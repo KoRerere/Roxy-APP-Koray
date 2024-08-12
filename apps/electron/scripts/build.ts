@@ -2,6 +2,7 @@ import { build, Configuration, Platform } from "electron-builder";
 import { cpSync } from "node:fs";
 import { exit, platform } from "node:process";
 import path from "node:path";
+import { notarizeMac } from "./notarize-mac";
 
 const version = process.env.npm_package_version;
 console.log("版本号：", version);
@@ -11,16 +12,18 @@ const workDir = path.join(__dirname, "../");
 cpSync(path.join(workDir, "../web/dist"), path.join(workDir, "./dist/web"), {
   recursive: true,
 });
-cpSync(
-  path.join(workDir, "../preload/dist"),
-  path.join(workDir, "./dist/preload"),
+cpSync(path.join(workDir, "../preload/dist"), path.join(workDir, "./dist/preload"),
   { recursive: true },
 );
 
 const options: Configuration = {
-  // appId: "com.linkv.electron",
-  productName: 'ElectronViteMonorepo',
+  appId: "com.lumi.app",
+  productName: "Lumibrowser",
+  copyright: "lumibrowser",
   asar: true,
+  extraMetadata: {
+    name: "Lumibrowser",
+  },
   directories: {
     output: "out",
     buildResources: "buildResources",
@@ -37,25 +40,31 @@ const options: Configuration = {
   removePackageScripts: true,
 
   afterSign: async (context) => {
-    // Mac releases require hardening+notarization: https://developer.apple.com/documentation/xcode/notarizing_macos_software_before_distribution
-    if (context.electronPlatformName === "darwin") {
-      // await notarizeMac(context)
-    }
+    await notarizeMac(context)
   },
   nodeGypRebuild: false,
   buildDependenciesFromSource: false,
 
   win: {
-    target: "nsis",
+    target: [
+      {
+        target: "nsis",
+        arch: ["ia32", "x64"],
+      }
+    ],
   },
 
+  dmg: {
+    sign: true
+  },
   mac: {
     target: ["dmg", "zip"],
+    hardenedRuntime: true,
+    gatekeeperAssess: false,
     entitlements: "buildResources/entitlements.mac.plist",
     entitlementsInherit: "buildResources/entitlements.mac.plist",
     identity: "LINKV TECH PTE. LTD. (GLM223L5MF)",
-    hardenedRuntime: true,
-    gatekeeperAssess: true,
+    notarize: false
   },
 
   linux: {
@@ -69,9 +78,10 @@ const options: Configuration = {
   publish: [
     {
       provider: 'github',
-      releaseType: 'draft',
+      releaseType: 'prerelease',
+      // private: true,
     }
-  ]
+  ],
 };
 
 // 要打包的目标平台
@@ -84,6 +94,7 @@ const targetPlatform: Platform = {
 build({
   targets: targetPlatform.createTarget(),
   config: options,
+  publish: process.env.CI ? "always" : "never",
 })
   .then((result) => {
     console.log(JSON.stringify(result));

@@ -5,8 +5,6 @@ import type { LogLevel, ViteDevServer } from 'vite';
 import electronPath from 'electron';
 import { ChildProcess, spawn } from 'node:child_process';
 import path from 'node:path';
-import { generateAsync } from '@repo/dts-for-context-bridge'
-
 
 /** @type 'production' | 'development'' */
 const mode = (process.env.MODE = process.env.MODE || 'development');
@@ -84,11 +82,6 @@ function setupPreloadPackageWatcher({ ws }: ViteDevServer) {
       {
         name: 'reload-page-on-preload-package-change',
         writeBundle() {
-          // Generating exposedInMainWorld.d.ts when preload package is changed.
-          generateAsync({
-            input: "apps/preload/src/**/*.ts",
-            output: "apps/preload/exposedInMainWorld.d.ts",
-          });
 
           ws.send({
             type: 'full-reload',

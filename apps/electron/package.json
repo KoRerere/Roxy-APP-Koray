@@ -9,13 +9,13 @@
   "main": "dist/index.cjs",
   "license": "MIT",
   "author": {
-    "name": "buqiyuan",
+    "name": "kuajingzhiyan",
     "email": "1743369777@qq.com",
     "url": "https://github.com/buqiyuan"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/buqiyuan/electron-vite-monorepo.git"
+    "url": "https://github.com/kuajingzhiyan/roxy-browser"
   },
   "scripts": {
     "dev": "vite",
@@ -25,19 +25,21 @@
     "lint": "eslint . --ext js,ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "postinstall": "cross-env ELECTRON_RUN_AS_NODE=1 electron ../../scripts/update-electron-vendors.js"
-
   },
   "devDependencies": {
-    "@types/node": "^22.1.0",
+    "@electron/notarize": "^2.3.2",
+    "@types/node": "^22.2.0",
     "@typescript-eslint/eslint-plugin": "8.0.1",
     "cross-env": "7.0.3",
-    "electron": "31.3.1",
+    "electron": "22.3.27",
     "electron-builder": "24.13.3",
-    "eslint": "9.8.0",
+    "eslint": "9.9.0",
     "typescript": "5.5.4",
     "vite": "5.4.0"
   },
   "dependencies": {
-    "electron-updater": "6.2.1"
+    "@roxy/electron-preload": "workspace:*",
+    "electron-updater": "6.2.1",
+    "puppeteer-core": "21.3.8"
   }
 }

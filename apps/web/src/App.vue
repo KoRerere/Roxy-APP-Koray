@@ -1,6 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+
+onMounted(async () => {
+  const username = await globalThis.electronAPI.send('getUsernameById', 1)
+  console.log('getUsernameById', username)
+
+  window.electronAPI.on('newUserJoin', (userID) => {
+    console.log('userID', userID)
+  })
+})
 </script>
 
 <template>

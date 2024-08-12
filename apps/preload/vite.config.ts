@@ -1,15 +1,12 @@
-import {chrome} from '../electron/.electron-vendors.cache.json';
-import {preload} from 'unplugin-auto-expose';
-import {join} from 'node:path';
+import { chrome } from '../electron/.electron-vendors.cache.json';
+import { join } from 'node:path';
+import dts from 'vite-plugin-dts'
+import type { UserConfig } from 'vite';
 
 const PACKAGE_ROOT = __dirname;
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..');
 
-/**
- * @type {import('vite').UserConfig}
- * @see https://vitejs.dev/config/
- */
-const config = {
+const config: UserConfig = {
   mode: process.env.MODE,
   root: PACKAGE_ROOT,
   envDir: process.cwd(),
@@ -21,7 +18,7 @@ const config = {
     assetsDir: '.',
     minify: process.env.MODE !== 'development',
     lib: {
-      entry: 'src/index.ts',
+      entry: ['src/index.ts', 'src/ipcMain.ts'],
       formats: ['cjs'],
     },
     rollupOptions: {
@@ -36,7 +33,7 @@ const config = {
     reportCompressedSize: false,
   },
 
-  plugins: [preload.vite()],
+  plugins: [dts({ rollupTypes: true })],
 };
 
 export default config;
