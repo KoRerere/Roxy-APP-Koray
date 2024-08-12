@@ -1,16 +1,22 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "module": "CommonJS",
-    "target": "ES2018",
+    "module": "ESNext",
+    "target": "ESNext",
     "sourceMap": false,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "skipLibCheck": true,
     "strict": true,
     "isolatedModules": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "/@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
+    "types/*.d.ts",
     "src/**/*.ts",
     "../electron/node_modules/electron/**/*.d.ts"
   ],

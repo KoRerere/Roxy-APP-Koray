@@ -22,7 +22,10 @@ const config: UserConfig = {
     assetsDir: '.',
     minify: process.env.MODE !== 'development',
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        browserWorker: 'src/workers/browser/index.ts',
+      },
       formats: ["cjs"],
     },
     rollupOptions: {

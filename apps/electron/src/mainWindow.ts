@@ -1,6 +1,7 @@
 import { BrowserWindow } from "electron";
 import { join } from "path";
 import { isProd, isDev } from '/@/utils/'
+import { browserWorkerManager } from '/@/workers/browser/manager'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -24,6 +25,11 @@ async function createWindow() {
     if (isDev) {
       browserWindow?.webContents.openDevTools({ mode: "detach" });
     }
+
+    browserWorkerManager.postMessage({ type: "ready" });
+    browserWorkerManager.onMessage((message) => {
+      console.log("Message from worker thread:", message);
+    })
   });
 
   const pageUrl =
@@ -40,6 +46,7 @@ async function createWindow() {
  * 恢复现有的浏览器窗口或创建新的浏览器窗口
  */
 export async function restoreOrCreateWindow() {
+
   let window = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed());
 
   if (window === undefined) {

@@ -1,4 +1,5 @@
 import { app } from "electron";
+import './ipc'
 import { restoreOrCreateWindow } from "/@/mainWindow";
 
 
