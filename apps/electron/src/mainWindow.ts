@@ -4,6 +4,8 @@ import { isProd, isDev } from '/@/utils/'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
+    width:1240,
+    height: 765,
     // Use 'ready-to-show' event to show window
     show: false,
     webPreferences: {

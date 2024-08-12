@@ -2,10 +2,10 @@
 
 import { chrome } from '../electron/.electron-vendors.cache.json';
 import vue from '@vitejs/plugin-vue';
-import { renderer } from 'unplugin-auto-expose';
 import { join } from 'node:path';
 import { UserConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools'
+import UnoCSS from 'unocss/vite'
 
 const PACKAGE_ROOT = __dirname;
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..');
@@ -39,9 +39,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueDevTools(),
-    renderer.vite({
-      preloadEntry: join(PACKAGE_ROOT, '../preload/src/index.ts'),
-    }),
+    UnoCSS(),
   ],
 };
 
