@@ -2,6 +2,8 @@
 import ScTable from '/@/components/sc-table'
 import ScMenu from '/@/components/sc-menu'
 import operatMenu from './components/operat-menu.vue'
+import filterTag from './components/filter-tag.vue'
+import profileInfo from './components/profile-info.vue'
 import { DeleteOutlined, EditOutlined, PaperClipOutlined } from '@ant-design/icons-vue'
 
 const columns = ref([
@@ -260,20 +262,39 @@ function handleResizeColumn(w: any, col: any) {
 
 <template>
   <div class="position-relative">
-    <ScTable row-key="id" :columns="columns" :data-source="dataSource" :custom-row="customRow"
-             :scroll="{ x: 500, y: 500 }" :operation="operation" @resize-column="handleResizeColumn"
-    >
-      <template #name="{ data }">
-        <span style="color:orange">{{ data.name }}</span>
-      </template>
-      <template #operation="{ data }">
-        <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
-      </template>
-    </ScTable>
+    <div class="flex items-center justify-center table-filter">
+      <filter-tag>
+        <template #tags>
+          <div>
+            <PaperClipOutlined /> Add filter
+          </div>
+        </template>
+      </filter-tag>
+    </div>
+  </div>
+  <ScTable row-key="id" :columns="columns" :data-source="dataSource" :custom-row="customRow"
+           :scroll="{ x: 500, y: 200 }" :operation="operation" @resize-column="handleResizeColumn"
+  >
+    <template #name="{ data }">
+      <span style="color:orange">{{ data.name }}</span>
+    </template>
+    <template #operation="{ data }">
+      <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
+    </template>
+  </ScTable>
+  <div>
+    <profile-info />
   </div>
 </template>
 
 <style lang="scss" scoped>
+.table-filter {
+  height: 54px;
+  background-color: #fff;
+  border-top: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
+  border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
+}
+
 :deep(.custom-class) {
   color: red;
 }

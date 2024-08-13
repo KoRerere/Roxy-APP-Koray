@@ -1,47 +1,41 @@
 <script lang="ts" setup>
-import { reactive, watch } from 'vue'
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons-vue'
+import CreateIcon from '/@/utils/createIcon'
 
-const state = reactive({
-  collapsed: false,
-  selectedKeys: ['1'],
-  openKeys: ['sub1'],
-  preOpenKeys: ['sub1'],
-})
+const router = useRouter()
+const routeMenu = router.getRoutes().filter(route => route.meta.root)
 
-watch(
-  () => state.openKeys,
-  (_val, oldVal) => {
-    state.preOpenKeys = oldVal
-  },
-)
+const selectedKeys = ref<string[]>(['1'])
 
-function toggleCollapsed() {
-  state.collapsed = !state.collapsed
-  state.openKeys = state.collapsed ? [] : state.preOpenKeys
+function handleClick(event: any) {
+  console.log('🚀 ~ handleClick ~ event:', event)
 }
 </script>
 
 <template>
-  <div>
-    <a-button type="primary" style="margin-bottom: 16px" @click="toggleCollapsed">
-      <MenuUnfoldOutlined v-if="state.collapsed" />
-      <MenuFoldOutlined v-else />
-    </a-button>
-    <a-menu v-model:openKeys="state.openKeys" v-model:selectedKeys="state.selectedKeys" mode="inline"
-            :inline-collapsed="state.collapsed"
-    >
-      <a-menu-item key="1">
-        <router-link to="/list">
-          窗口列表
+  <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="handleClick">
+    <template v-for="route in routeMenu" :key="route.name">
+      <a-sub-menu v-if="route.children?.length" :key="route.name">
+        <template #title>
+          <span>
+            <CreateIcon v-if="route.meta?.icon" :name="route.meta.icon" />
+            <span>{{ route.meta.title }}</span>
+          </span>
+        </template>
+
+        <a-menu-item v-for="child in route.children" :key="child.name">
+          <router-link :to="{ name: child.name }">
+            <CreateIcon v-if="child.meta?.icon" :name="child.meta.icon" />
+            <span>{{ child.meta?.title }}</span>
+          </router-link>
+        </a-menu-item>
+      </a-sub-menu>
+
+      <a-menu-item v-else>
+        <router-link :to="{ name: route.name }">
+          <CreateIcon v-if="route.meta?.icon" :name="route.meta.icon" />
+          <span>{{ route.meta?.title }}</span>
         </router-link>
       </a-menu-item>
-      <a-menu-item key="2">
-        nav 2
-      </a-menu-item>
-      <a-menu-item key="3">
-        nav 3
-      </a-menu-item>
-    </a-menu>
-  </div>
+    </template>
+  </a-menu>
 </template>
