@@ -1,90 +1,280 @@
 <script setup lang="ts">
-import rbTable from '/@/components/rb-table';
+import ScTable from '/@/components/sc-table'
+import ScMenu from '/@/components/sc-menu'
+import operatMenu from './components/operat-menu.vue'
+import { DeleteOutlined, EditOutlined, PaperClipOutlined } from '@ant-design/icons-vue'
 
-interface User {
-  valueKey: string
-  name: string
-  address: string
-}
+const columns = ref([
+  {
+    title: '宽度可拉伸 (200-500)',
+    dataIndex: 'age',
+    key: 'age',
+    width: 200,
+    minWidth: 200,
+    maxWidth: 500,
+    resizable: true,
+  },
+  {
+    title: '插槽测试',
+    dataIndex: 'name',
+    key: 'name',
+    width: 100,
+    resizable: true,
+    ellipsis: true,
+    slot: 'name',
+  },
+  {
+    title: '[getText && classes]',
+    dataIndex: 'address',
+    key: 'address',
+    classes: 'custom-class',
+    width: 100,
+    resizable: true,
+    ellipsis: true,
+    getText: (data: any) => `${data.tags.join(' ')}`,
+  },
+  {
+    title: '[getText && classes]',
+    dataIndex: 'address',
+    key: 'address',
+    classes: 'custom-class',
+    width: 100,
+    resizable: true,
+    ellipsis: true,
+    getText: (data: any) => `${data.tags.join(' ')}`,
+  },
+  {
+    title: '操作项',
+    dataIndex: 'operation',
+    key: 'operation',
+    slot: 'operation',
+  },
+  {
+    title: '[getText && classes]',
+    dataIndex: 'address',
+    key: 'address',
+    classes: 'custom-class',
+    width: 100,
+    resizable: true,
+    ellipsis: true,
+    getText: (data: any) => `${data.tags.join(' ')}`,
+  },
+  {
+    title: '[getText && classes]',
+    dataIndex: 'address',
+    key: 'address',
+    classes: 'custom-class',
+    width: 100,
+    resizable: true,
+    ellipsis: true,
+    getText: (data: any) => `${data.tags.join(' ')}`,
+  },
+])
 
-const list: User[] = [
+const dataSource = [
   {
-    valueKey: '2016-05-04',
-    name: 'Aleyna Kutzner',
-    address: 'Lohrbergstr. 86c, Süd Lilli, Saarland',
+    name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
+    age: 32,
+    tags: [
+      'nice',
+      'developer',
+    ],
+    id: 0,
   },
   {
-    valueKey: '2016-05-03',
-    name: 'Helen Jacobi',
-    address: '760 A Street, South Frankfield, Illinois',
+    name: '拉鸡巴倒',
+    age: 42,
+    tags: [
+      'loser',
+    ],
+    id: 1,
   },
   {
-    valueKey: '2016-05-02',
-    name: 'Brandon Deckert',
-    address: 'Arnold-Ohletz-Str. 41a, Alt Malinascheid, Thüringen',
+    name: 'SCVR',
+    age: 32,
+    tags: [
+      'cool',
+      'teacher',
+    ],
+    id: 2,
   },
   {
-    valueKey: '2016-05-01',
-    name: 'Margie Smith',
-    address: '23618 Windsor Drive, West Ricardoview, Idaho',
-  }
+    name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
+    age: 32,
+    tags: [
+      'nice',
+      'developer',
+    ],
+    id: 3,
+  },
+  {
+    name: '拉鸡巴倒',
+    age: 42,
+    tags: [
+      'loser',
+    ],
+    id: 4,
+  },
+  {
+    name: 'SCVR',
+    age: 32,
+    tags: [
+      'cool',
+      'teacher',
+    ],
+    id: 5,
+  },
+  {
+    name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
+    age: 32,
+    tags: [
+      'nice',
+      'developer',
+    ],
+    id: 6,
+  },
+  {
+    name: '拉鸡巴倒',
+    age: 42,
+    tags: [
+      'loser',
+    ],
+    id: 7,
+  },
+  {
+    name: 'SCVR',
+    age: 32,
+    tags: [
+      'cool',
+      'teacher',
+    ],
+    id: 8,
+  },
+  {
+    name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
+    age: 32,
+    tags: [
+      'nice',
+      'developer',
+    ],
+    id: 9,
+  },
+  {
+    name: '拉鸡巴倒',
+    age: 42,
+    tags: [
+      'loser',
+    ],
+    id: 10,
+  },
+  {
+    name: 'SCVR',
+    age: 32,
+    tags: [
+      'cool',
+      'teacher',
+    ],
+    id: 11,
+  },
+  {
+    name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
+    age: 32,
+    tags: [
+      'nice',
+      'developer',
+    ],
+    id: 12,
+  },
+  {
+    name: '拉鸡巴倒',
+    age: 42,
+    tags: [
+      'loser',
+    ],
+    id: 13,
+  },
+  {
+    name: 'SCVR',
+    age: 32,
+    tags: [
+      'cool',
+      'teacher',
+    ],
+    id: 14,
+  },
 ]
 
-const columns = {
-  version: 0.1,
-  name: 'browser',
-  data: [
-    {
-      label: '样式覆盖',
-      key: 'address',
-      className: 'scvr-class',
-      labelClassName: 'label-class-name',
-      minWidth: 240,
-    },
-    {
-      label: '插槽',
-      key: 'name',
-      slot: 'scvr',
-    },
-    {
-      label: '多字段修改拼接',
-      key: ' valueKey',
-      minWidth: 150,
-      getText: (data: any) => `${data.valueKey.replace(/-/g, '/')} && ${data.name}`
-    },
-    {
-      label: '操作项',
-      width: 150,
-      slot: 'operations',
-    }
-  ]
+const operation = [
+  {
+    key: 'test',
+    name: '测试',
+    icon: h(PaperClipOutlined),
+    quick: true,
+  },
+  {
+    key: 'Edit',
+    name: '编辑',
+    icon: h(EditOutlined),
+  },
+  {
+    key: 'Delete',
+    name: '删除',
+    icon: h(DeleteOutlined),
+  },
+]
+
+function operationHandler({ key }: any, data: any) {
+  switch (key) {
+    case 'test':
+      console.log('🚀 ~test:', data)
+      break
+    case 'Edit':
+      console.log('🚀 ~Edit:', data)
+      break
+    case 'Delete':
+      console.log('🚀 ~Delete:', data)
+      break
+  }
 }
 
+const scMenu: any = ScMenu()
 
+function customRow(data: any, _index: number) {
+  return {
+    onContextmenu: (mouseEvent: MouseEvent) => {
+      mouseEvent.preventDefault()
+      const { clientX, clientY } = mouseEvent
+      scMenu.insert({
+        operation,
+        operationHandler: (event: any) => operationHandler(event, data),
+        position: { x: clientX, y: clientY },
+      })
+    },
+  }
+}
+
+function handleResizeColumn(w: any, col: any) {
+  col.width = w
+}
 </script>
 
 <template>
-  <div>
-    <rb-table :list="list" :columns="columns">
-      <template #scvr="{ data }">
-        <span style="color:orangered">{{ `${data.valueKey} ` }}</span>
+  <div class="position-relative">
+    <ScTable row-key="id" :columns="columns" :data-source="dataSource" :custom-row="customRow"
+             :scroll="{ x: 500, y: 500 }" :operation="operation" @resize-column="handleResizeColumn"
+    >
+      <template #name="{ data }">
+        <span style="color:orange">{{ data.name }}</span>
       </template>
-      <template #operations>
-        <el-button link type="primary" size="small">Detail</el-button>
-        <el-button link type="primary" size="small">Edit</el-button>
+      <template #operation="{ data }">
+        <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
       </template>
-    </rb-table>
+    </ScTable>
   </div>
 </template>
 
-
-
-<style scoped>
-:deep(.scvr-class) {
+<style lang="scss" scoped>
+:deep(.custom-class) {
   color: red;
-}
-
-:deep(.label-class-name) {
-  color: green;
 }
 </style>

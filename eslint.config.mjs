@@ -13,6 +13,7 @@ export default antfu(
     rules: {
       'no-console': 'off',
       'n/prefer-global/process': 'off',
+      'vue/first-attribute-linebreak': 'off',
     },
   },
 )
