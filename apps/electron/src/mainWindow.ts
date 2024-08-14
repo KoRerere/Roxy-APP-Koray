@@ -1,4 +1,4 @@
-import { BrowserWindow, globalShortcut } from 'electron'
+import { BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { isDev, isProd } from '/@/utils/'
 import { browserWorkerManager } from '/@/workers/browser/manager'
@@ -13,6 +13,7 @@ async function createWindow() {
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
       preload: isProd ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
+      devTools: isDev,
     },
   })
 
@@ -24,11 +25,6 @@ async function createWindow() {
 
     if (isDev) {
       browserWindow?.webContents.openDevTools({ mode: 'detach' })
-
-      // 注册快捷键 Ctrl+Shift+I 打开开发者工具
-      globalShortcut.register('Control+Shift+I', () => {
-        browserWindow?.webContents.openDevTools({ mode: 'detach' })
-      })
     }
 
     browserWorkerManager.postMessage({ type: 'ready' })

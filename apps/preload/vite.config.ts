@@ -1,15 +1,15 @@
-import { chrome } from '../electron/.electron-vendors.cache.json';
-import { join } from 'node:path';
+import { join } from 'node:path'
 import dts from 'vite-plugin-dts'
-import type { UserConfig } from 'vite';
+import type { UserConfig } from 'vite'
+import { chrome } from '../electron/.electron-vendors.cache.json'
 
-const PACKAGE_ROOT = __dirname;
-const PROJECT_ROOT = join(PACKAGE_ROOT, '../..');
+const PACKAGE_ROOT = __dirname
+const PROJECT_ROOT = join(PACKAGE_ROOT, '../..')
 
 const config: UserConfig = {
   mode: process.env.MODE,
   root: PACKAGE_ROOT,
-  envDir: process.cwd(),
+  envDir: PROJECT_ROOT,
   build: {
     ssr: true,
     sourcemap: 'inline',
@@ -33,7 +33,7 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
 
-  plugins: [dts({ rollupTypes: true })],
-};
+  plugins: [dts()],
+}
 
-export default config;
+export default config

@@ -1,4 +1,4 @@
-export type MainMessage = {
+export interface MainMessage {
   /** 新用户加入 */
-  newUserJoin(userID: number): string
+  newUserJoin: (userID: number) => string
 }
