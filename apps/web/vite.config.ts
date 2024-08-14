@@ -5,9 +5,12 @@ import vue from '@vitejs/plugin-vue'
 import type { UserConfig } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import UnoCSS from 'unocss/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+
 import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
-import AutoImport from 'unplugin-auto-import/vite'
+import { PrimeVueResolver } from '@primevue/auto-import-resolver'
+
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -49,6 +52,7 @@ const config: UserConfig = {
     }),
     Components({
       resolvers: [
+        PrimeVueResolver(),
         AntDesignVueResolver({
           importStyle: false, // css in js
         }),

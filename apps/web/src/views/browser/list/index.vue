@@ -2,76 +2,14 @@
 import ScTable from '/@/components/sc-table'
 import ScMenu from '/@/components/sc-menu'
 import operatMenu from './components/operat-menu.vue'
-import filterTag from './components/filter-tag.vue'
 import profileInfo from './components/profile-info.vue'
-import { DeleteOutlined, EditOutlined, PaperClipOutlined } from '@ant-design/icons-vue'
 
-const columns = ref([
-  {
-    title: '宽度可拉伸 (200-500)',
-    dataIndex: 'age',
-    key: 'age',
-    width: 200,
-    minWidth: 200,
-    maxWidth: 500,
-    resizable: true,
-  },
-  {
-    title: '插槽测试',
-    dataIndex: 'name',
-    key: 'name',
-    width: 100,
-    resizable: true,
-    ellipsis: true,
-    slot: 'name',
-  },
-  {
-    title: '[getText && classes]',
-    dataIndex: 'address',
-    key: 'address',
-    classes: 'custom-class',
-    width: 100,
-    resizable: true,
-    ellipsis: true,
-    getText: (data: any) => `${data.tags.join(' ')}`,
-  },
-  {
-    title: '[getText && classes]',
-    dataIndex: 'address',
-    key: 'address',
-    classes: 'custom-class',
-    width: 100,
-    resizable: true,
-    ellipsis: true,
-    getText: (data: any) => `${data.tags.join(' ')}`,
-  },
-  {
-    title: '操作项',
-    dataIndex: 'operation',
-    key: 'operation',
-    slot: 'operation',
-  },
-  {
-    title: '[getText && classes]',
-    dataIndex: 'address',
-    key: 'address',
-    classes: 'custom-class',
-    width: 100,
-    resizable: true,
-    ellipsis: true,
-    getText: (data: any) => `${data.tags.join(' ')}`,
-  },
-  {
-    title: '[getText && classes]',
-    dataIndex: 'address',
-    key: 'address',
-    classes: 'custom-class',
-    width: 100,
-    resizable: true,
-    ellipsis: true,
-    getText: (data: any) => `${data.tags.join(' ')}`,
-  },
-])
+import useColumns from '/@/hooks/useColumns'
+
+import filterTag from './components/filter-tag.vue'
+import openBrowser from './components/open-browser.vue'
+
+import { DeleteOutlined, EditOutlined, PaperClipOutlined } from '@ant-design/icons-vue'
 
 const dataSource = [
   {
@@ -84,7 +22,7 @@ const dataSource = [
     id: 0,
   },
   {
-    name: '拉鸡巴倒',
+    name: '111',
     age: 42,
     tags: [
       'loser',
@@ -110,7 +48,7 @@ const dataSource = [
     id: 3,
   },
   {
-    name: '拉鸡巴倒',
+    name: 'aaaaa',
     age: 42,
     tags: [
       'loser',
@@ -136,7 +74,7 @@ const dataSource = [
     id: 6,
   },
   {
-    name: '拉鸡巴倒',
+    name: 'aaaaa',
     age: 42,
     tags: [
       'loser',
@@ -162,7 +100,7 @@ const dataSource = [
     id: 9,
   },
   {
-    name: '拉鸡巴倒',
+    name: 'aaaaa',
     age: 42,
     tags: [
       'loser',
@@ -188,7 +126,7 @@ const dataSource = [
     id: 12,
   },
   {
-    name: '拉鸡巴倒',
+    name: 'aaaaa',
     age: 42,
     tags: [
       'loser',
@@ -224,6 +162,45 @@ const operation = [
     icon: h(DeleteOutlined),
   },
 ]
+
+const columnsConfig = {
+  key: 'browser.list',
+  data: [
+    {
+      title: '配置文件信息',
+      dataIndex: 'profile',
+      key: 'profile',
+      width: 300,
+      resizable: true,
+      slot: 'profile',
+    },
+    {
+      title: '打开/预览',
+      dataIndex: 'open',
+      key: 'open',
+      width: 150,
+      resizable: true,
+      ellipsis: true,
+      slot: 'open',
+    },
+    {
+      title: 'getText && classes',
+      dataIndex: 'address',
+      key: 'address',
+      classes: 'custom-class',
+      ellipsis: true,
+      getText: (data: any) => `${data.tags.join(' ')}`,
+    },
+    {
+      title: '操作项',
+      dataIndex: 'operation',
+      key: 'operation',
+      slot: 'operation',
+    },
+  ],
+}
+
+const [columns] = useColumns(columnsConfig)
 
 function operationHandler({ key }: any, data: any) {
   switch (key) {
@@ -262,28 +239,27 @@ function handleResizeColumn(w: any, col: any) {
 
 <template>
   <div class="position-relative">
-    <div class="flex items-center justify-center table-filter">
-      <filter-tag>
-        <template #tags>
-          <div>
-            <PaperClipOutlined /> Add filter
-          </div>
-        </template>
-      </filter-tag>
-    </div>
-  </div>
-  <ScTable row-key="id" :columns="columns" :data-source="dataSource" :custom-row="customRow"
-           :scroll="{ x: 500, y: 200 }" :operation="operation" @resize-column="handleResizeColumn"
-  >
-    <template #name="{ data }">
-      <span style="color:orange">{{ data.name }}</span>
-    </template>
-    <template #operation="{ data }">
-      <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
-    </template>
-  </ScTable>
-  <div>
-    <profile-info />
+    <ScTable v-model:columns="columns" row-key="id" :data-source="dataSource" :custom-row="customRow"
+             :scroll="{ x: 500, y: 400 }" :operation="operation" @resize-column="handleResizeColumn"
+    >
+      <template #table-header>
+        <filter-tag>
+          <template #tags>
+            <div>Add filter</div>
+          </template>
+        </filter-tag>
+      </template>
+
+      <template #profile>
+        <profile-info />
+      </template>
+      <template #open>
+        <open-browser />
+      </template>
+      <template #operation="{ data }">
+        <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
+      </template>
+    </ScTable>
   </div>
 </template>
 

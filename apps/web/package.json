@@ -13,13 +13,18 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@mdi/font": "^7.4.47",
+    "@primevue/themes": "^4.0.4",
     "ant-design-vue": "4.x",
     "pinia": "^2.2.1",
+    "primevue": "^4.0.4",
     "vue": "^3.4.36",
+    "vue-draggable-plus": "^0.5.3",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@primevue/auto-import-resolver": "^4.0.4",
     "@roxy/electron-preload": "workspace:*",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.14.14",

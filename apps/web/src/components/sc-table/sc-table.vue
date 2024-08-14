@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { CopyOutlined } from '@ant-design/icons-vue'
 import selectionOperation from './selection-operation.vue'
+import tableConfig from './table-config.vue'
 
 const props = defineProps({
   rowKey: {
     type: String,
     default: 'key',
+  },
+  columns: {
+    type: Array,
+    required: true,
+    default: () => [],
   },
   dataSource: {
     type: Array,
@@ -17,6 +23,10 @@ const props = defineProps({
     default: () => [],
   },
 })
+
+defineEmits(['update:columns'])
+
+const _columns = computed(() => props.columns.filter((item: any) => item._hide))
 
 const state = reactive<{
   selectedRowKeys: (string | number)[]
@@ -38,7 +48,13 @@ function clearSelection() {
 
 <template>
   <div class="position-relative">
-    <a-table :row-key="rowKey" :data-source="dataSource"
+    <div class="flex table-header">
+      <div class="flex-auto">
+        <slot name="table-header" />
+      </div>
+      <tableConfig :columns="props.columns" @update:columns="(columns) => $emit('update:columns', columns)" />
+    </div>
+    <a-table :row-key="rowKey" :columns="_columns" :data-source="dataSource"
              :row-selection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }" v-bind="$attrs"
     >
       <template #bodyCell="{ column, record }">
