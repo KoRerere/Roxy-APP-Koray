@@ -17,7 +17,13 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Team<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * No description
    *
@@ -27,7 +33,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_user_list
    */
   userGetUserListList = (query: UserGetUserListListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -68,7 +74,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_select_staff
    */
   userSelectStaffList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -95,7 +101,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_select_manager
    */
   userSelectManagerList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -122,7 +128,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_select_group
    */
   userSelectGroupList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -150,7 +156,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_add_user_list
    */
   userAddUserListCreate = (data: UserAddUserListCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -177,7 +183,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_mdf_user_list
    */
   userMdfUserListCreate = (data: UserMdfUserListCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -200,7 +206,7 @@ export class Team<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_del_user_list
    */
   userDelUserListCreate = (data: UserDelUserListCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;

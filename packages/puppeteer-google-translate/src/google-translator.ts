@@ -16,7 +16,7 @@ export class GoogleTranslator {
 
     this.browserLaunching = puppeteer.launch({
       executablePath: chromePath,
-      headless: false, // 设置为 false 以便看到浏览器操作
+      // headless: false, // 设置为 false 以便看到浏览器操作
       // slowMo: 250, // 减慢操作速度，方便观察
     })
 
@@ -39,7 +39,7 @@ export class GoogleTranslator {
       return text
     })
     const html = await Promise.all(promises)
-    console.log('html', html.join(''))
+    console.log('[puppeteer-google-translate]', html.join(''))
     // await browser.close();
     return html.join('')
   }

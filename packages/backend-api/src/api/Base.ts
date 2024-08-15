@@ -29,7 +29,13 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Base<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * No description
    *
@@ -39,7 +45,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/login
    */
   loginCreate = (data: LoginCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -69,7 +75,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/reg
    */
   postBase = (data: PostBasePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -92,7 +98,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/send_email_forget_verify_code
    */
   sendEmailForgetVerifyCodeList = (query: SendEmailForgetVerifyCodeListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -114,7 +120,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/forget_password
    */
   forgetPasswordList = (query: ForgetPasswordListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -136,7 +142,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/send_email_register_verify_code
    */
   sendEmailRegisterVerifyCodeList = (query: SendEmailRegisterVerifyCodeListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -158,7 +164,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_change_account
    */
   userChangeAccountCreate = (data: UserChangeAccountCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -181,7 +187,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_change_pwd
    */
   userChangePwdCreate = (data: UserChangePwdCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -204,7 +210,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_send_email_verify_code
    */
   userSendEmailVerifyCodeList = (query: UserSendEmailVerifyCodeListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -226,7 +232,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_change_email
    */
   userChangeEmailCreate = (data: UserChangeEmailCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -249,7 +255,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_user_info
    */
   userGetUserInfoList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -309,7 +315,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_get_app_upgrade
    */
   userGetAppUpgradeCreate = (data: UserGetAppUpgradeCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         downloadUrl: string;
         version: string;
@@ -336,7 +342,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_get_core_upgrade
    */
   userGetCoreUpgradeCreate = (data: UserGetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -366,7 +372,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_user_config
    */
   userGetUserConfigList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -398,7 +404,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_def_config
    */
   userGetDefConfigList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -429,7 +435,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_set_user_config
    */
   userSetUserConfigCreate = (data: UserSetUserConfigCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -452,7 +458,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_user_api
    */
   userGetUserApiList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -478,7 +484,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_set_user_api
    */
   userSetUserApiCreate = (data: UserSetUserApiCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -501,7 +507,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_dict_version
    */
   userGetDictVersionList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -550,7 +556,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_system_dict_v2
    */
   userGetSystemDictV2List = (query: UserGetSystemDictV2ListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -577,7 +583,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_mdf_team_info
    */
   userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -600,7 +606,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_annt_list
    */
   userGetAnntListList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -630,7 +636,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_notify
    */
   userGetNotifyList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -658,7 +664,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request POST:/user_read_notify
    */
   userReadNotifyCreate = (data: UserReadNotifyCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -681,7 +687,7 @@ export class Base<SecurityDataType = unknown> extends HttpClient<SecurityDataTyp
    * @request GET:/user_get_oss_credential
    */
   userGetOssCredentialList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {

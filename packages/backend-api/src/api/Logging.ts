@@ -12,7 +12,13 @@
 import { UserGetLoginLogListParams, UserGetOperateLogListParams } from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
-export class Logging<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Logging<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * No description
    *
@@ -22,7 +28,7 @@ export class Logging<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_get_operate_log
    */
   userGetOperateLogList = (query: UserGetOperateLogListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -57,7 +63,7 @@ export class Logging<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_get_login_log
    */
   userGetLoginLogList = (query: UserGetLoginLogListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {

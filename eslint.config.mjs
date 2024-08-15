@@ -8,7 +8,7 @@ export default antfu(
     typescript: true,
 
     ignores: [
-      './packages/backend-api/src/api/*.ts',
+      'packages/backend-api/src/api/*.ts',
     ],
   },
   {

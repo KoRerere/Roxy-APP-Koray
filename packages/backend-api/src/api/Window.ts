@@ -44,7 +44,13 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Window<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * No description
    *
@@ -54,7 +60,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_window_info
    */
   userGetWindowInfoList = (query: UserGetWindowInfoListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -211,7 +217,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
               filename: string;
               mimeType: string;
               mimeDescription: string;
-              suffixes: number;
+              suffixes: number | string;
             }[];
             mediaDevice?: boolean;
             mediaDeviceList?: {
@@ -251,7 +257,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_window_info_recycle
    */
   userGetWindowInfoRecycleList = (query: UserGetWindowInfoRecycleListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -300,7 +306,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_add_window_info
    */
   userAddWindowInfoCreate = (data: UserAddWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -328,7 +334,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_batch_window_info
    */
   userBatchWindowInfoCreate = (data: UserBatchWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -351,7 +357,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_import_window_info
    */
   userImportWindowInfoCreate = (data: UserImportWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -379,7 +385,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_window_info_single
    */
   userMdfWindowInfoSingleCreate = (data: UserMdfWindowInfoSingleCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -402,7 +408,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_window_info_batch
    */
   userMdfWindowInfoBatchCreate = (data: UserMdfWindowInfoBatchCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -425,7 +431,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_modify_window_report_time
    */
   userModifyWindowReportTimeCreate = (data: UserModifyWindowReportTimeCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -448,7 +454,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_window_info_random
    */
   userMdfWindowInfoRandomCreate = (data: UserMdfWindowInfoRandomCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -471,7 +477,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_clear_window_cache
    */
   userClearWindowCacheCreate = (data: UserClearWindowCacheCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -493,7 +499,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_clear_window_cache_api
    */
   userClearWindowCacheApiCreate = (data: UserClearWindowCacheApiCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -515,7 +521,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_del_window_info
    */
   userDelWindowInfoCreate = (data: UserDelWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -537,7 +543,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_del_window_info_api
    */
   userDelWindowInfoApiCreate = (data: UserDelWindowInfoApiCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -560,7 +566,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_window_sync_status
    */
   userMdfWindowSyncStatusCreate = (data: UserMdfWindowSyncStatusCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -583,7 +589,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_window_sync_v2
    */
   userMdfWindowSyncV2Create = (data: UserMdfWindowSyncV2CreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -606,7 +612,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_ua_webgl
    */
   userGetUaWebglList = (query: UserGetUaWebglListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -632,7 +638,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_ua_webgl_v2
    */
   userGetUaWebglV2List = (query: UserGetUaWebglV2ListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -659,7 +665,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_device_name
    */
   userGetDeviceNameList = (query: UserGetDeviceNameListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -684,7 +690,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_device_name_v2
    */
   userGetDeviceNameV2List = (query: UserGetDeviceNameV2ListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -709,7 +715,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_mac_addr_v2
    */
   userGetMacAddrV2List = (query: UserGetMacAddrV2ListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -734,7 +740,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_group_info
    */
   userGetGroupInfoList = (query: UserGetGroupInfoListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -765,7 +771,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_add_group_info
    */
   userAddGroupInfoCreate = (data: UserAddGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: object;
@@ -789,7 +795,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_group_info
    */
   userMdfGroupInfoCreate = (data: UserMdfGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -812,7 +818,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_del_group_info
    */
   userDelGroupInfoCreate = (data: UserDelGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -835,7 +841,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_label_info
    */
   userGetLabelInfoList = (query: UserGetLabelInfoListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -866,7 +872,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_add_label_info
    */
   userAddLabelInfoCreate = (data: UserAddLabelInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: object;
@@ -890,7 +896,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_mdf_label_info
    */
   userMdfLabelInfoCreate = (data: UserMdfLabelInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -913,7 +919,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_del_label_info
    */
   userDelLabelInfoCreate = (data: UserDelLabelInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -936,7 +942,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request GET:/user_get_platform_info
    */
   userGetPlatformInfoList = (query: UserGetPlatformInfoListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -961,7 +967,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_add_platform_info
    */
   userAddPlatformInfoCreate = (data: UserAddPlatformInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: object;
@@ -985,7 +991,7 @@ export class Window<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @request POST:/user_del_platform_info
    */
   userDelPlatformInfoCreate = (data: UserDelPlatformInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
