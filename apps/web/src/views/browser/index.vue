@@ -33,7 +33,7 @@ const tabs = ref([
         </template>
       </a-tab-pane>
     </a-tabs>
-    <div style="background-color: gray;" class="flex-auto">
+    <div style="background-color: gray;" class="flex flex-col flex-auto">
       <router-view />
     </div>
   </div>

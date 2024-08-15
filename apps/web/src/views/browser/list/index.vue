@@ -3,15 +3,15 @@ import ScTable from '/@/components/sc-table'
 import ScMenu from '/@/components/sc-menu'
 import operatMenu from './components/operat-menu.vue'
 import profileInfo from './components/profile-info.vue'
-
-import useColumns from '/@/hooks/useColumns'
-
 import filterTag from './components/filter-tag.vue'
 import openBrowser from './components/open-browser.vue'
+import selectProxy from './components/select-proxy.vue'
 
-import { DeleteOutlined, EditOutlined, PaperClipOutlined } from '@ant-design/icons-vue'
+import useColumns from '/@/hooks/useColumns'
+import columnsRow from './columns'
+import { operation, operationHandler, sorts } from './operation'
 
-const dataSource = [
+const dataList = [
   {
     name: 'John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown John Brown',
     age: 32,
@@ -144,77 +144,7 @@ const dataSource = [
   },
 ]
 
-const operation = [
-  {
-    key: 'test',
-    name: '测试',
-    icon: h(PaperClipOutlined),
-    quick: true,
-  },
-  {
-    key: 'Edit',
-    name: '编辑',
-    icon: h(EditOutlined),
-  },
-  {
-    key: 'Delete',
-    name: '删除',
-    icon: h(DeleteOutlined),
-  },
-]
-
-const columnsConfig = {
-  key: 'browser.list',
-  data: [
-    {
-      title: '配置文件信息',
-      dataIndex: 'profile',
-      key: 'profile',
-      width: 300,
-      resizable: true,
-      slot: 'profile',
-    },
-    {
-      title: '打开/预览',
-      dataIndex: 'open',
-      key: 'open',
-      width: 150,
-      resizable: true,
-      ellipsis: true,
-      slot: 'open',
-    },
-    {
-      title: 'getText && classes',
-      dataIndex: 'address',
-      key: 'address',
-      classes: 'custom-class',
-      ellipsis: true,
-      getText: (data: any) => `${data.tags.join(' ')}`,
-    },
-    {
-      title: '操作项',
-      dataIndex: 'operation',
-      key: 'operation',
-      slot: 'operation',
-    },
-  ],
-}
-
-const [columns] = useColumns(columnsConfig)
-
-function operationHandler({ key }: any, data: any) {
-  switch (key) {
-    case 'test':
-      console.log('🚀 ~test:', data)
-      break
-    case 'Edit':
-      console.log('🚀 ~Edit:', data)
-      break
-    case 'Delete':
-      console.log('🚀 ~Delete:', data)
-      break
-  }
-}
+const [columns] = useColumns(columnsRow)
 
 const scMenu: any = ScMenu()
 
@@ -235,12 +165,14 @@ function customRow(data: any, _index: number) {
 function handleResizeColumn(w: any, col: any) {
   col.width = w
 }
+
+const visibleRight = ref(false)
 </script>
 
 <template>
   <div class="position-relative">
-    <ScTable v-model:columns="columns" row-key="id" :data-source="dataSource" :custom-row="customRow"
-             :scroll="{ x: 500, y: 400 }" :operation="operation" @resize-column="handleResizeColumn"
+    <ScTable v-model:columns="columns" row-selection data-key="id" :data-list="dataList" :custom-row="customRow"
+             :scroll="{ x: 500, y: 400 }" :operation="operation" :sorts="sorts" @resize-column="handleResizeColumn"
     >
       <template #table-header>
         <filter-tag>
@@ -249,7 +181,6 @@ function handleResizeColumn(w: any, col: any) {
           </template>
         </filter-tag>
       </template>
-
       <template #profile>
         <profile-info />
       </template>
@@ -260,6 +191,12 @@ function handleResizeColumn(w: any, col: any) {
         <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
       </template>
     </ScTable>
+
+    <Drawer v-model:visible="visibleRight" position="right" class="!w-[60%]">
+      <template #container>
+        <select-proxy />
+      </template>
+    </Drawer>
   </div>
 </template>
 

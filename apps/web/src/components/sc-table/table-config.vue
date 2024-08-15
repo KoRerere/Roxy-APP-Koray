@@ -23,8 +23,8 @@ function update(newColumns: any[]) {
 </script>
 
 <template>
-  <div v-ripple class="flex-cc cursor-pointer table-display" @click="toggle">
-    <span class="font-size-sm mdi mdi-tune-vertical" />
+  <div v-ripple class="cursor-pointer table-display" @click="toggle">
+    <span class="font-size-[16px] leading-none mdi mdi-tune-vertical" />
     <span>Display</span>
   </div>
 
@@ -74,10 +74,9 @@ function update(newColumns: any[]) {
   justify-content: center;
   align-items: center;
   gap: var(--spacing-sm, 4px);
+  min-width: 24px;
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
 
-  width: 74px;
-  min-width: 24px;
   border-radius: var(--radius-sm, 4px);
   border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
   background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f2f5f7);

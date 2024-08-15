@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ScMenu from '/@/components/sc-menu'
-import { EllipsisOutlined } from '@ant-design/icons-vue'
 
 const props = defineProps({
   data: {
@@ -38,17 +37,15 @@ function openMenu() {
 
 <template>
   <div>
-    <a-button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon"
-              @click.stop="quickClick(item.key)"
+    <Button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon"
+            @click.stop="quickClick(item.key)"
     >
       {{ item.name }}
-    </a-button>
+    </Button>
 
-    <a-button size="small" @click.stop="openMenu">
-      <template #icon>
-        <EllipsisOutlined ref="iconRef" />
-      </template>
-    </a-button>
+    <Button text size="small" @click.stop="openMenu">
+      <span ref="iconRef" class="mdi mdi-dots-horizontal" />
+    </Button>
   </div>
 </template>
 

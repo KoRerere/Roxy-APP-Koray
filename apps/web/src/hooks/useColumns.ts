@@ -25,7 +25,7 @@ function useColumns(data: Columns) {
   const _list = ref(
     list
       .map((item, index) => {
-        const _hide = cache[item.key]?.hide ?? true
+        const _hide = cache[item.key]?.hide ?? false
         const _sort = cache[item.key]?.sort ?? index
         return {
           ...item,

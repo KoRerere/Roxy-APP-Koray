@@ -26,9 +26,6 @@ const collapsed = ref<boolean>(false)
       <a-layout-content>
         <RouterView />
       </a-layout-content>
-      <!-- <a-layout-footer style="text-align: center">
-        Ant Design ©2018 Created by Ant UED
-      </a-layout-footer> -->
     </a-layout>
   </a-layout>
 </template>

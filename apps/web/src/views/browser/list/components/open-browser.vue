@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import { SearchOutlined } from '@ant-design/icons-vue'
 </script>
 
 <template>
-  <a-button type="primary" :icon="h(SearchOutlined)">
-    Search
-  </a-button>
+  <Button type="button" size="small">
+    <span class="mdi mdi-magnify" />
+    <span>Search</span>
+  </Button>
 </template>
 
 <style scoped></style>

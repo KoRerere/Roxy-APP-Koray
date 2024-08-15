@@ -1,50 +1,51 @@
 <script setup lang="ts">
-import { CopyOutlined } from '@ant-design/icons-vue'
 import selectionOperation from './selection-operation.vue'
+import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
 import tableSort from './table-sort.vue'
 
 const props = defineProps({
-  rowKey: {
+  dataKey: {
     type: String,
-    default: 'key',
+    default: 'id',
+  },
+  dataList: {
+    type: Array,
+    required: true,
+    default: () => [],
   },
   columns: {
     type: Array,
     required: true,
     default: () => [],
   },
-  dataSource: {
+  filters: {
     type: Array,
-    required: true,
+    default: () => [],
+  },
+  sorts: {
+    type: Array,
     default: () => [],
   },
   operation: {
     type: Array,
     default: () => [],
   },
+  rowSelection: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 defineEmits(['update:columns'])
 
-const _columns = computed(() => props.columns.filter((item: any) => item._hide))
-const _filters = computed(() => props.operation.filter((item: any) => item.filterable))
+const _columns = computed<any[]>(() => props.columns.filter((item: any) => !item._hide))
 
-const state = reactive<{
-  selectedRowKeys: (string | number)[]
-}>({
-      selectedRowKeys: [], // Check here to configure the default column
-    })
-
-const selectedCount = computed(() => state.selectedRowKeys.length)
-
-function onSelectChange(selectedRowKeys: (string | number)[]) {
-  state.selectedRowKeys = selectedRowKeys
-}
+const selectedProduct = ref()
+const selectedCount = computed(() => selectedProduct.value?.length)
 
 function clearSelection() {
-  const _list = props.dataSource.filter((item: any) => state.selectedRowKeys.includes(item[props.rowKey]))
-  state.selectedRowKeys = []
+  selectedProduct.value = []
 }
 
 function sort(data: any) {
@@ -53,26 +54,30 @@ function sort(data: any) {
 </script>
 
 <template>
-  <div class="position-relative">
-    <div class="flex table-header">
+  <div class="position-relative flex-auto">
+    <div class="flex items-center table-header">
+      <table-filter :filters="filters" />
       <div class="flex-auto">
-        <slot name="table-header" />
+        <slot name="header" />
       </div>
-      <tableConfig :columns="props.columns" @update:columns="(columns) => $emit('update:columns', columns)" />
-      <table-sort :filters="_filters" @sort="sort" />
+      <table-config :columns="columns" @update:columns="(columns) => $emit('update:columns', columns)" />
+      <table-sort :sorts="sorts" @sort="sort" />
     </div>
-    <a-table :row-key="rowKey" :columns="_columns" :data-source="dataSource"
-             :row-selection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }" v-bind="$attrs"
+
+    <DataTable v-model:selection="selectedProduct" :value="dataList" paginator :rows="15"
+               :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="500px" v-bind="$attrs"
     >
-      <template #bodyCell="{ column, record }">
-        <slot :name="column.slot" :data="record">
-          <span :class="column.classes">{{ column.getText?.(record) || record[column.key] }} </span>
-          <CopyOutlined v-if="column.copyable" class="copyable" />
-        </slot>
-      </template>
-    </a-table>
+      <Column v-if="rowSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
+      <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
+        <template #body="{ data }">
+          <slot :name="column.slot" :data="data">
+            <span :class="column.classes">{{ column.getText?.(data) || data[column.key] }} </span>
+          </slot>
+        </template>
+      </Column>
+    </DataTable>
     <Transition>
-      <selection-operation v-if="selectedCount > 0" :selected-count="selectedCount" :total="dataSource.length"
+      <selection-operation v-if="selectedCount > 0" :selected-count="selectedCount" :total="dataList.length"
                            :operation="operation" @clear-selection="clearSelection"
       />
     </Transition>
@@ -81,9 +86,9 @@ function sort(data: any) {
 
 <style lang="scss" scoped>
 .table-header {
-  padding: var(--spacing-none, 0px) var(--spacing-4xl, 24px);
+  height: 60px;
   gap: var(--spacing-md, 6px);
-  // background-color: #fff;
+  background-color: olivedrab;
 }
 
 .copyable {

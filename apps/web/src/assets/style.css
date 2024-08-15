@@ -3,26 +3,6 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-
-  --win-top-bar-h: 32px;
-  --layout-head-h: 58px;
-  --layout-header-h: 66px;
-  --notice-bar-h: 32px;
-  --layout-top-h: calc(var(--win-top-bar-h) + var(--notice-bar-h) + var(--layout-header-h));
-  --layout-enmu-w: 220px;
-  --layout-enmu-min-w: 64px;
-  --layout-notice-h: 32px;
-  --theme-color: #1e1e1e;
-  --assistant-color: #f3521f;
-  --pages-arp: 8px;
-  --el-color-primary: #195bff;
-  --el-color-primary-light-5: rgba(0, 83, 255, 0.5);
-  --bg-color: rgba(0, 83, 255, 0.2);
-  --border-color: rgb(207, 207, 207);
-
-  --window-border-radius: 6px;
-  --dialog-border-radius: 4px;
-  --body-border: solid 1px #000;
 }
 
 :root.fullscreen,
@@ -68,17 +48,6 @@ body {
 
 body:has(.isMacOs) {
   --body-border: none;
-}
-
-body:has(.yellow-theme) {
-  --el-color-primary: #f3521f !important;
-  --el-color-primary: #ff3d02 !important;
-  --el-color-primary-dark-2: #be401a !important;
-  --el-color-primary-light-3: #ff4b15 !important;
-  --el-color-primary-light-5: #db4214 !important;
-  --el-color-primary-light-7: #cb3d11 !important;
-  --el-color-primary-light-8: #af411f !important;
-  --el-color-primary-light-9: #f3a993 !important;
 }
 
 :focus-visible {
