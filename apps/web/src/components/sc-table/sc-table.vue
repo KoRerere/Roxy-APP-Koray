@@ -2,6 +2,7 @@
 import { CopyOutlined } from '@ant-design/icons-vue'
 import selectionOperation from './selection-operation.vue'
 import tableConfig from './table-config.vue'
+import tableSort from './table-sort.vue'
 
 const props = defineProps({
   rowKey: {
@@ -27,6 +28,7 @@ const props = defineProps({
 defineEmits(['update:columns'])
 
 const _columns = computed(() => props.columns.filter((item: any) => item._hide))
+const _filters = computed(() => props.operation.filter((item: any) => item.filterable))
 
 const state = reactive<{
   selectedRowKeys: (string | number)[]
@@ -44,6 +46,10 @@ function clearSelection() {
   const _list = props.dataSource.filter((item: any) => state.selectedRowKeys.includes(item[props.rowKey]))
   state.selectedRowKeys = []
 }
+
+function sort(data: any) {
+  console.log('🚀 ~ sort ~ data:', data)
+}
 </script>
 
 <template>
@@ -53,6 +59,7 @@ function clearSelection() {
         <slot name="table-header" />
       </div>
       <tableConfig :columns="props.columns" @update:columns="(columns) => $emit('update:columns', columns)" />
+      <table-sort :filters="_filters" @sort="sort" />
     </div>
     <a-table :row-key="rowKey" :columns="_columns" :data-source="dataSource"
              :row-selection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }" v-bind="$attrs"
@@ -73,6 +80,12 @@ function clearSelection() {
 </template>
 
 <style lang="scss" scoped>
+.table-header {
+  padding: var(--spacing-none, 0px) var(--spacing-4xl, 24px);
+  gap: var(--spacing-md, 6px);
+  // background-color: #fff;
+}
+
 .copyable {
   margin-left: 12px;
   color: orange;

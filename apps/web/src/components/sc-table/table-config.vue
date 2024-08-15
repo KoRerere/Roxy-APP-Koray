@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { VueDraggable } from 'vue-draggable-plus'
+import scPopover from '/@/components/sc-popover'
 
 const props = defineProps({
   columns: {
@@ -22,21 +23,50 @@ function update(newColumns: any[]) {
 </script>
 
 <template>
-  <div v-ripple class="cursor-pointer table-display" @click="toggle">
+  <div v-ripple class="flex-cc cursor-pointer table-display" @click="toggle">
     <span class="font-size-sm mdi mdi-tune-vertical" />
     <span>Display</span>
   </div>
 
-  <Popover ref="popRef">
+  <sc-popover ref="popRef" footer class="table-popover">
     <VueDraggable :model-value="props.columns" :animation="150" handle=".handle" @update:model-value="update">
-      <div v-for="item in props.columns" :key="item.key" class="flex items-center column">
-        <span class="mdi mdi-drag cursor-grab handle" />
+      <div v-for="item in props.columns" :key="item.key" class="flex items-center table-popover-column">
+        <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.title }}</span>
         <ToggleSwitch v-model="item._hide" />
       </div>
     </VueDraggable>
-  </Popover>
+    <template #footer>
+      <span v-ripple class="cursor-pointer table-popover-save">Save for all filters</span>
+    </template>
+  </sc-popover>
 </template>
+
+<style lang="scss">
+.table-popover {
+  &-column {
+    padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+    min-width: 250px;
+  }
+
+  &-save {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm, 4px);
+    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+    min-width: 24px;
+
+    color: var(--Colors-Text-text-primary, #171c1f);
+    text-align: center;
+    font-family: Inter;
+    font-size: var(--Font-Size-text-sm, 12px);
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 .table-display {
@@ -62,14 +92,5 @@ function update(newColumns: any[]) {
   font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
-}
-
-.handle {
-  margin-right: var(--spacing-s, 4px);
-}
-
-.column {
-  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
-  min-width: 240px;
 }
 </style>
