@@ -5,6 +5,10 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {},
+    "types": [
+      "node",
+      "vite/client"
+    ],
     "strict": true,
     "sourceMap": false,
     "allowSyntheticDefaultImports": true,

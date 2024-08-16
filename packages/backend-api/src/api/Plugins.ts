@@ -20,7 +20,13 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Plugins<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar
    *
@@ -30,7 +36,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request POST:/user_upload_chrome_plugins
    */
   userUploadChromePluginsCreate = (data: UserUploadChromePluginsCreatePayload, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.http.request<object, any>({
       path: `/user_upload_chrome_plugins`,
       method: "POST",
       body: data,
@@ -47,7 +53,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_record_plugin_upload
    */
   userRecordPluginUploadList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: number;
@@ -69,7 +75,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request POST:/user_upload_plugin_info
    */
   userUploadPluginInfoCreate = (data: UserUploadPluginInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -96,7 +102,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_get_plugin_category
    */
   userGetPluginCategoryList = (params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -123,7 +129,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_get_system_plugin
    */
   userGetSystemPluginList = (query: UserGetSystemPluginListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -161,7 +167,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request POST:/user_add_system_plugin
    */
   userAddSystemPluginCreate = (data: UserAddSystemPluginCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -184,7 +190,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request GET:/user_get_plugin_list
    */
   userGetPluginListList = (query: UserGetPluginListListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -221,7 +227,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request POST:/user_del_plugin_info
    */
   userDelPluginInfoCreate = (data: UserDelPluginInfoCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
@@ -244,7 +250,7 @@ export class Plugins<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @request POST:/user_mdf_plugin_status
    */
   userMdfPluginStatusCreate = (data: UserMdfPluginStatusCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;

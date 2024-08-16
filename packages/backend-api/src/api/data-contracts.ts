@@ -194,22 +194,22 @@ export interface UserReadNotifyCreatePayload {
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -224,12 +224,12 @@ export interface UserGetWindowInfoListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -264,7 +264,7 @@ export interface UserGetWindowInfoListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -274,7 +274,7 @@ export interface UserGetWindowInfoListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -284,12 +284,12 @@ export interface UserGetWindowInfoListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -337,22 +337,22 @@ export interface UserGetWindowInfoListParams {
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example " 2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -367,12 +367,12 @@ export interface UserGetWindowInfoRecycleListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -387,22 +387,22 @@ export interface UserGetWindowInfoRecycleListParams {
   host?: string;
   /**
    * 窗口类型，枚举值：1.自建窗口，2.团队窗口，3.全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 创建人id, int,非必传
-   * @example 2
+   * @example "2"
    */
   createBy?: number;
   /**
    * 操作人id, int,非必传
-   * @example 3
+   * @example "3"
    */
   operateBy?: number;
   /**
    * 排序类型，int, 枚举值，1.序号从大到小，2.序号从小到大，3.删除时间从大到小，4.删除时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -574,7 +574,7 @@ export interface UserAddWindowInfoCreatePayload {
     filename: string;
     mimeType: string;
     mimeDescription: string;
-    suffixes: number;
+    suffixes: number | string;
   }[];
   mediaDevice: boolean;
   mediaDeviceList: {
@@ -707,7 +707,7 @@ export interface UserBatchWindowInfoCreatePayload {
     filename: string;
     mimeType: string;
     mimeDescription: string;
-    suffixes: number;
+    suffixes: number | string;
   }[];
   hardwareConcurrent: number;
   deviceMemory: number;
@@ -870,7 +870,7 @@ export interface UserMdfWindowInfoSingleCreatePayload {
     filename: string;
     mimeType: string;
     mimeDescription: string;
-    suffixes: number;
+    suffixes: number | string;
   }[];
   mediaDevice: boolean;
   mediaDeviceList: {
@@ -1004,7 +1004,7 @@ export interface UserMdfWindowInfoBatchCreatePayload {
     filename: string;
     mimeType: string;
     mimeDescription: string;
-    suffixes: number;
+    suffixes: number | string;
   }[];
   hardwareConcurrent: number;
   deviceMemory: number;
@@ -1103,7 +1103,7 @@ export interface UserGetUaWebglV2ListParams {
   webGLManufacturer?: string;
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -1127,7 +1127,7 @@ export interface UserGetDeviceNameV2ListParams {
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -1135,12 +1135,12 @@ export interface UserGetMacAddrV2ListParams {
 export interface UserGetGroupInfoListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -1233,12 +1233,12 @@ export interface UserUploadPluginInfoCreatePayload {
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
@@ -1258,7 +1258,7 @@ export interface UserGetProxyModuleListParams {
   host?: string;
   /**
    * 排序类型，1：代理ID从大到小，2：代理ID从小到大
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
 }
@@ -1340,17 +1340,17 @@ export interface UserCheckIpCreatePayload {
 export interface UserGetUserListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 用户id
-   * @example 2
+   * @example "2"
    */
   id?: number;
   /**
@@ -1365,7 +1365,7 @@ export interface UserGetUserListListParams {
   userName?: string;
   /**
    * 账号状态，1: 开启，2: 关闭
-   * @example 1
+   * @example "1"
    */
   status?: number;
 }
@@ -1428,12 +1428,12 @@ export interface UserDelUserListCreatePayload {
 export interface UserGetSystemPluginListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -1456,12 +1456,12 @@ export interface UserAddSystemPluginCreatePayload {
 export interface UserGetPluginListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**

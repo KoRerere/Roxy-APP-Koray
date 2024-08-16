@@ -19,7 +19,13 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Proxy<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
   /**
    * No description
    *
@@ -29,7 +35,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request GET:/user_get_proxy_module
    */
   userGetProxyModuleList = (query: UserGetProxyModuleListParams, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         data: {
@@ -72,7 +78,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request POST:/user_add_proxy_module
    */
   userAddProxyModuleCreate = (data: UserAddProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.http.request<object, any>({
       path: `/user_add_proxy_module`,
       method: "POST",
       body: data,
@@ -89,7 +95,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request POST:/user_mdf_proxy_module
    */
   userMdfProxyModuleCreate = (data: UserMdfProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.http.request<object, any>({
       path: `/user_mdf_proxy_module`,
       method: "POST",
       body: data,
@@ -106,7 +112,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request POST:/user_del_proxy_module
    */
   userDelProxyModuleCreate = (data: UserDelProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.http.request<object, any>({
       path: `/user_del_proxy_module`,
       method: "POST",
       body: data,
@@ -123,7 +129,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request POST:/user_unbind_proxy_module
    */
   userUnbindProxyModuleCreate = (data: UserUnbindProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.http.request<object, any>({
       path: `/user_unbind_proxy_module`,
       method: "POST",
       body: data,
@@ -139,7 +145,7 @@ export class Proxy<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @request POST:/user_check_ip
    */
   userCheckIpCreate = (data: UserCheckIpCreatePayload, params: RequestParams = {}) =>
-    this.request<
+    this.http.request<
       {
         code: number;
         msg: string;
