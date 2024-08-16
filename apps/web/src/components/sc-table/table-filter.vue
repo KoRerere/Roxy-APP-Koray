@@ -39,4 +39,8 @@ const _filters = ref([
   />
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+:deep(.p-select-label) {
+  padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
+}
+</style>

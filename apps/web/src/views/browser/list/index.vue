@@ -171,8 +171,9 @@ const visibleRight = ref(false)
 
 <template>
   <div class="position-relative">
-    <ScTable v-model:columns="columns" row-selection data-key="id" :data-list="dataList" :custom-row="customRow"
-             :scroll="{ x: 500, y: 400 }" :operation="operation" :sorts="sorts" @resize-column="handleResizeColumn"
+    <ScTable v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
+             data-key="id" :data-list="dataList" :custom-row="customRow" :scroll="{ x: 500, y: 400 }" :operation="operation"
+             :sorts="sorts" @resize-column="handleResizeColumn"
     >
       <template #table-header>
         <filter-tag>
