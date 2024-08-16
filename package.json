@@ -18,12 +18,13 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "tsx scripts/watch.ts | npm run dev:pkg",
+    "dev": "tsx scripts/watch.ts",
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
     "build": "turbo run build && pnpm run compile",
     "dev:p": "turbo run dev --parallel",
     "compile": "turbo run compile",
     "build:pkg": "pnpm -F electron-main run build:pkg",
+    "postinstall": "npm run dev:pkg",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
