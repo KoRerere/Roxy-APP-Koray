@@ -4,7 +4,7 @@ import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
 import tableSort from './table-sort.vue'
 
-const props = defineProps({
+const _props = defineProps({
   dataKey: {
     type: String,
     default: 'id',
@@ -39,7 +39,7 @@ const props = defineProps({
 
 defineEmits(['update:columns'])
 
-const _columns = computed<any[]>(() => props.columns.filter((item: any) => !item._hide))
+const _columns = computed<any[]>(() => _props.columns.filter((item: any) => !item._hide))
 
 const selectedProduct = ref()
 const selectedCount = computed(() => selectedProduct.value?.length)
@@ -51,21 +51,30 @@ function clearSelection() {
 function sort(data: any) {
   console.log('🚀 ~ sort ~ data:', data)
 }
+
+const ctxMenu = ref()
+const _selectexxxxdProduct = ref()
+function onRowContextMenu(event: any) {
+  console.log('🚀 ~ onRowContextMenu ~ event:', event)
+  console.log('🚀 ~ _selectexxxxdProduct:', _selectexxxxdProduct.value)
+  ctxMenu.value.show(event.originalEvent)
+}
 </script>
 
 <template>
   <div class="position-relative flex-auto">
     <div class="flex items-center table-header">
       <table-filter :filters="filters" />
-      <div class="flex-auto">
-        <slot name="header" />
+      <slot name="header-extra" />
+      <div class="flex flex-auto justify-end gap-2">
+        <table-config :columns="columns" @update:columns="(columns) => $emit('update:columns', columns)" />
+        <table-sort :sorts="sorts" @sort="sort" />
       </div>
-      <table-config :columns="columns" @update:columns="(columns) => $emit('update:columns', columns)" />
-      <table-sort :sorts="sorts" @sort="sort" />
     </div>
 
-    <DataTable v-model:selection="selectedProduct" :value="dataList" paginator :rows="15"
-               :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="500px" v-bind="$attrs"
+    <DataTable v-bind="$attrs" v-model:selection="selectedProduct" v-model:contextMenuSelection="_selectexxxxdProduct"
+               :value="dataList" paginator :rows="15" :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="500px"
+               context-menu @row-contextmenu="onRowContextMenu"
     >
       <Column v-if="rowSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
       <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
@@ -76,6 +85,14 @@ function sort(data: any) {
         </template>
       </Column>
     </DataTable>
+    <ContextMenu ref="ctxMenu" :model="operation">
+      <template #item="{ item, props }">
+        <a v-ripple v-bind="props.action">
+          <span>{{ item.name }}</span>
+        </a>
+      </template>
+    </ContextMenu>
+
     <Transition>
       <selection-operation v-if="selectedCount > 0" :selected-count="selectedCount" :total="dataList.length"
                            :operation="operation" @clear-selection="clearSelection"

@@ -1,16 +1,25 @@
 export const operation = [
   {
-    key: 'test',
+    key: 'Test',
     name: '测试',
     quick: true,
+    command: () => {
+      console.log('🚀 ~ Test:')
+    },
   },
   {
     key: 'Edit',
     name: '编辑',
+    command: () => {
+      console.log('🚀 ~ Edit:')
+    },
   },
   {
     key: 'Delete',
     name: '删除',
+    command: () => {
+      console.log('🚀 ~ Delete:')
+    },
   },
 ]
 

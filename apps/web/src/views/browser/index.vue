@@ -1,46 +1,26 @@
-<script setup lang="ts">
-import { DeleteOutlined } from '@ant-design/icons-vue'
+<script setup>
+import { ref } from 'vue'
 
-const activeKey = ref('1')
-
-const tabs = ref([
-  {
-    key: '1',
-    tab: 'All Profiles',
-  },
-  {
-    key: '2',
-    tab: 'Favs Profiles',
-  },
-  {
-    key: '3',
-    tab: 'Open Profiles',
-  },
-  {
-    key: '4',
-    tab: 'Trash',
-  },
+const items = ref([
+  { label: 'Dashboard', icon: 'mdi mdi-google-downasaur' },
+  { label: 'Transactions', icon: 'mdi mdi-unicorn' },
+  { label: 'Products', icon: 'mdi mdi-duck' },
+  { label: 'Messages', icon: 'mdi mdi-elephant' },
 ])
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <a-tabs v-model:activeKey="activeKey" destroy-inactive-tab-pane>
-      <a-tab-pane v-for="item in tabs" :key="item.key">
-        <template #tab>
-          <DeleteOutlined />
-          {{ item.tab }}
-        </template>
-      </a-tab-pane>
-    </a-tabs>
+  <div class="card flex flex-col h-full">
+    <Tabs value="Dashboard">
+      <TabList>
+        <Tab v-for="tab in items" :key="tab.label" :value="tab.label">
+          <i :class="tab.icon" />
+          <span>{{ tab.label }}</span>
+        </Tab>
+      </TabList>
+    </Tabs>
     <div style="background-color: gray;" class="flex flex-col flex-auto">
       <router-view />
     </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-:deep(.ant-tabs-nav) {
-  margin-bottom: 0;
-}
-</style>

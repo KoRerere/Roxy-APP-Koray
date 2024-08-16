@@ -1,6 +1,4 @@
 <script setup>
-import CreateIcon from '/@/utils/createIcon'
-
 const links = [
   {
     icon: new URL(`/@/assets/image/android.svg`, import.meta.url).href,
@@ -25,8 +23,7 @@ const links = [
       <div v-for="(link, index) in links" :key="index" class="flex items-center justify-center state-icons"
            :class="link.classes"
       >
-        <CreateIcon v-if="link.create" name="PlusOutlined" />
-        <img v-else class="state-icons-img" :src="link.icon">
+        <img class="state-icons-img" :src="link.icon">
       </div>
     </div>
     <div>Untitled Profile</div>

@@ -11,6 +11,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScMenu: typeof import('./src/components/sc-menu/sc-menu.vue')['default']
-    ScTable: typeof import('./src/components/sc-table/sc-table.vue')['default']
+    ScTable: typeof import('./src/components/sc-table/index.vue')['default']
   }
 }

@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import ScTable from '/@/components/sc-table'
-import ScMenu from '/@/components/sc-menu'
 import operatMenu from './components/operat-menu.vue'
 import profileInfo from './components/profile-info.vue'
-import filterTag from './components/filter-tag.vue'
+import customFilter from './components/custom-filter.vue'
 import openBrowser from './components/open-browser.vue'
 import selectProxy from './components/select-proxy.vue'
 
@@ -146,22 +145,6 @@ const dataList = [
 
 const [columns] = useColumns(columnsRow)
 
-const scMenu: any = ScMenu()
-
-function customRow(data: any, _index: number) {
-  return {
-    onContextmenu: (mouseEvent: MouseEvent) => {
-      mouseEvent.preventDefault()
-      const { clientX, clientY } = mouseEvent
-      scMenu.insert({
-        operation,
-        operationHandler: (event: any) => operationHandler(event, data),
-        position: { x: clientX, y: clientY },
-      })
-    },
-  }
-}
-
 function handleResizeColumn(w: any, col: any) {
   col.width = w
 }
@@ -172,15 +155,11 @@ const visibleRight = ref(false)
 <template>
   <div class="position-relative">
     <ScTable v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
-             data-key="id" :data-list="dataList" :custom-row="customRow" :scroll="{ x: 500, y: 400 }" :operation="operation"
-             :sorts="sorts" @resize-column="handleResizeColumn"
+             data-key="id" :data-list="dataList" :scroll="{ x: 500, y: 400 }" :operation="operation" :sorts="sorts"
+             @resize-column="handleResizeColumn"
     >
-      <template #table-header>
-        <filter-tag>
-          <template #tags>
-            <div>Add filter</div>
-          </template>
-        </filter-tag>
+      <template #header-extra>
+        <custom-filter />
       </template>
       <template #profile>
         <profile-info />
