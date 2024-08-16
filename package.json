@@ -20,11 +20,12 @@
   "scripts": {
     "dev": "tsx scripts/watch.ts",
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
+    "build:pkg": "pnpm -F \"./packages/**\" build",
     "build": "turbo run build && pnpm run compile",
     "dev:p": "turbo run dev --parallel",
     "compile": "turbo run compile",
-    "build:pkg": "pnpm -F electron-main run build:pkg",
-    "postinstall": "npm run dev:pkg",
+    "pack:pkg": "pnpm -F electron-main run build:pkg",
+    "postinstall": "npm run build:pkg",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
