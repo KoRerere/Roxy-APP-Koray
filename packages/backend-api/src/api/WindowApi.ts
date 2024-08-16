@@ -44,7 +44,7 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Window<SecurityDataType = unknown> {
+export class WindowApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
 
   constructor(http: HttpClient<SecurityDataType>) {
@@ -217,7 +217,7 @@ export class Window<SecurityDataType = unknown> {
               filename: string;
               mimeType: string;
               mimeDescription: string;
-              suffixes: number | string;
+              suffixes: number;
             }[];
             mediaDevice?: boolean;
             mediaDeviceList?: {

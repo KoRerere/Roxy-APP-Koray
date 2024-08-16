@@ -20,7 +20,7 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Plugins<SecurityDataType = unknown> {
+export class PluginsApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
 
   constructor(http: HttpClient<SecurityDataType>) {

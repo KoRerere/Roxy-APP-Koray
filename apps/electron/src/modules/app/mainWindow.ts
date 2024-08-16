@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'node:path'
+import { API } from '/@/api'
 import { isDev, isProd } from '/@/utils/'
 import { browserWorkerManager } from '/@/workers/browser/manager'
 
@@ -39,6 +40,8 @@ async function createWindow() {
       : `file://${join(__dirname, './web/index.html')}`
 
   await browserWindow.loadURL(pageUrl)
+
+  API.window.userGetWindowInfoList({}).then(console.log)
 
   return browserWindow
 }

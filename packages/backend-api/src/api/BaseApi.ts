@@ -29,7 +29,7 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Base<SecurityDataType = unknown> {
+export class BaseApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
 
   constructor(http: HttpClient<SecurityDataType>) {

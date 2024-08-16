@@ -19,7 +19,7 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Proxy<SecurityDataType = unknown> {
+export class ProxyApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
 
   constructor(http: HttpClient<SecurityDataType>) {

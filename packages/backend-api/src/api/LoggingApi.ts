@@ -12,7 +12,7 @@
 import { UserGetLoginLogListParams, UserGetOperateLogListParams } from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
-export class Logging<SecurityDataType = unknown> {
+export class LoggingApi<SecurityDataType = unknown> {
   http: HttpClient<SecurityDataType>;
 
   constructor(http: HttpClient<SecurityDataType>) {

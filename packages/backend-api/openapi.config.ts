@@ -4,10 +4,8 @@ import { generateApi } from 'swagger-typescript-api'
 
 /* NOTE: all fields are optional expect one of `input`, `url`, `spec` */
 generateApi({
-  name: 'MySuperbApi.ts',
-  // set to `false` to prevent the tool from writing to disk
   output: path.resolve(process.cwd(), './src/api'),
-  url: 'http://127.0.0.1:4523/export/openapi/4?version=3.1',
+  url: 'http://127.0.0.1:4523/export/openapi/7?version=3.0',
   httpClientType: 'axios', // or "fetch"
   modular: true,
   //  generateRouteTypes: true,
@@ -18,10 +16,11 @@ generateApi({
   unwrapResponseData: true,
   cleanOutput: true,
   singleHttpClient: true,
-  // templates: generateTemplates({
-
-  // }),
   hooks: {
+    onCreateRoute(routeData) {
+      routeData.namespace = `${routeData.namespace}API`
+      return routeData
+    },
   },
 }).then(({ files }) => {
   const content = files.reduce((acc, file) => {

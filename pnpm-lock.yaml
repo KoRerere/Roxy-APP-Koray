@@ -47,6 +47,9 @@ importers:
 
   apps/electron:
     dependencies:
+      '@roxy/backend-api':
+        specifier: workspace:*
+        version: link:../../packages/backend-api
       '@roxy/electron-preload':
         specifier: workspace:*
         version: link:../preload
@@ -128,6 +131,9 @@ importers:
       '@primevue/auto-import-resolver':
         specifier: ^4.0.4
         version: 4.0.4
+      '@roxy/backend-api':
+        specifier: workspace:*
+        version: link:../../packages/backend-api
       '@roxy/electron-preload':
         specifier: workspace:*
         version: link:../preload
