@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import RouterMenu from '/@/components/menus.vue'
-import CreateIcon from '/@/utils/createIcon'
 
 const collapsed = ref<boolean>(false)
 </script>
@@ -15,8 +14,7 @@ const collapsed = ref<boolean>(false)
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
            @click="() => (collapsed = !collapsed)"
       >
-        <CreateIcon :name="collapsed ? 'ArrowRightOutlined' : 'ArrowLeftOutlined'" />
-        <span v-if="!collapsed">Hide</span>
+        <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </a-layout-sider>
     <a-layout>

@@ -1,75 +1,120 @@
 <script setup>
-defineProps({
+import { sleep } from '/@/utils/'
+
+const _props = defineProps({
   filter: {
     type: Array,
     default: () => [
       {
+        key: 'search',
         label: 'Search',
         icon: 'mdi mdi-earth',
       },
       {
-        label: 'Search',
+        key: 'search2',
+        label: 'Search2',
+        icon: 'mdi mdi-earth',
+        chindren: [
+          {
+            type: 'listBox',
+            options: [
+              {
+                key: 'chindren1',
+                label: 'chindren1',
+                icon: 'mdi mdi-earth',
+              },
+              {
+                key: 'chindren2',
+                label: 'chindren2',
+                icon: 'mdi mdi-earth',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        separator: true,
+      },
+      {
+        key: 'h2o',
+        label: 'H2o',
         icon: 'mdi mdi-earth',
       },
       {
         separator: true,
       },
       {
-        label: 'Aaaa',
-        icon: 'mdi mdi-earth',
-      },
-      {
-        separator: true,
-      },
-      {
-        label: 'Xxxxx',
+        key: 'scc',
+        label: 'scc',
         icon: 'mdi mdi-earth',
       },
     ],
   },
 })
-const menu = ref()
+const menuRef = ref()
+const meun = reactive({
+  targetEvent: null,
+  isChidren: false,
+  list: _props.filter,
+})
 
-function toggle(event) {
-  menu.value.toggle(event)
+function show(event) {
+  meun.targetEvent = event
+  menuRef.value.show(event)
+}
+
+function onClick(item) {
+  if (item.chindren) {
+    sleep(20).then(() => {
+      meun.isChidren = true
+      meun.list = item.chindren
+    })
+    return
+  }
+
+  if (meun.isChidren) {
+    sleep(20).then(() => {
+      meun.isChidren = false
+      meun.list = _props.filter
+    })
+  }
+  console.log('🚀 ~ onClick ~ item:', item)
+  menuRef.value.hide()
 }
 </script>
 
 <template>
-  <div class="cursor-pointer add-filter" @click="toggle">
+  <div class="cursor-pointer add-filter" @click="show($event)">
     <span class="mdi mdi-account-alert" />
     <span>Add filters</span>
   </div>
 
-  <TieredMenu id="overlay_tmenu" ref="menu" :model="filter" popup
-              :pt="{ separator: 'my-separator', menu: { transition: 'my-menu-transition' } }"
+  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.list" popup
+              :pt="{ separator: 'browser-separator', menu: { transition: 'browser-menu-transition' } }"
   >
-    <template #item="{ item }">
-      <div class="cursor-pointer add-filter-item">
+    <template #item="{ item, props }">
+      <a v-ripple class="cursor-pointer browser-filter-item" v-bind="props.action" @click.stop="onClick(item)">
         <span :class="item.icon" />
         <span>{{ item.label }}</span>
-      </div>
+      </a>
     </template>
   </TieredMenu>
 </template>
 
 <style lang="scss">
-.add-filter-item {
-  display: flex;
-  align-items: center;
+.browser {
+  &-menu-transition {
+    padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
+  }
 
-  padding: 8px var(--spacing-md, 6px) 8px 10px;
-  gap: var(--spacing-md, 6px);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
-}
+  &-separator {
+    margin: var(--spacing-md, 6px) 0;
+  }
 
-.my-menu-transition {
-  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
-}
-
-.my-separator {
-  margin: var(--spacing-md, 6px) 0;
+  &-filter-item {
+    padding: 8px var(--spacing-md, 6px) 8px 10px !important;
+    gap: var(--spacing-md, 6px) !important;
+  }
 }
 </style>
 
