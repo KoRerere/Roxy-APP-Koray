@@ -1,8 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'node:path'
-import { API } from '/@/api'
 import { isDev, isProd } from '/@/utils/'
-import { browserWorkerManager } from '/@/workers/browser/manager'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -28,10 +26,10 @@ async function createWindow() {
       browserWindow?.webContents.openDevTools({ mode: 'detach' })
     }
 
-    browserWorkerManager.postMessage({ type: 'ready' })
-    browserWorkerManager.onMessage((message) => {
-      console.log('Message from worker thread:', message)
-    })
+    // browserWorkerManager.postMessage({ type: 'ready' })
+    // browserWorkerManager.onMessage((message) => {
+    //   console.log('Message from worker thread:', message)
+    // })
   })
 
   const pageUrl
@@ -41,7 +39,11 @@ async function createWindow() {
 
   await browserWindow.loadURL(pageUrl)
 
-  API.window.userGetWindowInfoList({}).then(console.log)
+  console.log('createWindow', pageUrl)
+  // setTimeout(() => {
+  //   console.log('browserManager launch')
+  //   browserManager.launch()
+  // }, 5000)
 
   return browserWindow
 }

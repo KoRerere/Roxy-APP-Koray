@@ -1,0 +1,22 @@
+{
+  "name": "@repo/node-typesafe-worker-messages",
+  "type": "module",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Using type-safe worker communication in Node.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p ./tsconfig.json -emitDeclarationOnly"
+  },
+  "devDependencies": {
+    "@types/node": "^22.3.0",
+    "electron-log": "^5.1.7",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1"
+  }
+}

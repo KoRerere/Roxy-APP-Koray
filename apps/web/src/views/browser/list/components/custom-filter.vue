@@ -135,6 +135,5 @@ function onClick(item) {
   font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
-  /* 133.333% */
 }
 </style>

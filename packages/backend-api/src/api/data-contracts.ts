@@ -16,6 +16,18 @@ export interface LoginCreatePayload {
   password: string;
 }
 
+export interface LoginCreateData {
+  code: number;
+  data: {
+    token: string;
+    type: number;
+    user_name: string;
+    user_id: number;
+    role: string;
+  };
+  msg: string;
+}
+
 export interface PostBasePayload {
   /** 用户名 */
   user_name: string;
@@ -27,12 +39,22 @@ export interface PostBasePayload {
   ver_code: string;
 }
 
+export interface PostBaseData {
+  code: number;
+  msg: string;
+}
+
 export interface SendEmailForgetVerifyCodeListParams {
   /**
    * 邮箱
    * @example "166533381@qq.com"
    */
   email: string;
+}
+
+export interface SendEmailForgetVerifyCodeListData {
+  code: number;
+  msg: string;
 }
 
 export interface ForgetPasswordListParams {
@@ -53,6 +75,11 @@ export interface ForgetPasswordListParams {
   new_pwd: string;
 }
 
+export interface ForgetPasswordListData {
+  code: number;
+  msg: string;
+}
+
 export interface SendEmailRegisterVerifyCodeListParams {
   /**
    * 邮箱
@@ -61,9 +88,19 @@ export interface SendEmailRegisterVerifyCodeListParams {
   email: string;
 }
 
+export interface SendEmailRegisterVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
 export interface UserChangeAccountCreatePayload {
   /** 真实姓名 */
   realName: string;
+}
+
+export interface UserChangeAccountCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserChangePwdCreatePayload {
@@ -71,6 +108,11 @@ export interface UserChangePwdCreatePayload {
   old_pwd: string;
   /** 新密码 */
   new_pwd: string;
+}
+
+export interface UserChangePwdCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserSendEmailVerifyCodeListParams {
@@ -81,11 +123,65 @@ export interface UserSendEmailVerifyCodeListParams {
   email: string;
 }
 
+export interface UserSendEmailVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
 export interface UserChangeEmailCreatePayload {
   /** 新邮箱 */
   email: string;
   /** 验证码 */
   code: string;
+}
+
+export interface UserChangeEmailCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetUserInfoListData {
+  code: number;
+  data: {
+    id: number;
+    userName: string;
+    role: string;
+    mainId: number;
+    realName: string;
+    phone: string;
+    email: string;
+    maxWindowCount: number;
+    useWindowCount: number;
+    maxUserCount: number;
+    useUserCount: number;
+    maxOpenCount: number;
+    createTime: string;
+    updateTime: string;
+    teamId: number;
+    teamName: string;
+    assignCnt: number;
+    remainCnt: number;
+    useOpenCount: number;
+    totalAmount: number;
+    leftAmount: number;
+    host: string;
+    sgHost: string;
+    usHost: string;
+    proxyHttpPort: number;
+    proxyHttpsPort: number;
+    proxySocks5Port: number;
+    proxyUserName: string;
+    proxyPassword: string;
+    proxyTime: number;
+    refreshUrl: string;
+    sgRefreshUrl: string;
+    usRefreshUrl: string;
+    price: number;
+    cityPrice: number;
+    mobilePrice: number;
+    dcPrice: number;
+  };
+  msg: string;
 }
 
 export interface UserGetAppUpgradeCreatePayload {
@@ -104,6 +200,15 @@ export interface UserGetAppUpgradeCreatePayload {
    * 32或64，str，非必传
    */
   osBit?: string;
+}
+
+export interface UserGetAppUpgradeCreateData {
+  downloadUrl: string;
+  version: string;
+  upgradeTitle: string;
+  upgradeDesc: string;
+  releaseTime: string;
+  webDomain: string;
 }
 
 export interface UserGetCoreUpgradeCreatePayload {
@@ -127,6 +232,49 @@ export interface UserGetCoreUpgradeCreatePayload {
    * mac专用：intel/apple，str，非必传
    */
   cpu?: string;
+}
+
+export interface UserGetCoreUpgradeCreateData {
+  code: number;
+  data: {
+    rows: {
+      coreVersion: string;
+      version: string;
+      downloadUrl: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetUserConfigListData {
+  code: number;
+  data: {
+    language: string;
+    timezone: string;
+    closeSoft: string;
+    cacheDir: string;
+    autoDelDays: string;
+    autoDelSize: string;
+    memoryLimit: string;
+    ipBlackList: string[];
+    apiToken: string;
+  };
+  msg: string;
+}
+
+export interface UserGetDefConfigListData {
+  code: number;
+  data: {
+    language: string;
+    timezone: string;
+    closeSoft: string;
+    cacheDir: string;
+    autoDelDays: string;
+    autoDelSize: string;
+    memoryLimit: string;
+    ipBlackList: string[];
+  };
+  msg: string;
 }
 
 export interface UserSetUserConfigCreatePayload {
@@ -164,6 +312,21 @@ export interface UserSetUserConfigCreatePayload {
   apiToken: string;
 }
 
+export interface UserSetUserConfigCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetUserApiListData {
+  code: number;
+  data: {
+    apiKey: string;
+    port: string;
+    open: boolean;
+  };
+  msg: string;
+}
+
 export interface UserSetUserApiCreatePayload {
   /** api */
   apiKey: string;
@@ -171,6 +334,44 @@ export interface UserSetUserApiCreatePayload {
   port: string;
   /** 打开，关闭 */
   open: boolean;
+}
+
+export interface UserSetUserApiCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetDictVersionListData {
+  code: number;
+  data: {
+    dictVersion: string;
+    os: string;
+    proxyMethod: string;
+    proxyType: string;
+    proxyNetwork: string;
+    billMethod: string;
+    ipType: string;
+    protocol: string;
+    country: string;
+    proxyProvider: string;
+    proxyTime: string;
+    checkChannel: string;
+    windowType: string;
+    language: string;
+    displayLanguage: string;
+    timeZone: string;
+    resolution: string;
+    disableSslList: string;
+    hardwareConcurrent: string;
+    deviceMemory: string;
+    source: string;
+    accessServer: string;
+    rotateCountry: string;
+    addType: string;
+    exeType: string;
+    frequency: string;
+  };
+  msg: string;
 }
 
 export interface UserGetSystemDictV2ListParams {
@@ -181,14 +382,73 @@ export interface UserGetSystemDictV2ListParams {
   type: string[];
 }
 
+export interface UserGetSystemDictV2ListData {
+  code: number;
+  data: {
+    type: string;
+    label: string;
+    value: string;
+  }[];
+  msg: string;
+}
+
 export interface UserMdfTeamInfoCreatePayload {
   /** 团队名称 */
   name: string;
 }
 
+export interface UserMdfTeamInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetAnntListListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      announcement?: string;
+      href?: string;
+      createTime?: string;
+      diff?: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetNotifyListData {
+  code: number;
+  data: {
+    id: number;
+    type: string;
+    notify: string;
+    status: number;
+    createTime: string;
+  }[];
+  msg: string;
+}
+
 export interface UserReadNotifyCreatePayload {
   /** 已读通知id，List */
   ids: number[];
+}
+
+export interface UserReadNotifyCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetOssCredentialListData {
+  code: number;
+  data: {
+    accessKeyId: string;
+    accessKeySecret: string;
+    expiration: string;
+    securityToken: string;
+    region: string;
+    bucket: string;
+  };
+  msg: string;
 }
 
 export interface UserGetWindowInfoListParams {
@@ -334,6 +594,186 @@ export interface UserGetWindowInfoListParams {
   isBindRpa?: string;
 }
 
+export interface UserGetWindowInfoListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      dirId?: string;
+      windowSortNum?: number;
+      windowName?: string;
+      groupId?: number;
+      groupName?: string;
+      platformUrl?: string;
+      platformUserName?: string;
+      platformPassword?: string;
+      defaultOpenUrl?: string[];
+      coreVersion?: string;
+      os?: string;
+      osVersion?: string;
+      browserVersion?: string;
+      userAgent?: string;
+      cookie?: {
+        name?: string;
+        value?: string;
+        domain?: string;
+      }[];
+      windowRemark?: string;
+      isOften?: boolean;
+      openStatus?: boolean;
+      statusInfo?: {
+        openUserId: number;
+        openUserName: string;
+        openTime: string;
+      }[];
+      labelId?: number;
+      labelColor?: string;
+      labelName?: string;
+      labelIds?: number[];
+      labelInfo?: {
+        labelId: number;
+        labelName: string;
+        labelColor: string;
+      }[];
+      loginData?: string[];
+      createTime?: string;
+      updateTime?: string;
+      userName?: string;
+      realName?: string;
+      role?: string;
+      moduleId?: number;
+      proxyMethod?: string;
+      addType?: string;
+      proxyType?: string;
+      proxyCategory?: string;
+      ipType?: string;
+      proxyProvider?: string;
+      protocol?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyTime?: string;
+      refreshUrl?: string;
+      accessServer?: string;
+      checkChannel?: string;
+      extraChannel?: string;
+      isExtraNewIp?: boolean;
+      isRepectCheck?: boolean;
+      extraUrl?: string;
+      lastIp?: string;
+      lastCountry?: string;
+      isLanguageBaseIp?: boolean;
+      isDisplayLanguageBaseIp?: boolean;
+      isTimeZone?: boolean;
+      position?: number;
+      longitude?: string;
+      latitude?: string;
+      precisionPos?: string;
+      forbidAudio?: boolean;
+      forbidImage?: number;
+      forbiddenPictureSize?: string;
+      forbidMedia?: boolean;
+      syncTab?: boolean;
+      localState?: {
+        os_crypt: {
+          audit_enabled: boolean;
+          encrypted_key: string;
+        };
+      };
+      syncCookie?: boolean;
+      openMult?: boolean;
+      forbidTranslatePopup?: boolean;
+      forbidSavePassword?: boolean;
+      stopOpenNet?: boolean;
+      stopOpenIP?: boolean;
+      stopOpenPosition?: boolean;
+      syncIndexedDb?: boolean;
+      syncLocalStorage?: boolean;
+      syncBookmark?: boolean;
+      syncPassword?: boolean;
+      syncHistory?: boolean;
+      syncExtensions?: boolean;
+      syncValue?: object;
+      clearCacheFile?: boolean;
+      clearCookie?: boolean;
+      clearHistory?: boolean;
+      isDisplayName?: boolean;
+      randomFingerprint?: boolean;
+      allowLoginChrome?: boolean;
+      allowRunApplication?: boolean;
+      useGpu?: boolean;
+      webRTC?: number;
+      openWidth?: string;
+      openHeight?: string;
+      resolutionType?: boolean;
+      resolutionY?: string;
+      fontType?: boolean;
+      canvas?: boolean;
+      webGLValue?: string;
+      webGLRender?: string;
+      webGpu?: string;
+      webGpuVendor?: string;
+      audioContext?: boolean;
+      audioContextValue?: string;
+      computerName?: string;
+      macAddress?: string;
+      speechVoices?: boolean;
+      speechVoicesValue?: {
+        enable: boolean;
+        voices: {
+          name: string;
+          lang: string;
+          isLocalService: boolean;
+        }[];
+      };
+      doNotTrack?: boolean;
+      clientRectsValue?: {
+        enable: boolean;
+        clientRectsNoiseFactorX: number;
+        clientRectsNoiseFactorY: number;
+      };
+      deviceInfo?: boolean;
+      deviceNameSwitch?: boolean;
+      macInfo?: boolean;
+      portScanProtect?: boolean;
+      disableSsl?: boolean;
+      disableSslList?: string[];
+      enablePlugin?: boolean;
+      enablePluginList?: {
+        name: string;
+        description: string;
+        filename: string;
+        mimeType: string;
+        mimeDescription: string;
+        suffixes: number | string;
+      }[];
+      mediaDevice?: boolean;
+      mediaDeviceList?: {
+        deviceType?: string;
+        deviceId?: string;
+        label?: string;
+        groupId?: string;
+      }[];
+      hardwareConcurrent?: number;
+      deviceMemory?: number;
+      userAgentNew?: string;
+      userAgentVersion?: string;
+      platform?: string;
+      navigatorPlatform?: string;
+      pixelDepth?: number;
+      colorDepth?: number;
+      isBindRpa?: boolean;
+      pluginVersion?: string;
+      pluginRoute?: string;
+    }[];
+  };
+}
+
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -440,6 +880,38 @@ export interface UserGetWindowInfoRecycleListParams {
    * @example "12,45,22"
    */
   groupIds?: string;
+}
+
+export interface UserGetWindowInfoRecycleListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      windowSortNum?: number;
+      windowName?: string;
+      groupId?: number;
+      groupName?: string;
+      windowRemark?: string;
+      labelId?: number;
+      labelColor?: string;
+      labelName?: string;
+      labelIds?: number[];
+      labelInfo?: {
+        labelId: number;
+        labelName: string;
+        labelColor: string;
+      }[];
+      createUser?: string;
+      operateUser?: string;
+      deleteTime?: string;
+      os?: string;
+      platformUrl?: string;
+      lastIp?: string;
+      lastCountry?: string;
+    }[];
+  };
+  msg: string;
 }
 
 export interface UserAddWindowInfoCreatePayload {
@@ -587,6 +1059,16 @@ export interface UserAddWindowInfoCreatePayload {
   deviceMemory: number;
 }
 
+export interface UserAddWindowInfoCreateData {
+  code: number;
+  data: {
+    createBy: number;
+    windowUserId: number;
+    windowId: number;
+  };
+  msg: string;
+}
+
 export interface UserBatchWindowInfoCreatePayload {
   createCount: number;
   windowNamePrefix: string;
@@ -713,6 +1195,11 @@ export interface UserBatchWindowInfoCreatePayload {
   deviceMemory: number;
 }
 
+export interface UserBatchWindowInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserImportWindowInfoCreatePayload {
   fileName: string;
   excelData: {
@@ -732,6 +1219,16 @@ export interface UserImportWindowInfoCreatePayload {
   windowRemark: string;
   userAgent: string;
   windowSize: string;
+}
+
+export interface UserImportWindowInfoCreateData {
+  code: number;
+  data: {
+    createBy: number;
+    windowUserId: number;
+    windowId: number;
+  };
+  msg: string;
 }
 
 export interface UserMdfWindowInfoSingleCreatePayload {
@@ -883,6 +1380,11 @@ export interface UserMdfWindowInfoSingleCreatePayload {
   deviceMemory: number;
 }
 
+export interface UserMdfWindowInfoSingleCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserMdfWindowInfoBatchCreatePayload {
   ids: number[];
   windowName: string;
@@ -1010,13 +1512,28 @@ export interface UserMdfWindowInfoBatchCreatePayload {
   deviceMemory: number;
 }
 
+export interface UserMdfWindowInfoBatchCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
 }
 
+export interface UserModifyWindowReportTimeCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserMdfWindowInfoRandomCreatePayload {
   dirId: string;
+}
+
+export interface UserMdfWindowInfoRandomCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserClearWindowCacheCreatePayload {
@@ -1024,9 +1541,19 @@ export interface UserClearWindowCacheCreatePayload {
   ids: number[];
 }
 
+export interface UserClearWindowCacheCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserClearWindowCacheApiCreatePayload {
   /** 要清空的窗口dirId列表 */
   dirIds: number[];
+}
+
+export interface UserClearWindowCacheApiCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserDelWindowInfoCreatePayload {
@@ -1034,9 +1561,19 @@ export interface UserDelWindowInfoCreatePayload {
   ids: number[];
 }
 
+export interface UserDelWindowInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserDelWindowInfoApiCreatePayload {
   /** 要删除的窗口dirIds列表 */
   dirIds: string[];
+}
+
+export interface UserDelWindowInfoApiCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserMdfWindowSyncStatusCreatePayload {
@@ -1053,6 +1590,11 @@ export interface UserMdfWindowSyncStatusCreatePayload {
   }[];
 }
 
+export interface UserMdfWindowSyncStatusCreateData {
+  code: number;
+  msg: string;
+}
+
 export type UserMdfWindowSyncV2CreatePayload = {
   id?: number;
   /** www.baidu.com','http:ip123.in/ip.json'], */
@@ -1061,6 +1603,11 @@ export type UserMdfWindowSyncV2CreatePayload = {
   syncValue?: object;
   openStatus?: boolean;
 }[];
+
+export interface UserMdfWindowSyncV2CreateData {
+  code: number;
+  msg: string;
+}
 
 export interface UserGetUaWebglListParams {
   /** @example "Windows" */
@@ -1073,6 +1620,15 @@ export interface UserGetUaWebglListParams {
   coreVersionstring?: string;
   /** @example "Google Inc. (Intel)" */
   webGLManufacturer?: string;
+}
+
+export interface UserGetUaWebglListData {
+  code: number;
+  data: {
+    userAgent: string;
+    webGLRender: string;
+    webGLManufacturer: string;
+  };
 }
 
 export interface UserGetUaWebglV2ListParams {
@@ -1108,12 +1664,30 @@ export interface UserGetUaWebglV2ListParams {
   count: number;
 }
 
+export interface UserGetUaWebglV2ListData {
+  code: number;
+  data: {
+    userAgent?: string;
+    webGLRender?: string;
+    webGLManufacturer?: string;
+  }[];
+  msg: string;
+}
+
 export interface UserGetDeviceNameListParams {
   /**
    * 操作系统，如 macOS,Windows
    * @example "Windows"
    */
   os: string;
+}
+
+export interface UserGetDeviceNameListData {
+  code: number;
+  data: {
+    deviceName: string;
+  };
+  msg: string;
 }
 
 export interface UserGetDeviceNameV2ListParams {
@@ -1124,12 +1698,28 @@ export interface UserGetDeviceNameV2ListParams {
   os: string;
 }
 
+export interface UserGetDeviceNameV2ListData {
+  code: number;
+  data: {
+    deviceName?: string;
+  }[];
+  msg: string;
+}
+
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
    * @example 2
    */
   count: number;
+}
+
+export interface UserGetMacAddrV2ListData {
+  code: number;
+  data: {
+    macAddr?: string;
+  }[];
+  msg: string;
 }
 
 export interface UserGetGroupInfoListParams {
@@ -1150,9 +1740,29 @@ export interface UserGetGroupInfoListParams {
   name?: string;
 }
 
+export interface UserGetGroupInfoListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      name?: string;
+      userName?: string;
+      isBind?: boolean;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserAddGroupInfoCreatePayload {
   /** 分组名 */
   name: string;
+}
+
+export interface UserAddGroupInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
 }
 
 export interface UserMdfGroupInfoCreatePayload {
@@ -1162,9 +1772,19 @@ export interface UserMdfGroupInfoCreatePayload {
   name: string;
 }
 
+export interface UserMdfGroupInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserDelGroupInfoCreatePayload {
   /** 要删除的分组id */
   ids: number[];
+}
+
+export interface UserDelGroupInfoCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserGetLabelInfoListParams {
@@ -1185,11 +1805,31 @@ export interface UserGetLabelInfoListParams {
   name?: string;
 }
 
+export interface UserGetLabelInfoListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      color?: string;
+      name?: string;
+      isBind?: boolean;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserAddLabelInfoCreatePayload {
   /** 标签颜色 */
   color: string;
   /** 标签名称 */
   name: string;
+}
+
+export interface UserAddLabelInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
 }
 
 export interface UserMdfLabelInfoCreatePayload {
@@ -1201,14 +1841,32 @@ export interface UserMdfLabelInfoCreatePayload {
   name: string;
 }
 
+export interface UserMdfLabelInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserDelLabelInfoCreatePayload {
   /** 要删除的标签id列表 */
   ids: number[];
 }
 
+export interface UserDelLabelInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserUploadChromePluginsCreatePayload {
   /** 插件下载地址 */
   url: string;
+}
+
+export type UserUploadChromePluginsCreateData = object;
+
+export interface UserRecordPluginUploadListData {
+  code: number;
+  data: number;
+  msg: string;
 }
 
 export interface UserUploadPluginInfoCreatePayload {
@@ -1228,6 +1886,15 @@ export interface UserUploadPluginInfoCreatePayload {
   pluginDesc: string;
   /** 提供方 */
   provider?: string;
+}
+
+export interface UserUploadPluginInfoCreateData {
+  code: number;
+  data: {
+    create_by: number;
+    plugin_id: number;
+  };
+  msg: string;
 }
 
 export interface UserGetProxyModuleListParams {
@@ -1263,6 +1930,32 @@ export interface UserGetProxyModuleListParams {
   sortType?: number;
 }
 
+export interface UserGetProxyModuleListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      protocol?: string;
+      country?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      refreshUrl?: string;
+      /** ip123.in/ip.json， str */
+      checkChannel?: string;
+      lastCountry?: string;
+      checkStatus?: boolean;
+      remark?: string;
+      isBind?: boolean;
+      bindCount?: number;
+      bindList?: number[];
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserAddProxyModuleCreatePayload {
   /** 网络协议 */
   ipType: string;
@@ -1289,6 +1982,8 @@ export interface UserAddProxyModuleCreatePayload {
   /** 检测状态 */
   checkStatus?: boolean;
 }
+
+export type UserAddProxyModuleCreateData = object;
 
 export interface UserMdfProxyModuleCreatePayload {
   /** 代理id */
@@ -1319,15 +2014,21 @@ export interface UserMdfProxyModuleCreatePayload {
   checkStatus?: boolean;
 }
 
+export type UserMdfProxyModuleCreateData = object;
+
 export interface UserDelProxyModuleCreatePayload {
   /** 要删除的代理id列表 */
   ids: number[];
 }
 
+export type UserDelProxyModuleCreateData = object;
+
 export interface UserUnbindProxyModuleCreatePayload {
   /** 需要解绑的ip列表 */
   ids: number[];
 }
+
+export type UserUnbindProxyModuleCreateData = object;
 
 export interface UserCheckIpCreatePayload {
   /**
@@ -1335,6 +2036,17 @@ export interface UserCheckIpCreatePayload {
    * ID 编号
    */
   id: string;
+}
+
+export interface UserCheckIpCreateData {
+  code: number;
+  msg: string;
+  data: {
+    lastIp: string;
+    lastCountry: string;
+    lastCountryEnName: string;
+    lastCountryCnName: string;
+  };
 }
 
 export interface UserGetUserListListParams {
@@ -1370,6 +2082,64 @@ export interface UserGetUserListListParams {
   status?: number;
 }
 
+export interface UserGetUserListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      userName?: string;
+      role?: string;
+      maxWindowCount?: number;
+      useWindowCount?: number;
+      status?: boolean;
+      realName?: string;
+      password?: string;
+      staffIds?: number[];
+      managerId?: number;
+      grantGroupIds?: number[];
+      avaWindowCount?: number;
+      phone?: string;
+      email?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectStaffListData {
+  code: number;
+  data: {
+    rows: {
+      staffId: number;
+      staffName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectManagerListData {
+  code: number;
+  data: {
+    rows: {
+      managerId: number;
+      managerName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectGroupListData {
+  code: number;
+  data: {
+    rows: {
+      groupId: number;
+      groupName: string;
+      userName: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserAddUserListCreatePayload {
   /** 姓名 */
   realName: string;
@@ -1391,6 +2161,15 @@ export interface UserAddUserListCreatePayload {
   phone?: string;
   /** 邮箱 */
   email?: string;
+}
+
+export interface UserAddUserListCreateData {
+  code: number;
+  data: {
+    create_by: number;
+    group_user_id: number;
+  };
+  msg: string;
 }
 
 export interface UserMdfUserListCreatePayload {
@@ -1420,9 +2199,30 @@ export interface UserMdfUserListCreatePayload {
   status?: boolean;
 }
 
+export interface UserMdfUserListCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserDelUserListCreatePayload {
   /** 要删除的用户id */
   id: string;
+}
+
+export interface UserDelUserListCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPluginCategoryListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      categoryName: string;
+    }[];
+  };
+  msg: string;
 }
 
 export interface UserGetSystemPluginListParams {
@@ -1448,9 +2248,35 @@ export interface UserGetSystemPluginListParams {
   pluginName?: string;
 }
 
+export interface UserGetSystemPluginListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      pluginDir: string;
+      category: number;
+      categoryName: string;
+      pluginName: string;
+      pluginIcon: string;
+      pluginRoute: string;
+      pluginVersion: string;
+      pluginDesc: string;
+      provider: string;
+      supportCore: string;
+      addStatus: boolean;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserAddSystemPluginCreatePayload {
   /** 系统扩展id */
   id: number;
+}
+
+export interface UserAddSystemPluginCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserGetPluginListListParams {
@@ -1471,9 +2297,34 @@ export interface UserGetPluginListListParams {
   pluginName?: string;
 }
 
+export interface UserGetPluginListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      source?: string;
+      pluginDir?: string;
+      pluginName?: string;
+      pluginIcon?: string;
+      pluginRoute?: string;
+      pluginVersion?: string;
+      pluginDesc?: string;
+      provider?: string;
+      useStatus?: boolean;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserDelPluginInfoCreatePayload {
   /** 要删除的插件id */
   id: number;
+}
+
+export interface UserDelPluginInfoCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserMdfPluginStatusCreatePayload {
@@ -1481,6 +2332,11 @@ export interface UserMdfPluginStatusCreatePayload {
   id: number;
   /** 是否启用，true:开启，false:关闭 */
   useStatus: boolean;
+}
+
+export interface UserMdfPluginStatusCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserGetPlatformInfoListParams {
@@ -1491,14 +2347,33 @@ export interface UserGetPlatformInfoListParams {
   platformUrl?: string;
 }
 
+export interface UserGetPlatformInfoListData {
+  code: number;
+  data: {
+    platformUrl: string[];
+  };
+  msg: string;
+}
+
 export interface UserAddPlatformInfoCreatePayload {
   /** 业务平台 */
   platformUrl: string;
 }
 
+export interface UserAddPlatformInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
 export interface UserDelPlatformInfoCreatePayload {
   /** 要删除的业务平台id列表 */
   ids: number[];
+}
+
+export interface UserDelPlatformInfoCreateData {
+  code: number;
+  msg: string;
 }
 
 export interface UserGetOperateLogListParams {
@@ -1524,6 +2399,24 @@ export interface UserGetOperateLogListParams {
   endDate?: string;
 }
 
+export interface UserGetOperateLogListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      userName?: string;
+      role?: string;
+      operateType?: string;
+      operateDetail?: string;
+      operateTime?: string;
+      status?: string;
+      location?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetLoginLogListParams {
   /**
    * token必填
@@ -1545,4 +2438,104 @@ export interface UserGetLoginLogListParams {
    * @example "xxx"
    */
   endDate?: string;
+}
+
+export interface UserGetLoginLogListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id: number;
+      userName: string;
+      address: string;
+      location: string;
+      createTime: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UpdateWindowFilterNameCreatePayload {
+  /** 传入字段 */
+  filter_name_list: {
+    /** 标签页名称 */
+    filter_name?: string;
+    /** 标签页查询条件 */
+    filter_condition?: {
+      platform: string;
+    }[];
+    /** 排序字段 */
+    sort?: number;
+  }[];
+}
+
+export interface UpdateWindowFilterNameCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface DeleteWindowFilterNameCreatePayload {
+  filter_name_list: {
+    filter_name?: string;
+    filter_condition?: {
+      platform: string;
+    }[];
+    sort?: number;
+  }[];
+}
+
+export interface DeleteWindowFilterNameCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface AddWindowFilterNameCreatePayload {
+  filter_name_list: {
+    filter_name?: string;
+    filter_condition?: {
+      platform: string;
+    }[];
+  }[];
+}
+
+export interface AddWindowFilterNameCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface GetWindowFilterNameListListData {
+  code: number;
+  data: {
+    filter_name?: string;
+    filter_condition?: {
+      platform: string;
+    }[];
+    sort?: number;
+  }[];
+  msg: string;
+}
+
+export interface UpdateWindowTableRowsCreatePayload {
+  table_rows: {
+    name: string;
+    sort: number;
+    status: number;
+  }[];
+}
+
+export interface UpdateWindowTableRowsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface SaveWindowTableSortOrderCreatePayload {
+  table_sort: {
+    name?: string;
+    order?: string;
+  }[];
+}
+
+export interface SaveWindowTableSortOrderCreateData {
+  code: number;
+  msg: string;
 }
