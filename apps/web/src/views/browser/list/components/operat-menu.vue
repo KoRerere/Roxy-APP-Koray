@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ScMenu from '/@/components/sc-menu'
+import { useTieredMenu } from '/@/hooks/useTieredMenu'
 
 const props = defineProps({
   data: {
@@ -22,16 +22,10 @@ function quickClick(key: string) {
   props.operationHandler({ key }, props.data)
 }
 
-const scMenu = ScMenu()
-const iconRef = ref<HTMLElement | null>(null)
+const [show] = useTieredMenu()
 
-function openMenu() {
-  const { width, height, left, top } = iconRef.value!.getBoundingClientRect()
-  scMenu.insert({
-    operation: props.operation,
-    operationHandler: (event: any) => props.operationHandler(event, props.data),
-    position: { x: left + width * 1.5, y: top + height * 0.5 },
-  })
+function openMenu(even: Event) {
+  show(even, {})
 }
 </script>
 
@@ -44,7 +38,7 @@ function openMenu() {
     </Button>
 
     <Button text size="small" @click.stop="openMenu">
-      <span ref="iconRef" class="mdi mdi-dots-horizontal" />
+      <span class="mdi mdi-dots-horizontal" />
     </Button>
   </div>
 </template>

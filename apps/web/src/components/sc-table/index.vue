@@ -10,25 +10,25 @@ const _props = defineProps({
     default: 'id',
   },
   dataList: {
-    type: Array,
+    type: Array as PropType<any[]>,
     required: true,
     default: () => [],
   },
   columns: {
-    type: Array,
+    type: Array as PropType<any[]>,
     required: true,
     default: () => [],
   },
   filters: {
-    type: Array,
+    type: Array as PropType<any[]>,
     default: () => [],
   },
   sorts: {
-    type: Array,
+    type: Array as PropType<any[]>,
     default: () => [],
   },
   operation: {
-    type: Array,
+    type: Array as PropType<any[]>,
     default: () => [],
   },
   rowSelection: {

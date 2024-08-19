@@ -11,7 +11,7 @@ defineProps({
     default: 0,
   },
   operation: {
-    type: Array,
+    type: Array as PropType<any[]>,
     default: () => [],
   },
 })
@@ -26,7 +26,7 @@ defineEmits(['clearSelection'])
         <span>{{ selectedCount }} of {{ total }} selected</span>
         <CloseOutlined @click="$emit('clearSelection')" />
       </div>
-      <div v-for="item in operation" :key="item" class="selection-operation-item">
+      <div v-for="item in operation" :key="item.name" class="selection-operation-item">
         {{ item.name }}
       </div>
     </slot>

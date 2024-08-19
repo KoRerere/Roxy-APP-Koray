@@ -33,78 +33,78 @@ export const routes = [
       },
     ],
   },
-  {
-    path: '/agent',
-    name: 'agent',
-    meta: { title: '代理IP', icon: 'PieChartOutlined', root: true },
-    component: () => import('/@/views/agent'),
-    children: [
-      {
-        path: 'list',
-        name: 'agent-list',
-        meta: { title: '代理列表', icon: '' },
-        component: () => import('/@/views/agent/list'),
-      },
-      {
-        path: 'shop',
-        name: 'agent-shop',
-        meta: { title: '代理购买', icon: '' },
-        component: () => import('/@/views/agent/shop'),
-      },
-      {
-        path: 'import',
-        name: 'agent-import',
-        meta: { title: '代理导入', icon: '' },
-        component: () => import('/@/views/agent/import'),
-      },
-    ],
-  },
-  {
-    path: '/plugins',
-    name: 'plugins',
-    meta: { title: '代理IP', icon: 'BarChartOutlined', root: true },
-    component: () => import('/@/views/plugins'),
-    children: [
-      {
-        path: 'shop',
-        name: 'plugins-shop',
-        meta: { title: '扩展推荐', icon: '' },
-        component: () => import('/@/views/plugins/shop'),
-      },
-      {
-        path: 'config',
-        name: 'plugins-config',
-        meta: { title: '扩展配置', icon: '' },
-        component: () => import('/@/views/plugins/config'),
-      },
-    ],
-  },
-  {
-    path: '/team',
-    name: 'team',
-    meta: { title: '团队管理', icon: 'DotChartOutlined', root: true },
-    component: () => import('/@/views/team'),
-    children: [
-      {
-        path: 'user',
-        name: 'team-user',
-        meta: { title: '成员管理', icon: '' },
-        component: () => import('/@/views/team/user'),
-      },
-      {
-        path: 'log',
-        name: 'team-log',
-        meta: { title: '操作日志', icon: '' },
-        component: () => import('/@/views/team/log'),
-      },
-    ],
-  },
-  {
-    path: '/auto',
-    name: 'auto',
-    meta: { title: '自动化', icon: 'LineChartOutlined', root: true },
-    component: () => import('/@/views/auto'),
-  },
+  // {
+  //   path: '/agent',
+  //   name: 'agent',
+  //   meta: { title: '代理IP', icon: 'PieChartOutlined', root: true },
+  //   component: () => import('/@/views/agent'),
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'agent-list',
+  //       meta: { title: '代理列表', icon: '' },
+  //       component: () => import('/@/views/agent/list'),
+  //     },
+  //     {
+  //       path: 'shop',
+  //       name: 'agent-shop',
+  //       meta: { title: '代理购买', icon: '' },
+  //       component: () => import('/@/views/agent/shop'),
+  //     },
+  //     {
+  //       path: 'import',
+  //       name: 'agent-import',
+  //       meta: { title: '代理导入', icon: '' },
+  //       component: () => import('/@/views/agent/import'),
+  //     },
+  //   ],
+  // },
+  // {
+  //   path: '/plugins',
+  //   name: 'plugins',
+  //   meta: { title: '代理IP', icon: 'BarChartOutlined', root: true },
+  //   component: () => import('/@/views/plugins'),
+  //   children: [
+  //     {
+  //       path: 'shop',
+  //       name: 'plugins-shop',
+  //       meta: { title: '扩展推荐', icon: '' },
+  //       component: () => import('/@/views/plugins/shop'),
+  //     },
+  //     {
+  //       path: 'config',
+  //       name: 'plugins-config',
+  //       meta: { title: '扩展配置', icon: '' },
+  //       component: () => import('/@/views/plugins/config'),
+  //     },
+  //   ],
+  // },
+  // {
+  //   path: '/team',
+  //   name: 'team',
+  //   meta: { title: '团队管理', icon: 'DotChartOutlined', root: true },
+  //   component: () => import('/@/views/team'),
+  //   children: [
+  //     {
+  //       path: 'user',
+  //       name: 'team-user',
+  //       meta: { title: '成员管理', icon: '' },
+  //       component: () => import('/@/views/team/user'),
+  //     },
+  //     {
+  //       path: 'log',
+  //       name: 'team-log',
+  //       meta: { title: '操作日志', icon: '' },
+  //       component: () => import('/@/views/team/log'),
+  //     },
+  //   ],
+  // },
+  // {
+  //   path: '/auto',
+  //   name: 'auto',
+  //   meta: { title: '自动化', icon: 'LineChartOutlined', root: true },
+  //   component: () => import('/@/views/auto'),
+  // },
 ]
 
 const router = createRouter({
