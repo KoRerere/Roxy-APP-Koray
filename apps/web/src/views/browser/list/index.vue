@@ -8,7 +8,7 @@ import selectProxy from './components/select-proxy.vue'
 
 import useColumns from '/@/hooks/useColumns'
 import columnsRow from './columns'
-import { operation, operationHandler, sorts } from './operation'
+import { filters, operation, operationHandler, sorts } from './operation'
 
 const dataList = [
   {
@@ -145,19 +145,25 @@ const dataList = [
 
 const [columns] = useColumns(columnsRow)
 
-function handleResizeColumn(w: any, col: any) {
-  col.width = w
+const menuRef = ref()
+function handleMore(event: Event, _data: any) {
+  // menuRef.value.hide()
+  // nextTick(() => {
+  menuRef.value.show(event)
+  // })
 }
 
-const visibleRight = ref(false)
+const visibleRight = ref(true)
 </script>
 
 <template>
+  <div @click="visibleRight = true">
+    aaaaaaaa
+  </div>
   <div class="position-relative">
     <ScTable v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
-             data-key="id" :data-list="dataList" :scroll="{ x: 500, y: 400 }" :operation="operation" :sorts="sorts"
-             @resize-column="handleResizeColumn"
-    >
+      data-key="id" :data-list="dataList" :scroll="{ x: 500, y: 400 }" :operation="operation"
+      :operation-handler="operationHandler" :filters="filters" :sorts="sorts">
       <template #header-extra>
         <custom-filter />
       </template>
@@ -168,11 +174,20 @@ const visibleRight = ref(false)
         <open-browser />
       </template>
       <template #operation="{ data }">
-        <operat-menu :data="data" :operation="operation" :operation-handler="operationHandler" />
+        <operat-menu :data="data" :operation="operation" @more="(event) => handleMore(event, data)" />
       </template>
     </ScTable>
 
-    <Drawer v-model:visible="visibleRight" position="right" class="!w-[60%]">
+    <TieredMenu ref="menuRef" :model="operation" popup>
+      <template #item="{ item, props }">
+        <a v-ripple v-bind="props.action">
+          <span :class="item.icon" />
+          <span>{{ item.name }}</span>
+        </a>
+      </template>
+    </TieredMenu>
+
+    <Drawer v-model:visible="visibleRight" position="right" class="!w-[80%]">
       <template #container>
         <select-proxy />
       </template>

@@ -2,33 +2,48 @@
 import { sleep } from '/@/utils/'
 
 const _props = defineProps({
-  filter: {
+  options: {
     type: Array,
     default: () => [
       {
-        key: 'search',
-        label: 'Search',
-        icon: 'mdi mdi-earth',
-      },
-      {
-        key: 'search2',
-        label: 'Search2',
+        key: 'scvr',
+        name: '多选',
         icon: 'mdi mdi-earth',
         chindren: [
           {
-            type: 'listBox',
-            options: [
-              {
-                key: 'chindren1',
-                label: 'chindren1',
-                icon: 'mdi mdi-earth',
-              },
-              {
-                key: 'chindren2',
-                label: 'chindren2',
-                icon: 'mdi mdi-earth',
-              },
-            ],
+            prentKey: 'scvr',
+            type: 'Checkbox',
+            key: 'multi1',
+            name: '子项1',
+            icon: 'mdi mdi-earth',
+          },
+          {
+            prentKey: 'scvr',
+            type: 'Checkbox',
+            key: 'multi2',
+            name: '子项2',
+            icon: 'mdi mdi-earth',
+          },
+        ],
+      },
+      {
+        key: 'search2',
+        name: '单选',
+        icon: 'mdi mdi-earth',
+        chindren: [
+          {
+            prentKey: 'search2',
+            type: 'RadioButton',
+            key: 'one1',
+            name: '儿子1',
+            icon: 'mdi mdi-earth',
+          },
+          {
+            prentKey: 'search2',
+            type: 'RadioButton',
+            key: 'one2',
+            name: '儿子2',
+            icon: 'mdi mdi-earth',
           },
         ],
       },
@@ -37,7 +52,7 @@ const _props = defineProps({
       },
       {
         key: 'h2o',
-        label: 'H2o',
+        name: '水',
         icon: 'mdi mdi-earth',
       },
       {
@@ -45,8 +60,16 @@ const _props = defineProps({
       },
       {
         key: 'scc',
-        label: 'scc',
+        name: '啊啊啊',
         icon: 'mdi mdi-earth',
+      },
+    ],
+  },
+  list: {
+    type: Array,
+    default: () => [
+      {
+
       },
     ],
   },
@@ -55,47 +78,93 @@ const menuRef = ref()
 const meun = reactive({
   targetEvent: null,
   isChidren: false,
-  list: _props.filter,
+  rowOptions: _props.options,
+  options: _props.options,
+  selectedCategories: [],
 })
 
-function show(event) {
+const _list = ref([
+  // {
+  //   type: 'Checkbox',
+  //   key: 'chindren1',
+  //   name: '选择1',
+  //   icon: 'mdi mdi-earth',
+  // },
+  // {
+  //   type: 'Checkbox',
+  //   key: 'chindren2',
+  //   name: '选择2',
+  //   icon: 'mdi mdi-earth',
+  // },
+])
+
+function show (event) {
   meun.targetEvent = event
   menuRef.value.show(event)
 }
 
-function onClick(item) {
+function onClick (item) {
   if (item.chindren) {
     sleep(20).then(() => {
       meun.isChidren = true
-      meun.list = item.chindren
+      meun.options = item.chindren
     })
     return
   }
+  _list.value.push(item)
+  menuRef.value.hide()
+}
 
+function onHide () {
   if (meun.isChidren) {
+    const selected = [].concat(meun.selectedCategories)[0]
+    if (selected) {
+      const { type, prentKey } = selected
+      const item = type === 'RadioButton'
+        ? selected
+        : meun.rowOptions.find(item => item.key === prentKey)
+      _list.value.push(item)
+    }
+    meun.selectedCategories = []
+
     sleep(20).then(() => {
       meun.isChidren = false
-      meun.list = _props.filter
+      meun.options = _props.options
     })
   }
-  console.log('🚀 ~ onClick ~ item:', item)
-  menuRef.value.hide()
 }
 </script>
 
 <template>
-  <div class="cursor-pointer add-filter" @click="show($event)">
-    <span class="mdi mdi-account-alert" />
-    <span>Add filters</span>
+  <div class="flex gap-2 filter-list">
+    <div v-for="item in _list" :key="item.key" class="cursor-pointer">
+      <span />
+      <span>{{ item.name }}</span>
+    </div>
+    <Button class="create-filter" text @click="show($event)">
+      <span class="mdi mdi-filter-variant" />
+      <span v-if="!_list.length">Add filters</span>
+    </Button>
   </div>
-
-  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.list" popup
-              :pt="{ separator: 'browser-separator', menu: { transition: 'browser-menu-transition' } }"
-  >
+  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.options" popup
+    :pt="{ separator: 'browser-separator', menu: { transition: 'browser-menu-transition' } }" @hide="onHide">
     <template #item="{ item, props }">
-      <a v-ripple class="cursor-pointer browser-filter-item" v-bind="props.action" @click.stop="onClick(item)">
-        <span :class="item.icon" />
-        <span>{{ item.label }}</span>
+      <a v-ripple class="cursor-pointer browser-filter-item" v-bind="props.action">
+        <template v-if="item.type">
+
+          <RadioButton v-if="item.type === 'RadioButton'" v-model="meun.selectedCategories" :input-id="item.key"
+            :name="item.prentKey" :value="item" @click.stop />
+          <Checkbox v-if="item.type === 'Checkbox'" v-model="meun.selectedCategories" :name="item.prentKey"
+            :input-id="item.key" :value="item" @click.stop />
+          <label class="w-full" :for="item.key" @click.stop>{{ item.name }}</label>
+
+        </template>
+        <template v-else>
+          <div class="w-full" @click.stop="onClick(item)">
+            <span :class="item.icon" />
+            <span>{{ item.name }}</span>
+          </div>
+        </template>
       </a>
     </template>
   </TieredMenu>
@@ -119,17 +188,10 @@ function onClick(item) {
 </style>
 
 <style lang="scss" scoped>
-.add-filter {
-  display: flex;
+.create-filter {
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  justify-content: center;
-  align-items: center;
   gap: var(--spacing-sm, 4px);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
-
   color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-  text-align: center;
   font-family: Inter;
   font-size: var(--Font-Size-text-sm, 12px);
   font-style: normal;

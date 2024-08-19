@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useTieredMenu } from '/@/hooks/useTieredMenu'
-
 const props = defineProps({
   data: {
     type: Object,
@@ -10,34 +8,20 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  operationHandler: {
-    type: Function,
-    default: () => () => { },
-  },
 })
 
+defineEmits(['more'])
+
 const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
-
-function quickClick(key: string) {
-  props.operationHandler({ key }, props.data)
-}
-
-const [show] = useTieredMenu()
-
-function openMenu(even: Event) {
-  show(even, {})
-}
 </script>
 
 <template>
   <div>
-    <Button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon"
-            @click.stop="quickClick(item.key)"
-    >
+    <Button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon">
       {{ item.name }}
     </Button>
 
-    <Button text size="small" @click.stop="openMenu">
+    <Button text size="small" @click.stop="$emit('more', $event)">
       <span class="mdi mdi-dots-horizontal" />
     </Button>
   </div>

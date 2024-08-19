@@ -1,66 +1,137 @@
 <script setup>
 import scTable from '/@/components/sc-table'
-// import { ProductService } from '@/service/ProductService'
-
-onMounted(() => {
-  // ProductService.getProductsMini().then((data) => (products.value = data));
-})
+import actions from '/@/components/actions.vue'
 
 const columns = [
   {
-    title: '平台',
-    key: 'platform',
+    key: 'id',
+    title: 'ID',
+    slot: 'id',
   },
   {
-    title: '账号名称',
-    key: 'accountName',
+    key: 'Proxy',
+    title: '代理',
   },
   {
+    key: 'Outbound_IP',
+    title: '外部IP',
+  },
+  {
+    key: 'Related_Profiles',
     title: '相关简介',
-    key: 'relatedProfiles',
   },
   {
-    title: '动作',
-    key: 'actions',
+    key: 'Actions',
+    title: '操作',
+    slot: 'actions',
   },
 ]
 
 const dataList = ref([
   {
     id: 0,
-    platform: 'mac',
-    accountName: 'mac账号',
-    relatedProfiles: 'aaaaaaaaaaa',
+    Proxy: 'mac',
+    Outbound_IP: 'mac账号',
+    Related_Profiles: 'aaaaaaaaaaa',
   },
   {
     id: 1,
-    platform: 'mac',
-    accountName: 'mac账号',
-    relatedProfiles: 'aaaaaaaaaaa',
+    Proxy: 'mac',
+    Outbound_IP: 'mac账号',
+    Related_Profiles: 'aaaaaaaaaaa',
   },
   {
     id: 2,
-    platform: 'mac',
-    accountName: 'mac账号',
-    relatedProfiles: 'aaaaaaaaaaa',
+    Proxy: 'mac',
+    Outbound_IP: 'mac账号',
+    Related_Profiles: 'aaaaaaaaaaa',
   },
   {
     id: 3,
-    platform: 'mac',
-    accountName: 'mac账号',
-    relatedProfiles: 'aaaaaaaaaaa',
+    Proxy: 'mac',
+    Outbound_IP: 'mac账号',
+    Related_Profiles: 'aaaaaaaaaaa',
   },
   {
     id: 4,
-    platform: 'mac',
-    accountName: 'mac账号',
-    relatedProfiles: 'aaaaaaaaaaa',
+    Proxy: 'mac',
+    Outbound_IP: 'mac账号',
+    Related_Profiles: 'aaaaaaaaaaa',
   },
 ])
+
+const filterConfig = reactive({
+  value: 'All',
+  options: [
+    {
+      key: 'All',
+      name: 'All',
+    },
+    {
+      key: 'SOCKS5',
+      name: 'SOCKS 5',
+    },
+    {
+      key: 'HTTP',
+      name: 'HTTP',
+    },
+    {
+      key: 'HTTPS',
+      name: 'HTTPS',
+    },
+  ],
+})
+
+const operation = ref([
+  {
+    key: 'edit',
+    name: '编辑',
+    icon: 'mdi-wifi-off',
+    quick: true,
+  },
+  {
+    key: 'edit',
+    name: '编辑',
+    icon: 'mdi-refresh',
+    quick: true,
+  },
+  {
+    key: 'edit',
+    name: '编辑',
+    icon: 'mdi-file-document-plus-outline',
+    quick: true,
+  },
+])
+
+const selectedProxy = ref(null)
+
+watch(() => selectedProxy.value, (newValue) => {
+  console.log(newValue)
+})
 </script>
 
 <template>
   <div class="card">
-    <sc-table :data-list="dataList" :columns="columns" />
+    <sc-table :data-list="dataList" :columns="columns" :show-config="false">
+      <template #header-extra>
+        <div class="flex flex-auto items-center justify-between">
+          <SelectButton v-model="filterConfig.value" :options="filterConfig.options" option-label="name"
+            option-value="key" data-key="key" />
+          <Button>
+            <span class="mdi mdi-wifi-refresh" />
+            <span>Test All</span>
+          </Button>
+        </div>
+      </template>
+      <template #id="{ data }">
+        <div class="flex items-center gap-2">
+          <RadioButton v-model="selectedProxy" :input-id="`${data.id}`" name="proxy-select" :value="data.id" />
+          <label class="w-full cursor-pointer" :for="`${data.id}`">{{ data.id }}</label>
+        </div>
+      </template>
+      <template #actions="{ data }">
+        <actions :operation="operation" />
+      </template>
+    </sc-table>
   </div>
 </template>

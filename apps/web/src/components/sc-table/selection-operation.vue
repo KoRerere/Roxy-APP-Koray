@@ -2,9 +2,9 @@
 import { CloseOutlined } from '@ant-design/icons-vue'
 
 defineProps({
-  selectedCount: {
-    type: Number,
-    default: 0,
+  selection: {
+    type: Array as PropType<any[]>,
+    default: () => [],
   },
   total: {
     type: Number,
@@ -16,17 +16,18 @@ defineProps({
   },
 })
 
-defineEmits(['clearSelection'])
+defineEmits(['update:selection', 'batchOperation'])
 </script>
 
 <template>
   <div class="selection-operation">
     <slot name="selection-operation">
       <div class="selection-operation-item">
-        <span>{{ selectedCount }} of {{ total }} selected</span>
-        <CloseOutlined @click="$emit('clearSelection')" />
+        <span>{{ selection.length }} of {{ total }} selected</span>
+        <CloseOutlined @click="$emit('update:selection', [])" />
       </div>
-      <div v-for="item in operation" :key="item.name" class="selection-operation-item">
+      <div v-for="item in operation" :key="item.name" class="cursor-pointer selection-operation-item"
+        @click="$emit('batchOperation', item)">
         {{ item.name }}
       </div>
     </slot>

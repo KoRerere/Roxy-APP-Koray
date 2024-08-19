@@ -2,25 +2,16 @@ export const operation = [
   {
     key: 'Test',
     name: '测试',
-    quick: true,
-    command: () => {
-      console.log('🚀 ~ Test:')
-    },
+    quick: true
   },
   {
     key: 'Edit',
-    name: '编辑',
-    command: () => {
-      console.log('🚀 ~ Edit:')
-    },
+    name: '编辑'
   },
   {
     key: 'Delete',
-    name: '删除',
-    command: () => {
-      console.log('🚀 ~ Delete:')
-    },
-  },
+    name: '删除'
+  }
 ]
 
 export const sorts = [
@@ -31,12 +22,12 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { label: 'New York', value: 'NY' },
-      { label: 'Rome', value: 'RM' },
-      { label: 'London', value: 'LDN' },
-      { label: 'Istanbul', value: 'IST' },
-      { label: 'Paris', value: 'PRS' },
-    ],
+      { name: 'New York', value: 'NY' },
+      { name: 'Rome', value: 'RM' },
+      { name: 'London', value: 'LDN' },
+      { name: 'Istanbul', value: 'IST' },
+      { name: 'Paris', value: 'PRS' }
+    ]
   },
   {
     key: 'order',
@@ -45,9 +36,9 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { label: '升序', value: 'NY' },
-      { label: '降序', value: 'RM' },
-    ],
+      { name: '升序', value: 'NY' },
+      { name: '降序', value: 'RM' }
+    ]
   },
   {
     key: 'time',
@@ -56,15 +47,42 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { label: '创建时间', value: 'create' },
-      { label: '修改时间', value: 'modify' },
-    ],
+      { name: '创建时间', value: 'create' },
+      { name: '修改时间', value: 'modify' }
+    ]
+  }
+]
+
+export const filters = [
+  {
+    key: 'city',
+    name: '城市',
+    placeholder: '请选择城市',
+    value: null,
+    options: [
+      { name: '北京', value: 'bj' },
+      { name: '上海', value: 'sh' },
+      { name: '广州', value: 'gz' },
+      { name: '深圳', value: 'sz' },
+      { name: '杭州', value: 'hz' }
+    ]
   },
+  {
+    key: 'order',
+    name: '排序',
+    placeholder: '请选择排序',
+    value: null,
+    options: [
+      { name: '升序', value: 'NY' },
+      { name: '降序', value: 'RM' }
+    ]
+  }
 ]
 
 export function operationHandler({ key }: any, data: any) {
+  data = [].concat(data) // 有批量操作
   switch (key) {
-    case 'test':
+    case 'Test':
       console.log('🚀 ~test:', data)
       break
     case 'Edit':
@@ -79,5 +97,5 @@ export function operationHandler({ key }: any, data: any) {
 export default {
   sorts,
   operation,
-  operationHandler,
+  operationHandler
 }
