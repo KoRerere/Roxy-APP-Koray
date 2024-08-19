@@ -7,10 +7,23 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ALayout: typeof import('ant-design-vue/es')['Layout']
+    ALayoutContent: typeof import('ant-design-vue/es')['LayoutContent']
+    ALayoutHeader: typeof import('ant-design-vue/es')['LayoutHeader']
+    ALayoutSider: typeof import('ant-design-vue/es')['LayoutSider']
+    AMenu: typeof import('ant-design-vue/es')['Menu']
+    AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
+    ASubMenu: typeof import('ant-design-vue/es')['SubMenu']
+    Button: typeof import('primevue/button')['default']
     Menus: typeof import('./src/components/menus.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScMenu: typeof import('./src/components/sc-menu/sc-menu.vue')['default']
+    ScPopover: typeof import('./src/components/sc-popover/sc-popover.vue')['default']
     ScTable: typeof import('./src/components/sc-table/sc-table.vue')['default']
+    SelectionOperation: typeof import('./src/components/sc-table/selection-operation.vue')['default']
+    TableConfig: typeof import('./src/components/sc-table/table-config.vue')['default']
+    TableFilter: typeof import('./src/components/sc-table/table-filter.vue')['default']
+    TableSort: typeof import('./src/components/sc-table/table-sort.vue')['default']
   }
 }

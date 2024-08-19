@@ -9,7 +9,12 @@
  * ---------------------------------------------------------------
  */
 
-import { UserGetLoginLogListParams, UserGetOperateLogListParams } from "./data-contracts";
+import {
+  UserGetLoginLogListData,
+  UserGetLoginLogListParams,
+  UserGetOperateLogListData,
+  UserGetOperateLogListParams,
+} from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
 export class LoggingApi<SecurityDataType = unknown> {
@@ -26,28 +31,10 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @name UserGetOperateLogList
    * @summary 操作日志->获取日志
    * @request GET:/user_get_operate_log
+   * @response `200` `UserGetOperateLogListData` 成功
    */
   userGetOperateLogList = (query: UserGetOperateLogListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          total: number;
-          rows: {
-            id?: number;
-            userName?: string;
-            role?: string;
-            operateType?: string;
-            operateDetail?: string;
-            operateTime?: string;
-            status?: string;
-            location?: string;
-          }[];
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetOperateLogListData, any>({
       path: `/user_get_operate_log`,
       method: "GET",
       query: query,
@@ -61,25 +48,10 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @name UserGetLoginLogList
    * @summary 登录日志->获取日志
    * @request GET:/user_get_login_log
+   * @response `200` `UserGetLoginLogListData` 成功
    */
   userGetLoginLogList = (query: UserGetLoginLogListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          total: number;
-          rows: {
-            id: number;
-            userName: string;
-            address: string;
-            location: string;
-            createTime: string;
-          }[];
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetLoginLogListData, any>({
       path: `/user_get_login_log`,
       method: "GET",
       query: query,

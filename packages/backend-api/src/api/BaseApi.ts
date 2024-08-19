@@ -10,21 +10,45 @@
  */
 
 import {
+  ForgetPasswordListData,
   ForgetPasswordListParams,
+  LoginCreateData,
   LoginCreatePayload,
+  PostBaseData,
   PostBasePayload,
+  SendEmailForgetVerifyCodeListData,
   SendEmailForgetVerifyCodeListParams,
+  SendEmailRegisterVerifyCodeListData,
   SendEmailRegisterVerifyCodeListParams,
+  UserChangeAccountCreateData,
   UserChangeAccountCreatePayload,
+  UserChangeEmailCreateData,
   UserChangeEmailCreatePayload,
+  UserChangePwdCreateData,
   UserChangePwdCreatePayload,
+  UserGetAnntListListData,
+  UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
+  UserGetCoreUpgradeCreateData,
   UserGetCoreUpgradeCreatePayload,
+  UserGetDefConfigListData,
+  UserGetDictVersionListData,
+  UserGetNotifyListData,
+  UserGetOssCredentialListData,
+  UserGetSystemDictV2ListData,
   UserGetSystemDictV2ListParams,
+  UserGetUserApiListData,
+  UserGetUserConfigListData,
+  UserGetUserInfoListData,
+  UserMdfTeamInfoCreateData,
   UserMdfTeamInfoCreatePayload,
+  UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
+  UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
+  UserSetUserApiCreateData,
   UserSetUserApiCreatePayload,
+  UserSetUserConfigCreateData,
   UserSetUserConfigCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
@@ -43,22 +67,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name LoginCreate
    * @summary 登录
    * @request POST:/login
+   * @response `200` `LoginCreateData` 成功
    */
   loginCreate = (data: LoginCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          token: string;
-          type: number;
-          user_name: string;
-          user_id: number;
-          role: string;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<LoginCreateData, any>({
       path: `/login`,
       method: "POST",
       body: data,
@@ -73,15 +85,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name PostBase
    * @summary 注册
    * @request POST:/reg
+   * @response `200` `PostBaseData` 成功
    */
   postBase = (data: PostBasePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<PostBaseData, any>({
       path: `/reg`,
       method: "POST",
       body: data,
@@ -96,15 +103,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name SendEmailForgetVerifyCodeList
    * @summary 找回密码->验证码
    * @request GET:/send_email_forget_verify_code
+   * @response `200` `SendEmailForgetVerifyCodeListData` 成功
    */
   sendEmailForgetVerifyCodeList = (query: SendEmailForgetVerifyCodeListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<SendEmailForgetVerifyCodeListData, any>({
       path: `/send_email_forget_verify_code`,
       method: "GET",
       query: query,
@@ -118,15 +120,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name ForgetPasswordList
    * @summary 找回密码
    * @request GET:/forget_password
+   * @response `200` `ForgetPasswordListData` 成功
    */
   forgetPasswordList = (query: ForgetPasswordListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<ForgetPasswordListData, any>({
       path: `/forget_password`,
       method: "GET",
       query: query,
@@ -140,15 +137,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name SendEmailRegisterVerifyCodeList
    * @summary  注册验证码
    * @request GET:/send_email_register_verify_code
+   * @response `200` `SendEmailRegisterVerifyCodeListData` 成功
    */
   sendEmailRegisterVerifyCodeList = (query: SendEmailRegisterVerifyCodeListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<SendEmailRegisterVerifyCodeListData, any>({
       path: `/send_email_register_verify_code`,
       method: "GET",
       query: query,
@@ -162,15 +154,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangeAccountCreate
    * @summary 修改姓名
    * @request POST:/user_change_account
+   * @response `200` `UserChangeAccountCreateData` 成功
    */
   userChangeAccountCreate = (data: UserChangeAccountCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserChangeAccountCreateData, any>({
       path: `/user_change_account`,
       method: "POST",
       body: data,
@@ -185,15 +172,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangePwdCreate
    * @summary 修改密码
    * @request POST:/user_change_pwd
+   * @response `200` `UserChangePwdCreateData` 成功
    */
   userChangePwdCreate = (data: UserChangePwdCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserChangePwdCreateData, any>({
       path: `/user_change_pwd`,
       method: "POST",
       body: data,
@@ -208,15 +190,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSendEmailVerifyCodeList
    * @summary 修改邮箱验证码
    * @request GET:/user_send_email_verify_code
+   * @response `200` `UserSendEmailVerifyCodeListData` 成功
    */
   userSendEmailVerifyCodeList = (query: UserSendEmailVerifyCodeListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserSendEmailVerifyCodeListData, any>({
       path: `/user_send_email_verify_code`,
       method: "GET",
       query: query,
@@ -230,15 +207,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangeEmailCreate
    * @summary 修改邮箱
    * @request POST:/user_change_email
+   * @response `200` `UserChangeEmailCreateData` 成功
    */
   userChangeEmailCreate = (data: UserChangeEmailCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserChangeEmailCreateData, any>({
       path: `/user_change_email`,
       method: "POST",
       body: data,
@@ -253,54 +225,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserInfoList
    * @summary 用户基本信息
    * @request GET:/user_get_user_info
+   * @response `200` `UserGetUserInfoListData` 成功
    */
   userGetUserInfoList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          id: number;
-          userName: string;
-          role: string;
-          mainId: number;
-          realName: string;
-          phone: string;
-          email: string;
-          maxWindowCount: number;
-          useWindowCount: number;
-          maxUserCount: number;
-          useUserCount: number;
-          maxOpenCount: number;
-          createTime: string;
-          updateTime: string;
-          teamId: number;
-          teamName: string;
-          assignCnt: number;
-          remainCnt: number;
-          useOpenCount: number;
-          totalAmount: number;
-          leftAmount: number;
-          host: string;
-          sgHost: string;
-          usHost: string;
-          proxyHttpPort: number;
-          proxyHttpsPort: number;
-          proxySocks5Port: number;
-          proxyUserName: string;
-          proxyPassword: string;
-          proxyTime: number;
-          refreshUrl: string;
-          sgRefreshUrl: string;
-          usRefreshUrl: string;
-          price: number;
-          cityPrice: number;
-          mobilePrice: number;
-          dcPrice: number;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetUserInfoListData, any>({
       path: `/user_get_user_info`,
       method: "GET",
       format: "json",
@@ -313,19 +241,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetAppUpgradeCreate
    * @summary app升版
    * @request POST:/user_get_app_upgrade
+   * @response `200` `UserGetAppUpgradeCreateData` 成功
    */
   userGetAppUpgradeCreate = (data: UserGetAppUpgradeCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        downloadUrl: string;
-        version: string;
-        upgradeTitle: string;
-        upgradeDesc: string;
-        releaseTime: string;
-        webDomain: string;
-      },
-      any
-    >({
+    this.http.request<UserGetAppUpgradeCreateData, any>({
       path: `/user_get_app_upgrade`,
       method: "POST",
       body: data,
@@ -340,22 +259,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetCoreUpgradeCreate
    * @summary core升版
    * @request POST:/user_get_core_upgrade
+   * @response `200` `UserGetCoreUpgradeCreateData` 成功
    */
   userGetCoreUpgradeCreate = (data: UserGetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          rows: {
-            coreVersion: string;
-            version: string;
-            downloadUrl: string;
-          }[];
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetCoreUpgradeCreateData, any>({
       path: `/user_get_core_upgrade`,
       method: "POST",
       body: data,
@@ -370,26 +277,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserConfigList
    * @summary 获取软件设置
    * @request GET:/user_get_user_config
+   * @response `200` `UserGetUserConfigListData` 成功
    */
   userGetUserConfigList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          language: string;
-          timezone: string;
-          closeSoft: string;
-          cacheDir: string;
-          autoDelDays: string;
-          autoDelSize: string;
-          memoryLimit: string;
-          ipBlackList: string[];
-          apiToken: string;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetUserConfigListData, any>({
       path: `/user_get_user_config`,
       method: "GET",
       format: "json",
@@ -402,25 +293,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetDefConfigList
    * @summary 系统默认配置
    * @request GET:/user_get_def_config
+   * @response `200` `UserGetDefConfigListData` 成功
    */
   userGetDefConfigList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          language: string;
-          timezone: string;
-          closeSoft: string;
-          cacheDir: string;
-          autoDelDays: string;
-          autoDelSize: string;
-          memoryLimit: string;
-          ipBlackList: string[];
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetDefConfigListData, any>({
       path: `/user_get_def_config`,
       method: "GET",
       format: "json",
@@ -433,15 +309,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSetUserConfigCreate
    * @summary 保存软件设置
    * @request POST:/user_set_user_config
+   * @response `200` `UserSetUserConfigCreateData` 成功
    */
   userSetUserConfigCreate = (data: UserSetUserConfigCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserSetUserConfigCreateData, any>({
       path: `/user_set_user_config`,
       method: "POST",
       body: data,
@@ -456,20 +327,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserApiList
    * @summary 获取用户api
    * @request GET:/user_get_user_api
+   * @response `200` `UserGetUserApiListData` 成功
    */
   userGetUserApiList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          apiKey: string;
-          port: string;
-          open: boolean;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetUserApiListData, any>({
       path: `/user_get_user_api`,
       method: "GET",
       format: "json",
@@ -482,15 +343,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSetUserApiCreate
    * @summary 保存用户api
    * @request POST:/user_set_user_api
+   * @response `200` `UserSetUserApiCreateData` 成功
    */
   userSetUserApiCreate = (data: UserSetUserApiCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserSetUserApiCreateData, any>({
       path: `/user_set_user_api`,
       method: "POST",
       body: data,
@@ -505,43 +361,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetDictVersionList
    * @summary 获取字典版本
    * @request GET:/user_get_dict_version
+   * @response `200` `UserGetDictVersionListData` 成功
    */
   userGetDictVersionList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          dictVersion: string;
-          os: string;
-          proxyMethod: string;
-          proxyType: string;
-          proxyNetwork: string;
-          billMethod: string;
-          ipType: string;
-          protocol: string;
-          country: string;
-          proxyProvider: string;
-          proxyTime: string;
-          checkChannel: string;
-          windowType: string;
-          language: string;
-          displayLanguage: string;
-          timeZone: string;
-          resolution: string;
-          disableSslList: string;
-          hardwareConcurrent: string;
-          deviceMemory: string;
-          source: string;
-          accessServer: string;
-          rotateCountry: string;
-          addType: string;
-          exeType: string;
-          frequency: string;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetDictVersionListData, any>({
       path: `/user_get_dict_version`,
       method: "GET",
       format: "json",
@@ -554,20 +377,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetSystemDictV2List
    * @summary 获取字典内容V2
    * @request GET:/user_get_system_dict_v2
+   * @response `200` `UserGetSystemDictV2ListData` 成功
    */
   userGetSystemDictV2List = (query: UserGetSystemDictV2ListParams, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          type: string;
-          label: string;
-          value: string;
-        }[];
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetSystemDictV2ListData, any>({
       path: `/user_get_system_dict_v2`,
       method: "GET",
       query: query,
@@ -581,15 +394,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserMdfTeamInfoCreate
    * @summary 修改团队
    * @request POST:/user_mdf_team_info
+   * @response `200` `UserMdfTeamInfoCreateData` 成功
    */
   userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserMdfTeamInfoCreateData, any>({
       path: `/user_mdf_team_info`,
       method: "POST",
       body: data,
@@ -604,24 +412,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetAnntListList
    * @summary 用户获取公告【返回最近的5条】
    * @request GET:/user_get_annt_list
+   * @response `200` `UserGetAnntListListData` 成功
    */
   userGetAnntListList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          rows: {
-            id?: number;
-            announcement?: string;
-            href?: string;
-            createTime?: string;
-            diff?: number;
-          }[];
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetAnntListListData, any>({
       path: `/user_get_annt_list`,
       method: "GET",
       format: "json",
@@ -634,22 +428,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetNotifyList
    * @summary 获取通知【最近的10条】
    * @request GET:/user_get_notify
+   * @response `200` `UserGetNotifyListData` 成功
    */
   userGetNotifyList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          id: number;
-          type: string;
-          notify: string;
-          status: number;
-          createTime: string;
-        }[];
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetNotifyListData, any>({
       path: `/user_get_notify`,
       method: "GET",
       format: "json",
@@ -662,15 +444,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserReadNotifyCreate
    * @summary 通知已读
    * @request POST:/user_read_notify
+   * @response `200` `UserReadNotifyCreateData` 成功
    */
   userReadNotifyCreate = (data: UserReadNotifyCreatePayload, params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserReadNotifyCreateData, any>({
       path: `/user_read_notify`,
       method: "POST",
       body: data,
@@ -685,23 +462,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetOssCredentialList
    * @summary oss窗口数据同步上传和下载权限获取
    * @request GET:/user_get_oss_credential
+   * @response `200` `UserGetOssCredentialListData` 成功
    */
   userGetOssCredentialList = (params: RequestParams = {}) =>
-    this.http.request<
-      {
-        code: number;
-        data: {
-          accessKeyId: string;
-          accessKeySecret: string;
-          expiration: string;
-          securityToken: string;
-          region: string;
-          bucket: string;
-        };
-        msg: string;
-      },
-      any
-    >({
+    this.http.request<UserGetOssCredentialListData, any>({
       path: `/user_get_oss_credential`,
       method: "GET",
       format: "json",

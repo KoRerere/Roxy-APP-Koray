@@ -1,5 +1,5 @@
 {
-  "name": "electron-main",
+  "name": "roxybrowser",
   "version": "0.1.0",
   "private": false,
   "author": {
@@ -26,19 +26,30 @@
     "postinstall": "cross-env ELECTRON_RUN_AS_NODE=1 electron ../../scripts/update-electron-vendors.js"
   },
   "dependencies": {
+    "@repo/node-typesafe-worker-messages": "workspace:*",
     "@roxy/backend-api": "workspace:*",
     "@roxy/electron-preload": "workspace:*",
+    "ali-oss": "^6.21.0",
+    "archiver": "^7.0.1",
+    "axios": "^1.7.4",
     "core-js": "^3.38.0",
-    "electron-log": "^5.1.7",
+    "date-fns": "^3.6.0",
+    "electron-store": "^8.2.0",
     "electron-updater": "6.2.1",
-    "puppeteer-core": "21.3.8"
+    "puppeteer-core": "21.3.8",
+    "unzipper": "^0.12.3",
+    "winston": "^3.14.2",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.4.0",
+    "@types/ali-oss": "^6.16.11",
+    "@types/archiver": "^6.0.2",
     "@types/node": "^22.2.0",
+    "@types/unzipper": "^0.10.10",
     "electron": "22.3.27",
     "electron-builder": "24.13.3",
     "typescript": "5.5.4",
-    "vite": "5.4.0"
+    "vite": "5.4.1"
   }
 }

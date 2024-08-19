@@ -6,6 +6,7 @@ import type { UserConfig } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 
 import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
@@ -44,6 +45,7 @@ const config: UserConfig = {
   },
   plugins: [
     vue(),
+    vueJsx(),
     vueDevTools(),
     UnoCSS(),
     AutoImport({

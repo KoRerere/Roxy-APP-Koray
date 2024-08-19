@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import RouterMenu from '/@/components/menus.vue'
 import CreateIcon from '/@/utils/createIcon'
+import { useContextMenu } from './hooks/useContextMenu'
 
 const collapsed = ref<boolean>(false)
+const [show] = useContextMenu()
 </script>
 
 <template>
@@ -24,6 +26,7 @@ const collapsed = ref<boolean>(false)
         common header
       </a-layout-header>
       <a-layout-content>
+        <Button label="Submit" @click="show" />
         <RouterView />
       </a-layout-content>
     </a-layout>
