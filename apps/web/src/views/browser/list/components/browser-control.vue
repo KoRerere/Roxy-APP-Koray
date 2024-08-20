@@ -8,6 +8,8 @@ defineProps({
   },
 })
 
+const emits = defineEmits(['open'])
+
 const State_Enums = {
   Open: 0,
   Loading: 1,
@@ -28,11 +30,24 @@ const tooltip = computed(() => ({
 const errorText = computed(() => ({
   value: _state.error,
 }))
+
+function openBrowser() {
+  // _state.state = State_Enums.Loading
+  // _state.stateText = 'Loading'
+  // _state.progress = 20
+  // setTimeout(() => {
+  //   _state.state = State_Enums.Open
+  //   _state.stateText = 'Open'
+  //   _state.progress = 100
+  //   _state.error = ''
+  // }, 2000)
+  emits('open')
+}
 </script>
 
 <template>
   <div class="flex gap-2">
-    <div v-ripple v-tooltip.top="tooltip" class="flex-cc cursor-pointer open-browser">
+    <div v-ripple v-tooltip.top="tooltip" class="flex-cc cursor-pointer open-browser" @click="openBrowser">
       <circle-progress v-if="_state.state === State_Enums.Loading" size="16" :value="_state.progress" />
       <span v-if="_state.state === State_Enums.Open" class="mdi mdi-google-chrome text-4" />
       <span>{{ _state.stateText }}</span>

@@ -3,7 +3,7 @@ import ScTable from '/@/components/sc-table'
 import operatMenu from './components/operat-menu.vue'
 import profileInfo from './components/profile-info.vue'
 import customFilter from './components/custom-filter.vue'
-import openBrowser from './components/open-browser.vue'
+import browserControl from './components/browser-control.vue'
 import selectProxy from './components/select-proxy.vue'
 
 import useColumns from '/@/hooks/useColumns'
@@ -41,6 +41,10 @@ onMounted(() => {
   // getPlatformInfo()
   getwindowList()
 })
+
+function openBrowser(data: any) {
+  window.electronAPI.send('browser:batchLaunch', [JSON.parse(JSON.stringify(data))])
+}
 </script>
 
 <template>
@@ -56,8 +60,8 @@ onMounted(() => {
     <template #profile="{ data }">
       <profile-info :data="data" :platform-info="platformInfo" />
     </template>
-    <template #open>
-      <open-browser />
+    <template #open="{ data }">
+      <browser-control @open="() => openBrowser(data)" />
     </template>
     <template #group>
       123

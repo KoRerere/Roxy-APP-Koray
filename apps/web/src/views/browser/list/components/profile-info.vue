@@ -67,7 +67,7 @@ const links = ref([
 
 <template>
   <div class="flex h-full items-center profile">
-    <div>{{ data.id }}</div>
+    <div>{{ data.windowSortNum }}</div>
     <div class="flex justify-between state">
       <div v-for="(item, index) in links" :key="index" v-tooltip.top="item.tooltip"
         class="flex-cc cursor-pointer state-icons" :class="item.classes" @click="item.onClick">
