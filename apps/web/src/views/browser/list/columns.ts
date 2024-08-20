@@ -4,29 +4,24 @@ const columnsConfig = {
     {
       title: '配置文件信息',
       key: 'profile',
-      slot: 'profile',
-    },
-    {
-      title: '年龄',
-      key: 'age',
+      slot: 'profile'
     },
     {
       title: '打开/预览',
       key: 'open',
-      slot: 'open',
+      slot: 'open'
     },
     {
-      title: 'getText && classes',
-      key: 'address',
-      classes: 'custom-class',
-      getText: (data: any) => `tags: ${data.tags.join(' ')}`,
+      title: '组/标签',
+      key: 'group',
+      slot: 'group'
     },
     {
       title: '操作项',
-      key: 'operation',
-      slot: 'operation',
-    },
-  ],
+      key: 'actions',
+      slot: 'actions'
+    }
+  ]
 }
 
 export default columnsConfig

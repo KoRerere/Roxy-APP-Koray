@@ -3,12 +3,9 @@
 </script>
 
 <template>
-  <div>
-    <h1>this is Browser</h1>
+  <div class="h-full">
     <router-view />
   </div>
 </template>
-
-
 
 <style scoped></style>

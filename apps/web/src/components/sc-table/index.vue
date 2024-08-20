@@ -77,7 +77,7 @@ function batchOperation(item: any) {
 </script>
 
 <template>
-  <div class="position-relative flex-auto">
+  <div class="position-relative h-full">
     <div class="flex items-center table-header">
       <div class="flex flex-auto gap-2">
         <table-filter :filters="_filters" @change="filterChange" />
@@ -89,19 +89,30 @@ function batchOperation(item: any) {
         <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="onSort" />
       </div>
     </div>
-
-    <DataTable v-bind="$attrs" v-model:selection="RowsSelectedData" v-model:contextMenuSelection="contextMenuSelection"
-      :value="dataList" paginator :rows="15" :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="500px"
-      context-menu @row-contextmenu="onRowContextMenu">
-      <Column v-if="rowSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
-      <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
-        <template #body="{ data }">
-          <slot :name="column.slot" :data="data">
-            <span :class="column.classes">{{ column.getText?.(data) || data[column.key] }} </span>
+    <div class="table-body">
+      <DataTable v-bind="$attrs" v-model:selection="RowsSelectedData"
+        v-model:contextMenuSelection="contextMenuSelection" :value="dataList" paginator :rows="15"
+        :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="flex" context-menu
+        @row-contextmenu="onRowContextMenu">
+        <template #empty>
+          <slot name="table-empty">
+            <div class="text-center">
+              暂无数据
+            </div>
           </slot>
         </template>
-      </Column>
-    </DataTable>
+
+        <Column v-if="rowSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
+        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
+          <template #body="{ data }">
+            <slot :name="column.slot" :data="data">
+              <span :class="column.classes">{{ column.getText?.(data) || data[column.key] }} </span>
+            </slot>
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+
     <ContextMenu ref="menuRef" :model="operation">
       <template #item="{ item, props }">
         <a v-ripple v-bind="props.action" @click="menuClick(item)">
@@ -109,7 +120,6 @@ function batchOperation(item: any) {
         </a>
       </template>
     </ContextMenu>
-
     <Transition>
       <selection-operation v-if="RowsSelectedData?.length > 0" v-model:selection="RowsSelectedData"
         :total="dataList.length" :operation="operation" @batch-operation="batchOperation" />
@@ -118,14 +128,16 @@ function batchOperation(item: any) {
 </template>
 
 <style lang="scss" scoped>
-.table-header {
-  height: 60px;
-  background-color: olivedrab;
-}
+.table {
+  &-header {
+    height: 60px;
+    background-color: olivedrab;
+    flex-shrink: 0;
+  }
 
-.copyable {
-  margin-left: 12px;
-  color: orange;
+  &-body {
+    height: calc(100% - 60px);
+  }
 }
 
 .v-enter-active,

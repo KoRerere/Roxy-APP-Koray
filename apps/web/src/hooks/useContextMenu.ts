@@ -3,18 +3,13 @@ import { createVNode, getCurrentInstance, ref, render } from 'vue'
 
 type Menu = InstanceType<typeof ContextMenu>
 
-export function useContextMenu() {
+export function useContextMenu(props: any) {
   let vm: VNode
   const instance = getCurrentInstance()
-  // const menu = ref<InstanceType<typeof ContextMenu>>()
-  const items = ref([
-    { label: 'Copy', icon: 'pi pi-copy' },
-    { label: 'Rename', icon: 'pi pi-file-edit' },
-  ])
 
   const show = (event: Event) => {
     if (!vm) {
-      vm = createVNode(ContextMenu, { model: items.value })
+      vm = createVNode(ContextMenu, props)
       vm.appContext = instance!.appContext
       render(vm, document.body)
     }

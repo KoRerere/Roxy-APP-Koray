@@ -11,54 +11,54 @@ export const routes = [
         path: 'list',
         name: 'browser-list',
         meta: { title: '窗口列表', icon: 'AreaChartOutlined' },
-        component: () => import('/@/views/browser/list'),
+        component: () => import('/@/views/browser/list')
       },
       {
         path: 'transfer',
         name: 'browser-transfer',
         meta: { title: '窗口转移', icon: 'PieChartOutlined' },
-        component: () => import('/@/views/browser/transfer'),
+        component: () => import('/@/views/browser/transfer')
       },
       {
         path: 'create',
         name: 'browser-create',
         meta: { title: '新建窗口', icon: 'BarChartOutlined' },
-        component: () => import('/@/views/browser/create'),
+        component: () => import('/@/views/browser/create')
       },
       {
         path: 'recycle',
         name: 'browser-recycle',
         meta: { title: '回收站', icon: 'DotChartOutlined' },
-        component: () => import('/@/views/browser/recycle'),
-      },
-    ],
+        component: () => import('/@/views/browser/recycle')
+      }
+    ]
   },
-  // {
-  //   path: '/agent',
-  //   name: 'agent',
-  //   meta: { title: '代理IP', icon: 'PieChartOutlined', root: true },
-  //   component: () => import('/@/views/agent'),
-  //   children: [
-  //     {
-  //       path: 'list',
-  //       name: 'agent-list',
-  //       meta: { title: '代理列表', icon: '' },
-  //       component: () => import('/@/views/agent/list'),
-  //     },
-  //     {
-  //       path: 'shop',
-  //       name: 'agent-shop',
-  //       meta: { title: '代理购买', icon: '' },
-  //       component: () => import('/@/views/agent/shop'),
-  //     },
-  //     {
-  //       path: 'import',
-  //       name: 'agent-import',
-  //       meta: { title: '代理导入', icon: '' },
-  //       component: () => import('/@/views/agent/import'),
-  //     },
-  //   ],
-  // },
+  {
+    path: '/agent',
+    name: 'agent',
+    meta: { title: '代理IP', icon: 'PieChartOutlined', root: true },
+    component: () => import('/@/views/agent'),
+    children: [
+      {
+        path: 'list',
+        name: 'agent-list',
+        meta: { title: '代理列表', icon: '' },
+        component: () => import('/@/views/agent/list')
+      },
+      {
+        path: 'shop',
+        name: 'agent-shop',
+        meta: { title: '代理购买', icon: '' },
+        component: () => import('/@/views/agent/shop')
+      },
+      {
+        path: 'import',
+        name: 'agent-import',
+        meta: { title: '代理导入', icon: '' },
+        component: () => import('/@/views/agent/import')
+      }
+    ]
+  }
   // {
   //   path: '/plugins',
   //   name: 'plugins',
@@ -109,7 +109,7 @@ export const routes = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes
 })
 
 export default router

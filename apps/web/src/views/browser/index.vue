@@ -1,6 +1,4 @@
-<script setup>
-import { ref } from 'vue'
-
+<script setup lang="ts">
 const items = ref([
   { label: 'Dashboard', icon: 'mdi mdi-google-downasaur' },
   { label: 'Transactions', icon: 'mdi mdi-unicorn' },
@@ -10,7 +8,7 @@ const items = ref([
 </script>
 
 <template>
-  <div class="card flex flex-col h-full">
+  <div class="h-full">
     <Tabs value="Dashboard">
       <TabList>
         <Tab v-for="tab in items" :key="tab.label" :value="tab.label">
@@ -19,8 +17,16 @@ const items = ref([
         </Tab>
       </TabList>
     </Tabs>
-    <div style="background-color: gray;" class="flex flex-col flex-auto">
+    <div class="browser-content">
       <router-view />
     </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.browser {
+  &-content {
+    height: calc(100% - 48px);
+  }
+}
+</style>
