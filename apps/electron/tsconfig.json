@@ -13,6 +13,7 @@
       "node"
     ],
     "strict": true,
+    "noImplicitAny": false,
     "sourceMap": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

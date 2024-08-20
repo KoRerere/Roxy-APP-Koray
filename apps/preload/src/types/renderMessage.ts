@@ -1,6 +1,6 @@
 export interface RenderMessage {
-  /** 根据 ID 获取用户名 */
-  getUsernameById: (userID: number) => string
-  /** 获取系统信息 */
-  getOsInfo: () => string
+  /** 启动窗口 */
+  'browser:launch': (winItem: Record<string, any>) => any
+  /** 批量启动窗口 */
+  'browser:batchLaunch': () => any
 }

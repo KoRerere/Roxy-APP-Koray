@@ -1,2 +1,2 @@
-export * from './browserManager'
+export * from './browser-manager/'
 export * from './chromeCoreManager'

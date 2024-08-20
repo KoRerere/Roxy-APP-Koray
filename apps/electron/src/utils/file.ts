@@ -1,7 +1,8 @@
 import { access, mkdir, rm } from 'node:fs/promises'
-import { createWriteStream } from 'node:fs'
+import { createReadStream, createWriteStream } from 'node:fs'
 import { dirname } from 'node:path'
-import unzipper from 'unzipper'
+import { pipeline } from 'node:stream'
+import compressing from 'compressing'
 import axios from 'axios'
 
 /** 文件或目录是否存在 */
@@ -47,6 +48,5 @@ export async function downloadZipFile(url: string, outputZipPath: string) {
 
 /** 解压缩文件 */
 export async function unzipFile(zipFilePath: string, outputDir: string) {
-  const directory = await unzipper.Open.file(zipFilePath)
-  await directory.extract({ path: outputDir })
+  await compressing.zip.uncompress(zipFilePath, outputDir)
 }

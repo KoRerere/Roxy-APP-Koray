@@ -41,8 +41,10 @@ async function createWindow() {
 
   console.log('createWindow', pageUrl)
   // setTimeout(() => {
-  //   console.log('browserManager launch')
-  //   browserManager.launch()
+  //   API.window.userGetWindowInfoList({}).then(async (res) => {
+  //     const winInfoList = res.data.rows
+  //     await browserManager.batchLaunch(winInfoList.slice(0, 2))
+  //   })
   // }, 5000)
 
   return browserWindow
