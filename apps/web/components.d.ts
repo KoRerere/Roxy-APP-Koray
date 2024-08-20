@@ -8,14 +8,25 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Menus: typeof import('./src/components/menus.vue')['default']
+    Popover: typeof import('primevue/popover')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScMenu: typeof import('./src/components/sc-menu/sc-menu.vue')['default']
     ScPopover: typeof import('./src/components/sc-popover/sc-popover.vue')['default']
-    ScTable: typeof import('./src/components/sc-table/sc-table.vue')['default']
+    ScTable: typeof import('./src/components/sc-table/index.vue')['default']
+    Select: typeof import('primevue/select')['default']
     SelectionOperation: typeof import('./src/components/sc-table/selection-operation.vue')['default']
+    Tab: typeof import('primevue/tab')['default']
     TableConfig: typeof import('./src/components/sc-table/table-config.vue')['default']
     TableFilter: typeof import('./src/components/sc-table/table-filter.vue')['default']
     TableSort: typeof import('./src/components/sc-table/table-sort.vue')['default']
+    TabList: typeof import('primevue/tablist')['default']
+    Tabs: typeof import('primevue/tabs')['default']
+    TieredMenu: typeof import('primevue/tieredmenu')['default']
+    ToggleSwitch: typeof import('primevue/toggleswitch')['default']
+  }
+  export interface ComponentCustomProperties {
+    Ripple: typeof import('primevue/ripple')['default']
+    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }

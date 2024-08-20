@@ -1,7 +1,6 @@
 import { access, mkdir, rm } from 'node:fs/promises'
-import { createReadStream, createWriteStream } from 'node:fs'
+import { createWriteStream } from 'node:fs'
 import { dirname } from 'node:path'
-import { pipeline } from 'node:stream'
 import compressing from 'compressing'
 import axios from 'axios'
 

@@ -14,12 +14,12 @@
     "@ant-design/icons-vue": "^7.0.1",
     "@mdi/font": "^7.4.47",
     "@primevue/themes": "^4.0.4",
-    "ant-design-vue": "4.x",
-    "pinia": "^2.2.1",
+    "ant-design-vue": "~4.2.3",
+    "pinia": "^2.2.2",
     "primevue": "^4.0.4",
     "vue": "^3.4.38",
     "vue-draggable-plus": "^0.5.3",
-    "vue-i18n": "^9.13.1",
+    "vue-i18n": "^9.14.0",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
@@ -27,7 +27,7 @@
     "@roxy/backend-api": "workspace:*",
     "@roxy/electron-preload": "workspace:*",
     "@tsconfig/node20": "^20.1.4",
-    "@types/node": "^20.14.14",
+    "@types/node": "^20.16.1",
     "@unocss/reset": "^0.61.9",
     "@vitejs/plugin-vue": "^5.1.2",
     "@vitejs/plugin-vue-jsx": "^4.0.1",
@@ -38,9 +38,9 @@
     "typescript": "~5.4.5",
     "unocss": "^0.61.9",
     "unplugin-auto-import": "^0.18.2",
-    "unplugin-vue-components": "^0.27.3",
-    "vite": "^5.4.0",
-    "vite-plugin-vue-devtools": "^7.3.7",
+    "unplugin-vue-components": "^0.27.4",
+    "vite": "^5.4.1",
+    "vite-plugin-vue-devtools": "^7.3.8",
     "vue-tsc": "^2.0.29"
   }
 }

@@ -1,1 +1,3 @@
-export { default } from './sc-table.vue'
+import moduleName from './index.vue'
+
+export default moduleName

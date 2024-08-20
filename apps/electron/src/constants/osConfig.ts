@@ -1,5 +1,4 @@
 import { arch, platform, release } from 'node:os'
-import { getOSVersion } from '/@/utils'
 
 /** 当前系统信息 */
 export const osConfig = {

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import ScMenu from '/@/components/sc-menu'
-
 const props = defineProps({
   data: {
     type: Object,
@@ -10,41 +8,21 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  operationHandler: {
-    type: Function,
-    default: () => () => { },
-  },
 })
 
+defineEmits(['more'])
+
 const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
-
-function quickClick(key: string) {
-  props.operationHandler({ key }, props.data)
-}
-
-const scMenu = ScMenu()
-const iconRef = ref<HTMLElement | null>(null)
-
-function openMenu() {
-  const { width, height, left, top } = iconRef.value!.getBoundingClientRect()
-  scMenu.insert({
-    operation: props.operation,
-    operationHandler: (event: any) => props.operationHandler(event, props.data),
-    position: { x: left + width * 1.5, y: top + height * 0.5 },
-  })
-}
 </script>
 
 <template>
   <div>
-    <Button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon"
-            @click.stop="quickClick(item.key)"
-    >
+    <Button v-for="item in quickOperation" :key="item.name" size="small" :icon="item.icon">
       {{ item.name }}
     </Button>
 
-    <Button text size="small" @click.stop="openMenu">
-      <span ref="iconRef" class="mdi mdi-dots-horizontal" />
+    <Button text size="small" @click.stop="$emit('more', $event)">
+      <span class="mdi mdi-dots-horizontal" />
     </Button>
   </div>
 </template>
