@@ -5,7 +5,7 @@ export const httpClient = new HttpClient({
 })
 
 httpClient.instance.interceptors.request.use((config) => {
-  config.headers.token = 'cD6U0MGN8OKGpsrO1723469723644'
+  config.headers.token = 'HR7hg6ojoTI3ExyN1723775012325'
   return config
 })
 

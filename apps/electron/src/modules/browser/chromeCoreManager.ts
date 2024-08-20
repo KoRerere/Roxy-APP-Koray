@@ -83,7 +83,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
   /** 拉取当前系统可用的内核列表 */
   async fetchAvailableCoreList() {
+    console.log('fetchAvailableCoreList', osConfig)
     const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
+    console.log('fetchAvailableCoreList', result)
     this.availableCoreList = result.data.rows
     return this.availableCoreList
   }

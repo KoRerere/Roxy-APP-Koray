@@ -48,9 +48,17 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           console.log('Reloading electron app...', String(electronPath))
           /** 启动新的electron进程 */
           electronApp = spawn(String(electronPath), ['--inspect', '.'], {
-            stdio: 'inherit',
+            // stdio: 'inherit',
             // 设置工作目录
             cwd: path.resolve(__dirname, '../apps/electron'),
+          })
+
+          electronApp.stdout.on('data', (data) => {
+            console.log(data.toString())
+          })
+
+          electronApp.stderr.on('data', (data) => {
+            console.log('\x1B[31m%s\x1B[0m', data.toString())
           })
 
           /** 当应用程序退出时停止监听脚本 */

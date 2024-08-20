@@ -7,20 +7,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    ADropdown: typeof import('ant-design-vue/es')['Dropdown']
-    ALayout: typeof import('ant-design-vue/es')['Layout']
-    ALayoutContent: typeof import('ant-design-vue/es')['LayoutContent']
-    ALayoutHeader: typeof import('ant-design-vue/es')['LayoutHeader']
-    ALayoutSider: typeof import('ant-design-vue/es')['LayoutSider']
-    AMenu: typeof import('ant-design-vue/es')['Menu']
-    AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
-    ASubMenu: typeof import('ant-design-vue/es')['SubMenu']
-    Button: typeof import('primevue/button')['default']
-    CircleProgress: typeof import('./src/components/circle-progress.vue')['default']
-    Column: typeof import('primevue/column')['default']
-    ContextMenu: typeof import('primevue/contextmenu')['default']
-    DataTable: typeof import('primevue/datatable')['default']
-    Drawer: typeof import('primevue/drawer')['default']
     Menus: typeof import('./src/components/menus.vue')['default']
     Popover: typeof import('primevue/popover')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

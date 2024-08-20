@@ -1,5 +1,6 @@
 import { IPCMain } from '@roxy/electron-preload/main'
 import type { MainMessage, RenderMessage } from '@roxy/electron-preload'
+import { browserManager } from '/@/modules/browser'
 
 /**
  * Setup the IPC functions.
@@ -7,14 +8,13 @@ import type { MainMessage, RenderMessage } from '@roxy/electron-preload'
 export function setupIpc() {
   const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
-  ipcMain.on('getUsernameById', (userID) => {
-    console.log('getUsernameById', `User ID: ${userID}`)
-    return 'User Name'
+  ipcMain.on('browser:launch', (winItemInfo) => {
+    return browserManager.launch(winItemInfo)
   })
 
-  setTimeout(() => {
-    ipcMain.send('newUserJoin', 1)
-  }, 5000)
+  ipcMain.on('browser:batchLaunch', (winItemList) => {
+    return browserManager.batchLaunch(winItemList)
+  })
 
   return ipcMain
 }
