@@ -590,7 +590,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetPlatformInfoList
-   * @summary 业务平台查询
+   * @summary 业务平台查询（显示我们系统自带的平台）
    * @request GET:/user_get_platform_info
    * @response `200` `UserGetPlatformInfoListData` 成功
    */
@@ -639,7 +639,7 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description 数据需要全部传入，后端直接存储你的数据格式
+   * @description old_filter_name必须传入（唯一值），因为new_filter_name和sort都是通过old_filter_name行字段判断的 注：1.如果是修改排序，old_filter_name和new_filter_name值传相同进行，原来值进行可以不用变 2.如果是修改标签页名称，sort值传原来值进行可以不用变
    *
    * @tags Window
    * @name UpdateWindowFilterNameCreate
@@ -657,7 +657,7 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description 数据需要全部传入，后端直接存储你的数据格式
+   * No description
    *
    * @tags Window
    * @name DeleteWindowFilterNameCreate

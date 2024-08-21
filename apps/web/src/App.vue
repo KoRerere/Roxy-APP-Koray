@@ -2,6 +2,9 @@
 import RouterMenu from '/@/components/menus.vue'
 
 const collapsed = ref<boolean>(false)
+window.electronAPI.on('browser:process-message', (event) => {
+  console.log('browser:process-message', event)
+})
 </script>
 
 <template>
@@ -12,7 +15,8 @@ const collapsed = ref<boolean>(false)
       </div>
       <RouterMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-        @click="() => (collapsed = !collapsed)">
+           @click="() => (collapsed = !collapsed)"
+      >
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </a-layout-sider>

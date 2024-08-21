@@ -1,4 +1,4 @@
-import { setupIpc } from './ipc'
+import './ipc'
 import { setupApp } from './app'
 
 /**
@@ -6,6 +6,5 @@ import { setupApp } from './app'
  */
 export function setupModules() {
   // setupLog()
-  setupIpc()
   setupApp()
 }
