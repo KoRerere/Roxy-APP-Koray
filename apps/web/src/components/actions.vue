@@ -14,11 +14,9 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
 <template>
   <div class="flex items-center">
     <div class="quick">
-      <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer mdi" :class="[item.icon]"
-        size="small" />
+      <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer" :class="[item.icon]" />
     </div>
-
-    <Button text size="small" @click.stop="$emit('more', $event)">
+    <Button text size="small" @click.stop="$emit('more', [$event, operation])">
       <span class="mdi mdi-dots-horizontal" />
     </Button>
   </div>

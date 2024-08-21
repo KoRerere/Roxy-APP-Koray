@@ -19,15 +19,15 @@ const formInputs = ref([
   {
     label: 'Server',
     value: null,
-    children: [
+    items: [
       {
-        type: 'text',
+        type: 'select',
         name: 'type',
         placeholder: 'select type',
-        // options: [
-        //   { label: 'aaa', value: 'A' },
-        //   { label: 'bbb', value: 'M' },
-        // ],
+        options: [
+          { label: 'aaa', value: 'A' },
+          { label: 'bbb', value: 'M' },
+        ],
       },
       {
         type: 'text',
@@ -76,22 +76,26 @@ const formInputs = ref([
   },
 ])
 
-function getFormData () {
+function _getFormData () {
   console.log('🚀 ~ getFormData ~ formatInputs(formInputs.value):', formatInputs(formInputs.value))
 }
 </script>
 
 <template>
   <div>
+    <Button @click="_getFormData">
+      getFormData
+    </Button>
     <ry-form :inputs="formInputs">
       <template #server="{ input }">
         <input-base v-bind="input">
           <template #input>
             <InputGroup>
-              {{ input.children }}
-              <div v-for="item in input.children" :key="item.name">
-                <input-base v-bind="item" />
-              </div>
+              <template v-for="(item, index) in input.items" :key="index">
+                <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
+                  option-value="value" />
+                <InputText v-else v-bind="item" v-model="item.value" type="text" />
+              </template>
             </InputGroup>
           </template>
         </input-base>
@@ -100,10 +104,11 @@ function getFormData () {
         <input-base v-bind="input">
           <template #input>
             <div class="form-protocol">
-              <div v-for="option in input.options" :key="option.key" class="form-protocol-item">
+              <label v-for="option in input.options" :key="option.key" :for="option.value"
+                class="cursor-pointer form-protocol-item">
                 <RadioButton v-model="input.value" :input-id="option.value" :name="input.name" :value="option.value" />
-                <label :for="option.value" class="cursor-pointer">{{ option.label }}</label>
-              </div>
+                <div>{{ option.label }}</div>
+              </label>
             </div>
           </template>
         </input-base>

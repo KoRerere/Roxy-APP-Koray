@@ -2,24 +2,37 @@ export const operation = [
   {
     key: 'Test',
     name: '测试',
-    quick: true
+    label: '测试',
+    icon: 'mdi mdi-wifi-off',
+    quick: true,
+    command: () => {
+      console.log('🚀 ~Test:', 'test')
+    }
   },
   {
-    key: 'Edit',
-    name: '编辑'
+    key: 'edit',
+    name: '编辑',
+    label: '编辑',
+    icon: 'mdi mdi-refresh',
+    quick: true,
+    command: () => {}
   },
   {
     key: 'Delete',
-    name: '删除'
+    name: '删除',
+    label: '删除',
+    icon: 'mdi mdi-file-document-plus-outline',
+    quick: true,
+    command: () => {}
   }
 ]
 
 export const sorts = [
   {
-    key: 'city',
-    name: '城市',
-    placeholder: '请选择城市',
+    label: '城市',
+    name: 'city',
     value: null,
+    placeholder: '请选择城市',
     icon: 'mdi-sort-descending',
     options: [
       { label: 'New York', value: 'NY' },
@@ -30,10 +43,10 @@ export const sorts = [
     ]
   },
   {
-    key: 'order',
-    name: '排序',
-    placeholder: '请选择排序',
+    label: '排序',
+    name: 'order',
     value: null,
+    placeholder: '请选择排序',
     icon: 'mdi-sort-descending',
     options: [
       { label: '升序', value: 'NY' },
@@ -41,8 +54,8 @@ export const sorts = [
     ]
   },
   {
-    key: 'time',
-    name: '时间',
+    name: 'time',
+    label: '时间',
     placeholder: '请选择时间',
     value: null,
     icon: 'mdi-sort-descending',
@@ -55,26 +68,29 @@ export const sorts = [
 
 export const filters = [
   {
-    key: 'city',
-    name: '城市',
-    placeholder: '请选择城市',
+    label: 'city',
+    name: 'city',
     value: null,
+    placeholder: '筛选',
     options: [
-      { name: '北京', value: 'bj' },
-      { name: '上海', value: 'sh' },
-      { name: '广州', value: 'gz' },
-      { name: '深圳', value: 'sz' },
-      { name: '杭州', value: 'hz' }
+      { label: '北京', value: 'bj' },
+      { label: '上海', value: 'sh' },
+      { label: '广州', value: 'gz' },
+      { label: '深圳', value: 'sz' },
+      { label: '杭州', value: 'hz' }
     ]
   },
   {
-    key: 'order',
-    name: '排序',
-    placeholder: '请选择排序',
+    label: 'city2',
+    name: 'city2',
     value: null,
+    placeholder: '筛选2',
     options: [
-      { name: '升序', value: 'NY' },
-      { name: '降序', value: 'RM' }
+      { label: '北京', value: 'bj' },
+      { label: '上海', value: 'sh' },
+      { label: '广州', value: 'gz' },
+      { label: '深圳', value: 'sz' },
+      { label: '杭州', value: 'hz' }
     ]
   }
 ]

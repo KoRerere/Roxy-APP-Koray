@@ -14,7 +14,7 @@ const emits = defineEmits(['update:columns'])
 const popRef = ref()
 
 function toggle(event: Event) {
-  popRef.value.toggle(event)
+  popRef.value.getRef().toggle(event)
 }
 
 function update(newColumns: any[]) {

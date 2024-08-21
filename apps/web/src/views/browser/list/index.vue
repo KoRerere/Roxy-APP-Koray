@@ -1,6 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 // @ts-ignore
+import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import operatMenu from './components/operat-menu.vue'
 // @ts-ignore
@@ -13,53 +14,49 @@ import browserControl from './components/browser-control.vue'
 import proxyDrawer from './components/proxy/index.vue'
 
 import useColumns from '/@/hooks/useColumns'
+import { useContextMenu } from '/@/hooks/useContextMenu'
+
 import columnsRow from './columns'
 import { filters, operation, operationHandler, sorts } from './operation'
 import { API } from '/@/api'
 import type { UserGetPlatformInfoListData, UserGetWindowInfoListData } from '@roxy/backend-api'
 
 const [columns] = useColumns(columnsRow)
+const [show] = useContextMenu()
 
-const menuRef = ref()
-function handleMore(event: Event, _data: any) {
-  // menuRef.value.hide()
-  // nextTick(() => {
-  menuRef.value.show(event)
-  // })
-}
+const drawer = reactive({
+  visible: false,
+})
 
-const visibleRight = ref(true)
 // ======================================
 const platformInfo = ref<UserGetPlatformInfoListData['data']['platformUrl']>([])
-const dataList = ref<UserGetWindowInfoListData['data']['rows']>([])
 
 async function getPlatformInfo() {
   const { data } = await API.window.userGetPlatformInfoList({})
   platformInfo.value = data.platformUrl
 }
 
-async function getwindowList() {
-  const { data } = await API.window.userGetWindowInfoList({})
-  dataList.value = data.rows
+async function tableRequest(params: any) {
+  const { data } = await API.window.userGetWindowInfoList(params)
+  return data.rows
 }
-
-onMounted(() => {
-  getPlatformInfo()
-  getwindowList()
-})
 
 function openBrowser(data: any) {
   window.electronAPI.send('browser:batchLaunch', [toRaw(data)])
 }
+
+function onMore([event, model]: any[]) {
+  show(event, { model })
+}
+
+onMounted(() => {
+  getPlatformInfo()
+})
 </script>
 
 <template>
-  <div @click="visibleRight = true">
-    aaaaaaaa
-  </div>
-  <ry-table v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
-    data-key="id" :data-list="dataList" :scroll="{ x: 500, y: 400 }" :operation="operation"
-    :operation-handler="operationHandler" :filters="filters" :sorts="sorts">
+  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation"
+    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
     <template #header-extra>
       <custom-filter />
     </template>
@@ -72,24 +69,34 @@ function openBrowser(data: any) {
     <template #group>
       123
     </template>
-    <template #actions="{ data }">
-      <operat-menu :data="data" :operation="operation" @more="(event) => handleMore(event, data)" />
+    <template #actions>
+      <actions :operation="operation" @more="onMore" />
     </template>
   </ry-table>
-  <TieredMenu ref="menuRef" :model="operation" popup>
-    <template #item="{ item, props }">
-      <a v-ripple v-bind="props.action">
-        <span :class="item.icon" />
-        <span>{{ item.name }}</span>
-      </a>
-    </template>
-  </TieredMenu>
-  <Drawer v-model:visible="visibleRight" position="right" class="!w-[auto]">
+  <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
+    :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
       <proxy-drawer :close-drawer="closeCallback" />
     </template>
   </Drawer>
 </template>
+
+<style lang="scss">
+.browser-drawer {
+  padding: var(--spacing-xl, 12px);
+
+  &-content {
+    border-radius: var(--radius-lg, 8px);
+    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad);
+    background: var(--Colors-Background-bg-body, #fff);
+    box-shadow:
+      0px 1px 1px 0px rgba(0, 0, 0, 0.04),
+      0px 2px 8px 0px rgba(0, 0, 0, 0.04),
+      0px 3px 17px 0px rgba(0, 0, 0, 0.04),
+      0px 4px 30px 0px rgba(0, 0, 0, 0.12);
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 .table-filter {

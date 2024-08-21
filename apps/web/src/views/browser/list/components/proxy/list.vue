@@ -62,19 +62,19 @@ const operation = ref([
   {
     key: 'edit',
     name: '编辑',
-    icon: 'mdi-wifi-off',
+    icon: 'mdi mdi-wifi-off',
     quick: true,
   },
   {
     key: 'edit',
     name: '编辑',
-    icon: 'mdi-refresh',
+    icon: 'mdi mdi-refresh',
     quick: true,
   },
   {
     key: 'edit',
     name: '编辑',
-    icon: 'mdi-file-document-plus-outline',
+    icon: 'mdi mdi-file-document-plus-outline',
     quick: true,
   },
 ])

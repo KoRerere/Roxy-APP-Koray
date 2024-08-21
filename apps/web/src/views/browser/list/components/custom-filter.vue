@@ -137,7 +137,7 @@ function onHide () {
 
 <template>
   <div class="flex gap-2 filter-list">
-    <div v-for="item in _list" :key="item.key" class="cursor-pointer">
+    <div v-for="item in _list" :key="item.key" class="flex items-center cursor-pointer">
       <span />
       <span>{{ item.name }}</span>
     </div>

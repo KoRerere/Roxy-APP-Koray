@@ -10,8 +10,6 @@ const props = defineProps({
   },
 })
 
-defineEmits(['more'])
-
 const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
 </script>
 
@@ -21,7 +19,7 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
       {{ item.name }}
     </Button>
 
-    <Button text size="small" @click.stop="$emit('more', $event)">
+    <Button text size="small">
       <span class="mdi mdi-dots-horizontal" />
     </Button>
   </div>

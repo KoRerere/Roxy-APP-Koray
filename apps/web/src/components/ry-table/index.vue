@@ -5,15 +5,19 @@ import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
 import tableSort from './table-sort.vue'
 
-const _props = defineProps({
+const props = defineProps({
+  tableRequest: {
+    type: Function as PropType<(data: any) => Promise<any>>,
+    required: true,
+    default: () => () => [],
+  },
+  tableParams: {
+    type: Object as PropType<any>,
+    default: () => ({}),
+  },
   dataKey: {
     type: String,
     default: 'id',
-  },
-  dataList: {
-    type: Array as PropType<any[]>,
-    required: true,
-    default: () => [],
   },
   columns: {
     type: Array as PropType<any[]>,
@@ -48,16 +52,54 @@ const _props = defineProps({
 
 defineEmits(['update:columns'])
 
-const _columns = computed<any[]>(() => _props.columns.filter((item: any) => item._visible))
-const _filters = ref(_props.filters)
+const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible))
+const _filters = ref(props.filters)
 
-function onSort(data: any) {
-  console.log('🚀 ~ sort ~ data:', data)
+const tableAttrs = reactive({
+  'paginator': true,
+  'rows': 15,
+  'rows-per-page-options': [5, 15, 30, 50],
+  'scrollable': true,
+  'scroll-height': 'flex',
+  'context-menu': true,
+  'show-gridlines': true,
+  'resizable-columns': true,
+  'column-resize-mode': 'expand',
+  'row-selection': true,
+  'scroll': { x: 500, y: 400 },
+  ...useAttrs(),
+})
+
+const params = reactive({
+  filter: {},
+  sort: {},
+})
+
+const dataList = ref([])
+
+function onChangeParams(key: string, data: any) {
+  Object.assign(params[key], data)
+  _request()
 }
 
-function filterChange(_data: any) {
-  console.log('🚀 ~ filterChange ~ _data:', _data)
+async function _request(outerParams?: any) {
+  const requestParams = {
+    ...params.filter,
+    ...params.sort,
+    ...props.tableParams,
+    ...outerParams,
+  }
+  dataList.value = await props.tableRequest(requestParams)
 }
+
+onMounted(() => {
+  _request()
+})
+
+defineExpose({
+  request: _request,
+})
+
 // ======================================
 const menuRef = ref()
 const contextMenuSelection = ref()
@@ -68,11 +110,11 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
 }
 
 function menuClick(item: any) {
-  _props.operationHandler(item, contextMenuSelection.value)
+  props.operationHandler(item, contextMenuSelection.value)
 }
 
 function batchOperation(item: any) {
-  _props.operationHandler(item, RowsSelectedData.value)
+  props.operationHandler(item, RowsSelectedData.value)
 }
 </script>
 
@@ -80,20 +122,18 @@ function batchOperation(item: any) {
   <div class="position-relative h-full">
     <div class="flex items-center table-header">
       <div class="flex flex-auto gap-2">
-        <table-filter :filters="_filters" @change="filterChange" />
+        <table-filter :filters="_filters" @change="(data) => onChangeParams('filter', data)" />
         <slot name="header-extra" />
       </div>
       <div class="flex gap-2">
         <table-config v-if="showConfig" :columns="columns"
           @update:columns="(columns) => $emit('update:columns', columns)" />
-        <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="onSort" />
+        <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
       </div>
     </div>
     <div class="table-body">
-      <DataTable v-bind="$attrs" v-model:selection="RowsSelectedData"
-        v-model:contextMenuSelection="contextMenuSelection" :value="dataList" paginator :rows="15"
-        :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="flex" context-menu
-        @row-contextmenu="onRowContextMenu">
+      <DataTable v-model:selection="RowsSelectedData" v-model:contextMenuSelection="contextMenuSelection"
+        :value="dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -117,8 +157,9 @@ function batchOperation(item: any) {
     </div>
 
     <ContextMenu ref="menuRef" :model="operation">
-      <template #item="{ item, props }">
-        <a v-ripple v-bind="props.action" @click="menuClick(item)">
+      <template #item="{ item, props: ctxProps }">
+        <a v-ripple v-bind="ctxProps.action" @click="menuClick(item)">
+          <span :class="item.icon" />
           <span>{{ item.name }}</span>
         </a>
       </template>

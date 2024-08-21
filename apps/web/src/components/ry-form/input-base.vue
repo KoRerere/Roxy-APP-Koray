@@ -18,6 +18,11 @@ function onIconClick(attrs: Record<string, unknown>) {
   // toRaw(props)
   // console.log('🚀 ~ props:', props)
 }
+
+const xxx = useAttrs()
+if (xxx.mark) {
+  console.log('🚀 ~ xxx:', xxx)
+}
 </script>
 
 <template>
@@ -31,10 +36,10 @@ function onIconClick(attrs: Record<string, unknown>) {
       </slot>
       <slot name="input" :input="$attrs">
         <Textarea v-if="type === 'textarea'" :id="name" v-bind="$attrs" />
-        <Password v-if="type === 'password'" :id="name" toggle-mask v-bind="$attrs" />
+        <Password v-if="type === 'password'" :id="name" :feedback="false" toggle-mask v-bind="$attrs" />
         <IconField>
-          <InputText v-if="type === 'text'" :id="name" v-bind="$attrs" />
-          <InputNumber v-if="type === 'number'" :id="name" v-bind="$attrs" />
+          <InputText v-if="type === 'text'" :id="name" class="w-full" v-bind="$attrs" />
+          <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" />
           <InputIcon>
             <span v-if="icon" :class="icon" @click="onIconClick($attrs)" />
           </InputIcon>
@@ -45,6 +50,10 @@ function onIconClick(attrs: Record<string, unknown>) {
 </template>
 
 <style lang="scss" scoped>
+:deep(.p-password-input) {
+  width: 100%;
+}
+
 .ry-input {
   display: flex;
   flex-direction: column;
