@@ -22,11 +22,11 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { name: 'New York', value: 'NY' },
-      { name: 'Rome', value: 'RM' },
-      { name: 'London', value: 'LDN' },
-      { name: 'Istanbul', value: 'IST' },
-      { name: 'Paris', value: 'PRS' }
+      { label: 'New York', value: 'NY' },
+      { label: 'Rome', value: 'RM' },
+      { label: 'London', value: 'LDN' },
+      { label: 'Istanbul', value: 'IST' },
+      { label: 'Paris', value: 'PRS' }
     ]
   },
   {
@@ -36,8 +36,8 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { name: '升序', value: 'NY' },
-      { name: '降序', value: 'RM' }
+      { label: '升序', value: 'NY' },
+      { label: '降序', value: 'RM' }
     ]
   },
   {
@@ -47,8 +47,8 @@ export const sorts = [
     value: null,
     icon: 'mdi-sort-descending',
     options: [
-      { name: '创建时间', value: 'create' },
-      { name: '修改时间', value: 'modify' }
+      { label: '创建时间', value: 'create' },
+      { label: '修改时间', value: 'modify' }
     ]
   }
 ]

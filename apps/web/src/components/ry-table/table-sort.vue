@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import scPopover from '/@/components/sc-popover'
+import ryPopover from '/@/components/ry-popover'
 
 const props = defineProps({
   sorts: {
@@ -36,13 +36,12 @@ function update() {
     <span class="font-size-[16px] leading-none mdi mdi-sort-ascending " />
   </div>
 
-  <sc-popover ref="popRef" footer class="sort-popover">
+  <ry-popover ref="popRef" footer class="sort-popover">
     <div v-for="item in _sorts" :key="item.key" class="sort-popover-item">
       <span class="mdi" :class="item.icon" />
       <span class="w-full">{{ item.name }}</span>
       <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
-              option-value="value" checkmark :highlight-on-select="false"
-      />
+        option-value="value" checkmark :highlight-on-select="false" />
     </div>
     <template #footer>
       <Button text>
@@ -52,7 +51,7 @@ function update() {
         Save filter
       </Button>
     </template>
-  </sc-popover>
+  </ry-popover>
 </template>
 
 <style lang="scss">

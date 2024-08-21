@@ -1,5 +1,5 @@
 interface ColumnCache {
-  [key: string]: { hide: string, sort: string }
+  [key: string]: { visible: string; sort: string }
 }
 
 interface Columns {
@@ -12,33 +12,35 @@ function useColumns(data: Columns) {
 
   const cache = (localStorage.getItem(key)?.split(',') || []).reduce(
     (map: ColumnCache, cur: string) => {
-      const [key, hide, sort] = cur.split('_')
+      const [key, visible, sort] = cur.split('_')
       map[key] = {
-        hide: hide ? JSON.parse(hide) : undefined,
-        sort,
+        visible: visible ? JSON.parse(visible) : undefined,
+        sort
       }
       return map
     },
-    {},
+    {}
   )
 
   const _list = ref(
     list
       .map((item, index) => {
-        const _hide = cache[item.key]?.hide ?? false
+        const _visible = cache[item.key]?.visible ?? true
         const _sort = cache[item.key]?.sort ?? index
         return {
           ...item,
-          _hide,
-          _sort,
+          _visible,
+          _sort
         }
       })
       .slice()
-      .sort((a, b) => a._sort - b._sort),
+      .sort((a, b) => a._sort - b._sort)
   )
 
   onUnmounted(() => {
-    const _cache = _list.value.map((item, index) => `${item.key}_${item._hide}_${index}`).join(',')
+    const _cache = _list.value
+      .map((item, index) => `${item.key}_${item._visible}_${index}`)
+      .join(',')
     localStorage.setItem(key, _cache)
   })
 

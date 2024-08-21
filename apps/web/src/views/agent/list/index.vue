@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import scTable from '/@/components/sc-table'
+import ryTable from '/@/components/ry-table'
 
 const columns = ref([
   {
@@ -17,7 +17,7 @@ const dataList = ref(Array.from({ length: 20 }, (_, index) => ({ id: index, stat
 
 <template>
   <div class="h-full">
-    <sc-table :columns="columns" :data-list="dataList" />
+    <ry-table :columns="columns" :data-list="dataList" />
   </div>
 </template>
 

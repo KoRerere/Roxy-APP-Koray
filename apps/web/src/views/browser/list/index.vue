@@ -1,10 +1,16 @@
+<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import ScTable from '/@/components/sc-table'
+// @ts-ignore
+import ryTable from '/@/components/ry-table'
 import operatMenu from './components/operat-menu.vue'
+// @ts-ignore
 import profileInfo from './components/profile-info.vue'
+// @ts-ignore
 import customFilter from './components/custom-filter.vue'
+// @ts-ignore
 import browserControl from './components/browser-control.vue'
-import selectProxy from './components/select-proxy.vue'
+// @ts-ignore
+import proxyDrawer from './components/proxy/index.vue'
 
 import useColumns from '/@/hooks/useColumns'
 import columnsRow from './columns'
@@ -22,7 +28,7 @@ function handleMore(event: Event, _data: any) {
   // })
 }
 
-const visibleRight = ref(false)
+const visibleRight = ref(true)
 // ======================================
 const platformInfo = ref<UserGetPlatformInfoListData['data']['platformUrl']>([])
 const dataList = ref<UserGetWindowInfoListData['data']['rows']>([])
@@ -38,12 +44,12 @@ async function getwindowList() {
 }
 
 onMounted(() => {
-  // getPlatformInfo()
+  getPlatformInfo()
   getwindowList()
 })
 
 function openBrowser(data: any) {
-  window.electronAPI.send('browser:batchLaunch', [JSON.parse(JSON.stringify(data))])
+  window.electronAPI.send('browser:batchLaunch', [toRaw(data)])
 }
 </script>
 
@@ -51,7 +57,7 @@ function openBrowser(data: any) {
   <div @click="visibleRight = true">
     aaaaaaaa
   </div>
-  <ScTable v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
+  <ry-table v-model:columns="columns" show-gridlines resizable-columns column-resize-mode="expand" row-selection
     data-key="id" :data-list="dataList" :scroll="{ x: 500, y: 400 }" :operation="operation"
     :operation-handler="operationHandler" :filters="filters" :sorts="sorts">
     <template #header-extra>
@@ -69,7 +75,7 @@ function openBrowser(data: any) {
     <template #actions="{ data }">
       <operat-menu :data="data" :operation="operation" @more="(event) => handleMore(event, data)" />
     </template>
-  </ScTable>
+  </ry-table>
   <TieredMenu ref="menuRef" :model="operation" popup>
     <template #item="{ item, props }">
       <a v-ripple v-bind="props.action">
@@ -78,9 +84,9 @@ function openBrowser(data: any) {
       </a>
     </template>
   </TieredMenu>
-  <Drawer v-model:visible="visibleRight" position="right" class="!w-[80%]">
+  <Drawer v-model:visible="visibleRight" position="right" class="!w-[auto]">
     <template #container="{ closeCallback }">
-      <select-proxy :close-drawer="closeCallback" />
+      <proxy-drawer :close-drawer="closeCallback" />
     </template>
   </Drawer>
 </template>

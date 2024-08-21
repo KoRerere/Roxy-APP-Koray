@@ -48,7 +48,7 @@ const _props = defineProps({
 
 defineEmits(['update:columns'])
 
-const _columns = computed<any[]>(() => _props.columns.filter((item: any) => !item._hide))
+const _columns = computed<any[]>(() => _props.columns.filter((item: any) => item._visible))
 const _filters = ref(_props.filters)
 
 function onSort(data: any) {
@@ -94,6 +94,9 @@ function batchOperation(item: any) {
         v-model:contextMenuSelection="contextMenuSelection" :value="dataList" paginator :rows="15"
         :rows-per-page-options="[5, 15, 30, 50]" scrollable scroll-height="flex" context-menu
         @row-contextmenu="onRowContextMenu">
+        <template v-for="(_, name) in $slots" #[name]="slotProps">
+          <slot :name="name" v-bind="slotProps" />
+        </template>
         <template #empty>
           <slot name="table-empty">
             <div class="text-center">
