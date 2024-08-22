@@ -1,6 +1,7 @@
 <script setup>
 import ryForm from '/@/components/ry-form'
 import inputBase from '/@/components/ry-form/input-base.vue'
+import drawerContent from '/@/components/drawer-content.vue'
 
 import { formatInputs } from '/@/utils'
 
@@ -85,39 +86,46 @@ function _getFormData () {
 </script>
 
 <template>
-  <div>
-    <Button @click="_getFormData">
-      getFormData
-    </Button>
-    <ry-form :inputs="formInputs">
-      <template #server="{ input }">
-        <input-base v-bind="input">
-          <template #input>
-            <InputGroup>
-              <template v-for="(item, index) in input.items" :key="index">
-                <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-                  option-value="value" show-clear />
-                <InputText v-else v-bind="item" v-model="item.value" type="text" />
-              </template>
-            </InputGroup>
-          </template>
-        </input-base>
-      </template>
-      <template #protocol="{ input }">
-        <input-base v-bind="input">
-          <template #input>
-            <div class="form-protocol">
-              <label v-for="option in input.options" :key="option.key" :for="option.value"
-                class="cursor-pointer form-protocol-item">
-                <RadioButton v-model="input.value" :input-id="option.value" :name="input.name" :value="option.value" />
-                <div>{{ option.label }}</div>
-              </label>
-            </div>
-          </template>
-        </input-base>
-      </template>
-    </ry-form>
-  </div>
+  <drawer-content title="创建代理" v-bind="$attrs">
+    <div class="h-full flex flex-col">
+      <Button @click="_getFormData">
+        getFormData
+      </Button>
+      <ry-form :inputs="formInputs">
+        <template #server="{ input }">
+          <input-base v-bind="input">
+            <template #input>
+              <InputGroup>
+                <template v-for="(item, index) in input.items" :key="index">
+                  <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
+                    option-value="value" show-clear />
+                  <InputText v-else v-bind="item" v-model="item.value" type="text" />
+                </template>
+              </InputGroup>
+            </template>
+          </input-base>
+        </template>
+        <template #protocol="{ input }">
+          <input-base v-bind="input">
+            <template #input>
+              <div class="form-protocol">
+                <label v-for="option in input.options" :key="option.key" :for="option.value"
+                  class="cursor-pointer form-protocol-item">
+                  <RadioButton v-model="input.value" :input-id="option.value" :name="input.name"
+                    :value="option.value" />
+                  <div>{{ option.label }}</div>
+                </label>
+              </div>
+            </template>
+          </input-base>
+        </template>
+      </ry-form>
+    </div>
+    <template #footer>
+      <ry-button label="Test Proxy" severity="secondary" outlined />
+      <ry-button label="Save selected" severity="info" />
+    </template>
+  </drawer-content>
 </template>
 
 <style lang="scss" scoped>

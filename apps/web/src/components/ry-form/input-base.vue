@@ -1,23 +1,26 @@
 <script setup lang="ts">
-const props = defineProps({
+import inputLabel from './input-label.vue'
+
+defineProps({
   name: String,
   type: {
     type: String,
     default: 'text',
   },
-  tooltip: String,
+  labelPosition: {
+    type: String,
+    default: 'top',
+  },
+  // tooltip: String,
   icon: String,
+  leftIcon: String,
   iconClick: {
     type: Function,
     default: () => () => { },
   },
 })
 
-function onIconClick(attrs: Record<string, unknown>) {
-  console.log('🚀 ~ onIconClick ~ toRaw(attrs):', toRaw(attrs))
-  // toRaw(props)
-  // console.log('🚀 ~ props:', props)
-}
+defineEmits(['iconClick'])
 
 const xxx = useAttrs()
 if (xxx.mark) {
@@ -26,24 +29,25 @@ if (xxx.mark) {
 </script>
 
 <template>
-  <div class="ry-input">
+  <div class="rx-input" :class="{ 'rx-label-left': labelPosition === 'left' }">
     <slot>
       <slot name="label">
-        <label v-if="$attrs.label" class="ry-input-label" :for="name">
-          <span>{{ $attrs.label }}</span>
-          <span v-if="tooltip" v-tooltip.top="tooltip" class="mdi mdi-alert-octagon ry-input-label-tooltip" />
-        </label>
+        <input-label class="input-label" :name="name" v-bind="$attrs" />
       </slot>
       <slot name="input" :input="$attrs">
-        <Textarea v-if="type === 'textarea'" :id="name" v-bind="$attrs" />
-        <Password v-if="type === 'password'" :id="name" :feedback="false" toggle-mask v-bind="$attrs" />
-        <IconField>
+        <IconField v-if="type !== 'password'" class="w-full">
+          <InputIcon v-if="leftIcon">
+            <span :class="leftIcon" class="cursor-pointer" @click="$emit('iconClick')" />
+          </InputIcon>
+          <Textarea v-if="type === 'textarea'" :id="name" class="w-full" rows="5" cols="30" auto-resize
+            v-bind="$attrs" />
           <InputText v-if="type === 'text'" :id="name" class="w-full" v-bind="$attrs" />
           <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" />
-          <InputIcon>
-            <span v-if="icon" :class="icon" @click="onIconClick($attrs)" />
+          <InputIcon v-if="icon" :class="{ 'textarea-icon': type === 'textarea' }">
+            <span :class="icon" class="cursor-pointer" @click="$emit('iconClick')" />
           </InputIcon>
         </IconField>
+        <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs" />
       </slot>
     </slot>
   </div>
@@ -54,28 +58,16 @@ if (xxx.mark) {
   width: 100%;
 }
 
-.ry-input {
+.rx-input {
   display: flex;
   flex-direction: column;
-  align-self: stretch;
 
-  &-label {
-    display: flex;
-    height: 20px;
-    align-items: center;
-    gap: var(--spacing-sm, 4px);
-    align-self: stretch;
-    margin-bottom: var(--spacing-sm, 4px);
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-lg, 20px);
-
-    &-tooltip {
-      font-size: 12px;
-    }
+  &.rx-label-left {
+    flex-direction: row;
   }
+}
+
+.textarea-icon {
+  top: 1.2rem;
 }
 </style>

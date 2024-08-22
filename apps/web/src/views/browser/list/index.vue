@@ -11,7 +11,7 @@ import customFilter from './components/custom-filter.vue'
 // @ts-ignore
 import browserControl from './components/browser-control.vue'
 // @ts-ignore
-import proxyDrawer from './components/proxy/index.vue'
+import drawersContent from '../components/drawers/index.vue'
 
 import useColumns from '/@/hooks/useColumns'
 import { useContextMenu } from '/@/hooks/useContextMenu'
@@ -25,7 +25,7 @@ const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 
 const drawer = reactive({
-  visible: true,
+  visible: false,
 })
 
 // ======================================
@@ -55,8 +55,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <Button label="aaa" @click="drawer.visible = true" />
-  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation"
+  <Button label="open-drawers" @click="drawer.visible = true" />
+  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" column-selection
     :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
     <template #header-extra>
       <custom-filter />
@@ -77,7 +77,7 @@ onMounted(() => {
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
     :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
-      <proxy-drawer :close-drawer="closeCallback" />
+      <drawers-content :close-drawer="closeCallback" />
     </template>
   </Drawer>
 </template>

@@ -2,32 +2,30 @@
 <script setup lang="ts">
 import ryButton from '/@/components/ry-button'
 
-// @ts-ignore
-import list from './list.vue'
-// @ts-ignore
-import create from './create.vue'
-
 defineProps({
-  closeDrawer: {
-    type: Function,
-    default: () => () => { },
+  title: {
+    type: String,
+    default: 'Drawer title',
   },
 })
+
+defineEmits(['confirm', 'close'])
 </script>
 
 <template>
   <div class="w-full h-full drawer">
-    <div class="flex justify-between items-center drawer-title">
-      <span>选择代理</span>
-      <span class="cursor-pointer" @click="() => closeDrawer()">x</span>
+    <div class="flex justify-between items-center drawer-header">
+      <span>{{ title }}</span>
+      <span class="cursor-pointer" @click="$emit('close')">x</span>
     </div>
     <div class="drawer-content">
-      <list />
-      <!-- <create /> -->
+      <slot />
     </div>
-    <div class="flex justify-end drawer-footer">
-      <ry-button label="Save selected" severity="info" />
-      <ry-button label="Test Proxy" severity="secondary" outlined />
+    <div class="drawer-footer">
+      <slot name="footer">
+        <slot name="footer-left" />
+        <ry-button label="Confirm" severity="info" @click="$emit('confirm')" />
+      </slot>
     </div>
   </div>
 </template>
@@ -37,7 +35,7 @@ defineProps({
   display: flex;
   flex-direction: column;
 
-  &-title {
+  &-header {
     padding: var(--spacing-lg, 8px) var(--spacing-2xl, 16px);
     border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
     color: var(--Colors-Text-text-primary, #171c1f);
@@ -50,16 +48,15 @@ defineProps({
   }
 
   &-content {
-    flex: auto;
+    flex: 1;
     padding: var(--spacing-2xl, 16px);
   }
 
   &-footer {
     display: flex;
-    flex-direction: row-reverse;
-    padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) var(--spacing-3xl, 20px) var(--spacing-2xl, 16px);
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
   }
 }
 </style>

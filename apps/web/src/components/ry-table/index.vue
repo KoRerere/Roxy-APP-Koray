@@ -47,7 +47,7 @@ const props = defineProps({
     type: Function as PropType<(event: any, data: any) => void>,
     default: () => () => { },
   },
-  rowSelection: {
+  columnSelection: {
     type: Boolean,
     default: false,
   },
@@ -61,14 +61,13 @@ const _filters = ref(props.filters)
 const tableAttrs = reactive({
   'paginator': true,
   'rows': 15,
-  'rows-per-page-options': [5, 15, 30, 50],
+  'rows-per-page-options': [5, 15, 30, 70],
   'scrollable': true,
   'scroll-height': 'flex',
   'context-menu': true,
   'show-gridlines': true,
   'resizable-columns': true,
   'column-resize-mode': 'expand',
-  'row-selection': true,
   'scroll': { x: 500, y: 400 },
   ...useAttrs(),
 })
@@ -161,7 +160,7 @@ function batchOperation(item: any) {
           </slot>
         </template>
 
-        <Column v-if="rowSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
+        <Column v-if="columnSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">

@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import inputBase from './input-base.vue'
+import inputSelect from './input-select.vue'
 
 defineProps({
-  inputs: Array as PropType<any[]>,
-  default: () => [],
+  inputs: {
+    tyep: Array as PropType<any[]>,
+    default: () => [],
+  },
+  labelPosition: {
+    type: String,
+    default: 'top',
+  },
 })
+
+defineEmits(['iconClick'])
+
+const baseInput = ['text', 'password', 'number', 'textarea']
 </script>
 
 <template>
   <form class="ry-form" action="">
     <template v-for="input in inputs" :key="input.name">
-      <slot :name="input.slot" :input="input">
+      <slot :name="input.slot" :input="{ ...input, labelPosition }">
         <div v-if="input.separator" class="ry-form-line" />
-        <input-base v-else v-model="input.value" v-bind="input" />
+        <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value"
+          v-bind="{ ...input, labelPosition }" @icon-click="() => $emit('iconClick', input)" />
+        <input-select v-else-if="input.type === 'select'" v-bind="{ ...input, labelPosition }" v-model="input.value" />
       </slot>
     </template>
   </form>
