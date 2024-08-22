@@ -10,7 +10,7 @@ const formInputs = ref([
     label: 'Smart detection',
     name: 'SOCKS7',
     value: null,
-    placeholder: 'this is placeholder',
+    placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
     tooltip: 'man!',
   },
   {
@@ -59,18 +59,21 @@ const formInputs = ref([
     label: 'Username',
     name: 'SOCKS4',
     value: null,
+    placeholder: 'Username for your server',
   },
   {
     type: 'password',
     name: 'SOCKS5',
     label: 'Password',
     value: null,
+    placeholder: 'Password for your server',
   },
   {
     type: 'text',
-    label: 'label标题',
+    label: 'Refreshing URL',
     name: 'SOCKS6',
     value: null,
+    placeholder: 'Please enter a valid URL',
     tooltip: 'mamba out!',
     icon: 'mdi mdi-refresh',
   },
@@ -93,7 +96,7 @@ function _getFormData () {
             <InputGroup>
               <template v-for="(item, index) in input.items" :key="index">
                 <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-                  option-value="value" />
+                  option-value="value" show-clear />
                 <InputText v-else v-bind="item" v-model="item.value" type="text" />
               </template>
             </InputGroup>

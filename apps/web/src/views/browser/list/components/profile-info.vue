@@ -112,8 +112,6 @@ const links = ref([
     icon: _props.data.platformUrl,
     classes: '',
     tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
-    onClick: () => {
-    },
   },
   {
     icon: _props.data.platformUrl,

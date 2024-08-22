@@ -8,7 +8,6 @@ import tableSort from './table-sort.vue'
 const props = defineProps({
   tableRequest: {
     type: Function as PropType<(data: any) => Promise<any>>,
-    required: true,
     default: () => () => [],
   },
   tableParams: {
@@ -18,6 +17,10 @@ const props = defineProps({
   dataKey: {
     type: String,
     default: 'id',
+  },
+  dataList: {
+    type: Array as PropType<any[]>,
+    default: null,
   },
   columns: {
     type: Array as PropType<any[]>,
@@ -52,7 +55,7 @@ const props = defineProps({
 
 defineEmits(['update:columns'])
 
-const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible))
+const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref(props.filters)
 
 const tableAttrs = reactive({
@@ -75,21 +78,26 @@ const params = reactive({
   sort: {},
 })
 
-const dataList = ref([])
+const _dataList = ref([])
 
 function onChangeParams(key: string, data: any) {
   Object.assign(params[key], data)
   _request()
 }
 
-async function _request(outerParams?: any) {
-  const requestParams = {
+function _getParams(outerParams?: any) {
+  return {
     ...params.filter,
     ...params.sort,
     ...props.tableParams,
     ...outerParams,
   }
-  dataList.value = await props.tableRequest(requestParams)
+}
+async function _request(outerParams?: any) {
+  const requestParams = _getParams(outerParams)
+  _dataList.value = Array.isArray(props.dataList)
+    ? props.dataList
+    : await props.tableRequest(requestParams)
 }
 
 onMounted(() => {
@@ -98,6 +106,14 @@ onMounted(() => {
 
 defineExpose({
   request: _request,
+  getParams: (callback: (params: any, done) => void) => {
+    callback?.(
+      _getParams(),
+      (list?: any[]) => {
+        _dataList.value = list || props.dataList
+      },
+    )
+  },
 })
 
 // ======================================
@@ -133,7 +149,7 @@ function batchOperation(item: any) {
     </div>
     <div class="table-body">
       <DataTable v-model:selection="RowsSelectedData" v-model:contextMenuSelection="contextMenuSelection"
-        :value="dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
+        :value="_dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -166,7 +182,7 @@ function batchOperation(item: any) {
     </ContextMenu>
     <Transition>
       <selection-operation v-if="RowsSelectedData?.length > 0" v-model:selection="RowsSelectedData"
-        :total="dataList.length" :operation="operation" @batch-operation="batchOperation" />
+        :total="_dataList.length" :operation="operation" @batch-operation="batchOperation" />
     </Transition>
   </div>
 </template>

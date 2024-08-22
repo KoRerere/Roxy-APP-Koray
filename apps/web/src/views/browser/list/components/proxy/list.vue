@@ -87,25 +87,27 @@ watch(() => selectedProxy.value, (newValue) => {
 </script>
 
 <template>
-  <ry-table :data-list="dataList" :columns="columns" :show-config="false">
-    <template #header-extra>
-      <div class="flex flex-auto items-center justify-between">
-        <SelectButton v-model="filterConfig.value" :options="filterConfig.options" option-label="name"
-          option-value="key" data-key="key" />
-        <Button outlined severity="secondary">
-          <span class="mdi mdi-wifi-refresh" />
-          <span>Test All</span>
-        </Button>
-      </div>
-    </template>
-    <template #id="{ data }">
-      <div class="flex items-center gap-2">
-        <RadioButton v-model="selectedProxy" :input-id="`${data.id}`" name="proxy-select" :value="data.id" />
-        <label class="w-full cursor-pointer" :for="`${data.id}`">{{ data.id }}</label>
-      </div>
-    </template>
-    <template #actions>
-      <actions :operation="operation" />
-    </template>
-  </ry-table>
+  <div class="h-full w-[600px]">
+    <ry-table :data-list="dataList" :columns="columns" :show-config="false">
+      <template #header-extra>
+        <div class="flex flex-auto items-center justify-between">
+          <SelectButton v-model="filterConfig.value" :options="filterConfig.options" option-label="name"
+            option-value="key" data-key="key" />
+          <Button outlined severity="secondary">
+            <span class="mdi mdi-wifi-refresh" />
+            <span>Test All</span>
+          </Button>
+        </div>
+      </template>
+      <template #id="{ data }">
+        <div class="flex items-center gap-2">
+          <RadioButton v-model="selectedProxy" :input-id="`${data.id}`" name="proxy-select" :value="data.id" />
+          <label class="w-full cursor-pointer" :for="`${data.id}`">{{ data.id }}</label>
+        </div>
+      </template>
+      <template #actions>
+        <actions :operation="operation" />
+      </template>
+    </ry-table>
+  </div>
 </template>

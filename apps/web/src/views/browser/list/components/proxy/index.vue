@@ -22,8 +22,8 @@ defineProps({
       <span class="cursor-pointer" @click="() => closeDrawer()">x</span>
     </div>
     <div class="drawer-content">
-      <!-- <list /> -->
-      <create />
+      <list />
+      <!-- <create /> -->
     </div>
     <div class="flex justify-end drawer-footer">
       <ry-button label="Save selected" severity="info" />

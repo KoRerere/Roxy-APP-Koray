@@ -25,7 +25,7 @@ const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 
 const drawer = reactive({
-  visible: false,
+  visible: true,
 })
 
 // ======================================
@@ -55,6 +55,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <Button label="aaa" @click="drawer.visible = true" />
   <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation"
     :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
     <template #header-extra>
