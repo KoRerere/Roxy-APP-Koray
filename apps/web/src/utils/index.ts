@@ -10,9 +10,10 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function formatInputs(inputs: any[]): any {
+export function formatInputs(inputs: any[], original: any = {}): any {
   return inputs.reduce((formData, input) => {
-    const { name, value, items } = input
+    const { name, value, hide, items } = input
+    if (hide) return formData
     if (Object.prototype.hasOwnProperty.call(formData, name)) {
       throw new Error(`Duplicate name '${name}' found in inputs`)
     }
@@ -22,5 +23,12 @@ export function formatInputs(inputs: any[]): any {
       formData[name] = value?.value ?? value
     }
     return formData
+  }, original)
+}
+
+export function formatInputsByList(inputsGroup: any[]): any {
+  return inputsGroup.reduce((formData, inputs) => {
+    const _data = formatInputs(inputs, formData)
+    return Object.assign(formData, _data)
   }, {})
 }

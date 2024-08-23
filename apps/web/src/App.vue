@@ -17,7 +17,7 @@ const collapsed = ref<boolean>(false)
       </div>
     </a-layout-sider>
     <a-layout>
-      <a-layout-header style="background: yellowgreen">
+      <a-layout-header style="background: pink">
         common header
       </a-layout-header>
       <a-layout-content>

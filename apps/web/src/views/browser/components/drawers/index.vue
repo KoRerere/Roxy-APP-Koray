@@ -12,7 +12,7 @@ defineProps({
   },
 })
 
-const type = ref('pl')
+const type = ref('pc')
 </script>
 
 <template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import inputBase from './input-base.vue'
-import inputSelect from './input-select.vue'
+import formItem from './form-item.vue'
 
-defineProps({
+const _props = defineProps({
   inputs: {
-    tyep: Array as PropType<any[]>,
+    tyep: Array,
     default: () => [],
   },
   labelPosition: {
@@ -15,17 +15,20 @@ defineProps({
 
 defineEmits(['iconClick'])
 
+const _inputs = computed(() => _props.inputs.filter(input => input.visible !== false))
+
 const baseInput = ['text', 'password', 'number', 'textarea']
 </script>
 
 <template>
   <form class="ry-form" action="">
-    <template v-for="input in inputs" :key="input.name">
+    <template v-for="input in _inputs" :key="input.name">
       <slot :name="input.slot" :input="{ ...input, labelPosition }">
         <div v-if="input.separator" class="ry-form-line" />
         <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value"
           v-bind="{ ...input, labelPosition }" @icon-click="() => $emit('iconClick', input)" />
-        <input-select v-else-if="input.type === 'select'" v-bind="{ ...input, labelPosition }" v-model="input.value" />
+        <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition"
+          @change="() => input.change?.(input.value, input, inputs)" />
       </slot>
     </template>
   </form>

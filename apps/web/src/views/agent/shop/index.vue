@@ -11,7 +11,7 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .box {
   width: 600px;
   height: 600px;
@@ -28,10 +28,10 @@
 .content {
   flex: 1;
   background-color: orange;
-}
 
-.son {
-  height: 100%;
-  background-color: yellow;
+  .son {
+    height: 50%;
+    background-color: yellow;
+  }
 }
 </style>

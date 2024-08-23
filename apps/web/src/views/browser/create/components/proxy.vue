@@ -3,7 +3,7 @@ import ryButton from '/@/components/ry-button'
 import drawersContent from '/@/views/browser/components/drawers/index.vue'
 
 const drawer = reactive({
-  visible: true,
+  visible: false,
 })
 </script>
 
