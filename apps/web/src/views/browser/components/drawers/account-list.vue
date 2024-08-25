@@ -79,8 +79,8 @@ watch(() => selectedProxy.value, (newValue) => {
 
 <template>
   <drawer-content title="账号列表" v-bind="$attrs">
-    <div class="h-[600px] w-[600px]">
-      <ry-table :data-list="dataList" :columns="columns" :show-config="false" column-selection :filters="filters">
+    <div class="h-full">
+      <ry-table :data-list="dataList" :columns="columns" :show-config="false" :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>

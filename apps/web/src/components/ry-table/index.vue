@@ -27,6 +27,10 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  selectionMode: {
+    type: String as PropType<'single' | 'multiple' | undefined>,
+    default: undefined,
+  },
   filters: {
     type: Array as PropType<any[]>,
     default: () => [],
@@ -47,10 +51,6 @@ const props = defineProps({
     type: Function as PropType<(event: any, data: any) => void>,
     default: () => () => { },
   },
-  columnSelection: {
-    type: Boolean,
-    default: false,
-  },
 })
 
 defineEmits(['update:columns'])
@@ -69,10 +69,12 @@ const tableAttrs = reactive({
   'resizable-columns': true,
   'column-resize-mode': 'expand',
   'scroll': { x: 500, y: 400 },
+  'selection-mode': props.selectionMode,
+  'paginator-template': 'PrevPageLink PageLinks NextPageLink',
   ...useAttrs(),
 })
 
-const params = reactive({
+const params = reactive<any>({
   filter: {},
   sort: {},
 })
@@ -105,10 +107,10 @@ onMounted(() => {
 
 defineExpose({
   request: _request,
-  getParams: (callback: (params: any, done) => void) => {
+  getParams: (callback: (params: any, done: any) => void) => {
     callback?.(
       _getParams(),
-      (list?: any[]) => {
+      (list?: any) => {
         _dataList.value = list || props.dataList
       },
     )
@@ -118,18 +120,18 @@ defineExpose({
 // ======================================
 const menuRef = ref()
 const contextMenuSelection = ref()
-const RowsSelectedData = ref([])
+const selectionData = ref()
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   menuRef.value.show(event.originalEvent)
 }
 
-function menuClick(item: any) {
+function contextMenuClick(item: any) {
   props.operationHandler(item, contextMenuSelection.value)
 }
 
 function batchOperation(item: any) {
-  props.operationHandler(item, RowsSelectedData.value)
+  props.operationHandler(item, selectionData.value)
 }
 </script>
 
@@ -147,10 +149,17 @@ function batchOperation(item: any) {
       </div>
     </div>
     <div class="table-body">
-      <DataTable v-model:selection="RowsSelectedData" v-model:contextMenuSelection="contextMenuSelection"
+      <DataTable v-model:selection="selectionData" v-model:contextMenuSelection="contextMenuSelection"
         :value="_dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
+        </template>
+        <template #paginatorstart>
+          <div class="flex items-center table-body-jump">
+            <div>Go to</div>
+            <InputNumber placeholder="Page" />
+            <div>|</div>
+          </div>
         </template>
         <template #empty>
           <slot name="table-empty">
@@ -160,7 +169,7 @@ function batchOperation(item: any) {
           </slot>
         </template>
 
-        <Column v-if="columnSelection" selection-mode="multiple" :data-key="dataKey" header-style="width: 3rem" />
+        <Column v-if="selectionMode" :selection-mode="selectionMode" :data-key="dataKey" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
@@ -173,15 +182,16 @@ function batchOperation(item: any) {
 
     <ContextMenu ref="menuRef" :model="operation">
       <template #item="{ item, props: ctxProps }">
-        <a v-ripple v-bind="ctxProps.action" @click="menuClick(item)">
+        <a v-ripple v-bind="ctxProps.action" @click="contextMenuClick(item)">
           <span :class="item.icon" />
           <span>{{ item.name }}</span>
         </a>
       </template>
     </ContextMenu>
     <Transition>
-      <selection-operation v-if="RowsSelectedData?.length > 0" v-model:selection="RowsSelectedData"
-        :total="_dataList.length" :operation="operation" @batch-operation="batchOperation" />
+      <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
+        v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
+        @batch-operation="batchOperation" />
     </Transition>
   </div>
 </template>
@@ -196,7 +206,17 @@ function batchOperation(item: any) {
 
   &-body {
     height: calc(100% - 60px);
+
+    &-jump {
+      display: flex;
+      gap: var(--spacing-lg, 8px);
+    }
   }
+}
+
+:deep(.p-paginator-content-start) {
+  margin: auto;
+  margin-right: 0;
 }
 
 .v-enter-active,

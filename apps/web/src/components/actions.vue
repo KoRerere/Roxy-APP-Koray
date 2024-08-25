@@ -1,8 +1,14 @@
 <script setup lang="ts">
+import ryButton from './ry-button'
+
 const props = defineProps({
   operation: {
     type: Array,
     default: () => [],
+  },
+  showMenu: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -14,11 +20,12 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
 <template>
   <div class="flex items-center">
     <div class="quick">
-      <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer" :class="[item.icon]" />
+      <span v-for="item in quickOperation" :key="item.name" class="quick-item cursor-pointer" :class="[item.icon]"
+        @click.stop="() => item.onClick?.()" />
     </div>
-    <Button text size="small" @click.stop="$emit('more', [$event, operation])">
+    <ryButton v-if="showMenu" text size="small" @click.stop="$emit('more', [$event, operation])">
       <span class="mdi mdi-dots-horizontal" />
-    </Button>
+    </ryButton>
   </div>
 </template>
 
@@ -33,12 +40,9 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
   gap: var(--spacing-lg, 8px);
 
   &-item {
-    display: flex;
-    padding: var(--spacing-sm, 4px);
-    justify-content: center;
-    align-items: center;
-    gap: var(--spacing-sm, 4px);
-    font-size: 16px;
+    &:active {
+      color: orange;
+    }
   }
 }
 </style>
