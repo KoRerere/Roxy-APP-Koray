@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { formatInputsByList, hasOwnProperty } from '/@/utils'
+import { getFormDataByList } from '/@/utils'
 
 function setInputVisible(inputs: any[], names: string | string[], state: boolean) {
   const _names: string[] = ([] as string[]).concat(names)
@@ -11,7 +11,7 @@ function setInputVisible(inputs: any[], names: string | string[], state: boolean
 }
 
 async function getUaWebgl(windowInputs: any) {
-  const { os, osVersion, coreVersion } = formatInputsByList(windowInputs)
+  const { os, osVersion, coreVersion } = getFormDataByList(windowInputs)
   const { data } = await API.window.userGetUaWebglList({ os, osVersion, coreVersion })
 
   const keys = Object.keys(data)
@@ -25,11 +25,21 @@ async function getUaWebgl(windowInputs: any) {
   })
 }
 
+async function getDeviceName(windowInputs: any) {
+  const { os } = getFormDataByList(windowInputs)
+  return API.window.userGetDeviceNameList({ os })
+}
+
+async function getMacAddr(windowInputs: any) {
+  // const { os } = getFormDataByList(windowInputs)
+  // return API.window.userGetMacAddrV2List({ os })
+}
+
 export function getInputs(_data?: any) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   console.log('🚀 ~ getInputs ~  $dict_map:', $dict_map)
 
-  const windowInputs = [
+  const windowInputs = reactive([
     [
       {
         label: '系统选择',
@@ -76,15 +86,10 @@ export function getInputs(_data?: any) {
         type: 'textarea',
         label: 'User-Agent',
         name: 'userAgent',
-        value:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.202 Safari/537.36',
+        value: null,
         placeholder: 'placeholder',
         icon: 'mdi mdi-shuffle-variant',
-        iconClick: async (self: any, inputs: any) => {
-          // const { os, osVersion, coreVersion } = formatInputs(inputs)
-          // API.window.userGetUaWebglList({ os, osVersion, coreVersion }).then((res) => {
-          //   self.value = res.data.userAgent
-          // })
+        iconClick: () => {
           getUaWebgl(windowInputs)
         }
       },
@@ -129,42 +134,44 @@ export function getInputs(_data?: any) {
         name: 'isLanguageBaseIp',
         value: true,
         options: [
-          { label: '跟随ip匹配true', value: true },
-          { label: '自定义false', value: false }
+          { label: '跟随ip匹配', value: true },
+          { label: '自定义', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'language', input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'language', self.value === false)
         }
       },
       {
         type: 'select',
-        label: '#x ',
+        label: ' ',
         name: 'language',
-        placeholder: '选择语言',
-        value: { label: '#x中文(CN)', value: 'zh-CN' },
-        options: [],
+        placeholder: '请选择语言',
+        value: null,
+        options: $dict_map.language,
+        virtualScrollerOptions: { itemSize: 38 },
         visible: false
       },
       {
         type: 'radio',
         label: '语言界面',
-        name: 'languageInterface',
+        name: 'isDisplayLanguageBaseIp',
         value: true,
         options: [
-          { label: '跟随ip匹配true', value: true },
-          { label: '自定义false', value: false }
+          { label: '跟随ip匹配', value: true },
+          { label: '自定义', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'displayLanguage', input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'displayLanguage', self.value === false)
         }
       },
       {
         type: 'select',
-        label: '#x ',
+        label: ' ',
         name: 'displayLanguage',
-        placeholder: '选择语言',
-        value: { label: '#x日文(JP)', value: 'ja-JP' },
-        options: [],
+        placeholder: '请选择语言',
+        value: null,
+        options: $dict_map.language,
+        virtualScrollerOptions: { itemSize: 38 },
         visible: false
       },
       {
@@ -176,25 +183,18 @@ export function getInputs(_data?: any) {
           { label: '跟随ip匹配', value: true },
           { label: '自定义', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'timeZone', input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'timeZone', self.value === false)
         }
       },
       {
         type: 'select',
-        label: '#x ',
+        label: ' ',
         name: 'timeZone',
-        placeholder: '选择时区',
-        value: { label: '#x北京时间', value: 'Asia/Shanghai' },
-        options: [
-          { label: '#x北京时间', value: 'Asia/Shanghai' },
-          { label: '#x上海时间', value: 'Asia/Shanghai' },
-          { label: '#x香港时间', value: 'Asia/Shanghai' },
-          { label: '#x澳门时间', value: 'Asia/Shanghai' },
-          { label: '#x新加坡时间', value: 'Asia/Shanghai' },
-          { label: '#x东京时间', value: 'Asia/Tokyo' },
-          { label: '#x巴黎时间', value: 'Europe/Paris' }
-        ],
+        placeholder: '请选择时区',
+        value: null,
+        options: $dict_map.timeZone,
+        virtualScrollerOptions: { itemSize: 38 },
         visible: false
       },
       {
@@ -207,10 +207,10 @@ export function getInputs(_data?: any) {
           { label: '允许', value: 1 },
           { label: '禁用', value: 2 }
         ],
-        change(_v: any, input: any, inputs: any) {
+        change(_v: any, self: any, inputs: any) {
           const ipt = inputs.find((ipt: any) => ipt.name === 'isPositionBaseIp')
           if (ipt) {
-            const visible = input.value !== 2
+            const visible = self.value !== 2
             ipt.visible = visible
             if (!visible) {
               ipt.value = true
@@ -229,8 +229,8 @@ export function getInputs(_data?: any) {
           { label: '自定义', value: false }
         ],
         visible: true,
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, ['longitude', 'latitude', 'precisionPos'], input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, ['longitude', 'latitude', 'precisionPos'], self.value === false)
         }
       },
       {
@@ -288,18 +288,18 @@ export function getInputs(_data?: any) {
         ]
       },
       {
-        label: '#x窗口大小',
+        label: '窗口大小',
         slot: 'windowSize',
         items: [
           {
             type: 'text',
-            name: 'windowWidth',
-            placeholder: 'width'
+            name: 'openWidth',
+            placeholder: '请输入宽度'
           },
           {
             type: 'text',
-            name: 'windowHeight',
-            placeholder: 'height'
+            name: 'openHeight',
+            placeholder: '请输入高度'
           }
         ]
       }
@@ -314,21 +314,18 @@ export function getInputs(_data?: any) {
           { label: '跟随电脑', value: false },
           { label: '自定义', value: true }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'resolutionValue', input.value === true)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'resolution', self.value === true)
         }
       },
       {
         type: 'select',
-        label: '#x分辨率值',
-        name: 'resolutionValue',
-        value: { label: '#x1280 x 720', value: true },
-        options: [
-          { label: '#x1280 x 720', value: true },
-          { label: '#x1920 x 1080', value: false },
-          { label: '#x2560 x 1440', value: '3' },
-          { label: '#x3840 x 2160', value: '4' }
-        ],
+        label: '分辨率值',
+        name: 'resolution',
+        placeholder: '请选择分辨率',
+        value: null,
+        options: $dict_map.resolution,
+        virtualScrollerOptions: { itemSize: 38 },
         visible: false
       },
       {
@@ -371,8 +368,8 @@ export function getInputs(_data?: any) {
           { label: '真实', value: true },
           { label: '自定义', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, ['webGLManufacturer', 'webGLRender'], input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, ['webGLManufacturer', 'webGLRender'], self.value === false)
         }
       },
       {
@@ -382,7 +379,10 @@ export function getInputs(_data?: any) {
         value: null,
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
-        visible: true
+        visible: true,
+        iconClick: () => {
+          getUaWebgl(windowInputs)
+        }
       },
       {
         type: 'textarea',
@@ -392,7 +392,10 @@ export function getInputs(_data?: any) {
         placeholder: '',
         rows: 3,
         icon: 'mdi mdi-shuffle-variant',
-        visible: true
+        visible: true,
+        iconClick: () => {
+          getUaWebgl(windowInputs)
+        }
       },
       {
         type: 'radio',
@@ -474,18 +477,23 @@ export function getInputs(_data?: any) {
           { label: '随机', value: false },
           { label: '真实', value: true }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'deviceName', input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'deviceName', self.value === false)
         }
       },
       {
         type: 'text',
-        label: '#x ',
+        label: ' ',
         name: 'deviceName',
         value: null,
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
-        visible: true
+        visible: true,
+        iconClick: (self: any) => {
+          getDeviceName(windowInputs).then(({ data }) => {
+            self.value = data.deviceName
+          })
+        }
       },
       {
         type: 'radio',
@@ -496,67 +504,64 @@ export function getInputs(_data?: any) {
           { label: '真实', value: true },
           { label: '自定义', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'macAddr', input.value === false)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'macAddr', self.value === false)
         }
       },
       {
         type: 'text',
-        label: '#x ',
+        label: '#x 2',
         name: 'macAddr',
         value: null,
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
-        visible: true
+        visible: true,
+        iconClick: (self: any) => {
+          // getMacAddr(windowInputs).then(({ data }) => {
+          //   self.value = data.deviceName
+          // })
+        }
       },
       {
         type: 'select',
-        label: '#x硬件并发数',
-        name: 'hardwareParallelNumber',
-        value: { label: '#x2核', value: false },
-        placeholder: 'Username for your server',
-        options: Array.from({ length: 8 }, (_, i) => ({
-          label: `${(i + 1) * 2}核`,
-          value: `${(i + 1) * 2}`
-        }))
+        label: '硬件并发数',
+        name: 'hardwareConcurrent',
+        placeholder: '请选择硬件并发数',
+        value: null,
+        options: $dict_map.hardwareConcurrent
       },
       {
         type: 'select',
-        label: '#x设备内存',
-        name: 'DeviceMemory',
-        value: { label: '#x2G', value: false },
-        placeholder: 'Username for your server',
-        options: Array.from({ length: 5 }, (_, i) => ({
-          label: `${(i + 1) * 2}G`,
-          value: `${(i + 1) * 2}`
-        }))
+        label: '设备内存',
+        name: 'deviceMemory',
+        placeholder: '请选择设备内存',
+        value: null,
+        options: $dict_map.deviceMemory
       },
       {
         type: 'radio',
         label: 'SSL指纹设置',
         name: 'disableSsl',
-        value: false,
+        value: true,
         options: [
           { label: '开启', value: true },
           { label: '关闭', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'disableSslList', input.value === true)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'disableSslList', self.value === true)
         }
       },
       {
         type: 'select',
-        label: '#x ',
+        label: ' ',
         name: 'disableSslList',
-        value: null,
         placeholder: '选择SSL指纹设置',
-        options: [
-          { label: '#x1280 x 720', value: '1' },
-          { label: '#x1920 x 1080', value: '2' },
-          { label: '#x2560 x 1440', value: '3' },
-          { label: '#x3840 x 2160', value: '4' }
-        ],
-        visible: false
+        value: $dict_map.disableSslList[0],
+        options: $dict_map.disableSslList,
+        visible: true,
+        formatValue: (value: string) => {
+          return [value]
+        }
       },
       {
         type: 'radio',
@@ -567,8 +572,8 @@ export function getInputs(_data?: any) {
           { label: '开启', value: true },
           { label: '关闭', value: false }
         ],
-        change(_v: any, input: any, inputs: any) {
-          setInputVisible(inputs, 'portScanList', input.value === true)
+        change(_v: any, self: any, inputs: any) {
+          setInputVisible(inputs, 'portScanList', self.value === true)
         }
       },
       {
@@ -769,7 +774,7 @@ export function getInputs(_data?: any) {
         ]
       }
     ]
-  ]
+  ])
 
-  return { windowInputs }
+  return [windowInputs]
 }

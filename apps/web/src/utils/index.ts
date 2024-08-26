@@ -28,16 +28,28 @@ export function clearInputsValue(inputs: any): void {
   })
 }
 
-export function formatInputs(inputs: any[], original: any = {}): any {
+interface FormDataOptions {
+  keyName: string
+  valueName: string
+}
+
+export function getFormData(
+  inputs: any[],
+  original: object = {},
+  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+): any {
   return inputs.reduce((formData, input) => {
-    const { name, value, hide, items, formatValue } = input
-    if (hide) return formData
+    const { visible, items, formatValue } = input
+    const name = input[options.keyName]
+    const value = input[options.valueName]
+
+    if (visible === false) return formData
     if (hasOwnProperty(formData, name)) {
       throw new Error(`Duplicate name '${name}' found in inputs`)
     }
     if (items) {
-      Object.assign(formData, formatInputs(items))
-    } else if (name) {
+      Object.assign(formData, getFormData(items))
+    } else if (name?.trim()) {
       const _value = value?.value ?? value
       formData[name] = isFunction(formatValue) ? formatValue(_value, input, inputs) : _value
     }
@@ -45,11 +57,15 @@ export function formatInputs(inputs: any[], original: any = {}): any {
   }, original)
 }
 
-export function formatInputsByList(inputsGroup: any[]): any {
+export function getFormDataByList(
+  inputsGroup: any[],
+  original: object = {},
+  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+): any {
   return inputsGroup.reduce((formData, inputs) => {
-    const _data = formatInputs(inputs, formData)
+    const _data = getFormData(inputs, formData, options)
     return Object.assign(formData, _data)
-  }, {})
+  }, original)
 }
 
 export function getValidByObject(obj: { [key: string]: any }, keys: string[]): any {

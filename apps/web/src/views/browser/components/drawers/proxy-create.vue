@@ -2,7 +2,7 @@
 import ryForm from '/@/components/ry-form'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import drawerContent from '/@/components/drawer-content.vue'
-import { formatInputs } from '/@/utils'
+import { getFormData } from '/@/utils'
 
 const emits = defineEmits(['confirm'])
 
@@ -86,7 +86,7 @@ function testProxy () {
 }
 
 function createProxy () {
-  emits('confirm', formatInputs(formInputs.value))
+  emits('confirm', getFormData(formInputs.value))
 }
 </script>
 

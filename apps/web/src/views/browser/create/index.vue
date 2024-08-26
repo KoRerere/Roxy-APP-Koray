@@ -6,53 +6,58 @@ import rxEditDiv from '/@/components/rx-edit-div'
 import proxyItem from './components/proxy.vue'
 import accountItem from './components/account.vue'
 import previewCard from './components/preview-card.vue'
-import { formatInputsByList } from '/@/utils'
+import { getFormDataByList } from '/@/utils'
 import { getInputs } from './form-inputs'
+import { API } from '/@/api'
 
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
   { title: '批量创建', content: 'Tab 2 Content', value: '1' },
   { title: '批量导入', content: 'Tab 3 Content', value: '2' },
 ])
+const tabsValue = ref('0')
 
 const windowName = ref('Untitled profile')
-
-const { windowInputs } = getInputs()
+const [windowInputs] = getInputs()
 const accordions = reactive({
-  value: ['0'],
-  panels: [
-    {
-      title: 'window',
-      value: '0',
-      inputs: windowInputs[0],
-    },
-    {
-      title: 'Basic',
-      value: '1',
-      inputs: windowInputs[1],
-    },
-    {
-      title: 'highLevel',
-      value: '2',
-      inputs: windowInputs[2],
-    },
-    {
-      title: 'other',
-      value: '3',
-      inputs: windowInputs[3],
-    },
-  ],
+  value: ['2'],
+  panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
+    title,
+    value: `${index}`,
+    inputs: windowInputs[index],
+  })),
 })
 
-const tabValue = ref('0')
+const previewData = computed(() => getFormDataByList(windowInputs, {}, { keyName: 'label', valueName: 'value' }))
 
-const previewData = computed(() => formatInputsByList(accordions.panels.map(item => item.inputs)))
+function createProfile() {
+  const formData = getFormDataByList(windowInputs, {
+    openMult: false,
+    clearHistory: false,
+    allowRunApplication: false,
+    ignoreHttpsError: false,
+    webGLMeta: true,
+    enablePlugin: false,
+    enablePluginList: [
+      {
+        name: 'PDF Viewer',
+        description: 'Portable Document Format',
+        filename: 'internal-pdf-viewer',
+        mimeType: 'application/pdf|text/pdf',
+        mimeDescription: 'Portable Document Format|Portable Document Format',
+        suffixes: 2,
+      },
+    ],
+    mediaDevice: false,
+  })
+  API.window.userAddWindowInfoCreate(formData)
+}
 </script>
 
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-col flex-1 h-full">
-      <Tabs v-model:value="tabValue">
+      <Tabs v-model:value="tabsValue">
         <TabList>
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
             {{ tab.title }}
@@ -115,7 +120,7 @@ const previewData = computed(() => formatInputsByList(accordions.panels.map(item
       <div class="footer">
         <ry-button class="ma-auto ml-0" size="small" severity="secondary" label="Cancel" text />
         <ry-button size="small" severity="secondary" outlined label="Carete & Open" />
-        <ry-button size="small" severity="primary" label="Create profile" />
+        <ry-button size="small" severity="primary" label="Create profile" @click="createProfile" />
       </div>
     </div>
     <previewCard :data="previewData" />

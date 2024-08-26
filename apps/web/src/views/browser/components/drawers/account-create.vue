@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import ryForm from '/@/components/ry-form'
 import drawerContent from '/@/components/drawer-content.vue'
-import { clearInputsValue, formatInputs } from '/@/utils'
+import { clearInputsValue, getFormData } from '/@/utils'
 
 const props = defineProps({
   closeDrawer: {
@@ -60,7 +60,7 @@ function confirm(more: boolean) {
   if (!more) {
     props.closeDrawer()
   }
-  const formData = formatInputs(formInputs.value)
+  const formData = getFormData(formInputs.value)
   clearInputsValue(formInputs.value)
   emits('confirm', formData)
 }
