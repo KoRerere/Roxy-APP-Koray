@@ -9,7 +9,6 @@ defineProps({
 })
 
 const fakedata = fake()
-console.log('🚀 ~ fakedata:', fakedata)
 
 function fake() {
   return Object.fromEntries(Array.from({ length: 100 }, () => [Math.random().toString(36).slice(-6), Math.random().toString(36)]))

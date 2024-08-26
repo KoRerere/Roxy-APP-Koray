@@ -80,7 +80,8 @@ watch(() => selectedProxy.value, (newValue) => {
 <template>
   <drawer-content title="账号列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table :data-list="dataList" :columns="columns" :show-config="false" :filters="filters">
+      <ry-table selection-mode="multiple" :data-list="dataList" :columns="columns" :show-config="false"
+        :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>

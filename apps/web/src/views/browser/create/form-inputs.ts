@@ -26,8 +26,10 @@ export const windowInputs = [
         name: 'system',
         placeholder: 'select system',
         options: [
-          { label: 'aaa', value: 'A' },
-          { label: 'bbb', value: 'B' }
+          { label: 'windows', value: '1' },
+          { label: 'macOS', value: '2' },
+          { label: 'Android', value: '3' },
+          { label: 'IOS', value: '4' }
         ]
       },
       {
@@ -59,7 +61,7 @@ export const windowInputs = [
   {
     type: 'textarea',
     label: 'User-Agent',
-    name: 'UserAgent',
+    name: 'userAgent',
     value: null,
     placeholder: 'placeholder',
     icon: 'mdi mdi-shuffle-variant'
@@ -92,7 +94,8 @@ export const windowInputs = [
     name: 'cookies',
     value: null,
     placeholder: 'Paste your cookies with JSON format',
-    icon: 'mdi mdi-paperclip'
+    icon: 'mdi mdi-paperclip',
+    formatValue: (value, input, inputs) => {}
   }
 ]
 
