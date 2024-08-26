@@ -1,3 +1,3 @@
-import type { UserAddWindowInfoCreatePayload, UserGetWindowInfoListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetWindowInfoListData } from '@roxy/backend-api'
 
-export type WindowItemType = UserGetWindowInfoListData['data']['rows'][number] & UserAddWindowInfoCreatePayload
+export type WindowItemType = UnwrapRowType<UserGetWindowInfoListData> & UserAddWindowInfoCreatePayload

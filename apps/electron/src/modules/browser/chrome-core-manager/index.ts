@@ -4,7 +4,7 @@ import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 import { join } from 'node:path'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
-import type { UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
@@ -17,7 +17,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private usingMap = new Set<string>()
 
   /** 能够被当前系统使用的内核列表 */
-  private availableCoreList: UserGetCoreUpgradeCreateData['data']['rows'] = []
+  private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
 
   constructor() {
     this.fetchAvailableCoreList()
