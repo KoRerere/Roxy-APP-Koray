@@ -1,5 +1,6 @@
 export * from './common'
-export * from './store'
 export * from './os'
 export * from './file'
 export * from './oss'
+export * from './proxyDetection'
+export * from './getErrorMessage'

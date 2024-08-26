@@ -599,36 +599,56 @@ export interface UserGetWindowInfoListData {
   data: {
     total: number;
     rows: {
+      /** 窗口id, int */
       id?: number;
+      /** 【页面不显示】，窗口目录id */
       dirId?: string;
+      /** 窗口序号,int */
       windowSortNum?: number;
+      /** 窗口名称, str */
       windowName?: string;
+      /** id, int */
       groupId?: number;
+      /** 分组名称, str */
       groupName?: string;
+      /** 业务平台URL，str */
       platformUrl?: string;
+      /** 平台账号，str */
       platformUserName?: string;
+      /** 平台密码，str */
       platformPassword?: string;
       defaultOpenUrl?: string[];
+      /** 内核版本，枚举值：117，109, str类型 */
       coreVersion?: string;
+      /** 操作系统, Windows,macOS,Linux,Android,IOS */
       os?: string;
+      /** 操作系统版本 */
       osVersion?: string;
+      /** 浏览器版本 */
       browserVersion?: string;
+      /** User Agent */
       userAgent?: string;
       cookie?: {
         name?: string;
         value?: string;
         domain?: string;
       }[];
+      /** 窗口备注, str */
       windowRemark?: string;
+      /** 是否常用 */
       isOften?: boolean;
+      /** 是否已打开 */
       openStatus?: boolean;
       statusInfo?: {
         openUserId: number;
         openUserName: string;
         openTime: string;
       }[];
+      /** 【页面暂时不显示】，标签id */
       labelId?: number;
+      /** 【页面暂时不显示】，标签颜色 */
       labelColor?: string;
+      /** 【页面暂时不显示】，标签名称 */
       labelName?: string;
       labelIds?: number[];
       labelInfo?: {
@@ -636,48 +656,109 @@ export interface UserGetWindowInfoListData {
         labelName: string;
         labelColor: string;
       }[];
+      /** 【页面不显示】，用来存储网站的登录信息，网站会自动填充密码，List格式 */
       loginData?: string[];
+      /** 窗口创建时间, str */
       createTime?: string;
+      /** 窗口修改时间, str */
       updateTime?: string;
+      /** 窗口打开时间, str */
+      openTime?: string;
+      /** 窗口关闭时间, str */
+      closeTime?: string;
+      /** 窗口归属人用户名,即用户账号, str */
       userName?: string;
+      /** 窗口归属人用户姓名, str */
       realName?: string;
+      /** 窗口归属人所属角色，枚举值：main:主账号, admin:管理员, manager:经理, staff:成员, str */
       role?: string;
+      /** 窗口绑定的代理IP的id */
       moduleId?: number;
+      /** 代理方式，custom：自定义，import：导入的IP，api：API接入， 【取字典】 */
       proxyMethod?: string;
+      /** 添加类型，str, 枚举值：add：新增IP，choose: 已添加IP【取字典】 */
       addType?: string;
+      /** 代理名称 */
+      moduleName?: string;
+      /** 代理类型，str, 枚举值：static：静态IP，rotate: 动态IP， 【取字典】 */
       proxyType?: string;
+      /** 代理网络，str, 枚举值：resi：住宅IP，mobile: 手机IP，dc: 机房IP，ipv6: IPv6， 【取字典】 */
+      proxyNetwork?: string;
+      /** 计费方式，str,枚举值：month:包月，bandwidth:流量, 【取字典】 */
+      billMethod?: string;
+      /** 代理类型，枚举值：noproxy, HTTP, HTTPS, SOCKS5 */
       proxyCategory?: string;
+      /** 网络协议，str, 枚举值：IPV4, IPV6 */
       ipType?: string;
+      /** 代理服务商，str */
       proxyProvider?: string;
+      /** 代理协议，枚举值：NOPROXY, HTTP, HTTPS, SOCKS5 */
       protocol?: string;
+      /** 国家 */
       country?: string;
+      /** 【页面暂时不显示】，州 */
       state?: string;
+      /** 【页面暂时不显示】，城市 */
       city?: string;
+      /** 代理主机 */
       host?: string;
+      /** 代理端口 */
       port?: string;
+      /** 代理账号 */
       proxyUserName?: string;
+      /** 代理密码 */
       proxyPassword?: string;
+      /** ip时长 */
       proxyTime?: string;
+      /** 刷新URL */
       refreshUrl?: string;
+      /** 接入点，【取字典】 */
       accessServer?: string;
+      /** 查询渠道 */
       checkChannel?: string;
+      /** 一期用不上，proxyMethod=api时，提取链接的服务商，ROLA */
       extraChannel?: string;
+      /** 一期用不上，proxyMethod=api时，提取IP，每次打开都提取新IP，默认1, 枚举值：0和1 */
       isExtraNewIp?: boolean;
+      /** 一期用不上，proxyMethod=api时，提取IP校验重复，1 校验，0不校验。打开窗口时，将检测提取IP是否重复，重复则重新提取，最多重新提取5次,默认0 */
       isRepectCheck?: boolean;
+      /** 一期用不上，proxyMethod=api时，提取IP链接，str */
       extraUrl?: string;
+      /** 【页面暂时不显示】，关闭窗口时写入，给用户显示用 */
       lastIp?: string;
+      /** 【页面暂时不显示】，关闭窗口时写入，给用户显示用 */
       lastCountry?: string;
+      /** 语言，1:跟随IP匹配，0自定义，默认1 */
       isLanguageBaseIp?: boolean;
+      /** isLanguageBaseIp为0时选择的语言 */
+      language?: string;
+      /** 界面语言，1: 跟随IP匹配，0：自定义，默认1 */
       isDisplayLanguageBaseIp?: boolean;
+      /** isDisplayLanguageBaseIp为0时选择的语言 */
+      displayLanguage?: string;
+      /** 时区，1: 跟随IP匹配，0：自定义，默认1 */
       isTimeZone?: boolean;
+      /** isTimeZone为0时选择的时区 */
+      timeZone?: string;
+      /** 地理位置 0询问|1允许|2禁止，默认0 */
       position?: number;
+      /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义 */
+      isPositionBaseIp?: boolean;
+      /** 经度 isPositionBaseIp为0时设置，选择自定义的时候设置 */
       longitude?: string;
+      /** 纬度 isPositionBaseIp为0时设置，选择自定义的时候设置 */
       latitude?: string;
+      /** 精度米 isPositionBaseIp为0时设置，选择自定义的时候设置 */
       precisionPos?: string;
+      /** 声音，开启：1，关闭：0，默认1 */
       forbidAudio?: boolean;
+      /** 图片，允许加载：1，禁止加载：0，默认1 */
       forbidImage?: number;
+      /** 自定义加载图片尺寸，str */
       forbiddenPictureSize?: string;
+      /** 视频，允许加载：1，禁止加载：0，默认1 */
       forbidMedia?: boolean;
+      /** 同步标签页，1：是，0：否，默认1 */
       syncTab?: boolean;
       localState?: {
         os_crypt: {
@@ -685,43 +766,99 @@ export interface UserGetWindowInfoListData {
           encrypted_key: string;
         };
       };
+      /** 同步Cookie，1：是，0：否，默认1, 传true和false */
       syncCookie?: boolean;
+      /** 多开设置，1：开启，0：关闭，默认0 */
       openMult?: boolean;
+      /** 弹出谷歌翻译，1：是，0：否，默认0 */
       forbidTranslatePopup?: boolean;
+      /** 弹出保存密码，1：是，0：否，默认1 */
       forbidSavePassword?: boolean;
+      /** 网络不通停止打开，1：是，0：否，默认1 */
       stopOpenNet?: boolean;
+      /** IP发生变化停止打开，1：是，0：否，默认0 */
       stopOpenIP?: boolean;
+      /** IP对应国家/地区发生变化停止打开，1：是，0：否，默认0 */
       stopOpenPosition?: boolean;
+      /** 同步IndexedDB，1：是，0：否，默认0 */
       syncIndexedDb?: boolean;
+      /** 同步Local Storage，1：是，0：否，默认0 */
       syncLocalStorage?: boolean;
+      /** 同步书签，1：是，0：否，默认0 */
       syncBookmark?: boolean;
+      /** 同步已保存的用户名密码，1：是，0：否，默认1 */
       syncPassword?: boolean;
+      /** 同步历史记录，1：是，0：否，默认0 */
       syncHistory?: boolean;
+      /** 同步扩展应用数据，1：是，0：否，默认0 */
       syncExtensions?: boolean;
+      /** 【页面不显示】，同步扩展应用数据时会用到，Json格式 */
       syncValue?: object;
+      /** 启动浏览器前删除缓存文件，1：是，0：否，默认0 */
       clearCacheFile?: boolean;
+      /** 启动浏览器前删除Cookie，1：是，0：否，默认0 */
       clearCookie?: boolean;
+      /** 启动浏览器前删除历史记录，1：是，0：否，默认0 */
       clearHistory?: boolean;
+      /** 窗口名是否在标题栏显示，显示：true，不显示：false，布尔类型，非必传, 默认false */
       isDisplayName?: boolean;
+      /** 启动浏览时随机指纹，1：是，0：否，默认0 */
       randomFingerprint?: boolean;
+      /** 允许登录Chrome，1：是，0：否，默认0 */
       allowLoginChrome?: boolean;
+      /** 关闭浏览器后继续运行应用，1：是，0：否，默认0 */
       allowRunApplication?: boolean;
+      /** 使用硬件加速模式，1：是，0：否，默认1 */
       useGpu?: boolean;
+      /** webrtc 0替换|1真实|2禁用，默认0 */
       webRTC?: number;
+      /** 忽略https证书错误，1|0，默认0 */
+      ignoreHttpsError?: boolean;
+      /** 窗口尺寸，宽度 */
       openWidth?: string;
+      /** 窗口尺寸，高度 */
       openHeight?: string;
+      /** 分辨率， 0跟随电脑 | 1自定义，默认0 */
       resolutionType?: boolean;
+      /** 自定义分辨率时，分辨率X值 */
+      resolutionX?: string;
+      /** 自定义分辨率时，分辨率Y值 */
       resolutionY?: string;
+      /** 字体， 0系统默认|1随机匹配，默认1 */
       fontType?: boolean;
+      /** 【页面不显示】,字体值，指纹会用到 */
+      font?: string;
+      /** canvas 1随机｜0关闭，默认1 */
       canvas?: boolean;
+      /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到 */
+      canvasValue?: string;
+      /** webGL图像，1随机｜0关闭，默认1 */
+      webGL?: boolean;
+      /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到 */
       webGLValue?: string;
+      /** webgl元数据 1自定义｜0关闭，默认1 */
+      webGLMeta?: boolean;
+      /** webGLInfo开关，真实1，自定义0，默认0,true:真实，false:自定义 */
+      webGLInfo?: boolean;
+      /** webGLMeta自定义时，webGL厂商值 */
+      webGLManufacturer?: string;
+      /** webGLMeta自定义时，webGL渲染值 */
       webGLRender?: string;
+      /** webGpu基于webgl匹配、real 真实、block 禁止，默认值：webgl */
       webGpu?: string;
+      /** 【页面不显示】，指纹会用到 */
       webGpuVendor?: string;
+      /** audioContext值，1随机｜0关闭，默认1 */
       audioContext?: boolean;
+      /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到 */
       audioContextValue?: string;
+      /** windows 版本转换替代字段，默认值：空字符串 */
+      platformVersion?: string;
+      /** 电脑名称，默认值：空字符串 */
       computerName?: string;
+      /** MAC地址，默认值：空字符串 */
       macAddress?: string;
+      /** Speech Voices，1随机｜0关闭，默认1 */
       speechVoices?: boolean;
       speechVoicesValue?: {
         enable: boolean;
@@ -731,18 +868,34 @@ export interface UserGetWindowInfoListData {
           isLocalService: boolean;
         }[];
       };
+      /** doNotTrack 0关闭 | 1开启，默认1， 枚举值：0和1 */
       doNotTrack?: boolean;
+      /** ClientRects，1随机｜0关闭，默认1， 枚举值：0和1 */
+      clientRects?: boolean;
       clientRectsValue?: {
         enable: boolean;
         clientRectsNoiseFactorX: number;
         clientRectsNoiseFactorY: number;
       };
+      /** 设备信息，1自定义｜0关闭，默认1， 枚举值：0和1 */
       deviceInfo?: boolean;
+      /** 设备名称开关，真实1，自定义0，默认0,true:真实，false:自定义 */
       deviceNameSwitch?: boolean;
+      /** 设备名称，deviceInfo为1时设置 */
+      deviceName?: string;
+      /** mac地址开关，真实1，自定义0，默认0，,true:真实，false:自定义 */
       macInfo?: boolean;
+      /** mac地址，deviceInfo为1时设置 */
+      macAddr?: string;
+      /** 端口扫描保护 0关闭｜1开启，默认1， 枚举值：0和1 */
       portScanProtect?: boolean;
+      /** 端口扫描保护开启时的白名单，逗号分隔，str */
+      portScanList?: string;
+      /** ssl指纹设置，0关闭｜1开启，默认1， 枚举值：0和1 */
       disableSsl?: boolean;
+      /** 序列化的ssl特性值，List格式 */
       disableSslList?: string[];
+      /** 自定义插件指纹，0关闭｜1开启，默认1， 枚举值：0和1 */
       enablePlugin?: boolean;
       enablePluginList?: {
         name: string;
@@ -750,8 +903,9 @@ export interface UserGetWindowInfoListData {
         filename: string;
         mimeType: string;
         mimeDescription: string;
-        suffixes: number | string;
+        suffixes: number;
       }[];
+      /** 【页面不显示】，媒体设备，默认0，指纹会用到 */
       mediaDevice?: boolean;
       mediaDeviceList?: {
         deviceType?: string;
@@ -759,19 +913,32 @@ export interface UserGetWindowInfoListData {
         label?: string;
         groupId?: string;
       }[];
+      /** 硬件并发数，默认4 */
       hardwareConcurrent?: number;
+      /** 设备内存，1，2，4，8，不要传入大于8的值，默认8 */
       deviceMemory?: number;
+      /** 【页面不显示】，user agent，指纹会用到 */
       userAgentNew?: string;
+      /** 【页面不显示】，user agent版本号，指纹会用到 */
       userAgentVersion?: string;
+      /** 【页面不显示】，平台，指纹会用到 */
       platform?: string;
+      /** 【页面不显示】，导航平台，指纹会用到 */
       navigatorPlatform?: string;
+      /** 【页面不显示】，像素，指纹会用到 */
       pixelDepth?: number;
+      /** 【页面不显示】，颜色，指纹会用到 */
       colorDepth?: number;
+      /** 是否有绑定rpa,true:有绑定，false:没有绑定 str */
       isBindRpa?: boolean;
-      pluginVersion?: string;
-      pluginRoute?: string;
+      usePlugin?: {
+        pluginDir?: string;
+        pluginVersion?: string;
+        pluginRoute?: string;
+      }[];
     }[];
   };
+  msg: string;
 }
 
 export interface UserGetWindowInfoRecycleListParams {
@@ -2350,14 +2517,41 @@ export interface UserGetPlatformInfoListParams {
 export interface UserGetPlatformInfoListData {
   code: number;
   data: {
-    platformUrl: string[];
+    /** 总条数 */
+    total: number;
+    rows: {
+      id?: number;
+      /** 业务平台icon */
+      platformIcon?: string;
+      /** url */
+      platformUrl?: string;
+      /** 排序 */
+      sort?: number;
+      /** 创建时间 */
+      createTime?: string;
+      /** 修改时间 */
+      updateTime?: string;
+    }[];
   };
-  msg: string;
 }
 
 export interface UserAddPlatformInfoCreatePayload {
-  /** 业务平台 */
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
   platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
 }
 
 export interface UserAddPlatformInfoCreateData {
@@ -2456,17 +2650,12 @@ export interface UserGetLoginLogListData {
 }
 
 export interface UpdateWindowFilterNameCreatePayload {
-  /** 传入字段 */
-  filter_name_list: {
-    /** 标签页名称 */
-    filter_name?: string;
-    /** 标签页查询条件 */
-    filter_condition?: {
-      platform: string;
-    }[];
-    /** 排序字段 */
-    sort?: number;
-  }[];
+  /** 旧标签页名称 */
+  old_filter_name: string;
+  /** 新修改的标签页名称 */
+  new_filter_name: string;
+  /** 排序 */
+  sort: number;
 }
 
 export interface UpdateWindowFilterNameCreateData {
@@ -2475,13 +2664,8 @@ export interface UpdateWindowFilterNameCreateData {
 }
 
 export interface DeleteWindowFilterNameCreatePayload {
-  filter_name_list: {
-    filter_name?: string;
-    filter_condition?: {
-      platform: string;
-    }[];
-    sort?: number;
-  }[];
+  /** 标签名 */
+  filter_name: string;
 }
 
 export interface DeleteWindowFilterNameCreateData {
@@ -2490,11 +2674,11 @@ export interface DeleteWindowFilterNameCreateData {
 }
 
 export interface AddWindowFilterNameCreatePayload {
-  filter_name_list: {
-    filter_name?: string;
-    filter_condition?: {
-      platform: string;
-    }[];
+  /** 标签页名称 */
+  filter_name: string;
+  /** 标签页查询条件 */
+  filter_condition: {
+    platform: string;
   }[];
 }
 
@@ -2536,6 +2720,32 @@ export interface SaveWindowTableSortOrderCreatePayload {
 }
 
 export interface SaveWindowTableSortOrderCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfPlatformInfoCreatePayload {
+  /** 平台ID */
+  id: number;
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
+  platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
+}
+
+export interface UserMdfPlatformInfoCreateData {
   code: number;
   msg: string;
 }

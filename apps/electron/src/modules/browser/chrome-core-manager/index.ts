@@ -1,14 +1,14 @@
 import { readFile, rm } from 'node:fs/promises'
 import { appConfig } from '/@/constants/appConfig'
 import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import type { UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
-  private chromeBinName = isMac ? 'lumibrowser.app' : 'lumibrowser.exe'
+  private chromeBinName = isMac ? 'lumibrowser.app/Contents/MacOS/lumibrowser' : 'lumibrowser.exe'
 
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>()
@@ -43,44 +43,6 @@ export const chromeCoreManager = new class ChromeCoreManager {
     return this.availableCoreList.find(core => core.coreVersion === coreVersion)
   }
 
-  /** 更新 `this.localCoreMap` 的值 */
-  // async updateLocalCoreMap() {
-  //   const { chromeBinDir } = appConfig
-  //   const coreVersionKeys = Array.from(this.localCoreMap.keys())
-  //   // 读取内核缓存目录下的所有文件
-  //   const files = await readdir(chromeBinDir, { withFileTypes: true })
-  //   const promises = files.map(async (file) => {
-  //     if (file.isDirectory()) {
-  //       // 目录名即为内核版本号
-  //       const coreVersion = file.name
-  //       // 内核目录
-  //       const coreDir = join(chromeBinDir, coreVersion)
-  //       const exePath = join(coreDir, this.chromeBinName)
-  //       try {
-  //         const version = await readFile(join(coreDir, 'version'), 'utf-8')
-  //         this.localCoreMap.set(coreVersion, { version, exePath })
-  //       }
-  //       catch (error) {
-  //         console.error('updateLocalCoreMap error', error)
-  //         this.localCoreMap.delete(coreVersion)
-  //       }
-  //     }
-  //     else {
-  //       // 删除内核缓存目录下的非目录文件
-  //       rm(join(chromeBinDir, file.name))
-  //     }
-  //   })
-
-  //   // 过滤掉不存在的内核
-  //   coreVersionKeys.forEach((coreVersion) => {
-  //     if (!this.localCoreMap.has(coreVersion)) {
-  //       this.localCoreMap.delete(coreVersion)
-  //     }
-  //   })
-
-  //   return Promise.all(promises)
-  // }
-
   /** 拉取当前系统可用的内核列表 */
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
@@ -91,7 +53,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   }
 
   /** 根据内核版本获取对应的内核执行文件 */
-  async getCoreExePath(coreVersion: string) {
+  async getCoreExePath(coreVersion: string, msgCallback?: (msg: string) => void) {
     const exePath = this.genCoreExePath(coreVersion)
 
     // 如果该内核已经在使用中，则直接返回
@@ -99,19 +61,21 @@ export const chromeCoreManager = new class ChromeCoreManager {
       return exePath
     }
 
-    const isExists = await fileExists(exePath)
+    const coreDir = this.genCoreDir(coreVersion)
+    const isExeExists = await fileExists(exePath)
+    const isVersionFileExists = await fileExists((join(coreDir, 'version')))
 
-    // 如果本地不存在该内核，则下载
-    if (!isExists) {
+    // 如果本地不存在该内核或版本文件不存在，则下载
+    if (!isExeExists || !isVersionFileExists) {
       // 如果是第一次下载该内核，则将该内核加入下载队列
       if (!this.downloadingMap.has(coreVersion)) {
         this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
       }
+      msgCallback?.('正在下载内核')
       // 等待下载完成
       await this.downloadingMap.get(coreVersion)
     }
 
-    const coreDir = dirname(exePath)
     const availableCore = this.getAvailableCore(coreVersion)
 
     if (!availableCore) {
@@ -125,6 +89,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       if (localCoreVersion.trim() !== availableCore.version) {
         // 重新下载
         this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
+        msgCallback?.('正在下载内核')
         await this.downloadingMap.get(coreVersion)
       }
     }

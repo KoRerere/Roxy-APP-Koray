@@ -1,23 +1,44 @@
-import { dirname, join } from 'node:path'
-import { mkdir, writeFile } from 'node:fs/promises'
-import puppeteer from 'puppeteer-core'
+import { join } from 'node:path'
+import { writeFile } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
-import { defaultCLIArgs, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
-import { chromeCoreManager } from '/@/modules/browser/chromeCoreManager'
-import { appConfig } from '/@/constants'
+import { needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { encryptFingerprintConfig, genFingerprintConfig } from '/@/modules/browser/browser-manager/utils'
-import { fileExists } from '/@/utils'
+import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
+import type { AfterLaunchTask } from './afterLaunchTask'
+import { createReadStream } from 'node:fs'
+import { API } from '/@/api'
 
 export class BrowserItem {
-  private browser: Browser | null = null
+  private afterLaunchTask!: AfterLaunchTask
+  /** 浏览器实例 */
+  browser: Browser | null = null
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
-  /** 浏览器用户数据目录 */
+  /** 浏览器关闭后，上传数据 promise */
+  private uploadDataPromiser = Promise.withResolvers()
+  /** 当前浏览器用户数据目录 */
   userDataDir: string
+  /** 用户浏览器数据缓存文件名称 */
+  browserCacheFileName = 'browser-cache.zip'
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
     return join(this.userDataDir, 'lumi.conf')
+  }
+
+  /** 本地 OSS 缓存目录 */
+  get ossCacheDir() {
+    return join(this.userDataDir, 'oss-session')
+  }
+
+  /** 本地 OSS 缓存版本文件路径 */
+  get ossCacheVersionPath() {
+    return join(this.ossCacheDir, 'version')
+  }
+
+  /** OSS 用户数据目录 */
+  get ossRemoteCacheDir() {
+    return `${ossObject.userWindowDataDir}/${this.winInfo.dirId}`
   }
 
   /** 需要同步到 OSS 的文件 */
@@ -33,80 +54,103 @@ export class BrowserItem {
 
   /** 启动浏览器 */
   async launch() {
-    const { coreVersion } = this.winInfo
-
-    if (!coreVersion) {
-      throw new Error('没有指定内核版本')
+    if (this.browser) {
+      return
     }
-    // 获取内核执行程序路径
-    const exePath = await chromeCoreManager.getCoreExePath(coreVersion)
-    // 生成内核启动的命令行参数
-    const launchArgs = await this.genLaunchCLIArgs()
-    console.log('launchArgs', launchArgs)
-    // 创建指纹配置文件
-    await this.createFingerprintConfigFile()
+
+    const { BeforeLaunchTask } = await import('./beforeLaunchTask')
+    // 创建启动任务
+    const beforeLaunchTask = new BeforeLaunchTask(this.winInfo)
     // 拉起浏览器
-    this.browser = await puppeteer.launch({
-      args: launchArgs,
-      executablePath: exePath,
-      headless: false,
-      ignoreDefaultArgs: true,
-      defaultViewport: null,
-    })
-  }
-
-  /** 创建指纹配置文件 */
-  async createFingerprintConfigFile() {
-    const fingerprintConfig = genFingerprintConfig(this.winInfo)
-    try {
-      const dirExist = await fileExists(dirname(this.fingerprintConfigPath))
-      if (!dirExist) {
-        await mkdir(dirname(this.fingerprintConfigPath), { recursive: true })
+    this.browser = await beforeLaunchTask.run()
+    // 浏览器关闭时，需要上传本地数据和状态
+    this.browser?.on('disconnected', async () => {
+      try {
+        await this.uploadData()
+        this.uploadDataPromiser.resolve(true)
       }
-      const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
-      await writeFile(this.fingerprintConfigPath, content)
-    }
-    catch (error) {
-      return Promise.reject(error)
-    }
+      catch (error) {
+        this.uploadDataPromiser.reject(error)
+      }
+    })
+    const { AfterLaunchTask } = await import('./afterLaunchTask')
+    // 创建启动后任务
+    this.afterLaunchTask = new AfterLaunchTask(this.winInfo, this.browser!)
+    // 异步执行启动后的任务, 不需要等待
+    this.afterLaunchTask.run()
   }
 
-  /** 生成内核启动的命令行参数 */
-  async genLaunchCLIArgs(): Promise<string[]> {
-    const { sandboxPermission, startupParam } = this.winInfo
-
-    const args = [
-      ...defaultCLIArgs,
-      `--user-data-dir=${this.userDataDir}`,
-      '--window-position=0,0',
-      '--window-size=1000,1000',
-      'http://127.0.0.1:7777/console?id=08767b01eca86fe7713be1ed21736d3b',
-    ]
-
-    /** 内置命令行参数 keys */
-    const builtInArgKeys = args.map(arg => arg.split('=')[0])
-
-    // 开启沙盒模式
-    if (sandboxPermission) {
-      args.push(`--no-sandbox`)
-    }
-
-    // 用户自定义启动参数
-    if (startupParam && startupParam.trim?.() !== '') {
-      const userCustomArgs = startupParam.split(',')
-        .map((item: string) => item.trim())
-        .filter((arg: string) => {
-          return !builtInArgKeys.includes(arg.split('=')[0])
-        })
-      args.push(...userCustomArgs)
-    }
-
-    return args
-  }
-
+  /** 关闭浏览器 */
   async close() {
     if (this.browser) {
-      await this.browser.close()
+      this.browser.close()
+      return this.uploadDataPromiser.promise
     }
+  }
+
+  /** 关闭浏览器后需要同步的数据 */
+  private async uploadData() {
+    const params = await this.afterLaunchTask.getUploadData()
+    const { id, syncValue } = this.winInfo
+
+    console.log('update_message:', params)
+
+    const needSyncFiles = this.needSyncFiles.map(url => ({
+      path: join(this.userDataDir, url),
+      destPath: url,
+    }))
+
+    // build pages
+    const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
+    try {
+      await filesToZip(needSyncFiles, outputZipPath)
+
+      const remoteOssPath = `${this.ossRemoteCacheDir}/${this.browserCacheFileName}`
+      const readStream = createReadStream(outputZipPath)
+      const data = await aliOSS.putStream(remoteOssPath, readStream)
+      const newVersion = syncValue.version ? syncValue.version + 1 : 1
+      writeFile(this.ossCacheVersionPath, String(newVersion))
+      console.log(`oss 上传`, data)
+
+      // this.webContents.send("update_message_md5", {
+      //   ...parmes,
+      //   id: this.obj.id,
+      //   syncValue: {
+      //     version: newVersion,
+      //   },
+      // });
+
+      const uploadParams = {
+        id,
+        cookie: Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie,
+        defaultOpenUrl: params.defaultOpenUrl,
+        lumiLogin: params.lumiLogin,
+        syncValue: {
+          version: newVersion,
+        },
+        openStatus: false,
+      }
+      // 同步窗口状态
+      API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
+        console.log('user_mdf_window_sync_v2', res)
+      })
+    }
+    catch (error) {
+      console.log('filesToZip error: ', error)
+    }
+  }
+
+  /** 代理检测 */
+  async proxyDetection() {
+    return proxyDetection(this.winInfo)
+  }
+
+  /** 过滤标签页 */
+  filterTab(url: string) {
+    const invalidUrls = ['chrome://newtab/', 'chrome-extension://', 'about:blank']
+    if (invalidUrls.includes(url)) {
+      return false
+    }
+    return true
   }
 }

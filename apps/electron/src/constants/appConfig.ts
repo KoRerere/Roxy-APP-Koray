@@ -1,10 +1,8 @@
 import { app } from 'electron'
 import { join } from 'node:path'
-import { store } from '/@/utils/'
+import { store } from '/@/modules/store'
 
 const sessionDir = app.getPath('sessionData')
-
-let browserCacheRootDir = store.get('browserCacheRootDir', join(sessionDir, 'browser-cache'))
 
 export const appConfig = {
   /** 系统语言 */
@@ -13,11 +11,14 @@ export const appConfig = {
   chromeBinDir: join(sessionDir, 'chrome-bin'),
   /** 浏览器缓存根目录 */
   get browserCacheRootDir() {
-    return browserCacheRootDir
+    return store.browserCacheRootDir
   },
   set browserCacheRootDir(dir: string) {
-    browserCacheRootDir = dir
-    store.set('browserCacheRootDir', dir)
+    store.browserCacheRootDir = dir
+  },
+  /** 浏览器扩展目录 */
+  get browserExtensionsDir() {
+    return join(this.browserCacheRootDir, 'LumiExtensions')
   },
   /** 临时文件目录 */
   tempDir: join(sessionDir, 'temp'),
