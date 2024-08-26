@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const routes = [
   {
+    path: '/create',
+    name: 'browser-create',
+    meta: { title: '新建窗口', icon: 'BarChartOutlined', root: true },
+    component: () => import('/@/views/browser/create')
+  },
+  {
     path: '/',
     name: 'browser',
     meta: { title: '浏览器窗口', icon: 'AreaChartOutlined', root: true },
@@ -18,12 +24,6 @@ export const routes = [
         name: 'browser-transfer',
         meta: { title: '窗口转移', icon: 'PieChartOutlined' },
         component: () => import('/@/views/browser/transfer')
-      },
-      {
-        path: 'create',
-        name: 'browser-create',
-        meta: { title: '新建窗口', icon: 'BarChartOutlined' },
-        component: () => import('/@/views/browser/create')
       },
       {
         path: 'recycle',

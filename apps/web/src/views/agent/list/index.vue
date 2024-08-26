@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import scTable from '/@/components/sc-table'
+import ryTable from '/@/components/ry-table'
+import ryContextMenu from '/@/components/ry-contextMenu'
 
 const columns = ref([
   {
@@ -13,11 +14,18 @@ const columns = ref([
 ])
 
 const dataList = ref(Array.from({ length: 20 }, (_, index) => ({ id: index, status: '正常', link: 'https://www.baidu.com' })))
+
+const textMenu = ref()
+
+onMounted(() => {
+  textMenu.value.getRef()
+})
 </script>
 
 <template>
+  <ry-contextMenu ref="textMenu" />
   <div class="h-full">
-    <sc-table :columns="columns" :data-list="dataList" />
+    <ry-table :columns="columns" :data-list="dataList" />
   </div>
 </template>
 

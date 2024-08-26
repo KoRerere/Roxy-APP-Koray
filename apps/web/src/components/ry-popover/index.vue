@@ -8,10 +8,12 @@ defineProps({
 
 const popover = ref()
 
+function getRef() {
+  return popover.value
+}
+
 defineExpose({
-  toggle(event: MouseEvent): void {
-    popover.value.toggle(event)
-  },
+  getRef,
 })
 </script>
 

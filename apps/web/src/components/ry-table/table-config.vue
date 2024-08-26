@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { VueDraggable } from 'vue-draggable-plus'
-import scPopover from '/@/components/sc-popover'
+import ryPopover from '/@/components/ry-popover'
 
 const props = defineProps({
   columns: {
@@ -14,7 +14,7 @@ const emits = defineEmits(['update:columns'])
 const popRef = ref()
 
 function toggle(event: Event) {
-  popRef.value.toggle(event)
+  popRef.value.getRef().toggle(event)
 }
 
 function update(newColumns: any[]) {
@@ -28,18 +28,18 @@ function update(newColumns: any[]) {
     <span>Display</span>
   </div>
 
-  <sc-popover ref="popRef" footer class="table-popover">
+  <ry-popover ref="popRef" footer class="table-popover">
     <VueDraggable :model-value="props.columns" :animation="150" handle=".handle" @update:model-value="update">
       <div v-for="item in props.columns" :key="item.key" class="flex items-center table-popover-column">
         <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.title }}</span>
-        <ToggleSwitch v-model="item._hide" />
+        <ToggleSwitch v-model="item._visible" />
       </div>
     </VueDraggable>
     <template #footer>
       <span v-ripple class="cursor-pointer table-popover-save">Save for all filters</span>
     </template>
-  </sc-popover>
+  </ry-popover>
 </template>
 
 <style lang="scss">

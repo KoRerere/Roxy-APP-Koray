@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import scPopover from '/@/components/sc-popover'
+import ryPopover from '/@/components/ry-popover'
+import { formatInputs } from '/@/utils'
 
 const props = defineProps({
   sorts: {
@@ -9,25 +10,23 @@ const props = defineProps({
 })
 
 const emits = defineEmits(['sort'])
-
 const _sorts = ref(props.sorts)
 
 const popRef = ref()
-
 function toggle(event: Event) {
-  popRef.value.toggle(event)
+  popRef.value.getRef().toggle(event)
 }
 
-function getFilterData() {
-  return _sorts.value.reduce((acc, item) => {
-    acc[item.key] = item.value
-    return acc
-  }, {} as Record<string, any>)
+function onReset() {
+  _sorts.value.forEach((item) => {
+    item.value = null
+  })
+  onUpdate()
 }
 
-function update() {
-  const data = getFilterData()
-  emits('sort', data)
+function onUpdate() {
+  popRef.value.getRef().hide()
+  emits('sort', formatInputs(_sorts.value))
 }
 </script>
 
@@ -36,23 +35,22 @@ function update() {
     <span class="font-size-[16px] leading-none mdi mdi-sort-ascending " />
   </div>
 
-  <sc-popover ref="popRef" footer class="sort-popover">
-    <div v-for="item in _sorts" :key="item.key" class="sort-popover-item">
+  <ry-popover ref="popRef" footer class="sort-popover">
+    <div v-for="item in _sorts" :key="item.name" class="sort-popover-item">
       <span class="mdi" :class="item.icon" />
-      <span class="w-full">{{ item.name }}</span>
+      <span class="w-full">{{ item.label }}</span>
       <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
-              option-value="value" checkmark :highlight-on-select="false"
-      />
+        option-value="value" checkmark :highlight-on-select="false" />
     </div>
     <template #footer>
-      <Button text>
+      <Button text @click="onReset">
         Reset
       </Button>
-      <Button severity="info" @click="update">
+      <Button severity="info" @click="onUpdate">
         Save filter
       </Button>
     </template>
-  </sc-popover>
+  </ry-popover>
 </template>
 
 <style lang="scss">

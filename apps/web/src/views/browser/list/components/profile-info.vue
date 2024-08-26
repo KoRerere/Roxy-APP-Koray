@@ -12,32 +12,99 @@ const _props = defineProps({
   },
 })
 // icon: new URL(`/@/assets/image/hk.svg`, import.meta.url).href,
-const operation = ref([
-  {
-    label: 'Test proxy',
-  },
-  {
-    label: 'Refresh IP',
-  },
-  {
-    separator: true,
-  },
-  {
-    label: 'Edit proxy',
-  },
-  {
-    label: 'Change proxy',
-  },
-  {
-    separator: true,
-  },
-  {
-    label: 'Delete',
-  },
-])
 
-const [show] = useContextMenu({
-  model: operation.value,
+// const menuRef = ref(null)
+const [show] = useContextMenu()
+
+const proxyOperation = computed(() => {
+  const isDirect = _props.data.proxyCategory === 'noproxy'
+
+  return [
+    {
+      label: 'Add proxy',
+      hide: !isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      label: 'Select proxy',
+      hide: !isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      label: 'Test proxy',
+      hide: isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      label: 'Refresh IP',
+      hide: isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      hide: isDirect,
+      separator: true,
+    },
+    {
+      label: 'Edit proxy',
+      hide: isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      label: 'Change proxy',
+      hide: isDirect,
+      command: () => {
+
+      },
+    },
+    {
+      hide: isDirect,
+      separator: true,
+    },
+    {
+      label: 'Delete',
+      hide: isDirect,
+      command: () => {
+
+      },
+    },
+  ].filter(item => !item.hide)
+})
+
+const accountOperation = computed(() => {
+  // const isDirect = _props.data.proxyCategory === 'noproxy'
+  return [
+    {
+      label: 'Add account',
+      command: () => {
+
+      },
+    },
+    {
+      label: 'Select account',
+      command: () => {
+
+      },
+    },
+    {
+      separator: true,
+    },
+    {
+      label: 'Delete',
+      command: () => {
+
+      },
+    },
+  ].filter(item => !item.hide)
 })
 
 const links = ref([
@@ -45,22 +112,27 @@ const links = ref([
     icon: _props.data.platformUrl,
     classes: '',
     tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
-    onClick: (event) => {
-      show(event)
-    },
   },
   {
     icon: _props.data.platformUrl,
     classes: 'direct',
     create: true,
     tooltip: `Location: ${_props.data.lastCountry}\nIP: ${_props.data.lastIp}\nLast time: ${_props.data.updateTime}`,
-    onClick: () => { },
+    onClick: (event) => {
+      show(event, {
+        model: proxyOperation.value,
+      })
+    },
   },
   {
     icon: _props.data.platformUrl,
     classes: 'stack',
     tooltip: '',
-    onClick: () => { },
+    onClick: (event) => {
+      show(event, {
+        model: accountOperation.value,
+      })
+    },
   },
 ])
 </script>

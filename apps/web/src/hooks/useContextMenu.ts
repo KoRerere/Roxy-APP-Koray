@@ -3,16 +3,14 @@ import { createVNode, getCurrentInstance, ref, render } from 'vue'
 
 type Menu = InstanceType<typeof ContextMenu>
 
-export function useContextMenu(props: any) {
+export function useContextMenu() {
   let vm: VNode
   const instance = getCurrentInstance()
 
-  const show = (event: Event) => {
-    if (!vm) {
-      vm = createVNode(ContextMenu, props)
-      vm.appContext = instance!.appContext
-      render(vm, document.body)
-    }
+  const show = (event: Event, props: any) => {
+    vm = createVNode(ContextMenu, props)
+    vm.appContext = instance!.appContext
+    render(vm, document.body)
     nextTick(() => {
       ;(vm.component?.proxy as Menu)?.show(event)
     })
