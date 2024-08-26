@@ -7,6 +7,10 @@ defineProps({
     type: String,
     default: 'Drawer title',
   },
+  footer: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 defineEmits(['confirm', 'close'])
@@ -21,7 +25,7 @@ defineEmits(['confirm', 'close'])
     <div class="drawer-content">
       <slot />
     </div>
-    <div class="drawer-footer">
+    <div v-if="footer" class="drawer-footer">
       <slot name="footer">
         <slot name="footer-left" />
         <ry-button label="Confirm" severity="info" @click="$emit('confirm')" />
@@ -48,15 +52,17 @@ defineEmits(['confirm', 'close'])
   }
 
   &-content {
-    flex: 1;
-    padding: var(--spacing-2xl, 16px);
+    padding: 0 var(--spacing-2xl, 16px);
+    height: calc(100% - 100px);
   }
 
   &-footer {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    gap: var(--spacing-xl, 12px);
     padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
+    height: 60px;
   }
 }
 </style>

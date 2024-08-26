@@ -10,6 +10,16 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+export function clearInputsValue(inputs: any): void {
+  inputs.forEach((input: any) => {
+    if (input.items) {
+      clearInputsValue(input.items)
+    } else {
+      input.value = null
+    }
+  })
+}
+
 export function formatInputs(inputs: any[], original: any = {}): any {
   return inputs.reduce((formData, input) => {
     const { name, value, hide, items } = input
@@ -31,4 +41,16 @@ export function formatInputsByList(inputsGroup: any[]): any {
     const _data = formatInputs(inputs, formData)
     return Object.assign(formData, _data)
   }, {})
+}
+
+export function getValidByObject(obj: { [key: string]: any }, keys: string[]): any {
+  return keys.reduce(
+    (acc, key) => {
+      if (obj[key]) {
+        acc[key] = obj[key]
+      }
+      return acc
+    },
+    {} as { [key: string]: any }
+  )
 }

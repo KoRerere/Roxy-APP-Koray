@@ -3,7 +3,6 @@
 // @ts-ignore
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
-import operatMenu from './components/operat-menu.vue'
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -56,7 +55,7 @@ onMounted(() => {
 
 <template>
   <Button label="open-drawers" @click="drawer.visible = true" />
-  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" column-selection
+  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" selection-mode="multiple"
     :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
     <template #header-extra>
       <custom-filter />

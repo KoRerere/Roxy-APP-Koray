@@ -2,8 +2,9 @@
 import ryForm from '/@/components/ry-form'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import drawerContent from '/@/components/drawer-content.vue'
-
 import { formatInputs } from '/@/utils'
+
+const emits = defineEmits(['confirm'])
 
 const formInputs = ref([
   {
@@ -80,17 +81,18 @@ const formInputs = ref([
   },
 ])
 
-function _getFormData () {
-  console.log('🚀 ~ getFormData ~ formatInputs(formInputs.value):', formatInputs(formInputs.value))
+function testProxy () {
+
+}
+
+function createProxy () {
+  emits('confirm', formatInputs(formInputs.value))
 }
 </script>
 
 <template>
   <drawer-content title="创建代理" v-bind="$attrs">
     <div class="h-full flex flex-col">
-      <Button @click="_getFormData">
-        getFormData
-      </Button>
       <ry-form :inputs="formInputs">
         <template #server="{ input }">
           <input-base v-bind="input">
@@ -106,24 +108,22 @@ function _getFormData () {
           </input-base>
         </template>
         <template #protocol="{ input }">
-          <input-base v-bind="input">
-            <template #input>
-              <div class="form-protocol">
-                <label v-for="option in input.options" :key="option.key" :for="option.value"
-                  class="cursor-pointer form-protocol-item">
-                  <RadioButton v-model="input.value" :input-id="option.value" :name="input.name"
-                    :value="option.value" />
-                  <div>{{ option.label }}</div>
-                </label>
-              </div>
-            </template>
-          </input-base>
+          <div class="form-protocol">
+            <label v-for="option in input.options" :key="option.value" :for="`${input.name}_${option.value}`"
+              class="cursor-pointer form-protocol-item">
+              <RadioButton v-model="input.value" :input-id="`${input.name}_${option.value}`" :name="input.name"
+                :value="option.value" />
+              <div>{{ option.label }}</div>
+            </label>
+          </div>
         </template>
       </ry-form>
     </div>
     <template #footer>
-      <ry-button label="Test Proxy" severity="secondary" outlined />
-      <ry-button label="Save selected" severity="info" />
+      <div class="flex justify-between w-full">
+        <ry-button label="Test Proxy" severity="secondary" outlined @click="testProxy" />
+        <ry-button label="Save selected" severity="info" @click="createProxy" />
+      </div>
     </template>
   </drawer-content>
 </template>
