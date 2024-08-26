@@ -13,8 +13,6 @@ const _props = defineProps({
   },
 })
 
-defineEmits(['iconClick'])
-
 const _inputs = computed(() => _props.inputs.filter(input => input.visible !== false))
 
 const baseInput = ['text', 'password', 'number', 'textarea']
@@ -26,7 +24,7 @@ const baseInput = ['text', 'password', 'number', 'textarea']
       <slot :name="input.slot" :input="{ ...input, labelPosition }">
         <div v-if="input.separator" class="ry-form-line" />
         <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value"
-          v-bind="{ ...input, labelPosition }" @icon-click="() => $emit('iconClick', input)" />
+          v-bind="{ ...input, labelPosition }" @icon-click="() => input.iconClick?.(input, inputs)" />
         <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition"
           @change="() => input.change?.(input.value, input, inputs)" />
       </slot>

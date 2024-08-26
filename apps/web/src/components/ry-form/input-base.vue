@@ -11,21 +11,11 @@ defineProps({
     type: String,
     default: 'top',
   },
-  // tooltip: String,
   icon: String,
   leftIcon: String,
-  iconClick: {
-    type: Function,
-    default: () => () => { },
-  },
 })
 
 defineEmits(['iconClick'])
-
-const xxx = useAttrs()
-if (xxx.mark) {
-  console.log('🚀 ~ xxx:', xxx)
-}
 </script>
 
 <template>
@@ -56,6 +46,12 @@ if (xxx.mark) {
 <style lang="scss" scoped>
 :deep(.p-password-input) {
   width: 100%;
+}
+
+:deep(.p-iconfield) {
+  .p-textarea:not(:last-child) {
+    padding-right: calc((var(--p-form-field-padding-x) * 2) + var(--p-icon-size));
+  }
 }
 
 .rx-input {

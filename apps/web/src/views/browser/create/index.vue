@@ -7,8 +7,7 @@ import proxyItem from './components/proxy.vue'
 import accountItem from './components/account.vue'
 import previewCard from './components/preview-card.vue'
 import { formatInputsByList } from '/@/utils'
-import { basicInputs, hardwareInputs, otherInputs, windowInputs } from './form-inputs'
-import { API } from '/@/api'
+import { getInputs } from './form-inputs'
 
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
@@ -18,49 +17,36 @@ const tabs = ref([
 
 const windowName = ref('Untitled profile')
 
+const { windowInputs } = getInputs()
 const accordions = reactive({
-  value: ['1'],
+  value: ['0'],
   panels: [
     {
       title: 'window',
-      value: '1',
-      inputs: windowInputs,
+      value: '0',
+      inputs: windowInputs[0],
     },
     {
       title: 'Basic',
-      value: '2',
-      inputs: basicInputs,
+      value: '1',
+      inputs: windowInputs[1],
     },
     {
       title: 'highLevel',
-      value: '3',
-      inputs: hardwareInputs,
+      value: '2',
+      inputs: windowInputs[2],
     },
     {
       title: 'other',
-      value: '4',
-      inputs: otherInputs,
+      value: '3',
+      inputs: windowInputs[3],
     },
   ],
 })
 
 const tabValue = ref('0')
 
-function handleIconClick(_input: any) {
-  console.log('🚀 ~ handleIconClick ~ fromData:', formatInputsByList(accordions.panels.map(item => item.inputs)))
-}
-// ======================
-
-async function xxxx() {
-  const { data } = await API.base.userGetDictVersionList()
-  const { os, language } = data
-  const xxx = await API.base.userGetSystemDictV2List({ type: [os, language] })
-  console.log('🚀 ~ xxxx ~ xxx:', xxx)
-}
-
-onMounted(() => {
-  xxxx()
-})
+const previewData = computed(() => formatInputsByList(accordions.panels.map(item => item.inputs)))
 </script>
 
 <template>
@@ -81,15 +67,14 @@ onMounted(() => {
               {{ panels.title }}
             </AccordionHeader>
             <AccordionContent>
-              <ry-form :inputs="panels.inputs" label-position="left" @icon-click="handleIconClick">
+              <ry-form :inputs="panels.inputs" label-position="left">
                 <template #System="{ input }">
                   <div class="flex flex-row">
                     <input-label v-bind="input" />
                     <InputGroup>
-                      <template v-for="(item, index) in input.items" :key="index">
-                        <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-                          option-value="value" show-clear />
-                        <InputText v-else v-bind="item" v-model="item.value" type="text" />
+                      <template v-for="item in input.items" :key="item.name">
+                        <Select v-bind="item" v-model="item.value" option-label="label" option-value="value" show-clear
+                          @change="() => item.change?.(item, input.items)" />
                       </template>
                     </InputGroup>
                   </div>
@@ -133,7 +118,7 @@ onMounted(() => {
         <ry-button size="small" severity="primary" label="Create profile" />
       </div>
     </div>
-    <previewCard />
+    <previewCard :data="previewData" />
   </div>
 </template>
 

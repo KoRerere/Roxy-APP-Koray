@@ -10,6 +10,10 @@ export function isFunction(fn: any) {
   return getRawType(fn) === 'function'
 }
 
+export function hasOwnProperty(data: any, key: any) {
+  return Object.prototype.hasOwnProperty.call(data, key)
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -28,7 +32,7 @@ export function formatInputs(inputs: any[], original: any = {}): any {
   return inputs.reduce((formData, input) => {
     const { name, value, hide, items, formatValue } = input
     if (hide) return formData
-    if (Object.prototype.hasOwnProperty.call(formData, name)) {
+    if (hasOwnProperty(formData, name)) {
       throw new Error(`Duplicate name '${name}' found in inputs`)
     }
     if (items) {

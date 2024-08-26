@@ -5,6 +5,7 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "jsx": "preserve",
     "jsxImportSource": "vue",
+    "lib": ["esnext", "dom"],
     "baseUrl": ".",
     "paths": {
       "/@/*": ["src/*"]

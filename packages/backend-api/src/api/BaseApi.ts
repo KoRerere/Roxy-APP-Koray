@@ -35,8 +35,8 @@ import {
   UserGetDictVersionListData,
   UserGetNotifyListData,
   UserGetOssCredentialListData,
-  UserGetSystemDictV2ListData,
-  UserGetSystemDictV2ListParams,
+  UserGetSystemDictV2CreateData,
+  UserGetSystemDictV2CreatePayload,
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
@@ -374,16 +374,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * @description oss: oss的配置信息,同步的时候会用到 os: 操作系统 proxyMethod: 代理方式 proxyType：代理类型 proxyNetwork：代理网络 billMethod：计费方式 ipType：网络协议 protocol：代理协议 country: 国家 proxyProvider：代理服务商 proxyTime：IP时长 checkChannel：查询渠道 language：语言 displayLanguage：界面语言 timeZone：时区 resolution：分辨率 disableSslList：ssl特性值 hardwareConcurrent：硬件并发数 deviceMemory：设备内存 windowType: 窗口类型 source: 代理来源 accessServer: 接入点 osVersion-Windows: 操作系统版本 osVersion-macOS: 操作系统版本 osVersion-Linux: 操作系统版本 osVersion-Android: 操作系统版本 osVersion-IOS: 操作系统版本 versionType: 版本类型 rotateCountry: 动态机房选择国家 addType: 添加类型：新增IP，已添加IP frequency: 执行频率 exeType: 任务执行 proxyCategory：代理类型 isExtraNewIp: 提取方式 isRepectCheck: 校验重复
    *
    * @tags Base
-   * @name UserGetSystemDictV2List
+   * @name UserGetSystemDictV2Create
    * @summary 获取字典内容V2
-   * @request GET:/user_get_system_dict_v2
-   * @response `200` `UserGetSystemDictV2ListData` 成功
+   * @request POST:/user_get_system_dict_v2
+   * @response `200` `UserGetSystemDictV2CreateData` 成功
    */
-  userGetSystemDictV2List = (query: UserGetSystemDictV2ListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetSystemDictV2ListData, any>({
+  userGetSystemDictV2Create = (data: UserGetSystemDictV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserGetSystemDictV2CreateData, any>({
       path: `/user_get_system_dict_v2`,
-      method: "GET",
-      query: query,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

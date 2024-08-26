@@ -15,8 +15,10 @@ import {
   DeleteWindowFilterNameCreateData,
   DeleteWindowFilterNameCreatePayload,
   GetWindowFilterNameListListData,
+  GetWindowTableRowsListData,
   SaveWindowTableSortOrderCreateData,
   SaveWindowTableSortOrderCreatePayload,
+  SaveWindowTableSortOrderListData,
   UpdateWindowFilterNameCreateData,
   UpdateWindowFilterNameCreatePayload,
   UpdateWindowTableRowsCreateData,
@@ -25,8 +27,6 @@ import {
   UserAddGroupInfoCreatePayload,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
-  UserAddPlatformInfoCreateData,
-  UserAddPlatformInfoCreatePayload,
   UserAddWindowInfoCreateData,
   UserAddWindowInfoCreatePayload,
   UserBatchWindowInfoCreateData,
@@ -39,8 +39,6 @@ import {
   UserDelGroupInfoCreatePayload,
   UserDelLabelInfoCreateData,
   UserDelLabelInfoCreatePayload,
-  UserDelPlatformInfoCreateData,
-  UserDelPlatformInfoCreatePayload,
   UserDelWindowInfoApiCreateData,
   UserDelWindowInfoApiCreatePayload,
   UserDelWindowInfoCreateData,
@@ -55,8 +53,6 @@ import {
   UserGetLabelInfoListParams,
   UserGetMacAddrV2ListData,
   UserGetMacAddrV2ListParams,
-  UserGetPlatformInfoListData,
-  UserGetPlatformInfoListParams,
   UserGetUaWebglListData,
   UserGetUaWebglListParams,
   UserGetUaWebglV2ListData,
@@ -586,59 +582,6 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetPlatformInfoList
-   * @summary 业务平台查询（显示我们系统自带的平台）
-   * @request GET:/user_get_platform_info
-   * @response `200` `UserGetPlatformInfoListData` 成功
-   */
-  userGetPlatformInfoList = (query: UserGetPlatformInfoListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetPlatformInfoListData, any>({
-      path: `/user_get_platform_info`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserAddPlatformInfoCreate
-   * @summary 业务平台新增
-   * @request POST:/user_add_platform_info
-   * @response `200` `UserAddPlatformInfoCreateData` 成功
-   */
-  userAddPlatformInfoCreate = (data: UserAddPlatformInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserAddPlatformInfoCreateData, any>({
-      path: `/user_add_platform_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserDelPlatformInfoCreate
-   * @summary 业务平台删除
-   * @request POST:/user_del_platform_info
-   * @response `200` `UserDelPlatformInfoCreateData` 成功
-   */
-  userDelPlatformInfoCreate = (data: UserDelPlatformInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserDelPlatformInfoCreateData, any>({
-      path: `/user_del_platform_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
    * @description old_filter_name必须传入（唯一值），因为new_filter_name和sort都是通过old_filter_name行字段判断的 注：1.如果是修改排序，old_filter_name和new_filter_name值传相同进行，原来值进行可以不用变 2.如果是修改标签页名称，sort值传原来值进行可以不用变
    *
    * @tags Window
@@ -741,6 +684,38 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name SaveWindowTableSortOrderList
+   * @summary 保存窗口表格排序规则
+   * @request GET:/save_window_table_sort_order
+   * @response `200` `SaveWindowTableSortOrderListData` 成功
+   */
+  saveWindowTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<SaveWindowTableSortOrderListData, any>({
+      path: `/save_window_table_sort_order`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name GetWindowTableRowsList
+   * @summary 获取窗口表格列顺序
+   * @request GET:/get_window_table_rows
+   * @response `200` `GetWindowTableRowsListData` 成功
+   */
+  getWindowTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<GetWindowTableRowsListData, any>({
+      path: `/get_window_table_rows`,
+      method: "GET",
       format: "json",
       ...params,
     });

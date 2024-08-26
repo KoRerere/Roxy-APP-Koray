@@ -30,7 +30,7 @@ const visible = ref(true)
     </div>
     <div v-if="visible" class="preview-content">
       <div class="preview-content-list">
-        <div v-for="(value, key) in fakedata" :key="key" class="preview-content-item">
+        <div v-for="(value, key) in data" :key="key" class="preview-content-item">
           <div class="preview-content-item-label">
             {{ key }}
           </div>
@@ -112,9 +112,18 @@ const visible = ref(true)
       padding: var(--spacing-sm, 4px) 10px;
       align-items: flex-start;
       align-self: stretch;
+      gap: var(--spacing-sm, 4px);
+
+      color: var(--Color-neutrals-800, #252a2e);
+      font-family: 'DM Mono';
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
 
       &-label {
         width: 90px;
+        word-wrap: break-word;
       }
 
       &-value {
