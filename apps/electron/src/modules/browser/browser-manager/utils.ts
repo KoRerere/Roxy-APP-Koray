@@ -1,5 +1,5 @@
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import language from './language.json'
+import language from '/@/constants/language.json'
 import crypto from 'node:crypto'
 import { Buffer } from 'node:buffer'
 
@@ -305,7 +305,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     portScan: {
       enablePortScanWhiteList: winInfo.portScanProtect,
       // TODO: 从配置中获取
-      // portScanWhiteList: `${$app.server.port};${winInfo.portScanList.replaceAll(',', ';')}`,
+      portScanWhiteList: `${8888};${winInfo.portScanList.replaceAll(',', ';')}`,
     },
     /** 选填 屏幕分辨率 */
     get screen() {

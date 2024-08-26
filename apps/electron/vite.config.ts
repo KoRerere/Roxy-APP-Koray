@@ -16,7 +16,7 @@ const config: UserConfig = {
   },
   build: {
     ssr: true,
-    sourcemap: 'inline',
+    sourcemap: false,
     target: `node${node}`,
     outDir: 'dist',
     assetsDir: '.',
@@ -31,6 +31,7 @@ const config: UserConfig = {
     rollupOptions: {
       output: {
         entryFileNames: '[name].cjs',
+        chunkFileNames: '[name].cjs',
       },
     },
     emptyOutDir: true,

@@ -27,6 +27,9 @@ const protocolCheckMap = {
   noproxy: noProxy,
 } as const
 
+// 检测超时时间
+const TIMEOUT = 6000
+
 /** 根据协议获取检测方法 */
 function getCheckFunction(protocol: string) {
   return protocolCheckMap[protocol] || noProxy
@@ -80,7 +83,7 @@ function logProxyConfig(params, name = ``) {
  */
 async function noProxy(winInfo: WindowItemType) {
   const { checkChannel = `https://ip123.in/ip.json` } = winInfo
-  const response = await axios.get(checkChannel)
+  const response = await axios.get(checkChannel, { timeout: TIMEOUT })
 
   return response.data
 }
@@ -101,7 +104,7 @@ function checkHttpsProxy(winInfo: WindowItemType) {
     headers: {
       'user-agent': 'electron ',
     },
-    agent: new HttpsProxyAgent(httpUrl, { timeout: 100 }),
+    agent: new HttpsProxyAgent(httpUrl, { timeout: TIMEOUT }),
   };
   (!(`${checkChannel}`).includes(`https`) ? http : https).get(checkChannel, options, (res) => {
     // res.pipe(process.stdout);
@@ -137,9 +140,10 @@ async function checkHttpProxy(winInfo: WindowItemType) {
   logProxyConfig(winInfo, `Http`)
 
   const api = axios.create({
+    timeout: TIMEOUT,
     proxy: {
       host,
-      port,
+      port: Number(port),
       ...(proxyUserName === `` || proxyPassword === ``
         ? {}
         : {
@@ -174,8 +178,9 @@ async function checkSocks5Proxy(parmes) {
     auth = ``
   }
 
-  const agent = new SocksProxyAgent(`socks5h://${auth}${host}:${port}`)
-  // agent.timeout = 5000; // 设置超时时间
+  const agent = new SocksProxyAgent(`socks5h://${auth}${host}:${port}`, {
+    timeout: TIMEOUT,
+  })
 
   const response = await axios.get(checkChannel, {
     // headers: {

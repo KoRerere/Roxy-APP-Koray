@@ -2,8 +2,8 @@
 import RouterMenu from '/@/components/menus.vue'
 
 const collapsed = ref<boolean>(false)
-window.electronAPI.on('browser:process-message', (event) => {
-  console.log('browser:process-message', event)
+window.electronAPI.on('browser:launch-process-message', (event) => {
+  console.log('browser:launch-process-message', event)
 })
 </script>
 

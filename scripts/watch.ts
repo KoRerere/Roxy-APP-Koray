@@ -58,7 +58,12 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           })
 
           electronApp.stderr.on('data', (data) => {
-            console.log('\x1B[31m%s\x1B[0m', data.toString())
+            const str = data.toString()
+            const ignoreErrors = ['Secure coding is not enabled for restorable state', 'CoreText note: Client requested name']
+            if (ignoreErrors.some(err => str.includes(err))) {
+              return
+            }
+            console.log('\x1B[31m%s\x1B[0m', str)
           })
 
           /** 当应用程序退出时停止监听脚本 */

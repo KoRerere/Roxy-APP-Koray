@@ -53,7 +53,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   }
 
   /** 根据内核版本获取对应的内核执行文件 */
-  async getCoreExePath(coreVersion: string) {
+  async getCoreExePath(coreVersion: string, msgCallback?: (msg: string) => void) {
     const exePath = this.genCoreExePath(coreVersion)
 
     // 如果该内核已经在使用中，则直接返回
@@ -71,6 +71,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       if (!this.downloadingMap.has(coreVersion)) {
         this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
       }
+      msgCallback?.('正在下载内核')
       // 等待下载完成
       await this.downloadingMap.get(coreVersion)
     }
@@ -88,6 +89,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       if (localCoreVersion.trim() !== availableCore.version) {
         // 重新下载
         this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
+        msgCallback?.('正在下载内核')
         await this.downloadingMap.get(coreVersion)
       }
     }

@@ -1,9 +1,11 @@
+import type { ReadStream } from 'node:fs'
+import { createWriteStream } from 'node:fs'
 import OSS from 'ali-oss'
 import type { UserGetOssCredentialListData } from '@roxy/backend-api'
 import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
-  store!: OSS
+  store = {} as OSS
   timer?: NodeJS.Timeout
   /** 避免重复请求 */
   promise?: Promise<UserGetOssCredentialListData>
@@ -35,18 +37,40 @@ const _aliOSS = new class AliOSS {
       this.refreshUploadTokenInterval()
     }, timeout)
   }
+
+  /** 流式下载文件到本地 */
+  async getStreamPromise(remotePath: string, localPath: string) {
+    const { promise, reject, resolve } = Promise.withResolvers()
+    // 填写Object完整路径。Object完整路径中不能包含Bucket名称。
+    const result = await this.store.getStream(remotePath)
+
+    // 可读流实例。如果响应状态不是200，则 stream 将为null
+    const readStream: ReadStream = result.stream
+    if (!readStream) {
+      return reject(new Error('stream is null'))
+    }
+
+    // 填写本地文件的完整路径。如果指定的本地文件存在会覆盖，不存在则新建。
+    const writeStream = createWriteStream(localPath)
+    result.stream.pipe(writeStream)
+    readStream.on('end', resolve)
+    readStream.on('error', reject)
+
+    return promise
+  }
 }()
 
-export const aliOSS = new Proxy({} as OSS, {
-  get(target, key: keyof OSS) {
+export const aliOSS = new Proxy({} as OSS & typeof _aliOSS, {
+  get(_, key: keyof OSS) {
+    const target = Reflect.has(_aliOSS.store, key) ? _aliOSS.store : _aliOSS
     return async (...args: any[]) => {
       try {
-        return Reflect.apply(_aliOSS.store[key], _aliOSS.store, args)
+        return Reflect.apply(target[key], target, args)
       }
       catch (error) {
         console.error('aliOSS error', error)
         await _aliOSS.refreshUploadTokenInterval()
-        return Reflect.apply(_aliOSS.store[key], _aliOSS.store, args)
+        return Reflect.apply(target[key], target, args)
       }
     }
   },

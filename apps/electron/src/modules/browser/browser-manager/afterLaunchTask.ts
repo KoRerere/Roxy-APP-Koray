@@ -1,0 +1,203 @@
+import { join } from 'node:path'
+import { readFile, stat, writeFile } from 'node:fs/promises'
+import type { Browser } from 'puppeteer-core'
+import { BrowserItem } from './browserItem'
+import type { WindowItemType } from './types'
+import { fileExists } from '/@/utils/'
+
+/** 浏览器启动后要做的事情 */
+export class AfterLaunchTask extends BrowserItem {
+  /** 已打开的tab页 */
+  private openedTabs: Record<string, string> = {}
+  /** 最新的 cookies */
+  private cookies = ''
+  /** 判断是否手机端 */
+  get isPhone() {
+    return [`Android`, `IOS`].includes(this.winInfo.os)
+  }
+
+  /** lumiLogin 文件路径 */
+  get lumiLoginPath() {
+    return join(this.userDataDir, 'Default', 'LumiLogin')
+  }
+
+  constructor(winItem: WindowItemType, public browser: Browser) {
+    super(winItem)
+  }
+
+  async run() {
+    this.afterLaunch()
+    this.handleBrowserEvent()
+  }
+
+  /** 获取需要同步的数据 */
+  async getUploadData() {
+    // 同步 浏览器已经打开tabs标签
+    const defaultOpenUrl = Object.values(this.openedTabs)
+    console.log('同步标签页', defaultOpenUrl)
+    // 同步插件密码
+    let lumiLogin
+    try {
+      // cookie = this.browser_service.export_cookies();
+      // login_data = this.browser_service.export_login_data();
+      const stats = await stat(this.lumiLoginPath)
+      // lumiLogin 文件超过1M的文件就不同步到服务器
+      if (stats.size < 1024 * 1024) {
+        lumiLogin = await readFile(this.lumiLoginPath, 'utf8')
+      }
+      else {
+        console.log('lumiLogin文件超过1M，不同步到服务器', stats.size)
+      }
+      console.log('lumiLogin', lumiLogin)
+    }
+    catch (error) {
+      console.log(`update_message error`, error)
+    }
+
+    return {
+      id: this.winInfo.id,
+      defaultOpenUrl: defaultOpenUrl.filter(elem => this.filterTab(elem)),
+      cookie: this.cookies || [],
+      lumiLogin,
+    }
+  }
+
+  /** 浏览器启动后要做的事情 */
+  async afterLaunch() {
+    const { lumiLogin } = this.winInfo
+
+    if (lumiLogin) {
+      const defaultDir = join(this.userDataDir, 'Default')
+      await fileExists(defaultDir, true)
+      await writeFile(this.lumiLoginPath, lumiLogin, 'utf8')
+      console.log('写入 LumiLogin 成功')
+    }
+  }
+
+  /** 处理浏览器事件 */
+  async handleBrowserEvent() {
+    const { cookie, syncCookie } = this.winInfo
+
+    if (!this.browser) {
+      return
+    }
+
+    const createCDPSession = async () => {
+      const pages = await this.browser.pages()
+      return pages[0].target().createCDPSession()
+    }
+
+    // const client = await this.browser.target().createCDPSession();
+    const pages = await this.browser.pages().catch((err) => {
+      console.log('获取pages失败', err)
+      return Promise.reject(err)
+    })
+    console.log('get pages success')
+
+    let cdpSession = await createCDPSession().catch((err) => {
+      console.log('创建cdpSession失败', err)
+      return Promise.reject(err)
+    })
+
+    console.log('createCDPSession success')
+
+    await cdpSession.send('Network.enable').catch((err) => {
+      console.log('Network.enable 失败', err)
+    })
+    console.log('Network.enable success')
+
+    const startTime = Date.now()
+
+    if (syncCookie && cookie) {
+      await cdpSession.send('Network.setCookies', { cookies: cookie }).catch((err) => {
+        console.log('导入cookie失败', err)
+      })
+      console.log('Network.setCookies success')
+    }
+
+    // cookie导入成功后，把打开的tab页重新加载一次
+    pages.map(async (e) => {
+      const target = e.target()
+      const url = target.url()
+      if (url && url !== 'about:blank') {
+        await e.goto(url).catch((err) => {
+          console.log(`goto ${url} 失败`, err)
+        })
+        this.openedTabs[target._targetId] ||= url
+        if (!this.isPhone) {
+          e.evaluate(() => {
+            window.console.debug = function (_) { }
+          })
+        }
+      }
+    })
+    console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
+
+    // await client.send('Storage.setCookies', {
+    //   cookies: Array.isArray(this.cookies) ? this.cookies : []
+    // }).catch((err) => {
+    //   console.log('导入cookie失败', err)
+    // })
+
+    this.browser.on('targetchanged', async (target) => {
+      console.log(' url 改变', target.url(), target._targetId)
+      // type为page的时候，保存
+      if (target.type() === 'page') {
+        this.openedTabs[target._targetId] = target.url()
+      }
+      const { cookies } = await cdpSession.send('Network.getAllCookies')
+      this.cookies = JSON.stringify(cookies)
+      // console.log(this.cookies)
+    })
+    this.browser.on('targetcreated', async (target) => {
+      console.log('目标被创建', target.url())
+      if (syncCookie) {
+        const { cookies } = await cdpSession.send('Network.getAllCookies')
+        this.cookies = JSON.stringify(cookies)
+      }
+      // console.log(this.cookies)
+    })
+    this.browser.on('targetdestroyed', async (target) => {
+      let deleted_target_id = ''
+      let should_delete = false
+      try {
+        if (target.type() === 'page') {
+          deleted_target_id = target._targetId
+        }
+        console.log('目标被销毁', target.url(), target._targetId, target.type())
+        if (syncCookie) {
+          const { cookies } = await cdpSession.send('Network.getAllCookies')
+          this.cookies = JSON.stringify(cookies)
+        }
+
+        // 如果走到这里来说明是手动关闭tab页
+        if (target.type() === 'page') {
+          should_delete = true
+        }
+      }
+      catch (error) {
+        // 这里，说明关闭的那个tab页引用了cdpsession, 但是不确定是关闭浏览器还是tab页
+        console.log(`targetdestroyed=>${error}`)
+        try {
+          if (error.toString().includes('TargetCloseError')) {
+            console.log('重新创建cdpsession')
+            cdpSession = await createCDPSession()
+            if (syncCookie) {
+              const { cookies } = await cdpSession.send('Network.getAllCookies')
+              this.cookies = JSON.stringify(cookies)
+            }
+            // 这里说明cdpsession能创建成功, 浏览器没有关闭，关闭的只是一个tab页，要tabs中删除
+            should_delete = true
+          }
+        }
+        catch (error) {
+          console.log('重新创建 cdpSession 失败: ', error)
+        }
+      }
+      // 删除tab页
+      if (should_delete) {
+        delete this.openedTabs[deleted_target_id]
+      }
+    })
+  }
+}

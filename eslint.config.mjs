@@ -19,6 +19,14 @@ export default antfu(
       'jsdoc/convert-to-jsdoc-comments': ['warn'],
       'n/prefer-global/process': 'off',
       'vue/first-attribute-linebreak': 'off',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          caughtErrors: 'none',
+          varsIgnorePattern: '^_', // 忽略以 _ 开头的变量
+          argsIgnorePattern: '^_', // 忽略以 _ 开头的参数
+        },
+      ],
     },
   },
 )

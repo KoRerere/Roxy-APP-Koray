@@ -15,5 +15,5 @@ export interface BrowserProcessMessage {
 
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
-  'browser:process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
+  'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
 }
