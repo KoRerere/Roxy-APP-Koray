@@ -2,6 +2,7 @@
 // import { HttpClient } from './api/'
 
 export * from './api'
+export * from './types'
 
 // export const modules = import.meta.glob<any>('./api/*.ts', { eager: true })
 
