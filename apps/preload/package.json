@@ -5,12 +5,12 @@
   "private": true,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "development": "./src/index.ts",
       "default": "./dist/index.cjs"
     },
     "./main": {
-      "types": "./dist/ipcMain.d.ts",
+      "types": "./src/ipcMain.ts",
       "development": "./src/ipcMain.ts",
       "default": "./dist/ipcMain.cjs"
     },

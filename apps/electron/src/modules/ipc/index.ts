@@ -1,7 +1,7 @@
 import { IPCMain } from '@roxy/electron-preload/main'
-import type { MainMessageResult } from '@roxy/electron-preload/main'
-import type { MainMessage, RenderMessage } from '@roxy/electron-preload'
+import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { browserManager } from '/@/modules/browser'
+import { proxyDetection } from '/@/utils'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -24,8 +24,8 @@ export function errorDataWrapper(message = 'error', data?: any, error?: any): Ma
   }
 }
 
-ipcMain.on('browser:launch', (winItemInfo) => {
-  return browserManager.launch(winItemInfo)
+ipcMain.on('proxy:detection', (winItemInfo) => {
+  return proxyDetection(winItemInfo)
 })
 
 ipcMain.on('browser:batchLaunch', (winItemList) => {

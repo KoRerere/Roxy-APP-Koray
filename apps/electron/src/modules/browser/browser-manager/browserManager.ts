@@ -65,7 +65,9 @@ export class BrowserManager {
   /** 批量启动浏览器 */
   async batchLaunch(winInfoList: WindowItemType[]) {
     for (const winInfo of winInfoList) {
-      await this.launch(winInfo)
+      await this.launch(winInfo).catch((error) => {
+        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
+      })
     }
   }
 

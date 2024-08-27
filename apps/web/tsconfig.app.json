@@ -7,7 +7,12 @@
     "jsxImportSource": "vue",
     "baseUrl": ".",
     "paths": {
-      "/@/*": ["src/*"]
+      "/@/*": [
+        "src/*"
+      ],
+      "#roxybrowser/*": [
+        "../electron/src/*"
+      ]
     }
   },
   "include": [
@@ -21,5 +26,7 @@
     "./*.d.ts",
     "./auto-imports.d.ts"
   ],
-  "exclude": ["src/**/__tests__/*"]
+  "exclude": [
+    "src/**/__tests__/*"
+  ]
 }

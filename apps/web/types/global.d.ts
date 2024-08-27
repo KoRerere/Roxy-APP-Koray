@@ -1,5 +1,5 @@
-import { ElectronAPI } from '@roxy/electron-preload';
+import type { ElectronAPI } from '@roxy/electron-preload'
 
 declare global {
-  var electronAPI: ElectronAPI;
+  var electronAPI: ElectronAPI
 }
