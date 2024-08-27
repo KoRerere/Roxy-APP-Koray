@@ -16,7 +16,7 @@ async function getUaWebgl(windowInputs: any) {
 
   const keys = Object.keys(data)
 
-  windowInputs.forEach((inputs) => {
+  windowInputs.forEach((inputs: any) => {
     inputs.forEach((input: any) => {
       if (keys.includes(input.name)) {
         input.value = data[input.name]
@@ -37,7 +37,7 @@ async function getMacAddr(windowInputs: any) {
 
 export function getInputs(_data?: any) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  console.log('🚀 ~ getInputs ~  $dict_map:', $dict_map)
+  // console.log('🚀 ~ getInputs ~  $dict_map:', $dict_map)
 
   const windowInputs = reactive([
     [
@@ -105,15 +105,20 @@ export function getInputs(_data?: any) {
         separator: true
       },
       {
-        label: '#xURLs',
-        value: null,
-        slot: 'urls',
-        tooltip: 'man!'
+        label: 'Accounts',
+        name: 'windowPlatformList',
+        value: [],
+        slot: 'accounts',
+        formatValue: (value: string) => {
+          return JSON.stringify(value || [])
+        }
       },
       {
-        label: '#xAccounts',
-        value: null,
-        slot: 'accounts'
+        label: 'URLs',
+        name: 'defaultOpenUrl',
+        value: [],
+        slot: 'urls',
+        tooltip: 'man!'
       },
       {
         type: 'textarea',
@@ -124,6 +129,8 @@ export function getInputs(_data?: any) {
         icon: 'mdi mdi-paperclip',
         formatValue: (value: string) => {
           return value
+          // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
+          // : value
         }
       }
     ],

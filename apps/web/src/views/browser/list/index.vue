@@ -18,7 +18,6 @@ import { useContextMenu } from '/@/hooks/useContextMenu'
 import columnsRow from './columns'
 import { filters, operation, operationHandler, sorts } from './operation'
 import { API } from '/@/api'
-import type { UserGetPlatformInfoListData, UserGetWindowInfoListData } from '@roxy/backend-api'
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
@@ -28,12 +27,6 @@ const drawer = reactive({
 })
 
 // ======================================
-const platformInfo = ref<UserGetPlatformInfoListData['data']['platformUrl']>([])
-
-async function getPlatformInfo() {
-  const { data } = await API.window.userGetPlatformInfoList({})
-  platformInfo.value = data.platformUrl
-}
 
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoList(params)
@@ -49,7 +42,7 @@ function onMore([event, model]: any[]) {
 }
 
 onMounted(() => {
-  getPlatformInfo()
+  // getPlatformInfo()
 })
 </script>
 
@@ -61,7 +54,7 @@ onMounted(() => {
       <custom-filter />
     </template>
     <template #profile="{ data }">
-      <profile-info :data="data" :platform-info="platformInfo" />
+      <profile-info :data="data" :platform-info="data.platformUrlIds" />
     </template>
     <template #open="{ data }">
       <browser-control @open="() => openBrowser(data)" />

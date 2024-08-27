@@ -1,18 +1,21 @@
-<script setup>
+<script lang="ts" setup>
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import inputBase from '/@/components/ry-form/input-base.vue'
+import { API } from '/@/api'
+import type { UserGetPlatformInfoV2ListParams } from '@roxy/backend-api'
 
 const columns = [
   {
     title: '平台',
     key: 'platform',
+    slot: 'platform',
   },
   {
     title: '账号名称',
-    key: 'accountName',
+    key: 'platformUserName',
   },
   {
     title: '相关简介',
@@ -26,16 +29,7 @@ const columns = [
   },
 ]
 
-const dataList = ref(
-  Array.from({ length: 20 }, (_, index) => ({
-    id: index,
-    platform: 'mac',
-    accountName: 'mac账号',
-    related: ['a', 'b', 'c'],
-  })),
-)
-
-const operation = ref([
+const operation = [
   {
     key: 'edit',
     name: '编辑',
@@ -54,7 +48,7 @@ const operation = ref([
     icon: 'mdi mdi-file-document-plus-outline',
     quick: true,
   },
-])
+]
 
 const filters = [
   {
@@ -70,34 +64,40 @@ const filters = [
   },
 ]
 
-const selectedProxy = ref(null)
-
-watch(() => selectedProxy.value, (newValue) => {
-  console.log(newValue)
-})
+async function tableRequest(params: UserGetPlatformInfoV2ListParams) {
+  const { data } = await API.platform.userGetPlatformInfoV2List(params)
+  return data.rows.map(({ window_info, ...item }) => {
+    const list = window_info.split(',').filter(v => v)
+    const windowinfo = list.length > 1 ? [list[0], `+${list.length - 1}`] : list
+    return { ...item, window_info: windowinfo }
+  })
+}
 </script>
 
 <template>
   <drawer-content title="账号列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table selection-mode="multiple" :data-list="dataList" :columns="columns" :show-config="false"
+      <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-config="false"
         :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>
-        <template #id="{ data }">
-          <div class="flex items-center gap-2">
-            <RadioButton v-model="selectedProxy" :input-id="`${data.id}`" name="proxy-select" :value="data.id" />
-            <label class="w-full cursor-pointer" :for="`${data.id}`">{{ data.id }}</label>
+        <template #platform="{ data }">
+          <div class="platform">
+            <img class="platform-img" :src="data.platformIcon" alt="">
+            <div class="platform-nation">
+              {{ data.platformUrl }}
+            </div>
+            <div class="platform-time">
+              {{ data.platformName }}
+            </div>
           </div>
         </template>
-        <template #related>
-          <div class="flex items-center gap-2">
-            <ry-tag>
-              123
-            </ry-tag>
-            <ry-tag>
-              +2
+        <template #related="{ data }">
+          <div class="related">
+            <ry-tag v-for="item in data.window_info" :key="item">
+              <span class="mdi mdi-monitor mr-1" />
+              <span>{{ item }}</span>
             </ry-tag>
           </div>
         </template>
@@ -115,5 +115,42 @@ watch(() => selectedProxy.value, (newValue) => {
   justify-content: flex-end;
   align-items: center;
   padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
+}
+
+.platform {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  grid-column-gap: var(--spacing-lg, 8px);
+  grid-row-gap: var(--spacing-xs, 4px);
+
+  &-img {
+    font-size: 16px;
+    line-height: 1;
+    grid-row-start: span 2;
+  }
+
+  &-nation {
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+
+  &-time {
+    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+
+.related {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
 }
 </style>

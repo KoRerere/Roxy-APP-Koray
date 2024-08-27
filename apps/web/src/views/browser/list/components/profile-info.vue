@@ -109,12 +109,12 @@ const accountOperation = computed(() => {
 
 const links = ref([
   {
-    icon: _props.data.platformUrl,
+    icon: _props.data.platformIcon,
     classes: '',
     tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
   },
   {
-    icon: _props.data.platformUrl,
+    icon: _props.data.platformIcon,
     classes: 'direct',
     create: true,
     tooltip: `Location: ${_props.data.lastCountry}\nIP: ${_props.data.lastIp}\nLast time: ${_props.data.updateTime}`,
@@ -125,7 +125,7 @@ const links = ref([
     },
   },
   {
-    icon: _props.data.platformUrl,
+    icon: _props.data.platformIcon,
     classes: 'stack',
     tooltip: '',
     onClick: (event) => {

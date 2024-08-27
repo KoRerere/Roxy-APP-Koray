@@ -3,12 +3,15 @@ import ryForm from '/@/components/ry-form'
 import ryButton from '/@/components/ry-button'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import rxEditDiv from '/@/components/rx-edit-div'
+import previewCard from './components/preview-card.vue'
 import proxyItem from './components/proxy.vue'
 import accountItem from './components/account.vue'
-import previewCard from './components/preview-card.vue'
+import urlsItem from './components/urls.vue'
 import { getFormDataByList } from '/@/utils'
 import { getInputs } from './form-inputs'
 import { API } from '/@/api'
+
+const router = useRouter()
 
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
@@ -20,7 +23,7 @@ const tabsValue = ref('0')
 const windowName = ref('Untitled profile')
 const [windowInputs] = getInputs()
 const accordions = reactive({
-  value: ['2'],
+  value: ['0'],
   panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
     title,
     value: `${index}`,
@@ -32,25 +35,18 @@ const previewData = computed(() => getFormDataByList(windowInputs, {}, { keyName
 
 function createProfile() {
   const formData = getFormDataByList(windowInputs, {
-    openMult: false,
+    openMult: true,
     clearHistory: false,
-    allowRunApplication: false,
+    allowRunApplication: true,
     ignoreHttpsError: false,
     webGLMeta: true,
     enablePlugin: false,
-    enablePluginList: [
-      {
-        name: 'PDF Viewer',
-        description: 'Portable Document Format',
-        filename: 'internal-pdf-viewer',
-        mimeType: 'application/pdf|text/pdf',
-        mimeDescription: 'Portable Document Format|Portable Document Format',
-        suffixes: 2,
-      },
-    ],
+    enablePluginList: [],
     mediaDevice: false,
   })
-  API.window.userAddWindowInfoCreate(formData)
+  console.log(formData)
+  // return API.window.userAddWindowInfoCreate(formData)
+  // router.replace({ name: 'browser-list', params: { windowId: 111 } })
 }
 </script>
 
@@ -87,20 +83,17 @@ function createProfile() {
                 <template #Proxy="{ input }">
                   <div class="flex flex-row">
                     <input-label v-bind="input" />
-                    <proxy-item class="flex-1" />
-                  </div>
-                </template>
-                <template #urls="{ input }">
-                  <div class="flex flex-row">
-                    <input-label v-bind="input" />
-                    <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add URLs" />
+                    <proxyItem class="flex-1" />
                   </div>
                 </template>
                 <template #accounts="{ input }">
                   <div class="flex flex-row">
                     <input-label v-bind="input" />
-                    <account-item class="flex-1" />
+                    <accountItem v-model="input.value" class="flex-1" />
                   </div>
+                </template>
+                <template #urls="{ input }">
+                  <urlsItem v-model="input.value" v-bind="input" />
                 </template>
                 <template #windowSize="{ input }">
                   <div class="flex flex-row">
@@ -119,7 +112,7 @@ function createProfile() {
       </div>
       <div class="footer">
         <ry-button class="ma-auto ml-0" size="small" severity="secondary" label="Cancel" text />
-        <ry-button size="small" severity="secondary" outlined label="Carete & Open" />
+        <ry-button size="small" severity="secondary" outlined label="Carete & Open" @click="createProfile" />
         <ry-button size="small" severity="primary" label="Create profile" @click="createProfile" />
       </div>
     </div>

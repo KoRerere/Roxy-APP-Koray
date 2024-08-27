@@ -33,28 +33,40 @@ interface FormDataOptions {
   valueName: string
 }
 
+function formVaildData(formData, input) {
+  if (hasOwnProperty(formData, input.name)) {
+    throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
+  }
+  if (input.required && input.value === null) {
+    input.invalid = true
+    throw new Error(`Input '${input.name}' is required`)
+  }
+}
+
 export function getFormData(
   inputs: any[],
   original: object = {},
   options: FormDataOptions = { keyName: 'name', valueName: 'value' }
 ): any {
-  return inputs.reduce((formData, input) => {
-    const { visible, items, formatValue } = input
-    const name = input[options.keyName]
-    const value = input[options.valueName]
+  return inputs.reduce(
+    (formData, input) => {
+      const { visible, items, formatValue } = input
+      const name = input[options.keyName]
+      const value = input[options.valueName]
 
-    if (visible === false) return formData
-    if (hasOwnProperty(formData, name)) {
-      throw new Error(`Duplicate name '${name}' found in inputs`)
-    }
-    if (items) {
-      Object.assign(formData, getFormData(items))
-    } else if (name?.trim()) {
-      const _value = value?.value ?? value
-      formData[name] = isFunction(formatValue) ? formatValue(_value, input, inputs) : _value
-    }
-    return formData
-  }, original)
+      if (visible === false) return formData
+      formVaildData(formData, input)
+
+      if (items) {
+        Object.assign(formData, getFormData(items))
+      } else if (name?.trim()) {
+        const _value = value?.value ?? value
+        formData[name] = isFunction(formatValue) ? formatValue(_value, input, inputs) : _value
+      }
+      return formData
+    },
+    { ...original }
+  )
 }
 
 export function getFormDataByList(
