@@ -80,10 +80,10 @@ function createProfile() {
                     </InputGroup>
                   </div>
                 </template>
-                <template #Proxy="{ input }">
+                <template #proxy="{ input }">
                   <div class="flex flex-row">
                     <input-label v-bind="input" />
-                    <proxyItem class="flex-1" />
+                    <proxyItem v-model="input.value" class="flex-1" />
                   </div>
                 </template>
                 <template #accounts="{ input }">

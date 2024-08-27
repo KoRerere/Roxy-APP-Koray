@@ -97,9 +97,21 @@ export function getInputs(_data?: any) {
         separator: true
       },
       {
-        label: '#xProxy(Direct)',
-        value: null,
-        slot: 'Proxy'
+        label: 'Proxy(Direct)',
+        name: '_proxy',
+        value: {
+          host: null, // 代理主机
+          ipType: null, // 网络协议
+          port: null, // 代理端口
+          protocol: null, // 代理协议
+          proxyPassword: null, // 代理密码
+          proxyUserName: null, // 代理账号
+          refreshUrl: null // 刷新URL
+        },
+        slot: 'proxy',
+        formatValue: (self: any, _inputs: any, formData: any) => {
+          Object.assign(formData, self.value)
+        }
       },
       {
         separator: true
@@ -109,8 +121,8 @@ export function getInputs(_data?: any) {
         name: 'windowPlatformList',
         value: [],
         slot: 'accounts',
-        formatValue: (value: string) => {
-          return JSON.stringify(value || [])
+        formatValue: (self: any) => {
+          return JSON.stringify(self.value || [])
         }
       },
       {
@@ -127,9 +139,9 @@ export function getInputs(_data?: any) {
         value: null,
         placeholder: 'Paste your cookies with JSON format',
         icon: 'mdi mdi-paperclip',
-        formatValue: (value: string) => {
-          return value
-          // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
+        formatValue: (self: any) => {
+          return self.value
+          // ? JSON.parse(self.value).map(({ name, value, domain }) => ({ name, value, domain }))
           // : value
         }
       }
@@ -566,8 +578,8 @@ export function getInputs(_data?: any) {
         value: $dict_map.disableSslList[0],
         options: $dict_map.disableSslList,
         visible: true,
-        formatValue: (value: string) => {
-          return [value]
+        formatValue: (self: any) => {
+          return [self.value]
         }
       },
       {

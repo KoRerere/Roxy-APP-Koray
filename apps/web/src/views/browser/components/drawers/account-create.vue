@@ -81,8 +81,8 @@ async function getInputs() {
       placeholder: 'Paste JSON format or upload cookies JSON file',
       tooltip: 'man!',
       icon: 'mdi mdi-paperclip',
-      formatValue: (value: string) => {
-        return value
+      formatValue: (self) => {
+        return self.value
         // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
         // : value
       },

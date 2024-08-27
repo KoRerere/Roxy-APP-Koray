@@ -47,9 +47,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <Button label="open-drawers" @click="drawer.visible = true" />
+  <!-- <Button label="open-drawers" @click="drawer.visible = true" /> -->
   <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" selection-mode="multiple"
-    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
+    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id" :show-gridlines="false">
     <template #header-extra>
       <custom-filter />
     </template>

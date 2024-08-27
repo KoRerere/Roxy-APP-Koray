@@ -104,7 +104,7 @@ const visible = ref(true)
     &-list {
       width: 100%;
       height: 100%;
-      overflow-y: hidden;
+      overflow-y: scroll;
     }
 
     &-item {

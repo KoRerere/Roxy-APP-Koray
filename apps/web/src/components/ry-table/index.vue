@@ -75,8 +75,12 @@ const tableAttrs = reactive({
 })
 
 const params = reactive<any>({
-  filter: {},
   sort: {},
+  filter: {},
+  default: {
+    page_index: 1,
+    page_size: 15,
+  },
 })
 
 const _dataList = ref([])
@@ -88,8 +92,9 @@ function onChangeParams(key: string, data: any) {
 
 function _getParams(outerParams?: any) {
   return {
-    ...params.filter,
     ...params.sort,
+    ...params.filter,
+    ...params.default,
     ...props.tableParams,
     ...outerParams,
   }
@@ -137,7 +142,7 @@ function batchOperation(item: any) {
 
 <template>
   <div class="position-relative h-full">
-    <div class="flex items-center table-header">
+    <div class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
         <table-filter :filters="_filters" @change="(data) => onChangeParams('filter', data)" />
         <slot name="header-extra" />
@@ -148,14 +153,14 @@ function batchOperation(item: any) {
         <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
       </div>
     </div>
-    <div class="table-body">
+    <div class="rxtable-body">
       <DataTable v-model:selection="selectionData" v-model:contextMenuSelection="contextMenuSelection"
         :value="_dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
         <template #paginatorstart>
-          <div class="flex items-center table-body-jump">
+          <div class="flex items-center rxtable-body-jump">
             <div>Go to</div>
             <InputNumber placeholder="Page" />
             <div>|</div>
@@ -197,7 +202,7 @@ function batchOperation(item: any) {
 </template>
 
 <style lang="scss" scoped>
-.table {
+.rxtable {
   &-header {
     height: 60px;
     background-color: olivedrab;
@@ -217,6 +222,10 @@ function batchOperation(item: any) {
 :deep(.p-paginator-content-start) {
   margin: auto;
   margin-right: 0;
+}
+
+:deep(.p-datatable-paginator-bottom) {
+  border-style: none;
 }
 
 .v-enter-active,

@@ -43,11 +43,13 @@ function getInputs () {
         {
           type: 'text',
           name: 'host',
+          value: null,
           placeholder: '代理主机',
         },
         {
           type: 'text',
           name: 'port',
+          value: null,
           placeholder: '代理端口',
         },
       ],

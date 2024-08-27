@@ -61,7 +61,7 @@ export function getFormData(
         Object.assign(formData, getFormData(items))
       } else if (name?.trim()) {
         const _value = value?.value ?? value
-        formData[name] = isFunction(formatValue) ? formatValue(_value, input, inputs) : _value
+        formData[name] = isFunction(formatValue) ? formatValue(input, inputs, formData) : _value
       }
       return formData
     },

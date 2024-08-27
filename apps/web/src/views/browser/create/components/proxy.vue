@@ -3,33 +3,44 @@ import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
 import proxyCreate from '/@/views/browser/components/drawers/proxy-create.vue'
+import { useVModel } from '@vueuse/core'
 
-const proxyConfig = reactive<any>({
-  value: null,
-  state: {
-    state: 'success',
-    isTestProxy: false,
-    isRefresh: false,
-    loading: 'mdi mdi-selection-ellipse',
-    proxyIcon: 'mdi mdi-wifi-refresh',
-    ipIcon: 'mdi mdi-refresh',
-    help: 'Enter your username to reset your password.',
-    helpIcon: 'mdi mdi-web',
+const props = defineProps({
+  modelValue: {
+    type: Object as PropType<any>,
+    default: () => ({}),
   },
 })
+const emits = defineEmits(['update:modelValue'])
 
-const proxyData = computed(() => {
-  const { value, state } = proxyConfig
-  return value
-    ? {
-      ...value,
-      proxyValue: `${value.ipType} ${value.protocol}://${value.host || ''}:${value.port || ''}`,
-      help: state.help,
-      helpIcon: state.helpIcon,
-      proxyIcon: state.isTestProxy ? state.loading : state.proxyIcon,
-      ipIcon: state.isRefresh ? state.loading : state.ipIcon,
-    }
-    : null
+const proxyValue = useVModel(props, 'modelValue', emits)
+
+const proxyState = reactive({
+  region: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+  state: 'success',
+  isTestProxy: false,
+  isRefresh: false,
+  loading: 'mdi mdi-selection-ellipse',
+  ipIcon: 'mdi mdi-refresh',
+  proxyIcon: 'mdi mdi-wifi-refresh',
+  help: 'Enter your username to reset your password.',
+  helpIcon: 'mdi mdi-web',
+})
+
+const _proxyValue = computed(() => {
+  return {
+    visible: Object.values(proxyValue.value).some(v => v),
+    name: 'my-proxy',
+    value: `${proxyValue.value.protocol}://${proxyValue.value.ip}:${proxyValue.value.port}`,
+  }
+})
+
+const icons = computed(() => {
+  return {
+    ip: proxyState.isRefresh ? proxyState.loading : proxyState.ipIcon,
+    proxy: proxyState.isTestProxy ? proxyState.loading : proxyState.proxyIcon,
+    help: proxyState.helpIcon,
+  }
 })
 
 const drawer = reactive({
@@ -42,29 +53,30 @@ function toggleDrawer(type: 'create' | 'list') {
   drawer.type = type
 }
 
+function deleteProxy() {
+  Object.keys(proxyValue.value).forEach((key) => {
+    proxyValue.value[key] = null
+  })
+}
+
+function confirm(data: any) {
+  proxyValue.value = data
+}
+
 function testProxy() {
-  proxyConfig.state.isTestProxy = true
+  proxyState.isTestProxy = true
 
   setTimeout(() => {
-    proxyConfig.state.isTestProxy = false
+    proxyState.isTestProxy = false
   }, 2000)
 }
 
 function refreshIp() {
-  proxyConfig.state.isRefresh = true
+  proxyState.isRefresh = true
 
   setTimeout(() => {
-    proxyConfig.state.isRefresh = false
+    proxyState.isRefresh = false
   }, 2000)
-}
-
-function deleteProxy() {
-  proxyConfig.value = null
-}
-
-function confirm(data: any) {
-  console.log('🚀 ~ confirm ~ data:', data)
-  proxyConfig.value = data
 }
 </script>
 
@@ -77,23 +89,23 @@ function confirm(data: any) {
         @click="toggleDrawer('create')" />
     </div>
 
-    <template v-if="proxyData">
+    <div v-if="_proxyValue.visible">
       <rx-card class="proxy" @close="deleteProxy">
-        <img class="proxy-img" :src="proxyData.area">
+        <img class="proxy-img" :src="proxyState.region">
         <div class="flex justify-between proxy-nation ">
-          <span :class="proxyData.state">{{ proxyData.proxyName || '--' }}</span>
-          <span class="cursor-pointer" :class="proxyData.proxyIcon" @click="testProxy" />
+          <span :class="proxyState.state">{{ _proxyValue.name }}</span>
+          <span class="cursor-pointer" :class="icons.proxy" @click="testProxy" />
         </div>
         <div class="flex justify-between proxy-time">
-          <span>{{ proxyData.proxyValue }}</span>
-          <span class="cursor-pointer" :class="proxyData.ipIcon" @click="refreshIp" />
+          <span>{{ _proxyValue.value }}</span>
+          <span class="cursor-pointer" :class="icons.ip" @click="refreshIp" />
         </div>
       </rx-card>
       <small class="proxy-help">
-        <span :class="proxyData.helpIcon" />
-        <span>{{ proxyData.help }}</span>
+        <span :class="icons.help" />
+        <span>{{ proxyState.help }}</span>
       </small>
-    </template>
+    </div>
 
     <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
       :pt="{ mask: 'browser-drawer' }">

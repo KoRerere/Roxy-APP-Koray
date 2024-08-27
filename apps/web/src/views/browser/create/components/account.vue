@@ -3,6 +3,7 @@ import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import accountList from '/@/views/browser/components/drawers/account-list.vue'
 import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
+import { useVModel } from '@vueuse/core'
 
 const props = defineProps({
   modelValue: {
@@ -10,20 +11,8 @@ const props = defineProps({
     default: () => [],
   },
 })
-
 const emits = defineEmits(['update:modelValue'])
-
-// const selectList = reactive<any[]>([])
-
-const selectList = computed({
-  get() {
-    return props.modelValue
-  },
-  set(value) {
-    console.log('🚀 ~ set ~ value:', value)
-    emits('update:modelValue', value)
-  },
-})
+const selectList = useVModel(props, 'modelValue', emits)
 
 const drawer = reactive({
   visible: false,
