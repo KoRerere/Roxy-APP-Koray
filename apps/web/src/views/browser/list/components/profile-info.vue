@@ -163,7 +163,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   width: 104px;
 
   &-item {
-    height: 24px;
+    width: 24px;
     height: 24px;
 
     &:hover {

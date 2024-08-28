@@ -111,7 +111,7 @@ async function deleteProxy(data) {
     },
     accept: async () => {
       try {
-        const res = await API.proxy.userCheckIpCreate({ window_id: data.id, proxy_id: data.moduleId })
+        const res = await API.proxy.userCheckIpCreate({ window_id: data.id })
         toast.add({ severity: 'success', summary: '删除成功', detail: res.msg, life: 5000 })
       }
       catch (error) {
