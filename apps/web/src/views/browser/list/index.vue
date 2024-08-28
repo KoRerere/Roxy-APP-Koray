@@ -5,6 +5,10 @@ import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 
+import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
+import proxyCreate from '/@/views/browser/components/drawers/proxy-create.vue'
+import accountList from '/@/views/browser/components/drawers/account-list.vue'
+import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -12,7 +16,6 @@ import customFilter from './components/custom-filter.vue'
 // @ts-ignore
 import browserControl from './components/browser-control.vue'
 // @ts-ignore
-import drawersContent from '../components/drawers/index.vue'
 
 import useColumns from '/@/hooks/useColumns'
 import { useContextMenu } from '/@/hooks/useContextMenu'
@@ -29,6 +32,7 @@ const [show] = useContextMenu()
 
 const drawer = reactive({
   visible: false,
+  type: 'proxyCreate',
 })
 
 // ======================================
@@ -37,6 +41,30 @@ async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
   // autoOpenBrowser(data.rows)
   return data.rows
+}
+
+function profileOperate(key: string) {
+  console.log('🚀 ~ profileOperate ~ key:', key)
+  switch (key) {
+    case 'addProxy':
+      drawer.visible = true
+      drawer.type = 'proxyCreate'
+      break
+    case 'selectProxy':
+      break
+    case 'testProxy':
+      break
+    case 'refreshIp':
+      break
+    case 'editProxy':
+      break
+    case 'deleteProxy':
+      break
+    case 'addAccount':
+      break
+    case 'selectAccount':
+      break
+  }
 }
 
 function autoOpenBrowser(list: any) {
@@ -64,14 +92,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- <Button label="open-drawers" @click="drawer.visible = true" /> -->
   <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" selection-mode="multiple"
     :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id" :show-gridlines="false">
     <template #header-extra>
       <custom-filter />
     </template>
     <template #profile="{ data }">
-      <profile-info :data="data" :platform-info="data.platformUrlIds" />
+      <profile-info :data="data" @profile-operate="profileOperate" />
     </template>
     <template #open="{ data }">
       <browser-control @open="() => openBrowser(data)" />
@@ -86,7 +113,10 @@ onMounted(() => {
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
     :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
-      <drawers-content :close-drawer="closeCallback" />
+      <proxyList v-if="drawer.type === 'proxyList'" @close="() => closeCallback()" @confirm="() => { }" />
+      <proxyCreate v-if="drawer.type === 'proxyCreate'" @close="() => closeCallback()" @confirm="() => { }" />
+      <accountList v-if="drawer.type === 'accountList'" :close-drawer="closeCallback" />
+      <accountCreate v-if="drawer.type === 'accountCreate'" :close-drawer="closeCallback" @confirm="() => { }" />
     </template>
   </Drawer>
 </template>

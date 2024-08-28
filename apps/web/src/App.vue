@@ -28,6 +28,8 @@ window.electronAPI.on('browser:launch-process-message', (event) => {
       </div>
     </div>
   </div>
+  <Toast />
+  <Toast position="top-center" group="tc" />
 </template>
 
 <style lang="scss" scoped>
