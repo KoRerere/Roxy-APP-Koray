@@ -7,7 +7,7 @@ export const operation = [
     quick: true,
     command: () => {
       console.log('🚀 ~Test:', 'test')
-    }
+    },
   },
   {
     key: 'edit',
@@ -15,7 +15,7 @@ export const operation = [
     label: '编辑',
     icon: 'mdi mdi-refresh',
     quick: true,
-    command: () => {}
+    command: () => { },
   },
   {
     key: 'Delete',
@@ -23,8 +23,8 @@ export const operation = [
     label: '删除',
     icon: 'mdi mdi-file-document-plus-outline',
     quick: true,
-    command: () => {}
-  }
+    command: () => { },
+  },
 ]
 
 export const sorts = [
@@ -39,8 +39,8 @@ export const sorts = [
       { label: 'Rome', value: 'RM' },
       { label: 'London', value: 'LDN' },
       { label: 'Istanbul', value: 'IST' },
-      { label: 'Paris', value: 'PRS' }
-    ]
+      { label: 'Paris', value: 'PRS' },
+    ],
   },
   {
     label: '排序',
@@ -50,8 +50,8 @@ export const sorts = [
     icon: 'mdi-sort-descending',
     options: [
       { label: '升序', value: 'NY' },
-      { label: '降序', value: 'RM' }
-    ]
+      { label: '降序', value: 'RM' },
+    ],
   },
   {
     name: 'time',
@@ -61,9 +61,9 @@ export const sorts = [
     icon: 'mdi-sort-descending',
     options: [
       { label: '创建时间', value: 'create' },
-      { label: '修改时间', value: 'modify' }
-    ]
-  }
+      { label: '修改时间', value: 'modify' },
+    ],
+  },
 ]
 
 export const filters = [
@@ -77,8 +77,8 @@ export const filters = [
       { label: '上海', value: 'sh' },
       { label: '广州', value: 'gz' },
       { label: '深圳', value: 'sz' },
-      { label: '杭州', value: 'hz' }
-    ]
+      { label: '杭州', value: 'hz' },
+    ],
   },
   {
     label: 'city2',
@@ -90,17 +90,22 @@ export const filters = [
       { label: '上海', value: 'sh' },
       { label: '广州', value: 'gz' },
       { label: '深圳', value: 'sz' },
-      { label: '杭州', value: 'hz' }
-    ]
-  }
+      { label: '杭州', value: 'hz' },
+    ],
+  },
 ]
 
-export function operationHandler({ key }: any, data: any) {
+export async function operationHandler({ key }: any, data: any) {
   data = [].concat(data) // 有批量操作
   switch (key) {
     case 'Test':
+    {
       console.log('🚀 ~test:', data)
+      window.electronAPI.send('browser:batchLaunch', data.map((item: any) => toRaw(item)))
+      const proxyResult = await window.electronAPI.send('proxy:detection', toRaw(data[0]))
+      console.log('🚀 ~proxyResult:', proxyResult)
       break
+    }
     case 'Edit':
       console.log('🚀 ~Edit:', data)
       break
@@ -113,5 +118,5 @@ export function operationHandler({ key }: any, data: any) {
 export default {
   sorts,
   operation,
-  operationHandler
+  operationHandler,
 }

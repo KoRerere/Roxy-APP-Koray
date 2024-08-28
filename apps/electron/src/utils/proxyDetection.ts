@@ -5,7 +5,7 @@ import http from 'node:http'
 import axios from 'axios'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 
-interface CheckResult {
+export interface ProxyDetectionResult {
   ip: string
   organization: string
   asn: number
@@ -27,11 +27,13 @@ const protocolCheckMap = {
   noproxy: noProxy,
 } as const
 
+type ProtocolMapType = keyof typeof protocolCheckMap
+
 // 检测超时时间
 const TIMEOUT = 6000
 
 /** 根据协议获取检测方法 */
-function getCheckFunction(protocol: string) {
+function getCheckFunction(protocol: ProtocolMapType) {
   return protocolCheckMap[protocol] || noProxy
 }
 
@@ -45,15 +47,15 @@ function getCheckUrl(url = `http://ip123.in/ip.json`, ipType: string) {
 }
 
 /** 代理检测 */
-export async function proxyDetection(winInfo: WindowItemType): Promise<CheckResult> {
+export async function proxyDetection(winInfo: WindowItemType): Promise<ProxyDetectionResult> {
   const params = {
     ...winInfo,
     checkChannel: getCheckUrl(winInfo.checkChannel, winInfo.ipType) || `http://ip123.in/ip.json`,
   }
 
   console.log('params.proxyCategory', params.proxyCategory, params.protocol)
-
-  const checkMode = getCheckFunction(params.proxyCategory || params.protocol)
+  const protocol = params.proxyCategory || params.protocol
+  const checkMode = getCheckFunction(protocol as ProtocolMapType)
 
   const result = await checkMode(params)
 
@@ -66,7 +68,7 @@ export async function proxyDetection(winInfo: WindowItemType): Promise<CheckResu
   return result
 }
 
-function logProxyConfig(params, name = ``) {
+function logProxyConfig(params: any, name = ``) {
   // return
   const { checkChannel, host, port, proxyUserName, proxyPassword, proxyNetwork } = params
   console.log(`${name}\n
@@ -147,11 +149,11 @@ async function checkHttpProxy(winInfo: WindowItemType) {
       ...(proxyUserName === `` || proxyPassword === ``
         ? {}
         : {
-            auth: {
-              username: proxyUserName,
-              password: proxyPassword,
-            },
-          }),
+          auth: {
+            username: proxyUserName,
+            password: proxyPassword,
+          },
+        }),
     },
   })
   api.interceptors.request.use((config) => {
@@ -169,7 +171,7 @@ async function checkHttpProxy(winInfo: WindowItemType) {
 /**
  * socket5 代理
  */
-async function checkSocks5Proxy(parmes) {
+async function checkSocks5Proxy(parmes: any) {
   const { proxyUserName, proxyPassword, host, port, checkChannel } = parmes
   logProxyConfig(parmes, `socket5`)
 

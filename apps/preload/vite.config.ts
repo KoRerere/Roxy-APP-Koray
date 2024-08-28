@@ -33,7 +33,11 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
 
-  plugins: [dts()],
+  plugins: [dts({
+    tsconfigPath: join(PACKAGE_ROOT, 'tsconfig.build.json'),
+    rollupTypes: true,
+    clearPureImport: false,
+  })],
 }
 
 export default config

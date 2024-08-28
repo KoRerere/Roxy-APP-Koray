@@ -5,7 +5,7 @@ node_modules
 .pnp
 .pnp.js
 dist/
-components.d.ts
+**/components.d.ts
 
 # testing
 coverage

@@ -7,26 +7,27 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Menus: typeof import('./src/components/sider-menu.vue')['default']
-    Popover: typeof import('primevue/popover')['default']
+    Actions: typeof import('./src/components/actions.vue')['default']
+    CircleProgress: typeof import('./src/components/circle-progress.vue')['default']
+    DrawerContent: typeof import('./src/components/drawer-content.vue')['default']
+    FormItem: typeof import('./src/components/ry-form/form-item.vue')['default']
+    InputBase: typeof import('./src/components/ry-form/input-base.vue')['default']
+    InputLabel: typeof import('./src/components/ry-form/input-label.vue')['default']
+    InputRadio: typeof import('./src/components/ry-form/input-radio.vue')['default']
+    InputSelect: typeof import('./src/components/ry-form/input-select.vue')['default']
+    Menus: typeof import('./src/components/menus.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    ScMenu: typeof import('./src/components/sc-menu/sc-menu.vue')['default']
-    ScPopover: typeof import('./src/components/ry-popover/index.vue')['default']
-    ScTable: typeof import('./src/components/ry-table/index.vue')['default']
-    Select: typeof import('primevue/select')['default']
+    RxCard: typeof import('./src/components/rx-card/index.vue')['default']
+    RyButton: typeof import('./src/components/ry-button/index.vue')['default']
+    RyContextMenu: typeof import('./src/components/ry-contextMenu/index.vue')['default']
+    RyForm: typeof import('./src/components/ry-form/index.vue')['default']
+    RyPopover: typeof import('./src/components/ry-popover/index.vue')['default']
+    RyTable: typeof import('./src/components/ry-table/index.vue')['default']
+    RyTag: typeof import('./src/components/ry-tag/index.vue')['default']
     SelectionOperation: typeof import('./src/components/ry-table/selection-operation.vue')['default']
-    Tab: typeof import('primevue/tab')['default']
     TableConfig: typeof import('./src/components/ry-table/table-config.vue')['default']
     TableFilter: typeof import('./src/components/ry-table/table-filter.vue')['default']
     TableSort: typeof import('./src/components/ry-table/table-sort.vue')['default']
-    TabList: typeof import('primevue/tablist')['default']
-    Tabs: typeof import('primevue/tabs')['default']
-    TieredMenu: typeof import('primevue/tieredmenu')['default']
-    ToggleSwitch: typeof import('primevue/toggleswitch')['default']
-  }
-  export interface ComponentCustomProperties {
-    Ripple: typeof import('primevue/ripple')['default']
-    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }
