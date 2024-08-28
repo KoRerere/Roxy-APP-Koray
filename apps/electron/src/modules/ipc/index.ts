@@ -2,6 +2,7 @@ import { IPCMain } from '@roxy/electron-preload/main'
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { browserManager } from '/@/modules/browser'
 import { proxyDetection } from '/@/utils'
+import { store } from '/@/modules/store'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -30,4 +31,8 @@ ipcMain.on('proxy:detection', (winItemInfo) => {
 
 ipcMain.on('browser:batchLaunch', (winItemList) => {
   return browserManager.batchLaunch(winItemList)
+})
+
+ipcMain.on('user:setUserInfo', (userInfo) => {
+  store.userInfo = userInfo
 })

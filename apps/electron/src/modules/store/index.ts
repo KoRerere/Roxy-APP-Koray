@@ -3,7 +3,6 @@ import type { UserGetUserInfoListData } from '@roxy/backend-api'
 import { app } from 'electron'
 import Store from 'electron-store'
 import { fileExists } from '/@/utils/file'
-import { API } from '/@/api'
 
 interface StoreType {
   browserCacheRootDir: string
@@ -24,6 +23,7 @@ const _store = new Store<StoreType>({
 })
 
 let latestStore = { ..._store.store }
+console.log('latestStore', JSON.stringify(latestStore))
 
 _store.onDidAnyChange((newValue) => {
   latestStore = newValue!
@@ -31,7 +31,7 @@ _store.onDidAnyChange((newValue) => {
 
 export const store = new Proxy(latestStore, {
   get(target, prop) {
-    return target[prop]
+    return latestStore[prop]
   },
   set(target, prop: keyof StoreType, value) {
     _store.set(prop, value)
@@ -40,12 +40,6 @@ export const store = new Proxy(latestStore, {
 })
 
 export async function setupStore() {
-  API.base.userGetUserInfoList().then((res) => {
-    if (res.data) {
-      store.userInfo = res.data
-    }
-  })
-
   const isExists = await fileExists(latestStore.browserCacheRootDir)
   if (!isExists) {
     latestStore.browserCacheRootDir = defaultValues.browserCacheRootDir

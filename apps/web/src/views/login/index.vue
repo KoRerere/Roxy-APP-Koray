@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { getFormData } from '/@/utils'
+import { useUserStore } from '/@/stores/user'
+
+const { setUserInfo } = useUserStore()
 
 const inputs = [
   {
@@ -23,7 +26,14 @@ async function handleSubmit() {
   const params = getFormData(inputs)
   console.log(params)
   const { data } = await API.base.loginCreate(params)
+  setUserInfo(data)
+
+  const { data: userInfo } = await API.base.userGetUserInfoList()
+  userInfo.token = data.token
+  setUserInfo(data)
+
   console.log(data)
+  window.electronAPI.send('user:setUserInfo', userInfo)
 }
 </script>
 
