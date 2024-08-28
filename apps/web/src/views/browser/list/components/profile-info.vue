@@ -112,15 +112,13 @@ const accountOperation = computed(() => {
 })
 
 const os_enums = {
-  Windows: getImage('/os/windows.svg'),
-  IOS: getImage('/os/ios.svg'),
-  macOS: getImage('/os/macos.svg'),
-  Android: getImage('/os/android.svg'),
+  Windows: getImage('os/windows.svg'),
+  IOS: getImage('os/ios.svg'),
+  macOS: getImage('os/macos.svg'),
+  Android: getImage('os/android.svg'),
 }
-const platformImage = _props.data.windowPlatformList[0]?.platformIcon || getImage('/plus.svg')
-console.log(getImage('/plus.svg'))
+const platformImage = _props.data.windowPlatformList[0]?.platformIcon || getImage('plus.svg')
 
-// console.log(new URL(`/@/assets/image/plus.svg`, import.meta.url).href)
 const links = ref([
   {
     image: os_enums[_props.data.os],
@@ -128,7 +126,7 @@ const links = ref([
     tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
   },
   {
-    image: new URL(`/@/assets/image/proxy.svg`, import.meta.url).href,
+    image: getImage('proxy.svg'),
     // classes: 'direct',
     create: true,
     tooltip: `Location: ${_props.data.lastCountry}\nLast check: ${_props.data.updateTime}`,

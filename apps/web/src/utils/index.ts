@@ -93,5 +93,5 @@ export function getValidByObject(obj: { [key: string]: any }, keys: string[]): a
 }
 
 export function getImage(path: string) {
-  return new URL(`/@/assets/image${path}`, import.meta.url).href
+  return new URL(`../assets/image/${path}`, import.meta.url).href
 }
