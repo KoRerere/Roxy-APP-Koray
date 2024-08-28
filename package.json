@@ -27,7 +27,10 @@
     "pack:pkg": "pnpm -F electron-main run build:pkg",
     "postinstall": "npm run build:pkg",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean:cache": "npx rimraf node_modules/.cache/ && npx rimraf node_modules/.vite",
+    "clean:lib": "npx rimraf --glob node_modules **/node_modules",
+    "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",
