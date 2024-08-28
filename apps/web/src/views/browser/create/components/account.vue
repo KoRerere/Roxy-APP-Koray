@@ -3,25 +3,20 @@ import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import accountList from '/@/views/browser/components/drawers/account-list.vue'
 import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
+import { useVModel } from '@vueuse/core'
 
-const selectList = reactive([
-  {
-    id: 1,
-    area: 'mdi mdi-web',
-    web: 'http://www.xxx.com',
-    email: 'asdasdad@xx.com',
+const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: () => [],
   },
-  {
-    id: 2,
-    area: 'mdi mdi-web',
-    web: 'http://www.xxx.com',
-    email: 'asdasdad@xx.com',
-  },
-])
+})
+const emits = defineEmits(['update:modelValue'])
+const selectList = useVModel(props, 'modelValue', emits)
 
 const drawer = reactive({
   visible: false,
-  type: 'create',
+  type: 'list',
 })
 
 function toggleDrawer(type: 'create' | 'list') {
@@ -29,18 +24,13 @@ function toggleDrawer(type: 'create' | 'list') {
   drawer.type = type
 }
 
-function deleteAccount(_item: any) {
-  const index = selectList.findIndex(item => item.id === _item.id)
-  selectList.splice(index, 1)
+function deleteAccount(item: any) {
+  const index = selectList.value.findIndex(it => it.name === item.name)
+  selectList.value.splice(index, 1)
 }
 
-function confirm(_data: any) {
-  selectList.push({
-    id: new Date().getTime(),
-    area: 'mdi mdi-web',
-    web: 'http://www.xxx.com',
-    email: 'asdasdad@xx.com',
-  })
+function confirm(data: any) {
+  selectList.value.push(data)
 }
 </script>
 
@@ -55,12 +45,12 @@ function confirm(_data: any) {
 
     <div v-for="(item, index) in selectList" :key="index" class="card-list">
       <rx-card class="card-list-item" @close="deleteAccount(item)">
-        <div class="card-list-item-account">
-          <span :class="item.area" />
+        <img class="card-list-item-img" :src="item.platformIcon">
+        <div class="card-list-item-nation">
+          {{ item.platformUrl }}
         </div>
-        <div class="card-list-item-info">
-          <div>{{ item.web }}</div>
-          <div>{{ item.email }} </div>
+        <div class="card-list-item-time">
+          {{ item.platformName }}
         </div>
       </rx-card>
     </div>
@@ -87,29 +77,36 @@ function confirm(_data: any) {
 .card-list {
   display: flex;
   flex-direction: column;
-  margin-bottom: 10px;
+  margin-top: 10px;
 
   &-item {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    grid-column-gap: var(--spacing-lg, 8px);
+    grid-row-gap: var(--spacing-xs, 4px);
 
-    &-account {
-      width: 20px;
-      height: 20px;
-      font-size: 20px;
-      line-height: 1;
+    &-img {
+      width: 16px;
+      height: 16px;
+      grid-row-start: span 2;
     }
 
-    &-info {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      gap: 8px;
+    &-nation {
+      color: var(--Colors-Text-text-primary, #171c1f);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
       font-weight: 500;
-      line-height: 20px;
+      line-height: var(--Line-Height-text-xs, 16px);
+    }
+
+    &-time {
+      color: var(--Colors-Text-text-inactive, #a3a9ad);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: var(--Line-Height-text-xs, 16px);
     }
   }
 }

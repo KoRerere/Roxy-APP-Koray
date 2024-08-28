@@ -17,11 +17,12 @@ cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload
 
 const options: Configuration = {
   appId: 'com.lumi.app',
-  productName: 'Lumibrowser',
-  copyright: 'lumibrowser',
+  productName: 'Roxybrowser',
+  copyright: 'Roxybrowser',
   asar: true,
   extraMetadata: {
-    name: 'Lumibrowser',
+    name: 'Roxybrowser',
+    main: 'dist/index.cjs',
   },
   directories: {
     output: 'out',

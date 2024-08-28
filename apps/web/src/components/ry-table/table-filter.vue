@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatInputs } from '/@/utils'
+import { getFormData } from '/@/utils'
 
 const props = defineProps({
   filters: {
@@ -11,7 +11,7 @@ const props = defineProps({
 const emits = defineEmits(['change'])
 
 function handleFilterChange() {
-  emits('change', formatInputs(props.filters))
+  emits('change', getFormData(props.filters))
 }
 </script>
 

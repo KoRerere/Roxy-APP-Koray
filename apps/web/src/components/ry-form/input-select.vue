@@ -1,14 +1,17 @@
-<script setup>
+<script lang="ts" setup>
 defineProps({
   name: String,
 })
+defineEmits(['change'])
 </script>
 
 <template>
-  <Select filter show-clear option-label="label" v-bind="$attrs" :input-id="name" class="w-full">
+  <Select filter show-clear option-label="label" v-bind="$attrs" :input-id="name" class="w-full"
+    @change="$emit('change')">
     <template #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
-        <span :class="option.icon" />
+        <span v-if="option.icon" :class="option.icon" />
+        <img v-if="option.image" class="select-item-image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>
       <span v-else>
@@ -17,7 +20,8 @@ defineProps({
     </template>
     <template #option="{ option }">
       <div class="select-item">
-        <span :class="option.icon" />
+        <span v-if="option.icon" :class="option.icon" />
+        <img v-if="option.image" class="select-item-image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>
     </template>
@@ -29,5 +33,11 @@ defineProps({
   display: flex;
   align-items: center;
   gap: var(--spacing-xs, 4px);
+
+  &-image {
+    width: 16px;
+    height: 16px;
+    aspect-ratio: 1;
+  }
 }
 </style>

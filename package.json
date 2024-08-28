@@ -24,10 +24,13 @@
     "build": "turbo run build && pnpm run compile",
     "dev:p": "turbo run dev --parallel",
     "compile": "turbo run compile",
-    "pack:pkg": "pnpm -F electron-main run build:pkg",
+    "pack:pkg": "pnpm -F roxybrowser run build:pkg",
     "postinstall": "npm run build:pkg",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean:cache": "npx rimraf node_modules/.cache/ && npx rimraf node_modules/.vite",
+    "clean:lib": "npx rimraf --glob node_modules **/node_modules",
+    "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.27.3",

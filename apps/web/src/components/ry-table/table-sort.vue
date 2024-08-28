@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ryPopover from '/@/components/ry-popover'
-import { formatInputs } from '/@/utils'
+import { getFormData } from '/@/utils'
 
 const props = defineProps({
   sorts: {
@@ -26,7 +26,7 @@ function onReset() {
 
 function onUpdate() {
   popRef.value.getRef().hide()
-  emits('sort', formatInputs(_sorts.value))
+  emits('sort', getFormData(_sorts.value))
 }
 </script>
 

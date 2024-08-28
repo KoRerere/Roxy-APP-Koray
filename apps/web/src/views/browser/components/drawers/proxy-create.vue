@@ -1,93 +1,104 @@
 <script setup>
 import ryForm from '/@/components/ry-form'
-import inputBase from '/@/components/ry-form/input-base.vue'
 import drawerContent from '/@/components/drawer-content.vue'
-import { formatInputs } from '/@/utils'
+import { getFormData } from '/@/utils'
 
 const emits = defineEmits(['confirm'])
 
-const formInputs = ref([
-  {
-    type: 'textarea',
-    label: 'Smart detection',
-    name: 'SOCKS7',
-    value: null,
-    placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
-    tooltip: 'man!',
-  },
-  {
-    separator: true,
-  },
-  {
-    label: 'Server',
-    value: null,
-    items: [
-      {
-        type: 'select',
-        name: 'type',
-        placeholder: 'select type',
-        options: [
-          { label: 'aaa', value: 'A' },
-          { label: 'bbb', value: 'M' },
-        ],
-      },
-      {
-        type: 'text',
-        name: 'host',
-        placeholder: 'Host',
-      },
-      {
-        type: 'text',
-        name: 'port',
-        placeholder: ':Prot',
-      },
-    ],
-    tooltip: 'what can i say',
-    slot: 'server',
-  },
-  {
-    label: 'Protocol',
-    name: 'protocol',
-    value: null,
-    options: [
-      { label: 'IPv4', value: 'A' },
-      { label: 'IPv6', value: 'M' },
-    ],
-    tooltip: 'what can i say',
-    slot: 'protocol',
-  },
-  {
-    type: 'text',
-    label: 'Username',
-    name: 'SOCKS4',
-    value: null,
-    placeholder: 'Username for your server',
-  },
-  {
-    type: 'password',
-    name: 'SOCKS5',
-    label: 'Password',
-    value: null,
-    placeholder: 'Password for your server',
-  },
-  {
-    type: 'text',
-    label: 'Refreshing URL',
-    name: 'SOCKS6',
-    value: null,
-    placeholder: 'Please enter a valid URL',
-    tooltip: 'mamba out!',
-    icon: 'mdi mdi-refresh',
-  },
-])
+const formInputs = ref([])
+
+function getInputs () {
+  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+
+  formInputs.value = [
+    {
+      type: 'textarea',
+      label: '智能检测',
+      value: null,
+      placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
+      rows: 3,
+      tooltip: 'man!',
+    },
+    {
+      separator: true,
+    },
+    {
+      type: 'radio',
+      label: '网络协议',
+      name: 'ipType',
+      value: $dict_map.ipType[0].value,
+      options: $dict_map.ipType,
+      tooltip: 'what can i say',
+    },
+    {
+      label: 'Server',
+      items: [
+        {
+          type: 'select',
+          name: 'protocol',
+          placeholder: '请选择网络协议',
+          value: $dict_map.protocol[0].value,
+          options: $dict_map.protocol,
+        },
+        {
+          type: 'text',
+          name: 'host',
+          value: null,
+          placeholder: '代理主机',
+        },
+        {
+          type: 'text',
+          name: 'port',
+          value: null,
+          placeholder: '代理端口',
+        },
+      ],
+      tooltip: 'what can i say',
+      slot: 'server',
+    },
+    {
+      type: 'text',
+      label: '代理账号',
+      name: 'proxyUserName',
+      value: null,
+      placeholder: 'Username for your server',
+    },
+    {
+      type: 'password',
+      label: '代理密码',
+      name: 'proxyPassword',
+      value: null,
+      placeholder: 'Password for your server',
+    },
+    {
+      type: 'text',
+      label: '刷新URL',
+      name: 'refreshUrl',
+      value: null,
+      placeholder: 'Please enter a valid URL',
+      tooltip: 'mamba out!',
+      icon: 'mdi mdi-refresh',
+    },
+  ]
+}
 
 function testProxy () {
 
 }
 
 function createProxy () {
-  emits('confirm', formatInputs(formInputs.value))
+  try {
+    const formData = getFormData(formInputs.value)
+    emits('confirm', formData)
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
+
+onMounted(() => {
+  getInputs()
+})
 </script>
 
 <template>
@@ -95,27 +106,13 @@ function createProxy () {
     <div class="h-full flex flex-col">
       <ry-form :inputs="formInputs">
         <template #server="{ input }">
-          <input-base v-bind="input">
-            <template #input>
-              <InputGroup>
-                <template v-for="(item, index) in input.items" :key="index">
-                  <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-                    option-value="value" show-clear />
-                  <InputText v-else v-bind="item" v-model="item.value" type="text" />
-                </template>
-              </InputGroup>
+          <InputGroup>
+            <template v-for="(item, index) in input.items" :key="index">
+              <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
+                option-value="value" show-clear />
+              <InputText v-else v-bind="item" v-model="item.value" type="text" />
             </template>
-          </input-base>
-        </template>
-        <template #protocol="{ input }">
-          <div class="form-protocol">
-            <label v-for="option in input.options" :key="option.value" :for="`${input.name}_${option.value}`"
-              class="cursor-pointer form-protocol-item">
-              <RadioButton v-model="input.value" :input-id="`${input.name}_${option.value}`" :name="input.name"
-                :value="option.value" />
-              <div>{{ option.label }}</div>
-            </label>
-          </div>
+          </InputGroup>
         </template>
       </ry-form>
     </div>

@@ -9,7 +9,6 @@ defineProps({
 })
 
 const fakedata = fake()
-console.log('🚀 ~ fakedata:', fakedata)
 
 function fake() {
   return Object.fromEntries(Array.from({ length: 100 }, () => [Math.random().toString(36).slice(-6), Math.random().toString(36)]))
@@ -31,7 +30,7 @@ const visible = ref(true)
     </div>
     <div v-if="visible" class="preview-content">
       <div class="preview-content-list">
-        <div v-for="(value, key) in fakedata" :key="key" class="preview-content-item">
+        <div v-for="(value, key) in data" :key="key" class="preview-content-item">
           <div class="preview-content-item-label">
             {{ key }}
           </div>
@@ -54,9 +53,10 @@ const visible = ref(true)
   flex-direction: column;
   align-items: flex-start;
   margin: 12px;
+  margin-left: 0;
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   gap: var(--spacing-md, 6px);
-  width: 400px;
+  width: 340px;
   height: calc(100% - 24px);
   border-radius: 8px;
   border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
@@ -105,7 +105,7 @@ const visible = ref(true)
     &-list {
       width: 100%;
       height: 100%;
-      overflow-y: hidden;
+      overflow-y: scroll;
     }
 
     &-item {
@@ -113,9 +113,18 @@ const visible = ref(true)
       padding: var(--spacing-sm, 4px) 10px;
       align-items: flex-start;
       align-self: stretch;
+      gap: var(--spacing-sm, 4px);
+
+      color: var(--Color-neutrals-800, #252a2e);
+      font-family: 'DM Mono';
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
 
       &-label {
         width: 90px;
+        word-wrap: break-word;
       }
 
       &-value {

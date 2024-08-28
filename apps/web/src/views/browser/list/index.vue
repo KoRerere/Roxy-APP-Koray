@@ -3,6 +3,8 @@
 // @ts-ignore
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
+
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -18,7 +20,9 @@ import { useContextMenu } from '/@/hooks/useContextMenu'
 import columnsRow from './columns'
 import { filters, operation, operationHandler, sorts } from './operation'
 import { API } from '/@/api'
-import type { UserGetPlatformInfoListData, UserGetWindowInfoListData } from '@roxy/backend-api'
+
+const route = useRoute()
+const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
@@ -28,16 +32,22 @@ const drawer = reactive({
 })
 
 // ======================================
-const platformInfo = ref<UserGetPlatformInfoListData['data']['platformUrl']>([])
-
-async function getPlatformInfo() {
-  const { data } = await API.window.userGetPlatformInfoList({})
-  platformInfo.value = data.platformUrl
-}
 
 async function tableRequest(params: any) {
-  const { data } = await API.window.userGetWindowInfoList(params)
+  const { data } = await API.window.userGetWindowInfoV2List(params)
+  // autoOpenBrowser(data.rows)
   return data.rows
+}
+
+function autoOpenBrowser(list: any) {
+  const query = route.query.browser && JSON.parse(route.query.browser as string)
+  if (query?.openBrowser) {
+    const data = list.find(item => item.id === query.windowId)
+    router.replace({ name: route.name })
+    if (data) {
+      openBrowser(data)
+    }
+  }
 }
 
 function openBrowser(data: any) {
@@ -49,25 +59,25 @@ function onMore([event, model]: any[]) {
 }
 
 onMounted(() => {
-  getPlatformInfo()
+  // getPlatformInfo()
 })
 </script>
 
 <template>
-  <Button label="open-drawers" @click="drawer.visible = true" />
+  <!-- <Button label="open-drawers" @click="drawer.visible = true" /> -->
   <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" selection-mode="multiple"
-    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id">
+    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id" :show-gridlines="false">
     <template #header-extra>
       <custom-filter />
     </template>
     <template #profile="{ data }">
-      <profile-info :data="data" :platform-info="platformInfo" />
+      <profile-info :data="data" :platform-info="data.platformUrlIds" />
     </template>
     <template #open="{ data }">
       <browser-control @open="() => openBrowser(data)" />
     </template>
     <template #group>
-      123
+      <ryTag>123</ryTag>
     </template>
     <template #actions>
       <actions :operation="operation" @more="onMore" />

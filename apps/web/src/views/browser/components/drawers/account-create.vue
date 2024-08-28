@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import ryForm from '/@/components/ry-form'
 import drawerContent from '/@/components/drawer-content.vue'
-import { clearInputsValue, formatInputs } from '/@/utils'
+import { clearInputsValue, getFormData } from '/@/utils'
+import { API } from '/@/api'
 
 const props = defineProps({
   closeDrawer: {
@@ -12,58 +13,100 @@ const props = defineProps({
 
 const emits = defineEmits(['confirm'])
 
-const formInputs = ref([
-  {
-    type: 'text',
-    label: 'Website',
-    name: 'website',
-    value: null,
-    tooltip: 'man!',
-  },
-  {
-    type: 'text',
-    label: 'Account name',
-    name: 'accountname',
-    value: null,
-    placeholder: 'Username for your website',
-    tooltip: 'mamba out!',
-    icon: 'mdi mdi-refresh',
-  },
-  {
-    type: 'password',
-    name: 'SOCKS5',
-    label: 'Password',
-    value: null,
-    placeholder: 'Password for your server',
-    tooltip: 'man!',
-  },
-  {
-    type: 'text',
-    label: '2FA',
-    name: '2FA',
-    value: null,
-    placeholder: '32-digit Keys',
-    tooltip: 'mamba out!',
-  },
-  {
-    type: 'textarea',
-    label: 'Smart detection',
-    name: 'SOCKS7',
-    value: null,
-    placeholder: 'Paste JSON format or upload cookies JSON file',
-    tooltip: 'man!',
-    icon: 'mdi mdi-refresh',
-  },
-])
+const formInputs = ref()
+const original = { platformIcon: '' }
 
-function confirm(more: boolean) {
-  if (!more) {
-    props.closeDrawer()
-  }
-  const formData = formatInputs(formInputs.value)
-  clearInputsValue(formInputs.value)
-  emits('confirm', formData)
+async function getInputs() {
+  const { data } = await API.platform.userGetPlatformInfoList({})
+
+  const platformOptions = data.rows.map(item => ({
+    image: item.platformIcon,
+    label: item.platformUrl,
+    value: item.platformUrl,
+  }))
+
+  formInputs.value = [
+    {
+      type: 'text',
+      label: '平台名称',
+      name: 'platformName',
+      value: null,
+      placeholder: 'Better name to identify',
+      tooltip: 'man!',
+    },
+    {
+      type: 'select',
+      label: '平台URL',
+      name: 'platformUrl',
+      placeholder: 'Search or enter your platform URL',
+      value: null,
+      options: platformOptions,
+      required: true,
+      editable: true,
+      tooltip: 'man!',
+      change(value: any, self: any) {
+        self.invalid = false
+        original.platformIcon = value?.image || ''
+      },
+    },
+    {
+      type: 'text',
+      label: '平台账号',
+      name: 'platformUserName',
+      value: null,
+      placeholder: 'Username for your website',
+      tooltip: 'mamba out!',
+    },
+    {
+      type: 'password',
+      label: '平台密码',
+      name: 'platformPassword',
+      value: null,
+      placeholder: 'Password for your server',
+      tooltip: 'man!',
+    },
+    {
+      type: 'text',
+      label: '2FA密钥',
+      name: 'platformEfa',
+      value: null,
+      placeholder: '32-digit Keys',
+      tooltip: 'mamba out!',
+    },
+    {
+      type: 'textarea',
+      label: '平台cookeies',
+      name: 'platformCookies',
+      value: null,
+      placeholder: 'Paste JSON format or upload cookies JSON file',
+      tooltip: 'man!',
+      icon: 'mdi mdi-paperclip',
+      formatValue: (self) => {
+        return self.value
+        // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
+        // : value
+      },
+    },
+  ]
 }
+
+async function confirm(more: boolean) {
+  try {
+    const formData = getFormData(formInputs.value, original)
+    if (!more) {
+      props.closeDrawer()
+    }
+    clearInputsValue(formInputs.value)
+    emits('confirm', formData)
+  }
+  catch (error) {
+    console.log('🚀 ~ confirm ~ error:', error)
+  }
+}
+
+onMounted(() => {
+  getInputs()
+})
 </script>
 
 <template>

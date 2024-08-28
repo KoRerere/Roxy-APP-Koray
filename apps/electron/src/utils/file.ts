@@ -78,8 +78,10 @@ export async function unzipFile(zipFilePath: string, outputDir?: string) {
 /** 压缩给定的文件或目录 */
 export async function filesToZip(files: { path: string, destPath: string }[], outputPath: string) {
   console.log('files', files)
+  console.log('outputPath', outputPath)
   const { promise, resolve, reject } = Promise.withResolvers()
   // create a file to stream archive data to.
+  await fileExists(dirname(outputPath), true)
   const output = createWriteStream(outputPath)
   const archive = archiver('zip', {
     zlib: { level: 9 }, // Sets the compression level.
@@ -130,8 +132,8 @@ export async function filesToZip(files: { path: string, destPath: string }[], ou
   })
 
   const res = await Promise.allSettled(promiseArr)
-  console.log('res', res)
-  archive.finalize()
+  console.log('结果', res)
+  await archive.finalize()
 
   return promise
 }

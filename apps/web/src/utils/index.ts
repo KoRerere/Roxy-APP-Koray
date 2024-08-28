@@ -6,6 +6,14 @@ export function isObject(data: any) {
   return getRawType(data) === 'object'
 }
 
+export function isFunction(fn: any) {
+  return getRawType(fn) === 'function'
+}
+
+export function hasOwnProperty(data: any, key: any) {
+  return Object.prototype.hasOwnProperty.call(data, key)
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -20,27 +28,56 @@ export function clearInputsValue(inputs: any): void {
   })
 }
 
-export function formatInputs(inputs: any[], original: any = {}): any {
-  return inputs.reduce((formData, input) => {
-    const { name, value, hide, items } = input
-    if (hide) return formData
-    if (Object.prototype.hasOwnProperty.call(formData, name)) {
-      throw new Error(`Duplicate name '${name}' found in inputs`)
-    }
-    if (items) {
-      Object.assign(formData, formatInputs(items))
-    } else if (name) {
-      formData[name] = value?.value ?? value
-    }
-    return formData
-  }, original)
+interface FormDataOptions {
+  keyName: string
+  valueName: string
 }
 
-export function formatInputsByList(inputsGroup: any[]): any {
+function formVaildData(formData, input) {
+  if (hasOwnProperty(formData, input.name)) {
+    throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
+  }
+  if (input.required && input.value === null) {
+    input.invalid = true
+    throw new Error(`Input '${input.name}' is required`)
+  }
+}
+
+export function getFormData(
+  inputs: any[],
+  original: object = {},
+  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+): any {
+  return inputs.reduce(
+    (formData, input) => {
+      const { visible, items, formatValue } = input
+      const name = input[options.keyName]
+      const value = input[options.valueName]
+
+      if (visible === false) return formData
+      formVaildData(formData, input)
+
+      if (items) {
+        Object.assign(formData, getFormData(items))
+      } else if (name?.trim()) {
+        const _value = value?.value ?? value
+        formData[name] = isFunction(formatValue) ? formatValue(input, inputs, formData) : _value
+      }
+      return formData
+    },
+    { ...original }
+  )
+}
+
+export function getFormDataByList(
+  inputsGroup: any[],
+  original: object = {},
+  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+): any {
   return inputsGroup.reduce((formData, inputs) => {
-    const _data = formatInputs(inputs, formData)
+    const _data = getFormData(inputs, formData, options)
     return Object.assign(formData, _data)
-  }, {})
+  }, original)
 }
 
 export function getValidByObject(obj: { [key: string]: any }, keys: string[]): any {
@@ -53,4 +90,8 @@ export function getValidByObject(obj: { [key: string]: any }, keys: string[]): a
     },
     {} as { [key: string]: any }
   )
+}
+
+export function getImage(path: string) {
+  return new URL(`../assets/image/${path}`, import.meta.url).href
 }

@@ -15,6 +15,10 @@ defineProps({
     type: String,
     default: 'top',
   },
+  // Invalid:{
+  //   type: Boolean,
+  //   default: false,
+  // }
 })
 
 defineEmits(['change'])
@@ -26,8 +30,9 @@ defineEmits(['change'])
       <input-label class="input-label" v-bind="{ name, label, tooltip }" />
     </slot>
     <slot name="input">
-      <input-select v-if="type === 'select'" v-bind="$attrs" :name="name" />
+      <input-select v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
       <input-radio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
+      <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.placeholder }}</small>
     </slot>
   </div>
 </template>
@@ -39,6 +44,18 @@ defineEmits(['change'])
 
   &.rx-label-left {
     flex-direction: row;
+  }
+
+  &-help {
+    display: flex;
+    margin-top: var(--spacing-sm, 4px);
+    gap: var(--spacing-sm, 4px);
+    color: var(--p-red-400, #f87171);
+    font-family: Inter;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-xs, 16px);
   }
 }
 </style>

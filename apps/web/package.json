@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "vite build",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
@@ -14,6 +14,7 @@
     "@ant-design/icons-vue": "^7.0.1",
     "@mdi/font": "^7.4.47",
     "@primevue/themes": "^4.0.4",
+    "@vueuse/core": "^11.0.3",
     "ant-design-vue": "~4.2.3",
     "pinia": "^2.2.2",
     "primevue": "^4.0.4",
