@@ -104,7 +104,6 @@ export class BrowserItem {
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     try {
       await filesToZip(needSyncFiles, outputZipPath)
-
       const remoteOssPath = `${this.ossRemoteCacheDir}/${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)
