@@ -24,21 +24,20 @@ defineEmits(['iconClick'])
       <slot name="label">
         <input-label class="input-label" :name="name" v-bind="$attrs" />
       </slot>
-      <slot name="input" :input="$attrs">
-        <IconField v-if="type !== 'password'" class="w-full">
-          <InputIcon v-if="leftIcon">
-            <span :class="leftIcon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
-          </InputIcon>
-          <Textarea v-if="type === 'textarea'" :id="name" class="w-full" rows="5" cols="30" auto-resize
-            v-bind="$attrs" />
-          <InputText v-if="type === 'text'" :id="name" class="w-full" v-bind="$attrs" />
-          <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" />
-          <InputIcon v-if="icon" :class="{ 'textarea-icon': type === 'textarea' }">
-            <span :class="icon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
-          </InputIcon>
-        </IconField>
-        <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs" />
-      </slot>
+      <IconField v-if="type !== 'password'" class="w-full">
+        <InputIcon v-if="leftIcon">
+          <span :class="leftIcon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
+        </InputIcon>
+
+        <Textarea v-if="type === 'textarea'" :id="name" class="w-full" rows="5" cols="30" auto-resize v-bind="$attrs" />
+        <InputText v-if="type === 'text'" :id="name" class="w-full" v-bind="$attrs" />
+        <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" />
+
+        <InputIcon v-if="icon" :class="{ 'textarea-icon': type === 'textarea' }">
+          <span :class="icon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
+        </InputIcon>
+      </IconField>
+      <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs" />
     </slot>
   </div>
 </template>

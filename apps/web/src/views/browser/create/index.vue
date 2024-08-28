@@ -11,6 +11,8 @@ import { getFormDataByList } from '/@/utils'
 import { getInputs } from './form-inputs'
 import { API } from '/@/api'
 
+const router = useRouter()
+
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
   { title: '批量创建', content: 'Tab 2 Content', value: '1' },
@@ -21,7 +23,7 @@ const tabsValue = ref('0')
 const windowName = ref('Untitled profile')
 const [windowInputs] = getInputs()
 const accordions = reactive({
-  value: ['0', '1'],
+  value: ['0', '1', '2', '3'],
   panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
     title,
     value: `${index}`,
@@ -31,8 +33,10 @@ const accordions = reactive({
 
 const previewData = computed(() => getFormDataByList(windowInputs, {}, { keyName: 'label', valueName: 'value' }))
 
-function createProfile() {
+async function createProfile() {
   const formData = getFormDataByList(windowInputs, {
+    windowName: windowName.value,
+    // =================================
     openMult: true,
     clearHistory: false,
     allowRunApplication: true,
@@ -42,8 +46,8 @@ function createProfile() {
     enablePluginList: [],
     mediaDevice: false,
   })
-  console.log(formData)
-  // return API.window.userAddWindowInfoCreate(formData)
+  const { data } = await API.window.userAddWindowInfoCreate(formData)
+  console.log('🚀 ~ createProfile ~ data:', data)
   // router.replace({ name: 'browser-list', params: { windowId: 111 } })
 }
 </script>

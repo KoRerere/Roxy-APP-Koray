@@ -29,7 +29,7 @@ const drawer = reactive({
 // ======================================
 
 async function tableRequest(params: any) {
-  const { data } = await API.window.userGetWindowInfoList(params)
+  const { data } = await API.window.userGetWindowInfoV2List(params)
   return data.rows
 }
 

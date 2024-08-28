@@ -143,6 +143,9 @@ export function getInputs(_data?: any) {
           return self.value
           // ? JSON.parse(self.value).map(({ name, value, domain }) => ({ name, value, domain }))
           // : value
+        },
+        onBlur(self: any) {
+          console.log('🚀 ~ onBlur ~ self:', self)
         }
       }
     ],
