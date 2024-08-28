@@ -3,6 +3,8 @@
 // @ts-ignore
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
+
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -19,6 +21,9 @@ import columnsRow from './columns'
 import { filters, operation, operationHandler, sorts } from './operation'
 import { API } from '/@/api'
 
+const route = useRoute()
+const router = useRouter()
+
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 
@@ -30,7 +35,19 @@ const drawer = reactive({
 
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
+  // autoOpenBrowser(data.rows)
   return data.rows
+}
+
+function autoOpenBrowser(list: any) {
+  const query = route.query.browser && JSON.parse(route.query.browser as string)
+  if (query?.openBrowser) {
+    const data = list.find(item => item.id === query.windowId)
+    router.replace({ name: route.name })
+    if (data) {
+      openBrowser(data)
+    }
+  }
 }
 
 function openBrowser(data: any) {
@@ -60,7 +77,7 @@ onMounted(() => {
       <browser-control @open="() => openBrowser(data)" />
     </template>
     <template #group>
-      123
+      <ryTag>123</ryTag>
     </template>
     <template #actions>
       <actions :operation="operation" @more="onMore" />

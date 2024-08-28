@@ -120,10 +120,7 @@ export function getInputs(_data?: any) {
         label: 'Accounts',
         name: 'windowPlatformList',
         value: [],
-        slot: 'accounts',
-        formatValue: (self: any) => {
-          return JSON.stringify(self.value || [])
-        }
+        slot: 'accounts'
       },
       {
         label: 'URLs',

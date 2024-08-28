@@ -1,5 +1,6 @@
-<script setup>
+<script lang="ts" setup>
 import { useContextMenu } from '/@/hooks/useContextMenu'
+import { getImage } from '/@/utils'
 
 const _props = defineProps({
   platformInfo: {
@@ -11,7 +12,10 @@ const _props = defineProps({
     default: () => ({}),
   },
 })
-// icon: new URL(`/@/assets/image/hk.svg`, import.meta.url).href,
+
+if (_props.data.windowSortNum === 24) {
+  console.log('🚀 ~ data:', _props.data)
+}
 
 // const menuRef = ref(null)
 const [show] = useContextMenu()
@@ -107,28 +111,38 @@ const accountOperation = computed(() => {
   ].filter(item => !item.hide)
 })
 
+const os_enums = {
+  Windows: getImage('/os/windows.svg'),
+  IOS: getImage('/os/ios.svg'),
+  macOS: getImage('/os/macos.svg'),
+  Android: getImage('/os/android.svg'),
+}
+const platformImage = _props.data.windowPlatformList[0]?.platformIcon || getImage('/plus.svg')
+console.log(getImage('/plus.svg'))
+
+// console.log(new URL(`/@/assets/image/plus.svg`, import.meta.url).href)
 const links = ref([
   {
-    icon: _props.data.platformIcon,
+    image: os_enums[_props.data.os],
     classes: '',
     tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
   },
   {
-    icon: _props.data.platformIcon,
-    classes: 'direct',
+    image: new URL(`/@/assets/image/proxy.svg`, import.meta.url).href,
+    // classes: 'direct',
     create: true,
-    tooltip: `Location: ${_props.data.lastCountry}\nIP: ${_props.data.lastIp}\nLast time: ${_props.data.updateTime}`,
-    onClick: (event) => {
+    tooltip: `Location: ${_props.data.lastCountry}\nLast check: ${_props.data.updateTime}`,
+    onClick: (event: Event) => {
       show(event, {
         model: proxyOperation.value,
       })
     },
   },
   {
-    icon: _props.data.platformIcon,
-    classes: 'stack',
+    image: platformImage,
+    classes: _props.data.windowPlatformList.length > 1 ? 'stack' : '',
     tooltip: '',
-    onClick: (event) => {
+    onClick: (event: Event) => {
       show(event, {
         model: accountOperation.value,
       })
@@ -139,11 +153,13 @@ const links = ref([
 
 <template>
   <div class="flex h-full items-center profile">
-    <div>{{ data.windowSortNum }}</div>
+    <div class="w-[40px]">
+      {{ data.windowSortNum }}
+    </div>
     <div class="flex justify-between state">
       <div v-for="(item, index) in links" :key="index" v-tooltip.top="item.tooltip"
         class="flex-cc cursor-pointer state-icons" :class="item.classes" @click="item.onClick">
-        <img class="state-icons-img" :src="item.icon">
+        <img class="state-icons-img" :src="item.image">
       </div>
     </div>
     <div>{{ data.windowName }}</div>

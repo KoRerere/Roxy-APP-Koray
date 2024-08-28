@@ -33,7 +33,7 @@ const accordions = reactive({
 
 const previewData = computed(() => getFormDataByList(windowInputs, {}, { keyName: 'label', valueName: 'value' }))
 
-async function createProfile() {
+async function createProfile(openBrowser: boolean) {
   const formData = getFormDataByList(windowInputs, {
     windowName: windowName.value,
     // =================================
@@ -47,8 +47,12 @@ async function createProfile() {
     mediaDevice: false,
   })
   const { data } = await API.window.userAddWindowInfoCreate(formData)
-  console.log('🚀 ~ createProfile ~ data:', data)
-  // router.replace({ name: 'browser-list', params: { windowId: 111 } })
+  router.replace({
+    name: 'browser-list',
+    query: {
+      browser: JSON.stringify({ windowId: data.windowId, openBrowser }),
+    },
+  })
 }
 </script>
 
@@ -114,8 +118,8 @@ async function createProfile() {
       </div>
       <div class="footer">
         <ry-button class="ma-auto ml-0" size="small" severity="secondary" label="Cancel" text />
-        <ry-button size="small" severity="secondary" outlined label="Carete & Open" @click="createProfile" />
-        <ry-button size="small" severity="primary" label="Create profile" @click="createProfile" />
+        <ry-button size="small" severity="secondary" outlined label="Carete & Open" @click="createProfile(true)" />
+        <ry-button size="small" severity="primary" label="Create profile" @click="createProfile(false)" />
       </div>
     </div>
     <previewCard :data="previewData" />

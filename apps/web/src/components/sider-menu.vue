@@ -4,8 +4,8 @@ const routeMenu = router.getRoutes().filter(route => route.meta.root)
 
 const selectedKeys = ref<string[]>([])
 
-function handleClick(event: any) {
-  console.log('🚀 ~ handleClick ~ event:', event)
+function handleClick(_event: any) {
+  // console.log('🚀 ~ handleClick ~ event:', event)
 }
 </script>
 
