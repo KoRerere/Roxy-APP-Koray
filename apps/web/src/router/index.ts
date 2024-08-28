@@ -5,13 +5,13 @@ export const routes = [
     path: '/login',
     name: 'login',
     meta: { title: '登录', icon: 'BarChartOutlined', root: true },
-    component: () => import('/@/views/login'),
+    component: () => import('/@/views/login')
   },
   {
     path: '/create',
     name: 'browser-create',
     meta: { title: '新建窗口', icon: 'BarChartOutlined', root: true },
-    component: () => import('/@/views/browser/create'),
+    component: () => import('/@/views/browser/create')
   },
   {
     path: '/',
@@ -23,22 +23,22 @@ export const routes = [
         path: 'list',
         name: 'browser-list',
         meta: { title: '窗口列表', icon: 'AreaChartOutlined' },
-        component: () => import('/@/views/browser/list'),
+        component: () => import('/@/views/browser/list')
       },
       {
         path: 'transfer',
         name: 'browser-transfer',
         meta: { title: '窗口转移', icon: 'PieChartOutlined' },
-        component: () => import('/@/views/browser/transfer'),
+        component: () => import('/@/views/browser/transfer')
       },
       {
         path: 'recycle',
         name: 'browser-recycle',
         meta: { title: '回收站', icon: 'DotChartOutlined' },
-        component: () => import('/@/views/browser/recycle'),
-      },
-    ],
-  },
+        component: () => import('/@/views/browser/recycle')
+      }
+    ]
+  }
   // {
   //   path: '/agent',
   //   name: 'agent',
@@ -115,7 +115,7 @@ export const routes = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes
 })
 
 export default router
