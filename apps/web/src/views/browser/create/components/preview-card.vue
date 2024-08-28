@@ -53,9 +53,10 @@ const visible = ref(true)
   flex-direction: column;
   align-items: flex-start;
   margin: 12px;
+  margin-left: 0;
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   gap: var(--spacing-md, 6px);
-  width: 400px;
+  width: 340px;
   height: calc(100% - 24px);
   border-radius: 8px;
   border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);

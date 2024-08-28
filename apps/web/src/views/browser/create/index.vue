@@ -11,8 +11,6 @@ import { getFormDataByList } from '/@/utils'
 import { getInputs } from './form-inputs'
 import { API } from '/@/api'
 
-const router = useRouter()
-
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
   { title: '批量创建', content: 'Tab 2 Content', value: '1' },
@@ -23,7 +21,7 @@ const tabsValue = ref('0')
 const windowName = ref('Untitled profile')
 const [windowInputs] = getInputs()
 const accordions = reactive({
-  value: ['0'],
+  value: ['0', '1'],
   panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
     title,
     value: `${index}`,
@@ -51,8 +49,8 @@ function createProfile() {
 </script>
 
 <template>
-  <div class="flex justify-between h-full">
-    <div class="flex flex-col flex-1 h-full">
+  <div class="flex justify-between h-full overflow-hidden">
+    <div class="flex flex-col flex-1">
       <Tabs v-model:value="tabsValue">
         <TabList>
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -60,8 +58,8 @@ function createProfile() {
           </Tab>
         </TabList>
       </Tabs>
-      <rxEditDiv v-model="windowName" class="window-name" />
       <div class="flex-1 overflow-auto">
+        <rxEditDiv v-model="windowName" class="window-name" />
         <Accordion :value="accordions.value" multiple>
           <AccordionPanel v-for="panels in accordions.panels" :key="panels.title" :value="panels.value">
             <AccordionHeader as="div" class="accordion-header">

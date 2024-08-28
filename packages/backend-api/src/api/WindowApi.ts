@@ -61,6 +61,8 @@ import {
   UserGetWindowInfoListParams,
   UserGetWindowInfoRecycleListData,
   UserGetWindowInfoRecycleListParams,
+  UserGetWindowInfoV2ListData,
+  UserGetWindowInfoV2ListParams,
   UserImportWindowInfoCreateData,
   UserImportWindowInfoCreatePayload,
   UserMdfGroupInfoCreateData,
@@ -94,7 +96,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowInfoList
-   * @summary 窗口列表
+   * @summary 窗口列表 (旧版本接口)
    * @request GET:/user_get_window_info
    * @response `200` `UserGetWindowInfoListData` 成功
    */
@@ -716,6 +718,23 @@ export class WindowApi<SecurityDataType = unknown> {
     this.http.request<GetWindowTableRowsListData, any>({
       path: `/get_window_table_rows`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowInfoV2List
+   * @summary 窗口列表 (新版本接口)
+   * @request GET:/user_get_window_info_v2
+   * @response `200` `UserGetWindowInfoV2ListData` 成功
+   */
+  userGetWindowInfoV2List = (query: UserGetWindowInfoV2ListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetWindowInfoV2ListData, any>({
+      path: `/user_get_window_info_v2`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

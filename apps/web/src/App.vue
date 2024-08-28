@@ -70,7 +70,6 @@ window.electronAPI.on('browser:launch-process-message', (event) => {
 
   &-content {
     flex-grow: 1;
-    flex-shrink: 0;
     margin-right: var(--spacing-2xl, 16px);
     margin-bottom: var(--spacing-2xl, 16px);
     border-radius: var(--radius-sm, 4px);
