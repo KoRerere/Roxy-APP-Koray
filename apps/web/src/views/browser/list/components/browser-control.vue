@@ -47,7 +47,7 @@ function openBrowser() {
 
 <template>
   <div class="flex gap-2">
-    <div v-ripple v-tooltip.top="tooltip" class="flex-cc cursor-pointer open-browser" @click="openBrowser">
+    <div v-ripple v-tooltip.top="tooltip" class="flex-cc cursor-pointer open-browser" @click.stop="openBrowser">
       <circle-progress v-if="_state.state === State_Enums.Loading" size="16" :value="_state.progress" />
       <span v-if="_state.state === State_Enums.Open" class="mdi mdi-google-chrome text-4" />
       <span>{{ _state.stateText }}</span>

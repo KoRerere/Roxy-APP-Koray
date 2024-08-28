@@ -24,7 +24,7 @@ const os_image = {
   Android: getImage('os/android.svg'),
 }
 
-const isProxy = ref(!!_props.data.host)
+const isProxy = _props.data.proxyCategory !== 'noproxy'
 
 const list = ref([
   {

@@ -23,6 +23,11 @@ import { useContextMenu } from '/@/hooks/useContextMenu'
 import columnsRow from './columns'
 import { filters, operation, operationHandler, sorts } from './operation'
 import { API } from '/@/api'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+
+const confirm = useConfirm()
+const toast = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -33,6 +38,7 @@ const [show] = useContextMenu()
 const drawer = reactive({
   visible: false,
   type: 'proxyCreate',
+  props: null,
 })
 
 // ======================================
@@ -43,28 +49,75 @@ async function tableRequest(params: any) {
   return data.rows
 }
 
-function profileOperate(key: string) {
-  console.log('🚀 ~ profileOperate ~ key:', key)
+function profileOperate(key: string, data: any) {
   switch (key) {
     case 'addProxy':
       drawer.visible = true
       drawer.type = 'proxyCreate'
       break
+    case 'editProxy':
+      drawer.visible = true
+      drawer.type = 'proxyCreate'
+      drawer.props = data
+      break
     case 'selectProxy':
+      drawer.visible = true
+      drawer.type = 'proxyList'
       break
     case 'testProxy':
+      testProxy(data)
       break
     case 'refreshIp':
-      break
-    case 'editProxy':
+      refreshIp(data)
       break
     case 'deleteProxy':
+      deleteProxy(data)
       break
     case 'addAccount':
       break
     case 'selectAccount':
       break
   }
+}
+
+async function testProxy(data: any) {
+  try {
+    const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
+    console.log('🚀 ~ testProxy ~ res:', res)
+
+    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
+  }
+  catch (error) {
+
+  }
+}
+
+async function refreshIp(data) {
+  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
+}
+
+async function deleteProxy(data) {
+  confirm.require({
+    header: '警告',
+    message: '您确定要删除此代理吗?',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: '确定',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        const res = await API.proxy.userCheckIpCreate({ window_id: data.id, proxy_id: data.moduleId })
+        toast.add({ severity: 'success', summary: '删除成功', detail: res.msg, life: 5000 })
+      }
+      catch (error) {
+      }
+    },
+  })
 }
 
 function autoOpenBrowser(list: any) {
@@ -98,7 +151,7 @@ onMounted(() => {
       <custom-filter />
     </template>
     <template #profile="{ data }">
-      <profile-info :data="data" @profile-operate="profileOperate" />
+      <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
     <template #open="{ data }">
       <browser-control @open="() => openBrowser(data)" />

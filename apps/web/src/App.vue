@@ -48,7 +48,14 @@ onMounted(() => {
   </div>
   <Toast />
   <Toast position="top-center" group="tc" />
+  <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
 </template>
+
+<style lang="scss">
+.rx-dialog {
+  min-width: 350px;
+}
+</style>
 
 <style lang="scss" scoped>
 .rx-layout {
