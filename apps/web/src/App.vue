@@ -1,9 +1,27 @@
 <script lang="ts" setup>
 import siderMenu from './components/sider-menu.vue'
+import { API } from '/@/api'
 
 const collapsed = ref<boolean>(false)
 window.electronAPI.on('browser:launch-process-message', (event) => {
   console.log('browser:launch-process-message', event)
+})
+
+onMounted(() => {
+  const dict = localStorage.getItem('$dict_map')
+  if (!dict) {
+    API.base.userGetDictVersionList()
+      .then(({ data }) => API.base.userGetSystemDictV2Create({ type: Object.keys(data) }))
+      .then(({ data }) => {
+        const dict = {}
+        data.forEach((item) => {
+          if (!dict[item.type])
+            dict[item.type] = []
+          dict[item.type].push(item)
+        })
+        localStorage.setItem('$dict_map', JSON.stringify(dict))
+      })
+  }
 })
 </script>
 
@@ -28,7 +46,16 @@ window.electronAPI.on('browser:launch-process-message', (event) => {
       </div>
     </div>
   </div>
+  <Toast />
+  <Toast position="top-center" group="tc" />
+  <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
 </template>
+
+<style lang="scss">
+.rx-dialog {
+  min-width: 350px;
+}
+</style>
 
 <style lang="scss" scoped>
 .rx-layout {

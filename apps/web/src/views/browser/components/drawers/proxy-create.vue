@@ -2,9 +2,11 @@
 import ryForm from '/@/components/ry-form'
 import drawerContent from '/@/components/drawer-content.vue'
 import { getFormData } from '/@/utils'
+import { useToast } from 'primevue/usetoast'
 
 const emits = defineEmits(['confirm'])
 
+const toast = useToast()
 const formInputs = ref([])
 
 function getInputs () {
@@ -78,6 +80,9 @@ function getInputs () {
       placeholder: 'Please enter a valid URL',
       tooltip: 'mamba out!',
       icon: 'mdi mdi-refresh',
+      iconClick () {
+        toast.add({ severity: 'warn', summary: 'scvr', detail: 'Message Content', life: 3000 })
+      },
     },
   ]
 }
