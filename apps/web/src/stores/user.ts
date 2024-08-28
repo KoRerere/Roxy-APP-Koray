@@ -1,12 +1,15 @@
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import type { LoginCreateData } from '@roxy/backend-api'
 
-export const useCounterStore = defineStore('user', () => {
-  const count = ref(0)
-  const doubleCount = computed(() => count.value * 2)
-  function increment() {
-    count.value++
+export const useUserStore = defineStore('user', () => {
+  const userInfo = ref<LoginCreateData>({})
+
+  function setUserInfo(info) {
+    userInfo.value = info
   }
 
-  return { count, doubleCount, increment }
+  return { userInfo, setUserInfo }
+}, {
+  persist: true,
 })

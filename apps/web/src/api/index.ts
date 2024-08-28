@@ -6,15 +6,17 @@ import {
   PluginsApi,
   ProxyApi,
   TeamApi,
-  WindowApi
+  WindowApi,
 } from '@roxy/backend-api'
+import { useUserStore } from '/@/stores/user'
 
 export const httpClient = new HttpClient({
-  baseURL: 'https://lumitest.lumibrowser.com/'
+  baseURL: 'https://lumitest.lumibrowser.com/',
 })
 
 httpClient.instance.interceptors.request.use((config) => {
-  config.headers.token = 'yHiKQVrqKOomCxK31723012219917'
+  const { userInfo } = useUserStore()
+  config.headers.token = userInfo.token
   config.headers.appVersion = '3.0.0'
   return config
 })
@@ -26,5 +28,5 @@ export const API = {
   logging: new LoggingApi(httpClient),
   team: new TeamApi(httpClient),
   base: new BaseApi(httpClient),
-  platform: new PlatformApi(httpClient)
+  platform: new PlatformApi(httpClient),
 }
