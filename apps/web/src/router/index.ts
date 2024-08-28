@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const routes = [
   {
+    path: '/login',
+    name: 'login',
+    meta: { title: '登录', icon: 'BarChartOutlined', root: true },
+    component: () => import('/@/views/login'),
+  },
+  {
     path: '/create',
     name: 'browser-create',
     meta: { title: '新建窗口', icon: 'BarChartOutlined', root: true },

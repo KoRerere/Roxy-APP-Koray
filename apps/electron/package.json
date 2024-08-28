@@ -20,8 +20,8 @@
   "scripts": {
     "build-main": "webpack --config webpack.config.js",
     "test": "electron .",
-    "build": "vite build",
-    "build:pkg": "npx tsx scripts/build.ts && pnpm run build-main",
+    "build": "vite build && pnpm run build-main",
+    "build:pkg": "npx tsx scripts/build.ts",
     "compile": "cross-env MODE=production npm run build && npm run build:pkg",
     "lint": "eslint . --ext js,ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
