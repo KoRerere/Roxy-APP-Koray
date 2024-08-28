@@ -18,13 +18,12 @@ const config: UserConfig = {
     ssr: true,
     sourcemap: false,
     target: `node${node}`,
-    outDir: 'dist',
+    outDir: 'dist-vite',
     assetsDir: '.',
     minify: process.env.MODE !== 'development',
     lib: {
       entry: {
         index: 'src/index.ts',
-        browserWorker: 'src/workers/browser/index.ts',
       },
       formats: ['cjs'],
     },
