@@ -22,6 +22,7 @@ const options: Configuration = {
   asar: true,
   extraMetadata: {
     name: 'Roxybrowser',
+    main: 'dist/index.cjs',
   },
   directories: {
     output: 'out',
