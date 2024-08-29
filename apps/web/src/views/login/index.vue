@@ -11,14 +11,14 @@ const inputs = [
     label: '用户名',
     name: 'user_name',
     placeholder: '请选择语言',
-    value: null,
+    value: '',
   },
   {
     type: 'password',
     label: '密码',
     name: 'password',
     placeholder: '请输入密码',
-    value: null,
+    value: '',
   },
 ]
 

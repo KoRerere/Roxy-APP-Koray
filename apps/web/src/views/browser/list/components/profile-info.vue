@@ -11,9 +11,8 @@ const _props = defineProps({
 
 const emits = defineEmits(['profileOperate'])
 
-if (_props.data.windowSortNum === 27) {
-  console.log('🚀 ~ data:', _props.data)
-}
+const _data = computed(() => _props.data)
+const isProxy = computed(() => _data.value.proxyCategory !== 'noproxy')
 
 const [show] = useContextMenu()
 
@@ -24,31 +23,29 @@ const os_image = {
   Android: getImage('os/android.svg'),
 }
 
-const isProxy = _props.data.proxyCategory !== 'noproxy'
-
 const list = ref([
   {
-    image: os_image[_props.data.os],
+    image: os_image[_data.value.os],
     classes: '',
-    tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
+    tooltip: `System: ${_data.value.os} ${_data.value.osVersion}\nKernel: Chrome ${_data.value.coreVersion}`,
   },
   {
     classes: isProxy.value ? '' : 'direct',
     image: isProxy.value ? getImage('proxy.svg') : getImage('plus.svg'),
-    tooltip: isProxy.value ? `Location: ${_props.data.lastCountry || '--'}\nLast check: ${_props.data.checkTime || '--'}` : undefined,
+    tooltip: isProxy.value ? `Location: ${_data.value.lastCountry || '--'}\nLast check: ${_data.value.checkTime || '--'}` : undefined,
     onClick: (event: Event) => {
       show(event, {
-        model: getProxyOperation(_props.data),
+        model: getProxyOperation(_data.value),
       })
     },
   },
   {
-    image: _props.data.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
-    classes: _props.data.windowPlatformList.length > 1 ? 'stack' : '',
+    image: _data.value.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
+    classes: _data.value.windowPlatformList.length > 1 ? 'stack' : '',
     tooltip: '',
     onClick: (event: Event) => {
       show(event, {
-        model: getAccountOperation(_props.data),
+        model: getAccountOperation(_data.value),
       })
     },
   },

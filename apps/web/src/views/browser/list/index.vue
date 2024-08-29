@@ -5,10 +5,7 @@ import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 
-import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
-import proxyCreate from '/@/views/browser/components/drawers/proxy-create.vue'
-import accountList from '/@/views/browser/components/drawers/account-list.vue'
-import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
+import scvritems from '/@/views/browser/components/drawers/index.vue'
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -26,6 +23,8 @@ import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 
+import type { DrawerType } from '../components/drawers/props'
+
 const confirm = useConfirm()
 const toast = useToast()
 
@@ -34,11 +33,34 @@ const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
-
+const tableRef = ref()
 const drawer = reactive({
+  type: 'proxyList' as DrawerType,
+  title: '',
+  data: null,
   visible: false,
-  type: 'proxyCreate',
-  props: null,
+  confirm: (type: DrawerType, data: any) => {
+    switch (type) {
+      case 'proxyList':
+        break
+      case 'proxyForm':
+        drawer.editProxy(data)
+        break
+    }
+  },
+  editProxy: async (data: any) => {
+    try {
+      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
+      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      tableRef.value.request()
+    }
+    catch (error) {
+      toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
+    }
+    finally {
+      drawer.visible = false
+    }
+  },
 })
 
 // ======================================
@@ -46,32 +68,38 @@ const drawer = reactive({
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
   // autoOpenBrowser(data.rows)
+  console.log('🚀 ~ tableRequest ~ data.rows:', data.rows[0])
   return data.rows
 }
 
 function profileOperate(key: string, data: any) {
+  const _data = toRaw(data)
   switch (key) {
     case 'addProxy':
       drawer.visible = true
-      drawer.type = 'proxyCreate'
+      drawer.type = 'proxyForm'
+      drawer.data = _data
+      drawer.title = `新建代理 [UID-${data.windowSortNum}]`
       break
     case 'editProxy':
       drawer.visible = true
-      drawer.type = 'proxyCreate'
-      drawer.props = data
+      drawer.type = 'proxyForm'
+      drawer.data = _data
+      drawer.title = `编辑代理 [UID-${data.windowSortNum}]`
       break
     case 'selectProxy':
       drawer.visible = true
       drawer.type = 'proxyList'
+      drawer.title = `选择代理 [UID-${data.windowSortNum}]`
       break
     case 'testProxy':
-      testProxy(data)
+      testProxy(_data)
       break
     case 'refreshIp':
-      refreshIp(data)
+      refreshIp(_data)
       break
     case 'deleteProxy':
-      deleteProxy(data)
+      deleteProxy(_data)
       break
     case 'addAccount':
       break
@@ -92,11 +120,11 @@ async function testProxy(data: any) {
   }
 }
 
-async function refreshIp(data) {
+async function refreshIp(_data: any) {
   toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
 }
 
-async function deleteProxy(data) {
+async function deleteProxy(data: any) {
   confirm.require({
     header: '警告',
     message: '您确定要删除此代理吗?',
@@ -111,8 +139,18 @@ async function deleteProxy(data) {
     },
     accept: async () => {
       try {
-        const res = await API.proxy.userCheckIpCreate({ window_id: data.id })
-        toast.add({ severity: 'success', summary: '删除成功', detail: res.msg, life: 5000 })
+        const params = {
+          id: data.id,
+          dirId: data.dirId,
+          host: '',
+          ipType: '',
+          port: '',
+          proxyCategory: 'noproxy',
+          proxyPassword: '',
+          proxyUserName: '',
+          refreshUrl: '',
+        }
+        drawer.editProxy(params)
       }
       catch (error) {
       }
@@ -120,10 +158,10 @@ async function deleteProxy(data) {
   })
 }
 
-function autoOpenBrowser(list: any) {
+function _autoOpenBrowser(list: any) {
   const query = route.query.browser && JSON.parse(route.query.browser as string)
   if (query?.openBrowser) {
-    const data = list.find(item => item.id === query.windowId)
+    const data = list.find((item: any) => item.id === query.windowId)
     router.replace({ name: route.name })
     if (data) {
       openBrowser(data)
@@ -139,18 +177,24 @@ function onMore([event, model]: any[]) {
   show(event, { model })
 }
 
+async function _testModify(data: any) {
+  await API.window.userMdfWindowInfoSingleCreate(data)
+}
+
 onMounted(() => {
   // getPlatformInfo()
 })
 </script>
 
 <template>
-  <ry-table v-model:columns="columns" :table-request="tableRequest" :operation="operation" selection-mode="multiple"
-    :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id" :show-gridlines="false">
+  <ry-table ref="tableRef" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
+    selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
+    :show-gridlines="false">
     <template #header-extra>
       <custom-filter />
     </template>
     <template #profile="{ data }">
+      {{ data.proxyCategory }}
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
     <template #open="{ data }">
@@ -166,10 +210,8 @@ onMounted(() => {
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
     :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
-      <proxyList v-if="drawer.type === 'proxyList'" @close="() => closeCallback()" @confirm="() => { }" />
-      <proxyCreate v-if="drawer.type === 'proxyCreate'" @close="() => closeCallback()" @confirm="() => { }" />
-      <accountList v-if="drawer.type === 'accountList'" :close-drawer="closeCallback" />
-      <accountCreate v-if="drawer.type === 'accountCreate'" :close-drawer="closeCallback" @confirm="() => { }" />
+      <scvritems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
+        @confirm="data => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>
 </template>

@@ -86,7 +86,7 @@ export function getInputs(_data?: any) {
         type: 'textarea',
         label: 'User-Agent',
         name: 'userAgent',
-        value: null,
+        value: '',
         placeholder: 'placeholder',
         icon: 'mdi mdi-shuffle-variant',
         iconClick: () => {
@@ -103,7 +103,7 @@ export function getInputs(_data?: any) {
           host: null, // 代理主机
           ipType: null, // 网络协议
           port: null, // 代理端口
-          protocol: null, // 代理协议
+          proxyCategory: null, // 代理类型
           proxyPassword: null, // 代理密码
           proxyUserName: null, // 代理账号
           refreshUrl: null // 刷新URL
@@ -133,7 +133,7 @@ export function getInputs(_data?: any) {
         type: 'textarea',
         label: '#xCookies',
         name: 'cookies',
-        value: null,
+        value: '',
         placeholder: 'Paste your cookies with JSON format',
         icon: 'mdi mdi-paperclip',
         formatValue: (self: any) => {
@@ -165,7 +165,7 @@ export function getInputs(_data?: any) {
         label: ' ',
         name: 'language',
         placeholder: '请选择语言',
-        value: null,
+        value: '',
         options: $dict_map.language,
         virtualScrollerOptions: { itemSize: 38 },
         visible: false
@@ -188,7 +188,7 @@ export function getInputs(_data?: any) {
         label: ' ',
         name: 'displayLanguage',
         placeholder: '请选择语言',
-        value: null,
+        value: '',
         options: $dict_map.language,
         virtualScrollerOptions: { itemSize: 38 },
         visible: false
@@ -211,7 +211,7 @@ export function getInputs(_data?: any) {
         label: ' ',
         name: 'timeZone',
         placeholder: '请选择时区',
-        value: null,
+        value: '',
         options: $dict_map.timeZone,
         virtualScrollerOptions: { itemSize: 38 },
         visible: false
@@ -256,7 +256,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '经度',
         name: 'longitude',
-        value: null,
+        value: '',
         placeholder: '请填写经度, 示例: -40.123',
         visible: false
       },
@@ -264,7 +264,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '纬度',
         name: 'latitude',
-        value: null,
+        value: '',
         placeholder: '请填写纬度, 示例: 30.123',
         visible: false
       },
@@ -272,7 +272,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '精度(米)',
         name: 'precisionPos',
-        value: null,
+        value: '',
         placeholder: '请填写精度, 范围: 10-5000',
         visible: false
       },
@@ -342,7 +342,7 @@ export function getInputs(_data?: any) {
         label: '分辨率值',
         name: 'resolution',
         placeholder: '请选择分辨率',
-        value: null,
+        value: '',
         options: $dict_map.resolution,
         virtualScrollerOptions: { itemSize: 38 },
         visible: false
@@ -395,7 +395,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: 'WebGL厂商',
         name: 'webGLManufacturer',
-        value: null,
+        value: '',
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
         visible: true,
@@ -407,7 +407,7 @@ export function getInputs(_data?: any) {
         type: 'textarea',
         label: 'WebGL渲染',
         name: 'webGLRender',
-        value: null,
+        value: '',
         placeholder: '',
         rows: 3,
         icon: 'mdi mdi-shuffle-variant',
@@ -504,7 +504,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: ' ',
         name: 'deviceName',
-        value: null,
+        value: '',
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
         visible: true,
@@ -531,7 +531,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '#x 2',
         name: 'macAddr',
-        value: null,
+        value: '',
         placeholder: '',
         icon: 'mdi mdi-shuffle-variant',
         visible: true,
@@ -546,7 +546,7 @@ export function getInputs(_data?: any) {
         label: '硬件并发数',
         name: 'hardwareConcurrent',
         placeholder: '请选择硬件并发数',
-        value: null,
+        value: '',
         options: $dict_map.hardwareConcurrent
       },
       {
@@ -554,7 +554,7 @@ export function getInputs(_data?: any) {
         label: '设备内存',
         name: 'deviceMemory',
         placeholder: '请选择设备内存',
-        value: null,
+        value: '',
         options: $dict_map.deviceMemory
       },
       {
@@ -599,7 +599,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '扫描白名单',
         name: 'portScanList',
-        value: null,
+        value: '',
         placeholder: '输入整数，多个用英文逗号隔开',
         visible: false
       },
@@ -627,7 +627,7 @@ export function getInputs(_data?: any) {
         type: 'text',
         label: '启动参数',
         name: 'startupParam',
-        value: null,
+        value: '',
         placeholder: '浏览器启动参数,如 --mute,多个参数以英文逗号分隔'
       }
     ],

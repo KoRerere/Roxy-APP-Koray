@@ -1,22 +1,35 @@
-<script setup>
+<script lang="ts" setup>
 import ryForm from '/@/components/ry-form'
+import inputbase from '/@/components/ry-form/input-base.vue'
+
 import drawerContent from '/@/components/drawer-content.vue'
 import { getFormData } from '/@/utils'
 import { useToast } from 'primevue/usetoast'
 
+const props = defineProps({
+  data: {
+    type: Object,
+    default: () => ({}),
+  },
+  title: {
+    type: String,
+    default: '创建代理',
+  },
+})
 const emits = defineEmits(['confirm'])
 
 const toast = useToast()
-const formInputs = ref([])
+const formInputs = ref<any>([])
+const original = ref<any>()
 
-function getInputs () {
+function getInputs(data: any) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
   formInputs.value = [
     {
       type: 'textarea',
       label: '智能检测',
-      value: null,
+      value: '',
       placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
       rows: 3,
       tooltip: 'man!',
@@ -28,7 +41,7 @@ function getInputs () {
       type: 'radio',
       label: '网络协议',
       name: 'ipType',
-      value: $dict_map.ipType[0].value,
+      value: data.ipType || $dict_map.ipType[0].value,
       options: $dict_map.ipType,
       tooltip: 'what can i say',
     },
@@ -37,22 +50,25 @@ function getInputs () {
       items: [
         {
           type: 'select',
-          name: 'protocol',
+          name: 'proxyCategory',
           placeholder: '请选择网络协议',
-          value: $dict_map.protocol[0].value,
+          value: data.proxyCategory !== 'noproxy' ? data.proxyCategory : $dict_map.protocol[0].value,
           options: $dict_map.protocol,
         },
         {
           type: 'text',
           name: 'host',
-          value: null,
+          value: data.host || '',
           placeholder: '代理主机',
         },
         {
           type: 'text',
           name: 'port',
-          value: null,
+          value: data.port || '',
           placeholder: '代理端口',
+          // formatValue: (self: any) => {
+          //   return self.value || ''
+          // },
         },
       ],
       tooltip: 'what can i say',
@@ -62,38 +78,40 @@ function getInputs () {
       type: 'text',
       label: '代理账号',
       name: 'proxyUserName',
-      value: null,
+      value: data.proxyUserName || '',
       placeholder: 'Username for your server',
     },
     {
       type: 'password',
       label: '代理密码',
       name: 'proxyPassword',
-      value: null,
+      value: data.proxyPassword || '',
       placeholder: 'Password for your server',
     },
     {
       type: 'text',
       label: '刷新URL',
       name: 'refreshUrl',
-      value: null,
+      value: data.refreshUrl || '',
       placeholder: 'Please enter a valid URL',
       tooltip: 'mamba out!',
       icon: 'mdi mdi-refresh',
-      iconClick () {
+      iconClick() {
         toast.add({ severity: 'warn', summary: 'scvr', detail: 'Message Content', life: 3000 })
       },
     },
   ]
+
+  original.value = { id: data.id, dirId: data.dirId }
 }
 
-function testProxy () {
+function testProxy() {
 
 }
 
-function createProxy () {
+function createProxy() {
   try {
-    const formData = getFormData(formInputs.value)
+    const formData = getFormData(formInputs.value, original.value)
     emits('confirm', formData)
   }
   catch (error) {
@@ -102,12 +120,12 @@ function createProxy () {
 }
 
 onMounted(() => {
-  getInputs()
+  getInputs(props.data)
 })
 </script>
 
 <template>
-  <drawer-content title="创建代理" v-bind="$attrs">
+  <drawer-content :title="title" v-bind="$attrs">
     <div class="h-full flex flex-col">
       <ry-form :inputs="formInputs">
         <template #server="{ input }">
