@@ -150,7 +150,10 @@ export class AfterLaunchTask extends BrowserItem {
       // console.log(this.cookies)
     })
     this.browser.on('targetcreated', async (target) => {
-      console.log('目标被创建', target.url())
+      console.log('目标被创建', target.type(), target._targetId, target.url())
+      if (target.type() === 'page' && !['about:blank', 'chrome://newtab/'].includes(target.url())) {
+        this.openedTabs[target._targetId] = target.url()
+      }
       if (syncCookie) {
         const { cookies } = await cdpSession.send('Network.getAllCookies')
         this.cookies = JSON.stringify(cookies)

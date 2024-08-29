@@ -11,11 +11,6 @@ const _props = defineProps({
 
 const emits = defineEmits(['profileOperate'])
 
-const _data = computed(() => _props.data)
-const isProxy = computed(() => _data.value.proxyCategory !== 'noproxy')
-
-const [show] = useContextMenu()
-
 const os_image = {
   Windows: getImage('os/windows.svg'),
   IOS: getImage('os/iOS.svg'),
@@ -23,35 +18,42 @@ const os_image = {
   Android: getImage('os/android.svg'),
 }
 
-const list = ref([
+const data = computed(() => _props.data)
+const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
+
+const list = computed(() => [
   {
-    image: os_image[_data.value.os],
-    classes: '',
-    tooltip: `System: ${_data.value.os} ${_data.value.osVersion}\nKernel: Chrome ${_data.value.coreVersion}`,
+    key: 'os',
+    image: os_image[data.value.os],
+    tooltip: `System: ${data.value.os} ${data.value.osVersion}\nKernel: Chrome ${data.value.coreVersion}`,
   },
   {
+    key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
     image: isProxy.value ? getImage('proxy.svg') : getImage('plus.svg'),
-    tooltip: isProxy.value ? `Location: ${_data.value.lastCountry || '--'}\nLast check: ${_data.value.checkTime || '--'}` : undefined,
-    onClick: (event: Event) => {
-      show(event, {
-        model: getProxyOperation(_data.value),
-      })
-    },
+    tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
   },
   {
-    image: _data.value.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
-    classes: _data.value.windowPlatformList.length > 1 ? 'stack' : '',
-    tooltip: '',
-    onClick: (event: Event) => {
-      show(event, {
-        model: getAccountOperation(_data.value),
-      })
-    },
+    key: 'account',
+    image: data.value.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
+    classes: data.value.windowPlatformList.length > 1 ? 'stack' : '',
   },
 ])
 
-function getProxyOperation(_data: any) {
+const [show] = useContextMenu()
+
+function onClick(event: Event, key: string) {
+  switch (key) {
+    case 'proxy':
+      show(event, { model: getProxyOperation() })
+      break
+    case 'account':
+      show(event, { model: getAccountOperation() })
+      break
+  }
+}
+
+function getProxyOperation() {
   return [
     {
       label: 'Add proxy',
@@ -113,7 +115,7 @@ function getProxyOperation(_data: any) {
   ]
 }
 
-function getAccountOperation(_data: any) {
+function getAccountOperation() {
   return [
     {
       label: 'Add account',
@@ -137,9 +139,9 @@ function getAccountOperation(_data: any) {
       {{ data.windowSortNum }}
     </div>
     <div class="flex justify-between state">
-      <div v-for="(item, index) in list" :key="index" v-tooltip.top="item.tooltip" class="state-item">
+      <div v-for="item in list" :key="item.key" v-tooltip.top="item.tooltip" class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
-          @click.stop="(event) => item.onClick?.(event)">
+          @click.stop="(event) => onClick(event, item.key)">
           <img class="state-icons-img" :src="item.image">
         </div>
       </div>

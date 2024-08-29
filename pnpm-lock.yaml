@@ -46,7 +46,10 @@ importers:
         version: 5.4.2(@types/node@22.5.1)(sass@1.77.8)(terser@5.31.6)
 
   apps/electron:
-    dependencies:
+    devDependencies:
+      '@electron/notarize':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@repo/node-typesafe-worker-messages':
         specifier: workspace:*
         version: link:../../packages/node-typesafe-worker-messages
@@ -56,6 +59,18 @@ importers:
       '@roxy/electron-preload':
         specifier: workspace:*
         version: link:../preload
+      '@types/ali-oss':
+        specifier: ^6.16.11
+        version: 6.16.11
+      '@types/archiver':
+        specifier: ^6.0.2
+        version: 6.0.2
+      '@types/express':
+        specifier: 4.17.21
+        version: 4.17.21
+      '@types/node':
+        specifier: ^22.2.0
+        version: 22.5.1
       adm-zip:
         specifier: ^0.5.15
         version: 0.5.15
@@ -77,6 +92,12 @@ importers:
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
+      electron:
+        specifier: 22.3.27
+        version: 22.3.27
+      electron-builder:
+        specifier: 24.13.3
+        version: 24.13.3(electron-builder-squirrel-windows@24.13.3(dmg-builder@24.13.3))
       electron-store:
         specifier: ^8.2.0
         version: 8.2.0
@@ -98,34 +119,6 @@ importers:
       socks-proxy-agent:
         specifier: ^8.0.4
         version: 8.0.4
-      winston:
-        specifier: ^3.14.2
-        version: 3.14.2
-      winston-daily-rotate-file:
-        specifier: ^5.0.0
-        version: 5.0.0(winston@3.14.2)
-    devDependencies:
-      '@electron/notarize':
-        specifier: ^2.4.0
-        version: 2.4.0
-      '@types/ali-oss':
-        specifier: ^6.16.11
-        version: 6.16.11
-      '@types/archiver':
-        specifier: ^6.0.2
-        version: 6.0.2
-      '@types/express':
-        specifier: 4.17.21
-        version: 4.17.21
-      '@types/node':
-        specifier: ^22.2.0
-        version: 22.5.1
-      electron:
-        specifier: 22.3.27
-        version: 22.3.27
-      electron-builder:
-        specifier: 24.13.3
-        version: 24.13.3(electron-builder-squirrel-windows@24.13.3(dmg-builder@24.13.3))
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.5.4)(webpack@5.94.0(esbuild@0.23.1)(webpack-cli@5.1.4))
@@ -144,6 +137,12 @@ importers:
       webpack-cli:
         specifier: ^5.1.4
         version: 5.1.4(webpack@5.94.0)
+      winston:
+        specifier: ^3.14.2
+        version: 3.14.2
+      winston-daily-rotate-file:
+        specifier: ^5.0.0
+        version: 5.0.0(winston@3.14.2)
 
   apps/preload:
     dependencies:
