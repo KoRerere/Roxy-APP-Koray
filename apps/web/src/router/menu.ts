@@ -1,36 +1,36 @@
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordRaw } from "vue-router";
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
-    path: 'create',
-    name: 'browser-create',
-    meta: { title: '新建窗口', icon: 'BarChartOutlined', root: true },
-    component: () => import('/@/views/browser/create'),
+    path: "form",
+    name: "browser-form",
+    meta: { title: "新建窗口", icon: "BarChartOutlined", root: true },
+    component: () => import("/@/views/browser/form"),
   },
   {
-    path: 'browser',
-    name: 'browser',
-    meta: { title: '浏览器窗口', icon: 'AreaChartOutlined', root: true },
-    component: () => import('/@/views/browser'),
-    redirect: { name: 'browser-list' },
+    path: "browser",
+    name: "browser",
+    meta: { title: "浏览器窗口", icon: "AreaChartOutlined", root: true },
+    component: () => import("/@/views/browser"),
+    redirect: { name: "browser-list" },
     children: [
       {
-        path: 'list',
-        name: 'browser-list',
-        meta: { title: '窗口列表', icon: 'AreaChartOutlined' },
-        component: () => import('/@/views/browser/list'),
+        path: "list",
+        name: "browser-list",
+        meta: { title: "窗口列表", icon: "AreaChartOutlined" },
+        component: () => import("/@/views/browser/list"),
       },
       {
-        path: 'transfer',
-        name: 'browser-transfer',
-        meta: { title: '窗口转移', icon: 'PieChartOutlined' },
-        component: () => import('/@/views/browser/transfer'),
+        path: "transfer",
+        name: "browser-transfer",
+        meta: { title: "窗口转移", icon: "PieChartOutlined" },
+        component: () => import("/@/views/browser/transfer"),
       },
       {
-        path: 'recycle',
-        name: 'browser-recycle',
-        meta: { title: '回收站', icon: 'DotChartOutlined' },
-        component: () => import('/@/views/browser/recycle'),
+        path: "recycle",
+        name: "browser-recycle",
+        meta: { title: "回收站", icon: "DotChartOutlined" },
+        component: () => import("/@/views/browser/recycle"),
       },
     ],
   },
@@ -106,4 +106,4 @@ export const menuRoutes: RouteRecordRaw[] = [
   //   meta: { title: '自动化', icon: 'LineChartOutlined', root: true },
   //   component: () => import('/@/views/auto'),
   // },
-]
+];

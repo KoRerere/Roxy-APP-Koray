@@ -98,7 +98,7 @@ async function operationHandler({ name }: any, data: any) {
     }
     case 'edit':
       localStorage.setItem('$editWindow', JSON.stringify(data))
-      router.push({ name: 'browser-create', query: { id: data.id } })
+      router.push({ name: 'browser-form', query: { id: data.id } })
       break
     case 'delete':
       deleteWindow(_data)
