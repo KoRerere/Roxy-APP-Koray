@@ -1,5 +1,10 @@
-import { app } from 'electron'
+import path from 'node:path'
+import { app, shell } from 'electron'
 import { restoreOrCreateWindow } from './mainWindow'
+import { ipcMain } from '/@/modules/ipc'
+
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
+app.commandLine.appendSwitch('--no-sandbox')
 
 export function setupApp() {
   /**
@@ -10,7 +15,39 @@ export function setupApp() {
     app.quit()
     process.exit(0)
   }
-  app.on('second-instance', restoreOrCreateWindow)
+
+  const protocolName = 'roxybrowser'
+
+  app.removeAsDefaultProtocolClient(protocolName)
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(protocolName, process.execPath, [path.resolve(process.argv[1])])
+    }
+  }
+  else {
+    app.setAsDefaultProtocolClient(protocolName)
+  }
+
+  app.on('second-instance', async (event, commandLine) => {
+    console.log('commandLine', commandLine)
+    await restoreOrCreateWindow()
+    if (commandLine.at(-1)?.includes(`${protocolName}://oauth2callback`)) {
+      console.log('oauth2callback: ', commandLine)
+      ipcMain.send('oauth2:google-callback', `?${commandLine.at(-1)?.split('?')[1]}`)
+    }
+  })
+
+  app.on('open-url', (event, url) => {
+    ipcMain.send('oauth2:google-callback', `?${url.split('?')[1]}`)
+  })
+
+  //  系统自带浏览器打开
+  app.on('web-contents-created', (e, webContents) => {
+    webContents.setWindowOpenHandler(({ url }) => {
+      shell.openExternal(url)
+      return { action: 'deny' }
+    })
+  })
 
   /**
    * Shout down background process if all windows was closed

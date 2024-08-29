@@ -43,6 +43,15 @@ export class BrowserManager {
     })
   }
 
+  /** 批量启动浏览器 */
+  async batchLaunch(winInfoList: WindowItemType[]) {
+    for (const winInfo of winInfoList) {
+      await this.launch(winInfo).catch((error) => {
+        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
+      })
+    }
+  }
+
   /** 关闭浏览器 */
   async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
@@ -62,18 +71,9 @@ export class BrowserManager {
     }
   }
 
-  /** 批量启动浏览器 */
-  async batchLaunch(winInfoList: WindowItemType[]) {
-    for (const winInfo of winInfoList) {
-      await this.launch(winInfo).catch((error) => {
-        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
-      })
-    }
-  }
-
   /** 批量关闭浏览器 */
-  async batchClose() {
-    for await (const dirId of this.openedBrowserMap.keys()) {
+  async batchClose(dirIds: string[]) {
+    for (const dirId of dirIds) {
       await this.close(dirId)
     }
   }
@@ -81,5 +81,14 @@ export class BrowserManager {
   /** 停止打开后续窗口 */
   async stopOpen() {
     this.openingBrowserMap.clear()
+  }
+
+  /** 批量删除窗口 */
+  async batchDelete(dirIds: string[]) {
+    for (const dirId of dirIds) {
+      const browserItem = this.openedBrowserMap.get(dirId)
+      await this.close(dirId)
+      await browserItem?.removeLocalData()
+    }
   }
 }

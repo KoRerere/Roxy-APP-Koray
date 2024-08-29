@@ -16,4 +16,6 @@ export interface BrowserProcessMessage {
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
+  /** google 授权登录 */
+  'oauth2:google-callback': (payload: string) => void
 }

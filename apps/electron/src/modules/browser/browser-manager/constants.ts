@@ -61,3 +61,14 @@ export const needSyncLocalFileMap = [
   //   type: "file"
   // }
 ] as const
+
+/** 清除本地缓存（扩展数据除外） */
+export const cacheToClear = [
+  'Local Extension Settings',
+  'databases',
+  'Managed Extension Settings',
+  'Sync Extension Settings',
+  'Extensions',
+  'Preferences',
+  'Secure Preferences',
+]

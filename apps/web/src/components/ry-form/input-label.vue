@@ -3,6 +3,9 @@ defineProps({
   name: String,
   label: String,
   tooltip: String,
+  labelWidth: {
+    type: String,
+  },
 })
 </script>
 
@@ -19,6 +22,7 @@ defineProps({
   gap: var(--spacing-sm, 4px);
   margin-right: var(--spacing-lg, 8px);
   margin-bottom: var(--spacing-sm, 4px);
+  width: var(v-bind(labelWidth));
   min-width: 120px;
   color: var(--Component-Colors-TextInput-label-label, #171c1f);
   font-family: Inter;
