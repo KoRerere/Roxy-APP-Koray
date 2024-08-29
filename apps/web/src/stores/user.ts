@@ -2,10 +2,12 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { LoginCreateData } from '@roxy/backend-api'
 
-export const useUserStore = defineStore('user', () => {
-  const userInfo = ref<LoginCreateData['data']>({})
+type UserInfo = Partial<LoginCreateData['data']>
 
-  function setUserInfo(info) {
+export const useUserStore = defineStore('user', () => {
+  const userInfo = ref<UserInfo>({})
+
+  function setUserInfo(info: UserInfo) {
     userInfo.value = info
   }
 

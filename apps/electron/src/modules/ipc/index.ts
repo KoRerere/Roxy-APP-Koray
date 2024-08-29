@@ -25,11 +25,18 @@ export function errorDataWrapper(message = 'error', data?: any, error?: any): Ma
   }
 }
 
+/** 代理检测 */
 ipcMain.on('proxy:detection', (winItemInfo) => {
   return proxyDetection(winItemInfo)
 })
 
+/** 批量启动浏览器 */
 ipcMain.on('browser:batchLaunch', (winItemList) => {
+  return browserManager.batchLaunch(winItemList)
+})
+
+/** 批量删除本地浏览器 */
+ipcMain.on('browser:batchRemove', (winItemList) => {
   return browserManager.batchLaunch(winItemList)
 })
 

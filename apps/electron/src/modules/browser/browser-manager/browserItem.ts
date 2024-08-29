@@ -1,7 +1,7 @@
 import { join } from 'node:path'
-import { writeFile } from 'node:fs/promises'
+import { readdir, rm, writeFile } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
-import { needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { cacheToClear, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
@@ -83,7 +83,8 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.browser) {
-      this.browser.close()
+      await this.browser.close()
+      this.browser = null
       return this.uploadDataPromiser.promise
     }
   }
@@ -111,14 +112,6 @@ export class BrowserItem {
       writeFile(this.ossCacheVersionPath, String(newVersion))
       console.log(`oss 上传`, data)
 
-      // this.webContents.send("update_message_md5", {
-      //   ...parmes,
-      //   id: this.obj.id,
-      //   syncValue: {
-      //     version: newVersion,
-      //   },
-      // });
-
       const uploadParams = {
         id,
         cookie: Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie,
@@ -130,13 +123,46 @@ export class BrowserItem {
         openStatus: false,
       }
       // 同步窗口状态
-      API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
+      await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
         console.log('user_mdf_window_sync_v2', res)
       })
     }
     catch (error) {
       console.log('filesToZip error: ', error)
     }
+  }
+
+  /** 删除本地浏览器数据 */
+  async removeLocalData() {
+    await this.close()
+    // 删除本地浏览器数据目录
+    rm(this.userDataDir, { recursive: true })
+  }
+
+  /** 清除本地缓存（扩展数据除外） */
+  async removeLocalDataExcludeExtension() {
+    await this.close()
+
+    const files = await readdir(this.userDataDir)
+
+    const outPromises = files.map(async (file) => {
+      if (file === 'Default') {
+        const defaultDir = join(this.userDataDir, file)
+        const defaultFiles = await readdir(defaultDir)
+        const innerPromises = defaultFiles.map(async (defaultFile) => {
+          if (!cacheToClear.includes(defaultFile)) {
+            const filterDirPath = join(defaultDir, defaultFile)
+            await rm(filterDirPath, { recursive: true })
+          }
+        })
+        await Promise.all(innerPromises)
+      }
+      else {
+        await rm(join(this.userDataDir, file), { recursive: true })
+      }
+    })
+
+    await Promise.all(outPromises)
   }
 
   /** 代理检测 */
