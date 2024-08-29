@@ -111,7 +111,7 @@ onMounted(() => {
 })
 
 defineExpose({
-  request: _request,
+  refresh: _request,
   getParams: (callback: (params: any, done: any) => void) => {
     callback?.(
       _getParams(),
@@ -189,14 +189,18 @@ function batchOperation(item: any) {
       <template #item="{ item, props: ctxProps }">
         <a v-ripple v-bind="ctxProps.action" @click="contextMenuClick(item)">
           <span :class="item.icon" />
-          <span>{{ item.name }}</span>
+          <span>{{ item.label }}</span>
         </a>
       </template>
     </ContextMenu>
     <Transition>
       <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
         v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
-        @batch-operation="batchOperation" />
+        @batch-operation="batchOperation">
+        <template #multiple-operation>
+          <slot name="multiple-operation" :selection="selectionData" />
+        </template>
+      </selection-operation>
     </Transition>
   </div>
 </template>

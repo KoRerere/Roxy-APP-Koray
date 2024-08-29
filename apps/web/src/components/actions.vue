@@ -20,20 +20,18 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
 <template>
   <div class="flex items-center">
     <div class="quick">
-      <span v-for="item in quickOperation" :key="item.name" class="quick-item cursor-pointer" :class="[item.icon]"
+      <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer quick-item" :class="[item.icon]"
         @click.stop="() => item.onClick?.()" />
     </div>
-    <ryButton v-if="showMenu" text size="small" @click.stop="$emit('more', [$event, operation])">
-      <span class="mdi mdi-dots-horizontal" />
-    </ryButton>
+    <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', [$event, operation])">
+      <slot name="more-icon">
+        <ryButton text size="small" icon="mdi mdi-dots-vertical" />
+      </slot>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-btn + .ant-btn) {
-  margin-left: 8px;
-}
-
 .quick {
   display: flex;
   align-items: center;

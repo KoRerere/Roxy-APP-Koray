@@ -1,97 +1,104 @@
 function getRawType(data: any) {
-  return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
+  return Object.prototype.toString.call(data).slice(8, -1).toLowerCase();
 }
 
 export function isObject(data: any) {
-  return getRawType(data) === 'object'
+  return getRawType(data) === "object";
 }
 
 export function isFunction(fn: any) {
-  return getRawType(fn) === 'function'
+  return getRawType(fn) === "function";
 }
 
 export function hasOwnProperty(data: any, key: any) {
-  return Object.prototype.hasOwnProperty.call(data, key)
+  return Object.prototype.hasOwnProperty.call(data, key);
 }
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function clearInputsValue(inputs: any): void {
   inputs.forEach((input: any) => {
     if (input.items) {
-      clearInputsValue(input.items)
+      clearInputsValue(input.items);
     } else {
-      input.value = null
+      input.value = null;
     }
-  })
+  });
 }
 
 interface FormDataOptions {
-  keyName: string
-  valueName: string
+  keyName: string;
+  valueName: string;
 }
 
 function formVaildData(formData, input) {
   if (hasOwnProperty(formData, input.name)) {
-    throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
+    throw new Error(`Duplicate input.name '${input.name}' found in inputs`);
   }
   if (input.required && input.value === null) {
-    input.invalid = true
-    throw new Error(`Input '${input.name}' is required`)
+    input.invalid = true;
+    throw new Error(`Input '${input.name}' is required`);
   }
 }
 
 export function getFormData(
   inputs: any[],
   original: object = {},
-  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+  options: FormDataOptions = { keyName: "name", valueName: "value" },
 ): any {
   return inputs.reduce(
     (formData, input) => {
-      const { visible, items, formatValue } = input
-      const name = input[options.keyName]
-      const value = input[options.valueName]
+      const { visible, items, formatValue } = input;
+      const name = input[options.keyName];
+      const value = input[options.valueName];
 
-      if (visible === false) return formData
-      formVaildData(formData, input)
+      if (visible === false) return formData;
+      formVaildData(formData, input);
 
       if (items) {
-        Object.assign(formData, getFormData(items))
+        Object.assign(formData, getFormData(items));
       } else if (name?.trim()) {
-        const _value = value?.value ?? value
-        formData[name] = isFunction(formatValue) ? formatValue(input, inputs, formData) : _value
+        const _value = value?.value ?? value;
+        formData[name] = isFunction(formatValue)
+          ? formatValue(input, inputs, formData)
+          : _value;
       }
-      return formData
+      return formData;
     },
-    { ...original }
-  )
+    { ...original },
+  );
 }
 
 export function getFormDataByList(
   inputsGroup: any[],
   original: object = {},
-  options: FormDataOptions = { keyName: 'name', valueName: 'value' }
+  options: FormDataOptions = { keyName: "name", valueName: "value" },
 ): any {
-  return inputsGroup.reduce((formData, inputs) => {
-    const _data = getFormData(inputs, formData, options)
-    return Object.assign(formData, _data)
-  }, original)
+  return Array.isArray(inputsGroup)
+    ? inputsGroup.reduce((formData, inputs) => {
+        const _data = getFormData(inputs, formData, options);
+        return Object.assign(formData, _data);
+      }, original)
+    : [];
 }
 
-export function getValidByObject(obj: { [key: string]: any }, keys: string[]): any {
+export function getValidByObject(
+  obj: { [key: string]: any },
+  keys: string[],
+): any {
   return keys.reduce(
     (acc, key) => {
       if (obj[key]) {
-        acc[key] = obj[key]
+        acc[key] = obj[key];
       }
-      return acc
+      return acc;
     },
-    {} as { [key: string]: any }
-  )
+    {} as { [key: string]: any },
+  );
 }
 
 export function getImage(path: string) {
-  return new URL(`../assets/image/${path}`, import.meta.url).href
+  return new URL(`../assets/image/${path}`, import.meta.url).href;
 }

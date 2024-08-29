@@ -12,6 +12,7 @@ import { getInputs } from './form-inputs'
 import { API } from '/@/api'
 
 const router = useRouter()
+const route = useRoute()
 
 const tabs = ref([
   { title: '单个创建', content: 'Tab 1 Content', value: '0' },
@@ -21,20 +22,25 @@ const tabs = ref([
 const tabsValue = ref('0')
 
 const windowName = ref('Untitled profile')
-const [windowInputs] = getInputs()
-const accordions = reactive({
-  value: ['0', '1', '2', '3'],
-  panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
-    title,
-    value: `${index}`,
-    inputs: windowInputs[index],
-  })),
+
+const windowInputs = ref<any>([])
+const original = ref()
+
+const accordions = computed(() => {
+  return {
+    value: ['0', '1', '2', '3'],
+    panels: ['window', 'Basic', 'highLevel', 'other'].map((title, index) => ({
+      title,
+      value: `${index}`,
+      inputs: windowInputs.value[index],
+    })),
+  }
 })
 
-const previewData = computed(() => getFormDataByList(windowInputs, {}, { keyName: 'label', valueName: 'value' }))
+const previewData = computed(() => getFormDataByList(windowInputs.value, {}, { keyName: 'label', valueName: 'value' }))
 
 async function createProfile(openBrowser: boolean) {
-  const formData = getFormDataByList(windowInputs, {
+  const formData = getFormDataByList(windowInputs.value, {
     windowName: windowName.value,
     // =================================
     openMult: true,
@@ -54,6 +60,10 @@ async function createProfile(openBrowser: boolean) {
     },
   })
 }
+
+onMounted(() => {
+  windowInputs.value = getInputs()
+})
 </script>
 
 <template>

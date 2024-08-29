@@ -13,12 +13,13 @@ import customFilter from './components/custom-filter.vue'
 // @ts-ignore
 import browserControl from './components/browser-control.vue'
 // @ts-ignore
+import multipleOperation from './components/multiple-operation.vue'
 
 import useColumns from '/@/hooks/useColumns'
 import { useContextMenu } from '/@/hooks/useContextMenu'
 
 import columnsRow from './columns'
-import { filters, operation, operationHandler, sorts } from './operation'
+import { filters, operation, sorts } from './operation'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
@@ -63,7 +64,7 @@ const drawer = reactive({
     try {
       const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-      tableRef.value.request()
+      tableRef.value.refresh()
     }
     catch (error) {
       toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
@@ -74,13 +75,48 @@ const drawer = reactive({
   },
 })
 
-// ======================================
-
+/**
+ * ======================================
+ */
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
   // autoOpenBrowser(data.rows)
-  console.log('🚀 ~ tableRequest ~ data.rows:', data.rows[0])
   return data.rows
+}
+
+// =========================================
+
+async function operationHandler({ name }: any, data: any) {
+  /**
+   * 有批量操作
+   */
+  const _data = [].concat(data)
+  switch (name) {
+    case 'Test': {
+      console.log('🚀 ~test:', data)
+      break
+    }
+    case 'edit':
+      localStorage.setItem('$editWindow', JSON.stringify(data))
+      router.push({ name: 'browser-create', query: { id: data.id } })
+      break
+    case 'delete':
+      deleteWindow(_data)
+      break
+  }
+}
+
+async function deleteWindow(data: any) {
+  try {
+    const ids = data.map((item: any) => item.id)
+    await deletePopup()
+    const { msg } = await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: true })
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    tableRef.value.refresh()
+  }
+  catch (error) {
+    console.log('🚀 ~ deleteWindow ~ error:', error)
+  }
 }
 
 function profileOperate(key: string, data: any) {
@@ -140,37 +176,23 @@ async function refreshIp(_data: any) {
 }
 
 async function deleteProxy(data: any) {
-  confirm.require({
-    header: '警告',
-    message: '您确定要删除此代理吗?',
-    rejectProps: {
-      label: '取消',
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: '确定',
-      severity: 'danger',
-    },
-    accept: async () => {
-      try {
-        const params = {
-          id: data.id,
-          dirId: data.dirId,
-          host: '',
-          ipType: '',
-          port: '',
-          proxyCategory: 'noproxy',
-          proxyPassword: '',
-          proxyUserName: '',
-          refreshUrl: '',
-        }
-        drawer.editProfile(params)
-      }
-      catch (error) {
-      }
-    },
-  })
+  try {
+    await deletePopup()
+    drawer.editProfile({
+      id: data.id,
+      dirId: data.dirId,
+      host: '',
+      ipType: '',
+      port: '',
+      proxyCategory: 'noproxy',
+      proxyPassword: '',
+      proxyUserName: '',
+      refreshUrl: '',
+    })
+  }
+  catch (error) {
+    console.log('🚀 ~ deleteProxy ~ error:', error)
+  }
 }
 
 function _autoOpenBrowser(list: any) {
@@ -196,8 +218,26 @@ async function _testModify(data: any) {
   await API.window.userMdfWindowInfoSingleCreate(data)
 }
 
+function deletePopup() {
+  return new Promise((resolve, reject) => {
+    confirm.require({
+      header: '警告',
+      message: '您确定要删除此代理吗?',
+      rejectProps: {
+        label: '取消',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptProps: {
+        label: '确定',
+        severity: 'danger',
+      },
+      accept: () => resolve(null),
+      reject: () => reject(new Error('cancel popup')),
+    })
+  })
+}
 onMounted(() => {
-  // getPlatformInfo()
 })
 </script>
 
@@ -219,6 +259,9 @@ onMounted(() => {
     </template>
     <template #actions>
       <actions :operation="operation" @more="onMore" />
+    </template>
+    <template #multiple-operation="{ selection }">
+      <multipleOperation :selection="selection" :operation="operation" @more="onMore" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"

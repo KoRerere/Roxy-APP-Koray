@@ -52,7 +52,7 @@ function getInputs(data: any) {
           type: 'select',
           name: 'proxyCategory',
           placeholder: '请选择网络协议',
-          value: ['', 'noproxy'].includes(data.proxyCategory) ? $dict_map.protocol[0].value : data.proxyCategory,
+          value: !data.proxyCategory || data.proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : data.proxyCategory,
           options: $dict_map.protocol,
         },
         {
