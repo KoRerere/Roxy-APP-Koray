@@ -34,32 +34,32 @@ export const menuRoutes: RouteRecordRaw[] = [
       },
     ],
   },
-  // {
-  //   path: '/agent',
-  //   name: 'agent',
-  //   meta: { title: '代理IP', icon: 'PieChartOutlined', root: true },
-  //   component: () => import('/@/views/agent'),
-  //   children: [
-  //     {
-  //       path: 'list',
-  //       name: 'agent-list',
-  //       meta: { title: '代理列表', icon: '' },
-  //       component: () => import('/@/views/agent/list')
-  //     },
-  //     {
-  //       path: 'shop',
-  //       name: 'agent-shop',
-  //       meta: { title: '代理购买', icon: '' },
-  //       component: () => import('/@/views/agent/shop')
-  //     },
-  //     {
-  //       path: 'import',
-  //       name: 'agent-import',
-  //       meta: { title: '代理导入', icon: '' },
-  //       component: () => import('/@/views/agent/import')
-  //     }
-  //   ]
-  // }
+  {
+    path: "/agent",
+    name: "agent",
+    meta: { title: "代理IP", icon: "PieChartOutlined", root: true },
+    component: () => import("/@/views/agent"),
+    children: [
+      {
+        path: "list",
+        name: "agent-list",
+        meta: { title: "代理列表", icon: "" },
+        component: () => import("/@/views/agent/list"),
+      },
+      {
+        path: "shop",
+        name: "agent-shop",
+        meta: { title: "代理购买", icon: "" },
+        component: () => import("/@/views/agent/shop"),
+      },
+      {
+        path: "import",
+        name: "agent-import",
+        meta: { title: "代理导入", icon: "" },
+        component: () => import("/@/views/agent/import"),
+      },
+    ],
+  },
   // {
   //   path: '/plugins',
   //   name: 'plugins',
