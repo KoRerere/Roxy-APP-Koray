@@ -12,7 +12,7 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['update:modelValue'])
-const selectList = useVModel(props, 'modelValue', emits)
+const windowPlatformList = useVModel(props, 'modelValue', emits)
 
 const drawer = reactive({
   visible: false,
@@ -25,12 +25,12 @@ function toggleDrawer(type: 'create' | 'list') {
 }
 
 function deleteAccount(item: any) {
-  const index = selectList.value.findIndex(it => it.name === item.name)
-  selectList.value.splice(index, 1)
+  const index = windowPlatformList.value.findIndex(it => it.name === item.name)
+  windowPlatformList.value.splice(index, 1)
 }
 
 function confirm(data: any) {
-  selectList.value.push(data)
+  windowPlatformList.value.push(data)
 }
 </script>
 
@@ -43,7 +43,7 @@ function confirm(data: any) {
         @click="toggleDrawer('create')" />
     </div>
 
-    <div v-for="(item, index) in selectList" :key="index" class="card-list">
+    <div v-for="(item, index) in windowPlatformList" :key="index" class="card-list">
       <rx-card class="card-list-item" @close="deleteAccount(item)">
         <img class="card-list-item-img" :src="item.platformIcon">
         <div class="card-list-item-nation">
@@ -58,8 +58,8 @@ function confirm(data: any) {
     <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[50%]"
       :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <accountList v-if="drawer.type === 'list'" :close-drawer="closeCallback" />
-        <accountCreate v-if="drawer.type === 'create'" :close-drawer="closeCallback" @confirm="confirm" />
+        <accountList v-if="drawer.type === 'list'" @close="() => closeCallback()" />
+        <accountCreate v-if="drawer.type === 'create'" @close="() => closeCallback()" @confirm="confirm" />
       </template>
     </Drawer>
   </div>

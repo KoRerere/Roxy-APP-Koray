@@ -44,11 +44,22 @@ const drawer = reactive({
       case 'proxyList':
         break
       case 'proxyForm':
-        drawer.editProxy(data)
+        drawer.editProfile(data)
         break
+      case 'accountForm':
+        {
+          const { id, dirId, windowPlatformList, ...item } = data
+          console.log('🚀 ~ windowPlatformList:', windowPlatformList)
+          drawer.editProfile({
+            id,
+            dirId,
+            windowPlatformList: windowPlatformList.concat(item),
+          })
+          break
+        }
     }
   },
-  editProxy: async (data: any) => {
+  editProfile: async (data: any) => {
     try {
       const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
@@ -102,6 +113,10 @@ function profileOperate(key: string, data: any) {
       deleteProxy(_data)
       break
     case 'addAccount':
+      drawer.visible = true
+      drawer.type = 'accountForm'
+      drawer.data = _data
+      drawer.title = `新建账号 [UID-${data.windowSortNum}]`
       break
     case 'selectAccount':
       break
@@ -150,7 +165,7 @@ async function deleteProxy(data: any) {
           proxyUserName: '',
           refreshUrl: '',
         }
-        drawer.editProxy(params)
+        drawer.editProfile(params)
       }
       catch (error) {
       }
@@ -194,7 +209,6 @@ onMounted(() => {
       <custom-filter />
     </template>
     <template #profile="{ data }">
-      {{ data.proxyCategory }}
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
     <template #open="{ data }">

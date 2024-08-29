@@ -182,6 +182,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
     background: var(--Colors-Background-bg-action-secondary, #fff);
     box-shadow: $box-shadow;
+    transition: all 0.5s ease;
 
     &-img {
       width: 100%;
@@ -213,6 +214,5 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .direct {
   transform: scale(0);
-  transition: all 0.5s ease;
 }
 </style>

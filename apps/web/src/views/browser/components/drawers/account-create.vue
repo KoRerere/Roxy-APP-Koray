@@ -5,21 +5,25 @@ import { clearInputsValue, getFormData } from '/@/utils'
 import { API } from '/@/api'
 
 const props = defineProps({
-  closeDrawer: {
-    type: Function,
-    default: () => () => { },
+  data: {
+    type: Object,
+    default: () => ({}),
+  },
+  title: {
+    type: String,
+    default: '创建账号',
   },
 })
 
-const emits = defineEmits(['confirm'])
+const emits = defineEmits(['confirm', 'close'])
 
-const formInputs = ref()
-const original = { platformIcon: '' }
+const formInputs = ref<any>()
+const original = ref<any>()
 
-async function getInputs() {
-  const { data } = await API.platform.userGetPlatformInfoList({})
+async function getInputs(data: any) {
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
-  const platformOptions = data.rows.map(item => ({
+  const platformOptions = rows.map(item => ({
     image: item.platformIcon,
     label: item.platformUrl,
     value: item.platformUrl,
@@ -39,14 +43,14 @@ async function getInputs() {
       label: '平台URL',
       name: 'platformUrl',
       placeholder: 'Search or enter your platform URL',
-      value: '',
+      value: null,
       options: platformOptions,
       required: true,
       editable: true,
       tooltip: 'man!',
       change(value: any, self: any) {
         self.invalid = false
-        original.platformIcon = value?.image || ''
+        original.value.platformIcon = value?.image || ''
       },
     },
     {
@@ -81,20 +85,22 @@ async function getInputs() {
       placeholder: 'Paste JSON format or upload cookies JSON file',
       tooltip: 'man!',
       icon: 'mdi mdi-paperclip',
-      formatValue: (self) => {
+      formatValue: (self: any) => {
         return self.value
         // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
         // : value
       },
     },
   ]
+
+  original.value = { id: data.id, dirId: data.dirId, windowPlatformList: data.windowPlatformList }
 }
 
-async function confirm(more: boolean) {
+function confirm(more: boolean) {
   try {
-    const formData = getFormData(formInputs.value, original)
+    const formData = getFormData(formInputs.value, original.value)
     if (!more) {
-      props.closeDrawer()
+      emits('close')
     }
     clearInputsValue(formInputs.value)
     emits('confirm', formData)
@@ -105,12 +111,12 @@ async function confirm(more: boolean) {
 }
 
 onMounted(() => {
-  getInputs()
+  getInputs(props.data)
 })
 </script>
 
 <template>
-  <drawer-content title="创建账号" @close="() => closeDrawer()">
+  <drawer-content :title="title" v-bind="$attrs" @close="$emit('close')">
     <ry-form :inputs="formInputs" />
     <template #footer>
       <ry-button label="Save & Create more" severity="secondary" outlined @click="confirm(true)" />

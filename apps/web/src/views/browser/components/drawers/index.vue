@@ -15,7 +15,7 @@ defineProps(drawerProps)
   <proxyList v-if="type === 'proxyList'" v-bind="$attrs" />
   <proxyCreate v-if="type === 'proxyForm'" v-bind="$attrs" />
   <accountList v-if="type === 'accountList'" v-bind="$attrs" />
-  <accountCreate v-if="type === 'accountCreate'" v-bind="$attrs" />
+  <accountCreate v-if="type === 'accountForm'" v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped></style>
