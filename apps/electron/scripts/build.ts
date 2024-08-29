@@ -16,6 +16,7 @@ cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), {
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), { recursive: true })
 
 const options: Configuration = {
+  artifactName: '${productName}_${arch}_${version}.${ext}',
   appId: 'com.lumi.app',
   productName: 'Roxybrowser',
   copyright: 'Roxybrowser',

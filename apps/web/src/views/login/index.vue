@@ -2,8 +2,12 @@
 import { API } from '/@/api'
 import { getFormData } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
+import { useToast } from 'primevue/usetoast'
 
 const { setUserInfo } = useUserStore()
+const router = useRouter()
+
+const toast = useToast()
 
 const inputs = [
   {
@@ -31,9 +35,11 @@ async function handleSubmit() {
   const { data: userInfo } = await API.base.userGetUserInfoList()
   userInfo.token = data.token
   setUserInfo(data)
-
   console.log(data)
+  toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
+
   window.electronAPI.send('user:setUserInfo', userInfo)
+  router.push({ name: 'home' })
 }
 </script>
 
