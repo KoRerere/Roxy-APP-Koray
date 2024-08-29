@@ -30,8 +30,8 @@ const proxyState = reactive({
 const _proxyValue = computed(() => {
   return {
     visible: Object.values(proxyValue.value).some(v => v),
-    name: 'my-proxy',
-    value: `${proxyValue.value.protocol}://${proxyValue.value.ip}:${proxyValue.value.port}`,
+    name: '--',
+    value: `${proxyValue.value.ipType} ${proxyValue.value.proxyCategory}://${proxyValue.value.host}:${proxyValue.value.port}`,
   }
 })
 

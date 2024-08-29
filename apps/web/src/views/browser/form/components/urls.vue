@@ -11,7 +11,7 @@ function addInputs() {
   urlInputs.value.push({
     type: 'text',
     name: (new Date().getTime()).toString(32),
-    value: null,
+    value: '',
     placeholder: '请输入url',
     leftIcon: 'mdi mdi-link',
   })

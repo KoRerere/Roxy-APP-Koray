@@ -1,24 +1,24 @@
-import ContextMenu from 'primevue/contextmenu'
-import { createVNode, getCurrentInstance, ref, render } from 'vue'
+import ContextMenu from "primevue/contextmenu";
+import { createVNode, getCurrentInstance, render } from "vue";
 
-type Menu = InstanceType<typeof ContextMenu>
+type Menu = InstanceType<typeof ContextMenu>;
 
 export function useContextMenu() {
-  let vm: VNode
-  const instance = getCurrentInstance()
+  let vm: VNode;
+  const instance = getCurrentInstance();
 
   const show = (event: Event, props: any) => {
-    vm = createVNode(ContextMenu, props)
-    vm.appContext = instance!.appContext
-    render(vm, document.body)
+    vm = createVNode(ContextMenu, props);
+    vm.appContext = instance!.appContext;
+    render(vm, document.body);
     nextTick(() => {
-      ;(vm.component?.proxy as Menu)?.show(event)
-    })
-  }
+      (vm.component?.proxy as Menu)?.show(event);
+    });
+  };
 
   const hide = () => {
-    ;(vm.component?.proxy as Menu)?.hide()
-  }
+    (vm.component?.proxy as Menu)?.hide();
+  };
 
-  return [show, hide]
+  return [show, hide];
 }

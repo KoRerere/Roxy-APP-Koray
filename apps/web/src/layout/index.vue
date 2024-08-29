@@ -65,15 +65,15 @@ onMounted(() => {
       </div>
       <siderMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-           @click="() => (collapsed = !collapsed)"
-      >
+        @click="() => (collapsed = !collapsed)">
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </div>
     <div class="rx-main">
       <div class="rx-main-header">
         header
-        <Button type="button" icon="pi pi-ellipsis-v" aria-haspopup="true" aria-controls="overlay_menu" @click="toggle" />
+        <Button type="button" icon="pi pi-ellipsis-v" aria-haspopup="true" aria-controls="overlay_menu"
+          @click="toggle" />
         <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
       </div>
       <div class="rx-main-content">
@@ -81,9 +81,6 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <Toast />
-  <Toast position="top-center" group="tc" />
-  <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
 </template>
 
 <style lang="scss">

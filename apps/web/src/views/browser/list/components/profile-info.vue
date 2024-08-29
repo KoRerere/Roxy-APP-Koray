@@ -11,12 +11,6 @@ const _props = defineProps({
 
 const emits = defineEmits(['profileOperate'])
 
-if (_props.data.windowSortNum === 27) {
-  console.log('🚀 ~ data:', _props.data)
-}
-
-const [show] = useContextMenu()
-
 const os_image = {
   Windows: getImage('os/windows.svg'),
   IOS: getImage('os/iOS.svg'),
@@ -24,37 +18,42 @@ const os_image = {
   Android: getImage('os/android.svg'),
 }
 
-const isProxy = _props.data.proxyCategory !== 'noproxy'
+const data = computed(() => _props.data)
+const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
 
-const list = ref([
+const list = computed(() => [
   {
-    image: os_image[_props.data.os],
-    classes: '',
-    tooltip: `System: ${_props.data.os} ${_props.data.osVersion}\nKernel: Chrome ${_props.data.coreVersion}`,
+    key: 'os',
+    image: os_image[data.value.os],
+    tooltip: `System: ${data.value.os} ${data.value.osVersion}\nKernel: Chrome ${data.value.coreVersion}`,
   },
   {
+    key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
     image: isProxy.value ? getImage('proxy.svg') : getImage('plus.svg'),
-    tooltip: isProxy.value ? `Location: ${_props.data.lastCountry || '--'}\nLast check: ${_props.data.checkTime || '--'}` : undefined,
-    onClick: (event: Event) => {
-      show(event, {
-        model: getProxyOperation(_props.data),
-      })
-    },
+    tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
   },
   {
-    image: _props.data.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
-    classes: _props.data.windowPlatformList.length > 1 ? 'stack' : '',
-    tooltip: '',
-    onClick: (event: Event) => {
-      show(event, {
-        model: getAccountOperation(_props.data),
-      })
-    },
+    key: 'account',
+    image: data.value.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
+    classes: data.value.windowPlatformList.length > 1 ? 'stack' : '',
   },
 ])
 
-function getProxyOperation(_data: any) {
+const [show] = useContextMenu()
+
+function onClick(event: Event, key: string) {
+  switch (key) {
+    case 'proxy':
+      show(event, { model: getProxyOperation() })
+      break
+    case 'account':
+      show(event, { model: getAccountOperation() })
+      break
+  }
+}
+
+function getProxyOperation() {
   return [
     {
       label: 'Add proxy',
@@ -116,7 +115,7 @@ function getProxyOperation(_data: any) {
   ]
 }
 
-function getAccountOperation(_data: any) {
+function getAccountOperation() {
   return [
     {
       label: 'Add account',
@@ -140,9 +139,9 @@ function getAccountOperation(_data: any) {
       {{ data.windowSortNum }}
     </div>
     <div class="flex justify-between state">
-      <div v-for="(item, index) in list" :key="index" v-tooltip.top="item.tooltip" class="state-item">
+      <div v-for="item in list" :key="item.key" v-tooltip.top="item.tooltip" class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
-          @click.stop="(event) => item.onClick?.(event)">
+          @click.stop="(event) => onClick(event, item.key)">
           <img class="state-icons-img" :src="item.image">
         </div>
       </div>
@@ -163,7 +162,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   width: 104px;
 
   &-item {
-    height: 24px;
+    width: 24px;
     height: 24px;
 
     &:hover {
@@ -183,6 +182,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
     background: var(--Colors-Background-bg-action-secondary, #fff);
     box-shadow: $box-shadow;
+    transition: all 0.5s ease;
 
     &-img {
       width: 100%;
@@ -214,6 +214,5 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .direct {
   transform: scale(0);
-  transition: all 0.5s ease;
 }
 </style>

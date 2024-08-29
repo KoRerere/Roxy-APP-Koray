@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
-
-defineProps({
+const props = defineProps({
   selection: {
     type: Array as PropType<any[]>,
     default: () => [],
@@ -17,16 +15,19 @@ defineProps({
 })
 
 defineEmits(['update:selection', 'batchOperation'])
+
+const _operation = computed(() => props.operation.filter(item => item.name))
 </script>
 
 <template>
-  <div class="selection-operation">
-    <slot name="selection-operation">
-      <div class="selection-operation-item">
-        <span>{{ selection.length }} of {{ total }} selected</span>
-        <CloseOutlined @click="$emit('update:selection', [])" />
-      </div>
-      <div v-for="item in operation" :key="item.name" class="cursor-pointer selection-operation-item"
+  <div class="multiple-operation">
+    <div class="multiple-operation-item">
+      <span><span class=" text-white">{{ selection.length }}</span> of <span class=" text-white">{{ total }}</span>
+        selected</span>
+      <span class="mdi mdi-close cursor-pointer" @click="$emit('update:selection', [])" />
+    </div>
+    <slot name="multiple-operation">
+      <div v-for="item in _operation" :key="item.name" class="cursor-pointer multiple-operation-item"
         @click="$emit('batchOperation', item)">
         {{ item.name }}
       </div>
@@ -35,7 +36,7 @@ defineEmits(['update:selection', 'batchOperation'])
 </template>
 
 <style lang="scss" scoped>
-.selection-operation {
+.multiple-operation {
   position: absolute;
   left: 50%;
   bottom: 20%;
@@ -63,6 +64,13 @@ defineEmits(['update:selection', 'batchOperation'])
     border-radius: 5px;
     border: 0.5px solid var(--Color-neutrals-600, #575e61);
     background: var(--Color-neutrals-800, #252a2e);
+
+    color: rgba(255, 255, 255, 0.6);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-xs, 16px);
   }
 }
 </style>

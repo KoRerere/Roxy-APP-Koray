@@ -5,21 +5,25 @@ import { clearInputsValue, getFormData } from '/@/utils'
 import { API } from '/@/api'
 
 const props = defineProps({
-  closeDrawer: {
-    type: Function,
-    default: () => () => { },
+  data: {
+    type: Object,
+    default: () => ({}),
+  },
+  title: {
+    type: String,
+    default: '创建账号',
   },
 })
 
-const emits = defineEmits(['confirm'])
+const emits = defineEmits(['confirm', 'close'])
 
-const formInputs = ref()
-const original = { platformIcon: '' }
+const formInputs = ref<any>()
+const original = ref<any>()
 
-async function getInputs() {
-  const { data } = await API.platform.userGetPlatformInfoList({})
+async function getInputs(data: any) {
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
-  const platformOptions = data.rows.map(item => ({
+  const platformOptions = rows.map(item => ({
     image: item.platformIcon,
     label: item.platformUrl,
     value: item.platformUrl,
@@ -30,7 +34,7 @@ async function getInputs() {
       type: 'text',
       label: '平台名称',
       name: 'platformName',
-      value: null,
+      value: '',
       placeholder: 'Better name to identify',
       tooltip: 'man!',
     },
@@ -46,14 +50,14 @@ async function getInputs() {
       tooltip: 'man!',
       change(value: any, self: any) {
         self.invalid = false
-        original.platformIcon = value?.image || ''
+        original.value.platformIcon = value?.image || ''
       },
     },
     {
       type: 'text',
       label: '平台账号',
       name: 'platformUserName',
-      value: null,
+      value: '',
       placeholder: 'Username for your website',
       tooltip: 'mamba out!',
     },
@@ -61,7 +65,7 @@ async function getInputs() {
       type: 'password',
       label: '平台密码',
       name: 'platformPassword',
-      value: null,
+      value: '',
       placeholder: 'Password for your server',
       tooltip: 'man!',
     },
@@ -69,7 +73,7 @@ async function getInputs() {
       type: 'text',
       label: '2FA密钥',
       name: 'platformEfa',
-      value: null,
+      value: '',
       placeholder: '32-digit Keys',
       tooltip: 'mamba out!',
     },
@@ -77,24 +81,26 @@ async function getInputs() {
       type: 'textarea',
       label: '平台cookeies',
       name: 'platformCookies',
-      value: null,
+      value: '',
       placeholder: 'Paste JSON format or upload cookies JSON file',
       tooltip: 'man!',
       icon: 'mdi mdi-paperclip',
-      formatValue: (self) => {
+      formatValue: (self: any) => {
         return self.value
         // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
         // : value
       },
     },
   ]
+
+  original.value = { id: data.id, dirId: data.dirId, windowPlatformList: data.windowPlatformList }
 }
 
-async function confirm(more: boolean) {
+function confirm(more: boolean) {
   try {
-    const formData = getFormData(formInputs.value, original)
+    const formData = getFormData(formInputs.value, original.value)
     if (!more) {
-      props.closeDrawer()
+      emits('close')
     }
     clearInputsValue(formInputs.value)
     emits('confirm', formData)
@@ -105,12 +111,12 @@ async function confirm(more: boolean) {
 }
 
 onMounted(() => {
-  getInputs()
+  getInputs(props.data)
 })
 </script>
 
 <template>
-  <drawer-content title="创建账号" @close="() => closeDrawer()">
+  <drawer-content :title="title" v-bind="$attrs" @close="$emit('close')">
     <ry-form :inputs="formInputs" />
     <template #footer>
       <ry-button label="Save & Create more" severity="secondary" outlined @click="confirm(true)" />

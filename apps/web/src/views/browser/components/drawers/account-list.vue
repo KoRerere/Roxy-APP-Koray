@@ -54,7 +54,7 @@ const filters = [
   {
     label: 'city',
     name: 'city',
-    value: null,
+    value: '',
     placeholder: '选择平台',
     options: [
       { label: '所有平台', value: 'all' },
