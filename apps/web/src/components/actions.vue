@@ -23,7 +23,7 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
       <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer quick-item" :class="[item.icon]"
         @click.stop="() => item.onClick?.()" />
     </div>
-    <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', [$event, operation])">
+    <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
       <slot name="more-icon">
         <ryButton text size="small" icon="mdi mdi-dots-vertical" />
       </slot>

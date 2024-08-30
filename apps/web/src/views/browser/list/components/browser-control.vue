@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import circleProgress from '/@/components/circle-progress.vue'
 
-defineProps({
-  state: {
+const props = defineProps({
+  data: {
+    type: Object,
+    default: () => ({}),
+  },
+  openMessage: {
     type: Object,
     default: () => ({}),
   },
@@ -10,49 +14,46 @@ defineProps({
 
 const emits = defineEmits(['open'])
 
-const State_Enums = {
-  Open: 0,
-  Loading: 1,
-  Error: 2,
-}
+const browser = computed(() => {
+  const message = props.openMessage[props.data.dirId]
 
-const _state = reactive({
-  state: 0,
-  stateText: 'Open',
-  progress: 20,
-  error: 'this is error msg',
+  if (!message) {
+    return {
+      msg: 'Open',
+      classes: 'cursor-pointer',
+    }
+  }
+
+  const { pending, code, data, error } = message
+
+  return {
+    code,
+    pending,
+    msg: error ? 'Open' : data?.message,
+    error: error?.message,
+    percent: data?.percent || 0,
+    complted: data?.percent === 100,
+    tooltip: '',
+    classes: (error || data?.percent === 100) ? 'cursor-pointer' : 'cursor-not-allowed',
+  }
 })
 
-const tooltip = computed(() => ({
-  value: `${_state.stateText} browser`,
-}))
-
-const errorText = computed(() => ({
-  value: _state.error,
-}))
-
 function openBrowser() {
-  // _state.state = State_Enums.Loading
-  // _state.stateText = 'Loading'
-  // _state.progress = 20
-  // setTimeout(() => {
-  //   _state.state = State_Enums.Open
-  //   _state.stateText = 'Open'
-  //   _state.progress = 100
-  //   _state.error = ''
-  // }, 2000)
+  if (browser.value.pending) {
+    return
+  }
   emits('open')
 }
 </script>
 
 <template>
   <div class="flex gap-2">
-    <div v-ripple v-tooltip.top="tooltip" class="flex-cc cursor-pointer open-browser" @click.stop="openBrowser">
-      <circle-progress v-if="_state.state === State_Enums.Loading" size="16" :value="_state.progress" />
-      <span v-if="_state.state === State_Enums.Open" class="mdi mdi-google-chrome text-4" />
-      <span>{{ _state.stateText }}</span>
+    <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
+      <circle-progress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
+      <span v-if="!browser.percent && !browser.pending" class="mdi mdi-google-chrome text-4" />
+      <span>{{ browser.complted ? 'View' : browser?.msg }}</span>
     </div>
-    <span v-if="_state.error" v-tooltip.top="errorText" class="mdi mdi-alert-circle cursor-pointer text-red" />
+    <span v-if="browser?.error" v-tooltip.top="browser.error" class="mdi mdi-alert-circle cursor-pointer text-red" />
   </div>
 </template>
 

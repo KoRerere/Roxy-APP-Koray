@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { clear } from 'node:console'
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import selectionOperation from './selection-operation.vue'
 import tableFilter from './table-filter.vue'
@@ -85,44 +86,6 @@ const params = reactive<any>({
 
 const _dataList = ref([])
 
-function onChangeParams(key: string, data: any) {
-  Object.assign(params[key], data)
-  _request()
-}
-
-function _getParams(outerParams?: any) {
-  return {
-    ...params.sort,
-    ...params.filter,
-    ...params.default,
-    ...props.tableParams,
-    ...outerParams,
-  }
-}
-async function _request(outerParams?: any) {
-  const requestParams = _getParams(outerParams)
-  _dataList.value = Array.isArray(props.dataList)
-    ? props.dataList
-    : await props.tableRequest(requestParams)
-}
-
-onMounted(() => {
-  _request()
-})
-
-defineExpose({
-  refresh: _request,
-  getParams: (callback: (params: any, done: any) => void) => {
-    callback?.(
-      _getParams(),
-      (list?: any) => {
-        _dataList.value = list || props.dataList
-      },
-    )
-  },
-})
-
-// ======================================
 const menuRef = ref()
 const contextMenuSelection = ref()
 const selectionData = ref()
@@ -137,7 +100,52 @@ function contextMenuClick(item: any) {
 
 function batchOperation(item: any) {
   props.operationHandler(item, selectionData.value)
+  _clearSelection()
 }
+
+function onChangeParams(key: string, data: any) {
+  Object.assign(params[key], data)
+  _request()
+}
+
+function _getParams(outerParams?: any) {
+  return {
+    ...params.sort,
+    ...params.filter,
+    ...params.default,
+    ...props.tableParams,
+    ...outerParams,
+  }
+}
+
+async function _request(outerParams?: any) {
+  const requestParams = _getParams(outerParams)
+  _dataList.value = Array.isArray(props.dataList)
+    ? props.dataList
+    : await props.tableRequest(requestParams)
+  _clearSelection()
+}
+
+function _clearSelection() {
+  selectionData.value = []
+}
+
+onMounted(() => {
+  _request()
+})
+
+defineExpose({
+  refresh: _request,
+  clearSelection: _clearSelection,
+  getParams: (callback: (params: any, done: any) => void) => {
+    callback?.(
+      _getParams(),
+      (list?: any) => {
+        _dataList.value = list || props.dataList
+      },
+    )
+  },
+})
 </script>
 
 <template>
@@ -198,7 +206,7 @@ function batchOperation(item: any) {
         v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
         @batch-operation="batchOperation">
         <template #multiple-operation>
-          <slot name="multiple-operation" :selection="selectionData" />
+          <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
       </selection-operation>
     </Transition>

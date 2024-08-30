@@ -16,7 +16,7 @@ import browserControl from './components/browser-control.vue'
 import multipleOperation from './components/multiple-operation.vue'
 
 import useColumns from '/@/hooks/useColumns'
-import { useContextMenu } from '/@/hooks/useContextMenu'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import columnsRow from './columns'
 import { filters, operation, sorts } from './operation'
@@ -25,6 +25,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 
 import type { DrawerType } from '../components/drawers/props'
+import { message } from 'ant-design-vue'
 
 const confirm = useConfirm()
 const toast = useToast()
@@ -75,6 +76,8 @@ const drawer = reactive({
   },
 })
 
+const openMessage = reactive<any>({})
+
 /**
  * ======================================
  */
@@ -86,12 +89,12 @@ async function tableRequest(params: any) {
 
 // =========================================
 
-async function operationHandler({ name }: any, data: any) {
+async function operationHandler(operate: any, data: any) {
   /**
    * 有批量操作
    */
   const _data = [].concat(data)
-  switch (name) {
+  switch (operate.name) {
     case 'Test': {
       console.log('🚀 ~test:', data)
       break
@@ -207,11 +210,32 @@ function _autoOpenBrowser(list: any) {
 }
 
 function openBrowser(data: any) {
-  window.electronAPI.send('browser:batchLaunch', [toRaw(data)])
+  const params = [].concat(data).map((item: any, index: number) => {
+    openMessage[item.dirId] = {
+      pending: true,
+      data: {
+        message: index === 0 ? '启动中...' : '正在排队...',
+      },
+    }
+    return toRaw(item)
+  })
+  window.electronAPI.send('browser:batchLaunch', params)
 }
 
-function onMore([event, model]: any[]) {
-  show(event, { model })
+window.electronAPI.on('browser:launch-process-message', (event) => {
+  console.log('🚀 ~ window.electronAPI.on ~ event:', event)
+  const id = event.data?.dirId || event.data
+  openMessage[id as string] = event
+})
+
+function showOperationMenu(event: Event, data: any, extra?: any) {
+  show(event, {
+    operation: extra?.cmpOperation || operation,
+    operationHandler: (operate: any) => {
+      operationHandler(operate, data)
+      extra?.clearSelection()
+    },
+  })
 }
 
 async function _testModify(data: any) {
@@ -252,16 +276,18 @@ onMounted(() => {
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
     <template #open="{ data }">
-      <browser-control @open="() => openBrowser(data)" />
+      <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
     </template>
     <template #group>
       <ryTag>123</ryTag>
     </template>
-    <template #actions>
-      <actions :operation="operation" @more="onMore" />
+    <template #actions="{ data }">
+      <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
     </template>
-    <template #multiple-operation="{ selection }">
-      <multipleOperation :selection="selection" :operation="operation" @more="onMore" />
+    <template #multiple-operation="{ selection, clearSelection }">
+      <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
+        @more="([event, operation]) => showOperationMenu(event, selection, { operation, clearSelection })"
+        @open-browser="() => openBrowser(selection)" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"

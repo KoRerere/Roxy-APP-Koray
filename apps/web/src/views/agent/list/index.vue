@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ryTable from '/@/components/ry-table'
-import ryContextMenu from '/@/components/ry-contextMenu'
 
 const columns = ref([
   {
@@ -23,7 +22,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <ry-contextMenu ref="textMenu" />
   <div class="h-full">
     <ry-table :columns="columns" :data-list="dataList" />
   </div>
