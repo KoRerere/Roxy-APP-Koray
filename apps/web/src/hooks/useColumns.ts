@@ -1,5 +1,5 @@
 interface ColumnCache {
-  [key: string]: { visible: string; sort: string }
+  [key: string]: { visible: string, sort: string }
 }
 
 interface Columns {
@@ -15,11 +15,11 @@ function useColumns(data: Columns) {
       const [key, visible, sort] = cur.split('_')
       map[key] = {
         visible: visible ? JSON.parse(visible) : undefined,
-        sort
+        sort,
       }
       return map
     },
-    {}
+    {},
   )
 
   const _list = ref(
@@ -30,11 +30,11 @@ function useColumns(data: Columns) {
         return {
           ...item,
           _visible,
-          _sort
+          _sort,
         }
       })
       .slice()
-      .sort((a, b) => a._sort - b._sort)
+      .sort((a, b) => a._sort - b._sort),
   )
 
   onUnmounted(() => {
@@ -46,5 +46,12 @@ function useColumns(data: Columns) {
 
   return [_list]
 }
+
+// 表头存储数据格式
+// {
+//   "name": "name",
+//   "sort": 1,
+//   "status": 1
+// }
 
 export default useColumns

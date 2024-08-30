@@ -216,9 +216,12 @@ defineExpose({
 <style lang="scss" scoped>
 .rxtable {
   &-header {
-    height: 60px;
-    background-color: olivedrab;
-    flex-shrink: 0;
+    display: flex;
+    padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
   }
 
   &-body {

@@ -19,13 +19,12 @@ import useColumns from '/@/hooks/useColumns'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import columnsRow from './columns'
-import { filters, operation, sorts } from './operation'
+import { getFilters, getOperation, getSorts } from './operation'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 
 import type { DrawerType } from '../components/drawers/props'
-import { message } from 'ant-design-vue'
 
 const confirm = useConfirm()
 const toast = useToast()
@@ -75,6 +74,10 @@ const drawer = reactive({
     }
   },
 })
+
+const filters = ref()
+const sorts = ref()
+const operation = ref()
 
 const openMessage = reactive<any>({})
 
@@ -230,7 +233,7 @@ window.electronAPI.on('browser:launch-process-message', (event) => {
 
 function showOperationMenu(event: Event, data: any, extra?: any) {
   show(event, {
-    operation: extra?.cmpOperation || operation,
+    operation: extra?.cmpOperation || operation.value,
     operationHandler: (operate: any) => {
       operationHandler(operate, data)
       extra?.clearSelection()
@@ -262,6 +265,9 @@ function deletePopup() {
   })
 }
 onMounted(() => {
+  filters.value = getFilters()
+  sorts.value = getSorts()
+  operation.value = getOperation()
 })
 </script>
 

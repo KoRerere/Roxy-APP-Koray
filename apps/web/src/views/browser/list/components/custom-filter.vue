@@ -1,7 +1,7 @@
 <script setup>
 import { sleep } from '/@/utils/'
 
-const _props = defineProps({
+defineProps({
   options: {
     type: Array,
     default: () => [
@@ -67,36 +67,106 @@ const _props = defineProps({
   },
   list: {
     type: Array,
-    default: () => [
-      {
-
-      },
-    ],
+    default: () => [],
   },
 })
+
+const options = [
+  {
+    name: 'windowName',
+    label: '#@窗口名称(文本输入弹窗)',
+    icon: 'mdi mdi-ab-testing',
+  },
+  {
+    name: 'id',
+    label: '#@窗口ID(数字输入弹窗)',
+    icon: 'mdi mdi-abacus',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'osList',
+    label: '#@操作系统(多选)',
+    icon: 'mdi mdi-abjad-arabic',
+  },
+  {
+    name: 'platformUrlIds',
+    label: '#@账号平台(多选)',
+    icon: 'mdi mdi-abjad-hebrew',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'openStatus',
+    label: '#@窗口状态(单选)',
+    icon: 'mdi mdi-home-group',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'groupIds',
+    label: '#@窗口分组(多选)',
+    icon: 'mdi mdi-access-point-check',
+  },
+  {
+    name: 'labelIds',
+    label: '#@窗口标签(多选)',
+    icon: 'mdi mdi-tag-heart-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'isOften',
+    label: '#@窗口收藏(true/false)',
+    icon: 'mdi mdi-bookmark-music-outline',
+  },
+  {
+    name: 'windowRemark',
+    label: '#@窗口备注(文本输入弹窗)',
+    icon: 'mdi mdi-clipboard-list-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'proxyProtocoList',
+    label: '#@代理协议(多选)',
+    icon: 'mdi mdi-alarm-check',
+  },
+  {
+    name: 'proxyTestStatus',
+    label: '#@检测成功的代理(1)', // 一个字段，需要单独处理
+    icon: 'mdi mdi-clipboard-edit-outline',
+  },
+  {
+    name: 'proxyTestStatus',
+    label: '#@检测失败的代理(2)',
+    icon: 'mdi mdi-account-card-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'createTime', // startDate endDate
+    label: '#@窗口创建时间(时间范围弹窗)', // 时间范围弹窗
+    icon: 'mdi mdi-delete-empty-outline',
+  },
+]
+
 const menuRef = ref()
 const meun = reactive({
   targetEvent: null,
   isChidren: false,
-  rowOptions: _props.options,
-  options: _props.options,
+  options,
+  rowOptions: options,
   selectedCategories: [],
 })
 
-const _list = ref([
-  // {
-  //   type: 'Checkbox',
-  //   key: 'chindren1',
-  //   name: '选择1',
-  //   icon: 'mdi mdi-earth',
-  // },
-  // {
-  //   type: 'Checkbox',
-  //   key: 'chindren2',
-  //   name: '选择2',
-  //   icon: 'mdi mdi-earth',
-  // },
-])
+const filterList = ref([])
 
 function show (event) {
   meun.targetEvent = event
@@ -111,7 +181,7 @@ function onClick (item) {
     })
     return
   }
-  _list.value.push(item)
+  filterList.value.push(item)
   menuRef.value.hide()
 }
 
@@ -123,13 +193,13 @@ function onHide () {
       const item = type === 'RadioButton'
         ? selected
         : meun.rowOptions.find(item => item.key === prentKey)
-      _list.value.push(item)
+      filterList.value.push(item)
     }
     meun.selectedCategories = []
 
     sleep(20).then(() => {
       meun.isChidren = false
-      meun.options = _props.options
+      meun.options = options
     })
   }
 }
@@ -137,32 +207,32 @@ function onHide () {
 
 <template>
   <div class="flex gap-2 filter-list">
-    <div v-for="item in _list" :key="item.key" class="flex items-center cursor-pointer">
+    <div v-for="item in filterList" :key="item.key" class="flex items-center cursor-pointer">
       <span />
       <span>{{ item.name }}</span>
     </div>
     <Button class="create-filter" text @click="show($event)">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!_list.length">Add filters</span>
+      <span v-if="!filterList.length">Add filters</span>
     </Button>
   </div>
   <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.options" popup
-    :pt="{ separator: 'browser-separator', menu: { transition: 'browser-menu-transition' } }" @hide="onHide">
+    :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
-      <a v-ripple class="cursor-pointer browser-filter-item" v-bind="props.action">
+      <a v-ripple class="cursor-pointer browser-item" v-bind="props.action">
         <template v-if="item.type">
 
           <RadioButton v-if="item.type === 'RadioButton'" v-model="meun.selectedCategories" :input-id="item.key"
             :name="item.prentKey" :value="item" @click.stop />
           <Checkbox v-if="item.type === 'Checkbox'" v-model="meun.selectedCategories" :name="item.prentKey"
             :input-id="item.key" :value="item" @click.stop />
-          <label class="w-full" :for="item.key" @click.stop>{{ item.name }}</label>
+          <label class="w-full" :for="item.key" @click.stop>{{ item.label }}</label>
 
         </template>
         <template v-else>
-          <div class="w-full" @click.stop="onClick(item)">
+          <div class="w-full flex items-center browser-gap" @click.stop="onClick(item)">
             <span :class="item.icon" />
-            <span>{{ item.name }}</span>
+            <span>{{ item.label }}</span>
           </div>
         </template>
       </a>
@@ -172,7 +242,7 @@ function onHide () {
 
 <style lang="scss">
 .browser {
-  &-menu-transition {
+  &-content {
     padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
   }
 
@@ -180,8 +250,12 @@ function onHide () {
     margin: var(--spacing-md, 6px) 0;
   }
 
-  &-filter-item {
+  &-item {
     padding: 8px var(--spacing-md, 6px) 8px 10px !important;
+    gap: var(--spacing-md, 6px) !important;
+  }
+
+  &-gap {
     gap: var(--spacing-md, 6px) !important;
   }
 }
