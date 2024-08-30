@@ -1,0 +1,56 @@
+<script lang="ts" setup>
+import accordionInputs from './components/accordion-inputs.vue'
+import previewCard from './components/preview-card.vue'
+import { getFormDataByList } from '/@/utils'
+import { getAccordions, getDefaultValue } from './form-inputs'
+import { API } from '/@/api'
+
+const router = useRouter()
+const route = useRoute()
+
+const windowName = ref('edit profile')
+const accordions = ref()
+const original = ref()
+
+const previewData = computed(() => getFormDataByList(accordions.value?.inputsGroup, {}, { keyName: 'label', valueName: 'value' }))
+
+async function createProfile(formData: any) {
+  const params = {
+    windowName: windowName.value,
+    ...original.value,
+    ...formData,
+  }
+  await API.window.userMdfWindowInfoSingleCreate(params)
+  router.replace({ name: 'browser-list' })
+}
+
+function cancel() {
+  router.back()
+}
+
+onMounted(() => {
+  const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
+  windowName.value = data.windowName
+  accordions.value = getAccordions(data)
+  original.value = {
+    id: data.id,
+    ...getDefaultValue(data),
+  }
+})
+
+onUnmounted(() => {
+  localStorage.removeItem(`$editWindow_${original.value.id}`)
+})
+</script>
+
+<template>
+  <div class="flex justify-between h-full">
+    <div class="flex-1 h-full">
+      <accordionInputs v-model:windowName="windowName" :accordions="accordions" :open-browser="false" @cancel="cancel"
+        @create="createProfile" />
+    </div>
+    <previewCard :data="previewData" />
+  </div>
+</template>
+
+<style lang="scss" scoped></style>

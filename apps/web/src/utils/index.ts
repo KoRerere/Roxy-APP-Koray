@@ -60,7 +60,7 @@ export function getFormData(
       if (items) {
         Object.assign(formData, getFormData(items));
       } else if (name?.trim()) {
-        const _value = value?.value ?? value;
+        const _value = value?.value ?? value ?? "";
         formData[name] = isFunction(formatValue)
           ? formatValue(input, inputs, formData)
           : _value;

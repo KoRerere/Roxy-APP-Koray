@@ -8,6 +8,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     component: () => import("/@/views/browser/form"),
   },
   {
+    path: "edit",
+    name: "browser-edit",
+    meta: { title: "编辑窗口", icon: "BarChartOutlined" },
+    component: () => import("/@/views/browser/form/edit.vue"),
+  },
+  {
     path: "browser",
     name: "browser",
     meta: { title: "浏览器窗口", icon: "AreaChartOutlined", root: true },
