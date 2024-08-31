@@ -3,22 +3,16 @@ import ryTable from '/@/components/ry-table'
 
 const columns = ref([
   {
-    title: '状态',
+    title: 'xxx',
     key: 'status',
   },
   {
-    title: '链接1',
+    title: 'sss',
     key: 'link',
   },
 ])
 
 const dataList = ref(Array.from({ length: 20 }, (_, index) => ({ id: index, status: '正常', link: 'https://www.baidu.com' })))
-
-const textMenu = ref()
-
-onMounted(() => {
-  textMenu.value.getRef()
-})
 </script>
 
 <template>

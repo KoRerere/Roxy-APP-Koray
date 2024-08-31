@@ -12,7 +12,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['more'])
+defineEmits(['iconClick', 'more'])
 
 const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
 </script>
@@ -21,7 +21,7 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
   <div class="flex items-center">
     <div class="quick">
       <span v-for="item in quickOperation" :key="item.name" class="cursor-pointer quick-item" :class="[item.icon]"
-        @click.stop="() => item.onClick?.()" />
+        @click.stop="$emit('iconClick', item)" />
     </div>
     <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
       <slot name="more-icon">
@@ -38,6 +38,9 @@ const quickOperation: any = computed(() => props.operation.filter((item: any) =>
   gap: var(--spacing-lg, 8px);
 
   &-item {
+    font-size: 16px;
+    line-height: 1;
+
     &:active {
       color: orange;
     }

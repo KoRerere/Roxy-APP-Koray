@@ -178,7 +178,7 @@ importers:
         specifier: 4.0.0-alpha.4
         version: 4.0.0-alpha.4(pinia@2.2.2(typescript@5.4.5)(vue@3.4.38(typescript@5.4.5)))(rollup@4.21.1)
       primevue:
-        specifier: ^4.0.4
+        specifier: ^4.0.5
         version: 4.0.5(vue@3.4.38(typescript@5.4.5))
       vue:
         specifier: ^3.4.38
@@ -4204,6 +4204,7 @@ packages:
 
   pinia-plugin-persistedstate@4.0.0-alpha.4:
     resolution: {integrity: sha512-UkGfng1ccqHAoo5et2z/2NxyHGY/CZ7DvKBDCv/uFQaEARtfnbPOcI4eW1FQoTvPZpCrbzILtbktRtOMNqMaCA==}
+    deprecated: alpha version published as latest by mistake
     peerDependencies:
       '@pinia/nuxt': '>=0.5'
       pinia: '>=2'
