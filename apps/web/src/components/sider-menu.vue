@@ -11,7 +11,7 @@ const menuMap = routeMenu.reduce((menuMap, route) => {
   return menuMap
 }, {})
 
-const list = ref(Object.entries(menuMap).map(([groupName, value]) => ({
+const groups = Object.entries(menuMap).map(([groupName, value]) => ({
   label: groupName,
   items: value.map(item => ({
     label: item.meta.title,
@@ -21,7 +21,25 @@ const list = ref(Object.entries(menuMap).map(([groupName, value]) => ({
       router.push({ name: item.name })
     },
   })),
-})))
+}))
+
+const profile = [
+  {
+    label: '新建窗口',
+    command: () => {
+      router.push({ name: 'browser-create' })
+    },
+  },
+  {
+    label: '窗口列表',
+    command: () => {
+      router.push({ name: 'browser-list' })
+    },
+  },
+  ...groups,
+]
+
+const list = ref(profile)
 </script>
 
 <template>

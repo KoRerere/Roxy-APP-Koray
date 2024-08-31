@@ -4,7 +4,7 @@
 import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
 import proxyCreate from '/@/views/browser/components/drawers/proxy-create.vue'
 import accountList from '/@/views/browser/components/drawers/account-list.vue'
-import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
+import accountCreate from '/@/views/account/create'
 
 import { type DrawerType, drawerProps } from './props'
 

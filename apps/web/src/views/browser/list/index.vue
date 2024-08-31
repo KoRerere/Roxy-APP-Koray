@@ -5,7 +5,7 @@ import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 
-import scvritems from '/@/views/browser/components/drawers/index.vue'
+import drawersitems from '/@/views/browser/components/drawers/index.vue'
 // @ts-ignore
 import profileInfo from './components/profile-info.vue'
 // @ts-ignore
@@ -299,7 +299,7 @@ onMounted(() => {
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
     :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
-      <scvritems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
+      <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="data => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>

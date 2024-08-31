@@ -2,18 +2,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
-    path: 'form',
-    name: 'browser-form',
-    meta: { title: '新建窗口', icon: 'BarChartOutlined' },
-    component: () => import('/@/views/browser/form'),
-  },
-  {
-    path: 'edit',
-    name: 'browser-edit',
-    meta: { title: '编辑窗口', icon: 'BarChartOutlined' },
-    component: () => import('/@/views/browser/form/edit.vue'),
-  },
-  {
     path: 'browser',
     name: 'browser',
     meta: { title: '浏览器窗口', icon: 'AreaChartOutlined' },
@@ -39,6 +27,18 @@ export const menuRoutes: RouteRecordRaw[] = [
         component: () => import('/@/views/browser/recycle'),
       },
     ],
+  },
+  {
+    path: 'form',
+    name: 'browser-create',
+    meta: { title: '新建窗口', icon: 'BarChartOutlined' },
+    component: () => import('/@/views/browser/create'),
+  },
+  {
+    path: 'edit',
+    name: 'browser-edit',
+    meta: { title: '编辑窗口', icon: 'BarChartOutlined' },
+    component: () => import('/@/views/browser/create/edit.vue'),
   },
   {
     path: '/agent',
