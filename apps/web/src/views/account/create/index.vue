@@ -20,7 +20,7 @@ const emits = defineEmits(['confirm', 'close'])
 const formInputs = ref<any>()
 const original = ref<any>()
 
-async function getInputs(data: any) {
+async function getInputs(data: any = {}) {
   const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
   const platformOptions = rows.map(item => ({

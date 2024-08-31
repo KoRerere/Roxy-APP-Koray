@@ -1,19 +1,16 @@
 <script setup lang="ts">
-defineEmits(['cancel', 'save'])
+const emit = defineEmits(['cancel', 'save'])
 
 const dialogRef = inject<any>('dialogRef')
 
 function close() {
-  dialogRef.value.close({
-    msg: 'mamba out!',
-  })
+  dialogRef.value.close()
 }
-const value = ref('')
+const message = ref('')
 
-onMounted(() => {
-  const params = dialogRef.value.data
-  console.log('🚀 ~ onMounted ~ params:', params)
-})
+function save() {
+  emit('save', [message.value, close])
+}
 </script>
 
 <template>
@@ -22,10 +19,10 @@ onMounted(() => {
       <div>Add notes to profile[UID-20]/[UID-21]/[UID-22]</div>
     </div>
     <span class="block mb-2">Please fill the form below to change the tab name.</span>
-    <Textarea v-model="value" class="w-full" placeholder="Please add notes here" auto-resize rows="5" cols="30" />
+    <Textarea v-model="message" class="w-full" placeholder="Please add notes here" auto-resize rows="5" cols="30" />
     <span class=" text-red block mt-2">This action will overwrite all the old notes</span>
     <div class="footer">
-      <Button label="Save" severity="info" autofocus @click="$emit('save', { msg: 'what can i say' })" />
+      <Button label="Save" severity="info" autofocus @click="save" />
       <Button label="Cancel" text severity="secondary" autofocus @click="close" />
     </div>
   </div>

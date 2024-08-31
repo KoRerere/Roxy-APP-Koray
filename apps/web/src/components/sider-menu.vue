@@ -44,9 +44,9 @@ const list = ref(profile)
 
 <template>
   <Menu :model="list" class="w-full rx-menu">
-    <template #start>
+    <!-- <template #start>
       logo
-    </template>
+    </template> -->
     <template #item="{ item, props }">
       <a v-ripple class="flex items-center rx-menu-item" v-bind="props.action">
         <span :class="item.icon" />

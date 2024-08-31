@@ -2,7 +2,7 @@
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
-import proxyCreate from '/@/views/browser/components/drawers/proxy-create.vue'
+import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useVModel } from '@vueuse/core'
 
 const props = defineProps({
