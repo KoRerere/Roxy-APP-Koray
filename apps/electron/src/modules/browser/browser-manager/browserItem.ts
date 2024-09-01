@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { readdir, rm, writeFile } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
-import { cacheToClear, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
@@ -24,6 +24,11 @@ export class BrowserItem {
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
     return join(this.userDataDir, 'lumi.conf')
+  }
+
+  /** lumiLogin 文件路径 */
+  get lumiLoginPath() {
+    return join(this.userDataDir, 'Default', 'LumiLogin')
   }
 
   /** 本地 OSS 缓存目录 */
@@ -94,7 +99,7 @@ export class BrowserItem {
     const params = await this.afterLaunchTask.getUploadData()
     const { id, syncValue } = this.winInfo
 
-    console.log('update_message:', params)
+    console.log('uploadData:', params)
 
     const needSyncFiles = this.needSyncFiles.map(url => ({
       path: join(this.userDataDir, url),
@@ -170,12 +175,8 @@ export class BrowserItem {
     return proxyDetection(this.winInfo)
   }
 
-  /** 过滤标签页 */
-  filterTab(url: string) {
-    const invalidUrls = ['chrome://newtab/', 'chrome-extension://', 'about:blank']
-    if (invalidUrls.includes(url)) {
-      return false
-    }
-    return true
+  /** 是否是有效的 URL */
+  isValidURL(url: string) {
+    return !invalidUrls.some(n => url.includes(n!))
   }
 }

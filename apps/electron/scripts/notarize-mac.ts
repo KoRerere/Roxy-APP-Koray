@@ -18,8 +18,8 @@ export async function notarizeMac(context: AfterPackContext) {
   return await notarize({
     appPath: `${appOutDir}/${appName}.app`,
     tool: 'notarytool',
-    appleId: process.env.APPLE_ID!, //  苹果开发者账号
-    appleIdPassword: process.env.APPLE_PASSWORD!, // 苹果开发者密码
-    teamId: process.env.APPLE_TEAM_ID!, // 开发者团队 id
+    appleId: process.env.APPLE_ID! || '1019994756@qq.com', //  苹果开发者账号
+    appleIdPassword: process.env.APPLE_PASSWORD! || 'tcfp-quxc-dqqi-wnac', // 苹果开发者密码
+    teamId: process.env.APPLE_TEAM_ID! || 'GLM223L5MF', // 开发者团队 id
   })
 }

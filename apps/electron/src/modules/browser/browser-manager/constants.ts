@@ -72,3 +72,10 @@ export const cacheToClear = [
   'Preferences',
   'Secure Preferences',
 ]
+
+export const invalidUrls = [
+  'chrome://newtab/',
+  'chrome-extension://',
+  'about:blank',
+  import.meta.env.VITE_DEV_SERVER_URL,
+]

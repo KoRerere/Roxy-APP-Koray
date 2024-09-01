@@ -5,7 +5,7 @@ export class BrowserManager {
   /** 正在打开中的浏览器集合 */
   private openingBrowserMap = new Map<string, Promise<void>>()
   /** 已经打开的浏览器集合 */
-  private openedBrowserMap = new Map<string, BrowserItem>()
+  openedBrowserMap = new Map<string, BrowserItem>()
 
   /** 根据 dirId 获取已经打开的浏览器 */
   async getOpenedBrowser(dirId: string) {

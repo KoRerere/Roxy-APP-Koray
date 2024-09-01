@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'node:path'
-import { isDev, isProd } from '/@/utils/'
+import { isDev, isPackaged } from '/@/utils/'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -11,7 +11,7 @@ async function createWindow() {
     webPreferences: {
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
-      preload: isProd ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
+      preload: isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
       devTools: isDev,
     },
   })

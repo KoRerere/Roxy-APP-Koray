@@ -80,6 +80,9 @@ export class BeforeLaunchTask extends BrowserItem {
     const launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', launchArgs)
 
+    // 写入登录信息
+    await this.writeLoginData()
+
     // 拉起浏览器
     this.browser = await puppeteer.launch({
       args: launchArgs,
@@ -94,7 +97,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 生成内核启动的命令行参数 */
-  async genLaunchCLIArgs(): Promise<string[]> {
+  private async genLaunchCLIArgs(): Promise<string[]> {
     const { dirId, sandboxPermission, usePluginDir, startupParam, systemInfo = {} } = this.winInfo
 
     const args = [
@@ -104,7 +107,7 @@ export class BeforeLaunchTask extends BrowserItem {
       '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      `http://127.0.0.1:8888/console?id=${dirId}`,
+      `http://127.0.0.1:8888/dashboard?id=${dirId}`,
     ]
 
     // 如果用户开启了插件
@@ -170,7 +173,7 @@ export class BeforeLaunchTask extends BrowserItem {
 
     // 开启同步标签页后，同步标签页
     (this.winInfo.allOpenUrl || []).forEach((item) => {
-      if (this.filterTab(item)) {
+      if (this.isValidURL(item)) {
         args.push(item)
       }
     })
@@ -188,7 +191,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 根据代理检测结果决定是否要拉起浏览器 */
-  async handleProxyDetection() {
+  private async handleProxyDetection() {
     const { stopOpenNet, stopOpenIP, stopOpenPosition, lastIp, lastCountry } = this.winInfo
 
     // 网络不通停止打开 stopOpenNet
@@ -221,7 +224,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 创建指纹配置文件 */
-  async createFingerprintConfigFile() {
+  private async createFingerprintConfigFile() {
     // 生成指纹配置
     const fingerprintConfig = genFingerprintConfig(this.winInfo, this.proxyInfo)
     try {
@@ -236,7 +239,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 拉取远程缓存文件 */
-  async pullRemoteCacheFiles() {
+  private async pullRemoteCacheFiles() {
     const { version: remoteVersion } = this.winInfo.syncValue as Record<string, any>
 
     //  如果没有远程版本号，不拉取
@@ -295,8 +298,25 @@ export class BeforeLaunchTask extends BrowserItem {
     }
   }
 
+  /** 写入登录信息 */
+  private async writeLoginData() {
+    const { lumiLogin } = this.winInfo
+
+    if (lumiLogin) {
+      try {
+        const defaultDir = join(this.userDataDir, 'Default')
+        await fileExists(defaultDir, true)
+        await writeFile(this.lumiLoginPath, lumiLogin, 'utf8')
+        console.log('写入 LumiLogin 成功')
+      }
+      catch (error) {
+        console.error('写入 LumiLogin 失败', error)
+      }
+    }
+  }
+
   /** 内存检测 */
-  memoryDetection() {
+  private memoryDetection() {
     if (process.platform === 'darwin') {
       return Promise.resolve()
     }
@@ -322,7 +342,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 发送成功的消息到渲染进程 */
-  sendSuccessMessage(message: string, percent = this.progress) {
+  private sendSuccessMessage(message: string, percent = this.progress) {
     ipcMain.send('browser:launch-process-message', successDataWrapper({
       dirId: this.winInfo.dirId!,
       percent,
@@ -331,7 +351,7 @@ export class BeforeLaunchTask extends BrowserItem {
   }
 
   /** 发送错误的消息到渲染进程 */
-  sendErrorMessage(message: string, error?: any) {
+  private sendErrorMessage(message: string, error?: any) {
     ipcMain.send('browser:launch-process-message', errorDataWrapper(message, this.winInfo.dirId, error))
   }
 }
