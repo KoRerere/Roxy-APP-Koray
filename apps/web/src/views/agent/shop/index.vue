@@ -1,37 +1,58 @@
 <script setup lang="ts">
+import { format } from 'date-fns'
+import { getFormData } from '/@/utils/index'
+import ryForm from '/@/components/ry-form'
 
+const inputs = ref([
+  {
+    type: 'date',
+    items: [
+      {
+        placeholder: '开始时间',
+        name: 'timeStart',
+        value: null,
+        formatValue: (self: any) => {
+          return format(self.value, 'yyyy-MM-dd')
+        },
+      },
+      {
+        placeholder: '结束时间',
+        name: 'timeEnd',
+        value: null,
+        formatValue: (self: any) => {
+          return format(self.value, 'yyyy-MM-dd')
+        },
+      },
+    ],
+  },
+])
+
+const formData = ref()
+
+function test() {
+  formData.value = getFormData(inputs.value)
+}
 </script>
 
 <template>
   <div class="box">
-    <div class="header" />
-    <div class="content">
-      <div class="son" />
-    </div>
+    <!-- <InputGroup>
+      <template v-for="item in input.items" :key="item.name">
+        <DatePicker v-model="item.value" :placeholder="item.placeholder" show-button-bar date-format="yy-mm-dd" />
+      </template>
+</InputGroup> -->
+    <ryForm :inputs="inputs" />
   </div>
+  <div @click="test">
+    特效
+  </div>
+  {{ formData }}
 </template>
 
 <style lang="scss" scoped>
 .box {
   width: 600px;
   height: 600px;
-  background-color: gray;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  height: 100px;
-  background-color: skyblue;
-}
-
-.content {
-  flex: 1;
-  background-color: orange;
-
-  .son {
-    height: 50%;
-    background-color: yellow;
-  }
+  background-color: pink;
 }
 </style>

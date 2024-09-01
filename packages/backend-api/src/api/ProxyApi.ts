@@ -72,7 +72,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserMdfProxyModuleCreate
-   * @summary 修改单个代理
+   * @summary 批量修改代理
    * @request POST:/user_mdf_proxy_module
    * @response `200` `UserMdfProxyModuleCreateData` 成功
    */

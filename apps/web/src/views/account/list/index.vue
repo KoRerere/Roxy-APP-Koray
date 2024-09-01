@@ -165,7 +165,6 @@ function deletePopup(data: any) {
         @confirm="drawer.confirm" />
     </template>
   </Drawer>
-  <DynamicDialog />
 </template>
 
 <style lang="scss" scoped>

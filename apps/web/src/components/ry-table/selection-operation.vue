@@ -38,7 +38,7 @@ const groups: any = computed(() => Object.values(props.operation.reduce((groups,
         selected</span>
       <span class="mdi mdi-close cursor-pointer" @click="$emit('update:selection', [])" />
     </div>
-    <slot name="multiple">
+    <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="cursor-pointer multiple-group">
         <span v-for="item in list" :key="item.name" class="multiple-group-icon" :class="item.icon"
           @click="$emit('batchOperation', item)" />

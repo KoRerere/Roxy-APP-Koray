@@ -2,9 +2,9 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
-    path: 'browser',
+    path: '/browser',
     name: 'browser',
-    meta: { title: '浏览器窗口', icon: 'AreaChartOutlined' },
+    meta: { title: '浏览器窗口' },
     component: () => import('/@/views/browser'),
     redirect: { name: 'browser-list' },
     children: [
@@ -29,27 +29,33 @@ export const menuRoutes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: 'form',
+    path: '/browser/create',
     name: 'browser-create',
-    meta: { title: '新建窗口', icon: 'BarChartOutlined' },
+    meta: { title: '新建窗口' },
     component: () => import('/@/views/browser/create'),
   },
   {
-    path: 'edit',
+    path: '/browser/edit',
     name: 'browser-edit',
-    meta: { title: '编辑窗口', icon: 'BarChartOutlined' },
+    meta: { title: '编辑窗口' },
     component: () => import('/@/views/browser/create/edit.vue'),
   },
   {
     path: '/agent',
     name: 'agent',
-    meta: { title: '代理管理', icon: 'PieChartOutlined', groupName: 'resources' },
+    meta: { title: '代理管理', groupName: 'resources' },
     component: () => import('/@/views/agent/list'),
+  },
+  {
+    path: '/agent/shop',
+    name: 'account-shop',
+    meta: { title: '代理商店', groupName: 'resources' },
+    component: () => import('/@/views/agent/shop'),
   },
   {
     path: '/account',
     name: 'account',
-    meta: { title: '账号库', icon: 'PieChartOutlined', groupName: 'resources' },
+    meta: { title: '账号库', groupName: 'resources' },
     component: () => import('/@/views/account/list'),
   },
 ]

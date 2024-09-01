@@ -79,12 +79,6 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="scss">
-.rx-dialog {
-  min-width: 350px;
-}
-</style>
-
 <style lang="scss" scoped>
 .rx-layout {
   display: flex;

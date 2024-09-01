@@ -2,6 +2,7 @@
 import inputLabel from './input-label.vue'
 import inputSelect from './input-select.vue'
 import inputRadio from './input-radio.vue'
+import inputDate from './input-date.vue'
 
 defineProps({
   name: String,
@@ -32,7 +33,9 @@ defineEmits(['change'])
     <slot name="input">
       <input-select v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
       <input-radio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
+      <input-date v-if="type === 'date'" v-bind="$attrs" />
       <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.placeholder }}</small>
+      <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
     </slot>
   </div>
 </template>
