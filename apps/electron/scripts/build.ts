@@ -5,8 +5,10 @@ import { Platform, build } from 'electron-builder'
 import type { Configuration } from 'electron-builder'
 import { notarizeMac } from './notarize-mac'
 
-const version = process.env.npm_package_version
-console.log('版本号：', version)
+const version = process.env.APP_VERSION
+const isDev = process.env.NODE_ENV === 'development'
+console.log('是否是测试环境：', isDev)
+console.log('APP 版本号：', version)
 
 const workDir = path.join(__dirname, '../')
 
@@ -17,11 +19,12 @@ cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
-  appId: 'com.lumi.app',
+  appId: isDev ? 'com.roxy.test.app' : 'com.lumi.app',
   productName: 'Roxybrowser',
   copyright: 'Roxybrowser',
   asar: true,
   extraMetadata: {
+    version,
     name: 'Roxybrowser',
     main: 'dist/index.cjs',
   },
@@ -47,6 +50,7 @@ const options: Configuration = {
   buildDependenciesFromSource: false,
 
   win: {
+    icon: 'logo.ico',
     target: [
       {
         target: 'nsis',
@@ -59,7 +63,13 @@ const options: Configuration = {
     sign: true,
   },
   mac: {
-    target: ['dmg', 'zip'],
+    target: [
+      {
+        target: 'default',
+        arch: ['x64', 'arm64'],
+      },
+    ],
+    icon: 'logo.icns',
     hardenedRuntime: true,
     gatekeeperAssess: false,
     entitlements: 'buildResources/entitlements.mac.plist',

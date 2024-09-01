@@ -38,7 +38,10 @@ const config: UserConfig = {
     outDir: 'dist',
     assetsDir: '.',
     rollupOptions: {
-      input: join(PACKAGE_ROOT, 'index.html'),
+      input: {
+        main: join(PACKAGE_ROOT, 'index.html'),
+        dashboard: join(PACKAGE_ROOT, 'dashboard.html'),
+      },
     },
     emptyOutDir: true,
     reportCompressedSize: false,

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
+import { browserManager } from '/@/modules/browser/browser-manager'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
@@ -14,7 +15,11 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private downloadingMap = new Map<string, Promise<any>>()
 
   /** 正在使用中的内核 */
-  private usingMap = new Set<string>()
+  private get usingCores() {
+    const cores = [...browserManager.openedBrowserMap.values()]
+      .map(browserItem => browserItem.winInfo.coreVersion)
+    return new Set(cores)
+  }
 
   /** 能够被当前系统使用的内核列表 */
   private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
@@ -61,7 +66,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
     const exePath = this.genCoreExePath(coreVersion)
 
     // 如果该内核已经在使用中，则直接返回
-    if (this.usingMap.has(coreVersion)) {
+    if (this.usingCores.has(coreVersion)) {
       return exePath
     }
 

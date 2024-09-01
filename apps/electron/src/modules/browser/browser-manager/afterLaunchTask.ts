@@ -1,9 +1,8 @@
 import { join } from 'node:path'
-import { readFile, stat, writeFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
 import { BrowserItem } from './browserItem'
 import type { WindowItemType } from './types'
-import { fileExists } from '/@/utils/'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask extends BrowserItem {
@@ -16,17 +15,11 @@ export class AfterLaunchTask extends BrowserItem {
     return [`Android`, `IOS`].includes(this.winInfo.os)
   }
 
-  /** lumiLogin 文件路径 */
-  get lumiLoginPath() {
-    return join(this.userDataDir, 'Default', 'LumiLogin')
-  }
-
   constructor(winItem: WindowItemType, public browser: Browser) {
     super(winItem)
   }
 
   async run() {
-    this.afterLaunch()
     this.handleBrowserEvent()
   }
 
@@ -36,7 +29,7 @@ export class AfterLaunchTask extends BrowserItem {
     const defaultOpenUrl = Object.values(this.openedTabs)
     console.log('同步标签页', defaultOpenUrl)
     // 同步插件密码
-    let lumiLogin
+    let lumiLogin = ''
     try {
       // cookie = this.browser_service.export_cookies();
       // login_data = this.browser_service.export_login_data();
@@ -51,26 +44,14 @@ export class AfterLaunchTask extends BrowserItem {
       console.log('lumiLogin', lumiLogin)
     }
     catch (error) {
-      console.log(`update_message error`, error)
+      console.log(`lumiLogin 文件不存在`, error)
     }
 
     return {
       id: this.winInfo.id,
-      defaultOpenUrl: defaultOpenUrl.filter(elem => this.filterTab(elem)),
+      defaultOpenUrl: defaultOpenUrl.filter(url => this.isValidURL(url)),
       cookie: this.cookies || [],
       lumiLogin,
-    }
-  }
-
-  /** 浏览器启动后要做的事情 */
-  async afterLaunch() {
-    const { lumiLogin } = this.winInfo
-
-    if (lumiLogin) {
-      const defaultDir = join(this.userDataDir, 'Default')
-      await fileExists(defaultDir, true)
-      await writeFile(this.lumiLoginPath, lumiLogin, 'utf8')
-      console.log('写入 LumiLogin 成功')
     }
   }
 

@@ -1,4 +1,6 @@
+import { join } from 'node:path'
 import express from 'express'
+import { isPackaged } from '/@/utils'
 
 import indexRouter from './routes/index'
 import usersRouter from './routes/users'
@@ -12,7 +14,21 @@ class OpenAPIServer {
   }
 
   private init() {
-    this.app.use('/', indexRouter)
+    // 工作台
+    const staticMiddleware = express.static(join(__dirname, './web'), { index: 'dashboard.html' })
+    // 设置静态资源目录
+    this.app.use('/dashboard', (req, res, next) => {
+      const { id = '' } = req.query
+
+      if (isPackaged) {
+        staticMiddleware(req, res, next)
+      }
+      else {
+        res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}`)
+      }
+    })
+
+    // this.app.use('/', indexRouter)
     this.app.use('/users', usersRouter)
 
     this.app.use((req, res, next) => {
