@@ -1,25 +1,20 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-// @ts-ignore
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 
-import scvritems from '/@/views/browser/components/drawers/index.vue'
-// @ts-ignore
+import drawersitems from '/@/views/browser/components/drawers/index.vue'
 import profileInfo from './components/profile-info.vue'
-// @ts-ignore
-import customFilter from './components/custom-filter.vue'
-// @ts-ignore
+import customFilters from './components/custom-filters.vue'
 import browserControl from './components/browser-control.vue'
-// @ts-ignore
 import multipleOperation from './components/multiple-operation.vue'
 
 import useColumns from '/@/hooks/useColumns'
-import { useContextMenu } from '/@/hooks/useContextMenu'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import columnsRow from './columns'
-import { filters, operation, sorts } from './operation'
+import { getFilters, getOperation, getSorts } from './operation'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
@@ -75,30 +70,50 @@ const drawer = reactive({
   },
 })
 
-/**
- * ======================================
- */
+const filters = ref()
+const sorts = ref()
+const operation = ref()
+const openMessage = reactive<any>({})
+
+const cdpflist = ref([])
+
+watch(
+  () => cdpflist.value.length,
+  () => {
+    console.log('🚀 ~ cdpflist.value:', cdpflist.value)
+  },
+)
+
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
-  // autoOpenBrowser(data.rows)
+  autoOpenBrowser(data.rows)
   return data.rows
 }
 
-// =========================================
+function autoOpenBrowser(list: any) {
+  const query = route.query.browser && JSON.parse(route.query.browser as string)
+  if (query?.openBrowser) {
+    const data = list.find((item: any) => item.id === query.windowId)
+    router.replace({ name: route.name })
+    if (data) {
+      openBrowser(data)
+    }
+  }
+}
 
-async function operationHandler({ name }: any, data: any) {
+async function operationHandler(operate: any, data: any) {
   /**
    * 有批量操作
    */
   const _data = [].concat(data)
-  switch (name) {
+  switch (operate.name) {
     case 'Test': {
       console.log('🚀 ~test:', data)
       break
     }
     case 'edit':
-      localStorage.setItem('$editWindow', JSON.stringify(data))
-      router.push({ name: 'browser-form', query: { id: data.id } })
+      localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
+      router.push({ name: 'browser-edit', query: { id: data.id } })
       break
     case 'delete':
       deleteWindow(_data)
@@ -108,8 +123,9 @@ async function operationHandler({ name }: any, data: any) {
 
 async function deleteWindow(data: any) {
   try {
-    const ids = data.map((item: any) => item.id)
+    const ids: number[] = data.map((item: any) => item.id)
     await deletePopup()
+    // @ts-ignore
     const { msg } = await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: true })
     toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
     tableRef.value.refresh()
@@ -195,27 +211,35 @@ async function deleteProxy(data: any) {
   }
 }
 
-function _autoOpenBrowser(list: any) {
-  const query = route.query.browser && JSON.parse(route.query.browser as string)
-  if (query?.openBrowser) {
-    const data = list.find((item: any) => item.id === query.windowId)
-    router.replace({ name: route.name })
-    if (data) {
-      openBrowser(data)
-    }
-  }
-}
-
 function openBrowser(data: any) {
-  window.electronAPI.send('browser:batchLaunch', [toRaw(data)])
+  const params = [].concat(data).map((item: any, index: number) => {
+    openMessage[item.dirId] = {
+      pending: true,
+      data: {
+        message: index === 0 ? '启动中...' : '正在排队...',
+      },
+    }
+    return toRaw(item)
+  })
+  window.electronAPI.send('browser:batchLaunch', params)
 }
 
-function onMore([event, model]: any[]) {
-  show(event, { model })
+function listenOpenMessage() {
+  window.electronAPI.on('browser:launch-process-message', (event) => {
+    console.log('🚀 ~ window.electronAPI.on ~ event:', event)
+    const id = event.data?.dirId || event.data
+    openMessage[id as string] = event
+  })
 }
 
-async function _testModify(data: any) {
-  await API.window.userMdfWindowInfoSingleCreate(data)
+function showOperationMenu(event: Event, data: any, extra?: any) {
+  show(event, {
+    operation: extra?.cmpOperation || operation.value,
+    operationHandler: (operate: any) => {
+      operationHandler(operate, data)
+      extra?.clearSelection()
+    },
+  })
 }
 
 function deletePopup() {
@@ -237,7 +261,12 @@ function deletePopup() {
     })
   })
 }
+
 onMounted(() => {
+  listenOpenMessage()
+  filters.value = getFilters()
+  sorts.value = getSorts()
+  operation.value = getOperation()
 })
 </script>
 
@@ -246,28 +275,30 @@ onMounted(() => {
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
-      <custom-filter />
+      <customFilters v-model:list="cdpflist" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
     <template #open="{ data }">
-      <browser-control @open="() => openBrowser(data)" />
+      <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
     </template>
     <template #group>
       <ryTag>123</ryTag>
     </template>
-    <template #actions>
-      <actions :operation="operation" @more="onMore" />
+    <template #actions="{ data }">
+      <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
     </template>
-    <template #multiple-operation="{ selection }">
-      <multipleOperation :selection="selection" :operation="operation" @more="onMore" />
+    <template #multiple-operation="{ selection, clearSelection }">
+      <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
+        @more="([event, operation]) => showOperationMenu(event, selection, { operation, clearSelection })"
+        @open-browser="() => openBrowser(selection)" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
     :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
-      <scvritems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
+      <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="data => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>

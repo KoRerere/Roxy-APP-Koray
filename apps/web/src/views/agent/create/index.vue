@@ -1,7 +1,5 @@
 <script lang="ts" setup>
 import ryForm from '/@/components/ry-form'
-import inputbase from '/@/components/ry-form/input-base.vue'
-
 import drawerContent from '/@/components/drawer-content.vue'
 import { getFormData } from '/@/utils'
 import { useToast } from 'primevue/usetoast'

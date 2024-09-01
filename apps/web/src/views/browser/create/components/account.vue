@@ -2,7 +2,7 @@
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import accountList from '/@/views/browser/components/drawers/account-list.vue'
-import accountCreate from '/@/views/browser/components/drawers/account-create.vue'
+import accountCreate from '/@/views/account/create'
 import { useVModel } from '@vueuse/core'
 
 const props = defineProps({

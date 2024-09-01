@@ -9,10 +9,6 @@ const router = useRouter()
 const toast = useToast()
 
 const collapsed = ref<boolean>(false)
-window.electronAPI.on('browser:launch-process-message', (event) => {
-  console.log('browser:launch-process-message', event)
-})
-
 const menu = ref()
 const items = ref([
   {
@@ -82,12 +78,6 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style lang="scss">
-.rx-dialog {
-  min-width: 350px;
-}
-</style>
 
 <style lang="scss" scoped>
 .rx-layout {

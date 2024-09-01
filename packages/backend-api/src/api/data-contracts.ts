@@ -1121,7 +1121,10 @@ export interface UserAddWindowInfoCreatePayload {
   ipType: string;
   /** 代理服务商，str, 非必传， 【取字典】 */
   proxyProvider: string;
-  /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5, str, 必传，默认传 SOCKS5， 【取字典】 */
+  /**
+   * 代理协议，枚举值：HTTP, HTTPS, SOCKS5, str, 必传，默认传 SOCKS5， 【取字典】
+   * 暂时用不到
+   */
   protocol: string;
   /** 国家, str, 非必传， 【取字典】 */
   country: string;
@@ -1348,6 +1351,11 @@ export interface UserAddWindowInfoCreatePayload {
    *     ]
    */
   windowPlatformList: string[];
+  /**
+   * 代理测试状态
+   * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
+   */
+  checkStatus: number;
 }
 
 export interface UserAddWindowInfoCreateData {
@@ -1676,6 +1684,11 @@ export interface UserMdfWindowInfoSingleCreatePayload {
   windowPlatformList?: string[];
   /** 平台ID列表 */
   platformUrlIds?: number[];
+  /**
+   * 代理检测状态
+   * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
+   */
+  checkStatus?: number;
 }
 
 export interface UserMdfWindowInfoSingleCreateData {
@@ -2233,20 +2246,41 @@ export interface UserGetProxyModuleListData {
   data: {
     total: number;
     rows: {
+      /** 代理id，int */
       id?: number;
+      /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】 */
       protocol?: string;
+      /** 国家，str */
       country?: string;
+      /** 代理主机，str */
       host?: string;
+      /** 代理端口，str */
       port?: string;
+      /** 代理账号，str */
       proxyUserName?: string;
+      /** 代理密码，str */
       proxyPassword?: string;
+      /** 刷新URL, str */
       refreshUrl?: string;
-      /** ip123.in/ip.json， str */
+      /** 查询渠道，默认:http: //ip123.in/ip.json， str */
       checkChannel?: string;
+      /** 出口IP */
+      lastIp?: string;
+      /** 出口国家 */
       lastCountry?: string;
+      /** 出口州/省 */
+      lastState?: string;
+      /** 出口城市 */
+      lastCity?: string;
+      /** 最近一次检测状态，true:正常，false: 错误 */
       checkStatus?: boolean;
+      /** 最近一次检测检测时间，str */
+      checkTime?: string;
+      /** # 备注 */
       remark?: string;
+      /** 是否有绑定窗口, 布尔值 */
       isBind?: boolean;
+      /** 绑定的窗口数量 */
       bindCount?: number;
       bindList?: number[];
     }[];
@@ -2593,6 +2627,11 @@ export interface UserGetPluginListListParams {
    * @example "翻译助手"
    */
   pluginName?: string;
+  /**
+   * 启用状态，开启：true, 关闭： false
+   * @example "true"
+   */
+  status?: boolean;
 }
 
 export interface UserGetPluginListListData {
@@ -2600,16 +2639,30 @@ export interface UserGetPluginListListData {
   data: {
     total: number;
     rows: {
+      /** 插件id */
       id?: number;
+      /** 插件来源，枚举：sys: 系统内置,local:本地扩展, store:Chrome商店, 必传 */
       source?: string;
+      /** 插件dir */
       pluginDir?: string;
+      /** 插件名称 */
       pluginName?: string;
+      /** 插件icon地址，oss下载路径 */
       pluginIcon?: string;
+      /** 插件下载地址，oss下载路径 */
       pluginRoute?: string;
+      /** 扩展版本, str, 必传 */
       pluginVersion?: string;
+      /** 扩展版本, str, 必传 */
       pluginDesc?: string;
+      /** 提供方 */
       provider?: string;
+      /** 开启：true, 关闭： false */
       useStatus?: boolean;
+      /** 是否有权限删除 */
+      canDelete?: boolean;
+      /** 上传者 */
+      uploader?: string;
     }[];
   };
   msg: string;
@@ -3083,12 +3136,12 @@ export interface UserGetWindowInfoV2ListParams {
    */
   host?: string;
   /**
-   * 已打开, str, 非必传
+   * 窗口状态, str, 非必传,ture:打开,false:关闭
    * @example "true"
    */
   openStatus?: string;
   /**
-   * 常用, str, 非必传
+   * 窗口收藏, str, 非必传
    * @example "true"
    */
   isOften?: string;
@@ -3158,12 +3211,12 @@ export interface UserGetWindowInfoV2ListParams {
    */
   endDate?: string;
   /**
-   * 指定标签id串, 多个使用英文逗号分隔, str, 非必传
+   * 标签id列表, 多个使用英文逗号分隔, str, 非必传 (多选)
    * @example "10,20,33"
    */
   labelIds?: string;
   /**
-   * 指定分组id串, 多个使用英文逗号分隔, str, 非必传
+   * 分组id列表, 多个使用英文逗号分隔, str, 非必传(多选)
    * @example "12,45,22"
    */
   groupIds?: string;
@@ -3173,15 +3226,32 @@ export interface UserGetWindowInfoV2ListParams {
    */
   isBindRpa?: string;
   /**
-   * 新业务平台列表
+   * 账号平台（多选）,传数字ID
    * @example [""]
    */
-  platformUrlList?: number[];
+  platformUrlIds?: string[];
   /**
-   * 窗口的业务平台列表
-   * @example ["[\r\n      {\r\n        \"platformUrl\": \"https://www.test.com/\",\r\n        \"platformIcon\": \"https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/Facebook.png\",\r\n        \"platformUserName\": \"fhr66\",\r\n        \"platformPassword\": \"12345655\",\r\n        \"platformEfa\": \"111111111155\",\r\n        \"platformcookies\": \"test\",\r\n        \"platformName\": \"测试名字66\",\r\n        \"platformRemarks\": \"平台备注55\"\r\n      }\r\n    ]"]
+   * 操作系统（多选）,传字符串
+   * @example [""]
    */
-  windowPlatformList?: string[];
+  osList?: string[];
+  /**
+   * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
+   * @example "0"
+   */
+  proxyTestStatus?: number;
+  /**
+   * 排序字段
+   * @example "name"
+   */
+  orderName?: string;
+  /**
+   * 排序类型  desc:降序   asc:升序
+   * @example "desc"
+   */
+  orderType?: string;
+  /** 代理协议列表 */
+  proxyProtocoList?: string[];
 }
 
 export interface UserGetWindowInfoV2ListData {
@@ -3526,6 +3596,18 @@ export interface UserGetWindowInfoV2ListData {
         pluginVersion?: string;
         pluginRoute?: string;
       }[];
+      /** 新业务平台列表 */
+      platformUrlList?: string[];
+      /**
+       * 窗口的业务平台列表
+       * [      {        "platformUrl": "https://www.test.com/",        "platformIcon": "https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/Facebook.png",        "platformUserName": "fhr66",        "platformPassword": "12345655",        "platformEfa": "111111111155",        "platformcookies": "test",        "platformName": "测试名字66",        "platformRemarks": "平台备注55"      }    ]
+       */
+      windowPlatformList?: string[];
+      /**
+       * 代理检测状态
+       * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
+       */
+      checkStatus?: number;
     }[];
   };
   msg: string;

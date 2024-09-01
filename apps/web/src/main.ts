@@ -4,6 +4,7 @@ import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
 import Ripple from 'primevue/ripple'
 import ToastService from 'primevue/toastservice'
+import DialogService from 'primevue/dialogservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import { definePreset } from '@primevue/themes'
 import myPreset from '/@/assets/preset.ts'
@@ -24,6 +25,7 @@ app.use(store)
 app.use(router)
 app.use(i18n)
 app.use(ToastService)
+app.use(DialogService)
 app.use(ConfirmationService)
 app.use(PrimeVue, {
   ripple: true,
