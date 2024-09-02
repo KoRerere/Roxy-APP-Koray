@@ -4,9 +4,11 @@ import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getFormDataByList, setInputValueByInputKey, setInputVisible } from '/@/utils'
 import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
+import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 
 const router = useRouter()
+const toast = useToast()
 
 const tabs = ref([
   { title: '单个创建', value: 'single' },
@@ -22,11 +24,6 @@ const maxWindowCount = ref()
 
 provide('isBatch', isBatch)
 provide('createCount', createCount)
-
-// [{
-//   id:0
-//   proxyCategory: 'noproxy',
-// }]
 
 const accordions = ref(getAccordions())
 const inputsGroup = ref(getInputsGroup())
@@ -55,6 +52,7 @@ async function getUserInfo() {
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {
     windowName: windowName.value,
+    createCount: createCount.value,
     ...original.value,
     ...formData,
   }
@@ -64,24 +62,34 @@ async function createProfile(formData: any, openBrowser: boolean) {
   }
 
   const { data } = await API.window.userAddWindowInfoCreate(params)
-  toBrowserList({ browser: JSON.stringify({ windowId: data.windowId, openBrowser }) })
+  router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
 }
 
 async function batchCreateProfile(params: any) {
-  const diffCount = createCount.value - params.proxyInfoList.length
-  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))
-  params.createCount = createCount.value
+  const diffCount = params.createCount - params.proxyInfoList.length
+  if (diffCount < 0) {
+    toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 3000 })
+    return
+  }
 
-  const { data } = await API.window.userBatchWindowInfoCreate(params)
-  console.log('🚀 ~ batchCreateProfile ~ data:', data)
-  // toBrowserList()
+  const fingerDetail = await getFingerDetail(params)
+  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 补充空数据
+  params.fingerDetail = fingerDetail
+  await API.window.userBatchWindowInfoCreate(params)
+  router.replace({ name: 'browser-list' })
 }
 
-function toBrowserList(query?: any) {
-  router.replace({
-    name: 'browser-list',
-    query,
+async function getFingerDetail(params: any) {
+  const { os, osVersion, browserVersion, coreVersion, createCount } = params
+  const { data } = await API.window.userGetUaWebglV2List({
+    count: createCount,
+    os,
+    osVersion,
+    browserVersion,
+    coreVersion,
   })
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, mediaDevice, deviceName, macAddr } = params
+  return data.map(item => ({ ...item, fontType, canvas, webGL, audioContext, speechVoices, clientRects, mediaDevice, deviceName, macAddr }))
 }
 
 function cancel() {
