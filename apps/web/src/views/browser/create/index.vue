@@ -21,9 +21,9 @@ const inputsGroup = ref(getInputsGroup())
 const original = ref(getDefaultValue())
 const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
 
-// watch(() => tabsValue.value, (value) => {
-//   setInputVisible(inputsGroup.value, 'windowPlatformList', value === 'single')
-// })
+watch(() => tabsValue.value, (value) => {
+  setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
+})
 
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {

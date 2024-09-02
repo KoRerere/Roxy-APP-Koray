@@ -35,6 +35,10 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  isBatch: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emits = defineEmits(['update:windowName', 'cancel', 'createOpen', 'create'])
 

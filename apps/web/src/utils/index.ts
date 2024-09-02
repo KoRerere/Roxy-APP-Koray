@@ -98,7 +98,10 @@ export function setInputVisible(
 ) {
   const _names: string[] = ([] as string[]).concat(names)
   inputs.forEach((item: any) => {
-    if (_names.includes(item.name)) {
+    if (item.items && Array.isArray(item.items)) {
+      setInputVisible(item.items, _names, state)
+    }
+    else if (_names.includes(item.name)) {
       item.visible = state
     }
   })

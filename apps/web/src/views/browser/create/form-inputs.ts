@@ -141,7 +141,7 @@ export function getInputsGroup(data: any = {}) {
         separator: true,
       },
       {
-        label: 'Accounts(批量没有)',
+        label: 'Accounts',
         name: 'windowPlatformList',
         value: data.windowPlatformList ?? [],
         slot: 'accounts',
