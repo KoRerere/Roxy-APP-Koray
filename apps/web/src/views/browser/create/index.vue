@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
-import { getFormDataByList, setInputVisible } from '/@/utils'
+import { getFormDataByList, setInputValueByInputKey, setInputVisible } from '/@/utils'
 import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { API } from '/@/api'
 
@@ -13,6 +13,7 @@ const tabs = ref([
   { title: '批量导入', value: 'import' },
 ])
 const tabsValue = ref('single')
+const isBatch = ref(false)
 
 const windowName = ref('Untitled profile')
 
@@ -23,7 +24,14 @@ const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { ke
 
 watch(() => tabsValue.value, (value) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
+  setInputValueByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
+  isBatch.value = tabsValue.value === 'batch'
 })
+
+function tabChange(value: string) {
+  // tabsValue.value = value
+
+}
 
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {
@@ -40,6 +48,10 @@ async function createProfile(formData: any, openBrowser: boolean) {
   })
 }
 
+async function _batchCreateProfile(_formData: any, _openBrowser: boolean) {
+
+}
+
 function cancel() {
   router.back()
 }
@@ -48,7 +60,7 @@ function cancel() {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-col flex-1 h-full">
-      <Tabs v-model:value="tabsValue">
+      <Tabs v-model:value="tabsValue" @update:value="tabChange">
         <TabList>
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
             {{ tab.title }}
@@ -57,7 +69,7 @@ function cancel() {
       </Tabs>
       <div class="flex-1 overflow-hidden">
         <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
-          @cancel="cancel" @create-open="(formData: any) => createProfile(formData, true)"
+          :is-batch="isBatch" @cancel="cancel" @create-open="(formData: any) => createProfile(formData, true)"
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>

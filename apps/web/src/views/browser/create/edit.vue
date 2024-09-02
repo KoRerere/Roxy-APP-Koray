@@ -33,7 +33,7 @@ onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
   windowName.value = data.windowName
   accordions.value = getAccordions()
-  inputsGroup.value = getInputsGroup()
+  inputsGroup.value = getInputsGroup(data)
   original.value = {
     id: data.id,
     ...getDefaultValue(data),

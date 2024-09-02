@@ -52,7 +52,7 @@ const options = ref([
     label: '操作系统',
     name: 'osList',
     icon: 'mdi mdi-abjad-arabic',
-    chindren: ($dict_map.os || []).map((item: any) => ({
+    children: ($dict_map.os || []).map((item: any) => ({
       parentLabel: '操作系统',
       parentName: 'osList',
       type: 'Checkbox',
@@ -106,7 +106,7 @@ const options = ref([
     name: 'proxyProtocoList',
     label: '代理协议',
     icon: 'mdi mdi-alarm-check',
-    chindren: ($dict_map.protocol || []).map((item: any) => ({
+    children: ($dict_map.protocol || []).map((item: any) => ({
       parentLabel: '代理协议',
       parentName: 'proxyProtocoList',
       type: 'Checkbox',
@@ -137,8 +137,8 @@ const options = ref([
 ])
 
 const menuRef = ref()
-const isChidren = ref(false)
-const meunOptions = ref(options.value)
+const isChildren = ref(false)
+const menuOptions = ref(options.value)
 const selectedCategories = ref<string[]>([])
 
 function operationHandler(item: any) {
@@ -262,7 +262,7 @@ function inputPopup(data: any) {
     },
     data,
     emits: {
-      onSave: ([formData, close]: [string, () => void]) => {
+      onSave: ([formData, close]: [any, () => void]) => {
         const [[name, value]] = Object.entries(formData)
         if (!data.multiple) {
           deleteFilterByName(name)
@@ -295,10 +295,10 @@ function onSwitch(item: any, value: any = true) {
 }
 
 function openChild(item: any) {
-  if (item.chindren) {
+  if (item.children) {
     sleep(20).then(() => {
-      isChidren.value = true
-      meunOptions.value = item.chindren
+      isChildren.value = true
+      menuOptions.value = item.children
 
       const selected = filterList.value.find(it => it.name === item.name)
       selectedCategories.value = Array.isArray(selected?.value) ? selected.value : []
@@ -309,11 +309,11 @@ function openChild(item: any) {
 }
 
 function onHide() {
-  if (isChidren.value) {
+  if (isChildren.value) {
     selectedCategories.value = []
     sleep(20).then(() => {
-      isChidren.value = false
-      meunOptions.value = options.value
+      isChildren.value = false
+      menuOptions.value = options.value
       emit('filterChange')
     })
   }
@@ -358,7 +358,7 @@ function deleteFilter(index: number) {
       <span v-if="!filterList.length">Add filters</span>
     </Button>
   </div>
-  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meunOptions" popup
+  <TieredMenu ref="menuRef" :model="menuOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">

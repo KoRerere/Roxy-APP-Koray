@@ -75,7 +75,7 @@ function getFormData(isOpen: boolean) {
               <template #proxy="{ input }">
                 <div class="flex flex-row">
                   <inputLabel v-bind="input" />
-                  <proxyItem v-model="input.value" class="flex-1" />
+                  <proxyItem v-model="input.value" class="flex-1" :is-batch="isBatch" />
                 </div>
               </template>
               <template #accounts="{ input }">

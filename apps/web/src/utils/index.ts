@@ -91,18 +91,31 @@ export function getFormDataByList(
     : []
 }
 
+export function createDefaultObject<T extends string[], U>(keys: T, defaultValue: U) {
+  return keys.reduce((res, key) => ({ ...res, [key]: defaultValue }), {} as { [K in T[number]]: U })
+}
+
 export function setInputVisible(
   inputs: any[],
   names: string | string[],
   state: boolean,
 ) {
-  const _names: string[] = ([] as string[]).concat(names)
+  setInputValueByInputKey(inputs, names, 'visible', state)
+}
+
+export function setInputValueByInputKey(
+  inputs: any[],
+  inputNames: string | string[],
+  inputKey: string,
+  value: any,
+) {
+  const _names: string[] = ([] as string[]).concat(inputNames)
   inputs.forEach((item: any) => {
     if (item.items && Array.isArray(item.items)) {
-      setInputVisible(item.items, _names, state)
+      setInputValueByInputKey(item.items, _names, inputKey, value)
     }
     else if (_names.includes(item.name)) {
-      item.visible = state
+      item[inputKey] = value
     }
   })
 }
