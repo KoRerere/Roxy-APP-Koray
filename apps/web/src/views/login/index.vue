@@ -9,6 +9,8 @@ const router = useRouter()
 
 const toast = useToast()
 
+const loading = ref(false)
+
 const inputs = [
   {
     type: 'text',
@@ -29,9 +31,18 @@ const inputs = [
 ]
 
 async function handleSubmit() {
+  loading.value = true
   const params = getFormData(inputs)
   console.log(params)
-  const { data } = await API.base.loginCreate(params)
+  const { code, data, msg = '登录失败' } = await API.base.loginCreate(params).finally(() => {
+    loading.value = false
+  })
+
+  if (code !== 0) {
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+    return
+  }
+
   setUserInfo(data)
 
   const { data: userInfo } = await API.base.userGetUserInfoList()
@@ -54,13 +65,13 @@ function googleLogin() {
 <template>
   <div class="w-[300px] mx-[auto]">
     <ry-form :inputs="inputs" />
-    <ry-button class="w-full mt-[12px]" @click="handleSubmit">
+    <ry-button class="w-full mt-[12px]" :loading="loading" @click="handleSubmit">
       Log In
     </ry-button>
     <Divider align="center">
       OR
     </Divider>
-    <ry-button class="w-full" outlined @click="googleLogin">
+    <ry-button class="w-full" outlined :loading="loading" @click="googleLogin">
       Log in with Google
     </ry-button>
   </div>
