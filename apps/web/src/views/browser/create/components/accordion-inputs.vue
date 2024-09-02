@@ -16,7 +16,6 @@ interface Accordions {
     title: string
     value: string
   }[]
-  inputsGroup: any[]
 }
 
 const props = defineProps({
@@ -32,13 +31,17 @@ const props = defineProps({
     type: Object as PropType<Accordions>,
     default: undefined,
   },
+  inputsGroup: {
+    type: Array as PropType<any[]>,
+    default: () => [],
+  },
 })
 const emits = defineEmits(['update:windowName', 'cancel', 'createOpen', 'create'])
 
 const { windowName } = useVModels(props, emits)
 
 function getFormData(isOpen: boolean) {
-  const formData = getFormDataByList(props.accordions!.inputsGroup)
+  const formData = getFormDataByList(props!.inputsGroup)
   emits(isOpen ? 'createOpen' : 'create', formData)
 }
 </script>
@@ -53,7 +56,7 @@ function getFormData(isOpen: boolean) {
             {{ panels.title }}
           </AccordionHeader>
           <AccordionContent>
-            <ryForm :inputs="accordions.inputsGroup[index]" label-position="left">
+            <ryForm :inputs="inputsGroup[index]" label-position="left">
               <template #System="{ input }">
                 <div class="flex flex-row">
                   <inputLabel v-bind="input" />

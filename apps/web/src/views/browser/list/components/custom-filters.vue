@@ -1,4 +1,6 @@
+<!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
+// @ts-ignore
 import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
@@ -26,7 +28,7 @@ const _props = defineProps({
 
 const emit = defineEmits(['update:list', 'filterChange'])
 
-const scvrlist = useVModel(_props, 'list', emit)
+const filterList = useVModel(_props, 'list', emit)
 
 const dialog = useDialog()
 
@@ -135,12 +137,9 @@ const options = ref([
 ])
 
 const menuRef = ref()
-const meun = reactive({
-  targetEvent: null,
-  isChidren: false,
-  options: options.value,
-  selectedCategories: [],
-})
+const isChidren = ref(false)
+const meunOptions = ref(options.value)
+const selectedCategories = ref<string[]>([])
 
 function operationHandler(item: any) {
   const name = item.aliasName || item.name
@@ -250,7 +249,6 @@ function operationHandler(item: any) {
 }
 
 function show(event: any) {
-  meun.targetEvent = event
   menuRef.value.show(event)
 }
 
@@ -270,7 +268,7 @@ function inputPopup(data: any) {
           deleteFilterByName(name)
         }
 
-        scvrlist.value.push({
+        filterList.value.push({
           multiple: !!data.multiple,
           label: data.title,
           name,
@@ -286,7 +284,7 @@ function inputPopup(data: any) {
 
 function onSwitch(item: any, value: any = true) {
   deleteFilterByName(item.name)
-  scvrlist.value.push({
+  filterList.value.push({
     label: item.label,
     name: item.name,
     value,
@@ -299,8 +297,11 @@ function onSwitch(item: any, value: any = true) {
 function openChild(item: any) {
   if (item.chindren) {
     sleep(20).then(() => {
-      meun.isChidren = true
-      meun.options = item.chindren
+      isChidren.value = true
+      meunOptions.value = item.chindren
+
+      const selected = filterList.value.find(it => it.name === item.name)
+      selectedCategories.value = Array.isArray(selected?.value) ? selected.value : []
     })
     return
   }
@@ -308,11 +309,12 @@ function openChild(item: any) {
 }
 
 function onHide() {
-  if (meun.isChidren) {
-    meun.selectedCategories = []
+  if (isChidren.value) {
+    selectedCategories.value = []
     sleep(20).then(() => {
-      meun.isChidren = false
-      meun.options = options.value
+      isChidren.value = false
+      meunOptions.value = options.value
+      emit('filterChange')
     })
   }
 }
@@ -320,32 +322,32 @@ function onHide() {
 function onChange(item: any) {
   deleteFilterByName(item.parentName)
 
-  if (meun.selectedCategories.length > 0) {
-    scvrlist.value.push({
+  if (selectedCategories.value.length > 0) {
+    filterList.value.push({
       label: item.parentLabel,
       name: item.parentName,
-      value: meun.selectedCategories,
-      original: { [item.name]: meun.selectedCategories },
+      value: selectedCategories.value,
+      original: { [item.parentName]: selectedCategories.value },
     })
   }
 }
 
 function deleteFilterByName(name: string) {
-  const index = scvrlist.value.findIndex((item: any) => item.name === name)
+  const index = filterList.value.findIndex((item: any) => item.name === name)
   if (index >= 0) {
-    scvrlist.value.splice(index, 1)
+    filterList.value.splice(index, 1)
   }
 }
 
 function deleteFilter(index: number) {
-  scvrlist.value.splice(index, 1)
+  filterList.value.splice(index, 1)
   emit('filterChange')
 }
 </script>
 
 <template>
   <div class="flex gap-2 filter-list">
-    <div v-for="(item, index) in scvrlist" :key="index" class="filter-item">
+    <div v-for="(item, index) in filterList" :key="index" class="filter-item">
       <span class="mdi mdi-close cursor-pointer filter-item-icon" @click="deleteFilter(index)" />
       <span class="select-none">{{ item.label }}:</span>
       <span class="cursor-pointer">{{ item.value }}</span>
@@ -353,17 +355,17 @@ function deleteFilter(index: number) {
 
     <Button class="filter-button" text @click="show($event)">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!scvrlist.length">Add filters</span>
+      <span v-if="!filterList.length">Add filters</span>
     </Button>
   </div>
-  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.options" popup
+  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meunOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="item.type" class="cursor-pointer browser-item" :for="item.value" @click.stop>
-          <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="meun.selectedCategories" :input-id="item.name"
+          <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="selectedCategories.value" :input-id="item.name"
             :name="item.parentName" :value="item" @click.stop @change="change" /> -->
-          <Checkbox v-if="item.type === 'Checkbox'" v-model="meun.selectedCategories" :name="item.parentName"
+          <Checkbox v-if="item.type === 'Checkbox'" v-model="selectedCategories" :name="item.parentName"
             :input-id="item.value" :value="item.value" @click.stop @change="() => onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
