@@ -51,88 +51,81 @@ export function getOperation(_params: any = {}) {
       name: 'edit',
       label: '编辑',
       icon: 'mdi mdi-pencil-outline',
-      extraProps: {
-        multiple: false,
-      },
-      command: () => { },
     },
     {
       separator: true,
-      extraProps: {
-        multiple: false,
-      },
     },
     {
       name: 'view',
       label: '预览',
       icon: 'mdi mdi mdi-cube-scan',
-      command: () => { },
+      multiple: true,
     },
     {
       name: 'restart',
       label: '重启',
       icon: 'mdi mdi-restart',
-      command: () => { },
+      multiple: true,
+      groupName: 'first',
     },
     {
       name: 'close',
       label: '关闭',
       icon: 'mdi mdi-power',
-      command: () => { },
+      multiple: true,
+      groupName: 'first',
     },
     {
       separator: true,
+      multiple: true,
     },
     {
       name: 'addGroup',
       label: '新增组',
       icon: 'mdi mdi-home-group',
-      command: () => { },
+      multiple: true,
+      groupName: 'second',
     },
     {
       name: 'addTag',
       label: '新增标签',
       icon: 'mdi mdi-tag-heart-outline',
-      command: () => { },
+      multiple: true,
+      groupName: 'second',
     },
     {
       separator: true,
+      multiple: true,
     },
     {
       name: 'fav',
       label: '收藏',
       icon: 'mdi mdi-bookmark-music-outline',
-      command: () => { },
+      multiple: true,
     },
     {
       name: 'addNotes',
       label: '新增笔记',
       icon: 'mdi mdi-clipboard-list-outline',
-      command: () => { },
+      multiple: true,
     },
     {
       separator: true,
+      multiple: true,
     },
     {
       name: 'editCookies',
       label: '编辑cookies',
       icon: 'mdi mdi-clipboard-edit-outline',
-      extraProps: {
-        multiple: false,
-      },
-      command: () => { },
     },
     {
       separator: true,
-      extraProps: {
-        multiple: false,
-      },
     },
     {
       name: 'delete',
       label: '删除',
       icon: 'mdi mdi-delete-empty-outline',
-      command: () => { },
+      multiple: true,
     },
   ]
 }

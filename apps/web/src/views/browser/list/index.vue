@@ -75,14 +75,20 @@ const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
 
-const cdpflist = ref([])
+const filtersByGroup = ref([])
 
-watch(
-  () => cdpflist.value.length,
-  () => {
-    console.log('🚀 ~ cdpflist.value:', cdpflist.value)
-  },
-)
+function filterChange() {
+  const params = Object.values(filtersByGroup.value).reduce((params, item) => {
+    if (item.multiple) {
+      (params[item.name] || (params[item.name] = [])).push(item.value)
+    }
+    else {
+      Object.assign(params, item.original)
+    }
+    return params
+  }, {})
+  tableRef.value.refresh(params)
+}
 
 async function tableRequest(params: any) {
   const { data } = await API.window.userGetWindowInfoV2List(params)
@@ -275,7 +281,7 @@ onMounted(() => {
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
-      <customFilters v-model:list="cdpflist" />
+      <customFilters v-model:list="filtersByGroup" @filter-change="filterChange" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
@@ -291,7 +297,7 @@ onMounted(() => {
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-        @more="([event, operation]) => showOperationMenu(event, selection, { operation, clearSelection })"
+        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
         @open-browser="() => openBrowser(selection)" />
     </template>
   </ry-table>
