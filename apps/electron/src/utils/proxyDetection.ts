@@ -102,6 +102,7 @@ function checkHttpsProxy(winInfo: WindowItemType) {
   // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
 
   const httpUrl = `https://${auth}${host}:${port}`
+  console.log(`httpUrl`, httpUrl)
   const options = {
     headers: {
       'user-agent': 'electron ',
@@ -125,10 +126,15 @@ function checkHttpsProxy(winInfo: WindowItemType) {
         console.log(`checkHttpsProxy error 转json 出错 返回 所有结果`)
         reject(error)
       }
-    }).on(`error`, (error) => {
+    })
+
+    res.on(`error`, (error) => {
       console.log(`checkHttpsProxy error`, error)
       reject(error)
     })
+  }).on(`error`, (error) => {
+    console.log(`checkHttpsProxy error`, error)
+    reject(error)
   })
 
   return promise

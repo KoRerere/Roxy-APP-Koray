@@ -1,7 +1,7 @@
 import { IPCMain } from '@roxy/electron-preload/main'
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { browserManager } from '/@/modules/browser'
-import { proxyDetection } from '/@/utils'
+import { aliOSS, proxyDetection } from '/@/utils'
 import { store } from '/@/modules/store'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
@@ -36,10 +36,12 @@ ipcMain.on('browser:batchLaunch', (winItemList) => {
 })
 
 /** 批量删除本地浏览器 */
-ipcMain.on('browser:batchRemove', (winItemList) => {
-  return browserManager.batchLaunch(winItemList)
+ipcMain.on('browser:batchRemove', (dirIds) => {
+  return browserManager.batchDelete(dirIds)
 })
 
+/** 登录成功后，保存用户信息 */
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.userInfo = userInfo
+  aliOSS.init()
 })

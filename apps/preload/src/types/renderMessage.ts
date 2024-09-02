@@ -7,7 +7,7 @@ export interface RenderMessage {
   /** 批量关闭窗口 */
   'browser:batchClose': (dirIds: string) => any
   /** 批量删除窗口 */
-  'browser:batchRemove': (dirIds: string) => any
+  'browser:batchRemove': (dirIds: string[]) => any
   /** 代理检测 */
   'proxy:detection': (winItemList: WindowItemType) => ProxyDetectionResult
   /** 保存用户信息 */

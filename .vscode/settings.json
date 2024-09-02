@@ -83,5 +83,14 @@
     "scss",
     "pcss",
     "postcss"
-  ]
+  ],
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/dist-vite": true,
+    "**/out": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/.vscode": true
+  }
 }

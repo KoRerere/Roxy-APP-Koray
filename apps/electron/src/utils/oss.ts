@@ -6,11 +6,17 @@ import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
   store = {} as OSS
-  timer?: NodeJS.Timeout
+  private timer?: NodeJS.Timeout
   /** 避免重复请求 */
   promise?: Promise<UserGetOssCredentialListData>
 
   constructor() {
+    this.refreshUploadTokenInterval()
+  }
+
+  /** 用户切换账号之后需要重新 init */
+  init() {
+    // 定时刷新 OSS 上传凭证
     this.refreshUploadTokenInterval()
   }
 
