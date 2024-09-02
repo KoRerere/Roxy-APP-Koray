@@ -92,5 +92,9 @@
     "**/build": true,
     "**/.git": true,
     "**/.vscode": true
-  }
+  },
+  "cSpell.words": [
+    "decrementbuttonicon",
+    "incrementbuttonicon"
+  ]
 }

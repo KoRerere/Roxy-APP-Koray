@@ -16,18 +16,23 @@ const props = defineProps({
     type: Object as PropType<any>,
     default: () => ({}),
   },
-  isBatch: {
-    type: Boolean,
-    default: false,
-  },
 })
 
 const emits = defineEmits(['update:modelValue'])
 
+const isBatch = inject<Ref<boolean>>('isBatch')
+const createCount = inject<Ref<number>>('createCount')
+
 const dialog = useDialog()
 
 const proxyList = useVModel(props, 'modelValue', emits)
-const isBatch = computed(() => props.isBatch)
+
+const isOverload = computed(() => {
+  const sum = proxyList.value.reduce((sum: number, item: any) => {
+    return sum + (item?.proxyCount || 0)
+  }, 0)
+  return sum > (createCount?.value || 0)
+})
 
 const proxyState = reactive({
   region: getImage('proxy.svg'),
@@ -64,7 +69,7 @@ function deleteProxy(index: number) {
 }
 
 function confirm(data: any) {
-  if (isBatch.value) {
+  if (isBatch) {
     proxyList.value.push({
       ...data,
       proxyCount: 1,
@@ -133,6 +138,10 @@ function modifyProxyCount(index: number) {
       </small> -->
     <div>
       <template v-if="isBatch">
+        <!-- todo: 超出校验 -->
+        <Message v-if="isOverload" severity="warn" class="multiple">
+          Bound profiles must not exceed {{ createCount }}
+        </Message>
         <rx-card v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
           <div class="multiple-region">
             <img style="width: 16px;" :src="proxyState.region">

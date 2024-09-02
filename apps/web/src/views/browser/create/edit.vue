@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getFormDataByList } from '/@/utils'
@@ -47,9 +48,12 @@ onUnmounted(() => {
 
 <template>
   <div class="flex justify-between h-full">
-    <div class="flex-1 h-full">
-      <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
-        :open-browser="false" @cancel="cancel" @create="createProfile" />
+    <div class="flex flex-col flex-1 h-full">
+      <rxEditDiv v-model="windowName" class="window-name" />
+      <div class="flex-1 overflow-hidden">
+        <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
+          :open-browser="false" @cancel="cancel" @create="createProfile" />
+      </div>
     </div>
     <previewCard :data="previewData" />
   </div>
