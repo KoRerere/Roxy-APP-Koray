@@ -8,10 +8,12 @@ import {
   TeamApi,
   WindowApi,
 } from '@roxy/backend-api'
+import qs from 'qs'
 import { useUserStore } from '/@/stores/user'
 
 export const httpClient = new HttpClient({
   baseURL: 'https://lumitest.lumibrowser.com/',
+  paramsSerializer(params) { return qs.stringify(params, { arrayFormat: 'comma' }) },
 })
 
 httpClient.instance.interceptors.request.use((config) => {

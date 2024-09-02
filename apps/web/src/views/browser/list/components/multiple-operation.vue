@@ -3,7 +3,7 @@ import actions from '/@/components/actions.vue'
 
 const props = defineProps({
   operation: {
-    type: Array,
+    type: Array as PropType<any[]>,
     default: () => [],
   },
   selection: {
@@ -18,19 +18,15 @@ const props = defineProps({
 
 const emits = defineEmits(['openBrowser', 'more'])
 
-const multiplePperation = computed(() => props.operation.filter(item => !item.extraProps))
+const multiplePperation = computed(() => props.operation.filter((item: any) => item.multiple))
 
-const groupName = [
-  ['restart', 'close'],
-  ['addGroup', 'addTag'],
-]
-
-const quickGroup = computed(() => groupName.map(group =>
-  group.map(name =>
-    multiplePperation.value.find(item =>
-      item.name === name),
-  ),
-))
+const quickGroup = computed<any[]>(() => Object.values(multiplePperation.value.reduce((groups, item) => {
+  if (!item.name || !item.groupName || !item.multiple) {
+    return groups
+  }
+  (groups[item.groupName] || (groups[item.groupName] = [])).push(item)
+  return groups
+}, {})))
 
 function openBrowser() {
   emits('openBrowser', props.selection)

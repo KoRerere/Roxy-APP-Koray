@@ -1,23 +1,29 @@
 <script lang="ts" setup>
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
-import { getFormDataByList } from '/@/utils'
-import { getAccordions, getDefaultValue } from './form-inputs'
+import { getFormDataByList, setInputVisible } from '/@/utils'
+import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { API } from '/@/api'
 
 const router = useRouter()
 
 const tabs = ref([
-  { title: '单个创建', content: 'Tab 1 Content', value: '0' },
-  { title: '批量创建', content: 'Tab 2 Content', value: '1' },
-  { title: '批量导入', content: 'Tab 3 Content', value: '2' },
+  { title: '单个创建', value: 'single' },
+  { title: '批量创建', value: 'batch' },
+  { title: '批量导入', value: 'import' },
 ])
-const tabsValue = ref('0')
+const tabsValue = ref('single')
 
 const windowName = ref('Untitled profile')
-const accordions = ref()
-const original = ref()
-const previewData = computed(() => getFormDataByList(accordions.value?.inputsGroup, {}, { keyName: 'label', valueName: 'value' }))
+
+const accordions = ref(getAccordions())
+const inputsGroup = ref(getInputsGroup())
+const original = ref(getDefaultValue())
+const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
+
+// watch(() => tabsValue.value, (value) => {
+//   setInputVisible(inputsGroup.value, 'windowPlatformList', value === 'single')
+// })
 
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {
@@ -34,10 +40,9 @@ async function createProfile(formData: any, openBrowser: boolean) {
   })
 }
 
-onMounted(() => {
-  accordions.value = getAccordions()
-  original.value = getDefaultValue()
-})
+function cancel() {
+  router.back()
+}
 </script>
 
 <template>
@@ -51,8 +56,8 @@ onMounted(() => {
         </TabList>
       </Tabs>
       <div class="flex-1 overflow-hidden">
-        <accordionInputs v-model:windowName="windowName" :accordions="accordions" @cancel="() => { }"
-          @create-open="(formData: any) => createProfile(formData, true)"
+        <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
+          @cancel="cancel" @create-open="(formData: any) => createProfile(formData, true)"
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>

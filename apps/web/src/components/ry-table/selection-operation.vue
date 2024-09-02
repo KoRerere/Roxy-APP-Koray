@@ -20,12 +20,8 @@ const groups: any = computed(() => Object.values(props.operation.reduce((groups,
   if (!item.name || !item.multiple) {
     return groups
   }
-
-  const groupName = item.groupName || 'Other'
-  if (!groups[groupName]) {
-    groups[groupName] = []
-  }
-  groups[groupName].push(item)
+  const groupName = item.groupName || 'Other';
+  (groups[groupName] || (groups[groupName] = [])).push(item)
   return groups
 }, {})))
 </script>

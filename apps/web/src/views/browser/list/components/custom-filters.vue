@@ -1,31 +1,151 @@
+<!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
+// @ts-ignore
+import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
 import { useVModel } from '@vueuse/core'
-import simplePopup from './inputs-popup.vue'
+import { sleep } from '/@/utils'
 
-const props = defineProps({
+interface FilterItem {
+  multiple?: boolean
+  label: string
+  name: string
+  value: string | string[]
+  original: any
+}
+
+const _props = defineProps({
   options: {
     type: Array,
     default: () => [],
   },
   list: {
-    type: Array,
+    type: Array as PropType<FilterItem[]>,
     default: () => [],
   },
 })
 
-const emits = defineEmits(['update:list'])
-const scvrlist: any = useVModel(props, 'list', emits)
+const emit = defineEmits(['update:list', 'filterChange'])
+
+const filterList = useVModel(_props, 'list', emit)
 
 const dialog = useDialog()
+
+const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
 const options = ref([
   {
     name: 'windowName',
     label: '窗口名称',
     icon: 'mdi mdi-ab-testing',
-    command: () => {
+  },
+  {
+    label: '窗口ID',
+    name: 'windowIds',
+    icon: 'mdi mdi-abacus',
+  },
+  {
+    separator: true,
+  },
+  {
+    label: '操作系统',
+    name: 'osList',
+    icon: 'mdi mdi-abjad-arabic',
+    chindren: ($dict_map.os || []).map((item: any) => ({
+      parentLabel: '操作系统',
+      parentName: 'osList',
+      type: 'Checkbox',
+      value: item.value,
+      label: item.label,
+    })),
+  },
+  {
+    name: 'platformUrlIds',
+    label: '#@账号平台(多选)',
+    icon: 'mdi mdi-abjad-hebrew',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'openStatus',
+    label: '窗口状态',
+    icon: 'mdi mdi-home-group',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'groupIds',
+    label: '#@窗口分组(多选)',
+    icon: 'mdi mdi-access-point-check',
+  },
+  {
+    name: 'labelIds',
+    label: '#@窗口标签(多选)',
+    icon: 'mdi mdi-tag-heart-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'isOften',
+    label: '窗口收藏',
+    icon: 'mdi mdi-bookmark-music-outline',
+  },
+  {
+    label: '窗口备注',
+    name: 'windowRemark',
+    icon: 'mdi mdi-clipboard-list-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'proxyProtocoList',
+    label: '代理协议',
+    icon: 'mdi mdi-alarm-check',
+    chindren: ($dict_map.protocol || []).map((item: any) => ({
+      parentLabel: '代理协议',
+      parentName: 'proxyProtocoList',
+      type: 'Checkbox',
+      value: item.value,
+      label: item.label,
+    })),
+  },
+  {
+    aliasName: 'statusSuccess',
+    name: 'proxyTestStatus',
+    label: '检测成功的代理',
+    icon: 'mdi mdi-clipboard-edit-outline',
+  },
+  {
+    aliasName: 'statusFailure',
+    name: 'proxyTestStatus',
+    label: '检测失败的代理',
+    icon: 'mdi mdi-account-card-outline',
+  },
+  {
+    separator: true,
+  },
+  {
+    name: 'createTime',
+    label: '窗口创建时间',
+    icon: 'mdi mdi-delete-empty-outline',
+  },
+])
+
+const menuRef = ref()
+const isChidren = ref(false)
+const meunOptions = ref(options.value)
+const selectedCategories = ref<string[]>([])
+
+function operationHandler(item: any) {
+  const name = item.aliasName || item.name
+
+  switch (name) {
+    case 'windowName':
       inputPopup({
         title: '窗口名称',
         multiple: true,
@@ -39,13 +159,8 @@ const options = ref([
           },
         ],
       })
-    },
-  },
-  {
-    label: '窗口ID',
-    name: 'windowIds',
-    icon: 'mdi mdi-abacus',
-    command: () => {
+      break
+    case 'windowIds':
       inputPopup({
         title: '窗口ID',
         multiple: true,
@@ -59,73 +174,24 @@ const options = ref([
           },
         ],
       })
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'osList',
-    label: '#@操作系统(多选)',
-    icon: 'mdi mdi-abjad-arabic',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    name: 'platformUrlIds',
-    label: '#@账号平台(多选)',
-    icon: 'mdi mdi-abjad-hebrew',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'openStatus',
-    label: '#@窗口状态(单选)',
-    icon: 'mdi mdi-home-group',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'groupIds',
-    label: '#@窗口分组(多选)',
-    icon: 'mdi mdi-access-point-check',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    name: 'labelIds',
-    label: '#@窗口标签(多选)',
-    icon: 'mdi mdi-tag-heart-outline',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'isOften',
-    label: '#@窗口收藏(true/false)',
-    icon: 'mdi mdi-bookmark-music-outline',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    label: '窗口备注',
-    name: 'windowRemark',
-    icon: 'mdi mdi-clipboard-list-outline',
-    command: () => {
+      break
+    case 'osList':
+      openChild(item)
+      break
+    case 'platformUrlIds':
+      openChild(item)
+      break
+    case 'openStatus':
+      onSwitch(item)
+      break
+    case 'groupIds':
+      break
+    case 'labelIds':
+      break
+    case 'isOften':
+      onSwitch(item)
+      break
+    case 'windowRemark':
       inputPopup({
         title: '窗口备注',
         inputs: [
@@ -138,43 +204,17 @@ const options = ref([
           },
         ],
       })
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'proxyProtocoList',
-    label: '#@代理协议(多选)',
-    icon: 'mdi mdi-alarm-check',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    name: 'proxyTestStatus',
-    label: '#@检测成功的代理(1)', // 一个字段，需要单独处理
-    icon: 'mdi mdi-clipboard-edit-outline',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    name: 'proxyTestStatus',
-    label: '#@检测失败的代理(2)',
-    icon: 'mdi mdi-account-card-outline',
-    command: () => {
-      console.log('🚀 ~ commond:')
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'createTime',
-    label: '窗口创建时间',
-    icon: 'mdi mdi-delete-empty-outline',
-    command: () => {
+      break
+    case 'proxyProtocoList':
+      openChild(item)
+      break
+    case 'statusSuccess':
+      onSwitch(item, 1)
+      break
+    case 'statusFailure':
+      onSwitch(item, 2)
+      break
+    case 'createTime':
       inputPopup({
         title: '窗口创建时间',
         inputs: [
@@ -204,25 +244,16 @@ const options = ref([
           return Object.values(formData).join('~')
         },
       })
-    },
-  },
-])
-
-const menuRef = ref()
-const meun = reactive({
-  targetEvent: null,
-  isChidren: false,
-  options: options.value,
-  rowOptions: options.value,
-  selectedCategories: [],
-})
+      break
+  }
+}
 
 function show(event: any) {
-  meun.targetEvent = event
   menuRef.value.show(event)
 }
 
 function inputPopup(data: any) {
+  menuRef.value.hide()
   dialog.open(simplePopup, {
     props: {
       showHeader: false,
@@ -237,65 +268,86 @@ function inputPopup(data: any) {
           deleteFilterByName(name)
         }
 
-        scvrlist.value.push({
+        filterList.value.push({
           multiple: !!data.multiple,
           label: data.title,
           name,
           value: data.formatValue ? data.formatValue(formData) : value,
           original: formData,
         })
+        emit('filterChange')
         close()
       },
     },
   })
 }
 
-// function onClick (item) {
-//   if (item.chindren) {
-//     sleep(20).then(() => {
-//       meun.isChidren = true
-//       meun.options = item.chindren
-//     })
-//     return
-//   }
-//   scvrlist.value.push(item)
-//   menuRef.value.hide()
-// }
+function onSwitch(item: any, value: any = true) {
+  deleteFilterByName(item.name)
+  filterList.value.push({
+    label: item.label,
+    name: item.name,
+    value,
+    original: { [item.name]: value },
+  })
+  menuRef.value.hide()
+  emit('filterChange')
+}
+
+function openChild(item: any) {
+  if (item.chindren) {
+    sleep(20).then(() => {
+      isChidren.value = true
+      meunOptions.value = item.chindren
+
+      const selected = filterList.value.find(it => it.name === item.name)
+      selectedCategories.value = Array.isArray(selected?.value) ? selected.value : []
+    })
+    return
+  }
+  menuRef.value.hide()
+}
 
 function onHide() {
-  // if (meun.isChidren) {
-  //   const selected = [].concat(meun.selectedCategories)[0]
-  //   if (selected) {
-  //     const { type, prentKey } = selected
-  //     const item = type === 'RadioButton'
-  //       ? selected
-  //       : meun.rowOptions.find(item => item.key === prentKey)
-  //     scvrlist.value.push(item)
-  //   }
-  //   meun.selectedCategories = []
+  if (isChidren.value) {
+    selectedCategories.value = []
+    sleep(20).then(() => {
+      isChidren.value = false
+      meunOptions.value = options.value
+      emit('filterChange')
+    })
+  }
+}
 
-  //   sleep(20).then(() => {
-  //     meun.isChidren = false
-  //     meun.options = options
-  //   })
-  // }
+function onChange(item: any) {
+  deleteFilterByName(item.parentName)
+
+  if (selectedCategories.value.length > 0) {
+    filterList.value.push({
+      label: item.parentLabel,
+      name: item.parentName,
+      value: selectedCategories.value,
+      original: { [item.parentName]: selectedCategories.value },
+    })
+  }
 }
 
 function deleteFilterByName(name: string) {
-  const index = scvrlist.value.findIndex((item: any) => item.name === name)
+  const index = filterList.value.findIndex((item: any) => item.name === name)
   if (index >= 0) {
-    deleteFilter(index)
+    filterList.value.splice(index, 1)
   }
 }
 
 function deleteFilter(index: number) {
-  scvrlist.value.splice(index, 1)
+  filterList.value.splice(index, 1)
+  emit('filterChange')
 }
 </script>
 
 <template>
   <div class="flex gap-2 filter-list">
-    <div v-for="(item, index) in scvrlist" :key="index" class="filter-item">
+    <div v-for="(item, index) in filterList" :key="index" class="filter-item">
       <span class="mdi mdi-close cursor-pointer filter-item-icon" @click="deleteFilter(index)" />
       <span class="select-none">{{ item.label }}:</span>
       <span class="cursor-pointer">{{ item.value }}</span>
@@ -303,26 +355,24 @@ function deleteFilter(index: number) {
 
     <Button class="filter-button" text @click="show($event)">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!scvrlist.length">Add filters</span>
+      <span v-if="!filterList.length">Add filters</span>
     </Button>
   </div>
-  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meun.options" popup
+  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meunOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
-      <a v-ripple class="cursor-pointer browser-item" v-bind="props.action">
-        <template v-if="item.type">
-          <RadioButton v-if="item.type === 'RadioButton'" v-model="meun.selectedCategories" :input-id="item.key"
-            :name="item.prentKey" :value="item" @click.stop />
-          <Checkbox v-if="item.type === 'Checkbox'" v-model="meun.selectedCategories" :name="item.prentKey"
-            :input-id="item.key" :value="item" @click.stop />
-          <label class="w-full" :for="item.key" @click.stop>{{ item.label }}</label>
-        </template>
-        <template v-else>
-          <div class="w-full flex items-center browser-gap">
-            <span :class="item.icon" />
-            <span>{{ item.label }}</span>
-          </div>
-        </template>
+      <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
+        <label v-if="item.type" class="cursor-pointer browser-item" :for="item.value" @click.stop>
+          <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="selectedCategories.value" :input-id="item.name"
+            :name="item.parentName" :value="item" @click.stop @change="change" /> -->
+          <Checkbox v-if="item.type === 'Checkbox'" v-model="selectedCategories" :name="item.parentName"
+            :input-id="item.value" :value="item.value" @click.stop @change="() => onChange(item)" />
+          <span>{{ item.label }}</span>
+        </label>
+        <div v-else class="browser-item" @click.stop="operationHandler(item)">
+          <span :class="item.icon" />
+          <span>{{ item.label }}</span>
+        </div>
       </a>
     </template>
   </TieredMenu>
@@ -339,12 +389,11 @@ function deleteFilter(index: number) {
   }
 
   &-item {
+    display: flex;
+    align-items: center;
     padding: 8px var(--spacing-md, 6px) 8px 10px !important;
     gap: var(--spacing-md, 6px) !important;
-  }
-
-  &-gap {
-    gap: var(--spacing-md, 6px) !important;
+    width: 100%;
   }
 }
 </style>
@@ -381,24 +430,3 @@ function deleteFilter(index: number) {
   line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>
-
-<!-- "filter_name": "test1",      # 标签页名称
-"filter_condition": [        # 标签页查询条件
-    {
-      "platform": "macOS2222222"
-    },
-    {
-      "windowIds": [1,2,3,4]
-    },
-    {
-      "windowName":'asdads'
-    },
-    {
-      "startTime": "2022-01-01"
-    },
-    {
-      "endTime": "2022-06-01"
-    }
-],
-"sort": 1000    # 标签页排序字段
-} -->

@@ -33,11 +33,6 @@ function isInvalid(value: any) {
   return !value && value !== 0
 }
 
-interface FormDataOptions {
-  keyName: string
-  valueName: string
-}
-
 function formVaildData(formData: any, input: any) {
   if (hasOwnProperty(formData, input.name)) {
     throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
@@ -46,6 +41,11 @@ function formVaildData(formData: any, input: any) {
     input.invalid = true
     throw new Error(`Input '${input.name}' is required`)
   }
+}
+
+interface FormDataOptions {
+  keyName: string
+  valueName: string
 }
 
 export function getFormData(
@@ -89,6 +89,19 @@ export function getFormDataByList(
       return Object.assign(formData, _data)
     }, original)
     : []
+}
+
+export function setInputVisible(
+  inputs: any[],
+  names: string | string[],
+  state: boolean,
+) {
+  const _names: string[] = ([] as string[]).concat(names)
+  inputs.forEach((item: any) => {
+    if (_names.includes(item.name)) {
+      item.visible = state
+    }
+  })
 }
 
 export function getValidByObject(

@@ -2,7 +2,7 @@
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getFormDataByList } from '/@/utils'
-import { getAccordions, getDefaultValue } from './form-inputs'
+import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { API } from '/@/api'
 
 const router = useRouter()
@@ -10,9 +10,10 @@ const route = useRoute()
 
 const windowName = ref('edit profile')
 const accordions = ref()
+const inputsGroup = ref()
 const original = ref()
 
-const previewData = computed(() => getFormDataByList(accordions.value?.inputsGroup, {}, { keyName: 'label', valueName: 'value' }))
+const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
 
 async function createProfile(formData: any) {
   const params = {
@@ -31,7 +32,8 @@ function cancel() {
 onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
   windowName.value = data.windowName
-  accordions.value = getAccordions(data)
+  accordions.value = getAccordions()
+  inputsGroup.value = getInputsGroup()
   original.value = {
     id: data.id,
     ...getDefaultValue(data),
@@ -46,8 +48,8 @@ onUnmounted(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex-1 h-full">
-      <accordionInputs v-model:windowName="windowName" :accordions="accordions" :open-browser="false" @cancel="cancel"
-        @create="createProfile" />
+      <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
+        :open-browser="false" @cancel="cancel" @create="createProfile" />
     </div>
     <previewCard :data="previewData" />
   </div>

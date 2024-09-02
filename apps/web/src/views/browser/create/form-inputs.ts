@@ -1,18 +1,5 @@
 import { API } from '/@/api'
-import { getFormDataByList } from '/@/utils'
-
-function setInputVisible(
-  inputs: any[],
-  names: string | string[],
-  state: boolean,
-) {
-  const _names: string[] = ([] as string[]).concat(names)
-  inputs.forEach((item: any) => {
-    if (_names.includes(item.name)) {
-      item.visible = state
-    }
-  })
-}
+import { getFormDataByList, setInputVisible } from '/@/utils'
 
 async function getUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -38,14 +25,37 @@ async function getDeviceName(inputsGroup: any) {
   return API.window.userGetDeviceNameList({ os })
 }
 
-async function getMacAddr(inputsGroup: any) {
+async function _getMacAddr(_inputsGroup: any) {
   // const { os } = getFormDataByList(inputsGroup)
   // return API.window.userGetMacAddrV2List({ os })
 }
 
-export function getAccordions(data: any = {}) {
+export function getAccordions() {
+  return {
+    value: ['0', '1', '2', '3'],
+    panels: [
+      {
+        title: 'window',
+        value: '0',
+      },
+      {
+        title: 'Basic',
+        value: '1',
+      },
+      {
+        title: 'highLevel',
+        value: '2',
+      },
+      {
+        title: 'other',
+        value: '3',
+      },
+    ],
+  }
+}
+
+export function getInputsGroup(data: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  // console.log('🚀 ~ getInputs ~  $dict_map:', $dict_map)
 
   const inputsGroup = reactive([
     [
@@ -98,10 +108,11 @@ export function getAccordions(data: any = {}) {
       {
         type: 'textarea',
         label: 'User-Agent',
-        placeholder: '请填写代理',
+        placeholder: '请填写ua',
         name: 'userAgent',
         value: data.userAgent,
         icon: 'mdi mdi-shuffle-variant',
+        disabled: true,
         iconClick: () => {
           getUaWebgl(inputsGroup)
         },
@@ -130,7 +141,7 @@ export function getAccordions(data: any = {}) {
         separator: true,
       },
       {
-        label: 'Accounts',
+        label: 'Accounts(批量没有)',
         name: 'windowPlatformList',
         value: data.windowPlatformList ?? [],
         slot: 'accounts',
@@ -422,6 +433,7 @@ export function getAccordions(data: any = {}) {
         name: 'webGLManufacturer',
         value: data.webGLManufacturer,
         icon: 'mdi mdi-shuffle-variant',
+        disabled: true,
         visible: true,
         iconClick: () => {
           getUaWebgl(inputsGroup)
@@ -434,6 +446,7 @@ export function getAccordions(data: any = {}) {
         value: data.webGLRender,
         rows: 3,
         icon: 'mdi mdi-shuffle-variant',
+        disabled: true,
         visible: true,
         iconClick: () => {
           getUaWebgl(inputsGroup)
@@ -529,6 +542,7 @@ export function getAccordions(data: any = {}) {
         name: 'deviceName',
         value: data.deviceName,
         icon: 'mdi mdi-shuffle-variant',
+        disabled: true,
         visible: true,
         iconClick: (self: any) => {
           getDeviceName(inputsGroup).then(({ data }) => {
@@ -555,8 +569,9 @@ export function getAccordions(data: any = {}) {
         name: 'macAddr',
         value: data.macAddr,
         icon: 'mdi mdi-shuffle-variant',
+        disabled: true,
         visible: true,
-        iconClick: (self: any) => {
+        iconClick: (_self: any) => {
           // getMacAddr(inputsGroup).then(({ data }) => {
           //   self.value = data.deviceName
           // })
@@ -816,30 +831,7 @@ export function getAccordions(data: any = {}) {
     ],
   ])
 
-  const accordions = {
-    value: ['0', '1', '2', '3'],
-    panels: [
-      {
-        title: 'window',
-        value: '0',
-      },
-      {
-        title: 'Basic',
-        value: '1',
-      },
-      {
-        title: 'highLevel',
-        value: '2',
-      },
-      {
-        title: 'other',
-        value: '3',
-      },
-    ],
-    inputsGroup,
-  }
-
-  return accordions
+  return inputsGroup
 }
 
 export function getDefaultValue(data: any = {}) {
