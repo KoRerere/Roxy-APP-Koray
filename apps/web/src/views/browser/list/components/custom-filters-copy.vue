@@ -39,6 +39,9 @@ function operationHandler(item: any) {
     case 'date':
       inputPopup(item)
       break
+    case 'switch':
+      onSwitch(item)
+      break
     case 'radio':
       // onSwitch(item)
       break
@@ -70,13 +73,7 @@ function inputPopup(data: any) {
 }
 
 function onSwitch(item: any, value: any = true) {
-  // deleteFilterByName(item.name)
-  // filterList.value!.push({
-  //   label: item.label,
-  //   name: item.name,
-  //   value,
-  //   original: { [item.name]: value },
-  // })
+  item.value = value
   menuRef.value.hide()
   emit('filterChange')
 }

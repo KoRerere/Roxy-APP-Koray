@@ -107,9 +107,9 @@ async function saveFilters(formData: { filter_name: string }) {
 }
 
 async function tableRequest(params: any) {
-  const { data } = await API.window.userGetWindowInfoV2List(params)
-  autoOpenBrowser(data.rows)
-  return data.rows
+  const data = await API.window.userGetWindowInfoV2List(params)
+  autoOpenBrowser(data.data.rows)
+  return data
 }
 
 function autoOpenBrowser(list: any) {
@@ -124,22 +124,24 @@ function autoOpenBrowser(list: any) {
 }
 
 async function operationHandler(operate: any, data: any) {
-  console.log('🚀 ~ operationHandler ~ operate:', operate, data)
   /**
    * 有批量操作
    */
   const _data = [].concat(data)
+  const ids: number[] = data.map((item: any) => item.id)
+
   switch (operate.name) {
-    case 'Test': {
-      console.log('🚀 ~test:', data)
-      break
-    }
     case 'edit':
       localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
       router.push({ name: 'browser-edit', query: { id: data.id } })
       break
+    case 'fav': {
+      batchModifyWindow({ ids, isOften: true })
+      break
+    }
     case 'delete':
-      deleteWindow(_data)
+      deletePopup()
+        .then(() => batchModifyWindow({ ids, isDelete: true }))
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
@@ -147,12 +149,9 @@ async function operationHandler(operate: any, data: any) {
   }
 }
 
-async function deleteWindow(data: any) {
+async function batchModifyWindow(params: any) {
   try {
-    const ids: number[] = data.map((item: any) => item.id)
-    await deletePopup()
-    // @ts-ignore
-    const { msg } = await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: true })
+    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
     toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
     tableRef.value.refresh()
   }

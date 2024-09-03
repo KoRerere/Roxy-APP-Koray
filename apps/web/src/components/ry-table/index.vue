@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { clear } from 'node:console'
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
+import type { PageState } from 'primevue/paginator'
 import selectionOperation from './selection-operation.vue'
 import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
 import tableSort from './table-sort.vue'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 const props = defineProps({
   tableRequest: {
@@ -60,9 +64,6 @@ const _columns = computed<any[]>(() => props.columns.filter((item: any) => item.
 const _filters = ref(props.filters)
 
 const tableAttrs = reactive({
-  'paginator': true,
-  'rows': 15,
-  'rows-per-page-options': [5, 15, 30, 70],
   'scrollable': true,
   'scroll-height': 'flex',
   'context-menu': true,
@@ -75,20 +76,33 @@ const tableAttrs = reactive({
   ...useAttrs(),
 })
 
-const params = reactive<any>({
-  sort: {},
-  filter: {},
-  default: {
-    page_index: 1,
-    page_size: 15,
-  },
-})
-
 const _dataList = ref([])
-
 const menuRef = ref()
 const contextMenuSelection = ref()
 const selectionData = ref()
+
+const params = reactive<any>({
+  sort: {},
+  filters: {},
+})
+
+const paginatorConfig = reactive({
+  page: 1,
+  rows: 15,
+  totalRecords: 0,
+  rowsPerPageOptions: [5, 15, 30, 50],
+  onResetPage(page: number = 0, rows: number = 15) {
+    paginatorConfig.page = page
+    paginatorConfig.rows = rows
+  },
+  onPage(event: PageState) {
+    paginatorConfig.page = event.page + 1
+    _request()
+  },
+  onRowsChange(event) {
+    console.log('🚀 ~ onRowsChange ~ event:', paginatorConfig)
+  },
+})
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   menuRef.value.show(event.originalEvent)
@@ -105,11 +119,14 @@ function batchOperation(item: any) {
 
 function onChangeParams(key: string, data: any) {
   Object.assign(params[key], data)
+  paginatorConfig.onResetPage()
   _request()
 }
 
 function _getParams(outerParams?: any) {
   return {
+    page_index: paginatorConfig.page,
+    page_size: paginatorConfig.rows,
     ...params.sort,
     ...params.filter,
     ...params.default,
@@ -122,8 +139,14 @@ async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
   _dataList.value = Array.isArray(props.dataList)
     ? props.dataList
-    : await props.tableRequest(requestParams)
+    : await tableRequest(requestParams)
   _clearSelection()
+}
+
+async function tableRequest(requestParams: any) {
+  const { data } = await await props.tableRequest(requestParams)
+  paginatorConfig.totalRecords = data.total
+  return data.rows
 }
 
 function _clearSelection() {
@@ -149,10 +172,10 @@ defineExpose({
 </script>
 
 <template>
-  <div class="position-relative h-full">
+  <div class="position-relative h-full rxtable">
     <div class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
-        <table-filter :filters="_filters" @change="(data) => onChangeParams('filter', data)" />
+        <table-filter :filters="_filters" @change="(data) => onChangeParams('filters', data)" />
         <slot name="header-extra" />
       </div>
       <div class="flex gap-2">
@@ -166,13 +189,6 @@ defineExpose({
         :value="_dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
-        </template>
-        <template #paginatorstart>
-          <div class="flex items-center rxtable-body-jump">
-            <div>Go to</div>
-            <InputNumber placeholder="Page" />
-            <div>|</div>
-          </div>
         </template>
         <template #empty>
           <slot name="table-empty">
@@ -192,29 +208,47 @@ defineExpose({
         </Column>
       </DataTable>
     </div>
-
-    <ContextMenu ref="menuRef" :model="operation">
-      <template #item="{ item, props: ctxProps }">
-        <a v-ripple v-bind="ctxProps.action" @click="contextMenuClick(item)">
-          <span :class="item.icon" />
-          <span>{{ item.label }}</span>
-        </a>
-      </template>
-    </ContextMenu>
-    <Transition>
-      <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
-        @batch-operation="batchOperation">
-        <template #custom-operation>
-          <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
+    <div class="rxtable-paginator">
+      <Paginator template="PrevPageLink PageLinks NextPageLink" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+        <template #start>
+          <div class="flex flex-1 items-center rxtable-paginator-jump">
+            <div>Showing 11-20 of 300 profiles, </div>
+            <Select v-model="paginatorConfig.rows" :options="paginatorConfig.rowsPerPageOptions"
+              @change="paginatorConfig.onRowsChange" />
+            <div>profiles/page</div>
+            <div>Go to</div>
+            <InputNumber class="rxtable-paginator-jump-input" />
+            <div>|</div>
+          </div>
         </template>
-      </selection-operation>
-    </Transition>
+      </Paginator>
+    </div>
   </div>
+  <ContextMenu ref="menuRef" :model="operation">
+    <template #item="{ item, props: ctxProps }">
+      <a v-ripple v-bind="ctxProps.action" @click="contextMenuClick(item)">
+        <span :class="item.icon" />
+        <span>{{ item.label }}</span>
+      </a>
+    </template>
+  </ContextMenu>
+  <Transition>
+    <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
+      v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
+      @batch-operation="batchOperation">
+      <template #custom-operation>
+        <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
+      </template>
+    </selection-operation>
+  </Transition>
 </template>
 
 <style lang="scss" scoped>
 .rxtable {
+  display: flex;
+  flex-direction: column;
+
   &-header {
     display: flex;
     padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
@@ -225,22 +259,26 @@ defineExpose({
   }
 
   &-body {
-    height: calc(100% - 60px);
+    flex: 1;
+    overflow: hidden;
+  }
 
+  &-paginator {
     &-jump {
       display: flex;
       gap: var(--spacing-lg, 8px);
+
+      &-input {
+        :deep(.p-inputnumber-input) {
+          width: 60px;
+        }
+      }
     }
   }
 }
 
 :deep(.p-paginator-content-start) {
-  margin: auto;
-  margin-right: 0;
-}
-
-:deep(.p-datatable-paginator-bottom) {
-  border-style: none;
+  flex: 1;
 }
 
 .v-enter-active,

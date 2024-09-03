@@ -104,12 +104,14 @@ export function getOperation(_params: any = {}) {
       label: '收藏',
       icon: 'mdi mdi-bookmark-music-outline',
       multiple: true,
+      quick: true,
     },
     {
       name: 'addNotes',
       label: '新增笔记',
       icon: 'mdi mdi-clipboard-list-outline',
       multiple: true,
+      quick: true,
     },
     {
       separator: true,

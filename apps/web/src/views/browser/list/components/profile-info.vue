@@ -35,8 +35,8 @@ const list = computed(() => [
   },
   {
     key: 'account',
-    image: data.value.windowPlatformList[0]?.platformIcon || getImage('plus.svg'),
-    classes: data.value.windowPlatformList.length > 1 ? 'stack' : '',
+    image: data.value.windowPlatformList?.[0]?.platformIcon || getImage('plus.svg'),
+    classes: data.value.windowPlatformList?.length > 1 ? 'stack' : '',
   },
 ])
 
