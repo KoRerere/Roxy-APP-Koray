@@ -47,6 +47,7 @@ function update(newColumns: any[]) {
   &-column {
     padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
     min-width: 250px;
+    gap: var(--spacing-sm, 4px);
   }
 
   &-save {

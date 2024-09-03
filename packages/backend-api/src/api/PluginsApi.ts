@@ -93,7 +93,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserGetPluginCategoryList
-   * @summary 扩展中心->获取插件目录
+   * @summary 获取系统扩展插件类别
    * @request GET:/user_get_plugin_category
    * @response `200` `UserGetPluginCategoryListData` 成功
    */
@@ -109,7 +109,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserGetSystemPluginList
-   * @summary 扩展推荐->展示系统扩展列表
+   * @summary 获取系统扩展的插件
    * @request GET:/user_get_system_plugin
    * @response `200` `UserGetSystemPluginListData` 成功
    */
@@ -126,7 +126,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserAddSystemPluginCreate
-   * @summary 扩展推荐->添加系统扩展
+   * @summary 添加系统扩展到用户扩展列表
    * @request POST:/user_add_system_plugin
    * @response `200` `UserAddSystemPluginCreateData` 成功
    */
@@ -144,7 +144,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserGetPluginListList
-   * @summary 扩展配置->扩展配置列表
+   * @summary 获取用户自己添加的插件
    * @request GET:/user_get_plugin_list
    * @response `200` `UserGetPluginListListData` 成功
    */
@@ -161,7 +161,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserDelPluginInfoCreate
-   * @summary 扩展中心->删除插件
+   * @summary 删除用户自己添加的插件
    * @request POST:/user_del_plugin_info
    * @response `200` `UserDelPluginInfoCreateData` 成功
    */
@@ -179,7 +179,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    *
    * @tags Plugins
    * @name UserMdfPluginStatusCreate
-   * @summary 扩展中心->启用或关闭插件
+   * @summary 启用或关闭用户自己的插件
    * @request POST:/user_mdf_plugin_status
    * @response `200` `UserMdfPluginStatusCreateData` 成功
    */

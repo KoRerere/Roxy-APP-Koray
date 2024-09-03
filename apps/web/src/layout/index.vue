@@ -60,18 +60,18 @@ onMounted(() => {
       </div>
       <siderMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-           @click="() => (collapsed = !collapsed)"
-      >
+        @click="() => (collapsed = !collapsed)">
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </div>
-    <div class="rx-main">
+    <div class="rx-main overflow-hidden">
       <div class="rx-main-header">
         header
-        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle" @click="toggle" />
+        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle"
+          @click="toggle" />
         <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
       </div>
-      <div class="rx-main-content">
+      <div class="w-full rx-main-content">
         <RouterView />
       </div>
     </div>

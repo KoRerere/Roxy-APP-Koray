@@ -37,11 +37,10 @@ const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 const tableRef = ref()
 const filters = ref()
-const ctmFilters = ref(getCustomFilters())
+const ctmFilters = ref()
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
-const filtersByGroup = ref([])
 const drawer = reactive({
   type: 'proxyList' as DrawerType,
   title: '',
@@ -55,16 +54,16 @@ const drawer = reactive({
         drawer.editProfile(data)
         break
       case 'accountForm':
-      {
-        const { id, dirId, windowPlatformList, ...item } = data
-        console.log('🚀 ~ windowPlatformList:', windowPlatformList)
-        drawer.editProfile({
-          id,
-          dirId,
-          windowPlatformList: windowPlatformList.concat(item),
-        })
-        break
-      }
+        {
+          const { id, dirId, windowPlatformList, ...item } = data
+          console.log('🚀 ~ windowPlatformList:', windowPlatformList)
+          drawer.editProfile({
+            id,
+            dirId,
+            windowPlatformList: windowPlatformList.concat(item),
+          })
+          break
+        }
     }
   },
   editProfile: async (data: any) => {
@@ -83,10 +82,14 @@ const drawer = reactive({
 })
 
 watch(() => activeTab.value, (value) => {
-  ctmFilters.value = getCustomFilters(value.filter_condition || {})
+  if (value.routeName !== 'browser-recycle') {
+    getCustomFilters(value.filter_condition || {})
+      .then((data) => {
+        ctmFilters.value = data
+        filterChange()
+      })
+  }
 })
-
-console.log('🚀 ~ watch ~ ctmFilters.value:', ctmFilters.value)
 
 function filterChange() {
   const params = getFormData(ctmFilters.value)
@@ -97,9 +100,7 @@ async function saveFilters(formData: { filter_name: string }) {
   if (!filters.value.length) {
     return
   }
-
-  const filter_condition = filtersByGroup.value.reduce((params, item: any) => ({ ...params, ...item.original }), {} as UserAddWindowFilterNameCreatePayload['filter_condition'])
-
+  const filter_condition = getFormData(ctmFilters.value)
   const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   emit('updateFilterTabs')
@@ -312,13 +313,10 @@ onBeforeUnmount(() => {
 
 <template>
   <ry-table ref="tableRef" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
-            selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
-            :show-gridlines="false"
-  >
+    selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
+    :show-gridlines="false">
     <template #header-extra>
-      <customFilters v-model:list="filtersByGroup" :ctm-filters="ctmFilters" @filter-change="filterChange"
-                     @save-filters="saveFilters"
-      />
+      <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
@@ -334,19 +332,15 @@ onBeforeUnmount(() => {
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-                         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-                         @open-browser="() => openBrowser(selection)"
-                         @quick-click="(e) => operationHandler(e, selection)"
-      />
+        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
+        @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
-          :pt="{ mask: 'browser-drawer' }"
-  >
+    :pt="{ mask: 'browser-drawer' }">
     <template #container="{ closeCallback }">
       <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-                    @confirm="data => drawer.confirm(drawer.type, data)"
-      />
+        @confirm="data => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>
 </template>

@@ -13,7 +13,7 @@ const toast = useToast()
 const tabs = ref([
   { title: '单个创建', value: 'single' },
   { title: '批量创建', value: 'batch' },
-  { title: '批量导入', value: 'import' },
+  { title: '批量导入x', value: 'import' },
 ])
 const tabsValue = ref('single')
 const isBatch = ref(false)

@@ -187,7 +187,7 @@ export interface UserGetUserInfoListData {
 export interface UserGetAppUpgradeCreatePayload {
   /**
    * 操作系统
-   * 如 macOS,Windows，str，必传
+   * 如 "win32", "darwin"，str，必传
    */
   os: string;
   /**
@@ -203,18 +203,22 @@ export interface UserGetAppUpgradeCreatePayload {
 }
 
 export interface UserGetAppUpgradeCreateData {
-  downloadUrl: string;
-  version: string;
-  upgradeTitle: string;
-  upgradeDesc: string;
-  releaseTime: string;
-  webDomain: string;
+  code: number;
+  data: {
+    downloadUrl: string;
+    version: string;
+    upgradeTitle: string;
+    upgradeDesc: string;
+    releaseTime: string;
+    webDomain: string;
+  };
+  msg: string;
 }
 
 export interface UserGetCoreUpgradeCreatePayload {
   /**
    * 操作系统
-   * 如 macOS,Windows，str，必传
+   * 如 "win32", "darwin"，str，必传
    */
   os: string;
   /**
@@ -2565,7 +2569,7 @@ export interface UserGetSystemPluginListParams {
   page_index?: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example "9999"
    */
   page_size?: number;
   /**
