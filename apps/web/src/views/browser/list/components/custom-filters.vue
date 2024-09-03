@@ -15,14 +15,10 @@ interface FilterItem {
 }
 
 const _props = defineProps({
-  // options: {
-  //   type: Array,
-  //   default: () => [],
-  // },
-  // list: {
-  //   type: Array as PropType<FilterItem[]>,
-  //   default: () => [],
-  // },
+  ctmFilters: {
+    type: Array as PropType<any[]>,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])

@@ -29,6 +29,16 @@ export function clearInputsValue(inputs: any): void {
   })
 }
 
+export function isEmptyValue(value: any) {
+  if (Array.isArray(value)) {
+    return value.length === 0
+  }
+  else if (isObject(value)) {
+    return Object.keys(value).length === 0
+  }
+  return isInvalid(value)
+}
+
 function isInvalid(value: any) {
   return !value && value !== 0
 }
@@ -139,4 +149,19 @@ export function getValidByObject(
 
 export function getImage(path: string) {
   return new URL(`../assets/image/${path}`, import.meta.url).href
+}
+
+export function deepClone<T>(source: T, hash = new WeakMap()): T {
+  if (typeof source !== 'object' || source === null) {
+    return source
+  }
+  if (hash.has(source)) {
+    return hash.get(source)
+  }
+  const target: any = Array.isArray(source) ? [] : {}
+  hash.set(source, target);
+  (Reflect.ownKeys(source) as (keyof T)[]).forEach((key) => {
+    target[key] = deepClone((source as any)[key], hash)
+  })
+  return target
 }

@@ -6,15 +6,17 @@ import ryTag from '/@/components/ry-tag'
 
 import drawersitems from '/@/views/browser/components/drawers/index.vue'
 import profileInfo from './components/profile-info.vue'
-import customFilters from './components/custom-filters.vue'
+// import customFilters from './components/custom-filters.vue'
+import customFilters from './components/custom-filters-copy.vue'
 import browserControl from './components/browser-control.vue'
 import multipleOperation from './components/multiple-operation.vue'
+import { getFormData } from '/@/utils/index'
 
 import useColumns from '/@/hooks/useColumns'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import columnsRow from './columns'
-import { getFilters, getOperation, getSorts } from './operation'
+import { getCustomFilters, getFilters, getOperation, getSorts } from './operation'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
@@ -35,6 +37,7 @@ const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 const tableRef = ref()
 const filters = ref()
+const ctmFilters = ref(getCustomFilters())
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
@@ -80,11 +83,13 @@ const drawer = reactive({
 })
 
 watch(() => activeTab.value, (value) => {
-  console.log('🚀 ~ value:', value)
+  ctmFilters.value = getCustomFilters(value.filter_condition || {})
 })
 
+console.log('🚀 ~ watch ~ ctmFilters.value:', ctmFilters.value)
+
 function filterChange() {
-  const params = filtersByGroup.value.reduce((params, item: any) => ({ ...params, ...item.original }), {})
+  const params = getFormData(ctmFilters.value)
   tableRef.value.refresh(params)
 }
 
@@ -291,7 +296,8 @@ onMounted(() => {
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
-      <customFilters v-model:list="filtersByGroup" @filter-change="filterChange" @save-filters="saveFilters" />
+      <customFilters v-model:list="filtersByGroup" :ctm-filters="ctmFilters" @filter-change="filterChange"
+        @save-filters="saveFilters" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />

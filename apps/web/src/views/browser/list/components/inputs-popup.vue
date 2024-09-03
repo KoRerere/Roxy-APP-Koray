@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import ryForm from '/@/components/ry-form'
-import { getFormData } from '/@/utils/index'
+import { deepClone, getFormData } from '/@/utils/index'
 
 const emit = defineEmits(['cancel', 'save'])
 
 const dialogRef = inject<any>('dialogRef')
-const popupData = ref<any>({})
+const inputs = ref()
 
 function close() {
   dialogRef.value.close()
@@ -13,7 +13,7 @@ function close() {
 
 function save() {
   try {
-    const formData = getFormData(popupData.value.inputs)
+    const formData = getFormData(inputs.value)
     emit('save', [formData, close])
   }
   catch (error) {
@@ -22,21 +22,21 @@ function save() {
 }
 
 onMounted(() => {
-  popupData.value = dialogRef.value.data
+  inputs.value = [deepClone(dialogRef.value.data)]
 })
 </script>
 
 <template>
   <div class="content">
     <div class="header">
-      <div class="header-title">
+      <!-- <div class="header-title">
         {{ popupData.title }}
       </div>
       <div class="header-description">
         {{ popupData.description }}
-      </div>
+      </div> -->
     </div>
-    <ryForm class="form" :inputs="popupData.inputs" />
+    <ryForm class="form" :inputs="inputs" />
     <div class="footer">
       <Button label="Save" severity="info" autofocus @click="save" />
       <Button label="Cancel" text severity="secondary" autofocus @click="close" />
