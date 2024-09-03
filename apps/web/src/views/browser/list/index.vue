@@ -37,7 +37,7 @@ const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 const tableRef = ref()
 const filters = ref()
-const ctmFilters = ref(getCustomFilters())
+const ctmFilters = ref()
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
@@ -83,10 +83,14 @@ const drawer = reactive({
 })
 
 watch(() => activeTab.value, (value) => {
-  ctmFilters.value = getCustomFilters(value.filter_condition || {})
+  if (value.routeName !== 'browser-recycle') {
+    getCustomFilters(value.filter_condition || {})
+      .then((data) => {
+        ctmFilters.value = data
+        filterChange()
+      })
+  }
 })
-
-console.log('🚀 ~ watch ~ ctmFilters.value:', ctmFilters.value)
 
 function filterChange() {
   const params = getFormData(ctmFilters.value)

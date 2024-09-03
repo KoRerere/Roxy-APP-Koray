@@ -30,7 +30,9 @@ const scvroptionsItems = computed(() => scvroptions.value.filter((item: any) => 
 
 const menuRef = ref()
 const isChildren = ref(false)
-const menuOptions = ref(scvroptions.value)
+const subMenuOptions = ref()
+const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : scvroptions.value)
+
 const selectedCategories = ref<string[]>([])
 
 function showMenu(event: any) {
@@ -91,7 +93,7 @@ function openChild(item: any) {
   if (item.options) {
     sleep(20).then(() => {
       isChildren.value = true
-      menuOptions.value = item.options
+      subMenuOptions.value = item.options
       selectedCategories.value = item.value
     })
     return
@@ -104,7 +106,6 @@ function onHide() {
     selectedCategories.value = []
     sleep(20).then(() => {
       isChildren.value = false
-      menuOptions.value = scvroptions.value
       emit('filterChange')
     })
   }

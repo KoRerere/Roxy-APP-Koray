@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { API } from '/@/api'
 
 export function getFilters(params: any = {}) {
   return [
@@ -131,8 +132,15 @@ export function getOperation(_params: any = {}) {
   ]
 }
 
-export function getCustomFilters(params: any = {}) {
+export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+
+  // todo 下版本优化，点击二级菜单才调用接口
+  const [{ data: platformList }, { data: groupList }, { data: labelList }] = await Promise.all([
+    API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
+    API.window.userGetGroupInfoList({ page_index: 1, page_size: 999 }),
+    API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
+  ])
 
   return [
     {
@@ -163,9 +171,16 @@ export function getCustomFilters(params: any = {}) {
       })),
     },
     {
+      type: 'Checkbox',
       name: 'platformUrlIds',
-      label: '#@账号平台(多选)',
+      label: '账号平台',
       icon: 'mdi mdi-abjad-hebrew',
+      options: platformList.rows.map((item: any) => ({
+        parentLabel: '账号平台',
+        parentName: 'platformUrlIds',
+        value: `${item.id}`,
+        label: item.platformName,
+      })),
     },
     {
       separator: true,
@@ -192,14 +207,28 @@ export function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
+      type: 'Checkbox',
       name: 'groupIds',
-      label: '#@窗口分组(多选)',
+      label: '窗口分组',
       icon: 'mdi mdi-access-point-check',
+      options: groupList.rows.map((item: any) => ({
+        parentLabel: '窗口分组',
+        parentName: 'groupIds',
+        value: `${item.id}`,
+        label: item.name,
+      })),
     },
     {
+      type: 'Checkbox',
       name: 'labelIds',
-      label: '#@窗口标签(多选)',
+      label: '窗口标签',
       icon: 'mdi mdi-tag-heart-outline',
+      options: labelList.rows.map((item: any) => ({
+        parentLabel: '窗口分组',
+        parentName: 'labelIds',
+        value: `${item.id}`,
+        label: item.name,
+      })),
     },
     {
       separator: true,

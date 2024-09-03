@@ -29,6 +29,7 @@ function handleTabChange(id: string | number) {
 
 onMounted(() => {
   getFilterList()
+  activeTab.value = tabs.value[0]
 })
 </script>
 
