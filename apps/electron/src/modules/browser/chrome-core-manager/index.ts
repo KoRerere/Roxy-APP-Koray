@@ -60,7 +60,10 @@ export const chromeCoreManager = new class ChromeCoreManager {
   /** 根据内核版本获取对应的内核执行文件 */
   async getCoreExePath(coreVersion: string, msgCallback?: (msg: string) => void) {
     if (!this.availableCoreList.length) {
-      await this.fetchAvailableCoreList()
+      await this.fetchAvailableCoreList().catch((error) => {
+        msgCallback?.('获取内核列表失败')
+        return Promise.reject(error)
+      })
     }
 
     const exePath = this.genCoreExePath(coreVersion)

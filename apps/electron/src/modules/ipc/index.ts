@@ -3,6 +3,7 @@ import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electr
 import { browserManager } from '/@/modules/browser'
 import { aliOSS, proxyDetection } from '/@/utils'
 import { store } from '/@/modules/store'
+import { dialog } from 'electron'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -35,6 +36,16 @@ ipcMain.on('browser:batchLaunch', (winItemList) => {
   return browserManager.batchLaunch(winItemList)
 })
 
+/** 批量关闭浏览器 */
+ipcMain.on('browser:batchClose', (dirIds: string[]) => {
+  return browserManager.batchClose(dirIds)
+})
+
+/** 批量重启浏览器 */
+ipcMain.on('browser:batchRelaunch', (winItemList) => {
+  return browserManager.batchReLaunch(winItemList)
+})
+
 /** 批量删除本地浏览器 */
 ipcMain.on('browser:batchRemove', (dirIds) => {
   return browserManager.batchDelete(dirIds)
@@ -44,4 +55,24 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.userInfo = userInfo
   aliOSS.init()
+})
+
+/** 保存软件设置 */
+ipcMain.on('app:saveSoftConfig', (config) => {
+  // @ts-expect-error 后端字段不是一个枚举
+  store.closeSoft = config.closeSoft
+  store.memoryLimit = Number(config.memoryLimit) ? Number(config.memoryLimit) : 95
+  store.browserCacheRootDir = config.cacheDir
+})
+
+/** 选择文件夹 */
+ipcMain.on('dialog:selectDir', async () => {
+  try {
+    const { filePaths } = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    return filePaths[0]
+  }
+  catch (error) {
+    console.log(error)
+    return ''
+  }
 })

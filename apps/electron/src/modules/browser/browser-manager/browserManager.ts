@@ -1,5 +1,7 @@
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
+import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { ipcMain } from '/@/modules/ipc'
 
 export class BrowserManager {
   /** 正在打开中的浏览器集合 */
@@ -20,8 +22,15 @@ export class BrowserManager {
 
   /** 启动浏览器 */
   async launch(winInfo: WindowItemType) {
+    const openedBrowser = this.openedBrowserMap.get(winInfo.dirId!)
     // 如果浏览器已经打开, 则直接返回
-    if (this.openedBrowserMap.has(winInfo.dirId!)) {
+    if (openedBrowser) {
+      sendSuccessMessage({
+        dirId: openedBrowser.winInfo.dirId!,
+        percent: 100,
+        message: '浏览器已打开',
+      })
+      await openedBrowser.launch()
       return
     }
 
@@ -37,9 +46,10 @@ export class BrowserManager {
     })
     this.openedBrowserMap.set(winInfo.dirId!, browserItem)
     // 监听浏览器关闭事件, 从已打开的浏览器集合中删除
-    browserItem.browser?.on('disconnected', () => {
+    browserItem.getBrowser()?.on('disconnected', () => {
       console.log(`BrowserManager ${winInfo.dirId} === 浏览器已关闭`)
       this.openedBrowserMap.delete(winInfo.dirId!)
+      ipcMain.send('browser:on-close', winInfo.dirId!)
     })
   }
 
@@ -52,11 +62,17 @@ export class BrowserManager {
     }
   }
 
+  /** 批量重启浏览器 */
+  async batchReLaunch(winInfoList: WindowItemType[]) {
+    await this.batchClose(winInfoList.map(winInfo => winInfo.dirId!))
+    await this.batchLaunch(winInfoList)
+  }
+
   /** 关闭浏览器 */
   async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
-      const browserProcess = browserItem.browser?.process()
+      const browserProcess = browserItem.getBrowser()?.process()
       await browserItem.close()
       this.openedBrowserMap.delete(dirId)
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭

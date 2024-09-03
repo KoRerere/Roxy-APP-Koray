@@ -5,6 +5,10 @@ const tabs = ref([
   { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000', routeName: 'browser-list' },
   { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001', routeName: 'browser-recycle' },
 ])
+
+window.electronAPI.on('browser:on-close', (dirId) => {
+  console.log('browser:on-close', dirId)
+})
 const activeTab = ref()
 
 provide('activeTab', activeTab)

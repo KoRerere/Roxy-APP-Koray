@@ -5,14 +5,19 @@ import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/brow
 import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
+import type { BeforeLaunchTask } from './beforeLaunchTask'
 import type { AfterLaunchTask } from './afterLaunchTask'
 import { createReadStream } from 'node:fs'
 import { API } from '/@/api'
 
 export class BrowserItem {
+  private beforeLaunchTask!: BeforeLaunchTask
   private afterLaunchTask!: AfterLaunchTask
   /** 浏览器实例 */
-  browser: Browser | null = null
+  get #browser() {
+    return this.beforeLaunchTask?.browser
+  }
+
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
   /** 浏览器关闭后，上传数据 promise */
@@ -57,19 +62,26 @@ export class BrowserItem {
     this.userDataDir = join(appConfig.browserCacheRootDir, winItem.dirId!)
   }
 
+  getBrowser() {
+    return this.#browser
+  }
+
   /** 启动浏览器 */
   async launch() {
-    if (this.browser) {
+    if (this.#browser) {
+      this.beforeLaunchTask.makeActive().catch((error) => {
+        console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
+      })
       return
     }
 
     const { BeforeLaunchTask } = await import('./beforeLaunchTask')
     // 创建启动任务
-    const beforeLaunchTask = new BeforeLaunchTask(this.winInfo)
+    this.beforeLaunchTask = new BeforeLaunchTask(this.winInfo)
     // 拉起浏览器
-    this.browser = await beforeLaunchTask.run()
+    await this.beforeLaunchTask.run()
     // 浏览器关闭时，需要上传本地数据和状态
-    this.browser?.on('disconnected', async () => {
+    this.#browser!.on('disconnected', async () => {
       try {
         await this.uploadData()
         this.uploadDataPromiser.resolve(true)
@@ -80,16 +92,16 @@ export class BrowserItem {
     })
     const { AfterLaunchTask } = await import('./afterLaunchTask')
     // 创建启动后任务
-    this.afterLaunchTask = new AfterLaunchTask(this.winInfo, this.browser!)
+    this.afterLaunchTask = new AfterLaunchTask(this.winInfo, this.#browser!)
     // 异步执行启动后的任务, 不需要等待
     this.afterLaunchTask.run()
   }
 
   /** 关闭浏览器 */
   async close() {
-    if (this.browser) {
-      await this.browser.close()
-      this.browser = null
+    if (this.#browser) {
+      await this.#browser.close()
+      this.beforeLaunchTask.browser = null
       return this.uploadDataPromiser.promise
     }
   }

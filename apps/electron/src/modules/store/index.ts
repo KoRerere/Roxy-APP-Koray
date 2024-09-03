@@ -5,13 +5,20 @@ import Store from 'electron-store'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
+  /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
+  /** 软件关闭时 */
+  closeSoft: 'pop' | 'min' | 'exit'
+  /** 性能监控 */
+  memoryLimit: number
   userInfo: UserGetUserInfoListData['data']
 }
 
 const sessionDir = app.getPath('sessionData')
 
-const defaultValues = {
+const defaultValues: StoreType = {
+  closeSoft: 'pop',
+  memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
   userInfo: {} as UserGetUserInfoListData['data'],
 }

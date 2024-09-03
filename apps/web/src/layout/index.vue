@@ -11,23 +11,22 @@ const toast = useToast()
 const collapsed = ref<boolean>(false)
 const menu = ref()
 const items = ref([
+
   {
-    label: 'Options',
-    items: [
-      {
-        label: '个人信息',
-        icon: 'pi pi-refresh',
-      },
-      {
-        label: '退出登录',
-        icon: 'pi pi-upload',
-        command: () => {
-          clearUserInfo()
-          router.push({ name: 'login' })
-          toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
-        },
-      },
-    ],
+    label: '个人信息',
+    icon: 'pi pi-refresh',
+    command: () => {
+      router.push({ name: 'setting' })
+    },
+  },
+  {
+    label: '退出登录',
+    icon: 'pi pi-upload',
+    command: () => {
+      clearUserInfo()
+      router.push({ name: 'login' })
+      toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
+    },
   },
 ])
 
@@ -61,15 +60,15 @@ onMounted(() => {
       </div>
       <siderMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-        @click="() => (collapsed = !collapsed)">
+           @click="() => (collapsed = !collapsed)"
+      >
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </div>
     <div class="rx-main">
       <div class="rx-main-header">
         header
-        <Button type="button" icon="pi pi-ellipsis-v" aria-haspopup="true" aria-controls="overlay_menu"
-          @click="toggle" />
+        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle" @click="toggle" />
         <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
       </div>
       <div class="rx-main-content">
