@@ -2,6 +2,7 @@ import path from 'node:path'
 import { app, autoUpdater, shell } from 'electron'
 import { restoreOrCreateWindow } from './mainWindow'
 import { ipcMain } from '/@/modules/ipc'
+import { createTray } from '/@/modules/app/tray'
 
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 app.commandLine.appendSwitch('--no-sandbox')
@@ -96,6 +97,9 @@ export function setupApp() {
    * Create app window when background process will be ready
    */
   app.whenReady()
-    .then(restoreOrCreateWindow)
+    .then(async () => {
+      const browserWindow = await restoreOrCreateWindow()
+      createTray(browserWindow)
+    })
     .catch(e => console.error('Failed create window:', e))
 }
