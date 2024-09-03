@@ -6,13 +6,6 @@ import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
 import { isEmptyValue, setInputValueByInputKey, sleep } from '/@/utils'
 
-interface FilterItem {
-  label: string
-  name: string
-  value: string | string[]
-  original: any
-}
-
 const _props = defineProps({
   ctmFilters: {
     type: Array as PropType<any[]>,
@@ -21,7 +14,6 @@ const _props = defineProps({
 })
 
 const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])
-const filterList = defineModel<FilterItem[]>('list')
 const dialog = useDialog()
 
 const scvroptions = computed(() => _props.ctmFilters)
@@ -128,15 +120,11 @@ function saveFilters() {
       blockScroll: true,
     },
     data: {
-      title: 'save filter',
-      inputs: [
-        {
-          type: 'text',
-          placeholder: 'filter name...',
-          name: 'filter_name',
-          required: true,
-        },
-      ],
+      type: 'text',
+      label: 'Save filter',
+      placeholder: 'filter name...',
+      name: 'filter_name',
+      required: true,
     },
     emits: {
       onSave: ([formData, close]: [any, () => void]) => {
@@ -158,7 +146,7 @@ function saveFilters() {
 
     <ryButton class="filter-button" text @click="showMenu">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!filterList!.length">Add filters</span>
+      <span v-if="!scvroptionsItems.length">Add filters</span>
     </ryButton>
     <ryButton>clear</ryButton>
     <ryButton @click="saveFilters">

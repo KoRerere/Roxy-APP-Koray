@@ -28,7 +28,7 @@ export function getSorts(params: any = {}) {
         { label: '最后打开时间', value: 'openTime' },
         { label: '最后关闭时间', value: 'closeTime' },
         { label: '代理检测时间', value: 'checkTime' },
-        { label: '窗口ID', value: 'id' },
+        { label: '窗口序号', value: 'windowSortNum' },
         { label: '窗口名称', value: 'name' },
         { label: '国家', value: 'lastCountry' },
       ],

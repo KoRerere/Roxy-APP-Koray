@@ -41,7 +41,6 @@ const ctmFilters = ref()
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
-const filtersByGroup = ref([])
 const drawer = reactive({
   type: 'proxyList' as DrawerType,
   title: '',
@@ -101,9 +100,7 @@ async function saveFilters(formData: { filter_name: string }) {
   if (!filters.value.length) {
     return
   }
-
-  const filter_condition = filtersByGroup.value.reduce((params, item: any) => ({ ...params, ...item.original }), {} as UserAddWindowFilterNameCreatePayload['filter_condition'])
-
+  const filter_condition = getFormData(ctmFilters.value)
   const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   emit('updateFilterTabs')
@@ -300,8 +297,7 @@ onMounted(() => {
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
-      <customFilters v-model:list="filtersByGroup" :ctm-filters="ctmFilters" @filter-change="filterChange"
-        @save-filters="saveFilters" />
+      <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
