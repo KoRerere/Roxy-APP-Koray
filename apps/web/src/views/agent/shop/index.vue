@@ -12,7 +12,7 @@ const inputs = ref([
         name: 'timeStart',
         value: null,
         formatValue: (self: any) => {
-          return format(self.value, 'yyyy-MM-dd')
+          return self.value && format(self.value, 'yyyy-MM-dd')
         },
       },
       {
@@ -20,7 +20,7 @@ const inputs = ref([
         name: 'timeEnd',
         value: null,
         formatValue: (self: any) => {
-          return format(self.value, 'yyyy-MM-dd')
+          return self.value && format(self.value, 'yyyy-MM-dd')
         },
       },
     ],
@@ -36,16 +36,11 @@ function test() {
 
 <template>
   <div class="box">
-    <!-- <InputGroup>
-      <template v-for="item in input.items" :key="item.name">
-        <DatePicker v-model="item.value" :placeholder="item.placeholder" show-button-bar date-format="yy-mm-dd" />
-      </template>
-</InputGroup> -->
     <ryForm :inputs="inputs" />
   </div>
-  <div @click="test">
+  <ryButton @click="test">
     特效
-  </div>
+  </ryButton>
   {{ formData }}
 </template>
 

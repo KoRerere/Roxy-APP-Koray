@@ -57,9 +57,8 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'view',
-      label: '预览',
+      label: 'view',
       icon: 'mdi mdi mdi-cube-scan',
-      multiple: true,
     },
     {
       name: 'restart',

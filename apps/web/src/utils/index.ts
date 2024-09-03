@@ -37,7 +37,7 @@ function formVaildData(formData: any, input: any) {
   if (hasOwnProperty(formData, input.name)) {
     throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
   }
-  if (input.required && isInvalid(input.value)) {
+  else if (input.required && isInvalid(input.value)) {
     input.invalid = true
     throw new Error(`Input '${input.name}' is required`)
   }
@@ -55,13 +55,15 @@ export function getFormData(
 ): any {
   return inputs.reduce(
     (formData, input) => {
-      const { visible, items, formatValue } = input
+      if (input.visible === false) {
+        return formData
+      }
+
+      formVaildData(formData, input)
+
       const name = input[options.keyName]
       const value = input[options.valueName]
-
-      if (visible === false)
-        return formData
-      formVaildData(formData, input)
+      const { items, formatValue } = input
 
       if (items) {
         Object.assign(formData, getFormData(items))

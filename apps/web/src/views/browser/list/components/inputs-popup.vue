@@ -17,7 +17,7 @@ function save() {
     emit('save', [formData, close])
   }
   catch (error) {
-
+    console.log('🚀 ~ save ~ error:', error)
   }
 }
 

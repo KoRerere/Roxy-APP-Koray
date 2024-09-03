@@ -20,16 +20,25 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 
 import type { DrawerType } from '../components/drawers/props'
+import type { UserAddWindowFilterNameCreatePayload } from '@roxy/backend-api'
 
+const emit = defineEmits(['updateFilterTabs'])
 const confirm = useConfirm()
 const toast = useToast()
 
 const route = useRoute()
 const router = useRouter()
 
+const activeTab: any = inject('activeTab')
+
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
 const tableRef = ref()
+const filters = ref()
+const sorts = ref()
+const operation = ref()
+const openMessage = reactive<any>({})
+const filtersByGroup = ref([])
 const drawer = reactive({
   type: 'proxyList' as DrawerType,
   title: '',
@@ -70,24 +79,25 @@ const drawer = reactive({
   },
 })
 
-const filters = ref()
-const sorts = ref()
-const operation = ref()
-const openMessage = reactive<any>({})
-
-const filtersByGroup = ref([])
+watch(() => activeTab.value, (value) => {
+  console.log('🚀 ~ value:', value)
+})
 
 function filterChange() {
-  const params = Object.values(filtersByGroup.value).reduce((params, item) => {
-    if (item.multiple) {
-      (params[item.name] || (params[item.name] = [])).push(item.value)
-    }
-    else {
-      Object.assign(params, item.original)
-    }
-    return params
-  }, {})
+  const params = filtersByGroup.value.reduce((params, item: any) => ({ ...params, ...item.original }), {})
   tableRef.value.refresh(params)
+}
+
+async function saveFilters(formData: { filter_name: string }) {
+  if (!filters.value.length) {
+    return
+  }
+
+  const filter_condition = filtersByGroup.value.reduce((params, item: any) => ({ ...params, ...item.original }), {} as UserAddWindowFilterNameCreatePayload['filter_condition'])
+
+  const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  emit('updateFilterTabs')
 }
 
 async function tableRequest(params: any) {
@@ -281,7 +291,7 @@ onMounted(() => {
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
-      <customFilters v-model:list="filtersByGroup" @filter-change="filterChange" />
+      <customFilters v-model:list="filtersByGroup" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
