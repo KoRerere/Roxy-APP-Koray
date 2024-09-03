@@ -8,6 +8,15 @@ const tabs = ref([
   { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001', routeName: 'browser-recycle' },
 ])
 
+const sortTabs = computed({
+  get() {
+    return tabs.value.length > 2 ? tabs.value.slice(1, -1) : []
+  },
+  set(value) {
+    tabs.value.splice(1, tabs.value.length - 2, ...value)
+  },
+})
+
 window.electronAPI.on('browser:on-close', (dirId) => {
   console.log('browser:on-close', dirId)
 })
@@ -41,10 +50,9 @@ function showPopover(event: Event) {
 </script>
 
 <template>
-  <div class="h-full">
-    <div class="position-relative w-full overflow-hidden">
-      <span class="position-absolute top-3 right-4 z-1 cursor-pointer mdi mdi-cog" @click="showPopover" />
-      <Tabs :value="tabs[0].id" scrollable @update:value="handleTabChange">
+  <div class="flex flex-col h-full w-full">
+    <div class="flex items-center justify-between">
+      <Tabs class="flex-1 overflow-hidden" :value="tabs[0].id" scrollable @update:value="handleTabChange">
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
             <router-link v-if="item.routeName" v-slot="{ href, navigate }" :to="{ name: item.routeName }" custom>
@@ -56,28 +64,30 @@ function showPopover(event: Event) {
           </Tab>
         </TabList>
       </Tabs>
+      <ryTag class="mdi mdi-cog" @click="showPopover" />
     </div>
-    <div class="browser-content">
+    <div class="flex-1 overflow-hidden">
       <router-view @update-filter-tabs="getFilterList" />
     </div>
   </div>
 
   <ry-popover ref="popRef" class="table-popover">
-    <VueDraggable v-model="tabs" :animation="150" handle=".handle">
-      <div v-for="item in tabs" :key="item.id" class="flex items-center table-popover-column">
+    <div class="table-popover-column">
+      所有窗口
+    </div>
+    <!-- handle=".handle" -->
+    <VueDraggable v-model="sortTabs" :animation="150">
+      <div v-for="item in sortTabs" :key="item.id" class="flex items-center table-popover-column">
         <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.label }}</span>
         <span class="cursor-pointer mdi mdi-pencil-outline" />
         <span class="cursor-pointer mdi mdi-delete-empty-outline" />
       </div>
     </VueDraggable>
+    <div class="table-popover-column">
+      回收站
+    </div>
   </ry-popover>
 </template>
 
-<style scoped lang="scss">
-.browser {
-  &-content {
-    height: calc(100% - 48px);
-  }
-}
-</style>
+<style scoped lang="scss"></style>

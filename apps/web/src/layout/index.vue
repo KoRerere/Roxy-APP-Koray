@@ -64,14 +64,14 @@ onMounted(() => {
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </div>
-    <div class="rx-main overflow-hidden">
+    <div class="rx-main">
       <div class="rx-main-header">
-        header
+        common header
         <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle"
           @click="toggle" />
         <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
       </div>
-      <div class="w-full rx-main-content">
+      <div class="rx-main-content">
         <RouterView />
       </div>
     </div>
@@ -107,17 +107,17 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   &-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
     padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-none, 0px);
   }
 
   &-content {
-    flex-grow: 1;
+    flex: 1;
     margin-right: var(--spacing-2xl, 16px);
     margin-bottom: var(--spacing-2xl, 16px);
     border-radius: var(--radius-sm, 4px);
