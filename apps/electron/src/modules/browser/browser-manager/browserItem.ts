@@ -1,10 +1,9 @@
 import { join } from 'node:path'
 import { readdir, rm, writeFile } from 'node:fs/promises'
-import type { Browser } from 'puppeteer-core'
 import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
+import { aliOSS, filesToZip, getProcessIdsByExePath, proxyDetection } from '/@/utils'
 import type { BeforeLaunchTask } from './beforeLaunchTask'
 import type { AfterLaunchTask } from './afterLaunchTask'
 import { createReadStream } from 'node:fs'
@@ -100,8 +99,20 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
-      await this.#browser.close()
+      // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
+      const pid = this.#browser.process()?.pid
+      await this.#browser.close().finally(async () => {
+        if (pid) {
+          try {
+            process.kill(pid)
+          }
+          catch (error) {
+            // $LOG(`kill browser process`, error);
+          }
+        }
+      })
       this.beforeLaunchTask.browser = null
+
       return this.uploadDataPromiser.promise
     }
   }

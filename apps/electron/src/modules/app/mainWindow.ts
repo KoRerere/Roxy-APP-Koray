@@ -25,11 +25,6 @@ async function createWindow() {
     if (isDev) {
       browserWindow?.webContents.openDevTools({ mode: 'detach' })
     }
-
-    // browserWorkerManager.postMessage({ type: 'ready' })
-    // browserWorkerManager.onMessage((message) => {
-    //   console.log('Message from worker thread:', message)
-    // })
   })
 
   const pageUrl

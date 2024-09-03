@@ -32,12 +32,13 @@ const options: Configuration = {
     output: 'out',
     buildResources: 'buildResources',
   },
-  files: ['dist'],
-  protocols: {
-    name: 'Deeplink Example',
-    // Don't forget to set `MimeType: "x-scheme-handler/deeplink"` for `linux.desktop` entry!
-    schemes: ['deeplink'],
-  },
+  files: ['dist', 'resources'],
+  protocols: [
+    {
+      name: 'roxybrowser',
+      schemes: ['roxybrowser'],
+    },
+  ],
 
   // "store” | “normal” | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: 'normal',
@@ -58,7 +59,20 @@ const options: Configuration = {
       },
     ],
   },
-
+  nsis: {
+    installerSidebar: './buildResources/a1.bmp',
+    uninstallerSidebar: './buildResources/a2.bmp',
+    oneClick: false,
+    allowElevation: true,
+    allowToChangeInstallationDirectory: true,
+    installerIcon: './logo.ico',
+    uninstallerIcon: './logo.ico',
+    installerHeaderIcon: './logo.ico',
+    installerHeader: './logo.ico',
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+    shortcutName: 'roxybrowser',
+  },
   dmg: {
     sign: true,
   },

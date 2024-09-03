@@ -9,7 +9,6 @@ import AdmZip from 'adm-zip'
 import { chromeCoreManager } from '/@/modules/browser'
 import type { Browser } from 'puppeteer-core'
 import puppeteer from 'puppeteer-core'
-import { errorDataWrapper, ipcMain, successDataWrapper } from '/@/modules/ipc'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { extensionManager } from '/@/modules/extension'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
@@ -19,6 +18,8 @@ export class BeforeLaunchTask extends BrowserItem {
   browser: Browser | null = null
   /** 代理检测结果 */
   private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
+  /** 内核执行程序路径 */
+  exePath = ''
   /** 总任务数 */
   private totalTasks = 0
   /** 已完成任务数 */
@@ -71,7 +72,7 @@ export class BeforeLaunchTask extends BrowserItem {
     }
 
     // 获取内核执行程序路径
-    const exePath = await chromeCoreManager.getCoreExePath(coreVersion, (msg: string) => {
+    this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (msg: string) => {
       this.sendSuccessMessage(msg, this.progress + 1)
     })
       .catch((error) => {
@@ -89,7 +90,7 @@ export class BeforeLaunchTask extends BrowserItem {
     this.makeActive = () => {
       return puppeteer.launch({
         args: launchArgs,
-        executablePath: exePath,
+        executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,

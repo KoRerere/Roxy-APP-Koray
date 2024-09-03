@@ -16,7 +16,7 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['openBrowser', 'more'])
+const emits = defineEmits(['openBrowser', 'quickClick', 'more'])
 
 const multiplePperation = computed(() => props.operation.filter((item: any) => item.multiple))
 
@@ -40,7 +40,7 @@ function openBrowser() {
     <span class="open-text">Open</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
-    <span v-for="item in group" :key="item.name" :class="item.icon" class="cursor-pointer group-item" />
+    <span v-for="item in group" :key="item.name" :class="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
 
     <actions v-if="index === quickGroup.length - 1" @more="(event: Event) => $emit('more', [event, multiplePperation])">
       <template #more-icon>
