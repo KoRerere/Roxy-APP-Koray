@@ -15,7 +15,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private downloadingMap = new Map<string, Promise<any>>()
 
   /** 正在使用中的内核 */
-  private get usingCores() {
+  get usingCores() {
     const cores = [...browserManager.openedBrowserMap.values()]
       .map(browserItem => browserItem.winInfo.coreVersion)
     return new Set(cores)

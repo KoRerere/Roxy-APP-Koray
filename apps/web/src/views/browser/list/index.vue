@@ -55,16 +55,16 @@ const drawer = reactive({
         drawer.editProfile(data)
         break
       case 'accountForm':
-        {
-          const { id, dirId, windowPlatformList, ...item } = data
-          console.log('🚀 ~ windowPlatformList:', windowPlatformList)
-          drawer.editProfile({
-            id,
-            dirId,
-            windowPlatformList: windowPlatformList.concat(item),
-          })
-          break
-        }
+      {
+        const { id, dirId, windowPlatformList, ...item } = data
+        console.log('🚀 ~ windowPlatformList:', windowPlatformList)
+        drawer.editProfile({
+          id,
+          dirId,
+          windowPlatformList: windowPlatformList.concat(item),
+        })
+        break
+      }
     }
   },
   editProfile: async (data: any) => {
@@ -123,6 +123,7 @@ function autoOpenBrowser(list: any) {
 }
 
 async function operationHandler(operate: any, data: any) {
+  console.log('🚀 ~ operationHandler ~ operate:', operate, data)
   /**
    * 有批量操作
    */
@@ -138,6 +139,9 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'delete':
       deleteWindow(_data)
+      break
+    case 'close':
+      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
       break
   }
 }
@@ -157,6 +161,7 @@ async function deleteWindow(data: any) {
 }
 
 function profileOperate(key: string, data: any) {
+  console.log('🚀 ~ profileOperate ~ key:', key)
   const _data = toRaw(data)
   switch (key) {
     case 'addProxy':
@@ -246,10 +251,17 @@ function openBrowser(data: any) {
 }
 
 function listenOpenMessage() {
-  window.electronAPI.on('browser:launch-process-message', (event) => {
+  return window.electronAPI.on('browser:launch-process-message', (event) => {
     console.log('🚀 ~ window.electronAPI.on ~ event:', event)
     const id = event.data?.dirId || event.data
     openMessage[id as string] = event
+  })
+}
+
+function listenCloseMessage() {
+  return window.electronAPI.on('browser:on-close', (dirId) => {
+    console.log('🚀 ~browser:on-close ~ event:', dirId)
+    Reflect.deleteProperty(openMessage, dirId)
   })
 }
 
@@ -282,22 +294,31 @@ function deletePopup() {
     })
   })
 }
-
+let canceOpenlListener
+let canceCloselListener
 onMounted(() => {
-  listenOpenMessage()
+  canceOpenlListener = listenOpenMessage()
+  canceCloselListener = listenCloseMessage()
   filters.value = getFilters()
   sorts.value = getSorts()
   operation.value = getOperation()
+})
+
+onBeforeUnmount(() => {
+  canceOpenlListener?.()
+  canceCloselListener?.()
 })
 </script>
 
 <template>
   <ry-table ref="tableRef" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
-    selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
-    :show-gridlines="false">
+            selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
+            :show-gridlines="false"
+  >
     <template #header-extra>
       <customFilters v-model:list="filtersByGroup" :ctm-filters="ctmFilters" @filter-change="filterChange"
-        @save-filters="saveFilters" />
+                     @save-filters="saveFilters"
+      />
     </template>
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
@@ -313,15 +334,19 @@ onMounted(() => {
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-        @open-browser="() => openBrowser(selection)" />
+                         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
+                         @open-browser="() => openBrowser(selection)"
+                         @quick-click="(e) => operationHandler(e, selection)"
+      />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
-    :pt="{ mask: 'browser-drawer' }">
+          :pt="{ mask: 'browser-drawer' }"
+  >
     <template #container="{ closeCallback }">
       <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="data => drawer.confirm(drawer.type, data)" />
+                    @confirm="data => drawer.confirm(drawer.type, data)"
+      />
     </template>
   </Drawer>
 </template>

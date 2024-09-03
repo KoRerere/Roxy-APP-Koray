@@ -42,7 +42,7 @@
     "ali-oss": "^6.21.0",
     "archiver": "^7.0.1",
     "await-to-js": "^3.0.0",
-    "axios": "^1.7.6",
+    "axios": "^1.7.7",
     "compare-versions": "^6.1.1",
     "compressing": "^1.10.1",
     "core-js": "^3.38.1",

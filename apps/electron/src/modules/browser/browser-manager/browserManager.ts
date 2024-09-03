@@ -72,25 +72,18 @@ export class BrowserManager {
   async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
-      const browserProcess = browserItem.getBrowser()?.process()
-      await browserItem.close()
-      this.openedBrowserMap.delete(dirId)
-      // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
-      if (browserProcess?.pid) {
-        try {
-          process.kill(browserProcess.pid)
-        }
-        catch (_) {
-          // console.log(`kill browser process`, error);
-        }
-      }
+      await browserItem.close().finally(() => {
+        this.openedBrowserMap.delete(dirId)
+      })
     }
   }
 
   /** 批量关闭浏览器 */
   async batchClose(dirIds: string[]) {
     for (const dirId of dirIds) {
-      await this.close(dirId)
+      await this.close(dirId).catch((error) => {
+        console.error(`BrowserManager ${dirId} === 关闭失败`, error)
+      })
     }
   }
 
@@ -103,8 +96,13 @@ export class BrowserManager {
   async batchDelete(dirIds: string[]) {
     for (const dirId of dirIds) {
       const browserItem = this.openedBrowserMap.get(dirId)
-      await this.close(dirId)
-      await browserItem?.removeLocalData()
+      try {
+        await this.close(dirId)
+        await browserItem?.removeLocalData()
+      }
+      catch (error) {
+        console.error(`BrowserManager ${dirId} === 删除失败`, error)
+      }
     }
   }
 }

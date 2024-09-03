@@ -115,6 +115,7 @@ export async function filesToZip(files: { path: string, destPath: string }[], ou
 
   // good practice to catch this error explicitly
   archive.on('error', (err) => {
+    // console.log('archive error', err)
     reject(err)
   })
 
@@ -133,7 +134,7 @@ export async function filesToZip(files: { path: string, destPath: string }[], ou
 
   const res = await Promise.allSettled(promiseArr)
   console.log('结果', res)
-  await archive.finalize()
+  archive.finalize()
 
   return promise
 }
