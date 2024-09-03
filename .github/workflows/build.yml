@@ -3,8 +3,8 @@ name: Build
 on:
   push:
     branches: [test]
-#   tags:
-#     - 'v*.*.*'
+    tags:
+      - 'v*.*.*'
 jobs:
   release:
     name: build and release electron app
@@ -36,13 +36,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm build
-
       - name: Release for Windows
         if: matrix.os == 'windows-latest'
         run: |
-          pnpm pack:app
+          pnpm pack:dev
 
       - name: Release for MacOS
         if: matrix.os == 'macos-latest'
@@ -77,9 +74,9 @@ jobs:
           # apply provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-          pnpm pack:app
+          pnpm pack:dev
 
       - name: Release for Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pnpm pack:app
+          pnpm pack:dev

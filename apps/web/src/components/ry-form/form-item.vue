@@ -4,6 +4,10 @@ import inputSelect from './input-select.vue'
 import inputRadio from './input-radio.vue'
 import inputDate from './input-date.vue'
 
+defineOptions({
+  inheritAttrs: false,
+})
+
 defineProps({
   name: String,
   label: String,
@@ -16,10 +20,6 @@ defineProps({
     type: String,
     default: 'top',
   },
-  // Invalid:{
-  //   type: Boolean,
-  //   default: false,
-  // }
 })
 
 defineEmits(['change'])

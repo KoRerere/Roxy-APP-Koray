@@ -1,5 +1,7 @@
+<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import inputBase from './input-base.vue'
+// @ts-ignore
 import formItem from './form-item.vue'
 
 const _props = defineProps({

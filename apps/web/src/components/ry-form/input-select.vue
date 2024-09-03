@@ -1,7 +1,12 @@
 <script lang="ts" setup>
+defineOptions({
+  inheritAttrs: false,
+})
+
 defineProps({
   name: String,
 })
+
 defineEmits(['change'])
 </script>
 

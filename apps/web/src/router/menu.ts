@@ -2,6 +2,27 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
+    path: '/setting',
+    name: 'setting',
+    meta: { title: '设置' },
+    redirect: { name: 'profile' },
+    component: () => import('/@/views/setting/index.vue'),
+    children: [
+      {
+        path: 'profile',
+        name: 'profile',
+        meta: { title: '个人信息' },
+        component: () => import('/@/views/setting/profile.vue'),
+      },
+      {
+        path: 'soft-config',
+        name: 'soft-config',
+        meta: { title: '软件设置' },
+        component: () => import('/@/views/setting/soft-config.vue'),
+      },
+    ],
+  },
+  {
     path: '/browser',
     name: 'browser',
     meta: { title: '浏览器窗口' },
@@ -58,4 +79,5 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '账号库', groupName: 'resources' },
     component: () => import('/@/views/account/list'),
   },
+
 ]

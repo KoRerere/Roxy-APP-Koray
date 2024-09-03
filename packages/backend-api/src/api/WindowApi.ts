@@ -10,23 +10,12 @@
  */
 
 import {
-  AddWindowFilterNameCreateData,
-  AddWindowFilterNameCreatePayload,
-  DeleteWindowFilterNameCreateData,
-  DeleteWindowFilterNameCreatePayload,
-  GetWindowFilterNameListListData,
-  GetWindowTableRowsListData,
-  SaveWindowTableSortOrderCreateData,
-  SaveWindowTableSortOrderCreatePayload,
-  SaveWindowTableSortOrderListData,
-  UpdateWindowFilterNameCreateData,
-  UpdateWindowFilterNameCreatePayload,
-  UpdateWindowTableRowsCreateData,
-  UpdateWindowTableRowsCreatePayload,
   UserAddGroupInfoCreateData,
   UserAddGroupInfoCreatePayload,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
+  UserAddWindowFilterNameCreateData,
+  UserAddWindowFilterNameCreatePayload,
   UserAddWindowInfoCreateData,
   UserAddWindowInfoCreatePayload,
   UserBatchWindowInfoCreateData,
@@ -35,6 +24,8 @@ import {
   UserClearWindowCacheApiCreatePayload,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
+  UserDeleteWindowFilterNameCreateData,
+  UserDeleteWindowFilterNameCreatePayload,
   UserDelGroupInfoCreateData,
   UserDelGroupInfoCreatePayload,
   UserDelLabelInfoCreateData,
@@ -57,12 +48,14 @@ import {
   UserGetUaWebglListParams,
   UserGetUaWebglV2ListData,
   UserGetUaWebglV2ListParams,
+  UserGetWindowFilterNameListListData,
   UserGetWindowInfoListData,
   UserGetWindowInfoListParams,
   UserGetWindowInfoRecycleListData,
   UserGetWindowInfoRecycleListParams,
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
+  UserGetWindowTableRowsListData,
   UserImportWindowInfoCreateData,
   UserImportWindowInfoCreatePayload,
   UserMdfGroupInfoCreateData,
@@ -81,6 +74,13 @@ import {
   UserMdfWindowSyncV2CreatePayload,
   UserModifyWindowReportTimeCreateData,
   UserModifyWindowReportTimeCreatePayload,
+  UserSaveWindowTableSortOrderCreateData,
+  UserSaveWindowTableSortOrderCreatePayload,
+  UserSaveWindowTableSortOrderListData,
+  UserUpdateWindowFilterNameCreateData,
+  UserUpdateWindowFilterNameCreatePayload,
+  UserUpdateWindowTableRowsCreateData,
+  UserUpdateWindowTableRowsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -587,14 +587,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * @description old_filter_name必须传入（唯一值），因为new_filter_name和sort都是通过old_filter_name行字段判断的 注：1.如果是修改排序，old_filter_name和new_filter_name值传相同进行，原来值进行可以不用变 2.如果是修改标签页名称，sort值传原来值进行可以不用变
    *
    * @tags Window
-   * @name UpdateWindowFilterNameCreate
+   * @name UserUpdateWindowFilterNameCreate
    * @summary 修改窗口过滤器页签名称
-   * @request POST:/update_window_filter_name
-   * @response `200` `UpdateWindowFilterNameCreateData` 成功
+   * @request POST:/user_update_window_filter_name
+   * @response `200` `UserUpdateWindowFilterNameCreateData` 成功
    */
-  updateWindowFilterNameCreate = (data: UpdateWindowFilterNameCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UpdateWindowFilterNameCreateData, any>({
-      path: `/update_window_filter_name`,
+  userUpdateWindowFilterNameCreate = (data: UserUpdateWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpdateWindowFilterNameCreateData, any>({
+      path: `/user_update_window_filter_name`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -605,14 +605,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name DeleteWindowFilterNameCreate
+   * @name UserDeleteWindowFilterNameCreate
    * @summary 删除窗口过滤器页签名称
-   * @request POST:/delete_window_filter_name
-   * @response `200` `DeleteWindowFilterNameCreateData` 成功
+   * @request POST:/user_delete_window_filter_name
+   * @response `200` `UserDeleteWindowFilterNameCreateData` 成功
    */
-  deleteWindowFilterNameCreate = (data: DeleteWindowFilterNameCreatePayload, params: RequestParams = {}) =>
-    this.http.request<DeleteWindowFilterNameCreateData, any>({
-      path: `/delete_window_filter_name`,
+  userDeleteWindowFilterNameCreate = (data: UserDeleteWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDeleteWindowFilterNameCreateData, any>({
+      path: `/user_delete_window_filter_name`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -623,14 +623,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name AddWindowFilterNameCreate
+   * @name UserAddWindowFilterNameCreate
    * @summary 新增窗口过滤器页签名称
-   * @request POST:/add_window_filter_name
-   * @response `200` `AddWindowFilterNameCreateData` 成功
+   * @request POST:/user_add_window_filter_name
+   * @response `200` `UserAddWindowFilterNameCreateData` 成功
    */
-  addWindowFilterNameCreate = (data: AddWindowFilterNameCreatePayload, params: RequestParams = {}) =>
-    this.http.request<AddWindowFilterNameCreateData, any>({
-      path: `/add_window_filter_name`,
+  userAddWindowFilterNameCreate = (data: UserAddWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddWindowFilterNameCreateData, any>({
+      path: `/user_add_window_filter_name`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -641,14 +641,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name GetWindowFilterNameListList
+   * @name UserGetWindowFilterNameListList
    * @summary 获取窗口过滤器页签名称列表
-   * @request GET:/get_window_filter_name_list
-   * @response `200` `GetWindowFilterNameListListData` 成功
+   * @request GET:/user_get_window_filter_name_list
+   * @response `200` `UserGetWindowFilterNameListListData` 成功
    */
-  getWindowFilterNameListList = (params: RequestParams = {}) =>
-    this.http.request<GetWindowFilterNameListListData, any>({
-      path: `/get_window_filter_name_list`,
+  userGetWindowFilterNameListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowFilterNameListListData, any>({
+      path: `/user_get_window_filter_name_list`,
       method: "GET",
       format: "json",
       ...params,
@@ -657,14 +657,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UpdateWindowTableRowsCreate
+   * @name UserUpdateWindowTableRowsCreate
    * @summary 修改窗口表格列顺序
-   * @request POST:/update_window_table_rows
-   * @response `200` `UpdateWindowTableRowsCreateData` 成功
+   * @request POST:/user_update_window_table_rows
+   * @response `200` `UserUpdateWindowTableRowsCreateData` 成功
    */
-  updateWindowTableRowsCreate = (data: UpdateWindowTableRowsCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UpdateWindowTableRowsCreateData, any>({
-      path: `/update_window_table_rows`,
+  userUpdateWindowTableRowsCreate = (data: UserUpdateWindowTableRowsCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpdateWindowTableRowsCreateData, any>({
+      path: `/user_update_window_table_rows`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -675,14 +675,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name SaveWindowTableSortOrderCreate
+   * @name UserSaveWindowTableSortOrderCreate
    * @summary 保存窗口表格排序
-   * @request POST:/save_window_table_sort_order
-   * @response `200` `SaveWindowTableSortOrderCreateData` 成功
+   * @request POST:/user_save_window_table_sort_order
+   * @response `200` `UserSaveWindowTableSortOrderCreateData` 成功
    */
-  saveWindowTableSortOrderCreate = (data: SaveWindowTableSortOrderCreatePayload, params: RequestParams = {}) =>
-    this.http.request<SaveWindowTableSortOrderCreateData, any>({
-      path: `/save_window_table_sort_order`,
+  userSaveWindowTableSortOrderCreate = (data: UserSaveWindowTableSortOrderCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserSaveWindowTableSortOrderCreateData, any>({
+      path: `/user_save_window_table_sort_order`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -693,14 +693,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name SaveWindowTableSortOrderList
+   * @name UserSaveWindowTableSortOrderList
    * @summary 保存窗口表格排序规则
-   * @request GET:/save_window_table_sort_order
-   * @response `200` `SaveWindowTableSortOrderListData` 成功
+   * @request GET:/user_save_window_table_sort_order
+   * @response `200` `UserSaveWindowTableSortOrderListData` 成功
    */
-  saveWindowTableSortOrderList = (params: RequestParams = {}) =>
-    this.http.request<SaveWindowTableSortOrderListData, any>({
-      path: `/save_window_table_sort_order`,
+  userSaveWindowTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<UserSaveWindowTableSortOrderListData, any>({
+      path: `/user_save_window_table_sort_order`,
       method: "GET",
       format: "json",
       ...params,
@@ -709,14 +709,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name GetWindowTableRowsList
+   * @name UserGetWindowTableRowsList
    * @summary 获取窗口表格列顺序
-   * @request GET:/get_window_table_rows
-   * @response `200` `GetWindowTableRowsListData` 成功
+   * @request GET:/user_get_window_table_rows
+   * @response `200` `UserGetWindowTableRowsListData` 成功
    */
-  getWindowTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<GetWindowTableRowsListData, any>({
-      path: `/get_window_table_rows`,
+  userGetWindowTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowTableRowsListData, any>({
+      path: `/user_get_window_table_rows`,
       method: "GET",
       format: "json",
       ...params,

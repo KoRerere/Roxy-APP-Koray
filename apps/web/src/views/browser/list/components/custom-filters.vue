@@ -1,14 +1,13 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
 // @ts-ignore
+import ryButton from '/@/components/ry-button'
 import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
 import { format } from 'date-fns'
-import { useVModel } from '@vueuse/core'
 import { sleep } from '/@/utils'
 
 interface FilterItem {
-  multiple?: boolean
   label: string
   name: string
   value: string | string[]
@@ -16,19 +15,15 @@ interface FilterItem {
 }
 
 const _props = defineProps({
-  options: {
-    type: Array,
-    default: () => [],
-  },
-  list: {
-    type: Array as PropType<FilterItem[]>,
+  ctmFilters: {
+    type: Array as PropType<any[]>,
     default: () => [],
   },
 })
 
-const emit = defineEmits(['update:list', 'filterChange'])
+const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])
 
-const filterList = useVModel(_props, 'list', emit)
+const filterList = defineModel<FilterItem[]>('list')
 
 const dialog = useDialog()
 
@@ -41,8 +36,8 @@ const options = ref([
     icon: 'mdi mdi-ab-testing',
   },
   {
-    label: '窗口ID',
-    name: 'windowIds',
+    label: '窗口序号',
+    name: 'sortNums',
     icon: 'mdi mdi-abacus',
   },
   {
@@ -52,7 +47,7 @@ const options = ref([
     label: '操作系统',
     name: 'osList',
     icon: 'mdi mdi-abjad-arabic',
-    chindren: ($dict_map.os || []).map((item: any) => ({
+    children: ($dict_map.os || []).map((item: any) => ({
       parentLabel: '操作系统',
       parentName: 'osList',
       type: 'Checkbox',
@@ -69,8 +64,15 @@ const options = ref([
     separator: true,
   },
   {
+    aliasName: 'statusOpen',
     name: 'openStatus',
-    label: '窗口状态',
+    label: '窗口打开',
+    icon: 'mdi mdi-home-group',
+  },
+  {
+    aliasName: 'statusClose',
+    name: 'openStatus',
+    label: '窗口关闭',
     icon: 'mdi mdi-home-group',
   },
   {
@@ -106,7 +108,7 @@ const options = ref([
     name: 'proxyProtocoList',
     label: '代理协议',
     icon: 'mdi mdi-alarm-check',
-    chindren: ($dict_map.protocol || []).map((item: any) => ({
+    children: ($dict_map.protocol || []).map((item: any) => ({
       parentLabel: '代理协议',
       parentName: 'proxyProtocoList',
       type: 'Checkbox',
@@ -137,8 +139,8 @@ const options = ref([
 ])
 
 const menuRef = ref()
-const isChidren = ref(false)
-const meunOptions = ref(options.value)
+const isChildren = ref(false)
+const menuOptions = ref(options.value)
 const selectedCategories = ref<string[]>([])
 
 function operationHandler(item: any) {
@@ -148,7 +150,6 @@ function operationHandler(item: any) {
     case 'windowName':
       inputPopup({
         title: '窗口名称',
-        multiple: true,
         inputs: [
           {
             type: 'text',
@@ -160,15 +161,14 @@ function operationHandler(item: any) {
         ],
       })
       break
-    case 'windowIds':
+    case 'sortNums':
       inputPopup({
-        title: '窗口ID',
-        multiple: true,
+        title: '窗口序号',
         inputs: [
           {
             type: 'text',
-            placeholder: '请输入窗口ID',
-            name: 'windowIds',
+            placeholder: '请输入窗口序号',
+            name: 'sortNums',
             value: '',
             required: true,
           },
@@ -181,8 +181,11 @@ function operationHandler(item: any) {
     case 'platformUrlIds':
       openChild(item)
       break
-    case 'openStatus':
-      onSwitch(item)
+    case 'statusOpen':
+      onSwitch(item, true)
+      break
+    case 'statusClose':
+      onSwitch(item, false)
       break
     case 'groupIds':
       break
@@ -224,7 +227,7 @@ function operationHandler(item: any) {
               {
                 placeholder: '请选择开始时间',
                 name: 'startDate',
-                value: null,
+                required: true,
                 formatValue: (self: any) => {
                   return format(self.value, 'yyyy-MM-dd')
                 },
@@ -232,7 +235,7 @@ function operationHandler(item: any) {
               {
                 placeholder: '请选择结束时间',
                 name: 'endDate',
-                value: null,
+                required: true,
                 formatValue: (self: any) => {
                   return format(self.value, 'yyyy-MM-dd')
                 },
@@ -262,14 +265,10 @@ function inputPopup(data: any) {
     },
     data,
     emits: {
-      onSave: ([formData, close]: [string, () => void]) => {
+      onSave: ([formData, close]: [any, () => void]) => {
         const [[name, value]] = Object.entries(formData)
-        if (!data.multiple) {
-          deleteFilterByName(name)
-        }
-
-        filterList.value.push({
-          multiple: !!data.multiple,
+        deleteFilterByName(name)
+        filterList.value!.push({
           label: data.title,
           name,
           value: data.formatValue ? data.formatValue(formData) : value,
@@ -284,7 +283,7 @@ function inputPopup(data: any) {
 
 function onSwitch(item: any, value: any = true) {
   deleteFilterByName(item.name)
-  filterList.value.push({
+  filterList.value!.push({
     label: item.label,
     name: item.name,
     value,
@@ -295,12 +294,12 @@ function onSwitch(item: any, value: any = true) {
 }
 
 function openChild(item: any) {
-  if (item.chindren) {
+  if (item.children) {
     sleep(20).then(() => {
-      isChidren.value = true
-      meunOptions.value = item.chindren
+      isChildren.value = true
+      menuOptions.value = item.children
 
-      const selected = filterList.value.find(it => it.name === item.name)
+      const selected = filterList.value!.find(it => it.name === item.name)
       selectedCategories.value = Array.isArray(selected?.value) ? selected.value : []
     })
     return
@@ -309,11 +308,11 @@ function openChild(item: any) {
 }
 
 function onHide() {
-  if (isChidren.value) {
+  if (isChildren.value) {
     selectedCategories.value = []
     sleep(20).then(() => {
-      isChidren.value = false
-      meunOptions.value = options.value
+      isChildren.value = false
+      menuOptions.value = options.value
       emit('filterChange')
     })
   }
@@ -323,7 +322,7 @@ function onChange(item: any) {
   deleteFilterByName(item.parentName)
 
   if (selectedCategories.value.length > 0) {
-    filterList.value.push({
+    filterList.value!.push({
       label: item.parentLabel,
       name: item.parentName,
       value: selectedCategories.value,
@@ -333,15 +332,42 @@ function onChange(item: any) {
 }
 
 function deleteFilterByName(name: string) {
-  const index = filterList.value.findIndex((item: any) => item.name === name)
+  const index = filterList.value!.findIndex((item: any) => item.name === name)
   if (index >= 0) {
-    filterList.value.splice(index, 1)
+    filterList.value!.splice(index, 1)
   }
 }
 
 function deleteFilter(index: number) {
-  filterList.value.splice(index, 1)
+  filterList.value!.splice(index, 1)
   emit('filterChange')
+}
+
+function saveFilters() {
+  dialog.open(simplePopup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      title: 'save filter',
+      inputs: [
+        {
+          type: 'text',
+          placeholder: 'filter name...',
+          name: 'filter_name',
+          required: true,
+        },
+      ],
+    },
+    emits: {
+      onSave: ([formData, close]: [any, () => void]) => {
+        emit('saveFilters', formData)
+        close()
+      },
+    },
+  })
 }
 </script>
 
@@ -353,12 +379,16 @@ function deleteFilter(index: number) {
       <span class="cursor-pointer">{{ item.value }}</span>
     </div>
 
-    <Button class="filter-button" text @click="show($event)">
+    <ryButton class="filter-button" text @click="show($event)">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!filterList.length">Add filters</span>
-    </Button>
+      <span v-if="!filterList!.length">Add filters</span>
+    </ryButton>
+    <ryButton>clear</ryButton>
+    <ryButton @click="saveFilters">
+      save filter
+    </ryButton>
   </div>
-  <TieredMenu id="overlay_tmenu" ref="menuRef" :model="meunOptions" popup
+  <TieredMenu ref="menuRef" :model="menuOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import inputLabel from './input-label.vue'
 
+defineOptions({
+  inheritAttrs: false,
+})
+
 defineProps({
   name: String,
   type: {

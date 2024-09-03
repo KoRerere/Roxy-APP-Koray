@@ -12,6 +12,7 @@ import puppeteer from 'puppeteer-core'
 import { errorDataWrapper, ipcMain, successDataWrapper } from '/@/modules/ipc'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { extensionManager } from '/@/modules/extension'
+import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask extends BrowserItem {
@@ -28,6 +29,9 @@ export class BeforeLaunchTask extends BrowserItem {
   get progress() {
     return ~~((this.completedTasks / this.totalTasks) * 100)
   }
+
+  /** 用于重新拉起浏览器 */
+  makeActive!: () => Promise<Browser>
 
   /** 开始执行任务 */
   async run() {
@@ -55,7 +59,6 @@ export class BeforeLaunchTask extends BrowserItem {
     // 清空任务队列
     this.taskMap.clear()
     this.sendSuccessMessage('浏览器启动成功')
-    return this.browser
   }
 
   /** 启动浏览器 */
@@ -83,14 +86,18 @@ export class BeforeLaunchTask extends BrowserItem {
     // 写入登录信息
     await this.writeLoginData()
 
+    this.makeActive = () => {
+      return puppeteer.launch({
+        args: launchArgs,
+        executablePath: exePath,
+        headless: false,
+        ignoreDefaultArgs: true,
+        defaultViewport: null,
+      })
+    }
+
     // 拉起浏览器
-    this.browser = await puppeteer.launch({
-      args: launchArgs,
-      executablePath: exePath,
-      headless: false,
-      ignoreDefaultArgs: true,
-      defaultViewport: null,
-    }).catch((error) => {
+    this.browser = await this.makeActive().catch((error) => {
       this.sendErrorMessage('浏览器启动失败', error)
       return Promise.reject(error)
     })
@@ -343,15 +350,15 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 发送成功的消息到渲染进程 */
   private sendSuccessMessage(message: string, percent = this.progress) {
-    ipcMain.send('browser:launch-process-message', successDataWrapper({
+    sendSuccessMessage({
       dirId: this.winInfo.dirId!,
       percent,
       message,
-    }))
+    })
   }
 
   /** 发送错误的消息到渲染进程 */
   private sendErrorMessage(message: string, error?: any) {
-    ipcMain.send('browser:launch-process-message', errorDataWrapper(message, this.winInfo.dirId, error))
+    sendErrorMessage(message, this.winInfo.dirId!, error)
   }
 }

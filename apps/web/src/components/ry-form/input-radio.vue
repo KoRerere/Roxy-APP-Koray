@@ -1,4 +1,8 @@
 <script setup>
+defineOptions({
+  inheritAttrs: false,
+})
+
 defineProps({
   name: String,
   options: {

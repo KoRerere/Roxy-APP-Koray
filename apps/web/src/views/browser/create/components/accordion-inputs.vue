@@ -2,12 +2,10 @@
 import ryForm from '/@/components/ry-form'
 import ryButton from '/@/components/ry-button'
 import inputLabel from '/@/components/ry-form/input-label.vue'
-import rxEditDiv from '/@/components/rx-edit-div'
 import proxyItem from './proxy.vue'
 import accountItem from './account.vue'
 import urlsItem from './urls.vue'
 
-import { useVModels } from '@vueuse/core'
 import { getFormDataByList } from '/@/utils'
 
 interface Accordions {
@@ -23,10 +21,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  windowName: {
-    tyep: String,
-    default: '',
-  },
   accordions: {
     type: Object as PropType<Accordions>,
     default: undefined,
@@ -36,9 +30,7 @@ const props = defineProps({
     default: () => [],
   },
 })
-const emits = defineEmits(['update:windowName', 'cancel', 'createOpen', 'create'])
-
-const { windowName } = useVModels(props, emits)
+const emits = defineEmits(['cancel', 'createOpen', 'create'])
 
 function getFormData(isOpen: boolean) {
   const formData = getFormDataByList(props!.inputsGroup)
@@ -49,7 +41,6 @@ function getFormData(isOpen: boolean) {
 <template>
   <div class="flex flex-col h-full overflow-hidden">
     <div v-if="accordions" class="flex-1 overflow-auto">
-      <rxEditDiv v-model="windowName" class="window-name" />
       <Accordion :value="accordions.value" multiple>
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="index" :value="panels.value">
           <AccordionHeader as="div" class="accordion-header">

@@ -1,9 +1,15 @@
+<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
-import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
+import ryTag from '/@/components/ry-tag'
+// @ts-ignore
+import proxyTable from '/@/views/browser/components/drawers/proxy-list.vue'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useVModel } from '@vueuse/core'
+import { getImage } from '/@/utils'
+import { useDialog } from 'primevue/usedialog'
+import simplePopup from '/@/components/simplePopup/inputs-popup.vue'
 
 const props = defineProps({
   modelValue: {
@@ -11,12 +17,25 @@ const props = defineProps({
     default: () => ({}),
   },
 })
+
 const emits = defineEmits(['update:modelValue'])
 
-const proxyValue = useVModel(props, 'modelValue', emits)
+const isBatch = inject<Ref<boolean>>('isBatch')
+const createCount = inject<Ref<number>>('createCount')
+
+const dialog = useDialog()
+
+const proxyList = useVModel(props, 'modelValue', emits)
+
+const isOverload = computed(() => {
+  const sum = proxyList.value.reduce((sum: number, item: any) => {
+    return sum + (item?.proxyCount || 0)
+  }, 0)
+  return sum > (createCount?.value || 0)
+})
 
 const proxyState = reactive({
-  region: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png',
+  region: getImage('proxy.svg'),
   state: 'success',
   isTestProxy: false,
   isRefresh: false,
@@ -25,14 +44,6 @@ const proxyState = reactive({
   proxyIcon: 'mdi mdi-wifi-refresh',
   help: 'Enter your username to reset your password.',
   helpIcon: 'mdi mdi-web',
-})
-
-const _proxyValue = computed(() => {
-  return {
-    visible: Object.values(proxyValue.value).some(v => v),
-    name: '--',
-    value: `${proxyValue.value.ipType} ${proxyValue.value.proxyCategory}://${proxyValue.value.host}:${proxyValue.value.port}`,
-  }
 })
 
 const icons = computed(() => {
@@ -53,14 +64,20 @@ function toggleDrawer(type: 'create' | 'list') {
   drawer.type = type
 }
 
-function deleteProxy() {
-  Object.keys(proxyValue.value).forEach((key) => {
-    proxyValue.value[key] = null
-  })
+function deleteProxy(index: number) {
+  proxyList.value.splice(index, 1)
 }
 
 function confirm(data: any) {
-  proxyValue.value = data
+  if (isBatch) {
+    proxyList.value.push({
+      ...data,
+      proxyCount: 1,
+    })
+  }
+  else {
+    proxyList.value[0] = data
+  }
 }
 
 function testProxy() {
@@ -78,6 +95,33 @@ function refreshIp() {
     proxyState.isRefresh = false
   }, 2000)
 }
+
+function modifyProxyCount(index: number) {
+  dialog.open(simplePopup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      inputs: [
+        {
+          type: 'number',
+          placeholder: '请输入代理数量',
+          name: 'proxyCount',
+          value: null,
+          required: true,
+        },
+      ],
+    },
+    emits: {
+      onSave: ([formData, close]: [any, () => void]) => {
+        proxyList.value[index].proxyCount = Number.parseInt(formData.proxyCount)
+        close()
+      },
+    },
+  })
+}
 </script>
 
 <template>
@@ -88,29 +132,51 @@ function refreshIp() {
       <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add proxy"
         @click="toggleDrawer('create')" />
     </div>
-
-    <div v-if="_proxyValue.visible">
-      <rx-card class="proxy" @close="deleteProxy">
-        <img class="proxy-img" :src="proxyState.region">
-        <div class="flex justify-between proxy-nation ">
-          <span :class="proxyState.state">{{ _proxyValue.name }}</span>
-          <span class="cursor-pointer" :class="icons.proxy" @click="testProxy" />
-        </div>
-        <div class="flex justify-between proxy-time">
-          <span>{{ _proxyValue.value }}</span>
-          <span class="cursor-pointer" :class="icons.ip" @click="refreshIp" />
-        </div>
-      </rx-card>
-      <small class="proxy-help">
+    <!-- <small class="proxy-help">
         <span :class="icons.help" />
         <span>{{ proxyState.help }}</span>
-      </small>
+      </small> -->
+    <div>
+      <template v-if="isBatch">
+        <!-- todo: 超出校验 -->
+        <Message v-if="isOverload" severity="warn" class="multiple">
+          Bound profiles must not exceed {{ createCount }}
+        </Message>
+        <rx-card v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
+          <div class="multiple-region">
+            <img style="width: 16px;" :src="proxyState.region">
+            <span>US/United States</span>
+            <span class="mdi mdi-alert-octagon" />
+          </div>
+          <ryTag class="cursor-pointer" @click="modifyProxyCount(index)">
+            <span class="mdi mdi-web" />
+            <span>{{ item.proxyCount }}</span>
+          </ryTag>
+          <span class="cursor-pointer mdi mdi-wifi" />
+          <span class="cursor-pointer mdi mdi-refresh" />
+        </rx-card>
+      </template>
+
+      <template v-else>
+        <rx-card v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
+          <img class="single-img" :src="proxyState.region">
+          <div class="flex justify-between single-region ">
+            <span :class="proxyState.state">--</span>
+            <span class="cursor-pointer" :class="icons.proxy" @click="testProxy" />
+          </div>
+          <div class="flex justify-between single-time">
+            <span>{{ `${item.ipType || ''} ${item.proxyCategory || ''}://${item.host || ''}:${item.port || ''}`
+              }}</span>
+            <span class="cursor-pointer" :class="icons.ip" @click="refreshIp" />
+          </div>
+        </rx-card>
+      </template>
     </div>
 
     <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
       :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <proxyList v-if="drawer.type === 'list'" @close="() => closeCallback()"
+        <proxyTable v-if="drawer.type === 'list'" @close="() => closeCallback()"
           @confirm="(data: any) => { closeCallback(); confirm(data) }" />
         <proxyCreate v-if="drawer.type === 'create'" @close="() => closeCallback()"
           @confirm="(data: any) => { closeCallback(); confirm(data) }" />
@@ -128,7 +194,7 @@ function refreshIp() {
   align-self: stretch;
 }
 
-.proxy {
+.single {
   display: grid;
   grid-template-columns: 16px 1fr;
   grid-column-gap: var(--spacing-lg, 8px);
@@ -141,7 +207,7 @@ function refreshIp() {
     grid-row-start: span 2;
   }
 
-  &-nation {
+  &-region {
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
@@ -169,6 +235,27 @@ function refreshIp() {
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+
+.multiple {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  margin-top: 10px;
+
+  &-region {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: var(--spacing-md, 6px);
+
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: var(--Line-Height-text-lg, 20px);
   }
 }
 </style>

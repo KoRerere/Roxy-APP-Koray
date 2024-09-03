@@ -10,12 +10,6 @@
  */
 
 import {
-  GetPlatformTableRowsListData,
-  GetPlatformTableSortOrderListData,
-  SavePlatformTableSortOrderCreateData,
-  SavePlatformTableSortOrderCreatePayload,
-  UpdatePlatformTableRowsCreateData,
-  UpdatePlatformTableRowsCreatePayload,
   UserAddPlatformInfoCreateData,
   UserAddPlatformInfoCreatePayload,
   UserDelPlatformInfoCreateData,
@@ -24,8 +18,14 @@ import {
   UserGetPlatformInfoListParams,
   UserGetPlatformInfoV2ListData,
   UserGetPlatformInfoV2ListParams,
+  UserGetPlatformTableRowsListData,
+  UserGetPlatformTableSortOrderListData,
   UserMdfPlatformInfoCreateData,
   UserMdfPlatformInfoCreatePayload,
+  UserSavePlatformTableSortOrderCreateData,
+  UserSavePlatformTableSortOrderCreatePayload,
+  UserUpdatePlatformTableRowsCreateData,
+  UserUpdatePlatformTableRowsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -128,14 +128,14 @@ export class PlatformApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Platform
-   * @name UpdatePlatformTableRowsCreate
+   * @name UserUpdatePlatformTableRowsCreate
    * @summary 修改业务平台表格列顺序
-   * @request POST:/update_platform_table_rows
-   * @response `200` `UpdatePlatformTableRowsCreateData` 成功
+   * @request POST:/user_update_platform_table_rows
+   * @response `200` `UserUpdatePlatformTableRowsCreateData` 成功
    */
-  updatePlatformTableRowsCreate = (data: UpdatePlatformTableRowsCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UpdatePlatformTableRowsCreateData, any>({
-      path: `/update_platform_table_rows`,
+  userUpdatePlatformTableRowsCreate = (data: UserUpdatePlatformTableRowsCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpdatePlatformTableRowsCreateData, any>({
+      path: `/user_update_platform_table_rows`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -146,14 +146,17 @@ export class PlatformApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Platform
-   * @name SavePlatformTableSortOrderCreate
+   * @name UserSavePlatformTableSortOrderCreate
    * @summary 保存业务平台列表排序规则
-   * @request POST:/save_platform_table_sort_order
-   * @response `200` `SavePlatformTableSortOrderCreateData` 成功
+   * @request POST:/user_save_platform_table_sort_order
+   * @response `200` `UserSavePlatformTableSortOrderCreateData` 成功
    */
-  savePlatformTableSortOrderCreate = (data: SavePlatformTableSortOrderCreatePayload, params: RequestParams = {}) =>
-    this.http.request<SavePlatformTableSortOrderCreateData, any>({
-      path: `/save_platform_table_sort_order`,
+  userSavePlatformTableSortOrderCreate = (
+    data: UserSavePlatformTableSortOrderCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSavePlatformTableSortOrderCreateData, any>({
+      path: `/user_save_platform_table_sort_order`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -164,14 +167,14 @@ export class PlatformApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Platform
-   * @name GetPlatformTableRowsList
+   * @name UserGetPlatformTableRowsList
    * @summary 获取业务平台表格列顺序
-   * @request GET:/get_platform_table_rows
-   * @response `200` `GetPlatformTableRowsListData` 成功
+   * @request GET:/user_get_platform_table_rows
+   * @response `200` `UserGetPlatformTableRowsListData` 成功
    */
-  getPlatformTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<GetPlatformTableRowsListData, any>({
-      path: `/get_platform_table_rows`,
+  userGetPlatformTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPlatformTableRowsListData, any>({
+      path: `/user_get_platform_table_rows`,
       method: "GET",
       format: "json",
       ...params,
@@ -180,14 +183,14 @@ export class PlatformApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Platform
-   * @name GetPlatformTableSortOrderList
+   * @name UserGetPlatformTableSortOrderList
    * @summary 获取业务平台列表排序规则
-   * @request GET:/get_platform_table_sort_order
-   * @response `200` `GetPlatformTableSortOrderListData` 成功
+   * @request GET:/user_get_platform_table_sort_order
+   * @response `200` `UserGetPlatformTableSortOrderListData` 成功
    */
-  getPlatformTableSortOrderList = (params: RequestParams = {}) =>
-    this.http.request<GetPlatformTableSortOrderListData, any>({
-      path: `/get_platform_table_sort_order`,
+  userGetPlatformTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPlatformTableSortOrderListData, any>({
+      path: `/user_get_platform_table_sort_order`,
       method: "GET",
       format: "json",
       ...params,

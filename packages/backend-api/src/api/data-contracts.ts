@@ -2575,7 +2575,7 @@ export interface UserGetSystemPluginListParams {
   category?: string;
   /**
    * 扩展名称
-   * @example "翻译助手"
+   * @example "常用工具"
    */
   pluginName?: string;
 }
@@ -2663,6 +2663,8 @@ export interface UserGetPluginListListData {
       canDelete?: boolean;
       /** 上传者 */
       uploader?: string;
+      /** 最后更新时间 */
+      lateUpdateTime: string;
     }[];
   };
   msg: string;
@@ -2826,7 +2828,7 @@ export interface UserGetLoginLogListData {
   msg: string;
 }
 
-export interface UpdateWindowFilterNameCreatePayload {
+export interface UserUpdateWindowFilterNameCreatePayload {
   /** 旧标签页名称 */
   old_filter_name: string;
   /** 新修改的标签页名称 */
@@ -2835,48 +2837,71 @@ export interface UpdateWindowFilterNameCreatePayload {
   sort: number;
 }
 
-export interface UpdateWindowFilterNameCreateData {
+export interface UserUpdateWindowFilterNameCreateData {
   code: number;
   msg: string;
 }
 
-export interface DeleteWindowFilterNameCreatePayload {
+export interface UserDeleteWindowFilterNameCreatePayload {
   /** 标签名 */
   filter_name: string;
 }
 
-export interface DeleteWindowFilterNameCreateData {
+export interface UserDeleteWindowFilterNameCreateData {
   code: number;
   msg: string;
 }
 
-export interface AddWindowFilterNameCreatePayload {
-  /** 标签页名称 */
+export interface UserAddWindowFilterNameCreatePayload {
+  /** 标签名 */
   filter_name: string;
-  /** 标签页查询条件 */
   filter_condition: {
-    platform: string;
-  }[];
+    /** 操作系统 */
+    osList: string;
+    /** 窗口名 */
+    windowName: string;
+    /** 备注内容 */
+    windowRemark: string;
+    /** 序号 */
+    sortNum: string;
+    /** 平台 */
+    platformIds: string;
+    /** 窗口状态 "true"：打开,"false":关闭 */
+    openStatus: string;
+    /** 开始时间 */
+    startDate: string;
+    /** 结束时间 */
+    endDate: string;
+  };
 }
 
-export interface AddWindowFilterNameCreateData {
+export interface UserAddWindowFilterNameCreateData {
   code: number;
   msg: string;
 }
 
-export interface GetWindowFilterNameListListData {
+export interface UserGetWindowFilterNameListListData {
   code: number;
   data: {
-    filter_name?: string;
-    filter_condition?: {
-      platform: string;
-    }[];
-    sort?: number;
+    /** 标签名 */
+    filter_name: string;
+    /** 查询条件 */
+    filter_condition: {
+      osList: string;
+      windowName: string;
+      windowRemark: string;
+      sortNum: string;
+      platformIds: string;
+      openStatus?: string;
+      startDate?: string;
+      endDate?: string;
+    };
+    sort: number;
   }[];
   msg: string;
 }
 
-export interface UpdateWindowTableRowsCreatePayload {
+export interface UserUpdateWindowTableRowsCreatePayload {
   table_rows: {
     /** 名称 */
     name: string;
@@ -2887,12 +2912,12 @@ export interface UpdateWindowTableRowsCreatePayload {
   }[];
 }
 
-export interface UpdateWindowTableRowsCreateData {
+export interface UserUpdateWindowTableRowsCreateData {
   code: number;
   msg: string;
 }
 
-export interface SaveWindowTableSortOrderCreatePayload {
+export interface UserSaveWindowTableSortOrderCreatePayload {
   table_sort: {
     /** 名称 */
     name?: string;
@@ -2901,12 +2926,12 @@ export interface SaveWindowTableSortOrderCreatePayload {
   }[];
 }
 
-export interface SaveWindowTableSortOrderCreateData {
+export interface UserSaveWindowTableSortOrderCreateData {
   code: number;
   msg: string;
 }
 
-export interface SaveWindowTableSortOrderListData {
+export interface UserSaveWindowTableSortOrderListData {
   code: number;
   data: {
     /** 排序名称 */
@@ -3017,7 +3042,7 @@ export interface UserGetPlatformInfoV2ListData {
   msg: string;
 }
 
-export interface UpdatePlatformTableRowsCreatePayload {
+export interface UserUpdatePlatformTableRowsCreatePayload {
   table_rows: {
     /** 名称 */
     name: string;
@@ -3028,12 +3053,12 @@ export interface UpdatePlatformTableRowsCreatePayload {
   }[];
 }
 
-export interface UpdatePlatformTableRowsCreateData {
+export interface UserUpdatePlatformTableRowsCreateData {
   code: number;
   msg: string;
 }
 
-export interface SavePlatformTableSortOrderCreatePayload {
+export interface UserSavePlatformTableSortOrderCreatePayload {
   table_sort: {
     /** 名称 */
     name?: string;
@@ -3042,12 +3067,12 @@ export interface SavePlatformTableSortOrderCreatePayload {
   }[];
 }
 
-export interface SavePlatformTableSortOrderCreateData {
+export interface UserSavePlatformTableSortOrderCreateData {
   code: number;
   msg: string;
 }
 
-export interface GetPlatformTableRowsListData {
+export interface UserGetPlatformTableRowsListData {
   code: number;
   data: {
     /** 名称 */
@@ -3060,7 +3085,7 @@ export interface GetPlatformTableRowsListData {
   msg: string;
 }
 
-export interface GetPlatformTableSortOrderListData {
+export interface UserGetPlatformTableSortOrderListData {
   code: number;
   data: {
     /** 排序名称 */
@@ -3071,7 +3096,7 @@ export interface GetPlatformTableSortOrderListData {
   msg: string;
 }
 
-export interface GetWindowTableRowsListData {
+export interface UserGetWindowTableRowsListData {
   code: number;
   data: {
     /** 名称 */
@@ -3227,14 +3252,14 @@ export interface UserGetWindowInfoV2ListParams {
   isBindRpa?: string;
   /**
    * 账号平台（多选）,传数字ID
-   * @example [""]
+   * @example "1,2,3"
    */
-  platformUrlIds?: string[];
+  platformUrlIds?: string;
   /**
    * 操作系统（多选）,传字符串
-   * @example [""]
+   * @example "Windows,macOS"
    */
-  osList?: string[];
+  osList?: string;
   /**
    * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
    * @example "0"
@@ -3250,7 +3275,10 @@ export interface UserGetWindowInfoV2ListParams {
    * @example "desc"
    */
   orderType?: string;
-  /** 代理协议列表 */
+  /**
+   * 代理协议列表
+   * @example ["HTTP, SOCKS5"]
+   */
   proxyProtocoList?: string[];
 }
 

@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { app, shell } from 'electron'
+import { app, autoUpdater, shell } from 'electron'
 import { restoreOrCreateWindow } from './mainWindow'
 import { ipcMain } from '/@/modules/ipc'
 
@@ -16,6 +16,23 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('未处理的 Promise 拒绝:', reason)
   // 在这里执行一些清理操作或记录错误日志
+})
+
+/** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
+let isQuittingForUpdate = false
+
+autoUpdater.on('before-quit-for-update', () => {
+  isQuittingForUpdate = true
+  console.log('Application is quitting for update.')
+})
+
+app.on('before-quit', (event) => {
+  if (isQuittingForUpdate) {
+    console.log('Application is quitting for update.')
+  }
+  else {
+    console.log('Application is quitting normally.')
+  }
 })
 
 export function setupApp() {

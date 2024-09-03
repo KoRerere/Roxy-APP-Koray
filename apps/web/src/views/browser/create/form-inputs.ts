@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { getFormDataByList, setInputVisible } from '/@/utils'
+import { createDefaultObject, getFormDataByList, setInputVisible } from '/@/utils'
 
 async function getUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -56,6 +56,18 @@ export function getAccordions() {
 
 export function getInputsGroup(data: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+
+  const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
+    ? [{
+      host: data.host, // 代理主机
+      ipType: data.ipType, // 网络协议
+      port: data.port, // 代理端口
+      proxyCategory: data.proxyCategory, // 代理类型
+      proxyPassword: data.proxyPassword, // 代理密码
+      proxyUserName: data.proxyUserName, // 代理账号
+      refreshUrl: data.refreshUrl, // 刷新URL
+    }]
+    : []
 
   const inputsGroup = reactive([
     [
@@ -122,26 +134,23 @@ export function getInputsGroup(data: any = {}) {
       },
       {
         label: 'Proxy(Direct)',
-        name: '_proxy',
-        value: {
-          host: data.host, // 代理主机
-          ipType: data.ipType, // 网络协议
-          port: data.port, // 代理端口
-          proxyCategory: data.proxyCategory, // 代理类型
-          proxyPassword: data.proxyPassword, // 代理密码
-          proxyUserName: data.proxyUserName, // 代理账号
-          refreshUrl: data.refreshUrl, // 刷新URL
-        },
+        name: 'proxyInfoList',
+        value: proxyInfoList,
         slot: 'proxy',
         formatValue: (self: any, _inputs: any, formData: any) => {
-          Object.assign(formData, self.value)
+          const value = self.value[0] || {
+            ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
+            proxyCategory: 'noproxy', // 删除代理时要手动标记直连
+          }
+          Object.assign(formData, value)// 赋值给表单（单个创建，以上字段为空则代表删除代理）
+          return self.value.map(({ proxyCount, ...item }: any) => Array.from({ length: proxyCount }, () => item)).flat()
         },
       },
       {
         separator: true,
       },
       {
-        label: 'Accounts(批量没有)',
+        label: 'Accounts',
         name: 'windowPlatformList',
         value: data.windowPlatformList ?? [],
         slot: 'accounts',

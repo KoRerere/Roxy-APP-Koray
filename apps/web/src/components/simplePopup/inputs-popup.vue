@@ -12,7 +12,13 @@ function close() {
 }
 
 function save() {
-  emit('save', [getFormData(popupData.value.inputs), close])
+  try {
+    const formData = getFormData(popupData.value.inputs)
+    emit('save', [formData, close])
+  }
+  catch (error) {
+
+  }
 }
 
 onMounted(() => {

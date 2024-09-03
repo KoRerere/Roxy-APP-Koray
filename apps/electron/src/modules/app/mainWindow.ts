@@ -50,20 +50,27 @@ async function createWindow() {
   return browserWindow
 }
 
+let mainWindow: BrowserWindow | undefined
+
 /**
  * 恢复现有的浏览器窗口或创建新的浏览器窗口
  */
 export async function restoreOrCreateWindow() {
-  let window = BrowserWindow.getAllWindows().find(w => !w.isDestroyed())
+  mainWindow = BrowserWindow.getAllWindows().find(w => !w.isDestroyed())
 
-  if (window === undefined) {
-    window = await createWindow()
+  if (mainWindow === undefined) {
+    mainWindow = await createWindow()
   }
 
-  if (window.isMinimized()) {
-    window.restore()
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
   }
 
-  window.focus()
-  return window
+  mainWindow.focus()
+  return mainWindow
+}
+
+/** 获取主窗口实例 */
+export function getMainWindow() {
+  return mainWindow
 }
