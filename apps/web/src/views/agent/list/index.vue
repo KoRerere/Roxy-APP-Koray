@@ -4,33 +4,11 @@ import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
 import proxyIcon from '/@/assets/image/proxy.svg'
-import { API } from '/@/api'
 import useColumns from '/@/hooks/useColumns'
-
+import { API } from '/@/api'
 import columnsConfig from './columns'
 
-// const columns = ref([
-//   {
-//     title: 'Proxy Info',
-//     slot: 'proxy',
-//   },
-//   {
-//     title: 'Outbound IP',
-//     slot: 'outbound',
-//   },
-//   {
-//     title: 'IP Checker',
-//     slot: 'checker',
-//   },
-//   {
-//     title: 'Related Profiles',
-//     slot: 'related',
-//   },
-//   {
-//     title: 'Actions',
-//     slot: 'actions',
-//   },
-// ])
+import remarkIcon from '/@/components/remark-icon'
 
 const [columns] = useColumns(columnsConfig)
 
@@ -46,13 +24,6 @@ const operation = ref([
     name: 'test',
     label: '测速',
     icon: 'mdi mdi-wifi',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'note',
-    label: '笔记',
-    icon: 'mdi mdi mdi-cube-scan',
     quick: true,
     multiple: true,
   },
@@ -121,13 +92,15 @@ async function tableRequest(params: any) {
           </div>
         </template>
         <template #actions="{ data }">
-          <actions :operation="operation" :show-menu="false"
-            @icon-click="(operate) => operationHandler(operate, data)" />
+          <div class="flex gap-2">
+            <actions :operation="operation" :show-menu="false"
+              @icon-click="(operate) => operationHandler(operate, data)" />
+            <remarkIcon />
+          </div>
         </template>
       </ry-table>
     </div>
   </div>
-  <DynamicDialog />
 </template>
 
 <style lang="scss" scoped>

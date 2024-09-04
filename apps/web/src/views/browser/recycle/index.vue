@@ -123,7 +123,6 @@ async function tableRequest() {
       </ry-table>
     </div>
   </div>
-  <DynamicDialog />
 </template>
 
 <style lang="scss" scoped>
