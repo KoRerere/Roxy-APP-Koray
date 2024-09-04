@@ -190,18 +190,17 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'radio',
       name: 'openStatus',
+      label: '窗口状态',
       options: [
         {
-          name: 'statusOpen',
+          icon: 'mdi mdi-home-group',
           label: '窗口打开',
           value: true,
-          icon: 'mdi mdi-home-group',
         },
         {
-          name: 'statusClose',
+          icon: 'mdi mdi-home-group',
           label: '窗口关闭',
           value: false,
-          icon: 'mdi mdi-home-group',
         },
       ],
     },
@@ -262,21 +261,19 @@ export async function getCustomFilters(params: any = {}) {
         label: item.label,
       })),
     },
-
     {
       type: 'radio',
       name: 'proxyTestStatus',
+      label: '检测状态',
       options: [
         {
-          name: 'statusSuccess',
-          label: '检测成功的代理',
           icon: 'mdi mdi-clipboard-edit-outline',
+          label: '检测成功的代理',
           value: '1',
         },
         {
-          name: 'statusFailure',
-          label: '检测失败的代理',
           icon: 'mdi mdi-account-card-outline',
+          label: '检测失败的代理',
           value: '2',
         },
       ],
@@ -294,20 +291,26 @@ export async function getCustomFilters(params: any = {}) {
           placeholder: '请选择开始时间',
           name: 'startDate',
           formatValue: (self: any) => {
-            return self.valu && format(self.value, 'yyyy-MM-dd')
+            return self.value && format(self.value, 'yyyy-MM-dd')
           },
         },
         {
           placeholder: '请选择结束时间',
           name: 'endDate',
           formatValue: (self: any) => {
-            return self.valu && format(self.value, 'yyyy-MM-dd')
+            return self.value && format(self.value, 'yyyy-MM-dd')
           },
         },
       ],
     },
   ].map((input: any) => {
-    input.value = params[input.name]
+    if (input.type === 'date') {
+      input.value = params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined
+      input.items.forEach((it: any) => it.value = params[it.name])
+    }
+    else {
+      input.value = params[input.name]
+    }
     return input
   })
 }

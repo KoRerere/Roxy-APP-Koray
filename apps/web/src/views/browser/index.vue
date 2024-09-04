@@ -3,6 +3,12 @@ import { VueDraggable } from 'vue-draggable-plus'
 import ryPopover from '/@/components/ry-popover'
 import { API } from '/@/api'
 
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+
+const confirm = useConfirm()
+const toast = useToast()
+
 const tabs = ref([
   { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000', routeName: 'browser-list' },
   { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001', routeName: 'browser-recycle' },
@@ -34,6 +40,32 @@ async function getFilterList() {
   tabs.value.splice(1, 0, ...list)
 }
 
+async function deleteFilterItem(filter_name: string) {
+  confirm.require({
+    header: '警告',
+    message: '确认删除此筛选组？',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: '确定',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        const { msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name })
+        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        getFilterList()
+      }
+      catch (error) {
+        console.log('🚀 ~ accept: ~ error:', error)
+      }
+    },
+  })
+}
+
 function handleTabChange(id: string | number) {
   activeTab.value = tabs.value.find(item => item.id === id)
 }
@@ -46,6 +78,10 @@ onMounted(() => {
 const popRef = ref()
 function showPopover(event: Event) {
   popRef.value.getRef().show(event)
+}
+
+function hidePopover() {
+  console.log('🚀 ~ hidePopover ~ hidePopover:')
 }
 </script>
 
@@ -71,7 +107,7 @@ function showPopover(event: Event) {
     </div>
   </div>
 
-  <ry-popover ref="popRef" class="table-popover">
+  <ry-popover ref="popRef" class="table-popover" @hide="hidePopover">
     <div class="table-popover-column">
       所有窗口
     </div>
@@ -81,7 +117,7 @@ function showPopover(event: Event) {
         <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.label }}</span>
         <span class="cursor-pointer mdi mdi-pencil-outline" />
-        <span class="cursor-pointer mdi mdi-delete-empty-outline" />
+        <span class="cursor-pointer mdi mdi-delete-empty-outline" @click="deleteFilterItem(item.label)" />
       </div>
     </VueDraggable>
     <div class="table-popover-column">

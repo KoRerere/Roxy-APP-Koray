@@ -2833,12 +2833,20 @@ export interface UserGetLoginLogListData {
 }
 
 export interface UserUpdateWindowFilterNameCreatePayload {
-  /** 旧标签页名称 */
+  /** 旧的标签页名称 */
   old_filter_name: string;
-  /** 新修改的标签页名称 */
+  /** 新的标签页名称 */
   new_filter_name: string;
   /** 排序 */
   sort: number;
+  filter_rule: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
 }
 
 export interface UserUpdateWindowFilterNameCreateData {
@@ -2877,6 +2885,14 @@ export interface UserAddWindowFilterNameCreatePayload {
     /** 结束时间 */
     endDate: string;
   };
+  filter_rule: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
 }
 
 export interface UserAddWindowFilterNameCreateData {
@@ -2900,6 +2916,16 @@ export interface UserGetWindowFilterNameListListData {
       startDate?: string;
       endDate?: string;
     };
+    /** 排序规则 */
+    filter_rule: {
+      /** 名称 */
+      name: string;
+      /** 排序 */
+      sort: number;
+      /** 状态 */
+      status: number;
+    }[];
+    /** 排序 */
     sort: number;
   }[];
   msg: string;
@@ -2932,17 +2958,6 @@ export interface UserSaveWindowTableSortOrderCreatePayload {
 
 export interface UserSaveWindowTableSortOrderCreateData {
   code: number;
-  msg: string;
-}
-
-export interface UserSaveWindowTableSortOrderListData {
-  code: number;
-  data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序类型 */
-    order_type?: string;
-  }[];
   msg: string;
 }
 
@@ -3109,6 +3124,17 @@ export interface UserGetWindowTableRowsListData {
     sort?: number;
     /** 状态 */
     status?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetWindowTableSortOrderListData {
+  code: number;
+  data: {
+    /** 排序名称 */
+    order_name?: string;
+    /** 排序类型 */
+    order_type?: string;
   }[];
   msg: string;
 }
@@ -3642,5 +3668,138 @@ export interface UserGetWindowInfoV2ListData {
       checkStatus?: number;
     }[];
   };
+  msg: string;
+}
+
+export interface UserBatchWindowInfoV2CreatePayload {
+  createCount: number;
+  windowNamePrefix: string;
+  groupId: number;
+  platformUrl: string;
+  defaultOpenUrl: string[];
+  efa: string;
+  os: string;
+  osVersion: string;
+  cookie: {
+    name?: string;
+    value?: string;
+    domain?: string;
+  }[];
+  moduleIds: {
+    moduleId: number;
+    count: number;
+  }[];
+  proxyMethod: string;
+  proxyCategory: string;
+  ipType: string;
+  proxyProvider: string;
+  protocol: string;
+  country: string;
+  state: string;
+  city: string;
+  host: string;
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  proxyTime: string;
+  refreshUrl: string;
+  accessServer: string;
+  checkChannel: string;
+  extraChannel: string;
+  isExtraNewIp: boolean;
+  isRepectCheck: boolean;
+  extraUrl: string;
+  lastIp: string;
+  lastCountry: string;
+  fingerDetail: {
+    userAgent?: string;
+    font?: string;
+    canvasValue?: string;
+    webGLValue?: string;
+    webGLManufacturer?: string;
+    webGLRender?: string;
+    audioContextValue?: string;
+    speechVoicesValue?: object;
+    clientRectsValue?: object;
+    mediaDevice?: boolean;
+    mediaDeviceList?: string[];
+    deviceName?: string;
+    macAddr?: string;
+  }[];
+  isLanguageBaseIp: boolean;
+  language: string;
+  isDisplayLanguageBaseIp: boolean;
+  displayLanguage: string;
+  isTimeZone: boolean;
+  timeZone: string;
+  position: number;
+  isPositionBaseIp: boolean;
+  longitude: string;
+  latitude: string;
+  precisionPos: string;
+  forbidAudio: boolean;
+  forbidImage: number;
+  forbiddenPictureSize: string;
+  forbidMedia: boolean;
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  isDisplayName: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+  /** 代理详细信息 */
+  proxyInfoList: string[];
+}
+
+export interface UserBatchWindowInfoV2CreateData {
+  code: number;
   msg: string;
 }

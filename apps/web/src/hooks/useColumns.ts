@@ -7,23 +7,23 @@ interface Columns {
   data: any[]
 }
 
-function useColumns(data: Columns) {
-  const { key, data: list } = data
+function useColumns(columns: Columns) {
+  const { key, data } = columns
 
   const cache = (localStorage.getItem(key)?.split(',') || []).reduce(
-    (map: ColumnCache, cur: string) => {
-      const [key, visible, sort] = cur.split('_')
-      map[key] = {
+    (settingMap, columnSetting: string) => {
+      const [columnKey, visible, sort] = columnSetting.split('_')
+      settingMap[columnKey] = {
         visible: visible ? JSON.parse(visible) : undefined,
         sort,
       }
-      return map
+      return settingMap
     },
-    {},
+    {} as ColumnCache,
   )
 
   const _list = ref(
-    list
+    data
       .map((item, index) => {
         const _visible = cache[item.key]?.visible ?? true
         const _sort = cache[item.key]?.sort ?? index
@@ -37,12 +37,12 @@ function useColumns(data: Columns) {
       .sort((a, b) => a._sort - b._sort),
   )
 
-  onUnmounted(() => {
-    const _cache = _list.value
-      .map((item, index) => `${item.key}_${item._visible}_${index}`)
-      .join(',')
-    localStorage.setItem(key, _cache)
-  })
+  // onUnmounted(() => {
+  //   const _cache = _list.value
+  //     .map((item, index) => `${item.key}_${item._visible}_${index}`)
+  //     .join(',')
+  //   localStorage.setItem(key, _cache)
+  // })
 
   return [_list]
 }

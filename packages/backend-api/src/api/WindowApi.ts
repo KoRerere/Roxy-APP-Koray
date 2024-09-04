@@ -20,6 +20,8 @@ import {
   UserAddWindowInfoCreatePayload,
   UserBatchWindowInfoCreateData,
   UserBatchWindowInfoCreatePayload,
+  UserBatchWindowInfoV2CreateData,
+  UserBatchWindowInfoV2CreatePayload,
   UserClearWindowCacheApiCreateData,
   UserClearWindowCacheApiCreatePayload,
   UserClearWindowCacheCreateData,
@@ -56,6 +58,7 @@ import {
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
   UserGetWindowTableRowsListData,
+  UserGetWindowTableSortOrderListData,
   UserImportWindowInfoCreateData,
   UserImportWindowInfoCreatePayload,
   UserMdfGroupInfoCreateData,
@@ -76,7 +79,6 @@ import {
   UserModifyWindowReportTimeCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
   UserSaveWindowTableSortOrderCreatePayload,
-  UserSaveWindowTableSortOrderListData,
   UserUpdateWindowFilterNameCreateData,
   UserUpdateWindowFilterNameCreatePayload,
   UserUpdateWindowTableRowsCreateData,
@@ -660,6 +662,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserUpdateWindowTableRowsCreate
    * @summary 修改窗口表格列顺序
    * @request POST:/user_update_window_table_rows
+   * @deprecated
    * @response `200` `UserUpdateWindowTableRowsCreateData` 成功
    */
   userUpdateWindowTableRowsCreate = (data: UserUpdateWindowTableRowsCreatePayload, params: RequestParams = {}) =>
@@ -676,7 +679,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserSaveWindowTableSortOrderCreate
-   * @summary 保存窗口表格排序
+   * @summary 保存窗口表格排序规则
    * @request POST:/user_save_window_table_sort_order
    * @response `200` `UserSaveWindowTableSortOrderCreateData` 成功
    */
@@ -693,14 +696,15 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserSaveWindowTableSortOrderList
-   * @summary 保存窗口表格排序规则
-   * @request GET:/user_save_window_table_sort_order
-   * @response `200` `UserSaveWindowTableSortOrderListData` 成功
+   * @name UserGetWindowTableRowsList
+   * @summary 获取窗口表格列顺序
+   * @request GET:/user_get_window_table_rows
+   * @deprecated
+   * @response `200` `UserGetWindowTableRowsListData` 成功
    */
-  userSaveWindowTableSortOrderList = (params: RequestParams = {}) =>
-    this.http.request<UserSaveWindowTableSortOrderListData, any>({
-      path: `/user_save_window_table_sort_order`,
+  userGetWindowTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowTableRowsListData, any>({
+      path: `/user_get_window_table_rows`,
       method: "GET",
       format: "json",
       ...params,
@@ -709,14 +713,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserGetWindowTableRowsList
-   * @summary 获取窗口表格列顺序
-   * @request GET:/user_get_window_table_rows
-   * @response `200` `UserGetWindowTableRowsListData` 成功
+   * @name UserGetWindowTableSortOrderList
+   * @summary 获取窗口表格排序规则
+   * @request GET:/user_get_window_table_sort_order
+   * @response `200` `UserGetWindowTableSortOrderListData` 成功
    */
-  userGetWindowTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<UserGetWindowTableRowsListData, any>({
-      path: `/user_get_window_table_rows`,
+  userGetWindowTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowTableSortOrderListData, any>({
+      path: `/user_get_window_table_sort_order`,
       method: "GET",
       format: "json",
       ...params,
@@ -735,6 +739,24 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_window_info_v2`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserBatchWindowInfoV2Create
+   * @summary 批量创建窗口 (新浏览器版本)
+   * @request POST:/user_batch_window_info_v2
+   * @response `200` `UserBatchWindowInfoV2CreateData` 成功
+   */
+  userBatchWindowInfoV2Create = (data: UserBatchWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserBatchWindowInfoV2CreateData, any>({
+      path: `/user_batch_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

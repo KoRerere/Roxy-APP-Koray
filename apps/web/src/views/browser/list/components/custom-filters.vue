@@ -4,15 +4,7 @@
 import ryButton from '/@/components/ry-button'
 import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
-import { format } from 'date-fns'
-import { sleep } from '/@/utils'
-
-interface FilterItem {
-  label: string
-  name: string
-  value: string | string[]
-  original: any
-}
+import { isEmptyValue, setInputValueByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
   ctmFilters: {
@@ -22,237 +14,50 @@ const _props = defineProps({
 })
 
 const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])
-
-const filterList = defineModel<FilterItem[]>('list')
-
 const dialog = useDialog()
 
-const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+const scvroptions = computed(() => {
+  return _props.ctmFilters
+    .map((item) => {
+      if (item.type === 'radio' && Array.isArray(item.options) && item.options.length > 0) {
+        return item.options.map((it: any) => ({ ...it, parentName: item.name, type: item.type }))
+      }
+      return item
+    })
+    .flat()
+})
 
-const options = ref([
-  {
-    name: 'windowName',
-    label: '窗口名称',
-    icon: 'mdi mdi-ab-testing',
-  },
-  {
-    label: '窗口序号',
-    name: 'sortNums',
-    icon: 'mdi mdi-abacus',
-  },
-  {
-    separator: true,
-  },
-  {
-    label: '操作系统',
-    name: 'osList',
-    icon: 'mdi mdi-abjad-arabic',
-    children: ($dict_map.os || []).map((item: any) => ({
-      parentLabel: '操作系统',
-      parentName: 'osList',
-      type: 'Checkbox',
-      value: item.value,
-      label: item.label,
-    })),
-  },
-  {
-    name: 'platformUrlIds',
-    label: '#@账号平台(多选)',
-    icon: 'mdi mdi-abjad-hebrew',
-  },
-  {
-    separator: true,
-  },
-  {
-    aliasName: 'statusOpen',
-    name: 'openStatus',
-    label: '窗口打开',
-    icon: 'mdi mdi-home-group',
-  },
-  {
-    aliasName: 'statusClose',
-    name: 'openStatus',
-    label: '窗口关闭',
-    icon: 'mdi mdi-home-group',
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'groupIds',
-    label: '#@窗口分组(多选)',
-    icon: 'mdi mdi-access-point-check',
-  },
-  {
-    name: 'labelIds',
-    label: '#@窗口标签(多选)',
-    icon: 'mdi mdi-tag-heart-outline',
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'isOften',
-    label: '窗口收藏',
-    icon: 'mdi mdi-bookmark-music-outline',
-  },
-  {
-    label: '窗口备注',
-    name: 'windowRemark',
-    icon: 'mdi mdi-clipboard-list-outline',
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'proxyProtocoList',
-    label: '代理协议',
-    icon: 'mdi mdi-alarm-check',
-    children: ($dict_map.protocol || []).map((item: any) => ({
-      parentLabel: '代理协议',
-      parentName: 'proxyProtocoList',
-      type: 'Checkbox',
-      value: item.value,
-      label: item.label,
-    })),
-  },
-  {
-    aliasName: 'statusSuccess',
-    name: 'proxyTestStatus',
-    label: '检测成功的代理',
-    icon: 'mdi mdi-clipboard-edit-outline',
-  },
-  {
-    aliasName: 'statusFailure',
-    name: 'proxyTestStatus',
-    label: '检测失败的代理',
-    icon: 'mdi mdi-account-card-outline',
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'createTime',
-    label: '窗口创建时间',
-    icon: 'mdi mdi-delete-empty-outline',
-  },
-])
+const scvroptionsItems = computed(() => _props.ctmFilters.filter((item: any) => item.type !== 'Separator' && !isEmptyValue(item.value)))
 
 const menuRef = ref()
 const isChildren = ref(false)
-const menuOptions = ref(options.value)
+const subMenuOptions = ref()
+const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : scvroptions.value)
+
 const selectedCategories = ref<string[]>([])
 
-function operationHandler(item: any) {
-  const name = item.aliasName || item.name
-
-  switch (name) {
-    case 'windowName':
-      inputPopup({
-        title: '窗口名称',
-        inputs: [
-          {
-            type: 'text',
-            placeholder: '请输入窗口名称',
-            name: 'windowName',
-            value: '',
-            required: true,
-          },
-        ],
-      })
-      break
-    case 'sortNums':
-      inputPopup({
-        title: '窗口序号',
-        inputs: [
-          {
-            type: 'text',
-            placeholder: '请输入窗口序号',
-            name: 'sortNums',
-            value: '',
-            required: true,
-          },
-        ],
-      })
-      break
-    case 'osList':
-      openChild(item)
-      break
-    case 'platformUrlIds':
-      openChild(item)
-      break
-    case 'statusOpen':
-      onSwitch(item, true)
-      break
-    case 'statusClose':
-      onSwitch(item, false)
-      break
-    case 'groupIds':
-      break
-    case 'labelIds':
-      break
-    case 'isOften':
-      onSwitch(item)
-      break
-    case 'windowRemark':
-      inputPopup({
-        title: '窗口备注',
-        inputs: [
-          {
-            type: 'textarea',
-            placeholder: '请输入窗口备注',
-            name: 'windowRemark',
-            value: '',
-            required: true,
-          },
-        ],
-      })
-      break
-    case 'proxyProtocoList':
-      openChild(item)
-      break
-    case 'statusSuccess':
-      onSwitch(item, 1)
-      break
-    case 'statusFailure':
-      onSwitch(item, 2)
-      break
-    case 'createTime':
-      inputPopup({
-        title: '窗口创建时间',
-        inputs: [
-          {
-            type: 'date',
-            items: [
-              {
-                placeholder: '请选择开始时间',
-                name: 'startDate',
-                required: true,
-                formatValue: (self: any) => {
-                  return format(self.value, 'yyyy-MM-dd')
-                },
-              },
-              {
-                placeholder: '请选择结束时间',
-                name: 'endDate',
-                required: true,
-                formatValue: (self: any) => {
-                  return format(self.value, 'yyyy-MM-dd')
-                },
-              },
-            ],
-          },
-        ],
-        formatValue(formData: any) {
-          return Object.values(formData).join('~')
-        },
-      })
-      break
-  }
+function showMenu(event: any) {
+  menuRef.value.show(event)
 }
 
-function show(event: any) {
-  menuRef.value.show(event)
+function operationHandler(item: any) {
+  switch (item.type) {
+    case 'text':
+    case 'number':
+    case 'textarea':
+    case 'date':
+      inputPopup(item)
+      break
+    case 'switch':
+      onSwitch(item)
+      break
+    case 'radio':
+      onRadioChose(item)
+      break
+    case 'Checkbox':
+      openChild(item)
+      break
+  }
 }
 
 function inputPopup(data: any) {
@@ -266,13 +71,12 @@ function inputPopup(data: any) {
     data,
     emits: {
       onSave: ([formData, close]: [any, () => void]) => {
-        const [[name, value]] = Object.entries(formData)
-        deleteFilterByName(name)
-        filterList.value!.push({
-          label: data.title,
-          name,
-          value: data.formatValue ? data.formatValue(formData) : value,
-          original: formData,
+        if (data.type === 'date') {
+          const value = Object.values(formData).join('~')
+          setInputValueByInputKey(_props.ctmFilters, data.name, 'value', value)// 用于筛选标签展示
+        }
+        Object.entries(formData).forEach(([name, value]) => {
+          setInputValueByInputKey(_props.ctmFilters, name, 'value', value)
         })
         emit('filterChange')
         close()
@@ -281,26 +85,24 @@ function inputPopup(data: any) {
   })
 }
 
+function onRadioChose(item: any) {
+  setInputValueByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
+  menuRef.value.hide()
+  emit('filterChange')
+}
+
 function onSwitch(item: any, value: any = true) {
-  deleteFilterByName(item.name)
-  filterList.value!.push({
-    label: item.label,
-    name: item.name,
-    value,
-    original: { [item.name]: value },
-  })
+  item.value = value
   menuRef.value.hide()
   emit('filterChange')
 }
 
 function openChild(item: any) {
-  if (item.children) {
+  if (item.options) {
     sleep(20).then(() => {
       isChildren.value = true
-      menuOptions.value = item.children
-
-      const selected = filterList.value!.find(it => it.name === item.name)
-      selectedCategories.value = Array.isArray(selected?.value) ? selected.value : []
+      subMenuOptions.value = item.options
+      selectedCategories.value = item.value
     })
     return
   }
@@ -308,38 +110,32 @@ function openChild(item: any) {
 }
 
 function onHide() {
-  if (isChildren.value) {
+  if (isChildren.value) { // 二级 checkbox 菜单隐藏触发
     selectedCategories.value = []
     sleep(20).then(() => {
       isChildren.value = false
-      menuOptions.value = options.value
       emit('filterChange')
     })
   }
 }
 
 function onChange(item: any) {
-  deleteFilterByName(item.parentName)
-
-  if (selectedCategories.value.length > 0) {
-    filterList.value!.push({
-      label: item.parentLabel,
-      name: item.parentName,
-      value: selectedCategories.value,
-      original: { [item.parentName]: selectedCategories.value },
-    })
-  }
+  _props.ctmFilters.find(input => input.name === item.parentName).value = toRaw(selectedCategories.value)
 }
 
-function deleteFilterByName(name: string) {
-  const index = filterList.value!.findIndex((item: any) => item.name === name)
-  if (index >= 0) {
-    filterList.value!.splice(index, 1)
-  }
+function deleteFilterItem(item: any) {
+  const names = item.type !== 'date' ? item.name : [item.name, item.items.map((it: any) => it.name)].flat()
+  setInputValueByInputKey(_props.ctmFilters, names, 'value', null)
+  emit('filterChange')
 }
 
-function deleteFilter(index: number) {
-  filterList.value!.splice(index, 1)
+function clearFilters() {
+  _props.ctmFilters.forEach((item) => {
+    item.value = null
+    if (Array.isArray(item.items)) {
+      item.items.forEach((it: any) => it.value = null)
+    }
+  })
   emit('filterChange')
 }
 
@@ -351,15 +147,11 @@ function saveFilters() {
       blockScroll: true,
     },
     data: {
-      title: 'save filter',
-      inputs: [
-        {
-          type: 'text',
-          placeholder: 'filter name...',
-          name: 'filter_name',
-          required: true,
-        },
-      ],
+      type: 'text',
+      label: 'Save filter',
+      placeholder: 'filter name...',
+      name: 'filter_name',
+      required: true,
     },
     emits: {
       onSave: ([formData, close]: [any, () => void]) => {
@@ -373,30 +165,32 @@ function saveFilters() {
 
 <template>
   <div class="flex gap-2 filter-list">
-    <div v-for="(item, index) in filterList" :key="index" class="filter-item">
-      <span class="mdi mdi-close cursor-pointer filter-item-icon" @click="deleteFilter(index)" />
+    <div v-for="(item, index) in scvroptionsItems" :key="index" class="filter-item">
+      <span class="mdi mdi-close cursor-pointer filter-item-icon" @click.stop="deleteFilterItem(item)" />
       <span class="select-none">{{ item.label }}:</span>
       <span class="cursor-pointer">{{ item.value }}</span>
     </div>
 
-    <ryButton class="filter-button" text @click="show($event)">
+    <ryButton class="filter-button" text @click="showMenu">
       <span class="mdi mdi-filter-variant" />
-      <span v-if="!filterList!.length">Add filters</span>
+      <span v-if="!scvroptionsItems.length">Add filters</span>
     </ryButton>
-    <ryButton>clear</ryButton>
+    <ryButton @click="clearFilters">
+      clear
+    </ryButton>
     <ryButton @click="saveFilters">
       save filter
     </ryButton>
   </div>
+  <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="selectedCategories.value" :input-id="item.name"
+            :name="item.parentName" :value="item" @click.stop @change="change" /> -->
   <TieredMenu ref="menuRef" :model="menuOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
-        <label v-if="item.type" class="cursor-pointer browser-item" :for="item.value" @click.stop>
-          <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="selectedCategories.value" :input-id="item.name"
-            :name="item.parentName" :value="item" @click.stop @change="change" /> -->
-          <Checkbox v-if="item.type === 'Checkbox'" v-model="selectedCategories" :name="item.parentName"
-            :input-id="item.value" :value="item.value" @click.stop @change="() => onChange(item)" />
+        <label v-if="isChildren" class="cursor-pointer browser-item" :for="item.value" @click.stop>
+          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
+            @click.stop @change="() => onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
         <div v-else class="browser-item" @click.stop="operationHandler(item)">

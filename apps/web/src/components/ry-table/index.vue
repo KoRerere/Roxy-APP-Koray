@@ -91,7 +91,7 @@ const paginatorConfig = reactive({
   rows: 15,
   totalRecords: 0,
   rowsPerPageOptions: [5, 15, 30, 50],
-  onResetPage(page: number = 0, rows: number = 15) {
+  onResetPage(page: number = 1, rows: number = 15) {
     paginatorConfig.page = page
     paginatorConfig.rows = rows
   },
@@ -99,8 +99,8 @@ const paginatorConfig = reactive({
     paginatorConfig.page = event.page + 1
     _request()
   },
-  onRowsChange(event) {
-    console.log('🚀 ~ onRowsChange ~ event:', paginatorConfig)
+  onRowsChange() {
+    _request()
   },
 })
 
@@ -180,7 +180,12 @@ defineExpose({
       </div>
       <div class="flex gap-2">
         <table-config v-if="showConfig" :columns="columns"
-          @update:columns="(columns) => $emit('update:columns', columns)" />
+          @update:columns="(columns) => $emit('update:columns', columns)">
+          <template #footer>
+            <slot name="config-footer" />
+          </template>
+        </table-config>
+
         <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
       </div>
     </div>
@@ -197,7 +202,6 @@ defineExpose({
             </div>
           </slot>
         </template>
-
         <Column v-if="selectionMode" :selection-mode="selectionMode" :data-key="dataKey" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
           <template #body="{ data }">

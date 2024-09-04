@@ -6,8 +6,7 @@ import ryTag from '/@/components/ry-tag'
 
 import drawersitems from '/@/views/browser/components/drawers/index.vue'
 import profileInfo from './components/profile-info.vue'
-// import customFilters from './components/custom-filters.vue'
-import customFilters from './components/custom-filters-copy.vue'
+import customFilters from './components/custom-filters.vue'
 import browserControl from './components/browser-control.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import { getFormData } from '/@/utils/index'
@@ -22,7 +21,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 
 import type { DrawerType } from '../components/drawers/props'
-import type { UserAddWindowFilterNameCreatePayload } from '@roxy/backend-api'
 
 const emit = defineEmits(['updateFilterTabs'])
 const confirm = useConfirm()
@@ -56,7 +54,6 @@ const drawer = reactive({
       case 'accountForm':
         {
           const { id, dirId, windowPlatformList, ...item } = data
-          console.log('🚀 ~ windowPlatformList:', windowPlatformList)
           drawer.editProfile({
             id,
             dirId,
@@ -101,9 +98,17 @@ async function saveFilters(formData: { filter_name: string }) {
     return
   }
   const filter_condition = getFormData(ctmFilters.value)
-  const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition })
+  const filter_rule = columns.value.map(column => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
+
+  const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   emit('updateFilterTabs')
+}
+
+async function coverAllFiltersConfig() {
+
+  // warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
+  //   .then(() => { })
 }
 
 async function tableRequest(params: any) {
@@ -140,7 +145,7 @@ async function operationHandler(operate: any, data: any) {
       break
     }
     case 'delete':
-      deletePopup()
+      warnPopup('确定要删除所选窗口？')
         .then(() => batchModifyWindow({ ids, isDelete: true }))
       break
     case 'close':
@@ -161,13 +166,11 @@ async function batchModifyWindow(params: any) {
 }
 
 function profileOperate(key: string, data: any) {
-  console.log('🚀 ~ profileOperate ~ key:', key)
   const _data = toRaw(data)
   switch (key) {
     case 'addProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.data = _data
       drawer.title = `新建代理 [UID-${data.windowSortNum}]`
       break
     case 'editProxy':
@@ -219,7 +222,7 @@ async function refreshIp(_data: any) {
 
 async function deleteProxy(data: any) {
   try {
-    await deletePopup()
+    await warnPopup('您确定要删除此代理吗')
     drawer.editProfile({
       id: data.id,
       dirId: data.dirId,
@@ -252,7 +255,6 @@ function openBrowser(data: any) {
 
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
-    console.log('🚀 ~ window.electronAPI.on ~ event:', event)
     const id = event.data?.dirId || event.data
     openMessage[id as string] = event
   })
@@ -260,7 +262,6 @@ function listenOpenMessage() {
 
 function listenCloseMessage() {
   return window.electronAPI.on('browser:on-close', (dirId) => {
-    console.log('🚀 ~browser:on-close ~ event:', dirId)
     Reflect.deleteProperty(openMessage, dirId)
   })
 }
@@ -275,11 +276,11 @@ function showOperationMenu(event: Event, data: any, extra?: any) {
   })
 }
 
-function deletePopup() {
-  return new Promise((resolve, reject) => {
+function warnPopup(message: string) {
+  return new Promise((resolve, _reject) => {
     confirm.require({
       header: '警告',
-      message: '您确定要删除此代理吗?',
+      message,
       rejectProps: {
         label: '取消',
         severity: 'secondary',
@@ -290,7 +291,7 @@ function deletePopup() {
         severity: 'danger',
       },
       accept: () => resolve(null),
-      reject: () => reject(new Error('cancel popup')),
+      // reject: () => reject(new Error('cancel popup')),
     })
   })
 }
@@ -317,6 +318,12 @@ onBeforeUnmount(() => {
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
+    <template #config-footer>
+      <div class="flex-1 flex justify-end cursor-pointer config-footer" @click="coverAllFiltersConfig">
+        Save for all filters
+      </div>
+    </template>
+
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
     </template>
@@ -335,8 +342,8 @@ onBeforeUnmount(() => {
         @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" />
     </template>
   </ry-table>
-  <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
-    :pt="{ mask: 'browser-drawer' }">
+  <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
+    :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
       <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="data => drawer.confirm(drawer.type, data)" />
@@ -344,19 +351,19 @@ onBeforeUnmount(() => {
   </Drawer>
 </template>
 
-<style lang="scss">
+<style lang="scss" module="classes">
 .browser-drawer {
   padding: var(--spacing-xl, 12px);
 
   &-content {
     border-radius: var(--radius-lg, 8px);
-    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad) !important;
+    background: var(--Colors-Background-bg-body, #fff) !important;
     box-shadow:
       0px 1px 1px 0px rgba(0, 0, 0, 0.04),
       0px 2px 8px 0px rgba(0, 0, 0, 0.04),
       0px 3px 17px 0px rgba(0, 0, 0, 0.04),
-      0px 4px 30px 0px rgba(0, 0, 0, 0.12);
+      0px 4px 30px 0px rgba(0, 0, 0, 0.12) !important;
   }
 }
 </style>
@@ -369,7 +376,11 @@ onBeforeUnmount(() => {
   border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
 }
 
-:deep(.custom-class) {
-  color: red;
+.config-footer {
+  padding: var(--spacing-lg, 8px) 10px;
+  gap: var(--spacing-lg, 8px);
+  border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  // padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
 }
 </style>

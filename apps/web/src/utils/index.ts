@@ -40,7 +40,7 @@ export function isEmptyValue(value: any) {
 }
 
 function isInvalid(value: any) {
-  return !value && value !== 0
+  return [null, undefined, ''].includes(value)
 }
 
 function formVaildData(formData: any, input: any) {
@@ -121,13 +121,13 @@ export function setInputValueByInputKey(
   inputKey: string,
   value: any,
 ) {
-  const _names: string[] = ([] as string[]).concat(inputNames)
+  const setNames: string[] = ([] as string[]).concat(inputNames)
   inputs.forEach((item: any) => {
-    if (item.items && Array.isArray(item.items)) {
-      setInputValueByInputKey(item.items, _names, inputKey, value)
-    }
-    else if (_names.includes(item.name)) {
+    if (setNames.includes(item.name)) {
       item[inputKey] = value
+    }
+    if (item.items && Array.isArray(item.items)) {
+      setInputValueByInputKey(item.items, setNames, inputKey, value)
     }
   })
 }
