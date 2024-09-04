@@ -8,8 +8,7 @@ import proxyTable from '/@/views/browser/components/drawers/proxy-list.vue'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useVModel } from '@vueuse/core'
 import { getImage } from '/@/utils'
-import { useDialog } from 'primevue/usedialog'
-import simplePopup from '/@/components/simplePopup/inputs-popup.vue'
+import { useTableContext } from '../hooks/useContext'
 
 const props = defineProps({
   modelValue: {
@@ -20,10 +19,7 @@ const props = defineProps({
 
 const emits = defineEmits(['update:modelValue'])
 
-const isBatch = inject<Ref<boolean>>('isBatch')
-const createCount = inject<Ref<number>>('createCount')
-
-const dialog = useDialog()
+const { isBatch, createCount } = useTableContext()
 
 const proxyList = useVModel(props, 'modelValue', emits)
 
@@ -96,31 +92,31 @@ function refreshIp() {
   }, 2000)
 }
 
-function modifyProxyCount(index: number) {
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      inputs: [
-        {
-          type: 'number',
-          placeholder: '请输入代理数量',
-          name: 'proxyCount',
-          value: null,
-          required: true,
-        },
-      ],
-    },
-    emits: {
-      onSave: ([formData, close]: [any, () => void]) => {
-        proxyList.value[index].proxyCount = Number.parseInt(formData.proxyCount)
-        close()
-      },
-    },
-  })
+function modifyProxyCount() {
+  // dialog.open(simplePopup, {
+  //   props: {
+  //     showHeader: false,
+  //     modal: true,
+  //     blockScroll: true,
+  //   },
+  //   data: {
+  //     inputs: [
+  //       {
+  //         type: 'number',
+  //         placeholder: '请输入代理数量',
+  //         name: 'proxyCount',
+  //         value: null,
+  //         required: true,
+  //       },
+  //     ],
+  //   },
+  //   emits: {
+  //     onSave: ([formData, close]: [any, () => void]) => {
+  //       proxyList.value[index].proxyCount = Number.parseInt(formData.proxyCount)
+  //       close()
+  //     },
+  //   },
+  // })
 }
 </script>
 
@@ -148,7 +144,7 @@ function modifyProxyCount(index: number) {
             <span>US/United States</span>
             <span class="mdi mdi-alert-octagon" />
           </div>
-          <ryTag class="cursor-pointer" @click="modifyProxyCount(index)">
+          <ryTag class="cursor-pointer" @click="modifyProxyCount">
             <span class="mdi mdi-web" />
             <span>{{ item.proxyCount }}</span>
           </ryTag>
