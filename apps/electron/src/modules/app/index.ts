@@ -4,6 +4,11 @@ import { restoreOrCreateWindow } from './mainWindow'
 import { ipcMain } from '/@/modules/ipc'
 import { createTray } from '/@/modules/app/tray'
 
+// 开发环境下，使用开发环境变量中的版本号
+if (!app.isPackaged) {
+  app.getVersion = () => import.meta.env.VITE_APP_VERSION
+}
+
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 app.commandLine.appendSwitch('--no-sandbox')
 

@@ -74,7 +74,7 @@ export const appUpdater = new class AppUpdater {
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
-      this.#autoUpdater.updateConfigPath = path.join(__dirname, '../dev-app-update.yml')
+      // this.#autoUpdater.updateConfigPath = path.join(__dirname, '../dev-app-update.yml')
     }
 
     this.#autoUpdater.autoInstallOnAppQuit = true
@@ -105,9 +105,7 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
       this.isInProgress = false
-      console.log(`无更新`, updateInfo)
-      this.#updateMessageData.percent = 100
-      this.sendSuccessMessage()
+      console.log(`当前无更新`, updateInfo)
     })
 
     this.#autoUpdater.on(`download-progress`, (progressInfo) => {

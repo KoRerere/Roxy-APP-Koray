@@ -52,7 +52,7 @@ function getButtonLabel(item) {
     return `Downloading ${Math.floor(item.percent)}%`
   }
   else if (item.status === 'downloaded') {
-    return 'Install'
+    return 'Install and relaunch'
   }
   else if (item.status === 'failed') {
     return 'Retry'
