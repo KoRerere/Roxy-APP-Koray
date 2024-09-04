@@ -5,6 +5,7 @@ import previewCard from './components/preview-card.vue'
 import { getFormDataByList } from '/@/utils'
 import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { API } from '/@/api'
+import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
 const route = useRoute()
@@ -15,6 +16,8 @@ const inputsGroup = ref()
 const original = ref()
 
 const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
+
+createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
 async function createProfile(formData: any) {
   const params = {

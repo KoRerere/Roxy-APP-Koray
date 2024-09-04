@@ -144,9 +144,9 @@ async function _request(outerParams?: any) {
 }
 
 async function tableRequest(requestParams: any) {
-  const { data } = await await props.tableRequest(requestParams)
-  paginatorConfig.totalRecords = data.total
-  return data.rows
+  const { data } = await props.tableRequest(requestParams)
+  paginatorConfig.totalRecords = data?.total ?? 0
+  return data?.rows || []
 }
 
 function _clearSelection() {

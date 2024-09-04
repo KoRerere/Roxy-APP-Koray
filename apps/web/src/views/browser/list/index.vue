@@ -133,7 +133,7 @@ async function operationHandler(operate: any, data: any) {
    * 有批量操作
    */
   const _data = [].concat(data)
-  const ids: number[] = data.map((item: any) => item.id)
+  const ids: number[] = _data.map((item: any) => item.id)
 
   switch (operate.name) {
     case 'edit':

@@ -6,6 +6,7 @@ import { getFormDataByList, setInputValueByInputKey, setInputVisible } from '/@/
 import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
 const toast = useToast()
@@ -22,8 +23,7 @@ const windowName = ref('Untitled profile')
 const createCount = ref(1)
 const maxWindowCount = ref()
 
-provide('isBatch', isBatch)
-provide('createCount', createCount)
+createTableContext({ isBatch, createCount })
 
 const accordions = ref(getAccordions())
 const inputsGroup = ref(getInputsGroup())

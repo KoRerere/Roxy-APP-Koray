@@ -3,36 +3,36 @@ import ryTag from '/@/components/ry-tag'
 import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
-import notes from '/@/views/account/list/components/notes.vue'
-// import { useToast } from 'primevue/usetoast'
-import { useDialog } from 'primevue/usedialog'
-// import { useConfirm } from 'primevue/useconfirm'
-// const toast = useToast()
-const dialog = useDialog()
-// const confirm = useConfirm()
+import proxyIcon from '/@/assets/image/proxy.svg'
+import { API } from '/@/api'
+import useColumns from '/@/hooks/useColumns'
 
-const columns = ref([
-  {
-    title: 'Proxy Info',
-    slot: 'proxy',
-  },
-  {
-    title: 'Outbound IP',
-    slot: 'outbound',
-  },
-  {
-    title: 'IP Checker',
-    slot: 'checker',
-  },
-  {
-    title: 'Related Profiles',
-    slot: 'related',
-  },
-  {
-    title: 'Actions',
-    slot: 'actions',
-  },
-])
+import columnsConfig from './columns'
+
+// const columns = ref([
+//   {
+//     title: 'Proxy Info',
+//     slot: 'proxy',
+//   },
+//   {
+//     title: 'Outbound IP',
+//     slot: 'outbound',
+//   },
+//   {
+//     title: 'IP Checker',
+//     slot: 'checker',
+//   },
+//   {
+//     title: 'Related Profiles',
+//     slot: 'related',
+//   },
+//   {
+//     title: 'Actions',
+//     slot: 'actions',
+//   },
+// ])
+
+const [columns] = useColumns(columnsConfig)
 
 const operation = ref([
   {
@@ -58,15 +58,12 @@ const operation = ref([
   },
 ])
 
-const dataList = ref(Array.from({ length: 20 }, (_, index) => ({ id: index, status: '正常', link: 'https://www.baidu.com' })))
-
 function operationHandler(operate: any, data: any) {
   switch (operate.name) {
     case 'refresh':
       console.log('🚀 ~ operationHandler ~ data:', data)
       break
     case 'note':
-      addNote(data)
       break
     case 'test':
       console.log('🚀 ~ operationHandler ~ data:', data)
@@ -74,25 +71,8 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-function ipChecker(data: any) {
-  console.log('🚀 ~ ipChecker ~ data:', data)
-}
-
-function addNote(data: any) {
-  dialog.open(notes, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    emits: {
-      onSave: ([value, close]: [string, () => void]) => {
-        console.log('🚀 ~ addNote ~ data:', data)
-        console.log('🚀 ~ scvr ~ xxx:', value)
-        close()
-      },
-    },
-  })
+async function tableRequest(params: any) {
+  return await API.proxy.userGetProxyModuleList(params)
 }
 </script>
 
@@ -106,31 +86,39 @@ function addNote(data: any) {
       <ryButton size="small" icon="mdi mdi-wifi" label="Test all" />
     </div>
     <div class="proxies-content">
-      <ry-table selection-mode="multiple" :columns="columns" :data-list="dataList" :operation="operation"
+      <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :operation="operation"
         :operation-handler="operationHandler" :show-gridlines="false">
         <template #proxy="{ data }">
-          <div>{{ data.a }}</div>
-          <div>{{ data.b }}</div>
+          <div><span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span></div>
+          <div>{{ data.ipType }}</div>
         </template>
         <template #outbound="{ data }">
           <div class="outbound">
-            <img class="outbound-img" :src="data.region">
+            <img class="outbound-img" :src="data.region || proxyIcon">
             <div class="flex justify-between outbound-region">
-              <span>111</span>
+              <span>{{ data.lastCountry }}</span>
             </div>
             <div class="flex items-center outbound-email">
-              <span>222</span>
+              <span>{{ data.checkTime }}</span>
             </div>
           </div>
         </template>
         <template #checker="{ data }">
-          <ryTag @click.stop="ipChecker(data)">
+          <ryTag>
             <span class="mdi mdi-web" />
-            <span>666</span>
+            <span>{{ data.checkChannel }}</span>
           </ryTag>
         </template>
-        <template #related>
-          <ryTag>123</ryTag>
+        <template #related="{ data }">
+          <template v-if="data.bindCount > 0">
+            <ryTag>{{ data[0] }}</ryTag>
+            <ryTag v-if="data.bindCount > 1">
+              {{ data.bindCount - 1 }}
+            </ryTag>
+          </template>
+          <div v-else>
+            - -
+          </div>
         </template>
         <template #actions="{ data }">
           <actions :operation="operation" :show-menu="false"
