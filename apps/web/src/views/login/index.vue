@@ -60,14 +60,18 @@ function googleLogin() {
   const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.email&response_type=code&redirect_uri=${redirect_url}&client_id=663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com`
   window.open(url)
 }
+
+window.electronAPI.on('oauth2:google-callback', (code) => {
+  console.log('oauth2:google-callback', code)
+})
 </script>
 
 <template>
   <div class="w-[300px] mx-[auto]">
     <ry-form :inputs="inputs" />
-    <ry-button class="w-full mt-[12px]" :loading="loading" @click="handleSubmit">
+    <Button type="button" class="mt-[20px] w-full" label="Search" icon="pi pi-search" :loading="loading" @click="handleSubmit">
       Log In
-    </ry-button>
+    </Button>
     <Divider align="center">
       OR
     </Divider>

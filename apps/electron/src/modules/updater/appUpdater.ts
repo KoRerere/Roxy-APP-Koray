@@ -1,24 +1,34 @@
 import path from 'node:path'
-import { AppUpdater } from 'electron-updater'
+import { MacUpdater, NsisUpdater } from 'electron-updater'
 import { app } from 'electron'
 import { compare } from 'compare-versions'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
+import { isMac } from '/@/utils'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { ipcMain } from '/@/modules/ipc'
+import { getMainWindow } from '/@/modules/app/mainWindow'
 
 const isDevelopment = !app.isPackaged
 
-export const appUpdater = new class {
+export const appUpdater = new class AppUpdater {
   /** 是否在下载中 */
   isInProgress = false
   /** 轮询更新时间 */
   timeout = 1000 * (isDevelopment ? 30 : 60)
-  private autoUpdater!: AppUpdater
+  #autoUpdater!: MacUpdater | NsisUpdater
+  /** 更新信息消息体 */
+  #updateMessageData: ResourceUpdateMessage = {
+    type: 'app',
+    percent: 0,
+    description: '',
+  }
 
   constructor() {
     this.init()
   }
 
-  async init() {
+  private async init() {
     setTimeout(() => {
       this.init()
     }, this.timeout)
@@ -27,7 +37,12 @@ export const appUpdater = new class {
 
     console.log(`AppUpdater init data`, data)
 
-    const { downloadUrl, version } = data
+    const { downloadUrl, version, upgradeDesc, upgradeTitle, releaseTime } = data
+    this.#updateMessageData.originUpgradeData = data
+    this.#updateMessageData.description = upgradeDesc
+    this.#updateMessageData.title = upgradeTitle
+    this.#updateMessageData.version = version
+    this.#updateMessageData.releaseTime = releaseTime
     // downloadUrl = `http://localhost:7788/static`
     console.log(`AppUpdater downloadUrl`, downloadUrl)
 
@@ -35,101 +50,73 @@ export const appUpdater = new class {
       console.log(`更新地址为空 跳出更新`)
       return
     }
-    // $LOG(`update options `, this.options);
-
     const options = {
-      requestHeaders: {
-      },
+      requestHeaders: {},
       provider: 'generic',
       url: downloadUrl,
     }
 
-    $LOG.info(`AppUpdater init  this.options`, this.options)
-
-    this.message = message.data?.data || {}
-
-    $LOG.info(`AppUpdater init this.message`, this.message)
-
-    if (this.autoUpdater) {
+    if (this.#autoUpdater) {
       // 动态更新autoUpdater的配置
-      this.autoUpdater.setFeedURL(options)
+      this.#autoUpdater.setFeedURL(options)
       console.log('APP 远程版本：', version)
       console.log('APP 本地版本：', app.getVersion())
       console.log('远程版本是否大于本地版本：', compare(version, app.getVersion(), '>'))
       // 远程版本发生变化，重新检查更新
       if (version && compare(version, app.getVersion(), '>')) {
-        this.checkUpdate()
+        this.checkForUpdates()
       }
       return
     }
 
-    this.autoUpdater = new AppUpdater(this.options)
-    this.autoUpdater.forceDevUpdateConfig = true
+    this.#autoUpdater = isMac ? new MacUpdater(options) : new NsisUpdater(options)
+    this.#autoUpdater.forceDevUpdateConfig = true
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
-      this.autoUpdater.updateConfigPath = path.join(__dirname, './dev-app-update.yml')
+      this.#autoUpdater.updateConfigPath = path.join(__dirname, '../dev-app-update.yml')
     }
 
-    this.autoUpdater.autoInstallOnAppQuit = true
+    this.#autoUpdater.autoInstallOnAppQuit = true
 
-    this.autoUpdater.on(`error`, (error) => {
+    this.#autoUpdater.on(`error`, (error) => {
       this.isInProgress = false
       console.log(`autoUpdater 出现错误`, error)
-      this.webContents.send('$version', {
-        ...this.parmes,
-        message: this.message,
-        info_updata: true,
-        reDownload: true,
-      })
-
-      this.webContents.send('auto-updater-error', ...arguments)
+      this.sendErrorMessage()
     })
 
-    this.autoUpdater.on(`checking-for-update`, () => {
+    this.#autoUpdater.on(`checking-for-update`, () => {
       console.log(`autoUpdater 检查更新`)
     })
 
-    this.autoUpdater.on(`update-available`, (updateInfo) => {
+    this.#autoUpdater.on('update-available', (updateInfo) => {
       this.isInProgress = true
       console.log(`有更新`, updateInfo)
     })
 
     // 更新下载完成
-    this.autoUpdater.on(`update-downloaded`, (event) => {
+    this.#autoUpdater.on('update-downloaded', (event) => {
       this.isInProgress = false
       console.log(`更新下载完成`, event)
-
-      webContents.send('$version', {
-        ...th.parmes,
-        message: th.message,
-        code: app.getVersion(),
-        info_updata: true,
-        percent: 100,
-        total: message.files[0].size,
-        transferred: message.files[0].size,
-      })
+      this.#updateMessageData.percent = 100
+      this.#updateMessageData.status = 'downloaded'
+      this.sendSuccessMessage()
     })
 
-    this.autoUpdater.on(`update-not-available`, (message) => {
+    this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
       this.isInProgress = false
-      $LOG.info(`无更新`, message)
-      console.log(`无更新`, message)
-
-      webContents.send('$version', {
-        ...this.parmes,
-        message: this.message,
-        code: app.getVersion(),
-        info_updata: false,
-        percent: 100,
-        total: message.files[0].size,
-        transferred: message.files[0].size,
-      })
+      console.log(`无更新`, updateInfo)
+      this.#updateMessageData.percent = 100
+      this.sendSuccessMessage()
     })
 
-    this.autoUpdater.on(`download-progress`, (message) => {
+    this.#autoUpdater.on(`download-progress`, (progressInfo) => {
       this.isInProgress = true
-      console.log(`更新进度: `, message.percent)
+      const { percent, total } = progressInfo
+      console.log(`更新进度: `, percent)
+      this.#updateMessageData.status = 'downloading'
+      this.#updateMessageData.percent = percent
+      this.#updateMessageData.total = total
       // {
       //     total: 366305518,
       //     delta: 6021615,
@@ -137,24 +124,8 @@ export const appUpdater = new class {
       //     percent: 100,
       //     bytesPerSecond: 13831723
       //   }
-
-      // if (percent == 100) {
-
-      // } else {
-
-      // }
-      th.parmes = {
-        ...this.parmes,
-        ...message,
-      }
-      this.mainWindow.setProgressBar(message.percent / 100)
-      webContents.send('$version', {
-        ...th.parmes,
-        message: th.message,
-        code: app.getVersion(),
-        info_updata: true,
-        ...message,
-      })
+      getMainWindow()?.setProgressBar(percent / 100)
+      this.sendSuccessMessage()
     })
 
     this.checkForUpdates()
@@ -168,7 +139,7 @@ export const appUpdater = new class {
     }
 
     this.isInProgress = true
-    const checkResult = await this.autoUpdater.checkForUpdates().catch((error) => {
+    const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
       this.isInProgress = false
       console.log(`checkForUpdates error`, error)
     })
@@ -181,13 +152,22 @@ export const appUpdater = new class {
     const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
     const { version } = data
     console.log(`远程版本`, version, `本地版本`, app.getVersion())
-    return version && compare(version, app.getVersion(), '>')
+    return Boolean(version) && compare(version, app.getVersion(), '>')
   }
 
   /** 立即退出应用并且更新 */
   upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`立即退出应用并且更新`)
-    this.autoUpdater.quitAndInstall(true, true)
+    this.#autoUpdater.quitAndInstall(true, true)
+  }
+
+  private sendSuccessMessage() {
+    ipcMain.send('app:resource-update', this.#updateMessageData)
+  }
+
+  private sendErrorMessage() {
+    this.#updateMessageData.status = 'failed'
+    ipcMain.send('app:resource-update', this.#updateMessageData)
   }
 }()

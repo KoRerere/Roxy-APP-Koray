@@ -1,38 +1,11 @@
 <script lang="ts" setup>
 import siderMenu from '/@/components/sider-menu.vue'
 import { API } from '/@/api'
-import { useUserStore } from '../stores/user'
-import { useToast } from 'primevue/usetoast'
 
-const { clearUserInfo } = useUserStore()
-const router = useRouter()
-const toast = useToast()
+import ResourceUpdater from './components/resource-updater.vue'
+import Profile from './components/profile.vue'
 
 const collapsed = ref<boolean>(false)
-const menu = ref()
-const items = ref([
-
-  {
-    label: '个人信息',
-    icon: 'pi pi-refresh',
-    command: () => {
-      router.push({ name: 'setting' })
-    },
-  },
-  {
-    label: '退出登录',
-    icon: 'pi pi-upload',
-    command: () => {
-      clearUserInfo()
-      router.push({ name: 'login' })
-      toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
-    },
-  },
-])
-
-function toggle(event) {
-  menu.value.toggle(event)
-}
 
 onMounted(() => {
   const dict = localStorage.getItem('$dict_map')
@@ -60,16 +33,18 @@ onMounted(() => {
       </div>
       <siderMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-        @click="() => (collapsed = !collapsed)">
+           @click="() => (collapsed = !collapsed)"
+      >
         <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
       </div>
     </div>
     <div class="rx-main">
       <div class="rx-main-header">
-        common header
-        <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle"
-          @click="toggle" />
-        <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
+        header
+        <div class="flex gap-2">
+          <ResourceUpdater />
+          <Profile />
+        </div>
       </div>
       <div class="rx-main-content">
         <RouterView />

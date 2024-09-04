@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
 import { join } from 'node:path'
 import { isDev, isPackaged } from '/@/utils/'
 
@@ -8,6 +8,7 @@ async function createWindow() {
     height: 765,
     // Use 'ready-to-show' event to show window
     show: false,
+    autoHideMenuBar: true, // 自动隐藏菜单栏
     webPreferences: {
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
@@ -33,6 +34,7 @@ async function createWindow() {
       : `file://${join(__dirname, './web/index.html')}`
 
   await browserWindow.loadURL(pageUrl)
+  browserWindow.setTitle(`${browserWindow.getTitle()} | ${app.getVersion()}`)
 
   console.log('createWindow', pageUrl)
   // setTimeout(() => {

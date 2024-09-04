@@ -18,7 +18,7 @@
     "npm": ">=8.1"
   },
   "scripts": {
-    "bundle": "webpack --config webpack.config.js",
+    "bundle": "npx rimraf ./dist && webpack --config webpack.config.js",
     "test": "electron .",
     "build:dev": "vite build --mode development && pnpm bundle",
     "build:prod": "vite build && pnpm bundle",
@@ -56,6 +56,7 @@
     "https-proxy-agent": "^7.0.5",
     "puppeteer-core": "21.3.8",
     "socks-proxy-agent": "^8.0.4",
+    "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
     "tsconfig-paths-webpack-plugin": "^4.1.0",
     "typescript": "5.5.4",

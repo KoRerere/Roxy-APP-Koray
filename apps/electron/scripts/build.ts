@@ -1,4 +1,4 @@
-import { cpSync } from 'node:fs'
+import { cpSync, rmSync } from 'node:fs'
 import { exit, platform } from 'node:process'
 import path from 'node:path'
 import { Platform, build } from 'electron-builder'
@@ -26,7 +26,7 @@ const options: Configuration = {
   extraMetadata: {
     version,
     name: 'Roxybrowser',
-    main: 'dist/index.cjs',
+    main: 'dist/main.cjs',
   },
   directories: {
     output: 'out',

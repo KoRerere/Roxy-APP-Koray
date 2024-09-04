@@ -1,4 +1,5 @@
 import type { UserGetUserConfigListData } from '@roxy/backend-api'
+import type { ResourceUpdateMessage } from './mainMessage'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 
@@ -19,4 +20,8 @@ export interface RenderMessage {
   'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
   /** 选择文件夹 */
   'dialog:selectDir': () => Promise<string>
+  /** 检测更新 */
+  'app:checkUpdate': () => Promise<boolean>
+  /** 安装并更新 */
+  'app:install-update': (info: ResourceUpdateMessage) => any
 }

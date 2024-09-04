@@ -18,7 +18,7 @@ defineExpose({
 </script>
 
 <template>
-  <Popover ref="popover" class="table-display-pop">
+  <Popover ref="popover" :class="classes['table-display-pop']">
     <div class="content">
       <slot />
     </div>
@@ -28,9 +28,9 @@ defineExpose({
   </Popover>
 </template>
 
-<style lang="scss">
+<style lang="scss" module="classes">
 .table-display-pop {
-  .p-popover-content {
+  :global(.p-popover-content) {
     padding: 0;
   }
 }

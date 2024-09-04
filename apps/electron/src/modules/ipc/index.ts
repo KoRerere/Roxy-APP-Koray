@@ -4,6 +4,7 @@ import { browserManager } from '/@/modules/browser'
 import { aliOSS, proxyDetection } from '/@/utils'
 import { store } from '/@/modules/store'
 import { dialog } from 'electron'
+import { appUpdater } from '/@/modules/updater'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -74,5 +75,17 @@ ipcMain.on('dialog:selectDir', async () => {
   catch (error) {
     console.log(error)
     return ''
+  }
+})
+
+/** 检查更新 */
+ipcMain.on('app:checkUpdate', () => {
+  return appUpdater.hasUpdate()
+})
+
+/** 安装更新 */
+ipcMain.on('app:install-update', (info) => {
+  if (info.type === 'app') {
+    appUpdater.upgradeNow()
   }
 })

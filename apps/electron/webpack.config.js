@@ -1,4 +1,5 @@
 const path = require('node:path')
+const TerserPlugin = require('terser-webpack-plugin')
 
 /** @type { import('webpack').Configuration } */
 module.exports = {
@@ -7,11 +8,52 @@ module.exports = {
   entry: './dist-vite/index.cjs', // 入口文件，指向你应用的主文件
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录
-    filename: 'index.cjs', // 输出文件名
+    filename: '[name].cjs', // 使用 [name] 占位符来确保每个 chunk 有唯一的文件名
   },
   node: {
     __dirname: false, // 保持 __dirname 的原样（在 Node.js 中很重要）
     __filename: false,
+  },
+  optimization: {
+    minimize: true, // 启用代码压缩和混淆
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          compress: true, // 启用代码压缩
+          mangle: true, // 混淆变量名称
+        },
+        extractComments: false, // 禁止生成 LICENSE.txt 文件
+      }),
+    ],
+    splitChunks: {
+      chunks: 'all', // 对所有类型的代码进行分割
+      cacheGroups: {
+        // 将特定文件分割到一个单独的 chunk 中
+        specificFiles: {
+          test: (module) => {
+            // 匹配特定文件路径
+            const filePaths = [
+              path.resolve(__dirname, './dist-vite/beforeLaunchTask.cjs'),
+              path.resolve(__dirname, './dist-vite/afterLaunchTask.cjs'),
+            ]
+            return filePaths.includes(module.resource)
+          },
+          name: (module) => {
+            // 根据文件名生成 chunk 名称
+            const fileName = path.basename(module.resource, '.js')
+            return fileName
+          },
+          chunks: 'all',
+          enforce: true, // 强制创建这个 chunk
+        },
+        // 默认的 vendors 组
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
   },
   // module: {
   //   rules: [

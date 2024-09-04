@@ -30,7 +30,7 @@ const config: UserConfig = {
   server: {
     fs: {
       strict: true,
-    },
+    }
   },
   build: {
     sourcemap: true,

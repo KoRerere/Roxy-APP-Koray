@@ -1,4 +1,4 @@
-export interface MainMessageResult<T = null> {
+export interface MainMessageResult<T = any> {
   code: number
   data: T
   message: string
@@ -14,6 +14,28 @@ export interface BrowserProcessMessage {
   message: string
 }
 
+/** 资源更新消息体 */
+export interface ResourceUpdateMessage {
+  /** 更新类型 */
+  type: 'app' | 'patch' | 'web'
+  /** 状态 */
+  status?: 'downloading' | 'downloaded' | 'failed'
+  /** 下载进度 */
+  percent: number
+  /** 总大小 */
+  total?: number
+  /** 更新标题信息 */
+  title?: string
+  /** 更新描述信息 */
+  description: string
+  /** 版本号 */
+  version?: string
+  /** 发布时间 */
+  releaseTime?: string
+  /** 原始的更新数据 */
+  originUpgradeData?: any
+}
+
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
@@ -21,4 +43,6 @@ export interface MainMessage {
   'browser:on-close': (dirId: string) => void
   /** google 授权登录 */
   'oauth2:google-callback': (payload: string) => void
+  /** APP、patch、web 资源更新事件 */
+  'app:resource-update': (payload: ResourceUpdateMessage) => void
 }
