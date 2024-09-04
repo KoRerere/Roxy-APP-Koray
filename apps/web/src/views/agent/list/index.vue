@@ -3,12 +3,15 @@ import ryTag from '/@/components/ry-tag'
 import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
+import remarkIcon from '/@/components/remark-icon'
 import proxyIcon from '/@/assets/image/proxy.svg'
 import useColumns from '/@/hooks/useColumns'
-import { API } from '/@/api'
 import columnsConfig from './columns'
+import { API } from '/@/api'
 
-import remarkIcon from '/@/components/remark-icon'
+import type { UserGetProxyModuleListData } from '@roxy/backend-api'
+
+type ProxyItem = UserGetProxyModuleListData['data']['rows'][0]
 
 const [columns] = useColumns(columnsConfig)
 
@@ -29,12 +32,19 @@ const operation = ref([
   },
 ])
 
+const drawer = reactive({
+  data: null,
+  visible: false,
+})
+
+async function tableRequest(params: any) {
+  return await API.proxy.userGetProxyModuleList(params)
+}
+
 function operationHandler(operate: any, data: any) {
   switch (operate.name) {
     case 'refresh':
       console.log('🚀 ~ operationHandler ~ data:', data)
-      break
-    case 'note':
       break
     case 'test':
       console.log('🚀 ~ operationHandler ~ data:', data)
@@ -42,8 +52,12 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-async function tableRequest(params: any) {
-  return await API.proxy.userGetProxyModuleList(params)
+function refreshUrl(data: ProxyItem) {
+
+}
+
+function testProxy(data: ProxyItem) {
+
 }
 </script>
 
@@ -101,6 +115,13 @@ async function tableRequest(params: any) {
       </ry-table>
     </div>
   </div>
+  <Drawer v-model:visible="drawer.visible" position="right">
+    <template #container="{ closeCallback }">
+      <div @click="closeCallback">
+        123
+      </div>
+    </template>
+  </Drawer>
 </template>
 
 <style lang="scss" scoped>

@@ -32,7 +32,7 @@ provide('activeTab', activeTab)
 
 async function getFilterList() {
   const { data } = await API.window.userGetWindowFilterNameListList()
-  const list = data.map((item, index) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, routeName: 'browser-list' }))
+  const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, routeName: 'browser-list' }))
 
   if (tabs.value.length > 2) {
     tabs.value = tabs.value.filter(tab => ['1000', '1001'].includes(tab.id))
