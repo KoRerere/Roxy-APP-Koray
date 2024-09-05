@@ -1,4 +1,4 @@
-import type { UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from './mainMessage'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
@@ -12,10 +12,12 @@ export interface RenderMessage {
   'browser:batchClose': (dirIds: string[]) => void
   /** 批量删除窗口 */
   'browser:batchRemove': (dirIds: string[]) => void
+
   /** 代理检测 */
   'proxy:detection': (winItemList: WindowItemType) => ProxyDetectionResult
   /** 保存用户信息 */
   'user:setUserInfo': (userInfo: any) => void
+
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
   /** 选择文件夹 */
@@ -23,5 +25,20 @@ export interface RenderMessage {
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
   /** 安装并更新 */
-  'app:install-update': (info: ResourceUpdateMessage) => any
+  'app:quitAndInstall': (info: ResourceUpdateMessage) => any
+  /** 获取所有可用的内核列表 */
+  'app:getCoreList': () => Promise<ResourceUpdateMessage[]>
+  /** 下载指定内核 */
+  'app:download-chrome-core': (coreVersion: string) => void
+  /** 显示系统日志所在目录 */
+  'app:showLogDir': () => void
+  /** 获取本机 mac address */
+  'app:getMacAddress': () => string
+
+  /** 下载指定插件 */
+  'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void
+  /** 删除指定插件 */
+  'extension:remove': (extIDs: string[]) => void
+  /** 获取并解析用户本地选择的插件信息 */
+  'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => any
 }

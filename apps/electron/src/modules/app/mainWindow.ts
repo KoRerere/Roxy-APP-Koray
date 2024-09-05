@@ -1,6 +1,7 @@
 import { BrowserWindow, app } from 'electron'
 import { join } from 'node:path'
 import { isDev, isPackaged } from '/@/utils/'
+import { mediaProtocolName } from '/@/constants'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -16,6 +17,14 @@ async function createWindow() {
       devTools: isDev,
     },
   })
+
+  browserWindow.webContents.session.protocol.registerFileProtocol(
+    mediaProtocolName,
+    (request, callback) => {
+      const pathname = decodeURIComponent(request.url.replace(`${mediaProtocolName}:///`, ''))
+      callback(pathname)
+    },
+  )
 
   /**
    * @see https://github.com/electron/electron/issues/25012

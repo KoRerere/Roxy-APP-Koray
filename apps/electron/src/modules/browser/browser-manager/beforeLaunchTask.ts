@@ -1,7 +1,7 @@
 import { freemem, totalmem } from 'node:os'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { BrowserItem } from './browserItem'
+import type { BrowserItem } from './browserItem'
 import type { proxyDetection } from '/@/utils'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
@@ -14,7 +14,7 @@ import { extensionManager } from '/@/modules/extension'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 
 /** 浏览器启动时要做的事情 */
-export class BeforeLaunchTask extends BrowserItem {
+export class BeforeLaunchTask {
   browser: Browser | null = null
   /** 代理检测结果 */
   private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
@@ -33,6 +33,9 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 用于重新拉起浏览器 */
   makeActive!: () => Promise<Browser>
+
+  constructor(private browserItem: BrowserItem) {
+  }
 
   /** 开始执行任务 */
   async run() {
@@ -64,7 +67,7 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 启动浏览器 */
   async launch() {
-    const { coreVersion } = this.winInfo
+    const { coreVersion } = this.browserItem.winInfo
 
     if (!coreVersion) {
       this.sendErrorMessage('没有指定内核版本')
@@ -106,11 +109,22 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 生成内核启动的命令行参数 */
   private async genLaunchCLIArgs(): Promise<string[]> {
-    const { dirId, sandboxPermission, usePluginDir, startupParam, systemInfo = {} } = this.winInfo
+    const {
+      dirId,
+      sandboxPermission,
+      usePluginDir,
+      startupParam,
+      systemInfo = {},
+      openWidth,
+      openHeight,
+      os,
+      allOpenUrl,
+      useGpu,
+    } = this.browserItem.winInfo
 
     const args = [
       ...defaultCLIArgs,
-      `--user-data-dir=${this.userDataDir}`,
+      `--user-data-dir=${this.browserItem.userDataDir}`,
       '--window-position=0,0',
       '--window-size=1000,1000',
       '--no-sandbox',
@@ -168,20 +182,20 @@ export class BeforeLaunchTask extends BrowserItem {
     else {
       // 默认尺寸
       // if (data.resolutionType === true) {
-      args.push(`--window-size=${this.winInfo.openWidth || 1280},${this.winInfo.openHeight || 720}`)
+      args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
       // } else {
       //   exe_strs.push(`--window-size=1280,720`);
       // }
     }
 
     // 如果是移动端，打开开发者工具
-    if ([`Android`, `IOS`].includes(this.winInfo.os)) {
+    if ([`Android`, `IOS`].includes(os)) {
       args.push('--auto-open-devtools-for-tabs')
     }
 
     // 开启同步标签页后，同步标签页
-    (this.winInfo.allOpenUrl || []).forEach((item) => {
-      if (this.isValidURL(item)) {
+    (allOpenUrl || []).forEach((item) => {
+      if (this.browserItem.isValidURL(item)) {
         args.push(item)
       }
     })
@@ -191,7 +205,7 @@ export class BeforeLaunchTask extends BrowserItem {
     //   exe_strs.push(data.platformUrl);
     // }
 
-    if (!this.winInfo.useGpu) {
+    if (!useGpu) {
       args.push('--disable-gpu')
     };
 
@@ -200,14 +214,14 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 根据代理检测结果决定是否要拉起浏览器 */
   private async handleProxyDetection() {
-    const { stopOpenNet, stopOpenIP, stopOpenPosition, lastIp, lastCountry } = this.winInfo
+    const { stopOpenNet, stopOpenIP, stopOpenPosition, lastIp, lastCountry } = this.browserItem.winInfo
 
     // 网络不通停止打开 stopOpenNet
     // IP发生变化停止打开 stopOpenIP
     // IP对应国家 / 地区发生改变停止打开 stopOpenPosition
     try {
       // 检测代理信息
-      this.proxyInfo = await this.proxyDetection()
+      this.proxyInfo = await this.browserItem.proxyDetection()
     }
     catch (error) {
       console.error('代理检测失败', error)
@@ -234,11 +248,11 @@ export class BeforeLaunchTask extends BrowserItem {
   /** 创建指纹配置文件 */
   private async createFingerprintConfigFile() {
     // 生成指纹配置
-    const fingerprintConfig = genFingerprintConfig(this.winInfo, this.proxyInfo)
+    const fingerprintConfig = genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
     try {
-      await fileExists(dirname(this.fingerprintConfigPath), true)
+      await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)
       const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
-      await writeFile(this.fingerprintConfigPath, content)
+      await writeFile(this.browserItem.fingerprintConfigPath, content)
     }
     catch (error) {
       console.error('创建指纹配置文件失败', error)
@@ -248,7 +262,7 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 拉取远程缓存文件 */
   private async pullRemoteCacheFiles() {
-    const { version: remoteVersion } = this.winInfo.syncValue as Record<string, any>
+    const { version: remoteVersion } = this.browserItem.winInfo.syncValue as Record<string, any>
 
     //  如果没有远程版本号，不拉取
     if (!remoteVersion) {
@@ -256,8 +270,8 @@ export class BeforeLaunchTask extends BrowserItem {
       return
     }
 
-    const localVersion = await fileExists(this.ossCacheVersionPath)
-      ? await readFile(this.ossCacheVersionPath, 'utf-8')
+    const localVersion = await fileExists(this.browserItem.ossCacheVersionPath)
+      ? await readFile(this.browserItem.ossCacheVersionPath, 'utf-8')
       : 0
 
     console.log('localVersion', localVersion)
@@ -269,8 +283,8 @@ export class BeforeLaunchTask extends BrowserItem {
       return
     }
 
-    const remoteCacheFilePath = `${this.ossRemoteCacheDir}/${this.browserCacheFileName}`
-    const localCacheFilePath = join(this.ossCacheDir, this.browserCacheFileName)
+    const remoteCacheFilePath = `${this.browserItem.ossRemoteCacheDir}/${this.browserItem.browserCacheFileName}`
+    const localCacheFilePath = join(this.browserItem.ossCacheDir, this.browserItem.browserCacheFileName)
 
     try {
       await fileExists(dirname(localCacheFilePath), true)
@@ -278,7 +292,7 @@ export class BeforeLaunchTask extends BrowserItem {
       await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
       const zip = new AdmZip(localCacheFilePath)
 
-      const filters = this.needSyncFiles
+      const filters = this.browserItem.needSyncFiles
       console.log('filters', filters)
       zip.getEntries().forEach((entry) => {
         const target = filters.some(path => entry.entryName.includes(path.slice(1)))
@@ -289,16 +303,16 @@ export class BeforeLaunchTask extends BrowserItem {
 
         if (entry.isDirectory) {
           // console.log('需要解压的文件夹：', entry.entryName);
-          zip.extractEntryTo(entry, join(this.userDataDir, entry.entryName), false, true)
+          zip.extractEntryTo(entry, join(this.browserItem.userDataDir, entry.entryName), false, true)
         }
         else {
           // console.log('需要解压的文件：', entry.entryName);
-          zip.extractEntryTo(entry, dirname(join(this.userDataDir, entry.entryName)), false, true)
+          zip.extractEntryTo(entry, dirname(join(this.browserItem.userDataDir, entry.entryName)), false, true)
         }
       })
 
-      console.log('ossCacheVersionPath', this.ossCacheVersionPath)
-      writeFile(this.ossCacheVersionPath, String(remoteVersion))
+      console.log('ossCacheVersionPath', this.browserItem.ossCacheVersionPath)
+      writeFile(this.browserItem.ossCacheVersionPath, String(remoteVersion))
     }
     catch (error) {
       console.error('拉取远程缓存文件失败', error)
@@ -308,13 +322,13 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 写入登录信息 */
   private async writeLoginData() {
-    const { lumiLogin } = this.winInfo
+    const { lumiLogin } = this.browserItem.winInfo
 
     if (lumiLogin) {
       try {
-        const defaultDir = join(this.userDataDir, 'Default')
+        const defaultDir = join(this.browserItem.userDataDir, 'Default')
         await fileExists(defaultDir, true)
-        await writeFile(this.lumiLoginPath, lumiLogin, 'utf8')
+        await writeFile(this.browserItem.lumiLoginPath, lumiLogin, 'utf8')
         console.log('写入 LumiLogin 成功')
       }
       catch (error) {
@@ -352,7 +366,7 @@ export class BeforeLaunchTask extends BrowserItem {
   /** 发送成功的消息到渲染进程 */
   private sendSuccessMessage(message: string, percent = this.progress) {
     sendSuccessMessage({
-      dirId: this.winInfo.dirId!,
+      dirId: this.browserItem.winInfo.dirId!,
       percent,
       message,
     })
@@ -360,6 +374,6 @@ export class BeforeLaunchTask extends BrowserItem {
 
   /** 发送错误的消息到渲染进程 */
   private sendErrorMessage(message: string, error?: any) {
-    sendErrorMessage(message, this.winInfo.dirId!, error)
+    sendErrorMessage(message, this.browserItem.winInfo.dirId!, error)
   }
 }

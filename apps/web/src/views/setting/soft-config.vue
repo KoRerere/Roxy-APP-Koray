@@ -78,11 +78,41 @@ async function handleSubmit() {
 
   console.log('submit', params)
 }
+
+const openLogDir = () => window.electronAPI.send('app:showLogDir')
+
+const exeInfo = ref({})
+async function selectExtension(selectType: 'dir' | 'file') {
+  try {
+    const res = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
+    exeInfo.value = res.data
+    console.log('selectExtension', res)
+  }
+  catch (error) {
+    console.log('selectExtension error', error)
+  }
+}
 </script>
 
 <template>
   <div>软件设置</div>
   <ry-form :inputs="inputs" label-position="left" />
+  <div class="mt-[12px]">
+    系统日志
+    <ry-button class="ml-[12px]" @click="openLogDir">
+      打开日志目录
+    </ry-button>
+  </div>
+  <div class="mt-[12px]">
+    扩展管理
+    <ry-button class="ml-[12px]" @click="() => selectExtension('dir')">
+      选择扩展目录
+    </ry-button>
+    <ry-button class="ml-[12px]" @click="() => selectExtension('file')">
+      选择扩展文件
+    </ry-button>
+    <img :src="exeInfo.pluginIcon" alt="" srcset="">
+  </div>
   <ry-button class="w-full mt-[12px]" @click="handleSubmit">
     保存
   </ry-button>

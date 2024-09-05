@@ -17,9 +17,9 @@ export interface BrowserProcessMessage {
 /** 资源更新消息体 */
 export interface ResourceUpdateMessage {
   /** 更新类型 */
-  type: 'app' | 'patch' | 'web'
+  type: 'app' | 'patch' | 'web' | 'kernel'
   /** 状态 */
-  status?: 'downloading' | 'downloaded' | 'failed'
+  status?: 'downloading' | 'downloaded' | 'uninstalled' | 'failed'
   /** 下载进度 */
   percent: number
   /** 总大小 */
@@ -30,6 +30,8 @@ export interface ResourceUpdateMessage {
   description: string
   /** 版本号 */
   version?: string
+  /** 内核版本 */
+  coreVersion?: string
   /** 发布时间 */
   releaseTime?: string
   /** 原始的更新数据 */

@@ -6,6 +6,8 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
 import { browserManager } from '/@/modules/browser/browser-manager'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { ipcMain } from '/@/modules/ipc'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
@@ -30,6 +32,20 @@ export const chromeCoreManager = new class ChromeCoreManager {
     setInterval(() => {
       this.fetchAvailableCoreList()
     }, 1000 * 60 * 5)
+  }
+
+  /** 获取内核列表（供前端展示用） */
+  async getCoreList(): Promise<ResourceUpdateMessage[]> {
+    await this.fetchAvailableCoreList()
+    const arr = this.availableCoreList.map(async (core) => {
+      return {
+        type: 'kernel',
+        version: core.version,
+        coreVersion: core.coreVersion,
+        status: await fileExists(this.genCoreDir(core.coreVersion)) ? 'downloaded' : 'uninstalled',
+      }
+    })
+    return Promise.all(arr)
   }
 
   /** 根据内核版本获取内核所在目录 */
@@ -130,8 +146,27 @@ export const chromeCoreManager = new class ChromeCoreManager {
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
 
     try {
+      const payload: ResourceUpdateMessage = {
+        type: 'kernel',
+        status: 'downloading',
+        percent: 0,
+        description: `正在下载内核 ${coreVersion}`,
+        version: availableCore.version,
+        coreVersion,
+      }
       // 下载内核
-      await downloadZipFile(availableCore.downloadUrl, outputZipPath)
+      await downloadZipFile(availableCore.downloadUrl, outputZipPath, (progress) => {
+        console.log(`Download progress: ${progress}%`)
+        payload.percent = progress
+        ipcMain.send('app:resource-update', payload)
+      }).catch((error) => {
+        payload.status = 'failed'
+        ipcMain.send('app:resource-update', payload)
+        return Promise.reject(error)
+      })
+      payload.status = 'downloaded'
+      payload.description = `内核 ${coreVersion} 下载完成`
+      ipcMain.send('app:resource-update', payload)
       // 删除本地内核
       await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })
       // 解压缩内核

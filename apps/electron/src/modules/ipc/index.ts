@@ -1,10 +1,12 @@
 import { IPCMain } from '@roxy/electron-preload/main'
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
-import { browserManager } from '/@/modules/browser'
-import { aliOSS, proxyDetection } from '/@/utils'
+import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { aliOSS, getMacAddress, proxyDetection } from '/@/utils'
 import { store } from '/@/modules/store'
-import { dialog } from 'electron'
+import { dialog, shell } from 'electron'
 import { appUpdater } from '/@/modules/updater'
+import { extensionManager } from '/@/modules/extension'
+import { appConfig } from '/@/constants'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -84,8 +86,43 @@ ipcMain.on('app:checkUpdate', () => {
 })
 
 /** 安装更新 */
-ipcMain.on('app:install-update', (info) => {
+ipcMain.on('app:quitAndInstall', (info) => {
   if (info.type === 'app') {
     appUpdater.upgradeNow()
   }
+})
+
+/** 获取所有可用的内核列表 */
+ipcMain.on('app:getCoreList', () => {
+  return chromeCoreManager.getCoreList()
+})
+
+/** 下载指定的内核 */
+ipcMain.on('app:download-chrome-core', (coreVersion) => {
+  return chromeCoreManager.downloadCore(coreVersion)
+})
+
+/** 获取本机 mac address */
+ipcMain.on('app:getMacAddress', () => {
+  return getMacAddress()
+})
+
+/** 显示系统日志所在目录 */
+ipcMain.on('app:showLogDir', () => {
+  shell.openPath(appConfig.logsDir)
+})
+
+/** 下载指定插件 */
+ipcMain.on('extension:download', (extensions) => {
+  return extensionManager.downloadExtensions(extensions)
+})
+
+/** 删除指定插件 */
+ipcMain.on('extension:remove', (extIDs: string[]) => {
+  return extensionManager.removeExtensions(extIDs)
+})
+
+/** 获取并解析用户本地选择的插件信息 */
+ipcMain.on('extension:getSelectedExtensionInfo', (selectType: 'dir' | 'file') => {
+  return extensionManager.getUserSelectedExtensionInfo(selectType)
 })

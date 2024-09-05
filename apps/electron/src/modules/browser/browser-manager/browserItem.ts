@@ -4,10 +4,10 @@ import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/brow
 import { appConfig, ossObject } from '/@/constants'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { aliOSS, filesToZip, getProcessIdsByExePath, proxyDetection } from '/@/utils'
-import type { BeforeLaunchTask } from './beforeLaunchTask'
-import type { AfterLaunchTask } from './afterLaunchTask'
 import { createReadStream } from 'node:fs'
+import { AfterLaunchTask } from './afterLaunchTask'
 import { API } from '/@/api'
+import { BeforeLaunchTask } from './beforeLaunchTask'
 
 export class BrowserItem {
   private beforeLaunchTask!: BeforeLaunchTask
@@ -74,9 +74,8 @@ export class BrowserItem {
       return
     }
 
-    const { BeforeLaunchTask } = await import('./beforeLaunchTask')
     // 创建启动任务
-    this.beforeLaunchTask = new BeforeLaunchTask(this.winInfo)
+    this.beforeLaunchTask = new BeforeLaunchTask(this)
     // 拉起浏览器
     await this.beforeLaunchTask.run()
     // 浏览器关闭时，需要上传本地数据和状态
@@ -89,9 +88,8 @@ export class BrowserItem {
         this.uploadDataPromiser.reject(error)
       }
     })
-    const { AfterLaunchTask } = await import('./afterLaunchTask')
     // 创建启动后任务
-    this.afterLaunchTask = new AfterLaunchTask(this.winInfo, this.#browser!)
+    this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
     // 异步执行启动后的任务, 不需要等待
     this.afterLaunchTask.run()
   }
