@@ -6,6 +6,9 @@ import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
 import tableSort from './table-sort.vue'
 
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { isEmptyValue } from '/@/utils'
+
 defineOptions({
   inheritAttrs: false,
 })
@@ -48,17 +51,31 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
   operation: {
     type: Array as PropType<any[]>,
     default: () => [],
+  },
+  tableOperation: {
+    type: Function as PropType<(data: any) => any[]>,
+    default: () => () => [],
   },
   operationHandler: {
     type: Function as PropType<(event: any, data: any) => void>,
     default: () => () => { },
   },
+  paginator: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 defineEmits(['update:columns'])
+
+const [show] = useContextMenu()
 
 const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref(props.filters)
@@ -72,13 +89,10 @@ const tableAttrs = reactive({
   'column-resize-mode': 'expand',
   'scroll': { x: 500, y: 400 },
   'selection-mode': props.selectionMode,
-  'paginator-template': 'PrevPageLink PageLinks NextPageLink',
   ...useAttrs(),
 })
 
 const _dataList = ref([])
-const menuRef = ref()
-const contextMenuSelection = ref()
 const selectionData = ref()
 
 const params = reactive<any>({
@@ -104,14 +118,6 @@ const paginatorConfig = reactive({
   },
 })
 
-function onRowContextMenu(event: DataTableRowContextMenuEvent) {
-  menuRef.value.show(event.originalEvent)
-}
-
-function contextMenuClick(item: any) {
-  props.operationHandler(item, contextMenuSelection.value)
-}
-
 function batchOperation(item: any) {
   props.operationHandler(item, selectionData.value)
   _clearSelection()
@@ -135,6 +141,10 @@ function _getParams(outerParams?: any) {
   }
 }
 
+function _getOperation(data: any) {
+  return !isEmptyValue(props.operation) ? props.operation : props.tableOperation(data).filter((item: any) => item.power !== false)
+}
+
 async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
   _dataList.value = Array.isArray(props.dataList)
@@ -151,6 +161,13 @@ async function tableRequest(requestParams: any) {
 
 function _clearSelection() {
   selectionData.value = []
+}
+
+function onRowContextMenu(event: DataTableRowContextMenuEvent) {
+  show(event.originalEvent, {
+    operation: _getOperation(event.data),
+    operationHandler: (operate: any) => props.operationHandler(operate, event.data),
+  })
 }
 
 onMounted(() => {
@@ -190,8 +207,8 @@ defineExpose({
       </div>
     </div>
     <div class="rxtable-body">
-      <DataTable v-model:selection="selectionData" v-model:contextMenuSelection="contextMenuSelection"
-        :value="_dataList" v-bind="tableAttrs" @row-contextmenu="onRowContextMenu">
+      <DataTable v-model:selection="selectionData" :value="_dataList" v-bind="tableAttrs"
+        @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -210,9 +227,14 @@ defineExpose({
             </slot>
           </template>
         </Column>
+        <Column v-if="showActions" field="actions" header="Actions">
+          <template #body="{ data }">
+            <slot name="actions" :data="data" :operation="_getOperation(data)" />
+          </template>
+        </Column>
       </DataTable>
     </div>
-    <div class="rxtable-paginator">
+    <div v-if="paginator" class="rxtable-paginator">
       <Paginator template="PrevPageLink PageLinks NextPageLink" :rows="paginatorConfig.rows"
         :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
@@ -229,14 +251,6 @@ defineExpose({
       </Paginator>
     </div>
   </div>
-  <ContextMenu ref="menuRef" :model="operation">
-    <template #item="{ item, props: ctxProps }">
-      <a v-ripple v-bind="ctxProps.action" @click="contextMenuClick(item)">
-        <span :class="item.icon" />
-        <span>{{ item.label }}</span>
-      </a>
-    </template>
-  </ContextMenu>
   <Transition>
     <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
       v-model:selection="selectionData" :total="_dataList.length" :operation="operation"

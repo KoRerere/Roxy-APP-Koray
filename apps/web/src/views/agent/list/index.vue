@@ -7,30 +7,59 @@ import remarkIcon from '/@/components/remark-icon'
 import proxyIcon from '/@/assets/image/proxy.svg'
 import useColumns from '/@/hooks/useColumns'
 import columnsConfig from './columns'
+import { format } from 'date-fns'
 import { API } from '/@/api'
+import { useToast } from 'primevue/usetoast'
 
-import type { UserGetProxyModuleListData } from '@roxy/backend-api'
+import { ProxyCheckStatus } from '/@/enums'
+import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
 
-type ProxyItem = UserGetProxyModuleListData['data']['rows'][0]
+interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
+  loadingOperationMap: {
+    [key: string]: boolean
+  }
+}
 
+const toast = useToast()
 const [columns] = useColumns(columnsConfig)
 
-const operation = ref([
-  {
-    name: 'refresh',
-    label: '刷新',
-    icon: 'mdi mdi-refresh',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'test',
-    label: '测速',
-    icon: 'mdi mdi-wifi',
-    quick: true,
-    multiple: true,
-  },
-])
+// const operation = ref([
+//   {
+//     name: 'refresh',
+//     label: '刷新',
+//     icon: 'mdi mdi-refresh',
+//     quick: true,
+//     multiple: true,
+//   },
+//   {
+//     name: 'test',
+//     label: '测速',
+//     icon: 'mdi mdi-wifi',
+//     quick: true,
+//     multiple: true,
+//   },
+// ])
+
+function tableOperation(data: ProxyItem) {
+  return [
+    {
+      name: 'refresh',
+      label: '刷新',
+      icon: 'mdi mdi-refresh',
+      quick: true,
+      multiple: true,
+      disabled: !data.refreshUrl,
+      disabledTips: '缺少刷新地址',
+    },
+    {
+      name: 'test',
+      label: '测速',
+      icon: 'mdi mdi-wifi',
+      quick: true,
+      multiple: true,
+    },
+  ]
+}
 
 const drawer = reactive({
   data: null,
@@ -41,23 +70,42 @@ async function tableRequest(params: any) {
   return await API.proxy.userGetProxyModuleList(params)
 }
 
-function operationHandler(operate: any, data: any) {
+function operationHandler(operate: any, data: ProxyItem) {
+  const datas = ([] as ProxyItem[]).concat(data)
+
   switch (operate.name) {
     case 'refresh':
       console.log('🚀 ~ operationHandler ~ data:', data)
       break
     case 'test':
-      console.log('🚀 ~ operationHandler ~ data:', data)
+      testProxy(datas, operate.name)
       break
   }
 }
 
-function refreshUrl(data: ProxyItem) {
-
+function refreshUrl(data: ProxyItem[]) {
+  // window.electronAPI.send('app:install-update', info)
 }
 
-function testProxy(data: ProxyItem) {
-
+async function testProxy(datas: ProxyItem[], operateName: string) {
+  datas.forEach((item) => {
+    (item.loadingOperationMap || (item.loadingOperationMap = {}))[operateName] = true
+    window.electronAPI.send('proxy:detection', toRaw(item)).then((checkRes) => {
+      if (checkRes.error) {
+        toast.add({ severity: 'error', summary: 'Failure', detail: checkRes.error, life: 3000 })
+      }
+      const params = {
+        id: item.id,
+        checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+        lastCity: checkRes.city ?? '',
+        lastCountry: checkRes.continent_code ?? '',
+        lastIp: checkRes.ip ?? '',
+        checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      }
+      item.loadingOperationMap[operateName] = false
+      API.proxy.userMdfProxyModuleCreate(params)
+    })
+  })
 }
 </script>
 
@@ -71,8 +119,8 @@ function testProxy(data: ProxyItem) {
       <ryButton size="small" icon="mdi mdi-wifi" label="Test all" />
     </div>
     <div class="proxies-content">
-      <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :operation="operation"
-        :operation-handler="operationHandler" :show-gridlines="false">
+      <ry-table selection-mode="multiple" :table-request="tableRequest" :table-operation="tableOperation"
+        :columns="columns" :operation-handler="operationHandler" :show-gridlines="false">
         <template #proxy="{ data }">
           <div><span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span></div>
           <div>{{ data.ipType }}</div>
@@ -105,9 +153,9 @@ function testProxy(data: ProxyItem) {
             - -
           </div>
         </template>
-        <template #actions="{ data }">
-          <div class="flex gap-2">
-            <actions :operation="operation" :show-menu="false"
+        <template #actions="{ data, operation }">
+          <div class="flex justify-end gap-2">
+            <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
               @icon-click="(operate) => operationHandler(operate, data)" />
             <remarkIcon />
           </div>
