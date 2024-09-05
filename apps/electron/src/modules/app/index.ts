@@ -3,6 +3,7 @@ import { app, autoUpdater, shell } from 'electron'
 import { restoreOrCreateWindow } from './mainWindow'
 import { ipcMain } from '/@/modules/ipc'
 import { createTray } from '/@/modules/app/tray'
+import { appProtocolName } from '/@/constants'
 
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
@@ -51,22 +52,20 @@ export function setupApp() {
     process.exit(0)
   }
 
-  const protocolName = 'roxybrowser'
-
-  app.removeAsDefaultProtocolClient(protocolName)
+  app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
-      app.setAsDefaultProtocolClient(protocolName, process.execPath, [path.resolve(process.argv[1])])
+      app.setAsDefaultProtocolClient(appProtocolName, process.execPath, [path.resolve(process.argv[1])])
     }
   }
   else {
-    app.setAsDefaultProtocolClient(protocolName)
+    app.setAsDefaultProtocolClient(appProtocolName)
   }
 
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
-    if (commandLine.at(-1)?.includes(`${protocolName}://oauth2callback`)) {
+    if (commandLine.at(-1)?.includes(`${appProtocolName}://oauth2callback`)) {
       console.log('oauth2callback: ', commandLine)
       ipcMain.send('oauth2:google-callback', `?${commandLine.at(-1)?.split('?')[1]}`)
     }

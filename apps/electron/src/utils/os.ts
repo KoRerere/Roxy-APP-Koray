@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { platform } from 'node:os'
+import { networkInterfaces, platform } from 'node:os'
 
 /** 获取操作系统版本 */
 export function getOSVersion(): string {
@@ -29,4 +29,19 @@ export function getOSVersion(): string {
     console.error('Error fetching OS version:', error)
     return 'Unknown OS version'
   }
+}
+
+/** 获取本机 MAC 地址 */
+export function getMacAddress() {
+  const interfaces = networkInterfaces()
+
+  for (const name of Object.keys(interfaces)) {
+    const iface = interfaces[name] || []
+    for (const alias of iface) {
+      if (alias.family === 'IPv4' && !alias.internal) {
+        return alias.mac
+      }
+    }
+  }
+  return ''
 }

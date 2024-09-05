@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { ref } from 'vue'
+import type Popover from 'primevue/popover'
+import { onMounted, ref, useTemplateRef } from 'vue'
 
-const op = ref()
+const popoverRef = useTemplateRef('popover')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const tabs = ref([
@@ -18,22 +19,46 @@ const tabs = ref([
   },
 ])
 
-function toggle(event) {
-  op.value.toggle(event)
+function toggle(event: Event) {
+  popoverRef.value?.toggle(event)
+}
+
+onMounted(() => {
+  getKernelList()
+})
+
+async function getKernelList() {
+  const list = await window.electronAPI.send('app:getCoreList')
+  console.log('getKernelList', list)
+  kernelUpdates.value = list
 }
 
 window.electronAPI.on('app:resource-update', (data) => {
   console.log('app:resource-update', data)
-
-  if (data.type === 'app') {
-    clientUpdates.value = [data]
+  // 内核升级
+  if (data.type === 'kernel') {
+    const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
+    if (index === -1) {
+      kernelUpdates.value.push(data)
+    }
+    else {
+      kernelUpdates.value[index] = data
+    }
   }
-  else if (data.type === 'patch') {
-    kernelUpdates.value = [data]
+  // 客户端升级(app、web、patch)
+  else {
+    const index = clientUpdates.value.findIndex(item => data.type === item.type && item.title === data.title)
+    if (index === -1) {
+      clientUpdates.value.push(data)
+    }
+    else {
+      clientUpdates.value[index] = data
+    }
+    console.log('clientUpdates', clientUpdates.value)
   }
 })
 
-function handleItemClick(item) {
+function handleClientItemClick(item: ResourceUpdateMessage) {
   const info = toRaw(item)
   console.log('handleItemClick', info)
   if (info.status === 'downloading') {
@@ -43,11 +68,20 @@ function handleItemClick(item) {
     window.electronAPI.send('app:install-update', info)
   }
   else {
-    window.electronAPI.send('app:download-update', info)
+    // window.electronAPI.send('app:download-update', info)
   }
 }
 
-function getButtonLabel(item) {
+function handleKernelItemClick(item: ResourceUpdateMessage) {
+  if (item.status === 'downloading') {
+    return 'Downloading'
+  }
+  else if (item.status === 'uninstalled' && item.coreVersion) {
+    window.electronAPI.send('app:download-chrome-core', item.coreVersion)
+  }
+}
+
+function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
     return `Downloading ${Math.floor(item.percent)}%`
   }
@@ -61,15 +95,30 @@ function getButtonLabel(item) {
     return 'Download'
   }
 }
+
+function formatKernelBtnLabel(item: ResourceUpdateMessage) {
+  if (item.status === 'downloading') {
+    return `Downloading ${Math.floor(item.percent)}%`
+  }
+  else if (item.status === 'downloaded') {
+    return 'Installed'
+  }
+  else if (item.status === 'failed') {
+    return 'Retry'
+  }
+  else {
+    return 'Install'
+  }
+}
 </script>
 
 <template>
-  <div class="card flex justify-center">
+  <div class="flex justify-center">
     <OverlayBadge :value="clientUpdates.length" severity="danger">
       <Button type="button" icon="pi pi-arrow-circle-up" label="Upgrade" @click="toggle" />
     </OverlayBadge>
 
-    <Popover ref="op" :class="classes.popover">
+    <Popover ref="popover" :class="classes.popover">
       <Tabs :value="tabs[0].value">
         <TabList :class="classes.tablist">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -79,19 +128,50 @@ function getButtonLabel(item) {
         <TabPanels>
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value">
             <template v-if="tab.list.length">
+              <!-- 这里使用类型断言是因为 volar 的 bug -->
               <template v-for="item in tab.list" :key="item.title">
-                <div class="mb-[6px]">
-                  <div class="flex justify-between">
-                    <span>{{ item.title }} {{ item.version }}</span>
-                    <span>{{ item.releaseTime }}</span>
+                <!-- APP 更新列表 -->
+                <template v-if="item.type === 'app'">
+                  <div class="flex items-start">
+                    <img src="/logo.svg" class="w-[32px] h-[32px] mr-[6px]">
+                    <div class="flex-auto mb-[6px]">
+                      <div class="flex justify-between">
+                        <span>{{ item.title }} {{ item.version }}</span>
+                        <span>{{ item.releaseTime }}</span>
+                      </div>
+                      <div>{{ item.description }}</div>
+                      <Button
+                        type="button"
+                        :label="formatClientBtnLabel(item)"
+                        icon="pi pi-download"
+                        :loading="item.status === 'downloading'"
+                        class="mt-[6px]"
+                        @click="handleClientItemClick(item)"
+                      />
+                    </div>
                   </div>
-                  <div>{{ item.description }}</div>
-                  <Button
-                    type="button" :label="getButtonLabel(item)" icon="pi pi-download"
-                    :loading="item.status === 'downloading'"
-                    @click="handleItemClick(item)"
-                  />
-                </div>
+                </template>
+                <!-- 内核更新列表 -->
+                <template v-else>
+                  <div class="flex items-start">
+                    <img src="/kernel-logo.png" class="w-[32px] h-[32px] mr-[6px]">
+                    <div class="flex-auto mb-[6px]">
+                      <div class="flex justify-between">
+                        <span>{{ item.title }} {{ item.coreVersion }}</span>
+                        <Button
+                          type="button"
+                          severity="secondary"
+                          size="small"
+                          :label="formatKernelBtnLabel(item)"
+                          :icon="`pi ${item.status === 'downloaded' ? 'pi-check' : 'pi-download'}`"
+                          :loading="item.status === 'downloading'"
+                          :disabled="item.status === 'downloaded'"
+                          @click="handleKernelItemClick(item)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </template>
             </template>
             <template v-else>

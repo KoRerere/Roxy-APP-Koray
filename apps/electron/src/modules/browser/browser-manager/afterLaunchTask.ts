@@ -1,22 +1,19 @@
-import { join } from 'node:path'
 import { readFile, stat } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
-import { BrowserItem } from './browserItem'
-import type { WindowItemType } from './types'
+import type { BrowserItem } from './browserItem'
 
 /** 浏览器启动后要做的事情 */
-export class AfterLaunchTask extends BrowserItem {
+export class AfterLaunchTask {
   /** 已打开的tab页 */
   private openedTabs: Record<string, string> = {}
   /** 最新的 cookies */
   private cookies = ''
   /** 判断是否手机端 */
   get isPhone() {
-    return [`Android`, `IOS`].includes(this.winInfo.os)
+    return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
 
-  constructor(winItem: WindowItemType, public browser: Browser) {
-    super(winItem)
+  constructor(private browserItem: BrowserItem, public browser: Browser) {
   }
 
   async run() {
@@ -33,10 +30,10 @@ export class AfterLaunchTask extends BrowserItem {
     try {
       // cookie = this.browser_service.export_cookies();
       // login_data = this.browser_service.export_login_data();
-      const stats = await stat(this.lumiLoginPath)
+      const stats = await stat(this.browserItem.lumiLoginPath)
       // lumiLogin 文件超过1M的文件就不同步到服务器
       if (stats.size < 1024 * 1024) {
-        lumiLogin = await readFile(this.lumiLoginPath, 'utf8')
+        lumiLogin = await readFile(this.browserItem.lumiLoginPath, 'utf8')
       }
       else {
         console.log('lumiLogin文件超过1M，不同步到服务器', stats.size)
@@ -48,8 +45,8 @@ export class AfterLaunchTask extends BrowserItem {
     }
 
     return {
-      id: this.winInfo.id,
-      defaultOpenUrl: defaultOpenUrl.filter(url => this.isValidURL(url)),
+      id: this.browserItem.winInfo.id,
+      defaultOpenUrl: defaultOpenUrl.filter(url => this.browserItem.isValidURL(url)),
       cookie: this.cookies || [],
       lumiLogin,
     }
@@ -57,7 +54,7 @@ export class AfterLaunchTask extends BrowserItem {
 
   /** 处理浏览器事件 */
   async handleBrowserEvent() {
-    const { cookie, syncCookie } = this.winInfo
+    const { cookie, syncCookie } = this.browserItem.winInfo
 
     if (!this.browser) {
       return

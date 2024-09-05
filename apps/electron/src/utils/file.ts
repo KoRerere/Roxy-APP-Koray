@@ -34,12 +34,18 @@ export async function fileExists(filePath: string, create = false) {
 /**
  * 流式下载 zip 文件
  */
-export async function downloadZipFile(url: string, outputZipPath: string) {
+export async function downloadZipFile(url: string, outputZipPath: string, downloadProgress?: (progress: number) => void) {
   const { promise, resolve, reject } = Promise.withResolvers()
   const response = await axios({
     method: 'get',
     url,
     responseType: 'stream',
+    onDownloadProgress: (progressEvent) => {
+      const totalLength = progressEvent.total
+      const progress = Math.round((progressEvent.loaded * 100) / totalLength!)
+      console.log(`Download progress: ${progress}%`)
+      downloadProgress?.(progress)
+    },
   })
 
   const isFileExists = await fileExists(outputZipPath)

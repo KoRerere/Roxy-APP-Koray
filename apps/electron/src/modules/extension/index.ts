@@ -1,8 +1,14 @@
-import { readdir, rm } from 'node:fs/promises'
+import { readdir, rm, stat } from 'node:fs/promises'
 import { appConfig } from '/@/constants/'
-import { join } from 'node:path'
+import path from 'node:path'
 import { API } from '/@/api'
 import { downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { Worker } from 'node:worker_threads'
+import type { UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
+import { dialog } from 'electron'
+import { getMainWindow } from '/@/modules/app/mainWindow'
+import { unzip } from '@tomjs/unzip-crx'
+import { getPluginMeta } from './helper'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
@@ -33,7 +39,7 @@ export const extensionManager = new class ExtensionManager {
     let downloadedArr: string[] = []
     if (noExists.length) {
       msgCallback?.('正在下载插件')
-      const promiseArr = await this.downloadExtensions(noExists)
+      const promiseArr = await this.downloadUserExtensions(noExists)
       downloadedArr = promiseArr.filter(p => p.status === 'fulfilled').map(p => p.value)
       const failedArr = promiseArr.filter(p => p.status === 'rejected').map(p => getErrorMessage(p.reason))
       if (failedArr.length) {
@@ -41,15 +47,20 @@ export const extensionManager = new class ExtensionManager {
       }
     }
 
-    return exists.map(name => join(this.extensionDir, name)).concat(downloadedArr)
+    return exists.map(name => path.join(this.extensionDir, name)).concat(downloadedArr)
   }
 
-  /** 下载指定插件 */
-  async downloadExtensions(extIDs: string[]) {
+  /** 从用户插件列表下载所需的插件 */
+  async downloadUserExtensions(extIDs: string[]) {
     const { data } = await API.plugins.userGetPluginListList({})
     const needDownloads = data.rows.filter(item => extIDs.includes(item.pluginDir!))
-    const promiseArr = needDownloads.map(async (item) => {
-      const localPath = join(this.extensionDir, item.pluginDir!)
+    return this.downloadExtensions(needDownloads)
+  }
+
+  /** 下载指定的插件 */
+  async downloadExtensions(extensions: UnwrapRowsType<UserGetSystemPluginListData | UserGetPluginListListData>) {
+    const promiseArr = extensions.map(async (item) => {
+      const localPath = path.join(this.extensionDir, item.pluginDir!)
       const zipPath = `${localPath}.zip`
       try {
         await downloadZipFile(item.pluginRoute!, zipPath)
@@ -68,10 +79,141 @@ export const extensionManager = new class ExtensionManager {
   /** 删除指定插件 */
   async removeExtensions(extIDs: string[]) {
     const promiseArr = extIDs.map(async (extID) => {
-      const localPath = join(this.extensionDir, extID)
-      await rm(localPath, { recursive: true })
+      const localPath = path.join(this.extensionDir, extID)
+      await rm(localPath, { recursive: true, force: true })
       return localPath
     })
     return Promise.allSettled(promiseArr)
+  }
+
+  /** 获取并解析用户本地选择的插件信息 */
+  async getUserSelectedExtensionInfo(selectType: 'dir' | 'file') {
+    const { promise, resolve } = Promise.withResolvers()
+    const { canceled, filePaths } = await dialog.showOpenDialog(getMainWindow()!, {
+      properties: [selectType === 'dir' ? 'openDirectory' : 'openFile'],
+      // .crx .zip
+      filters: [
+        { name: 'CRX and ZIP Files', extensions: ['crx', 'zip'] },
+      ],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      // 选择的插件目录
+      const pluginDir = filePaths[0]
+      const fileExtname = path.extname(pluginDir)
+
+      const pluginStat = await stat(pluginDir)
+
+      if (pluginStat.size > 1024 * 1024 * 100) {
+        resolve({ type: 'warning', message: '插件大小不能超过100MB' })
+        return promise
+      }
+
+      if (pluginStat.isFile() && fileExtname !== '.crx' && fileExtname !== '.zip') {
+        resolve({ type: 'warning', message: '请选择正确的插件文件' })
+        return promise
+      }
+
+      if (fileExtname === '.crx') {
+        const tempDir = path.join(appConfig.tempDir, 'crx')
+        const { name } = path.parse(pluginDir)
+        const destDir = path.join(tempDir, name)
+
+        await fileExists(tempDir, true)
+        await unzip(pluginDir, destDir)
+        try {
+          const pluginMeta = await getPluginMeta(destDir)
+          resolve({ type: 'success', data: pluginMeta })
+        }
+        catch (error) {
+          resolve({ type: 'error', data: error })
+        }
+
+        return promise
+      }
+      else if (fileExtname === '.zip') {
+        const tempDir = path.join(appConfig.tempDir, 'zip')
+        const { name } = path.parse(pluginDir)
+        const destDir = path.join(tempDir, name)
+
+        await fileExists(tempDir, true)
+        await import('./extensionWorker')
+        const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
+
+        worker.on('message', async (result) => {
+          const { type, data } = result
+
+          if (type === 'extractPlugin') {
+            console.log('extractPlugin', data)
+            try {
+              const pluginMeta = await getPluginMeta(destDir)
+              resolve({ type: 'success', data: pluginMeta })
+            }
+            catch (error) {
+              resolve({ type: 'error', data: error })
+            }
+            finally {
+              worker.terminate()
+            }
+          }
+          else if (type === 'error') {
+            resolve({ type: 'error', data })
+            worker.terminate()
+          }
+        })
+
+        worker.on('error', (error) => {
+          console.error('Worker error:', error)
+          resolve({ type: 'error', data: error })
+          worker.terminate()
+        })
+
+        worker.postMessage({ type: 'extractPlugin', data: { pluginDir, destDir: tempDir } })
+
+        return promise
+      }
+
+      console.log('pluginDir', pluginDir)
+
+      await import('./extensionWorker')
+      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
+
+      worker.on('message', async (result) => {
+        const { type, data } = result
+
+        if (type === 'calculatePluginSize') {
+          console.log('calculatePluginSize', data)
+          if (data > 1024 * 1024 * 100) {
+            resolve({ type: 'warning', message: '插件大小不能超过100MB' })
+          }
+          else {
+            try {
+              const pluginMeta = await getPluginMeta(pluginDir)
+              resolve({ type: 'success', data: pluginMeta })
+            }
+            catch (error) {
+              resolve({ type: 'error', data: error })
+            }
+            finally {
+              worker.terminate()
+            }
+          }
+        }
+      })
+
+      worker.on('error', (error) => {
+        console.error('Worker error:', error)
+        resolve({ type: 'error', data: error })
+        worker.terminate()
+      })
+
+      // 传递插件目录给子线程, 让子线程计算插件大小
+      worker.postMessage({ type: 'calculatePluginSize', data: pluginDir })
+    }
+    else {
+      resolve({ type: 'warning', message: '未选择插件目录' })
+    }
+
+    return promise
   }
 }()
