@@ -11,7 +11,7 @@ const router = createRouter({
       name: 'home',
       path: '/',
       component: () => import('/@/layout/index.vue'),
-      redirect: { name: 'browser' },
+      redirect: { name: 'browser-list' },
       children: menuRoutes,
     },
   ],
