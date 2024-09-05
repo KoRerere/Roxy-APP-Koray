@@ -23,8 +23,8 @@ import { useToast } from 'primevue/usetoast'
 import type { DrawerType } from '/@/views/browser/components/drawers/props.ts'
 
 const props = defineProps({
-  activeTab: {
-    type: String,
+  currentFilter: {
+    type: Object,
     default: undefined,
   },
 })
@@ -83,14 +83,16 @@ const drawer = reactive({
   },
 })
 
-watch(() => props.activeTab, (_value) => {
-  // if (value.routeName !== 'browser-recycle') {
-  //   getCustomFilters(value.filter_condition || {})
-  //     .then((data) => {
-  //       ctmFilters.value = data
-  //       filterChange()
-  //     })
-  // }
+watch(() => props.currentFilter, (params) => {
+  if (params && params.name !== 'recycle') {
+    getCustomFilters(params.filter_condition || {})
+      .then((data) => {
+        ctmFilters.value = data
+        filterChange()
+      })
+  }
+}, {
+  immediate: true,
 })
 
 function filterChange() {
@@ -110,7 +112,7 @@ async function saveFilters(formData: { filter_name: string }) {
   emit('updateFilterTabs')
 }
 
-async function coverAllFiltersConfig() {
+async function coverDefaultDisplay() {
 
   // warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
   //   .then(() => { })
@@ -324,7 +326,7 @@ onBeforeUnmount(() => {
       <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
     <template #config-footer>
-      <div class="flex-1 flex justify-end cursor-pointer config-footer" @click="coverAllFiltersConfig">
+      <div class="flex-1 flex justify-end cursor-pointer config-footer" @click="coverDefaultDisplay">
         Save for all filters
       </div>
     </template>

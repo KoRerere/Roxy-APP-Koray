@@ -11,8 +11,8 @@ const confirm = useConfirm()
 const toast = useToast()
 
 const tabs = ref([
-  { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000' },
-  { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001' },
+  { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000', name: 'profiles' },
+  { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001', name: 'recycle' },
 ])
 
 const sortTabs = computed({
@@ -24,12 +24,13 @@ const sortTabs = computed({
   },
 })
 
-const activeTab = ref(tabs.value[0].id)
-const isRecycle = computed(() => activeTab.value === '1001')
+const active = ref(tabs.value[0].id)
+const isRecycle = computed(() => active.value === '1001')
+const currentFilter = computed(() => tabs.value.find(tab => tab.id === active.value))
 
 async function getFilterList() {
   const { data } = await API.window.userGetWindowFilterNameListList()
-  const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}` }))
+  const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, name: item.filter_name }))
 
   if (tabs.value.length > 2) {
     tabs.value = tabs.value.filter(tab => ['1000', '1001'].includes(tab.id))
@@ -39,6 +40,8 @@ async function getFilterList() {
 
 async function updateFilterTabs() {
   await getFilterList()
+  const last = tabs.value.length - 2
+  active.value = tabs.value[last].id
 }
 
 async function deleteFilterItem(filter_name: string) {
@@ -88,28 +91,23 @@ onMounted(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center justify-between">
-      <Tabs v-model:value="activeTab" class="flex-1 overflow-hidden" scrollable>
+      <Tabs v-model:value="active" class="flex-1 overflow-hidden" scrollable>
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
-            <!-- <router-link v-if="item.routeName" v-slot="{ href, navigate }" :to="{ name: item.routeName }" custom>
-              <a :href="href" class="flex items-center text-inherit decoration-none" @click="navigate">
-                <span :class="item.icon" />
-                <span>{{ item.label }}</span>
-              </a>
-            </router-link> -->
-
-            <a class="flex items-center text-inherit decoration-none">
+            <div class="flex items-center text-inherit">
               <span :class="item.icon" />
               <span>{{ item.label }}</span>
-            </a>
+            </div>
           </Tab>
         </TabList>
       </Tabs>
       <ryTag class="cursor-pointer mdi mdi-cog" @click="showPopover" />
     </div>
-    <div class="flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden">
       <recycle v-if="isRecycle" />
-      <profiles v-else @update-filter-tabs="updateFilterTabs" />
+      <div v-show="!isRecycle" class="flex-1 overflow-hidden">
+        <profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
+      </div>
     </div>
   </div>
 

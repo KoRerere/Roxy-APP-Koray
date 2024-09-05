@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { createDefaultObject, getFormDataByList, setInputVisible } from '/@/utils'
+import { createDefaultObject, getFormDataByList, setInputValue, setInputVisible } from '/@/utils'
 
 async function getUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -25,9 +25,13 @@ async function getDeviceName(inputsGroup: any) {
   return API.window.userGetDeviceNameList({ os })
 }
 
-async function _getMacAddr(_inputsGroup: any) {
-  // const { os } = getFormDataByList(inputsGroup)
-  // return API.window.userGetMacAddrV2List({ os })
+async function getMacAddr(inputsGroup: any) {
+  const { macInfo } = getFormDataByList(inputsGroup)
+  const result: any = macInfo
+    ? await window.electronAPI.send('app:getMacAddress')
+    : await API.window.userGetMacAddrV2List({ count: 1 }).then(res => res.data[0])
+
+  return result?.macAddr || result
 }
 
 export function getAccordions() {
@@ -570,20 +574,23 @@ export function getInputsGroup(data: any = {}) {
         ],
         change(_v: any, self: any, inputs: any) {
           setInputVisible(inputs, 'macAddr', self.value === false)
+          getMacAddr(inputsGroup).then((res: any) => {
+            setInputValue(inputs, 'macAddr', res)
+          })
         },
       },
       {
         type: 'text',
-        label: '#x 2',
+        label: ' ',
         name: 'macAddr',
         value: data.macAddr,
         icon: 'mdi mdi-shuffle-variant',
         disabled: true,
         visible: true,
-        iconClick: (_self: any) => {
-          // getMacAddr(inputsGroup).then(({ data }) => {
-          //   self.value = data.deviceName
-          // })
+        iconClick: (self: any) => {
+          getMacAddr(inputsGroup).then((res: any) => {
+            self.value = res
+          })
         },
       },
       {
@@ -617,7 +624,7 @@ export function getInputsGroup(data: any = {}) {
       },
       {
         type: 'select',
-        label: '#x 5',
+        label: ' ',
         placeholder: '选择SSL指纹设置',
         name: 'disableSslList',
         value: $dict_map.disableSslList[0],
