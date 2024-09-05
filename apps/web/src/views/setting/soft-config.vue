@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { API } from '/@/api'
-import { getFormData, setInputValueByInputKey } from '/@/utils'
+import { getFormData, setInputFieldByInputKey } from '/@/utils'
 
 import { useToast } from 'primevue/usetoast'
 
@@ -36,7 +36,7 @@ function getInputs(data: any) {
         const dir = await window.electronAPI.send('dialog:selectDir')
         console.log('dialog:selectDir', dir)
         if (dir) {
-          setInputValueByInputKey(inputs.value, 'cacheDir', 'value', dir)
+          setInputFieldByInputKey(inputs.value, 'cacheDir', 'value', dir)
         }
       }),
     },

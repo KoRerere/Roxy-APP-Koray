@@ -92,14 +92,12 @@ function addNote(data: any) {
 }
 
 async function tableRequest() {
-  const xxx = await API.window.userGetWindowInfoRecycleList()
-  console.log('🚀 ~ tableRequest ~ xxx:', xxx)
-  return xxx
+  return {}
 }
 </script>
 
 <template>
-  <div class="flex flex-col h-full proxies">
+  <div class="flex flex-col flex-1 proxies">
     <div class="proxies-header">
       回收站
     </div>
@@ -107,18 +105,18 @@ async function tableRequest() {
       <ry-table selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation"
         :operation-handler="operationHandler" :show-gridlines="false">
         <template #profile="{ data }">
-          <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
+          <!-- <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" /> -->
         </template>
         <template #group>
           <ryTag>123</ryTag>
         </template>
         <template #actions="{ data }">
-          <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
+          <!-- <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" /> -->
         </template>
         <template #multiple-operation="{ selection, clearSelection }">
-          <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
+          <!-- <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
             @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-            @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" />
+            @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" /> -->
         </template>
       </ry-table>
     </div>
