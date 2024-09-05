@@ -131,14 +131,16 @@ export const extensionManager = new class ExtensionManager {
 
         return promise
       }
-      else if (fileExtname === '.zip') {
+
+      await import('./extensionWorker')
+      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
+
+      if (fileExtname === '.zip') {
         const tempDir = path.join(appConfig.tempDir, 'zip')
         const { name } = path.parse(pluginDir)
         const destDir = path.join(tempDir, name)
 
         await fileExists(tempDir, true)
-        await import('./extensionWorker')
-        const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
 
         worker.on('message', async (result) => {
           const { type, data } = result
@@ -174,9 +176,6 @@ export const extensionManager = new class ExtensionManager {
       }
 
       console.log('pluginDir', pluginDir)
-
-      await import('./extensionWorker')
-      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
 
       worker.on('message', async (result) => {
         const { type, data } = result
