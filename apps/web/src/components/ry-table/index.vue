@@ -253,7 +253,7 @@ defineExpose({
   </div>
   <Transition>
     <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
-      v-model:selection="selectionData" :total="_dataList.length" :operation="operation"
+      v-model:selection="selectionData" :total="_dataList.length" :operation="_getOperation(selectionData)"
       @batch-operation="batchOperation">
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />

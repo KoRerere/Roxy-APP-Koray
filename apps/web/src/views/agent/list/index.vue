@@ -40,7 +40,8 @@ const [columns] = useColumns(columnsConfig)
 //   },
 // ])
 
-function tableOperation(data: ProxyItem) {
+function tableOperation(data: ProxyItem | ProxyItem[]) {
+  const datas = ([] as ProxyItem[]).concat(data)
   return [
     {
       name: 'refresh',
@@ -48,7 +49,7 @@ function tableOperation(data: ProxyItem) {
       icon: 'mdi mdi-refresh',
       quick: true,
       multiple: true,
-      disabled: !data.refreshUrl,
+      disabled: datas.some(item => !item.refreshUrl),
       disabledTips: '缺少刷新地址',
     },
     {
