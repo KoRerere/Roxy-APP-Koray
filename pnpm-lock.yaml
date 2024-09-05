@@ -65,6 +65,9 @@ importers:
       '@tomjs/unzip-crx':
         specifier: ^1.1.3
         version: 1.1.3
+      '@types/adm-zip':
+        specifier: ^0.5.5
+        version: 0.5.5
       '@types/ali-oss':
         specifier: ^6.16.11
         version: 6.16.11
@@ -1282,6 +1285,9 @@ packages:
 
   '@tsconfig/node20@20.1.4':
     resolution: {integrity: sha512-sqgsT69YFeLWf5NtJ4Xq/xAF8p4ZQHlmGW74Nu2tD4+g5fAsposc4ZfaaPixVu4y01BEiDCWLRDCvDM5JOsRxg==}
+
+  '@types/adm-zip@0.5.5':
+    resolution: {integrity: sha512-YCGstVMjc4LTY5uK9/obvxBya93axZOVOyf2GSUulADzmLhYE45u2nAssCs/fWBs1Ifq5Vat75JTPwd5XZoPJw==}
 
   '@types/ali-oss@6.16.11':
     resolution: {integrity: sha512-/AyemPZy93ZXGzEokMsoPFgjH37snpzH4X/fwans/n63HLaCleriCG3PyrkHCPkgHEc9vj9Uo6paqsBN3vJ3OA==}
@@ -6899,6 +6905,10 @@ snapshots:
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
   '@tsconfig/node20@20.1.4': {}
+
+  '@types/adm-zip@0.5.5':
+    dependencies:
+      '@types/node': 22.5.2
 
   '@types/ali-oss@6.16.11': {}
 

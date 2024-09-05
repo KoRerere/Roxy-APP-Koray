@@ -14,4 +14,9 @@ export const ossObject = {
     const { mainId } = store.userInfo
     return `/${this.groupdata}/${mainId}/window`
   },
+  /** 用户插件目录 */
+  get userPluginDataDir() {
+    const { mainId } = store.userInfo
+    return `/${this.groupdata}/${mainId}/plugin`
+  },
 } as const
