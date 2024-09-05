@@ -250,6 +250,13 @@ export async function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
+      type: 'text',
+      label: '关联代理ID',
+      name: 'proxyIds',
+      placeholder: '多个代理ID逗号分隔',
+      icon: 'mdi mdi-abacus',
+    },
+    {
       type: 'Checkbox',
       name: 'proxyProtocoList',
       label: '代理协议',
