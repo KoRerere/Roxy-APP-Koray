@@ -4,24 +4,19 @@ const columnsConfig = {
     {
       title: '配置文件信息',
       key: 'profile',
-      slot: 'profile'
+      slot: 'profile',
     },
     {
       title: '打开/预览',
       key: 'open',
-      slot: 'open'
+      slot: 'open',
     },
     {
       title: '组/标签',
       key: 'group',
-      slot: 'group'
+      slot: 'group',
     },
-    {
-      title: '操作项',
-      key: 'actions',
-      slot: 'actions'
-    }
-  ]
+  ],
 }
 
 export default columnsConfig

@@ -123,6 +123,22 @@ export function setInputValue(
   setInputFieldByInputKey(inputs, names, 'value', state)
 }
 
+export function setInputValueByFormData(inputs: any[], formData: any) {
+  inputs.forEach((item: any) => {
+    if (Array.isArray(item)) {
+      setInputValueByFormData(item, formData)
+      return
+    }
+
+    if (item.name && formData[item.name]) {
+      item.value = formData[item.name]
+    }
+    if (item.items && Array.isArray(item.items)) {
+      setInputValueByFormData(item.items, formData)
+    }
+  })
+}
+
 export function setInputFieldByInputKey(
   inputs: any[],
   inputNames: string | string[],

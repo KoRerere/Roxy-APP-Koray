@@ -29,11 +29,6 @@ const columns = ref([
     key: 'group',
     slot: 'group',
   },
-  {
-    title: '操作项',
-    key: 'actions',
-    slot: 'actions',
-  },
 ])
 
 const operation = ref([

@@ -25,8 +25,7 @@ function onRemark() {
       inputs: [
         {
           type: 'text',
-          name: 'webGLManufacturer',
-          placeholder: 'WebGL Manufacturer',
+          name: 'remark',
           value: props.value,
         },
       ],

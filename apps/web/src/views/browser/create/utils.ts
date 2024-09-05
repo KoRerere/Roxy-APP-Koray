@@ -1,4 +1,5 @@
-import { getFormDataByList } from '/@/utils'
+import { API } from '/@/api'
+import { getFormDataByList, setInputValueByFormData } from '/@/utils'
 
 export const fontArray = [
   'BIZ UDPGothic Bold',
@@ -432,10 +433,10 @@ function getSpeechSynthesis() {
   return [...newArray, ...voices]
 }
 
-function _ceateFingerDetail(inupts: any, count: number = 1) {
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects } = getFormDataByList(inupts)
+export function ceateRandomFinger(inupts: any, count: number = 1) {
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
 
-  const _fingerDetail = Array.from({ length: count }, () => ({
+  const fingerDetail = Array.from({ length: count }, () => ({
     mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
     mediaDeviceList: [
       {
@@ -453,14 +454,29 @@ function _ceateFingerDetail(inupts: any, count: number = 1) {
     clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
   }))
 
-  // [userAgent, webGLManufacturer, webGLRender] = API.xxx.xxx() || window.electronAPI.send()
-  // deviceName = API.xxx.xxx() || window.electronAPI.send()
-  // macAddr = API.xxx.xxx() || window.electronAPI.send()
+  Promise.all([
+    getUaWebgl({ count, os, osVersion, coreVersion }),
+    getDeviceName({ os }),
+    getMacAddr({ macInfo, count }),
+  ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
+    uaWebgl.forEach((item, index) => {
+      const formData = { ...item, ...deviceName[index], ...macAddr[index] }
+      Object.assign(fingerDetail[index], formData)
+      setInputValueByFormData(inupts, formData)
+    })
+  })
 }
 
-export default {
-  getCanvasContextNoiseValue,
-  getClientRectsValue,
-  getRandomFonts,
-  getSpeechSynthesis,
+function getUaWebgl(params) {
+  return API.window.userGetUaWebglV2List(params)
+}
+
+function getDeviceName(params) {
+  return API.window.userGetDeviceNameV2List(params)
+}
+
+function getMacAddr(params) {
+  return params.macInfo
+    ? window.electronAPI.send('app:getMacAddress').then(res => ({ data: [res] }))
+    : API.window.userGetMacAddrV2List(params)
 }

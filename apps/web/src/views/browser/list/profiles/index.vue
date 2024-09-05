@@ -71,11 +71,11 @@ const drawer = reactive({
   editProfile: async (data: any) => {
     try {
       const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
       tableRef.value.refresh()
     }
     catch (error) {
-      toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
+      toast.add({ severity: 'error', summary: '错误', detail: error, life: 3000 })
     }
     finally {
       drawer.visible = false
@@ -108,7 +108,7 @@ async function saveFilters(formData: { filter_name: string }) {
   const filter_rule = columns.value.map(column => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
 
   const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
   emit('updateFilterTabs')
 }
 
@@ -164,7 +164,7 @@ async function operationHandler(operate: any, data: any) {
 async function batchModifyWindow(params: any) {
   try {
     const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
     tableRef.value.refresh()
   }
   catch (error) {
@@ -216,7 +216,7 @@ async function testProxy(data: any) {
     const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
     console.log('🚀 ~ testProxy ~ res:', res)
 
-    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
+    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 3000 })
   }
   catch (error) {
 
@@ -224,7 +224,7 @@ async function testProxy(data: any) {
 }
 
 async function refreshIp(_data: any) {
-  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
+  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 3000 })
 }
 
 async function deleteProxy(data: any) {
