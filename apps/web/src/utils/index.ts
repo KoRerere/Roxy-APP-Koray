@@ -165,3 +165,7 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
   })
   return target
 }
+
+export function EQ<T>(list: T[], field: keyof T): boolean {
+  return list.some(item => !item[field])
+}
