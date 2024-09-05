@@ -5,7 +5,11 @@ const TerserPlugin = require('terser-webpack-plugin')
 module.exports = {
   mode: 'production', // 或者 'development'
   target: 'electron-main', // 目标环境设置为 Node.js
-  entry: './dist-vite/index.cjs', // 入口文件，指向你应用的主文件
+  // 入口文件，指向你应用的主文件
+  entry: {
+    main: './dist-vite/index.cjs',
+    extensionWorker: './dist-vite/extensionWorker.cjs',
+  },
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录
     filename: '[name].cjs', // 使用 [name] 占位符来确保每个 chunk 有唯一的文件名
@@ -25,32 +29,47 @@ module.exports = {
         extractComments: false, // 禁止生成 LICENSE.txt 文件
       }),
     ],
+    // splitChunks: {
+    //   chunks: 'all', // 对所有类型的代码进行分割
+    //   cacheGroups: {
+    //     // 将特定文件分割到一个单独的 chunk 中
+    //     specificFiles: {
+    //       test: (module) => {
+    //         // 匹配特定文件路径
+    //         const filePaths = [
+    //           path.resolve(__dirname, './dist-vite/extensionWorker.cjs'),
+    //         ]
+    //         return filePaths.includes(module.resource)
+    //       },
+    //       name: (module) => {
+    //         // 根据文件名生成 chunk 名称
+    //         const fileName = path.basename(module.resource, '.cjs')
+    //         return fileName
+    //       },
+    //       chunks: 'all',
+    //       enforce: true, // 强制创建这个 chunk
+    //     },
+    //     // 默认的 vendors 组
+    //     vendors: {
+    //       test: /[\\/]node_modules[\\/]/,
+    //       name: 'vendors',
+    //       chunks: 'all',
+    //     },
+    //   },
+    // },
     splitChunks: {
       chunks: 'all', // 对所有类型的代码进行分割
       cacheGroups: {
-        // 将特定文件分割到一个单独的 chunk 中
-        specificFiles: {
-          test: (module) => {
-            // 匹配特定文件路径
-            const filePaths = [
-              path.resolve(__dirname, './dist-vite/beforeLaunchTask.cjs'),
-              path.resolve(__dirname, './dist-vite/afterLaunchTask.cjs'),
-            ]
-            return filePaths.includes(module.resource)
-          },
-          name: (module) => {
-            // 根据文件名生成 chunk 名称
-            const fileName = path.basename(module.resource, '.js')
-            return fileName
-          },
-          chunks: 'all',
-          enforce: true, // 强制创建这个 chunk
-        },
-        // 默认的 vendors 组
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/]/,
           name: 'vendors',
           chunks: 'all',
+        },
+        common: {
+          name: 'common',
+          minChunks: 2, // 至少两个 chunk 共享的模块会被提取到 common chunk 中
+          priority: -10,
+          reuseExistingChunk: true,
         },
       },
     },
