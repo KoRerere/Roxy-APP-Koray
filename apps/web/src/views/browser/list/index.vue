@@ -1,386 +1,135 @@
-<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import actions from '/@/components/actions.vue'
-import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
-
-import drawersitems from '/@/views/browser/components/drawers/index.vue'
-import profileInfo from './components/profile-info.vue'
-import customFilters from './components/custom-filters.vue'
-import browserControl from './components/browser-control.vue'
-import multipleOperation from './components/multiple-operation.vue'
-import { getFormData } from '/@/utils/index'
-
-import useColumns from '/@/hooks/useColumns'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
-
-import columnsRow from './columns'
-import { getCustomFilters, getFilters, getOperation, getSorts } from './operation'
-import { API } from '/@/api'
+import { VueDraggable } from 'vue-draggable-plus'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
+import ryPopover from '/@/components/ry-popover'
+import profiles from './profiles'
+import recycle from './recycle'
+import { API } from '/@/api'
 
-import type { DrawerType } from '../components/drawers/props'
-
-const emit = defineEmits(['updateFilterTabs'])
 const confirm = useConfirm()
 const toast = useToast()
 
-const route = useRoute()
-const router = useRouter()
+const tabs = ref([
+  { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000' },
+  { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001' },
+])
 
-const activeTab: any = inject('activeTab')
-
-const [columns] = useColumns(columnsRow)
-const [show] = useContextMenu()
-const tableRef = ref()
-const filters = ref()
-const ctmFilters = ref()
-const sorts = ref()
-const operation = ref()
-const openMessage = reactive<any>({})
-const drawer = reactive({
-  type: 'proxyList' as DrawerType,
-  title: '',
-  data: null,
-  visible: false,
-  confirm: (type: DrawerType, data: any) => {
-    switch (type) {
-      case 'proxyList':
-        break
-      case 'proxyForm':
-        drawer.editProfile(data)
-        break
-      case 'accountForm':
-        {
-          const { id, dirId, windowPlatformList, ...item } = data
-          drawer.editProfile({
-            id,
-            dirId,
-            windowPlatformList: windowPlatformList.concat(item),
-          })
-          break
-        }
-    }
+const sortTabs = computed({
+  get() {
+    return tabs.value.length > 2 ? tabs.value.slice(1, -1) : []
   },
-  editProfile: async (data: any) => {
-    try {
-      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-      tableRef.value.refresh()
-    }
-    catch (error) {
-      toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
-    }
-    finally {
-      drawer.visible = false
-    }
+  set(value) {
+    tabs.value.splice(1, tabs.value.length - 2, ...value)
   },
 })
 
-watch(() => activeTab.value, (value) => {
-  if (value.routeName !== 'browser-recycle') {
-    getCustomFilters(value.filter_condition || {})
-      .then((data) => {
-        ctmFilters.value = data
-        filterChange()
-      })
+const activeTab = ref(tabs.value[0].id)
+const isRecycle = computed(() => activeTab.value === '1001')
+
+async function getFilterList() {
+  const { data } = await API.window.userGetWindowFilterNameListList()
+  const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}` }))
+
+  if (tabs.value.length > 2) {
+    tabs.value = tabs.value.filter(tab => ['1000', '1001'].includes(tab.id))
   }
-})
-
-function filterChange() {
-  const params = getFormData(ctmFilters.value)
-  tableRef.value.refresh(params)
+  tabs.value.splice(1, 0, ...list)
 }
 
-async function saveFilters(formData: { filter_name: string }) {
-  if (!filters.value.length) {
-    return
-  }
-  const filter_condition = getFormData(ctmFilters.value)
-  const filter_rule = columns.value.map(column => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
-
-  const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  emit('updateFilterTabs')
+async function updateFilterTabs() {
+  await getFilterList()
 }
 
-async function coverAllFiltersConfig() {
-
-  // warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
-  //   .then(() => { })
-}
-
-async function tableRequest(params: any) {
-  const data = await API.window.userGetWindowInfoV2List(params)
-  autoOpenBrowser(data.data.rows)
-  return data
-}
-
-function autoOpenBrowser(list: any) {
-  const query = route.query.browser && JSON.parse(route.query.browser as string)
-  if (query?.openBrowser) {
-    const data = list.find((item: any) => item.id === query.windowId)
-    router.replace({ name: route.name })
-    if (data) {
-      openBrowser(data)
-    }
-  }
-}
-
-async function operationHandler(operate: any, data: any) {
-  /**
-   * 有批量操作
-   */
-  const _data = [].concat(data)
-  const ids: number[] = _data.map((item: any) => item.id)
-
-  switch (operate.name) {
-    case 'edit':
-      localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
-      router.push({ name: 'browser-edit', query: { id: data.id } })
-      break
-    case 'fav': {
-      batchModifyWindow({ ids, isOften: true })
-      break
-    }
-    case 'delete':
-      warnPopup('确定要删除所选窗口？')
-        .then(() => batchModifyWindow({ ids, isDelete: true }))
-      break
-    case 'close':
-      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
-      break
-  }
-}
-
-async function batchModifyWindow(params: any) {
-  try {
-    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-    tableRef.value.refresh()
-  }
-  catch (error) {
-    console.log('🚀 ~ deleteWindow ~ error:', error)
-  }
-}
-
-function profileOperate(key: string, data: any) {
-  const _data = toRaw(data)
-  switch (key) {
-    case 'addProxy':
-      drawer.visible = true
-      drawer.type = 'proxyForm'
-      drawer.title = `新建代理 [UID-${data.windowSortNum}]`
-      break
-    case 'editProxy':
-      drawer.visible = true
-      drawer.type = 'proxyForm'
-      drawer.data = _data
-      drawer.title = `编辑代理 [UID-${data.windowSortNum}]`
-      break
-    case 'selectProxy':
-      drawer.visible = true
-      drawer.type = 'proxyList'
-      drawer.title = `选择代理 [UID-${data.windowSortNum}]`
-      break
-    case 'testProxy':
-      testProxy(_data)
-      break
-    case 'refreshIp':
-      refreshIp(_data)
-      break
-    case 'deleteProxy':
-      deleteProxy(_data)
-      break
-    case 'addAccount':
-      drawer.visible = true
-      drawer.type = 'accountForm'
-      drawer.data = _data
-      drawer.title = `新建账号 [UID-${data.windowSortNum}]`
-      break
-    case 'selectAccount':
-      break
-  }
-}
-
-async function testProxy(data: any) {
-  try {
-    const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
-    console.log('🚀 ~ testProxy ~ res:', res)
-
-    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
-  }
-  catch (error) {
-
-  }
-}
-
-async function refreshIp(_data: any) {
-  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
-}
-
-async function deleteProxy(data: any) {
-  try {
-    await warnPopup('您确定要删除此代理吗')
-    drawer.editProfile({
-      id: data.id,
-      dirId: data.dirId,
-      host: '',
-      ipType: '',
-      port: '',
-      proxyCategory: 'noproxy',
-      proxyPassword: '',
-      proxyUserName: '',
-      refreshUrl: '',
-    })
-  }
-  catch (error) {
-    console.log('🚀 ~ deleteProxy ~ error:', error)
-  }
-}
-
-function openBrowser(data: any) {
-  const params = [].concat(data).map((item: any, index: number) => {
-    openMessage[item.dirId] = {
-      pending: true,
-      data: {
-        message: index === 0 ? '启动中...' : '正在排队...',
-      },
-    }
-    return toRaw(item)
-  })
-  window.electronAPI.send('browser:batchLaunch', params)
-}
-
-function listenOpenMessage() {
-  return window.electronAPI.on('browser:launch-process-message', (event) => {
-    const id = event.data?.dirId || event.data
-    openMessage[id as string] = event
-  })
-}
-
-function listenCloseMessage() {
-  return window.electronAPI.on('browser:on-close', (dirId) => {
-    Reflect.deleteProperty(openMessage, dirId)
-  })
-}
-
-function showOperationMenu(event: Event, data: any, extra?: any) {
-  show(event, {
-    operation: extra?.cmpOperation || operation.value,
-    operationHandler: (operate: any) => {
-      operationHandler(operate, data)
-      extra?.clearSelection()
+async function deleteFilterItem(filter_name: string) {
+  confirm.require({
+    header: '警告',
+    message: '确认删除此筛选组？',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: '确定',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        const { msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name })
+        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        getFilterList()
+      }
+      catch (error) {
+        console.log('🚀 ~ accept: ~ error:', error)
+      }
     },
   })
 }
 
-function warnPopup(message: string) {
-  return new Promise((resolve, _reject) => {
-    confirm.require({
-      header: '警告',
-      message,
-      rejectProps: {
-        label: '取消',
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptProps: {
-        label: '确定',
-        severity: 'danger',
-      },
-      accept: () => resolve(null),
-      // reject: () => reject(new Error('cancel popup')),
-    })
-  })
+const popRef = ref()
+function showPopover(event: Event) {
+  popRef.value.getRef().show(event)
 }
-let canceOpenlListener
-let canceCloselListener
-onMounted(() => {
-  canceOpenlListener = listenOpenMessage()
-  canceCloselListener = listenCloseMessage()
-  filters.value = getFilters()
-  sorts.value = getSorts()
-  operation.value = getOperation()
+
+function hidePopover() {
+  console.log('🚀 ~ hidePopover ~ hidePopover:')
+}
+
+window.electronAPI.on('browser:on-close', (dirId) => {
+  console.log('browser:on-close', dirId)
 })
 
-onBeforeUnmount(() => {
-  canceOpenlListener?.()
-  canceCloselListener?.()
+onMounted(() => {
+  getFilterList()
 })
 </script>
 
 <template>
-  <ry-table ref="tableRef" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
-    selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
-    :show-gridlines="false">
-    <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
-    </template>
-    <template #config-footer>
-      <div class="flex-1 flex justify-end cursor-pointer config-footer" @click="coverAllFiltersConfig">
-        Save for all filters
-      </div>
-    </template>
+  <div class="flex flex-col h-full w-full">
+    <div class="flex items-center justify-between">
+      <Tabs v-model:value="activeTab" class="flex-1 overflow-hidden" scrollable>
+        <TabList>
+          <Tab v-for="item in tabs" :key="item.label" :value="item.id">
+            <!-- <router-link v-if="item.routeName" v-slot="{ href, navigate }" :to="{ name: item.routeName }" custom>
+              <a :href="href" class="flex items-center text-inherit decoration-none" @click="navigate">
+                <span :class="item.icon" />
+                <span>{{ item.label }}</span>
+              </a>
+            </router-link> -->
 
-    <template #profile="{ data }">
-      <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" />
-    </template>
-    <template #open="{ data }">
-      <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
-    </template>
-    <template #group>
-      <ryTag>123</ryTag>
-    </template>
-    <template #actions="{ data }">
-      <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
-    </template>
-    <template #multiple-operation="{ selection, clearSelection }">
-      <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-        @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" />
-    </template>
-  </ry-table>
-  <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
-    :pt="{ mask: classes['browser-drawer'] }">
-    <template #container="{ closeCallback }">
-      <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="data => drawer.confirm(drawer.type, data)" />
-    </template>
-  </Drawer>
+            <a class="flex items-center text-inherit decoration-none">
+              <span :class="item.icon" />
+              <span>{{ item.label }}</span>
+            </a>
+          </Tab>
+        </TabList>
+      </Tabs>
+      <ryTag class="cursor-pointer mdi mdi-cog" @click="showPopover" />
+    </div>
+    <div class="flex-1 overflow-hidden">
+      <recycle v-if="isRecycle" />
+      <profiles v-else @update-filter-tabs="updateFilterTabs" />
+    </div>
+  </div>
+
+  <ry-popover ref="popRef" class="table-popover" @hide="hidePopover">
+    <div class="table-popover-column">
+      所有窗口
+    </div>
+    <!-- handle=".handle" -->
+    <VueDraggable v-model="sortTabs" :animation="150">
+      <div v-for="item in sortTabs" :key="item.id" class="flex items-center table-popover-column">
+        <span class="cursor-grab mdi mdi-drag handle" />
+        <span class="flex-auto">{{ item.label }}</span>
+        <span class="cursor-pointer mdi mdi-pencil-outline" />
+        <span class="cursor-pointer mdi mdi-delete-empty-outline" @click="deleteFilterItem(item.label)" />
+      </div>
+    </VueDraggable>
+    <div class="table-popover-column">
+      回收站
+    </div>
+  </ry-popover>
 </template>
 
-<style lang="scss" module="classes">
-.browser-drawer {
-  padding: var(--spacing-xl, 12px);
-
-  &-content {
-    border-radius: var(--radius-lg, 8px);
-    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad) !important;
-    background: var(--Colors-Background-bg-body, #fff) !important;
-    box-shadow:
-      0px 1px 1px 0px rgba(0, 0, 0, 0.04),
-      0px 2px 8px 0px rgba(0, 0, 0, 0.04),
-      0px 3px 17px 0px rgba(0, 0, 0, 0.04),
-      0px 4px 30px 0px rgba(0, 0, 0, 0.12) !important;
-  }
-}
-</style>
-
-<style lang="scss" scoped>
-.table-filter {
-  height: 54px;
-  background-color: #fff;
-  border-top: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
-  border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
-}
-
-.config-footer {
-  padding: var(--spacing-lg, 8px) 10px;
-  gap: var(--spacing-lg, 8px);
-  border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-
-  // padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-}
-</style>
+<style scoped lang="scss"></style>
