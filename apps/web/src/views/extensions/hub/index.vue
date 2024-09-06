@@ -1,60 +1,61 @@
 <script setup lang="ts">
-import { API } from '/@/api';
-import { Item } from 'ant-design-vue/es/menu';
-
+import { API } from '/@/api'
 
 const props = withDefaults(defineProps<{
-  dataList: Item[];
+  dataList: Item[]
 }>(), {
-  dataList: () => []
-});
+  dataList: () => [],
+})
 
-let selCategoryIndex = ref<any>(1)
+const emits = defineEmits(['searchMethod'])
+const selCategoryIndex = ref<any>(1)
 const searchValue = ref()
 
 function addPlugin(item: Items) {
   installedPlugin(item)
 }
 
-// 安装插件
+/**
+ * 安装插件
+ */
 async function installedPlugin(item: Items) {
-  const category = props.dataList.find((c) => c.id === item.category);
+  const category = props.dataList.find(c => c.id === item.category)
   if (category && category.arr && Array.isArray(category.arr)) {
     // 更新指定 item 的状态
-    const index = category.arr.findIndex((i) => i.id === item.id);
+    const index = category.arr.findIndex(i => i.id === item.id)
     if (index !== -1) {
-      category.arr[index].addStatus = 'installing';
+      category.arr[index].addStatus = 'installing'
     }
     console.log(category.arr[index].addStatus)
   }
   const params = {
-    id: item.id
+    id: item.id,
   }
-  const { code, msg } = await API.plugins.userAddSystemPluginCreate(params);
+  const { code, msg } = await API.plugins.userAddSystemPluginCreate(params)
   if (code === 0) {
     if (category && category.arr && Array.isArray(category.arr)) {
       // 更新指定 item 的状态
-      const index = category.arr.findIndex((i) => i.id === item.id);
+      const index = category.arr.findIndex(i => i.id === item.id)
       if (index !== -1) {
-        category.arr[index].addStatus = true;
+        category.arr[index].addStatus = true
       }
     }
   }
 }
-const emits = defineEmits(['searchMethod'])
 function searchEmit(e: any) {
   // 触发父组件的事件
-  emits('searchMethod', searchValue);
+  emits('searchMethod', searchValue)
 }
 
-
-// 点击滚动事件
+/**
+ * 点击滚动事件
+ */
 function scrollToCategory(item: Item) {
-  const element: any = document.querySelector(`[data-category-id="${item.id}"]`);
+  const element: any = document.querySelector(`[data-category-id="${item.id}"]`)
 
   if (element) {
     // 如果没有容器，则针对整个文档
-    element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
   }
 
   // if (element) {
@@ -62,7 +63,6 @@ function scrollToCategory(item: Item) {
   //   element.scrollTo(0, offsetTop)
   // }
 }
-
 
 // 计算元素的偏移量
 // function getOffsetTop(element: any): number {
@@ -75,10 +75,11 @@ function scrollToCategory(item: Item) {
 //   return offsetTop;
 // }
 
-
-// 点击层级
+/**
+ * 点击层级
+ */
 function selCategoryClick(item: any) {
-  selCategoryIndex.value = item.id;
+  selCategoryIndex.value = item.id
   scrollToCategory(item)
 }
 
@@ -86,31 +87,28 @@ function selCategoryClick(item: any) {
 const filteredDataList = computed(() => {
   return props.dataList.filter((item: any) => {
     if (item.arr && Array.isArray(item.arr)) {
-      return item.arr.length > 0;
+      return item.arr.length > 0
     }
-    return false;
-  });
-});
+    return false
+  })
+})
 
 interface Item {
   id: number
-  categoryName: string,
+  categoryName: string
   arr?: any[] | Items[] | undefined
 }
 
-
 interface Items {
-  pluginName: string,
-  pluginVersion: string,
-  pluginDesc: string,
-  pluginIcon: string,
-  provider: string,
-  category: number,
-  addStatus: any,
+  pluginName: string
+  pluginVersion: string
+  pluginDesc: string
+  pluginIcon: string
+  provider: string
+  category: number
+  addStatus: any
   id: number
 }
-
-
 </script>
 
 <template>
@@ -121,9 +119,7 @@ interface Items {
           <InputGroupAddon>
             <img src="/@/assets/image/extension/rx_ic_magnify.svg" alt="">
           </InputGroupAddon>
-          <InputText v-model="searchValue" @input="searchEmit" placeholder="Search your most used chrome extensions">
-
-          </InputText>
+          <InputText v-model="searchValue" placeholder="Search your most used chrome extensions" @input="searchEmit" />
 
           <!-- <InputGroupAddon> -->
 
@@ -131,16 +127,15 @@ interface Items {
         </InputGroup>
       </div>
 
-
       <div class="container">
-        <div class="content w-full flex flex-col" v-for="item in filteredDataList" :key="item.id">
+        <div v-for="item in filteredDataList" :key="item.id" class="content w-full flex flex-col">
           <div class="title flex item-cneter" :data-category-id="item.id">
             {{ item.categoryName }}
             <!-- ROXY CRAFTED -->
           </div>
 
           <div class="list-box">
-            <div class="list-item flex flex-col" v-for="items in item.arr" :key="items.id">
+            <div v-for="items in item.arr" :key="items.id" class="list-item flex flex-col">
               <div class="item-title-box flex">
                 <div class="title-icon">
                   <img :src="items.pluginIcon" alt="">
@@ -164,48 +159,44 @@ interface Items {
                   By <span>{{ items.provider }}</span>
                 </div>
 
-                <div class="item-intall-box flex" @click="addPlugin(items)" v-if="!items.addStatus">
+                <div v-if="!items.addStatus" class="item-intall-box flex" @click="addPlugin(items)">
                   <img class="item-install-icon" src="/@/assets/image/extension/rx_ic_download_cloud.svg" alt="">
-                  <div class="item-install-item">Install</div>
+                  <div class="item-install-item">
+                    Install
+                  </div>
                 </div>
 
-
-                <div class="item-intalled-box flex" v-else-if="items.addStatus === 'installing'">
-                  <div class="item-install-item">Installing...</div>
+                <div v-else-if="items.addStatus === 'installing'" class="item-intalled-box flex">
+                  <div class="item-install-item">
+                    Installing...
+                  </div>
                 </div>
 
-
-                <div class="item-intalled-box flex" v-else>
+                <div v-else class="item-intalled-box flex">
                   <img class="item-install-icon" src="/@/assets/image/extension/rx_ic_check_line.svg" alt="">
-                  <div class="item-install-item">Installed</div>
+                  <div class="item-install-item">
+                    Installed
+                  </div>
                 </div>
-
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
-
-
 
       <!-- 查询无结果 -->
-      <div class="search-nodata-box">
-
-      </div>
-
+      <div class="search-nodata-box" />
     </div>
 
     <div class="flex flex-col hub-category">
       <div class="category-content">
-        <div class="category-item" @click="selCategoryClick(item)" :class="{ 'active': selCategoryIndex === item.id }"
-          v-for="item in dataList" :key="item.id">
+        <div v-for="item in dataList" :key="item.id" class="category-item"
+             :class="{ active: selCategoryIndex === item.id }" @click="selCategoryClick(item)"
+        >
           {{ item.categoryName }}
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -214,7 +205,6 @@ interface Items {
   padding: var(--spacing-4xl, 24px) var(--spacing-4xl, 24px) 0 var(--spacing-4xl, 24px);
   display: grid;
   grid-template-columns: 82% 18%;
-
 
   .hub-content {
     flex: 1;
@@ -230,13 +220,11 @@ interface Items {
       }
     }
 
-
     .content:first-child {
       margin-top: 0;
     }
 
     .container {
-
       height: calc(100vh - 290px);
       display: flex;
       flex-direction: column;
@@ -252,7 +240,7 @@ interface Items {
         margin-top: 40px;
 
         .title {
-          color: var(--Colors-Text-text-tertiary, #7C8387);
+          color: var(--Colors-Text-text-tertiary, #7c8387);
           font-family: Inter;
           font-size: 12px;
           font-style: normal;
@@ -275,11 +263,13 @@ interface Items {
 
           .list-item {
             border-radius: var(--radius-md, 6px);
-            border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
-            background: var(--Color-neutrals-50, #FAFBFC);
+            border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+            background: var(--Color-neutrals-50, #fafbfc);
 
             /* shadow-sm */
-            box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+            box-shadow:
+              0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+              0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
             // flex: 1;
             // display: flex;
@@ -302,8 +292,8 @@ interface Items {
                 align-items: center;
                 gap: 10px;
                 border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-                border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
-                background: var(--Colors-Background-bg-body, #FFF);
+                border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+                background: var(--Colors-Background-bg-body, #fff);
 
                 img {
                   display: flex;
@@ -320,10 +310,8 @@ interface Items {
 
                 overflow: hidden;
 
-
                 .plugin-title {
-
-                  color: var(--Colors-Text-text-primary, #171C1F);
+                  color: var(--Colors-Text-text-primary, #171c1f);
                   text-overflow: ellipsis;
                   overflow: hidden;
                   white-space: nowrap;
@@ -336,7 +324,7 @@ interface Items {
                 }
 
                 .plugin-version {
-                  color: var(--Colors-Text-text-tertiary, #7C8387);
+                  color: var(--Colors-Text-text-tertiary, #7c8387);
                   font-family: Inter;
                   font-size: 12px;
                   font-style: normal;
@@ -349,7 +337,7 @@ interface Items {
 
             .item-desc {
               overflow: hidden;
-              color: var(--Colors-Text-text-secondary, #575D61);
+              color: var(--Colors-Text-text-secondary, #575d61);
               text-overflow: ellipsis;
               font-family: Inter;
               font-size: 12px;
@@ -365,7 +353,7 @@ interface Items {
               width: 100%;
               justify-content: space-between;
               align-items: center;
-              color: var(--Colors-Text-text-tertiary, #7C8387);
+              color: var(--Colors-Text-text-tertiary, #7c8387);
               font-family: Inter;
               font-size: 12px;
               font-style: normal;
@@ -373,9 +361,7 @@ interface Items {
               line-height: var(--Line-Height-text-xs, 16px);
               /* 133.333% */
 
-
               .item-provider {
-
                 span {
                   text-decoration: underline;
                 }
@@ -383,9 +369,11 @@ interface Items {
 
               .item-intall-box {
                 border-radius: var(--radius-sm, 4px);
-                border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #C7CDD1);
-                background: var(--Component-Colors-Buttons-Secondary-bg, #FFF);
-                box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+                border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+                background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+                box-shadow:
+                  0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+                  0px 1px 1px 0px rgba(0, 0, 0, 0.06);
                 display: flex;
                 min-width: 24px;
                 padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
@@ -397,9 +385,11 @@ interface Items {
 
               .item-intalled-box {
                 border-radius: var(--radius-sm, 4px);
-                border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #C7CDD1);
-                background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #F0F3F5);
-                box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+                border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+                background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+                box-shadow:
+                  0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+                  0px 1px 1px 0px rgba(0, 0, 0, 0.06);
                 display: flex;
                 min-width: 24px;
                 padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
@@ -409,18 +399,10 @@ interface Items {
                 cursor: pointer;
               }
             }
-
-
           }
-
-
         }
       }
     }
-
-
-
-
   }
 
   .hub-category {
@@ -428,7 +410,7 @@ interface Items {
     margin-top: 100px;
 
     .category-content {
-      border-left: 2px solid var(--Color-blue-100, #E8F5FC);
+      border-left: 2px solid var(--Color-blue-100, #e8f5fc);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -440,7 +422,7 @@ interface Items {
         gap: var(--spacing-2xl, 16px);
         align-self: stretch;
         padding-left: var(--spacing-2xl, 16px);
-        color: var(--Colors-Text-text-secondary, #575D61);
+        color: var(--Colors-Text-text-secondary, #575d61);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -453,14 +435,13 @@ interface Items {
       .active {
         box-sizing: border-box;
         border-left: 2px solid var(--p-tabs-tab-active-border-color);
-        color: var(--Colors-Text-text-primary, #171C1F);
+        color: var(--Colors-Text-text-primary, #171c1f);
         font-family: Inter;
         font-weight: 600;
         margin-left: -2px;
         /* 133.333% */
       }
     }
-
   }
 }
 </style>

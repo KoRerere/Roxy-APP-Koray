@@ -17,6 +17,9 @@ export interface RenderMessage {
 
   /** 代理检测 */
   'proxy:detection': (winItemList: WindowItemType) => ProxyDetectionResult
+  /** 代理 => 刷新 URL */
+  'proxy:refreshUrl': (refreshUrl: string) => Promise<boolean>
+
   /** 保存用户信息 */
   'user:setUserInfo': (userInfo: any) => void
 

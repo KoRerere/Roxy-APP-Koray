@@ -1,39 +1,105 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import dashboardBgSvg from '/@/assets/image/dashboard-bg.svg?raw'
+import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { useToast } from 'primevue/usetoast'
 import { fingerprintInfoList } from './constants'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
+const toast = useToast()
+
+const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
+/** 获取窗口详情 loading */
+const fetchWindowInfoLoading = ref(false)
 const testProxyLoading = ref(false)
 const proxyInfo = ref<Record<string, any>>({})
 
+/** 获取当前窗口信息 */
+function getWindowInfo() {
+  fetchWindowInfoLoading.value = true
+  fetch(`http://localhost:8888/api/browser/list?dirId=${dirId}`)
+    .then(response => response.json())
+    .then((result) => {
+      console.log(result)
+      const { code, data, msg } = result
+      if (code === 0) {
+        windowInfo.value = data.rows[0]
+      }
+      else {
+        console.error('获取窗口信息失败')
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+      }
+    })
+    .catch(error => console.error(error))
+    .finally(() => {
+      setTimeout(() => {
+        fetchWindowInfoLoading.value = false
+      }, 1500)
+    })
+}
+
+getWindowInfo()
+
+/** 代理检查 */
 function proxyDetection() {
   testProxyLoading.value = true
   fetch(`http://localhost:8888/api/proxy/detection?dirId=${dirId}`)
     .then(response => response.json())
-    .then((data) => {
-      console.log(data)
-      proxyInfo.value = data
+    .then((result) => {
+      console.log(result)
+      if (result.code === 0) {
+        proxyInfo.value = result.data
+      }
+      else {
+        console.error('代理检查失败')
+        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 300000 })
+      }
     })
-    .catch(error => console.error(error)).finally(() => {
+    .catch(error => console.error(error))
+    .finally(() => {
       setTimeout(() => {
         testProxyLoading.value = false
       }, 1500)
     })
 }
 
+/** 刷新 URL */
+function refreshURL(url) {
+  fetch(`http://localhost:8888/api/proxy/refresh-url?url=${url}`)
+    .then(response => response.json())
+    .then((data) => {
+      console.log(data)
+    })
+    .catch(error => console.error(error))
+}
+
 proxyDetection()
 </script>
 
 <template>
+  <Toast />
   <div class="layout">
+    <div class="header">
+      <div class="left">
+        <div class="sort-number">
+          {{ windowInfo.windowSortNum }}
+        </div>
+        <div class="window-name">
+          {{ windowInfo.windowName }}
+        </div>
+      </div>
+      <div class="time">
+        Europe/London (GMT+01:00) 2024-08-16 08:26
+      </div>
+    </div>
+
     <div class="card base-info">
-      <div class="header">
+      <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
         <div v-else class="city-logo" />
         <div class="operate">
-          <div class="btn">
+          <div class="btn" @click="refreshURL">
             Refresh URL
           </div>
           <div class="btn" @click="proxyDetection">
@@ -109,7 +175,12 @@ proxyDetection()
               {{ item.label }}:
             </div>
             <div class="value">
-              {{ item.value }}
+              <template v-if="fetchWindowInfoLoading">
+                <Skeleton :width="item.width" height="1.3rem" />
+              </template>
+              <template v-else>
+                {{ item.format(windowInfo) }}
+              </template>
             </div>
           </div>
         </template>
@@ -119,6 +190,55 @@ proxyDetection()
 </template>
 
 <style lang="scss" scoped>
+.header {
+  display: flex;
+  padding-top: var(--spacing-2xl, 16px);
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg, 8px);
+
+    .sort-number {
+      display: flex;
+      padding: var(--spacing-xs, 2px) var(--spacing-md, 6px);
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      border-radius: var(--radius-2xl, 12px);
+      background: var(--Colors-Background-bg-brand, #12a3fc);
+      color: var(--Colors-Text-text-action-primary, #fff);
+      font-family: 'JetBrains Mono';
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: normal;
+    }
+
+    .window-name {
+      color: #000;
+      font-family: Inter;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: var(--Line-Height-text-xs, 16px); /* 114.286% */
+    }
+  }
+
+  .time {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    text-align: right;
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+}
+
 .layout {
   display: flex;
   max-width: 1000px;
@@ -217,7 +337,7 @@ proxyDetection()
     z-index: 1;
   }
 
-  .header {
+  .card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -261,10 +381,11 @@ proxyDetection()
     height: 528px;
     z-index: 0;
 
-    :global(svg) {
+    :deep(svg) {
       width: 473.777px;
       height: 488.667px;
       mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0) 20.36%, rgba(255, 255, 255, 0.9) 92.52%);
+      -webkit-mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0) 20.36%, rgba(255, 255, 255, 0.9) 92.52%);
       flex-shrink: 0;
     }
   }

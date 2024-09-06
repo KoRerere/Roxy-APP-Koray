@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import express from 'express'
 import { browserManager } from '/@/modules/browser'
-import { isPackaged } from '/@/utils'
+import { isPackaged, tryRefreshUrl } from '/@/utils'
 
 const router = express.Router()
 
@@ -27,17 +27,25 @@ router.get('/proxy/detection', async (req, res) => {
     const proxyInfo = await browserItem.proxyDetection()
 
     res.send({
+      code: 0,
       dirId,
-      ...proxyInfo,
+      data: proxyInfo,
     })
   }
   catch (error) {
     res.send({
+      code: 1,
       dirId,
-      data: '代理检测失败',
+      message: '代理检测失败',
     })
     console.log('proxyDetection error', error)
   }
+})
+
+/* 代理 => 刷新 URL */
+router.post('/proxy/refresh-url', async (req, res) => {
+  const { url } = req.query
+  res.send(await tryRefreshUrl(url as string))
 })
 
 export default router

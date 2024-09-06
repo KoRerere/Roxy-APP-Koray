@@ -1,12 +1,12 @@
-import crypto from 'node:crypto'
 import { Buffer } from 'node:buffer'
+import crypto from 'node:crypto'
 
 // 固定密钥（32字节）
 const secretKey = Buffer.from('00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff', 'hex')
 const nonce = crypto.randomBytes(12)
 
 /** AES-GCM 加密函数 */
-export function encryptAESGCM(msg) {
+export function encryptAESGCM(msg: string) {
   const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce)
   const ciphertext = Buffer.concat([cipher.update(msg), cipher.final()])
   const authTag = cipher.getAuthTag()
@@ -14,7 +14,7 @@ export function encryptAESGCM(msg) {
 }
 
 /** AES-GCM 解密函数 */
-export function decryptAESGCM(str) {
+export function decryptAESGCM(str: string) {
   const [ciphertext, nonce, authTag] = str.split(':').map(v => Buffer.from(v, 'base64'))
 
   const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce)

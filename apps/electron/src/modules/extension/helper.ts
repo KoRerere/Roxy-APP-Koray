@@ -1,15 +1,15 @@
+import { access, readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import url from 'node:url'
-import { access, readFile, readdir } from 'node:fs/promises'
 import { mediaProtocolName } from '/@/constants'
 import { fileExists } from '/@/utils'
 
 export type PluginMeta = Awaited<ReturnType<typeof getPluginMeta>>
 
 /** 递归获取 manifest.json 所在目录 */
-async function getPluginDir(dir, level = 3) {
+async function getPluginDir(dir: string, level = 3): Promise<string> {
   if (level === 0) {
-    return null
+    return ''
   }
 
   const manifestExist = await fileExists(path.join(dir, 'manifest.json'))
@@ -33,10 +33,11 @@ async function getPluginDir(dir, level = 3) {
       }
     }
   }
+  return ''
 }
 
 /** 获取插件清单文件信息 */
-export async function getPluginManifestInfo(pluginDir) {
+export async function getPluginManifestInfo(pluginDir: string) {
   try {
     // 插件目录下是否有 manifest.json
     // const manifestExist = await access(path.join(pluginDir, 'manifest.json')).then(() => true).catch(() => false)
@@ -60,7 +61,7 @@ export async function getPluginManifestInfo(pluginDir) {
 }
 
 /** 获取插件信息 */
-export async function getPluginMeta(pluginDir) {
+export async function getPluginMeta(pluginDir: string) {
   try {
     const { targetPluginDir, manifestInfo } = await getPluginManifestInfo(pluginDir)
 

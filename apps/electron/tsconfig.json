@@ -10,7 +10,8 @@
       ]
     },
     "types": [
-      "node"
+      "node",
+      "vite/client"
     ],
     "strict": true,
     "noImplicitAny": false,
@@ -22,6 +23,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "dashboard/**/*.ts",
     "./types/**/*.d.ts"
   ],
   "exclude": [

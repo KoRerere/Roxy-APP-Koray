@@ -46,6 +46,15 @@ function getCheckUrl(url = `http://ip123.in/ip.json`, ipType: string) {
   return url
 }
 
+/** 代理 => 刷新 URL */
+export function tryRefreshUrl(refreshUrl: string) {
+  return axios.get(refreshUrl).then((response) => {
+    return response.statusText === 'OK'
+  }).catch(() => {
+    return false
+  })
+}
+
 /** 代理检测 */
 export async function proxyDetection(winInfo: WindowItemType): Promise<ProxyDetectionResult> {
   const params = {
