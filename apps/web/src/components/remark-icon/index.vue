@@ -4,6 +4,10 @@ import popup from '/@/components/simplePopup'
 
 const props = defineProps({
   value: String,
+  rows: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['onConfirm', 'onCancel'])
@@ -32,12 +36,16 @@ function onRemark() {
     },
     emits: {
       onConfirm: ([formData, close]: [any, close: () => void]) => {
-        emit('onConfirm', [formData.remark, close])
+        emit('onConfirm', [formData.remark, close, props.rows])
       },
       onCancel: () => emit('onCancel'),
     },
   })
 }
+
+defineExpose({
+  onRemark,
+})
 </script>
 
 <template>

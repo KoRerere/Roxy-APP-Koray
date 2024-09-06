@@ -10,9 +10,10 @@ import columnsConfig from './columns'
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { useToast } from 'primevue/usetoast'
-
+import { setRowsLoading } from '/@/utils'
 import { ProxyCheckStatus } from '/@/enums'
 import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
+import { useTemplateRef } from 'vue'
 
 interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   loadingOperationMap: {
@@ -20,25 +21,12 @@ interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   }
 }
 
+const tableRef = useTemplateRef('proxyTable')
+
 const toast = useToast()
 const [columns] = useColumns(columnsConfig)
 
-// const operation = ref([
-//   {
-//     name: 'refresh',
-//     label: '刷新',
-//     icon: 'mdi mdi-refresh',
-//     quick: true,
-//     multiple: true,
-//   },
-//   {
-//     name: 'test',
-//     label: '测速',
-//     icon: 'mdi mdi-wifi',
-//     quick: true,
-//     multiple: true,
-//   },
-// ])
+const dataList = ref()
 
 function tableOperation(data: ProxyItem | ProxyItem[]) {
   const datas = ([] as ProxyItem[]).concat(data)
@@ -68,7 +56,9 @@ const drawer = reactive({
 })
 
 async function tableRequest(params: any) {
-  return await API.proxy.userGetProxyModuleList(params)
+  const data = await API.proxy.userGetProxyModuleList(params)
+  dataList.value = data.data.rows
+  return data
 }
 
 function operationHandler(operate: any, data: ProxyItem) {
@@ -76,7 +66,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 
   switch (operate.name) {
     case 'refresh':
-      console.log('🚀 ~ operationHandler ~ data:', data)
+      refreshUrl(datas)
       break
     case 'test':
       testProxy(datas, operate.name)
@@ -84,29 +74,46 @@ function operationHandler(operate: any, data: ProxyItem) {
   }
 }
 
-function refreshUrl(data: ProxyItem[]) {
-  // window.electronAPI.send('app:install-update', info)
+function refreshUrl(datas: ProxyItem[]) {
+  datas.forEach(async (item) => {
+    const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
+    toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: item.refreshUrl, life: 5000 })
+  })
 }
 
+/**
+ * 并发限制 5
+ */
 async function testProxy(datas: ProxyItem[], operateName: string) {
   datas.forEach((item) => {
-    (item.loadingOperationMap || (item.loadingOperationMap = {}))[operateName] = true
-    window.electronAPI.send('proxy:detection', toRaw(item)).then((checkRes) => {
-      if (checkRes.error) {
-        toast.add({ severity: 'error', summary: 'Failure', detail: checkRes.error, life: 3000 })
-      }
-      const params = {
-        id: item.id,
-        checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-        lastCity: checkRes.city ?? '',
-        lastCountry: checkRes.continent_code ?? '',
-        lastIp: checkRes.ip ?? '',
-        checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-      }
-      item.loadingOperationMap[operateName] = false
-      API.proxy.userMdfProxyModuleCreate(params)
-    })
+    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item)))
+      .then(async (checkRes) => {
+        const params = {
+          id: item.id,
+          checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+          lastCity: checkRes.city ?? '',
+          lastCountry: checkRes.continent_code ?? '',
+          lastIp: checkRes.ip ?? '',
+          checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        }
+        editProxy(params)
+      })
   })
+}
+
+function testAllProxy() {
+  testProxy(dataList.value, 'test')
+}
+
+async function addRemark([remark, close]: [string, () => void], data: any) {
+  const { msg } = await editProxy({ ...data, remark })
+  toast.add({ severity: 'success', summary: 'Success', detail: msg, life: 5000 })
+  tableRef.value?.refresh()
+  close()
+}
+
+async function editProxy(data: any) {
+  return await API.proxy.userMdfProxyModuleCreate([data])
 }
 </script>
 
@@ -117,11 +124,12 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
         Proxies
       </div>
       <ryButton size="small" severity="info" icon="mdi mdi-web" label="Create proxy" />
-      <ryButton size="small" icon="mdi mdi-wifi" label="Test all" />
+      <ryButton size="small" icon="mdi mdi-wifi" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
-      <ry-table selection-mode="multiple" :table-request="tableRequest" :table-operation="tableOperation"
-        :columns="columns" :operation-handler="operationHandler" :show-gridlines="false">
+      <ry-table ref="proxyTable" selection-mode="multiple" :table-request="tableRequest"
+        :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
+        :show-gridlines="false">
         <template #proxy="{ data }">
           <div><span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span></div>
           <div>{{ data.ipType }}</div>
@@ -157,8 +165,8 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
         <template #actions="{ data, operation }">
           <div class="flex justify-end gap-2">
             <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-              @icon-click="(operate) => operationHandler(operate, data)" />
-            <remarkIcon />
+              @quick-click="(operate) => operationHandler(operate, data)" />
+            <remarkIcon :value="data.remark" @on-confirm="(params) => addRemark(params, data)" />
           </div>
         </template>
       </ry-table>

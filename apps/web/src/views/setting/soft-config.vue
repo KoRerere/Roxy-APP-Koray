@@ -81,11 +81,11 @@ async function handleSubmit() {
   const { code } = await API.base.userSetUserConfigCreate(params)
 
   if (code === 0) {
-    toast.add({ severity: 'success', summary: 'Success', detail: '保存成功', life: 3000 })
+    toast.add({ severity: 'success', summary: 'Success', detail: '保存成功', life: 5000 })
     window.electronAPI.send('app:saveSoftConfig', params)
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: '保存失败', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: '保存失败', life: 5000 })
   }
 
   console.log('submit', params)

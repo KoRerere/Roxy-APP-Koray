@@ -90,7 +90,7 @@ function editAccount(formData: UserMdfPlatformInfoCreatePayload) {
 
 async function addRemark([platformRemarks, close]: [string, () => void], data: any) {
   const { msg } = await editAccount({ ...data, platformRemarks })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   tableRef.value?.refresh()
   close()
 }
@@ -112,7 +112,7 @@ function deletePopup(data: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
     },
   })
 }
@@ -147,7 +147,7 @@ function deletePopup(data: any) {
           <div class="flex gap-2">
             <remarkIcon :value="data.platformRemarks" @on-confirm="(params) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
-              @icon-click="(operate) => operationHandler(operate, data)" />
+              @quick-click="(operate) => operationHandler(operate, data)" />
           </div>
         </template>
       </ry-table>

@@ -83,14 +83,14 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'addGroup',
-      label: '新增组',
+      label: '新增组 x',
       icon: 'mdi mdi-home-group',
       multiple: true,
       groupName: 'second',
     },
     {
       name: 'addTag',
-      label: '新增标签',
+      label: '新增标签 x',
       icon: 'mdi mdi-tag-heart-outline',
       multiple: true,
       groupName: 'second',
@@ -104,14 +104,12 @@ export function getOperation(_params: any = {}) {
       label: '收藏',
       icon: 'mdi mdi-bookmark-music-outline',
       multiple: true,
-      quick: true,
     },
     {
       name: 'addNotes',
       label: '新增笔记',
       icon: 'mdi mdi-clipboard-list-outline',
       multiple: true,
-      quick: true,
     },
     {
       separator: true,
@@ -119,7 +117,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'editCookies',
-      label: '编辑cookies',
+      label: '编辑cookies x',
       icon: 'mdi mdi-clipboard-edit-outline',
     },
     {

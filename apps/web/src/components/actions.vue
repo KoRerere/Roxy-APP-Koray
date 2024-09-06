@@ -16,16 +16,16 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['iconClick', 'more'])
+const emit = defineEmits(['quickClick', 'more'])
 
 const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
 const loadingQuickOperation: any = computed(() => props.loadingOperationMap)
 
-function iconClick(item: any) {
+function quickClick(item: any) {
   if (item.disabled || loadingQuickOperation.value?.[item.name]) {
     return
   }
-  emit('iconClick', item)
+  emit('quickClick', item)
 }
 </script>
 
@@ -35,7 +35,7 @@ function iconClick(item: any) {
       <span v-for="item in quickOperation" :key="item.name"
         v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500 }" class="quick-item"
         :class="[loadingQuickOperation?.[item.name] ? 'pi-spin mdi mdi-selection-ellipse' : item.icon, { disabled: item.disabled }]"
-        @click.stop="iconClick(item)" />
+        @click.stop="quickClick(item)" />
     </div>
     <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
       <slot name="more-icon">

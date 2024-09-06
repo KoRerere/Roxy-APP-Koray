@@ -39,7 +39,7 @@ async function handleSubmit() {
   })
 
   if (code !== 0) {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
     return
   }
 
@@ -52,7 +52,7 @@ async function afterLogin(token: string) {
 
   setUserInfo(data)
   console.log(data)
-  toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
+  toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
 
   window.electronAPI.send('user:setUserInfo', { token, ...data })
   router.push({ name: 'home' })
@@ -70,7 +70,7 @@ async function googleAuth2Login(googleToken: string) {
     afterLogin(data.token)
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
     return Promise.reject(msg)
   }
 }
@@ -85,7 +85,8 @@ window.electronAPI.on('oauth2:google-callback', (searchStr) => {
 <template>
   <div class="w-[300px] mx-[auto]">
     <ry-form :inputs="inputs" />
-    <Button type="button" class="mt-[20px] w-full" label="Search" icon="pi pi-search" :loading="loading" @click="handleSubmit">
+    <Button type="button" class="mt-[20px] w-full" label="Search" icon="pi pi-search" :loading="loading"
+      @click="handleSubmit">
       Log In
     </Button>
     <Divider align="center">

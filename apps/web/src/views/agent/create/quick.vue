@@ -95,7 +95,7 @@ function getInputs(data: any = {}) {
       tooltip: 'mamba out!',
       icon: 'mdi mdi-refresh',
       iconClick() {
-        toast.add({ severity: 'warn', summary: 'scvr', detail: 'Message Content', life: 3000 })
+        toast.add({ severity: 'warn', summary: 'scvr', detail: 'Message Content', life: 5000 })
       },
     },
   ]

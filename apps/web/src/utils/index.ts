@@ -193,3 +193,11 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
 export function EQ<T>(list: T[], field: keyof T): boolean {
   return list.some(item => !item[field])
 }
+
+export function setRowsLoading(row: any, operateName: string, fn: (row: any) => Promise<any>) {
+  (row.loadingOperationMap || (row.loadingOperationMap = {}))[operateName] = true
+  return fn(row).then((data: any) => {
+    row.loadingOperationMap[operateName] = false
+    return data
+  })
+}

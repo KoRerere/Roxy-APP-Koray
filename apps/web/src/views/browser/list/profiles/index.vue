@@ -3,6 +3,7 @@
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
+import remarkIcon from '/@/components/remark-icon'
 
 import drawersitems from '/@/views/browser/components/drawers/index.vue'
 import profileInfo from './components/profile-info.vue'
@@ -19,6 +20,7 @@ import { getCustomFilters, getFilters, getOperation, getSorts } from './operatio
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
+import { useTemplateRef } from 'vue'
 
 import type { DrawerType } from '/@/views/browser/components/drawers/props.ts'
 
@@ -30,6 +32,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['updateFilterTabs'])
+
 const confirm = useConfirm()
 const toast = useToast()
 
@@ -38,12 +41,15 @@ const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
-const tableRef = ref()
 const filters = ref()
 const ctmFilters = ref()
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
+
+const remarkRef = useTemplateRef('remark')
+const tableRef = useTemplateRef('windownTable')
+
 const drawer = reactive({
   type: 'proxyList' as DrawerType,
   title: '',
@@ -71,11 +77,11 @@ const drawer = reactive({
   editProfile: async (data: any) => {
     try {
       const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
       tableRef.value.refresh()
     }
     catch (error) {
-      toast.add({ severity: 'error', summary: '错误', detail: error, life: 3000 })
+      toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
     }
     finally {
       drawer.visible = false
@@ -97,7 +103,7 @@ watch(() => props.currentFilter, (params) => {
 
 function filterChange() {
   const params = getFormData(ctmFilters.value)
-  tableRef.value.refresh(params)
+  tableRef.value!.refresh(params)
 }
 
 async function saveFilters(formData: { filter_name: string }) {
@@ -108,7 +114,7 @@ async function saveFilters(formData: { filter_name: string }) {
   const filter_rule = columns.value.map(column => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
 
   const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   emit('updateFilterTabs')
 }
 
@@ -124,18 +130,8 @@ async function tableRequest(params: any) {
   return data
 }
 
-function autoOpenBrowser(list: any) {
-  const query = route.query.browser && JSON.parse(route.query.browser as string)
-  if (query?.openBrowser) {
-    const data = list.find((item: any) => item.id === query.windowId)
-    router.replace({ name: route.name })
-    if (data) {
-      openBrowser(data)
-    }
-  }
-}
-
 async function operationHandler(operate: any, data: any) {
+  console.log('🚀 ~ operationHandler ~ operate:', operate)
   /**
    * 有批量操作
    */
@@ -147,16 +143,18 @@ async function operationHandler(operate: any, data: any) {
       localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
       router.push({ name: 'browser-edit', query: { id: data.id } })
       break
-    case 'fav': {
+    case 'close':
+      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
+      break
+    case 'fav':
       batchModifyWindow({ ids, isOften: true })
       break
-    }
+    case 'addNotes':
+      remarkRef.value?.onRemark()
+      break
     case 'delete':
       warnPopup('确定要删除所选窗口？')
         .then(() => batchModifyWindow({ ids, isDelete: true }))
-      break
-    case 'close':
-      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
       break
   }
 }
@@ -164,7 +162,7 @@ async function operationHandler(operate: any, data: any) {
 async function batchModifyWindow(params: any) {
   try {
     const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
     tableRef.value.refresh()
   }
   catch (error) {
@@ -172,6 +170,49 @@ async function batchModifyWindow(params: any) {
   }
 }
 
+function autoOpenBrowser(list: any) {
+  const query = route.query.browser && JSON.parse(route.query.browser as string)
+  if (query?.openBrowser) {
+    const data = list.find((item: any) => item.id === query.windowId)
+    router.replace({ name: route.name })
+    if (data) {
+      openBrowser(data)
+    }
+  }
+}
+
+function openBrowser(data: any) {
+  const params = [].concat(data).map((item: any, index: number) => {
+    openMessage[item.dirId] = {
+      pending: true,
+      data: {
+        message: index === 0 ? '启动中...' : '正在排队...',
+      },
+    }
+    return toRaw(item)
+  })
+  window.electronAPI.send('browser:batchLaunch', params)
+}
+
+function showOperationMenu(event: Event, data: any, extra?: any) {
+  show(event, {
+    operation: extra?.cmpOperation || operation.value,
+    operationHandler: (operate: any) => {
+      operationHandler(operate, data)
+      extra?.clearSelection()
+    },
+  })
+}
+
+async function addRemark([windowRemark, close, datas]: [string, () => void, any]) {
+  const ids = datas.map((item: any) => item.id)
+  await batchModifyWindow({ ids, windowRemark })
+  close()
+}
+
+/**
+ * profile =================
+ */
 function profileOperate(key: string, data: any) {
   const _data = toRaw(data)
   switch (key) {
@@ -216,7 +257,7 @@ async function testProxy(data: any) {
     const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
     console.log('🚀 ~ testProxy ~ res:', res)
 
-    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 3000 })
+    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
   }
   catch (error) {
 
@@ -224,7 +265,7 @@ async function testProxy(data: any) {
 }
 
 async function refreshIp(_data: any) {
-  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 3000 })
+  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
 }
 
 async function deleteProxy(data: any) {
@@ -247,19 +288,6 @@ async function deleteProxy(data: any) {
   }
 }
 
-function openBrowser(data: any) {
-  const params = [].concat(data).map((item: any, index: number) => {
-    openMessage[item.dirId] = {
-      pending: true,
-      data: {
-        message: index === 0 ? '启动中...' : '正在排队...',
-      },
-    }
-    return toRaw(item)
-  })
-  window.electronAPI.send('browser:batchLaunch', params)
-}
-
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
     const id = event.data?.dirId || event.data
@@ -270,16 +298,6 @@ function listenOpenMessage() {
 function listenCloseMessage() {
   return window.electronAPI.on('browser:on-close', (dirId) => {
     Reflect.deleteProperty(openMessage, dirId)
-  })
-}
-
-function showOperationMenu(event: Event, data: any, extra?: any) {
-  show(event, {
-    operation: extra?.cmpOperation || operation.value,
-    operationHandler: (operate: any) => {
-      operationHandler(operate, data)
-      extra?.clearSelection()
-    },
   })
 }
 
@@ -319,7 +337,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <ry-table ref="tableRef" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
+  <ry-table ref="windownTable" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">
     <template #header-extra>
@@ -341,7 +359,13 @@ onBeforeUnmount(() => {
       <ryTag>123</ryTag>
     </template>
     <template #actions="{ data }">
-      <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
+      <div class="flex items-center">
+        <span :class="{ 'text-orange': data.isOften }" class="mdi mdi-bookmark-music-outline mr-2 "
+          @click.stop="operationHandler({ name: 'fav' }, data)" />
+        <remarkIcon ref="remark" :value="data.windowRemark" :rows="[data]" @on-confirm="addRemark" />
+        <actions :operation="operation" @quick-click="(operate) => operationHandler(operate, data)"
+          @more="(event: Event) => showOperationMenu(event, data)" />
+      </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
