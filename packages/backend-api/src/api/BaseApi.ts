@@ -14,6 +14,10 @@ import {
   ForgetPasswordListParams,
   LoginCreateData,
   LoginCreatePayload,
+  LoginGoogleCreateData,
+  LoginGoogleCreatePayload,
+  LoginGoogleV2CreateData,
+  LoginGoogleV2CreatePayload,
   PostBaseData,
   PostBasePayload,
   SendEmailForgetVerifyCodeListData,
@@ -469,6 +473,42 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetOssCredentialListData, any>({
       path: `/user_get_oss_credential`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginGoogleCreate
+   * @summary 谷歌登录
+   * @request POST:/login_google
+   * @response `200` `LoginGoogleCreateData` 成功
+   */
+  loginGoogleCreate = (data: LoginGoogleCreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginGoogleCreateData, any>({
+      path: `/login_google`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginGoogleV2Create
+   * @summary 谷歌登录 (新版浏览器使用)
+   * @request POST:/login_google_v2
+   * @response `200` `LoginGoogleV2CreateData` 成功
+   */
+  loginGoogleV2Create = (data: LoginGoogleV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginGoogleV2CreateData, any>({
+      path: `/login_google_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

@@ -4,7 +4,7 @@
 import ryButton from '/@/components/ry-button'
 import simplePopup from './inputs-popup.vue'
 import { useDialog } from 'primevue/usedialog'
-import { isEmptyValue, setInputValueByInputKey, sleep } from '/@/utils'
+import { isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
   ctmFilters: {
@@ -16,7 +16,7 @@ const _props = defineProps({
 const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])
 const dialog = useDialog()
 
-const scvroptions = computed(() => {
+const rawOptions = computed(() => {
   return _props.ctmFilters
     .map((item) => {
       if (item.type === 'radio' && Array.isArray(item.options) && item.options.length > 0) {
@@ -27,14 +27,14 @@ const scvroptions = computed(() => {
     .flat()
 })
 
-const scvroptionsItems = computed(() => _props.ctmFilters.filter((item: any) => item.type !== 'Separator' && !isEmptyValue(item.value)))
+const filterTagList = computed(() => _props.ctmFilters.filter((item: any) => item.type !== 'Separator' && !isEmptyValue(item.value)))
 
 const menuRef = ref()
 const isChildren = ref(false)
 const subMenuOptions = ref()
-const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : scvroptions.value)
-
-const selectedCategories = ref<string[]>([])
+const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
+const selectedCategories = ref([])
+const isChange = ref(false)
 
 function showMenu(event: any) {
   menuRef.value.show(event)
@@ -73,10 +73,10 @@ function inputPopup(data: any) {
       onSave: ([formData, close]: [any, () => void]) => {
         if (data.type === 'date') {
           const value = Object.values(formData).join('~')
-          setInputValueByInputKey(_props.ctmFilters, data.name, 'value', value)// 用于筛选标签展示
+          setInputFieldByInputKey(_props.ctmFilters, data.name, 'value', value)// 用于筛选标签展示
         }
         Object.entries(formData).forEach(([name, value]) => {
-          setInputValueByInputKey(_props.ctmFilters, name, 'value', value)
+          setInputFieldByInputKey(_props.ctmFilters, name, 'value', value)
         })
         emit('filterChange')
         close()
@@ -86,7 +86,7 @@ function inputPopup(data: any) {
 }
 
 function onRadioChose(item: any) {
-  setInputValueByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
+  setInputFieldByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
   menuRef.value.hide()
   emit('filterChange')
 }
@@ -125,7 +125,7 @@ function onChange(item: any) {
 
 function deleteFilterItem(item: any) {
   const names = item.type !== 'date' ? item.name : [item.name, item.items.map((it: any) => it.name)].flat()
-  setInputValueByInputKey(_props.ctmFilters, names, 'value', null)
+  setInputFieldByInputKey(_props.ctmFilters, names, 'value', null)
   emit('filterChange')
 }
 
@@ -164,26 +164,28 @@ function saveFilters() {
 </script>
 
 <template>
-  <div class="flex gap-2 filter-list">
-    <div v-for="(item, index) in scvroptionsItems" :key="index" class="filter-item">
-      <span class="mdi mdi-close cursor-pointer filter-item-icon" @click.stop="deleteFilterItem(item)" />
-      <span class="select-none">{{ item.label }}:</span>
-      <span class="cursor-pointer">{{ item.value }}</span>
+  <div class="flex flex-1 justify-between filter">
+    <div class="flex flex-1 filter-list">
+      <div v-for="(item, index) in filterTagList" :key="index" class="filter-list-item">
+        <span class="mdi mdi-close cursor-pointer filter-item-icon" @click.stop="deleteFilterItem(item)" />
+        <span class="select-none">{{ item.label }}:</span>
+        <span class="cursor-pointer">{{ item.value }}</span>
+      </div>
+      <ryButton class="filter-list-button" text @click="showMenu">
+        <span class="mdi mdi-filter-variant" />
+        <span v-if="!filterTagList.length">Add filters</span>
+      </ryButton>
     </div>
-
-    <ryButton class="filter-button" text @click="showMenu">
-      <span class="mdi mdi-filter-variant" />
-      <span v-if="!scvroptionsItems.length">Add filters</span>
-    </ryButton>
-    <ryButton @click="clearFilters">
-      clear
-    </ryButton>
-    <ryButton @click="saveFilters">
-      save filter
-    </ryButton>
+    <div class="filter-actions">
+      <ryButton text severity="secondary" @click="clearFilters">
+        reset
+      </ryButton>
+      <ryButton severity="info" @click="saveFilters">
+        save filter
+      </ryButton>
+      <div>|</div>
+    </div>
   </div>
-  <!-- <RadioButton v-if="item.type === 'RadioButton'" v-model="selectedCategories.value" :input-id="item.name"
-            :name="item.parentName" :value="item" @click.stop @change="change" /> -->
   <TieredMenu ref="menuRef" :model="menuOptions" popup
     :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
     <template #item="{ item, props }">
@@ -223,34 +225,52 @@ function saveFilters() {
 </style>
 
 <style lang="scss" scoped>
-.filter-item {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
-  gap: var(--spacing-sm, 4px);
-  border-radius: var(--radius-full, 9999px);
-  border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-  background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+.filter {
+  &-list {
+    display: flex;
+    align-items: center;
+    margin-right: var(--spacing-lg, 8px);
+    gap: var(--spacing-lg, 8px);
 
-  color: var(--Colors-Text-text-action-secondary, #171c1f);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+    &-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
+      gap: var(--spacing-sm, 4px);
+      border-radius: var(--radius-full, 9999px);
+      border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
+      background: var(--Colors-Background-bg-body-hover, #f0f3f5);
 
-  &-icon {
-    font-size: 14px;
+      color: var(--Colors-Text-text-action-secondary, #171c1f);
+      font-family: Inter;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+
+      &-icon {
+        font-size: 14px;
+      }
+    }
+
+    &-button {
+      padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+      gap: var(--spacing-sm, 4px);
+      color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
+      font-family: Inter;
+      font-size: var(--Font-Size-text-sm, 12px);
+      font-style: normal;
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+    }
   }
-}
 
-.filter-button {
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  gap: var(--spacing-sm, 4px);
-  color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-  font-family: Inter;
-  font-size: var(--Font-Size-text-sm, 12px);
-  font-style: normal;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+  &-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: var(--spacing-md, 6px);
+    gap: var(--spacing-md, 6px);
+    color: var(--Colors-Border-border-container, #c7cdd1);
+  }
 }
 </style>

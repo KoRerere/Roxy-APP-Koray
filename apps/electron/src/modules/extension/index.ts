@@ -1,14 +1,18 @@
-import { readdir, rm, stat } from 'node:fs/promises'
-import { appConfig } from '/@/constants/'
+import { readFile, readdir, rm, stat } from 'node:fs/promises'
+import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { API } from '/@/api'
-import { downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
 import { Worker } from 'node:worker_threads'
-import type { UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 import { dialog } from 'electron'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { unzip } from '@tomjs/unzip-crx'
-import { getPluginMeta } from './helper'
+import AdmZip from 'adm-zip'
+import { compare } from 'compare-versions'
+import { getPluginManifestInfo, getPluginMeta } from './helper'
+import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
@@ -86,6 +90,63 @@ export const extensionManager = new class ExtensionManager {
     return Promise.allSettled(promiseArr)
   }
 
+  /** 上传本地插件到 OSS */
+  async uploadExtensionToOSS(params: UnwrapRowType<UserGetPluginListListData>) {
+    let { pluginDir, pluginIcon } = params
+    const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
+
+    if (!pluginDir || !pluginIcon) {
+      return Promise.reject('插件目录或插件图标不能为空')
+    }
+
+    const manifestExist = await fileExists(path.join(pluginDir, 'manifest.json'))
+
+    if (!manifestExist) {
+      return Promise.reject('插件目录下不存在 manifest.json 文件')
+    }
+    const manifestFile = await readFile(path.join(pluginDir, 'manifest.json'), 'utf-8')
+
+    // 创建一个MD5哈希对象，并使用文件数据更新哈希值
+    const hash = crypto.createHash('md5')
+    hash.update(manifestFile)
+
+    // 计算并获取哈希值的十六进制表示插件目录名
+    const dirName = hash.digest('hex')
+
+    pluginIcon = pluginIcon.replace(`${mediaProtocolName}:///`, '')
+    const zip = new AdmZip()
+    // 获取目录名
+    // const dirName = path.basename(pluginDir);
+    // 获取图片后缀名
+    const iconExtName = path.extname(pluginIcon)
+
+    console.log('upload-plugin', pluginDir, pluginIcon, dirName)
+
+    zip.addLocalFolder(path.normalize(pluginDir))
+    const zipBuffer = zip.toBuffer()
+
+    try {
+      const basePath = ossObject.userPluginDataDir
+      const promises = [
+        aliOSS.put(`${basePath}/${dirName}.zip`, zipBuffer),
+        aliOSS.put(`${basePath}/${dirName}${iconExtName}`, pluginIcon),
+      ]
+      const [pluginResult, iconResult] = await Promise.all(promises)
+      const result: UploadExtensionToOSSResult = {
+        pluginRoute: pluginResult.url,
+        pluginIcon: iconResult.url,
+        pluginDir: dirName,
+      }
+      console.log('upload-plugin result', result)
+      resolve(result)
+    }
+    catch (err) {
+      reject(err)
+    }
+
+    return promise
+  }
+
   /** 获取并解析用户本地选择的插件信息 */
   async getUserSelectedExtensionInfo(selectType: 'dir' | 'file') {
     const { promise, resolve } = Promise.withResolvers()
@@ -131,14 +192,16 @@ export const extensionManager = new class ExtensionManager {
 
         return promise
       }
-      else if (fileExtname === '.zip') {
+
+      await import('./extensionWorker')
+      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
+
+      if (fileExtname === '.zip') {
         const tempDir = path.join(appConfig.tempDir, 'zip')
         const { name } = path.parse(pluginDir)
         const destDir = path.join(tempDir, name)
 
         await fileExists(tempDir, true)
-        await import('./extensionWorker')
-        const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
 
         worker.on('message', async (result) => {
           const { type, data } = result
@@ -174,9 +237,6 @@ export const extensionManager = new class ExtensionManager {
       }
 
       console.log('pluginDir', pluginDir)
-
-      await import('./extensionWorker')
-      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
 
       worker.on('message', async (result) => {
         const { type, data } = result
@@ -215,5 +275,42 @@ export const extensionManager = new class ExtensionManager {
     }
 
     return promise
+  }
+
+  /** 获取本地已安装的插件 */
+  async getInstalledExtensions() {
+    const extIds = await this.getAllExtensions()
+    const promiseArr = extIds.map(async (extID) => {
+      const pluginDir = path.join(this.extensionDir, extID)
+      return getPluginMeta(pluginDir)
+    })
+
+    const result = await Promise.allSettled(promiseArr)
+    return result.filter(p => p.status === 'fulfilled').map(p => p.value)
+  }
+
+  /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
+  async checkLocalExtensionUpdate(checkList: CheckLocalExtensionUpdatePayload) {
+    const checkPromises = checkList.map(async ({ extID, newVersion }) => {
+      const pluginDir = path.join(this.extensionDir, extID)
+      const isExist = await fileExists(pluginDir)
+      if (!isExist) {
+        return ''
+      }
+      try {
+        const { manifestInfo } = await getPluginManifestInfo(pluginDir)
+        // 如果本地插件版本小于最新版本，则返回插件ID
+        if (compare(manifestInfo.version, newVersion, '<')) {
+          return extID
+        }
+      }
+      catch (error) {
+        return ''
+      }
+    })
+
+    const result = await Promise.all(checkPromises)
+
+    return result.filter((id): id is string => Boolean(id))
   }
 }()

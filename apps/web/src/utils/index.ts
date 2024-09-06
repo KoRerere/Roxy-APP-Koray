@@ -112,10 +112,18 @@ export function setInputVisible(
   names: string | string[],
   state: boolean,
 ) {
-  setInputValueByInputKey(inputs, names, 'visible', state)
+  setInputFieldByInputKey(inputs, names, 'visible', state)
 }
 
-export function setInputValueByInputKey(
+export function setInputValue(
+  inputs: any[],
+  names: string | string[],
+  state: boolean,
+) {
+  setInputFieldByInputKey(inputs, names, 'value', state)
+}
+
+export function setInputFieldByInputKey(
   inputs: any[],
   inputNames: string | string[],
   inputKey: string,
@@ -127,7 +135,7 @@ export function setInputValueByInputKey(
       item[inputKey] = value
     }
     if (item.items && Array.isArray(item.items)) {
-      setInputValueByInputKey(item.items, setNames, inputKey, value)
+      setInputFieldByInputKey(item.items, setNames, inputKey, value)
     }
   })
 }
@@ -164,4 +172,8 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
     target[key] = deepClone((source as any)[key], hash)
   })
   return target
+}
+
+export function EQ<T>(list: T[], field: keyof T): boolean {
+  return list.some(item => !item[field])
 }

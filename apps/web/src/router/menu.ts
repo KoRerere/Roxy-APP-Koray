@@ -24,30 +24,9 @@ export const menuRoutes: RouteRecordRaw[] = [
   },
   {
     path: '/browser',
-    name: 'browser',
+    name: 'browser-list',
     meta: { title: '浏览器窗口' },
-    component: () => import('/@/views/browser'),
-    redirect: { name: 'browser-list' },
-    children: [
-      {
-        path: 'list',
-        name: 'browser-list',
-        meta: { title: '窗口列表', icon: 'AreaChartOutlined' },
-        component: () => import('/@/views/browser/list'),
-      },
-      {
-        path: 'transfer',
-        name: 'browser-transfer',
-        meta: { title: '窗口转移', icon: 'PieChartOutlined' },
-        component: () => import('/@/views/browser/transfer'),
-      },
-      {
-        path: 'recycle',
-        name: 'browser-recycle',
-        meta: { title: '回收站', icon: 'DotChartOutlined' },
-        component: () => import('/@/views/browser/recycle'),
-      },
-    ],
+    component: () => import('/@/views/browser/list'),
   },
   {
     path: '/browser/create',

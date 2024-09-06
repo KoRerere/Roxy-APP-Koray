@@ -19,6 +19,10 @@ const tabs = ref([
   },
 ])
 
+const noticeNum = computed(() => {
+  return clientUpdates.value.length + kernelUpdates.value.filter(item => item.status === 'downloading').length
+})
+
 function toggle(event: Event) {
   popoverRef.value?.toggle(event)
 }
@@ -114,7 +118,7 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
 
 <template>
   <div class="flex justify-center">
-    <OverlayBadge :value="clientUpdates.length" severity="danger">
+    <OverlayBadge :value="noticeNum" severity="danger">
       <Button type="button" icon="pi pi-arrow-circle-up" label="Upgrade" @click="toggle" />
     </OverlayBadge>
 

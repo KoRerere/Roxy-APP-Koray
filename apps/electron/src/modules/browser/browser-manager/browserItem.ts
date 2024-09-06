@@ -67,8 +67,9 @@ export class BrowserItem {
 
   /** 启动浏览器 */
   async launch() {
+    // 如果浏览器已经存在，直接激活
     if (this.#browser) {
-      this.beforeLaunchTask.makeActive().catch((error) => {
+      this.beforeLaunchTask.makeBrowserActive().catch((error) => {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
       return

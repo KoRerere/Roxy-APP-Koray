@@ -11,7 +11,7 @@ const router = createRouter({
       name: 'home',
       path: '/',
       component: () => import('/@/layout/index.vue'),
-      redirect: { name: 'browser' },
+      redirect: { name: 'browser-list' },
       children: menuRoutes,
     },
   ],
@@ -20,7 +20,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  if (to.name !== 'login' && !userStore.userInfo.token) {
+  if (to.name !== 'login' && !userStore.token) {
     return next({ name: 'login' })
   }
 

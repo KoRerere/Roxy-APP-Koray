@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { API } from '/@/api'
-import { getFormData, setInputValueByInputKey } from '/@/utils'
+import { getFormData, setInputFieldByInputKey } from '/@/utils'
 
 import { useToast } from 'primevue/usetoast'
 
@@ -36,7 +36,7 @@ function getInputs(data: any) {
         const dir = await window.electronAPI.send('dialog:selectDir')
         console.log('dialog:selectDir', dir)
         if (dir) {
-          setInputValueByInputKey(inputs.value, 'cacheDir', 'value', dir)
+          setInputFieldByInputKey(inputs.value, 'cacheDir', 'value', dir)
         }
       }),
     },
@@ -51,9 +51,21 @@ function getInputs(data: any) {
 
 const inputs = ref(getInputs(form))
 
-onMounted(() => {
+onMounted(async () => {
   console.log('mounted')
   getSoftConfig()
+  // 检查本地插件是否有更新, 返回的是需要更新的插件 ID 字符串数组
+  const res = await window.electronAPI.send('extension:checkLocalExtensionUpdate', [{
+    extID: 'anlikcnbgdeidpacdbdljnabclhahhmd',
+    newVersion: '6.0.1',
+  }])
+
+  console.log('checkLocalExtensionUpdate', res)
+
+  // 获取本地已安装的插件
+  const result = await window.electronAPI.send('extension:getInstalledExtensions')
+
+  console.log('extension:getInstalledExtensions', result)
 })
 
 async function getSoftConfig() {
@@ -84,9 +96,14 @@ const openLogDir = () => window.electronAPI.send('app:showLogDir')
 const exeInfo = ref({})
 async function selectExtension(selectType: 'dir' | 'file') {
   try {
+    // 选择并解析本地插件
     const res = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
     exeInfo.value = res.data
     console.log('selectExtension', res)
+    const { pluginDir, pluginIcon } = res.data
+    // 上传插件到OSS
+    const uploadResult = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
+    console.log('uploadResult', uploadResult)
   }
   catch (error) {
     console.log('selectExtension error', error)
@@ -111,7 +128,7 @@ async function selectExtension(selectType: 'dir' | 'file') {
     <ry-button class="ml-[12px]" @click="() => selectExtension('file')">
       选择扩展文件
     </ry-button>
-    <img :src="exeInfo.pluginIcon" alt="" srcset="">
+    <img :src="exeInfo?.pluginIcon" alt="" srcset="">
   </div>
   <ry-button class="w-full mt-[12px]" @click="handleSubmit">
     保存

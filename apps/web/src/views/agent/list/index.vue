@@ -3,76 +3,110 @@ import ryTag from '/@/components/ry-tag'
 import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
+import remarkIcon from '/@/components/remark-icon'
 import proxyIcon from '/@/assets/image/proxy.svg'
-import { API } from '/@/api'
 import useColumns from '/@/hooks/useColumns'
-
 import columnsConfig from './columns'
+import { format } from 'date-fns'
+import { API } from '/@/api'
+import { useToast } from 'primevue/usetoast'
 
-// const columns = ref([
+import { ProxyCheckStatus } from '/@/enums'
+import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
+
+interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
+  loadingOperationMap: {
+    [key: string]: boolean
+  }
+}
+
+const toast = useToast()
+const [columns] = useColumns(columnsConfig)
+
+// const operation = ref([
 //   {
-//     title: 'Proxy Info',
-//     slot: 'proxy',
+//     name: 'refresh',
+//     label: '刷新',
+//     icon: 'mdi mdi-refresh',
+//     quick: true,
+//     multiple: true,
 //   },
 //   {
-//     title: 'Outbound IP',
-//     slot: 'outbound',
-//   },
-//   {
-//     title: 'IP Checker',
-//     slot: 'checker',
-//   },
-//   {
-//     title: 'Related Profiles',
-//     slot: 'related',
-//   },
-//   {
-//     title: 'Actions',
-//     slot: 'actions',
+//     name: 'test',
+//     label: '测速',
+//     icon: 'mdi mdi-wifi',
+//     quick: true,
+//     multiple: true,
 //   },
 // ])
 
-const [columns] = useColumns(columnsConfig)
+function tableOperation(data: ProxyItem | ProxyItem[]) {
+  const datas = ([] as ProxyItem[]).concat(data)
+  return [
+    {
+      name: 'refresh',
+      label: '刷新',
+      icon: 'mdi mdi-refresh',
+      quick: true,
+      multiple: true,
+      disabled: datas.some(item => !item.refreshUrl),
+      disabledTips: '缺少刷新地址',
+    },
+    {
+      name: 'test',
+      label: '测速',
+      icon: 'mdi mdi-wifi',
+      quick: true,
+      multiple: true,
+    },
+  ]
+}
 
-const operation = ref([
-  {
-    name: 'refresh',
-    label: '刷新',
-    icon: 'mdi mdi-refresh',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'test',
-    label: '测速',
-    icon: 'mdi mdi-wifi',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'note',
-    label: '笔记',
-    icon: 'mdi mdi mdi-cube-scan',
-    quick: true,
-    multiple: true,
-  },
-])
+const drawer = reactive({
+  data: null,
+  visible: false,
+})
 
-function operationHandler(operate: any, data: any) {
+async function tableRequest(params: any) {
+  return await API.proxy.userGetProxyModuleList(params)
+}
+
+function operationHandler(operate: any, data: ProxyItem) {
+  const datas = ([] as ProxyItem[]).concat(data)
+
   switch (operate.name) {
     case 'refresh':
       console.log('🚀 ~ operationHandler ~ data:', data)
       break
-    case 'note':
-      break
     case 'test':
-      console.log('🚀 ~ operationHandler ~ data:', data)
+      testProxy(datas, operate.name)
       break
   }
 }
 
-async function tableRequest(params: any) {
-  return await API.proxy.userGetProxyModuleList(params)
+function refreshUrl(data: ProxyItem[]) {
+  // window.electronAPI.send('app:install-update', info)
+}
+
+async function testProxy(datas: ProxyItem[], operateName: string) {
+  datas.forEach((item) => {
+    (item.loadingOperationMap || (item.loadingOperationMap = {}))[operateName] = true
+    window.electronAPI.send('proxy:detection', toRaw(item)).then((checkRes) => {
+      if (checkRes.error) {
+        toast.add({ severity: 'error', summary: 'Failure', detail: checkRes.error, life: 3000 })
+      }
+      const params = {
+        id: item.id,
+        checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+        lastCity: checkRes.city ?? '',
+        lastCountry: checkRes.continent_code ?? '',
+        lastIp: checkRes.ip ?? '',
+        checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      }
+      item.loadingOperationMap[operateName] = false
+      API.proxy.userMdfProxyModuleCreate(params)
+    })
+  })
 }
 </script>
 
@@ -86,8 +120,8 @@ async function tableRequest(params: any) {
       <ryButton size="small" icon="mdi mdi-wifi" label="Test all" />
     </div>
     <div class="proxies-content">
-      <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :operation="operation"
-        :operation-handler="operationHandler" :show-gridlines="false">
+      <ry-table selection-mode="multiple" :table-request="tableRequest" :table-operation="tableOperation"
+        :columns="columns" :operation-handler="operationHandler" :show-gridlines="false">
         <template #proxy="{ data }">
           <div><span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span></div>
           <div>{{ data.ipType }}</div>
@@ -120,14 +154,23 @@ async function tableRequest(params: any) {
             - -
           </div>
         </template>
-        <template #actions="{ data }">
-          <actions :operation="operation" :show-menu="false"
-            @icon-click="(operate) => operationHandler(operate, data)" />
+        <template #actions="{ data, operation }">
+          <div class="flex justify-end gap-2">
+            <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
+              @icon-click="(operate) => operationHandler(operate, data)" />
+            <remarkIcon />
+          </div>
         </template>
       </ry-table>
     </div>
   </div>
-  <DynamicDialog />
+  <Drawer v-model:visible="drawer.visible" position="right">
+    <template #container="{ closeCallback }">
+      <div @click="closeCallback">
+        123
+      </div>
+    </template>
+  </Drawer>
 </template>
 
 <style lang="scss" scoped>

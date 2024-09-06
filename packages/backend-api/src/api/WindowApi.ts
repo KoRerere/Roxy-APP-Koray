@@ -18,6 +18,8 @@ import {
   UserAddWindowFilterNameCreatePayload,
   UserAddWindowInfoCreateData,
   UserAddWindowInfoCreatePayload,
+  UserBatchUpdateWindowTableRowsCreateData,
+  UserBatchUpdateWindowTableRowsCreatePayload,
   UserBatchWindowInfoCreateData,
   UserBatchWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
@@ -61,6 +63,8 @@ import {
   UserGetWindowTableSortOrderListData,
   UserImportWindowInfoCreateData,
   UserImportWindowInfoCreatePayload,
+  UserImportWindowInfoV2CreateData,
+  UserImportWindowInfoV2CreatePayload,
   UserMdfGroupInfoCreateData,
   UserMdfGroupInfoCreatePayload,
   UserMdfLabelInfoCreateData,
@@ -714,7 +718,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowTableSortOrderList
-   * @summary 获取窗口表格排序规则
+   * @summary 获取默认表格排序列
    * @request GET:/user_get_window_table_sort_order
    * @response `200` `UserGetWindowTableSortOrderListData` 成功
    */
@@ -754,6 +758,46 @@ export class WindowApi<SecurityDataType = unknown> {
   userBatchWindowInfoV2Create = (data: UserBatchWindowInfoV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserBatchWindowInfoV2CreateData, any>({
       path: `/user_batch_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserBatchUpdateWindowTableRowsCreate
+   * @summary 批量修改每个标签页表格列的顺序
+   * @request POST:/user_batch_update_window_table_rows
+   * @deprecated
+   * @response `200` `UserBatchUpdateWindowTableRowsCreateData` 成功
+   */
+  userBatchUpdateWindowTableRowsCreate = (
+    data: UserBatchUpdateWindowTableRowsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchUpdateWindowTableRowsCreateData, any>({
+      path: `/user_batch_update_window_table_rows`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserImportWindowInfoV2Create
+   * @summary 批量导入窗口 (新版本浏览器使用)
+   * @request POST:/user_import_window_info_v2
+   * @response `200` `UserImportWindowInfoV2CreateData` 成功
+   */
+  userImportWindowInfoV2Create = (data: UserImportWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserImportWindowInfoV2CreateData, any>({
+      path: `/user_import_window_info_v2`,
       method: "POST",
       body: data,
       type: ContentType.Json,

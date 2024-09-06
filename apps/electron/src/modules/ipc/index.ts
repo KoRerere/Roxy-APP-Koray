@@ -126,3 +126,18 @@ ipcMain.on('extension:remove', (extIDs: string[]) => {
 ipcMain.on('extension:getSelectedExtensionInfo', (selectType: 'dir' | 'file') => {
   return extensionManager.getUserSelectedExtensionInfo(selectType)
 })
+
+/** 上传本地插件到 OSS */
+ipcMain.on('extension:uploadExtensionToOSS', (payload) => {
+  return extensionManager.uploadExtensionToOSS(payload)
+})
+
+/** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
+ipcMain.on('extension:checkLocalExtensionUpdate', (checkList) => {
+  return extensionManager.checkLocalExtensionUpdate(checkList)
+})
+
+/** 获取本地已安装的插件 */
+ipcMain.on('extension:getInstalledExtensions', () => {
+  return extensionManager.getInstalledExtensions()
+})

@@ -5,24 +5,16 @@ import { isPackaged } from '/@/utils'
 
 const router = express.Router()
 
-/* GET home page. */
-router.get('/dashboard', async (req, res) => {
-  const { id } = req.query
+/* 代理检测 */
+router.get('/proxy/detection', async (req, res) => {
+  const { dirId } = req.query
 
-  if (!id) {
-    res.status(400).send('id is required')
+  if (!dirId) {
+    res.status(400).send('dirId is required')
     return
   }
 
-  if (isPackaged) {
-    res.sendFile(join(__dirname, './web/dashboard.html'))
-    return
-  }
-  else {
-    return res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard/index.html?id=${id}`)
-  }
-
-  const browserItem = await browserManager.getOpenedBrowser(id as string)
+  const browserItem = await browserManager.getOpenedBrowser(dirId as string)
 
   console.log('browserItem', browserItem)
 
@@ -35,13 +27,13 @@ router.get('/dashboard', async (req, res) => {
     const proxyInfo = await browserItem.proxyDetection()
 
     res.send({
-      dirId: id,
+      dirId,
       ...proxyInfo,
     })
   }
   catch (error) {
     res.send({
-      dirId: id,
+      dirId,
       data: '代理检测失败',
     })
     console.log('proxyDetection error', error)
