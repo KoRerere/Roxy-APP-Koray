@@ -31,7 +31,9 @@ function onRemark() {
       ],
     },
     emits: {
-      onConfirm: (data: [any, close: () => void]) => emit('onConfirm', data),
+      onConfirm: ([formData, close]: [any, close: () => void]) => {
+        emit('onConfirm', [formData.remark, close])
+      },
       onCancel: () => emit('onCancel'),
     },
   })

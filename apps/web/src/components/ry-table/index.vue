@@ -16,7 +16,7 @@ defineOptions({
 const props = defineProps({
   tableRequest: {
     type: Function as PropType<(data: any) => Promise<any>>,
-    default: () => () => [],
+    default: () => () => Promise.resolve({}),
   },
   tableParams: {
     type: Object as PropType<any>,
@@ -61,7 +61,7 @@ const props = defineProps({
   },
   tableOperation: {
     type: Function as PropType<(data: any) => any[]>,
-    default: () => () => [],
+    default: () => [],
   },
   operationHandler: {
     type: Function as PropType<(event: any, data: any) => void>,

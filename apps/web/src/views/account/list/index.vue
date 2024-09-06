@@ -8,8 +8,11 @@ import remarkIcon from '/@/components/remark-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { useTemplateRef } from 'vue'
 
-import type { UserAddPlatformInfoCreatePayload, UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+
+const tableRef = useTemplateRef('accountTable')
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -23,7 +26,7 @@ const columns = ref([
   {
     title: 'Alias',
     key: 'link',
-    getText: (row: any) => row.link || '--',
+    getText: (row: any) => row.platformName || '--',
   },
   {
     title: 'Related Profiles',
@@ -51,9 +54,12 @@ const drawer = reactive({
   visible: false,
   data: {},
   title: '创建账号',
-  confirm: (formData: UserMdfPlatformInfoCreatePayload) => {
-    createAccount(formData)
-    drawer.visible = false
+  confirm: async (formData: UserMdfPlatformInfoCreatePayload) => {
+    const data = formData.id
+      ? await editAccount(formData)
+      : await createAccount(formData)
+    console.log('🚀 ~ confirm: ~ data:', data)
+    tableRef.value?.refresh()
   },
 })
 
@@ -70,19 +76,22 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-async function tableRequest(params: any) {
-  return await API.platform.userGetPlatformInfoV2List(params)
+function tableRequest(params: any) {
+  return API.platform.userGetPlatformInfoV2List(params)
 }
 
-async function createAccount(formData: UserMdfPlatformInfoCreatePayload) {
-  const data = formData.id
-    ? await API.platform.userMdfPlatformInfoCreate(formData)
-    : await API.platform.userAddPlatformInfoCreate(formData)
-  console.log('🚀 ~ createAccount ~ data:', data)
+function createAccount(formData: UserMdfPlatformInfoCreatePayload) {
+  return API.platform.userAddPlatformInfoCreate(formData)
 }
 
-async function addNote([formData, close]: [any, () => void], data: any) {
-  await API.platform.userMdfPlatformInfoCreate({ ...data, ...formData })
+function editAccount(formData: UserMdfPlatformInfoCreatePayload) {
+  return API.platform.userMdfPlatformInfoCreate(formData)
+}
+
+async function addRemark([platformRemarks, close]: [string, () => void], data: any) {
+  const { msg } = await editAccount({ ...data, platformRemarks })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+  tableRef.value?.refresh()
   close()
 }
 
@@ -117,8 +126,8 @@ function deletePopup(data: any) {
         @click="drawer.visible = true" />
     </div>
     <div class="account-content">
-      <ry-table selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation"
-        :operation-handler="operationHandler" :show-gridlines="false">
+      <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
@@ -136,7 +145,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <remarkIcon @on-confirm="(params) => addNote(params, data)" />
+            <remarkIcon :value="data.platformRemarks" @on-confirm="(params) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
               @icon-click="(operate) => operationHandler(operate, data)" />
           </div>
@@ -144,7 +153,7 @@ function deletePopup(data: any) {
       </ry-table>
     </div>
   </div>
-  <Drawer v-model:visible="drawer.visible" position="right" class="!w-[400px]">
+  <Drawer v-model:visible="drawer.visible" position="right" class="!w-[500px]">
     <template #container="{ closeCallback }">
       <accountCreate :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="drawer.confirm" />
