@@ -18,7 +18,7 @@ const userExtensionList = ref()
 
 onBeforeMount(() => {
 	getExtensionHubCategory();
-	getUserExtensionList()
+	// getUserExtensionList()
 })
 
 

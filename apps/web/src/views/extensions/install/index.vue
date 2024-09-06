@@ -52,7 +52,7 @@ const toast = useToast()
 //     "uploader": ""
 //   },
 // ]
-
+const tableRef = ref()
 const operation = ref([
   {
     name: 'edit',
@@ -107,7 +107,7 @@ const columns = ref([
   },
 ])
 
-const dataList = ref()
+const dataLists = ref()
 
 let isInstallPopVisible = ref(false)
 
@@ -156,6 +156,11 @@ async function handleInstall(params: any) {
 }
 
 
+onMounted(() => {
+  // getUserExtensionList({})
+  getUserExtensionList({})
+})
+
 // 打开安装弹窗
 function openInstallPop() {
   isInstallPopVisible.value = true;
@@ -180,9 +185,9 @@ async function handleSwitch(item: any) {
   }
 }
 
-watch(() => dataList.value, (newValue) => {
+watch(() => dataLists.value, (newValue) => {
   // console.log(dataList.value)
-  dataList.value = newValue
+  dataLists.value = newValue
 })
 
 // 根据选择事件触发
@@ -194,7 +199,7 @@ function selectFunc(e: any) {
     // 删除属性
     delete params.status
   }
-  getUserExtensionList(params)
+  tableRef.value.refresh(params)
 }
 
 // 本地上传插件请求
@@ -205,7 +210,7 @@ async function uploadLocalPlugin(params: any) {
 // 请求user插件列表数据
 async function getUserExtensionList(params: any | {}) {
   const data = await API.plugins.userGetPluginListList(params)
-  dataList.value = data.data.rows;
+  dataLists.value = data.data.rows;
   return data
 }
 
@@ -238,8 +243,8 @@ async function getUserExtensionList(params: any | {}) {
     </installDialog>
 
     <div class="extension-content">
-      <ry-table scrollable selection-mode="multiple" :operation="operation" :table-request="getUserExtensionList"
-        :columns="columns" :show-gridlines="false">
+      <ry-table ref="tableRef" scrollable selection-mode="multiple" :operation="operation"
+        :table-request="getUserExtensionList" :columns="columns" :show-gridlines="false">
         <template #header-extra>
           <div class="flex items-center justify-between w-full">
             <selectBotton @selectFunc="selectFunc"></selectBotton>
