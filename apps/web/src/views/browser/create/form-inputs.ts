@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { createDefaultObject, getFormDataByList, setInputValue, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { createDefaultObject, filterFieldByValue, getFormDataByList, setInputValueByFormData, setInputVisible } from '/@/utils'
 
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis } from './utils'
 
@@ -39,7 +39,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
 
   const fingerDetail = Array.from({ length: count }, () => {
-    return {
+    return filterFieldByValue({
       mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
       mediaDeviceList: [
         {
@@ -55,7 +55,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
       audioContextValue: audioContext ? getCanvasContextNoiseValue() : null,
       speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
       clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
-    }
+    }, value => value !== null) // 跟随老版本逻辑过滤没有值的属性
   })
 
   await Promise.all([
@@ -887,15 +887,15 @@ export function getInputsGroup(data: any = {}) {
   return inputsGroup
 }
 
-export function getDefaultValue(data: any = {}) {
+export function getDefaultValue() {
   return {
-    openMult: data.openMult ?? true,
-    clearHistory: data.clearHistory ?? false,
-    allowRunApplication: data.allowRunApplication ?? true,
-    ignoreHttpsError: data.ignoreHttpsError ?? false,
-    webGLMeta: data.webGLMeta ?? true,
-    enablePlugin: data.enablePlugin ?? false,
-    enablePluginList: data.enablePluginList ?? [],
-    mediaDevice: data.mediaDevice ?? false,
+    openMult: true,
+    clearHistory: false,
+    allowRunApplication: true,
+    ignoreHttpsError: false,
+    webGLMeta: true,
+    enablePlugin: false,
+    enablePluginList: [],
+    mediaDevice: false,
   }
 }

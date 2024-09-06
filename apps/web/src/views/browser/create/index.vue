@@ -76,7 +76,7 @@ async function batchCreateProfile(params: any) {
   }
 
   const fingerDetail = await ceateRandomFinger(inputsGroup.value, createCount.value)
-  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 补充空数据
+  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   await API.window.userBatchWindowInfoCreate(params)
   router.replace({ name: 'browser-list' })

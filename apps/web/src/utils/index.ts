@@ -201,3 +201,7 @@ export function setRowsLoading(row: any, operateName: string, fn: (row: any) => 
     return data
   })
 }
+
+export function filterFieldByValue(obj: object, filter: (value: any) => boolean) {
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => filter(v)))
+}

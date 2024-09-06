@@ -41,8 +41,7 @@ onMounted(() => {
   accordions.value = getAccordions()
   inputsGroup.value = getInputsGroup(data)
   original.value = {
-    id: data.id,
-    ...getDefaultValue(data),
+    ...data,
   }
 })
 
