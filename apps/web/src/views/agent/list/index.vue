@@ -157,7 +157,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
         <template #actions="{ data, operation }">
           <div class="flex justify-end gap-2">
             <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-              @icon-click="(operate) => operationHandler(operate, data)" />
+              @quick-click="(operate) => operationHandler(operate, data)" />
             <remarkIcon />
           </div>
         </template>

@@ -44,6 +44,7 @@ const ctmFilters = ref()
 const sorts = ref()
 const operation = ref()
 const openMessage = reactive<any>({})
+
 const drawer = reactive({
   type: 'proxyList' as DrawerType,
   title: '',
@@ -124,18 +125,8 @@ async function tableRequest(params: any) {
   return data
 }
 
-function autoOpenBrowser(list: any) {
-  const query = route.query.browser && JSON.parse(route.query.browser as string)
-  if (query?.openBrowser) {
-    const data = list.find((item: any) => item.id === query.windowId)
-    router.replace({ name: route.name })
-    if (data) {
-      openBrowser(data)
-    }
-  }
-}
-
 async function operationHandler(operate: any, data: any) {
+  console.log('🚀 ~ operationHandler ~ operate:', operate)
   /**
    * 有批量操作
    */
@@ -147,6 +138,9 @@ async function operationHandler(operate: any, data: any) {
       localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
       router.push({ name: 'browser-edit', query: { id: data.id } })
       break
+    case 'close':
+      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
+      break
     case 'fav': {
       batchModifyWindow({ ids, isOften: true })
       break
@@ -154,9 +148,6 @@ async function operationHandler(operate: any, data: any) {
     case 'delete':
       warnPopup('确定要删除所选窗口？')
         .then(() => batchModifyWindow({ ids, isDelete: true }))
-      break
-    case 'close':
-      window.electronAPI.send('browser:batchClose', _data.map((item: any) => item.dirId))
       break
   }
 }
@@ -172,6 +163,42 @@ async function batchModifyWindow(params: any) {
   }
 }
 
+function autoOpenBrowser(list: any) {
+  const query = route.query.browser && JSON.parse(route.query.browser as string)
+  if (query?.openBrowser) {
+    const data = list.find((item: any) => item.id === query.windowId)
+    router.replace({ name: route.name })
+    if (data) {
+      openBrowser(data)
+    }
+  }
+}
+
+function openBrowser(data: any) {
+  const params = [].concat(data).map((item: any, index: number) => {
+    openMessage[item.dirId] = {
+      pending: true,
+      data: {
+        message: index === 0 ? '启动中...' : '正在排队...',
+      },
+    }
+    return toRaw(item)
+  })
+  window.electronAPI.send('browser:batchLaunch', params)
+}
+
+function showOperationMenu(event: Event, data: any, extra?: any) {
+  show(event, {
+    operation: extra?.cmpOperation || operation.value,
+    operationHandler: (operate: any) => {
+      operationHandler(operate, data)
+      extra?.clearSelection()
+    },
+  })
+}
+/**
+ * profile =================
+ */
 function profileOperate(key: string, data: any) {
   const _data = toRaw(data)
   switch (key) {
@@ -247,19 +274,6 @@ async function deleteProxy(data: any) {
   }
 }
 
-function openBrowser(data: any) {
-  const params = [].concat(data).map((item: any, index: number) => {
-    openMessage[item.dirId] = {
-      pending: true,
-      data: {
-        message: index === 0 ? '启动中...' : '正在排队...',
-      },
-    }
-    return toRaw(item)
-  })
-  window.electronAPI.send('browser:batchLaunch', params)
-}
-
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
     const id = event.data?.dirId || event.data
@@ -270,16 +284,6 @@ function listenOpenMessage() {
 function listenCloseMessage() {
   return window.electronAPI.on('browser:on-close', (dirId) => {
     Reflect.deleteProperty(openMessage, dirId)
-  })
-}
-
-function showOperationMenu(event: Event, data: any, extra?: any) {
-  show(event, {
-    operation: extra?.cmpOperation || operation.value,
-    operationHandler: (operate: any) => {
-      operationHandler(operate, data)
-      extra?.clearSelection()
-    },
   })
 }
 
@@ -341,7 +345,11 @@ onBeforeUnmount(() => {
       <ryTag>123</ryTag>
     </template>
     <template #actions="{ data }">
-      <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" />
+      <div class="flex items-center">
+        <span class="mdi mdi-bookmark-music-outline mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
+        <actions :operation="operation" @quick-click="(operate) => operationHandler(operate, data)"
+          @more="(event: Event) => showOperationMenu(event, data)" />
+      </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"

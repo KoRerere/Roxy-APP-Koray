@@ -147,7 +147,7 @@ function deletePopup(data: any) {
           <div class="flex gap-2">
             <remarkIcon :value="data.platformRemarks" @on-confirm="(params) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
-              @icon-click="(operate) => operationHandler(operate, data)" />
+              @quick-click="(operate) => operationHandler(operate, data)" />
           </div>
         </template>
       </ry-table>
