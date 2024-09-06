@@ -5,7 +5,7 @@ import { Platform, build } from 'electron-builder'
 import type { Configuration } from 'electron-builder'
 import { notarizeMac } from './notarize-mac'
 
-const version = process.env.APP_VERSION
+const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV === 'development'
 console.log('是否是测试环境：', isDev)
 console.log('APP 版本号：', version)
@@ -19,7 +19,7 @@ cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
-  appId: isDev ? 'com.roxy.test.app' : 'com.lumi.app',
+  appId: isDev ? 'com.roxybrowser.app' : 'com.lumi.app',
   productName: 'Roxybrowser',
   copyright: 'Roxybrowser',
   asar: true,
@@ -32,7 +32,11 @@ const options: Configuration = {
     output: 'out',
     buildResources: 'buildResources',
   },
-  files: ['dist', 'resources'],
+  files: [
+    'dist',
+    'resources',
+    '!node_modules/**', // 排除 node_modules 目录中的所有模块
+  ],
   protocols: [
     {
       name: 'roxybrowser',

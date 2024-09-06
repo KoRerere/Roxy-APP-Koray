@@ -14,7 +14,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['update:selection', 'batchOperation'])
+const emit = defineEmits(['update:selection', 'batchOperation'])
 
 const groups: any = computed(() => Object.values(props.operation.reduce((groups, item) => {
   if (!item.name || !item.multiple) {
@@ -24,6 +24,14 @@ const groups: any = computed(() => Object.values(props.operation.reduce((groups,
   (groups[groupName] || (groups[groupName] = [])).push(item)
   return groups
 }, {})))
+
+function batchOperation(item: any) {
+  if (item.disabled) {
+    return
+  }
+
+  emit('batchOperation', item)
+}
 </script>
 
 <template>
@@ -35,9 +43,10 @@ const groups: any = computed(() => Object.values(props.operation.reduce((groups,
       <span class="mdi mdi-close cursor-pointer" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
-      <div v-for="(list, index) in groups" :key="index" class="cursor-pointer multiple-group">
-        <span v-for="item in list" :key="item.name" class="multiple-group-icon" :class="item.icon"
-          @click="$emit('batchOperation', item)" />
+      <div v-for="(list, index) in groups" :key="index" class="multiple-group">
+        <span v-for="item in list" :key="item.name"
+          v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }"
+          class="multiple-group-icon" :class="[item.icon, { disabled: item.disabled }]" @click="batchOperation(item)" />
       </div>
     </slot>
   </div>
@@ -87,6 +96,12 @@ const groups: any = computed(() => Object.values(props.operation.reduce((groups,
     &-icon {
       font-size: 16px;
       gap: 8px;
+      cursor: pointer;
+
+      &.disabled {
+        color: #cccccc;
+        cursor: not-allowed;
+      }
     }
   }
 }

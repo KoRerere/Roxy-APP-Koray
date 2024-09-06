@@ -126,3 +126,8 @@ ipcMain.on('extension:remove', (extIDs: string[]) => {
 ipcMain.on('extension:getSelectedExtensionInfo', (selectType: 'dir' | 'file') => {
   return extensionManager.getUserSelectedExtensionInfo(selectType)
 })
+
+/** 上传本地插件到 OSS */
+ipcMain.on('extension:uploadExtensionToOSS', (payload) => {
+  return extensionManager.uploadExtensionToOSS(payload)
+})

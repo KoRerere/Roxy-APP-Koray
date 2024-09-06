@@ -17,8 +17,8 @@ export const httpClient = new HttpClient({
 })
 
 httpClient.instance.interceptors.request.use((config) => {
-  const { userInfo } = useUserStore()
-  config.headers.token = userInfo.token
+  const { token } = useUserStore()
+  config.headers.token = token
   config.headers.appVersion = '3.0.0'
   return config
 })

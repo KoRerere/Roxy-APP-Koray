@@ -2,7 +2,7 @@
 import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
-import { getFormDataByList, setInputValueByInputKey, setInputVisible } from '/@/utils'
+import { getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
@@ -32,7 +32,7 @@ const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { ke
 
 watch(() => tabsValue.value, (value) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
-  setInputValueByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
+  setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'batch'
   if (isBatch.value) {
     getUserInfo()

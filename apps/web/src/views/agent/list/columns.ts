@@ -17,10 +17,6 @@ const columnsConfig = {
       title: 'Related Profiles',
       slot: 'related',
     },
-    {
-      title: 'Actions',
-      slot: 'actions',
-    },
   ],
 }
 
