@@ -3,7 +3,7 @@ import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
-import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
+import { ceateRandomFinger, getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { createTableContext } from './hooks/useContext'
@@ -36,6 +36,9 @@ watch(() => tabsValue.value, (value) => {
   isBatch.value = tabsValue.value === 'batch'
   if (isBatch.value) {
     getUserInfo()
+  }
+  if (tabsValue.value !== 'import') {
+    ceateRandomFinger(inputsGroup.value)
   }
 })
 
@@ -72,29 +75,20 @@ async function batchCreateProfile(params: any) {
     return
   }
 
-  const fingerDetail = await getFingerDetail(params)
+  const fingerDetail = await ceateRandomFinger(inputsGroup.value, createCount.value)
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 补充空数据
   params.fingerDetail = fingerDetail
   await API.window.userBatchWindowInfoCreate(params)
   router.replace({ name: 'browser-list' })
 }
 
-async function getFingerDetail(params: any) {
-  const { os, osVersion, browserVersion, coreVersion, createCount } = params
-  const { data } = await API.window.userGetUaWebglV2List({
-    count: createCount,
-    os,
-    osVersion,
-    browserVersion,
-    coreVersion,
-  })
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, mediaDevice, deviceName, macAddr } = params
-  return data.map(item => ({ ...item, fontType, canvas, webGL, audioContext, speechVoices, clientRects, mediaDevice, deviceName, macAddr }))
-}
-
 function cancel() {
   router.back()
 }
+
+onMounted(() => {
+  ceateRandomFinger(inputsGroup.value)
+})
 
 onUnmounted(() => {
 

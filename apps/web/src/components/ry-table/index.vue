@@ -16,7 +16,7 @@ defineOptions({
 const props = defineProps({
   tableRequest: {
     type: Function as PropType<(data: any) => Promise<any>>,
-    default: () => () => [],
+    default: () => () => Promise.resolve({}),
   },
   tableParams: {
     type: Object as PropType<any>,
@@ -61,7 +61,7 @@ const props = defineProps({
   },
   tableOperation: {
     type: Function as PropType<(data: any) => any[]>,
-    default: () => () => [],
+    default: () => [],
   },
   operationHandler: {
     type: Function as PropType<(event: any, data: any) => void>,
@@ -149,11 +149,11 @@ async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
   _dataList.value = Array.isArray(props.dataList)
     ? props.dataList
-    : await tableRequest(requestParams)
+    : await _tableRequest(requestParams)
   _clearSelection()
 }
 
-async function tableRequest(requestParams: any) {
+async function _tableRequest(requestParams: any) {
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
   return data?.rows || []

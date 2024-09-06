@@ -1,0 +1,431 @@
+export const fontArray = [
+  'BIZ UDPGothic Bold',
+  'Georgia Pro Italic',
+  'Aparajita Bold',
+  'KodchiangUPC Bold Italic',
+  'BrowalliaUPC Bold Italic',
+  'Kalinga Bold',
+  'Kokila Italic',
+  'Urdu Typesetting Bold',
+  'Aparajita Bold Italic',
+  'CordiaUPC',
+  'LilyUPC',
+  'Georgia Pro Cond Light',
+  'Georgia Pro',
+  'Rockwell Nova Italic',
+  'Verdana Pro Bold',
+  'Arabic Typesetting',
+  'FreesiaUPC Bold Italic',
+  'Gisha Bold',
+  'Miriam Fixed',
+  'Meiryo UI Bold Italic',
+  'Gill Sans Nova Cond Lt Italic',
+  'Verdana Pro Cond Bold',
+  'Verdana Pro Cond Light Italic',
+  'Iskoola Pota',
+  'Rockwell Nova Cond Italic',
+  'Verdana Pro Cond Bold Italic',
+  'Neue Haas Grotesk Text Pro Bold Italic',
+  'Rockwell Nova Light',
+  'UD Digi Kyokasho NK-B',
+  'DilleniaUPC Italic',
+  'Corbel Light Italic',
+  'Yu Mincho Regular',
+  'Verdana Pro Cond Italic',
+  'SimHei',
+  'Arial Nova Light',
+  'Arial Nova Cond Bold Italic',
+  'BIZ UDPMincho Medium',
+  'Gill Sans Nova Cond Bold Italic',
+  'DotumChe',
+  'IrisUPC',
+  'Georgia Pro Cond Black',
+  'Neue Haas Grotesk Text Pro Bold',
+  'Levenim MT',
+  'Miriam',
+  'Arial Nova Light Italic',
+  'Leelawadee Bold',
+  'Gill Sans Nova Cond XBd',
+  'Angsana New Bold',
+  'LilyUPC Bold',
+  'Browallia New',
+  'DilleniaUPC',
+  'Candara Light Italic',
+  'Rockwell Nova Cond Light',
+  'UD Digi Kyokasho NK-R',
+  'DokChampa',
+  'Cordia New Bold',
+  'Meiryo UI Bold',
+  'Rockwell Nova Extra Bold',
+  'Utsaah Bold Italic',
+  'Gill Sans Nova Cond XBd Italic',
+  'Verdana Pro Cond',
+  'Aldhabi',
+  'Traditional Arabic Bold',
+  'David',
+  'Georgia Pro Cond Light Italic',
+  'UD Digi Kyokasho NP-B',
+  'Kokila Bold Italic',
+  'Rockwell Nova Bold Italic',
+  'Rockwell Nova Light Italic',
+  'DilleniaUPC Bold',
+  'JasmineUPC Bold Italic',
+  'Arial Nova Cond Italic',
+  'Verdana Pro SemiBold',
+  'BrowalliaUPC Bold',
+  'JasmineUPC',
+  'EucrosiaUPC Italic',
+  'Candara Light',
+  'Verdana Pro Cond SemiBold Italic',
+  'Dotum',
+  'Aparajita Italic',
+  'Khmer UI Bold',
+  'Neue Haas Grotesk Text Pro Medium',
+  'UD Digi Kyokasho N-B',
+  'Verdana Pro Cond SemiBold',
+  'Euphemia',
+  'EucrosiaUPC',
+  'Verdana Pro Italic',
+  'Angsana New Bold Italic',
+  'Cordia New',
+  'Cordia New Italic',
+  'Gisha',
+  'Vani',
+  'Utsaah Bold',
+  'AngsanaUPC Bold',
+  'FreesiaUPC Italic',
+  'Tunga Bold',
+  'Rockwell Nova',
+  'Andalus',
+  'Angsana New Italic',
+  'Plantagenet Cherokee',
+  'Rockwell Nova Cond Bold Italic',
+  'MoolBoran',
+  'Georgia Pro Semibold',
+  'Gill Sans Nova Italic',
+  'Neue Haas Grotesk Text Pro Italic',
+  'Gungsuh',
+  'Browallia New Italic',
+  'Arial Nova Italic',
+  'Microsoft Uighur Bold',
+  'GulimChe',
+  'Iskoola Pota Bold',
+  'KodchiangUPC Bold',
+  'Vrinda',
+  'AngsanaUPC Italic',
+  'Sakkal Majalla Bold',
+  'Georgia Pro Semibold Italic',
+  'JasmineUPC Italic',
+  'Gill Sans Nova Cond',
+  'Leelawadee',
+  'Sakkal Majalla',
+  'JasmineUPC Bold',
+  'Georgia Pro Black Italic',
+  'Latha Bold',
+  'Georgia Pro Light',
+  'PMingLiU',
+  'AngsanaUPC',
+  'Gill Sans Nova Light',
+  'Verdana Pro Cond Black Italic',
+  'Utsaah',
+  'Gill Sans Nova Cond Bold',
+  'Shonar Bangla Bold',
+  'Cordia New Bold Italic',
+  'Georgia Pro Bold Italic',
+  'Simplified Arabic Bold',
+  'BIZ UDGothic',
+  'Rockwell Nova Extra Bold Italic',
+  'Aparajita',
+  'BrowalliaUPC Italic',
+  'Gulim',
+  'DilleniaUPC Bold Italic',
+  'Arial Nova Bold',
+  'AngsanaUPC Bold Italic',
+  'Yu Mincho Demibold',
+  'Meiryo Bold Italic',
+  'Simplified Arabic',
+  'DaunPenh',
+  'MS Mincho',
+  'FreesiaUPC',
+  'Arial Nova',
+  'Georgia Pro Cond Bold',
+  'Georgia Pro Cond Semibold',
+  'Aharoni Bold',
+  'Arial Nova Cond Light',
+  'Georgia Pro Cond',
+  'BIZ UDGothic Bold',
+  'Gill Sans Nova Cond Italic',
+  'Raavi',
+  'Gill Sans Nova Bold',
+  'Meiryo UI',
+  'Vani Bold',
+  'Corbel Light',
+  'Kalinga',
+  'Meiryo Bold',
+  'Meiryo UI Italic',
+  'Utsaah Italic',
+  'Georgia Pro Light Italic',
+  'Verdana Pro Black Italic',
+  'Verdana Pro Bold Italic',
+  'Rockwell Nova Bold',
+  'LilyUPC Italic',
+  'Rod',
+  'Simplified Arabic Fixed',
+  'Kokila',
+  'Verdana Pro SemiBold Italic',
+  'EucrosiaUPC Bold Italic',
+  'Gill Sans Nova Light Italic',
+  'Gill Sans Nova',
+  'Rockwell Nova Cond',
+  'Angsana New',
+  'Mangal Bold',
+  'Lao UI Bold',
+  'Rockwell Nova Cond Light Italic',
+  'DengXian Bold',
+  'Nyala',
+  'CordiaUPC Bold',
+  'Raavi Bold',
+  'KodchiangUPC',
+  'Shonar Bangla',
+  'Browallia New Bold',
+  'FreesiaUPC Bold',
+  'Kokila Bold',
+  'Latha',
+  'Vijaya Bold',
+  'Verdana Pro Black',
+  'Verdana Pro',
+  'Browallia New Bold Italic',
+  'Georgia Pro Bold',
+  'GungsuhChe',
+  'Lao UI',
+  'Verdana Pro Cond Light',
+  'Yu Mincho Light',
+  'Estrangelo Edessa',
+  'Levenim MT Bold',
+  'Meiryo',
+  'David Bold',
+  'Arial Nova Bold Italic',
+  'Arial Nova Cond',
+  'Urdu Typesetting',
+  'Microsoft Uighur',
+  'FangSong',
+  'Vrinda Bold',
+  'Khmer UI',
+  'Verdana Pro Light',
+  'IrisUPC Bold Italic',
+  'Shruti Bold',
+  'Traditional Arabic',
+  'DengXian Light',
+  'BrowalliaUPC',
+  'KaiTi',
+  'Verdana Pro Light Italic',
+  'Gautami',
+  'Gautami Bold',
+  'DFKai-SB',
+  'Sanskrit Text',
+  'Georgia Pro Cond Black Italic',
+  'Rockwell Nova Cond Bold',
+  'IrisUPC Italic',
+  'Georgia Pro Cond Italic',
+  'UD Digi Kyokasho NP-R',
+  'Meiryo Italic',
+  'Arial Nova Cond Bold',
+  'Georgia Pro Black',
+  'Kartika Bold',
+  'Georgia Pro Cond Semibold Italic',
+  'Batang',
+  'IrisUPC Bold',
+  'Vijaya',
+  'Tunga',
+  'UD Digi Kyokasho N-R',
+  'Verdana Pro Cond Black',
+  'Narkisim',
+  'Arial Nova Cond Light Italic',
+  'Neue Haas Grotesk Text Pro Medium Italic',
+  'Gill Sans Nova Ultra Bold',
+  'CordiaUPC Bold Italic',
+  'Gill Sans Nova Cond Lt',
+  'FrankRuehl',
+  'MingLiU',
+  'BIZ UDMincho Medium',
+  'Gill Sans Nova Bold Italic',
+  'Gill Sans Nova Cond Ultra Bold',
+  'BatangChe',
+  'MingLiU_HKSCS',
+  'Kartika',
+  'Neue Haas Grotesk Text Pro',
+  'BIZ UDPGothic',
+  'CordiaUPC Italic',
+  'MS PMincho',
+  'Shruti',
+  'Mangal',
+  'Georgia Pro Cond Bold Italic',
+  'LilyUPC Bold Italic',
+  'EucrosiaUPC Bold',
+  'KodchiangUPC Italic',
+]
+
+/**
+ * 获取canvas随机值
+ */
+export function getCanvasContextNoiseValue() {
+  const randStr = 'ABCDEFGHIJKLMNOPQISTUVWXYZ0123456789'
+  // 0-9随机数，原生js
+  const n1 = Math.floor(Math.random() * 10)
+  // 0-9随机数，原生js
+  const n2 = Math.floor(Math.random() * 10)
+  // n3从randStr随机取14个字符
+  let n3 = ''
+  for (let i = 0; i < 14; i++) {
+    const randNum = Math.floor(Math.random() * randStr.length)
+    n3 += randStr[randNum]
+  }
+
+  return `${n1}${n2}${n3}`
+}
+
+export function getClientRectsValue() {
+  return {
+    clientRectsNoiseFactorX: (2 * Math.random() - 1), // x 轴
+    clientRectsNoiseFactorY: (2 * Math.random() - 1), // y轴
+  }
+}
+
+/**
+ * 生成随机字体
+ */
+export function getRandomFonts(number = 20) {
+  const selectedFonts = []
+
+  // 从字体列表中随机选择20个字体
+  for (let i = 0; i < number; i++) {
+    const randomIndex = Math.floor(Math.random() * fontArray.length)
+    selectedFonts.push(fontArray[randomIndex])
+  }
+
+  // 将选择的字体用逗号分隔，保存到字符串 str 中
+  const str = selectedFonts.join(';')
+  return str
+}
+// 获取speechVoices随机值
+// 生成不同的系统中可用的语音列表,语言列表有很多。
+// 以下是随机举例，按照参考list 一般是18-20个。
+// 其中isLocalService代表是否是local，如果不是就自动设成了 remote 属性 ，
+/**
+ * 一般isLocalService 会有3个true
+ */
+export function getSpeechSynthesis() {
+  const voices = [
+    {
+      name: 'Google Bahasa Indonesia',
+      lang: 'id-ID',
+      isLocalService: false,
+    },
+    {
+      name: 'Google Deutsch',
+      lang: 'de-DE',
+      isLocalService: false,
+    },
+    {
+      name: 'Google español',
+      lang: 'es-ES',
+      isLocalService: false,
+    },
+    {
+      name: 'Google español de Estados Unidos',
+      lang: 'es-US',
+      isLocalService: false,
+    },
+    {
+      name: 'Google français',
+      lang: 'fr-FR',
+      isLocalService: false,
+    },
+    {
+      name: 'Google italiano',
+      lang: 'it-IT',
+      isLocalService: false,
+    },
+    {
+      name: 'Google Nederlands',
+      lang: 'nl-NL',
+      isLocalService: false,
+    },
+    {
+      name: 'Google polski',
+      lang: 'pl-PL',
+      isLocalService: false,
+    },
+    {
+      name: 'Google português do Brasil',
+      lang: 'pt-BR',
+      isLocalService: false,
+    },
+    {
+      name: 'Google UK English Female',
+      lang: 'en-GB',
+      isLocalService: false,
+    },
+    {
+      name: 'Google UK English Male',
+      lang: 'en-GB',
+      isLocalService: false,
+    },
+    {
+      name: 'Google US English',
+      lang: 'en-US',
+      isLocalService: false,
+    },
+    {
+      name: 'Google русский',
+      lang: 'ru-RU',
+      isLocalService: false,
+    },
+    {
+      name: 'Google हिन्दी',
+      lang: 'hi-IN',
+      isLocalService: false,
+    },
+    {
+      name: 'Google 國語（臺灣）',
+      lang: 'zh-TW',
+      isLocalService: false,
+    },
+    {
+      name: 'Google 日本語',
+      lang: 'ja-JP',
+      isLocalService: false,
+    },
+    {
+      name: 'Google 한국의',
+      lang: 'ko-KR',
+      isLocalService: false,
+    },
+    {
+      name: 'Google 普通话（中国大陆）',
+      lang: 'zh-CN',
+      isLocalService: false,
+    },
+    {
+      name: 'Google 粤語（香港）',
+      lang: 'zh-HK',
+      isLocalService: false,
+    },
+  ]
+
+  for (let i = 0; i < Math.floor(Math.random() * 2); i++) {
+    voices.splice(Math.floor(Math.random() * (voices.length - 1)), 1)
+  }
+
+  const newArray = []
+  for (let i = 0; i < 3; i++) {
+    const index = Math.floor(Math.random() * (voices.length - 1))
+    const [obj] = voices.splice(index, 1)
+    // console.log(`index`, index, `obj`, obj)
+    newArray.push({
+      ...obj,
+      isLocalService: true,
+    })
+  }
+  return [...newArray, ...voices]
+}

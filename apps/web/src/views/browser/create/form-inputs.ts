@@ -1,37 +1,77 @@
 import { API } from '/@/api'
-import { createDefaultObject, getFormDataByList, setInputValue, setInputVisible } from '/@/utils'
+import { createDefaultObject, getFormDataByList, setInputValue, setInputValueByFormData, setInputVisible } from '/@/utils'
 
-async function getUaWebgl(inputsGroup: any) {
+import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis } from './utils'
+
+async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
-  const { data } = await API.window.userGetUaWebglList({
-    os,
-    osVersion,
-    coreVersion,
+  const { data } = await getUaWebgl({ os, osVersion, coreVersion, count: 1 })
+  setInputValueByFormData(inputsGroup, data[0])
+}
+
+async function setDeviceName(inputsGroup: any) {
+  const { os } = getFormDataByList(inputsGroup)
+  const { data } = await getDeviceName({ os, count: 1 })
+  setInputValueByFormData(inputsGroup, data[0])
+}
+
+async function setMacAddr(inputsGroup: any) {
+  const { macInfo } = getFormDataByList(inputsGroup)
+  const { data } = await getMacAddr({ macInfo, count: 1 })
+  setInputValueByFormData(inputsGroup, data[0])
+}
+
+function getUaWebgl(params: any) {
+  return API.window.userGetUaWebglV2List(params)
+}
+
+function getDeviceName(params: any) {
+  return API.window.userGetDeviceNameV2List(params)
+}
+
+function getMacAddr(params: any) {
+  return params.macInfo
+    ? window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
+    : API.window.userGetMacAddrV2List(params)
+}
+
+export async function ceateRandomFinger(inupts: any, count: number = 1) {
+  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
+
+  const fingerDetail = Array.from({ length: count }, () => {
+    return {
+      mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
+      mediaDeviceList: [
+        {
+          deviceType: 'audioinput',
+          deviceId: '',
+          label: '',
+          groupId: '',
+        },
+      ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
+      font: fontType ? getRandomFonts() : null,
+      canvasValue: canvas ? getCanvasContextNoiseValue() : null,
+      webGLValue: webGL ? getCanvasContextNoiseValue() : null,
+      audioContextValue: audioContext ? getCanvasContextNoiseValue() : null,
+      speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
+      clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
+    }
   })
 
-  const keys = Object.keys(data)
+  await Promise.all([
+    getUaWebgl({ os, osVersion, coreVersion, count }),
+    getDeviceName({ os, count }),
+    getMacAddr({ macInfo, count }),
+  ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
+    setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
 
-  inputsGroup.forEach((inputs: any) => {
-    inputs.forEach((input: any) => {
-      if (keys.includes(input.name)) {
-        input.value = data[input.name]
-      }
+    uaWebgl.forEach((item, index) => {
+      const formData = { ...item, ...deviceName[index], ...macAddr[index] }
+      Object.assign(fingerDetail[index], formData)
     })
   })
-}
 
-async function getDeviceName(inputsGroup: any) {
-  const { os } = getFormDataByList(inputsGroup)
-  return API.window.userGetDeviceNameList({ os })
-}
-
-async function getMacAddr(inputsGroup: any) {
-  const { macInfo } = getFormDataByList(inputsGroup)
-  const result: any = macInfo
-    ? await window.electronAPI.send('app:getMacAddress')
-    : await API.window.userGetMacAddrV2List({ count: 1 }).then(res => res.data[0])
-
-  return result?.macAddr || result
+  return fingerDetail
 }
 
 export function getAccordions() {
@@ -130,7 +170,7 @@ export function getInputsGroup(data: any = {}) {
         icon: 'mdi mdi-shuffle-variant',
         disabled: true,
         iconClick: () => {
-          getUaWebgl(inputsGroup)
+          setUaWebgl(inputsGroup)
         },
       },
       {
@@ -449,7 +489,7 @@ export function getInputsGroup(data: any = {}) {
         disabled: true,
         visible: true,
         iconClick: () => {
-          getUaWebgl(inputsGroup)
+          setUaWebgl(inputsGroup)
         },
       },
       {
@@ -462,7 +502,7 @@ export function getInputsGroup(data: any = {}) {
         disabled: true,
         visible: true,
         iconClick: () => {
-          getUaWebgl(inputsGroup)
+          setUaWebgl(inputsGroup)
         },
       },
       {
@@ -557,10 +597,8 @@ export function getInputsGroup(data: any = {}) {
         icon: 'mdi mdi-shuffle-variant',
         disabled: true,
         visible: true,
-        iconClick: (self: any) => {
-          getDeviceName(inputsGroup).then(({ data }) => {
-            self.value = data.deviceName
-          })
+        iconClick: () => {
+          setDeviceName(inputsGroup)
         },
       },
       {
@@ -573,10 +611,11 @@ export function getInputsGroup(data: any = {}) {
           { label: '自定义', value: false },
         ],
         change(_v: any, self: any, inputs: any) {
-          setInputVisible(inputs, 'macAddr', self.value === false)
-          getMacAddr(inputsGroup).then((res: any) => {
-            setInputValue(inputs, 'macAddr', res)
-          })
+          const showMacAddr = self.value === false
+          setInputVisible(inputs, 'macAddr', showMacAddr)
+          if (showMacAddr) {
+            setMacAddr(inputsGroup)
+          }
         },
       },
       {
@@ -587,10 +626,8 @@ export function getInputsGroup(data: any = {}) {
         icon: 'mdi mdi-shuffle-variant',
         disabled: true,
         visible: true,
-        iconClick: (self: any) => {
-          getMacAddr(inputsGroup).then((res: any) => {
-            self.value = res
-          })
+        iconClick: () => {
+          setMacAddr(inputsGroup)
         },
       },
       {

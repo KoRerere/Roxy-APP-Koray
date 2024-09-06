@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ryForm from '/@/components/ry-form'
 import drawerContent from '/@/components/drawer-content.vue'
+import remarkIcon from '/@/components/remark-icon'
 import { clearInputsValue, getFormData } from '/@/utils'
 import { API } from '/@/api'
 
@@ -17,10 +18,13 @@ const props = defineProps({
 
 const emits = defineEmits(['confirm', 'close'])
 
-const formInputs = ref<any>()
-const original = ref<any>()
+const isEdit = computed(() => !!props.data.id)
+
+const formInputs = ref()
+const original = ref()
 
 async function getInputs(data: any = {}) {
+  console.log('🚀 ~ getInputs ~ data:', data)
   const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
   const platformOptions = rows.map(item => ({
@@ -91,9 +95,17 @@ async function getInputs(data: any = {}) {
         // : value
       },
     },
-  ]
+  ].map((item) => {
+    item.value = data[item.name] || undefined
+    return item
+  })
 
-  original.value = { id: data.id, dirId: data.dirId, windowPlatformList: data.windowPlatformList }
+  original.value = { id: data.id, dirId: data.dirId, windowPlatformList: data.windowPlatformList, platformRemarks: data.platformRemarks }
+}
+
+function addRemark([platformRemarks, close]: [string, () => void]) {
+  original.value.platformRemarks = platformRemarks
+  close()
 }
 
 function confirm(more: boolean) {
@@ -119,28 +131,31 @@ onMounted(() => {
   <drawer-content :title="title" v-bind="$attrs" @close="$emit('close')">
     <ry-form :inputs="formInputs" />
     <template #footer>
-      <ry-button label="Save & Create more" severity="secondary" outlined @click="confirm(true)" />
-      <ry-button label="Create account" severity="info" @click="confirm(false)" />
+      <div class="button-group">
+        <remarkIcon class="ma-auto ml-0 button-group-remark" :value="original?.platformRemarks"
+          @on-confirm="addRemark" />
+        <ry-button v-if="!isEdit" label="Save & Create more" severity="secondary" outlined @click="confirm(true)" />
+        <ry-button :label="isEdit ? 'Edit account' : 'Create account'" severity="info" @click="confirm(false)" />
+      </div>
     </template>
   </drawer-content>
 </template>
 
 <style lang="scss" scoped>
-.form-protocol {
+.button-group {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg, 8px);
+  flex: 1;
+  justify-content: flex-end;
+  gap: var(--spacing-xl, 12px);
 
-  &-item {
-    display: flex;
-    min-width: 120px;
-    padding: 10px 10px 10px var(--spacing-xl, 12px);
-    align-items: center;
-    gap: var(--spacing-lg, 8px);
-    border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #ffffff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  &-remark {
+    padding: var(--spacing-md, 6px);
+    border-radius: var(--radius-sm, 4px);
+    border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+    box-shadow:
+      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
   }
 }
 </style>

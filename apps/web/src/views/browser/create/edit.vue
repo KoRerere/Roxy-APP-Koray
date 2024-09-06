@@ -35,6 +35,8 @@ function cancel() {
 
 onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
+  console.log('🚀 ~ onMounted ~ data:', data)
+
   windowName.value = data.windowName
   accordions.value = getAccordions()
   inputsGroup.value = getInputsGroup(data)

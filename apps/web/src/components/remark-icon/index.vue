@@ -25,14 +25,15 @@ function onRemark() {
       inputs: [
         {
           type: 'text',
-          name: 'webGLManufacturer',
-          placeholder: 'WebGL Manufacturer',
+          name: 'remark',
           value: props.value,
         },
       ],
     },
     emits: {
-      onConfirm: (data: [any, close: () => void]) => emit('onConfirm', data),
+      onConfirm: ([formData, close]: [any, close: () => void]) => {
+        emit('onConfirm', [formData.remark, close])
+      },
       onCancel: () => emit('onCancel'),
     },
   })

@@ -60,7 +60,7 @@ async function deleteFilterItem(filter_name: string) {
     accept: async () => {
       try {
         const { msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name })
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
         getFilterList()
       }
       catch (error) {

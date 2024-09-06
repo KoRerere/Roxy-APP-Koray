@@ -43,19 +43,19 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: '/agent',
     name: 'agent',
-    meta: { title: '代理管理x', groupName: 'resources' },
+    meta: { title: '代理管理', groupName: 'resources' },
     component: () => import('/@/views/agent/list'),
   },
   {
     path: '/agent/shop',
     name: 'account-shop',
-    meta: { title: '代理商店x', groupName: 'resources' },
+    meta: { title: '代理商店(dome test)x', groupName: 'resources' },
     component: () => import('/@/views/agent/shop'),
   },
   {
     path: '/account',
     name: 'account',
-    meta: { title: '账号库x', groupName: 'resources' },
+    meta: { title: '账号库', groupName: 'resources' },
     component: () => import('/@/views/account/list'),
   },
   {

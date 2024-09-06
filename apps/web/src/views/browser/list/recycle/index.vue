@@ -3,15 +3,8 @@ import ryTag from '/@/components/ry-tag'
 import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
-import notes from '/@/views/account/list/components/notes.vue'
-// import { useToast } from 'primevue/usetoast'
-import { useDialog } from 'primevue/usedialog'
-// const confirm = useConfirm()
 
 import { API } from '/@/api'
-// import { useConfirm } from 'primevue/useconfirm'
-// const toast = useToast()
-const dialog = useDialog()
 
 const columns = ref([
   {
@@ -28,11 +21,6 @@ const columns = ref([
     title: '组/标签',
     key: 'group',
     slot: 'group',
-  },
-  {
-    title: '操作项',
-    key: 'actions',
-    slot: 'actions',
   },
 ])
 
@@ -66,29 +54,11 @@ function operationHandler(operate: any, data: any) {
       console.log('🚀 ~ operationHandler ~ data:', data)
       break
     case 'note':
-      addNote(data)
       break
     case 'test':
       console.log('🚀 ~ operationHandler ~ data:', data)
       break
   }
-}
-
-function addNote(data: any) {
-  dialog.open(notes, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    emits: {
-      onSave: ([value, close]: [string, () => void]) => {
-        console.log('🚀 ~ addNote ~ data:', data)
-        console.log('🚀 ~ scvr ~ xxx:', value)
-        close()
-      },
-    },
-  })
 }
 
 async function tableRequest() {
