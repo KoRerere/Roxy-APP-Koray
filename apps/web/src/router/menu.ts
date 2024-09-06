@@ -76,7 +76,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         name: 'extensions-hub',
         meta: { title: 'extensionHub', icon: 'AreaChartOutlined' },
         component: () => import('/@/views/extensions/hub'),
-      },
+      }
     ]
   }
 
