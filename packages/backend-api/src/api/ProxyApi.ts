@@ -18,8 +18,11 @@ import {
   UserDelProxyModuleCreatePayload,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
+  UserGetProxyTableSortOrderListData,
   UserMdfProxyModuleCreateData,
   UserMdfProxyModuleCreatePayload,
+  UserSaveProxyTableSortOrderCreateData,
+  UserSaveProxyTableSortOrderCreatePayload,
   UserUnbindProxyModuleCreateData,
   UserUnbindProxyModuleCreatePayload,
 } from "./data-contracts";
@@ -72,7 +75,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserMdfProxyModuleCreate
-   * @summary 批量修改代理
+   * @summary 单个代理修改
    * @request POST:/user_mdf_proxy_module
    * @response `200` `UserMdfProxyModuleCreateData` 成功
    */
@@ -127,11 +130,46 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserCheckIpCreate
    * @summary 检测单个静态IP
    * @request POST:/user_check_ip
+   * @deprecated
    * @response `200` `UserCheckIpCreateData` 成功
    */
   userCheckIpCreate = (data: UserCheckIpCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserCheckIpCreateData, any>({
       path: `/user_check_ip`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyTableSortOrderList
+   * @summary 获取代理列表排序规则
+   * @request GET:/user_get_proxy_table_sort_order
+   * @response `200` `UserGetProxyTableSortOrderListData` 成功
+   */
+  userGetProxyTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyTableSortOrderListData, any>({
+      path: `/user_get_proxy_table_sort_order`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserSaveProxyTableSortOrderCreate
+   * @summary 保存代理列表排序规则
+   * @request POST:/user_save_proxy_table_sort_order
+   * @response `200` `UserSaveProxyTableSortOrderCreateData` 成功
+   */
+  userSaveProxyTableSortOrderCreate = (data: UserSaveProxyTableSortOrderCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserSaveProxyTableSortOrderCreateData, any>({
+      path: `/user_save_proxy_table_sort_order`,
       method: "POST",
       body: data,
       type: ContentType.Json,

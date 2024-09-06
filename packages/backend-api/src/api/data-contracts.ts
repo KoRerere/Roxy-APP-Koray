@@ -455,22 +455,22 @@ export interface UserGetOssCredentialListData {
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example "2"
+   * @example 2
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example "10"
+   * @example 10
    */
   groupId?: number;
   /**
@@ -485,12 +485,12 @@ export interface UserGetWindowInfoListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example "1"
+   * @example 1
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example "8"
+   * @example 8
    */
   sortMax?: number;
   /**
@@ -525,7 +525,7 @@ export interface UserGetWindowInfoListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example "10"
+   * @example 10
    */
   moduleId?: number;
   /**
@@ -535,7 +535,7 @@ export interface UserGetWindowInfoListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example "12"
+   * @example 12
    */
   id?: number;
   /**
@@ -545,12 +545,12 @@ export interface UserGetWindowInfoListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example "1"
+   * @example 1
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example "1"
+   * @example 1
    */
   sortType?: number;
   /**
@@ -945,22 +945,22 @@ export interface UserGetWindowInfoListData {
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example " 2"
+   * @example 2
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example "10"
+   * @example 10
    */
   groupId?: number;
   /**
@@ -975,12 +975,12 @@ export interface UserGetWindowInfoRecycleListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example "1"
+   * @example 1
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example "8"
+   * @example 8
    */
   sortMax?: number;
   /**
@@ -995,22 +995,22 @@ export interface UserGetWindowInfoRecycleListParams {
   host?: string;
   /**
    * 窗口类型，枚举值：1.自建窗口，2.团队窗口，3.全部窗口,
-   * @example "1"
+   * @example 1
    */
   windowType?: number;
   /**
    * 创建人id, int,非必传
-   * @example "2"
+   * @example 2
    */
   createBy?: number;
   /**
    * 操作人id, int,非必传
-   * @example "3"
+   * @example 3
    */
   operateBy?: number;
   /**
    * 排序类型，int, 枚举值，1.序号从大到小，2.序号从小到大，3.删除时间从大到小，4.删除时间从小到大，非必传,默认为 1
-   * @example "1"
+   * @example 1
    */
   sortType?: number;
   /**
@@ -1974,7 +1974,7 @@ export interface UserGetUaWebglV2ListParams {
   webGLManufacturer?: string;
   /**
    * 需要获取的数量
-   * @example "2"
+   * @example 2
    */
   count: number;
 }
@@ -2024,7 +2024,7 @@ export interface UserGetDeviceNameV2ListData {
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
-   * @example "2"
+   * @example 2
    */
   count: number;
 }
@@ -2040,12 +2040,12 @@ export interface UserGetMacAddrV2ListData {
 export interface UserGetGroupInfoListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
@@ -2215,12 +2215,12 @@ export interface UserUploadPluginInfoCreateData {
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example 15
    */
   page_size: number;
   /**
@@ -2234,15 +2234,55 @@ export interface UserGetProxyModuleListParams {
    */
   protocol?: string;
   /**
-   * 代理IP
+   * 代理IP（代理链接）
    * @example "13.21.211.11"
    */
   host?: string;
   /**
-   * 排序类型，1：代理ID从大到小，2：代理ID从小到大
-   * @example "1"
+   * 排序类型，1：代理ID从大到小，2：代理ID从小到大（老版本用的，新版本可以不用）
+   * @example 1
    */
   sortType?: number;
+  /**
+   * 排序字段
+   * @example "createTime"
+   */
+  order_name?: string;
+  /**
+   * 排序规则
+   * @example "desc"
+   */
+  order_type?: string;
+  /**
+   * 代理国家
+   * @example "BR"
+   */
+  lastCountry?: string;
+  /**
+   * 窗口ID
+   * @example "11,22"
+   */
+  id?: string;
+  /**
+   * 代理检测状态，0：未检测，1：检测成功，2：检测失败
+   * @example 0
+   */
+  checkStatus?: number;
+  /**
+   * 创建时间开始, str, 非必传
+   * @example "2024-05-22"
+   */
+  startDate?: string;
+  /**
+   * 创建时间结束, str, 非必传
+   * @example "2024-05-24"
+   */
+  endDate?: string;
+  /**
+   * 代理备注
+   * @example "xxx"
+   */
+  remark?: string;
 }
 
 export interface UserGetProxyModuleListData {
@@ -2287,6 +2327,12 @@ export interface UserGetProxyModuleListData {
       /** 绑定的窗口数量 */
       bindCount?: number;
       bindList?: number[];
+      /** 编辑时间 */
+      updateTime?: string;
+      /** 创建时间 */
+      createTime?: string;
+      /** IP类型 */
+      ipType?: string;
     }[];
   };
   msg: string;
@@ -2321,34 +2367,48 @@ export interface UserAddProxyModuleCreatePayload {
 
 export type UserAddProxyModuleCreateData = object;
 
-export interface UserMdfProxyModuleCreatePayload {
-  /** 代理id */
+export type UserMdfProxyModuleCreatePayload = {
+  /** 代理ID */
   id: number;
-  /** 网络协议 */
-  ipType?: string;
-  /** 代理协议 */
+  /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】, 非必传 */
   protocol?: string;
-  /** 代理主机  */
+  /** 城市 */
+  country?: string;
+  /** 代理主机 str, 非必传 */
   host?: string;
-  /** 代理端口 */
+  /** 代理端口 str, 非必传 */
   port?: string;
-  /** 代理账号 */
+  /** 代理账号 str, 非必传 */
   proxyUserName?: string;
-  /** 代理密码 */
+  /** 代理密码 str, 非必传 */
   proxyPassword?: string;
-  /** 刷新URL */
+  /** 刷新URL str, 非必传 */
   refreshUrl?: string;
-  /** 查询渠道 */
+  /** 查询渠道，默认:http://ip123.in/ip.json, str, 非必传 */
   checkChannel?: string;
-  /** 出口IP */
+  /** 出口IP，给用户显示用, 非必传 */
   lastIp?: string;
-  /** 出口国家 */
+  /** 出口国家，给用户显示用, 非必传 */
   lastCountry?: string;
-  /** 检测时间 */
-  checkTime?: string;
-  /** 检测状态 */
+  /** // 出口城市 */
+  lastCity?: string;
+  /** 检测状态, 非必传 */
   checkStatus?: boolean;
-}
+  /** # 检测时间, 非必传 */
+  checkTime?: string;
+  /** 网络协议，str, 枚举值：IPV4, IPV6, 非必传 */
+  ipType?: string;
+  /** 备注 */
+  remark?: string;
+  /** 是否绑定 */
+  isBind?: boolean;
+  /** 绑定窗口数量 */
+  bindCount?: number;
+  /** 绑定的窗口ID */
+  bindList?: number[];
+  /** 是否加载 */
+  loading?: boolean;
+}[];
 
 export type UserMdfProxyModuleCreateData = object;
 
@@ -2388,17 +2448,17 @@ export interface UserCheckIpCreateData {
 export interface UserGetUserListListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
    * 用户id
-   * @example "2"
+   * @example 2
    */
   id?: number;
   /**
@@ -2413,7 +2473,7 @@ export interface UserGetUserListListParams {
   userName?: string;
   /**
    * 账号状态，1: 开启，2: 关闭
-   * @example "1"
+   * @example 1
    */
   status?: number;
 }
@@ -2564,12 +2624,12 @@ export interface UserGetPluginCategoryListData {
 export interface UserGetSystemPluginListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example "9999"
+   * @example 9999
    */
   page_size?: number;
   /**
@@ -2618,12 +2678,12 @@ export interface UserAddSystemPluginCreateData {
 export interface UserGetPluginListListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
@@ -2668,7 +2728,11 @@ export interface UserGetPluginListListData {
       /** 上传者 */
       uploader?: string;
       /** 最后更新时间 */
-      lateUpdateTime: string;
+      lateUpdateTime?: string;
+      /** 插件更新状态，0:没有更新，1:有更新 */
+      pluginUpdateState?: number;
+      /** 插件最新版本，通过检测得到 */
+      pluginNewVersion?: string;
     }[];
   };
   msg: string;
@@ -2990,12 +3054,12 @@ export interface UserMdfPlatformInfoCreateData {
 export interface UserGetPlatformInfoV2ListParams {
   /**
    * 分页索引
-   * @example "1"
+   * @example 1
    */
   page_index: number;
   /**
    * 分页条数
-   * @example "15"
+   * @example 15
    */
   page_size: number;
   /**
@@ -3131,10 +3195,9 @@ export interface UserGetWindowTableRowsListData {
 export interface UserGetWindowTableSortOrderListData {
   code: number;
   data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序类型 */
-    order_type?: string;
+    name: string;
+    sort: string;
+    status: number;
   }[];
   msg: string;
 }
@@ -3142,22 +3205,22 @@ export interface UserGetWindowTableSortOrderListData {
 export interface UserGetWindowInfoV2ListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example "1"
+   * @example 1
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example "15"
+   * @example 15
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example "2"
+   * @example 2
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example "10"
+   * @example 10
    */
   groupId?: number;
   /**
@@ -3172,12 +3235,12 @@ export interface UserGetWindowInfoV2ListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example "1"
+   * @example 1
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example "8"
+   * @example 8
    */
   sortMax?: number;
   /**
@@ -3212,7 +3275,7 @@ export interface UserGetWindowInfoV2ListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example "10"
+   * @example 10
    */
   moduleId?: number;
   /**
@@ -3222,7 +3285,7 @@ export interface UserGetWindowInfoV2ListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example "12"
+   * @example 12
    */
   id?: number;
   /**
@@ -3232,12 +3295,12 @@ export interface UserGetWindowInfoV2ListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example "1"
+   * @example 1
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example "1"
+   * @example 1
    */
   sortType?: number;
   /**
@@ -3292,7 +3355,7 @@ export interface UserGetWindowInfoV2ListParams {
   osList?: string;
   /**
    * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
-   * @example "0"
+   * @example 0
    */
   proxyTestStatus?: number;
   /**
@@ -3310,6 +3373,11 @@ export interface UserGetWindowInfoV2ListParams {
    * @example ["HTTP, SOCKS5"]
    */
   proxyProtocoList?: string[];
+  /**
+   * 关联代理
+   * @example "11,12"
+   */
+  proxyIds?: string;
 }
 
 export interface UserGetWindowInfoV2ListData {
@@ -3801,5 +3869,128 @@ export interface UserBatchWindowInfoV2CreatePayload {
 
 export interface UserBatchWindowInfoV2CreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserBatchUpdateWindowTableRowsCreatePayload {
+  filter_rule: {
+    /** 名称 */
+    name: string;
+    /** 排序 */
+    sort: number;
+    /** 状态 */
+    status: number;
+  }[];
+}
+
+export interface UserBatchUpdateWindowTableRowsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCheckAllPluginsVersionListParams {
+  /** 插件目录ID */
+  pluginDir: string;
+}
+
+export interface UserCheckAllPluginsVersionListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUpgradePluginsCreatePayload {
+  /** 插件目录ID */
+  pluginDir: string;
+  /** 插件名称 */
+  pluginName: string;
+}
+
+export interface UserUpgradePluginsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUploadChromePluginsV2CreatePayload {
+  /** 插件下载地址 */
+  url: string;
+}
+
+export type UserUploadChromePluginsV2CreateData = object;
+
+export interface UserImportWindowInfoV2CreatePayload {
+  fileName: string;
+  excelData: {
+    rowNum?: number;
+    windowName?: string;
+    groupName?: string;
+    platformUrl?: string;
+    platformUserName?: string;
+    platformPassword?: string;
+    efa?: string;
+    path?: string;
+    domain?: string;
+  }[];
+  defaultOpenUrl: string;
+  proxyMethod: string;
+  proxyInfo: string;
+  windowRemark: string;
+  userAgent: string;
+  windowSize: string;
+}
+
+export interface UserImportWindowInfoV2CreateData {
+  code: number;
+  data: {
+    createBy: number;
+    windowUserId: number;
+    windowId: number;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyTableSortOrderListData {
+  code: number;
+  data: {
+    /** 排序名称 */
+    order_name?: string;
+    /** 排序规则 */
+    order_type?: string;
+  }[];
+  msg: string;
+}
+
+export interface UserSaveProxyTableSortOrderCreatePayload {
+  table_sort: {
+    /** 名称 */
+    name?: string;
+    /** 判断降序还是升序 */
+    order?: string;
+  }[];
+}
+
+export interface UserSaveProxyTableSortOrderCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface LoginGoogleCreatePayload {
+  /** 传入谷歌登录token */
+  googleToken: string;
+}
+
+export interface LoginGoogleCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+  };
   msg: string;
 }

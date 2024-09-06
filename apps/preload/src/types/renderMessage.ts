@@ -1,4 +1,4 @@
-import type { UnwrapRowsType, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from './mainMessage'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
@@ -41,4 +41,7 @@ export interface RenderMessage {
   'extension:remove': (extIDs: string[]) => void
   /** 获取并解析用户本地选择的插件信息 */
   'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => any
+  /** 上传本地插件到 OSS */
+  'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData>) =>
+    Promise<Pick<UnwrapRowType<UserGetPluginListListData>, 'pluginIcon' | 'pluginRoute' | 'pluginDir'>>
 }

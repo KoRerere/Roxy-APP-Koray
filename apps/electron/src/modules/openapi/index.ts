@@ -3,7 +3,7 @@ import express from 'express'
 import { isPackaged } from '/@/utils'
 
 import indexRouter from './routes/index'
-import usersRouter from './routes/users'
+import browserRouter from './routes/browser'
 
 class OpenAPIServer {
   private app: express.Application
@@ -28,8 +28,26 @@ class OpenAPIServer {
       }
     })
 
-    // this.app.use('/', indexRouter)
-    this.app.use('/users', usersRouter)
+    this.app.all(`*`, async (req, res, next) => {
+      // $LOG(`req header`, req.path, req.header(`token`))
+
+      res.header('Connection', 'close')
+      res.header('Access-Control-Allow-Origin', '*')
+      res.header('Access-Control-Allow-Headers', '*')
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE')
+      res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE')
+
+      // if (this.intercept(req)) {
+      //   return res.json({
+      //     code: 500,
+      //     msg: `token错误`,
+      //   });
+      // }
+      next()
+    })
+
+    this.app.use('/api', indexRouter)
+    this.app.use('/browser', browserRouter)
 
     this.app.use((req, res, next) => {
       res.status(404).send('Sorry can\'t find that!')

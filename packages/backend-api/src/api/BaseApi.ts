@@ -14,6 +14,8 @@ import {
   ForgetPasswordListParams,
   LoginCreateData,
   LoginCreatePayload,
+  LoginGoogleCreateData,
+  LoginGoogleCreatePayload,
   PostBaseData,
   PostBasePayload,
   SendEmailForgetVerifyCodeListData,
@@ -469,6 +471,24 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetOssCredentialListData, any>({
       path: `/user_get_oss_credential`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginGoogleCreate
+   * @summary 谷歌登录
+   * @request POST:/login_google
+   * @response `200` `LoginGoogleCreateData` 成功
+   */
+  loginGoogleCreate = (data: LoginGoogleCreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginGoogleCreateData, any>({
+      path: `/login_google`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

@@ -20,7 +20,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  if (to.name !== 'login' && !userStore.userInfo.token) {
+  if (to.name !== 'login' && !userStore.token) {
     return next({ name: 'login' })
   }
 

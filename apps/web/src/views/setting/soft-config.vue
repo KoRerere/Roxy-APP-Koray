@@ -87,6 +87,9 @@ async function selectExtension(selectType: 'dir' | 'file') {
     const res = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
     exeInfo.value = res.data
     console.log('selectExtension', res)
+    const { pluginDir, pluginIcon } = res.data
+    const uploadResult = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
+    console.log('uploadResult', uploadResult)
   }
   catch (error) {
     console.log('selectExtension error', error)
@@ -111,7 +114,7 @@ async function selectExtension(selectType: 'dir' | 'file') {
     <ry-button class="ml-[12px]" @click="() => selectExtension('file')">
       选择扩展文件
     </ry-button>
-    <img :src="exeInfo.pluginIcon" alt="" srcset="">
+    <img :src="exeInfo?.pluginIcon" alt="" srcset="">
   </div>
   <ry-button class="w-full mt-[12px]" @click="handleSubmit">
     保存
