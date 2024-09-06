@@ -136,3 +136,8 @@ ipcMain.on('extension:uploadExtensionToOSS', (payload) => {
 ipcMain.on('extension:checkLocalExtensionUpdate', (checkList) => {
   return extensionManager.checkLocalExtensionUpdate(checkList)
 })
+
+/** 获取本地已安装的插件 */
+ipcMain.on('extension:getInstalledExtensions', () => {
+  return extensionManager.getInstalledExtensions()
+})

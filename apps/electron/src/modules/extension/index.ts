@@ -277,6 +277,18 @@ export const extensionManager = new class ExtensionManager {
     return promise
   }
 
+  /** 获取本地已安装的插件 */
+  async getInstalledExtensions() {
+    const extIds = await this.getAllExtensions()
+    const promiseArr = extIds.map(async (extID) => {
+      const pluginDir = path.join(this.extensionDir, extID)
+      return getPluginMeta(pluginDir)
+    })
+
+    const result = await Promise.allSettled(promiseArr)
+    return result.filter(p => p.status === 'fulfilled').map(p => p.value)
+  }
+
   /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
   async checkLocalExtensionUpdate(checkList: CheckLocalExtensionUpdatePayload) {
     const checkPromises = checkList.map(async ({ extID, newVersion }) => {
