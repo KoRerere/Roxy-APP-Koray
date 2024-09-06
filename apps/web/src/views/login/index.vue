@@ -65,7 +65,7 @@ function openGoogleAuth2Login() {
 }
 
 async function googleAuth2Login(googleToken: string) {
-  const { code, data, msg = '登录失败' } = await API.base.loginGoogleCreate({ googleToken })
+  const { code, data, msg = '登录失败' } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
     afterLogin(data.token)
   }

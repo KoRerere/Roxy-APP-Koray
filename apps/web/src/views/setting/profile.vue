@@ -7,6 +7,6 @@ const { userInfo } = useUserStore()
 <template>
   <div>个人信息</div>
   <div>
-    <p>用户名: {{ userInfo.user_name }}</p>
+    <p>用户名: {{ userInfo.userName }}</p>
   </div>
 </template>

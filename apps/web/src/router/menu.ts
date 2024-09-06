@@ -58,5 +58,26 @@ export const menuRoutes: RouteRecordRaw[] = [
     meta: { title: '账号库', groupName: 'resources' },
     component: () => import('/@/views/account/list'),
   },
+  {
+    path: '/extensions',
+    name: 'extensions',
+    meta: { title: 'Extensions', groupName: 'Tools' },
+    component: () => import('/@/views/extensions'),
+    redirect: { name: 'extensions-hub' },
+    children: [
+      {
+        path: 'install',
+        name: 'install',
+        meta: { title: 'intalled', icon: 'AreaChartOutlined' },
+        component: () => import('../views/extensions/install'),
+      },
+      {
+        path: 'hub',
+        name: 'extensions-hub',
+        meta: { title: 'extensionHub', icon: 'AreaChartOutlined' },
+        component: () => import('/@/views/extensions/hub'),
+      }
+    ]
+  }
 
 ]
