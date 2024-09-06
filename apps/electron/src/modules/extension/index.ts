@@ -10,7 +10,9 @@ import { dialog } from 'electron'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { unzip } from '@tomjs/unzip-crx'
 import AdmZip from 'adm-zip'
-import { getPluginMeta } from './helper'
+import { compare } from 'compare-versions'
+import { getPluginManifestInfo, getPluginMeta } from './helper'
+import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
@@ -90,10 +92,8 @@ export const extensionManager = new class ExtensionManager {
 
   /** 上传本地插件到 OSS */
   async uploadExtensionToOSS(params: UnwrapRowType<UserGetPluginListListData>) {
-    type Result = Pick<UnwrapRowType<UserGetPluginListListData>, 'pluginIcon' | 'pluginRoute' | 'pluginDir'>
-
     let { pluginDir, pluginIcon } = params
-    const { promise, resolve, reject } = Promise.withResolvers<Result>()
+    const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
 
     if (!pluginDir || !pluginIcon) {
       return Promise.reject('插件目录或插件图标不能为空')
@@ -132,7 +132,7 @@ export const extensionManager = new class ExtensionManager {
         aliOSS.put(`${basePath}/${dirName}${iconExtName}`, pluginIcon),
       ]
       const [pluginResult, iconResult] = await Promise.all(promises)
-      const result: Result = {
+      const result: UploadExtensionToOSSResult = {
         pluginRoute: pluginResult.url,
         pluginIcon: iconResult.url,
         pluginDir: dirName,
@@ -275,5 +275,30 @@ export const extensionManager = new class ExtensionManager {
     }
 
     return promise
+  }
+
+  /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
+  async checkLocalExtensionUpdate(checkList: CheckLocalExtensionUpdatePayload) {
+    const checkPromises = checkList.map(async ({ extID, newVersion }) => {
+      const pluginDir = path.join(this.extensionDir, extID)
+      const isExist = await fileExists(pluginDir)
+      if (!isExist) {
+        return ''
+      }
+      try {
+        const { manifestInfo } = await getPluginManifestInfo(pluginDir)
+        // 如果本地插件版本小于最新版本，则返回插件ID
+        if (compare(manifestInfo.version, newVersion, '<')) {
+          return extID
+        }
+      }
+      catch (error) {
+        return ''
+      }
+    })
+
+    const result = await Promise.all(checkPromises)
+
+    return result.filter((id): id is string => Boolean(id))
   }
 }()
