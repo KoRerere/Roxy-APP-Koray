@@ -4,11 +4,12 @@ import ryTable from '/@/components/ry-table'
 import ryButton from '/@/components/ry-button'
 import actions from '/@/components/actions.vue'
 import accountCreate from '/@/views/account/create'
+import remarkIcon from '/@/components/remark-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 
-import remarkIcon from '/@/components/remark-icon'
+import type { UserAddPlatformInfoCreatePayload, UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -27,7 +28,6 @@ const columns = ref([
   {
     title: 'Related Profiles',
     slot: 'related',
-
   },
 ])
 
@@ -51,8 +51,8 @@ const drawer = reactive({
   visible: false,
   data: {},
   title: '创建账号',
-  confirm: (data: any) => {
-    console.log('🚀 ~ drawer.confirm ~ data:', data)
+  confirm: (formData: UserMdfPlatformInfoCreatePayload) => {
+    createAccount(formData)
     drawer.visible = false
   },
 })
@@ -70,8 +70,15 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-function createAccount() {
+async function tableRequest(params: any) {
+  return await API.platform.userGetPlatformInfoV2List(params)
+}
 
+async function createAccount(formData: UserMdfPlatformInfoCreatePayload) {
+  const data = formData.id
+    ? await API.platform.userMdfPlatformInfoCreate(formData)
+    : await API.platform.userAddPlatformInfoCreate(formData)
+  console.log('🚀 ~ createAccount ~ data:', data)
 }
 
 async function addNote([formData, close]: [any, () => void], data: any) {
@@ -99,11 +106,6 @@ function deletePopup(data: any) {
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
     },
   })
-}
-
-async function tableRequest(params: any) {
-  // return await API.platform.userGetPlatformInfoV2List(params)
-  return await API.proxy.userGetProxyModuleList(params)
 }
 </script>
 
