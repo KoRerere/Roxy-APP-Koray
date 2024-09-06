@@ -4,7 +4,7 @@ import list from './install/index.vue'
 import hub from './hub/index.vue'
 const tabs = ref([
 	{ title: 'Intalled', value: 'intalled' },
-	{ title: 'Extension Hub', value: 'hub' }
+	{ title: 'Extension Hub', value: 'hub' },
 ])
 
 const tabsValue = ref('intalled')
@@ -14,9 +14,11 @@ const categoryList = ref<any>([])
 
 let extensionList = ref<any>([])
 
+const userExtensionList = ref()
 
 onBeforeMount(() => {
 	getExtensionHubCategory();
+	getUserExtensionList()
 })
 
 
@@ -35,6 +37,13 @@ async function getExtensionHubCategory() {
 	categoryList.value = data.rows;
 	getExtensionList({})
 	return data.rows;
+}
+
+// hub 插件列表
+async function getUserExtensionList() {
+	const { data } = await API.plugins.userGetPluginListList({})
+	userExtensionList.value = data.rows;
+	return data.rows
 }
 
 
@@ -100,10 +109,9 @@ function searchMethod(e: any) {
 						</Tab>
 					</TabList>
 
-
 					<TabPanels class="p-0 tabpanel">
 						<TabPanel value="intalled">
-							<list></list>
+							<list :dataList="userExtensionList"></list>
 						</TabPanel>
 						<TabPanel class="p-0" value="hub">
 							<hub @searchMethod="searchMethod" :dataList="categoryList"></hub>
