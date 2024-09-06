@@ -12,6 +12,8 @@
 import {
   UserAddSystemPluginCreateData,
   UserAddSystemPluginCreatePayload,
+  UserCheckAllPluginsVersionListData,
+  UserCheckAllPluginsVersionListParams,
   UserDelPluginInfoCreateData,
   UserDelPluginInfoCreatePayload,
   UserGetPluginCategoryListData,
@@ -22,8 +24,12 @@ import {
   UserMdfPluginStatusCreateData,
   UserMdfPluginStatusCreatePayload,
   UserRecordPluginUploadListData,
+  UserUpgradePluginsCreateData,
+  UserUpgradePluginsCreatePayload,
   UserUploadChromePluginsCreateData,
   UserUploadChromePluginsCreatePayload,
+  UserUploadChromePluginsV2CreateData,
+  UserUploadChromePluginsV2CreatePayload,
   UserUploadPluginInfoCreateData,
   UserUploadPluginInfoCreatePayload,
 } from "./data-contracts";
@@ -186,6 +192,59 @@ export class PluginsApi<SecurityDataType = unknown> {
   userMdfPluginStatusCreate = (data: UserMdfPluginStatusCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfPluginStatusCreateData, any>({
       path: `/user_mdf_plugin_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 分两种情况检测：1.如果是单个检测，就传pluginDir="xxxxxxxxxxxxxxxxxxx" 2.如果是多个检测，就传pluginDir=""就行
+   *
+   * @tags Plugins
+   * @name UserCheckAllPluginsVersionList
+   * @summary 用户检查自己所有插件版本
+   * @request GET:/user_check_all_plugins_version
+   * @response `200` `UserCheckAllPluginsVersionListData` 成功
+   */
+  userCheckAllPluginsVersionList = (query: UserCheckAllPluginsVersionListParams, params: RequestParams = {}) =>
+    this.http.request<UserCheckAllPluginsVersionListData, any>({
+      path: `/user_check_all_plugins_version`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 只有谷歌商店插件可以升级
+   *
+   * @tags Plugins
+   * @name UserUpgradePluginsCreate
+   * @summary 用户升级自己插件
+   * @request POST:/user_upgrade_plugins
+   * @response `200` `UserUpgradePluginsCreateData` 成功
+   */
+  userUpgradePluginsCreate = (data: UserUpgradePluginsCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpgradePluginsCreateData, any>({
+      path: `/user_upgrade_plugins`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar
+   *
+   * @tags Plugins
+   * @name UserUploadChromePluginsV2Create
+   * @summary 谷歌商店上传谷歌插件 (新版浏览器使用)
+   * @request POST:/user_upload_chrome_plugins_v2
+   * @response `200` `UserUploadChromePluginsV2CreateData` 成功
+   */
+  userUploadChromePluginsV2Create = (data: UserUploadChromePluginsV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUploadChromePluginsV2CreateData, any>({
+      path: `/user_upload_chrome_plugins_v2`,
       method: "POST",
       body: data,
       type: ContentType.Json,

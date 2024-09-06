@@ -32,7 +32,7 @@ export class BeforeLaunchTask {
   }
 
   /** 用于重新拉起浏览器 */
-  makeActive!: () => Promise<Browser>
+  makeBrowserActive!: () => Promise<Browser>
 
   constructor(private browserItem: BrowserItem) {
   }
@@ -90,7 +90,7 @@ export class BeforeLaunchTask {
     // 写入登录信息
     await this.writeLoginData()
 
-    this.makeActive = () => {
+    this.makeBrowserActive = () => {
       return puppeteer.launch({
         args: launchArgs,
         executablePath: this.exePath,
@@ -101,7 +101,7 @@ export class BeforeLaunchTask {
     }
 
     // 拉起浏览器
-    this.browser = await this.makeActive().catch((error) => {
+    this.browser = await this.makeBrowserActive().catch((error) => {
       this.sendErrorMessage('浏览器启动失败', error)
       return Promise.reject(error)
     })
