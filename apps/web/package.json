@@ -17,11 +17,11 @@
     "@vueuse/core": "^11.0.3",
     "date-fns": "^3.6.0",
     "pinia": "^2.2.2",
-    "pinia-plugin-persistedstate": "3.2.3",
+    "pinia-plugin-persistedstate": "4.0.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.0.5",
     "qs": "^6.13.0",
-    "vue": "^3.5.0",
+    "vue": "^3.5.3",
     "vue-draggable-plus": "^0.5.3",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.4.3"
@@ -44,7 +44,7 @@
     "unplugin-auto-import": "^0.18.2",
     "unplugin-vue-components": "^0.27.4",
     "vite": "^5.4.3",
-    "vite-plugin-vue-devtools": "^7.4.3",
-    "vue-tsc": "^2.1.4"
+    "vite-plugin-vue-devtools": "^7.4.4",
+    "vue-tsc": "^2.1.6"
   }
 }

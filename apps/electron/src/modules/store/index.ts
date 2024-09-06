@@ -11,7 +11,7 @@ interface StoreType {
   closeSoft: 'pop' | 'min' | 'exit'
   /** 性能监控 */
   memoryLimit: number
-  userInfo: UserGetUserInfoListData['data']
+  userInfo: UserGetUserInfoListData['data'] & { token?: string }
 }
 
 const sessionDir = app.getPath('sessionData')

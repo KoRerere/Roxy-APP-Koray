@@ -1,12 +1,12 @@
-import type { ReadStream } from 'node:fs'
 import { createWriteStream } from 'node:fs'
 import OSS from 'ali-oss'
 import type { UserGetOssCredentialListData } from '@roxy/backend-api'
+import type { ReadStream } from 'node:fs'
 import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
   store = {} as OSS
-  private timer?: NodeJS.Timeout
+  #timer?: NodeJS.Timeout
   /** 避免重复请求 */
   promise?: Promise<UserGetOssCredentialListData>
 
@@ -36,10 +36,10 @@ const _aliOSS = new class AliOSS {
       stsToken: data.securityToken,
     })
     // 避免存在多个定时器
-    clearTimeout(this.timer)
+    clearTimeout(this.#timer)
     // 提前 2 分钟刷新
     const timeout = +new Date(data.expiration) - Date.now() - 1000 * 60 * 2
-    this.timer = setTimeout(() => {
+    this.#timer = setTimeout(() => {
       this.refreshUploadTokenInterval()
     }, timeout)
   }

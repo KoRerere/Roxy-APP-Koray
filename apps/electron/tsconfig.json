@@ -10,7 +10,8 @@
       ]
     },
     "types": [
-      "node"
+      "node",
+      "vite/client"
     ],
     "strict": true,
     "noImplicitAny": false,
