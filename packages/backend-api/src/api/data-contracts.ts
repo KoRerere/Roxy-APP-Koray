@@ -3994,3 +3994,25 @@ export interface LoginGoogleCreateData {
   };
   msg: string;
 }
+
+export interface LoginGoogleV2CreatePayload {
+  /** 传入谷歌登录token */
+  googleToken: string;
+}
+
+export interface LoginGoogleV2CreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+  };
+  msg: string;
+}

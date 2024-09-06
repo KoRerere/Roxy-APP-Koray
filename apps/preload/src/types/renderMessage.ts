@@ -3,6 +3,7 @@ import type { ResourceUpdateMessage } from './mainMessage'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
+import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 
 export interface RenderMessage {
   /** 批量启动窗口 */
@@ -46,4 +47,6 @@ export interface RenderMessage {
   'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData>) => Promise<UploadExtensionToOSSResult>
   /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
   'extension:checkLocalExtensionUpdate': (payload: CheckLocalExtensionUpdatePayload) => Promise<string[]>
+  /** 获取本地已安装的插件 */
+  'extension:getInstalledExtensions': () => Promise<PluginMeta[]>
 }

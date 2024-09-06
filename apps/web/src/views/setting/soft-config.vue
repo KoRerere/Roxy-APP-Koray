@@ -54,13 +54,18 @@ const inputs = ref(getInputs(form))
 onMounted(async () => {
   console.log('mounted')
   getSoftConfig()
-  // 检查本地插件是否有更新
+  // 检查本地插件是否有更新, 返回的是需要更新的插件 ID 字符串数组
   const res = await window.electronAPI.send('extension:checkLocalExtensionUpdate', [{
     extID: 'anlikcnbgdeidpacdbdljnabclhahhmd',
     newVersion: '6.0.1',
   }])
 
   console.log('checkLocalExtensionUpdate', res)
+
+  // 获取本地已安装的插件
+  const result = await window.electronAPI.send('extension:getInstalledExtensions')
+
+  console.log('extension:getInstalledExtensions', result)
 })
 
 async function getSoftConfig() {

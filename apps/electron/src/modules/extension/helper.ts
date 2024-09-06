@@ -4,6 +4,8 @@ import { access, readFile, readdir } from 'node:fs/promises'
 import { mediaProtocolName } from '/@/constants'
 import { fileExists } from '/@/utils'
 
+export type PluginMeta = Awaited<ReturnType<typeof getPluginMeta>>
+
 /** 递归获取 manifest.json 所在目录 */
 async function getPluginDir(dir, level = 3) {
   if (level === 0) {
