@@ -433,7 +433,7 @@ function getSpeechSynthesis() {
   return [...newArray, ...voices]
 }
 
-export function ceateRandomFinger(inupts: any, count: number = 1) {
+function ceateRandomFinger(inupts: any, count: number = 1) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
 
   const fingerDetail = Array.from({ length: count }, () => ({
