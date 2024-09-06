@@ -1,11 +1,12 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { LoginCreateData } from '@roxy/backend-api'
+import type { UserGetUserInfoListData } from '@roxy/backend-api'
 
-type UserInfo = Partial<LoginCreateData['data']>
+type UserInfo = Partial<UserGetUserInfoListData['data']>
 
 export const useUserStore = defineStore('user', () => {
   const userInfo = ref<UserInfo>({})
+  const tokenRef = ref('')
 
   function setUserInfo(info: UserInfo) {
     userInfo.value = info
@@ -15,7 +16,11 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {}
   }
 
-  return { userInfo, setUserInfo, clearUserInfo }
+  function setToken(token: string) {
+    tokenRef.value = token
+  }
+
+  return { token: tokenRef, userInfo, setUserInfo, clearUserInfo, setToken }
 }, {
   persist: true,
 })

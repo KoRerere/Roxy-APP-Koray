@@ -4,7 +4,7 @@ import { getFormData } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 
-const { setUserInfo } = useUserStore()
+const { setUserInfo, setToken } = useUserStore()
 const router = useRouter()
 
 const toast = useToast()
@@ -47,13 +47,14 @@ async function handleSubmit() {
 }
 
 async function afterLogin(token: string) {
+  setToken(token)
   const { data } = await API.base.userGetUserInfoList()
-  data.token = token
+
   setUserInfo(data)
   console.log(data)
   toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
 
-  window.electronAPI.send('user:setUserInfo', data)
+  window.electronAPI.send('user:setUserInfo', { token, ...data })
   router.push({ name: 'home' })
 }
 
