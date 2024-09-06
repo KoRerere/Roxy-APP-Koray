@@ -1,19 +1,22 @@
 export const fingerprintInfoList = [
   {
     label: 'OS/Kernal',
-    value: 'macOS / Chrome 119',
-  },
-  {
-    label: 'OS Language',
-    value: 'en-US',
+    width: '15rem',
+    format: (winInfo) => {
+      return `${winInfo.os || '--'} / ${winInfo.coreVersion || '--'}`
+    },
   },
   {
     label: 'Browser Language',
-    value: 'en-US',
+    width: '15rem',
+    format: (winInfo) => {
+      return winInfo.language || '--'
+    },
   },
   {
     label: 'User Agent',
-    value: `Mozilla/5.0 (Windows NT 10.0) AppleWebKit/
-537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36`,
+    format: (winInfo) => {
+      return winInfo.userAgent || '--'
+    },
   },
 ]

@@ -10,10 +10,11 @@ class OpenAPIServer {
 
   constructor() {
     this.app = express()
-    this.init()
+    this.setupRoutes()
+    this.printRoutes()
   }
 
-  private init() {
+  private setupRoutes() {
     // 工作台
     const staticMiddleware = express.static(join(__dirname, './web'), { index: 'dashboard.html' })
     // 设置静态资源目录
@@ -47,7 +48,7 @@ class OpenAPIServer {
     })
 
     this.app.use('/api', indexRouter)
-    this.app.use('/browser', browserRouter)
+    this.app.use('/api/browser', browserRouter)
 
     this.app.use((req, res, next) => {
       res.status(404).send('Sorry can\'t find that!')
@@ -62,6 +63,32 @@ class OpenAPIServer {
 
   stop() {
     this.app.listen().close()
+  }
+
+  private printRoutes() {
+    const routes: any[] = []
+
+    this.app._router.stack.forEach((middleware: any) => {
+      if (middleware.route && middleware.route.path !== '*') { // routes registered directly on the app
+        routes.push({
+          path: middleware.route.path,
+          methods: middleware.route.methods,
+        })
+      }
+      else if (middleware.name === 'router') { // router middleware
+        middleware.handle.stack.forEach((handler: any) => {
+          const route = handler.route
+          if (route && route.path !== '*') {
+            routes.push({
+              path: route.path,
+              methods: route.methods,
+            })
+          }
+        })
+      }
+    })
+
+    console.log('Registered routes:', routes)
   }
 }
 

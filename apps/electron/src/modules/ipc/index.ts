@@ -1,12 +1,13 @@
 import { IPCMain } from '@roxy/electron-preload/main'
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
-import { aliOSS, getMacAddress, proxyDetection } from '/@/utils'
+import { aliOSS, getMacAddress, proxyDetection, tryRefreshUrl } from '/@/utils'
 import { store } from '/@/modules/store'
 import { dialog, shell } from 'electron'
 import { appUpdater } from '/@/modules/updater'
 import { extensionManager } from '/@/modules/extension'
 import { appConfig } from '/@/constants'
+import axios from 'axios'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -32,6 +33,11 @@ export function errorDataWrapper(message = 'error', data?: any, error?: any): Ma
 /** 代理检测 */
 ipcMain.on('proxy:detection', (winItemInfo) => {
   return proxyDetection(winItemInfo)
+})
+
+/** 代理 => 刷新 URL */
+ipcMain.on('proxy:refreshUrl', (refreshUrl) => {
+  return tryRefreshUrl(refreshUrl)
 })
 
 /** 批量启动浏览器 */
