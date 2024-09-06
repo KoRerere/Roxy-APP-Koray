@@ -22,7 +22,7 @@ const items = ref([
     command: () => {
       clearUserInfo()
       router.push({ name: 'login' })
-      toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 3000 })
+      toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
     },
   },
 ])
@@ -34,7 +34,6 @@ function toggle(event) {
 
 <template>
   <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" shape="circle"
-          @click="toggle"
-  />
+    @click="toggle" />
   <Menu id="overlay_menu" ref="menu" :model="items" :popup="true" />
 </template>

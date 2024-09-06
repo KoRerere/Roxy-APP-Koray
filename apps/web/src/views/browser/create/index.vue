@@ -71,7 +71,7 @@ async function createProfile(formData: any, openBrowser: boolean) {
 async function batchCreateProfile(params: any) {
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
-    toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 3000 })
+    toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 5000 })
     return
   }
 

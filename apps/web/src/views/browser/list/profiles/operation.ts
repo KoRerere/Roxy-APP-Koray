@@ -107,10 +107,9 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'addNotes',
-      label: '新增笔记 x',
+      label: '新增笔记',
       icon: 'mdi mdi-clipboard-list-outline',
       multiple: true,
-      quick: true,
     },
     {
       separator: true,
