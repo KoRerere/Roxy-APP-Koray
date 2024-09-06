@@ -151,7 +151,7 @@ async function handleInstall(params: any) {
   const { code, msg } = await API.plugins.userUploadChromePluginsCreateV2(params)
   if (code == 0) {
     // TODO 刷新列表
-    getUserExtensionList({})
+    tableRef.value.refresh()
   }
 }
 
