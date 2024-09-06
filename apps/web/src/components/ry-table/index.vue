@@ -149,11 +149,11 @@ async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
   _dataList.value = Array.isArray(props.dataList)
     ? props.dataList
-    : await tableRequest(requestParams)
+    : await _tableRequest(requestParams)
   _clearSelection()
 }
 
-async function tableRequest(requestParams: any) {
+async function _tableRequest(requestParams: any) {
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
   return data?.rows || []

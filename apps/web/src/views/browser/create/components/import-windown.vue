@@ -16,26 +16,12 @@ function onRemoveTemplatingFile (file, removeFileCallback, index) {
   totalSizePercent.value = totalSize.value / 10
 }
 
-function onClearTemplatingUpload (clear) {
-  clear()
-  totalSize.value = 0
-  totalSizePercent.value = 0
-}
-
 function onSelectedFiles (event) {
+  console.log('🚀 ~ onSelectedFiles ~ event:', event)
   files.value = event.files
   files.value.forEach((file) => {
     totalSize.value += Number.parseInt(formatSize(file.size))
   })
-}
-
-function uploadEvent (callback) {
-  totalSizePercent.value = totalSize.value / 10
-  callback()
-}
-
-function onTemplatedUpload () {
-  toast.add({ severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000 })
 }
 
 function formatSize (bytes) {
@@ -52,6 +38,21 @@ function formatSize (bytes) {
 
   return `${formattedSize} ${sizes[i]}`
 }
+
+async function customBase64Uploader (event) {
+  const file = event.files[0]
+  const reader = new FileReader()
+  /**
+   * blob:url
+   */
+  const blob = await fetch(file.objectURL).then(r => r.blob())
+
+  reader.readAsDataURL(blob)
+
+  reader.onloadend = function () {
+    const base64data = reader.result
+  }
+}
 </script>
 
 <template>
@@ -60,14 +61,15 @@ function formatSize (bytes) {
       Please download our <a>template file</a> here. After you finish editing, upload it through the
       following steps.
     </div>
-    <div>* We only support create up to 500 profiles every time.</div>
-    <FileUpload :pt="{ root: 'upload-custome' }" name="demo[]" url="/api/upload" :multiple="true" accept="image/*"
-      :max-file-size="1000000" @upload="onTemplatedUpload($event)" @select="onSelectedFiles">
+    <div>* We only support create up to 100 profiles every time.</div>
+    <!-- accept="image/*" -->
+    <FileUpload :pt="{ root: 'upload-custome' }" :max-file-size="5000000" custom-upload @select="onSelectedFiles"
+      @uploader="customBase64Uploader">
       <template #header="{ chooseCallback }">
         <Button class="upload-btn" icon="pi pi-upload" label="Upload template file" outlined severity="secondary"
           @click="chooseCallback()" />
       </template>
-      <template #content="{ files, uploadedFiles, removeUploadedFileCallback, removeFileCallback }">
+      <template #content="{ files: scvrfxiles, uploadedFiles, removeUploadedFileCallback, removeFileCallback }">
         <!-- <div v-if="files.length > 0">
             <h5>Pending</h5>
             <div class="flex flex-wrap gap-4">
@@ -104,10 +106,11 @@ function formatSize (bytes) {
             </div>
           </div> -->
         <div class="upload-area">
+          {{ scvrfxiles }}
           <span class="mdi mdi-file-outline upload-area-icon" />
           <div class="text-center">
             <div>Choose file and drop it here</div>
-            <div>Only .xlsx files supported, up to 50MB.</div>
+            <div>Only .xlsx files supported, up to 5MB.</div>
           </div>
           <Button class="invisible" label="placeholader" outlined severity="secondary" />
         </div>

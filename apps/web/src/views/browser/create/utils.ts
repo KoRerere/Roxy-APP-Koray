@@ -1,6 +1,3 @@
-import { API } from '/@/api'
-import { getFormDataByList, setInputValueByFormData } from '/@/utils'
-
 export const fontArray = [
   'BIZ UDPGothic Bold',
   'Georgia Pro Italic',
@@ -271,7 +268,7 @@ export const fontArray = [
 /**
  * 获取canvas随机值
  */
-function getCanvasContextNoiseValue() {
+export function getCanvasContextNoiseValue() {
   const randStr = 'ABCDEFGHIJKLMNOPQISTUVWXYZ0123456789'
   // 0-9随机数，原生js
   const n1 = Math.floor(Math.random() * 10)
@@ -287,7 +284,7 @@ function getCanvasContextNoiseValue() {
   return `${n1}${n2}${n3}`
 }
 
-function getClientRectsValue() {
+export function getClientRectsValue() {
   return {
     clientRectsNoiseFactorX: (2 * Math.random() - 1), // x 轴
     clientRectsNoiseFactorY: (2 * Math.random() - 1), // y轴
@@ -297,7 +294,7 @@ function getClientRectsValue() {
 /**
  * 生成随机字体
  */
-function getRandomFonts(number = 20) {
+export function getRandomFonts(number = 20) {
   const selectedFonts = []
 
   // 从字体列表中随机选择20个字体
@@ -317,7 +314,7 @@ function getRandomFonts(number = 20) {
 /**
  * 一般isLocalService 会有3个true
  */
-function getSpeechSynthesis() {
+export function getSpeechSynthesis() {
   const voices = [
     {
       name: 'Google Bahasa Indonesia',
@@ -431,52 +428,4 @@ function getSpeechSynthesis() {
     })
   }
   return [...newArray, ...voices]
-}
-
-function ceateRandomFinger(inupts: any, count: number = 1) {
-  const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
-
-  const fingerDetail = Array.from({ length: count }, () => ({
-    mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
-    mediaDeviceList: [
-      {
-        deviceType: 'audioinput',
-        deviceId: '',
-        label: '',
-        groupId: '',
-      },
-    ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-    font: fontType ? getRandomFonts() : null,
-    canvasValue: canvas ? getCanvasContextNoiseValue() : null,
-    webGLValue: webGL ? getCanvasContextNoiseValue() : null,
-    audioContextValue: audioContext ? getCanvasContextNoiseValue() : null,
-    speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
-    clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
-  }))
-
-  Promise.all([
-    getUaWebgl({ count, os, osVersion, coreVersion }),
-    getDeviceName({ os }),
-    getMacAddr({ macInfo, count }),
-  ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
-    uaWebgl.forEach((item, index) => {
-      const formData = { ...item, ...deviceName[index], ...macAddr[index] }
-      Object.assign(fingerDetail[index], formData)
-      setInputValueByFormData(inupts, formData)
-    })
-  })
-}
-
-function getUaWebgl(params) {
-  return API.window.userGetUaWebglV2List(params)
-}
-
-function getDeviceName(params) {
-  return API.window.userGetDeviceNameV2List(params)
-}
-
-function getMacAddr(params) {
-  return params.macInfo
-    ? window.electronAPI.send('app:getMacAddress').then(res => ({ data: [res] }))
-    : API.window.userGetMacAddrV2List(params)
 }
