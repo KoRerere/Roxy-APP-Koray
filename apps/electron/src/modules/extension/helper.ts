@@ -33,8 +33,8 @@ async function getPluginDir(dir, level = 3) {
   }
 }
 
-/** 获取插件信息 */
-export async function getPluginMeta(pluginDir) {
+/** 获取插件清单文件信息 */
+export async function getPluginManifestInfo(pluginDir) {
   try {
     // 插件目录下是否有 manifest.json
     // const manifestExist = await access(path.join(pluginDir, 'manifest.json')).then(() => true).catch(() => false)
@@ -47,6 +47,20 @@ export async function getPluginMeta(pluginDir) {
     // https://developer.chrome.com/docs/extensions/reference/api/i18n?hl=zh-cn
     const manifestFile = await readFile(path.join(targetPluginDir, 'manifest.json'), 'utf-8')
     const manifestInfo = JSON.parse(manifestFile)
+    return {
+      targetPluginDir,
+      manifestInfo,
+    }
+  }
+  catch (error) {
+    return Promise.reject(error)
+  }
+}
+
+/** 获取插件信息 */
+export async function getPluginMeta(pluginDir) {
+  try {
+    const { targetPluginDir, manifestInfo } = await getPluginManifestInfo(pluginDir)
 
     /** 插件图标 */
     let pluginIcon = ''

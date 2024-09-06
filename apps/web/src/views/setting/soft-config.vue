@@ -51,9 +51,16 @@ function getInputs(data: any) {
 
 const inputs = ref(getInputs(form))
 
-onMounted(() => {
+onMounted(async () => {
   console.log('mounted')
   getSoftConfig()
+  // 检查本地插件是否有更新
+  const res = await window.electronAPI.send('extension:checkLocalExtensionUpdate', [{
+    extID: 'anlikcnbgdeidpacdbdljnabclhahhmd',
+    newVersion: '6.0.1',
+  }])
+
+  console.log('checkLocalExtensionUpdate', res)
 })
 
 async function getSoftConfig() {
@@ -84,10 +91,12 @@ const openLogDir = () => window.electronAPI.send('app:showLogDir')
 const exeInfo = ref({})
 async function selectExtension(selectType: 'dir' | 'file') {
   try {
+    // 选择并解析本地插件
     const res = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
     exeInfo.value = res.data
     console.log('selectExtension', res)
     const { pluginDir, pluginIcon } = res.data
+    // 上传插件到OSS
     const uploadResult = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
     console.log('uploadResult', uploadResult)
   }

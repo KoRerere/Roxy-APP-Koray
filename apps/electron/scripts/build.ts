@@ -35,7 +35,6 @@ const options: Configuration = {
   files: [
     'dist',
     'resources',
-    '!node_modules/**', // 排除 node_modules 目录中的所有模块
   ],
   protocols: [
     {
