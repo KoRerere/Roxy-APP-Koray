@@ -53,6 +53,10 @@ defineEmits(['iconClick'])
   width: 100%;
 }
 
+:deep(.p-textarea) {
+  resize: none;
+}
+
 :deep(.p-iconfield) {
   .p-textarea:not(:last-child) {
     padding-right: calc((var(--p-form-field-padding-x) * 2) + var(--p-icon-size));

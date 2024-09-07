@@ -12,6 +12,7 @@ import browserControl from './components/browser-control.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import groupIcon from './components/group-icon.vue'
 import tagsIcon from './components/tags-icon.vue'
+import editCookies from './components/edit-cookies.vue'
 import { getFormData } from '/@/utils/index'
 
 import useColumns from '/@/hooks/useColumns'
@@ -25,6 +26,8 @@ import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 
 import type { DrawerType } from '/@/views/browser/components/drawers/props.ts'
+
+type Type = DrawerType | 'editCookies'
 
 const props = defineProps({
   currentFilter: {
@@ -53,11 +56,11 @@ const remarkRef = useTemplateRef('remark')
 const tableRef = useTemplateRef('windownTable')
 
 const drawer = reactive({
-  type: 'proxyList' as DrawerType,
+  type: 'proxyList' as Type,
   title: '',
   data: null,
   visible: false,
-  confirm: (type: DrawerType, data: any) => {
+  confirm: (type: Type, data: any) => {
     switch (type) {
       case 'proxyList':
         break
@@ -133,9 +136,9 @@ async function tableRequest(params: any) {
 }
 
 async function operationHandler(operate: any, data: any) {
-  console.log('🚀 ~ operationHandler ~ operate:', operate)
+  // console.log('🚀 ~ operationHandler ~ operate:', operate)
   /**
-   * 有批量操作
+   * 兼容批量操作
    */
   const _data = [].concat(data)
   const ids: number[] = _data.map((item: any) => item.id)
@@ -153,6 +156,11 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'addNotes':
       remarkRef.value?.onRemark()
+      break
+    case 'editCookies':
+      drawer.visible = true
+      drawer.type = 'editCookies'
+      drawer.data = data
       break
     case 'delete':
       warnPopup('确定要删除所选窗口？')
@@ -382,7 +390,8 @@ onBeforeUnmount(() => {
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
     :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data" />
+      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="data => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>
