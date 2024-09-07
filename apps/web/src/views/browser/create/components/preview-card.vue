@@ -54,7 +54,7 @@ const visible = ref(true)
   align-items: flex-start;
   margin: 12px;
   margin-left: 0;
-  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+  padding: var(--spacing-lg, 8px) 0;
   gap: var(--spacing-md, 6px);
   width: 340px;
   height: calc(100% - 24px);
@@ -78,6 +78,7 @@ const visible = ref(true)
     align-self: stretch;
     align-items: center;
     justify-content: space-between;
+    padding: 0 var(--spacing-xl, 12px);
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
@@ -89,7 +90,6 @@ const visible = ref(true)
   &-content {
     position: relative;
     flex: 1;
-    width: 100%;
     overflow: hidden;
 
     &::after {
@@ -103,6 +103,7 @@ const visible = ref(true)
     }
 
     &-list {
+      padding: 0 var(--spacing-xl, 12px);
       width: 100%;
       height: 100%;
       overflow-y: scroll;
@@ -138,6 +139,7 @@ const visible = ref(true)
     align-self: stretch;
     align-items: center;
     justify-content: flex-end;
+    padding: 0 var(--spacing-xl, 12px);
     height: 40px;
   }
 }

@@ -12,7 +12,7 @@ defineProps({
 <template>
   <label v-if="label" class="rx-label" :for="name">
     <span>{{ label }}</span>
-    <span v-if="tooltip" v-tooltip.top="tooltip" class="mdi mdi-alert-octagon rx-label-tooltip" />
+    <span v-if="tooltip" v-tooltip.top="tooltip" class="mdi mdi-information-outline rx-label-tooltip" />
   </label>
 </template>
 

@@ -97,7 +97,7 @@ onUnmounted(() => {
 
 <template>
   <div class="flex justify-between h-full">
-    <div class="flex flex-col flex-1 h-full">
+    <div class="flex flex-1 flex-col">
       <Tabs v-model:value="tabsValue">
         <TabList>
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -105,26 +105,46 @@ onUnmounted(() => {
           </Tab>
         </TabList>
       </Tabs>
-      <div v-if="isBatch" class="flex items-center justify-between batch">
-        <div>Profiles amount</div>
-        <div class="flex flex-col items-end">
-          <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
-            button-layout="horizontal" :step="1" fluid>
-            <template #incrementicon>
-              <span class="mdi mdi-plus" />
-            </template>
-            <template #decrementicon>
-              <span class="mdi mdi-minus" />
-            </template>
-          </InputNumber>
-          <div>Max profiles: {{ maxWindowCount }}. For more profiles please import profiles.</div>
+      <div class="flex-ovh-1">
+        <Accordion class="w-45 metadata" value="0">
+          <AccordionPanel value="0">
+            <AccordionHeader as="div" class="metadata-header">
+              Header I
+            </AccordionHeader>
+            <AccordionContent>
+              <div class="metadata-list">
+                <div v-for="item in ['Group', 'Tag', 'Notes']" :key="item" class="metadata-list-item">
+                  <span class="mdi mdi-information-outline" />
+                  <span class="flex-1">{{ item }}</span>
+                  <span class="mdi mdi-plus" />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionPanel>
+        </Accordion>
+        <div class="flex-ovh-1 flex-col content-scvr">
+          <div class="top-content">
+            <div v-if="isBatch" class="flex items-center justify-between batch">
+              <div>Profiles amount</div>
+              <div class="flex flex-col items-end">
+                <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
+                  button-layout="horizontal" :step="1" fluid>
+                  <template #incrementicon>
+                    <span class="mdi mdi-plus" />
+                  </template>
+                  <template #decrementicon>
+                    <span class="mdi mdi-minus" />
+                  </template>
+                </InputNumber>
+                <div>Max profiles: {{ maxWindowCount }}. For more profiles please import profiles.</div>
+              </div>
+            </div>
+            <rxEditDiv v-else v-model="windowName" class="top-content-windown-name" />
+          </div>
+          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="!isBatch"
+            @cancel="cancel" @create-open="(formData: any) => createProfile(formData, true)"
+            @create="(formData: any) => createProfile(formData, false)" />
         </div>
-      </div>
-      <rxEditDiv v-else v-model="windowName" class="window-name" />
-      <div class="flex-1 overflow-hidden">
-        <accordionInputs :accordions="accordions" :inputs-group="inputsGroup" :open-browser="!isBatch" @cancel="cancel"
-          @create-open="(formData: any) => createProfile(formData, true)"
-          @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>
     <previewCard :data="previewData" />
@@ -132,6 +152,46 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
+.top-content {
+  padding: var(--spacing-md, 16px) var(--spacing-sm, 12px);
+
+  &-windown-name {
+    padding: var(--spacing-md, 6px) 8px;
+  }
+}
+
+.metadata {
+  margin-top: 63px;
+  padding: 0 16px;
+
+  :deep(.p-accordionpanel) {
+    border: none;
+  }
+
+  &-header {
+    padding: var(--spacing-md, 6px) 8px;
+    background: var(--Color-neutrals-100, #f0f3f5) !important;
+    border-radius: 4px;
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4xl, 24px);
+
+    &-item {
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      gap: var(--spacing-md, 6px);
+    }
+  }
+}
+
+:deep(.p-accordioncontent-content) {
+  padding: 16px 8px;
+}
+
 .batch {
   padding: var(--spacing-none, 0px) 8px;
 

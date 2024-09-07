@@ -16,7 +16,7 @@ const hasRemark = computed(() => props.value)
 
 const dialog = useDialog()
 
-function onRemark() {
+function onRemark(value: string) {
   dialog.open(popup, {
     props: {
       showHeader: false,
@@ -30,7 +30,7 @@ function onRemark() {
         {
           type: 'text',
           name: 'remark',
-          value: props.value,
+          value: value || props.value,
         },
       ],
     },

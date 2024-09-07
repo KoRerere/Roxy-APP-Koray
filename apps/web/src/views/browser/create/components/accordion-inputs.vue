@@ -39,8 +39,8 @@ function getFormData(isOpen: boolean) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden">
-    <div v-if="accordions" class="flex-1 overflow-auto">
+  <div class="flex-ovh-1 flex-col">
+    <div v-if="accordions" class="flex-1 overflow-auto accordion-contianer">
       <Accordion :value="accordions.value" multiple>
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="index" :value="panels.value">
           <AccordionHeader as="div" class="accordion-header">
@@ -100,8 +100,8 @@ function getFormData(isOpen: boolean) {
 </template>
 
 <style lang="scss" scoped>
-.window-name {
-  padding: var(--spacing-md, 6px) 8px;
+.accordion-contianer {
+  padding: 0 var(--spacing-md, 12px);
 }
 
 .accordion-header {
