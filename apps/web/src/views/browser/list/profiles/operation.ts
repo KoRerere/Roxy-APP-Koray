@@ -1,6 +1,8 @@
 import { format } from 'date-fns'
+import { SimpleCache } from '/@/utils/cache'
 import { API } from '/@/api'
 
+const cache = SimpleCache.getInstance()
 export function getFilters(params: any = {}) {
   return [
     {
@@ -137,9 +139,9 @@ export async function getCustomFilters(params: any = {}) {
 
   // todo 下版本优化，点击二级菜单才调用接口
   const [{ data: platformList }, { data: groupList }, { data: labelList }] = await Promise.all([
-    API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
-    API.window.userGetGroupInfoList({ page_index: 1, page_size: 999 }),
-    API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
+    cache.fetch(API.platform.userGetPlatformInfoV2List, { page_index: 1, page_size: 999 }),
+    cache.fetch(API.window.userGetGroupInfoList, { page_index: 1, page_size: 999 }),
+    cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' }),
   ])
 
   return [

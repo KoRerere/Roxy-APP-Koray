@@ -10,6 +10,8 @@ import profileInfo from './components/profile-info.vue'
 import customFilters from './components/custom-filters.vue'
 import browserControl from './components/browser-control.vue'
 import multipleOperation from './components/multiple-operation.vue'
+import groupIcon from './components/group-icon.vue'
+import tagsIcon from './components/tags-icon.vue'
 import { getFormData } from '/@/utils/index'
 
 import useColumns from '/@/hooks/useColumns'
@@ -41,10 +43,10 @@ const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
-const filters = ref()
+const filters = ref(getFilters())
 const ctmFilters = ref()
-const sorts = ref()
-const operation = ref()
+const sorts = ref(getSorts())
+const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 
 const remarkRef = useTemplateRef('remark')
@@ -78,7 +80,7 @@ const drawer = reactive({
     try {
       const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-      tableRef.value.refresh()
+      tableRef.value?.refresh()
     }
     catch (error) {
       toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
@@ -163,7 +165,7 @@ async function batchModifyWindow(params: any) {
   try {
     const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
     toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-    tableRef.value.refresh()
+    tableRef.value?.refresh()
   }
   catch (error) {
     console.log('🚀 ~ deleteWindow ~ error:', error)
@@ -325,9 +327,6 @@ let canceCloselListener
 onMounted(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
-  filters.value = getFilters()
-  sorts.value = getSorts()
-  operation.value = getOperation()
 })
 
 onBeforeUnmount(() => {
@@ -356,7 +355,14 @@ onBeforeUnmount(() => {
       <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
     </template>
     <template #group>
-      <ryTag>123</ryTag>
+      <div class="flex gap-2">
+        <ryTag>
+          <groupIcon />
+        </ryTag>
+        <ryTag radius>
+          <tagsIcon />
+        </ryTag>
+      </div>
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
