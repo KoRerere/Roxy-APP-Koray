@@ -6,6 +6,7 @@ import Dashboard from './index.vue'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
+import '/@/assets/style.css'
 import '/@/assets/override.css'
 
 const app = createApp(Dashboard)
