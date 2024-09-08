@@ -42,7 +42,7 @@ function getFormData(isOpen: boolean) {
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto accordion-contianer">
       <Accordion :value="accordions.value" multiple>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="index" :value="panels.value">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>

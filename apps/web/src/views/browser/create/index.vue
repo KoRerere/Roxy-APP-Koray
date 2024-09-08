@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
+import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
-import { getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import { ceateRandomFinger, getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
@@ -14,7 +15,7 @@ const toast = useToast()
 const tabs = ref([
   { title: '单个创建', value: 'single' },
   { title: '批量创建', value: 'batch' },
-  { title: '批量导入x', value: 'import' },
+  { title: '批量导入', value: 'import' },
 ])
 const tabsValue = ref('single')
 const isBatch = ref(false)
@@ -22,11 +23,26 @@ const isBatch = ref(false)
 const windowName = ref('Untitled profile')
 const createCount = ref(1)
 const maxWindowCount = ref()
-
+const fileAnalyzeData = ref()
 createTableContext({ isBatch, createCount })
 
-const accordions = ref(getAccordions())
-const inputsGroup = ref(getInputsGroup())
+const [windowInputs, basicInputs, highLevelInputs, otherInputs] = getInputsGroup()
+
+const rawWindowInputs = ref(windowInputs.map((input: any) => deepClone(input)))
+const inputsGroup = computed(() => {
+  return tabsValue.value === 'import'
+    ? [basicInputs, highLevelInputs, otherInputs]
+    : [windowInputs, basicInputs, highLevelInputs, otherInputs]
+})
+
+const accordions = computed(() => {
+  const startIndex = tabsValue.value === 'import' ? 1 : 0
+  return {
+    value: tabsValue.value === 'import' ? [] : ['0'],
+    panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
+  }
+})
+
 const original = ref(getDefaultValue())
 const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
 
@@ -52,6 +68,10 @@ async function getUserInfo() {
   }
 }
 
+function importSuccess(data: any) {
+  fileAnalyzeData.value = data
+}
+
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {
     windowName: windowName.value,
@@ -60,10 +80,17 @@ async function createProfile(formData: any, openBrowser: boolean) {
     ...formData,
   }
 
-  if (isBatch.value) {
-    return batchCreateProfile(params)
+  switch (tabsValue.value) {
+    case 'single':
+      return singleCreateProfile(params, openBrowser)
+    case 'batch':
+      return batchCreateProfile(params)
+    case 'import':
+      return importProfile(params)
   }
+}
 
+async function singleCreateProfile(params: any, openBrowser: boolean) {
   const { data } = await API.window.userAddWindowInfoCreate(params)
   router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
 }
@@ -79,6 +106,17 @@ async function batchCreateProfile(params: any) {
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   await API.window.userBatchWindowInfoCreate(params)
+  router.replace({ name: 'browser-list' })
+}
+
+async function importProfile(params: any) {
+  if (!fileAnalyzeData.value) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Please select a file to import.' })
+    return
+  }
+  const fingerCount = fileAnalyzeData.value.excelData.length
+  const fingerDetail = await ceateRandomFinger([rawWindowInputs.value, ...inputsGroup.value], fingerCount)
+  await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail })
   router.replace({ name: 'browser-list' })
 }
 
@@ -124,7 +162,8 @@ onUnmounted(() => {
         </Accordion>
         <div class="flex-ovh-1 flex-col content-scvr">
           <div class="top-content">
-            <div v-if="isBatch" class="flex items-center justify-between batch">
+            <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" class="top-content-windown-name" />
+            <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
               <div>Profiles amount</div>
               <div class="flex flex-col items-end">
                 <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
@@ -136,13 +175,18 @@ onUnmounted(() => {
                     <span class="mdi mdi-minus" />
                   </template>
                 </InputNumber>
-                <div>Max profiles: {{ maxWindowCount }}. For more profiles please import profiles.</div>
+                <div class="batch-info">
+                  Max profiles: {{ maxWindowCount }}. For more profiles please <span class="batch-info-jump"
+                    @click="tabsValue = 'import'">import
+                    profiles</span>.
+                </div>
               </div>
             </div>
-            <rxEditDiv v-else v-model="windowName" class="top-content-windown-name" />
+            <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
           </div>
-          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="!isBatch"
-            @cancel="cancel" @create-open="(formData: any) => createProfile(formData, true)"
+          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup"
+            :open-browser="tabsValue === 'single'" @cancel="cancel"
+            @create-open="(formData: any) => createProfile(formData, true)"
             @create="(formData: any) => createProfile(formData, false)" />
         </div>
       </div>
@@ -201,6 +245,22 @@ onUnmounted(() => {
 
     :deep(.p-inputnumber-input) {
       text-align: center;
+    }
+  }
+
+  &-info {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    text-align: right;
+    font-family: Inter;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+
+    &-jump {
+      color: var(--Colors-Text-text-brand, #12a3fc);
+      cursor: pointer;
+      user-select: none;
     }
   }
 }

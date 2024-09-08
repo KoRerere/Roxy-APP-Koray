@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import importWindown from '/@/views/browser/create/components/import-windown.vue'
+import importWindow from '/@/views/browser/create/components/import-window.vue'
 </script>
 
 <template>
-  <importWindown />
+  <importWindow />
 </template>
 
-<style lang="scss" scoped></style>
+<style scoped></style>
