@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { createDefaultObject, filterFieldByValue, getFormDataByList, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis } from './utils'
 
@@ -187,16 +187,18 @@ export function getInputsGroup(data: any = {}) {
       type: 'textarea',
       label: '#xCookies',
       placeholder: 'Paste your cookies with JSON format',
-      name: 'cookies',
+      name: 'cookie',
       value: data.cookies,
       icon: 'mdi mdi-paperclip',
+      errorMsg: 'cookie格式错误, 请检查格式',
       formatValue: (self: any) => {
         return self.value
-        // ? JSON.parse(self.value).map(({ name, value, domain }) => ({ name, value, domain }))
-        // : value
       },
-      onBlur(self: any) {
-        console.log('🚀 ~ onBlur ~ self:', self)
+      onBlur() {
+        const { cookie } = getFormData(windowInputs)
+        if (!checkCookieFormat(cookie)) {
+          setInputFieldByInputKey(windowInputs, 'cookie', 'invalid', true)
+        }
       },
     },
   ])

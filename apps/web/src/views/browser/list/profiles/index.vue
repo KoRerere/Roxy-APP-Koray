@@ -3,7 +3,6 @@
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
-import remarkIcon from '/@/components/remark-icon'
 
 import drawersitems from '/@/views/browser/components/drawers/index.vue'
 import profileInfo from './components/profile-info.vue'
@@ -244,9 +243,12 @@ function onRemark(datas: any) {
   })
 }
 
-async function onEditCookies(data) {
-  console.log('🚀 ~ onEditCookies ~ data:', data)
-  console.log('🚀 ~ onEditCookies ~ data:', drawer.data)
+async function onEditCookies(cookie: any[]) {
+  const params = Object.assign({}, drawer.data, { cookie })
+  const { msg } = await API.window.userMdfWindowInfoSingleCreate(params)
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  drawer.visible = false
+  tableRef.value?.refresh()
 }
 /**
  * profile =================

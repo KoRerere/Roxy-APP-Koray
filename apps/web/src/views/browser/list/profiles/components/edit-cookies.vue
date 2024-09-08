@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import ryForm from '/@/components/ry-form'
+import { checkCookieFormat, isEmptyValue } from '/@/utils'
 import drawerContent from '/@/components/drawer-content.vue'
+import { useToast } from 'primevue/usetoast'
 
 const props = defineProps({
   data: {
@@ -15,36 +16,36 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm'])
 
-const cookies = ref(props.data.cookies)
+const toast = useToast()
 
+const cookie = isEmptyValue(props.data.cookie) ? '' : JSON.stringify(props.data.cookie)
+
+const cookies = ref(cookie)
 const isWrap = ref(false)
-
-function chechCookies() {
-  return false
-}
-
-function onBlur() {
-  // console.log('🚀 ~ onBlur ~ event:', cookies.value)
-}
+const loading = ref(false)
 
 function onConfirm() {
-  if (chechCookies()) {
-    emit('confirm', cookies.value)
+  if (cookies.value && checkCookieFormat(cookies.value)) {
+    loading.value = true
+    emit('confirm', JSON.parse(cookies.value))
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'cookie 格式错误', life: 5000 })
   }
 }
 </script>
 
 <template>
   <drawerContent title="编辑 cookies" v-bind="$attrs">
-    <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookies with JSON format" cols="40"
-      :auto-resize="false" @blur="onBlur" />
+    <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookie with JSON format" cols="40"
+      :auto-resize="false" />
     <template #footer>
       <div class="flex justify-between w-full">
         <div class="flex items-center">
           <Checkbox v-model="isWrap" input-id="wrap" binary />
           <label for="wrap" class="select-none ml-2 cursor-pointer">Text wrap</label>
         </div>
-        <ry-button label="Save Cookies" severity="info" @click="onConfirm" />
+        <ry-button label="Save Cookies" :loading="loading" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawerContent>

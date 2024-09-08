@@ -16,7 +16,7 @@ export function getFormData(
         return formData
       }
 
-      formVaildData(formData, input)
+      formValidator(formData, input)
 
       const name = input[options.keyName]
       const value = input[options.valueName]
@@ -50,13 +50,18 @@ export function getFormDataByList(
     : []
 }
 
-function formVaildData(formData: any, input: any) {
+function formValidator(formData: any, input: any) {
   if (hasOwnProperty(formData, input.name)) {
     throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
   }
   else if (input.required && isInvalid(input.value)) {
     input.invalid = true
     throw new Error(`Input '${input.name}' is required`)
+  }
+
+  if (isFunction(input.validator) && !input.validator(input)) {
+    input.invalid = true
+    throw new Error(`Input '${input.name}' is invalid`)
   }
 }
 

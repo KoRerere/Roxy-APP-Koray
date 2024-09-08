@@ -63,6 +63,16 @@ export function setRowsLoading(row: any, operateName: string, fn: (row: any) => 
   })
 }
 
-// export function EQ<T>(list: T[], field: keyof T): boolean {
-//   return list.some(item => !item[field])
-// }
+export function checkCookieFormat(cookie: string): boolean {
+  try {
+    if (cookie && typeof cookie === 'string') {
+      if (!Array.isArray(JSON.parse(cookie))) {
+        return false
+      }
+    }
+  }
+  catch (error) {
+    return false
+  }
+  return true
+}
