@@ -1,5 +1,5 @@
-import { isMainThread, parentPort } from 'node:worker_threads'
 import path from 'node:path'
+import { isMainThread, parentPort } from 'node:worker_threads'
 import AdmZip from 'adm-zip'
 import iconv from 'iconv-lite'
 

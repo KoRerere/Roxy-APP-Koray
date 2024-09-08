@@ -19,6 +19,7 @@ export default antfu(
       'jsdoc/convert-to-jsdoc-comments': ['warn'],
       'n/prefer-global/process': 'off',
       'vue/first-attribute-linebreak': 'off',
+      'ts/no-unused-expressions': 'off',
       'unused-imports/no-unused-vars': [
         'error',
         {

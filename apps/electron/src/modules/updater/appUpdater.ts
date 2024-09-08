@@ -1,13 +1,12 @@
-import path from 'node:path'
-import { MacUpdater, NsisUpdater } from 'electron-updater'
-import { app } from 'electron'
 import { compare } from 'compare-versions'
+import { app } from 'electron'
+import { MacUpdater, NsisUpdater } from 'electron-updater'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
-import { isMac } from '/@/utils'
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import { ipcMain } from '/@/modules/ipc'
 import { getMainWindow } from '/@/modules/app/mainWindow'
+import { ipcMain } from '/@/modules/ipc'
+import { isMac } from '/@/utils'
 
 const isDevelopment = !app.isPackaged
 

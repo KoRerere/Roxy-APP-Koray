@@ -1,13 +1,13 @@
 import { readFile, rm } from 'node:fs/promises'
-import { appConfig } from '/@/constants/appConfig'
-import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 import { join } from 'node:path'
+import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
-import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
+import { appConfig } from '/@/constants/appConfig'
 import { browserManager } from '/@/modules/browser/browser-manager'
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { ipcMain } from '/@/modules/ipc'
+import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
@@ -145,15 +145,16 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
 
+    const payload: ResourceUpdateMessage = {
+      type: 'kernel',
+      status: 'downloading',
+      percent: 0,
+      description: `正在下载内核 ${coreVersion}`,
+      version: availableCore.version,
+      coreVersion,
+    }
+
     try {
-      const payload: ResourceUpdateMessage = {
-        type: 'kernel',
-        status: 'downloading',
-        percent: 0,
-        description: `正在下载内核 ${coreVersion}`,
-        version: availableCore.version,
-        coreVersion,
-      }
       // 下载内核
       await downloadZipFile(availableCore.downloadUrl, outputZipPath, (progress) => {
         console.log(`Download progress: ${progress}%`)
@@ -179,6 +180,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       return Promise.reject(error)
     }
     finally {
+      // 无论成功与否，记得将其从下载队列中移除
       this.downloadingMap.delete(coreVersion)
     }
   }

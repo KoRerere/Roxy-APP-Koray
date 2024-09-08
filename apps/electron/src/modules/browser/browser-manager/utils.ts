@@ -1,7 +1,7 @@
+import { Buffer } from 'node:buffer'
+import crypto from 'node:crypto'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import language from '/@/constants/language.json'
-import crypto from 'node:crypto'
-import { Buffer } from 'node:buffer'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code

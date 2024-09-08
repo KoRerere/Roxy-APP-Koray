@@ -73,6 +73,7 @@ export const cacheToClear = [
   'Secure Preferences',
 ]
 
+/** 无效的 URL, 无须同步 */
 export const invalidUrls = [
   'chrome://newtab/',
   'chrome-extension://',

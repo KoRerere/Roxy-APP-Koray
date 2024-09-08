@@ -1,15 +1,15 @@
-import type { UnwrapRowType, UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
-import type { ResourceUpdateMessage } from './mainMessage'
-import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
-import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
+import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
+import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
+import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData, UserGetUserInfoListData } from '@roxy/backend-api'
+import type { ResourceUpdateMessage } from './mainMessage'
 
 export interface RenderMessage {
   /** 批量启动窗口 */
-  'browser:batchLaunch': (winItemList: WindowItemType[]) => any
+  'browser:batchLaunch': (winItemList: WindowItemType[]) => void
   /** 批量重启窗口 */
-  'browser:batchRelaunch': (winItemList: WindowItemType[]) => any
+  'browser:batchRelaunch': (winItemList: WindowItemType[]) => void
   /** 批量关闭窗口 */
   'browser:batchClose': (dirIds: string[]) => void
   /** 批量删除窗口 */
@@ -21,7 +21,7 @@ export interface RenderMessage {
   'proxy:refreshUrl': (refreshUrl: string) => Promise<boolean>
 
   /** 保存用户信息 */
-  'user:setUserInfo': (userInfo: any) => void
+  'user:setUserInfo': (userInfo: UserGetUserInfoListData['data'] & { token?: string }) => void
 
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void

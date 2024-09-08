@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import dashboardBgSvg from '/@/assets/image/dashboard-bg.svg?raw'
-import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
+import { ref } from 'vue'
+import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { fingerprintInfoList } from './constants'
+import dashboardBgSvg from '/@/assets/image/dashboard-bg.svg?raw'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
@@ -12,6 +12,7 @@ const toast = useToast()
 const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
 /** 获取窗口详情 loading */
 const fetchWindowInfoLoading = ref(false)
+const refreshUrlLoading = ref(false)
 const testProxyLoading = ref(false)
 const proxyInfo = ref<Record<string, any>>({})
 
@@ -53,7 +54,8 @@ function proxyDetection() {
       }
       else {
         console.error('代理检查失败')
-        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 300000 })
+        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+        proxyInfo.value = {}
       }
     })
     .catch(error => console.error(error))
@@ -65,13 +67,34 @@ function proxyDetection() {
 }
 
 /** 刷新 URL */
-function refreshURL(url) {
-  fetch(`http://localhost:8888/api/proxy/refresh-url?url=${url}`)
+function refreshURL() {
+  refreshUrlLoading.value = true
+  fetch(`http://localhost:8888/api/proxy/refresh-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshUrl: windowInfo.value.refreshUrl }),
+  })
     .then(response => response.json())
-    .then((data) => {
-      console.log(data)
+    .then((result) => {
+      console.log(result)
+      // 刷新成功，重新检查代理
+      if (result.data) {
+        proxyDetection()
+      }
+      else {
+        console.error('刷新 URL 失败')
+        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+      }
     })
-    .catch(error => console.error(error))
+    .catch(error => () => {
+      console.error(error)
+      toast.add({ severity: 'error', summary: 'Error', detail: '刷新 URL 失败', life: 3000 })
+    })
+    .finally(() => {
+      refreshUrlLoading.value = false
+    })
 }
 
 proxyDetection()
@@ -99,12 +122,21 @@ proxyDetection()
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
         <div v-else class="city-logo" />
         <div class="operate">
-          <div class="btn" @click="refreshURL">
-            Refresh URL
-          </div>
-          <div class="btn" @click="proxyDetection">
-            Test proxy
-          </div>
+          <Button
+            v-if="windowInfo.refreshUrl"
+            class="btn"
+            label="Refresh URL" icon="pi pi-sync"
+            :loading="refreshUrlLoading" outlined
+            :disabled="refreshUrlLoading || testProxyLoading"
+            @click="refreshURL"
+          />
+          <Button
+            class="btn"
+            label="Test proxy" icon="pi pi-wifi"
+            :loading="testProxyLoading" outlined
+            :disabled="refreshUrlLoading || testProxyLoading"
+            @click="proxyDetection"
+          />
         </div>
       </div>
       <div class="min-w-xs">
@@ -364,11 +396,11 @@ proxyDetection()
         border-radius: var(--radius-md, 6px);
         border: 1px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
         background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-        cursor: pointer;
         /* shadow-sm */
         box-shadow:
           0px 4px 4px -1px rgba(0, 0, 0, 0.02),
           0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+        color: #000;
       }
     }
   }

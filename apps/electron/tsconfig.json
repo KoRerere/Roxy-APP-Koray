@@ -23,8 +23,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "dashboard/**/*.ts",
-    "./types/**/*.d.ts"
+    "./types"
   ],
   "exclude": [
     "**/*.spec.ts",

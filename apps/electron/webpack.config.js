@@ -5,7 +5,6 @@ const TerserPlugin = require('terser-webpack-plugin')
 module.exports = {
   mode: 'production', // 或者 'development'
   target: 'electron-main', // 目标环境设置为 Node.js
-  // 入口文件，指向你应用的主文件
   entry: {
     main: './dist-vite/index.cjs',
     extensionWorker: './dist-vite/extensionWorker.cjs',
