@@ -3,7 +3,7 @@ import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getFormDataByList } from '/@/utils'
-import { getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
+import { getInputsGroup } from './form-inputs'
 import { API } from '/@/api'
 import { createTableContext } from './hooks/useContext'
 
@@ -11,7 +11,11 @@ const router = useRouter()
 const route = useRoute()
 
 const windowName = ref('edit profile')
-const accordions = ref()
+const accordions = ref({
+  value: ['0'],
+  panels: ['window', 'Basic', 'highLevel', 'other']
+    .map((title, index) => ({ title, value: index.toString() })),
+})
 const inputsGroup = ref()
 const original = ref()
 
@@ -35,14 +39,11 @@ function cancel() {
 
 onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
-  console.log('🚀 ~ onMounted ~ data:', data)
 
   windowName.value = data.windowName
-  accordions.value = getAccordions()
   inputsGroup.value = getInputsGroup(data)
   original.value = {
-    id: data.id,
-    ...getDefaultValue(data),
+    ...data,
   }
 })
 
@@ -53,9 +54,11 @@ onUnmounted(() => {
 
 <template>
   <div class="flex justify-between h-full">
-    <div class="flex flex-col flex-1 h-full">
-      <rxEditDiv v-model="windowName" class="window-name" />
-      <div class="flex-1 overflow-hidden">
+    <div class="flex-ovh-1 flex-col">
+      <div class="top-content">
+        <rxEditDiv v-model="windowName" class="window-name" />
+      </div>
+      <div class="flex-ovh-1">
         <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
           :open-browser="false" @cancel="cancel" @create="createProfile" />
       </div>
@@ -64,4 +67,12 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.top-content {
+  padding: var(--spacing-md, 16px) var(--spacing-sm, 12px);
+
+  &-windown-name {
+    padding: var(--spacing-md, 6px) 8px;
+  }
+}
+</style>

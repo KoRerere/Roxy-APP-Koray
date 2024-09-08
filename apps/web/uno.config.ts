@@ -22,6 +22,7 @@ export default defineConfig({
     'flex-ac': 'flex justify-around items-center',
     'flex-bc': 'flex justify-between items-center',
     'flex-cc': 'flex justify-center items-center',
+    'flex-ovh-1': 'flex overflow-hidden flex-1',
   },
   theme: {
     colors: {

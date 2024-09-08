@@ -75,7 +75,7 @@ async function tableRequest(params: UserGetPlatformInfoV2ListParams) {
 </script>
 
 <template>
-  <drawer-content title="账号列表" v-bind="$attrs">
+  <drawerContent title="账号列表" v-bind="$attrs">
     <div class="h-full">
       <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-config="false"
         :filters="filters">
@@ -106,7 +106,7 @@ async function tableRequest(params: UserGetPlatformInfoV2ListParams) {
         </template>
       </ry-table>
     </div>
-  </drawer-content>
+  </drawerContent>
 </template>
 
 <style lang="scss" scoped>

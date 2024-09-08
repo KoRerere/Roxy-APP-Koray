@@ -139,7 +139,8 @@ function getAccountOperation() {
       {{ data.windowSortNum }}
     </div>
     <div class="flex justify-between state">
-      <div v-for="item in list" :key="item.key" v-tooltip.top="item.tooltip" class="state-item">
+      <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
+        class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
           @click.stop="(event) => onClick(event, item.key)">
           <img class="state-icons-img" :src="item.image">
