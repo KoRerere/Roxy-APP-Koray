@@ -8,15 +8,7 @@ defineProps({
   },
 })
 
-const fakedata = fake()
-
-function fake() {
-  return Object.fromEntries(Array.from({ length: 100 }, () => [Math.random().toString(36).slice(-6), Math.random().toString(36)]))
-}
-
-function shuffle() {
-
-}
+defineEmits(['shuffle'])
 
 const visible = ref(true)
 </script>
@@ -42,7 +34,7 @@ const visible = ref(true)
     </div>
     <div v-if="visible" class="preview-footer">
       <ryButton label="Shuffle profiles" icon="mdi mdi-shuffle-variant" outlined severity="secondary"
-        @click="shuffle" />
+        @click="$emit('shuffle')" />
     </div>
   </div>
 </template>
@@ -91,6 +83,7 @@ const visible = ref(true)
     position: relative;
     flex: 1;
     overflow: hidden;
+    word-break: break-all;
 
     &::after {
       content: ' ';

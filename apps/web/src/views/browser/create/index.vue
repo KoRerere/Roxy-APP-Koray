@@ -4,7 +4,7 @@ import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
 import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
-import { ceateRandomFinger, getAccordions, getDefaultValue, getInputsGroup } from './form-inputs'
+import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-inputs'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { createTableContext } from './hooks/useContext'
@@ -27,14 +27,17 @@ const fileAnalyzeData = ref()
 createTableContext({ isBatch, createCount })
 
 const [windowInputs, basicInputs, highLevelInputs, otherInputs] = getInputsGroup()
-
+/**
+ *批量导入时 os,osVersion,coreVersion 使用默认值, 此处copy一份原始数据
+ */
+const original = ref(getDefaultValue())
 const rawWindowInputs = ref(windowInputs.map((input: any) => deepClone(input)))
+
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
     ? [basicInputs, highLevelInputs, otherInputs]
     : [windowInputs, basicInputs, highLevelInputs, otherInputs]
 })
-
 const accordions = computed(() => {
   const startIndex = tabsValue.value === 'import' ? 1 : 0
   return {
@@ -42,9 +45,14 @@ const accordions = computed(() => {
     panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
 })
-
-const original = ref(getDefaultValue())
-const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
+const previewInputs = computed(() => {
+  return tabsValue.value === 'import'
+    ? [rawWindowInputs.value, ...inputsGroup.value]
+    : inputsGroup.value
+})
+const previewData = computed(() => {
+  return getFormDataByList(previewInputs.value, {}, { keyName: 'label', valueName: 'value' })
+})
 
 watch(() => tabsValue.value, (value) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
@@ -53,9 +61,7 @@ watch(() => tabsValue.value, (value) => {
   if (isBatch.value) {
     getUserInfo()
   }
-  if (tabsValue.value !== 'import') {
-    ceateRandomFinger(inputsGroup.value)
-  }
+  ceateRandomFinger(previewInputs.value)
 })
 
 async function getUserInfo() {
@@ -72,6 +78,10 @@ function importSuccess(data: any) {
   fileAnalyzeData.value = data
 }
 
+function onShuffle() {
+  ceateRandomFinger(previewInputs.value)
+}
+
 async function createProfile(formData: any, openBrowser: boolean) {
   const params = {
     windowName: windowName.value,
@@ -79,7 +89,6 @@ async function createProfile(formData: any, openBrowser: boolean) {
     ...original.value,
     ...formData,
   }
-
   switch (tabsValue.value) {
     case 'single':
       return singleCreateProfile(params, openBrowser)
@@ -102,7 +111,7 @@ async function batchCreateProfile(params: any) {
     return
   }
 
-  const fingerDetail = await ceateRandomFinger(inputsGroup.value, createCount.value)
+  const fingerDetail = await ceateRandomFinger(previewInputs.value, createCount.value)
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   await API.window.userBatchWindowInfoCreate(params)
@@ -115,7 +124,7 @@ async function importProfile(params: any) {
     return
   }
   const fingerCount = fileAnalyzeData.value.excelData.length
-  const fingerDetail = await ceateRandomFinger([rawWindowInputs.value, ...inputsGroup.value], fingerCount)
+  const fingerDetail = await ceateRandomFinger(previewInputs.value, fingerCount)
   await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail })
   router.replace({ name: 'browser-list' })
 }
@@ -126,10 +135,6 @@ function cancel() {
 
 onMounted(() => {
   ceateRandomFinger(inputsGroup.value)
-})
-
-onUnmounted(() => {
-
 })
 </script>
 
@@ -191,7 +196,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <previewCard :data="previewData" />
+    <previewCard :data="previewData" @shuffle="onShuffle" />
   </div>
 </template>
 
@@ -212,6 +217,10 @@ onUnmounted(() => {
     border: none;
   }
 
+  :deep(.p-accordioncontent-content) {
+    padding: 16px 8px;
+  }
+
   &-header {
     padding: var(--spacing-md, 6px) 8px;
     background: var(--Color-neutrals-100, #f0f3f5) !important;
@@ -230,10 +239,6 @@ onUnmounted(() => {
       gap: var(--spacing-md, 6px);
     }
   }
-}
-
-:deep(.p-accordioncontent-content) {
-  padding: 16px 8px;
 }
 
 .batch {

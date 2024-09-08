@@ -37,7 +37,6 @@ function getMacAddr(params: any) {
 
 export async function ceateRandomFinger(inupts: any, count: number = 1) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
-  console.log('🚀 ~ ceateRandomFinger ~ os, osVersion, coreVersion:', os, osVersion, coreVersion)
 
   const fingerDetail = Array.from({ length: count }, () => {
     return filterFieldByValue({
@@ -73,30 +72,6 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
   })
 
   return fingerDetail
-}
-
-export function getAccordions() {
-  return {
-    value: ['0'],
-    panels: [
-      {
-        title: 'window',
-        value: '0',
-      },
-      {
-        title: 'Basic',
-        value: '1',
-      },
-      {
-        title: 'highLevel',
-        value: '2',
-      },
-      {
-        title: 'other',
-        value: '3',
-      },
-    ],
-  }
 }
 
 export function getInputsGroup(data: any = {}) {
@@ -157,7 +132,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'select',
-      label: '#x浏览器内核',
+      label: '浏览器内核',
       placeholder: '请选择浏览器内核',
       name: 'coreVersion',
       value: $dict_map.coreVersion[0],
