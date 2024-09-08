@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import dashboardBgSvg from '/@/assets/image/dashboard-bg.svg?raw'
-import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
-import { fingerprintInfoList } from './constants'
+import { onBeforeMount, ref, useTemplateRef } from 'vue'
+import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { fingerprintInfoList, profileInfoList } from './constants'
+import { getTimeOffset } from './utils'
+import dashboardBgSvg from '/@/assets/image/dashboard-bg.svg?raw'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
@@ -12,8 +14,16 @@ const toast = useToast()
 const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
 /** 获取窗口详情 loading */
 const fetchWindowInfoLoading = ref(false)
+const refreshUrlLoading = ref(false)
 const testProxyLoading = ref(false)
 const proxyInfo = ref<Record<string, any>>({})
+const ipLocationEl = useTemplateRef('ipLocationEl')
+const now = useDateFormat(useNow(), 'YYYY-MM-DD HH:mm:ss')
+/** 当前时区偏移量 */
+const offsetHours = getTimeOffset()
+/** 时区标识符 */
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const isMobile = useMediaQuery('(max-width: 428px)')
 
 /** 获取当前窗口信息 */
 function getWindowInfo() {
@@ -33,16 +43,12 @@ function getWindowInfo() {
     })
     .catch(error => console.error(error))
     .finally(() => {
-      setTimeout(() => {
-        fetchWindowInfoLoading.value = false
-      }, 1500)
+      fetchWindowInfoLoading.value = false
     })
 }
 
-getWindowInfo()
-
 /** 代理检查 */
-function proxyDetection() {
+function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
   fetch(`http://localhost:8888/api/proxy/detection?dirId=${dirId}`)
     .then(response => response.json())
@@ -50,31 +56,58 @@ function proxyDetection() {
       console.log(result)
       if (result.code === 0) {
         proxyInfo.value = result.data
+        // 通过点击事件触发的检查，显示成功提示
+        if (event) {
+          toast.add({ severity: 'success', summary: 'Test proxy success', life: 3000 })
+        }
       }
       else {
         console.error('代理检查失败')
-        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 300000 })
+        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+        proxyInfo.value = {}
       }
     })
     .catch(error => console.error(error))
     .finally(() => {
-      setTimeout(() => {
-        testProxyLoading.value = false
-      }, 1500)
+      testProxyLoading.value = false
     })
 }
 
 /** 刷新 URL */
-function refreshURL(url) {
-  fetch(`http://localhost:8888/api/proxy/refresh-url?url=${url}`)
+function refreshURL() {
+  refreshUrlLoading.value = true
+  fetch(`http://localhost:8888/api/proxy/refresh-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshUrl: windowInfo.value.refreshUrl }),
+  })
     .then(response => response.json())
-    .then((data) => {
-      console.log(data)
+    .then((result) => {
+      console.log(result)
+      // 刷新成功，重新检查代理
+      if (result.data) {
+        proxyDetection()
+      }
+      else {
+        console.error('刷新 URL 失败')
+        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+      }
     })
-    .catch(error => console.error(error))
+    .catch(error => () => {
+      console.error(error)
+      toast.add({ severity: 'error', summary: 'Error', detail: '刷新 URL 失败', life: 3000 })
+    })
+    .finally(() => {
+      refreshUrlLoading.value = false
+    })
 }
 
-proxyDetection()
+onBeforeMount(() => {
+  getWindowInfo()
+  proxyDetection()
+})
 </script>
 
 <template>
@@ -90,7 +123,7 @@ proxyDetection()
         </div>
       </div>
       <div class="time">
-        Europe/London (GMT+01:00) 2024-08-16 08:26
+        {{ timeZone }} (GMT{{ offsetHours }}) <span class="now">{{ now }}</span>
       </div>
     </div>
 
@@ -98,16 +131,27 @@ proxyDetection()
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
         <div v-else class="city-logo" />
-        <div class="operate">
-          <div class="btn" @click="refreshURL">
-            Refresh URL
+        <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
+          <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
+            <Button
+              v-if="windowInfo.refreshUrl"
+              class="btn"
+              label="Refresh URL" icon="pi pi-sync"
+              :loading="refreshUrlLoading" outlined
+              :disabled="refreshUrlLoading || testProxyLoading"
+              @click="refreshURL"
+            />
+            <Button
+              class="btn"
+              label="Test proxy" icon="pi pi-wifi"
+              :loading="testProxyLoading" outlined
+              :disabled="refreshUrlLoading || testProxyLoading"
+              @click="proxyDetection"
+            />
           </div>
-          <div class="btn" @click="proxyDetection">
-            Test proxy
-          </div>
-        </div>
+        </Teleport>
       </div>
-      <div class="min-w-xs">
+      <div ref="ipLocationEl" class="min-w-xs">
         <div class="location">
           <Skeleton v-if="testProxyLoading" height="1.7rem" />
           <template v-else>
@@ -130,39 +174,16 @@ proxyDetection()
         <div class="title">
           Profile Info
         </div>
-        <div class="item">
-          <div class="label">
-            Notes:
-          </div>
-          <div class="value">
-            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae
-          </div>
-        </div>
-        <div class="item">
-          <div class="label">
-            Group:
-          </div>
-          <div class="value">
-            --
-          </div>
-        </div>
-        <div class="item">
-          <div class="label">
-            Tags:
-          </div>
-          <div class="value">
-            <div class="tag-wrap">
-              <div class="tag">
-                <img src="/@/assets/image/tags/tag-red.svg">
-                Blocked
-              </div>
-              <div class="tag">
-                <img src="/@/assets/image/tags/tag-blue.svg">
-                Health
-              </div>
+        <template v-for="item in profileInfoList" :key="item.label">
+          <div class="item">
+            <div class="label">
+              {{ item.label }}:
+            </div>
+            <div class="value">
+              <component :is="item.customRender(windowInfo)" />
             </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <div class="list">
@@ -186,16 +207,43 @@ proxyDetection()
         </template>
       </div>
     </div>
+
+    <div class="footer">
+      <div class="info">
+        IP region is tested by <a href="https://ip123.in/" target="_blank">ip123.in</a>. This page costs you about 5KB :)
+      </div>
+      <div class="version">
+        version 1.0.0
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.layout {
+  display: flex;
+  max-width: 1000px;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-2xl, 16px);
+  padding: 16px 15px 90px 15px;
+}
+
 .header {
   display: flex;
   padding-top: var(--spacing-2xl, 16px);
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
+
+  @media (max-width: 540px) {
+    & {
+      flex-direction: column;
+      gap: var(--spacing-2xl, 16px);
+      align-items: flex-start;
+    }
+  }
 
   .left {
     display: flex;
@@ -236,16 +284,16 @@ proxyDetection()
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-  }
-}
 
-.layout {
-  display: flex;
-  max-width: 1000px;
-  margin: 0 auto;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--spacing-2xl, 16px);
+    .now {
+      color: var(--Chrome-Light-Active, #36373a);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+    }
+  }
 }
 
 .card {
@@ -301,6 +349,7 @@ proxyDetection()
           display: flex;
           align-items: center;
           gap: var(--spacing-md, 6px);
+          flex-wrap: wrap;
 
           .tag {
             display: flex;
@@ -313,9 +362,12 @@ proxyDetection()
             border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);
             background: var(--Component-Colors-Tag-bg, #f0f3f5);
 
-            img {
-              width: 16px;
-              height: 16px;
+            .dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              margin: 0 4px;
+              background-color: var(--tag-color);
             }
           }
         }
@@ -333,6 +385,12 @@ proxyDetection()
   overflow: hidden;
   position: relative;
 
+  @media (max-width: 428px) {
+    & {
+      gap: var(--oversize-spacing-2rem, 32px);
+    }
+  }
+
   > * {
     z-index: 1;
   }
@@ -349,27 +407,27 @@ proxyDetection()
       background-color: #171c1f;
       border-radius: 50%;
     }
+  }
 
-    .operate {
+  .operate {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl, 12px);
+    .btn {
       display: flex;
+      min-width: 24px;
+      padding: var(--spacing-md, 6px) 10px;
+      justify-content: center;
       align-items: center;
-      gap: var(--spacing-xl, 12px);
-      .btn {
-        display: flex;
-        min-width: 24px;
-        padding: var(--spacing-md, 6px) 10px;
-        justify-content: center;
-        align-items: center;
-        gap: var(--spacing-md, 6px);
-        border-radius: var(--radius-md, 6px);
-        border: 1px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-        background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-        cursor: pointer;
-        /* shadow-sm */
-        box-shadow:
-          0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-          0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-      }
+      gap: var(--spacing-md, 6px);
+      border-radius: var(--radius-md, 6px);
+      border: 1px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+      background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+      /* shadow-sm */
+      box-shadow:
+        0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+        0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+      color: #000;
     }
   }
 
@@ -416,5 +474,31 @@ proxyDetection()
   font-style: normal;
   font-weight: 600;
   line-height: var(--Line-Height-display-sm, 38px); /* 118.75% */
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  .info {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  }
+
+  .version {
+    color: var(--Colors-Text-text-subtle, #c7cdd1);
+    text-align: right;
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  }
 }
 </style>

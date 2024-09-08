@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { app, autoUpdater, shell } from 'electron'
 import { restoreOrCreateWindow } from './mainWindow'
-import { ipcMain } from '/@/modules/ipc'
-import { createTray } from '/@/modules/app/tray'
 import { appProtocolName } from '/@/constants'
+import { createTray } from '/@/modules/app/tray'
+import { ipcMain } from '/@/modules/ipc'
 
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
@@ -38,7 +38,12 @@ app.on('before-quit', (event) => {
     console.log('Application is quitting for update.')
   }
   else {
+    event.preventDefault()
     console.log('Application is quitting normally.')
+    setTimeout(() => {
+      // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
+      app.exit()
+    }, 5000)
   }
 })
 
@@ -65,12 +70,14 @@ export function setupApp() {
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
+    // Windows 系统需要通过这种方式获取参数
     if (commandLine.at(-1)?.includes(`${appProtocolName}://oauth2callback`)) {
       console.log('oauth2callback: ', commandLine)
       ipcMain.send('oauth2:google-callback', `?${commandLine.at(-1)?.split('?')[1]}`)
     }
   })
 
+  // macOS 系统通过 open-url 事件获取参数
   app.on('open-url', (event, url) => {
     ipcMain.send('oauth2:google-callback', `?${url.split('?')[1]}`)
   })
@@ -86,11 +93,12 @@ export function setupApp() {
   /**
    * Shout down background process if all windows was closed
    */
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit()
-    }
-  })
+  // app.on('window-all-closed', () => {
+  //   if (process.platform !== 'darwin') {
+  //     console.log('All windows was closed. Quit app.')
+  //     app.quit()
+  //   }
+  // })
 
   /**
    * @see https://www.electronjs.org/docs/v14-x-y/api/app#event-activate-macos Event: 'activate'

@@ -1,13 +1,12 @@
 import { IPCMain } from '@roxy/electron-preload/main'
-import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
-import { browserManager, chromeCoreManager } from '/@/modules/browser'
-import { aliOSS, getMacAddress, proxyDetection, tryRefreshUrl } from '/@/utils'
-import { store } from '/@/modules/store'
 import { dialog, shell } from 'electron'
-import { appUpdater } from '/@/modules/updater'
-import { extensionManager } from '/@/modules/extension'
+import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { appConfig } from '/@/constants'
-import axios from 'axios'
+import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { extensionManager } from '/@/modules/extension'
+import { store } from '/@/modules/store'
+import { appUpdater } from '/@/modules/updater'
+import { aliOSS, getMacAddress, proxyDetection, tryRefreshUrl } from '/@/utils'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 

@@ -1,0 +1,15 @@
+.p-button:disabled {
+  cursor: not-allowed !important;
+}
+
+.p-toast-message-content:has(.p-toast-detail:empty) {
+  align-items: center;
+}
+
+.p-toast-message-content:has(.p-toast-detail:empty) .p-toast-close-button {
+  margin: -25% 0 -25%;
+}
+
+.p-toast-detail:empty {
+  display: none;
+}

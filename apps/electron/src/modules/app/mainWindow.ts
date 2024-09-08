@@ -1,7 +1,8 @@
-import { BrowserWindow, app } from 'electron'
 import { join } from 'node:path'
-import { isDev, isPackaged } from '/@/utils/'
+import { app, BrowserWindow } from 'electron'
 import { mediaProtocolName } from '/@/constants'
+import { handleCloseWindow } from '/@/modules/app/utils'
+import { isDev, isPackaged } from '/@/utils/'
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -35,6 +36,11 @@ async function createWindow() {
     if (isDev) {
       browserWindow?.webContents.openDevTools({ mode: 'detach' })
     }
+  })
+
+  browserWindow.on('close', (event) => {
+    console.log('on window close')
+    handleCloseWindow(event)
   })
 
   const pageUrl

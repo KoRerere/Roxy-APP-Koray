@@ -26,5 +26,8 @@ function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
 }
 
 export function getErrorMessage(error: unknown) {
+  if (typeof error === 'string') {
+    return error
+  }
   return toErrorWithMessage(error).message
 }

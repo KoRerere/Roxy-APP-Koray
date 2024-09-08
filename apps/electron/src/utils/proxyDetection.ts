@@ -1,8 +1,8 @@
-import { SocksProxyAgent } from 'socks-proxy-agent'
-import { HttpsProxyAgent } from 'https-proxy-agent'
-import https from 'node:https'
 import http from 'node:http'
+import https from 'node:https'
 import axios from 'axios'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 
 export interface ProxyDetectionResult {
@@ -111,14 +111,14 @@ function checkHttpsProxy(winInfo: WindowItemType) {
   // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
 
   const httpUrl = `https://${auth}${host}:${port}`
-  console.log(`httpUrl`, httpUrl)
-  const options = {
+  console.log(`httpUrl`, httpUrl);
+  (!(`${checkChannel}`).includes(`https`) ? http : https).get(checkChannel, {
     headers: {
       'user-agent': 'electron ',
     },
+    timeout: TIMEOUT,
     agent: new HttpsProxyAgent(httpUrl, { timeout: TIMEOUT }),
-  };
-  (!(`${checkChannel}`).includes(`https`) ? http : https).get(checkChannel, options, (res) => {
+  }, (res) => {
     // res.pipe(process.stdout);
     let data = ``
 
@@ -203,6 +203,7 @@ async function checkSocks5Proxy(parmes: any) {
     // headers: {
     //   Host: new URL(checkChannel).host
     // },
+    timeout: TIMEOUT,
     httpAgent: agent,
   })
 

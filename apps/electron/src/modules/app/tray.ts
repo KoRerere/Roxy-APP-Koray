@@ -1,6 +1,6 @@
 import path from 'node:path'
-import type { BrowserWindow } from 'electron'
 import { Menu, Tray } from 'electron'
+import type { BrowserWindow } from 'electron'
 
 let tray: Tray
 /** 创建托盘 */
@@ -33,5 +33,9 @@ export function createTray(win: BrowserWindow) {
     win.show()
     win.setSkipTaskbar(false)
   })
+  return tray
+}
+
+export function getTray() {
   return tray
 }

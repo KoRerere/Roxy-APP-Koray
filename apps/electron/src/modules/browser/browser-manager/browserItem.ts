@@ -1,13 +1,13 @@
-import { join } from 'node:path'
-import { readdir, rm, writeFile } from 'node:fs/promises'
-import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
-import { appConfig, ossObject } from '/@/constants'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { aliOSS, filesToZip, getProcessIdsByExePath, proxyDetection } from '/@/utils'
 import { createReadStream } from 'node:fs'
+import { readdir, rm, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { AfterLaunchTask } from './afterLaunchTask'
-import { API } from '/@/api'
 import { BeforeLaunchTask } from './beforeLaunchTask'
+import { API } from '/@/api'
+import { appConfig, ossObject } from '/@/constants'
+import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { aliOSS, filesToZip, getProcessIdsByExePath, proxyDetection } from '/@/utils'
 
 export class BrowserItem {
   private beforeLaunchTask!: BeforeLaunchTask
@@ -61,6 +61,7 @@ export class BrowserItem {
     this.userDataDir = join(appConfig.browserCacheRootDir, winItem.dirId!)
   }
 
+  /** 获取浏览器实例 */
   getBrowser() {
     return this.#browser
   }
@@ -135,7 +136,7 @@ export class BrowserItem {
       const remoteOssPath = `${this.ossRemoteCacheDir}/${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)
-      const newVersion = syncValue.version ? syncValue.version + 1 : 1
+      const newVersion = syncValue?.version ? syncValue.version + 1 : 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
       console.log(`oss 上传`, data)
 

@@ -1,22 +1,23 @@
-import { createApp } from 'vue'
-import 'primeicons/primeicons.css'
+import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
+import ConfirmationService from 'primevue/confirmationservice'
+import DialogService from 'primevue/dialogservice'
 import Ripple from 'primevue/ripple'
 import ToastService from 'primevue/toastservice'
-import DialogService from 'primevue/dialogservice'
-import ConfirmationService from 'primevue/confirmationservice'
-import { definePreset } from '@primevue/themes'
-import myPreset from '/@/assets/preset.ts'
-
+import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'
 import i18n from './i18n'
 
+import router from './router'
+import '/@/assets/override.css'
 import '/@/assets/style.css'
-import '@unocss/reset/normalize.css'
-import 'virtual:uno.css'
+
 import '@mdi/font/css/materialdesignicons.css'
+import '@unocss/reset/normalize.css'
+import 'primeicons/primeicons.css'
+import 'virtual:uno.css'
+import myPreset from '/@/assets/preset.ts'
 import { store } from '/@/stores'
 
 const app = createApp(App)

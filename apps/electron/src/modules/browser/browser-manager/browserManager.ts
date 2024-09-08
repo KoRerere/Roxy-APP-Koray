@@ -1,6 +1,6 @@
+import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
-import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { ipcMain } from '/@/modules/ipc'
 
 export class BrowserManager {

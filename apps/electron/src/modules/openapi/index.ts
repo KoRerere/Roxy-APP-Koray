@@ -1,58 +1,15 @@
-import { join } from 'node:path'
 import express from 'express'
-import { isPackaged } from '/@/utils'
+import { setupMiddlewares } from './middlewares/'
+import { setupRoutes } from './routes/'
 
-import indexRouter from './routes/index'
-import browserRouter from './routes/browser'
-
-class OpenAPIServer {
-  private app: express.Application
-
-  constructor() {
-    this.app = express()
-    this.setupRoutes()
-    this.printRoutes()
-  }
-
-  private setupRoutes() {
-    // 工作台
-    const staticMiddleware = express.static(join(__dirname, './web'), { index: 'dashboard.html' })
-    // 设置静态资源目录
-    this.app.use('/dashboard', (req, res, next) => {
-      const { id = '' } = req.query
-
-      if (isPackaged) {
-        staticMiddleware(req, res, next)
-      }
-      else {
-        res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}`)
-      }
-    })
-
-    this.app.all(`*`, async (req, res, next) => {
-      // $LOG(`req header`, req.path, req.header(`token`))
-
-      res.header('Connection', 'close')
-      res.header('Access-Control-Allow-Origin', '*')
-      res.header('Access-Control-Allow-Headers', '*')
-      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE')
-      res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE')
-
-      // if (this.intercept(req)) {
-      //   return res.json({
-      //     code: 500,
-      //     msg: `token错误`,
-      //   });
-      // }
-      next()
-    })
-
-    this.app.use('/api', indexRouter)
-    this.app.use('/api/browser', browserRouter)
-
-    this.app.use((req, res, next) => {
-      res.status(404).send('Sorry can\'t find that!')
-    })
+export const openAPIServer = new class OpenAPIServer {
+  constructor(private app = express()) {
+    // 注册中间件
+    setupMiddlewares(this.app)
+    // 注册路由
+    setupRoutes(this.app)
+    // 打印已注册的路由
+    // this.printRoutes()
   }
 
   start() {
@@ -90,6 +47,4 @@ class OpenAPIServer {
 
     console.log('Registered routes:', routes)
   }
-}
-
-export const openAPIServer = new OpenAPIServer()
+}()

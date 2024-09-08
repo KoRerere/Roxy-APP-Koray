@@ -1,13 +1,18 @@
 import { join } from 'node:path'
-import type { UserGetUserInfoListData } from '@roxy/backend-api'
 import { app } from 'electron'
 import Store from 'electron-store'
+import type { UserGetUserInfoListData } from '@roxy/backend-api'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
   /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
-  /** 软件关闭时 */
+  /**
+   * 软件关闭时
+   * - pop: 弹出提示
+   * - min: 最小化到托盘
+   * - exit: 直接退出
+   */
   closeSoft: 'pop' | 'min' | 'exit'
   /** 性能监控 */
   memoryLimit: number

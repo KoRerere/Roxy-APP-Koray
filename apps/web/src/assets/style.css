@@ -46,6 +46,11 @@ body {
   overflow: hidden;
 }
 
+a {
+  text-decoration: none;
+  color: var(--Colors-Text-text-link, #12a3fc);
+}
+
 body:has(.isMacOs) {
   --body-border: none;
 }

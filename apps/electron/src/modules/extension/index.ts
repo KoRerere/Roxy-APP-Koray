@@ -1,18 +1,18 @@
-import { readFile, readdir, rm, stat } from 'node:fs/promises'
-import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
-import path from 'node:path'
 import crypto from 'node:crypto'
-import { API } from '/@/api'
-import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { readdir, readFile, rm, stat } from 'node:fs/promises'
+import path from 'node:path'
 import { Worker } from 'node:worker_threads'
-import type { UnwrapRowType, UnwrapRowsType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
-import { dialog } from 'electron'
-import { getMainWindow } from '/@/modules/app/mainWindow'
 import { unzip } from '@tomjs/unzip-crx'
 import AdmZip from 'adm-zip'
 import { compare } from 'compare-versions'
-import { getPluginManifestInfo, getPluginMeta } from './helper'
+import { dialog } from 'electron'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
+import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
+import { getPluginManifestInfo, getPluginMeta } from './helper'
+import { API } from '/@/api'
+import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
+import { getMainWindow } from '/@/modules/app/mainWindow'
+import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
@@ -193,6 +193,7 @@ export const extensionManager = new class ExtensionManager {
         return promise
       }
 
+      // 这里使用动态 import 模块，是为了利用 vite 打包时的代码分割特性
       await import('./extensionWorker')
       const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
 
