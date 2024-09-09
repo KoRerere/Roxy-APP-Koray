@@ -34,7 +34,7 @@ function quickClick(item: any) {
     <div class="quick">
       <span v-for="item in quickOperation" :key="item.name"
         v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500 }" class="quick-item"
-        :class="[loadingQuickOperation?.[item.name] ? 'pi-spin mdi mdi-selection-ellipse' : item.icon, { disabled: item.disabled }]"
+        :class="[loadingQuickOperation?.[item.name] ? 'pi-spin mdi mdi-selection-ellipse disabled' : item.icon, { 'disabled text-gray-300': item.disabled }]"
         @click.stop="quickClick(item)" />
     </div>
     <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
@@ -61,7 +61,6 @@ function quickClick(item: any) {
     }
 
     &.disabled {
-      color: #cccccc;
       cursor: not-allowed;
     }
   }
