@@ -404,17 +404,10 @@ onBeforeUnmount(() => {
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <<<<<<< HEAD <span v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }"
-          :class="{ 'text-orange': data.isOften }" class="mdi mdi-bookmark-music-outline"
-          @click.stop="operationHandler({ name: 'fav' }, data)" />
+        <span v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :class="{ 'text-orange': data.isOften }"
+          class="mdi mdi-bookmark-music-outline" @click.stop="operationHandler({ name: 'fav' }, data)" />
         <span v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :class="{ 'text-orange': data.windowRemark }"
           class="mdi mdi-list-box-outline ml-2" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-
-        =======
-        <span :class="{ 'text-orange': data.isOften }" class="mdi mdi-bookmark-music-outline mr-2 "
-          @click.stop="operationHandler({ name: 'fav' }, data)" />
-        <remarkIcon ref="remark" :value="data.windowRemark" :rows="[data]" @on-confirm="addRemark" />
-        >>>>>>> 841002a55206e62db6376760824a65402353e6db
         <actions :operation="operation" @quick-click="(operate) => operationHandler(operate, data)"
           @more="(event: Event) => showOperationMenu(event, data)" />
       </div>
@@ -428,13 +421,9 @@ onBeforeUnmount(() => {
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
     :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <<<<<<< HEAD <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data" @confirm="onEditCookies" />
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
         @confirm="data => drawer.confirm(drawer.type, data)" />
-      =======
-      <drawersitems :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="data => drawer.confirm(drawer.type, data)" />
-      >>>>>>> 841002a55206e62db6376760824a65402353e6db
     </template>
   </Drawer>
 </template>

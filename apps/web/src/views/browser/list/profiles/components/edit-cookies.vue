@@ -18,7 +18,7 @@ const emit = defineEmits(['confirm'])
 
 const toast = useToast()
 
-const cookie = isEmptyValue(props.data.cookie) ? '' : JSON.stringify(props.data.cookie)
+const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie)
 
 const cookies = ref(cookie)
 const isWrap = ref(false)
