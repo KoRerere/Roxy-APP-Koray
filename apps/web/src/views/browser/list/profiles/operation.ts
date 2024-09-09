@@ -119,7 +119,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'editCookies',
-      label: '编辑cookies x',
+      label: '编辑cookies',
       icon: 'mdi mdi-clipboard-edit-outline',
     },
     {

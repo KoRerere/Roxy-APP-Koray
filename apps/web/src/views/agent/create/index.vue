@@ -20,7 +20,7 @@ const toast = useToast()
 const formInputs = ref<any>([])
 const original = ref<any>()
 
-function getInputs(data: any) {
+function getInputs(data: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
   formInputs.value = [
@@ -118,7 +118,7 @@ function createProxy() {
 }
 
 onMounted(() => {
-  getInputs(props.data)
+  getInputs(props.data || {})
 })
 </script>
 
