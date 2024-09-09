@@ -2,6 +2,9 @@
 // import { format } from 'date-fns'
 import parseTextarea from './components/parse-textarea.vue'
 import parsedTable from './components/parsed-table.vue'
+import { API } from '/@/api'
+
+const router = useRouter()
 
 const tabs = ref([
   { title: '单个代理', value: 'single' },
@@ -11,7 +14,7 @@ const tabsValue = ref('batch')
 
 // ===============================================
 
-const proxiesText = ref('192.168.0.1:8000[ggband]{Remark}\n192.168.0.1:8000[ggband]{Remark}\n*socks5://www.baidu.com:90224:rola6ds90_1:457452[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\nsocks5://gate8.rola.vip:2000:dfsdfsf:964616[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\n*socks5://gate8.rola.vip:2000:rola690_1:457452\nsocks5://gate8.rola.vip:2000:rola690_2:457452\nsocks5://gate8.rola.vip:2000:rola690_3:457452')
+const proxiesText = ref('192.168.0.1:8000[ggband]{Remark}\n192.168.0.1:8000[ggband]{Remark}\n*socks5://www.baidu.com:90224:rola6ds90_1:457452[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\nsocks5://gate8.rola.vip:2000:dfsdfsf:964616[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\n*socks5://gate8.rola.vip:2000:rola690_1:457452\nsocks5://gate8.rola.vip:2000:rola690_2:457452\nsocks5://gate8.rola.vip:2000:rola690_3:457452\n192.168.0.1:8000[ggband]{Remark}\n192.168.0.1:8000[ggband]{Remark}\n*socks5://www.baidu.com:90224:rola6ds90_1:457452[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\nsocks5://gate8.rola.vip:2000:dfsdfsf:964616[http://refresh.rola.info/refresh?user=rola690_66&country=us&state=&city=]{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.}\n*socks5://gate8.rola.vip:2000:rola690_1:457452\nsocks5://gate8.rola.vip:2000:rola690_2:457452\nsocks5://gate8.rola.vip:2000:rola690_3:457452')
 
 const dataList = ref()
 const isDuplicate = ref(true)
@@ -39,6 +42,11 @@ function parseValue() {
       }
     })
 }
+
+async function saveProxies() {
+  const { data } = await API.proxy.userAddProxyModuleCreate(dataList.value)
+  router.replace({ name: 'agent' })
+}
 </script>
 
 <template>
@@ -55,54 +63,62 @@ function parseValue() {
         </Tab>
       </TabList>
     </Tabs>
-    <div class="proxies-content">
-      <div class="panel">
-        <div class="panel-title">
-          Proxies information
-        </div>
-        <div class="information">
-          <parseTextarea v-model="proxiesText" />
-          <div class="flex justify-between information-actions">
-            <div class="flex items-center">
-              <Checkbox v-model="isDuplicate" input-id="wrap" binary />
-              <label for="wrap" class="select-none ml-2 cursor-pointer">Filter duplicates</label>
-              <span class="mdi mdi-information-outline" />
+
+    <div class="flex-ovh-1 flex-col proxies-content">
+      <div class="parse-input">
+        <div class="panel">
+          <div class="panel-title">
+            Proxies information
+          </div>
+          <div class="information">
+            <parseTextarea v-model="proxiesText" />
+            <div class="flex justify-between information-actions">
+              <div class="flex items-center">
+                <Checkbox v-model="isDuplicate" input-id="wrap" binary />
+                <label for="wrap" class="select-none ml-2 cursor-pointer">Filter duplicates</label>
+                <span class="mdi mdi-information-outline" />
+              </div>
+              <ryButton outlined severity="secondary" size="small" label="Parse proxies" icon="mdi mdi-play"
+                @click="parseValue" />
             </div>
-            <ryButton outlined severity="secondary" size="small" label="Parse proxies" icon="mdi mdi-play"
-              @click="parseValue" />
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">
+            Import rules
+          </div>
+          <div class="rules">
+            Allowed formats (IPv4, IPv6 supported):<br><br>
+            192.168.0.1:8000<span class="text-blue">{Remark}</span><br>
+            192.168.0.1:8000:username:password<span class="text-blue">{Remark}</span><br>
+            socks5://192.168.0.1:8000<span class="text-green">[Refresh IP URL]</span><span
+              class="text-blue">{Remark}</span><br>
+            http://[2001:db8:2de:0:0:0:0:e13]:8000<span class="text-green">[Refresh IP URL]</span><span
+              class="text-blue">{Remark}</span><br><br>
+            1. If you do not fill in the proxy type, it will default to HTTP<br>
+            2. Only support HTTP, HTTPS, SOCKS5<br>
+            3. One proxy per line, add up to 500 proxies at a time<br>
+            4. Host support IPv4 and IPv6, if IPv6 host should be filled in []
           </div>
         </div>
       </div>
-      <div class="panel">
-        <div class="panel-title">
-          Import rules
-        </div>
-        <div class="rules">
-          Allowed formats (IPv4, IPv6 supported):<br><br>
-          192.168.0.1:8000<span class="text-blue">{Remark}</span><br>
-          192.168.0.1:8000:username:password<span class="text-blue">{Remark}</span><br>
-          socks5://192.168.0.1:8000<span class="text-green">[Refresh IP URL]</span><span
-            class="text-blue">{Remark}</span><br>
-          http://[2001:db8:2de:0:0:0:0:e13]:8000<span class="text-green">[Refresh IP URL]</span><span
-            class="text-blue">{Remark}</span><br><br>
-          1. If you do not fill in the proxy type, it will default to HTTP<br>
-          2. Only support HTTP, HTTPS, SOCKS5<br>
-          3. One proxy per line, add up to 500 proxies at a time<br>
-          4. Host support IPv4 and IPv6, if IPv6 host should be filled in []
-        </div>
-      </div>
-    </div>
 
-    <div class="flex flex-col flex-1 overflow-hidden pa-5">
-      <div class="flex items-center justify-between">
-        <div>Parsed proxies</div>
-        <div class="flex gap-2">
-          <ryButton severity="secondary" size="small" label="Delete fail" icon="mdi mdi-trash-can-outline" />
-          <ryButton severity="secondary" size="small" label="Test all proxies" icon="mdi mdi-wifi" />
+      <div class="flex flex-col flex-1 overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div>Parsed proxies</div>
+          <div class="flex gap-2">
+            <ryButton severity="secondary" size="small" label="Delete fail" icon="mdi mdi-trash-can-outline" />
+            <ryButton severity="secondary" size="small" label="Test all proxies" icon="mdi mdi-wifi" />
+          </div>
+        </div>
+        <div class="flex-ovh-1 items-center justify-center">
+          <parsedTable :data-list="dataList" />
         </div>
       </div>
-      <div class="flex-ovh-1">
-        <parsedTable :data-list="dataList" />
+
+      <div class="flex justify-between">
+        <ryButton severity="secondary" text size="small" label="Cancel" />
+        <ryButton severity="info" size="small" label="Save proxies" @click="saveProxies" />
       </div>
     </div>
   </div>
@@ -110,6 +126,10 @@ function parseValue() {
 
 <style lang="scss" scoped>
 .proxies-content {
+  padding: 24px 24px 16px;
+}
+
+.parse-input {
   display: flex;
   gap: 8px;
 
@@ -160,6 +180,32 @@ function parseValue() {
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-lg, 20px);
+  }
+}
+
+.empty {
+  gap: var(--spacing-lg, 8px);
+  width: var(--width-sm, 480px);
+  height: 160px;
+  flex-shrink: 0;
+  border-radius: var(--radius-2xl, 12px);
+  border: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+
+  color: #000;
+  text-align: center;
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 16px;
+
+  span {
+    color: var(--Colors-Text-text-secondary, #575d61);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
   }
 }
 </style>
