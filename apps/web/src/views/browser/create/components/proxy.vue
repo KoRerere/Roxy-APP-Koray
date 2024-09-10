@@ -1,14 +1,14 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
+import { useVModel } from '@vueuse/core'
+import { useTableContext } from '../hooks/useContext'
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import ryTag from '/@/components/ry-tag'
-// @ts-ignore
-import proxyTable from '/@/views/browser/components/drawers/proxy-list.vue'
-import proxyCreate from '/@/views/agent/create/quick.vue'
-import { useVModel } from '@vueuse/core'
 import { getImage } from '/@/utils'
-import { useTableContext } from '../hooks/useContext'
+import proxyCreate from '/@/views/agent/create/quick.vue'
+// @ts-ignore
+import proxyTable from '/@/views/agent/list/quick.vue'
 
 const props = defineProps({
   modelValue: {

@@ -2,8 +2,8 @@
 import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
+import { parseProxyUrl } from './hooks'
 import parseTextarea from './parse-textarea.vue'
-import { parseProxyUrl } from './utils'
 
 import { ProxyCheckStatus } from '/@/enums'
 import { setRowsLoading, sleep } from '/@/utils'

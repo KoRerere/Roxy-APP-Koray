@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { useVModel } from '@vueuse/core'
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
-import accountList from '/@/views/browser/components/drawers/account-list.vue'
 import accountCreate from '/@/views/account/create'
-import { useVModel } from '@vueuse/core'
+import accountList from '/@/views/account/list/quick.vue'
 
 const props = defineProps({
   modelValue: {
@@ -12,7 +12,7 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['update:modelValue'])
-const windowPlatformList = useVModel(props, 'modelValue', emits)
+const windowPlatformList: any = useVModel(props, 'modelValue', emits)
 
 const drawer = reactive({
   visible: false,
@@ -25,7 +25,7 @@ function toggleDrawer(type: 'create' | 'list') {
 }
 
 function deleteAccount(item: any) {
-  const index = windowPlatformList.value.findIndex(it => it.name === item.name)
+  const index = windowPlatformList.value.findIndex((it: any) => it.name === item.name)
   windowPlatformList.value.splice(index, 1)
 }
 

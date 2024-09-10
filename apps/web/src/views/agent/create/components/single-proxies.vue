@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { useDebounceFn } from '@vueuse/core'
 import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
-import { parseProxyUrl } from './utils'
-import ryForm from '/@/components/ry-form'
+import { getInputs } from './form-inputs'
+import proxiesForm from './proxies-form.vue'
 import { ProxyCheckStatus } from '/@/enums'
-import { getFormData, isEmptyValue, setInputValueByFormData } from '/@/utils'
+
+import { getFormData } from '/@/utils'
 
 const emit = defineEmits(['cancel', 'save'])
 
@@ -20,108 +20,6 @@ const checkeResult = ref({
   checkTime: '',
 })
 
-function getInputs(data: any = {}) {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  const inputs = reactive([
-    {
-      type: 'textarea',
-      label: '智能检测',
-      name: 'proxyRules',
-      value: '',
-      placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
-      rows: 5,
-      errorMsg: '解析内容有误',
-      tooltip: 'man!',
-      change: useDebounceFn((input: any) => {
-        input.invalid = false
-        const ipType = input.value?.startsWith('*') ? 'IPV6' : 'IPV4'
-        const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(input.value)
-        const formData = {
-          proxyCategory: protocol?.toLocaleUpperCase(),
-          host,
-          port,
-          proxyUserName,
-          proxyPassword,
-          refreshUrl,
-        }
-
-        if (isEmptyValue(Object.values(formData).filter(Boolean))) {
-          input.invalid = true
-        }
-        else {
-          setInputValueByFormData(inputs, { ipType, ...formData })
-        }
-        input.value = undefined
-      }, 500),
-    },
-    {
-      separator: true,
-    },
-    {
-      type: 'radio',
-      label: '网络协议',
-      name: 'ipType',
-      value: data.ipType || $dict_map.ipType[0].value,
-      options: $dict_map.ipType,
-      tooltip: 'what can i say',
-    },
-    {
-      label: 'Server',
-      items: [
-        {
-          type: 'select',
-          name: 'proxyCategory',
-          placeholder: '请选择网络协议',
-          value: !data.proxyCategory || data.proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : data.proxyCategory,
-          options: $dict_map.protocol,
-        },
-        {
-          type: 'text',
-          name: 'host',
-          value: data.host || '',
-          placeholder: '代理主机',
-        },
-        {
-          type: 'text',
-          name: 'port',
-          value: data.port || '',
-          placeholder: '代理端口',
-        },
-      ],
-      tooltip: 'what can i say',
-      slot: 'server',
-    },
-    {
-      type: 'text',
-      label: '代理账号',
-      name: 'proxyUserName',
-      value: data.proxyUserName || '',
-      placeholder: 'Username for your server',
-    },
-    {
-      type: 'password',
-      label: '代理密码',
-      name: 'proxyPassword',
-      value: data.proxyPassword || '',
-      placeholder: 'Password for your server',
-    },
-    {
-      type: 'text',
-      label: '刷新URL',
-      name: 'refreshUrl',
-      value: data.refreshUrl || '',
-      placeholder: 'Please enter a valid URL',
-      tooltip: 'mamba out!',
-      icon: 'mdi mdi-refresh',
-      iconClick: async () => {
-        const { refreshUrl } = getFormData(formInputs.value)
-        const isOK = await window.electronAPI.send('proxy:refreshUrl', refreshUrl!)
-        toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: refreshUrl, life: 5000 })
-      },
-    },
-  ])
-  return inputs
-}
 const loading = ref(false)
 
 async function testProxy() {
@@ -160,24 +58,35 @@ function save() {
 
 <template>
   <div class="flex items-center flex-col w-50% mx-auto">
-    <ry-form :inputs="formInputs">
-      <template #server="{ input }">
-        <InputGroup>
-          <template v-for="(item, index) in input.items" :key="index">
-            <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-              option-value="value" show-clear />
-            <InputText v-else v-bind="item" v-model="item.value" type="text" />
-          </template>
-        </InputGroup>
-      </template>
-    </ry-form>
-    <div class="flex flex-1 items-end justify-end w-full gap-3">
-      <Button class="mx-auto ml-0" severity="secondary" :loading="loading" label="Test proxies" icon="mdi mdi-wifi"
-        @click="testProxy" />
-      <ryButton text severity="secondary" label="Cancel" @click="$emit('cancel')" />
-      <ryButton severity="info" label="Save proxies" @click="save" />
+    <proxiesForm :inputs="formInputs" />
+    <div class="flex flex-1 items-end justify-between w-full">
+      <div class="flex items-center gap-3">
+        <Button size="small" severity="secondary" :loading="loading" label="Test proxies" icon="mdi mdi-wifi"
+          @click="testProxy" />
+        <span class="mdi mdi-list-box-outline remark cursor-pointer" />
+      </div>
+      <div class="flex gap-3">
+        <ryButton text size="small" severity="secondary" label="Cancel" @click="$emit('cancel')" />
+        <ryButton size="small" severity="info" label="Save proxies" @click="save" />
+      </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.remark {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md, 6px);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 4px);
+  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+
+  box-shadow:
+    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+}
+</style>

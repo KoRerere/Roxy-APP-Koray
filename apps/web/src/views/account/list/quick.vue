@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
+import type { UserGetPlatformInfoV2ListParams } from '@roxy/backend-api'
+import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import inputBase from '/@/components/ry-form/input-base.vue'
-import { API } from '/@/api'
-import type { UserGetPlatformInfoV2ListParams } from '@roxy/backend-api'
+import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
 
 const columns = [
   {
