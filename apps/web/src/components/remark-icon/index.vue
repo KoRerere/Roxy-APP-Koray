@@ -16,7 +16,7 @@ const hasRemark = computed(() => props.value)
 
 const dialog = useDialog()
 
-function onRemark(value: string) {
+function onRemark() {
   dialog.open(popup, {
     props: {
       showHeader: false,
@@ -30,7 +30,7 @@ function onRemark(value: string) {
         {
           type: 'text',
           name: 'remark',
-          value: value || props.value,
+          value: props.value,
         },
       ],
     },
@@ -42,10 +42,6 @@ function onRemark(value: string) {
     },
   })
 }
-
-defineExpose({
-  onRemark,
-})
 </script>
 
 <template>

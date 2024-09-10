@@ -455,22 +455,22 @@ export interface UserGetOssCredentialListData {
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -485,12 +485,12 @@ export interface UserGetWindowInfoListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -525,7 +525,7 @@ export interface UserGetWindowInfoListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -535,7 +535,7 @@ export interface UserGetWindowInfoListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -545,12 +545,12 @@ export interface UserGetWindowInfoListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -945,22 +945,22 @@ export interface UserGetWindowInfoListData {
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example " 2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -975,12 +975,12 @@ export interface UserGetWindowInfoRecycleListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -995,22 +995,22 @@ export interface UserGetWindowInfoRecycleListParams {
   host?: string;
   /**
    * 窗口类型，枚举值：1.自建窗口，2.团队窗口，3.全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 创建人id, int,非必传
-   * @example 2
+   * @example "2"
    */
   createBy?: number;
   /**
    * 操作人id, int,非必传
-   * @example 3
+   * @example "3"
    */
   operateBy?: number;
   /**
    * 排序类型，int, 枚举值，1.序号从大到小，2.序号从小到大，3.删除时间从大到小，4.删除时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -1256,6 +1256,8 @@ export interface UserAddWindowInfoCreatePayload {
   canvas: boolean;
   /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
   canvasValue: string;
+  /** 取 1000-99999 之间的随机整数 */
+  canvasValueV2: string;
   /** webGL图像，1随机｜0关闭，默认1，布尔值，必传, 传true和false */
   webGL: boolean;
   /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
@@ -1470,6 +1472,7 @@ export interface UserBatchWindowInfoCreatePayload {
   resolutionY: string;
   fontType: boolean;
   canvas: boolean;
+  canvasValueV2: string;
   webGL: boolean;
   webGLMeta: boolean;
   webGLInfo: boolean;
@@ -1504,24 +1507,156 @@ export interface UserBatchWindowInfoCreateData {
 }
 
 export interface UserImportWindowInfoCreatePayload {
+  /** 文件名，str，必传 */
   fileName: string;
+  /** excel数据 */
   excelData: {
+    /** 行号，int，必传 */
     rowNum?: number;
+    /** 窗口名称，str，必传 */
     windowName?: string;
+    /** 分组名称, str，非必传 */
     groupName?: string;
+    /** 账号平台，str，非必传 */
     platformUrl?: string;
+    /** 用户名，str，非必传 */
     platformUserName?: string;
+    /** 密码，str，非必传 */
     platformPassword?: string;
+    /** 2fa，str，非必传 */
     efa?: string;
-    path?: string;
-    domain?: string;
+    cookie?: {
+      name?: string;
+      path?: string;
+      domain?: string;
+    }[];
+    defaultOpenUrl?: string;
+    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
+    proxyMethod?: string;
+    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
+    proxyInfo?: string;
+    /** 刷新URL， str, 非必传 */
+    refreshUrl?: string;
+    /** 窗口备注，str，非必传 */
+    windowRemark?: string;
+    /** User Agent，str, 非必传 */
+    userAgent?: string;
+    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
+    windowSize?: string;
   }[];
-  defaultOpenUrl: string;
-  proxyMethod: string;
-  proxyInfo: string;
-  windowRemark: string;
-  userAgent: string;
-  windowSize: string;
+  fingerDetail: {
+    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
+    font?: string;
+    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    canvasValue?: string;
+    /**   取 1000-99999 之间的随机整数 */
+    canvasValueV2?: string;
+    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    webGLValue?: string;
+    /** webGLMeta自定义时，webGL厂商值, 非必传 */
+    webGLManufacturer?: string;
+    /** webGLMeta自定义时，webGL渲染值, 非必传 */
+    webGLRender?: string;
+    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
+    audioContextValue?: string;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    speechVoicesValue?: object;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    clientRectsValue?: object;
+    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
+    mediaDevice?: boolean;
+    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
+    mediaDeviceList?: string[];
+    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
+    deviceName?: string;
+    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
+    macAddr?: string;
+  }[];
+  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
+  isLanguageBaseIp: boolean;
+  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  language: string;
+  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isDisplayLanguageBaseIp: boolean;
+  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  displayLanguage: string;
+  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isTimeZone: boolean;
+  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
+  timeZone: string;
+  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
+  position: number;
+  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
+  isPositionBaseIp: boolean;
+  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
+  longitude: string;
+  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
+  latitude: string;
+  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
+  precisionPos: string;
+  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
+  forbidAudio: boolean;
+  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
+  forbidImage: number;
+  /** 自定义加载图片尺寸，str, 非必传 */
+  forbiddenPictureSize: string;
+  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
+  forbidMedia: boolean;
+  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  isDisplayName: boolean;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
 }
 
 export interface UserImportWindowInfoCreateData {
@@ -1629,6 +1764,7 @@ export interface UserMdfWindowInfoSingleCreatePayload {
   font: string;
   canvas: boolean;
   canvasValue: string;
+  canvasValueV2?: string;
   webGL: boolean;
   webGLValue: string;
   webGLMeta: boolean;
@@ -1744,6 +1880,7 @@ export interface UserMdfWindowInfoBatchCreatePayload {
     userAgent?: string;
     font?: string;
     canvasValue?: string;
+    canvasValueV2?: string;
     webGLValue?: string;
     webGLManufacturer?: string;
     webGLRender?: string;
@@ -1974,7 +2111,7 @@ export interface UserGetUaWebglV2ListParams {
   webGLManufacturer?: string;
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2024,7 +2161,7 @@ export interface UserGetDeviceNameV2ListData {
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2040,12 +2177,12 @@ export interface UserGetMacAddrV2ListData {
 export interface UserGetGroupInfoListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -2215,12 +2352,12 @@ export interface UserUploadPluginInfoCreateData {
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
@@ -2240,7 +2377,7 @@ export interface UserGetProxyModuleListParams {
   host?: string;
   /**
    * 排序类型，1：代理ID从大到小，2：代理ID从小到大（老版本用的，新版本可以不用）
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -2265,7 +2402,7 @@ export interface UserGetProxyModuleListParams {
   id?: string;
   /**
    * 代理检测状态，0：未检测，1：检测成功，2：检测失败
-   * @example 0
+   * @example "0"
    */
   checkStatus?: number;
   /**
@@ -2363,6 +2500,8 @@ export interface UserAddProxyModuleCreatePayload {
   checkTime?: string;
   /** 检测状态 */
   checkStatus?: boolean;
+  /** 备注 */
+  remark?: string;
 }
 
 export type UserAddProxyModuleCreateData = object;
@@ -2448,17 +2587,17 @@ export interface UserCheckIpCreateData {
 export interface UserGetUserListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 用户id
-   * @example 2
+   * @example "2"
    */
   id?: number;
   /**
@@ -2473,7 +2612,7 @@ export interface UserGetUserListListParams {
   userName?: string;
   /**
    * 账号状态，1: 开启，2: 关闭
-   * @example 1
+   * @example "1"
    */
   status?: number;
 }
@@ -2624,12 +2763,12 @@ export interface UserGetPluginCategoryListData {
 export interface UserGetSystemPluginListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 9999
+   * @example "9999"
    */
   page_size?: number;
   /**
@@ -2678,12 +2817,12 @@ export interface UserAddSystemPluginCreateData {
 export interface UserGetPluginListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -3054,12 +3193,12 @@ export interface UserMdfPlatformInfoCreateData {
 export interface UserGetPlatformInfoV2ListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
@@ -3205,22 +3344,22 @@ export interface UserGetWindowTableSortOrderListData {
 export interface UserGetWindowInfoV2ListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -3235,12 +3374,12 @@ export interface UserGetWindowInfoV2ListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -3275,7 +3414,7 @@ export interface UserGetWindowInfoV2ListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -3285,7 +3424,7 @@ export interface UserGetWindowInfoV2ListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -3295,12 +3434,12 @@ export interface UserGetWindowInfoV2ListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -3355,7 +3494,7 @@ export interface UserGetWindowInfoV2ListParams {
   osList?: string;
   /**
    * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
-   * @example 0
+   * @example "0"
    */
   proxyTestStatus?: number;
   /**
@@ -3783,6 +3922,7 @@ export interface UserBatchWindowInfoV2CreatePayload {
     userAgent?: string;
     font?: string;
     canvasValue?: string;
+    canvasValuev2?: string;
     webGLValue?: string;
     webGLManufacturer?: string;
     webGLRender?: string;
@@ -3918,24 +4058,156 @@ export interface UserUploadChromePluginsV2CreatePayload {
 export type UserUploadChromePluginsV2CreateData = object;
 
 export interface UserImportWindowInfoV2CreatePayload {
+  /** 文件名，str，必传 */
   fileName: string;
+  /** excel数据 */
   excelData: {
+    /** 行号，int，必传 */
     rowNum?: number;
+    /** 窗口名称，str，必传 */
     windowName?: string;
+    /** 分组名称, str，非必传 */
     groupName?: string;
+    /** 账号平台，str，非必传 */
     platformUrl?: string;
+    /** 用户名，str，非必传 */
     platformUserName?: string;
+    /** 密码，str，非必传 */
     platformPassword?: string;
+    /** 2fa，str，非必传 */
     efa?: string;
-    path?: string;
-    domain?: string;
+    cookie?: {
+      name?: string;
+      path?: string;
+      domain?: string;
+    }[];
+    defaultOpenUrl?: string;
+    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
+    proxyMethod?: string;
+    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
+    proxyInfo?: string;
+    /** 刷新URL， str, 非必传 */
+    refreshUrl?: string;
+    /** 窗口备注，str，非必传 */
+    windowRemark?: string;
+    /** User Agent，str, 非必传 */
+    userAgent?: string;
+    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
+    windowSize?: string;
   }[];
-  defaultOpenUrl: string;
-  proxyMethod: string;
-  proxyInfo: string;
-  windowRemark: string;
-  userAgent: string;
-  windowSize: string;
+  fingerDetail: {
+    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
+    font?: string;
+    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    canvasValue?: string;
+    /** 取 1000-99999 之间的随机整数 */
+    canvasValueV2?: string;
+    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    webGLValue?: string;
+    /** webGLMeta自定义时，webGL厂商值, 非必传 */
+    webGLManufacturer?: string;
+    /** webGLMeta自定义时，webGL渲染值, 非必传 */
+    webGLRender?: string;
+    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
+    audioContextValue?: string;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    speechVoicesValue?: object;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    clientRectsValue?: object;
+    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
+    mediaDevice?: boolean;
+    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
+    mediaDeviceList?: string[];
+    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
+    deviceName?: string;
+    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
+    macAddr?: string;
+  }[];
+  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
+  isLanguageBaseIp: boolean;
+  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  language: string;
+  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isDisplayLanguageBaseIp: boolean;
+  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  displayLanguage: string;
+  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isTimeZone: boolean;
+  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
+  timeZone: string;
+  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
+  position: number;
+  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
+  isPositionBaseIp: boolean;
+  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
+  longitude: string;
+  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
+  latitude: string;
+  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
+  precisionPos: string;
+  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
+  forbidAudio: boolean;
+  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
+  forbidImage: number;
+  /** 自定义加载图片尺寸，str, 非必传 */
+  forbiddenPictureSize: string;
+  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
+  forbidMedia: boolean;
+  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  isDisplayName: boolean;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
 }
 
 export interface UserImportWindowInfoV2CreateData {
@@ -4014,5 +4286,34 @@ export interface LoginGoogleV2CreateData {
     /** 账号类型 */
     role: string;
   };
+  msg: string;
+}
+
+export interface UserUpdateProxyTableRowsCreatePayload {
+  table_rows: {
+    /** 名称 */
+    name: string;
+    /** 排序 */
+    sort: number;
+    /** 状态 */
+    status: number;
+  }[];
+}
+
+export interface UserUpdateProxyTableRowsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProxyTableRowsListData {
+  code: number;
+  data: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
   msg: string;
 }
