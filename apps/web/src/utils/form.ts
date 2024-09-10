@@ -76,7 +76,7 @@ export function setInputVisible(
 export function setInputValue(
   inputs: any[],
   names: string | string[],
-  state: boolean,
+  state: any,
 ) {
   setInputFieldByInputKey(inputs, names, 'value', state)
 }

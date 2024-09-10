@@ -2,8 +2,8 @@
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
 import selectionOperation from './selection-operation.vue'
-import tableFilter from './table-filter.vue'
 import tableConfig from './table-config.vue'
+import tableFilter from './table-filter.vue'
 import tableSort from './table-sort.vue'
 
 import { useContextMenu } from '/@/components/rx-ctxmenu'
@@ -42,6 +42,10 @@ const props = defineProps({
   filters: {
     type: Array as PropType<any[]>,
     default: () => [],
+  },
+  showTableHeader: {
+    type: Boolean,
+    default: true,
   },
   showConfig: {
     type: Boolean,
@@ -84,7 +88,7 @@ const tableAttrs = reactive({
   'scrollable': true,
   'scroll-height': 'flex',
   'context-menu': true,
-  'show-gridlines': true,
+  'show-gridlines': false,
   'resizable-columns': true,
   'column-resize-mode': 'expand',
   'scroll': { x: 500, y: 400 },
@@ -92,7 +96,9 @@ const tableAttrs = reactive({
   ...useAttrs(),
 })
 
-const _dataList = ref([])
+const _dataList = ref()
+const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
+
 const selectionData = ref()
 
 const params = reactive<any>({
@@ -147,16 +153,10 @@ function _getOperation(data: any) {
 
 async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
-  _dataList.value = Array.isArray(props.dataList)
-    ? props.dataList
-    : await _tableRequest(requestParams)
-  _clearSelection()
-}
-
-async function _tableRequest(requestParams: any) {
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
-  return data?.rows || []
+  _dataList.value = data?.rows || []
+  _clearSelection()
 }
 
 function _clearSelection() {
@@ -177,20 +177,13 @@ onMounted(() => {
 defineExpose({
   refresh: _request,
   clearSelection: _clearSelection,
-  getParams: (callback: (params: any, done: any) => void) => {
-    callback?.(
-      _getParams(),
-      (list?: any) => {
-        _dataList.value = list || props.dataList
-      },
-    )
-  },
+  getParams: () => [_getParams(), (list: any) => { _dataList.value = list || [] }],
 })
 </script>
 
 <template>
-  <div class="position-relative h-full rxtable">
-    <div class="flex items-center rxtable-header">
+  <div class="position-relative w-full h-full rxtable">
+    <div v-if="showTableHeader" class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
         <table-filter :filters="_filters" @change="(data) => onChangeParams('filters', data)" />
         <slot name="header-extra" />
@@ -203,11 +196,11 @@ defineExpose({
           </template>
         </table-config>
 
-        <table-sort v-if="sorts?.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
+        <table-sort v-if="sorts.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
       </div>
     </div>
     <div class="rxtable-body">
-      <DataTable v-model:selection="selectionData" :value="_dataList" v-bind="tableAttrs"
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
         @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
@@ -223,11 +216,14 @@ defineExpose({
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
-              <span :class="column.classes">{{ column.getText?.(data) || data[column.key] }} </span>
+              <div :style="{ width: `${column.width}px` || 'auto' }" class="rxtable-cell" :class="column.classes"
+                :title="column.getText?.(data) || data[column.key]">
+                {{ column.getText?.(data) || data[column.key] }}
+              </div>
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" header="Actions">
+        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen>
           <template #body="{ data }">
             <slot name="actions" :data="data" :operation="_getOperation(data)" />
           </template>
@@ -253,7 +249,7 @@ defineExpose({
   </div>
   <Transition>
     <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
-      v-model:selection="selectionData" :total="_dataList.length" :operation="_getOperation(selectionData)"
+      v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
       @batch-operation="batchOperation">
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
@@ -274,6 +270,12 @@ defineExpose({
     align-items: center;
     align-self: stretch;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  }
+
+  &-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &-body {

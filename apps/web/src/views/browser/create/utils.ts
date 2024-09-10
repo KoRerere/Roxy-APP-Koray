@@ -1,3 +1,5 @@
+import { getRandomInt } from '/@/utils'
+
 export const fontArray = [
   'BIZ UDPGothic Bold',
   'Georgia Pro Italic',
@@ -266,9 +268,16 @@ export const fontArray = [
 ]
 
 /**
- * 获取canvas随机值
+ * 获取canvas随机值,从0123456789ABCDEF里面随机取32位
  */
 export function getCanvasContextNoiseValue() {
+  const randStr = '0123456789ABCDEF'
+  return Array.from({ length: 32 }, () => {
+    return randStr[getRandomInt(0, randStr.length - 1)]
+  }).join('')
+}
+
+export function getwebGLNoiseValue() {
   const randStr = 'ABCDEFGHIJKLMNOPQISTUVWXYZ0123456789'
   // 0-9随机数，原生js
   const n1 = Math.floor(Math.random() * 10)

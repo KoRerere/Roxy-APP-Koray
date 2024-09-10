@@ -1,8 +1,12 @@
 <script lang="ts" setup>
-import ryForm from '/@/components/ry-form'
-import drawerContent from '/@/components/drawer-content.vue'
-import { getFormData } from '/@/utils'
+import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
+import { getInputs } from './components/form-inputs'
+import proxiesForm from './components/proxies-form.vue'
+import drawerContent from '/@/components/drawer-content.vue'
+import { ProxyCheckStatus } from '/@/enums'
+
+import { getFormData } from '/@/utils'
 
 const props = defineProps({
   data: {
@@ -15,96 +19,42 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['confirm'])
-
 const toast = useToast()
+
 const formInputs = ref<any>([])
 const original = ref<any>()
+const checkeResult = ref({
+  checkStatus: ProxyCheckStatus.failure,
+  lastIp: '',
+  lastCity: '',
+  lastCountry: '',
+  checkTime: '',
+})
 
-function getInputs(data: any = {}) {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+const loading = ref(false)
 
-  formInputs.value = [
-    {
-      type: 'textarea',
-      label: '智能检测',
-      value: '',
-      placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
-      rows: 3,
-      tooltip: 'man!',
-    },
-    {
-      separator: true,
-    },
-    {
-      type: 'radio',
-      label: '网络协议',
-      name: 'ipType',
-      value: data.ipType || $dict_map.ipType[0].value,
-      options: $dict_map.ipType,
-      tooltip: 'what can i say',
-    },
-    {
-      label: 'Server',
-      items: [
-        {
-          type: 'select',
-          name: 'proxyCategory',
-          placeholder: '请选择网络协议',
-          value: !data.proxyCategory || data.proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : data.proxyCategory,
-          options: $dict_map.protocol,
-        },
-        {
-          type: 'text',
-          name: 'host',
-          value: data.host || '',
-          placeholder: '代理主机',
-        },
-        {
-          type: 'text',
-          name: 'port',
-          value: data.port || '',
-          placeholder: '代理端口',
-          // formatValue: (self: any) => {
-          //   return self.value || ''
-          // },
-        },
-      ],
-      tooltip: 'what can i say',
-      slot: 'server',
-    },
-    {
-      type: 'text',
-      label: '代理账号',
-      name: 'proxyUserName',
-      value: data.proxyUserName || '',
-      placeholder: 'Username for your server',
-    },
-    {
-      type: 'password',
-      label: '代理密码',
-      name: 'proxyPassword',
-      value: data.proxyPassword || '',
-      placeholder: 'Password for your server',
-    },
-    {
-      type: 'text',
-      label: '刷新URL',
-      name: 'refreshUrl',
-      value: data.refreshUrl || '',
-      placeholder: 'Please enter a valid URL',
-      tooltip: 'mamba out!',
-      icon: 'mdi mdi-refresh',
-      iconClick() {
-        toast.add({ severity: 'warn', summary: 'scvr', detail: 'Message Content', life: 5000 })
-      },
-    },
-  ]
+async function testProxy() {
+  const data = getFormData(formInputs.value)
 
-  original.value = { id: data.id, dirId: data.dirId }
-}
+  loading.value = true
+  window.electronAPI.send('proxy:detection', toRaw(data)).then(async (checkRes) => {
+    loading.value = false
 
-function testProxy() {
+    if (!checkRes.ip) {
+      toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
+    }
+    else {
+      toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.continent_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
+    }
 
+    checkeResult.value = {
+      checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+      lastIp: checkRes.ip ?? '',
+      lastCity: checkRes.city ?? '',
+      lastCountry: checkRes.continent_code ?? '',
+      checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+    }
+  })
 }
 
 function createProxy() {
@@ -118,50 +68,40 @@ function createProxy() {
 }
 
 onMounted(() => {
-  getInputs(props.data || {})
+  formInputs.value = getInputs(props.data || {})
 })
 </script>
 
 <template>
   <drawer-content :title="title" v-bind="$attrs">
     <div class="h-full flex flex-col">
-      <ry-form :inputs="formInputs">
-        <template #server="{ input }">
-          <InputGroup>
-            <template v-for="(item, index) in input.items" :key="index">
-              <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-                option-value="value" show-clear />
-              <InputText v-else v-bind="item" v-model="item.value" type="text" />
-            </template>
-          </InputGroup>
-        </template>
-      </ry-form>
+      <proxiesForm :inputs="formInputs" />
     </div>
     <template #footer>
-      <div class="flex justify-between w-full">
-        <ry-button label="Test Proxy" severity="secondary" outlined @click="testProxy" />
-        <ry-button label="Save selected" severity="info" @click="createProxy" />
+      <div class="flex items-center w-full gap-3">
+        <ry-button size="small" label="Test Proxy" icon="mdi mdi-wifi" severity="secondary" outlined
+          @click="testProxy" />
+        <span class="mdi mdi-list-box-outline remark cursor-pointer" />
+        <ry-button class="mx-auto mr-0" size="small" label="Save selected" severity="info" @click="createProxy" />
       </div>
     </template>
   </drawer-content>
 </template>
 
 <style lang="scss" scoped>
-.form-protocol {
+.remark {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg, 8px);
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md, 6px);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 4px);
+  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
 
-  &-item {
-    display: flex;
-    min-width: 120px;
-    padding: 10px 10px 10px var(--spacing-xl, 12px);
-    align-items: center;
-    gap: var(--spacing-lg, 8px);
-    border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #ffffff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  }
+  box-shadow:
+    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 }
 </style>

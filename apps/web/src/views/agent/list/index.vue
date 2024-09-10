@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import ryTag from '/@/components/ry-tag'
-import ryTable from '/@/components/ry-table'
-import ryButton from '/@/components/ry-button'
+import { format } from 'date-fns'
+import { useToast } from 'primevue/usetoast'
+import { useTemplateRef } from 'vue'
+import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
+import columnsConfig from './columns'
+import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
-import proxyIcon from '/@/assets/image/proxy.svg'
-import useColumns from '/@/hooks/useColumns'
-import columnsConfig from './columns'
-import { format } from 'date-fns'
-import { API } from '/@/api'
-import { useToast } from 'primevue/usetoast'
-import { setRowsLoading } from '/@/utils'
+import ryButton from '/@/components/ry-button'
+import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
-import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
-import { useTemplateRef } from 'vue'
+import useColumns from '/@/hooks/useColumns'
+import { setRowsLoading } from '/@/utils'
+import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
 interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   loadingOperationMap: {
@@ -135,15 +135,7 @@ async function editProxy(data: any) {
           <div>{{ data.ipType }}</div>
         </template>
         <template #outbound="{ data }">
-          <div class="outbound">
-            <img class="outbound-img" :src="data.region || proxyIcon">
-            <div class="flex justify-between outbound-region">
-              <span>{{ data.lastCountry }}</span>
-            </div>
-            <div class="flex items-center outbound-email">
-              <span>{{ data.checkTime }}</span>
-            </div>
-          </div>
+          <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
         </template>
         <template #checker="{ data }">
           <ryTag>
@@ -198,35 +190,6 @@ async function editProxy(data: any) {
 
   &-content {
     height: calc(100% - 48px);
-  }
-}
-
-.outbound {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-md, 8px);
-  grid-row-gap: var(--spacing-sm, 4px);
-
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  line-height: var(--Line-Height-text-xs, 16px);
-  font-weight: 400;
-
-  &-img {
-    width: 16px;
-    height: 16px;
-    grid-row-start: span 2;
-  }
-
-  &-region {
-    color: var(--Colors-Text-text-primary, #171c1f);
-    font-weight: 500;
-  }
-
-  &-email {
-    gap: var(--spacing-sm, 4px);
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }
 </style>

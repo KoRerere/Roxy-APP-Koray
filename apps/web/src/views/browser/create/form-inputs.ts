@@ -1,7 +1,7 @@
+import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 import { API } from '/@/api'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
-import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis } from './utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -51,8 +51,9 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
       font: fontType ? getRandomFonts() : null,
       canvasValue: canvas ? getCanvasContextNoiseValue() : null,
-      webGLValue: webGL ? getCanvasContextNoiseValue() : null,
-      audioContextValue: audioContext ? getCanvasContextNoiseValue() : null,
+      canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
+      webGLValue: webGL ? getwebGLNoiseValue() : null,
+      audioContextValue: audioContext ? getwebGLNoiseValue() : null,
       speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
       clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
     }, value => value !== null) // 跟随老版本逻辑过滤没有值的属性

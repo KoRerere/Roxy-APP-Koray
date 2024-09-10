@@ -47,6 +47,12 @@ export const menuRoutes: RouteRecordRaw[] = [
     component: () => import('/@/views/agent/list'),
   },
   {
+    path: '/agent/create',
+    name: 'agent-create',
+    meta: { title: '新建代理', groupName: 'resources' },
+    component: () => import('/@/views/agent/create'),
+  },
+  {
     path: '/agent/shop',
     name: 'account-shop',
     meta: { title: '代理商店(dome test)x', groupName: 'resources' },
@@ -76,8 +82,8 @@ export const menuRoutes: RouteRecordRaw[] = [
         name: 'extensions-hub',
         meta: { title: 'extensionHub', icon: 'AreaChartOutlined' },
         component: () => import('/@/views/extensions/hub'),
-      }
-    ]
-  }
+      },
+    ],
+  },
 
 ]

@@ -1,33 +1,30 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import actions from '/@/components/actions.vue'
-import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
+import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
+import { useToast } from 'primevue/usetoast'
 
-import drawersitems from '/@/views/browser/components/drawers/index.vue'
-import profileInfo from './components/profile-info.vue'
-import customFilters from './components/custom-filters.vue'
-import browserControl from './components/browser-control.vue'
-import multipleOperation from './components/multiple-operation.vue'
-import groupIcon from './components/group-icon.vue'
-import tagsIcon from './components/tags-icon.vue'
-import editCookies from './components/edit-cookies.vue'
-import { getFormData } from '/@/utils/index'
-
-import useColumns from '/@/hooks/useColumns'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
-
+import { useTemplateRef } from 'vue'
 import columnsRow from './columns'
+import browserControl from './components/browser-control.vue'
+import customFilters from './components/custom-filters.vue'
+import drawersitems from './components/drawers-item.vue'
+import editCookies from './components/edit-cookies.vue'
+import groupIcon from './components/group-icon.vue'
+import multipleOperation from './components/multiple-operation.vue'
+
+import profileInfo from './components/profile-info.vue'
+import tagsIcon from './components/tags-icon.vue'
+
 import { getCustomFilters, getFilters, getOperation, getSorts } from './operation'
 import { API } from '/@/api'
-import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
-import { useTemplateRef } from 'vue'
-import { useDialog } from 'primevue/usedialog'
+import actions from '/@/components/actions.vue'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
 import popup from '/@/components/simplePopup'
-import type { DrawerType } from '/@/views/browser/components/drawers/props.ts'
-
-type Type = DrawerType | 'editCookies'
+import useColumns from '/@/hooks/useColumns'
+import { getFormData } from '/@/utils/index'
 
 const props = defineProps({
   currentFilter: {
@@ -57,11 +54,11 @@ const remarkRef = useTemplateRef('remark')
 const tableRef = useTemplateRef('windownTable')
 
 const drawer = reactive({
-  type: 'proxyList' as Type,
+  type: 'proxyList',
   title: '',
   data: null,
   visible: false,
-  confirm: (type: Type, data: any) => {
+  confirm: (type: any, data: any) => {
     switch (type) {
       case 'proxyList':
         break

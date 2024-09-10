@@ -1,14 +1,21 @@
-<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-// @ts-ignore
-import proxyList from '/@/views/browser/components/drawers/proxy-list.vue'
-import accountList from '/@/views/browser/components/drawers/account-list.vue'
-import proxyCreate from '/@/views/agent/create/quick.vue'
 import accountCreate from '/@/views/account/create'
+import accountList from '/@/views/account/list/quick.vue'
+import proxyCreate from '/@/views/agent/create/quick.vue'
+import proxyList from '/@/views/agent/list/quick.vue'
 
-import { type DrawerType, drawerProps } from './props'
+export type DrawerType =
+  | 'proxyList'
+  | 'proxyForm'
+  | 'accountList'
+  | 'accountForm'
 
-defineProps(drawerProps)
+defineProps({
+  type: {
+    type: String as PropType<DrawerType>,
+    default: 'proxyList',
+  },
+})
 </script>
 
 <template>
