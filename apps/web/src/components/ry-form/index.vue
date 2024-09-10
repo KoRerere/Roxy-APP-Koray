@@ -1,8 +1,8 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import inputBase from './input-base.vue'
 // @ts-ignore
 import formItem from './form-item.vue'
+import inputBase from './input-base.vue'
 
 const _props = defineProps({
   inputs: {
@@ -27,7 +27,8 @@ const baseInput = ['text', 'password', 'number', 'textarea']
         <div v-if="input.separator" class="ry-form-line" />
 
         <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value" v-bind="input"
-          :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)" />
+          :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)"
+          @change="() => input.change?.(input, inputs)" />
 
         <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition"
           @change="() => input.change?.(input.value, input, inputs)" />
