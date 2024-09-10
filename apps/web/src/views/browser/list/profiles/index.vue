@@ -50,7 +50,6 @@ const sorts = ref(getSorts())
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 
-const remarkRef = useTemplateRef('remark')
 const tableRef = useTemplateRef('windownTable')
 
 const drawer = reactive({
@@ -61,6 +60,7 @@ const drawer = reactive({
   confirm: (type: any, data: any) => {
     switch (type) {
       case 'proxyList':
+        relatedProxy(data)
         break
       case 'proxyForm':
         drawer.editProfile(data)
@@ -79,7 +79,7 @@ const drawer = reactive({
   },
   editProfile: async (data: any) => {
     try {
-      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
+      const { msg } = await modifyWindowInfo(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
       tableRef.value?.refresh()
     }
@@ -242,11 +242,22 @@ function onRemark(datas: any) {
 
 async function onEditCookies(cookie: any[]) {
   const params = Object.assign({}, drawer.data, { cookie })
-  const { msg } = await API.window.userMdfWindowInfoSingleCreate(params)
+  const { msg } = await modifyWindowInfo(params)
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   drawer.visible = false
   tableRef.value?.refresh()
 }
+
+async function relatedProxy(proxy: any) {
+  const params = Object.assign({}, drawer.data, { moduleId: proxy.id })
+  await modifyWindowInfo(params)
+  drawer.visible = false
+}
+
+function modifyWindowInfo(params: any) {
+  return API.window.userMdfWindowInfoSingleCreate(params)
+}
+
 /**
  * profile =================
  */
@@ -267,6 +278,7 @@ function profileOperate(key: string, data: any) {
     case 'selectProxy':
       drawer.visible = true
       drawer.type = 'proxyList'
+      drawer.data = _data
       drawer.title = `选择代理 [UID-${data.windowSortNum}]`
       break
     case 'testProxy':
@@ -285,20 +297,24 @@ function profileOperate(key: string, data: any) {
       drawer.title = `新建账号 [UID-${data.windowSortNum}]`
       break
     case 'selectAccount':
+      drawer.visible = true
+      drawer.type = 'accountList'
+      drawer.title = `选择账号 [UID-${data.windowSortNum}]`
       break
   }
 }
 
 async function testProxy(data: any) {
-  try {
-    const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
-    console.log('🚀 ~ testProxy ~ res:', res)
+  console.log('🚀 ~ testProxy ~ data:', data)
+  // try {
+  //   const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
+  //   console.log('🚀 ~ testProxy ~ res:', res)
 
-    toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
-  }
-  catch (error) {
+  //   toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
+  // }
+  // catch (error) {
 
-  }
+  // }
 }
 
 async function refreshIp(_data: any) {
@@ -325,19 +341,6 @@ async function deleteProxy(data: any) {
   }
 }
 
-function listenOpenMessage() {
-  return window.electronAPI.on('browser:launch-process-message', (event) => {
-    const id = event.data?.dirId || event.data
-    openMessage[id as string] = event
-  })
-}
-
-function listenCloseMessage() {
-  return window.electronAPI.on('browser:on-close', (dirId) => {
-    Reflect.deleteProperty(openMessage, dirId)
-  })
-}
-
 function warnPopup(message: string) {
   return new Promise((resolve, _reject) => {
     confirm.require({
@@ -357,8 +360,22 @@ function warnPopup(message: string) {
     })
   })
 }
-let canceOpenlListener
-let canceCloselListener
+
+function listenOpenMessage() {
+  return window.electronAPI.on('browser:launch-process-message', (event) => {
+    const id = event.data?.dirId || event.data
+    openMessage[id as string] = event
+  })
+}
+
+function listenCloseMessage() {
+  return window.electronAPI.on('browser:on-close', (dirId) => {
+    Reflect.deleteProperty(openMessage, dirId)
+  })
+}
+
+let canceOpenlListener: any
+let canceCloselListener: any
 onMounted(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
@@ -371,6 +388,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
     selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
     :show-gridlines="false">

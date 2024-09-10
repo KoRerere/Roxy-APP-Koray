@@ -18,6 +18,7 @@ import {
   UserDelProxyModuleCreatePayload,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
+  UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
   UserMdfProxyModuleCreateData,
   UserMdfProxyModuleCreatePayload,
@@ -25,6 +26,8 @@ import {
   UserSaveProxyTableSortOrderCreatePayload,
   UserUnbindProxyModuleCreateData,
   UserUnbindProxyModuleCreatePayload,
+  UserUpdateProxyTableRowsCreateData,
+  UserUpdateProxyTableRowsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -173,6 +176,40 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserUpdateProxyTableRowsCreate
+   * @summary 修改代理表格列顺序
+   * @request POST:/user_update_proxy_table_rows
+   * @response `200` `UserUpdateProxyTableRowsCreateData` 成功
+   */
+  userUpdateProxyTableRowsCreate = (data: UserUpdateProxyTableRowsCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpdateProxyTableRowsCreateData, any>({
+      path: `/user_update_proxy_table_rows`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyTableRowsList
+   * @summary 获取代理表格列顺序
+   * @request GET:/user_get_proxy_table_rows
+   * @response `200` `UserGetProxyTableRowsListData` 成功
+   */
+  userGetProxyTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyTableRowsListData, any>({
+      path: `/user_get_proxy_table_rows`,
+      method: "GET",
       format: "json",
       ...params,
     });

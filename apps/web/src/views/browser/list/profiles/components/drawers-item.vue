@@ -4,15 +4,9 @@ import accountList from '/@/views/account/list/quick.vue'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import proxyList from '/@/views/agent/list/quick.vue'
 
-export type DrawerType =
-  | 'proxyList'
-  | 'proxyForm'
-  | 'accountList'
-  | 'accountForm'
-
 defineProps({
   type: {
-    type: String as PropType<DrawerType>,
+    type: String as PropType<any>,
     default: 'proxyList',
   },
 })

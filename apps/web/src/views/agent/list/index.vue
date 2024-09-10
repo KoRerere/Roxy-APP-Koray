@@ -2,8 +2,8 @@
 import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
 import columnsConfig from './columns'
+import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
@@ -13,13 +13,9 @@ import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { setRowsLoading } from '/@/utils'
-import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
-interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
-  loadingOperationMap: {
-    [key: string]: boolean
-  }
-}
+import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const tableRef = useTemplateRef('proxyTable')
 
@@ -28,35 +24,13 @@ const [columns] = useColumns(columnsConfig)
 
 const dataList = ref()
 
-function tableOperation(data: ProxyItem | ProxyItem[]) {
-  const datas = ([] as ProxyItem[]).concat(data)
-  return [
-    {
-      name: 'refresh',
-      label: '刷新',
-      icon: 'mdi mdi-refresh',
-      quick: true,
-      multiple: true,
-      disabled: datas.some(item => !item.refreshUrl),
-      disabledTips: '缺少刷新地址',
-    },
-    {
-      name: 'test',
-      label: '测速',
-      icon: 'mdi mdi-wifi',
-      quick: true,
-      multiple: true,
-    },
-  ]
-}
-
 const drawer = reactive({
   data: null,
   visible: false,
 })
 
-async function tableRequest(params: any) {
-  const data = await API.proxy.userGetProxyModuleList(params)
+async function getTableList(params: any) {
+  const data = await tableRequest(params)
   dataList.value = data.data.rows
   return data
 }
@@ -81,12 +55,9 @@ function refreshUrl(datas: ProxyItem[]) {
   })
 }
 
-/**
- * 并发限制 5
- */
 async function testProxy(datas: ProxyItem[], operateName: string) {
   datas.forEach((item) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item)))
+    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item) as any))
       .then(async (checkRes) => {
         const params = {
           id: item.id,
@@ -106,8 +77,8 @@ function testAllProxy() {
 }
 
 async function addRemark([remark, close]: [string, () => void], data: any) {
-  const { msg } = await editProxy({ ...data, remark })
-  toast.add({ severity: 'success', summary: 'Success', detail: msg, life: 5000 })
+  await editProxy({ ...data, remark })
+  toast.add({ severity: 'success', summary: 'Success', detail: '添加成功', life: 5000 })
   tableRef.value?.refresh()
   close()
 }
@@ -127,12 +98,17 @@ async function editProxy(data: any) {
       <ryButton size="small" icon="mdi mdi-wifi" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
-      <ry-table ref="proxyTable" selection-mode="multiple" :table-request="tableRequest"
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
+      <ry-table ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
         :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #proxy="{ data }">
-          <div><span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span></div>
-          <div>{{ data.ipType }}</div>
+          <div class="proxy-host">
+            <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
+          </div>
+          <div class="ip-type">
+            {{ data.ipType }}
+          </div>
         </template>
         <template #outbound="{ data }">
           <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
@@ -144,15 +120,7 @@ async function editProxy(data: any) {
           </ryTag>
         </template>
         <template #related="{ data }">
-          <template v-if="data.bindCount > 0">
-            <ryTag>{{ data[0] }}</ryTag>
-            <ryTag v-if="data.bindCount > 1">
-              {{ data.bindCount - 1 }}
-            </ryTag>
-          </template>
-          <div v-else>
-            - -
-          </div>
+          <relatedProfiles :data="data" />
         </template>
         <template #actions="{ data, operation }">
           <div class="flex justify-end gap-2">
@@ -191,5 +159,23 @@ async function editProxy(data: any) {
   &-content {
     height: calc(100% - 48px);
   }
+}
+
+.proxy-host {
+  color: var(--Color-neutrals-950, #0e1214);
+  font-family: 'JetBrains Mono';
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.ip-type {
+  color: var(--Colors-Text-text-subtle, #c7cdd1);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

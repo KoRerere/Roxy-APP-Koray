@@ -1,47 +1,23 @@
-<script setup>
+<script lang="ts" setup>
+import { format } from 'date-fns'
+import { useToast } from 'primevue/usetoast'
+import proxyColumns from './columns'
+import { type ProxyItem, tableOperation, tableRequest } from './operation'
+import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
+import { ProxyCheckStatus } from '/@/enums'
+import { setRowsLoading } from '/@/utils'
+import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
-const emits = defineEmits(['confirm'])
+const emit = defineEmits(['confirm'])
 
-const columns = [
-  {
-    key: 'id',
-    title: 'ID',
-  },
-  {
-    key: 'Proxy',
-    title: '代理',
-    slot: 'proxy',
-  },
-  {
-    key: 'Outbound_IP',
-    title: '外部IP',
-    slot: 'outbound',
-  },
-  {
-    key: 'Related_Profiles',
-    title: '相关简介',
-    slot: 'related',
-  },
-  {
-    key: 'Actions',
-    title: '操作',
-    slot: 'actions',
-  },
-]
+const toast = useToast()
 
-const dataList = ref(
-  Array.from({ length: 100 }, (_, index) => ({
-    id: index,
-    Proxy: 'mac',
-    Outbound_IP: 'mac账号',
-    Related_Profiles: 'aaaaaaaaaaa',
-  })),
-)
+const columns = proxyColumns.data.filter(column => column.key !== 'ipChecker')
 
 const filterButtons = reactive({
   value: 'All',
@@ -65,117 +41,96 @@ const filterButtons = reactive({
   ],
 })
 
-function getOperation (data) {
-  return [
-    {
-      key: 'test',
-      name: '测试',
-      icon: 'mdi mdi-wifi-off',
-      visible: true,
-      quick: true,
-      onClick: () => {
-        testProxy(data)
-      },
-    },
-    {
-      key: 'refresh',
-      name: '刷新',
-      icon: 'mdi mdi-refresh',
-      visible: data.id % 2 === 0,
-      quick: true,
-      onClick: () => {
-        refreshProxy(data)
-      },
-    },
-    {
-      key: 'edit',
-      name: '编辑',
-      icon: 'mdi mdi-file-document-plus-outline',
-      visible: true,
-      quick: true,
-      onClick: () => {
-        editProxy(data)
-      },
-    },
-  ].filter(item => item.visible)
+const dataList = ref()
+
+async function getTableList(params: any) {
+  const data = await tableRequest(params)
+  dataList.value = data.data.rows
+  return data
 }
 
-function testProxy (data) {
-  console.log('🚀 ~ testProxy ~ testProxy:', data)
+function operationHandler(operate: any, data: ProxyItem) {
+  const datas = ([] as ProxyItem[]).concat(data)
+  switch (operate.name) {
+    case 'refresh':
+      refreshUrl(datas)
+      break
+    case 'test':
+      testProxy(datas, operate.name)
+      break
+  }
 }
 
-function testAll () {
-  console.log('🚀 ~ testAll ~ testAll:')
+function refreshUrl(datas: ProxyItem[]) {
+  datas.forEach(async (item) => {
+    const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
+    toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: item.refreshUrl, life: 5000 })
+  })
 }
 
-function refreshProxy (data) {
-  console.log('🚀 ~ refreshProxy ~ refreshProxy:', data)
+async function testProxy(datas: ProxyItem[], operateName: string) {
+  datas.forEach((item) => {
+    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item) as any))
+      .then(async (checkRes) => {
+        const params = {
+          id: item.id,
+          checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+          lastCity: checkRes.city ?? '',
+          lastCountry: checkRes.continent_code ?? '',
+          lastIp: checkRes.ip ?? '',
+          checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        }
+        await API.proxy.userMdfProxyModuleCreate([params as any])
+        Object.assign(item, params)
+      })
+  })
 }
 
-function editProxy (data) {
-  console.log('🚀 ~ editProxy ~ editProxy:', data)
+function testAllProxy() {
+  testProxy(dataList.value, 'test')
 }
 
-const rowSelectData = ref()
+// ===================
+const selectedRow = ref<ProxyItem>()
 
-function onRowSelect ({ index }) {
-  rowSelectData.value = dataList.value[index]
+function onRowSelect(row: any) {
+  selectedRow.value = row.data
 }
 
-function saveSelected () {
-  emits('confirm', rowSelectData.value)
+function saveSelected() {
+  emit('confirm', selectedRow.value)
 }
 </script>
 
 <template>
   <drawer-content title="代理列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table :data-list="dataList" :show-gridlines="false" :columns="columns" :show-config="false"
+      <ry-table :table-request="getTableList" :show-gridlines="false" :columns="columns" :show-config="false"
         selection-mode="single" @row-select="onRowSelect">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
               option-value="key" data-key="key" />
-            <ryButton severity="secondary">
-              <span class="mdi mdi-wifi-refresh" />
-              <span @click="testAll">Test All</span>
-            </ryButton>
+            <ryButton severity="secondary" icon="mdi mdi-wifi-refresh" label="Test All" @click="testAllProxy" />
           </div>
         </template>
-        <template #proxy>
-          <div class="proxy-info">
-            <div>
-              socks5://gate3.rola.info:2189
-            </div>
-            <div class="proxy-info-type">
-              IPv4
-            </div>
+        <template #proxy="{ data }">
+          <div class="proxy-host">
+            <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
+          </div>
+          <div class="ip-type">
+            {{ data.ipType }}
           </div>
         </template>
-        <template #outbound>
-          <div class="outboundip">
-            <div class="mdi mdi-web outboundip-img" />
-            <div class="outboundip-nation">
-              HK/HongKong
-            </div>
-            <div class="outboundip-time">
-              5 days ago
-            </div>
-          </div>
+        <template #outbound="{ data }">
+          <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
         </template>
-        <template #related>
-          <div class="flex items-center gap-2">
-            <ry-tag>
-              <span class="mdi mdi-monitor mr-1" />
-              <span>12345</span>
-            </ry-tag>
-            <ry-tag>
-              +2
-            </ry-tag>
-          </div>
+        <template #related="{ data }">
+          <relatedProfiles :data="data" />
         </template>
         <template #actions="{ data }">
-          <actions :operation="getOperation(data)" :show-menu="false" />
+          <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
+            :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
         </template>
       </ry-table>
     </div>
@@ -186,53 +141,21 @@ function saveSelected () {
 </template>
 
 <style lang="scss" scoped>
-.proxy-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm, 4px);
-  min-width: 220px;
+.proxy-host {
   color: var(--Color-neutrals-950, #0e1214);
   font-family: 'JetBrains Mono';
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
-
-  &-type {
-    color: var(--Colors-Text-text-subtle, #c7cdd1);
-    font-family: Inter;
-    font-weight: 400;
-  }
 }
 
-.outboundip {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-lg, 8px);
-  grid-row-gap: var(--spacing-xs, 4px);
-
-  &-img {
-    font-size: 16px;
-    line-height: 1;
-    grid-row-start: span 2;
-  }
-
-  &-nation {
-    color: var(--Colors-Text-text-primary, #171c1f);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
-
-  &-time {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
+.ip-type {
+  color: var(--Colors-Text-text-subtle, #c7cdd1);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>
