@@ -3,7 +3,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import columnsRow from './columns'
-import { getOperation } from './operation'
+import { getOperation, getSorts } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
@@ -16,6 +16,7 @@ const toast = useToast()
 const [columns] = useColumns(columnsRow)
 
 const operation = getOperation()
+const sorts = ref(getSorts())
 
 const tableRef = useTemplateRef('recycleTable')
 
@@ -72,7 +73,7 @@ async function deleteHandler(datas: any) {
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
+        :operation="operation" :operation-handler="operationHandler" :sorts="sorts" :show-gridlines="false">
         <template #profile="{ data }">
           <profileInfo :data="data" disabled />
         </template>
