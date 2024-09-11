@@ -7,7 +7,7 @@ import tableFilter from './table-filter.vue'
 import tableSort from './table-sort.vue'
 
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { isEmptyValue } from '/@/utils'
+import { isEmptyValue, isFunction } from '/@/utils'
 
 defineOptions({
   inheritAttrs: false,
@@ -83,6 +83,10 @@ const [show] = useContextMenu()
 
 const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref(props.filters)
+const _dataList = ref()
+const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
+
+const { selection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(useAttrs())
 
 const tableAttrs = reactive({
   'scrollable': true,
@@ -93,13 +97,25 @@ const tableAttrs = reactive({
   'column-resize-mode': 'expand',
   'scroll': { x: 500, y: 400 },
   'selection-mode': props.selectionMode,
-  ...useAttrs(),
+  ...attrs,
 })
 
-const _dataList = ref()
-const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
+const hasOuterSelection = isFunction(onUpdateSelection?.value)
+const innerSelection = ref()
 
-const selectionData = ref()
+const selectionData = computed({
+  get() {
+    return hasOuterSelection ? selection.value : innerSelection.value
+  },
+  set(value: any) {
+    if (hasOuterSelection) {
+      (onUpdateSelection?.value as any)(value)
+    }
+    else {
+      innerSelection.value = value
+    }
+  },
+})
 
 const params = reactive<any>({
   sort: {},
@@ -164,6 +180,9 @@ function _clearSelection() {
 }
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
+  if (!tableAttrs['context-menu']) {
+    return
+  }
   show(event.originalEvent, {
     operation: _getOperation(event.data),
     operationHandler: (operate: any) => props.operationHandler(operate, event.data),

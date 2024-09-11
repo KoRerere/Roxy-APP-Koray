@@ -100,12 +100,13 @@ async function createProfile(formData: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
+  params.proxyMethod = params.moduleId ? 'choose' : 'custom'// 单个创建时兼容老接口
   const { data } = await API.window.userAddWindowInfoCreate(params)
   router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
 }
 
 async function batchCreateProfile(params: any) {
-  // 差异数量，代理总数量在formData时已处理
+  // 差异数量，代理总数量在 formatValue 时已处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
     toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 5000 })
