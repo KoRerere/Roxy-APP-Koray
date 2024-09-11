@@ -155,13 +155,13 @@ onBeforeMount(() => {
         <div class="location">
           <Skeleton v-if="testProxyLoading" height="1.7rem" />
           <template v-else>
-            {{ proxyInfo.continent }} / {{ proxyInfo.region }} / {{ proxyInfo.city }}
+            {{ proxyInfo.continent || '--' }} / {{ proxyInfo.region || '--' }} / {{ proxyInfo.city || '--' }}
           </template>
         </div>
         <div class="ip">
           <Skeleton v-if="testProxyLoading" class="mt-2" height="2rem" />
           <template v-else>
-            IP: {{ proxyInfo.ip }}
+            IP: {{ proxyInfo.ip || '--' }}
           </template>
         </div>
       </div>

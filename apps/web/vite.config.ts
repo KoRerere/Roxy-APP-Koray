@@ -1,16 +1,16 @@
 /* eslint-env node */
 
 import { join } from 'node:path'
+import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
-import type { UserConfig } from 'vite'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import vueJsx from '@vitejs/plugin-vue-jsx'
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 
 import Components from 'unplugin-vue-components/vite'
-import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
-import { PrimeVueResolver } from '@primevue/auto-import-resolver'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import type { UserConfig } from 'vite'
 
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
@@ -28,9 +28,10 @@ const config: UserConfig = {
   },
   base: '',
   server: {
+    host: '0.0.0.0',
     fs: {
       strict: true,
-    }
+    },
   },
   build: {
     sourcemap: true,

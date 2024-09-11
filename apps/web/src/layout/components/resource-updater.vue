@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { onMounted, ref, useTemplateRef } from 'vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type Popover from 'primevue/popover'
-import { onMounted, ref, useTemplateRef } from 'vue'
 
 const popoverRef = useTemplateRef('popover')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
@@ -157,10 +157,10 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
                 </template>
                 <!-- 内核更新列表 -->
                 <template v-else>
-                  <div class="flex items-start">
+                  <div class="flex items-start mb-[6px]">
                     <img src="/kernel-logo.png" class="w-[32px] h-[32px] mr-[6px]">
-                    <div class="flex-auto mb-[6px]">
-                      <div class="flex justify-between">
+                    <div class="flex-auto">
+                      <div class="flex justify-between items-center">
                         <span>{{ item.title }} {{ item.coreVersion }}</span>
                         <Button
                           type="button"
