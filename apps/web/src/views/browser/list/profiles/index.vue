@@ -133,7 +133,8 @@ async function coverDefaultDisplay() {
 }
 
 async function tableRequest(params: any) {
-  const data = await API.window.userGetWindowInfoV2List(params)
+  // 0: 未删除
+  const data = await API.window.userGetWindowInfoV2List({ ...params, isDelete: 0 })
   autoOpenBrowser(data.data.rows)
   return data
 }

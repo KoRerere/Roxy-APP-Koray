@@ -21,7 +21,8 @@ const sorts = ref(getSorts())
 const tableRef = useTemplateRef('recycleTable')
 
 async function tableRequest(params: any) {
-  return API.window.userGetWindowInfoRecycleList(params)
+  // 1: 已删除
+  return API.window.userGetWindowInfoV2List({ ...params, isDelete: 1 })
 }
 
 function operationHandler(operate: any, data: any) {
