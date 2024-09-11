@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import rxEditDiv from '/@/components/rx-edit-div'
+import { useToast } from 'primevue/usetoast'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
-import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-inputs'
-import { useToast } from 'primevue/usetoast'
-import { API } from '/@/api'
 import { createTableContext } from './hooks/useContext'
+import { API } from '/@/api'
+import rxEditDiv from '/@/components/rx-edit-div'
+import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 
 const router = useRouter()
 const toast = useToast()
@@ -105,6 +105,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 async function batchCreateProfile(params: any) {
+  // 差异数量，代理总数量在formData时已处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
     toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 5000 })

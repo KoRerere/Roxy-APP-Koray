@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import ryForm from '/@/components/ry-form'
-import ryButton from '/@/components/ry-button'
-import inputLabel from '/@/components/ry-form/input-label.vue'
-import proxyItem from './proxy.vue'
 import accountItem from './account.vue'
+import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
+import ryButton from '/@/components/ry-button'
+import ryForm from '/@/components/ry-form'
+import inputLabel from '/@/components/ry-form/input-label.vue'
 
 import { getFormDataByList } from '/@/utils'
 

@@ -11,6 +11,11 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
   const datas = ([] as ProxyItem[]).concat(data)
   return [
     {
+      name: 'edit',
+      label: '编辑',
+      icon: 'mdi mdi-pencil-box-outline',
+    },
+    {
       name: 'refresh',
       label: '刷新',
       icon: 'mdi mdi-refresh',
