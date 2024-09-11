@@ -1,42 +1,24 @@
 <script setup lang="ts">
-import { API } from '/@/api'
-import { getFormData } from '/@/utils'
-import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
+import type { LoginCreatePayload } from '@roxy/backend-api'
+import { EmailCodeInputOtp, SignForm } from './components/'
+import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
+import { API } from '/@/api'
+import { useUserStore } from '/@/stores/user'
 
 const { setUserInfo, setToken } = useUserStore()
 const router = useRouter()
-
 const toast = useToast()
+let signFormData: LoginCreatePayload = {
+  user_name: '',
+  password: '',
+}
 
-const loading = ref(false)
-
-const inputs = [
-  {
-    type: 'text',
-    label: '用户名',
-    name: 'user_name',
-    placeholder: '请选择用户名',
-    value: null,
-    labelWidth: '80px',
-  },
-  {
-    type: 'password',
-    label: '密码',
-    name: 'password',
-    placeholder: '请输入密码',
-    value: null,
-    labelWidth: '80px',
-  },
-]
+const currentComp = ref<CurrentComp>('signForm')
 
 async function handleSubmit() {
-  loading.value = true
-  const params = getFormData(inputs)
-  console.log(params)
-  const { code, data, msg = '登录失败' } = await API.base.loginCreate(params).finally(() => {
-    loading.value = false
-  })
+  console.log(signFormData)
+  const { code, data, msg = '登录失败' } = await API.base.loginCreate(signFormData)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
@@ -58,12 +40,6 @@ async function afterLogin(token: string) {
   router.push({ name: 'home' })
 }
 
-function openGoogleAuth2Login() {
-  const redirect_url = 'https://www.lumibrowser.com/zh_CN/oauth2_google.html'
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.email&response_type=code&redirect_uri=${redirect_url}&client_id=663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com`
-  window.open(url)
-}
-
 async function googleAuth2Login(googleToken: string) {
   const { code, data, msg = '登录失败' } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
@@ -75,27 +51,134 @@ async function googleAuth2Login(googleToken: string) {
   }
 }
 
-window.electronAPI.on('oauth2:google-callback', (searchStr) => {
+function setCurrentComponent(comp: CurrentComp) {
+  currentComp.value = comp
+}
+
+const cancelCallback = window.electronAPI.on('oauth2:google-callback', (searchStr) => {
   console.log('oauth2:google-callback', searchStr)
   const code = new URLSearchParams(searchStr).get('code')
-  googleAuth2Login(code)
+  if (code) {
+    googleAuth2Login(code)
+  }
+  else {
+    console.error('google oauth2 code is null')
+  }
+})
+
+onUnmounted(() => {
+  cancelCallback?.()
+})
+
+provideLoginContext({
+  setCurrentComponent,
+  setSignFormData(data: Record<string, any>) {
+    signFormData = data
+  },
+  getSignFormData() {
+    return signFormData
+  },
+  toSignIn: handleSubmit,
 })
 </script>
 
 <template>
-  <div class="w-[300px] mx-[auto]">
-    <ry-form :inputs="inputs" />
-    <Button type="button" class="mt-[20px] w-full" label="Search" icon="pi pi-search" :loading="loading"
-      @click="handleSubmit">
-      Log In
-    </Button>
-    <Divider align="center">
-      OR
-    </Divider>
-    <ry-button class="w-full" outlined :loading="loading" @click="openGoogleAuth2Login">
-      Log in with Google
-    </ry-button>
+  <div class="sign-card">
+    <div class="sign-card-header">
+      <div class="sign-card-content">
+        <img src="/logo.svg" class="w-[64px] h-[64px]">
+        <div class="logo-text">
+          RoxyBrowser
+        </div>
+      </div>
+    </div>
+    <SignForm v-if="currentComp === 'signForm'" />
+    <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" />
+  </div>
+  <div class="sign-bg">
+    <div class="blue" />
+    <div class="purple" />
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.sign-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  display: flex;
+  width: 330px;
+  flex-direction: column;
+  align-items: center;
+  gap: 33px;
+}
+
+.sign-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  align-self: stretch;
+
+  .sign-card-content {
+    display: flex;
+    width: 155px;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-text {
+    align-self: stretch;
+    color: #000;
+    font-family: Archivo;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 20px; /* 83.333% */
+  }
+}
+
+.sign-bg {
+  display: flex;
+  position: fixed;
+  top: 104%;
+  left: -100px;
+  right: -30px;
+  height: 656.408px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  filter: blur(150px);
+  transform: rotate(10deg);
+  z-index: -1;
+
+  .blue {
+    width: 866.302px;
+    height: 648.468px;
+    flex-shrink: 0;
+    border-radius: var(--radius-none, 866.302px);
+    background: var(--Color-blue-300, #12a3fc);
+    animation: ripple 15s linear infinite;
+  }
+
+  .purple {
+    width: 617.019px;
+    height: 461.868px;
+    flex-shrink: 0;
+    border-radius: var(--radius-none, 617.019px);
+    background: #ca59ff;
+    animation: ripple 15s linear infinite;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

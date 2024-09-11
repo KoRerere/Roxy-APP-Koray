@@ -1,0 +1,24 @@
+import type { LoginCreatePayload } from '@roxy/backend-api'
+
+const injectKey = Symbol('loginContext')
+
+export function provideLoginContext(context: LoginContext) {
+  provide(injectKey, context)
+}
+
+export function useLoginContext() {
+  return inject(injectKey) as LoginContext
+}
+
+export type CurrentComp = 'emailCodeInputOtp' | 'signForm'
+
+export interface LoginContext {
+  /** 登录 */
+  toSignIn: () => Promise<void>
+  /** 切换组件 */
+  setCurrentComponent: (comp: CurrentComp) => void
+  /** 保存当前表单的数据 */
+  setSignFormData: (signFormData: LoginCreatePayload) => void
+  /** 获取当前表单的数据 */
+  getSignFormData: () => LoginCreatePayload
+}
