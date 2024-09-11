@@ -79,8 +79,8 @@ async function deleteHandler(datas: any) {
           <profileInfo :data="data" disabled />
         </template>
         <template #log="{ data }">
-          <div>{{ data.createUser }}</div>
-          <div>{{ data.deleteTime }}</div>
+          <div>{{ data.email }}</div>
+          <div>{{ data.updateTime }}</div>
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
