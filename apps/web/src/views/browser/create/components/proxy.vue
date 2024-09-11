@@ -1,12 +1,15 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core'
+import { useDialog } from 'primevue/usedialog'
 import { useTableContext } from '../hooks/useContext'
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import ryTag from '/@/components/ry-tag'
+import simplePopup from '/@/components/simplePopup'
 import { getImage } from '/@/utils'
 import proxyCreate from '/@/views/agent/create/quick.vue'
+
 // @ts-ignore
 import proxyTable from '/@/views/agent/list/quick.vue'
 
@@ -19,13 +22,14 @@ const props = defineProps({
 
 const emits = defineEmits(['update:modelValue'])
 
-const { isBatch, createCount } = useTableContext()
-
 const proxyList = useVModel(props, 'modelValue', emits)
+
+const dialog = useDialog()
+const { isBatch, createCount } = useTableContext()
 
 const isOverload = computed(() => {
   const sum = proxyList.value.reduce((sum: number, item: any) => {
-    return sum + (item?.proxyCount || 0)
+    return sum + (item?._proxyCount || 0)
   }, 0)
   return sum > (createCount?.value || 0)
 })
@@ -65,10 +69,10 @@ function deleteProxy(index: number) {
 }
 
 function confirm(data: any) {
-  if (isBatch) {
+  if (isBatch.value) {
     proxyList.value.push({
       ...data,
-      proxyCount: 1,
+      _proxyCount: 1,
     })
   }
   else {
@@ -92,31 +96,31 @@ function refreshIp() {
   }, 2000)
 }
 
-function modifyProxyCount() {
-  // dialog.open(simplePopup, {
-  //   props: {
-  //     showHeader: false,
-  //     modal: true,
-  //     blockScroll: true,
-  //   },
-  //   data: {
-  //     inputs: [
-  //       {
-  //         type: 'number',
-  //         placeholder: '请输入代理数量',
-  //         name: 'proxyCount',
-  //         value: null,
-  //         required: true,
-  //       },
-  //     ],
-  //   },
-  //   emits: {
-  //     onSave: ([formData, close]: [any, () => void]) => {
-  //       proxyList.value[index].proxyCount = Number.parseInt(formData.proxyCount)
-  //       close()
-  //     },
-  //   },
-  // })
+function modifyProxyCount(item: any) {
+  dialog.open(simplePopup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      inputs: [
+        {
+          type: 'number',
+          placeholder: '请输入代理数量',
+          name: 'proxyCount',
+          value: null,
+          required: true,
+        },
+      ],
+    },
+    emits: {
+      onConfirm: ([formData, close]: [any, () => void]) => {
+        item._proxyCount = Number.parseInt(formData.proxyCount)// 创建时补全代理数量需要用到
+        close()
+      },
+    },
+  })
 }
 </script>
 
@@ -144,9 +148,9 @@ function modifyProxyCount() {
             <span>US/United States</span>
             <span class="mdi mdi-alert-octagon" />
           </div>
-          <ryTag class="cursor-pointer" @click="modifyProxyCount">
+          <ryTag class="cursor-pointer" @click="modifyProxyCount(item)">
             <span class="mdi mdi-web" />
-            <span>{{ item.proxyCount }}</span>
+            <span>{{ item._proxyCount }}</span>
           </ryTag>
           <span class="cursor-pointer mdi mdi-wifi" />
           <span class="cursor-pointer mdi mdi-refresh" />

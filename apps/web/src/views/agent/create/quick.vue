@@ -21,8 +21,8 @@ const props = defineProps({
 const emits = defineEmits(['confirm'])
 const toast = useToast()
 
-const formInputs = ref<any>([])
-const original = ref<any>()
+const formInputs = ref(getInputs(props.data || {}))
+const original = ref(props.data)
 const checkeResult = ref({
   checkStatus: ProxyCheckStatus.failure,
   lastIp: '',
@@ -57,7 +57,7 @@ async function testProxy() {
   })
 }
 
-function createProxy() {
+function onConfirm() {
   try {
     const formData = getFormData(formInputs.value, original.value)
     emits('confirm', formData)
@@ -66,10 +66,6 @@ function createProxy() {
     console.log(error)
   }
 }
-
-onMounted(() => {
-  formInputs.value = getInputs(props.data || {})
-})
 </script>
 
 <template>
@@ -82,7 +78,8 @@ onMounted(() => {
         <ry-button size="small" label="Test Proxy" icon="mdi mdi-wifi" severity="secondary" outlined
           @click="testProxy" />
         <span class="mdi mdi-list-box-outline remark cursor-pointer" />
-        <ry-button class="mx-auto mr-0" size="small" label="Save selected" severity="info" @click="createProxy" />
+        <ry-button class="mx-auto mr-0" size="small" :label="original?.id ? 'Update Proxy' : 'Create Proxy'"
+          severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawer-content>

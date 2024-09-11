@@ -10,13 +10,15 @@ export function getFormData(
   original: object = {},
   options: FormDataOptions = { keyName: 'name', valueName: 'value' },
 ): any {
-  return inputs.reduce(
+  const hadKey: Set<string> = new Set()
+
+  const formData = inputs.reduce(
     (formData, input) => {
       if (input.visible === false) {
         return formData
       }
 
-      formValidator(formData, input)
+      formValidator(hadKey, input)
 
       const name = input[options.keyName]
       const value = input[options.valueName]
@@ -30,11 +32,14 @@ export function getFormData(
         formData[name] = isFunction(formatValue)
           ? formatValue(input, inputs, formData)
           : _value
+        hadKey.add(name)// 记录以解析的字段
       }
       return formData
     },
     { ...original },
   )
+  hadKey.clear()
+  return formData
 }
 
 export function getFormDataByList(
@@ -50,8 +55,8 @@ export function getFormDataByList(
     : []
 }
 
-function formValidator(formData: any, input: any) {
-  if (hasOwnProperty(formData, input.name)) {
+function formValidator(hadKey: Set<string>, input: any) {
+  if (hadKey.has(input.name)) {
     throw new Error(`Duplicate input.name '${input.name}' found in inputs`)
   }
   else if (input.required && isInvalid(input.value)) {

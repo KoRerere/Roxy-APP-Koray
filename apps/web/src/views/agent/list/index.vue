@@ -14,6 +14,7 @@ import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { setRowsLoading } from '/@/utils'
 
+import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
@@ -39,6 +40,10 @@ function operationHandler(operate: any, data: ProxyItem) {
   const datas = ([] as ProxyItem[]).concat(data)
 
   switch (operate.name) {
+    case 'edit':
+      drawer.visible = true
+      drawer.data = data
+      break
     case 'refresh':
       refreshUrl(datas)
       break
@@ -67,7 +72,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
           lastIp: checkRes.ip ?? '',
           checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         }
-        editProxy(params)
+        onEdit(params)
       })
   })
 }
@@ -77,13 +82,13 @@ function testAllProxy() {
 }
 
 async function addRemark([remark, close]: [string, () => void], data: any) {
-  await editProxy({ ...data, remark })
+  await onEdit({ ...data, remark })
   toast.add({ severity: 'success', summary: 'Success', detail: '添加成功', life: 5000 })
   tableRef.value?.refresh()
   close()
 }
 
-async function editProxy(data: any) {
+async function onEdit(data: any) {
   return await API.proxy.userMdfProxyModuleCreate([data])
 }
 </script>
@@ -132,11 +137,9 @@ async function editProxy(data: any) {
       </ry-table>
     </div>
   </div>
-  <Drawer v-model:visible="drawer.visible" position="right">
+  <Drawer v-model:visible="drawer.visible" position="right" class="!w-[auto]">
     <template #container="{ closeCallback }">
-      <div @click="closeCallback">
-        123
-      </div>
+      <editProxy :data="drawer.data" title="编辑代理" @close="closeCallback" />
     </template>
   </Drawer>
 </template>

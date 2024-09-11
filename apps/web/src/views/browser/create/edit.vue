@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import rxEditDiv from '/@/components/rx-edit-div'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
-import { getFormDataByList } from '/@/utils'
 import { getInputsGroup } from './form-inputs'
-import { API } from '/@/api'
 import { createTableContext } from './hooks/useContext'
+import { API } from '/@/api'
+import rxEditDiv from '/@/components/rx-edit-div'
+import { getFormDataByList } from '/@/utils'
 
 const router = useRouter()
 const route = useRoute()
@@ -42,9 +42,7 @@ onMounted(() => {
 
   windowName.value = data.windowName
   inputsGroup.value = getInputsGroup(data)
-  original.value = {
-    ...data,
-  }
+  original.value = data
 })
 
 onUnmounted(() => {
@@ -59,7 +57,7 @@ onUnmounted(() => {
         <rxEditDiv v-model="windowName" class="window-name" />
       </div>
       <div class="flex-ovh-1">
-        <accordionInputs v-model:windowName="windowName" :accordions="accordions" :inputs-group="inputsGroup"
+        <accordionInputs v-model:window-name="windowName" :accordions="accordions" :inputs-group="inputsGroup"
           :open-browser="false" @cancel="cancel" @create="createProfile" />
       </div>
     </div>

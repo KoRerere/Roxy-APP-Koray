@@ -159,13 +159,14 @@ export function getInputsGroup(data: any = {}) {
       name: 'proxyInfoList',
       value: proxyInfoList,
       slot: 'proxy',
-      formatValue: (self: any, _inputs: any, formData: any) => {
-        const value = self.value[0] || {
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        const { id, ...value } = input.value[0] || {
           ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
+          moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
-        Object.assign(formData, value)// 赋值给表单（单个创建，以上字段为空则代表删除代理）
-        return self.value.map(({ proxyCount, ...item }: any) => Array.from({ length: proxyCount }, () => item)).flat()
+        Object.assign(formData, { ...value, moduleId: id })// 赋值给表单，批量创建这些值会无视（以上字段为空则代表删除代理）
+        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => item)).flat()
       },
     },
     {

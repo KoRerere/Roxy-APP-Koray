@@ -213,7 +213,7 @@ defineExpose({
           </slot>
         </template>
         <Column v-if="selectionMode" :selection-mode="selectionMode" :data-key="dataKey" header-style="width: 3rem" />
-        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
+        <Column v-for="column in _columns" :key="column[dataKey]" :field="column.key" :header="column.title">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <div :style="{ width: `${column.width}px` || 'auto' }" class="rxtable-cell" :class="column.classes"
