@@ -2,29 +2,33 @@
 import { useContextMenu } from '/@/hooks/useContextMenu'
 import { getImage } from '/@/utils'
 
-const _props = defineProps({
+const props = defineProps({
   data: {
     type: Object,
     default: () => ({}),
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
 const emits = defineEmits(['profileOperate'])
 
-const os_image = {
-  Windows: getImage('os/windows.svg'),
-  IOS: getImage('os/iOS.svg'),
-  macOS: getImage('os/macOS.svg'),
-  Android: getImage('os/android.svg'),
+const os_image: any = {
+  windows: getImage('os/windows.svg'),
+  ios: getImage('os/iOS.svg'),
+  macos: getImage('os/macOS.svg'),
+  android: getImage('os/android.svg'),
 }
 
-const data = computed(() => _props.data)
+const data = computed(() => props.data)
 const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
 
 const list = computed(() => [
   {
     key: 'os',
-    image: os_image[data.value.os],
+    image: os_image[(data.value.os as string).toLocaleLowerCase()],
     tooltip: `System: ${data.value.os} ${data.value.osVersion}\nKernel: Chrome ${data.value.coreVersion}`,
   },
   {
@@ -43,6 +47,10 @@ const list = computed(() => [
 const [show] = useContextMenu()
 
 function onClick(event: Event, key: string) {
+  if (props.disabled) {
+    return
+  }
+
   switch (key) {
     case 'proxy':
       show(event, { model: getProxyOperation() })
@@ -77,10 +85,11 @@ function getProxyOperation() {
       },
     },
     {
-      label: 'Refresh IP',
+      label: 'Refresh Url',
       visible: isProxy.value,
+      disabled: !data.value.refreshUrl,
       command: () => {
-        emits('profileOperate', 'refreshIp')
+        emits('profileOperate', 'refreshUrl')
       },
     },
     {
@@ -134,11 +143,11 @@ function getAccountOperation() {
 </script>
 
 <template>
-  <div class="flex h-full items-center profile">
+  <div class="flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
     <div class="w-[40px]">
       {{ data.windowSortNum }}
     </div>
-    <div class="flex justify-between state">
+    <div class="flex justify-between state" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
         class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
@@ -154,6 +163,10 @@ function getAccountOperation() {
 <style lang="scss" scoped>
 $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+
+.disabled-mask {
+  filter: grayscale(100%);
+}
 
 .profile {
   gap: var(--spacing-xl, 12px);

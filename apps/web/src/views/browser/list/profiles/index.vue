@@ -1,5 +1,6 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
+import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -23,8 +24,9 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 import popup from '/@/components/simplePopup'
+import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
-import { getFormData } from '/@/utils/index'
+import { createDefaultObject, getFormData } from '/@/utils/index'
 
 const props = defineProps({
   currentFilter: {
@@ -59,25 +61,28 @@ const drawer = reactive({
   visible: false,
   confirm: (type: any, data: any) => {
     switch (type) {
-      case 'proxyList':
-        relatedProxy(data)
+      case 'proxyList': {
+        const { id, dirId } = drawer.data!
+        drawer.updateProfile({ id, dirId, moduleId: data.id, proxyMethod: 'choose' })
         break
-      case 'proxyForm':
-        drawer.editProfile(data)
+      }
+      case 'proxyForm': {
+        const { id, dirId } = drawer.data!
+        drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
         break
-      case 'accountForm':
-        {
-          const { id, dirId, windowPlatformList, ...item } = data
-          drawer.editProfile({
-            id,
-            dirId,
-            windowPlatformList: windowPlatformList.concat(item),
-          })
-          break
-        }
+      }
+      case 'accountForm': {
+        const { id, dirId, windowPlatformList, ...item } = data
+        drawer.updateProfile({
+          id,
+          dirId,
+          windowPlatformList: windowPlatformList.concat(item),
+        })
+        break
+      }
     }
   },
-  editProfile: async (data: any) => {
+  updateProfile: async (data: any) => {
     try {
       const { msg } = await modifyWindowInfo(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
@@ -248,12 +253,6 @@ async function onEditCookies(cookie: any[]) {
   tableRef.value?.refresh()
 }
 
-async function relatedProxy(proxy: any) {
-  const params = Object.assign({}, drawer.data, { moduleId: proxy.id })
-  await modifyWindowInfo(params)
-  drawer.visible = false
-}
-
 function modifyWindowInfo(params: any) {
   return API.window.userMdfWindowInfoSingleCreate(params)
 }
@@ -263,6 +262,7 @@ function modifyWindowInfo(params: any) {
  */
 function profileOperate(key: string, data: any) {
   const _data = toRaw(data)
+  drawer.data = _data
   switch (key) {
     case 'addProxy':
       drawer.visible = true
@@ -272,20 +272,18 @@ function profileOperate(key: string, data: any) {
     case 'editProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.data = _data
       drawer.title = `编辑代理 [UID-${data.windowSortNum}]`
       break
     case 'selectProxy':
       drawer.visible = true
       drawer.type = 'proxyList'
-      drawer.data = _data
       drawer.title = `选择代理 [UID-${data.windowSortNum}]`
       break
     case 'testProxy':
       testProxy(_data)
       break
-    case 'refreshIp':
-      refreshIp(_data)
+    case 'refreshUrl':
+      refreshUrl(_data)
       break
     case 'deleteProxy':
       deleteProxy(_data)
@@ -293,7 +291,6 @@ function profileOperate(key: string, data: any) {
     case 'addAccount':
       drawer.visible = true
       drawer.type = 'accountForm'
-      drawer.data = _data
       drawer.title = `新建账号 [UID-${data.windowSortNum}]`
       break
     case 'selectAccount':
@@ -305,39 +302,42 @@ function profileOperate(key: string, data: any) {
 }
 
 async function testProxy(data: any) {
-  console.log('🚀 ~ testProxy ~ data:', data)
-  // try {
-  //   const res = await API.proxy.userCheckIpCreate({ id: data.moduleId })
-  //   console.log('🚀 ~ testProxy ~ res:', res)
+  const checkRes = await window.electronAPI.send('proxy:detection', toRaw(data) as any)
+  const params = {
+    checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
+    lastCity: checkRes.city ?? '',
+    lastCountry: checkRes.continent_code ?? '',
+    lastIp: checkRes.ip ?? '',
+    checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+  }
 
-  //   toast.add({ severity: 'error', summary: '错误', detail: res.msg, life: 5000 })
-  // }
-  // catch (error) {
+  if (data.moduleId) {
+    await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...params }] as any)
+  }
 
-  // }
+  drawer.updateProfile({ id: data.id, dirId: data.dirId, ...params })
 }
 
-async function refreshIp(_data: any) {
-  toast.add({ severity: 'warn', summary: '警告', detail: '尽请期待', life: 5000 })
+async function refreshUrl(data: any) {
+  const isOK = await window.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
+  toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: data.refreshUrl, life: 5000 })
 }
 
 async function deleteProxy(data: any) {
   try {
     await warnPopup('您确定要删除此代理吗')
-    drawer.editProfile({
+    // 删除代理也是调用修改接口
+    drawer.updateProfile({
       id: data.id,
       dirId: data.dirId,
-      host: '',
-      ipType: '',
-      port: '',
+      moduleId: 0, // 为0表示解除关联
       proxyCategory: 'noproxy',
-      proxyPassword: '',
-      proxyUserName: '',
-      refreshUrl: '',
+      proxyMethod: 'custom',
+      ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
     })
   }
   catch (error) {
-    console.log('🚀 ~ deleteProxy ~ error:', error)
+    toast.add({ severity: 'warn', summary: '警告', detail: error, life: 5000 })
   }
 }
 
@@ -356,7 +356,6 @@ function warnPopup(message: string) {
         severity: 'danger',
       },
       accept: () => resolve(null),
-      // reject: () => reject(new Error('cancel popup')),
     })
   })
 }

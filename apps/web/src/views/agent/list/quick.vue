@@ -13,6 +13,13 @@ import { setRowsLoading } from '/@/utils'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
+const _props = defineProps({
+  data: {
+    type: Object as PropType<any>,
+    default: () => ({}),
+  },
+})
+
 const emit = defineEmits(['confirm'])
 
 const toast = useToast()
@@ -90,23 +97,19 @@ function testAllProxy() {
   testProxy(dataList.value, 'test')
 }
 
-// ===================
-const selectedRow = ref<ProxyItem>()
-
-function onRowSelect(row: any) {
-  selectedRow.value = row.data
-}
+// ====================
+const selection = ref()
 
 function saveSelected() {
-  emit('confirm', selectedRow.value)
+  emit('confirm', selection.value)
 }
 </script>
 
 <template>
   <drawer-content title="代理列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table :table-request="getTableList" :show-gridlines="false" :columns="columns" :show-config="false"
-        selection-mode="single" @row-select="onRowSelect">
+      <ry-table v-model:selection="selection" :table-request="getTableList" :show-gridlines="false" :columns="columns"
+        :show-config="false" selection-mode="single" :context-menu="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
@@ -114,23 +117,23 @@ function saveSelected() {
             <ryButton severity="secondary" icon="mdi mdi-wifi-refresh" label="Test All" @click="testAllProxy" />
           </div>
         </template>
-        <template #proxy="{ data }">
+        <template #proxy="{ data: row }">
           <div class="proxy-host">
-            <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
+            <span>{{ row.protocol }}://</span><span>{{ row.host }}</span><span>:{{ row.port }}</span>
           </div>
           <div class="ip-type">
-            {{ data.ipType }}
+            {{ row.ipType }}
           </div>
         </template>
-        <template #outbound="{ data }">
-          <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
+        <template #outbound="{ data: row }">
+          <outboundIp :image="row.region" :country="row.lastCountry" :time="row.checkTime" />
         </template>
-        <template #related="{ data }">
-          <relatedProfiles :data="data" />
+        <template #related="{ data: row }">
+          <relatedProfiles :data="row" />
         </template>
-        <template #actions="{ data }">
-          <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
-            :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
+        <template #actions="{ data: row }">
+          <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
+            @quick-click="(operate) => operationHandler(operate, row)" />
         </template>
       </ry-table>
     </div>

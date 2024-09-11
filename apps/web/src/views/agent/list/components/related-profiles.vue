@@ -14,18 +14,21 @@ const hasBindCount = computed(() => {
 })
 
 const bindData = computed(() => {
+  const surplus = props.data?.bindList?.slice(1)
+
   return {
     value: props.data?.bindList![0],
-    count: (props.data?.bindCount ?? 0) - 1,
+    count: surplus?.length,
+    tooltip: `profiles id: ${surplus?.join(', ')}`,
   }
 })
 </script>
 
 <template>
-  <div v-if="hasBindCount">
+  <div v-if="hasBindCount" class="flex gap-2">
     <ryTag>{{ bindData.value }}</ryTag>
-    <ryTag v-if="bindData.count">
-      {{ bindData.count }}
+    <ryTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }">
+      +{{ bindData.count }}
     </ryTag>
   </div>
   <div v-else>

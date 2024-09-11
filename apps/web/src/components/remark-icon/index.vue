@@ -8,6 +8,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['onConfirm', 'onCancel'])
@@ -17,6 +21,10 @@ const hasRemark = computed(() => props.value)
 const dialog = useDialog()
 
 function onRemark() {
+  if (props.disabled) {
+    return
+  }
+
   dialog.open(popup, {
     props: {
       showHeader: false,
@@ -45,12 +53,12 @@ function onRemark() {
 </script>
 
 <template>
-  <div v-tooltip.top="value" class="cursor-pointer mdi mdi-file remark-icon" :class="{ active: hasRemark }"
-    @click.stop="onRemark" />
+  <div v-tooltip.top="value" class="cursor-pointer mdi mdi-file remark-icon"
+    :class="{ 'text-gray-200': disabled, 'active': hasRemark }" @click.stop="onRemark" />
 </template>
 
 <style lang="scss" scoped>
-.remark-icon:active {
+.remark-icon:active:not(.text-gray-200) {
   color: orange;
 }
 

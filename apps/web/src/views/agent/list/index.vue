@@ -25,7 +25,7 @@ const [columns] = useColumns(columnsConfig)
 
 const dataList = ref()
 
-const drawer = reactive({
+const drawer: any = reactive({
   data: null,
   visible: false,
 })
@@ -88,8 +88,15 @@ async function addRemark([remark, close]: [string, () => void], data: any) {
   close()
 }
 
+async function onEditConfirm(data: any) {
+  await onEdit(data)
+  toast.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  tableRef.value?.refresh()
+  drawer.visible = false
+}
+
 async function onEdit(data: any) {
-  return await API.proxy.userMdfProxyModuleCreate([data])
+  return API.proxy.userMdfProxyModuleCreate([data])
 }
 </script>
 
@@ -139,7 +146,7 @@ async function onEdit(data: any) {
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[auto]">
     <template #container="{ closeCallback }">
-      <editProxy :data="drawer.data" title="编辑代理" @close="closeCallback" />
+      <editProxy :data="drawer.data" title="编辑代理" @close="closeCallback" @confirm="onEditConfirm" />
     </template>
   </Drawer>
 </template>

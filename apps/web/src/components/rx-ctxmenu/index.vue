@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { MenuItem } from 'primevue/menuitem'
-import type operation from '/@/views/browser/list/operation'
 
 defineProps({
   operation: {

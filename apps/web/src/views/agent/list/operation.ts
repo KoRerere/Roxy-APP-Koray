@@ -7,23 +7,23 @@ export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   }
 }
 
-export function tableOperation(data: ProxyItem | ProxyItem[]) {
-  const datas = ([] as ProxyItem[]).concat(data)
+export function tableOperation(_data: ProxyItem | ProxyItem[]) {
+  // const datas = ([] as ProxyItem[]).concat(_data)
   return [
     {
       name: 'edit',
       label: '编辑',
       icon: 'mdi mdi-pencil-box-outline',
     },
-    {
-      name: 'refresh',
-      label: '刷新',
-      icon: 'mdi mdi-refresh',
-      quick: true,
-      multiple: true,
-      disabled: datas.some(item => !item.refreshUrl),
-      disabledTips: '缺少刷新地址',
-    },
+    // {
+    //   name: 'refresh',
+    //   label: '刷新',
+    //   icon: 'mdi mdi-refresh',
+    //   quick: true,
+    //   multiple: true,
+    //   disabled: datas.some(item => !item.refreshUrl),
+    //   disabledTips: '缺少刷新地址',
+    // },
     {
       name: 'test',
       label: '测速',

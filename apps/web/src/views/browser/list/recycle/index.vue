@@ -1,68 +1,66 @@
 <script setup lang="ts">
-import ryTag from '/@/components/ry-tag'
-import ryTable from '/@/components/ry-table'
-import ryButton from '/@/components/ry-button'
-import actions from '/@/components/actions.vue'
-
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+import { useTemplateRef } from 'vue'
+import columnsRow from './columns'
+import { getOperation } from './operation'
 import { API } from '/@/api'
+import actions from '/@/components/actions.vue'
+import ryTable from '/@/components/ry-table'
+import useColumns from '/@/hooks/useColumns'
+import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 
-const columns = ref([
-  {
-    title: '配置文件信息',
-    key: 'profile',
-    slot: 'profile',
-  },
-  {
-    title: '打开/预览',
-    key: 'open',
-    slot: 'open',
-  },
-  {
-    title: '组/标签',
-    key: 'group',
-    slot: 'group',
-  },
-])
+const confirm = useConfirm()
+const toast = useToast()
 
-const operation = ref([
-  {
-    name: 'refresh',
-    label: '刷新',
-    icon: 'mdi mdi-refresh',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'test',
-    label: '测速',
-    icon: 'mdi mdi-wifi',
-    quick: true,
-    multiple: true,
-  },
-  {
-    name: 'note',
-    label: '笔记',
-    icon: 'mdi mdi mdi-cube-scan',
-    quick: true,
-    multiple: true,
-  },
-])
+const [columns] = useColumns(columnsRow)
+
+const operation = getOperation()
+
+const tableRef = useTemplateRef('recycleTable')
+
+async function tableRequest(params: any) {
+  return API.window.userGetWindowInfoRecycleList(params)
+}
 
 function operationHandler(operate: any, data: any) {
+  const datas = [].concat(data)
   switch (operate.name) {
-    case 'refresh':
-      console.log('🚀 ~ operationHandler ~ data:', data)
+    case 'recover':
+      recoverHandler(datas)
       break
-    case 'note':
-      break
-    case 'test':
-      console.log('🚀 ~ operationHandler ~ data:', data)
+    case 'delete':
+      deleteHandler(datas)
       break
   }
 }
 
-async function tableRequest() {
-  return {}
+async function recoverHandler(datas: any) {
+  const ids = datas.map((item: any) => item.id)
+  await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: false } as any)
+  tableRef.value?.refresh()
+}
+
+async function deleteHandler(datas: any) {
+  confirm.require({
+    header: '警告',
+    message: '此操作不可逆, 确认要彻底删除吗？',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: '确定',
+      severity: 'danger',
+    },
+    accept: async () => {
+      const ids = datas.map((item: any) => item.id)
+      const { msg } = await API.window.userDelWindowInfoCreate({ ids })
+      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      tableRef.value?.refresh()
+    },
+  })
 }
 </script>
 
@@ -72,21 +70,22 @@ async function tableRequest() {
       回收站
     </div>
     <div class="proxies-content">
-      <ry-table selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation"
-        :operation-handler="operationHandler" :show-gridlines="false">
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
+      <ry-table ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
         <template #profile="{ data }">
-          <!-- <profile-info :data="data" @profile-operate="(key: string) => profileOperate(key, data)" /> -->
+          <profileInfo :data="data" disabled />
         </template>
-        <template #group>
-          <ryTag>123</ryTag>
+        <template #log="{ data }">
+          <div>{{ data.createUser }}</div>
+          <div>{{ data.deleteTime }}</div>
         </template>
         <template #actions="{ data }">
-          <!-- <actions :operation="operation" @more="(event: Event) => showOperationMenu(event, data)" /> -->
-        </template>
-        <template #multiple-operation="{ selection, clearSelection }">
-          <!-- <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-            @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-            @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" /> -->
+          <div class="flex gap-2">
+            <remarkIcon :value="data.windowRemark" disabled />
+            <actions :operation="operation" :show-menu="false"
+              @quick-click="(operate) => operationHandler(operate, data)" />
+          </div>
         </template>
       </ry-table>
     </div>
