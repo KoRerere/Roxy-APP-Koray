@@ -33,8 +33,8 @@ console.log('svgIcons', svgIcons)
 console.log('svgModules', svgModules)
 
 function handleCopyText(text: SvgNames) {
-  copyText(text)
   currentIcon.value = text
+  copyText(text)
   toast.add({
     severity: 'success',
     summary: '复制成功',
