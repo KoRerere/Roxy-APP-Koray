@@ -56,8 +56,9 @@
     "overrides": {}
   },
   "simple-git-hooks": {
+    "post-checkout": "git update-index --assume-unchanged apps/web/src/components/rx-icon/src/svg-icon-types.ts",
     "pre-commit": "pnpm lint-staged",
-    "post-merge": "pnpm install"
+    "post-merge": "pnpm install | git update-index --assume-unchanged apps/web/src/components/rx-icon/src/svg-icon-types.ts"
   },
   "lint-staged": {
     "*": "eslint --fix"

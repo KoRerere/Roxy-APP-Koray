@@ -20,7 +20,7 @@ const props = defineProps({
 
 const fontSize = computed(() => {
   const { size } = props
-  return typeof size === 'number' ? `${size}px` : size
+  return Number.isNaN(Number(size)) ? size : `${size}px`
 })
 
 const SvgComponent = computed(() => {

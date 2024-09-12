@@ -3,7 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxAlert } from '/@/components/rx-alert/'
 
 const { setCurrentComponent } = useLoginContext()
 const toast = useToast()
@@ -14,6 +14,7 @@ const newPassword = ref('')
 const reNewPassword = ref('')
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
 const loading = ref(false)
+const isShowAlert = ref(false)
 
 async function handleSubmit() {
   if (currentStep.value === 'step1') {
@@ -39,7 +40,7 @@ async function handleSubmit() {
       return
     }
 
-    const { code, msg } = await API.base.forgetPasswordList({
+    const { code, msg } = await API.base.forgetPasswordCreate({
       email: email.value,
       new_pwd: newPassword.value,
       ver_code: emailCode.value,
@@ -70,19 +71,12 @@ function receiveEmailCode(code: string) {
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
       <div class="box">
-        <Message class="message" severity="error" closable>
-          <div class="flex items-start gap-2">
-            <RxSvgIcon name="base/rx_ic_check_fill" />
-            <div class="message-body">
-              <span class="message-title">
-                Your email haven’t been signed up.
-              </span>
-              <span class="message-desc">
-                Please checkout your email and try again.
-              </span>
-            </div>
-          </div>
-        </Message>
+        <RxAlert
+          v-model:visible="isShowAlert"
+          type="error"
+          title="Your email haven’t been signed up."
+          content="Please checkout your email and try again."
+        />
         <div class="title">
           Reset your password
         </div>
@@ -96,9 +90,9 @@ function receiveEmailCode(code: string) {
           </template>
           <template v-else>
             <label for="new-password" class="label">New password</label>
-            <Password id="new-password" v-model="newPassword" placeholder="Enter new password" />
+            <Password id="new-password" v-model="newPassword" :feedback="false" placeholder="Enter new password" />
             <label for="re-new-password" class="label">Re-enter new password</label>
-            <Password id="re-new-password" v-model="reNewPassword" placeholder="Re-enter new password" />
+            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" placeholder="Re-enter new password" />
           </template>
         </div>
       </div>
@@ -152,6 +146,10 @@ function receiveEmailCode(code: string) {
   align-items: flex-start;
   gap: var(--spacing-2xl, 16px);
   align-self: stretch;
+
+  :deep(.p-inputtext) {
+    width: 100%;
+  }
 }
 .box {
   display: flex;

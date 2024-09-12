@@ -68,7 +68,7 @@ async function handleSubmit() {
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
     <ry-button class="w-full" :loading="loading" @click="handleSubmit">
-      Complete sign up
+      {{ type === 'signUp' ? 'Complete sign up' : 'Next' }}
     </ry-button>
     <div class="tips">
       <span>
