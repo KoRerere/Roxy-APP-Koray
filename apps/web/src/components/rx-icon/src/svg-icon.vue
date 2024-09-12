@@ -30,11 +30,11 @@ const SvgComponent = computed(() => {
 </script>
 
 <template>
-  <SvgComponent />
+  <SvgComponent class="svg" />
 </template>
 
 <style lang="scss" scoped>
-svg {
+:where(.svg) {
   font-size: v-bind(fontSize);
   color: v-bind(color);
 }

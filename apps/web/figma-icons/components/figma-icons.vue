@@ -95,5 +95,4 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 </template>
 
 <style lang="scss" scoped>
-
 </style>
