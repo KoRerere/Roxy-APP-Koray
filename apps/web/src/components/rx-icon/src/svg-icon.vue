@@ -8,6 +8,19 @@ const props = defineProps({
     type: String as PropType<SvgNames>,
     required: true,
   },
+  size: {
+    type: [Number, String],
+    default: 24,
+  },
+  color: {
+    type: String,
+    default: '',
+  },
+})
+
+const fontSize = computed(() => {
+  const { size } = props
+  return typeof size === 'number' ? `${size}px` : size
 })
 
 const SvgComponent = computed(() => {
@@ -19,4 +32,9 @@ const SvgComponent = computed(() => {
   <SvgComponent v-bind="$attrs" />
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+svg {
+  font-size: v-bind(fontSize);
+  color: v-bind(color);
+}
+</style>
