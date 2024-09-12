@@ -78,12 +78,16 @@ export type SvgNames = ${typeDefine}`
                 return {
                   element: {
                     enter: (node) => {
-                      // 基础图标的颜色使用当前颜色
-                      if (info.path?.includes('assets/images/base/')
-                        && node.attributes.fill
-                        && node.name === 'path') {
-                        node.attributes.fill = 'currentColor'
+                      if (node.name === 'svg') {
+                        node.attributes.width = '1em'
+                        node.attributes.height = '1em'
                       }
+                      // // 基础图标的颜色使用当前颜色
+                      // if (info.path?.includes('assets/images/base/')
+                      //   && node.attributes.fill
+                      //   && node.name === 'path') {
+                      //   node.attributes.fill = 'currentColor'
+                      // }
                     },
                   },
                 }
