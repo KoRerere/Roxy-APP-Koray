@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import ryTag from '/@/components/ry-tag'
-import ryTable from '/@/components/ry-table'
-import ryButton from '/@/components/ry-button'
-import actions from '/@/components/actions.vue'
-import accountCreate from '/@/views/account/create'
-import remarkIcon from '/@/components/remark-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import { API } from '/@/api'
 import { useTemplateRef } from 'vue'
-
 import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+import { API } from '/@/api'
+import actions from '/@/components/actions.vue'
+import remarkIcon from '/@/components/remark-icon'
+import ryButton from '/@/components/ry-button'
+import ryTable from '/@/components/ry-table'
+import ryTag from '/@/components/ry-tag'
+
+import accountCreate from '/@/views/account/create'
+
+import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const tableRef = useTemplateRef('accountTable')
 
@@ -63,8 +65,13 @@ const drawer = reactive({
   },
 })
 
-function operationHandler(operate: any, data: any) {
+function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
+    case 'create':
+      drawer.data = {}
+      drawer.title = '创建账号'
+      drawer.visible = true
+      break
     case 'edit':
       drawer.data = data
       drawer.title = '编辑账号'
@@ -123,7 +130,7 @@ function deletePopup(data: any) {
     <div class="flex justify-between account-header">
       <div>Accounts</div>
       <ryButton size="small" severity="info" icon="mdi mdi-plus" label="Create account"
-        @click="drawer.visible = true" />
+        @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
@@ -141,13 +148,13 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <ryTag>{{ data.window_info }}</ryTag>
+          <relatedProfiles />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <remarkIcon :value="data.platformRemarks" @on-confirm="(params) => addRemark(params, data)" />
+            <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
-              @quick-click="(operate) => operationHandler(operate, data)" />
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </ry-table>

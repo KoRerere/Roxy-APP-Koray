@@ -1,4 +1,4 @@
-import { hasOwnProperty, isFunction, isInvalid } from './basic'
+import { isFunction, isInvalid } from './basic'
 
 interface FormDataOptions {
   keyName: string

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
-import type { PropType } from 'vue'
 import { svgIcons } from './svgIcons'
 import type { SvgNames } from './svg-icon-types'
 
@@ -17,7 +16,7 @@ const SvgComponent = computed(() => {
 </script>
 
 <template>
-  <SvgComponent />
+  <SvgComponent v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped></style>

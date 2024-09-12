@@ -86,7 +86,7 @@ const _filters = ref(props.filters)
 const _dataList = ref()
 const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
 
-const { selection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(useAttrs())
+const { selection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
 
 const tableAttrs = reactive({
   'scrollable': true,
@@ -204,18 +204,18 @@ defineExpose({
   <div class="position-relative w-full h-full rxtable">
     <div v-if="showTableHeader" class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
-        <table-filter :filters="_filters" @change="(data) => onChangeParams('filters', data)" />
+        <table-filter :filters="_filters" @change="(data: any) => onChangeParams('filters', data)" />
         <slot name="header-extra" />
       </div>
       <div class="flex gap-2">
         <table-config v-if="showConfig" :columns="columns"
-          @update:columns="(columns) => $emit('update:columns', columns)">
+          @update:columns="(columns: any) => $emit('update:columns', columns)">
           <template #footer>
             <slot name="config-footer" />
           </template>
         </table-config>
 
-        <table-sort v-if="sorts.length > 0" :sorts="sorts" @sort="(data) => onChangeParams('sort', data)" />
+        <table-sort v-if="sorts.length > 0" :sorts="sorts" @sort="(data: any) => onChangeParams('sort', data)" />
       </div>
     </div>
     <div class="rxtable-body">

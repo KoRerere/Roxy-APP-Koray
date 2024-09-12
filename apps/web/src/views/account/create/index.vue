@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import ryForm from '/@/components/ry-form'
+import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import remarkIcon from '/@/components/remark-icon'
-import { clearInputsValue, getFormData } from '/@/utils'
-import { API } from '/@/api'
+import ryForm from '/@/components/ry-form'
+import { clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
+import { SimpleCache } from '/@/utils/cache'
 
 const props = defineProps({
   data: {
@@ -19,21 +20,21 @@ const props = defineProps({
 const emits = defineEmits(['confirm', 'close'])
 
 const isEdit = computed(() => !!props.data.id)
+const cache = SimpleCache.getInstance()
 
 const formInputs = ref()
 const original = ref()
 
 async function getInputs(data: any = {}) {
-  console.log('🚀 ~ getInputs ~ data:', data)
-  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
+  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
 
-  const platformOptions = rows.map(item => ({
+  const platformOptions = rows.map((item: any) => ({
     image: item.platformIcon,
     label: item.platformUrl,
     value: item.platformUrl,
   }))
 
-  formInputs.value = [
+  const inputs = [
     {
       type: 'text',
       label: '平台名称',
@@ -95,12 +96,9 @@ async function getInputs(data: any = {}) {
         // : value
       },
     },
-  ].map((item) => {
-    item.value = data[item.name] || undefined
-    return item
-  })
-
-  original.value = { id: data.id, dirId: data.dirId, windowPlatformList: data.windowPlatformList, platformRemarks: data.platformRemarks }
+  ]
+  setInputValueByFormData(inputs, data)
+  return inputs
 }
 
 function addRemark([platformRemarks, close]: [string, () => void]) {
@@ -123,7 +121,10 @@ function confirm(more: boolean) {
 }
 
 onMounted(() => {
-  getInputs(props.data)
+  getInputs(props.data).then((inputs) => {
+    formInputs.value = inputs
+  })
+  original.value = props.data
 })
 </script>
 

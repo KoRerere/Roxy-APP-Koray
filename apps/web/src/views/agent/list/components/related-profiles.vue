@@ -7,6 +7,10 @@ const props = defineProps({
     type: Object as PropType<ProxyItem>,
     default: undefined,
   },
+  list: {
+    type: Array as PropType<string[]>,
+    default: undefined,
+  },
 })
 
 const hasBindCount = computed(() => {

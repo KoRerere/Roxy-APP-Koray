@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import popup from '/@/components/simplePopup'
 
 const props = defineProps({
@@ -53,13 +54,20 @@ function onRemark() {
 </script>
 
 <template>
-  <div v-tooltip.top="value" class="cursor-pointer mdi mdi-file remark-icon"
-    :class="{ 'text-gray-200': disabled, 'active': hasRemark }" @click.stop="onRemark" />
+  <div v-tooltip.top="value" class="flex items-center cursor-pointer" @click.stop="onRemark">
+    <RxSvgIcon name="base/rx_ic_doc_add" class="remark-icon"
+      :class="{ 'text-gray-200': disabled, 'active': hasRemark }" />
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.remark-icon:active:not(.text-gray-200) {
-  color: orange;
+.remark-icon {
+  width: 16px;
+  height: 16px;
+
+  &:active:not(.text-gray-200) {
+    color: orange;
+  }
 }
 
 .active {
