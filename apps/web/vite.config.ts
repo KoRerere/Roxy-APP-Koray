@@ -75,7 +75,18 @@ export type SvgNames = ${typeDefine}`
                 const name = info.path?.split('assets/images/').at(1)?.replace('.svg', '')
                 name && nameSet.add(name)
                 genSvgTypes()
-                return null
+                return {
+                  element: {
+                    enter: (node) => {
+                      // 基础图标的颜色使用当前颜色
+                      if (info.path?.includes('assets/images/base/')
+                        && node.attributes.fill
+                        && node.name === 'path') {
+                        node.attributes.fill = 'currentColor'
+                      }
+                    },
+                  },
+                }
               }
             })(),
           },

@@ -3,8 +3,8 @@ import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
-import { fingerprintInfoList, profileInfoList } from './constants'
-import { getTimeOffset } from './utils'
+import { fingerprintInfoList, profileInfoList } from '../constants'
+import { getTimeOffset } from '../utils'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
@@ -111,7 +111,6 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <Toast />
   <div class="layout">
     <div class="header">
       <div class="left">
