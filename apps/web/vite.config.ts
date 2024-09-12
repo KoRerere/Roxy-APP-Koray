@@ -11,6 +11,7 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
+import mkcert from 'vite-plugin-mkcert'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 import type { UserConfig } from 'vite'
@@ -30,6 +31,9 @@ const config: UserConfig = {
   },
   base: '',
   server: {
+    https: {
+
+    },
     host: '0.0.0.0',
     fs: {
       strict: true,
@@ -53,6 +57,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
+    mkcert(),
     svgLoader({
       svgoConfig: {
         plugins: [
