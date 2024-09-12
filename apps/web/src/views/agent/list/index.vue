@@ -132,7 +132,7 @@ async function onEdit(data: any) {
           </ryTag>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :data="data" />
+          <relatedProfiles :list="data.bindList" />
         </template>
         <template #actions="{ data, operation }">
           <div class="flex justify-end gap-2">

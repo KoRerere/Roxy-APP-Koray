@@ -71,6 +71,10 @@ const props = defineProps({
     type: Function as PropType<(event: any, data: any) => void>,
     default: () => () => { },
   },
+  multipleOperation: {
+    type: Boolean,
+    default: true,
+  },
   paginator: {
     type: Boolean,
     default: true,
@@ -267,7 +271,7 @@ defineExpose({
     </div>
   </div>
   <Transition>
-    <selection-operation v-if="selectionMode === 'multiple' && selectionData?.length > 0"
+    <selection-operation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
       v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
       @batch-operation="batchOperation">
       <template #custom-operation>

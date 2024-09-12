@@ -8,7 +8,6 @@ import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
 
 import accountCreate from '/@/views/account/create'
 
@@ -148,7 +147,7 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedProfiles />
+          <relatedProfiles :list="data.relatedProfiles" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">

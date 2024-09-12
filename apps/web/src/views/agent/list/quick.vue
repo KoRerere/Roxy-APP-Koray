@@ -129,7 +129,7 @@ function saveSelected() {
           <outboundIp :image="row.region" :country="row.lastCountry" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
-          <relatedProfiles :data="row" />
+          <relatedProfiles :list="row.bindList" />
         </template>
         <template #actions="{ data: row }">
           <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"

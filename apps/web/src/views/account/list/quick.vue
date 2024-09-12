@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import type { UserGetPlatformInfoV2ListParams } from '@roxy/backend-api'
+import { useToast } from 'primevue/usetoast'
+import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
+import remarkIcon from '/@/components/remark-icon'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
+import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
+
+const toast = useToast()
 
 const columns = [
   {
@@ -21,32 +24,6 @@ const columns = [
     title: '相关简介',
     key: 'related',
     slot: 'related',
-  },
-  {
-    key: 'Actions',
-    title: '操作',
-    slot: 'actions',
-  },
-]
-
-const operation = [
-  {
-    key: 'edit',
-    name: '编辑',
-    icon: 'mdi mdi-wifi-off',
-    quick: true,
-  },
-  {
-    key: 'edit',
-    name: '编辑',
-    icon: 'mdi mdi-refresh',
-    quick: true,
-  },
-  {
-    key: 'edit',
-    name: '编辑',
-    icon: 'mdi mdi-file-document-plus-outline',
-    quick: true,
   },
 ]
 
@@ -64,93 +41,92 @@ const filters = [
   },
 ]
 
-async function tableRequest(params: UserGetPlatformInfoV2ListParams) {
-  const { data } = await API.platform.userGetPlatformInfoV2List(params)
-  return data.rows.map(({ window_info, ...item }) => {
-    const list = window_info.split(',').filter(v => v)
-    const windowinfo = list.length > 1 ? [list[0], `+${list.length - 1}`] : list
-    return { ...item, window_info: windowinfo }
-  })
+const tableRef = useTemplateRef('accountTable')
+
+async function tableRequest(params: any) {
+  return API.platform.userGetPlatformInfoV2List(params)
+}
+
+async function addRemark([platformRemarks, close]: [string, () => void], data: any) {
+  const { msg } = await editAccount({ ...data, platformRemarks })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  tableRef.value?.refresh()
+  close()
+}
+
+function editAccount(formData: any) {
+  return API.platform.userMdfPlatformInfoCreate(formData)
+}
+// ============================
+const selectedRows = ref()
+
+function handleSave() {
+  console.log('🚀 ~ selectedRows:', selectedRows.value)
 }
 </script>
 
 <template>
   <drawerContent title="账号列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-config="false"
+      <ry-table ref="accountTable" v-model:selection="selectedRows" :multiple-operation="false"
+        selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-config="false"
         :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>
         <template #platform="{ data }">
           <div class="platform">
-            <img class="platform-img" :src="data.platformIcon" alt="">
-            <div class="platform-nation">
-              {{ data.platformUrl }}
+            <img class="platform-img" :src="data.platformIcon">
+            <div class="flex justify-between platform-region">
+              <span>{{ data.platformUrl }}</span>
             </div>
-            <div class="platform-time">
-              {{ data.platformName }}
+            <div class="flex items-center platform-email">
+              <span>{{ data.platformUserName }}</span>
+              <img v-if="data.platformEfa" class="platform-img" src="/@/assets/images/account/2fa.svg">
             </div>
           </div>
         </template>
         <template #related="{ data }">
-          <div class="related">
-            <ry-tag v-for="item in data.window_info" :key="item">
-              <span class="mdi mdi-monitor mr-1" />
-              <span>{{ item }}</span>
-            </ry-tag>
-          </div>
+          <relatedProfiles :list="data.list" />
         </template>
-        <template #actions>
-          <actions :operation="operation" />
+        <template #actions="{ data }">
+          <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />
         </template>
       </ry-table>
     </div>
+    <template #footer>
+      <ryButton severity="info" size="small" label="Save selected" @click="handleSave" />
+    </template>
   </drawerContent>
 </template>
 
 <style lang="scss" scoped>
-.button-group {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
-}
-
 .platform {
   display: grid;
   grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-lg, 8px);
-  grid-row-gap: var(--spacing-xs, 4px);
+  grid-column-gap: var(--spacing-md, 8px);
+  grid-row-gap: var(--spacing-sm, 4px);
+
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  line-height: var(--Line-Height-text-xs, 16px);
+  font-weight: 400;
 
   &-img {
-    font-size: 16px;
-    line-height: 1;
+    width: 16px;
+    height: 16px;
     grid-row-start: span 2;
   }
 
-  &-nation {
+  &-region {
     color: var(--Colors-Text-text-primary, #171c1f);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
   }
 
-  &-time {
+  &-email {
+    gap: var(--spacing-sm, 4px);
     color: var(--Colors-Text-text-inactive, #a3a9ad);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px);
   }
-}
-
-.related {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md, 6px);
 }
 </style>

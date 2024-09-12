@@ -3,10 +3,6 @@ import type { ProxyItem } from '../operation'
 import ryTag from '/@/components/ry-tag'
 
 const props = defineProps({
-  data: {
-    type: Object as PropType<ProxyItem>,
-    default: undefined,
-  },
   list: {
     type: Array as PropType<string[]>,
     default: undefined,
@@ -14,14 +10,14 @@ const props = defineProps({
 })
 
 const hasBindCount = computed(() => {
-  return (props.data?.bindCount ?? 0) > 0
+  return (props.list?.length ?? 0) > 0
 })
 
 const bindData = computed(() => {
-  const surplus = props.data?.bindList?.slice(1)
+  const surplus = props.list?.slice(1)
 
   return {
-    value: props.data?.bindList![0],
+    value: props.list?.[0],
     count: surplus?.length,
     tooltip: `profiles id: ${surplus?.join(', ')}`,
   }
