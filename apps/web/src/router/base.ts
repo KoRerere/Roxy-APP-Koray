@@ -7,10 +7,4 @@ export const baseRoutes: RouteRecordRaw[] = [
     meta: { title: '登录' },
     component: () => import('/@/views/login/index.vue'),
   },
-  {
-    name: 'signup',
-    path: '/signup',
-    meta: { title: '注册' },
-    component: () => import('/@/views/signup'),
-  },
 ]

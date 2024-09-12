@@ -7,23 +7,23 @@
       <div class="text-sm">Select your extension</div>
       <div class="flex items-center justify-start gap-4">
         <Button @click="uploadFile('file')" outlined label="Upload" severity="info">
-          <img src="/@/assets/image/extension/rx_ic_export.svg" alt="" />
+          <img src="/@/assets/images/extension/rx_ic_export.svg" alt="" />
           <span class="text-sm">Select a file</span>
         </Button> <span class="font-semibold">OR</span>
         <Button outlined label="Upload" severity="secondary">
-          <img src="/@/assets/image/extension/rx_ic_folder.svg" alt="" />
+          <img src="/@/assets/images/extension/rx_ic_folder.svg" alt="" />
           <span class="text-sm">Select a file</span>
         </Button>
       </div>
 
       <div class="flex items-center text-xs">
-        <img src="/@/assets/image/extension/rx_ic_warn_fill.svg" class="mr-1" alt="">
+        <img src="/@/assets/images/extension/rx_ic_warn_fill.svg" class="mr-1" alt="">
         <span style="color: var(--Colors-Text-text-tertiary, #7C8387)">Zip, CRX file supported, file limited to 50MB
           max.</span>
       </div>
 
       <!-- 上传文件回显 -->
-      <!-- 
+      <!--
       <div class="upload-file-info-box">
 
         <div class="upload-file-info-name">
@@ -35,7 +35,7 @@
               <span class="upload-file-info-name-text">name</span>
               <span class="upload-file-info-name-size-text">10/50</span>
             </div>
-            <InputText v-model="exNameInput" type="text" size="large" placeholder="Large" /> 
+            <InputText v-model="exNameInput" type="text" size="large" placeholder="Large" />
         </div>
 
         <div class="upload-file-info-desc">

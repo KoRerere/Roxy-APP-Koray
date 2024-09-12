@@ -10,6 +10,7 @@
       "dom"
     ],
     "baseUrl": ".",
+    "moduleResolution": "bundler",
     "paths": {
       "/@/*": [
         "src/*"
@@ -28,6 +29,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "dashboard/**/*",
+    "figma-icons/**/*",
     "types/*.d.ts",
     "./*.d.ts",
     "./auto-imports.d.ts"

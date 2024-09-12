@@ -1,12 +1,12 @@
 <template>
   <div class="botton-box flex align-center">
     <Button class="install" @click="clickInstallBtn">
-      <img class="icon" src="/@/assets/image/extension/rx_ic_download_url.svg" alt="">
+      <img class="icon" src="/@/assets/images/extension/rx_ic_download_url.svg" alt="">
       <span>Install via URL</span>
     </Button>
 
     <Button @click="uploadFile" class="upload">
-      <img class="icon" src="/@/assets/image/extension/rx_ic_upload.svg" alt="">
+      <img class="icon" src="/@/assets/images/extension/rx_ic_upload.svg" alt="">
       <span>Uplod</span>
     </Button>
 
@@ -14,7 +14,7 @@
     <div class="line"></div>
 
     <Button class="update">
-      <img class="icon" src="/@/assets/image/extension/rx_ic_clock_rotate.svg" alt="">
+      <img class="icon" src="/@/assets/images/extension/rx_ic_clock_rotate.svg" alt="">
       <span>Update All</span>
     </Button>
   </div>

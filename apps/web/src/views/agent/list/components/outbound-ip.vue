@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import proxyIcon from '/@/assets/image/proxy.svg'
+import proxyIcon from '/@/assets/images/proxy.svg'
 
 defineProps({
   image: {

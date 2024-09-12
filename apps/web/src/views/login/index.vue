@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import type { LoginCreatePayload } from '@roxy/backend-api'
-import { EmailCodeInputOtp, SignForm } from './components/'
+import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
@@ -72,7 +72,7 @@ onUnmounted(() => {
 
 provideLoginContext({
   setCurrentComponent,
-  setSignFormData(data: Record<string, any>) {
+  setSignFormData(data) {
     signFormData = data
   },
   getSignFormData() {
@@ -93,7 +93,8 @@ provideLoginContext({
       </div>
     </div>
     <SignForm v-if="currentComp === 'signForm'" />
-    <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" />
+    <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" />
+    <ResetPassword v-else-if="currentComp === 'resetPassword'" />
   </div>
   <div class="sign-bg">
     <div class="blue" />
@@ -112,7 +113,7 @@ provideLoginContext({
   width: 330px;
   flex-direction: column;
   align-items: center;
-  gap: 33px;
+  gap: var(--spacing-2xl, 16px);
 }
 
 .sign-card-header {

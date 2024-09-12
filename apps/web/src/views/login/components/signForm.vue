@@ -5,9 +5,10 @@ import { useLoginContext } from '../hooks/useLoginContext'
 import { API } from '/@/api'
 import { getFormData, setInputVisible } from '/@/utils'
 
-const loginContext = useLoginContext()
+const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
+const rememberMe = ref(false)
 const loading = ref(false)
 const isRegister = ref(false)
 
@@ -54,21 +55,21 @@ async function handleSubmit() {
   try {
     loading.value = true
     const params = getFormData(inputs.value)
-    loginContext.setSignFormData(params)
+    setSignFormData(params)
     console.log(params)
     // if sign up, switch to emailCodeInputOtp component
     if (isRegister.value) {
       const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: params.user_name })
       if (code === 0) {
         toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
-        loginContext.setCurrentComponent('emailCodeInputOtp')
+        setCurrentComponent('emailCodeInputOtp')
       }
       else {
         toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
       }
     }
     else {
-      await loginContext.toSignIn()
+      await toSignIn()
     }
   }
   catch (error) {
@@ -93,8 +94,17 @@ function switchFormMode(val: boolean) {
 
 <template>
   <ry-form class="w-full" :inputs="inputs" />
+  <div v-if="!isRegister" class="remember-me">
+    <div class="flex items-center">
+      <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
+      <label for="remember-me" class="ml-2"> Remember me </label>
+    </div>
+    <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">
+      Forget password
+    </div>
+  </div>
   <div class="login-ways">
-    <Button type="button" class="mt-[20px] w-full" label="Search" icon="pi pi-search" :loading="loading"
+    <Button type="button" class="w-full" label="Search" icon="pi pi-search" :loading="loading"
             @click="handleSubmit"
     >
       {{ isRegister ? 'Sign up' : 'Log in' }}
@@ -121,6 +131,22 @@ function switchFormMode(val: boolean) {
 </template>
 
 <style lang="scss" scoped>
+.remember-me {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  .forget-pwd {
+    cursor: pointer;
+    color: var(--Color-blue-300, #12a3fc);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  }
+}
+
 .divider {
   width: 100%;
   display: flex;
