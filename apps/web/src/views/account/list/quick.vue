@@ -4,6 +4,7 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import remarkIcon from '/@/components/remark-icon'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import ryTable from '/@/components/ry-table'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
@@ -83,7 +84,7 @@ function handleSave() {
             </div>
             <div class="flex items-center platform-email">
               <span>{{ data.platformUserName }}</span>
-              <img v-if="data.platformEfa" class="platform-img" src="/@/assets/images/account/2fa.svg">
+              <RxSvgIcon v-if="data.platformEfa" class="text-blue platform-img" name="base/rx_ic_2fa" :size="16" />
             </div>
           </div>
         </template>

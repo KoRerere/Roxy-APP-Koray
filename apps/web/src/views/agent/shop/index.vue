@@ -1,11 +1,9 @@
 <script setup lang="ts">
-
+import manage from '/@/views/browser/manage'
 </script>
 
 <template>
-  <div>
-    123
-  </div>
+  <manage />
 </template>
 
 <style scoped></style>
