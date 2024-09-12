@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { VueDraggable } from 'vue-draggable-plus'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import ryPopover from '/@/components/ry-popover'
+import { VueDraggable } from 'vue-draggable-plus'
 import profiles from './profiles'
 import recycle from './recycle'
 import { API } from '/@/api'
+import ryPopover from '/@/components/ry-popover'
 
 const confirm = useConfirm()
 const toast = useToast()
@@ -19,21 +19,21 @@ const sortTabs = computed({
   get() {
     return tabs.value.length > 2 ? tabs.value.slice(1, -1) : []
   },
-  set(value) {
+  set(value: any) {
     tabs.value.splice(1, tabs.value.length - 2, ...value)
   },
 })
 
 const active = ref(tabs.value[0].id)
 const isRecycle = computed(() => active.value === '1001')
-const currentFilter = computed(() => tabs.value.find(tab => tab.id === active.value))
+const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 async function getFilterList() {
   const { data } = await API.window.userGetWindowFilterNameListList()
   const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, name: item.filter_name }))
 
   if (tabs.value.length > 2) {
-    tabs.value = tabs.value.filter(tab => ['1000', '1001'].includes(tab.id))
+    tabs.value = tabs.value.filter((tab: any) => ['1000', '1001'].includes(tab.id))
   }
   tabs.value.splice(1, 0, ...list)
 }

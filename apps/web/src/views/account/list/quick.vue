@@ -8,6 +8,8 @@ import inputBase from '/@/components/ry-form/input-base.vue'
 import ryTable from '/@/components/ry-table'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
+const emit = defineEmits(['confirm'])
+
 const toast = useToast()
 
 const columns = [
@@ -58,19 +60,18 @@ function editAccount(formData: any) {
   return API.platform.userMdfPlatformInfoCreate(formData)
 }
 // ============================
-const selectedRows = ref()
+const selection = ref()
 
 function handleSave() {
-  console.log('🚀 ~ selectedRows:', selectedRows.value)
+  emit('confirm', selection.value)
 }
 </script>
 
 <template>
   <drawerContent title="账号列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table ref="accountTable" v-model:selection="selectedRows" :multiple-operation="false"
-        selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-config="false"
-        :filters="filters">
+      <ry-table ref="accountTable" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
+        :table-request="tableRequest" :columns="columns" :show-config="false" :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>

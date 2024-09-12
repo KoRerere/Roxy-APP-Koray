@@ -13,14 +13,15 @@ import drawersitems from './components/drawers-item.vue'
 import editCookies from './components/edit-cookies.vue'
 import groupIcon from './components/group-icon.vue'
 import multipleOperation from './components/multiple-operation.vue'
-
 import profileInfo from './components/profile-info.vue'
-import tagsIcon from './components/tags-icon.vue'
 
+import tagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getFilters, getOperation, getSorts } from './operation'
+
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 import popup from '/@/components/simplePopup'
@@ -60,24 +61,27 @@ const drawer = reactive({
   data: null,
   visible: false,
   confirm: (type: any, data: any) => {
+    const { id, dirId, windowPlatformList } = drawer.data!
     switch (type) {
-      case 'proxyList': {
-        const { id, dirId } = drawer.data!
-        drawer.updateProfile({ id, dirId, moduleId: data.id, proxyMethod: 'choose' })
-        break
-      }
       case 'proxyForm': {
-        const { id, dirId } = drawer.data!
         drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
         break
       }
+      case 'proxyList': {
+        drawer.updateProfile({ id, dirId, moduleId: data.id, proxyMethod: 'choose' })
+        break
+      }
       case 'accountForm': {
-        const { id, dirId, windowPlatformList, ...item } = data
         drawer.updateProfile({
           id,
           dirId,
-          windowPlatformList: windowPlatformList.concat(item),
+          windowPlatformList: windowPlatformList.concat(data),
         })
+        break
+      }
+      case 'accountList': {
+        const platformUrlIds = data.map((item: any) => item.id)
+        drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }
     }
@@ -97,7 +101,7 @@ const drawer = reactive({
   },
 })
 
-watch(() => props.currentFilter, (params) => {
+watch(() => props.currentFilter, (params: any) => {
   if (params && params.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
@@ -119,7 +123,7 @@ async function saveFilters(formData: { filter_name: string }) {
     return
   }
   const filter_condition = getFormData(ctmFilters.value)
-  const filter_rule = columns.value.map(column => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
+  const filter_rule = columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
 
   const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
@@ -419,11 +423,11 @@ onBeforeUnmount(() => {
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <span v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :class="{ 'text-orange': data.isOften }"
-          class="mdi mdi-bookmark-music-outline" @click.stop="operationHandler({ name: 'fav' }, data)" />
-        <span v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :class="{ 'text-orange': data.windowRemark }"
-          class="mdi mdi-list-box-outline ml-2" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <actions :operation="operation" @quick-click="(operate) => operationHandler(operate, data)"
+        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
+          :class="{ 'text-orange': data.isOften }" class="mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
+        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
+          :class="{ 'text-orange': data.windowRemark }" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+        <actions :operation="operation" @quick-click="(operate: any) => operationHandler(operate, data)"
           @more="(event: Event) => showOperationMenu(event, data)" />
       </div>
     </template>
@@ -438,7 +442,7 @@ onBeforeUnmount(() => {
     <template #container="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="data => drawer.confirm(drawer.type, data)" />
+        @confirm="(data: any) => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>
 </template>

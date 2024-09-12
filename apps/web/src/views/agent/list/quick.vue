@@ -13,13 +13,6 @@ import { setRowsLoading } from '/@/utils'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
-const _props = defineProps({
-  data: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  },
-})
-
 const emit = defineEmits(['confirm'])
 
 const toast = useToast()
@@ -133,7 +126,7 @@ function saveSelected() {
         </template>
         <template #actions="{ data: row }">
           <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
-            @quick-click="(operate) => operationHandler(operate, row)" />
+            @quick-click="(operate: any) => operationHandler(operate, row)" />
         </template>
       </ry-table>
     </div>

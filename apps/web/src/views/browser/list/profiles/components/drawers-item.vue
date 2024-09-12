@@ -9,13 +9,17 @@ defineProps({
     type: String as PropType<any>,
     default: 'proxyList',
   },
+  data: {
+    type: Object as PropType<any>,
+    default: () => ({}),
+  },
 })
 </script>
 
 <template>
-  <proxyList v-if="type === 'proxyList'" v-bind="$attrs" />
-  <proxyCreate v-if="type === 'proxyForm'" v-bind="$attrs" />
-  <accountList v-if="type === 'accountList'" v-bind="$attrs" />
+  <proxyList v-if="type === 'proxyList'" :data="data" v-bind="$attrs" />
+  <proxyCreate v-if="type === 'proxyForm'" :data="data" v-bind="$attrs" />
+  <accountList v-if="type === 'accountList'" :data="data" v-bind="$attrs" />
   <accountCreate v-if="type === 'accountForm'" v-bind="$attrs" />
 </template>
 
