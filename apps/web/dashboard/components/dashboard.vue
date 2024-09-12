@@ -25,10 +25,12 @@ const offsetHours = getTimeOffset()
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
+const hostname = location.hostname
+
 /** 获取当前窗口信息 */
 function getWindowInfo() {
   fetchWindowInfoLoading.value = true
-  fetch(`http://localhost:8888/api/browser/list?dirId=${dirId}`)
+  fetch(`http://${hostname}:8888/api/browser/list?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       console.log(result)
@@ -50,7 +52,7 @@ function getWindowInfo() {
 /** 代理检查 */
 function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
-  fetch(`http://localhost:8888/api/proxy/detection?dirId=${dirId}`)
+  fetch(`http://${hostname}:8888/api/proxy/detection?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       console.log(result)
@@ -76,7 +78,7 @@ function proxyDetection(event?: MouseEvent) {
 /** 刷新 URL */
 function refreshURL() {
   refreshUrlLoading.value = true
-  fetch(`http://localhost:8888/api/proxy/refresh-url`, {
+  fetch(`http://${hostname}:8888/api/proxy/refresh-url`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

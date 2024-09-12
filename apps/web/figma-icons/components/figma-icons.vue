@@ -62,7 +62,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
         </pre>
           </div>
           <div v-if="currentIcon">
-            当前选中的图标： <RxSvgIcon :name="currentIcon" />
+            <div class="flex items-center">
+              当前选中的图标： <RxSvgIcon :name="currentIcon" />
+            </div>
             <pre class="m-0 h-[80px]">
           <code>
 &lt;RxSvgIcon name="{{ currentIcon }}" /&gt;
@@ -72,7 +74,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
         </div>
       </template>
     </Card>
-    <div class="overflow-auto">
+    <div class="scroller overflow-auto">
       <template v-for="(list, key) in svgModules" :key="key">
         <Card class="mx-12 my-5">
           <template #title>
@@ -95,4 +97,17 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 </template>
 
 <style lang="scss" scoped>
+/* 优化滚动性能 */
+.scroller {
+  will-change: transform;
+  contain: layout paint;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+/* 确保硬件加速 */
+// .flex {
+//   transform: translateZ(0);
+// }
 </style>
