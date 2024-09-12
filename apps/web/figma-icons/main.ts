@@ -2,14 +2,14 @@ import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import { createApp } from 'vue'
-import Dashboard from './index.vue'
+import App from './App.vue'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
 import '/@/assets/style.css'
 import '/@/assets/override.css'
 
-const app = createApp(Dashboard)
+const app = createApp(App)
 
 app.use(PrimeVue, {
   theme: {

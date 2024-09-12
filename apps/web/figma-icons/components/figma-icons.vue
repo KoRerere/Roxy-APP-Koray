@@ -45,7 +45,6 @@ function handleCopyText(text: SvgNames) {
 </script>
 
 <template>
-  <Toast position="top-center" />
   <div class="h-[100vh]">
     <Card class="mx-12 my-5">
       <template #title>

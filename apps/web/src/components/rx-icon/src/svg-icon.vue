@@ -12,9 +12,7 @@ const props = defineProps({
 })
 
 const SvgComponent = computed(() => {
-  return defineAsyncComponent(
-    svgIcons[`../../../assets/images/${props.name}.svg`],
-  )
+  return svgIcons[`../../../assets/images/${props.name}.svg`]
 })
 </script>
 
