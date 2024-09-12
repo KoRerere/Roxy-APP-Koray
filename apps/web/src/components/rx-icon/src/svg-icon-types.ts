@@ -1,3 +1,4 @@
+
 /** 此文件自动生成，请勿修改！所有可用的 svg name */
 export type SvgNames = 'base/rx_ic_at'
   | 'base/rx_ic_attachment'

@@ -80,7 +80,7 @@ const drawer = reactive({
         break
       }
       case 'accountList': {
-        const platformUrlIds = data.map((item: any) => item.id)
+        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean)
         drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }

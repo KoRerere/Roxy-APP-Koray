@@ -29,9 +29,9 @@ function confirm(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <ry-button size="small" severity="secondary" icon="mdi mdi-swap-horizontal" label="Select"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
         @click="toggleDrawer('list')" />
-      <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add account"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add account"
         @click="toggleDrawer('create')" />
     </div>
 

@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import { format } from 'date-fns'
-import { useToast } from 'primevue/usetoast'
 import { getInputs } from './components/form-inputs'
 import proxiesForm from './components/proxies-form.vue'
 import drawerContent from '/@/components/drawer-content.vue'
-import { ProxyCheckStatus } from '/@/enums'
-
 import { getFormData } from '/@/utils'
+
+import { useCheckProxy } from '/@/views/agent/hooks'
 
 const props = defineProps({
   data: {
@@ -19,42 +17,16 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['confirm'])
-const toast = useToast()
 
 const formInputs = ref(getInputs(props.data || {}))
 const original = ref(props.data)
-const checkeResult = ref({
-  checkStatus: ProxyCheckStatus.failure,
-  lastIp: '',
-  lastCity: '',
-  lastCountry: '',
-  checkTime: '',
-})
-
-const loading = ref(false)
+const [checkResult, checkProxy] = useCheckProxy()
 
 async function testProxy() {
   const data = getFormData(formInputs.value)
 
-  loading.value = true
-  window.electronAPI.send('proxy:detection', toRaw(data)).then(async (checkRes) => {
-    loading.value = false
-
-    if (!checkRes.ip) {
-      toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
-    }
-    else {
-      toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.continent_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
-    }
-
-    checkeResult.value = {
-      checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-      lastIp: checkRes.ip ?? '',
-      lastCity: checkRes.city ?? '',
-      lastCountry: checkRes.continent_code ?? '',
-      checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-    }
-  })
+  await checkProxy(data)
+  console.log('🚀 ~ testProxy ~ checkResult:', checkResult)
 }
 
 function onConfirm() {
@@ -75,7 +47,7 @@ function onConfirm() {
     </div>
     <template #footer>
       <div class="flex items-center w-full gap-3">
-        <ry-button size="small" label="Test Proxy" icon="mdi mdi-wifi" severity="secondary" outlined
+        <ry-button size="small" label="Test Proxy" icon="base/rx_ic_internet" severity="secondary" outlined
           @click="testProxy" />
         <span class="mdi mdi-list-box-outline remark cursor-pointer" />
         <ry-button class="mx-auto mr-0" size="small" :label="original?.id ? 'Update Proxy' : 'Create Proxy'"

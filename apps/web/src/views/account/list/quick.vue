@@ -88,7 +88,7 @@ function handleSave() {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :list="data.list" />
+          <relatedProfiles :list="data.window_info" />
         </template>
         <template #actions="{ data }">
           <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />

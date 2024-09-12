@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -41,7 +43,7 @@ function divInput(ev: any) {
       @input="divInput" @blur="contenteditable = false">
       {{ myTitle }}
     </div>
-    <span class="edit-icon mdi mdi-pencil-outline" @click="focusEditableDiv" />
+    <RxSvgIcon class="cursor-pointer" name="base/rx_ic_edit" :size="16" @click="focusEditableDiv" />
   </div>
 </template>
 
@@ -72,11 +74,6 @@ function divInput(ev: any) {
       height: 1px;
       background-color: var(--Color-neutrals-600, #575d61);
     }
-  }
-
-  &-icon {
-    font-size: 16px;
-    line-height: 1;
   }
 }
 </style>

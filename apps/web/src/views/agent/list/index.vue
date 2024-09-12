@@ -106,8 +106,8 @@ async function onEdit(data: any) {
       <div class="flex-1">
         Proxies
       </div>
-      <ryButton size="small" severity="info" icon="mdi mdi-web" label="Create proxy" />
-      <ryButton size="small" icon="mdi mdi-wifi" label="Test all" @click="testAllProxy" />
+      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy" />
+      <ryButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->

@@ -107,7 +107,7 @@ function saveSelected() {
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
               option-value="key" data-key="key" />
-            <ryButton severity="secondary" icon="mdi mdi-wifi-refresh" label="Test All" @click="testAllProxy" />
+            <ryButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">

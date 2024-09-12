@@ -33,7 +33,7 @@ const visible = ref(true)
       </div>
     </div>
     <div v-if="visible" class="preview-footer">
-      <ryButton label="Shuffle profiles" icon="mdi mdi-shuffle-variant" outlined severity="secondary"
+      <ryButton label="Shuffle profiles" icon="base/rx_ic_shuffle" outlined severity="secondary"
         @click="$emit('shuffle')" />
     </div>
   </div>

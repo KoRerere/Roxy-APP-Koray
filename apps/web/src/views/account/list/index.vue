@@ -127,7 +127,7 @@ function deletePopup(data: any) {
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Accounts</div>
-      <ryButton size="small" severity="info" icon="mdi mdi-plus" label="Create account"
+      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create account"
         @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
@@ -146,7 +146,7 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :list="data.relatedProfiles" />
+          <relatedProfiles :list="data.window_info" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">

@@ -189,7 +189,7 @@ function save() {
               <label for="wrap" class="select-none ml-2 cursor-pointer">Filter duplicates</label>
               <span class="mdi mdi-information-outline" />
             </div>
-            <ryButton outlined severity="secondary" size="small" label="Parse proxies" icon="mdi mdi-play"
+            <ryButton outlined severity="secondary" size="small" label="Parse proxies" icon="base/rx_ic_play"
               @click="parseValue" />
           </div>
         </div>
@@ -217,9 +217,10 @@ function save() {
       <div class="flex items-center justify-between">
         <div>Parsed proxies</div>
         <div class="flex gap-2">
-          <ryButton severity="secondary" text size="small" label="Delete fail" icon="mdi mdi-trash-can-outline"
+          <ryButton severity="secondary" text size="small" label="Delete fail" icon="base/rx_ic_bin_1"
             :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <ryButton severity="secondary" size="small" label="Test all proxies" icon="mdi mdi-wifi" @click="testAll" />
+          <ryButton severity="secondary" size="small" label="Test all proxies" icon="base/rx_ic_speed_test"
+            @click="testAll" />
         </div>
       </div>
       <Message v-if="showMessage" severity="success" icon="pi pi-check-circle" closable @close="messageClose">

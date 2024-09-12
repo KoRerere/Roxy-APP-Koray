@@ -5,6 +5,19 @@ interface FormDataOptions {
   valueName: string
 }
 
+export function findInputByName(inputs: any[], name: string): any {
+  const list = inputs.slice()
+  while (list?.length) {
+    const input = list.shift()
+    if (input.name === name) {
+      return input
+    }
+    if (input.items && Array.isArray(input.items)) {
+      list.unshift(...input.items)
+    }
+  }
+}
+
 export function getFormData(
   inputs: any[],
   original: object = {},

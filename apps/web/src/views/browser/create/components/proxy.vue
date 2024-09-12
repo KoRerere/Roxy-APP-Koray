@@ -7,8 +7,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import ryTag from '/@/components/ry-tag'
 import simplePopup from '/@/components/simplePopup'
-import { getImage } from '/@/utils'
 import proxyCreate from '/@/views/agent/create/quick.vue'
+import { useCheckProxy } from '/@/views/agent/hooks'
+
 // @ts-ignore
 import proxyTable from '/@/views/agent/list/quick.vue'
 
@@ -24,24 +25,11 @@ const isOverload = computed(() => {
   return sum > (createCount?.value || 0)
 })
 
-const proxyState = reactive({
-  region: getImage('proxy.svg'),
-  state: 'success',
-  isTestProxy: false,
-  isRefresh: false,
-  loading: 'mdi mdi-selection-ellipse',
-  ipIcon: 'mdi mdi-refresh',
-  proxyIcon: 'mdi mdi-wifi-refresh',
-  help: 'Enter your username to reset your password.',
-  helpIcon: 'mdi mdi-web',
-})
+const [checkResult, checkProxy] = useCheckProxy()
 
-const icons = computed(() => {
-  return {
-    ip: proxyState.isRefresh ? proxyState.loading : proxyState.ipIcon,
-    proxy: proxyState.isTestProxy ? proxyState.loading : proxyState.proxyIcon,
-    help: proxyState.helpIcon,
-  }
+const proxyState = reactive({
+  state: 'success',
+  loading: 'mdi mdi-selection-ellipse',
 })
 
 const drawer = reactive({
@@ -59,10 +47,9 @@ function deleteProxy(index: number) {
 }
 
 function confirm(data: any) {
-  console.log('🚀 ~ confirm ~ data:', data)
   if (isBatch.value) {
     proxyList.value.push({
-      ...data,
+      ...toRaw(data),
       _proxyCount: 1,
     })
   }
@@ -71,20 +58,8 @@ function confirm(data: any) {
   }
 }
 
-function testProxy() {
-  proxyState.isTestProxy = true
-
-  setTimeout(() => {
-    proxyState.isTestProxy = false
-  }, 2000)
-}
-
-function refreshIp() {
-  proxyState.isRefresh = true
-
-  setTimeout(() => {
-    proxyState.isRefresh = false
-  }, 2000)
+async function testProxy(data: any) {
+  await checkProxy(toRaw(data))
 }
 
 function modifyProxyCount(item: any) {
@@ -135,9 +110,9 @@ function tooltipValue(item: any) {
 <template>
   <div>
     <div class="button-group">
-      <ry-button size="small" severity="secondary" icon="mdi mdi-swap-horizontal" label="Select"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
         @click="toggleDrawer('list')" />
-      <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add proxy"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add proxy"
         @click="toggleDrawer('create')" />
     </div>
     <div>
@@ -147,7 +122,7 @@ function tooltipValue(item: any) {
         </Message>
         <rx-card v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
           <div class="multiple-region">
-            <img style="width: 16px;" :src="proxyState.region">
+            <RxSvgIcon name="base/rx_ic_earth" :size="16" />
             <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
             <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
           </div>
@@ -155,23 +130,22 @@ function tooltipValue(item: any) {
             <RxSvgIcon name="base/rx_ic_browser" :size="16" />
             <span>{{ item._proxyCount }}</span>
           </ryTag>
-          <!-- class="pi-spin" -->
-          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_renew" :size="16" />
-          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_speed_test" :size="16" />
+          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
+            :size="16" @click="testProxy(item)" />
         </rx-card>
       </template>
 
       <template v-else>
         <rx-card v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
-          <img class="single-img" :src="proxyState.region">
+          <RxSvgIcon class="single-img" name="base/rx_ic_earth" :size="16" />
           <div class="flex justify-between single-region ">
-            <span :class="proxyState.state">--</span>
-            <span class="cursor-pointer" :class="icons.proxy" @click="testProxy" />
+            <span :class="proxyState.state">{{ item.lastCountry }}/{{ item.lastCity }}</span>
+            <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
+              :size="16" @click="testProxy(item)" />
           </div>
           <div class="flex justify-between single-time">
             <span>{{ `${item.ipType || ''} ${item.proxyCategory || ''}://${item.host || ''}:${item.port || ''}`
               }}</span>
-            <span class="cursor-pointer" :class="icons.ip" @click="refreshIp" />
           </div>
         </rx-card>
       </template>
@@ -224,18 +198,6 @@ function tooltipValue(item: any) {
     color: var(--Colors-Text-text-inactive, #a3a9ad);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
-
-  &-help {
-    display: flex;
-    margin-top: var(--spacing-sm, 4px);
-    gap: var(--spacing-sm, 4px);
-    color: var(--Colors-Text-text-tertiary, #7c8387);
-    font-family: Inter;
-    font-size: 10px;
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
