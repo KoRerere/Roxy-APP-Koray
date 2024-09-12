@@ -126,7 +126,7 @@ async function onEdit(data: any) {
           <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
         </template>
         <template #checker="{ data }">
-          <ryTag>
+          <ryTag severity="info">
             <span class="mdi mdi-web" />
             <span>{{ data.checkChannel }}</span>
           </ryTag>
@@ -135,10 +135,10 @@ async function onEdit(data: any) {
           <relatedProfiles :list="data.bindList" />
         </template>
         <template #actions="{ data, operation }">
-          <div class="flex justify-end gap-2">
+          <div class="flex gap-2">
             <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-              @quick-click="(operate) => operationHandler(operate, data)" />
-            <remarkIcon :value="data.remark" @on-confirm="(params) => addRemark(params, data)" />
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <remarkIcon :value="data.remark" @on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
       </ry-table>

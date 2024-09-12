@@ -21,6 +21,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  isEdit: {
+    type: Boolean,
+    default: false,
+  },
   accordions: {
     type: Object as PropType<Accordions>,
     default: undefined,
@@ -94,7 +98,8 @@ function getFormData(isOpen: boolean) {
         @click.stop="$emit('cancel')" />
       <ryButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
         @click.stop="getFormData(true)" />
-      <ryButton size="small" severity="primary" label="Create profile" @click.stop="getFormData(false)" />
+      <ryButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
+        @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

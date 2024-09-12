@@ -26,8 +26,10 @@ const bindData = computed(() => {
 
 <template>
   <div v-if="hasBindCount" class="flex gap-2">
-    <ryTag>{{ bindData.value }}</ryTag>
-    <ryTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }">
+    <ryTag severity="info">
+      {{ bindData.value }}
+    </ryTag>
+    <ryTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" severity="info">
       +{{ bindData.count }}
     </ryTag>
   </div>

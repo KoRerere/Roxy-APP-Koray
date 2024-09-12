@@ -58,7 +58,7 @@ onUnmounted(() => {
       </div>
       <div class="flex-ovh-1">
         <accordionInputs v-model:window-name="windowName" :accordions="accordions" :inputs-group="inputsGroup"
-          :open-browser="false" @cancel="cancel" @create="createProfile" />
+          :open-browser="false" is-edit @cancel="cancel" @create="createProfile" />
       </div>
     </div>
     <previewCard :data="previewData" />
