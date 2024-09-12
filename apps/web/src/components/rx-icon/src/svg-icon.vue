@@ -29,11 +29,11 @@ const SvgComponent = computed(() => {
 </script>
 
 <template>
-  <SvgComponent v-bind="$attrs" />
+  <SvgComponent class="svg" v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped>
-svg {
+:where(.svg) {
   font-size: v-bind(fontSize);
   color: v-bind(color);
 }

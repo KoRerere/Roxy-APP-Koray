@@ -55,19 +55,14 @@ function onRemark() {
 
 <template>
   <div class="flex items-center">
-    <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon cursor-pointer"
+    <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon cursor-pointer" :size="16"
       :class="{ 'text-gray-200': disabled, 'active': hasRemark }" @click.stop="onRemark" />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.remark-icon {
-  width: 16px;
-  height: 16px;
-
-  &:active:not(.text-gray-200) {
-    color: orange;
-  }
+.remark-icon:active:not(.text-gray-200) {
+  color: orange;
 }
 
 .active {
