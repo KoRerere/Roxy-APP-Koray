@@ -1,6 +1,4 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
-import tagBlueSvg from '/@/assets/image/tags/tag-blue.svg'
-import tagRedSvg from '/@/assets/image/tags/tag-red.svg'
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 

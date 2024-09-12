@@ -17,7 +17,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
-import myPreset from '/@/assets/preset.ts'
+import myPreset from '/@/assets/preset'
 import { store } from '/@/stores'
 
 const app = createApp(App)

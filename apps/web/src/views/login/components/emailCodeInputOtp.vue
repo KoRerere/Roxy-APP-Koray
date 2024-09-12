@@ -3,23 +3,38 @@ import { useToast } from 'primevue/usetoast'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { API } from '/@/api'
 
+const props = defineProps({
+  type: {
+    type: String as PropType<'signUp' | 'resetPassword'>,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['ok'])
+
 const emailCode = defineModel('emailCode', { default: '' })
 
-const loginContext = useLoginContext()
+const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
 const toast = useToast()
 
 const loading = ref(false)
 
 function toReEnter() {
-  loginContext.setCurrentComponent('signForm')
+  setCurrentComponent('signForm')
 }
 
 async function handleSubmit() {
   if (emailCode.value.length !== 6) {
     return
   }
+
+  if (props.type === 'resetPassword') {
+    emit('ok', emailCode.value)
+    return
+  }
+
   loading.value = true
-  const signFormData = loginContext.getSignFormData()
+  const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
     ...signFormData,
     // TODO: remove this hardcode
@@ -30,9 +45,10 @@ async function handleSubmit() {
     loading.value = false
   })
   if (code === 0) {
-    await loginContext.toSignIn().finally(() => {
+    await toSignIn().finally(() => {
       loading.value = false
     })
+    emit('ok', emailCode.value)
   }
   else {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })

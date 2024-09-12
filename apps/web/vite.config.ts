@@ -1,17 +1,19 @@
 /* eslint-env node */
 
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import { debounce } from 'es-toolkit'
 import UnoCSS from 'unocss/vite'
+
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
-
 import Components from 'unplugin-vue-components/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import svgLoader from 'vite-svg-loader'
 import type { UserConfig } from 'vite'
-
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -40,8 +42,9 @@ const config: UserConfig = {
     assetsDir: '.',
     rollupOptions: {
       input: {
-        main: join(PACKAGE_ROOT, 'index.html'),
-        dashboard: join(PACKAGE_ROOT, 'dashboard.html'),
+        'main': join(PACKAGE_ROOT, 'index.html'),
+        'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
+        'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
       },
     },
     emptyOutDir: true,
@@ -50,6 +53,35 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
+    svgLoader({
+      svgoConfig: {
+        plugins: [
+          {
+            name: 'myPlugin',
+            fn: (() => {
+              const nameSet = new Set<string>()
+              const targetPath = join(PACKAGE_ROOT, 'src/components/rx-icon/src/svg-icon-types.ts')
+
+              const genSvgTypes = debounce(() => {
+                const typeDefine = [...nameSet].map(n => `'${n}'`).join(`
+  | `)
+                const code = `
+/** 此文件自动生成，请勿修改！所有可用的 svg name */
+export type SvgNames = ${typeDefine}`
+                writeFile(targetPath, code)
+              }, 3000)
+
+              return (root, params, info) => {
+                const name = info.path?.split('assets/images/').at(1)?.replace('.svg', '')
+                name && nameSet.add(name)
+                genSvgTypes()
+                return null
+              }
+            })(),
+          },
+        ],
+      },
+    }),
     vueDevTools(),
     UnoCSS(),
     AutoImport({

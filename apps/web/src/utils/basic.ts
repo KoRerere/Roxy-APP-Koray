@@ -37,7 +37,7 @@ export function createDefaultObject<T extends string[], U>(keys: T, defaultValue
 }
 
 export function getImage(path: string) {
-  return new URL(`../assets/image/${path}`, import.meta.url).href
+  return new URL(`../assets/images/${path}`, import.meta.url).href
 }
 
 export function deepClone<T>(source: T, hash = new WeakMap()): T {
@@ -79,4 +79,10 @@ export function checkCookieFormat(cookie: string): boolean {
 
 export function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+export function copyText(text: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    console.log('Copied to clipboard:', text)
+  })
 }

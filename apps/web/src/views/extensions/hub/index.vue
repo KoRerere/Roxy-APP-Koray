@@ -117,7 +117,7 @@ interface Items {
       <div class="search">
         <InputGroup>
           <InputGroupAddon>
-            <img src="/@/assets/image/extension/rx_ic_magnify.svg" alt="">
+            <img src="/@/assets/images/extension/rx_ic_magnify.svg" alt="">
           </InputGroupAddon>
           <InputText v-model="searchValue" placeholder="Search your most used chrome extensions" @input="searchEmit" />
 
@@ -160,7 +160,7 @@ interface Items {
                 </div>
 
                 <div v-if="!items.addStatus" class="item-intall-box flex" @click="addPlugin(items)">
-                  <img class="item-install-icon" src="/@/assets/image/extension/rx_ic_download_cloud.svg" alt="">
+                  <img class="item-install-icon" src="/@/assets/images/extension/rx_ic_download_cloud.svg" alt="">
                   <div class="item-install-item">
                     Install
                   </div>
@@ -173,7 +173,7 @@ interface Items {
                 </div>
 
                 <div v-else class="item-intalled-box flex">
-                  <img class="item-install-icon" src="/@/assets/image/extension/rx_ic_check_line.svg" alt="">
+                  <img class="item-install-icon" src="/@/assets/images/extension/rx_ic_check_line.svg" alt="">
                   <div class="item-install-item">
                     Installed
                   </div>

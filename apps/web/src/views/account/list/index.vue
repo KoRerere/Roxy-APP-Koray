@@ -136,7 +136,7 @@ function deletePopup(data: any) {
             </div>
             <div class="flex items-center platform-email">
               <span>{{ data.platformUserName }}</span>
-              <img v-if="data.platformEfa" class="platform-img" src="/@/assets/image/account/2fa.svg">
+              <img v-if="data.platformEfa" class="platform-img" src="/@/assets/images/account/2fa.svg">
             </div>
           </div>
         </template>
