@@ -434,14 +434,15 @@ onBeforeUnmount(() => {
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-        @open-browser="() => openBrowser(selection)" @quick-click="(e) => operationHandler(e, selection)" />
+        @open-browser="() => openBrowser(selection)"
+        @quick-click="(event: any) => operationHandler(event, selection)" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
     :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
-      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
+      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
         @confirm="(data: any) => drawer.confirm(drawer.type, data)" />
     </template>
   </Drawer>

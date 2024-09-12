@@ -1,9 +1,9 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
+import { useDialog } from 'primevue/usedialog'
+import simplePopup from './inputs-popup.vue'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
-import simplePopup from './inputs-popup.vue'
-import { useDialog } from 'primevue/usedialog'
 import { isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
@@ -34,7 +34,6 @@ const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref([])
-const isChange = ref(false)
 
 function showMenu(event: any) {
   menuRef.value.show(event)

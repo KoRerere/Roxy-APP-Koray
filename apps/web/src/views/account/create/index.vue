@@ -3,7 +3,7 @@ import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import remarkIcon from '/@/components/remark-icon'
 import ryForm from '/@/components/ry-form'
-import { clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
+import { checkCookieFormat, clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
 import { SimpleCache } from '/@/utils/cache'
 
 const props = defineProps({
@@ -14,6 +14,10 @@ const props = defineProps({
   title: {
     type: String,
     default: '创建账号',
+  },
+  showCreateMore: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -90,10 +94,8 @@ async function getInputs(data: any = {}) {
       placeholder: 'Paste JSON format or upload cookies JSON file',
       tooltip: 'man!',
       icon: 'mdi mdi-paperclip',
-      formatValue: (self: any) => {
-        return self.value
-        // ? JSON.parse(value).map(({ name, value, domain }) => ({ name, value, domain }))
-        // : value
+      formatValue: (input: any) => {
+        return checkCookieFormat(input.value) ? input.value : ''
       },
     },
   ]
@@ -135,7 +137,8 @@ onMounted(() => {
       <div class="button-group">
         <remarkIcon class="ma-auto ml-0 button-group-remark" :value="original?.platformRemarks"
           @on-confirm="addRemark" />
-        <ry-button v-if="!isEdit" label="Save & Create more" severity="secondary" outlined @click="confirm(true)" />
+        <ry-button v-if="!isEdit && showCreateMore" label="Save & Create more" severity="secondary" outlined
+          @click="confirm(true)" />
         <ry-button :label="isEdit ? 'Edit account' : 'Create account'" severity="info" @click="confirm(false)" />
       </div>
     </template>

@@ -20,7 +20,7 @@ defineProps({
   <proxyList v-if="type === 'proxyList'" :data="data" v-bind="$attrs" />
   <proxyCreate v-if="type === 'proxyForm'" :data="data" v-bind="$attrs" />
   <accountList v-if="type === 'accountList'" :data="data" v-bind="$attrs" />
-  <accountCreate v-if="type === 'accountForm'" v-bind="$attrs" />
+  <accountCreate v-if="type === 'accountForm'" :show-create-more="false" v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped></style>

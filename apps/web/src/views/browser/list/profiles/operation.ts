@@ -64,7 +64,7 @@ export async function getCustomFilters(params: any = {}) {
         parentLabel: '账号平台',
         parentName: 'platformUrlIds',
         value: `${item.id}`,
-        label: item.platformName,
+        label: new URL(item.platformUrl).hostname,
       })),
     },
     {

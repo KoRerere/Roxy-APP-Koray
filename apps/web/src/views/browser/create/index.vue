@@ -54,7 +54,7 @@ const previewData = computed(() => {
   return getFormDataByList(previewInputs.value, {}, { keyName: 'label', valueName: 'value' })
 })
 
-watch(() => tabsValue.value, (value) => {
+watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'batch'

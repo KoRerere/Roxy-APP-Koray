@@ -56,10 +56,9 @@ const drawer = reactive({
   data: {},
   title: '创建账号',
   confirm: async (formData: UserMdfPlatformInfoCreatePayload) => {
-    const data = formData.id
+    const _data = formData.id
       ? await editAccount(formData)
       : await createAccount(formData)
-    console.log('🚀 ~ confirm: ~ data:', data)
     tableRef.value?.refresh()
   },
 })
@@ -161,8 +160,7 @@ function deletePopup(data: any) {
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[500px]">
     <template #container="{ closeCallback }">
-      <accountCreate :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="drawer.confirm" />
+      <accountCreate :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm" />
     </template>
   </Drawer>
 </template>
