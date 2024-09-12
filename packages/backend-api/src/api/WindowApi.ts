@@ -730,7 +730,7 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description 新版本回收站列表也用此接口，is_delete传1即可
    *
    * @tags Window
    * @name UserGetWindowInfoV2List

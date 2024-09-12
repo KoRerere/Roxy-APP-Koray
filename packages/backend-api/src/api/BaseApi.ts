@@ -10,8 +10,8 @@
  */
 
 import {
-  ForgetPasswordListData,
-  ForgetPasswordListParams,
+  ForgetPasswordCreateData,
+  ForgetPasswordCreatePayload,
   LoginCreateData,
   LoginCreatePayload,
   LoginGoogleCreateData,
@@ -121,16 +121,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name ForgetPasswordList
+   * @name ForgetPasswordCreate
    * @summary 找回密码
-   * @request GET:/forget_password
-   * @response `200` `ForgetPasswordListData` 成功
+   * @request POST:/forget_password
+   * @response `200` `ForgetPasswordCreateData` 成功
    */
-  forgetPasswordList = (query: ForgetPasswordListParams, params: RequestParams = {}) =>
-    this.http.request<ForgetPasswordListData, any>({
+  forgetPasswordCreate = (data: ForgetPasswordCreatePayload, params: RequestParams = {}) =>
+    this.http.request<ForgetPasswordCreateData, any>({
       path: `/forget_password`,
-      method: "GET",
-      query: query,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

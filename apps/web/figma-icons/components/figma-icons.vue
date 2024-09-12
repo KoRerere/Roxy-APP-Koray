@@ -45,7 +45,7 @@ function handleCopyText(text: SvgNames) {
 </script>
 
 <template>
-  <div class="h-[100vh]">
+  <div class="h-[100vh] flex flex-col">
     <Card class="mx-12 my-5">
       <template #title>
         使用说明
@@ -72,11 +72,11 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
         </div>
       </template>
     </Card>
-    <div class="overflow-auto h-full">
+    <div class="overflow-auto">
       <template v-for="(list, key) in svgModules" :key="key">
         <Card class="mx-12 my-5">
           <template #title>
-            {{ key }}
+            {{ key }}（{{ list.length }}）
           </template>
           <template #content>
             <div class="flex flex-wrap gap-4 text-center">

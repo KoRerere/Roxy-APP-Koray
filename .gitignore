@@ -8,7 +8,6 @@ dist/
 dist-vite/
 **/components.d.ts
 **/auto-imports.d.ts
-**/svg-icon-types.ts
 
 # testing
 coverage
