@@ -13,13 +13,6 @@ import { setRowsLoading } from '/@/utils'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
-const _props = defineProps({
-  data: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  },
-})
-
 const emit = defineEmits(['confirm'])
 
 const toast = useToast()
@@ -114,7 +107,7 @@ function saveSelected() {
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
               option-value="key" data-key="key" />
-            <ryButton severity="secondary" icon="mdi mdi-wifi-refresh" label="Test All" @click="testAllProxy" />
+            <ryButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">
@@ -129,11 +122,11 @@ function saveSelected() {
           <outboundIp :image="row.region" :country="row.lastCountry" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
-          <relatedProfiles :data="row" />
+          <relatedProfiles :list="row.bindList" />
         </template>
         <template #actions="{ data: row }">
           <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
-            @quick-click="(operate) => operationHandler(operate, row)" />
+            @quick-click="(operate: any) => operationHandler(operate, row)" />
         </template>
       </ry-table>
     </div>

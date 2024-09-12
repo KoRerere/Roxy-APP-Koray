@@ -1,7 +1,7 @@
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { parseProxyUrl } from './hooks'
-import { getFormData, isEmptyValue, setInputValueByFormData } from '/@/utils'
+import { findInputByName, getFormData, isEmptyValue, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
   const toast = useToast()
@@ -64,12 +64,14 @@ export function getInputs(data: any = {}) {
           name: 'host',
           value: data.host || '',
           placeholder: '代理主机',
+          required: true,
         },
         {
           type: 'text',
           name: 'port',
           value: data.port || '',
           placeholder: '代理端口',
+          required: true,
         },
       ],
       tooltip: 'what can i say',
@@ -98,9 +100,11 @@ export function getInputs(data: any = {}) {
       tooltip: 'mamba out!',
       icon: 'mdi mdi-refresh',
       iconClick: async () => {
-        const { refreshUrl } = getFormData(inputs)
-        const isOK = await window.electronAPI.send('proxy:refreshUrl', refreshUrl)
-        toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: refreshUrl, life: 5000 })
+        const input = findInputByName(inputs, 'refreshUrl')
+        if (input.value) {
+          const isOK = await window.electronAPI.send('proxy:refreshUrl', input.value)
+          toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: input.value, life: 5000 })
+        }
       },
     },
   ])

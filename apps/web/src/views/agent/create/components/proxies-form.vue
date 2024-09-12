@@ -15,10 +15,10 @@ defineProps({
       <div>
         <inputLabel label="Server" />
         <InputGroup>
-          <template v-for="(item, index) in input.items" :key="index">
-            <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" option-label="label"
-              option-value="value" show-clear />
-            <InputText v-else v-bind="item" v-model="item.value" type="text" />
+          <template v-for="item in input.items" :key="item.name">
+            <Select v-if="item.type === 'select'" v-bind="item" v-model="item.value" class="!w-full"
+              option-label="label" option-value="value" show-clear />
+            <InputText v-else v-bind="item" v-model="item.value" class="!w-full" type="text" />
           </template>
         </InputGroup>
       </div>

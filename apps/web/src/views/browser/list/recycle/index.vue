@@ -21,7 +21,8 @@ const sorts = ref(getSorts())
 const tableRef = useTemplateRef('recycleTable')
 
 async function tableRequest(params: any) {
-  return API.window.userGetWindowInfoRecycleList(params)
+  // 1: 已删除
+  return API.window.userGetWindowInfoV2List({ ...params, isDelete: 1 })
 }
 
 function operationHandler(operate: any, data: any) {
@@ -78,8 +79,8 @@ async function deleteHandler(datas: any) {
           <profileInfo :data="data" disabled />
         </template>
         <template #log="{ data }">
-          <div>{{ data.createUser }}</div>
-          <div>{{ data.deleteTime }}</div>
+          <div>{{ data.email }}</div>
+          <div>{{ data.updateTime }}</div>
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">

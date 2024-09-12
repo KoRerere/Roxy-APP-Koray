@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { count } from 'node:console'
-import { read, utils } from 'xlsx'
 import { useToast } from 'primevue/usetoast'
+import { read, utils } from 'xlsx'
 
 const emit = defineEmits(['importSuccess'])
 
@@ -143,7 +143,7 @@ async function handleBeforeUpload(rawFile: any) {
         <div>{{ fileData.name || 'Choose file and drop it here' }}</div>
         <div>{{ fileData.size || 'Only .xlsx files supported, up to 5MB.' }}</div>
       </div>
-      <ryButton icon="mdi mdi-upload" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined
+      <ryButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined
         severity="secondary" @click="chooseFile" />
     </div>
     <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import proxyIcon from '/@/assets/images/proxy.svg'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 defineProps({
   image: {
@@ -19,7 +19,8 @@ defineProps({
 
 <template>
   <div class="outbound">
-    <img class="outbound-img" :src="image || proxyIcon">
+    <img v-if="image" class="outbound-img" :src="image">
+    <RxSvgIcon v-else class="outbound-img" name="base/rx_ic_earth" :size="16" />
     <div class="flex justify-between outbound-region">
       <span>{{ country || '--' }}</span>
     </div>

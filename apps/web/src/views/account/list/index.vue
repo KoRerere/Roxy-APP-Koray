@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import ryTag from '/@/components/ry-tag'
-import ryTable from '/@/components/ry-table'
-import ryButton from '/@/components/ry-button'
-import actions from '/@/components/actions.vue'
-import accountCreate from '/@/views/account/create'
-import remarkIcon from '/@/components/remark-icon'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import { API } from '/@/api'
 import { useTemplateRef } from 'vue'
-
 import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+import { API } from '/@/api'
+import actions from '/@/components/actions.vue'
+import remarkIcon from '/@/components/remark-icon'
+import ryButton from '/@/components/ry-button'
+import ryTable from '/@/components/ry-table'
+
+import accountCreate from '/@/views/account/create'
+
+import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const tableRef = useTemplateRef('accountTable')
 
@@ -55,16 +56,20 @@ const drawer = reactive({
   data: {},
   title: '创建账号',
   confirm: async (formData: UserMdfPlatformInfoCreatePayload) => {
-    const data = formData.id
+    const _data = formData.id
       ? await editAccount(formData)
       : await createAccount(formData)
-    console.log('🚀 ~ confirm: ~ data:', data)
     tableRef.value?.refresh()
   },
 })
 
-function operationHandler(operate: any, data: any) {
+function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
+    case 'create':
+      drawer.data = {}
+      drawer.title = '创建账号'
+      drawer.visible = true
+      break
     case 'edit':
       drawer.data = data
       drawer.title = '编辑账号'
@@ -122,8 +127,8 @@ function deletePopup(data: any) {
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Accounts</div>
-      <ryButton size="small" severity="info" icon="mdi mdi-plus" label="Create account"
-        @click="drawer.visible = true" />
+      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create account"
+        @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
@@ -141,13 +146,13 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <ryTag>{{ data.window_info }}</ryTag>
+          <relatedProfiles :list="data.window_info" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <remarkIcon :value="data.platformRemarks" @on-confirm="(params) => addRemark(params, data)" />
+            <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
-              @quick-click="(operate) => operationHandler(operate, data)" />
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </ry-table>
@@ -155,8 +160,7 @@ function deletePopup(data: any) {
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[500px]">
     <template #container="{ closeCallback }">
-      <accountCreate :data="drawer.data" :title="drawer.title" @close="() => closeCallback()"
-        @confirm="drawer.confirm" />
+      <accountCreate :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm" />
     </template>
   </Drawer>
 </template>

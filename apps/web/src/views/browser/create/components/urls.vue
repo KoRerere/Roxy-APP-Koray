@@ -36,7 +36,7 @@ function onBlur() {
   <div class="flex flex-row">
     <input-label v-bind="$attrs" />
     <div class="flex-1">
-      <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add URLs" @click="addInputs" />
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add URLs" @click="addInputs" />
       <div class="inputs">
         <rxCard v-for="(input, index) in urlInputs" :key="input.name" class="inputs-item" @close="deleteInput(index)">
           <inputBase v-model="input.value" v-bind="input" @blur="onBlur" />

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
-import { getImage } from '/@/utils'
 
 const props = defineProps({
   data: {
@@ -16,10 +16,10 @@ const props = defineProps({
 const emits = defineEmits(['profileOperate'])
 
 const os_image: any = {
-  windows: getImage('os/windows.svg'),
-  ios: getImage('os/iOS.svg'),
-  macos: getImage('os/macOS.svg'),
-  android: getImage('os/android.svg'),
+  windows: 'platforms/rx_os_windows',
+  macos: 'platforms/rx_os_macOS',
+  ios: 'platforms/rx_os_iOS',
+  android: 'platforms/rx_os_android',
 }
 
 const data = computed(() => props.data)
@@ -28,18 +28,19 @@ const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
 const list = computed(() => [
   {
     key: 'os',
-    image: os_image[(data.value.os as string).toLocaleLowerCase()],
+    svg: os_image[(data.value.os as string).toLocaleLowerCase()],
     tooltip: `System: ${data.value.os} ${data.value.osVersion}\nKernel: Chrome ${data.value.coreVersion}`,
   },
   {
     key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
-    image: isProxy.value ? getImage('proxy.svg') : getImage('plus.svg'),
+    svg: isProxy.value ? 'base/rx_ic_earth' : 'base/rx_ic_plus',
     tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
   },
   {
     key: 'account',
-    image: data.value.windowPlatformList?.[0]?.platformIcon || getImage('plus.svg'),
+    image: data.value.windowPlatformList?.[0]?.platformIcon,
+    svg: 'base/rx_ic_plus',
     classes: data.value.windowPlatformList?.length > 1 ? 'stack' : '',
   },
 ])
@@ -151,8 +152,9 @@ function getAccountOperation() {
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
         class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
-          @click.stop="(event) => onClick(event, item.key)">
-          <img class="state-icons-img" :src="item.image">
+          @click.stop="(event: any) => onClick(event, item.key)">
+          <img v-if="item.image" :src="item.image" class="state-icons-img">
+          <RxSvgIcon v-else :name="item.svg" />
         </div>
       </div>
     </div>

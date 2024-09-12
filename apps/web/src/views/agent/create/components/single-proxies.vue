@@ -61,7 +61,7 @@ function save() {
     <proxiesForm :inputs="formInputs" />
     <div class="flex flex-1 items-end justify-between w-full">
       <div class="flex items-center gap-3">
-        <Button size="small" severity="secondary" :loading="loading" label="Test proxies" icon="mdi mdi-wifi"
+        <Button size="small" severity="secondary" :loading="loading" label="Test proxies" icon="base/rx_ic_speed_test"
           @click="testProxy" />
         <span class="mdi mdi-list-box-outline remark cursor-pointer" />
       </div>

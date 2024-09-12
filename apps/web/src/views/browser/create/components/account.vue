@@ -1,18 +1,10 @@
 <script setup lang="ts">
-import { useVModel } from '@vueuse/core'
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
 import accountCreate from '/@/views/account/create'
 import accountList from '/@/views/account/list/quick.vue'
 
-const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => [],
-  },
-})
-const emits = defineEmits(['update:modelValue'])
-const windowPlatformList: any = useVModel(props, 'modelValue', emits)
+const windowPlatformList: any = defineModel('modelValue')
 
 const drawer = reactive({
   visible: false,
@@ -30,16 +22,16 @@ function deleteAccount(item: any) {
 }
 
 function confirm(data: any) {
-  windowPlatformList.value.push(data)
+  windowPlatformList.value.push(...([].concat(data)))
 }
 </script>
 
 <template>
   <div>
     <div class="button-group">
-      <ry-button size="small" severity="secondary" icon="mdi mdi-swap-horizontal" label="Select"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
         @click="toggleDrawer('list')" />
-      <ry-button size="small" severity="secondary" icon="mdi mdi-plus" label="Add account"
+      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add account"
         @click="toggleDrawer('create')" />
     </div>
 
@@ -58,8 +50,9 @@ function confirm(data: any) {
     <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[50%]"
       :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <accountList v-if="drawer.type === 'list'" @close="() => closeCallback()" />
-        <accountCreate v-if="drawer.type === 'create'" @close="() => closeCallback()" @confirm="confirm" />
+        <accountList v-if="drawer.type === 'list'" @close="closeCallback"
+          @confirm="(data: any) => { confirm(data); closeCallback() }" />
+        <accountCreate v-if="drawer.type === 'create'" @close="closeCallback" @confirm="confirm" />
       </template>
     </Drawer>
   </div>

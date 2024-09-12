@@ -106,8 +106,8 @@ async function onEdit(data: any) {
       <div class="flex-1">
         Proxies
       </div>
-      <ryButton size="small" severity="info" icon="mdi mdi-web" label="Create proxy" />
-      <ryButton size="small" icon="mdi mdi-wifi" label="Test all" @click="testAllProxy" />
+      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy" />
+      <ryButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
@@ -126,19 +126,19 @@ async function onEdit(data: any) {
           <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
         </template>
         <template #checker="{ data }">
-          <ryTag>
+          <ryTag severity="info">
             <span class="mdi mdi-web" />
             <span>{{ data.checkChannel }}</span>
           </ryTag>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :data="data" />
+          <relatedProfiles :list="data.bindList" />
         </template>
         <template #actions="{ data, operation }">
-          <div class="flex justify-end gap-2">
+          <div class="flex gap-2">
             <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-              @quick-click="(operate) => operationHandler(operate, data)" />
-            <remarkIcon :value="data.remark" @on-confirm="(params) => addRemark(params, data)" />
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <remarkIcon :value="data.remark" @on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
       </ry-table>

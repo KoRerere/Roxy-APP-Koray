@@ -177,6 +177,11 @@ export function getInputsGroup(data: any = {}) {
       name: 'windowPlatformList',
       value: data.windowPlatformList ?? [],
       slot: 'accounts',
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        const platformUrlIds = input.value.map((item: any) => item.id).filter(Boolean)
+        Object.assign(formData, { platformUrlIds })// 关联账号库选择的账号id
+        return input.value
+      },
     },
     {
       label: 'URLs',
@@ -187,7 +192,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'textarea',
-      label: '#xCookies',
+      label: 'Cookies',
       placeholder: 'Paste your cookies with JSON format',
       name: 'cookie',
       value: data.cookies,
