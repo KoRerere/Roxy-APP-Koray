@@ -35,7 +35,7 @@
     "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.5.1",
+    "@antfu/eslint-config": "^3.6.0",
     "@dotenvx/dotenvx": "^1.14.0",
     "@types/node": "^22.5.2",
     "@unocss/eslint-plugin": "^0.62.3",
@@ -45,8 +45,8 @@
     "lint-staged": "^15.2.10",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
-    "tsx": "^4.19.0",
-    "turbo": "^2.1.1",
+    "tsx": "^4.19.1",
+    "turbo": "^2.1.2",
     "vite": "^5.4.4"
   },
   "pnpm": {
@@ -56,9 +56,9 @@
     "overrides": {}
   },
   "simple-git-hooks": {
-    "post-checkout": "git update-index --assume-unchanged apps/web/src/components/rx-icon/src/svg-icon-types.ts",
+    "post-checkout": "",
     "pre-commit": "pnpm lint-staged",
-    "post-merge": "pnpm install | git update-index --assume-unchanged apps/web/src/components/rx-icon/src/svg-icon-types.ts"
+    "post-merge": "pnpm install"
   },
   "lint-staged": {
     "*": "eslint --fix"

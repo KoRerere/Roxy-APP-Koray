@@ -10,6 +10,8 @@
       "esnext",
       "dom"
     ],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -21,6 +23,7 @@
         "../electron/src/*"
       ]
     },
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
   "include": [

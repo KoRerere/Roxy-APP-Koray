@@ -7,4 +7,10 @@ export const baseRoutes: RouteRecordRaw[] = [
     meta: { title: '登录' },
     component: () => import('/@/views/login/index.vue'),
   },
+  {
+    name: 'pro-form',
+    path: '/pro-form',
+    meta: { title: '动态表单' },
+    component: () => import('/@/views/pro-form/index.vue'),
+  },
 ]
