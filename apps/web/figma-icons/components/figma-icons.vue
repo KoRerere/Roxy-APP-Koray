@@ -74,7 +74,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
         </div>
       </template>
     </Card>
-    <div class="scroller overflow-auto">
+    <div class="translate-z-0 overflow-auto">
       <template v-for="(list, key) in svgModules" :key="key">
         <Card class="mx-12 my-5">
           <template #title>
@@ -83,7 +83,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
           <template #content>
             <div class="flex flex-wrap gap-4 text-center">
               <template v-for="item in list" :key="item.path">
-                <div class="cursor-pointer" :title="item.filename" @click="handleCopyText(item.path)">
+                <div class="cursor-pointer transform transition-transform duration-200 hover:scale-110" :title="item.filename" @click="handleCopyText(item.path)">
                   <RxSvgIcon :name="item.path" />
                 <!-- <div>{{ item.filename }}</div> -->
                 </div>
@@ -97,17 +97,4 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 </template>
 
 <style lang="scss" scoped>
-/* 优化滚动性能 */
-.scroller {
-  will-change: transform;
-  contain: layout paint;
-  backface-visibility: hidden;
-  perspective: 1000px;
-  transform: translateZ(0);
-}
-
-/* 确保硬件加速 */
-// .flex {
-//   transform: translateZ(0);
-// }
 </style>

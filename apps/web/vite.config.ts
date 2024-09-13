@@ -1,6 +1,7 @@
 /* eslint-env node */
 
-import { writeFile } from 'node:fs/promises'
+import { accessSync } from 'node:fs'
+import { access, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
@@ -19,6 +20,26 @@ import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..')
+const svgIconTypesPath = join(PACKAGE_ROOT, 'src/components/rx-icon/src/svg-icon-types.ts')
+
+access(svgIconTypesPath).catch(() => {
+  writeFile(svgIconTypesPath, `export type SvgNames = ''`)
+})
+
+const primevueFiles = await readdir(join(PACKAGE_ROOT, './node_modules/primevue'), { withFileTypes: true })
+const exclude = ['chart', 'editor']
+const primevueComponents = primevueFiles.reduce<string[]>((acc, dir) => {
+  if (dir.isDirectory() && !exclude.includes(dir.name)) {
+    try {
+      accessSync(join(PACKAGE_ROOT, `./node_modules/primevue/${dir.name}/package.json`))
+      acc.push(`primevue/${dir.name}`)
+    }
+    catch (error) {
+
+    }
+  }
+  return acc
+}, [])
 
 const config: UserConfig = {
   mode: process.env.MODE,
@@ -38,6 +59,12 @@ const config: UserConfig = {
     fs: {
       strict: true,
     },
+    warmup: {
+      clientFiles: ['./index.html', './src/{views,components}/*'],
+    },
+  },
+  optimizeDeps: {
+    include: [...primevueComponents],
   },
   build: {
     sourcemap: true,
@@ -57,7 +84,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
-    mkcert(),
+    mkcert({ source: 'coding' }),
     svgLoader({
       svgoConfig: {
         plugins: [
@@ -65,7 +92,6 @@ const config: UserConfig = {
             name: 'myPlugin',
             fn: (() => {
               const nameSet = new Set<string>()
-              const targetPath = join(PACKAGE_ROOT, 'src/components/rx-icon/src/svg-icon-types.ts')
 
               const genSvgTypes = debounce(() => {
                 const typeDefine = [...nameSet].map(n => `'${n}'`).join(`
@@ -73,7 +99,7 @@ const config: UserConfig = {
                 const code = `
 /** 此文件自动生成，请勿修改！所有可用的 svg name */
 export type SvgNames = ${typeDefine}`
-                writeFile(targetPath, code)
+                writeFile(svgIconTypesPath, code)
               }, 3000)
 
               return (root, params, info) => {
