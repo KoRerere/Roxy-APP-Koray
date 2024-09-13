@@ -2,12 +2,6 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
-    path: '/agent/shop',
-    name: 'account-shop',
-    meta: { title: '代理商店(dome test)x', groupName: 'resources' },
-    component: () => import('/@/views/agent/shop'),
-  },
-  {
     path: 'browser',
     name: 'browser',
     meta: { title: 'All Profiles', icon: 'base/rx_ic_browser' },
