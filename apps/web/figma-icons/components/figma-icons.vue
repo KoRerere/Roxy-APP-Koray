@@ -83,7 +83,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
           <template #content>
             <div class="flex flex-wrap gap-4 text-center">
               <template v-for="item in list" :key="item.path">
-                <div class="cursor-pointer transform transition-transform duration-200 hover:scale-110" :title="item.filename" @click="handleCopyText(item.path)">
+                <div class="icon-item" :title="item.filename" @click="handleCopyText(item.path)">
                   <RxSvgIcon :name="item.path" />
                 <!-- <div>{{ item.filename }}</div> -->
                 </div>
@@ -97,4 +97,14 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 </template>
 
 <style lang="scss" scoped>
+.icon-item {
+  cursor: pointer;
+  transition: transform 0.3s;
+  will-change: transform;
+  transform: translateZ(1px);
+
+  &:hover {
+    transform: scale(1.2);
+  }
+}
 </style>

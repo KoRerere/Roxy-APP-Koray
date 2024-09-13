@@ -13,7 +13,6 @@ const emailCode = ref('')
 const newPassword = ref('')
 const reNewPassword = ref('')
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
-const loading = ref(false)
 const isShowAlert = ref(false)
 
 async function handleSubmit() {
@@ -96,7 +95,7 @@ function receiveEmailCode(code: string) {
           </template>
         </div>
       </div>
-      <ry-button class="w-full" :loading="loading" @click="handleSubmit">
+      <ry-button class="w-full" @click="handleSubmit">
         {{ currentStep === 'step1' ? 'Next' : 'Confirm' }}
       </ry-button>
       <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">Back to sign in</a>

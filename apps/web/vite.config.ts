@@ -1,5 +1,6 @@
 /* eslint-env node */
 
+import type { UserConfig } from 'vite'
 import { accessSync } from 'node:fs'
 import { access, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -7,15 +8,14 @@ import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
-import UnoCSS from 'unocss/vite'
 
+import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import mkcert from 'vite-plugin-mkcert'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
-import type { UserConfig } from 'vite'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -135,6 +135,7 @@ export type SvgNames = ${typeDefine}`
       dts: './auto-imports.d.ts',
     }),
     Components({
+      dts: true,
       resolvers: [
         PrimeVueResolver(),
         AntDesignVueResolver({

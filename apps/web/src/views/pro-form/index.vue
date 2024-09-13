@@ -4,7 +4,6 @@ import { reactive } from 'vue'
 import { z } from 'zod'
 
 const toast = useToast()
-
 // 响应式表单数据
 const formData = reactive({
   user_name: '',

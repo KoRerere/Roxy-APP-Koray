@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from 'vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import type Popover from 'primevue/popover'
+import { onMounted, ref, useTemplateRef } from 'vue'
 
 const popoverRef = useTemplateRef('popover')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
@@ -132,7 +132,6 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
         <TabPanels>
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value">
             <template v-if="tab.list.length">
-              <!-- 这里使用类型断言是因为 volar 的 bug -->
               <template v-for="item in tab.list" :key="item.title">
                 <!-- APP 更新列表 -->
                 <template v-if="item.type === 'app'">

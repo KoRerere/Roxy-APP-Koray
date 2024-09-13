@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast'
 import type { LoginCreatePayload } from '@roxy/backend-api'
+import { useToast } from 'primevue/usetoast'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { API } from '/@/api'
@@ -18,6 +18,7 @@ const currentComp = ref<CurrentComp>('signForm')
 
 async function handleSubmit() {
   console.log(signFormData)
+  signFormData.user_name = signFormData.user_name.trim()
   const { code, data, msg = '登录失败' } = await API.base.loginCreate(signFormData)
 
   if (code !== 0) {

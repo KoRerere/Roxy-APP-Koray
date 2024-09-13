@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
-import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
@@ -50,60 +50,63 @@ function getWindowInfo() {
 }
 
 /** 代理检查 */
-function proxyDetection(event?: MouseEvent) {
+async function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
-  fetch(`http://${hostname}:8888/api/proxy/detection?dirId=${dirId}`)
-    .then(response => response.json())
-    .then((result) => {
-      console.log(result)
-      if (result.code === 0) {
-        proxyInfo.value = result.data
-        // 通过点击事件触发的检查，显示成功提示
-        if (event) {
-          toast.add({ severity: 'success', summary: 'Test proxy success', life: 3000 })
-        }
+  try {
+    const response = await fetch(`http://${hostname}:8888/api/proxy/detection?dirId=${dirId}`)
+    const result = await response.json()
+    console.log(result)
+    if (result.code === 0) {
+      proxyInfo.value = result.data
+      // 通过点击事件触发的检查，显示成功提示
+      if (event) {
+        toast.add({ severity: 'success', summary: 'Test proxy success', life: 3000 })
       }
-      else {
-        console.error('代理检查失败')
-        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
-        proxyInfo.value = {}
-      }
-    })
-    .catch(error => console.error(error))
-    .finally(() => {
-      testProxyLoading.value = false
-    })
+    }
+    else {
+      console.error('代理检查失败')
+      toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+      proxyInfo.value = {}
+    }
+  }
+  catch (error) {
+    console.error(error)
+    toast.add({ severity: 'error', summary: 'Error', detail: '代理检查失败', life: 3000 })
+  }
+  finally {
+    testProxyLoading.value = false
+  }
 }
 
 /** 刷新 URL */
-function refreshURL() {
+async function refreshURL() {
   refreshUrlLoading.value = true
-  fetch(`http://${hostname}:8888/api/proxy/refresh-url`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ refreshUrl: windowInfo.value.refreshUrl }),
-  })
-    .then(response => response.json())
-    .then((result) => {
-      console.log(result)
-      // 刷新成功，重新检查代理
-      if (result.data) {
-        proxyDetection()
-      }
-      else {
-        console.error('刷新 URL 失败')
-        toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
-      }
+  try {
+    const response = await fetch(`http://${hostname}:8888/api/proxy/refresh-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshUrl: windowInfo.value.refreshUrl }),
     })
-    .catch(error => () => {
-      console.error(error)
-      toast.add({ severity: 'error', summary: 'Error', detail: '刷新 URL 失败', life: 3000 })
-    })
-    .finally(() => {
-      refreshUrlLoading.value = false
-    })
+    const result = await response.json()
+    console.log(result)
+    // 刷新成功，重新检查代理
+    if (result.data) {
+      proxyDetection()
+    }
+    else {
+      console.error('刷新 URL 失败')
+      toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+    }
+  }
+  catch (error) {
+    console.error(error)
+    toast.add({ severity: 'error', summary: 'Error', detail: '刷新 URL 失败', life: 3000 })
+  }
+  finally {
+    refreshUrlLoading.value = false
+  }
 }
 
 onBeforeMount(() => {
@@ -134,18 +137,20 @@ onBeforeMount(() => {
         <div v-else class="city-logo" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <Button
+            <ry-button
               v-if="windowInfo.refreshUrl"
+              v-model:loading="refreshUrlLoading"
+              icon="base/rx_ic_renew"
               class="btn"
-              label="Refresh URL" icon="pi pi-sync"
-              :loading="refreshUrlLoading" outlined
+              label="Refresh URL" outlined
               :disabled="refreshUrlLoading || testProxyLoading"
               @click="refreshURL"
             />
-            <Button
+            <ry-button
+              v-model:loading="testProxyLoading"
               class="btn"
-              label="Test proxy" icon="pi pi-wifi"
-              :loading="testProxyLoading" outlined
+              icon="base/rx_ic_speed_test"
+              label="Test proxy" outlined
               :disabled="refreshUrlLoading || testProxyLoading"
               @click="proxyDetection"
             />
