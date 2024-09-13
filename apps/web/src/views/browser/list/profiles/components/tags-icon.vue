@@ -14,6 +14,7 @@ function operationHandler(operate: any) {
 
 function openMenu(event: any) {
   show(event, {
+    type: 'checkbox',
     operation: operation.value,
     operationHandler,
   })
@@ -21,7 +22,7 @@ function openMenu(event: any) {
 
 async function getGroups() {
   const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
-  operation.value = data.rows.map((item: any) => ({ ...item, label: item.name }))
+  operation.value = data.rows.map((item: any) => ({ ...item, label: item.name, value: `${item.id}` }))
 }
 
 onMounted(() => {

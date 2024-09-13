@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { group } from 'node:console'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
-import { API } from '/@/api'
 
+import { API } from '/@/api'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 import editPopup from '/@/views/browser/manage/tags/edit.vue'
 
@@ -37,6 +38,7 @@ const operation = ref([
     name: 'delete',
     icon: 'base/rx_ic_bin_1',
     quick: true,
+    multiple: true,
   },
 ])
 
@@ -102,8 +104,8 @@ async function deleteTag(data: any) {
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ryTable ref="tagTable" :columns="columns" :table-request="tableRequest" :paginator="false"
-        :show-table-header="false">
+      <ryTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler"
+        :table-request="tableRequest" :paginator="false" :show-table-header="false" selection-mode="multiple">
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
