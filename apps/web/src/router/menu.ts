@@ -22,7 +22,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'create',
         name: 'browser-create',
-        meta: { title: '新建窗口', hideInMenu: true },
+        meta: { title: '新建窗口' },
         component: () => import('/@/views/browser/create'),
       },
       {

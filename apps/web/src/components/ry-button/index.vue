@@ -29,33 +29,23 @@ async function handleClick(e: MouseEvent) {
 </script>
 
 <template>
-  <Button v-bind="{ ...$attrs, ...$props, onClick: handleClick }" class="w-full" :loading="loading">
-    <template #icon>
+  <Button v-bind="{ ...$attrs, ...$props, onClick: handleClick }" :loading="loading">
+    <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
-        <RxSvgIcon v-if="icon" :name="icon" :size="16" />
+        <RxSvgIcon :name="icon" :size="16" />
       </slot>
     </template>
-    <template v-if="loading" #loadingicon>
+    <template #loadingicon>
       <slot name="loadingicon">
-        <RxSvgIcon name="base/rx_ic_spin" class="icon-spin" :size="16" />
+        <RxSvgIcon name="base/rx_ic_spin" class="loading-circle" :size="16" />
       </slot>
     </template>
     <template v-if="$slots.default" #default>
-      <RxSvgIcon v-if="loading" class="icon-spin" name="base/rx_ic_spin" :size="16" />
+      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" :size="16" />
       <slot />
     </template>
   </Button>
 </template>
 
 <style lang="scss" scoped>
-.icon-spin {
-  display: inline-block;
-  animation: loadingCircle 1s infinite linear;
-}
-
-@keyframes loadingCircle {
-  100% {
-    transform: rotate(360deg);
-  }
-}
 </style>

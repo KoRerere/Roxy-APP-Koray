@@ -71,3 +71,9 @@ input[type='number'] {
 .rx-icon:active {
   color: orange;
 }
+
+@keyframes loadingCircle {
+  100% {
+    transform: rotate(360deg);
+  }
+}

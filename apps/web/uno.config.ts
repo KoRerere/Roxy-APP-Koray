@@ -16,6 +16,9 @@ export default defineConfig({
     presetAttributify({ prefix: 'un-', prefixedOnly: true }),
     presetUno(),
   ],
+  rules: [['loading-circle', {
+    animation: 'loadingCircle 1s infinite linear',
+  }]],
   transformers: [transformerDirectives(), transformerVariantGroup()],
   shortcuts: {
     'wh-full': 'w-full h-full',
