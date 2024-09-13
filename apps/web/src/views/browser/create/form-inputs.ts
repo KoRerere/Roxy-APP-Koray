@@ -180,7 +180,7 @@ export function getInputsGroup(data: any = {}) {
       formatValue: (input: any, _inputs: any, formData: any) => {
         const platformUrlIds = input.value.map((item: any) => item.id).filter(Boolean)
         Object.assign(formData, { platformUrlIds })// 关联账号库选择的账号id
-        return input.value
+        return input.value.filter((item: any) => !item.id)// 过滤需要关联的账号
       },
     },
     {
