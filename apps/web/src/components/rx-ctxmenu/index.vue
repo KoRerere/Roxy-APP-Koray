@@ -2,43 +2,24 @@
 import type { MenuItem } from 'primevue/menuitem'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
-const props = defineProps({
+defineProps({
   type: {
     type: String as PropType<'default' | 'checkbox' | 'radio'>,
     default: 'default',
   },
-  // selected: {
-  //   type: Array as PropType<any>,
-  // },
   operation: {
     type: Array as PropType<MenuItem[]>,
-    /**
-     * required: true,
-     */
     default: () => [],
   },
   operationHandler: {
     type: Function as PropType<(item: MenuItem) => void>,
-    /**
-     * required: true,
-     */
     default: () => () => { },
   },
 })
 
-// const emit = defineEmits(['update:selected'])
-
-const selected = defineModel('selected')
+const selected = ref()
 
 const ctxMenu = ref()
-
-// const selectedCategories = computed({
-//   get: () => props.selected,
-//   set: (val: string[]) => {
-//     console.log('🚀 ~ val:', val)
-//     emit('update:selected', val)
-//   },
-// })
 
 function onHide() {
 }

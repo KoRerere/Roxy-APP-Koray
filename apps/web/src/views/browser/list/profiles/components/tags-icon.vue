@@ -4,27 +4,22 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { SimpleCache } from '/@/utils/cache'
 
-const props = defineProps({
+defineProps({
   labels: {
     type: Array as PropType<any[]>,
     default: () => ([]),
   },
 })
 
-const emit = defineEmits(['update'])
-
 const [show] = useContextMenu()
 const cache = SimpleCache.getInstance()
 const operation = ref()
-
-const selected = ref(props.labels.map(item => `${item.labelId}`))
 
 async function openMenu(event: any) {
   await getGroups()
 
   show(event, {
     type: 'checkbox',
-    selected,
     operation: operation.value,
   })
 }

@@ -1,5 +1,5 @@
-import { createVNode, getCurrentInstance, render } from 'vue'
 import type ContextMenu from 'primevue/contextmenu'
+import { createVNode, getCurrentInstance, render } from 'vue'
 import rxMenu from './index.vue'
 
 type Menu = InstanceType<typeof ContextMenu>
