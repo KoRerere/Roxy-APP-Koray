@@ -5,8 +5,8 @@ const route = useRoute()
 const router = useRouter()
 
 const items = ref([
-  { route: '/setting/profile', label: '个人信息', icon: 'pi pi-home' },
-  { route: '/setting/soft-config', label: '软件设置', icon: 'pi pi-chart-line' },
+  { route: '/workspace/settings/profile', label: '个人信息', icon: 'pi pi-home' },
+  { route: '/workspace/settings/soft-config', label: '软件设置', icon: 'pi pi-chart-line' },
 ])
 
 function handleTabsChange(value) {

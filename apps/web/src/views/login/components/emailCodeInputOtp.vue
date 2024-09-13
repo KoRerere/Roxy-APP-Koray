@@ -17,8 +17,6 @@ const emailCode = defineModel('emailCode', { default: '' })
 const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
 const toast = useToast()
 
-const loading = ref(false)
-
 function toReEnter() {
   setCurrentComponent('signForm')
 }
@@ -33,7 +31,6 @@ async function handleSubmit() {
     return
   }
 
-  loading.value = true
   const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
     ...signFormData,
@@ -41,13 +38,9 @@ async function handleSubmit() {
     user_name: 'bqytest5',
     email: signFormData.user_name,
     ver_code: emailCode.value,
-  }).finally(() => {
-    loading.value = false
   })
   if (code === 0) {
-    await toSignIn().finally(() => {
-      loading.value = false
-    })
+    await toSignIn()
     emit('ok', emailCode.value)
   }
   else {
@@ -67,7 +60,7 @@ async function handleSubmit() {
       Please checkout your email and fill the code below to complete the sign up.
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
-    <ry-button class="w-full" :loading="loading" @click="handleSubmit">
+    <ry-button class="w-full" @click="handleSubmit">
       {{ type === 'signUp' ? 'Complete sign up' : 'Next' }}
     </ry-button>
     <div class="tips">

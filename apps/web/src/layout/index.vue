@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import siderMenu from '/@/components/sider-menu.vue'
-import { API } from '/@/api'
-
-import ResourceUpdater from './components/resource-updater.vue'
+import AsideMenu from './components/aside-menu.vue'
 import Profile from './components/profile.vue'
+import ResourceUpdater from './components/resource-updater.vue'
+
+import { API } from '/@/api'
+import siderMenu from '/@/components/sider-menu.vue'
 
 const collapsed = ref<boolean>(false)
 
@@ -31,7 +32,7 @@ onMounted(() => {
       <div class="logo">
         RoxyBrowser
       </div>
-      <siderMenu />
+      <AsideMenu />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
            @click="() => (collapsed = !collapsed)"
       >

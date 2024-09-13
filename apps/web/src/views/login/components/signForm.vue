@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import type { PropType } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { API } from '/@/api'
 import { getFormData, setInputVisible } from '/@/utils'
@@ -9,7 +9,6 @@ const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
 const rememberMe = ref(false)
-const loading = ref(false)
 const isRegister = ref(false)
 
 const inputs = ref([
@@ -23,7 +22,7 @@ const inputs = ref([
     validator(self: any) {
       const reg = /^[\w-]+@[\w-]+(?:\.[\w-]+)+$/
       console.log(self.value, reg.test(self.value))
-      return reg.test(self.value)
+      return reg.test(self.value.trim())
     },
   },
   {
@@ -52,31 +51,22 @@ const inputs = ref([
 ])
 
 async function handleSubmit() {
-  try {
-    loading.value = true
-    const params = getFormData(inputs.value)
-    setSignFormData(params)
-    console.log(params)
-    // if sign up, switch to emailCodeInputOtp component
-    if (isRegister.value) {
-      const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: params.user_name })
-      if (code === 0) {
-        toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
-        setCurrentComponent('emailCodeInputOtp')
-      }
-      else {
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
-      }
+  const params = getFormData(inputs.value)
+  setSignFormData(params)
+  console.log(params)
+  // if sign up, switch to emailCodeInputOtp component
+  if (isRegister.value) {
+    const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: params.user_name })
+    if (code === 0) {
+      toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
+      setCurrentComponent('emailCodeInputOtp')
     }
     else {
-      await toSignIn()
+      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
     }
   }
-  catch (error) {
-    loading.value = false
-  }
-  finally {
-    loading.value = false
+  else {
+    await toSignIn()
   }
 }
 
@@ -104,15 +94,13 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <Button type="button" class="w-full" label="Search" icon="pi pi-search" :loading="loading"
-            @click="handleSubmit"
-    >
+    <ry-button type="button" class="w-full" label="Search" @click="handleSubmit">
       {{ isRegister ? 'Sign up' : 'Log in' }}
-    </Button>
+    </ry-button>
     <div class="divider">
       <span class="mx-2">OR</span>
     </div>
-    <ry-button class="w-full" outlined :loading="loading" @click="openGoogleAuth2Login">
+    <ry-button class="w-full" outlined @click="openGoogleAuth2Login">
       <img src="/google.svg"> Log in with Google
     </ry-button>
     <div v-if="isRegister" class="signup-tips">
