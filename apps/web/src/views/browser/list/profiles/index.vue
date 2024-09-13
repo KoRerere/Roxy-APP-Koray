@@ -256,6 +256,10 @@ async function onEditCookies(cookie: any[]) {
   tableRef.value?.refresh()
 }
 
+function updateTags(labelIds: number[], data: any) {
+  modifyWindowInfo({ id: data.id, labelIds })
+}
+
 function modifyWindowInfo(params: any) {
   return API.window.userMdfWindowInfoSingleCreate(params)
 }
@@ -409,8 +413,8 @@ onBeforeUnmount(() => {
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
     </template>
-    <template #tags>
-      <tagsIcon />
+    <template #tags="{ data }">
+      <tagsIcon :labels="data.labelInfo" @update="(labelIds: number[]) => updateTags(labelIds, data)" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">

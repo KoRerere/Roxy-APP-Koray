@@ -4,35 +4,68 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { SimpleCache } from '/@/utils/cache'
 
+const props = defineProps({
+  labels: {
+    type: Array as PropType<any[]>,
+    default: () => ([]),
+  },
+})
+
+const emit = defineEmits(['update'])
+
 const [show] = useContextMenu()
 const cache = SimpleCache.getInstance()
 const operation = ref()
 
-function operationHandler(operate: any) {
-  console.log('🚀 ~ operationHandler ~ operate:', operate)
-}
+const selected = ref(props.labels.map(item => `${item.labelId}`))
 
-function openMenu(event: any) {
+async function openMenu(event: any) {
+  await getGroups()
+
   show(event, {
     type: 'checkbox',
+    selected,
     operation: operation.value,
-    operationHandler,
   })
 }
 
 async function getGroups() {
   const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
-  operation.value = data.rows.map((item: any) => ({ ...item, label: item.name, value: `${item.id}` }))
+  operation.value = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
 }
-
-onMounted(() => {
-  getGroups()
-})
 </script>
 
 <template>
-  <RxSvgIcon v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" name="base/rx_ic_tag" :size="16"
-    @click.stop="openMenu" />
+  <div class="flex items-center gap-2">
+    <RxSvgIcon v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" name="base/rx_ic_tag" :size="16"
+      @click.stop="openMenu" />
+    <div v-for="label in labels" :key="label.labelId" class="label">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
+          :fill="label.labelColor" />
+      </svg>
+      {{ label.labelName }}
+    </div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.label {
+  display: flex;
+  min-width: 24px;
+  padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) var(--spacing-sm, 4px);
+  justify-content: center;
+  align-items: center;
+  border-radius: 40px;
+  border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);
+  background: var(--Component-Colors-Tag-bg, #f0f3f5);
+
+  color: var(--Component-Colors-Tag-text, #575d61);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+</style>
