@@ -120,7 +120,7 @@ onMounted(() => {
       <div v-for="item in sortTabs" :key="item.id" class="flex items-center table-popover-column">
         <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.label }}</span>
-        <span class="cursor-pointer mdi mdi-pencil-outline" />
+        <span class="cursor-pointer base/rx_ic_edit" />
         <span class="cursor-pointer mdi mdi-delete-empty-outline" @click="deleteFilterItem(item.label)" />
       </div>
     </VueDraggable>

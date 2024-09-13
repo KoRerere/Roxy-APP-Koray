@@ -49,7 +49,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: '/agent/create',
     name: 'agent-create',
-    meta: { title: '新建代理', groupName: 'resources' },
+    meta: { title: '新建代理' },
     component: () => import('/@/views/agent/create'),
   },
   {
@@ -67,7 +67,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: '/extensions',
     name: 'extensions',
-    meta: { title: 'Extensions', groupName: 'Tools' },
+    meta: { title: '插件中心', groupName: 'Tools' },
     component: () => import('/@/views/extensions'),
     redirect: { name: 'extensions-hub' },
     children: [

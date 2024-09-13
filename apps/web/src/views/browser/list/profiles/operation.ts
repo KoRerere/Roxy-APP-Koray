@@ -21,9 +21,8 @@ export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
   // todo 下版本优化，点击二级菜单才调用接口
-  const [{ data: platformList }, { data: groupList }, { data: labelList }] = await Promise.all([
+  const [{ data: platformList }, { data: labelList }] = await Promise.all([
     cache.fetch(API.platform.userGetPlatformInfoV2List, { page_index: 1, page_size: 999 }),
-    cache.fetch(API.window.userGetGroupInfoList, { page_index: 1, page_size: 999 }),
     cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' }),
   ])
 
@@ -32,13 +31,13 @@ export async function getCustomFilters(params: any = {}) {
       type: 'text',
       name: 'windowName',
       label: '窗口名称',
-      icon: 'mdi mdi-ab-testing',
+      icon: 'base/rx_ic_browser',
     },
     {
       type: 'number',
       label: '窗口序号',
       name: 'sortNums',
-      icon: 'mdi mdi-abacus',
+      icon: 'base/rx_ic_id',
     },
     {
       separator: true,
@@ -47,7 +46,7 @@ export async function getCustomFilters(params: any = {}) {
       type: 'Checkbox',
       label: '操作系统',
       name: 'osList',
-      icon: 'mdi mdi-abjad-arabic',
+      icon: 'base/rx_ic_laptop',
       options: ($dict_map.os || []).map((item: any) => ({
         parentLabel: '操作系统',
         parentName: 'osList',
@@ -59,7 +58,7 @@ export async function getCustomFilters(params: any = {}) {
       type: 'Checkbox',
       name: 'platformUrlIds',
       label: '账号平台',
-      icon: 'mdi mdi-abjad-hebrew',
+      icon: 'base/rx_ic_keys',
       options: platformList.rows.map((item: any) => ({
         parentLabel: '账号平台',
         parentName: 'platformUrlIds',
@@ -76,12 +75,12 @@ export async function getCustomFilters(params: any = {}) {
       label: '窗口状态',
       options: [
         {
-          icon: 'mdi mdi-home-group',
+          icon: 'base/rx_ic_browsers_line',
           label: '窗口打开',
           value: true,
         },
         {
-          icon: 'mdi mdi-home-group',
+          icon: 'base/rx_ic_browsers_line',
           label: '窗口关闭',
           value: false,
         },
@@ -92,21 +91,9 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
-      name: 'groupIds',
-      label: '窗口分组',
-      icon: 'mdi mdi-access-point-check',
-      options: groupList.rows.map((item: any) => ({
-        parentLabel: '窗口分组',
-        parentName: 'groupIds',
-        value: `${item.id}`,
-        label: item.name,
-      })),
-    },
-    {
-      type: 'Checkbox',
       name: 'labelIds',
       label: '窗口标签',
-      icon: 'mdi mdi-tag-heart-outline',
+      icon: 'base/rx_ic_tag',
       options: labelList.rows.map((item: any) => ({
         parentLabel: '窗口分组',
         parentName: 'labelIds',
@@ -121,13 +108,13 @@ export async function getCustomFilters(params: any = {}) {
       type: 'switch',
       name: 'isOften',
       label: '窗口收藏',
-      icon: 'mdi mdi-bookmark-music-outline',
+      icon: 'base/rx_ic_bookmark',
     },
     {
       type: 'textarea',
       label: '窗口备注',
       name: 'windowRemark',
-      icon: 'mdi mdi-clipboard-list-outline',
+      icon: 'base/rx_ic_doc_article',
     },
     {
       separator: true,
@@ -137,13 +124,13 @@ export async function getCustomFilters(params: any = {}) {
       label: '关联代理ID',
       name: 'proxyIds',
       placeholder: '多个代理ID逗号分隔',
-      icon: 'mdi mdi-abacus',
+      icon: 'base/rx_ic_internet',
     },
     {
       type: 'Checkbox',
       name: 'proxyProtocoList',
       label: '代理协议',
-      icon: 'mdi mdi-alarm-check',
+      icon: 'base/rx_ic_internet_pin',
       options: ($dict_map.protocol || []).map((item: any) => ({
         parentLabel: '代理协议',
         parentName: 'proxyProtocoList',
@@ -157,12 +144,12 @@ export async function getCustomFilters(params: any = {}) {
       label: '检测状态',
       options: [
         {
-          icon: 'mdi mdi-clipboard-edit-outline',
+          icon: 'base/rx_ic_internet_check',
           label: '检测成功的代理',
           value: '1',
         },
         {
-          icon: 'mdi mdi-account-card-outline',
+          icon: 'base/rx_ic_internet_error',
           label: '检测失败的代理',
           value: '2',
         },
@@ -175,7 +162,7 @@ export async function getCustomFilters(params: any = {}) {
       type: 'date',
       name: 'createTime',
       label: '窗口创建时间',
-      icon: 'mdi mdi-delete-empty-outline',
+      icon: 'base/rx_ic_calendar',
       items: [
         {
           placeholder: '请选择开始时间',
@@ -222,7 +209,7 @@ export function getSorts(params: any = {}) {
         { label: '窗口名称', value: 'name' },
         { label: '国家', value: 'lastCountry' },
       ],
-      icon: 'mdi-sort-descending',
+      icon: 'base/rx_ic_sort_ascending',
     },
     {
       label: '排序类型',
@@ -233,7 +220,7 @@ export function getSorts(params: any = {}) {
         { label: '降序', value: 'desc' },
         { label: '升序', value: 'asc' },
       ],
-      icon: 'mdi-sort-descending',
+      icon: 'base/rx_ic_sort_ascending',
     },
   ]
 }
@@ -243,7 +230,7 @@ export function getOperation(_params: any = {}) {
     {
       name: 'edit',
       label: '编辑',
-      icon: 'mdi mdi-pencil-outline',
+      icon: 'base/rx_ic_edit',
     },
     {
       separator: true,
@@ -251,39 +238,21 @@ export function getOperation(_params: any = {}) {
     {
       name: 'view',
       label: 'view',
-      icon: 'mdi mdi mdi-cube-scan',
+      icon: 'base/rx_ic_eye',
     },
     {
       name: 'restart',
       label: '重启',
-      icon: 'mdi mdi-restart',
+      icon: 'base/rx_ic_refresh',
       multiple: true,
       groupName: 'first',
     },
     {
       name: 'close',
       label: '关闭',
-      icon: 'mdi mdi-power',
+      icon: 'base/rx_ic_shut_down',
       multiple: true,
       groupName: 'first',
-    },
-    {
-      separator: true,
-      multiple: true,
-    },
-    {
-      name: 'addGroup',
-      label: '新增组 x',
-      icon: 'mdi mdi-home-group',
-      multiple: true,
-      groupName: 'second',
-    },
-    {
-      name: 'addTag',
-      label: '新增标签 x',
-      icon: 'mdi mdi-tag-heart-outline',
-      multiple: true,
-      groupName: 'second',
     },
     {
       separator: true,
@@ -292,13 +261,13 @@ export function getOperation(_params: any = {}) {
     {
       name: 'fav',
       label: '收藏',
-      icon: 'mdi mdi-bookmark-music-outline',
+      icon: 'base/rx_ic_bookmark',
       multiple: true,
     },
     {
       name: 'addNotes',
       label: '新增笔记',
-      icon: 'mdi mdi-clipboard-list-outline',
+      icon: 'base/rx_ic_doc_add',
       multiple: true,
     },
     {
@@ -308,7 +277,7 @@ export function getOperation(_params: any = {}) {
     {
       name: 'editCookies',
       label: '编辑cookies',
-      icon: 'mdi mdi-clipboard-edit-outline',
+      icon: 'base/rx_ic_edit',
     },
     {
       separator: true,
@@ -316,7 +285,7 @@ export function getOperation(_params: any = {}) {
     {
       name: 'delete',
       label: '删除',
-      icon: 'mdi mdi-delete-empty-outline',
+      icon: 'base/rx_ic_bin_1',
       multiple: true,
     },
   ]

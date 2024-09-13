@@ -13,21 +13,12 @@ export function tableOperation(_data: ProxyItem | ProxyItem[]) {
     {
       name: 'edit',
       label: '编辑',
-      icon: 'mdi mdi-pencil-box-outline',
+      icon: 'base/rx_ic_edit',
     },
-    // {
-    //   name: 'refresh',
-    //   label: '刷新',
-    //   icon: 'mdi mdi-refresh',
-    //   quick: true,
-    //   multiple: true,
-    //   disabled: datas.some(item => !item.refreshUrl),
-    //   disabledTips: '缺少刷新地址',
-    // },
     {
       name: 'test',
       label: '测速',
-      icon: 'mdi mdi-wifi',
+      icon: 'base/rx_ic_speed_test',
       quick: true,
       multiple: true,
     },

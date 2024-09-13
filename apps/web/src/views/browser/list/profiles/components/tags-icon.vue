@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { SimpleCache } from '/@/utils/cache'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { SimpleCache } from '/@/utils/cache'
 
 const [show] = useContextMenu()
 const cache = SimpleCache.getInstance()
@@ -29,7 +30,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <span v-tooltip.top="{ value: 'Add group', showDelay: 500 }" class="mdi mdi-tag-outline" @click.stop="openMenu" />
+  <RxSvgIcon v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" name="base/rx_ic_tag" :size="16"
+    @click.stop="openMenu" />
 </template>
 
 <style scoped></style>

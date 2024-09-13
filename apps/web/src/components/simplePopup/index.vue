@@ -40,8 +40,8 @@ onMounted(() => {
     </div>
     <ryForm class="form" :inputs="popupProps.inputs" />
     <div class="footer">
-      <Button label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
       <Button label="Cancel" text severity="secondary" autofocus @click="close" />
+      <Button label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
     </div>
   </div>
 </template>

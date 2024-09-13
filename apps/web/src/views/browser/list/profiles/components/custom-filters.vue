@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
 import simplePopup from './inputs-popup.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
 import { isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
@@ -195,7 +196,7 @@ function saveFilters() {
           <span>{{ item.label }}</span>
         </label>
         <div v-else class="browser-item" @click.stop="operationHandler(item)">
-          <span :class="item.icon" />
+          <RxSvgIcon :name="item.icon" :size="16" />
           <span>{{ item.label }}</span>
         </div>
       </a>

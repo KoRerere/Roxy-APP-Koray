@@ -18,6 +18,7 @@ import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
+const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
 
 const toast = useToast()
@@ -73,6 +74,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
           checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         }
         onEdit(params)
+        toast.add({ severity: 'success', summary: 'Success', detail: '刷新成功', life: 5000 })
       })
   })
 }
@@ -98,6 +100,10 @@ async function onEditConfirm(data: any) {
 async function onEdit(data: any) {
   return API.proxy.userMdfProxyModuleCreate([data])
 }
+
+function createProxy() {
+  router.push({ name: 'agent-create' })
+}
 </script>
 
 <template>
@@ -106,7 +112,7 @@ async function onEdit(data: any) {
       <div class="flex-1">
         Proxies
       </div>
-      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy" />
+      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy" @click="createProxy" />
       <ryButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">

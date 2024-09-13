@@ -12,9 +12,9 @@ const columnsConfig = {
       slot: 'open',
     },
     {
-      title: '组/标签',
-      key: 'group',
-      slot: 'group',
+      title: '标签',
+      key: 'tags',
+      slot: 'tags',
     },
   ],
 }
