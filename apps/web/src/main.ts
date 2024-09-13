@@ -10,15 +10,14 @@ import App from './App.vue'
 import i18n from './i18n'
 
 import router from './router'
-import '/@/assets/override.css'
-import '/@/assets/style.css'
+import '/@/styles/index.css'
 
 import '@mdi/font/css/materialdesignicons.css'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
-import myPreset from '/@/assets/preset'
 import { store } from '/@/stores'
+import myPreset from '/@/styles/preset'
 
 const app = createApp(App)
 
