@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import actions from '/@/components/actions.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const props = defineProps({
   operation: {
@@ -36,17 +37,14 @@ function openBrowser() {
 
 <template>
   <div class="cursor-pointer open" @click="openBrowser">
-    <span class="mdi mdi-google-chrome open-icon" />
+    <RxSvgIcon class="open-icon" name="base/rx_ic_chrome" />
     <span class="open-text">Open</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
-    <span v-for="item in group" :key="item.name" :class="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
-
-    <actions v-if="index === quickGroup.length - 1" @more="(event: Event) => $emit('more', [event, multiplePperation])">
-      <template #more-icon>
-        <span class="mdi mdi-dots-vertical group-item" />
-      </template>
-    </actions>
+    <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item"
+      @click="$emit('quickClick', item)" />
+    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v"
+      @click.stop="(event: Event) => $emit('more', [event, multiplePperation])" />
   </div>
 </template>
 

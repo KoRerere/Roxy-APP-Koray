@@ -6,7 +6,7 @@ const tabs = ref([
   { title: 'Groups', value: 'groups' },
   { title: 'Tags', value: 'tags' },
 ])
-const tabsValue = ref('groups')
+const tabsValue = ref('tags')
 </script>
 
 <template>

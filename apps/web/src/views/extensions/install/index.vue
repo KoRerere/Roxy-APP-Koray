@@ -57,7 +57,7 @@ const operation = ref([
   {
     name: 'edit',
     label: '编辑',
-    icon: 'mdi mdi-pencil-outline',
+    icon: 'base/rx_ic_edit',
     quick: true,
   },
   {

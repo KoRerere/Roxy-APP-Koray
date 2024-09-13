@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ryButton from './ry-button'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const props = defineProps({
   operation: {
@@ -32,9 +33,10 @@ function quickClick(item: any) {
 <template>
   <div class="flex items-center">
     <div class="quick">
-      <span v-for="item in quickOperation" :key="item.name"
+      <RxSvgIcon v-for="item in quickOperation" :key="item.name"
         v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500 }" class="quick-item"
-        :class="[item.classes, loadingQuickOperation?.[item.name] ? 'pi-spin mdi mdi-selection-ellipse disabled' : item.icon, { 'disabled text-gray-300': item.disabled }]"
+        :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
+        :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]"
         @click.stop="quickClick(item)" />
     </div>
     <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">

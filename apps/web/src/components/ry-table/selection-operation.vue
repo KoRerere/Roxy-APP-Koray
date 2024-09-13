@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
+
 const props = defineProps({
   selection: {
     type: Array as PropType<any[]>,
@@ -44,9 +46,10 @@ function batchOperation(item: any) {
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <span v-for="item in list" :key="item.name"
+        <RxSvgIcon v-for="item in list" :key="item.name"
           v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }"
-          class="multiple-group-icon" :class="[item.icon, { disabled: item.disabled }]" @click="batchOperation(item)" />
+          class="multiple-group-icon" :name="item.icon" :size="16" :class="{ disabled: item.disabled }" color="white"
+          @click="batchOperation(item)" />
       </div>
     </slot>
   </div>

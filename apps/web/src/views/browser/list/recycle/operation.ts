@@ -15,7 +15,7 @@ export function getSorts(params: any = {}) {
         { label: '窗口名称', value: 'name' },
         { label: '国家', value: 'lastCountry' },
       ],
-      icon: 'mdi-sort-descending',
+      icon: 'base/rx_ic_sort_ascending',
     },
     {
       label: '排序类型',
@@ -26,7 +26,7 @@ export function getSorts(params: any = {}) {
         { label: '降序', value: 'desc' },
         { label: '升序', value: 'asc' },
       ],
-      icon: 'mdi-sort-descending',
+      icon: 'base/rx_ic_sort_ascending',
     },
   ]
 }
@@ -36,7 +36,7 @@ export function getOperation() {
     {
       name: 'recover',
       label: '恢复',
-      icon: 'mdi mdi-refresh',
+      icon: 'base/rx_ic_refresh',
       classes: 'text-gray-500',
       quick: true,
       multiple: true,
@@ -44,7 +44,7 @@ export function getOperation() {
     {
       name: 'delete',
       label: '删除',
-      icon: 'mdi mdi-delete-empty-outline',
+      icon: 'base/rx_ic_bin_1',
       classes: 'text-red',
       quick: true,
       multiple: true,

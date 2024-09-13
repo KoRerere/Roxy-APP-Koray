@@ -11,7 +11,6 @@ import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
 import drawersitems from './components/drawers-item.vue'
 import editCookies from './components/edit-cookies.vue'
-import groupIcon from './components/group-icon.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 
@@ -23,7 +22,6 @@ import actions from '/@/components/actions.vue'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
 import popup from '/@/components/simplePopup'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
@@ -61,7 +59,7 @@ const drawer = reactive({
   data: null,
   visible: false,
   confirm: (type: any, data: any) => {
-    const { id, dirId, windowPlatformList } = drawer.data!
+    const { id, dirId, windowPlatformList, platformIds } = drawer.data!
     switch (type) {
       case 'proxyForm': {
         drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
@@ -75,12 +73,12 @@ const drawer = reactive({
         drawer.updateProfile({
           id,
           dirId,
-          windowPlatformList: windowPlatformList.concat(data),
+          windowPlatformList: (windowPlatformList as any[]).concat(data),
         })
         break
       }
       case 'accountList': {
-        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean)
+        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean).concat(platformIds)
         drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }
@@ -411,15 +409,8 @@ onBeforeUnmount(() => {
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
     </template>
-    <template #group>
-      <div class="flex gap-2">
-        <ryTag>
-          <groupIcon />
-        </ryTag>
-        <ryTag radius>
-          <tagsIcon />
-        </ryTag>
-      </div>
+    <template #tags>
+      <tagsIcon />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">

@@ -100,7 +100,6 @@ const tableAttrs = reactive({
   'resizable-columns': true,
   'column-resize-mode': 'expand',
   'scroll': { x: 500, y: 400 },
-  'selection-mode': props.selectionMode,
   ...attrs,
 })
 
@@ -223,7 +222,7 @@ defineExpose({
       </div>
     </div>
     <div class="rxtable-body">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :data-key="dataKey"
         @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
@@ -235,8 +234,8 @@ defineExpose({
             </div>
           </slot>
         </template>
-        <Column v-if="selectionMode" :selection-mode="selectionMode" :data-key="dataKey" header-style="width: 3rem" />
-        <Column v-for="column in _columns" :key="column[dataKey]" :field="column.key" :header="column.title">
+        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
+        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <div :style="{ width: `${column.width}px` || 'auto' }" class="rxtable-cell" :class="column.classes"
@@ -246,7 +245,8 @@ defineExpose({
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen>
+        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen
+          header-style="width: 9rem">
           <template #body="{ data }">
             <slot name="actions" :data="data" :operation="_getOperation(data)" />
           </template>

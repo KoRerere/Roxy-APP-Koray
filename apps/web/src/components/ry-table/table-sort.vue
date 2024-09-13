@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryPopover from '/@/components/ry-popover'
 import { getFormData } from '/@/utils'
 
@@ -32,13 +33,13 @@ function onUpdate() {
 
 <template>
   <div v-ripple class="cursor-pointer sort-icon" @click="toggle">
-    <span class="font-size-[16px] leading-none mdi mdi-sort-ascending " />
+    <RxSvgIcon name="base/rx_ic_sort_ascending" :size="16" />
   </div>
 
   <ry-popover ref="popRef" footer class="sort-popover">
     <div v-for="item in _sorts" :key="item.name" class="sort-popover-item">
-      <span class="mdi" :class="item.icon" />
-      <span class="w-full">{{ item.label }}</span>
+      <RxSvgIcon :name="item.icon" :size="16" />
+      <span class="flex-1">{{ item.label }}</span>
       <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
         option-value="value" checkmark :highlight-on-select="false" />
     </div>
@@ -61,7 +62,7 @@ function onUpdate() {
     align-items: center;
     gap: var(--spacing-sm, 4px);
     padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-    width: 280px;
+    min-width: 300px;
   }
 }
 </style>

@@ -102,7 +102,7 @@ function tableOperation(data: any) {
     {
       name: 'refresh',
       label: '刷新',
-      icon: 'mdi mdi-refresh',
+      icon: 'base/rx_ic_refresh',
       quick: true,
       disabled: !data.refreshUrl,
       disabledTips: '缺少刷新地址',
@@ -110,7 +110,7 @@ function tableOperation(data: any) {
     {
       name: 'test',
       label: '测速',
-      icon: 'mdi mdi-wifi',
+      icon: 'base/rx_ic_speed_test',
       quick: true,
     },
   ]

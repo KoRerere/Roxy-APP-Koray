@@ -40,13 +40,13 @@ const operation = ref([
   {
     name: 'edit',
     label: '编辑',
-    icon: 'mdi mdi-pencil-outline',
+    icon: 'base/rx_ic_edit',
     quick: true,
   },
   {
     name: 'delete',
     label: '删除',
-    icon: 'mdi mdi-delete-empty-outline',
+    icon: 'base/rx_ic_bin_1',
     quick: true,
     multiple: true,
   },

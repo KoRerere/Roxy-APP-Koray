@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
 import simplePopup from './inputs-popup.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
 import { isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
@@ -29,14 +30,14 @@ const rawOptions = computed(() => {
 
 const filterTagList = computed(() => _props.ctmFilters.filter((item: any) => item.type !== 'Separator' && !isEmptyValue(item.value)))
 
-const menuRef = ref()
+const menuRef = useTemplateRef('tmenu')
 const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref([])
 
 function showMenu(event: any) {
-  menuRef.value.show(event)
+  menuRef.value?.show(event)
 }
 
 function operationHandler(item: any) {
@@ -60,7 +61,7 @@ function operationHandler(item: any) {
 }
 
 function inputPopup(data: any) {
-  menuRef.value.hide()
+  menuRef.value?.hide()
   dialog.open(simplePopup, {
     props: {
       showHeader: false,
@@ -86,13 +87,13 @@ function inputPopup(data: any) {
 
 function onRadioChose(item: any) {
   setInputFieldByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
-  menuRef.value.hide()
+  menuRef.value?.hide()
   emit('filterChange')
 }
 
 function onSwitch(item: any, value: any = true) {
   item.value = value
-  menuRef.value.hide()
+  menuRef.value?.hide()
   emit('filterChange')
 }
 
@@ -105,7 +106,7 @@ function openChild(item: any) {
     })
     return
   }
-  menuRef.value.hide()
+  menuRef.value?.hide()
 }
 
 function onHide() {
@@ -185,17 +186,18 @@ function saveFilters() {
       <div>|</div>
     </div>
   </div>
-  <TieredMenu ref="menuRef" :model="menuOptions" popup
-    :pt="{ separator: 'browser-separator', menu: { transition: 'browser-content' } }" @hide="onHide">
+  <!-- eslint-disable-next-line vue/no-unused-refs -->
+  <TieredMenu ref="tmenu" :model="menuOptions" popup
+    :pt="{ separator: classes['browser-separator'], menu: { transition: classes['browser-content'] } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
-        <label v-if="isChildren" class="cursor-pointer browser-item" :for="item.value" @click.stop>
+        <label v-if="isChildren" class="cursor-pointer" :class="classes['browser-item']" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @click.stop @change="() => onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
-        <div v-else class="browser-item" @click.stop="operationHandler(item)">
-          <span :class="item.icon" />
+        <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">
+          <RxSvgIcon :name="item.icon" :size="16" />
           <span>{{ item.label }}</span>
         </div>
       </a>
@@ -203,7 +205,7 @@ function saveFilters() {
   </TieredMenu>
 </template>
 
-<style lang="scss">
+<style lang="scss" module="classes">
 .browser {
   &-content {
     padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
