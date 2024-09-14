@@ -63,7 +63,8 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
           </div>
           <div v-if="currentIcon">
             <div class="flex items-center">
-              当前选中的图标： <RxSvgIcon :name="currentIcon" />
+              当前选中的图标：
+              <RxSvgIcon :name="currentIcon" :size="48" />
             </div>
             <pre class="m-0 h-[80px]">
           <code>
@@ -84,8 +85,8 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
             <div class="flex flex-wrap gap-4 text-center">
               <template v-for="item in list" :key="item.path">
                 <div class="icon-item" :title="item.filename" @click="handleCopyText(item.path)">
-                  <RxSvgIcon :name="item.path" />
-                <!-- <div>{{ item.filename }}</div> -->
+                  <RxSvgIcon :name="item.path" :size="48" />
+                  <!-- <div>{{ item.filename }}</div> -->
                 </div>
               </template>
             </div>

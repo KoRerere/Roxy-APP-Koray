@@ -48,8 +48,8 @@ onMounted(() => {
     </div>
     <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
-      <Button label="Cancel" text severity="secondary" autofocus @click="close" />
-      <Button label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
+      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
+      <Button size="small" label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
     </div>
   </div>
 </template>

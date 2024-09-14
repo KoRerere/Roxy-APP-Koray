@@ -235,9 +235,9 @@ function save() {
               未检测
             </div>
           </template>
-          <template #actions="{ data, operation }">
-            <actions :loading-operation-map="data.loadingOperationMap" :operation="operation" :show-menu="false"
-              @quick-click="(operate) => operationHandler(operate, data)" />
+          <template #actions="{ data }">
+            <actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
+              :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
           </template>
         </ry-table>
       </div>

@@ -139,10 +139,10 @@ function createProxy() {
         <template #related="{ data }">
           <relatedProfiles :list="data.bindList" />
         </template>
-        <template #actions="{ data, operation }">
+        <template #actions="{ data }">
           <div class="flex gap-2">
-            <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
+              :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
             <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>

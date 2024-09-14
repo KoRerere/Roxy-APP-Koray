@@ -192,6 +192,13 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   })
 }
 
+function showOperationMenu(event: Event, data: any) {
+  show(event, {
+    operation: _getOperation(data),
+    operationHandler: (operate: any) => props.operationHandler(operate, data),
+  })
+}
+
 onMounted(() => {
   _request()
 })
@@ -248,7 +255,14 @@ defineExpose({
         <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen
           header-style="width: 9rem">
           <template #body="{ data }">
-            <slot name="actions" :data="data" :operation="_getOperation(data)" />
+            <div class="flex items-center">
+              <slot name="actions-extra" :data="data" />
+              <slot name="actions" :data="data">
+                <actions :operation="_getOperation(data)"
+                  @quick-click="(operate: any) => operationHandler(operate, data)"
+                  @more="(event: Event) => showOperationMenu(event, data)" />
+              </slot>
+            </div>
           </template>
         </Column>
       </DataTable>

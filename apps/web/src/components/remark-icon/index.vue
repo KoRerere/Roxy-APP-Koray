@@ -23,8 +23,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['onConfirm', 'onCancel'])
-
 const hasRemark = computed(() => props.value)
 
 const dialog = useDialog()
