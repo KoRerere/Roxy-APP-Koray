@@ -72,6 +72,21 @@ input[type='number'] {
   color: orange;
 }
 
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter/Inter-VariableFont_opsz,wght.ttf');
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/Archivo/Archivo-VariableFont_wdth,wght.ttf');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrains Mono/JetBrainsMono_wght.ttf');
+}
+
 @keyframes loadingCircle {
   100% {
     transform: rotate(360deg);
