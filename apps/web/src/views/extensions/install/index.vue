@@ -2,14 +2,14 @@
 // import { useConfirm } from 'primevue/useconfirm'
 // import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
-// import bottonBox from './components/buttonBox.vue'
+import type { ToastMessageOptions } from 'primevue/toast'
 
 import selectBotton from './components/selectBotton.vue'
-
 import uploadDialog from './components/uploadDialog.vue'
 import { API } from '/@/api'
 
 import ryTable from '/@/components/ry-table'
+import { useSimpleDialog } from '/@/components/simplePopup'
 
 defineOptions({
   inheritAttrs: false,
@@ -18,6 +18,8 @@ defineOptions({
 // const toast = useToast()
 // const dialog = useDialog()
 const toast = useToast()
+const [dialogOpen] = useSimpleDialog()
+
 const tableRef = ref()
 const operation = ref([
   {
@@ -74,8 +76,6 @@ const columns = ref([
 ])
 
 const dataLists = ref()
-
-const isInstallPopVisible = ref(false)
 
 const uploadPop = ref(true)
 
@@ -170,7 +170,39 @@ async function getUserExtensionList(params: any) {
 // ======================================
 
 function installViaUrl() {
+  dialogOpen({
+    props: {
+      title: 'Install via Chrome Store',
+      content: 'Please paste the chrome extension URL down below then click the install button.',
+      inputs: [
+        {
+          type: 'text',
+          placeholder: 'Extension URL',
+          name: 'url',
+          leftIcon: 'base/rx_ic_link',
+          validator: (val: string) => {
+            const urlRegex = /^(?:http|https):\/\/[^ "]+$/
+            return urlRegex.test(val ?? '')
+          },
+        },
+      ],
+    },
+    onConfirm: async (formData: any) => {
+      const { data } = await API.plugins.userRecordPluginUploadList()
+      if (data) {
+        const { code, msg } = await API.plugins.userUploadChromePluginsV2Create(formData)
+        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', '安装成功'] : ['error', '安装失败']
+        toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 
+        if (code === 0) {
+          tableRef.value.refresh()
+        }
+      }
+      else {
+        toast.add({ severity: 'warn', summary: '警告', detail: '您的上传次数已用完', life: 5000, group: 'tc' })
+      }
+    },
+  })
 }
 </script>
 

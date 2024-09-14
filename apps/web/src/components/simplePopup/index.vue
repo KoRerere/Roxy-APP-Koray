@@ -17,13 +17,16 @@ function close() {
 
 async function confirm() {
   try {
-    loading.value = true
     const formData = getFormData(_props.value.inputs)
+    loading.value = true
     await _onConfirm.value?.(formData)
     close()
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
+  }
+  finally {
+    loading.value = false
   }
 }
 
