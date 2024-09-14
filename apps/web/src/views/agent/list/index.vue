@@ -69,7 +69,7 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
           id: item.id,
           checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
           lastCity: checkRes.city ?? '',
-          lastCountry: checkRes.continent_code ?? '',
+          lastCountry: checkRes.country_code ?? '',
           lastIp: checkRes.ip ?? '',
           checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
         }
@@ -83,11 +83,10 @@ function testAllProxy() {
   testProxy(dataList.value, 'test')
 }
 
-async function addRemark([remark, close]: [string, () => void], data: any) {
+async function addRemark(remark: string, data: any) {
   await onEdit({ ...data, remark })
   toast.add({ severity: 'success', summary: 'Success', detail: '添加成功', life: 5000 })
   tableRef.value?.refresh()
-  close()
 }
 
 async function onEditConfirm(data: any) {
@@ -144,7 +143,7 @@ function createProxy() {
           <div class="flex gap-2">
             <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
               @quick-click="(operate: any) => operationHandler(operate, data)" />
-            <remarkIcon :value="data.remark" @on-confirm="(params: any) => addRemark(params, data)" />
+            <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
       </ry-table>

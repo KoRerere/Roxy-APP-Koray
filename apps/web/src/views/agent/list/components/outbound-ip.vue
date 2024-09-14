@@ -10,6 +10,10 @@ defineProps({
     type: String,
     default: '',
   },
+  city: {
+    type: String,
+    default: '',
+  },
   time: {
     type: String,
     default: '',
@@ -22,7 +26,7 @@ defineProps({
     <img v-if="image" class="outbound-img" :src="image">
     <RxSvgIcon v-else class="outbound-img" name="base/rx_ic_earth" :size="16" />
     <div class="flex justify-between outbound-region">
-      <span>{{ country || '--' }}</span>
+      <span>{{ country || '--' }}/{{ city }}</span>
     </div>
     <div class="flex items-center outbound-email">
       <span>{{ time }}</span>

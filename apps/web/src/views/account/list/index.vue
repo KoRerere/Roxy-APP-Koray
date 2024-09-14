@@ -94,11 +94,10 @@ function editAccount(formData: UserMdfPlatformInfoCreatePayload) {
   return API.platform.userMdfPlatformInfoCreate(formData)
 }
 
-async function addRemark([platformRemarks, close]: [string, () => void], data: any) {
+async function addRemark(platformRemarks: string, data: any) {
   const { msg } = await editAccount({ ...data, platformRemarks })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   tableRef.value?.refresh()
-  close()
 }
 
 function deletePopup(data: any) {
@@ -151,7 +150,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />
+            <remarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false"
               @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>

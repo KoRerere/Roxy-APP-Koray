@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
+import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import proxyColumns from './columns'
 import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
@@ -8,40 +8,52 @@ import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-import { ProxyCheckStatus } from '/@/enums'
+import { ProxyProtocol } from '/@/enums/proxy'
 import { setRowsLoading } from '/@/utils'
+import { useCheckProxy } from '/@/views/agent/hooks'
+
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
+
+const props = defineProps({
+  data: {
+    type: Object as PropType<any>,
+    default: undefined,
+  },
+})
 
 const emit = defineEmits(['confirm'])
 
 const toast = useToast()
+const [checkProxy] = useCheckProxy()
 
+const tableRef = useTemplateRef('agent')
+const dataList = ref()
 const columns = proxyColumns.data.filter(column => column.key !== 'ipChecker')
-
 const filterButtons = reactive({
-  value: 'All',
+  value: null,
   options: [
     {
-      key: 'All',
       name: 'All',
+      value: null,
     },
     {
-      key: 'SOCKS5',
       name: 'SOCKS 5',
+      value: ProxyProtocol.SOCKS5,
     },
     {
-      key: 'HTTP',
       name: 'HTTP',
+      value: ProxyProtocol.HTTP,
     },
     {
-      key: 'HTTPS',
       name: 'HTTPS',
+      value: ProxyProtocol.HTTPS,
     },
   ],
+  onChange({ value }: SelectButtonChangeEvent) {
+    tableRef.value?.refresh({ protocol: value })
+  },
 })
-
-const dataList = ref()
 
 async function getTableList(params: any) {
   const data = await tableRequest(params)
@@ -69,21 +81,13 @@ function refreshUrl(datas: ProxyItem[]) {
 }
 
 async function testProxy(datas: ProxyItem[], operateName: string) {
-  datas.forEach((item) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item) as any))
-      .then(async (checkRes) => {
-        const params = {
-          id: item.id,
-          checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-          lastCity: checkRes.city ?? '',
-          lastCountry: checkRes.continent_code ?? '',
-          lastIp: checkRes.ip ?? '',
-          checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        }
-        await API.proxy.userMdfProxyModuleCreate([params as any])
-        Object.assign(item, params)
+  for (const item of datas) {
+    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
+      .then(async (checkResult) => {
+        await API.proxy.userMdfProxyModuleCreate([{ ...toRaw(checkResult), id: item.id } as any])
+        Object.assign(item, toRaw(checkResult))
       })
-  })
+  }
 }
 
 function testAllProxy() {
@@ -93,6 +97,12 @@ function testAllProxy() {
 // ====================
 const selection = ref()
 
+watch(() => props.data, (value) => {
+  selection.value = { id: value?.moduleId }
+}, {
+  immediate: true,
+})
+
 function saveSelected() {
   emit('confirm', selection.value)
 }
@@ -101,12 +111,12 @@ function saveSelected() {
 <template>
   <drawer-content title="代理列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table v-model:selection="selection" :table-request="getTableList" :show-gridlines="false" :columns="columns"
-        :show-config="false" selection-mode="single" :context-menu="false">
+      <ry-table ref="agent" v-model:selection="selection" :table-request="getTableList" :show-gridlines="false"
+        :columns="columns" :show-config="false" selection-mode="single" :context-menu="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
-              option-value="key" data-key="key" />
+              option-value="value" data-key="value" @change="filterButtons.onChange" />
             <ryButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
           </div>
         </template>
@@ -119,7 +129,7 @@ function saveSelected() {
           </div>
         </template>
         <template #outbound="{ data: row }">
-          <outboundIp :image="row.region" :country="row.lastCountry" :time="row.checkTime" />
+          <outboundIp :image="row.region" :country="row.lastCountry" :city="row.lastCity" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
           <relatedProfiles :list="row.bindList" />

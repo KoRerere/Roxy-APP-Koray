@@ -1,11 +1,12 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
-import simplePopup from './inputs-popup.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
-import { isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
+
+import simplePopup from '/@/components/simplePopup'
+import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
   ctmFilters: {
@@ -68,9 +69,11 @@ function inputPopup(data: any) {
       modal: true,
       blockScroll: true,
     },
-    data,
-    emits: {
-      onSave: ([formData, close]: [any, () => void]) => {
+    data: {
+      props: {
+        inputs: [deepClone(data)],
+      },
+      onConfirm: async (formData: any) => {
         if (data.type === 'date') {
           const value = Object.values(formData).join('~')
           setInputFieldByInputKey(_props.ctmFilters, data.name, 'value', value)// 用于筛选标签展示
@@ -79,7 +82,6 @@ function inputPopup(data: any) {
           setInputFieldByInputKey(_props.ctmFilters, name, 'value', value)
         })
         emit('filterChange')
-        close()
       },
     },
   })

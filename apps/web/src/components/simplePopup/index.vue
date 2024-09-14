@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import ryForm from '/@/components/ry-form'
-import { deepClone, getFormData } from '/@/utils/index'
-
-const emit = defineEmits(['cancel', 'confirm'])
+import { getFormData } from '/@/utils/index'
 
 const dialogRef = inject<any>('dialogRef')
 
-const popupProps = ref()
 const loading = ref(false)
+const _props = ref()
+const _onConfirm = ref()
+const _onCancel = ref()
 
 function close() {
   loading.value = false
   dialogRef.value.close()
+  _onCancel.value?.()
 }
 
-function confirm() {
+async function confirm() {
   try {
-    const formData = getFormData(popupProps.value.inputs)
     loading.value = true
-    emit('confirm', [formData, close])
+    const formData = getFormData(_props.value.inputs)
+    await _onConfirm.value?.(formData)
+    close()
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
@@ -26,19 +28,22 @@ function confirm() {
 }
 
 onMounted(() => {
-  popupProps.value = deepClone(dialogRef.value.data)
+  const { props, onConfirm, onCancel } = dialogRef.value.data
+  _props.value = props
+  _onConfirm.value = onConfirm
+  _onCancel.value = onCancel
 })
 </script>
 
 <template>
-  <div v-if="popupProps" class="flex flex-col popup">
+  <div v-if="_props" class="flex flex-col popup">
     <div class="popup-title">
-      {{ popupProps.title }}
+      {{ _props.title }}
     </div>
     <div class="popup-content">
-      {{ popupProps.content }}
+      {{ _props.content }}
     </div>
-    <ryForm class="form" :inputs="popupProps.inputs" />
+    <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
       <Button label="Cancel" text severity="secondary" autofocus @click="close" />
       <Button label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />

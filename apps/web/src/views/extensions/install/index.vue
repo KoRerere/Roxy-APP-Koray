@@ -1,57 +1,23 @@
 <script setup lang="ts">
-import { API } from '/@/api'
-import ryTag from '/@/components/ry-tag'
-import ryTable from '/@/components/ry-table'
+// import { useConfirm } from 'primevue/useconfirm'
+// import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
+// import bottonBox from './components/buttonBox.vue'
 
-import bottonBox from './components/buttonBox.vue'
 import selectBotton from './components/selectBotton.vue'
 
-import { useDialog } from 'primevue/usedialog'
-import { useConfirm } from 'primevue/useconfirm'
-
-import installDialog from './components/installDialog.vue'
 import uploadDialog from './components/uploadDialog.vue'
+import { API } from '/@/api'
+
+import ryTable from '/@/components/ry-table'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 // const toast = useToast()
-const dialog = useDialog()
+// const dialog = useDialog()
 const toast = useToast()
-// const dataList = [
-//   {
-//     "id": 224,
-//     "source": "sys",
-//     "pluginDir": "cofbobkapfknpdllndaligcgmikmegbl",
-//     "pluginName": "Premium Sender Plus",
-//     "pluginIcon": "http://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/plugin/cofbobkapfknpdllndaligcgmikmegbl.png",
-//     "pluginRoute": "http://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/plugin/cofbobkapfknpdllndaligcgmikmegbl.zip",
-//     "pluginVersion": "1.1.74",
-//     "pluginDesc": "Best Message Sending Extension.",
-//     "provider": "Chrome Store",
-//     "pluginUpdateState": 0,
-//     "pluginNewVersion": "",
-//     "useStatus": true,
-//     "lateUpdateTime": "2024-09-04 17:16:05",
-//     "canDelete": true,
-//     "uploader": ""
-//   },
-//   {
-//     "id": 223,
-//     "source": "sys",
-//     "pluginDir": "padekgcemlokbadohgkifijomclgjgif",
-//     "pluginName": "Proxy SwitchyOmega",
-//     "pluginIcon": "http://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/plugin/padekgcemlokbadohgkifijomclgjgif.png",
-//     "pluginRoute": "http://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/plugin/padekgcemlokbadohgkifijomclgjgif.zip",
-//     "pluginVersion": "2.5.21",
-//     "pluginDesc": "Manage and switch between multiple proxies quickly & easily.",
-//     "provider": "Chrome Store",
-//     "pluginUpdateState": 0,
-//     "pluginNewVersion": "",
-//     "useStatus": true,
-//     "lateUpdateTime": "2024-09-04 16:47:51",
-//     "canDelete": true,
-//     "uploader": ""
-//   },
-// ]
 const tableRef = ref()
 const operation = ref([
   {
@@ -109,78 +75,60 @@ const columns = ref([
 
 const dataLists = ref()
 
-let isInstallPopVisible = ref(false)
+const isInstallPopVisible = ref(false)
 
 const uploadPop = ref(true)
-
-
-
-// const props = defineProps({
-//   dataList: {
-//     type: Array,
-//     default: () => []
-//   }
-// })
-
 
 function openUploadPop() {
   uploadPop.value = true
 }
 
-function closeUploadPop() {
-  uploadPop.value = false
-}
-
-
-// 提交url
+/**
+ * 提交url
+ */
 function handleSubmitInstall(val: string) {
   // 正则校验url，确保URL格式正确
-  const urlRegex = /^(http|https):\/\/[^ "]+$/;
+  const urlRegex = /^(?:http|https):\/\/[^ "]+$/
   if (!urlRegex.test(val ?? '')) {
-    toast.add({ severity: 'warn', summary: '警告', detail: "Invalid URL format", life: 5000 })
-    return;
+    toast.add({ severity: 'warn', summary: '警告', detail: 'Invalid URL format', life: 5000 })
+    return
   }
   const params = {
-    url: val
+    url: val,
   }
   handleInstall(params)
 }
 
-// 请求提交url接口
+/**
+ * 请求提交url接口
+ */
 async function handleInstall(params: any) {
-  const { code, msg } = await API.plugins.userUploadChromePluginsCreateV2(params)
-  if (code == 0) {
+  const { code } = await API.plugins.userUploadChromePluginsCreateV2(params)
+  if (code === 0) {
     // TODO 刷新列表
     tableRef.value.refresh()
   }
 }
-
 
 onMounted(() => {
   // getUserExtensionList({})
   getUserExtensionList({})
 })
 
-// 打开安装弹窗
-function openInstallPop() {
-  isInstallPopVisible.value = true;
-}
-
-function clickInstallCancelBtn() {
-  isInstallPopVisible.value = false;
-}
-
-// 用户开启或关闭插件
+/**
+ * 用户开启或关闭插件
+ */
 async function handleSwitch(item: any) {
   console.log(item)
   const params = {
     id: item.id,
-    useStatus: item.useStatus == false ? true : false
+    useStatus: item.useStatus === false,
   }
   const { code, msg } = await API.plugins.userMdfPluginStatusCreate(params)
-  if (code == 0) {
+  if (code === 0) {
     toast.add({ severity: 'success', summary: '操作成功', life: 5000 })
-  } else {
+  }
+  else {
     toast.add({ severity: 'error', summary: '失败', detail: msg, life: 5000 })
   }
 }
@@ -190,10 +138,12 @@ watch(() => dataLists.value, (newValue) => {
   dataLists.value = newValue
 })
 
-// 根据选择事件触发
+/**
+ * 根据选择事件触发
+ */
 function selectFunc(e: any) {
   const params = {
-    status: e === "Active" ? true : false
+    status: e === 'Active',
   }
   if (e === 'All') {
     // 删除属性
@@ -202,83 +152,77 @@ function selectFunc(e: any) {
   tableRef.value.refresh(params)
 }
 
-// 本地上传插件请求
-async function uploadLocalPlugin(params: any) {
-  const { data } = await API.plugins.userUploadPluginInfoCreate(params)
-}
+/**
+ * 本地上传插件请求
+ */
+// async function uploadLocalPlugin(params: any) {
+//   const { data } = await API.plugins.userUploadPluginInfoCreate(params)
+// }
 
-// 请求user插件列表数据
-async function getUserExtensionList(params: any | {}) {
+/**
+ * 请求user插件列表数据
+ */
+async function getUserExtensionList(params: any) {
   const data = await API.plugins.userGetPluginListList(params)
-  dataLists.value = data.data.rows;
+  dataLists.value = data.data.rows
   return data
 }
+// ======================================
 
+function installViaUrl() {
+
+}
 </script>
 
-
-
-
-
 <template>
-  <div>
-
-    <uploadDialog :uploadPop="true"></uploadDialog>
-
-    <!-- <Dialog modal :closable="false" :visible="installPop">
-      <div class="font-semibold text-sm  mb-4">Install via Chrome Store</div>
-      <div class="text-xs mb-2">Please paste the chrome extension URL down below then click the install
-        <br />button.
+  <uploadDialog :upload-pop="true" />
+  <!-- <installDialog :is-install-pop-visible="isInstallPopVisible" @click-install-cancel-btn="clickInstallCancelBtn"
+    @handle-submit-install="handleSubmitInstall" /> -->
+  <ry-table ref="tableRef" scrollable selection-mode="multiple" :operation="operation"
+    :table-request="getUserExtensionList" :columns="columns" :show-gridlines="false">
+    <template #header-extra>
+      <div class="flex items-center justify-between w-full">
+        <selectBotton @select-func="selectFunc" />
+        <!-- <bottonBox @open-install-pop="openInstallPop" @open-upload-pop="openUploadPop" /> -->
+        <div class="group-button">
+          <ryButton severity="info" size="small" icon="base/rx_ic_download_cloud" label="Install via URL"
+            @click="installViaUrl" />
+          <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload" />
+          <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_clock_rotate" label="Update All" />
+        </div>
       </div>
-      <InputText class="w-full mb-4" v-model="installInputValue" placeholder="Extension URL" />
-      <template #footer>
-        <Button type="button" label="Install" @click="handleSubmitInstall"></Button>
-        <Button severity="secondary" @click="closeIntallPop" text></Button>
-      </template>
-</Dialog> -->
+    </template>
+    <template #extension="{ data }">
+      <div>{{ data.pluginName }}</div>
+    </template>
 
+    <template #toggle="{ data }">
+      <div>
+        <ToggleSwitch v-model="data.useStatus" @change="handleSwitch(data)" />
+      </div>
+    </template>
 
-    <installDialog :isInstallPopVisible="isInstallPopVisible" @clickInstallCancelBtn="clickInstallCancelBtn"
-      @handleSubmitInstall="handleSubmitInstall">
-    </installDialog>
+    <template #source="{ data }">
+      <div>{{ data.source }}</div>
+    </template>
 
-    <div class="extension-content">
-      <ry-table ref="tableRef" scrollable selection-mode="multiple" :operation="operation"
-        :table-request="getUserExtensionList" :columns="columns" :show-gridlines="false">
-        <template #header-extra>
-          <div class="flex items-center justify-between w-full">
-            <selectBotton @selectFunc="selectFunc"></selectBotton>
-            <bottonBox @openInstallPop="openInstallPop" @openUploadPop="openUploadPop"></bottonBox>
-          </div>
-        </template>
-        <template #extension="{ data }">
-          <div>{{ data.pluginName }}</div>
-        </template>
+    <template #lastupdate="{ data }">
+      <div>{{ data.lateUpdateTime }}</div>
+    </template>
 
-        <template #toggle="{ data }">
-          <div>
-            <ToggleSwitch @change="handleSwitch(data)" v-model="data.useStatus" />
-          </div>
-        </template>
-
-
-        <template #source="{ data }">
-          <div>{{ data.source }}</div>
-        </template>
-
-        <template #lastupdate="{ data }">
-          <div>{{ data.lateUpdateTime }}</div>
-        </template>
-
-        <template #updateinfo="{ data }">
-          <div>{{ data.pluginUpdateState }}</div>
-        </template>
-
-      </ry-table>
-    </div>
-  </div>
-
+    <template #updateinfo="{ data }">
+      <div>{{ data.pluginUpdateState }}</div>
+    </template>
+  </ry-table>
 </template>
+
+<style lang="scss" scoped>
+.group-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg, 8px);
+}
+</style>
 
 <style lang="scss" scoped>
 .install-mask {
@@ -299,9 +243,13 @@ async function getUserExtensionList(params: any | {}) {
     align-items: flex-start;
     gap: var(--spacing-2xl, 16px);
     border-radius: 6px;
-    border: 0.5px solid var(--Color-neutrals-400, #A3A9AD);
-    background: #FFF;
-    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12);
+    border: 0.5px solid var(--Color-neutrals-400, #a3a9ad);
+    background: #fff;
+    box-shadow:
+      0px 1px 1px 0px rgba(0, 0, 0, 0.04),
+      0px 2px 8px 0px rgba(0, 0, 0, 0.04),
+      0px 3px 17px 0px rgba(0, 0, 0, 0.04),
+      0px 4px 30px 0px rgba(0, 0, 0, 0.12);
 
     transform: translate(0, -50%);
 
@@ -315,7 +263,7 @@ async function getUserExtensionList(params: any | {}) {
     }
 
     &-desc {
-      color: var(--Color-neutrals-600, #575D61);
+      color: var(--Color-neutrals-600, #575d61);
       font-family: Inter;
       margin-bottom: var(--spacing-xl, 12px);
       /* 150% */
@@ -328,8 +276,8 @@ async function getUserExtensionList(params: any | {}) {
       gap: var(--spacing-md, 6px);
       align-self: stretch;
       border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-      border: 1px solid var(--Component-Colors-TextInput-border-border, #C7CDD1);
-      background: var(--Component-Colors-TextInput-bg-bg, #FFF);
+      border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+      background: var(--Component-Colors-TextInput-bg-bg, #fff);
       box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     }
 
@@ -348,10 +296,12 @@ async function getUserExtensionList(params: any | {}) {
         align-items: center;
         gap: var(--spacing-sm, 4px);
         border-radius: var(--radius-sm, 4px);
-        border: 0.5px solid var(--Component-Colors-Buttons-Primary-border, #0881CC);
-        background: var(--Component-Colors-Buttons-Primary-bg, #12A3FC);
-        box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-        color: var(--Component-Colors-Buttons-Primary-text, #FFF);
+        border: 0.5px solid var(--Component-Colors-Buttons-Primary-border, #0881cc);
+        background: var(--Component-Colors-Buttons-Primary-bg, #12a3fc);
+        box-shadow:
+          0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+          0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+        color: var(--Component-Colors-Buttons-Primary-text, #fff);
         text-align: center;
         font-family: Inter;
         font-size: var(--Font-Size-text-sm, 12px);
@@ -370,7 +320,7 @@ async function getUserExtensionList(params: any | {}) {
         align-items: center;
         gap: var(--spacing-sm, 4px);
         border-radius: var(--radius-sm, 4px);
-        color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+        color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
         text-align: center;
         font-family: Inter;
         font-size: var(--Font-Size-text-sm, 12px);
@@ -380,9 +330,7 @@ async function getUserExtensionList(params: any | {}) {
         cursor: pointer;
         /* 133.333% */
       }
-
     }
-
   }
 }
 

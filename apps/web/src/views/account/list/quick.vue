@@ -50,11 +50,10 @@ async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-async function addRemark([platformRemarks, close]: [string, () => void], data: any) {
+async function addRemark(platformRemarks: string, data: any) {
   const { msg } = await editAccount({ ...data, platformRemarks })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   tableRef.value?.refresh()
-  close()
 }
 
 function editAccount(formData: any) {
@@ -92,7 +91,7 @@ function handleSave() {
           <relatedProfiles :list="data.window_info" />
         </template>
         <template #actions="{ data }">
-          <remarkIcon :value="data.platformRemarks" @on-confirm="(params: any) => addRemark(params, data)" />
+          <remarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
         </template>
       </ry-table>
     </div>

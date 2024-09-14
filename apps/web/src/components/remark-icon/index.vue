@@ -13,6 +13,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  onConfirm: {
+    type: Function,
+    default: () => { },
+  },
+  onCancel: {
+    type: Function,
+    default: () => { },
+  },
 })
 
 const emit = defineEmits(['onConfirm', 'onCancel'])
@@ -33,21 +41,23 @@ function onRemark() {
       blockScroll: true,
     },
     data: {
-      title: 'Install via Chrome Store',
-      content: 'Please paste the chrome extension URL down below then click the install button.',
-      inputs: [
-        {
-          type: 'text',
-          name: 'remark',
-          value: props.value,
-        },
-      ],
-    },
-    emits: {
-      onConfirm: ([formData, close]: [any, close: () => void]) => {
-        emit('onConfirm', [formData.remark, close, props.rows])
+      props: {
+        title: 'Install via Chrome Store',
+        content: 'Please paste the chrome extension URL down below then click the install button.',
+        inputs: [
+          {
+            type: 'text',
+            name: 'remark',
+            value: props.value,
+          },
+        ],
       },
-      onCancel: () => emit('onCancel'),
+      onConfirm: async (formData: any) => {
+        await props.onConfirm(formData.remark)
+      },
+      onCancel: () => {
+        props.onCancel()
+      },
     },
   })
 }

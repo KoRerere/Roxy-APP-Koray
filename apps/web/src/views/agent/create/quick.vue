@@ -20,13 +20,13 @@ const emits = defineEmits(['confirm'])
 
 const formInputs = ref(getInputs(props.data || {}))
 const original = ref(props.data)
-const [checkResult, checkProxy] = useCheckProxy()
+const [checkProxy] = useCheckProxy()
 
 async function testProxy() {
   const data = getFormData(formInputs.value)
 
   await checkProxy(data)
-  console.log('🚀 ~ testProxy ~ checkResult:', checkResult)
+  // console.log('🚀 ~ testProxy ~ checkResult:', checkResult)
 }
 
 function onConfirm() {

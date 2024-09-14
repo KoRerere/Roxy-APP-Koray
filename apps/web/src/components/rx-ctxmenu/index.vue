@@ -9,28 +9,29 @@ defineProps({
   },
   operation: {
     type: Array as PropType<MenuItem[]>,
-    required: true,
     default: () => [],
   },
   operationHandler: {
     type: Function as PropType<(item: MenuItem) => void>,
-    required: true,
     default: () => () => { },
   },
 })
+
+const selected = ref()
+
 const ctxMenu = ref()
 
-const selectedCategories = ref()
+function onHide() {
+}
 </script>
 
 <template>
-  <ContextMenu ref="ctxMenu" :model="operation">
+  <ContextMenu ref="ctxMenu" :model="operation" @hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
           @click.stop>
-          <Checkbox v-model="selectedCategories" name="checkbox" :input-id="item.value" :value="item.value" @click.stop
-            @change="() => operationHandler(selectedCategories)" />
+          <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
         <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">

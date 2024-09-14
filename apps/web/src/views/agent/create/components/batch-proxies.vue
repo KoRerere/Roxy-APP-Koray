@@ -140,7 +140,7 @@ async function testProxy(data: any, operateName: string) {
         item.checkStatus = checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success
         item.lastIp = checkRes.ip ?? ''
         item.lastCity = checkRes.city ?? ''
-        item.lastCountry = checkRes.continent_code ?? ''
+        item.lastCountry = checkRes.country_code ?? ''
         item.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       })
   })
