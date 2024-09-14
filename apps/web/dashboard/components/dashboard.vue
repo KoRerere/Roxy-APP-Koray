@@ -6,6 +6,7 @@ import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
@@ -134,7 +135,7 @@ onBeforeMount(() => {
     <div class="card base-info">
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
-        <div v-else class="city-logo" />
+        <RxSvgIcon v-else class="city-logo" :name="`country-code/${proxyInfo.country_code}`" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
             <ry-button
