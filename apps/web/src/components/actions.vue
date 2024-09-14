@@ -41,7 +41,7 @@ function quickClick(item: any) {
     </div>
     <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
       <slot name="more-icon">
-        <ryButton text size="small" icon="base/rx_ic_more-v" />
+        <ryButton text size="small" severity="secondary" icon="base/rx_ic_more-v" />
       </slot>
     </div>
   </div>

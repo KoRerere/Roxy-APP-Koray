@@ -26,6 +26,7 @@ export default defineConfig({
     'flex-bc': 'flex justify-between items-center',
     'flex-cc': 'flex justify-center items-center',
     'flex-ovh-1': 'flex overflow-hidden flex-1',
+    'ellipsis-1': 'text-ellipsis overflow-hidden whitespace-nowrap',
   },
   theme: {
     colors: {

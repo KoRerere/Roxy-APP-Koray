@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { SvgNames } from './svg-icon-types'
 import { defineAsyncComponent } from 'vue'
 import { svgIcons } from './svgIcons'
+import type { SvgNames } from './svg-icon-types'
 
 const props = defineProps({
   name: {
@@ -10,7 +10,7 @@ const props = defineProps({
   },
   size: {
     type: [Number, String],
-    default: 24,
+    default: 16,
   },
   color: {
     type: String,

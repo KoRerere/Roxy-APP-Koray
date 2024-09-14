@@ -17,13 +17,16 @@ function close() {
 
 async function confirm() {
   try {
-    loading.value = true
     const formData = getFormData(_props.value.inputs)
+    loading.value = true
     await _onConfirm.value?.(formData)
     close()
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
+  }
+  finally {
+    loading.value = false
   }
 }
 
@@ -45,8 +48,8 @@ onMounted(() => {
     </div>
     <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
-      <Button label="Cancel" text severity="secondary" autofocus @click="close" />
-      <Button label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
+      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
+      <Button size="small" label="Confirm" severity="info" :loading="loading" autofocus @click="confirm" />
     </div>
   </div>
 </template>

@@ -7,8 +7,7 @@ export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   }
 }
 
-export function tableOperation(_data: ProxyItem | ProxyItem[]) {
-  // const datas = ([] as ProxyItem[]).concat(_data)
+export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
   return [
     {
       name: 'edit',

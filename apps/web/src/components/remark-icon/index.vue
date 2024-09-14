@@ -23,8 +23,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['onConfirm', 'onCancel'])
-
 const hasRemark = computed(() => props.value)
 
 const dialog = useDialog()
@@ -42,8 +40,8 @@ function onRemark() {
     },
     data: {
       props: {
-        title: 'Install via Chrome Store',
-        content: 'Please paste the chrome extension URL down below then click the install button.',
+        title: '这是标题',
+        content: '这是描述',
         inputs: [
           {
             type: 'text',

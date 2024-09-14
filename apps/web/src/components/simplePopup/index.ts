@@ -2,10 +2,20 @@ import { useDialog } from 'primevue/usedialog'
 
 import popup from './index.vue'
 
-export function useSimplePopup() {
+interface SimpleDialogData {
+  props: {
+    title?: string
+    content?: string
+    inputs?: any[]
+  }
+  onConfirm?: (formData: any) => void
+  onCancel?: () => void
+}
+
+export function useSimpleDialog() {
   const dialog = useDialog()
 
-  function show(data: any) {
+  function dialogOpen(data: SimpleDialogData) {
     dialog.open(popup, {
       props: {
         showHeader: false,
@@ -16,7 +26,7 @@ export function useSimplePopup() {
     })
   }
 
-  return [show]
+  return [dialogOpen]
 }
 
 export default popup

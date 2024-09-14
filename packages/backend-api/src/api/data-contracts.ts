@@ -446,22 +446,22 @@ export interface UserGetOssCredentialListData {
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -476,12 +476,12 @@ export interface UserGetWindowInfoListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -516,7 +516,7 @@ export interface UserGetWindowInfoListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -526,7 +526,7 @@ export interface UserGetWindowInfoListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -536,12 +536,12 @@ export interface UserGetWindowInfoListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -936,22 +936,22 @@ export interface UserGetWindowInfoListData {
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example " 2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -966,12 +966,12 @@ export interface UserGetWindowInfoRecycleListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -986,22 +986,22 @@ export interface UserGetWindowInfoRecycleListParams {
   host?: string;
   /**
    * 窗口类型，枚举值：1.自建窗口，2.团队窗口，3.全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 创建人id, int,非必传
-   * @example 2
+   * @example "2"
    */
   createBy?: number;
   /**
    * 操作人id, int,非必传
-   * @example 3
+   * @example "3"
    */
   operateBy?: number;
   /**
    * 排序类型，int, 枚举值，1.序号从大到小，2.序号从小到大，3.删除时间从大到小，4.删除时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -2102,7 +2102,7 @@ export interface UserGetUaWebglV2ListParams {
   webGLManufacturer?: string;
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2152,7 +2152,7 @@ export interface UserGetDeviceNameV2ListData {
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2168,12 +2168,12 @@ export interface UserGetMacAddrV2ListData {
 export interface UserGetGroupInfoListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -2257,6 +2257,7 @@ export interface UserGetLabelInfoListData {
       color?: string;
       name?: string;
       isBind?: boolean;
+      bindWindowIds: number[];
     }[];
   };
   msg: string;
@@ -2343,12 +2344,12 @@ export interface UserUploadPluginInfoCreateData {
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
@@ -2368,7 +2369,7 @@ export interface UserGetProxyModuleListParams {
   host?: string;
   /**
    * 排序类型，1：代理ID从大到小，2：代理ID从小到大（老版本用的，新版本可以不用）
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -2393,7 +2394,7 @@ export interface UserGetProxyModuleListParams {
   id?: string;
   /**
    * 代理检测状态，0：未检测，1：检测成功，2：检测失败
-   * @example 0
+   * @example "0"
    */
   checkStatus?: number;
   /**
@@ -2578,17 +2579,17 @@ export interface UserCheckIpCreateData {
 export interface UserGetUserListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 用户id
-   * @example 2
+   * @example "2"
    */
   id?: number;
   /**
@@ -2603,7 +2604,7 @@ export interface UserGetUserListListParams {
   userName?: string;
   /**
    * 账号状态，1: 开启，2: 关闭
-   * @example 1
+   * @example "1"
    */
   status?: number;
 }
@@ -2754,12 +2755,12 @@ export interface UserGetPluginCategoryListData {
 export interface UserGetSystemPluginListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 9999
+   * @example "9999"
    */
   page_size?: number;
   /**
@@ -2808,12 +2809,12 @@ export interface UserAddSystemPluginCreateData {
 export interface UserGetPluginListListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -3184,12 +3185,12 @@ export interface UserMdfPlatformInfoCreateData {
 export interface UserGetPlatformInfoV2ListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
@@ -3335,22 +3336,22 @@ export interface UserGetWindowTableSortOrderListData {
 export interface UserGetWindowInfoV2ListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -3365,12 +3366,12 @@ export interface UserGetWindowInfoV2ListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -3405,7 +3406,7 @@ export interface UserGetWindowInfoV2ListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -3415,7 +3416,7 @@ export interface UserGetWindowInfoV2ListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -3425,12 +3426,12 @@ export interface UserGetWindowInfoV2ListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -3485,7 +3486,7 @@ export interface UserGetWindowInfoV2ListParams {
   osList?: string;
   /**
    * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
-   * @example 0
+   * @example "0"
    */
   proxyTestStatus?: number;
   /**
@@ -3510,7 +3511,7 @@ export interface UserGetWindowInfoV2ListParams {
   proxyIds?: string;
   /**
    * 是否删除，绑定回收站功能，1.删除，0.不删除
-   * @example 0
+   * @example "0"
    */
   is_delete: number;
 }
