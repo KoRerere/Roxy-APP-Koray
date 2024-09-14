@@ -25,7 +25,7 @@ const isOverload = computed(() => {
   return sum > (createCount?.value || 0)
 })
 
-const [checkResult, checkProxy] = useCheckProxy()
+const [checkProxy, checkResult] = useCheckProxy()
 
 const proxyState = reactive({
   state: 'success',
