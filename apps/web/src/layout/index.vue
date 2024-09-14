@@ -4,7 +4,6 @@ import Profile from './components/profile.vue'
 import ResourceUpdater from './components/resource-updater.vue'
 
 import { API } from '/@/api'
-import siderMenu from '/@/components/sider-menu.vue'
 
 const collapsed = ref<boolean>(false)
 
@@ -30,9 +29,12 @@ onMounted(() => {
   <div class="rx-layout">
     <div class="rx-sider" :class="{ collapsed }">
       <div class="logo">
-        RoxyBrowser
+        <SvgIcon name="base/logo" size="32" />
+        <template v-if="!collapsed">
+          RoxyBrowser
+        </template>
       </div>
-      <AsideMenu />
+      <AsideMenu :collapsed />
       <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
            @click="() => (collapsed = !collapsed)"
       >
@@ -72,10 +74,25 @@ onMounted(() => {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  will-change: width;
 
   &.collapsed {
     width: 64px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md, 6px);
+    flex-wrap: nowrap;
+    color: var(--Color-neutrals-950, #0e1214);
+    text-align: center;
+    font-family: Archivo;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
   }
 }
 

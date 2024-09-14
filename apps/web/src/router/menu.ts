@@ -10,13 +10,13 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'list',
         name: 'browser-list',
-        meta: { title: '浏览器窗口' },
+        meta: { title: '浏览器窗口', hideInMenu: true },
         component: () => import('/@/views/browser/list'),
       },
       {
         path: 'create',
         name: 'browser-create',
-        meta: { title: '新建窗口' },
+        meta: { title: '新建窗口', hideInMenu: true },
         component: () => import('/@/views/browser/create'),
       },
       {

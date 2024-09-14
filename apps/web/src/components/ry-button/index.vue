@@ -42,6 +42,7 @@ async function handleClick(e: MouseEvent) {
     </template>
     <template v-if="$slots.default" #default>
       <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" :size="16" />
+      <RxSvgIcon v-if="icon" :name="icon" :size="16" />
       <slot />
     </template>
   </Button>

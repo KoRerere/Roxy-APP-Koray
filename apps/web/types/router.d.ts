@@ -9,6 +9,8 @@ export { }
 
 declare module 'vue-router' {
   interface RouteMeta {
+    /** 菜单名称 */
+    title?: string
     /**  图标名称  */
     icon?: SvgNames
     /** 不需要在菜单中显示的路由 */
