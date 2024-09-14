@@ -33,14 +33,14 @@ async function testProxy() {
       toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
     }
     else {
-      toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.continent_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
+      toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
     }
 
     checkeResult.value = {
       checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
       lastIp: checkRes.ip ?? '',
       lastCity: checkRes.city ?? '',
-      lastCountry: checkRes.continent_code ?? '',
+      lastCountry: checkRes.country_code ?? '',
       checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     }
   })

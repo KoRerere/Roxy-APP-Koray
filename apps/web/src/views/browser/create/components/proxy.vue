@@ -70,22 +70,21 @@ function modifyProxyCount(item: any) {
       blockScroll: true,
     },
     data: {
-      title: 'man!',
-      content: 'proxy count',
-      inputs: [
-        {
-          type: 'number',
-          placeholder: '请输入代理数量',
-          name: 'proxyCount',
-          value: item._proxyCount,
-          required: true,
-        },
-      ],
-    },
-    emits: {
-      onConfirm: ([formData, close]: [any, () => void]) => {
+      props: {
+        title: 'man!',
+        content: 'proxy count',
+        inputs: [
+          {
+            type: 'number',
+            placeholder: '请输入代理数量',
+            name: 'proxyCount',
+            value: item._proxyCount,
+            required: true,
+          },
+        ],
+      },
+      onConfirm: (formData: any) => {
         item._proxyCount = Number.parseInt(formData.proxyCount)// 创建时补全代理数量需要用到
-        close()
       },
     },
   })

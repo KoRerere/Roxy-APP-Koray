@@ -228,21 +228,20 @@ function onRemark(datas: any) {
       blockScroll: true,
     },
     data: {
-      title: 'Install via Chrome Store',
-      content: 'Please paste the chrome extension URL down below then click the install button.',
-      inputs: [
-        {
-          type: 'text',
-          name: 'windowRemark',
-          value: datas[0].windowRemark,
-        },
-      ],
-    },
-    emits: {
-      onConfirm: async ([formData, close]: [any, close: () => void]) => {
+      props: {
+        title: 'Install via Chrome Store',
+        content: 'Please paste the chrome extension URL down below then click the install button.',
+        inputs: [
+          {
+            type: 'text',
+            name: 'windowRemark',
+            value: datas[0].windowRemark,
+          },
+        ],
+      },
+      onConfirm: async (formData: any) => {
         const ids = datas.map((item: any) => item.id)
         await batchModifyWindow({ ids, windowRemark: formData.windowRemark })
-        close()
       },
     },
   })
@@ -313,7 +312,7 @@ async function testProxy(data: any) {
   const params = {
     checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
     lastCity: checkRes.city ?? '',
-    lastCountry: checkRes.continent_code ?? '',
+    lastCountry: checkRes.country_code ?? '',
     lastIp: checkRes.ip ?? '',
     checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
   }
