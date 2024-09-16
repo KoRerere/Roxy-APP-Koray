@@ -59,7 +59,7 @@ const drawer = reactive({
   data: null,
   visible: false,
   confirm: (type: any, data: any) => {
-    const { id, dirId, windowPlatformList, platformIds } = drawer.data!
+    const { id, dirId, windowPlatformList } = drawer.data!
     switch (type) {
       case 'proxyForm': {
         drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
@@ -70,15 +70,12 @@ const drawer = reactive({
         break
       }
       case 'accountForm': {
-        drawer.updateProfile({
-          id,
-          dirId,
-          windowPlatformList: (windowPlatformList as any[]).concat(data),
-        })
+        const _windowPlatformList = (windowPlatformList as any[]).concat(data)
+        drawer.updateProfile({ id, dirId, windowPlatformList: _windowPlatformList })
         break
       }
       case 'accountList': {
-        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean).concat(platformIds)
+        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean)
         drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }
