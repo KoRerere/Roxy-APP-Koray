@@ -394,9 +394,8 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="windownTable" v-model:columns="columns" :table-request="tableRequest" :operation="operation"
-    selection-mode="multiple" :operation-handler="operationHandler" :filters="filters" :sorts="sorts" data-key="id"
-    :show-gridlines="false">
+  <ry-table ref="windownTable" v-model:columns="columns" :filters="filters" :sorts="sorts" :table-request="tableRequest"
+    :operation="operation" :operation-handler="operationHandler" selection-mode="multiple">
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>

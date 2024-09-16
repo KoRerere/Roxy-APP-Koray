@@ -14,14 +14,6 @@ defineOptions({
 })
 
 const props = defineProps({
-  tableRequest: {
-    type: Function as PropType<(data: any) => Promise<any>>,
-    default: () => () => Promise.resolve({}),
-  },
-  tableParams: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  },
   dataKey: {
     type: String,
     default: 'id',
@@ -30,34 +22,26 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: null,
   },
+  tableParams: {
+    type: Object as PropType<any>,
+    default: () => ({}),
+  },
+  tableRequest: {
+    type: Function as PropType<(data: any) => Promise<any>>,
+    default: () => () => Promise.resolve({}),
+  },
   columns: {
     type: Array as PropType<any[]>,
     required: true,
     default: () => [],
   },
-  selectionMode: {
-    type: String as PropType<'single' | 'multiple' | undefined>,
-    default: undefined,
-  },
   filters: {
     type: Array as PropType<any[]>,
     default: () => [],
   },
-  showTableHeader: {
-    type: Boolean,
-    default: true,
-  },
-  showConfig: {
-    type: Boolean,
-    default: true,
-  },
   sorts: {
     type: Array as PropType<any[]>,
     default: () => [],
-  },
-  showActions: {
-    type: Boolean,
-    default: true,
   },
   operation: {
     type: Array as PropType<any[]>,
@@ -79,20 +63,37 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showTableHeader: {
+    type: Boolean,
+    default: true,
+  },
+  showConfig: {
+    type: Boolean,
+    default: true,
+  },
+  showActions: {
+    type: Boolean,
+    default: true,
+  },
+  selectionMode: {
+    type: String as PropType<'single' | 'multiple' | undefined>,
+    default: undefined,
+  },
 })
 
 defineEmits(['update:columns'])
 
 const [show] = useContextMenu()
 
-const _columns = computed<any[]>(() => props.columns.filter((item: any) => item._visible ?? true))
+const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref(props.filters)
 const _dataList = ref()
 const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
 
-const { selection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
+const { selection: outerSelection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
 
 const tableAttrs = reactive({
+  'data-key': props.dataKey,
   'scrollable': true,
   'scroll-height': 'flex',
   'context-menu': true,
@@ -108,7 +109,7 @@ const innerSelection = ref()
 
 const selectionData = computed({
   get() {
-    return hasOuterSelection ? selection.value : innerSelection.value
+    return hasOuterSelection ? outerSelection.value : innerSelection.value
   },
   set(value: any) {
     if (hasOuterSelection) {
@@ -179,7 +180,9 @@ async function _request(outerParams?: any) {
 }
 
 function _clearSelection() {
-  selectionData.value = []
+  if (!hasOuterSelection) {
+    selectionData.value = undefined
+  }
 }
 
 function onRowContextMenu(event: DataTableRowContextMenuEvent) {
@@ -229,7 +232,7 @@ defineExpose({
       </div>
     </div>
     <div class="rxtable-body">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :data-key="dataKey"
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
         @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
