@@ -5,6 +5,7 @@ import ConfirmationService from 'primevue/confirmationservice'
 import DialogService from 'primevue/dialogservice'
 import Ripple from 'primevue/ripple'
 import ToastService from 'primevue/toastservice'
+import Tooltip from 'primevue/tooltip'
 import { createApp } from 'vue'
 import App from './App.vue'
 import i18n from './i18n'
@@ -35,5 +36,6 @@ app.use(PrimeVue, {
 })
 
 app.directive('ripple', Ripple)
+app.directive('tooltip', Tooltip)
 
 app.mount('#app')

@@ -15,5 +15,7 @@ declare module 'vue-router' {
     icon?: SvgNames
     /** 不需要在菜单中显示的路由 */
     hideInMenu?: boolean
+    /** 菜单类型 */
+    type?: 'group'
   }
 }

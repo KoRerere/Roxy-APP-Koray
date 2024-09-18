@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import AsideMenu from './components/aside-menu.vue'
+import AsideMenu from './components/aside-menu/index.vue'
 import Profile from './components/profile.vue'
 import ResourceUpdater from './components/resource-updater.vue'
 
@@ -93,6 +93,7 @@ onMounted(() => {
     font-style: normal;
     font-weight: 700;
     line-height: normal;
+    user-select: none;
   }
 }
 

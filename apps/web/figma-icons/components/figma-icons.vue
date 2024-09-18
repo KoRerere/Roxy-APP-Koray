@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
+import UploadIcons from './upload-icons.vue'
 import { RxSvgIcon, svgIcons, type SvgNames } from '/@/components/rx-icon/'
 import { copyText } from '/@/utils/'
 
@@ -29,8 +30,8 @@ const svgModules = Object.keys(svgIcons).reduce((acc, key) => {
 
   return acc
 }, {} as Record<string, { path: SvgNames, filename: string }[]>)
-console.log('svgIcons', svgIcons)
-console.log('svgModules', svgModules)
+// console.log('svgIcons', svgIcons)
+// console.log('svgModules', svgModules)
 
 function handleCopyText(text: SvgNames) {
   currentIcon.value = text
@@ -79,7 +80,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
       <template v-for="(list, key) in svgModules" :key="key">
         <Card class="mx-12 my-5">
           <template #title>
-            {{ key }}（{{ list.length }}）
+            <div class="flex items-start  mb-2">
+              {{ key }}（{{ list.length }}）<UploadIcons :dir-name="key" />
+            </div>
           </template>
           <template #content>
             <div class="flex flex-wrap gap-4 text-center">

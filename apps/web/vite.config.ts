@@ -5,15 +5,15 @@ import { accessSync } from 'node:fs'
 import { access, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
+import vitePlugins from '@roxy/vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import { debounce } from 'es-toolkit'
 
+import { debounce } from 'es-toolkit'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
-import mkcert from 'vite-plugin-mkcert'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 import { chrome } from '../electron/.electron-vendors.cache.json'
@@ -52,9 +52,6 @@ const config: UserConfig = {
   },
   base: '',
   server: {
-    https: {
-
-    },
     host: '0.0.0.0',
     fs: {
       strict: true,
@@ -84,7 +81,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
-    mkcert({ source: 'coding' }),
+    vitePlugins.uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
     svgLoader({
       svgoConfig: {
         plugins: [

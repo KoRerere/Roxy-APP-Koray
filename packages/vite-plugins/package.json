@@ -1,0 +1,25 @@
+{
+  "name": "@roxy/vite-plugins",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/formidable": "^3.4.5",
+    "adm-zip": "^0.5.16",
+    "formidable": "^3.5.1"
+  }
+}
