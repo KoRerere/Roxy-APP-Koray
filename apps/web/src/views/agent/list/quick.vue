@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
+import { useToast } from 'primevue/usetoast'
 import proxyColumns from './columns'
 import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
@@ -26,10 +26,12 @@ const emit = defineEmits(['confirm'])
 
 const toast = useToast()
 const [checkProxy] = useCheckProxy()
-
 const tableRef = useTemplateRef('agent')
-const dataList = ref()
+
 const columns = proxyColumns.data.filter(column => column.key !== 'ipChecker')
+const selection = ref({ id: props.data?.moduleId })
+const dataList = ref()
+
 const filterButtons = reactive({
   value: null,
   options: [
@@ -95,13 +97,6 @@ function testAllProxy() {
 }
 
 // ====================
-const selection = ref()
-
-watch(() => props.data, (value) => {
-  selection.value = { id: value?.moduleId }
-}, {
-  immediate: true,
-})
 
 function saveSelected() {
   emit('confirm', selection.value)
@@ -111,6 +106,7 @@ function saveSelected() {
 <template>
   <drawer-content title="代理列表" v-bind="$attrs">
     <div class="h-full">
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="agent" v-model:selection="selection" :table-request="getTableList" :show-gridlines="false"
         :columns="columns" :show-config="false" selection-mode="single" :context-menu="false">
         <template #header-extra>

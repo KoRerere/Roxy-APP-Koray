@@ -105,16 +105,22 @@ export class SimpleCache<T> {
   }
 }
 
-// // 使用示例
+// 使用示例
 // const cache = SimpleCache.getInstance();
 
-// const request = new Request('https://api.example.com/data');
+// const request = params =>
+//   axios.request({
+//     path: `/user_record_plugin_upload`,
+//     method: "GET",
+//     format: "json",
+//     ...params,
+//   });
 
-// cache.fetch(request, 5000).then(data => console.log(data)); // 第一次请求
-// cache.fetch(request, 5000).then(data => console.log(data)); // 第二次请求返回缓存
+// cache.fetch(request, params, 5000).then(data => console.log(data)); // 第一次请求
+// cache.fetch(request, params, 5000).then(data => console.log(data)); // 第二次请求返回缓存
 
-// // 获取所有缓存键
+// 获取所有缓存键
 // console.log(cache.getKeys());
 
-// // 获取缓存统计信息
+// 获取缓存统计信息
 // console.log(cache.getStats());

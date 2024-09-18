@@ -9,6 +9,12 @@ import inputBase from '/@/components/ry-form/input-base.vue'
 import ryTable from '/@/components/ry-table'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
+const props = defineProps({
+  data: {
+    type: Object as PropType<any>,
+    default: undefined,
+  },
+})
 const emit = defineEmits(['confirm'])
 
 const toast = useToast()
@@ -44,14 +50,15 @@ const filters = [
   },
 ]
 
-const tableRef = useTemplateRef('accountTable')
+const tableRef = useTemplateRef('account')
+const selection = ref(props.data.windowPlatformList.filter((item: any) => item.id))
 
 async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-async function addRemark(platformRemarks: string, data: any) {
-  const { msg } = await editAccount({ ...data, platformRemarks })
+async function addRemark(platformRemarks: string, row: any) {
+  const { msg } = await editAccount({ ...row, platformRemarks })
   toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
   tableRef.value?.refresh()
 }
@@ -59,8 +66,6 @@ async function addRemark(platformRemarks: string, data: any) {
 function editAccount(formData: any) {
   return API.platform.userMdfPlatformInfoCreate(formData)
 }
-// ============================
-const selection = ref()
 
 function handleSave() {
   emit('confirm', selection.value)
@@ -70,28 +75,29 @@ function handleSave() {
 <template>
   <drawerContent title="账号列表" v-bind="$attrs">
     <div class="h-full">
-      <ry-table ref="accountTable" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
+      <ry-table ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
         :table-request="tableRequest" :columns="columns" :show-config="false" :filters="filters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>
-        <template #platform="{ data }">
+        <template #platform="{ data: row }">
           <div class="platform">
-            <img class="platform-img" :src="data.platformIcon">
+            <img class="platform-img" :src="row.platformIcon">
             <div class="flex justify-between platform-region">
-              <span>{{ data.platformUrl }}</span>
+              <span>{{ row.platformUrl }}</span>
             </div>
             <div class="flex items-center platform-email">
-              <span>{{ data.platformUserName }}</span>
-              <RxSvgIcon v-if="data.platformEfa" class="text-blue platform-img" name="base/rx_ic_2fa" :size="16" />
+              <span>{{ row.platformUserName }}</span>
+              <RxSvgIcon v-if="row.platformEfa" class="text-blue platform-img" name="base/rx_ic_2fa" :size="16" />
             </div>
           </div>
         </template>
-        <template #related="{ data }">
-          <relatedProfiles :list="data.window_info" />
+        <template #related="{ data: row }">
+          <relatedProfiles :list="row.window_info" />
         </template>
-        <template #actions="{ data }">
-          <remarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
+        <template #actions="{ data: row }">
+          <remarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />
         </template>
       </ry-table>
     </div>

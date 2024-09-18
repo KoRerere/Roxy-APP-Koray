@@ -1,0 +1,195 @@
+<script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
+
+import { ExtensionsInstallType } from '/@/enums'
+
+const dialogRef = inject<any>('dialogRef')
+
+const loading = ref(false)
+const _props = ref()
+const _onConfirm = ref()
+const _onCancel = ref()
+
+async function confirm() {
+  try {
+    loading.value = true
+    await _onConfirm.value?.()
+    close()
+  }
+  catch (error) {
+    console.log('🚀 ~ confirm ~ error:', error)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function close() {
+  loading.value = false
+  dialogRef.value.close()
+  _onCancel.value?.()
+}
+
+onMounted(() => {
+  const { props, onConfirm, onCancel } = dialogRef.value.data
+  _props.value = props
+  _onConfirm.value = onConfirm
+  _onCancel.value = onCancel
+})
+
+// =======================
+const installType = ref(ExtensionsInstallType.all.toString())
+const categories = ref([
+  { label: 'All profiles', value: ExtensionsInstallType.all.toString() },
+  { label: 'Partial profiles', value: ExtensionsInstallType.partial.toString() },
+])
+
+const columns = [
+  {
+    title: 'Profile info',
+    key: 'profile',
+    slot: 'profile',
+  },
+]
+
+const dataList = Array.from({ length: 10 }, (_, index) => ({
+  id: index,
+  windowSortNum: `${index + 1}`.padStart(2, '0'),
+  windowName: `Window ${index + 1}`,
+}))
+</script>
+
+<template>
+  <div class="flex flex-col overflow-y-hidden popup">
+    <div class="popup-title">
+      Install to profiles
+    </div>
+    <div v-if="_props" class="extension">
+      <div class="extension-icon">
+        <img class="extension-icon-image" :src="_props.pluginIcon">
+      </div>
+      <div class="extension-name">
+        {{ _props.pluginName }}
+      </div>
+      <div class="extension-version">
+        v{{ _props.pluginVersion }}
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <div>Install to:</div>
+      <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
+        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value" />
+        <label :for="category.value">{{ category.label }}</label>
+      </div>
+    </div>
+    <div class="h-[240px]">
+      <ryTable :show-actions="false" :paginator="false" :data-list="dataList" :columns="columns"
+        :show-table-header="false" show-gridlines selection-mode="multiple" :multiple-operation="false">
+        <template #profile="{ data }">
+          <div class="profile">
+            <span class="profile-uid">UID-</span>
+            <span>{{ data.windowSortNum }}</span>
+            <span class="ml-6">{{ data.windowName }}</span>
+          </div>
+        </template>
+      </ryTable>
+    </div>
+
+    <div>
+      <RxSvgIcon name="base/rx_ic_info" />
+      <span>You can only install extension to profiles related to your projects.</span>
+    </div>
+    <div class="footer">
+      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
+      <Button size="small" label="Save and install" severity="info" :loading="loading" autofocus @click="confirm" />
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+:deep(.p-textarea) {
+  resize: none;
+}
+
+.popup {
+  width: 400px;
+  padding-top: 1.25rem;
+  gap: var(--spacing-2xl, 16px);
+
+  &-title {
+    color: #000;
+    font-family: Inter;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: normal;
+  }
+}
+
+.extension {
+  display: grid;
+  grid-template-areas:
+    'left right-top'
+    'left right-bottom';
+  align-items: center;
+  grid-template-columns: 36px 1fr;
+  gap: var(--spacing-sm, 4px) var(--spacing-2xl, 16px);
+  font-family: Inter;
+  line-height: var(--Line-Height-text-lg, 20px);
+  font-size: 12px;
+
+  &-icon {
+    grid-area: left;
+    padding: var(--spacing-md, 6px);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    background: var(--Colors-Background-bg-body, #fff);
+
+    &-image {
+      width: 100%;
+      aspect-ratio: 1;
+    }
+  }
+
+  &-name {
+    grid-area: right-top;
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+
+  &-version {
+    grid-area: right-bottom;
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: 'JetBrains Mono';
+    font-size: 12px;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+
+.profile {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-lg, 20px);
+
+  &-uid {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: 'JetBrains Mono';
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-xl, 12px);
+  align-self: stretch;
+}
+</style>

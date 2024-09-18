@@ -12,6 +12,8 @@
 import {
   UserAddSystemPluginCreateData,
   UserAddSystemPluginCreatePayload,
+  UserBatchDelPluginInfoCreateData,
+  UserBatchDelPluginInfoCreatePayload,
   UserCheckAllPluginsVersionListData,
   UserCheckAllPluginsVersionListParams,
   UserDelPluginInfoCreateData,
@@ -245,6 +247,24 @@ export class PluginsApi<SecurityDataType = unknown> {
   userUploadChromePluginsV2Create = (data: UserUploadChromePluginsV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUploadChromePluginsV2CreateData, any>({
       path: `/user_upload_chrome_plugins_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserBatchDelPluginInfoCreate
+   * @summary 批量删除用户自己添加的插件
+   * @request POST:/user_batch_del_plugin_info
+   * @response `200` `UserBatchDelPluginInfoCreateData` 成功
+   */
+  userBatchDelPluginInfoCreate = (data: UserBatchDelPluginInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserBatchDelPluginInfoCreateData, any>({
+      path: `/user_batch_del_plugin_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,

@@ -1,0 +1,120 @@
+/* eslint-disable */
+/* tslint:disable */
+/*
+ * ---------------------------------------------------------------
+ * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
+ * ##                                                           ##
+ * ## AUTHOR: acacode                                           ##
+ * ## SOURCE: https://github.com/acacode/swagger-typescript-api ##
+ * ---------------------------------------------------------------
+ */
+
+import {
+  UserAddProjectInfoCreateData,
+  UserAddProjectInfoCreatePayload,
+  UserAddWorkspaceInfoCreateData,
+  UserAddWorkspaceInfoCreatePayload,
+  UserGetWorkspaceListListData,
+  UserMdfProjectInfoCreateData,
+  UserMdfProjectInfoCreatePayload,
+  UserMdfWorkspaceInfoCreateData,
+  UserMdfWorkspaceInfoCreatePayload,
+} from "./data-contracts";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
+
+export class LimitApi<SecurityDataType = unknown> {
+  http: HttpClient<SecurityDataType>;
+
+  constructor(http: HttpClient<SecurityDataType>) {
+    this.http = http;
+  }
+
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetWorkspaceListList
+   * @summary 获取工作空间列表
+   * @request GET:/user_get_workspace_list
+   * @response `200` `UserGetWorkspaceListListData` 成功
+   */
+  userGetWorkspaceListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWorkspaceListListData, any>({
+      path: `/user_get_workspace_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserAddWorkspaceInfoCreate
+   * @summary 新增工作空间
+   * @request POST:/user_add_workspace_info
+   * @response `200` `UserAddWorkspaceInfoCreateData` 成功
+   */
+  userAddWorkspaceInfoCreate = (data: UserAddWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddWorkspaceInfoCreateData, any>({
+      path: `/user_add_workspace_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserMdfWorkspaceInfoCreate
+   * @summary 修改工作空间
+   * @request POST:/user_mdf_workspace_info
+   * @response `200` `UserMdfWorkspaceInfoCreateData` 成功
+   */
+  userMdfWorkspaceInfoCreate = (data: UserMdfWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfWorkspaceInfoCreateData, any>({
+      path: `/user_mdf_workspace_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserAddProjectInfoCreate
+   * @summary 新增项目
+   * @request POST:/user_add_project_info
+   * @response `200` `UserAddProjectInfoCreateData` 成功
+   */
+  userAddProjectInfoCreate = (data: UserAddProjectInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddProjectInfoCreateData, any>({
+      path: `/user_add_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserMdfProjectInfoCreate
+   * @summary 修改项目
+   * @request POST:/user_mdf_project_info
+   * @response `200` `UserMdfProjectInfoCreateData` 成功
+   */
+  userMdfProjectInfoCreate = (data: UserMdfProjectInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfProjectInfoCreateData, any>({
+      path: `/user_mdf_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+}
