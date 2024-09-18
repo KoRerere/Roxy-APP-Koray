@@ -49,4 +49,7 @@ async function handleClick(e: MouseEvent) {
 </template>
 
 <style lang="scss" scoped>
+:deep(svg) {
+  pointer-events: none;
+}
 </style>

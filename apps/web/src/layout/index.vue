@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import AsideMenu from './components/aside-menu/index.vue'
-import Profile from './components/profile.vue'
-import ResourceUpdater from './components/resource-updater.vue'
+import RxLayoutFooter from './components/footer/index.vue'
+import RxLayoutHeader from './components/header/index.vue'
 
 import { API } from '/@/api'
 
@@ -31,28 +31,23 @@ onMounted(() => {
       <div class="logo">
         <SvgIcon name="base/logo" size="32" />
         <template v-if="!collapsed">
-          RoxyBrowser
+          <span>
+            RoxyBrowser
+          </span>
+          <div class="env">
+            BETA
+          </div>
         </template>
       </div>
       <AsideMenu :collapsed />
-      <div class="position-absolute pa-4 bottom-0 left-0 w-full h-12 cursor-pointer flex items-center gap-2"
-           @click="() => (collapsed = !collapsed)"
-      >
-        <span>{{ collapsed ? 'Show' : 'Hide' }}</span>
-      </div>
+      <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
-    <div class="rx-main">
-      <div class="rx-main-header">
-        header
-        <div class="flex gap-2">
-          <ResourceUpdater />
-          <Profile />
-        </div>
-      </div>
+    <main class="rx-main">
+      <RxLayoutHeader />
       <div class="rx-main-content">
         <RouterView />
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -76,6 +71,8 @@ onMounted(() => {
   flex-shrink: 0;
   transition: all 0.25s ease;
   will-change: width;
+  overflow: hidden;
+  user-select: none;
 
   &.collapsed {
     width: 64px;
@@ -94,6 +91,24 @@ onMounted(() => {
     font-weight: 700;
     line-height: normal;
     user-select: none;
+
+    .env {
+      display: flex;
+      padding: var(--spacing-xs, 2px) var(--spacing-md, 6px);
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      color: var(--Colors-Text-text-tertiary, #7c8387);
+      text-align: center;
+      font-family: Archivo;
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+      letter-spacing: 0.1px;
+      border-radius: var(--radius-full, 9999px);
+      background: var(--Color-neutrals-200, #e4e8eb);
+    }
   }
 }
 
@@ -102,13 +117,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  &-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px) var(--spacing-xl, 12px) var(--spacing-none, 0px);
-  }
 
   &-content {
     flex: 1;

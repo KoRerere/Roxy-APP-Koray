@@ -35,10 +35,10 @@
     "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.6.0",
-    "@dotenvx/dotenvx": "^1.14.0",
+    "@antfu/eslint-config": "^3.6.2",
+    "@dotenvx/dotenvx": "^1.14.1",
     "@types/node": "^22.5.2",
-    "@unocss/eslint-plugin": "^0.62.3",
+    "@unocss/eslint-plugin": "^0.62.4",
     "cross-env": "^7.0.3",
     "eslint": "9.10.0",
     "eslint-plugin-format": "^0.1.2",
@@ -47,7 +47,7 @@
     "simple-git-hooks": "^2.11.1",
     "tsx": "^4.19.1",
     "turbo": "^2.1.2",
-    "vite": "^5.4.5"
+    "vite": "^5.4.6"
   },
   "pnpm": {
     "peerDependencyRules": {

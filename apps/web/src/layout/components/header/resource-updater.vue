@@ -118,8 +118,8 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
 
 <template>
   <div class="flex justify-center">
-    <OverlayBadge :value="noticeNum" severity="danger">
-      <Button type="button" icon="pi pi-arrow-circle-up" label="Upgrade" @click="toggle" />
+    <OverlayBadge :value="noticeNum" severity="danger" size="small">
+      <ry-button icon="base/rx_ic_renew" outlined size="small" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">

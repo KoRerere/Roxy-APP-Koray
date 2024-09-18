@@ -15,7 +15,7 @@ function toggle() {
   isCollapsed.value = !isCollapsed.value
 }
 
-onBeforeMount(() => {
+watchEffect(() => {
   if (canOpen.value) {
     isCollapsed.value = true
   }
@@ -79,9 +79,11 @@ onBeforeMount(() => {
   align-self: stretch;
   border-radius: 4px;
   cursor: pointer;
+  color: var(--Component-Colors-SideNav-link-text, #575d61);
 
   &:hover,
   &.active {
+    color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
     background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
   }
 
@@ -91,7 +93,6 @@ onBeforeMount(() => {
   }
   .menu-title {
     flex: auto;
-    color: var(--Component-Colors-SideNav-link-text, #575d61);
     font-family: Inter;
     font-size: var(--Font-Size-text-md, 13px);
     font-style: normal;

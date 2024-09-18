@@ -34,6 +34,7 @@ function toCreateBrowser() {
   align-self: stretch;
   white-space: nowrap;
   word-break: keep-all;
+  isolation: isolate;
 
   .menu {
     display: flex;
