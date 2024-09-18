@@ -14,12 +14,20 @@ const categoryList = ref()
 
 const extensionList = ref()
 
-const userExtensionList = ref()
-
 onBeforeMount(() => {
   getExtensionHubCategory()
-  // getUserExtensionList()
 })
+
+/**
+ * 请求插件目录
+ */
+async function getExtensionHubCategory() {
+  const { data } = await API.plugins.userGetPluginCategoryList()
+  categoryList.value = data.rows
+  console.log('🚀 ~ getExtensionHubCategory ~ categoryList.value:', categoryList.value)
+  getExtensionList({})
+  return data.rows
+}
 
 /**
  * 获取插件列表
@@ -28,16 +36,6 @@ async function getExtensionList(params: any) {
   const { data } = await API.plugins.userGetSystemPluginList(params)
   extensionList.value = data.rows
   getDataOfgCateGoryGroup()
-  return data.rows
-}
-
-/**
- * 请求插件目录
- */
-async function getExtensionHubCategory() {
-  const { data } = await API.plugins.userGetPluginCategoryList()
-  categoryList.value = data.rows
-  getExtensionList({})
   return data.rows
 }
 
@@ -79,7 +77,7 @@ function searchMethod(e: any) {
       </TabList>
       <TabPanels class="flex flex-1 !pa-0">
         <TabPanel class="flex-1" value="intalled">
-          <list :data-list="userExtensionList" />
+          <list />
         </TabPanel>
         <TabPanel value="hub">
           <hub :data-list="categoryList" @search-method="searchMethod" />

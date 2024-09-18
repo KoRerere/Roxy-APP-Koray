@@ -1,45 +1,22 @@
 <script setup lang="ts">
-// import { useConfirm } from 'primevue/useconfirm'
+import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
+import type { ToastMessageOptions } from 'primevue/toast'
+import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
-import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
-
-import type { ToastMessageOptions } from 'primevue/toast'
-
 import { API } from '/@/api'
-
-import ryTable from '/@/components/ry-table'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
+import { ExtensionsStatus } from '/@/enums'
+import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 
-// const toast = useToast()
+const confirm = useConfirm()
 const dialog = useDialog()
 const toast = useToast()
 const [dialogOpen] = useSimpleDialog()
 
 const tableRef = useTemplateRef('extable')
-const operation = ref([
-  {
-    name: 'checkUpdate',
-    label: 'Check update',
-    icon: 'base/rx_ic_clock_rotate',
-  },
-  {
-    name: 'setting',
-    label: 'Setting',
-    icon: 'base/rx_ic_gear',
-    multiple: true,
-  },
-  {
-    separator: true,
-  },
-  {
-    name: 'delete',
-    label: 'Delete',
-    icon: 'base/rx_ic_bin_1',
-    multiple: true,
-  },
-])
 
 const columns = ref([
   {
@@ -64,7 +41,7 @@ const columns = ref([
   {
     title: 'Update',
     key: 'pluginUpdateState',
-    getText: (row: any) => row.pluginUpdateState || '--',
+    slot: 'update',
   },
 ])
 
@@ -118,19 +95,65 @@ async function tableRequest(params: any) {
   return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })// 不分页
 }
 
+function tableOperation(data: any) {
+  return [
+    {
+      name: 'updateLocal',
+      label: 'update local',
+      icon: 'base/rx_ic_clock_rotate',
+      power: data.source === 'local',
+    },
+    {
+      name: 'checkUpdate',
+      label: 'check update',
+      icon: 'base/rx_ic_clock_rotate',
+      power: data.source !== 'local',
+    },
+    {
+      name: 'setting',
+      label: 'Setting',
+      icon: 'base/rx_ic_gear',
+      multiple: true,
+    },
+    {
+      separator: true,
+    },
+    {
+      name: 'delete',
+      label: 'Delete',
+      icon: 'base/rx_ic_bin_1',
+      multiple: true,
+    },
+  ]
+}
+
 async function operationHandler(operate: any, data: any) {
-  console.log('🚀 ~ operationHandler ~ operate:', operate.name)
-  const datas = [].concat(data)
+  const datas = [].concat(toRaw(data))
 
   switch (operate.name) {
     case 'install':
+      onInstall(data)
+      break
+    case 'updateLocal':
       break
     case 'checkUpdate':
+      checkUpdate(data)
       break
     case 'setting':
       break
     case 'delete':
+      deleteExtension(datas)
       break
+  }
+}
+
+async function uploadRecordCheck() {
+  const { data } = await API.plugins.userRecordPluginUploadList()
+  if (data) {
+    return Promise.resolve()
+  }
+  else {
+    throw new Error('您的上传次数已用完')
   }
 }
 
@@ -145,26 +168,22 @@ function installViaUrl() {
           placeholder: 'Extension URL',
           name: 'url',
           leftIcon: 'base/rx_ic_link',
-          validator: (val: string) => {
-            const urlRegex = /^(?:http|https):\/\/[^ "]+$/
-            return urlRegex.test(val ?? '')
-          },
         },
       ],
     },
     onConfirm: async (formData: any) => {
-      const { data } = await API.plugins.userRecordPluginUploadList()
-      if (data) {
-        const { code, msg } = await API.plugins.userUploadChromePluginsV2Create(formData)
+      try {
+        await uploadRecordCheck()
+        const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
         const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', '安装成功'] : ['error', '安装失败']
         toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 
         if (code === 0) {
-          tableRef.value.refresh()
+          tableRef.value?.refresh()
         }
       }
-      else {
-        toast.add({ severity: 'warn', summary: '警告', detail: '您的上传次数已用完', life: 5000, group: 'tc' })
+      catch (error) {
+        toast.add({ severity: 'warn', summary: '警告', detail: error, life: 5000, group: 'tc' })
       }
     },
   })
@@ -177,7 +196,18 @@ function onUploadExtension() {
       modal: true,
       blockScroll: true,
     },
-    data: {},
+    data: {
+      onConfirm: async (params: any) => {
+        try {
+          await uploadRecordCheck()
+          await API.plugins.userUploadPluginInfoCreate(params)
+          tableRef.value?.refresh()
+        }
+        catch (error) {
+          console.log('🚀 ~ onConfirm: ~ error:', error)
+        }
+      },
+    },
   })
 }
 
@@ -186,11 +216,67 @@ async function onSwitch(item: any) {
   const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', '成功'] : ['error', '失败']
   toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 }
+
+async function onInstall(data: any) {
+  dialog.open(installExtension, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: data,
+      onConfirm: async (params: any) => {
+
+        // try {
+        //   const xxx = await window.electronAPI.send('extension:download', data)
+        //   console.log('🚀 ~ onConfirm: ~ xxx:', xxx)
+        // }
+        // catch (error) {
+        //   console.log('🚀 ~ onConfirm: ~ error:', error)
+        // }
+      },
+    },
+  })
+}
+
+async function checkUpdate(data: any) {
+  const res = await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
+  console.log('🚀 ~ checkUpdate ~ data:', res)
+}
+
+async function deleteExtension(datas: any) {
+  confirm.require({
+    header: '警告',
+    message: '确认删除此插件？',
+    rejectProps: {
+      label: '取消',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: '确定',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        const ids = datas.map((item: any) => item.id)
+        const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
+
+        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        tableRef.value?.refresh()
+      }
+      catch (error) {
+        console.log('🚀 ~ accept: ~ error:', error)
+      }
+    },
+  })
+}
 </script>
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="extable" scrollable selection-mode="multiple" :operation="operation"
+  <ry-table ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
     :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
     :show-config="false" :show-gridlines="false" :paginator="false">
     <template #header-extra>
@@ -198,11 +284,10 @@ async function onSwitch(item: any) {
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
           data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <ryButton severity="info" size="small" icon="base/rx_ic_download_cloud" label="Install via URL"
+          <ryButton severity="info" size="small" icon="base/rx_ic_download_cloud" label="Add with URL"
             @click="installViaUrl" />
           <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload"
             @click="onUploadExtension" />
-          <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_clock_rotate" label="Update All" />
         </div>
       </div>
     </template>
@@ -223,6 +308,17 @@ async function onSwitch(item: any) {
       <div class="flex items-center gap-2">
         <ToggleSwitch v-model="data.useStatus" @change="onSwitch(data)" />
         <div>{{ data.useStatus ? 'Active' : 'Disable' }}</div>
+      </div>
+    </template>
+
+    <template #update="{ data }">
+      <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
+        <ryButton label="Update" size="small" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }"
+          name="base/rx_ic_info" />
+      </div>
+      <div v-else>
+        --
       </div>
     </template>
 

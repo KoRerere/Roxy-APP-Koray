@@ -191,8 +191,7 @@ interface Items {
     <div class="flex flex-col hub-category">
       <div class="category-content">
         <div v-for="item in dataList" :key="item.id" class="category-item"
-             :class="{ active: selCategoryIndex === item.id }" @click="selCategoryClick(item)"
-        >
+          :class="{ active: selCategoryIndex === item.id }" @click="selCategoryClick(item)">
           {{ item.categoryName }}
         </div>
       </div>

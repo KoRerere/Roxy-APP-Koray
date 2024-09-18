@@ -1,18 +1,11 @@
 <script lang="ts" setup>
-import { count } from 'node:console'
 import { useToast } from 'primevue/usetoast'
 import { read, utils } from 'xlsx'
+import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
 
 const toast = useToast()
-
-const ExcelAccept = {
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-  'application/vnd.ms-excel': ['.xls'],
-  'application/vnd.ms-excel.sheet.macroEnabled.12': ['.xlsm'],
-  'application/vnd.ms-excel.sheet.binary.macroEnabled.12': ['.xlsb'],
-}
 
 const nameMap = {
   '窗口名称': 'windowName',
@@ -36,6 +29,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024
 function fileDragover(event: Event) {
   event.preventDefault()
 }
+
 function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]

@@ -4314,3 +4314,91 @@ export interface UserGetProxyTableRowsListData {
   }[];
   msg: string;
 }
+
+export interface UserGetWorkspaceListListData {
+  code: number;
+  data: {
+    rows: {
+      /** ID */
+      id?: number;
+      /** 创建人ID */
+      userId?: number;
+      /** 工作空间名称 */
+      workspaceName?: string;
+      /** 工作空间图片 */
+      workspacePicture?: string;
+      /** 是否默认工作空间，1：是 0：不是，默认不是 */
+      workspaceDefault?: number;
+      /** 工作空间状态，1：启用 0：停用 */
+      workspaceStatus?: number;
+      /** 创建时间 */
+      createTime?: string;
+      /** 修改时间 */
+      updateTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddWorkspaceInfoCreatePayload {
+  /** 工作空间名称 */
+  workspaceName: string;
+  /** 工作空间图片 */
+  workspacePicture?: string;
+}
+
+export interface UserAddWorkspaceInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
+export interface UserMdfWorkspaceInfoCreatePayload {
+  /** 工作空间ID */
+  id: number;
+  /** 工作空间名称 */
+  workspaceName: string;
+  /** 工作空间图片 */
+  workspacePicture?: string;
+}
+
+export interface UserMdfWorkspaceInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserAddProjectInfoCreatePayload {
+  /** 工作空间ID */
+  workspaceId: number;
+  /** 项目名称 */
+  projectName: string;
+}
+
+export interface UserAddProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfProjectInfoCreatePayload {
+  /** 项目ID */
+  id: number;
+  /** 绑定的空间ID */
+  workspaceId: number;
+  /** 项目名称 */
+  projectName: string;
+}
+
+export interface UserMdfProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserBatchDelPluginInfoCreatePayload {
+  /** 插件id列表 */
+  ids: number[];
+}
+
+export interface UserBatchDelPluginInfoCreateData {
+  code: number;
+  msg: string;
+}
