@@ -13,7 +13,7 @@ const items = ref([
     label: '个人信息',
     icon: 'pi pi-refresh',
     command: () => {
-      router.push({ name: 'setting' })
+      router.push({ name: 'profile' })
     },
   },
   {

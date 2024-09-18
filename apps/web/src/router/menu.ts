@@ -30,7 +30,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: 'Resource/Tool' },
+    meta: { title: 'Resource/Tool', type: 'group' },
     children: [
       {
         path: 'account',
@@ -66,13 +66,13 @@ export const menuRoutes: RouteRecordRaw[] = [
           {
             path: 'install',
             name: 'install',
-            meta: { title: 'intalled', icon: 'base/AreaChartOutlined' },
+            meta: { title: 'intalled', icon: 'base/AreaChartOutlined', hideInMenu: true },
             component: () => import('../views/extensions/install'),
           },
           {
             path: 'hub',
             name: 'extensions-hub',
-            meta: { title: 'extensionHub', icon: 'base/AreaChartOutlined' },
+            meta: { title: 'extensionHub', icon: 'base/AreaChartOutlined', hideInMenu: true },
             component: () => import('/@/views/extensions/hub'),
           },
         ],
@@ -88,7 +88,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'workspace',
     name: 'workspace',
-    meta: { title: 'workspace' },
+    meta: { title: 'workspace', type: 'group' },
     redirect: { name: 'teams' },
     children: [
       {
