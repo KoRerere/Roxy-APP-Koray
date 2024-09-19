@@ -12,6 +12,7 @@ async function createWindow() {
     show: false,
     autoHideMenuBar: true, // 自动隐藏菜单栏
     webPreferences: {
+      spellcheck: false,
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
       preload: isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),

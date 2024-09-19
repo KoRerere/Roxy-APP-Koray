@@ -11,6 +11,6 @@ export const baseRoutes: RouteRecordRaw[] = [
     name: 'pro-form',
     path: '/pro-form',
     meta: { title: '动态表单' },
-    component: () => import('/@/views/pro-form/index.vue'),
+    component: () => import('/@/components/rx-form/index.vue'),
   },
 ]

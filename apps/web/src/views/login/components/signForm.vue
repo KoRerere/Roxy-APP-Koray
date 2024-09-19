@@ -1,62 +1,25 @@
 <script lang="ts" setup>
-import type { PropType } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useLoginContext } from '../hooks/useLoginContext'
+import { formSchemas } from './schemas'
 import { API } from '/@/api'
-import { getFormData, setInputVisible } from '/@/utils'
+import { RxForm } from '/@/components/rx-form'
 
 const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
 const rememberMe = ref(false)
 const isRegister = ref(false)
-
-const inputs = ref([
-  {
-    type: 'text',
-    label: 'Email',
-    name: 'user_name',
-    placeholder: 'Email address',
-    value: '',
-    errorMsg: 'Please enter the correct email address',
-    validator(self: any) {
-      const reg = /^[\w-]+@[\w-]+(?:\.[\w-]+)+$/
-      console.log(self.value, reg.test(self.value))
-      return reg.test(self.value.trim())
-    },
-  },
-  {
-    type: 'password',
-    label: 'Password',
-    name: 'password',
-    placeholder: 'Login password',
-    value: '',
-    errorMsg: 'Please enter the password',
-    validator(self: any) {
-      console.log(self.value.trim().length > 0)
-      return self.value.trim().length > 0
-    },
-  },
-  {
-    type: 'text',
-    label: 'Invitation (Optional)',
-    name: 'invitation_code',
-    placeholder: 'Invitation code',
-    value: '',
-    visible: false,
-    rules: [
-      { required: false, message: 'Please enter the invitation code', trigger: 'blur' },
-    ],
-  },
-])
+const formInstance = useTemplateRef('formInstance')
 
 async function handleSubmit() {
-  const params = getFormData(inputs.value)
-  setSignFormData(params)
-  console.log(params)
+  const formData = await formInstance.value?.submit()
+  // const params = getFormData(inputs.value)
+  setSignFormData(formData)
+  console.log(formData)
   // if sign up, switch to emailCodeInputOtp component
   if (isRegister.value) {
-    const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: params.user_name })
+    const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: formData.user_name })
     if (code === 0) {
       toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
       setCurrentComponent('emailCodeInputOtp')
@@ -78,12 +41,12 @@ function openGoogleAuth2Login() {
 
 function switchFormMode(val: boolean) {
   isRegister.value = val
-  setInputVisible(inputs.value, 'invitation_code', val)
 }
 </script>
 
 <template>
-  <ry-form class="w-full" :inputs="inputs" />
+  <!-- <ry-form class="w-full" :inputs="inputs" /> -->
+  <RxForm ref="formInstance" :schemas="formSchemas" :footer="false" layout="vertical" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
