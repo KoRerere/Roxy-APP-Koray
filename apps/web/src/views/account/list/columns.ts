@@ -3,7 +3,7 @@ import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const columnsConfig = {
-  key: 'browser.list',
+  key: 'account.list',
   data: [
     {
       title: 'Platform & Password',

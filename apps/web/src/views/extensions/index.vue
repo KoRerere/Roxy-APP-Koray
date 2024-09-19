@@ -13,12 +13,17 @@ const tabsValue = ref('intalled')
 const listRef = useTemplateRef('listref')
 const hubRef = useTemplateRef('hubref')
 
+const syncList = ref(false)
+const syncHub = ref(false)
+
 function onChange(value: any) {
-  if (value === 'intalled') {
+  if (value === 'intalled' && syncList.value) {
     listRef.value?.refresh()
+    syncList.value = false
   }
-  else if (value === 'hub') {
+  else if (value === 'hub' && syncHub.value) {
     hubRef.value?.refresh()
+    syncHub.value = false
   }
 }
 </script>
@@ -37,11 +42,11 @@ function onChange(value: any) {
       <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
         <TabPanel class="flex-1" value="intalled">
           <!-- eslint-disable-next-line vue/no-unused-refs -->
-          <list ref="listref" />
+          <list ref="listref" v-model:needsync="syncHub" />
         </TabPanel>
         <TabPanel class="flex flex-1" value="hub">
           <!-- eslint-disable-next-line vue/no-unused-refs -->
-          <hub ref="hubref" />
+          <hub ref="hubref" v-model:needsync="syncList" />
         </TabPanel>
       </TabPanels>
     </Tabs>

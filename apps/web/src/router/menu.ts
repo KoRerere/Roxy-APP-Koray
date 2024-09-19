@@ -101,7 +101,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'history-logs',
         name: 'history-logs',
         meta: { title: 'History-Logs', icon: 'base/rx_ic_doc_data' },
-        component: () => import('/@/views/setting/profile.vue'),
+        component: () => import('/@/views/history-logs'),
       },
       {
         path: 'settings',
