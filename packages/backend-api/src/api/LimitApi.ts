@@ -14,6 +14,10 @@ import {
   UserAddProjectInfoCreatePayload,
   UserAddWorkspaceInfoCreateData,
   UserAddWorkspaceInfoCreatePayload,
+  UserDelWorkspaceInfoCreateData,
+  UserDelWorkspaceInfoCreatePayload,
+  UserGetProjectInfoByWorkspaceListData,
+  UserGetProjectInfoByWorkspaceListParams,
   UserGetWorkspaceListListData,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
@@ -111,6 +115,41 @@ export class LimitApi<SecurityDataType = unknown> {
   userMdfProjectInfoCreate = (data: UserMdfProjectInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfProjectInfoCreateData, any>({
       path: `/user_mdf_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description role 权限： Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1)  Manager(管理者,枚举：2) Owner(拥有者,枚举：3)
+   *
+   * @tags Limit
+   * @name UserGetProjectInfoByWorkspaceList
+   * @summary 根据空间ID获取当前用户所拥有的项目及成员
+   * @request GET:/user_get_project_info_by_workspace
+   * @response `200` `UserGetProjectInfoByWorkspaceListData` 成功
+   */
+  userGetProjectInfoByWorkspaceList = (query: UserGetProjectInfoByWorkspaceListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
+      path: `/user_get_project_info_by_workspace`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserDelWorkspaceInfoCreate
+   * @summary 删除工作空间
+   * @request POST:/user_del_workspace_info
+   * @response `200` `UserDelWorkspaceInfoCreateData` 成功
+   */
+  userDelWorkspaceInfoCreate = (data: UserDelWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDelWorkspaceInfoCreateData, any>({
+      path: `/user_del_workspace_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,
