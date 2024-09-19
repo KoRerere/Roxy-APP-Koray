@@ -4402,3 +4402,87 @@ export interface UserBatchDelPluginInfoCreateData {
   code: number;
   msg: string;
 }
+
+export interface UserGetPluginWindowListParams {
+  /**
+   * 插件ID
+   * @example "1"
+   */
+  pluginId: number;
+  /**
+   * 项目ID
+   * @example "1,2,3"
+   */
+  projectId?: string;
+  /**
+   * 标签ID
+   * @example "1,2,3"
+   */
+  labelIds?: string;
+  /**
+   * 工作空间ID
+   * @example "1"
+   */
+  workspaceId: number;
+}
+
+export interface UserGetPluginWindowListData {
+  code: number;
+  data: {
+    rows: {
+      /** 窗口ID */
+      id?: number;
+      /** 窗口名称 */
+      windowName?: string;
+      /** 项目名称 */
+      projectName?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddPluginToWindowCreatePayload {
+  /** 安装类型 0:全部安装，1:部分安装 */
+  installType: number;
+  /** 插件ID */
+  pluginId: number;
+  /** 工作空间ID */
+  workspaceId: number;
+  /** 窗口ID */
+  windowId?: number[];
+}
+
+export interface UserAddPluginToWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetProjectInfoByWorkspaceListParams {
+  /** 工作空间ID */
+  workspaceId: string;
+}
+
+export interface UserGetProjectInfoByWorkspaceListData {
+  code: number;
+  data: {
+    rows: {
+      /** 项目id */
+      project_id: number;
+      /** 项目名称 */
+      projectName: string;
+      /** 项目权限 */
+      role: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserDelWorkspaceInfoCreatePayload {
+  /** 工作空间ID */
+  id: number;
+}
+
+export interface UserDelWorkspaceInfoCreateData {
+  code: number;
+  msg: string;
+}

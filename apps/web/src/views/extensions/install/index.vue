@@ -61,8 +61,12 @@ const filters = reactive({
       value: false,
     },
   ],
-  onChange({ value }: SelectButtonChangeEvent) {
-    tableRef.value?.refresh({ status: value })
+  onChange() {
+    tableRef.value?.refresh({ status: filters.value })
+  },
+  resetFilters() {
+    filters.value = null
+    filters.onChange()
   },
 })
 
@@ -179,7 +183,7 @@ function installViaUrl() {
         toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 
         if (code === 0) {
-          tableRef.value?.refresh()
+          filters.resetFilters()
         }
       }
       catch (error) {
@@ -201,7 +205,7 @@ function onUploadExtension() {
         try {
           await uploadRecordCheck()
           await API.plugins.userUploadPluginInfoCreate(params)
-          tableRef.value?.refresh()
+          filters.resetFilters()
         }
         catch (error) {
           console.log('🚀 ~ onConfirm: ~ error:', error)
@@ -227,14 +231,14 @@ async function onInstall(data: any) {
     data: {
       props: data,
       onConfirm: async (params: any) => {
-
-        // try {
-        //   const xxx = await window.electronAPI.send('extension:download', data)
-        //   console.log('🚀 ~ onConfirm: ~ xxx:', xxx)
-        // }
-        // catch (error) {
-        //   console.log('🚀 ~ onConfirm: ~ error:', error)
-        // }
+        try {
+          await API.plugins.userAddPluginToWindowCreate(params)
+          await window.electronAPI.send('extension:download', [toRaw(data)])
+          toast.add({ severity: 'success', summary: '成功', detail: '插件安装完成', life: 5000 })
+        }
+        catch (error) {
+          console.log('🚀 ~ onConfirm: ~ error:', error)
+        }
       },
     },
   })
@@ -243,6 +247,11 @@ async function onInstall(data: any) {
 async function checkUpdate(data: any) {
   const res = await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
   console.log('🚀 ~ checkUpdate ~ data:', res)
+}
+
+async function updateExtension(data: any) {
+  await API.plugins.userUpgradePluginsCreate(data)
+  filters.resetFilters()
 }
 
 async function deleteExtension(datas: any) {
@@ -264,7 +273,7 @@ async function deleteExtension(datas: any) {
         const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
         toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-        tableRef.value?.refresh()
+        filters.resetFilters()
       }
       catch (error) {
         console.log('🚀 ~ accept: ~ error:', error)
@@ -272,6 +281,10 @@ async function deleteExtension(datas: any) {
     },
   })
 }
+
+defineExpose({
+  refresh: () => filters.onChange(),
+})
 </script>
 
 <template>
@@ -313,7 +326,7 @@ async function deleteExtension(datas: any) {
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <ryButton label="Update" size="small" />
+        <ryButton label="Update" size="small" @click="updateExtension(data)" />
         <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }"
           name="base/rx_ic_info" />
       </div>
@@ -355,7 +368,7 @@ async function deleteExtension(datas: any) {
     font-style: normal;
     line-height: var(--Line-Height-text-xs, 16px);
     font-weight: 500;
-    width: 200px;
+    width: 240px;
 
     &-name {
       color: var(--Colors-Text-text-primary, #171c1f);

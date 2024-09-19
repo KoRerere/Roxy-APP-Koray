@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useTemplateRef } from 'vue'
 import hub from './hub/index.vue'
 import list from './install/index.vue'
-import { API } from '/@/api'
 
 const tabs = ref([
   { title: 'Intalled', value: 'intalled' },
@@ -10,57 +10,16 @@ const tabs = ref([
 
 const tabsValue = ref('intalled')
 
-const categoryList = ref()
+const listRef = useTemplateRef('listref')
+const hubRef = useTemplateRef('hubref')
 
-const extensionList = ref()
-
-onBeforeMount(() => {
-  getExtensionHubCategory()
-})
-
-/**
- * 请求插件目录
- */
-async function getExtensionHubCategory() {
-  const { data } = await API.plugins.userGetPluginCategoryList()
-  categoryList.value = data.rows
-  console.log('🚀 ~ getExtensionHubCategory ~ categoryList.value:', categoryList.value)
-  getExtensionList({})
-  return data.rows
-}
-
-/**
- * 获取插件列表
- */
-async function getExtensionList(params: any) {
-  const { data } = await API.plugins.userGetSystemPluginList(params)
-  extensionList.value = data.rows
-  getDataOfgCateGoryGroup()
-  return data.rows
-}
-
-/**
- * 根据分类组合数据
- */
-function getDataOfgCateGoryGroup() {
-  for (let i = 0; i < categoryList.value.length; i++) {
-    categoryList.value[i].arr = []
-    for (let j = 0; j < extensionList.value.length; j++) {
-      if (categoryList.value[i].id === extensionList.value[j].category) {
-        categoryList.value[i].arr.push(extensionList.value[j])
-      }
-    }
+function onChange(value: any) {
+  if (value === 'intalled') {
+    listRef.value?.refresh()
   }
-}
-
-/**
- * 仓库触发搜索时间
- */
-function searchMethod(e: any) {
-  const params = {
-    pluginName: e.value,
+  else if (value === 'hub') {
+    hubRef.value?.refresh()
   }
-  getExtensionList(params)
 }
 </script>
 
@@ -69,18 +28,20 @@ function searchMethod(e: any) {
     <div class="extensions-header">
       Extensions
     </div>
-    <Tabs class="flex-1" :value="tabsValue">
+    <Tabs class="flex-1 overflow-hidden" :value="tabsValue" @update:value="onChange">
       <TabList>
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
           {{ tab.title }}
         </Tab>
       </TabList>
-      <TabPanels class="flex flex-1 !pa-0">
+      <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
         <TabPanel class="flex-1" value="intalled">
-          <list />
+          <!-- eslint-disable-next-line vue/no-unused-refs -->
+          <list ref="listref" />
         </TabPanel>
-        <TabPanel value="hub">
-          <hub :data-list="categoryList" @search-method="searchMethod" />
+        <TabPanel class="flex flex-1" value="hub">
+          <!-- eslint-disable-next-line vue/no-unused-refs -->
+          <hub ref="hubref" />
         </TabPanel>
       </TabPanels>
     </Tabs>

@@ -1,7 +1,7 @@
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { parseProxyUrl } from './hooks'
-import { findInputByName, getFormData, isEmptyValue, setInputValueByFormData } from '/@/utils'
+import { findInputByName, isEmptyValue, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
   const toast = useToast()

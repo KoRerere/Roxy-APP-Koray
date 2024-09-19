@@ -10,6 +10,8 @@
  */
 
 import {
+  UserAddPluginToWindowCreateData,
+  UserAddPluginToWindowCreatePayload,
   UserAddSystemPluginCreateData,
   UserAddSystemPluginCreatePayload,
   UserBatchDelPluginInfoCreateData,
@@ -21,6 +23,8 @@ import {
   UserGetPluginCategoryListData,
   UserGetPluginListListData,
   UserGetPluginListListParams,
+  UserGetPluginWindowListData,
+  UserGetPluginWindowListParams,
   UserGetSystemPluginListData,
   UserGetSystemPluginListParams,
   UserMdfPluginStatusCreateData,
@@ -265,6 +269,41 @@ export class PluginsApi<SecurityDataType = unknown> {
   userBatchDelPluginInfoCreate = (data: UserBatchDelPluginInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserBatchDelPluginInfoCreateData, any>({
       path: `/user_batch_del_plugin_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserGetPluginWindowList
+   * @summary 获取插件所在的窗口
+   * @request GET:/user_get_plugin_window
+   * @response `200` `UserGetPluginWindowListData` 成功
+   */
+  userGetPluginWindowList = (query: UserGetPluginWindowListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetPluginWindowListData, any>({
+      path: `/user_get_plugin_window`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description installType如果是全部安装传0即可，windowId不用传
+   *
+   * @tags Plugins
+   * @name UserAddPluginToWindowCreate
+   * @summary 安装插件到窗口
+   * @request POST:/user_add_plugin_to_window
+   * @response `200` `UserAddPluginToWindowCreateData` 成功
+   */
+  userAddPluginToWindowCreate = (data: UserAddPluginToWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddPluginToWindowCreateData, any>({
+      path: `/user_add_plugin_to_window`,
       method: "POST",
       body: data,
       type: ContentType.Json,

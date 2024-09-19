@@ -1,19 +1,61 @@
 <script setup lang="ts">
+import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 import { ExtensionsInstallType } from '/@/enums'
 
-const dialogRef = inject<any>('dialogRef')
+const allInstall = ExtensionsInstallType.all.toString()
+const partialInstall = ExtensionsInstallType.partial.toString()
 
-const loading = ref(false)
+const dialogRef = inject<any>('dialogRef')
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
+const loading = ref(false)
+
+const installType = ref(allInstall)
+const categories = ref([
+  { label: 'All profiles', value: allInstall },
+  { label: 'Partial profiles', value: partialInstall },
+])
+
+const columns = [
+  {
+    title: 'Profile info',
+    key: 'profile',
+    slot: 'profile',
+  },
+]
+const dataList = ref()
+const selection = ref([])
+
+function onChange() {
+  if (installType.value === partialInstall) {
+    getProfileList()
+  }
+}
+
+async function getProfileList() {
+  if (dataList.value) {
+    return
+  }
+  const { data } = await API.plugins.userGetPluginWindowList({
+    pluginId: _props.value.id,
+    workspaceId: 3,
+  })
+  dataList.value = data.rows
+}
 
 async function confirm() {
   try {
+    const params = {
+      installType: Number(installType.value),
+      pluginId: _props.value.id,
+      workspaceId: 3,
+      windowId: selection.value.map((item: any) => item.id),
+    }
     loading.value = true
-    await _onConfirm.value?.()
+    await _onConfirm.value?.(params)
     close()
   }
   catch (error) {
@@ -36,27 +78,6 @@ onMounted(() => {
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
 })
-
-// =======================
-const installType = ref(ExtensionsInstallType.all.toString())
-const categories = ref([
-  { label: 'All profiles', value: ExtensionsInstallType.all.toString() },
-  { label: 'Partial profiles', value: ExtensionsInstallType.partial.toString() },
-])
-
-const columns = [
-  {
-    title: 'Profile info',
-    key: 'profile',
-    slot: 'profile',
-  },
-]
-
-const dataList = Array.from({ length: 10 }, (_, index) => ({
-  id: index,
-  windowSortNum: `${index + 1}`.padStart(2, '0'),
-  windowName: `Window ${index + 1}`,
-}))
 </script>
 
 <template>
@@ -79,23 +100,24 @@ const dataList = Array.from({ length: 10 }, (_, index) => ({
     <div class="flex flex-col gap-1">
       <div>Install to:</div>
       <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
-        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value" />
+        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value"
+          @change="onChange" />
         <label :for="category.value">{{ category.label }}</label>
       </div>
     </div>
-    <div class="h-[240px]">
-      <ryTable :show-actions="false" :paginator="false" :data-list="dataList" :columns="columns"
-        :show-table-header="false" show-gridlines selection-mode="multiple" :multiple-operation="false">
+    <div v-show="installType === partialInstall" class="profile-table">
+      <ryTable v-model:selection="selection" :show-actions="false" :paginator="false" :data-list="dataList"
+        :columns="columns" :show-table-header="false" show-gridlines selection-mode="multiple"
+        :multiple-operation="false">
         <template #profile="{ data }">
           <div class="profile">
             <span class="profile-uid">UID-</span>
-            <span>{{ data.windowSortNum }}</span>
+            <span>{{ data.id }}</span>
             <span class="ml-6">{{ data.windowName }}</span>
           </div>
         </template>
       </ryTable>
     </div>
-
     <div>
       <RxSvgIcon name="base/rx_ic_info" />
       <span>You can only install extension to profiles related to your projects.</span>
@@ -124,6 +146,10 @@ const dataList = Array.from({ length: 10 }, (_, index) => ({
     font-weight: 500;
     line-height: normal;
   }
+}
+
+.profile-table {
+  max-height: 240px;
 }
 
 .extension {
