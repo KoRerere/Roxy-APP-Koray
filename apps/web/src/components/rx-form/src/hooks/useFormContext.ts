@@ -1,4 +1,4 @@
-import type { FormProps } from '../form'
+import type { RxFormProps } from '../form'
 import type { UseFormStateReturnType } from './useFormState'
 import { injectLocal, provideLocal } from '@vueuse/core'
 
@@ -6,7 +6,7 @@ const key = Symbol('schema-form')
 
 interface SchemaFormType {
   formState: UseFormStateReturnType
-  formProps: FormProps
+  formProps: RxFormProps
 }
 
 export async function createFormContext(instance: SchemaFormType) {

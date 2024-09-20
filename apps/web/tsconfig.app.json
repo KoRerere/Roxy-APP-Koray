@@ -23,6 +23,7 @@
         "../electron/src/*"
       ]
     },
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },

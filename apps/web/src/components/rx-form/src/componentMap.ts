@@ -9,6 +9,7 @@ import Password from 'primevue/password'
 import RadioButton from 'primevue/radiobutton'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import { RxRadioButton } from '/@/components/rx-radio-button'
 
 const componentMap = {
   InputText,
@@ -16,6 +17,7 @@ const componentMap = {
   RadioButton,
   Select,
   Textarea,
+  RxRadioButton,
 }
 
 type ExtractPropTypes<T extends Component> = T extends new (...args: any) => any
@@ -26,6 +28,7 @@ type ComponentMapType = typeof componentMap
 
 export type ComponentType = keyof ComponentMapType
 
+// 狗东西的类型定义有问题: https://github.com/primefaces/primevue/issues/6152
 export type ComponentMapProps = {
   [K in ComponentType]: ExtractPropTypes<ComponentMapType[K]>;
 }

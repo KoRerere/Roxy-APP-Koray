@@ -1,89 +1,52 @@
 <script setup lang="ts">
 import type { FormSchema } from './types/form'
-import { formEmits, formProps } from './form'
+import { rxFormEmits, rxFormProps } from './form'
 import FormItem from './form-item.vue'
-import { createFormContext } from './hooks'
+import { createFormContext, useFormMethods } from './hooks'
 import { useFormState } from './hooks/useFormState'
 
-const props = defineProps(formProps)
-const emit = defineEmits(formEmits)
+const props = defineProps(rxFormProps)
+const emit = defineEmits(rxFormEmits)
 
-const formState = useFormState({ props })
-const { formModel, validationSchema, errors } = formState
+const formState = useFormState({ props, emit })
+const { formModel, validationSchema, errors, innerFormSchemas } = formState
 
 createFormContext({
   formState,
   formProps: props,
 })
-// const { defineField, handleSubmit, resetForm, errors } = useForm({
-//   validationSchema: schema,
-// });
 
-/**
- * 提交表单并验证所有字段
- */
-function onSubmit() {
-  const result = validationSchema.value.safeParse(formModel.value)
-  console.log('result', result)
-  // 清除所有字段的错误信息
-  Object.keys(errors.value).forEach((key) => {
-    errors.value[key] = ''
-  })
-
-  // 表单验证失败，更新错误信息
-  if (!result.success) {
-    // 遍历错误并更新错误信息
-    result.error.errors.forEach((error) => {
-      const field = error.path[0]
-      errors.value[field] = error.message
-    })
-    return Promise.reject(errors.value)
-  }
-  else {
-    emit('submit', formModel.value)
-    return Promise.resolve(formModel.value)
-  }
-}
-
-function resetForm() {
-  Object.keys(formModel.value).forEach((key) => {
-    formModel.value[key] = ''
-  })
-  Object.keys(errors.value).forEach((key) => {
-    errors.value[key] = ''
-  })
-  emit('reset')
-}
+const formMethods = useFormMethods({ emit })
+const { resetFields, handleSubmit } = formMethods
 
 defineExpose({
-  formModel,
-  errors,
-  submit: onSubmit,
-  resetForm,
+  ...formState,
+  ...formMethods,
+  submit: handleSubmit,
 })
 </script>
 
 <template>
-  <div class="rx-form">
-    <template v-for="item in schemas" :key="item.field">
+  <form class="rx-form" @submit="handleSubmit">
+    <template v-for="item in innerFormSchemas" :key="item.field">
       <FormItem v-model="formModel[item.field]" v-model:errors="errors" :schema="item" :validation-schema />
     </template>
     <div v-if="footer" class="footer">
       <slot name="footer">
         <div class="label" />
         <div class="buttons">
-          <Button label="Submit" type="submit" @click="onSubmit" />
+          <Button label="Submit" type="submit" />
 
           <Button
             label="Reset"
             type="button"
             class="p-button-secondary"
-            @click="resetForm"
+            @click="resetFields"
           />
         </div>
       </slot>
     </div>
-  </div>
+  </form>
 </template>
 
 <style lang="scss" scoped>

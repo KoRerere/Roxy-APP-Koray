@@ -1,10 +1,10 @@
-import type { Component, ComputedRef, CSSProperties, VNode, WatchOptions } from 'vue'
+import type { Component, ComputedRef, CSSProperties, Ref, VNode, WatchOptions } from 'vue'
 import type { z, ZodFirstPartySchemaTypes } from 'zod'
 import type { ComponentMapProps, ComponentType } from '../componentMap'
 
 export interface Rule {
   trigger?: 'blur' | 'change' | 'submit'
-  validator?: (zod: typeof z) => ZodFirstPartySchemaTypes
+  validator?: (zod: typeof z, formModel: Ref<Recordable>) => ZodFirstPartySchemaTypes
 }
 
 export interface RenderCallbackParams<
@@ -76,9 +76,13 @@ type ComponentSchema<T extends object = Recordable> =
   }
 
 export type FormSchema<T extends object = Recordable> = ComponentSchema<T> & {
+  /** 字段名 */
   field: string
   label?: string
+  /** 表单项校验规则 */
   rule?: Rule
+  /** 默认值 */
+  defaultValue?: any
   /** 表单组件slots，例如 Select 的 optiongroup slot 可以写成：{ optiongroup: () => VNode } */
   componentSlots?:
   | ((renderCallbackParams: RenderCallbackParams<T>) => Recordable<CustomRenderFn<T>>)

@@ -5,7 +5,7 @@ import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
 
-const { setCurrentComponent } = useLoginContext()
+const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
 
 const email = ref('')
@@ -46,6 +46,7 @@ async function handleSubmit() {
     })
     if (code === 0) {
       toast.add({ severity: 'success', summary: 'Success', detail: 'Password reset successfully', life: 5000 })
+      setSignFormData({ user_name: email.value, password: newPassword.value })
       setCurrentComponent('signForm')
     }
     else {
@@ -102,7 +103,7 @@ function receiveEmailCode(code: string) {
     </div>
   </template>
   <template v-else>
-    <EmailCodeInputOtp type="resetPassword" @ok="receiveEmailCode" />
+    <EmailCodeInputOtp type="resetPassword" :email @ok="receiveEmailCode" />
   </template>
 </template>
 

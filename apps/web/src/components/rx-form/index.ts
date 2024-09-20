@@ -5,3 +5,7 @@ export { default as RxForm } from './src/form.vue'
 export function defineFormSchema<T extends object = Recordable>(schema: FormSchema<T>[]) {
   return schema
 }
+
+// export default RxForm as typeof RxForm & {
+//   readonly useForm: typeof useForm
+// }

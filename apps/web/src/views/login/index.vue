@@ -9,17 +9,17 @@ import { useUserStore } from '/@/stores/user'
 const { setUserInfo, setToken } = useUserStore()
 const router = useRouter()
 const toast = useToast()
-let signFormData: LoginCreatePayload = {
+const signFormData = ref<LoginCreatePayload>({
   user_name: '',
   password: '',
-}
+})
 
 const currentComp = ref<CurrentComp>('signForm')
 
 async function handleSubmit() {
   console.log(signFormData)
-  signFormData.user_name = signFormData.user_name.trim()
-  const { code, data, msg = '登录失败' } = await API.base.loginCreate(signFormData)
+  signFormData.value.user_name = signFormData.value.user_name.trim()
+  const { code, data, msg = '登录失败' } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
@@ -74,10 +74,10 @@ onUnmounted(() => {
 provideLoginContext({
   setCurrentComponent,
   setSignFormData(data) {
-    signFormData = data
+    signFormData.value = data
   },
   getSignFormData() {
-    return signFormData
+    return signFormData.value
   },
   toSignIn: handleSubmit,
 })
@@ -93,7 +93,7 @@ provideLoginContext({
         </div>
       </div>
     </div>
-    <SignForm v-if="currentComp === 'signForm'" />
+    <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" />
     <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" />
     <ResetPassword v-else-if="currentComp === 'resetPassword'" />
   </div>

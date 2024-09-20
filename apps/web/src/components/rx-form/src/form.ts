@@ -1,8 +1,11 @@
-import type { ExtractPropTypes } from 'vue'
+import type { EmitFn, ExtractPropTypes } from 'vue'
 import type { FormSchema } from './types/form'
 import { isPlainObject } from 'es-toolkit'
 
-export const formProps = {
+export const rxFormProps = {
+  modelValue: {
+    type: Object as PropType<Recordable>,
+  },
   schemas: {
     type: Object as PropType<FormSchema[]>,
     required: true,
@@ -30,9 +33,11 @@ export const formProps = {
   },
 }
 
-export const formEmits = {
-  reset: () => true,
-  submit: (formModel: Recordable) => isPlainObject(formModel),
+export const rxFormEmits = {
+  'update:modelValue': (val: Recordable) => Boolean(val),
+  'reset': () => true,
+  'submit': (formModel: Recordable) => isPlainObject(formModel),
 }
 
-export type FormProps = ExtractPropTypes<typeof formProps>
+export type RxFormEmits = EmitFn<typeof rxFormEmits>
+export type RxFormProps = ExtractPropTypes<typeof rxFormProps>

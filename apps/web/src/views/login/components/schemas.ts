@@ -5,6 +5,9 @@ export const formSchemas = defineFormSchema([
     field: 'user_name',
     component: 'InputText',
     label: 'Email',
+    componentProps: {
+      placeholder: 'Email address',
+    },
     rule: {
       trigger: 'change',
       validator(zod) {
@@ -21,6 +24,7 @@ export const formSchemas = defineFormSchema([
     componentProps: {
       feedback: false,
       toggleMask: true,
+      placeholder: 'Login password',
     },
     rule: {
       validator(zod) {
