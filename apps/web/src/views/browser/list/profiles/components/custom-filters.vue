@@ -244,15 +244,14 @@ function saveFilters() {
       align-items: center;
       padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
       gap: var(--spacing-sm, 4px);
-      border-radius: var(--radius-full, 9999px);
-      border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-      background: var(--Colors-Background-bg-body-hover, #f0f3f5);
-
+      height: 24px;
       color: var(--Colors-Text-text-action-secondary, #171c1f);
       font-family: Inter;
       font-size: 12px;
       font-weight: 500;
       line-height: var(--Line-Height-text-xs, 16px);
+      border-radius: var(--radius-full, 9999px);
+      border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
     }
 
     &-button {

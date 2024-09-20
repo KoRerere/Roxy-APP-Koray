@@ -14,4 +14,8 @@
 .rx-dialog {
   min-width: 350px;
 }
+
+.p-tooltip-arrow {
+  display: none;
+}
 </style>

@@ -6,6 +6,7 @@ const cache = SimpleCache.getInstance()
 export function tableFilters(params: any = {}) {
   return [
     {
+      type: 'select',
       label: ' ',
       name: 'match',
       value: params.match ?? 'every',
