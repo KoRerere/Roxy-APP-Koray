@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { UnwrapRowType, UserGetPluginWindowListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { ExtensionsInstallStatus, ExtensionsInstallType } from '/@/enums'
 
-import { ExtensionsInstallType } from '/@/enums'
-
+type DataItem = UnwrapRowType<UserGetPluginWindowListData>
 const allInstall = ExtensionsInstallType.all.toString()
 const partialInstall = ExtensionsInstallType.partial.toString()
 
@@ -27,7 +28,7 @@ const columns = [
   },
 ]
 const dataList = ref()
-const selection = ref([])
+const selection = ref()
 
 function onChange() {
   if (installType.value === partialInstall) {
@@ -44,6 +45,12 @@ async function getProfileList() {
     workspaceId: 3,
   })
   dataList.value = data.rows
+  selection.value = data.rows.filter((item: any) => item.plugin_install_status === ExtensionsInstallStatus.installed)
+}
+
+function getInstallStatus() {
+  const map = new Map(selection.value.map((item: DataItem) => [item.id, item.id]))
+  return dataList.value.map((item: DataItem) => map.get(item.id) === item.id ? ExtensionsInstallStatus.installed : ExtensionsInstallStatus.notInstalled)
 }
 
 async function confirm() {
@@ -52,7 +59,8 @@ async function confirm() {
       installType: Number(installType.value),
       pluginId: _props.value.id,
       workspaceId: 3,
-      windowId: selection.value.map((item: any) => item.id),
+      projectId: dataList.value.map((item: any) => item.id),
+      installStatus: getInstallStatus(),
     }
     loading.value = true
     await _onConfirm.value?.(params)
@@ -106,14 +114,14 @@ onMounted(() => {
       </div>
     </div>
     <div v-show="installType === partialInstall" class="profile-table">
-      <ryTable v-model:selection="selection" :show-actions="false" :paginator="false" :data-list="dataList"
-        :columns="columns" :show-table-header="false" show-gridlines selection-mode="multiple"
-        :multiple-operation="false">
+      <ryTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
+        :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+        selection-mode="multiple">
         <template #profile="{ data }">
           <div class="profile">
             <span class="profile-uid">UID-</span>
             <span>{{ data.id }}</span>
-            <span class="ml-6">{{ data.windowName }}</span>
+            <span class="ml-6">{{ data.projectName }}</span>
           </div>
         </template>
       </ryTable>
