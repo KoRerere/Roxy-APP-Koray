@@ -86,7 +86,7 @@ function tableFilters() {
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
       <RxSvgIcon name="base/rx_ic_doc_data" />
-      <span>Logss</span>
+      <span>History Logs</span>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"

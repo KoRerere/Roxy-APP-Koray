@@ -324,10 +324,8 @@ defineExpose({
       </div>
     </template>
     <template #toggle="{ data }">
-      <div class="flex items-center gap-2">
-        <ToggleSwitch v-model="data.useStatus" @change="onSwitch(data)" />
-        <div>{{ data.useStatus ? 'Active' : 'Disable' }}</div>
-      </div>
+      <rxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? 'Active' : 'Disable'"
+        @change="onSwitch(data)" />
     </template>
 
     <template #update="{ data }">

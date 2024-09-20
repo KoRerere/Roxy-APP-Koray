@@ -34,7 +34,7 @@ function toggle(event: Event) {
         :class="display['table-popover-column']">
         <span class="cursor-grab mdi mdi-drag handle" />
         <span class="flex-auto">{{ item.title }}</span>
-        <ToggleSwitch v-model="item._visible" />
+        <rxToggleSwitch v-model="item._visible" />
       </div>
     </VueDraggable>
     <template #footer>
