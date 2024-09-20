@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
+import { format } from 'date-fns'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
@@ -44,7 +45,8 @@ function tableFilters() {
     {
       type: 'multiple',
       name: 'operateModule',
-      value: ['Profiles'],
+      value: [],
+      placeholder: 'All actions',
       options: [
         { label: 'Profiles', value: 'Profiles' },
         { label: 'Proxies', value: 'Proxies' },
@@ -58,7 +60,8 @@ function tableFilters() {
     {
       type: 'multiple',
       name: 'userNameIds',
-      value: ['1'],
+      value: [],
+      placeholder: 'All users',
       options: [
         { label: 'Match one', value: '1' },
         { label: 'Match two', value: '2' },
@@ -67,11 +70,13 @@ function tableFilters() {
       ],
     },
     {
-      name: 'startDate',
-      options: [
-        { label: 'Match Every', value: 'every' },
-        { label: 'Match Any', value: 'any' },
-      ],
+      type: 'date',
+      name: 'date',
+      placeholder: 'All time',
+      formatValue: (input: any, _: any, formData: any) => {
+        const [startDate, endDate] = (input.value || []).map((date: Date) => format(date, 'yyyy-MM-dd'))
+        Object.assign(formData, { startDate, endDate })
+      },
     },
   ]
 }
@@ -81,13 +86,18 @@ function tableFilters() {
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
       <RxSvgIcon name="base/rx_ic_doc_data" />
-      <span>Logss</span>
+      <span>History Logs</span>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
         :show-config="false" :context-menu="false">
         <template #location="{ data }">
-          {{ data.location }}
+          <div class="flex items-center gap-1">
+            <RxSvgIcon name="base/rx_ic_earth" />
+            <div>{{ data.countryCode }}</div>
+            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
+              :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12" />
+          </div>
         </template>
       </ry-table>
     </div>

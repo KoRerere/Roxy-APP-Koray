@@ -16,6 +16,8 @@ const description = [
     content: 'For API installations and instructions, please visit: <a class="decoration-underline" href="">API Documentation.</a>',
   },
 ]
+
+const usage = ref(false)
 </script>
 
 <template>
@@ -24,8 +26,11 @@ const description = [
       <RxSvgIcon name="base/rx_ic_doc_code" />
       <span>API Keys</span>
     </div>
-    <div class="flex-1 api-content">
-      <div>123</div>
+    <div class="flex-1 w-1/2 mx-auto">
+      <div class="api-usage">
+        <div>API keys usage:</div>
+        <rxToggleSwitch v-model="usage" :label="usage ? 'Active' : 'Disable'" />
+      </div>
       <div class="api-description">
         <div v-for="item in description" :key="item.title">
           <div class="api-description-title">
@@ -53,9 +58,19 @@ const description = [
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
   }
 
-  &-content {
-    margin: 0 auto;
-    width: 50%;
+  &-usage {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2xl, 16px) var(--spacing-xl, 12px);
+
+    color: #000;
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 24px;
+
+    border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
   }
 
   &-description {

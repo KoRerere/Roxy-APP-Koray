@@ -39,6 +39,7 @@ const columns = [
 function tableFilters() {
   return [
     {
+      type: 'select',
       label: 'city',
       name: 'city',
       value: '',
