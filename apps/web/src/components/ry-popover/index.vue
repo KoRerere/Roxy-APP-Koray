@@ -1,16 +1,11 @@
 <script setup lang="ts">
-defineProps({
-  footer: {
-    type: Boolean,
-    default: false,
-  },
-})
-
 const popover = ref()
 
 function getRef() {
   return popover.value
 }
+
+const { footer: footerSlot } = useSlots()
 
 defineExpose({
   getRef,
@@ -22,7 +17,7 @@ defineExpose({
     <div class="content">
       <slot />
     </div>
-    <div v-if="footer" class="footer">
+    <div v-if="footerSlot" class="footer">
       <slot name="footer" />
     </div>
   </Popover>
@@ -30,6 +25,13 @@ defineExpose({
 
 <style lang="scss" module="classes">
 .table-display-pop {
+  margin-top: 6px !important;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+
   :global(.p-popover-content) {
     padding: 0;
   }
@@ -49,10 +51,8 @@ defineExpose({
 .footer {
   display: flex;
   padding: var(--spacing-lg, 8px) 10px;
-  justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-lg, 8px);
-  align-self: stretch;
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 </style>

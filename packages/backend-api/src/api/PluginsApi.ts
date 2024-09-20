@@ -293,7 +293,7 @@ export class PluginsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description installType如果是全部安装传0即可，windowId不用传
+   * No description
    *
    * @tags Plugins
    * @name UserAddPluginToWindowCreate

@@ -5,38 +5,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
 
-const filters = ref([
-  {
-    type: 'multiple',
-    name: 'match',
-    value: ['1'],
-    options: [
-      { label: 'Match one', value: '1' },
-      { label: 'Match two', value: '2' },
-      { label: 'Match three', value: '3' },
-      { label: 'Match four', value: '4' },
-    ],
-  },
-  {
-    type: 'multiple',
-    name: 'match1',
-    value: ['1'],
-    options: [
-      { label: 'Match one', value: '1' },
-      { label: 'Match two', value: '2' },
-      { label: 'Match three', value: '3' },
-      { label: 'Match four', value: '4' },
-    ],
-  },
-  {
-    name: 'match2',
-    options: [
-      { label: 'Match Every', value: 'every' },
-      { label: 'Match Any', value: 'any' },
-    ],
-  },
-])
-
 const columns = ref([
   {
     title: 'User',
@@ -70,6 +38,43 @@ const columns = ref([
 function tableRequest(params: any) {
   return API.logging.userGetOperateLogList(params)
 }
+
+function tableFilters() {
+  return [
+    {
+      type: 'multiple',
+      name: 'operateModule',
+      value: ['Profiles'],
+      options: [
+        { label: 'Profiles', value: 'Profiles' },
+        { label: 'Proxies', value: 'Proxies' },
+        { label: 'Accounts', value: 'Accounts' },
+        { label: 'Projects', value: 'Projects' },
+        { label: 'Extensions', value: 'Extensions' },
+        { label: 'Members', value: 'Members' },
+        { label: 'Team settings', value: 'Team settings' },
+      ],
+    },
+    {
+      type: 'multiple',
+      name: 'userNameIds',
+      value: ['1'],
+      options: [
+        { label: 'Match one', value: '1' },
+        { label: 'Match two', value: '2' },
+        { label: 'Match three', value: '3' },
+        { label: 'Match four', value: '4' },
+      ],
+    },
+    {
+      name: 'startDate',
+      options: [
+        { label: 'Match Every', value: 'every' },
+        { label: 'Match Any', value: 'any' },
+      ],
+    },
+  ]
+}
 </script>
 
 <template>
@@ -79,7 +84,7 @@ function tableRequest(params: any) {
       <span>Logss</span>
     </div>
     <div class="flex flex-1 overflow-hidden">
-      <ry-table :filters="filters" :columns="columns" :table-request="tableRequest" :show-actions="false"
+      <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
         :show-config="false" :context-menu="false">
         <template #location="{ data }">
           {{ data.location }}

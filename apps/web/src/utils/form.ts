@@ -143,7 +143,7 @@ export function clearInputsValue(inputs: any): void {
   })
 }
 
-export function filterFieldByValue(obj: object, filter: (value: any) => boolean) {
+export function filterFieldByValue(obj: object, filter: (value: any) => boolean = (v: any) => !!v) {
   return Object.fromEntries(Object.entries(obj).filter(([_, v]) => filter(v)))
 }
 

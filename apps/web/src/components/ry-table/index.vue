@@ -35,8 +35,8 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
-  filters: {
-    type: Array as PropType<any[]>,
+  tableFilters: {
+    type: Function as PropType<() => any[]>,
     default: () => [],
   },
   sorts: {
@@ -86,7 +86,7 @@ defineEmits(['update:columns'])
 const [show] = useContextMenu()
 
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
-const _filters = ref(props.filters)
+const _filters = ref()
 const _dataList = ref()
 const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
 
@@ -124,6 +124,7 @@ const selectionData = computed({
 const params = reactive<any>({
   sort: {},
   filters: {},
+  default: {},
 })
 
 const paginatorConfig = reactive({
@@ -155,6 +156,10 @@ function onChangeParams(key: string, data: any) {
   _request()
 }
 
+async function _getFilters() {
+  _filters.value = await props.tableFilters()
+}
+
 function _getParams(outerParams?: any) {
   return {
     page_index: paginatorConfig.page,
@@ -167,16 +172,16 @@ function _getParams(outerParams?: any) {
   }
 }
 
-function _getOperation(data: any) {
-  return !isEmptyValue(props.operation) ? props.operation : props.tableOperation(data).filter((item: any) => item.power !== false)
-}
-
 async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
   _dataList.value = data?.rows || []
   _clearSelection()
+}
+
+function _getOperation(data: any) {
+  return !isEmptyValue(props.operation) ? props.operation : props.tableOperation(data).filter((item: any) => item.power !== false)
 }
 
 function _clearSelection() {
@@ -203,6 +208,7 @@ function showOperationMenu(event: Event, data: any) {
 }
 
 onMounted(() => {
+  _getFilters()
   _request()
 })
 

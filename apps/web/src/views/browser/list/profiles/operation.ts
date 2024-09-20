@@ -3,7 +3,7 @@ import { API } from '/@/api'
 import { SimpleCache } from '/@/utils/cache'
 
 const cache = SimpleCache.getInstance()
-export function getFilters(params: any = {}) {
+export function tableFilters(params: any = {}) {
   return [
     {
       label: ' ',
@@ -291,7 +291,7 @@ export function getOperation(_params: any = {}) {
   ]
 }
 export default {
-  getFilters,
+  tableFilters,
   getCustomFilters,
   getSorts,
   getOperation,
