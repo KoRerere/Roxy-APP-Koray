@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { FormSchema } from './src/types/form'
+import type { FormSchema } from '../src/types/form'
 import { useToast } from 'primevue/usetoast'
 import { reactive } from 'vue'
-import { formSchemas } from './schema'
-import DynamicForm from './src/form.vue'
+import { formSchemas } from './schemas'
+import { RxForm } from '/@/components/rx-form/'
 
 const toast = useToast()
 
@@ -19,7 +19,7 @@ function handleSubmit(value) {
 </script>
 
 <template>
-  <DynamicForm :schemas="formSchemas" @submit="handleSubmit" />
+  <RxForm :schemas="formSchemas" label-width="160px" @submit="handleSubmit" />
 </template>
 
 <style scoped>

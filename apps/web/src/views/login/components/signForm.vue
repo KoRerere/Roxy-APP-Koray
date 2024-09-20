@@ -5,6 +5,8 @@ import { formSchemas } from './schemas'
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
 
+const signFormData = defineModel({ type: Object, default: {} })
+
 const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
@@ -46,7 +48,7 @@ function switchFormMode(val: boolean) {
 
 <template>
   <!-- <ry-form class="w-full" :inputs="inputs" /> -->
-  <RxForm ref="formInstance" :schemas="formSchemas" :footer="false" layout="vertical" />
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />

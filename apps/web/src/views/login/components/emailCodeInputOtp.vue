@@ -8,6 +8,9 @@ const props = defineProps({
     type: String as PropType<'signUp' | 'resetPassword'>,
     required: true,
   },
+  email: {
+    type: String,
+  },
 })
 
 const emit = defineEmits(['ok'])
@@ -16,6 +19,10 @@ const emailCode = defineModel('emailCode', { default: '' })
 
 const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
 const toast = useToast()
+
+const getEmail = computed(() => {
+  return props.email || getSignFormData().user_name
+})
 
 function toReEnter() {
   setCurrentComponent('signForm')
@@ -33,9 +40,9 @@ async function handleSubmit() {
 
   const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
-    ...signFormData,
     // TODO: remove this hardcode
     user_name: 'bqytest5',
+    ...signFormData,
     email: signFormData.user_name,
     ver_code: emailCode.value,
   })
@@ -56,7 +63,7 @@ async function handleSubmit() {
     </div>
     <div class="description">
       We've send a 6-character verification code to your email: <br>
-      <span class="email-text">support@roxybrowser.com</span> <br><br>
+      <span class="email-text">{{ getEmail }}</span> <br><br>
       Please checkout your email and fill the code below to complete the sign up.
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />

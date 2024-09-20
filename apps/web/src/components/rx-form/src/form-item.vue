@@ -84,6 +84,7 @@ const getComponentProps = computed(() => {
 
   return {
     inputClass: 'w-full',
+    invalid: Boolean(errors.value[props.schema.field]),
     ...compProps,
     ...props.schema.componentProps,
   }
@@ -152,7 +153,7 @@ label {
 }
 
 .p-error {
-  height: 16px;
+  height: 22px;
   display: block;
   color: red;
 }

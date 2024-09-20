@@ -8,9 +8,9 @@ export const baseRoutes: RouteRecordRaw[] = [
     component: () => import('/@/views/login/index.vue'),
   },
   {
-    name: 'pro-form',
-    path: '/pro-form',
+    name: 'rx-form',
+    path: '/rx-form',
     meta: { title: '动态表单' },
-    component: () => import('/@/components/rx-form/index.vue'),
+    component: () => import('../components/rx-form/demos/index.vue'),
   },
 ]
