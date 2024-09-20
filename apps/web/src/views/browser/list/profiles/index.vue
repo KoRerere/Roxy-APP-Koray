@@ -15,7 +15,7 @@ import multipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 
 import tagsIcon from './components/tags-icon.vue'
-import { getCustomFilters, getFilters, getOperation, getSorts } from './operation'
+import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
 
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
@@ -45,7 +45,6 @@ const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
-const filters = ref(getFilters())
 const ctmFilters = ref()
 const sorts = ref(getSorts())
 const operation = ref(getOperation())
@@ -114,15 +113,19 @@ function filterChange() {
 }
 
 async function saveFilters(formData: { filter_name: string }) {
-  if (!filters.value.length) {
+  if (!ctmFilters.value.some((item: any) => item.value)) {
     return
   }
   const filter_condition = getFormData(ctmFilters.value)
   const filter_rule = columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
-
-  const { msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  emit('updateFilterTabs')
+  const { code, msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
+  if (code === 0) {
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    emit('updateFilterTabs')
+  }
+  else {
+    toast.add({ severity: 'error', summary: '失败', detail: msg, life: 5000 })
+  }
 }
 
 async function coverDefaultDisplay() {
@@ -391,14 +394,15 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="windownTable" v-model:columns="columns" :filters="filters" :sorts="sorts" :table-request="tableRequest"
-    :operation="operation" :operation-handler="operationHandler" selection-mode="multiple">
+  <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
+    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    selection-mode="multiple">
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
     <template #config-footer>
-      <div class="flex-1 flex justify-end cursor-pointer config-footer" @click="coverDefaultDisplay">
-        Save for all filters
+      <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
+        Save for default display
       </div>
     </template>
 
@@ -461,13 +465,5 @@ onBeforeUnmount(() => {
   background-color: #fff;
   border-top: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
   border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
-}
-
-.config-footer {
-  padding: var(--spacing-lg, 8px) 10px;
-  gap: var(--spacing-lg, 8px);
-  border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-
-  // padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
 }
 </style>

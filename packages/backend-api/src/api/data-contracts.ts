@@ -2969,6 +2969,16 @@ export interface UserGetOperateLogListParams {
    * @example "xxx"
    */
   endDate?: string;
+  /**
+   * 操作模块
+   * @example "Accounts"
+   */
+  operateModule: string;
+  /**
+   * 用户ID列表
+   * @example "1,2,3"
+   */
+  userNameIds?: string;
 }
 
 export interface UserGetOperateLogListData {
@@ -2982,8 +2992,13 @@ export interface UserGetOperateLogListData {
       operateType?: string;
       operateDetail?: string;
       operateTime?: string;
-      status?: string;
+      operateModule?: string;
+      workspaceId?: number;
+      countryCode?: string;
+      status?: boolean;
       location?: string;
+      country?: string;
+      code?: string;
     }[];
   };
   msg: string;
@@ -4410,16 +4425,6 @@ export interface UserGetPluginWindowListParams {
    */
   pluginId: number;
   /**
-   * 项目ID
-   * @example "1,2,3"
-   */
-  projectId?: string;
-  /**
-   * 标签ID
-   * @example "1,2,3"
-   */
-  labelIds?: string;
-  /**
    * 工作空间ID
    * @example "1"
    */
@@ -4430,12 +4435,14 @@ export interface UserGetPluginWindowListData {
   code: number;
   data: {
     rows: {
-      /** 窗口ID */
+      /** 项目ID */
       id?: number;
-      /** 窗口名称 */
-      windowName?: string;
       /** 项目名称 */
       projectName?: string;
+      /** 插件ID */
+      pluginIds?: string;
+      /** 项目安装状态 */
+      plugin_install_status?: number;
     }[];
   };
   msg: string;
@@ -4448,8 +4455,10 @@ export interface UserAddPluginToWindowCreatePayload {
   pluginId: number;
   /** 工作空间ID */
   workspaceId: number;
-  /** 窗口ID */
-  windowId?: number[];
+  /** 项目ID */
+  projectId: number[];
+  /** 插件安装状态 */
+  installStatus: number[];
 }
 
 export interface UserAddPluginToWindowCreateData {

@@ -36,19 +36,21 @@ const columns = [
   },
 ]
 
-const filters = [
-  {
-    label: 'city',
-    name: 'city',
-    value: '',
-    placeholder: '选择平台',
-    options: [
-      { label: '所有平台', value: 'all' },
-      { label: 'mac', value: 'mac' },
-      { label: 'win', value: 'win' },
-    ],
-  },
-]
+function tableFilters() {
+  return [
+    {
+      label: 'city',
+      name: 'city',
+      value: '',
+      placeholder: '选择平台',
+      options: [
+        { label: '所有平台', value: 'all' },
+        { label: 'mac', value: 'mac' },
+        { label: 'win', value: 'win' },
+      ],
+    },
+  ]
+}
 
 const tableRef = useTemplateRef('account')
 const selection = ref(props.data.windowPlatformList.filter((item: any) => item.id))
@@ -77,7 +79,7 @@ function handleSave() {
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
-        :table-request="tableRequest" :columns="columns" :show-config="false" :filters="filters">
+        :table-request="tableRequest" :columns="columns" :show-config="false" :table-filters="tableFilters">
         <template #header-extra>
           <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
         </template>

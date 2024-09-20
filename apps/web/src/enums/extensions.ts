@@ -7,3 +7,8 @@ export enum ExtensionsInstallType {
   all = 0,
   partial = 1,
 }
+
+export enum ExtensionsInstallStatus {
+  notInstalled = 0,
+  installed = 1,
+}

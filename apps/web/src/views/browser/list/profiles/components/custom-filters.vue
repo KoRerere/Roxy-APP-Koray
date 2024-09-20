@@ -4,7 +4,6 @@ import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
-
 import simplePopup from '/@/components/simplePopup'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
@@ -15,7 +14,7 @@ const _props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:list', 'filterChange', 'saveFilters'])
+const emit = defineEmits(['filterChange', 'saveFilters'])
 const dialog = useDialog()
 
 const rawOptions = computed(() => {
@@ -36,6 +35,7 @@ const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref([])
+const isChanged = ref(false)
 
 function showMenu(event: any) {
   menuRef.value?.show(event)
@@ -81,7 +81,7 @@ function inputPopup(data: any) {
         Object.entries(formData).forEach(([name, value]) => {
           setInputFieldByInputKey(_props.ctmFilters, name, 'value', value)
         })
-        emit('filterChange')
+        onFilterChange()
       },
     },
   })
@@ -90,13 +90,13 @@ function inputPopup(data: any) {
 function onRadioChose(item: any) {
   setInputFieldByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
   menuRef.value?.hide()
-  emit('filterChange')
+  onFilterChange()
 }
 
 function onSwitch(item: any, value: any = true) {
   item.value = value
   menuRef.value?.hide()
-  emit('filterChange')
+  onFilterChange()
 }
 
 function openChild(item: any) {
@@ -116,7 +116,7 @@ function onHide() {
     selectedCategories.value = []
     sleep(20).then(() => {
       isChildren.value = false
-      emit('filterChange')
+      onFilterChange()
     })
   }
 }
@@ -128,7 +128,7 @@ function onChange(item: any) {
 function deleteFilterItem(item: any) {
   const names = item.type !== 'date' ? item.name : [item.name, item.items.map((it: any) => it.name)].flat()
   setInputFieldByInputKey(_props.ctmFilters, names, 'value', null)
-  emit('filterChange')
+  onFilterChange()
 }
 
 function clearFilters() {
@@ -138,6 +138,11 @@ function clearFilters() {
       item.items.forEach((it: any) => it.value = null)
     }
   })
+  onFilterChange()
+}
+
+function onFilterChange() {
+  isChanged.value = filterTagList.value.length > 0
   emit('filterChange')
 }
 
@@ -149,16 +154,19 @@ function saveFilters() {
       blockScroll: true,
     },
     data: {
-      type: 'text',
-      label: 'Save filter',
-      placeholder: 'filter name...',
-      name: 'filter_name',
-      required: true,
-    },
-    emits: {
-      onSave: ([formData, close]: [any, () => void]) => {
+      props: {
+        title: 'Save filter',
+        inputs: [
+          {
+            type: 'text',
+            placeholder: 'filter name...',
+            name: 'filter_name',
+            required: true,
+          },
+        ],
+      },
+      onConfirm: (formData: any) => {
         emit('saveFilters', formData)
-        close()
       },
     },
   })
@@ -169,22 +177,18 @@ function saveFilters() {
   <div class="flex flex-1 justify-between filter">
     <div class="flex flex-1 filter-list">
       <div v-for="(item, index) in filterTagList" :key="index" class="filter-list-item">
-        <span class="mdi mdi-close cursor-pointer filter-item-icon" @click.stop="deleteFilterItem(item)" />
+        <RxSvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
       <ryButton class="filter-list-button" text @click="showMenu">
-        <span class="mdi mdi-filter-variant" />
+        <RxSvgIcon name="base/rx_ic_filter" />
         <span v-if="!filterTagList.length">Add filters</span>
       </ryButton>
     </div>
-    <div class="filter-actions">
-      <ryButton text severity="secondary" @click="clearFilters">
-        reset
-      </ryButton>
-      <ryButton severity="info" @click="saveFilters">
-        save filter
-      </ryButton>
+    <div v-show="isChanged" class="filter-actions">
+      <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
+      <ryButton severity="info" size="small" label="Save filter" @click="saveFilters" />
       <div>|</div>
     </div>
   </div>
@@ -199,7 +203,7 @@ function saveFilters() {
           <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">
-          <RxSvgIcon :name="item.icon" :size="16" />
+          <RxSvgIcon :name="item.icon" />
           <span>{{ item.label }}</span>
         </div>
       </a>
@@ -249,10 +253,6 @@ function saveFilters() {
       font-size: 12px;
       font-weight: 500;
       line-height: var(--Line-Height-text-xs, 16px);
-
-      &-icon {
-        font-size: 14px;
-      }
     }
 
     &-button {

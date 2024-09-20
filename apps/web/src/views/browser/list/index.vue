@@ -5,14 +5,14 @@ import { VueDraggable } from 'vue-draggable-plus'
 import profiles from './profiles'
 import recycle from './recycle'
 import { API } from '/@/api'
-import ryPopover from '/@/components/ry-popover'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const confirm = useConfirm()
 const toast = useToast()
 
 const tabs = ref([
-  { label: '所有窗口', icon: 'mdi mdi-google-downasaur', id: '1000', name: 'profiles' },
-  { label: '回收站', icon: 'mdi mdi-delete-empty-outline', id: '1001', name: 'recycle' },
+  { label: '所有窗口', id: '1000', name: 'profiles' },
+  { label: '回收站', icon: 'base/rx_ic_bin_2', id: '1001', name: 'recycle' },
 ])
 
 const sortTabs = computed({
@@ -95,13 +95,15 @@ onMounted(() => {
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
             <div class="flex items-center text-inherit">
-              <span :class="item.icon" />
+              <RxSvgIcon v-if="item.icon" :name="item.icon" />
               <span>{{ item.label }}</span>
             </div>
           </Tab>
         </TabList>
       </Tabs>
-      <ryTag class="cursor-pointer mdi mdi-cog" @click="showPopover" />
+      <div @click="showPopover">
+        <RxSvgIcon name="base/rx_ic_gear" class="cursor-pointer" />
+      </div>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <recycle v-if="isRecycle" />
@@ -111,23 +113,52 @@ onMounted(() => {
     </div>
   </div>
 
-  <ry-popover ref="popRef" class="table-popover" @hide="hidePopover">
-    <div class="table-popover-column">
-      所有窗口
-    </div>
-    <!-- handle=".handle" -->
+  <ryPopover ref="popRef" @hide="hidePopover">
+    <!-- <div class="scvr-item">
+      <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
+      <span>所有窗口</span>
+    </div> -->
     <VueDraggable v-model="sortTabs" :animation="150">
-      <div v-for="item in sortTabs" :key="item.id" class="flex items-center table-popover-column">
-        <span class="cursor-grab mdi mdi-drag handle" />
+      <div v-for="item in sortTabs" :key="item.id" class="scvr-item">
+        <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>
-        <span class="cursor-pointer base/rx_ic_edit" />
-        <span class="cursor-pointer mdi mdi-delete-empty-outline" @click="deleteFilterItem(item.label)" />
+        <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" />
+        <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item.label)" />
       </div>
     </VueDraggable>
-    <div class="table-popover-column">
-      回收站
-    </div>
-  </ry-popover>
+    <!-- <div class="scvr-item">
+      <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
+      <span>回收站</span>
+    </div> -->
+    <template #footer>
+      <div class="reset">
+        Reset to default
+      </div>
+    </template>
+  </ryPopover>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.scvr-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+  gap: var(--spacing-lg, 8px);
+  min-width: 260px;
+  color: var(--Color-neutrals-900, #171c1f);
+  font-family: Inter;
+  font-size: 13px;
+  line-height: normal;
+}
+
+.reset {
+  width: 100%;
+  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+  text-align: right;
+  font-family: Inter;
+  font-size: var(--Font-Size-text-sm, 12px);
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+</style>

@@ -61,21 +61,6 @@ export const menuRoutes: RouteRecordRaw[] = [
         name: 'extensions',
         meta: { title: 'Extensions', icon: 'base/rx_ic_extension_store' },
         component: () => import('/@/views/extensions'),
-        redirect: { name: 'extensions-hub' },
-        children: [
-          {
-            path: 'install',
-            name: 'install',
-            meta: { title: 'intalled', icon: 'base/AreaChartOutlined', hideInMenu: true },
-            component: () => import('../views/extensions/install'),
-          },
-          {
-            path: 'hub',
-            name: 'extensions-hub',
-            meta: { title: 'extensionHub', icon: 'base/AreaChartOutlined', hideInMenu: true },
-            component: () => import('/@/views/extensions/hub'),
-          },
-        ],
       },
       {
         path: 'rpa',
@@ -101,7 +86,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'history-logs',
         name: 'history-logs',
         meta: { title: 'History-Logs', icon: 'base/rx_ic_doc_data' },
-        component: () => import('/@/views/setting/profile.vue'),
+        component: () => import('/@/views/history-logs'),
       },
       {
         path: 'settings',
@@ -125,5 +110,11 @@ export const menuRoutes: RouteRecordRaw[] = [
         ],
       },
     ],
+  },
+  {
+    path: 'api-keys',
+    name: 'api-keys',
+    meta: { title: 'Api-keys', icon: 'base/rx_ic_doc_code' },
+    component: () => import('/@/views/api-keys'),
   },
 ]

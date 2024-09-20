@@ -15,6 +15,8 @@ interface PluginMap {
   }
 }
 
+const needsync = defineModel('needsync')
+
 const categories = ref()
 const activeCategory = ref()
 const pluginList = ref()
@@ -65,6 +67,7 @@ async function addSystemPlugin(plugin: PluginItem) {
   const { code } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
   if (code === 0) {
     plugin.addStatus = true
+    needsync.value = true
   }
 }
 
@@ -74,7 +77,11 @@ onBeforeMount(() => {
 })
 
 defineExpose({
-  refresh: () => getPluginList(),
+  refresh: () => {
+    search.value = ''
+    searchResult.value = undefined
+    getPluginList()
+  },
 })
 </script>
 
@@ -89,13 +96,13 @@ defineExpose({
       </div>
     </div>
     <div class="flex flex-1 flex-col list">
-      <InputGroup>
+      <InputGroup class="dynamic-padding">
         <InputGroupAddon>
           <RxSvgIcon name="base/rx_ic_magnify" />
         </InputGroupAddon>
         <InputText v-model="search" placeholder="Search your most used chrome extensions" @input="searchPlugins" />
       </InputGroup>
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex-1 overflow-y-auto dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
           <div :id="`category_${item.categoryId}`" class="list-group-title">
             {{ item.categoryName }}
@@ -141,6 +148,7 @@ defineExpose({
     flex-direction: column;
     gap: var(--spacing-xl, 12px);
     width: 126px;
+    // width: calc(100% / 8 + 8px);
 
     &::before {
       content: '';
@@ -188,7 +196,6 @@ defineExpose({
 }
 
 .list {
-  // padding: 0 calc(100% / 24 + var(--spacing-2xl, 16px));
   gap: 40px;
 
   &-group {
@@ -286,5 +293,9 @@ defineExpose({
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
   }
+}
+
+.dynamic-padding {
+  padding: 0 calc(100% / 24 + var(--spacing-2xl, 16px));
 }
 </style>

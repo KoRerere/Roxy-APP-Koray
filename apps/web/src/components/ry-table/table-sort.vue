@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryPopover from '/@/components/ry-popover'
 import { getFormData } from '/@/utils'
 
 const props = defineProps({
@@ -19,9 +18,7 @@ function toggle(event: Event) {
 }
 
 function onReset() {
-  _sorts.value.forEach((item) => {
-    item.value = null
-  })
+  _sorts.value.forEach(item => item.value = null)
   onUpdate()
 }
 
@@ -33,28 +30,25 @@ function onUpdate() {
 
 <template>
   <div v-ripple class="cursor-pointer sort-icon" @click="toggle">
-    <RxSvgIcon name="base/rx_ic_sort_ascending" :size="16" />
+    <RxSvgIcon name="base/rx_ic_sort_ascending" />
   </div>
-
-  <ry-popover ref="popRef" footer class="sort-popover">
-    <div v-for="item in _sorts" :key="item.name" class="sort-popover-item">
+  <ryPopover ref="popRef" footer :class="classes['sort-popover']">
+    <div v-for="item in _sorts" :key="item.name" :class="classes['sort-popover-item']">
       <RxSvgIcon :name="item.icon" :size="16" />
       <span class="flex-1">{{ item.label }}</span>
       <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
         option-value="value" checkmark :highlight-on-select="false" />
     </div>
     <template #footer>
-      <Button text @click="onReset">
-        Reset
-      </Button>
-      <Button severity="info" @click="onUpdate">
-        Save filter
-      </Button>
+      <div class="flex justify-end gap-2 w-full">
+        <ryButton size="small" severity="secondary" text label="Reset" @click="onReset" />
+        <ryButton size="small" severity="info" label="Save filter" @click="onUpdate" />
+      </div>
     </template>
-  </ry-popover>
+  </ryPopover>
 </template>
 
-<style lang="scss">
+<style lang="scss" module="classes">
 .sort-popover {
   &-item {
     display: flex;
@@ -70,13 +64,12 @@ function onUpdate() {
 <style lang="scss" scoped>
 .sort-icon {
   display: flex;
-  padding: var(--spacing-sm, 4px);
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-sm, 4px);
-
-  border-radius: var(--radius-sm, 4px);
+  width: 30px;
+  height: 30px;
   border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+  border-radius: var(--radius-sm, 4px);
   background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),

@@ -1,14 +1,16 @@
 <script setup lang="ts">
+import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+import columnsRow from './columns'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
+import useColumns from '/@/hooks/useColumns'
 
 import accountCreate from '/@/views/account/create'
 
@@ -19,22 +21,7 @@ const tableRef = useTemplateRef('accountTable')
 const toast = useToast()
 const confirm = useConfirm()
 
-const columns = ref([
-  {
-    title: 'Platform & Password',
-    key: 'status',
-    slot: 'platform',
-  },
-  {
-    title: 'Alias',
-    key: 'link',
-    getText: (row: any) => row.platformName || '--',
-  },
-  {
-    title: 'Related Profiles',
-    slot: 'related',
-  },
-])
+const [columns] = useColumns(columnsRow)
 
 const operation = ref([
   {

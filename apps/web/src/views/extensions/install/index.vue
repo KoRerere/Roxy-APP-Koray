@@ -16,6 +16,8 @@ const dialog = useDialog()
 const toast = useToast()
 const [dialogOpen] = useSimpleDialog()
 
+const needsync = defineModel('needsync')
+
 const tableRef = useTemplateRef('extable')
 
 const columns = ref([
@@ -63,6 +65,7 @@ const filters = reactive({
   ],
   onChange() {
     tableRef.value?.refresh({ status: filters.value })
+    needsync.value = true
   },
   resetFilters() {
     filters.value = null
@@ -245,8 +248,9 @@ async function onInstall(data: any) {
 }
 
 async function checkUpdate(data: any) {
-  const res = await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
-  console.log('🚀 ~ checkUpdate ~ data:', res)
+  await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
+  toast.add({ severity: 'success', summary: '成功', detail: '检测完成', life: 5000 })
+  filters.onChange()
 }
 
 async function updateExtension(data: any) {
@@ -283,7 +287,9 @@ async function deleteExtension(datas: any) {
 }
 
 defineExpose({
-  refresh: () => filters.onChange(),
+  refresh: () => {
+    tableRef.value?.refresh({ status: filters.value })
+  },
 })
 </script>
 
