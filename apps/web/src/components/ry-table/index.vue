@@ -160,7 +160,7 @@ function _getParams(outerParams?: any) {
     page_index: paginatorConfig.page,
     page_size: paginatorConfig.rows,
     ...params.sort,
-    ...params.filter,
+    ...params.filters,
     ...params.default,
     ...props.tableParams,
     ...outerParams,
@@ -316,6 +316,12 @@ defineExpose({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
   }
 
   &-body {
