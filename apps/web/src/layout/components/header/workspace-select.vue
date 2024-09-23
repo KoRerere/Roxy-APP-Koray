@@ -7,7 +7,7 @@ import { roleLabelMap } from '/@/enums/'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
-const { workspaceID, setWorkspaceID } = useWorkspaceStore()
+const workspaceStore = useWorkspaceStore()
 const selectedWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>({})
 const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
 const [dialog] = useFormDialog()
@@ -40,7 +40,7 @@ const formSchemas = defineFormSchema([
 async function getWorkspace() {
   const { data } = await API.limit.userGetWorkspaceListList()
   workspaceList.value = data.rows
-  selectedWorkspace.value = data.rows.find(item => item.id === workspaceID || item.workspaceDefault)
+  selectedWorkspace.value = data.rows.find(item => item.id === workspaceStore.workspaceID || item.workspaceDefault)
 }
 
 function showCreateWorkspaceDialog() {
@@ -58,7 +58,7 @@ function showCreateWorkspaceDialog() {
 
 watch(selectedWorkspace, (value) => {
   if (value.id) {
-    setWorkspaceID(value.id)
+    workspaceStore.setWorkspaceID(value.id)
   }
 })
 

@@ -13,20 +13,9 @@ defineProps({
 })
 
 const router = useRouter()
-const workspaceStore = useWorkspaceStore()
+const { workspaceID } = storeToRefs(useWorkspaceStore())
 
-const projectList = [
-  {
-    path: ':id',
-    name: 'project-item',
-    meta: { title: '项目一', params: { id: '1' } },
-  },
-  {
-    path: ':id',
-    name: 'project-item',
-    meta: { title: '项目二', params: { id: '2' } },
-  },
-] as unknown as RouteRecordRaw[]
+const projectList = ref<Partial<RouteRecordRaw>[]>([])
 
 const menus = computed(() => {
   const projectIndex = menuRoutes.findIndex(item => item.name === 'projects')!
@@ -35,7 +24,7 @@ const menus = computed(() => {
     ...menuRoutes.slice(0, projectIndex),
     {
       ...menuRoutes[projectIndex],
-      children: projectList,
+      children: projectList.value,
     },
     ...menuRoutes.slice(projectIndex + 1),
   ]
@@ -43,10 +32,16 @@ const menus = computed(() => {
 
 async function getProjects() {
   const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
-  console.log(data)
+  projectList.value = data.rows.map((item) => {
+    return {
+      path: ':id',
+      name: 'project-item',
+      meta: { title: item.projectName, params: { id: item.project_id } },
+    }
+  })
 }
 
-watch(() => workspaceStore.workspaceID, () => {
+watch(workspaceID, () => {
   getProjects()
 }, { immediate: true })
 
