@@ -11,6 +11,7 @@ import {
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 export const httpClient = new HttpClient({
   baseURL: 'https://lumitest.lumibrowser.com/',
@@ -19,8 +20,10 @@ export const httpClient = new HttpClient({
 
 httpClient.instance.interceptors.request.use((config) => {
   const { token } = useUserStore()
+  const { workspaceID } = useWorkspaceStore()
   config.headers.token = token
   config.headers.appVersion = '3.0.0'
+  config.headers.workspaceId = workspaceID
   return config
 })
 

@@ -1,6 +1,6 @@
+import type { UserGetUserInfoListData } from '@roxy/backend-api'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { UserGetUserInfoListData } from '@roxy/backend-api'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 

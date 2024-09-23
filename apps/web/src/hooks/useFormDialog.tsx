@@ -33,7 +33,7 @@ export function useFormDialog() {
     )
   }
 
-  const renderDialog = () => {
+  const renderDialog = async () => {
     if (_modalInstance) {
       return _modalInstance
     }
@@ -41,6 +41,7 @@ export function useFormDialog() {
     vnode.appContext = appContext
     render(vnode, document.body)
     _modalInstance = vnode.component!
+    await nextTick()
     return _modalInstance
   }
 
@@ -59,8 +60,8 @@ export function useFormDialog() {
     }
   }
 
-  function showModal(props: FormDialogProps) {
-    renderDialog()
+  async function showModal(props: FormDialogProps) {
+    await renderDialog()
     visible.value = true
     innerProps.value = rewriteProps(props)
   }

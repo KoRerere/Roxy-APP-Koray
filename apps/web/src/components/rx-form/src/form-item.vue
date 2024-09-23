@@ -141,8 +141,11 @@ label {
   display: flex;
   align-items: center;
   height: 32px;
-  width: v-bind('formProps.labelWidth');
   justify-content: v-bind('labelAlign');
+
+  &.horizontal {
+    width: v-bind('formProps.labelWidth');
+  }
 
   &::after {
     content: ':';
