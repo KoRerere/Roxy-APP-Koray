@@ -101,7 +101,7 @@ async function operationHandler(operate: any, data?: any) {
 }
 
 function tableRequest(params: any) {
-  return API.limit.userGetProjectInfoByWorkspaceList({ ...params, workspaceId: 1 })
+  return API.limit.userGetProjectInfoByWorkspaceList(params)
 }
 
 function deletePopup(data: any) {

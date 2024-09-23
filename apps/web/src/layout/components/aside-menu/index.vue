@@ -1,7 +1,9 @@
 <script setup lang=ts>
 import type { RouteRecordRaw } from 'vue-router'
 import SubMenuItem from './sub-menu-item.vue'
+import { API } from '/@/api'
 import { menuRoutes } from '/@/router/menu'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 defineProps({
   collapsed: {
@@ -11,6 +13,7 @@ defineProps({
 })
 
 const router = useRouter()
+const workspaceStore = useWorkspaceStore()
 
 const projectList = [
   {
@@ -37,6 +40,15 @@ const menus = computed(() => {
     ...menuRoutes.slice(projectIndex + 1),
   ]
 })
+
+async function getProjects() {
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+  console.log(data)
+}
+
+watch(() => workspaceStore.workspaceID, () => {
+  getProjects()
+}, { immediate: true })
 
 function toCreateBrowser() {
   router.push({ name: 'browser-create' })

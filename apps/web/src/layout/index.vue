@@ -4,7 +4,9 @@ import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
 
 import { API } from '/@/api'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
+const workspaceStore = useWorkspaceStore()
 const collapsed = ref<boolean>(false)
 
 onMounted(() => {
@@ -45,7 +47,7 @@ onMounted(() => {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-content">
-        <RouterView />
+        <RouterView :key="workspaceStore.workspaceID" />
       </div>
     </main>
   </div>
