@@ -38,24 +38,16 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
-    <RouterLink
-      v-slot="{ navigate, href, isActive }"
-      :to="{ name: item.name, params: item.meta?.params }"
-      custom
-    >
-      <a
-        v-ripple
-        v-tooltip="{ value: item.meta?.title, disabled: !collapsed }"
-        class="menu-item"
-        :href="canOpen ? undefined : href"
-        :class="{ active: isActive }"
-        @click="handleClickItem(navigate)"
-      >
+    <RouterLink v-slot="{ navigate, href, isActive }"
+      :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
+        :href="canOpen ? undefined : href" :class="{ active: isActive }" @click="handleClickItem(navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />
         <div class="menu-title">
           {{ item.meta?.title }}
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
+        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
+          @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>
@@ -73,6 +65,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
     .menu-item {
       justify-content: center;
     }
+
     .menu-icon.plus {
       display: none;
     }
@@ -105,13 +98,15 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
     width: 16px;
     height: 16px;
   }
+
   .menu-title {
     flex: auto;
     font-family: Inter;
     font-size: var(--Font-Size-text-md, 13px);
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-lg, 20px); /* 153.846% */
+    line-height: var(--Line-Height-text-lg, 20px);
+    /* 153.846% */
   }
 }
 </style>

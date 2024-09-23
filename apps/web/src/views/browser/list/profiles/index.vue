@@ -107,6 +107,15 @@ watch(() => props.currentFilter, (params: any) => {
   immediate: true,
 })
 
+watch(
+  () => route.params.id,
+  () => {
+    if (route.params.id) {
+      tableRef.value?.refresh()
+    }
+  },
+)
+
 function filterChange() {
   const params = getFormData(ctmFilters.value)
   tableRef.value!.refresh(params)
@@ -135,9 +144,8 @@ async function coverDefaultDisplay() {
 }
 
 async function tableRequest(params: any) {
-  // projectId
   // 0: 未删除
-  const data = await API.window.userGetWindowInfoV2List({ ...params, isDelete: 0 })
+  const data = await API.window.userGetWindowInfoV2List({ ...params, projectId: route.params.id, isDelete: 0 })
   autoOpenBrowser(data.data?.rows)
   return data
 }
