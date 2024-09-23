@@ -1,6 +1,7 @@
 import {
   BaseApi,
   HttpClient,
+  LimitApi,
   LoggingApi,
   PlatformApi,
   PluginsApi,
@@ -31,4 +32,5 @@ export const API = {
   team: new TeamApi(httpClient),
   base: new BaseApi(httpClient),
   platform: new PlatformApi(httpClient),
+  limit: new LimitApi(httpClient),
 }

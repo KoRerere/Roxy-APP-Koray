@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 import MenuItemContent from './menu-item-content.vue'
 
 defineOptions({
   name: 'SubMenuItem',
 })
 
-const { level = 0 } = defineProps<{
+const { level = 0, collapsed } = defineProps<{
   items: RouteRecordRaw[]
   collapsed: boolean
   level?: number
 }>()
 
-const collapsedChildren = ref(false)
+const collapsedMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>({})
 
 const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
@@ -28,14 +28,14 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
         <div v-else class="line" />
       </template>
       <template v-else>
-        <MenuItemContent v-model:open="collapsedChildren" :item="item" :collapsed />
+        <MenuItemContent v-model:open="collapsedMap[item.name!]" :item="item" :collapsed />
       </template>
       <!-- 递归生成子菜单 -->
       <template v-if="item.children?.length">
         <SubMenuItem
           :items="item.children.filter(n => !n.meta?.hideInMenu)"
           :level="isGroup(item) ? level : level + 1" :collapsed
-          :class="{ collapsedChildren }"
+          :class="{ collapsedChildren: collapsedMap[item.name!] }"
         />
       </template>
     </template>

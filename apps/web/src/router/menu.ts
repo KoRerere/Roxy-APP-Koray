@@ -28,6 +28,26 @@ export const menuRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: 'projects',
+    name: 'projects',
+    meta: { title: 'Projects', icon: 'base/rx_ic_stack' },
+    redirect: { name: 'project-list' },
+    children: [
+      {
+        path: 'list',
+        name: 'project-list',
+        meta: { title: '项目列表', hideInMenu: true },
+        component: () => import('/@/views/projects/index.vue'),
+      },
+      {
+        path: ':id',
+        name: 'project-item',
+        meta: { title: '浏览器窗口', hideInMenu: true },
+        component: () => import('/@/views/projects/project-item.vue'),
+      },
+    ],
+  },
+  {
     path: 'resource',
     name: 'resource',
     meta: { title: 'Resource/Tool', type: 'group' },

@@ -1,4 +1,5 @@
 <script setup lang=ts>
+import type { RouteRecordRaw } from 'vue-router'
 import SubMenuItem from './sub-menu-item.vue'
 import { menuRoutes } from '/@/router/menu'
 
@@ -11,6 +12,32 @@ defineProps({
 
 const router = useRouter()
 
+const projectList = [
+  {
+    path: ':id',
+    name: 'project-item',
+    meta: { title: '项目一', params: { id: '1' } },
+  },
+  {
+    path: ':id',
+    name: 'project-item',
+    meta: { title: '项目二', params: { id: '2' } },
+  },
+] as unknown as RouteRecordRaw[]
+
+const menus = computed(() => {
+  const projectIndex = menuRoutes.findIndex(item => item.name === 'projects')!
+  // projects.children = projectList
+  return [
+    ...menuRoutes.slice(0, projectIndex),
+    {
+      ...menuRoutes[projectIndex],
+      children: projectList,
+    },
+    ...menuRoutes.slice(projectIndex + 1),
+  ]
+})
+
 function toCreateBrowser() {
   router.push({ name: 'browser-create' })
 }
@@ -20,7 +47,7 @@ function toCreateBrowser() {
   <aside class="aside" :class="{ collapsed }">
     <ry-button :label="collapsed ? '' : 'New profile'" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
     <nav class="menu">
-      <SubMenuItem :items="menuRoutes" :collapsed />
+      <SubMenuItem :items="menus" :collapsed />
     </nav>
   </aside>
 </template>

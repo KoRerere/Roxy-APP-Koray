@@ -18,8 +18,9 @@ import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
 import { store } from '/@/stores'
-import myPreset from '/@/styles/preset'
+import myPreset from '/@/styles/primevuePresets'
 
+console.log('myPreset', myPreset)
 const app = createApp(App)
 
 app.use(store)
@@ -31,7 +32,23 @@ app.use(ConfirmationService)
 app.use(PrimeVue, {
   ripple: true,
   theme: {
-    preset: definePreset(Aura, myPreset),
+    preset: definePreset(Aura, {
+      primitive: myPreset,
+      semantic: {
+        primary: {
+          100: '{Color.blue.100}',
+          200: '{Color.blue.100}',
+          300: '{Color.blue.100}',
+          400: '{Color.blue.200}',
+          500: '{Color.blue.300}',
+          600: '{Color.blue.400}',
+          700: '{Color.blue.500}',
+          800: '{Color.blue.600}',
+          900: '{Color.blue.600}',
+          950: '{Color.blue.600}',
+        },
+      },
+    }),
   },
 })
 
