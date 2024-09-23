@@ -135,6 +135,7 @@ function validateField() {
 
 <style lang="scss" scoped>
 .form-item-control {
+  flex: auto;
 }
 label {
   display: flex;

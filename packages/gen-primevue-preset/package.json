@@ -1,0 +1,19 @@
+{
+  "name": "gen-primevue-preset",
+  "version": "1.0.0",
+  "description": "Your Figma Plugin",
+  "author": "",
+  "license": "",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json || true",
+    "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
+    "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@figma/eslint-plugin-figma-plugins": "*",
+    "@figma/plugin-typings": "*",
+    "typescript": "^5.6.2"
+  }
+}

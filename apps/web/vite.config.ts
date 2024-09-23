@@ -81,6 +81,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
+    vitePlugins.genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     vitePlugins.uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
     svgLoader({
       svgoConfig: {

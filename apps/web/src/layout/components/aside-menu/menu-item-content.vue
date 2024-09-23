@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { RouteRecordRaw } from 'vue-router'
-import { computed, onBeforeMount } from 'vue'
+import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
+import { computed, onBeforeMount, type UnwrapRef } from 'vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 const props = defineProps<{
@@ -8,25 +8,39 @@ const props = defineProps<{
   collapsed: boolean
 }>()
 
+const route = useRoute()
 const isCollapsed = defineModel('open', { default: false })
 const canOpen = computed(() => props.item.children?.some(n => !n.meta?.hideInMenu))
+
+if (canOpen.value) {
+  isCollapsed.value = true
+}
 
 function toggle() {
   isCollapsed.value = !isCollapsed.value
 }
 
 watchEffect(() => {
-  if (canOpen.value) {
+  if (route.matched.some(n => n.name === props.item.name)) {
+    isCollapsed.value = false
+  }
+  if (props.collapsed) {
     isCollapsed.value = true
   }
 })
+
+function handleClickItem(navigate: UseLinkReturn['navigate']) {
+  if (!canOpen.value || props.item.redirect) {
+    navigate()
+  }
+}
 </script>
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink
-      v-slot="{ isActive, href, navigate }"
-      :to="{ name: item.name }"
+      v-slot="{ navigate, href, isActive }"
+      :to="{ name: item.name, params: item.meta?.params }"
       custom
     >
       <a
@@ -35,13 +49,13 @@ watchEffect(() => {
         class="menu-item"
         :href="canOpen ? undefined : href"
         :class="{ active: isActive }"
-        @click="canOpen || navigate"
+        @click="handleClickItem(navigate)"
       >
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />
         <div class="menu-title">
           {{ item.meta?.title }}
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click="toggle" />
+        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>

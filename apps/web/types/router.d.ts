@@ -17,5 +17,7 @@ declare module 'vue-router' {
     hideInMenu?: boolean
     /** 菜单类型 */
     type?: 'group'
+    /** 路由参数 */
+    params?: Record<string, any>
   }
 }
