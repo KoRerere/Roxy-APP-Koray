@@ -52,4 +52,6 @@ export interface RenderMessage {
   'extension:checkLocalExtensionUpdate': (payload: CheckLocalExtensionUpdatePayload) => Promise<string[]>
   /** 获取本地已安装的插件 */
   'extension:getInstalledExtensions': () => Promise<PluginMeta[]>
+  /** 生成 api key */
+  'base:apikey': () => Promise<string>
 }

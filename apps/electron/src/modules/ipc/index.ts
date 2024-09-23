@@ -1,6 +1,7 @@
+import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
+import crypto from 'node:crypto'
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
-import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import { appConfig } from '/@/constants'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
@@ -145,4 +146,10 @@ ipcMain.on('extension:checkLocalExtensionUpdate', (checkList) => {
 /** 获取本地已安装的插件 */
 ipcMain.on('extension:getInstalledExtensions', () => {
   return extensionManager.getInstalledExtensions()
+})
+
+/** 生成 api key */
+ipcMain.on('base:apikey', () => {
+  const str = `${Date.now()}`
+  return Promise.resolve(crypto.createHash('md5').update(str, 'utf8').digest('hex'))
 })
