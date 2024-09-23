@@ -137,12 +137,11 @@ async function coverDefaultDisplay() {
 async function tableRequest(params: any) {
   // 0: 未删除
   const data = await API.window.userGetWindowInfoV2List({ ...params, isDelete: 0 })
-  autoOpenBrowser(data.data.rows)
+  autoOpenBrowser(data.data?.rows)
   return data
 }
 
 async function operationHandler(operate: any, data: any) {
-  // console.log('🚀 ~ operationHandler ~ operate:', operate)
   /**
    * 兼容批量操作
    */

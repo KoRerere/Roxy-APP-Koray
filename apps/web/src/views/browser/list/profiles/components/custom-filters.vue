@@ -1,7 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 // @ts-ignore
 import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
@@ -203,7 +203,7 @@ function saveFilters() {
           <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">
-          <RxSvgIcon :name="item.icon" />
+          <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
       </a>

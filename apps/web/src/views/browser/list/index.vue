@@ -1,14 +1,19 @@
 <script setup lang="ts">
+import { he } from 'date-fns/locale'
 import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
 import profiles from './profiles'
 import recycle from './recycle'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import tags from '/@/views/browser/list/tags'
 
 const confirm = useConfirm()
 const toast = useToast()
+const dialog = useDialog()
 
 const tabs = ref([
   { label: '所有窗口', id: '1000', name: 'profiles' },
@@ -70,6 +75,16 @@ async function deleteFilterItem(filter_name: string) {
   })
 }
 
+async function openManageCategory() {
+  dialog.open(tags, {
+    props: {
+      header: 'Manage Tags',
+      modal: true,
+      style: { width: '70vw', height: '50vh' },
+    },
+  })
+}
+
 const popRef = ref()
 function showPopover(event: Event) {
   popRef.value.getRef().show(event)
@@ -90,12 +105,19 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col h-full w-full">
+    <div class="profile-header">
+      <div>Profiles</div>
+      <div v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
+        <RxSvgIcon name="base/rx_ic_group" />
+        <div>Manage Category</div>
+      </div>
+    </div>
     <div class="flex items-center justify-between">
       <Tabs v-model:value="active" class="flex-1 overflow-hidden" scrollable>
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
             <div class="flex items-center text-inherit">
-              <RxSvgIcon v-if="item.icon" :name="item.icon" />
+              <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
               <span>{{ item.label }}</span>
             </div>
           </Tab>
@@ -114,24 +136,24 @@ onMounted(() => {
   </div>
 
   <ryPopover ref="popRef" @hide="hidePopover">
-    <!-- <div class="scvr-item">
+    <!-- <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>所有窗口</span>
     </div> -->
     <VueDraggable v-model="sortTabs" :animation="150">
-      <div v-for="item in sortTabs" :key="item.id" class="scvr-item">
+      <div v-for="item in sortTabs" :key="item.id" class="sort-item">
         <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>
         <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" />
         <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item.label)" />
       </div>
     </VueDraggable>
-    <!-- <div class="scvr-item">
+    <!-- <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>回收站</span>
     </div> -->
     <template #footer>
-      <div class="reset">
+      <div class="sort-reset">
         Reset to default
       </div>
     </template>
@@ -139,7 +161,33 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.scvr-item {
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+
+  color: #000;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+
+  &-manage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+    gap: var(--spacing-sm, 4px);
+
+    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    font-size: var(--Font-Size-text-sm, 12px);
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+}
+
+.sort-item {
   display: flex;
   align-items: center;
   padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
@@ -151,7 +199,7 @@ onMounted(() => {
   line-height: normal;
 }
 
-.reset {
+.sort-reset {
   width: 100%;
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
   color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);

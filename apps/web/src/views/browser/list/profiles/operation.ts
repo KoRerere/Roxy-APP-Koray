@@ -3,18 +3,18 @@ import { API } from '/@/api'
 import { SimpleCache } from '/@/utils/cache'
 
 const cache = SimpleCache.getInstance()
-export function tableFilters(params: any = {}) {
+export function tableFilters(_params: any = {}) {
   return [
-    {
-      type: 'select',
-      label: ' ',
-      name: 'match',
-      value: params.match ?? 'every',
-      options: [
-        { label: 'Match Every', value: 'every' },
-        { label: 'Match Any', value: 'any' },
-      ],
-    },
+    // {
+    //   type: 'select',
+    //   label: ' ',
+    //   name: 'match',
+    //   value: params.match ?? 'every',
+    //   options: [
+    //     { label: 'Match Every', value: 'every' },
+    //     { label: 'Match Any', value: 'any' },
+    //   ],
+    // },
   ]
 }
 
