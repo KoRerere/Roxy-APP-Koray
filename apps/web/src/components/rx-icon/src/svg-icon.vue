@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { SvgNames } from './svg-icon-types'
 import { defineAsyncComponent } from 'vue'
 import { svgIcons } from './svgIcons'
-import type { SvgNames } from './svg-icon-types'
 
 const props = defineProps({
   name: {
@@ -29,7 +29,7 @@ const SvgComponent = computed(() => {
 </script>
 
 <template>
-  <SvgComponent class="svg" v-bind="$attrs" />
+  <SvgComponent class="svg" :data-name="name" v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped>

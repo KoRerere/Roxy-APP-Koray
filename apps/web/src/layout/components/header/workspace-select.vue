@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { UnwrapRowsType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { API } from '/@/api/'
 import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { roleLabelMap } from '/@/enums/'
 import { useFormDialog } from '/@/hooks/useFormDialog'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
-const selectedWorkspace = ref({})
+const { workspaceID, setWorkspaceID } = useWorkspaceStore()
+const selectedWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>({})
 const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
 const [dialog] = useFormDialog()
 
@@ -38,9 +40,8 @@ const formSchemas = defineFormSchema([
 async function getWorkspace() {
   const { data } = await API.limit.userGetWorkspaceListList()
   workspaceList.value = data.rows
-  selectedWorkspace.value = data.rows.find(item => item.workspaceDefault)
+  selectedWorkspace.value = data.rows.find(item => item.id === workspaceID || item.workspaceDefault)
 }
-getWorkspace()
 
 function showCreateWorkspaceDialog() {
   dialog.showModal({
@@ -54,6 +55,16 @@ function showCreateWorkspaceDialog() {
     },
   })
 }
+
+watch(selectedWorkspace, (value) => {
+  if (value.id) {
+    setWorkspaceID(value.id)
+  }
+})
+
+onBeforeMount(() => {
+  getWorkspace()
+})
 </script>
 
 <template>

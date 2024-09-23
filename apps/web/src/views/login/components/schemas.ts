@@ -13,7 +13,7 @@ export const formSchemas = defineFormSchema([
       validator(zod) {
         return zod.string()
           .min(1, 'Email is required')
-          .email('Invalid email address')
+        // .email('Invalid email address')
       },
     },
   },
