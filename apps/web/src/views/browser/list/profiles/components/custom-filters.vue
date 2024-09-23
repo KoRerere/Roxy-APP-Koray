@@ -171,6 +171,15 @@ function saveFilters() {
     },
   })
 }
+
+const items = [
+  {
+    label: 'Save As',
+    command: () => {
+      saveFilters()
+    },
+  },
+]
 </script>
 
 <template>
@@ -188,7 +197,9 @@ function saveFilters() {
     </div>
     <div v-show="isChanged" class="filter-actions">
       <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
-      <ryButton severity="info" size="small" label="Save filter" @click="saveFilters" />
+      <ryButton severity="info" size="small" label="Save" @click="saveFilters" />
+
+      <SplitButton severity="info" size="small" label="Save" :model="items" />
       <div>|</div>
     </div>
   </div>

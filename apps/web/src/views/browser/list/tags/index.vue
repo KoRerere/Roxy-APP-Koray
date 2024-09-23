@@ -6,7 +6,7 @@ import { useToast } from 'primevue/usetoast'
 
 import { API } from '/@/api'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
-import editPopup from '/@/views/browser/manage/tags/edit.vue'
+import editPopup from '/@/views/browser/list/tags/edit.vue'
 
 const dialog = useDialog()
 const toast = useToast()

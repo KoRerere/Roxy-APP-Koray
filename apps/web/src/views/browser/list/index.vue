@@ -15,10 +15,12 @@ const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
 
-const tabs = ref([
+const rawTabs = [
   { label: '所有窗口', id: '1000', name: 'profiles' },
   { label: '回收站', icon: 'base/rx_ic_bin_2', id: '1001', name: 'recycle' },
-])
+]
+
+const tabs = ref(rawTabs.slice())
 
 const sortTabs = computed({
   get() {
@@ -36,11 +38,7 @@ const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === ac
 async function getFilterList() {
   const { data } = await API.window.userGetWindowFilterNameListList()
   const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, name: item.filter_name }))
-
-  if (tabs.value.length > 2) {
-    tabs.value = tabs.value.filter((tab: any) => ['1000', '1001'].includes(tab.id))
-  }
-  tabs.value.splice(1, 0, ...list)
+  tabs.value = [rawTabs[0], ...list, rawTabs[1]]
 }
 
 async function updateFilterTabs() {
@@ -64,9 +62,15 @@ async function deleteFilterItem(filter_name: string) {
     },
     accept: async () => {
       try {
+        const isActive = currentFilter.value?.name === filter_name
         const { msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name })
         toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-        getFilterList()
+        if (isActive) {
+          getFilterList()
+        }
+        else {
+          tabs.value = tabs.value.filter((tab: any) => tab.name !== filter_name)
+        }
       }
       catch (error) {
         console.log('🚀 ~ accept: ~ error:', error)

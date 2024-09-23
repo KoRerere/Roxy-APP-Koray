@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
+import { setInputValueByFormData } from '/@/utils'
 import { SimpleCache } from '/@/utils/cache'
 
 const cache = SimpleCache.getInstance()
@@ -21,13 +22,12 @@ export function tableFilters(_params: any = {}) {
 export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
-  // todo 下版本优化，点击二级菜单才调用接口
   const [{ data: platformList }, { data: labelList }] = await Promise.all([
     cache.fetch(API.platform.userGetPlatformInfoV2List, { page_index: 1, page_size: 999 }),
     cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' }),
   ])
 
-  return [
+  const inputs = [
     {
       type: 'text',
       name: 'windowName',
@@ -191,6 +191,8 @@ export async function getCustomFilters(params: any = {}) {
     }
     return input
   })
+
+  return inputs
 }
 
 export function getSorts(params: any = {}) {
@@ -291,6 +293,7 @@ export function getOperation(_params: any = {}) {
     },
   ]
 }
+
 export default {
   tableFilters,
   getCustomFilters,

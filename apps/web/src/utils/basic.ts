@@ -83,6 +83,6 @@ export function getRandomInt(min: number, max: number) {
 
 export function copyText(text: string) {
   navigator.clipboard.writeText(text).then(() => {
-    console.log('Copied to clipboard:', text)
+    // console.log('Copied to clipboard:', text)
   })
 }
