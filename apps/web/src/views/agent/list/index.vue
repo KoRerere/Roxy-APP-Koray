@@ -16,7 +16,6 @@ import { setRowsLoading } from '/@/utils'
 
 import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
@@ -137,7 +136,7 @@ function createProxy() {
           </ryTag>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :list="data.bindList" />
+          <relatedInfo :list="data.bindList" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">

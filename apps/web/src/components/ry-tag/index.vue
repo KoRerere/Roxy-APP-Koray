@@ -1,22 +1,23 @@
 <script setup lang="ts">
-defineProps({
-  radius: {
-    type: Boolean,
-    default: false,
-  },
-})
+import type { TagProps } from 'primevue/tag'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+
+interface Props extends /* @vue-ignore */ TagProps {
+  icon?: SvgNames
+}
+
+defineProps<Props>()
 </script>
 
 <template>
-  <Tag v-bind="$attrs" :class="{ 'ry-tag-radius': radius }">
-    <template v-for="(_, name) in $slots" #[name]="slotProps">
-      <slot :name="name" :slot-props="slotProps" />
+  <Tag>
+    <template #icon>
+      <RxSvgIcon v-if="icon" :name="icon" />
+    </template>
+    <template #default>
+      <slot name="default" />
     </template>
   </Tag>
 </template>
 
-<style scoped>
-.ry-tag-radius {
-  border-radius: 50%;
-}
-</style>
+<style scoped></style>

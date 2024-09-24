@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
@@ -7,8 +6,6 @@ import columnsRow from './columns'
 import { inviteUsersFormSchemas, projectFormSchemas } from './schemas'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
-import remarkIcon from '/@/components/remark-icon'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 
@@ -16,7 +13,6 @@ import { Role } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useProjectStore } from '/@/stores/project'
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const tableRef = useTemplateRef('accountTable')
 const [dialog] = useFormDialog()
@@ -158,13 +154,11 @@ function deletePopup(data: any) {
     <div class="flex justify-between account-header">
       <div>Projects</div>
       <RxButton size="small" severity="info" icon="base/rx_ic_plus" label="Add project"
-                @click="operationHandler({ name: 'create' })"
-      />
+        @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-      >
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -183,8 +177,7 @@ function deletePopup(data: any) {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <actions :operation="operation" :show-menu="false"
-                     @quick-click="(operate: any) => operationHandler(operate, data)"
-            />
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </ry-table>

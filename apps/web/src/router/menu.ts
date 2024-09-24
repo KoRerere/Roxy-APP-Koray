@@ -100,7 +100,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'teams',
         name: 'teams',
         meta: { title: 'Teams', icon: 'base/rx_ic_user' },
-        component: () => import('/@/views/setting/profile.vue'),
+        component: () => import('/@/views/team'),
       },
       {
         path: 'history-logs',

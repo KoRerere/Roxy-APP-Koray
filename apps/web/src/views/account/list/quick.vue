@@ -7,7 +7,6 @@ import remarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import ryTable from '/@/components/ry-table'
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const props = defineProps({
   data: {
@@ -97,7 +96,7 @@ function handleSave() {
           </div>
         </template>
         <template #related="{ data: row }">
-          <relatedProfiles :list="row.window_info" />
+          <relatedInfo :list="row.window_info" />
         </template>
         <template #actions="{ data: row }">
           <remarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />

@@ -5,7 +5,6 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 
 import { API } from '/@/api'
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 import editPopup from '/@/views/browser/list/tags/edit.vue'
 
 const dialog = useDialog()
@@ -116,7 +115,7 @@ async function deleteTag(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :list="data.bindWindowIds" />
+          <relatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
           <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
