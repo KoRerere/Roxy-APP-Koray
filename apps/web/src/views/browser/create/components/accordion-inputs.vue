@@ -1,19 +1,13 @@
 <script lang="ts" setup>
+import type { Accordions, MetaData } from './type.ts'
 import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
+
 import inputLabel from '/@/components/ry-form/input-label.vue'
 
-import { getFormDataByList } from '/@/utils'
-
-interface Accordions {
-  value: string[]
-  panels: {
-    title: string
-    value: string
-  }[]
-}
+import { filterFieldByValue, getFormDataByList, isEmptyValue } from '/@/utils'
 
 const props = defineProps({
   openBrowser: {
@@ -32,18 +26,24 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  metaData: {
+    type: Object as PropType<MetaData>,
+    default: () => ({
+      projectName: 'No project',
+      projectId: '',
+      labelIds: [],
+      windowRemark: '',
+    }),
+  },
 })
 
 const emits = defineEmits(['createOpen', 'create'])
 
-const mateData = reactive({
-  project: '',
-  tags: [],
-  remark: '',
-})
+const metaData = reactive(props.metaData)
 
 function getFormData(isOpen: boolean) {
-  const formData = getFormDataByList(props!.inputsGroup)
+  const _metaData = filterFieldByValue(toRaw(metaData), v => !isEmptyValue(v))
+  const formData = getFormDataByList(props!.inputsGroup, _metaData)
   emits(isOpen ? 'createOpen' : 'create', formData)
 }
 </script>
@@ -101,7 +101,7 @@ function getFormData(isOpen: boolean) {
       </Accordion>
     </div>
     <div class="footer">
-      <mateGroup v-model="mateData" class="flex-1" />
+      <mateGroup v-model="metaData" class="flex-1" />
       <ryButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
         @click.stop="getFormData(true)" />
       <ryButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
