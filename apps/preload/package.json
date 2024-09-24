@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@roxy/backend-api": "workspace:*",
-    "vite-plugin-dts": "^4.2.1"
+    "vite": "5.4.7",
+    "vite-plugin-dts": "^4.2.2"
   }
 }

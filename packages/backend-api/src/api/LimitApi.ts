@@ -16,15 +16,16 @@ import {
   UserAddUserByProjectInfoCreatePayload,
   UserAddWorkspaceInfoCreateData,
   UserAddWorkspaceInfoCreatePayload,
-  UserBatchInviteCreateData,
-  UserBatchInviteCreatePayload,
   UserDelWorkspaceInfoCreateData,
   UserDelWorkspaceInfoCreatePayload,
   UserGetMemberInfoByProjectIdListData,
   UserGetMemberInfoByProjectIdListParams,
   UserGetMemberInfoByWorkspaceListData,
+  UserGetMemberInfoByWorkspaceListParams,
   UserGetProjectInfoByWorkspaceListData,
   UserGetWorkspaceListListData,
+  UserInviteCreateData,
+  UserInviteCreatePayload,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
   UserMdfWorkspaceInfoCreateData,
@@ -118,10 +119,11 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_get_member_info_by_workspace
    * @response `200` `UserGetMemberInfoByWorkspaceListData`
    */
-  userGetMemberInfoByWorkspaceList = (params: RequestParams = {}) =>
+  userGetMemberInfoByWorkspaceList = (query: UserGetMemberInfoByWorkspaceListParams, params: RequestParams = {}) =>
     this.http.request<UserGetMemberInfoByWorkspaceListData, any>({
       path: `/user_get_member_info_by_workspace`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -198,14 +200,14 @@ export class LimitApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Limit
-   * @name UserBatchInviteCreate
+   * @name UserInviteCreate
    * @summary 邀请用户
-   * @request POST:/user_batch_invite
-   * @response `200` `UserBatchInviteCreateData`
+   * @request POST:/user_invite
+   * @response `200` `UserInviteCreateData`
    */
-  userBatchInviteCreate = (data: UserBatchInviteCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserBatchInviteCreateData, any>({
-      path: `/user_batch_invite`,
+  userInviteCreate = (data: UserInviteCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserInviteCreateData, any>({
+      path: `/user_invite`,
       method: "POST",
       body: data,
       type: ContentType.Json,

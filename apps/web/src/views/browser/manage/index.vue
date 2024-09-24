@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import groups from './groups'
-import tags from './tags'
 
 const tabs = ref([
   { title: 'Groups', value: 'groups' },
@@ -20,7 +19,6 @@ const tabsValue = ref('tags')
     </Tabs>
     <div class="flex-ovh-1 w-full">
       <groups v-show="tabsValue === 'groups'" />
-      <tags v-show="tabsValue === 'tags'" />
     </div>
   </div>
 </template>
