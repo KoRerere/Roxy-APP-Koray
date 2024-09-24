@@ -41,13 +41,13 @@ onMounted(() => {
           </div>
         </template>
       </div>
-      <AsideMenu :collapsed />
+      <AsideMenu v-if="workspaceID" :collapsed />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-content">
-        <RouterView :key="workspaceID" />
+        <RouterView v-if="workspaceID" :key="workspaceID" />
       </div>
     </main>
   </div>

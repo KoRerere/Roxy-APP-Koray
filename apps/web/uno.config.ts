@@ -27,6 +27,7 @@ export default defineConfig({
     'flex-cc': 'flex justify-center items-center',
     'flex-ovh-1': 'flex overflow-hidden flex-1',
     'ellipsis-1': 'text-ellipsis overflow-hidden whitespace-nowrap',
+    'position-y-center': 'absolute top-1/2 transform -translate-y-1/2',
   },
   theme: {
     colors: {
