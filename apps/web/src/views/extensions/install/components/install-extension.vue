@@ -40,10 +40,7 @@ async function getProfileList() {
   if (dataList.value) {
     return
   }
-  const { data } = await API.plugins.userGetPluginWindowList({
-    pluginId: _props.value.id,
-    workspaceId: 3,
-  })
+  const { data } = await API.plugins.userGetPluginWindowList({ pluginId: _props.value.id })
   dataList.value = data.rows
   selection.value = data.rows.filter((item: any) => item.plugin_install_status === ExtensionsInstallStatus.installed)
 }
@@ -58,7 +55,6 @@ async function confirm() {
     const params = {
       installType: Number(installType.value),
       pluginId: _props.value.id,
-      workspaceId: 3,
       projectId: dataList.value.map((item: any) => item.id),
       installStatus: getInstallStatus(),
     }

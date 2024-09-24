@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 import { z } from 'zod'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { getFormData, setInputFieldByInputKey, setInputValue } from '/@/utils'
+import { copyText } from '/@/utils/'
 
+const toast = useToast()
 const confirm = useConfirm()
 
 const illustrate = [
@@ -40,7 +43,6 @@ const inputs = ref([
   { separator: true },
   {
     name: 'port',
-    // value: port.value,
     placeholder: '0~65535',
     onblur: () => {
       const formData = getFormData(inputs.value)
@@ -84,6 +86,11 @@ async function resetApiKey() {
   })
 }
 
+async function onCopy() {
+  copyText(apiKey.value)
+  toast.add({ severity: 'success', summary: '成功', detail: '复制成功', life: 5000 })
+}
+
 onMounted(() => {
   getApiKeys()
 })
@@ -119,7 +126,7 @@ onMounted(() => {
             <div class="api-content-key-value">
               {{ apiKey }}
             </div>
-            <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" />
+            <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
           </div>
           <div class="api-content-key-desc">
             * Please keep your API keys safe and should not abuse it.

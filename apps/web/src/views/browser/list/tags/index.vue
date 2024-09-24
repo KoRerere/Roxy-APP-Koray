@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
 import { group } from 'node:console'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
-import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
 
 import { API } from '/@/api'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
-import editPopup from '/@/views/browser/manage/tags/edit.vue'
+import editPopup from '/@/views/browser/list/tags/edit.vue'
 
 const dialog = useDialog()
 const toast = useToast()
@@ -94,7 +94,7 @@ async function deleteTag(data: any) {
 </script>
 
 <template>
-  <div class="flex-ovh-1 flex-col">
+  <div class="flex-ovh-1 flex-col h-full">
     <div class="flex justify-between items-center px-4 py-3 gap-2">
       <div class="flex-1 total-tags">
         All Tags ({{ totalNum }})
