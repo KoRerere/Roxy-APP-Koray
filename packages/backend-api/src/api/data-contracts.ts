@@ -4449,6 +4449,14 @@ export interface UserDelWorkspaceInfoCreateData {
   msg: string;
 }
 
+export interface UserGetMemberInfoByWorkspaceListParams {
+  /**
+   *  Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1) Manager(管理者,枚举：2)，不传查询所有
+   * @example 1
+   */
+  role?: number;
+}
+
 export interface UserGetMemberInfoByWorkspaceListData {
   code: number;
   data: {
@@ -4543,7 +4551,7 @@ export interface UserGetMemberInfoByProjectIdListData {
   msg: string;
 }
 
-export interface UserBatchInviteCreatePayload {
+export interface UserInviteCreatePayload {
   /** 用户邮箱 */
   email: string;
   /**
@@ -4555,7 +4563,7 @@ export interface UserBatchInviteCreatePayload {
   projectId: number;
 }
 
-export interface UserBatchInviteCreateData {
+export interface UserInviteCreateData {
   code: number;
   msg: string;
 }

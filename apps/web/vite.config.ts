@@ -5,7 +5,7 @@ import { accessSync } from 'node:fs'
 import { access, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
-import vitePlugins from '@roxy/vite-plugins'
+import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 
@@ -88,8 +88,8 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
-    vitePlugins.genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
-    vitePlugins.uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
+    genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
+    uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
     svgLoader({
       svgoConfig: {
         plugins: [

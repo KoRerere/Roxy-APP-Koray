@@ -56,7 +56,6 @@ async function operationHandler(operate: any, data?: any) {
           layout: 'vertical',
         },
         async handleOk(formModel) {
-          formModel.workspaceId = 1
           const { code, data, msg } = await API.limit.userAddProjectInfoCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
@@ -74,8 +73,7 @@ async function operationHandler(operate: any, data?: any) {
         class: 'w-[500px]',
         schemas: inviteUsersFormSchemas,
         async handleOk(formModel) {
-          formModel.workspaceId = 1
-          const { code, data, msg } = await API.limit.userAddProjectInfoCreate(formModel)
+          const { code, data, msg } = await API.limit.userInviteCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
             toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })
@@ -88,7 +86,7 @@ async function operationHandler(operate: any, data?: any) {
 
       dialog.formRef.value?.setFieldsValue({
         role: Role.VIEWER,
-        project_id: data.project_id,
+        projectId: data.project_id,
       })
 
       break

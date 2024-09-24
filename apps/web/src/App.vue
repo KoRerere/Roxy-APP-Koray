@@ -1,10 +1,14 @@
 <script lang="ts" setup>
-window.electronAPI.on('invite:to-project', (searchStr) => {
+import { API } from './api'
+
+window.electronAPI.on('invite:to-project', async (searchStr) => {
   console.log('invite:to-project', searchStr)
   const code = new URLSearchParams(searchStr).get('data')
-  if (code) {}
+  if (code) {
+    await API.limit.userAddUserByProjectInfoCreate(code)
+  }
   else {
-    console.error('google oauth2 code is null')
+    console.error('invite:to-project code is null')
   }
 })
 </script>

@@ -7,21 +7,28 @@
   "keywords": [],
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "development": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "body-parser": "^1.20.3",
+    "formidable": "^3.5.1"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
     "@types/body-parser": "^1.19.5",
     "@types/formidable": "^3.4.5",
-    "adm-zip": "^0.5.16",
-    "body-parser": "^1.20.3",
-    "formidable": "^3.5.1"
+    "vite": "^5.4.7",
+    "vite-plugin-dts": "^4.2.2"
   }
 }

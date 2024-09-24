@@ -12,6 +12,8 @@
 import {
   UserAddProjectInfoCreateData,
   UserAddProjectInfoCreatePayload,
+  UserAddUserByProjectInfoCreateData,
+  UserAddUserByProjectInfoCreatePayload,
   UserAddWorkspaceInfoCreateData,
   UserAddWorkspaceInfoCreatePayload,
   UserDelWorkspaceInfoCreateData,
@@ -19,8 +21,11 @@ import {
   UserGetMemberInfoByProjectIdListData,
   UserGetMemberInfoByProjectIdListParams,
   UserGetMemberInfoByWorkspaceListData,
+  UserGetMemberInfoByWorkspaceListParams,
   UserGetProjectInfoByWorkspaceListData,
   UserGetWorkspaceListListData,
+  UserInviteCreateData,
+  UserInviteCreatePayload,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
   UserMdfWorkspaceInfoCreateData,
@@ -114,10 +119,11 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_get_member_info_by_workspace
    * @response `200` `UserGetMemberInfoByWorkspaceListData`
    */
-  userGetMemberInfoByWorkspaceList = (params: RequestParams = {}) =>
+  userGetMemberInfoByWorkspaceList = (query: UserGetMemberInfoByWorkspaceListParams, params: RequestParams = {}) =>
     this.http.request<UserGetMemberInfoByWorkspaceListData, any>({
       path: `/user_get_member_info_by_workspace`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -187,6 +193,42 @@ export class LimitApi<SecurityDataType = unknown> {
       path: `/user_get_member_info_by_project_id`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserInviteCreate
+   * @summary 邀请用户
+   * @request POST:/user_invite
+   * @response `200` `UserInviteCreateData`
+   */
+  userInviteCreate = (data: UserInviteCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserInviteCreateData, any>({
+      path: `/user_invite`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserAddUserByProjectInfoCreate
+   * @summary 绑定用户关联的项目
+   * @request POST:/user_add_user_by_project_info
+   * @response `200` `UserAddUserByProjectInfoCreateData`
+   */
+  userAddUserByProjectInfoCreate = (data: UserAddUserByProjectInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddUserByProjectInfoCreateData, any>({
+      path: `/user_add_user_by_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
