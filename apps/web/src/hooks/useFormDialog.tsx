@@ -1,6 +1,6 @@
 import type { FormSchema, RxFormProps } from '/@/components/rx-form/'
-import Dialog, { type DialogProps } from 'primevue/dialog'
-import { createVNode, type FunctionalComponent, type HTMLAttributes, render } from 'vue'
+import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
+import { createVNode, type FunctionalComponent, type HTMLAttributes, render, type VNode } from 'vue'
 import { RxForm } from '/@/components/rx-form'
 import RxButton from '/@/components/ry-button/'
 
@@ -9,6 +9,10 @@ interface FormDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyo
   handleOk?: (formModel: Recordable) => void
   schemas?: FormSchema[]
   formProps?: Partial<RxFormProps>
+  dialogSlots?: Partial<FormDialogSlots>
+}
+
+interface FormDialogSlots extends DialogSlots {
 }
 
 export function useFormDialog() {
@@ -19,16 +23,22 @@ export function useFormDialog() {
   const formRef = ref<InstanceType<typeof RxForm>>()
   const innerProps = ref<FormDialogProps>({})
 
-  const FormDialogComponent: FunctionalComponent<FormDialogProps> = () => {
-    const { formProps, schemas, handleCancel, handleOk, ...dialogProps } = innerProps.value
+  const FormDialogComponent: FunctionalComponent<FormDialogProps> = (props, { slots }) => {
+    const { formProps, schemas, handleCancel, handleOk, dialogSlots, ...dialogProps } = innerProps.value
 
-    return (
-      <Dialog modal {...dialogProps} v-model:visible={visible.value}>
-        <RxForm ref={formRef} {...formProps} schemas={schemas} footer={false}></RxForm>
+    const __dialogSlots = {
+      footer: () => (
         <div class="flex justify-end gap-2">
           <RxButton type="button" label="Cancel" severity="secondary" onClick={handleCancel}></RxButton>
           <RxButton type="button" label="Save" onClick={handleOk}></RxButton>
         </div>
+      ),
+      ...dialogSlots,
+    }
+
+    return (
+      <Dialog v-slots={__dialogSlots} modal {...dialogProps} v-model:visible={visible.value}>
+        <RxForm ref={formRef} {...formProps} schemas={schemas} footer={false}></RxForm>
       </Dialog>
     )
   }

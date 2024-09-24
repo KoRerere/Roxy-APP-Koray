@@ -1,4 +1,5 @@
-<script setup lang="ts">
+<script setup lang="tsx">
+import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
@@ -154,11 +155,13 @@ function deletePopup(data: any) {
     <div class="flex justify-between account-header">
       <div>Projects</div>
       <RxButton size="small" severity="info" icon="base/rx_ic_plus" label="Add project"
-        @click="operationHandler({ name: 'create' })" />
+                @click="operationHandler({ name: 'create' })"
+      />
     </div>
     <div class="account-content">
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
+                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+      >
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -177,7 +180,8 @@ function deletePopup(data: any) {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <actions :operation="operation" :show-menu="false"
-              @quick-click="(operate: any) => operationHandler(operate, data)" />
+                     @quick-click="(operate: any) => operationHandler(operate, data)"
+            />
           </div>
         </template>
       </ry-table>
