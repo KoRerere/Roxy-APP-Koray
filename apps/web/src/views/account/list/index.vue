@@ -14,8 +14,6 @@ import useColumns from '/@/hooks/useColumns'
 
 import accountCreate from '/@/views/account/create'
 
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
-
 const tableRef = useTemplateRef('accountTable')
 
 const toast = useToast()
@@ -118,6 +116,7 @@ function deletePopup(data: any) {
         @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
         :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
         <template #platform="{ data }">
@@ -133,7 +132,7 @@ function deletePopup(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedProfiles :list="data.window_info" />
+          <relatedInfo :list="data.window_info" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">

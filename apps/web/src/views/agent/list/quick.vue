@@ -13,7 +13,6 @@ import { setRowsLoading } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
 
 const props = defineProps({
   data: {
@@ -128,7 +127,7 @@ function saveSelected() {
           <outboundIp :image="row.region" :country="row.lastCountry" :city="row.lastCity" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
-          <relatedProfiles :list="row.bindList" />
+          <relatedInfo :list="row.bindList" />
         </template>
         <template #actions="{ data: row }">
           <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"

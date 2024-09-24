@@ -2,8 +2,6 @@
 import testtable from './components/test-table.vue'
 import { API } from '/@/api'
 
-import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
-
 const columns = ref([
   {
     title: 'group',
@@ -27,7 +25,7 @@ const selection = ref({ id: 226 })
   <div class="flex-ovh-1">
     <testtable v-model:selection="selection" :columns="columns" :table-request="tableRequest">
       <template #related="{ data }">
-        <relatedProfiles :list="data.bindList" />
+        <relatedInfo :list="data.bindList" />
       </template>
     </testtable>
   </div>

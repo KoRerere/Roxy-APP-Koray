@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import type { ToastMessageOptions } from 'primevue/toast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
