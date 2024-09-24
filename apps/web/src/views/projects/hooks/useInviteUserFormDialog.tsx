@@ -1,3 +1,5 @@
+import type RyTable from '/@/components/ry-table'
+import type { Ref } from 'vue'
 import Checkbox from 'primevue/checkbox'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
@@ -6,21 +8,31 @@ import { Role } from '/@/enums'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { inviteUsersFormSchemas } from '/@/views/projects/schemas'
 
+interface PropsType {
+  tableRef?: Ref<InstanceType<typeof RyTable>>
+  id?: number
+  email?: string
+  role?: Role
+  projectIds?: number[]
+}
+
 export function useInviteUserFormDialog() {
   const [dialog] = useFormDialog()
   const isInviteMore = ref(false)
   const toast = useToast()
 
-  const showDialog = async ({ projectIds = [], tableRef }) => {
+  const showDialog = async ({ tableRef, ...data }: PropsType) => {
+    const originl = data
+
     await dialog.showModal({
       header: 'Invite users',
       class: 'w-[500px]',
       formProps: {
         layout: 'vertical',
         initialValues: {
-          email: '',
-          role: Role.VIEWER,
-          projectIds,
+          email: data.email,
+          role: data.role || Role.VIEWER,
+          projectIds: data.projectIds || [],
         },
       },
       schemas: inviteUsersFormSchemas,
@@ -30,7 +42,7 @@ export function useInviteUserFormDialog() {
             <RxButton label="Cancel" severity="secondary" type="button" onClick={dialog.handleCancel} />
             <div class="flex gap-2">
               <div class="flex items-center">
-                <Checkbox v-model={isInviteMore.value} inputId="ingredient1" binary />
+                <Checkbox v-model={isInviteMore.value} input-id="ingredient1" binary />
                 <label for="ingredient1" class="ml-2"> Invite more </label>
               </div>
               <RxButton label="Send invitation" severity="primary" onClick={dialog.handleOk} />
@@ -39,8 +51,10 @@ export function useInviteUserFormDialog() {
         ),
       },
       async handleOk(formModel) {
-        const { code, data, msg } = await API.limit.userInviteCreate(formModel)
-        tableRef.value?.refresh()
+        const { code, data, msg } = originl.id
+          ? await API.limit.userInviteCreate(formModel)
+          : await API.limit.userInviteCreate(formModel)
+        tableRef?.value?.refresh()
         if (code === 0) {
           toast.add({ severity: 'success', summary: '成功', detail: '发送邀请成功', life: 3000 })
         }
@@ -53,6 +67,14 @@ export function useInviteUserFormDialog() {
         }
       },
     })
+    if (data?.email) {
+      dialog.formRef.value?.updateSchema({
+        field: 'email',
+        componentProps: {
+          disabled: true,
+        },
+      })
+    }
   }
 
   return [showDialog]

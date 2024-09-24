@@ -90,7 +90,7 @@ function tableFilters() {
     </div>
     <div class="flex flex-1 overflow-hidden">
       <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
-        :show-config="false" :context-menu="false">
+        :show-display="false" :context-menu="false">
         <template #location="{ data }">
           <div class="flex items-center gap-1">
             <RxSvgIcon name="base/rx_ic_earth" />

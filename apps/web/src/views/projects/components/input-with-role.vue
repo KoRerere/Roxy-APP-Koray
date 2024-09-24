@@ -2,9 +2,12 @@
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { Role } from '/@/enums'
 
+defineOptions({
+  inheritAttrs: false,
+})
+
 const modelValue = defineModel<string>()
 const roleModelValue = defineModel('role')
-
 const items = ref([
   {
     label: 'Viewer',
@@ -33,7 +36,7 @@ const selectedRoleLabel = computed(() => {
     <InputIcon>
       <RxSvgIcon name="base/rx_ic_mail" />
     </InputIcon>
-    <InputText v-model="modelValue" placeholder="Enter email" class="w-full" />
+    <InputText v-bind="$attrs" v-model="modelValue" placeholder="Enter email" class="w-full" />
     <InputIcon class="position-y-center !mt-0">
       <SplitButton :model="items" severity="secondary" size="small">
         {{ selectedRoleLabel }}
@@ -80,7 +83,8 @@ const selectedRoleLabel = computed(() => {
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 
   .description {
@@ -89,7 +93,8 @@ const selectedRoleLabel = computed(() => {
     font-size: 10px;
     font-style: normal;
     font-weight: 400;
-    line-height: 14px; /* 140% */
+    line-height: 14px;
+    /* 140% */
   }
 }
 </style>

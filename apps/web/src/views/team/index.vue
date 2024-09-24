@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import type { ToastMessageOptions } from 'primevue/toast'
+import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 // import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import relatedInfo from '/@/components/related-info.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 
+// import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
 // import { useSimpleDialog } from '/@/components/simplePopup'
-import { Role } from '/@/enums'
+import { Membership, Role, roleLabelMap } from '/@/enums'
 
+const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const confirm = useConfirm()
 // const dialog = useDialog()
 const toast = useToast()
 // const [dialogOpen] = useSimpleDialog()
 
-const tableRef = useTemplateRef('extable')
+const tableRef = useTemplateRef('team')
+
+type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
 const columns = ref([
   {
@@ -25,12 +29,13 @@ const columns = ref([
   },
   {
     title: 'Status',
-    key: 'useStatus',
+    key: 'status',
+    getText: (row: TableRow) => row.status === Membership.joinIn ? 'Active' : 'Pending',
   },
   {
     title: 'Membership',
     key: 'source',
-    getText: (row: any) => row.uploader || row.source || '未知',
+    getText: (row: TableRow) => roleLabelMap[row.role as Role],
   },
   {
     title: 'Related Projects',
@@ -60,7 +65,7 @@ const filters = reactive({
     },
   ],
   onChange() {
-    tableRef.value?.refresh({ status: filters.value })
+    tableRef.value?.refresh({ role: filters.value })
   },
   resetFilters() {
     filters.value = null
@@ -94,21 +99,16 @@ const sorts = ref([
 ])
 
 async function tableRequest(params: any) {
-  return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })// 不分页
+  return API.limit.userGetMemberInfoByWorkspaceList(params)
 }
 
 function tableOperation() {
   return [
     {
-      name: 'checkUpdate',
+      name: 'edit',
       label: 'check update',
-      icon: 'base/rx_ic_clock_rotate',
-    },
-    {
-      name: 'setting',
-      label: 'Setting',
-      icon: 'base/rx_ic_gear',
-      multiple: true,
+      icon: 'base/rx_ic_edit',
+      quick: true,
     },
     {
       separator: true,
@@ -117,6 +117,7 @@ function tableOperation() {
       name: 'delete',
       label: 'Delete',
       icon: 'base/rx_ic_bin_1',
+      quick: true,
       multiple: true,
     },
   ]
@@ -126,9 +127,8 @@ async function operationHandler(operate: any, data: any) {
   const datas = [].concat(toRaw(data))
 
   switch (operate.name) {
-    case 'updateLocal':
-      break
-    case 'setting':
+    case 'edit':
+      handleShowInviteUserFormDialog(data)
       break
     case 'delete':
       deleteMember(datas)
@@ -163,16 +163,24 @@ async function deleteMember(datas: any) {
     },
   })
 }
+
+function handleShowInviteUserFormDialog(data?: TableRow) {
+  const { email, project_info, role } = data || {}
+  const projectIds = project_info?.map(item => item.project_id)
+  showInviteUserFormDialog({ email, projectIds, role })
+}
 </script>
 
 <template>
   <div class="header">
     Teams
+    <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
+      @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
+  <ry-table ref="team" scrollable selection-mode="multiple" :table-operation="tableOperation"
     :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-config="false" :show-gridlines="false" :paginator="false">
+    :show-gridlines="false" :paginator="false" :show-actions-menu="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
@@ -181,20 +189,19 @@ async function deleteMember(datas: any) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <img class="member-image" :src="data.pluginIcon">
+        <img class="member-image" :src="data.avatar">
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
-            {{ data.pluginName }}
+            {{ data.email }}
           </div>
           <div class="member-info-name">
-            {{ data.pluginVersion }}
+            {{ data.userName }}
           </div>
         </div>
       </div>
     </template>
     <template #related="{ data }">
-      <!-- {{ data.relatedProjects }} -->
-      <relatedInfo />
+      <relatedInfo :list="data.project_info" :show-max="2" icon="base/rx_ic_stack" field="projectName" />
     </template>
   </ry-table>
 </template>
