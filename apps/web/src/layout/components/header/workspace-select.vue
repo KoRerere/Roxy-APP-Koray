@@ -59,6 +59,7 @@ function showCreateWorkspaceDialog() {
 watch(selectedWorkspace, (value) => {
   if (value.id) {
     workspaceStore.setWorkspaceID(value.id)
+    workspaceStore.setWorkspaceInfo(value)
   }
 })
 
@@ -69,18 +70,15 @@ onBeforeMount(() => {
 
 <template>
   <div class="workspace">
-    <Select
-      v-model="selectedWorkspace"
-      :options="workspaceList" option-label="name" placeholder="Select a Country"
-      class="workspace-select"
-      :overlay-class="$style['workspace-select-overlay']"
-    >
+    <Select v-model="selectedWorkspace" :options="workspaceList" option-label="name" placeholder="Select a Country"
+      class="workspace-select" :overlay-class="$style['workspace-select-overlay']">
       <template #value="slotProps">
         <img :alt="slotProps.value.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png">
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
       </template>
       <template #option="slotProps">
-        <img :alt="slotProps.option.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" class="mr-2" style="width: 18px">
+        <img :alt="slotProps.option.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+          class="mr-2" style="width: 18px">
         <div>{{ slotProps.option.workspaceName }}</div>
         <span class="role-tag">
           <RxSvgIcon name="base/rx_ic_internet" size="10" />
@@ -97,11 +95,12 @@ onBeforeMount(() => {
   </div>
 </template>
 
-<style  lang="scss" module>
+<style lang="scss" module>
 .workspace-select-overlay {
   :global(.p-select-list) {
     border-bottom: 1px solid var(--Colors-Border-border-container, #c7cdd1);
   }
+
   :global(.p-select-option) {
     display: flex;
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 10px;
@@ -130,6 +129,7 @@ onBeforeMount(() => {
     :deep(.p-select-list-container) {
       border-bottom: 1px solid var(--Colors-Border-border-container, #c7cdd1);
     }
+
     :deep(.p-select-label) {
       display: flex;
       padding: var(--spacing-sm, 4px) var(--spacing-md, 6px) var(--spacing-sm, 4px) var(--spacing-sm, 4px);
@@ -141,7 +141,8 @@ onBeforeMount(() => {
       font-size: 12px;
       font-style: normal;
       font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+      line-height: var(--Line-Height-text-xs, 16px);
+      /* 133.333% */
 
       img {
         display: flex;
@@ -158,7 +159,8 @@ onBeforeMount(() => {
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
-        line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+        line-height: var(--Line-Height-text-xs, 16px);
+        /* 133.333% */
       }
     }
   }
@@ -182,7 +184,8 @@ onBeforeMount(() => {
     font-size: 13px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 123.077% */
   }
 }
 
@@ -198,6 +201,7 @@ onBeforeMount(() => {
   font-size: 10px;
   font-style: normal;
   font-weight: 500;
-  line-height: 14px; /* 140% */
+  line-height: 14px;
+  /* 140% */
 }
 </style>
