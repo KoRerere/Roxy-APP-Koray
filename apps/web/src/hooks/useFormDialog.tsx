@@ -84,6 +84,8 @@ export function useFormDialog() {
     formRef,
     showModal,
     hideModal,
+    handleOk: () => innerProps.value.handleOk?.(),
+    handleCancel: () => innerProps.value.handleCancel?.(),
   }
 
   return [instance]

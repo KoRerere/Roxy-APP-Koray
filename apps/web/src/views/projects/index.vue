@@ -4,12 +4,13 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import columnsRow from './columns'
+import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { inviteUsersFormSchemas, projectFormSchemas } from './schemas'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
+
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-
 import { Role } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
@@ -17,6 +18,7 @@ import { useProjectStore } from '/@/stores/project'
 
 const tableRef = useTemplateRef('accountTable')
 const [dialog] = useFormDialog()
+const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
@@ -68,26 +70,7 @@ async function operationHandler(operate: any, data?: any) {
       })
       break
     case 'invite':
-      await dialog.showModal({
-        header: 'Invite users',
-        class: 'w-[500px]',
-        schemas: inviteUsersFormSchemas,
-        async handleOk(formModel) {
-          const { code, data, msg } = await API.limit.userInviteCreate(formModel)
-          tableRef.value?.refresh()
-          if (code === 0) {
-            toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })
-          }
-          else {
-            toast.add({ severity: 'error', summary: '失败', detail: msg || '创建失败', life: 3000 })
-          }
-        },
-      })
-
-      dialog.formRef.value?.setFieldsValue({
-        role: Role.VIEWER,
-        projectId: data.project_id,
-      })
+      showInviteUserFormDialog({ projectIds: [data.project_id], tableRef })
 
       break
     case 'edit':

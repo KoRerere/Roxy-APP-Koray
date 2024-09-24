@@ -399,13 +399,18 @@ onBeforeUnmount(() => {
   canceOpenlListener?.()
   canceCloselListener?.()
 })
+
+defineExpose({
+  tableRef,
+})
 </script>
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
-    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    selection-mode="multiple">
+            :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+            selection-mode="multiple"
+  >
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
     </template>
@@ -430,26 +435,32 @@ onBeforeUnmount(() => {
     <template #actions="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
-          :class="{ 'text-orange': data.isOften }" class="mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
+                   :class="{ 'text-orange': data.isOften }" class="mr-2" @click.stop="operationHandler({ name: 'fav' }, data)"
+        />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
-          :class="{ 'text-orange': data.windowRemark }" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+                   :class="{ 'text-orange': data.windowRemark }" @click.stop="operationHandler({ name: 'addNotes' }, data)"
+        />
         <actions :operation="operation" @quick-click="(operate: any) => operationHandler(operate, data)"
-          @more="(event: Event) => showOperationMenu(event, data)" />
+                 @more="(event: Event) => showOperationMenu(event, data)"
+        />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-        @open-browser="() => openBrowser(selection)"
-        @quick-click="(event: any) => operationHandler(event, selection)" />
+                         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
+                         @open-browser="() => openBrowser(selection)"
+                         @quick-click="(event: any) => operationHandler(event, selection)"
+      />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
-    :pt="{ mask: classes['browser-drawer'] }">
+          :pt="{ mask: classes['browser-drawer'] }"
+  >
     <template #container="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
-        @confirm="(data: any) => drawer.confirm(drawer.type, data)" />
+                    @confirm="(data: any) => drawer.confirm(drawer.type, data)"
+      />
     </template>
   </Drawer>
 </template>

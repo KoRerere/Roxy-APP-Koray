@@ -5,6 +5,7 @@
 import type { Component, VNodeProps } from 'vue'
 
 import InputText from 'primevue/inputtext'
+import MultiSelect from 'primevue/multiselect'
 import Password from 'primevue/password'
 import RadioButton from 'primevue/radiobutton'
 import Select from 'primevue/select'
@@ -18,6 +19,7 @@ const componentMap = {
   Select,
   Textarea,
   RxRadioButton,
+  MultiSelect,
 }
 
 type ExtractPropTypes<T extends Component> = T extends new (...args: any) => any

@@ -1,4 +1,5 @@
 import InputWithRole from './components/input-with-role.vue'
+import { API } from '/@/api'
 import { defineFormSchema } from '/@/components/rx-form'
 
 export const projectFormSchemas = defineFormSchema([
@@ -28,7 +29,7 @@ export const inviteUsersFormSchemas = defineFormSchema([
       return <InputWithRole v-model:role={formModel.value.role}></InputWithRole>
     },
     componentProps: {
-      placeholder: 'Project name...',
+      placeholder: 'Enter email...',
     },
     rule: {
       trigger: 'blur',
@@ -36,6 +37,29 @@ export const inviteUsersFormSchemas = defineFormSchema([
         return zod.string()
           .min(1, 'Email is required')
           .email('Invalid email address')
+      },
+    },
+  },
+  {
+    field: 'projectIds',
+    component: 'MultiSelect',
+    label: 'Invite to projects',
+    componentProps: {
+      filter: true,
+      optionLabel: 'projectName',
+      optionValue: 'project_id',
+      display: 'chip',
+      request: async () => {
+        const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+        return data.rows
+      },
+    },
+    rule: {
+      trigger: 'blur',
+      validator(zod) {
+        return zod.number()
+          .array()
+          .min(1, 'Project is required')
       },
     },
   },
