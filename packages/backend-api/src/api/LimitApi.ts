@@ -16,8 +16,10 @@ import {
   UserAddWorkspaceInfoCreatePayload,
   UserDelWorkspaceInfoCreateData,
   UserDelWorkspaceInfoCreatePayload,
+  UserGetMemberInfoByProjectIdListData,
+  UserGetMemberInfoByProjectIdListParams,
+  UserGetMemberInfoByWorkspaceListData,
   UserGetProjectInfoByWorkspaceListData,
-  UserGetProjectInfoByWorkspaceListParams,
   UserGetWorkspaceListListData,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
@@ -34,13 +36,13 @@ export class LimitApi<SecurityDataType = unknown> {
   }
 
   /**
-   * No description
+   * @description role 权限： Viewer(查看者,枚举：0) Editor(编辑者,枚举：1) Manager(管理者,枚举：2) Owner(拥有者,枚举：3)
    *
    * @tags Limit
    * @name UserGetWorkspaceListList
    * @summary 获取工作空间列表
    * @request GET:/user_get_workspace_list
-   * @response `200` `UserGetWorkspaceListListData` 成功
+   * @response `200` `UserGetWorkspaceListListData`
    */
   userGetWorkspaceListList = (params: RequestParams = {}) =>
     this.http.request<UserGetWorkspaceListListData, any>({
@@ -56,7 +58,7 @@ export class LimitApi<SecurityDataType = unknown> {
    * @name UserAddWorkspaceInfoCreate
    * @summary 新增工作空间
    * @request POST:/user_add_workspace_info
-   * @response `200` `UserAddWorkspaceInfoCreateData` 成功
+   * @response `200` `UserAddWorkspaceInfoCreateData`
    */
   userAddWorkspaceInfoCreate = (data: UserAddWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddWorkspaceInfoCreateData, any>({
@@ -74,7 +76,7 @@ export class LimitApi<SecurityDataType = unknown> {
    * @name UserMdfWorkspaceInfoCreate
    * @summary 修改工作空间
    * @request POST:/user_mdf_workspace_info
-   * @response `200` `UserMdfWorkspaceInfoCreateData` 成功
+   * @response `200` `UserMdfWorkspaceInfoCreateData`
    */
   userMdfWorkspaceInfoCreate = (data: UserMdfWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWorkspaceInfoCreateData, any>({
@@ -89,10 +91,44 @@ export class LimitApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Limit
+   * @name UserDelWorkspaceInfoCreate
+   * @summary 删除工作空间
+   * @request POST:/user_del_workspace_info
+   * @response `200` `UserDelWorkspaceInfoCreateData`
+   */
+  userDelWorkspaceInfoCreate = (data: UserDelWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDelWorkspaceInfoCreateData, any>({
+      path: `/user_del_workspace_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetMemberInfoByWorkspaceList
+   * @summary 获取成员所在的项目(团队管理列表)
+   * @request GET:/user_get_member_info_by_workspace
+   * @response `200` `UserGetMemberInfoByWorkspaceListData`
+   */
+  userGetMemberInfoByWorkspaceList = (params: RequestParams = {}) =>
+    this.http.request<UserGetMemberInfoByWorkspaceListData, any>({
+      path: `/user_get_member_info_by_workspace`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
    * @name UserAddProjectInfoCreate
    * @summary 新增项目
    * @request POST:/user_add_project_info
-   * @response `200` `UserAddProjectInfoCreateData` 成功
+   * @response `200` `UserAddProjectInfoCreateData`
    */
   userAddProjectInfoCreate = (data: UserAddProjectInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddProjectInfoCreateData, any>({
@@ -110,7 +146,7 @@ export class LimitApi<SecurityDataType = unknown> {
    * @name UserMdfProjectInfoCreate
    * @summary 修改项目
    * @request POST:/user_mdf_project_info
-   * @response `200` `UserMdfProjectInfoCreateData` 成功
+   * @response `200` `UserMdfProjectInfoCreateData`
    */
   userMdfProjectInfoCreate = (data: UserMdfProjectInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfProjectInfoCreateData, any>({
@@ -126,15 +162,14 @@ export class LimitApi<SecurityDataType = unknown> {
    *
    * @tags Limit
    * @name UserGetProjectInfoByWorkspaceList
-   * @summary 根据空间ID获取当前用户所拥有的项目及成员
+   * @summary 获取当前用户所拥有的项目及成员
    * @request GET:/user_get_project_info_by_workspace
-   * @response `200` `UserGetProjectInfoByWorkspaceListData` 成功
+   * @response `200` `UserGetProjectInfoByWorkspaceListData`
    */
-  userGetProjectInfoByWorkspaceList = (query: UserGetProjectInfoByWorkspaceListParams, params: RequestParams = {}) =>
+  userGetProjectInfoByWorkspaceList = (params: RequestParams = {}) =>
     this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
       path: `/user_get_project_info_by_workspace`,
       method: "GET",
-      query: query,
       format: "json",
       ...params,
     });
@@ -142,17 +177,16 @@ export class LimitApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Limit
-   * @name UserDelWorkspaceInfoCreate
-   * @summary 删除工作空间
-   * @request POST:/user_del_workspace_info
-   * @response `200` `UserDelWorkspaceInfoCreateData` 成功
+   * @name UserGetMemberInfoByProjectIdList
+   * @summary 根据项目ID获取成员
+   * @request GET:/user_get_member_info_by_project_id
+   * @response `200` `UserGetMemberInfoByProjectIdListData`
    */
-  userDelWorkspaceInfoCreate = (data: UserDelWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserDelWorkspaceInfoCreateData, any>({
-      path: `/user_del_workspace_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
+  userGetMemberInfoByProjectIdList = (query: UserGetMemberInfoByProjectIdListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetMemberInfoByProjectIdListData, any>({
+      path: `/user_get_member_info_by_project_id`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
