@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import profiles from '/@/views/browser/list/profiles/index.vue'
+import Profiles from '/@/views/browser/list/profiles/index.vue'
 
 const route = useRoute()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
@@ -30,7 +30,7 @@ function handleShowInviteUserFormDialog() {
         <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite" @click="handleShowInviteUserFormDialog" />
       </div>
     </div>
-    <profiles ref="profiles" />
+    <Profiles ref="profiles" />
   </div>
 </template>
 
