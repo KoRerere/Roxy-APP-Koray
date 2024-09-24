@@ -13,7 +13,7 @@ export type UseFormStateReturnType = ReturnType<typeof useFormState>
 
 export function useFormState({ props, emit }: useFormStateParams) {
   /** 表单项数据 */
-  const formModel = (props.modelValue ? useVModel(props, 'modelValue', emit, { defaultValue: {} }) : ref<Recordable>({})) as Ref<Recordable>
+  const formModel = (props.modelValue ? useVModel(props, 'modelValue', emit, { defaultValue: { ...props.initialValues } }) : ref<Recordable>({ ...props.initialValues })) as Ref<Recordable>
   /** 将 formSchema 克隆一份，避免修改原有的 formSchema，后续修改 formSchema 必须调用内部的方法进行修改  */
   const innerFormSchemas = shallowRef(reactive(cloneDeep(props.schemas!)))
   /** 初始时的componentProps，用于updateSchema更新时不覆盖componentProps为函数时的值 */

@@ -120,6 +120,12 @@ function validateField() {
     errors.value[field] = result.error.errors[0].message
   }
 }
+
+onMounted(async () => {
+  if (props.schema.componentProps?.request) {
+    props.schema.componentProps.options = await props.schema.componentProps.request()
+  }
+})
 </script>
 
 <template>

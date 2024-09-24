@@ -3,8 +3,11 @@ import { API } from './api'
 
 window.electronAPI.on('invite:to-project', async (searchStr) => {
   console.log('invite:to-project', searchStr)
-  const code = new URLSearchParams(searchStr).get('data')
+  // URLSearchParams 会把 + 号转成空格，所以这里不用 URLSearchParams
+  // const code = new URLSearchParams(searchStr).get('data')
+  const code = searchStr.split('data=')[1]
   if (code) {
+    console.log('invite:to-project code', code)
     await API.limit.userAddUserByProjectInfoCreate(code)
   }
   else {
