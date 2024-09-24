@@ -75,7 +75,7 @@ async function operationHandler(operate: any, data?: any) {
         schemas: inviteUsersFormSchemas,
         async handleOk(formModel) {
           formModel.workspaceId = 1
-          const { code, data, msg } = await API.limit.userAddProjectInfoCreate(formModel)
+          const { code, data, msg } = await API.limit.userBatchInviteCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
             toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })

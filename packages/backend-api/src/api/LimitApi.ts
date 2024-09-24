@@ -12,8 +12,12 @@
 import {
   UserAddProjectInfoCreateData,
   UserAddProjectInfoCreatePayload,
+  UserAddUserByProjectInfoCreateData,
+  UserAddUserByProjectInfoCreatePayload,
   UserAddWorkspaceInfoCreateData,
   UserAddWorkspaceInfoCreatePayload,
+  UserBatchInviteCreateData,
+  UserBatchInviteCreatePayload,
   UserDelWorkspaceInfoCreateData,
   UserDelWorkspaceInfoCreatePayload,
   UserGetMemberInfoByProjectIdListData,
@@ -187,6 +191,42 @@ export class LimitApi<SecurityDataType = unknown> {
       path: `/user_get_member_info_by_project_id`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserBatchInviteCreate
+   * @summary 邀请用户
+   * @request POST:/user_batch_invite
+   * @response `200` `UserBatchInviteCreateData`
+   */
+  userBatchInviteCreate = (data: UserBatchInviteCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserBatchInviteCreateData, any>({
+      path: `/user_batch_invite`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserAddUserByProjectInfoCreate
+   * @summary 绑定用户关联的项目
+   * @request POST:/user_add_user_by_project_info
+   * @response `200` `UserAddUserByProjectInfoCreateData`
+   */
+  userAddUserByProjectInfoCreate = (data: UserAddUserByProjectInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddUserByProjectInfoCreateData, any>({
+      path: `/user_add_user_by_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

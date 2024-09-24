@@ -6,7 +6,7 @@
   "license": "",
   "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json || true",
+    "build": "tsc -p tsconfig.json || exit 0",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
     "watch": "tsc -p tsconfig.json --watch"
