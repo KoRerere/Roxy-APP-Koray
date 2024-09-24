@@ -1,3 +1,4 @@
+import InputWithRole from './components/input-with-role.vue'
 import { defineFormSchema } from '/@/components/rx-form'
 
 export const projectFormSchemas = defineFormSchema([
@@ -15,6 +16,26 @@ export const projectFormSchemas = defineFormSchema([
           .min(1, 'Project name is required')
           .min(2, 'Project name must be at least 2 characters long')
           .max(30, 'Project name must be less than 30 characters')
+      },
+    },
+  },
+])
+
+export const inviteUsersFormSchemas = defineFormSchema([
+  {
+    field: 'email',
+    component: ({ formModel }) => {
+      return <InputWithRole v-model:role={formModel.value.role}></InputWithRole>
+    },
+    componentProps: {
+      placeholder: 'Project name...',
+    },
+    rule: {
+      trigger: 'blur',
+      validator(zod) {
+        return zod.string()
+          .min(1, 'Email is required')
+          .email('Invalid email address')
       },
     },
   },

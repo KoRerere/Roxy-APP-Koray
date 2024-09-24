@@ -4,22 +4,25 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import columnsRow from './columns'
+import { inviteUsersFormSchemas, projectFormSchemas } from './schemas'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-import useColumns from '/@/hooks/useColumns'
 
+import { Role } from '/@/enums'
+import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
+import { useProjectStore } from '/@/stores/project'
 import relatedProfiles from '/@/views/agent/list/components/related-profiles.vue'
-import { projectFormSchemas } from '/@/views/projects/schemas'
 
 const tableRef = useTemplateRef('accountTable')
 const [dialog] = useFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
+const { getProjects } = useProjectStore()
 
 const [columns] = useColumns(columnsRow)
 
@@ -68,6 +71,30 @@ async function operationHandler(operate: any, data?: any) {
         },
       })
       break
+    case 'invite':
+      await dialog.showModal({
+        header: 'Invite users',
+        class: 'w-[500px]',
+        schemas: inviteUsersFormSchemas,
+        async handleOk(formModel) {
+          formModel.workspaceId = 1
+          const { code, data, msg } = await API.limit.userAddProjectInfoCreate(formModel)
+          tableRef.value?.refresh()
+          if (code === 0) {
+            toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })
+          }
+          else {
+            toast.add({ severity: 'error', summary: '失败', detail: msg || '创建失败', life: 3000 })
+          }
+        },
+      })
+
+      dialog.formRef.value?.setFieldsValue({
+        role: Role.VIEWER,
+        project_id: data.project_id,
+      })
+
+      break
     case 'edit':
       await dialog.showModal({
         header: 'Edit project',
@@ -90,7 +117,6 @@ async function operationHandler(operate: any, data?: any) {
 
       dialog.formRef.value?.setFieldsValue({
         id: data.project_id,
-        workspaceId: 1,
         ...data,
       })
       break
@@ -101,7 +127,7 @@ async function operationHandler(operate: any, data?: any) {
 }
 
 function tableRequest(params: any) {
-  return API.limit.userGetProjectInfoByWorkspaceList(params)
+  return getProjects(params)
 }
 
 function deletePopup(data: any) {
@@ -141,12 +167,10 @@ function deletePopup(data: any) {
       >
         <template #members="{ data }">
           <AvatarGroup>
-            <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" />
-            <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/asiyajavayant.png" shape="circle" />
-            <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/onyamalimba.png" shape="circle" />
-            <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/ionibowcher.png" shape="circle" />
-            <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/xuxuefeng.png" shape="circle" />
-            <Avatar label="+2" shape="circle" />
+            <template v-for="person in data.user_info" :key="person.userId">
+              <Avatar v-tooltip.top="person.userName" :label="person.userName.at(0)" shape="circle" />
+            </template>
+            <!-- <Avatar label="+2" shape="circle" /> -->
           </AvatarGroup>
         </template>
         <template #open="{ data }">

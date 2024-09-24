@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { ZodObject } from 'zod'
-import type { CustomRenderFn, FormSchema } from './types/form'
+import type { CustomRenderFn, FormSchema, RenderCallbackParams } from './types/form'
 import { isFunction, isPlainObject, isString } from 'es-toolkit'
 import { isVNode } from 'vue'
 import { componentMap } from './componentMap'
@@ -48,7 +48,18 @@ const getComponent = computed(() => {
     : vnodeFactory(component)
 })
 
-function vnodeFactory(component: FormSchema['componentSlots'] | FormSchema['component'], values: Recordable = {}) {
+const getValues = computed<RenderCallbackParams>(() => {
+  const { schema } = props
+  const { formModel } = formState
+
+  return {
+    field: schema.field,
+    formModel,
+    schema,
+  }
+})
+
+function vnodeFactory(component: FormSchema['componentSlots'] | FormSchema['component'], values = getValues.value) {
   if (isString(component)) {
     return <>{component}</>
   }
@@ -114,7 +125,7 @@ function validateField() {
 <template>
   <div class="field">
     <div class="form-item-row" :class="formProps.layout">
-      <label :for="compId">{{ schema.label }} </label>
+      <label v-if="schema.label" :for="compId">{{ schema.label }} </label>
       <div class="form-item-control">
         <component
           :is="getComponent"

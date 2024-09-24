@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import SubMenuItem from './sub-menu-item.vue'
 import { API } from '/@/api'
 import { menuRoutes } from '/@/router/menu'
+import { useProjectStore } from '/@/stores/project'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 defineProps({
@@ -14,8 +15,17 @@ defineProps({
 
 const router = useRouter()
 const { workspaceID } = storeToRefs(useWorkspaceStore())
+const projectStore = useProjectStore()
 
-const projectList = ref<Partial<RouteRecordRaw>[]>([])
+const projectList = computed(() => {
+  return projectStore.projects.map((item) => {
+    return {
+      path: ':id',
+      name: 'project-item',
+      meta: { title: item.projectName, params: { id: item.project_id } },
+    }
+  })
+})
 
 const menus = computed(() => {
   const projectIndex = menuRoutes.findIndex(item => item.name === 'projects')!
@@ -30,19 +40,8 @@ const menus = computed(() => {
   ]
 })
 
-async function getProjects() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
-  projectList.value = data.rows.map((item) => {
-    return {
-      path: ':id',
-      name: 'project-item',
-      meta: { title: item.projectName, params: { id: item.project_id } },
-    }
-  })
-}
-
 watch(workspaceID, () => {
-  getProjects()
+  projectStore.getProjects()
 }, { immediate: true })
 
 function toCreateBrowser() {

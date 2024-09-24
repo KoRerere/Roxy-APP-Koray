@@ -63,6 +63,13 @@ const config: UserConfig = {
   optimizeDeps: {
     include: [...primevueComponents],
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler', // or "modern", "legacy"
+      },
+    },
+  },
   build: {
     sourcemap: true,
     target: `chrome${chrome}`,

@@ -1,0 +1,95 @@
+<script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { Role } from '/@/enums'
+
+const modelValue = defineModel<string>()
+const roleModelValue = defineModel('role')
+
+const items = ref([
+  {
+    label: 'Viewer',
+    value: Role.VIEWER,
+    description: 'Can only open and view profiles/proxies/accounts related to selected project.',
+  },
+  {
+    label: 'Editor',
+    value: Role.EDITOR,
+    description: 'Can edit and view profiles/proxies/accounts related to selected project. Can manage viewers related to selected projects.',
+  },
+  {
+    label: 'Manager',
+    value: Role.MANAGER,
+    description: 'Can manage all profiles and resources in all projects. Can manage all viewers and editors.',
+  },
+])
+
+const selectedRoleLabel = computed(() => {
+  return items.value.find(item => item.value === roleModelValue.value)?.label
+})
+</script>
+
+<template>
+  <IconField>
+    <InputIcon>
+      <RxSvgIcon name="base/rx_ic_mail" />
+    </InputIcon>
+    <InputText v-model="modelValue" placeholder="Enter email" class="w-full" />
+    <InputIcon class="position-y-center !mt-0">
+      <SplitButton :model="items" severity="secondary" size="small">
+        {{ selectedRoleLabel }}
+        <template #item="{ item }">
+          <div class="item" @click.stop>
+            <RadioButton v-model="roleModelValue" :input-id="item.label + item.value" :value="item.value" />
+            <div class="detail">
+              <label :for="item.label + item.value" class="label">{{ item.label }}</label>
+              <div class="description">
+                {{ item.description }}
+              </div>
+            </div>
+          </div>
+        </template>
+      </SplitButton>
+    </InputIcon>
+  </IconField>
+</template>
+
+<style lang="scss" scoped>
+.item {
+  width: 280px;
+  display: flex;
+  padding: var(--spacing-md, 6px);
+  align-items: flex-start;
+  gap: var(--spacing-lg, 8px);
+  align-self: stretch;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--Colors-Background-bg-body, #fff);
+
+  .detail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-none, 0px);
+    flex: 1 0 0;
+  }
+
+  .label {
+    align-self: stretch;
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  }
+
+  .description {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: Inter;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 14px; /* 140% */
+  }
+}
+</style>
