@@ -14,6 +14,7 @@ import editCookies from './components/edit-cookies.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 
+import projectIcon from './components/project-icon.vue'
 import tagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
 
@@ -419,6 +420,9 @@ onBeforeUnmount(() => {
     </template>
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="() => openBrowser(data)" />
+    </template>
+    <template #project="{ data }">
+      <projectIcon :labels="data.labelInfo" @update="(labelIds: number[]) => updateTags(labelIds, data)" />
     </template>
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="(labelIds: number[]) => updateTags(labelIds, data)" />

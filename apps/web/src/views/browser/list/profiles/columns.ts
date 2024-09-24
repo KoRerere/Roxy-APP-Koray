@@ -12,6 +12,11 @@ const columnsConfig = {
       slot: 'open',
     },
     {
+      title: '项目',
+      key: 'project',
+      slot: 'project',
+    },
+    {
       title: '标签',
       key: 'tags',
       slot: 'tags',

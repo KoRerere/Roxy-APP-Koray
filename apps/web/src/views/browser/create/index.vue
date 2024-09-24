@@ -7,6 +7,7 @@ import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-input
 import { createTableContext } from './hooks/useContext'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 
 const router = useRouter()
@@ -28,10 +29,10 @@ createTableContext({ isBatch, createCount })
 
 const [windowInputs, basicInputs, highLevelInputs, otherInputs] = getInputsGroup()
 /**
- *批量导入时 os,osVersion,coreVersion 使用默认值, 此处copy一份原始数据
+ *批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
  */
-const original = ref(getDefaultValue())
 const rawWindowInputs = ref(windowInputs.map((input: any) => deepClone(input)))
+const original = ref(getDefaultValue())
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -131,10 +132,6 @@ async function importProfile(params: any) {
   router.replace({ name: 'browser-list' })
 }
 
-function cancel() {
-  router.back()
-}
-
 onMounted(() => {
   ceateRandomFinger(inputsGroup.value)
 })
@@ -150,52 +147,33 @@ onMounted(() => {
           </Tab>
         </TabList>
       </Tabs>
-      <div class="flex-ovh-1">
-        <Accordion class="w-45 metadata" value="0">
-          <AccordionPanel value="0">
-            <AccordionHeader as="div" class="metadata-header">
-              Header I
-            </AccordionHeader>
-            <AccordionContent>
-              <div class="metadata-list">
-                <div v-for="item in ['Group', 'Tag', 'Notes']" :key="item" class="metadata-list-item">
-                  <span class="mdi mdi-information-outline" />
-                  <span class="flex-1">{{ item }}</span>
-                  <span class="mdi mdi-plus" />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionPanel>
-        </Accordion>
-        <div class="flex-ovh-1 flex-col content-scvr">
-          <div class="top-content">
-            <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" class="top-content-windown-name" />
-            <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
-              <div>Profiles amount</div>
-              <div class="flex flex-col items-end">
-                <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
-                  button-layout="horizontal" :step="1" fluid>
-                  <template #incrementicon>
-                    <span class="mdi mdi-plus" />
-                  </template>
-                  <template #decrementicon>
-                    <span class="mdi mdi-minus" />
-                  </template>
-                </InputNumber>
-                <div class="batch-info">
-                  Max profiles: {{ maxWindowCount }}. For more profiles please <span class="batch-info-jump"
-                    @click="tabsValue = 'import'">import
-                    profiles</span>.
-                </div>
+      <div class="flex-ovh-1 flex-col">
+        <div class="top-content">
+          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" class="top-content-windown-name" />
+          <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
+            <div>Profiles amount</div>
+            <div class="flex flex-col items-end">
+              <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
+                button-layout="horizontal" :step="1" fluid>
+                <template #incrementicon>
+                  <RxSvgIcon name="base/rx_ic_plus" />
+                </template>
+                <template #decrementicon>
+                  <RxSvgIcon name="base/rx_ic_minus" />
+                </template>
+              </InputNumber>
+              <div class="batch-info">
+                Max profiles: {{ maxWindowCount }}. For more profiles please <span class="batch-info-jump"
+                  @click="tabsValue = 'import'">import
+                  profiles</span>.
               </div>
             </div>
-            <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
           </div>
-          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup"
-            :open-browser="tabsValue === 'single'" @cancel="cancel"
-            @create-open="(formData: any) => createProfile(formData, true)"
-            @create="(formData: any) => createProfile(formData, false)" />
+          <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
+        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup"
+          :open-browser="tabsValue === 'single'" @create-open="(formData: any) => createProfile(formData, true)"
+          @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>
     <previewCard :data="previewData" @shuffle="onShuffle" />
@@ -208,38 +186,6 @@ onMounted(() => {
 
   &-windown-name {
     padding: var(--spacing-md, 6px) 8px;
-  }
-}
-
-.metadata {
-  margin-top: 63px;
-  padding: 0 16px;
-
-  :deep(.p-accordionpanel) {
-    border: none;
-  }
-
-  :deep(.p-accordioncontent-content) {
-    padding: 16px 8px;
-  }
-
-  &-header {
-    padding: var(--spacing-md, 6px) 8px;
-    background: var(--Color-neutrals-100, #f0f3f5) !important;
-    border-radius: 4px;
-  }
-
-  &-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-4xl, 24px);
-
-    &-item {
-      display: flex;
-      align-items: center;
-      align-self: stretch;
-      gap: var(--spacing-md, 6px);
-    }
   }
 }
 
