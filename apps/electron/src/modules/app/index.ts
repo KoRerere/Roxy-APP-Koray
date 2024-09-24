@@ -75,6 +75,11 @@ export function setupApp() {
       console.log('oauth2callback: ', commandLine)
       ipcMain.send('oauth2:google-callback', `?${commandLine.at(-1)?.split('?')[1]}`)
     }
+    // Windows 系统需要通过这种方式获取参数
+    if (commandLine.at(-1)?.includes(`${appProtocolName}://inviteUser2project`)) {
+      console.log('inviteUser2project: ', commandLine)
+      ipcMain.send('invite:to-project', `?${commandLine.at(-1)?.split('?')[1]}`)
+    }
   })
 
   // macOS 系统通过 open-url 事件获取参数

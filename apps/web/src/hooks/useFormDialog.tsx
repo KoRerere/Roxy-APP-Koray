@@ -37,7 +37,7 @@ export function useFormDialog() {
     }
 
     return (
-      <Dialog v-slots={__dialogSlots} modal {...dialogProps} v-model:visible={visible.value}>
+      <Dialog v-slots={__dialogSlots} contentClass="!pb-2" modal {...dialogProps} v-model:visible={visible.value}>
         <RxForm ref={formRef} {...formProps} schemas={schemas} footer={false}></RxForm>
       </Dialog>
     )
@@ -71,9 +71,9 @@ export function useFormDialog() {
   }
 
   async function showModal(props: FormDialogProps) {
+    innerProps.value = rewriteProps(props)
     await renderDialog()
     visible.value = true
-    innerProps.value = rewriteProps(props)
   }
 
   function hideModal() {

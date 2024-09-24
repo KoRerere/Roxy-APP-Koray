@@ -45,6 +45,8 @@ export interface MainMessage {
   'browser:on-close': (dirId: string) => void
   /** google 授权登录 */
   'oauth2:google-callback': (payload: string) => void
+  /** 邀请用户进入项目 */
+  'invite:to-project': (payload: string) => void
   /** APP、patch、web 资源更新事件 */
   'app:resource-update': (payload: ResourceUpdateMessage) => void
 }

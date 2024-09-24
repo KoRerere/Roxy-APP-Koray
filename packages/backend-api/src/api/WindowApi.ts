@@ -104,7 +104,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetWindowInfoList
    * @summary 窗口列表 (旧版本接口)
    * @request GET:/user_get_window_info
-   * @response `200` `UserGetWindowInfoListData` 成功
+   * @response `200` `UserGetWindowInfoListData`
    */
   userGetWindowInfoList = (query: UserGetWindowInfoListParams, params: RequestParams = {}) =>
     this.http.request<UserGetWindowInfoListData, any>({
@@ -121,7 +121,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetWindowInfoRecycleList
    * @summary 回收站列表
    * @request GET:/user_get_window_info_recycle
-   * @response `200` `UserGetWindowInfoRecycleListData` 成功
+   * @response `200` `UserGetWindowInfoRecycleListData`
    */
   userGetWindowInfoRecycleList = (query: UserGetWindowInfoRecycleListParams, params: RequestParams = {}) =>
     this.http.request<UserGetWindowInfoRecycleListData, any>({
@@ -138,7 +138,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserAddWindowInfoCreate
    * @summary 单个创建窗口
    * @request POST:/user_add_window_info
-   * @response `200` `UserAddWindowInfoCreateData` 成功
+   * @response `200` `UserAddWindowInfoCreateData`
    */
   userAddWindowInfoCreate = (data: UserAddWindowInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddWindowInfoCreateData, any>({
@@ -156,7 +156,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserBatchWindowInfoCreate
    * @summary 批量创建窗口
    * @request POST:/user_batch_window_info
-   * @response `200` `UserBatchWindowInfoCreateData` 成功
+   * @response `200` `UserBatchWindowInfoCreateData`
    */
   userBatchWindowInfoCreate = (data: UserBatchWindowInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserBatchWindowInfoCreateData, any>({
@@ -174,7 +174,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserImportWindowInfoCreate
    * @summary 批量导入窗口
    * @request POST:/user_import_window_info
-   * @response `200` `UserImportWindowInfoCreateData` 成功
+   * @response `200` `UserImportWindowInfoCreateData`
    */
   userImportWindowInfoCreate = (data: UserImportWindowInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserImportWindowInfoCreateData, any>({
@@ -192,7 +192,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfWindowInfoSingleCreate
    * @summary 单个修改窗口
    * @request POST:/user_mdf_window_info_single
-   * @response `200` `UserMdfWindowInfoSingleCreateData` 成功
+   * @response `200` `UserMdfWindowInfoSingleCreateData`
    */
   userMdfWindowInfoSingleCreate = (data: UserMdfWindowInfoSingleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowInfoSingleCreateData, any>({
@@ -210,7 +210,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfWindowInfoBatchCreate
    * @summary 批量修改窗口
    * @request POST:/user_mdf_window_info_batch
-   * @response `200` `UserMdfWindowInfoBatchCreateData` 成功
+   * @response `200` `UserMdfWindowInfoBatchCreateData`
    */
   userMdfWindowInfoBatchCreate = (data: UserMdfWindowInfoBatchCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowInfoBatchCreateData, any>({
@@ -228,7 +228,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserModifyWindowReportTimeCreate
    * @summary 修改窗口上报时间
    * @request POST:/user_modify_window_report_time
-   * @response `200` `UserModifyWindowReportTimeCreateData` 成功
+   * @response `200` `UserModifyWindowReportTimeCreateData`
    */
   userModifyWindowReportTimeCreate = (data: UserModifyWindowReportTimeCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserModifyWindowReportTimeCreateData, any>({
@@ -246,7 +246,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfWindowInfoRandomCreate
    * @summary 一键随机指纹
    * @request POST:/user_mdf_window_info_random
-   * @response `200` `UserMdfWindowInfoRandomCreateData` 成功
+   * @response `200` `UserMdfWindowInfoRandomCreateData`
    */
   userMdfWindowInfoRandomCreate = (data: UserMdfWindowInfoRandomCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowInfoRandomCreateData, any>({
@@ -264,7 +264,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserClearWindowCacheCreate
    * @summary 清空所有缓存
    * @request POST:/user_clear_window_cache
-   * @response `200` `UserClearWindowCacheCreateData` 成功
+   * @response `200` `UserClearWindowCacheCreateData`
    */
   userClearWindowCacheCreate = (data: UserClearWindowCacheCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserClearWindowCacheCreateData, any>({
@@ -281,7 +281,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserClearWindowCacheApiCreate
    * @summary API清空所有缓存
    * @request POST:/user_clear_window_cache_api
-   * @response `200` `UserClearWindowCacheApiCreateData` 成功
+   * @response `200` `UserClearWindowCacheApiCreateData`
    */
   userClearWindowCacheApiCreate = (data: UserClearWindowCacheApiCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserClearWindowCacheApiCreateData, any>({
@@ -298,7 +298,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserDelWindowInfoCreate
    * @summary 回收站->批量删除窗口
    * @request POST:/user_del_window_info
-   * @response `200` `UserDelWindowInfoCreateData` 成功
+   * @response `200` `UserDelWindowInfoCreateData`
    */
   userDelWindowInfoCreate = (data: UserDelWindowInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelWindowInfoCreateData, any>({
@@ -315,7 +315,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserDelWindowInfoApiCreate
    * @summary 回收站->api批量删除窗口
    * @request POST:/user_del_window_info_api
-   * @response `200` `UserDelWindowInfoApiCreateData` 成功
+   * @response `200` `UserDelWindowInfoApiCreateData`
    */
   userDelWindowInfoApiCreate = (data: UserDelWindowInfoApiCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelWindowInfoApiCreateData, any>({
@@ -333,7 +333,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfWindowSyncStatusCreate
    * @summary 打开和关闭窗口时同步窗口状态
    * @request POST:/user_mdf_window_sync_status
-   * @response `200` `UserMdfWindowSyncStatusCreateData` 成功
+   * @response `200` `UserMdfWindowSyncStatusCreateData`
    */
   userMdfWindowSyncStatusCreate = (data: UserMdfWindowSyncStatusCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowSyncStatusCreateData, any>({
@@ -351,7 +351,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfWindowSyncV2Create
    * @summary 关闭窗口时cookie同步 + 标签页同步 + 打开和关闭窗口时同步窗口状态
    * @request POST:/user_mdf_window_sync_v2
-   * @response `200` `UserMdfWindowSyncV2CreateData` 成功
+   * @response `200` `UserMdfWindowSyncV2CreateData`
    */
   userMdfWindowSyncV2Create = (data: UserMdfWindowSyncV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowSyncV2CreateData, any>({
@@ -369,7 +369,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetUaWebglList
    * @summary 获取UA
    * @request GET:/user_get_ua_webgl
-   * @response `200` `UserGetUaWebglListData` 成功
+   * @response `200` `UserGetUaWebglListData`
    */
   userGetUaWebglList = (query: UserGetUaWebglListParams, params: RequestParams = {}) =>
     this.http.request<UserGetUaWebglListData, any>({
@@ -386,7 +386,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetUaWebglV2List
    * @summary 批量获取UA
    * @request GET:/user_get_ua_webgl_v2
-   * @response `200` `UserGetUaWebglV2ListData` 成功
+   * @response `200` `UserGetUaWebglV2ListData`
    */
   userGetUaWebglV2List = (query: UserGetUaWebglV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetUaWebglV2ListData, any>({
@@ -403,7 +403,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetDeviceNameList
    * @summary 获取设备名称
    * @request GET:/user_get_device_name
-   * @response `200` `UserGetDeviceNameListData` 成功
+   * @response `200` `UserGetDeviceNameListData`
    */
   userGetDeviceNameList = (query: UserGetDeviceNameListParams, params: RequestParams = {}) =>
     this.http.request<UserGetDeviceNameListData, any>({
@@ -420,7 +420,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetDeviceNameV2List
    * @summary 批量获取设备名称
    * @request GET:/user_get_device_name_v2
-   * @response `200` `UserGetDeviceNameV2ListData` 成功
+   * @response `200` `UserGetDeviceNameV2ListData`
    */
   userGetDeviceNameV2List = (query: UserGetDeviceNameV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetDeviceNameV2ListData, any>({
@@ -437,7 +437,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetMacAddrV2List
    * @summary 获取mac地址
    * @request GET:/user_get_mac_addr_v2
-   * @response `200` `UserGetMacAddrV2ListData` 成功
+   * @response `200` `UserGetMacAddrV2ListData`
    */
   userGetMacAddrV2List = (query: UserGetMacAddrV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetMacAddrV2ListData, any>({
@@ -454,7 +454,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetGroupInfoList
    * @summary 分组查询
    * @request GET:/user_get_group_info
-   * @response `200` `UserGetGroupInfoListData` 成功
+   * @response `200` `UserGetGroupInfoListData`
    */
   userGetGroupInfoList = (query: UserGetGroupInfoListParams, params: RequestParams = {}) =>
     this.http.request<UserGetGroupInfoListData, any>({
@@ -471,7 +471,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserAddGroupInfoCreate
    * @summary 分组新增
    * @request POST:/user_add_group_info
-   * @response `200` `UserAddGroupInfoCreateData` 成功
+   * @response `200` `UserAddGroupInfoCreateData`
    */
   userAddGroupInfoCreate = (data: UserAddGroupInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddGroupInfoCreateData, any>({
@@ -489,7 +489,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfGroupInfoCreate
    * @summary 分组修改
    * @request POST:/user_mdf_group_info
-   * @response `200` `UserMdfGroupInfoCreateData` 成功
+   * @response `200` `UserMdfGroupInfoCreateData`
    */
   userMdfGroupInfoCreate = (data: UserMdfGroupInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfGroupInfoCreateData, any>({
@@ -507,7 +507,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserDelGroupInfoCreate
    * @summary 分组删除
    * @request POST:/user_del_group_info
-   * @response `200` `UserDelGroupInfoCreateData` 成功
+   * @response `200` `UserDelGroupInfoCreateData`
    */
   userDelGroupInfoCreate = (data: UserDelGroupInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelGroupInfoCreateData, any>({
@@ -525,7 +525,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetLabelInfoList
    * @summary 标签查询
    * @request GET:/user_get_label_info
-   * @response `200` `UserGetLabelInfoListData` 成功
+   * @response `200` `UserGetLabelInfoListData`
    */
   userGetLabelInfoList = (query: UserGetLabelInfoListParams, params: RequestParams = {}) =>
     this.http.request<UserGetLabelInfoListData, any>({
@@ -542,7 +542,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserAddLabelInfoCreate
    * @summary 标签新增
    * @request POST:/user_add_label_info
-   * @response `200` `UserAddLabelInfoCreateData` 成功
+   * @response `200` `UserAddLabelInfoCreateData`
    */
   userAddLabelInfoCreate = (data: UserAddLabelInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddLabelInfoCreateData, any>({
@@ -560,7 +560,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserMdfLabelInfoCreate
    * @summary 标签修改
    * @request POST:/user_mdf_label_info
-   * @response `200` `UserMdfLabelInfoCreateData` 成功
+   * @response `200` `UserMdfLabelInfoCreateData`
    */
   userMdfLabelInfoCreate = (data: UserMdfLabelInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfLabelInfoCreateData, any>({
@@ -578,7 +578,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserDelLabelInfoCreate
    * @summary 标签删除
    * @request POST:/user_del_label_info
-   * @response `200` `UserDelLabelInfoCreateData` 成功
+   * @response `200` `UserDelLabelInfoCreateData`
    */
   userDelLabelInfoCreate = (data: UserDelLabelInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelLabelInfoCreateData, any>({
@@ -596,7 +596,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserUpdateWindowFilterNameCreate
    * @summary 修改窗口过滤器页签名称
    * @request POST:/user_update_window_filter_name
-   * @response `200` `UserUpdateWindowFilterNameCreateData` 成功
+   * @response `200` `UserUpdateWindowFilterNameCreateData`
    */
   userUpdateWindowFilterNameCreate = (data: UserUpdateWindowFilterNameCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpdateWindowFilterNameCreateData, any>({
@@ -614,7 +614,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserDeleteWindowFilterNameCreate
    * @summary 删除窗口过滤器页签名称
    * @request POST:/user_delete_window_filter_name
-   * @response `200` `UserDeleteWindowFilterNameCreateData` 成功
+   * @response `200` `UserDeleteWindowFilterNameCreateData`
    */
   userDeleteWindowFilterNameCreate = (data: UserDeleteWindowFilterNameCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDeleteWindowFilterNameCreateData, any>({
@@ -632,7 +632,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserAddWindowFilterNameCreate
    * @summary 新增窗口过滤器页签名称
    * @request POST:/user_add_window_filter_name
-   * @response `200` `UserAddWindowFilterNameCreateData` 成功
+   * @response `200` `UserAddWindowFilterNameCreateData`
    */
   userAddWindowFilterNameCreate = (data: UserAddWindowFilterNameCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddWindowFilterNameCreateData, any>({
@@ -650,7 +650,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetWindowFilterNameListList
    * @summary 获取窗口过滤器页签名称列表
    * @request GET:/user_get_window_filter_name_list
-   * @response `200` `UserGetWindowFilterNameListListData` 成功
+   * @response `200` `UserGetWindowFilterNameListListData`
    */
   userGetWindowFilterNameListList = (params: RequestParams = {}) =>
     this.http.request<UserGetWindowFilterNameListListData, any>({
@@ -667,7 +667,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @summary 修改窗口表格列顺序
    * @request POST:/user_update_window_table_rows
    * @deprecated
-   * @response `200` `UserUpdateWindowTableRowsCreateData` 成功
+   * @response `200` `UserUpdateWindowTableRowsCreateData`
    */
   userUpdateWindowTableRowsCreate = (data: UserUpdateWindowTableRowsCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpdateWindowTableRowsCreateData, any>({
@@ -685,7 +685,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserSaveWindowTableSortOrderCreate
    * @summary 保存窗口表格排序规则
    * @request POST:/user_save_window_table_sort_order
-   * @response `200` `UserSaveWindowTableSortOrderCreateData` 成功
+   * @response `200` `UserSaveWindowTableSortOrderCreateData`
    */
   userSaveWindowTableSortOrderCreate = (data: UserSaveWindowTableSortOrderCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserSaveWindowTableSortOrderCreateData, any>({
@@ -704,7 +704,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @summary 获取窗口表格列顺序
    * @request GET:/user_get_window_table_rows
    * @deprecated
-   * @response `200` `UserGetWindowTableRowsListData` 成功
+   * @response `200` `UserGetWindowTableRowsListData`
    */
   userGetWindowTableRowsList = (params: RequestParams = {}) =>
     this.http.request<UserGetWindowTableRowsListData, any>({
@@ -720,7 +720,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetWindowTableSortOrderList
    * @summary 获取默认表格排序列
    * @request GET:/user_get_window_table_sort_order
-   * @response `200` `UserGetWindowTableSortOrderListData` 成功
+   * @response `200` `UserGetWindowTableSortOrderListData`
    */
   userGetWindowTableSortOrderList = (params: RequestParams = {}) =>
     this.http.request<UserGetWindowTableSortOrderListData, any>({
@@ -736,7 +736,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserGetWindowInfoV2List
    * @summary 窗口列表 (新版本接口)
    * @request GET:/user_get_window_info_v2
-   * @response `200` `UserGetWindowInfoV2ListData` 成功
+   * @response `200` `UserGetWindowInfoV2ListData`
    */
   userGetWindowInfoV2List = (query: UserGetWindowInfoV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetWindowInfoV2ListData, any>({
@@ -753,7 +753,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserBatchWindowInfoV2Create
    * @summary 批量创建窗口 (新浏览器版本)
    * @request POST:/user_batch_window_info_v2
-   * @response `200` `UserBatchWindowInfoV2CreateData` 成功
+   * @response `200` `UserBatchWindowInfoV2CreateData`
    */
   userBatchWindowInfoV2Create = (data: UserBatchWindowInfoV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserBatchWindowInfoV2CreateData, any>({
@@ -772,7 +772,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @summary 批量修改每个标签页表格列的顺序
    * @request POST:/user_batch_update_window_table_rows
    * @deprecated
-   * @response `200` `UserBatchUpdateWindowTableRowsCreateData` 成功
+   * @response `200` `UserBatchUpdateWindowTableRowsCreateData`
    */
   userBatchUpdateWindowTableRowsCreate = (
     data: UserBatchUpdateWindowTableRowsCreatePayload,
@@ -793,7 +793,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserImportWindowInfoV2Create
    * @summary 批量导入窗口 (新版本浏览器使用)
    * @request POST:/user_import_window_info_v2
-   * @response `200` `UserImportWindowInfoV2CreateData` 成功
+   * @response `200` `UserImportWindowInfoV2CreateData`
    */
   userImportWindowInfoV2Create = (data: UserImportWindowInfoV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserImportWindowInfoV2CreateData, any>({
