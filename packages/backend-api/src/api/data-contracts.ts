@@ -385,12 +385,8 @@ export interface UserGetSystemDictV2CreateData {
 }
 
 export interface UserMdfTeamInfoCreatePayload {
-  /** 用户ID */
-  userId: number;
-  /** 权限 */
-  role: number;
-  /** 项目ID列表 */
-  projectIds: number[];
+  /** 团队名称 */
+  name: string;
 }
 
 export interface UserMdfTeamInfoCreateData {
@@ -447,69 +443,25 @@ export interface UserGetOssCredentialListData {
   msg: string;
 }
 
-export interface LoginGoogleCreatePayload {
-  /** 传入谷歌登录token */
-  googleToken: string;
-}
-
-export interface LoginGoogleCreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-  };
-  msg: string;
-}
-
-export interface LoginGoogleV2CreatePayload {
-  /** 传入谷歌登录token */
-  googleToken: string;
-}
-
-export interface LoginGoogleV2CreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-  };
-  msg: string;
-}
-
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -524,12 +476,12 @@ export interface UserGetWindowInfoListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -564,7 +516,7 @@ export interface UserGetWindowInfoListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -574,7 +526,7 @@ export interface UserGetWindowInfoListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -584,12 +536,12 @@ export interface UserGetWindowInfoListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -984,22 +936,22 @@ export interface UserGetWindowInfoListData {
 export interface UserGetWindowInfoRecycleListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example " 2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -1014,12 +966,12 @@ export interface UserGetWindowInfoRecycleListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -1034,22 +986,22 @@ export interface UserGetWindowInfoRecycleListParams {
   host?: string;
   /**
    * 窗口类型，枚举值：1.自建窗口，2.团队窗口，3.全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 创建人id, int,非必传
-   * @example 2
+   * @example "2"
    */
   createBy?: number;
   /**
    * 操作人id, int,非必传
-   * @example 3
+   * @example "3"
    */
   operateBy?: number;
   /**
    * 排序类型，int, 枚举值，1.序号从大到小，2.序号从小到大，3.删除时间从大到小，4.删除时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -2150,7 +2102,7 @@ export interface UserGetUaWebglV2ListParams {
   webGLManufacturer?: string;
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2200,7 +2152,7 @@ export interface UserGetDeviceNameV2ListData {
 export interface UserGetMacAddrV2ListParams {
   /**
    * 需要获取的数量
-   * @example 2
+   * @example "2"
    */
   count: number;
 }
@@ -2216,12 +2168,12 @@ export interface UserGetMacAddrV2ListData {
 export interface UserGetGroupInfoListParams {
   /**
    * 分页索引
-   * @example 1
+   * @example "1"
    */
   page_index?: number;
   /**
    * 分页条数
-   * @example 15
+   * @example "15"
    */
   page_size?: number;
   /**
@@ -2345,6 +2297,748 @@ export interface UserDelLabelInfoCreatePayload {
 
 export interface UserDelLabelInfoCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserUploadChromePluginsCreatePayload {
+  /** 插件下载地址 */
+  url: string;
+}
+
+export type UserUploadChromePluginsCreateData = object;
+
+export interface UserRecordPluginUploadListData {
+  code: number;
+  data: number;
+  msg: string;
+}
+
+export interface UserUploadPluginInfoCreatePayload {
+  /** 来源，枚举：local:本地扩展, store:Chrome商店 */
+  source: string;
+  /** 插件目录 */
+  pluginDir: string;
+  /** 插件名称 */
+  pluginName: string;
+  /** 插件icon地址 */
+  pluginIcon: string;
+  /** 插件下载地址 */
+  pluginRoute: string;
+  /** 扩展版本 */
+  pluginVersion: string;
+  /** 插件描述 */
+  pluginDesc: string;
+  /** 提供方 */
+  provider?: string;
+}
+
+export interface UserUploadPluginInfoCreateData {
+  code: number;
+  data: {
+    create_by: number;
+    plugin_id: number;
+  };
+  msg: string;
+}
+
+export interface UserGetProxyModuleListParams {
+  /**
+   * 分页索引
+   * @example "1"
+   */
+  page_index: number;
+  /**
+   * 分页条数
+   * @example "15"
+   */
+  page_size: number;
+  /**
+   * 国家
+   * @example "us"
+   */
+  country?: string;
+  /**
+   * 代理协议，枚举值：HTTP, HTTPS, SOCKS5
+   * @example "SOCKS5"
+   */
+  protocol?: string;
+  /**
+   * 代理IP（代理链接）
+   * @example "13.21.211.11"
+   */
+  host?: string;
+  /**
+   * 排序类型，1：代理ID从大到小，2：代理ID从小到大（老版本用的，新版本可以不用）
+   * @example "1"
+   */
+  sortType?: number;
+  /**
+   * 排序字段
+   * @example "createTime"
+   */
+  order_name?: string;
+  /**
+   * 排序规则
+   * @example "desc"
+   */
+  order_type?: string;
+  /**
+   * 代理国家
+   * @example "BR"
+   */
+  lastCountry?: string;
+  /**
+   * 窗口ID
+   * @example "11,22"
+   */
+  id?: string;
+  /**
+   * 代理检测状态，0：未检测，1：检测成功，2：检测失败
+   * @example "0"
+   */
+  checkStatus?: number;
+  /**
+   * 创建时间开始, str, 非必传
+   * @example "2024-05-22"
+   */
+  startDate?: string;
+  /**
+   * 创建时间结束, str, 非必传
+   * @example "2024-05-24"
+   */
+  endDate?: string;
+  /**
+   * 代理备注
+   * @example "xxx"
+   */
+  remark?: string;
+}
+
+export interface UserGetProxyModuleListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 代理id，int */
+      id?: number;
+      /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】 */
+      protocol?: string;
+      /** 国家，str */
+      country?: string;
+      /** 代理主机，str */
+      host?: string;
+      /** 代理端口，str */
+      port?: string;
+      /** 代理账号，str */
+      proxyUserName?: string;
+      /** 代理密码，str */
+      proxyPassword?: string;
+      /** 刷新URL, str */
+      refreshUrl?: string;
+      /** 查询渠道，默认:http: //ip123.in/ip.json， str */
+      checkChannel?: string;
+      /** 出口IP */
+      lastIp?: string;
+      /** 出口国家 */
+      lastCountry?: string;
+      /** 出口州/省 */
+      lastState?: string;
+      /** 出口城市 */
+      lastCity?: string;
+      /** 最近一次检测状态，true:正常，false: 错误 */
+      checkStatus?: boolean;
+      /** 最近一次检测检测时间，str */
+      checkTime?: string;
+      /** # 备注 */
+      remark?: string;
+      /** 是否有绑定窗口, 布尔值 */
+      isBind?: boolean;
+      /** 绑定的窗口数量 */
+      bindCount?: number;
+      bindList?: number[];
+      /** 编辑时间 */
+      updateTime?: string;
+      /** 创建时间 */
+      createTime?: string;
+      /** IP类型 */
+      ipType?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddProxyModuleCreatePayload {
+  /** 网络协议 */
+  ipType: string;
+  /** 代理协议 */
+  protocol: string;
+  /** 代理主机 */
+  host: string;
+  /** 代理端口 */
+  port: string;
+  /** 代理账号 */
+  proxyUserName?: string;
+  /** 代理密码 */
+  proxyPassword?: string;
+  /** 刷新URL */
+  refreshUrl?: string;
+  /** 查询渠道 */
+  checkChannel?: string;
+  /**  出口IP */
+  lastIp?: string;
+  /** 出口国家 */
+  lastCountry?: string;
+  /** 检测时间 */
+  checkTime?: string;
+  /** 检测状态 */
+  checkStatus?: boolean;
+  /** 备注 */
+  remark?: string;
+}
+
+export type UserAddProxyModuleCreateData = object;
+
+export type UserMdfProxyModuleCreatePayload = {
+  /** 代理ID */
+  id: number;
+  /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】, 非必传 */
+  protocol?: string;
+  /** 城市 */
+  country?: string;
+  /** 代理主机 str, 非必传 */
+  host?: string;
+  /** 代理端口 str, 非必传 */
+  port?: string;
+  /** 代理账号 str, 非必传 */
+  proxyUserName?: string;
+  /** 代理密码 str, 非必传 */
+  proxyPassword?: string;
+  /** 刷新URL str, 非必传 */
+  refreshUrl?: string;
+  /** 查询渠道，默认:http://ip123.in/ip.json, str, 非必传 */
+  checkChannel?: string;
+  /** 出口IP，给用户显示用, 非必传 */
+  lastIp?: string;
+  /** 出口国家，给用户显示用, 非必传 */
+  lastCountry?: string;
+  /** // 出口城市 */
+  lastCity?: string;
+  /** 检测状态, 非必传 */
+  checkStatus?: boolean;
+  /** # 检测时间, 非必传 */
+  checkTime?: string;
+  /** 网络协议，str, 枚举值：IPV4, IPV6, 非必传 */
+  ipType?: string;
+  /** 备注 */
+  remark?: string;
+  /** 是否绑定 */
+  isBind?: boolean;
+  /** 绑定窗口数量 */
+  bindCount?: number;
+  /** 绑定的窗口ID */
+  bindList?: number[];
+  /** 是否加载 */
+  loading?: boolean;
+}[];
+
+export type UserMdfProxyModuleCreateData = object;
+
+export interface UserDelProxyModuleCreatePayload {
+  /** 要删除的代理id列表 */
+  ids: number[];
+}
+
+export type UserDelProxyModuleCreateData = object;
+
+export interface UserUnbindProxyModuleCreatePayload {
+  /** 需要解绑的ip列表 */
+  ids: number[];
+}
+
+export type UserUnbindProxyModuleCreateData = object;
+
+export interface UserCheckIpCreatePayload {
+  /**
+   * 代理id
+   * ID 编号
+   */
+  id: string;
+}
+
+export interface UserCheckIpCreateData {
+  code: number;
+  msg: string;
+  data: {
+    lastIp: string;
+    lastCountry: string;
+    lastCountryEnName: string;
+    lastCountryCnName: string;
+  };
+}
+
+export interface UserGetUserListListParams {
+  /**
+   * 分页索引
+   * @example "1"
+   */
+  page_index?: number;
+  /**
+   * 分页条数
+   * @example "15"
+   */
+  page_size?: number;
+  /**
+   * 用户id
+   * @example "2"
+   */
+  id?: number;
+  /**
+   * 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员
+   * @example "main"
+   */
+  role?: string;
+  /**
+   * 用户名
+   * @example "fbtest"
+   */
+  userName?: string;
+  /**
+   * 账号状态，1: 开启，2: 关闭
+   * @example "1"
+   */
+  status?: number;
+}
+
+export interface UserGetUserListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      userName?: string;
+      role?: string;
+      maxWindowCount?: number;
+      useWindowCount?: number;
+      status?: boolean;
+      realName?: string;
+      password?: string;
+      staffIds?: number[];
+      managerId?: number;
+      grantGroupIds?: number[];
+      avaWindowCount?: number;
+      phone?: string;
+      email?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectStaffListData {
+  code: number;
+  data: {
+    rows: {
+      staffId: number;
+      staffName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectManagerListData {
+  code: number;
+  data: {
+    rows: {
+      managerId: number;
+      managerName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSelectGroupListData {
+  code: number;
+  data: {
+    rows: {
+      groupId: number;
+      groupName: string;
+      userName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddUserListCreatePayload {
+  /** 姓名 */
+  realName: string;
+  /** 用户名 */
+  userName: string;
+  /** 登录密码 */
+  password: string;
+  /** 【注意是页面选择的角色，不是用户本身的角色】, 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员 */
+  role: string;
+  /** 成员列表, 只有 经理 才有 */
+  staffIds?: number[];
+  /** 所属经理，只有 员工 才有 */
+  managerId?: number;
+  /** 授权分组id列表 */
+  grantGroupIds?: number[];
+  /** 可创建窗口数 */
+  maxWindowCount?: number;
+  /** 手机号 */
+  phone?: string;
+  /** 邮箱 */
+  email?: string;
+}
+
+export interface UserAddUserListCreateData {
+  code: number;
+  data: {
+    create_by: number;
+    group_user_id: number;
+  };
+  msg: string;
+}
+
+export interface UserMdfUserListCreatePayload {
+  /** 用户id */
+  id: number;
+  /** 姓名 */
+  realName: string;
+  /** 用户名 */
+  userName: string;
+  /** 登录密码 */
+  password: string;
+  /** 【注意是页面选择的角色，不是用户本身的角色】, 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员 */
+  role: string;
+  /** 管理成员, 只有 经理 才有, 非必传 */
+  staffIds?: number[];
+  /** 所属经理, 只有 员工 才有 */
+  managerId?: number;
+  /** 权分组id列表，只有 经理和员工 才有 */
+  grantGroupIds?: number[];
+  /**  可创建窗口数 */
+  maxWindowCount?: number;
+  /** 手机号 */
+  phone?: string;
+  /** 邮箱 */
+  email?: string;
+  /** 态，枚举值：true：生效，false：失效, true/false */
+  status?: boolean;
+}
+
+export interface UserMdfUserListCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDelUserListCreatePayload {
+  /** 要删除的用户id */
+  id: string;
+}
+
+export interface UserDelUserListCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPluginCategoryListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      categoryName: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetSystemPluginListParams {
+  /**
+   * 分页索引
+   * @example "1"
+   */
+  page_index?: number;
+  /**
+   * 分页条数
+   * @example "9999"
+   */
+  page_size?: number;
+  /**
+   * 扩展分类: 可选值："hot","tool","fanyi","yingxiao","amazon","shopee","sumaitong","whatsapp","dzsw","guanggao","qukuailian","other"
+   * @example "tool"
+   */
+  category?: string;
+  /**
+   * 扩展名称
+   * @example "常用工具"
+   */
+  pluginName?: string;
+}
+
+export interface UserGetSystemPluginListData {
+  code: number;
+  data: {
+    rows: {
+      id: number;
+      pluginDir: string;
+      category: number;
+      categoryName: string;
+      pluginName: string;
+      pluginIcon: string;
+      pluginRoute: string;
+      pluginVersion: string;
+      pluginDesc: string;
+      provider: string;
+      supportCore: string;
+      addStatus: boolean;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddSystemPluginCreatePayload {
+  /** 系统扩展id */
+  id: number;
+}
+
+export interface UserAddSystemPluginCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPluginListListParams {
+  /**
+   * 分页索引
+   * @example "1"
+   */
+  page_index?: number;
+  /**
+   * 分页条数
+   * @example "15"
+   */
+  page_size?: number;
+  /**
+   * 扩展名称
+   * @example "翻译助手"
+   */
+  pluginName?: string;
+  /**
+   * 启用状态，开启：true, 关闭： false
+   * @example "true"
+   */
+  status?: boolean;
+}
+
+export interface UserGetPluginListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 插件id */
+      id?: number;
+      /** 插件来源，枚举：sys: 系统内置,local:本地扩展, store:Chrome商店, 必传 */
+      source?: string;
+      /** 插件dir */
+      pluginDir?: string;
+      /** 插件名称 */
+      pluginName?: string;
+      /** 插件icon地址，oss下载路径 */
+      pluginIcon?: string;
+      /** 插件下载地址，oss下载路径 */
+      pluginRoute?: string;
+      /** 扩展版本, str, 必传 */
+      pluginVersion?: string;
+      /** 扩展版本, str, 必传 */
+      pluginDesc?: string;
+      /** 提供方 */
+      provider?: string;
+      /** 开启：true, 关闭： false */
+      useStatus?: boolean;
+      /** 是否有权限删除 */
+      canDelete?: boolean;
+      /** 上传者 */
+      uploader?: string;
+      /** 最后更新时间 */
+      lateUpdateTime?: string;
+      /** 插件更新状态，0:没有更新，1:有更新 */
+      pluginUpdateState?: number;
+      /** 插件最新版本，通过检测得到 */
+      pluginNewVersion?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserDelPluginInfoCreatePayload {
+  /** 要删除的插件id */
+  id: number;
+}
+
+export interface UserDelPluginInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfPluginStatusCreatePayload {
+  /** ID */
+  id: number;
+  /** 是否启用，true:开启，false:关闭 */
+  useStatus: boolean;
+}
+
+export interface UserMdfPluginStatusCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPlatformInfoListParams {
+  /**
+   * 业务平台
+   * @example "amazon"
+   */
+  platformUrl?: string;
+}
+
+export interface UserGetPlatformInfoListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      /** 业务平台icon */
+      platformIcon?: string;
+      /** url */
+      platformUrl?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddPlatformInfoCreatePayload {
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
+  platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
+}
+
+export interface UserAddPlatformInfoCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
+export interface UserDelPlatformInfoCreatePayload {
+  /** 要删除的业务平台id列表 */
+  ids: number[];
+}
+
+export interface UserDelPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetOperateLogListParams {
+  /**
+   * token必填
+   * @example "6hLvXa548lFZivFw1701699537353"
+   */
+  token: string;
+  /**
+   * 用户名
+   * @example "xxx"
+   */
+  userName?: string;
+  /**
+   * 开始时间
+   * @example "xxx"
+   */
+  startDate?: string;
+  /**
+   * 结束时间
+   * @example "xxx"
+   */
+  endDate?: string;
+  /**
+   * 操作模块
+   * @example "Accounts"
+   */
+  operateModule: string;
+  /**
+   * 用户ID列表
+   * @example "1,2,3"
+   */
+  userNameIds?: string;
+}
+
+export interface UserGetOperateLogListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      userName?: string;
+      role?: string;
+      operateType?: string;
+      operateDetail?: string;
+      operateTime?: string;
+      operateModule?: string;
+      workspaceId?: number;
+      countryCode?: string;
+      status?: boolean;
+      location?: string;
+      country?: string;
+      code?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetLoginLogListParams {
+  /**
+   * token必填
+   * @example "6hLvXa548lFZivFw1701699537353"
+   */
+  token: string;
+  /**
+   * 用户名
+   * @example "xxx"
+   */
+  userName?: string;
+  /**
+   * 开始时间
+   * @example "xxx"
+   */
+  startDate?: string;
+  /**
+   * 结束时间
+   * @example "xxx"
+   */
+  endDate?: string;
+}
+
+export interface UserGetLoginLogListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id: number;
+      userName: string;
+      address: string;
+      location: string;
+      createTime: string;
+    }[];
+  };
   msg: string;
 }
 
@@ -2477,6 +3171,160 @@ export interface UserSaveWindowTableSortOrderCreateData {
   msg: string;
 }
 
+export interface UserMdfPlatformInfoCreatePayload {
+  /** 平台ID */
+  id: number;
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
+  platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
+}
+
+export interface UserMdfPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPlatformInfoV2ListParams {
+  /**
+   * 分页索引
+   * @example "1"
+   */
+  page_index: number;
+  /**
+   * 分页条数
+   * @example "15"
+   */
+  page_size: number;
+  /**
+   * 平台URL
+   * @example "https://www.facebook.com/"
+   */
+  platformUrl?: string;
+  /**
+   * 平台名字
+   * @example "xxxx"
+   */
+  platformName?: string;
+  /**
+   * 平台账号
+   * @example "xxxx"
+   */
+  platformUserName?: string;
+  /**
+   * 排序名称
+   * @example "create_time"
+   */
+  order_name?: string;
+  /**
+   * 排序类型
+   * @example "desc"
+   */
+  order_type?: string;
+}
+
+export interface UserGetPlatformInfoV2ListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 平台ID */
+      id?: number;
+      /** 用户ID */
+      userId?: number;
+      /** 平台url */
+      platformUrl?: string;
+      /** 平台icon */
+      platformIcon?: string;
+      /** 平台账户 */
+      platformUserName?: string;
+      /** 平台密码 */
+      platformPassword?: string;
+      /** 平台2FA密钥 */
+      platformEfa?: string;
+      /** 平台cookies */
+      platformcookies?: string;
+      /** 平台名字 */
+      platformName?: string;
+      /** 平台备注 */
+      platformRemarks?: string;
+      /** 创建时间 */
+      createTime?: string;
+      /** 修改时间 */
+      updateTime?: string;
+      /** 关联窗口ID */
+      window_info?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserUpdatePlatformTableRowsCreatePayload {
+  table_rows: {
+    /** 名称 */
+    name: string;
+    /** 排序 */
+    sort: number;
+    /** 状态 */
+    status: number;
+  }[];
+}
+
+export interface UserUpdatePlatformTableRowsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSavePlatformTableSortOrderCreatePayload {
+  table_sort: {
+    /** 名称 */
+    name?: string;
+    /** 判断降序还是升序 */
+    order?: string;
+  }[];
+}
+
+export interface UserSavePlatformTableSortOrderCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPlatformTableRowsListData {
+  code: number;
+  data: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetPlatformTableSortOrderListData {
+  code: number;
+  data: {
+    /** 排序名称 */
+    order_name?: string;
+    /** 排序类型 */
+    order_type?: string;
+  }[];
+  msg: string;
+}
+
 export interface UserGetWindowTableRowsListData {
   code: number;
   data: {
@@ -2503,22 +3351,22 @@ export interface UserGetWindowTableSortOrderListData {
 export interface UserGetWindowInfoV2ListParams {
   /**
    * 分页索引, int, 非必传, 默认1
-   * @example 1
+   * @example "1"
    */
   page_index: number;
   /**
    * 分页条数, int, 非必传, 默认15
-   * @example 15
+   * @example "15"
    */
   page_size: number;
   /**
    * 标签id,  int, 非必传
-   * @example 2
+   * @example "2"
    */
   labelId?: number;
   /**
    * 分组id, int, 非必传
-   * @example 10
+   * @example "10"
    */
   groupId?: number;
   /**
@@ -2533,12 +3381,12 @@ export interface UserGetWindowInfoV2ListParams {
   sortNums?: string;
   /**
    * 最小序号, int, 非必传
-   * @example 1
+   * @example "1"
    */
   sortMin?: number;
   /**
    * 最大序号, int, 非必传
-   * @example 8
+   * @example "8"
    */
   sortMax?: number;
   /**
@@ -2573,7 +3421,7 @@ export interface UserGetWindowInfoV2ListParams {
   userName?: string;
   /**
    * 绑定了某个代理IP的所有窗口, int, 非必传
-   * @example 10
+   * @example "10"
    */
   moduleId?: number;
   /**
@@ -2583,7 +3431,7 @@ export interface UserGetWindowInfoV2ListParams {
   isBind?: string;
   /**
    * 窗口id
-   * @example 12
+   * @example "12"
    */
   id?: number;
   /**
@@ -2593,12 +3441,12 @@ export interface UserGetWindowInfoV2ListParams {
   dirId?: string;
   /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
-   * @example 1
+   * @example "1"
    */
   windowType?: number;
   /**
    * 排序类型，int, 枚举值，1：序号从大到小，2：序号从小到大，3：创建时间从大到小，4：创建时间从小到大，非必传,默认为 1
-   * @example 1
+   * @example "1"
    */
   sortType?: number;
   /**
@@ -2653,7 +3501,7 @@ export interface UserGetWindowInfoV2ListParams {
   osList?: string;
   /**
    * 代理测试状态,0:没有测试，1:测试成功，2:检测失败
-   * @example 0
+   * @example "0"
    */
   proxyTestStatus?: number;
   /**
@@ -2678,7 +3526,7 @@ export interface UserGetWindowInfoV2ListParams {
   proxyIds?: string;
   /**
    * 是否删除，绑定回收站功能，1.删除，0.不删除
-   * @example 0
+   * @example "0"
    */
   is_delete: number;
   /** 项目ID，默认不传查询所有 */
@@ -3196,6 +4044,35 @@ export interface UserBatchUpdateWindowTableRowsCreateData {
   msg: string;
 }
 
+export interface UserCheckAllPluginsVersionListParams {
+  /** 插件目录ID */
+  pluginDir: string;
+}
+
+export interface UserCheckAllPluginsVersionListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUpgradePluginsCreatePayload {
+  /** 插件目录ID */
+  pluginDir: string;
+  /** 插件名称 */
+  pluginName: string;
+}
+
+export interface UserUpgradePluginsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUploadChromePluginsV2CreatePayload {
+  /** 插件下载地址 */
+  url: string;
+}
+
+export type UserUploadChromePluginsV2CreateData = object;
+
 export interface UserImportWindowInfoV2CreatePayload {
   /** 文件名，str，必传 */
   fileName: string;
@@ -3359,452 +4236,6 @@ export interface UserImportWindowInfoV2CreateData {
   msg: string;
 }
 
-export interface UserGetPlatformInfoListParams {
-  /**
-   * 业务平台
-   * @example "amazon"
-   */
-  platformUrl?: string;
-}
-
-export interface UserGetPlatformInfoListData {
-  code: number;
-  data: {
-    rows: {
-      id?: number;
-      /** 业务平台icon */
-      platformIcon?: string;
-      /** url */
-      platformUrl?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserAddPlatformInfoCreatePayload {
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon: string;
-  /** 平台URL */
-  platformUrl: string;
-  /** 平台账号 */
-  platformUserName: string;
-  /** 平台密码 */
-  platformPassword: string;
-  /** 2FA密钥 */
-  platformEfa: string;
-  /** 平台cookeies */
-  platformCookies: string;
-  /** 平台名称 */
-  platformName: string;
-  /** 平台备注 */
-  platformRemarks: string;
-}
-
-export interface UserAddPlatformInfoCreateData {
-  code: number;
-  data: object;
-  msg: string;
-}
-
-export interface UserDelPlatformInfoCreatePayload {
-  /** 要删除的业务平台id列表 */
-  ids: number[];
-}
-
-export interface UserDelPlatformInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserMdfPlatformInfoCreatePayload {
-  /** 平台ID */
-  id: number;
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon: string;
-  /** 平台URL */
-  platformUrl: string;
-  /** 平台账号 */
-  platformUserName: string;
-  /** 平台密码 */
-  platformPassword: string;
-  /** 2FA密钥 */
-  platformEfa: string;
-  /** 平台cookeies */
-  platformCookies: string;
-  /** 平台名称 */
-  platformName: string;
-  /** 平台备注 */
-  platformRemarks: string;
-}
-
-export interface UserMdfPlatformInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetPlatformInfoV2ListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  page_index: number;
-  /**
-   * 分页条数
-   * @example 15
-   */
-  page_size: number;
-  /**
-   * 平台URL
-   * @example "https://www.facebook.com/"
-   */
-  platformUrl?: string;
-  /**
-   * 平台名字
-   * @example "xxxx"
-   */
-  platformName?: string;
-  /**
-   * 平台账号
-   * @example "xxxx"
-   */
-  platformUserName?: string;
-  /**
-   * 排序名称
-   * @example "create_time"
-   */
-  order_name?: string;
-  /**
-   * 排序类型
-   * @example "desc"
-   */
-  order_type?: string;
-}
-
-export interface UserGetPlatformInfoV2ListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      /** 平台ID */
-      id?: number;
-      /** 用户ID */
-      userId?: number;
-      /** 平台url */
-      platformUrl?: string;
-      /** 平台icon */
-      platformIcon?: string;
-      /** 平台账户 */
-      platformUserName?: string;
-      /** 平台密码 */
-      platformPassword?: string;
-      /** 平台2FA密钥 */
-      platformEfa?: string;
-      /** 平台cookies */
-      platformcookies?: string;
-      /** 平台名字 */
-      platformName?: string;
-      /** 平台备注 */
-      platformRemarks?: string;
-      /** 创建时间 */
-      createTime?: string;
-      /** 修改时间 */
-      updateTime?: string;
-      /** 关联窗口ID */
-      window_info?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserUpdatePlatformTableRowsCreatePayload {
-  table_rows: {
-    /** 名称 */
-    name: string;
-    /** 排序 */
-    sort: number;
-    /** 状态 */
-    status: number;
-  }[];
-}
-
-export interface UserUpdatePlatformTableRowsCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserSavePlatformTableSortOrderCreatePayload {
-  table_sort: {
-    /** 名称 */
-    name?: string;
-    /** 判断降序还是升序 */
-    order?: string;
-  }[];
-}
-
-export interface UserSavePlatformTableSortOrderCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetPlatformTableRowsListData {
-  code: number;
-  data: {
-    /** 名称 */
-    name?: string;
-    /** 排序 */
-    sort?: number;
-    /** 状态 */
-    status?: number;
-  }[];
-  msg: string;
-}
-
-export interface UserGetPlatformTableSortOrderListData {
-  code: number;
-  data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序类型 */
-    order_type?: string;
-  }[];
-  msg: string;
-}
-
-export interface UserGetProxyModuleListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  page_index: number;
-  /**
-   * 分页条数
-   * @example 15
-   */
-  page_size: number;
-  /**
-   * 国家
-   * @example "us"
-   */
-  country?: string;
-  /**
-   * 代理协议，枚举值：HTTP, HTTPS, SOCKS5
-   * @example "SOCKS5"
-   */
-  protocol?: string;
-  /**
-   * 代理IP（代理链接）
-   * @example "13.21.211.11"
-   */
-  host?: string;
-  /**
-   * 排序类型，1：代理ID从大到小，2：代理ID从小到大（老版本用的，新版本可以不用）
-   * @example 1
-   */
-  sortType?: number;
-  /**
-   * 排序字段
-   * @example "createTime"
-   */
-  order_name?: string;
-  /**
-   * 排序规则
-   * @example "desc"
-   */
-  order_type?: string;
-  /**
-   * 代理国家
-   * @example "BR"
-   */
-  lastCountry?: string;
-  /**
-   * 窗口ID
-   * @example "11,22"
-   */
-  id?: string;
-  /**
-   * 代理检测状态，0：未检测，1：检测成功，2：检测失败
-   * @example 0
-   */
-  checkStatus?: number;
-  /**
-   * 创建时间开始, str, 非必传
-   * @example "2024-05-22"
-   */
-  startDate?: string;
-  /**
-   * 创建时间结束, str, 非必传
-   * @example "2024-05-24"
-   */
-  endDate?: string;
-  /**
-   * 代理备注
-   * @example "xxx"
-   */
-  remark?: string;
-}
-
-export interface UserGetProxyModuleListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      /** 代理id，int */
-      id?: number;
-      /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】 */
-      protocol?: string;
-      /** 国家，str */
-      country?: string;
-      /** 代理主机，str */
-      host?: string;
-      /** 代理端口，str */
-      port?: string;
-      /** 代理账号，str */
-      proxyUserName?: string;
-      /** 代理密码，str */
-      proxyPassword?: string;
-      /** 刷新URL, str */
-      refreshUrl?: string;
-      /** 查询渠道，默认:http: //ip123.in/ip.json， str */
-      checkChannel?: string;
-      /** 出口IP */
-      lastIp?: string;
-      /** 出口国家 */
-      lastCountry?: string;
-      /** 出口州/省 */
-      lastState?: string;
-      /** 出口城市 */
-      lastCity?: string;
-      /** 最近一次检测状态，true:正常，false: 错误 */
-      checkStatus?: boolean;
-      /** 最近一次检测检测时间，str */
-      checkTime?: string;
-      /** # 备注 */
-      remark?: string;
-      /** 是否有绑定窗口, 布尔值 */
-      isBind?: boolean;
-      /** 绑定的窗口数量 */
-      bindCount?: number;
-      bindList?: number[];
-      /** 编辑时间 */
-      updateTime?: string;
-      /** 创建时间 */
-      createTime?: string;
-      /** IP类型 */
-      ipType?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserAddProxyModuleCreatePayload {
-  /** 网络协议 */
-  ipType: string;
-  /** 代理协议 */
-  protocol: string;
-  /** 代理主机 */
-  host: string;
-  /** 代理端口 */
-  port: string;
-  /** 代理账号 */
-  proxyUserName?: string;
-  /** 代理密码 */
-  proxyPassword?: string;
-  /** 刷新URL */
-  refreshUrl?: string;
-  /** 查询渠道 */
-  checkChannel?: string;
-  /**  出口IP */
-  lastIp?: string;
-  /** 出口国家 */
-  lastCountry?: string;
-  /** 检测时间 */
-  checkTime?: string;
-  /** 检测状态 */
-  checkStatus?: boolean;
-  /** 备注 */
-  remark?: string;
-}
-
-export type UserAddProxyModuleCreateData = object;
-
-export type UserMdfProxyModuleCreatePayload = {
-  /** 代理ID */
-  id: number;
-  /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】, 非必传 */
-  protocol?: string;
-  /** 城市 */
-  country?: string;
-  /** 代理主机 str, 非必传 */
-  host?: string;
-  /** 代理端口 str, 非必传 */
-  port?: string;
-  /** 代理账号 str, 非必传 */
-  proxyUserName?: string;
-  /** 代理密码 str, 非必传 */
-  proxyPassword?: string;
-  /** 刷新URL str, 非必传 */
-  refreshUrl?: string;
-  /** 查询渠道，默认:http://ip123.in/ip.json, str, 非必传 */
-  checkChannel?: string;
-  /** 出口IP，给用户显示用, 非必传 */
-  lastIp?: string;
-  /** 出口国家，给用户显示用, 非必传 */
-  lastCountry?: string;
-  /** // 出口城市 */
-  lastCity?: string;
-  /** 检测状态, 非必传 */
-  checkStatus?: boolean;
-  /** # 检测时间, 非必传 */
-  checkTime?: string;
-  /** 网络协议，str, 枚举值：IPV4, IPV6, 非必传 */
-  ipType?: string;
-  /** 备注 */
-  remark?: string;
-  /** 是否绑定 */
-  isBind?: boolean;
-  /** 绑定窗口数量 */
-  bindCount?: number;
-  /** 绑定的窗口ID */
-  bindList?: number[];
-  /** 是否加载 */
-  loading?: boolean;
-}[];
-
-export type UserMdfProxyModuleCreateData = object;
-
-export interface UserDelProxyModuleCreatePayload {
-  /** 要删除的代理id列表 */
-  ids: number[];
-}
-
-export type UserDelProxyModuleCreateData = object;
-
-export interface UserUnbindProxyModuleCreatePayload {
-  /** 需要解绑的ip列表 */
-  ids: number[];
-}
-
-export type UserUnbindProxyModuleCreateData = object;
-
-export interface UserCheckIpCreatePayload {
-  /**
-   * 代理id
-   * ID 编号
-   */
-  id: string;
-}
-
-export interface UserCheckIpCreateData {
-  code: number;
-  msg: string;
-  data: {
-    lastIp: string;
-    lastCountry: string;
-    lastCountryEnName: string;
-    lastCountryCnName: string;
-  };
-}
-
 export interface UserGetProxyTableSortOrderListData {
   code: number;
   data: {
@@ -3827,6 +4258,50 @@ export interface UserSaveProxyTableSortOrderCreatePayload {
 
 export interface UserSaveProxyTableSortOrderCreateData {
   code: number;
+  msg: string;
+}
+
+export interface LoginGoogleCreatePayload {
+  /** 传入谷歌登录token */
+  googleToken: string;
+}
+
+export interface LoginGoogleCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+  };
+  msg: string;
+}
+
+export interface LoginGoogleV2CreatePayload {
+  /** 传入谷歌登录token */
+  googleToken: string;
+}
+
+export interface LoginGoogleV2CreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+  };
   msg: string;
 }
 
@@ -3856,572 +4331,6 @@ export interface UserGetProxyTableRowsListData {
     /** 状态 */
     status?: number;
   }[];
-  msg: string;
-}
-
-export interface UserUploadChromePluginsCreatePayload {
-  /** 插件下载地址 */
-  url: string;
-}
-
-export type UserUploadChromePluginsCreateData = object;
-
-export interface UserRecordPluginUploadListData {
-  code: number;
-  data: number;
-  msg: string;
-}
-
-export interface UserUploadPluginInfoCreatePayload {
-  /** 来源，枚举：local:本地扩展, store:Chrome商店 */
-  source: string;
-  /** 插件目录 */
-  pluginDir: string;
-  /** 插件名称 */
-  pluginName: string;
-  /** 插件icon地址 */
-  pluginIcon: string;
-  /** 插件下载地址 */
-  pluginRoute: string;
-  /** 扩展版本 */
-  pluginVersion: string;
-  /** 插件描述 */
-  pluginDesc: string;
-  /** 提供方 */
-  provider?: string;
-}
-
-export interface UserUploadPluginInfoCreateData {
-  code: number;
-  data: {
-    create_by: number;
-    plugin_id: number;
-  };
-  msg: string;
-}
-
-export interface UserGetPluginCategoryListData {
-  code: number;
-  data: {
-    rows: {
-      id: number;
-      categoryName: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserGetSystemPluginListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  page_index?: number;
-  /**
-   * 分页条数
-   * @example 9999
-   */
-  page_size?: number;
-  /**
-   * 扩展分类: 可选值："hot","tool","fanyi","yingxiao","amazon","shopee","sumaitong","whatsapp","dzsw","guanggao","qukuailian","other"
-   * @example "tool"
-   */
-  category?: string;
-  /**
-   * 扩展名称
-   * @example "常用工具"
-   */
-  pluginName?: string;
-}
-
-export interface UserGetSystemPluginListData {
-  code: number;
-  data: {
-    rows: {
-      id: number;
-      pluginDir: string;
-      category: number;
-      categoryName: string;
-      pluginName: string;
-      pluginIcon: string;
-      pluginRoute: string;
-      pluginVersion: string;
-      pluginDesc: string;
-      provider: string;
-      supportCore: string;
-      addStatus: boolean;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserAddSystemPluginCreatePayload {
-  /** 系统扩展id */
-  id: number;
-}
-
-export interface UserAddSystemPluginCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetPluginListListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  page_index?: number;
-  /**
-   * 分页条数
-   * @example 15
-   */
-  page_size?: number;
-  /**
-   * 扩展名称
-   * @example "翻译助手"
-   */
-  pluginName?: string;
-  /**
-   * 启用状态，开启：true, 关闭： false
-   * @example "true"
-   */
-  status?: boolean;
-}
-
-export interface UserGetPluginListListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      /** 插件id */
-      id?: number;
-      /** 插件来源，枚举：sys: 系统内置,local:本地扩展, store:Chrome商店, 必传 */
-      source?: string;
-      /** 插件dir */
-      pluginDir?: string;
-      /** 插件名称 */
-      pluginName?: string;
-      /** 插件icon地址，oss下载路径 */
-      pluginIcon?: string;
-      /** 插件下载地址，oss下载路径 */
-      pluginRoute?: string;
-      /** 扩展版本, str, 必传 */
-      pluginVersion?: string;
-      /** 扩展版本, str, 必传 */
-      pluginDesc?: string;
-      /** 提供方 */
-      provider?: string;
-      /** 开启：true, 关闭： false */
-      useStatus?: boolean;
-      /** 是否有权限删除 */
-      canDelete?: boolean;
-      /** 上传者 */
-      uploader?: string;
-      /** 最后更新时间 */
-      lateUpdateTime?: string;
-      /** 插件更新状态，0:没有更新，1:有更新 */
-      pluginUpdateState?: number;
-      /** 插件最新版本，通过检测得到 */
-      pluginNewVersion?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserDelPluginInfoCreatePayload {
-  /** 要删除的插件id */
-  id: number;
-}
-
-export interface UserDelPluginInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserMdfPluginStatusCreatePayload {
-  /** ID */
-  id: number;
-  /** 是否启用，true:开启，false:关闭 */
-  useStatus: boolean;
-}
-
-export interface UserMdfPluginStatusCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserCheckAllPluginsVersionListParams {
-  /** 插件目录ID */
-  pluginDir: string;
-}
-
-export interface UserCheckAllPluginsVersionListData {
-  code: number;
-  msg: string;
-}
-
-export interface UserUpgradePluginsCreatePayload {
-  /** 插件目录ID */
-  pluginDir: string;
-  /** 插件名称 */
-  pluginName: string;
-}
-
-export interface UserUpgradePluginsCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserUploadChromePluginsV2CreatePayload {
-  /** 插件下载地址 */
-  url: string;
-}
-
-export type UserUploadChromePluginsV2CreateData = object;
-
-export interface UserBatchDelPluginInfoCreatePayload {
-  /** 插件id列表 */
-  ids: number[];
-}
-
-export interface UserBatchDelPluginInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetPluginWindowListParams {
-  /**
-   * 插件ID
-   * @example 1
-   */
-  pluginId: number;
-}
-
-export interface UserGetPluginWindowListData {
-  code: number;
-  data: {
-    rows: {
-      /** 项目ID */
-      id?: number;
-      /** 项目名称 */
-      projectName?: string;
-      /** 插件ID */
-      pluginIds?: string;
-      /** 项目安装状态 */
-      plugin_install_status?: number;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserAddPluginToWindowCreatePayload {
-  /** 安装类型 0:全部安装，1:部分安装 */
-  installType: number;
-  /** 插件ID */
-  pluginId: number;
-  /** 项目ID */
-  projectId: number[];
-  /** 插件安装状态 */
-  installStatus: number[];
-}
-
-export interface UserAddPluginToWindowCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetUserListListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  page_index?: number;
-  /**
-   * 分页条数
-   * @example 15
-   */
-  page_size?: number;
-  /**
-   * 用户id
-   * @example 2
-   */
-  id?: number;
-  /**
-   * 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员
-   * @example "main"
-   */
-  role?: string;
-  /**
-   * 用户名
-   * @example "fbtest"
-   */
-  userName?: string;
-  /**
-   * 账号状态，1: 开启，2: 关闭
-   * @example 1
-   */
-  status?: number;
-}
-
-export interface UserGetUserListListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      id?: number;
-      userName?: string;
-      role?: string;
-      maxWindowCount?: number;
-      useWindowCount?: number;
-      status?: boolean;
-      realName?: string;
-      password?: string;
-      staffIds?: number[];
-      managerId?: number;
-      grantGroupIds?: number[];
-      avaWindowCount?: number;
-      phone?: string;
-      email?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserSelectStaffListData {
-  code: number;
-  data: {
-    rows: {
-      staffId: number;
-      staffName: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserSelectManagerListData {
-  code: number;
-  data: {
-    rows: {
-      managerId: number;
-      managerName: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserSelectGroupListData {
-  code: number;
-  data: {
-    rows: {
-      groupId: number;
-      groupName: string;
-      userName: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserAddUserListCreatePayload {
-  /** 姓名 */
-  realName: string;
-  /** 用户名 */
-  userName: string;
-  /** 登录密码 */
-  password: string;
-  /** 【注意是页面选择的角色，不是用户本身的角色】, 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员 */
-  role: string;
-  /** 成员列表, 只有 经理 才有 */
-  staffIds?: number[];
-  /** 所属经理，只有 员工 才有 */
-  managerId?: number;
-  /** 授权分组id列表 */
-  grantGroupIds?: number[];
-  /** 可创建窗口数 */
-  maxWindowCount?: number;
-  /** 手机号 */
-  phone?: string;
-  /** 邮箱 */
-  email?: string;
-}
-
-export interface UserAddUserListCreateData {
-  code: number;
-  data: {
-    create_by: number;
-    group_user_id: number;
-  };
-  msg: string;
-}
-
-export interface UserMdfUserListCreatePayload {
-  /** 用户id */
-  id: number;
-  /** 姓名 */
-  realName: string;
-  /** 用户名 */
-  userName: string;
-  /** 登录密码 */
-  password: string;
-  /** 【注意是页面选择的角色，不是用户本身的角色】, 枚举值：main:主账号, admin:管理员, manager:经理, staff:成员 */
-  role: string;
-  /** 管理成员, 只有 经理 才有, 非必传 */
-  staffIds?: number[];
-  /** 所属经理, 只有 员工 才有 */
-  managerId?: number;
-  /** 权分组id列表，只有 经理和员工 才有 */
-  grantGroupIds?: number[];
-  /**  可创建窗口数 */
-  maxWindowCount?: number;
-  /** 手机号 */
-  phone?: string;
-  /** 邮箱 */
-  email?: string;
-  /** 态，枚举值：true：生效，false：失效, true/false */
-  status?: boolean;
-}
-
-export interface UserMdfUserListCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserDelUserListCreatePayload {
-  /** 要删除的用户id */
-  id: string;
-}
-
-export interface UserDelUserListCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetMemberInfoByWorkspaceListParams {
-  /**
-   *  Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1) Manager(管理者,枚举：2)，不传查询所有
-   * @example 1
-   */
-  role?: number;
-}
-
-export interface UserGetMemberInfoByWorkspaceListData {
-  code: number;
-  data: {
-    rows: {
-      /** 用户ID */
-      user_id: number;
-      /** 权限 */
-      role: number;
-      /** 激活状态 0:没有激活,1:激活 */
-      status: number;
-      /** 用户邮箱 */
-      email?: string;
-      /** 项目信息 */
-      project_info: {
-        /** 项目ID */
-        project_id: number;
-        /** 项目名称 */
-        projectName: string;
-      }[];
-      /** 用户名 */
-      userName?: string;
-      /** 用户头像 */
-      avatar: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserGetOperateLogListParams {
-  /**
-   * token必填
-   * @example "6hLvXa548lFZivFw1701699537353"
-   */
-  token: string;
-  /**
-   * 用户名
-   * @example "xxx"
-   */
-  userName?: string;
-  /**
-   * 开始时间
-   * @example "xxx"
-   */
-  startDate?: string;
-  /**
-   * 结束时间
-   * @example "xxx"
-   */
-  endDate?: string;
-  /**
-   * 操作模块
-   * @example "Accounts"
-   */
-  operateModule: string;
-  /**
-   * 用户ID列表
-   * @example "1,2,3"
-   */
-  userNameIds?: string;
-}
-
-export interface UserGetOperateLogListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      id?: number;
-      userName?: string;
-      role?: string;
-      operateType?: string;
-      operateDetail?: string;
-      operateTime?: string;
-      operateModule?: string;
-      workspaceId?: number;
-      countryCode?: string;
-      status?: boolean;
-      location?: string;
-      country?: string;
-      code?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserGetLoginLogListParams {
-  /**
-   * token必填
-   * @example "6hLvXa548lFZivFw1701699537353"
-   */
-  token: string;
-  /**
-   * 用户名
-   * @example "xxx"
-   */
-  userName?: string;
-  /**
-   * 开始时间
-   * @example "xxx"
-   */
-  startDate?: string;
-  /**
-   * 结束时间
-   * @example "xxx"
-   */
-  endDate?: string;
-}
-
-export interface UserGetLoginLogListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      id: number;
-      userName: string;
-      address: string;
-      location: string;
-      createTime: string;
-    }[];
-  };
   msg: string;
 }
 
@@ -4479,16 +4388,6 @@ export interface UserMdfWorkspaceInfoCreateData {
   msg: string;
 }
 
-export interface UserDelWorkspaceInfoCreatePayload {
-  /** 工作空间ID */
-  workspaceId: number;
-}
-
-export interface UserDelWorkspaceInfoCreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserAddProjectInfoCreatePayload {
   /** 项目名称 */
   projectName: string;
@@ -4507,6 +4406,57 @@ export interface UserMdfProjectInfoCreatePayload {
 }
 
 export interface UserMdfProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserBatchDelPluginInfoCreatePayload {
+  /** 插件id列表 */
+  ids: number[];
+}
+
+export interface UserBatchDelPluginInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetPluginWindowListParams {
+  /**
+   * 插件ID
+   * @example "1"
+   */
+  pluginId: number;
+}
+
+export interface UserGetPluginWindowListData {
+  code: number;
+  data: {
+    rows: {
+      /** 项目ID */
+      id?: number;
+      /** 项目名称 */
+      projectName?: string;
+      /** 插件ID */
+      pluginIds?: string;
+      /** 项目安装状态 */
+      plugin_install_status?: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAddPluginToWindowCreatePayload {
+  /** 安装类型 0:全部安装，1:部分安装 */
+  installType: number;
+  /** 插件ID */
+  pluginId: number;
+  /** 项目ID */
+  projectId: number[];
+  /** 插件安装状态 */
+  installStatus: number[];
+}
+
+export interface UserAddPluginToWindowCreateData {
   code: number;
   msg: string;
 }
@@ -4573,7 +4523,7 @@ export interface UserGetMemberInfoByWorkspaceListData {
 export interface UserGetMemberInfoByProjectIdListParams {
   /**
    * 项目ID
-   * @example 1
+   * @example "1"
    */
   projectId: number;
 }
@@ -4644,6 +4594,20 @@ export interface UserDelWorkspaceInfoCreatePayload {
 }
 
 export interface UserDelWorkspaceInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfTeamInfoV2CreatePayload {
+  /** 用户ID */
+  userId: number;
+  /** 权限 */
+  role: number;
+  /** 项目ID列表 */
+  projectIds: number[];
+}
+
+export interface UserMdfTeamInfoV2CreateData {
   code: number;
   msg: string;
 }

@@ -43,7 +43,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserGetPlatformInfoList
    * @summary 业务平台查询（显示我们系统自带的平台）
    * @request GET:/user_get_platform_info
-   * @response `200` `UserGetPlatformInfoListData`
+   * @response `200` `UserGetPlatformInfoListData` 成功
    */
   userGetPlatformInfoList = (query: UserGetPlatformInfoListParams, params: RequestParams = {}) =>
     this.http.request<UserGetPlatformInfoListData, any>({
@@ -60,7 +60,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserAddPlatformInfoCreate
    * @summary 业务平台新增
    * @request POST:/user_add_platform_info
-   * @response `200` `UserAddPlatformInfoCreateData`
+   * @response `200` `UserAddPlatformInfoCreateData` 成功
    */
   userAddPlatformInfoCreate = (data: UserAddPlatformInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddPlatformInfoCreateData, any>({
@@ -78,7 +78,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserDelPlatformInfoCreate
    * @summary 业务平台删除
    * @request POST:/user_del_platform_info
-   * @response `200` `UserDelPlatformInfoCreateData`
+   * @response `200` `UserDelPlatformInfoCreateData` 成功
    */
   userDelPlatformInfoCreate = (data: UserDelPlatformInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelPlatformInfoCreateData, any>({
@@ -96,7 +96,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserMdfPlatformInfoCreate
    * @summary 业务平台修改
    * @request POST:/user_mdf_platform_info
-   * @response `200` `UserMdfPlatformInfoCreateData`
+   * @response `200` `UserMdfPlatformInfoCreateData` 成功
    */
   userMdfPlatformInfoCreate = (data: UserMdfPlatformInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfPlatformInfoCreateData, any>({
@@ -114,7 +114,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserGetPlatformInfoV2List
    * @summary 业务平台查询（只显示当前用户添加的平台）
    * @request GET:/user_get_platform_info_v2
-   * @response `200` `UserGetPlatformInfoV2ListData`
+   * @response `200` `UserGetPlatformInfoV2ListData` 成功
    */
   userGetPlatformInfoV2List = (query: UserGetPlatformInfoV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetPlatformInfoV2ListData, any>({
@@ -131,7 +131,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserUpdatePlatformTableRowsCreate
    * @summary 修改业务平台表格列顺序
    * @request POST:/user_update_platform_table_rows
-   * @response `200` `UserUpdatePlatformTableRowsCreateData`
+   * @response `200` `UserUpdatePlatformTableRowsCreateData` 成功
    */
   userUpdatePlatformTableRowsCreate = (data: UserUpdatePlatformTableRowsCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpdatePlatformTableRowsCreateData, any>({
@@ -149,7 +149,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserSavePlatformTableSortOrderCreate
    * @summary 保存业务平台列表排序规则
    * @request POST:/user_save_platform_table_sort_order
-   * @response `200` `UserSavePlatformTableSortOrderCreateData`
+   * @response `200` `UserSavePlatformTableSortOrderCreateData` 成功
    */
   userSavePlatformTableSortOrderCreate = (
     data: UserSavePlatformTableSortOrderCreatePayload,
@@ -170,7 +170,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserGetPlatformTableRowsList
    * @summary 获取业务平台表格列顺序
    * @request GET:/user_get_platform_table_rows
-   * @response `200` `UserGetPlatformTableRowsListData`
+   * @response `200` `UserGetPlatformTableRowsListData` 成功
    */
   userGetPlatformTableRowsList = (params: RequestParams = {}) =>
     this.http.request<UserGetPlatformTableRowsListData, any>({
@@ -186,7 +186,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @name UserGetPlatformTableSortOrderList
    * @summary 获取业务平台列表排序规则
    * @request GET:/user_get_platform_table_sort_order
-   * @response `200` `UserGetPlatformTableSortOrderListData`
+   * @response `200` `UserGetPlatformTableSortOrderListData` 成功
    */
   userGetPlatformTableSortOrderList = (params: RequestParams = {}) =>
     this.http.request<UserGetPlatformTableSortOrderListData, any>({
