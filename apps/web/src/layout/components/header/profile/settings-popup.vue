@@ -33,14 +33,14 @@ const active = ref('Profiles')
         Client Settings
       </div>
       <div class="menu-list">
-        <div v-for="item in list" :key="item.label" class="menu-list-item cursor-pointer"
+        <div v-for="item in list" :key="item.label" class="menu-list-item select-none cursor-pointer"
           :class="{ active: item.label === active }" @click="active = item.label">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
       </div>
     </div>
-    <div>
+    <div class="content">
       <Profile v-show="active === 'Profiles'" />
       <Preferences v-show="active === 'Preferences'" />
       <Network v-show="active === 'Network'" />
@@ -93,5 +93,10 @@ const active = ref('Profiles')
       }
     }
   }
+}
+
+.content {
+  margin: 0 auto;
+  width: calc(50% - 24px);
 }
 </style>
