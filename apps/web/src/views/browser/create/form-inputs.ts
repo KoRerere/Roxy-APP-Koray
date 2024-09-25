@@ -822,6 +822,16 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
+      label: '启动浏览器前删除Local Storage',
+      name: 'clearLocalStorage',
+      value: data.clearLocalStorage ?? false,
+      options: [
+        { label: '开启', value: true },
+        { label: '关闭', value: false },
+      ],
+    },
+    {
+      type: 'radio',
       label: '启动浏览器时随机指纹',
       name: 'randomFingerprint',
       value: data.randomFingerprint ?? false,
