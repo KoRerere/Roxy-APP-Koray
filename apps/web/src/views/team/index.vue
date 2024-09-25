@@ -100,8 +100,10 @@ async function tableRequest(params: any) {
   return API.team.userGetMemberInfoByWorkspaceList(params)
 }
 
+console.log(toRaw(workspaceStore.currentWorkspace))
+
 function tableOperation(data: TableRow) {
-  const disabled = workspaceStore.currentWorkspace?.role && workspaceStore.currentWorkspace.role <= data.role
+  const disabled = (workspaceStore.currentWorkspace?.role ?? -1) <= data.role
   return [
     {
       name: 'edit',
