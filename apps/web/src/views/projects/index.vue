@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
@@ -6,8 +7,8 @@ import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { inviteUsersFormSchemas, projectFormSchemas } from './schemas'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 
+import actions from '/@/components/actions.vue'
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
@@ -106,11 +107,10 @@ function tableRequest(params: any) {
   return getProjects(params)
 }
 
-function deletePopup(data: any) {
-  const datas = [].concat(data)
+function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>) {
   confirm.require({
     header: '警告',
-    message: `确定删除此项目(${data.projectName})吗?`,
+    message: `确定删除此项目(${item.projectName})吗?`,
     rejectProps: {
       label: '取消',
       severity: 'secondary',
@@ -121,9 +121,14 @@ function deletePopup(data: any) {
       severity: 'danger',
     },
     accept: async () => {
-      const ids = datas.map((item: any) => item.id)
-      // const { msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id })
+      if (code === 0) {
+        tableRef.value?.refresh()
+        toast.add({ severity: 'success', summary: '成功', detail: '删除成功', life: 3000 })
+      }
+      else {
+        toast.add({ severity: 'error', summary: '失败', detail: msg || '删除失败', life: 3000 })
+      }
     },
   })
 }

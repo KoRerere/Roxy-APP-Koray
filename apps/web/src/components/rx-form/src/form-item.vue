@@ -160,10 +160,6 @@ label {
   height: 32px;
   justify-content: v-bind('labelAlign');
 
-  &.horizontal {
-    width: v-bind('formProps.labelWidth');
-  }
-
   &::after {
     content: ':';
     position: relative;
@@ -183,6 +179,10 @@ label {
 
   &.vertical {
     flex-direction: column;
+  }
+
+  &.horizontal label {
+    width: v-bind('formProps.labelWidth');
   }
 }
 </style>

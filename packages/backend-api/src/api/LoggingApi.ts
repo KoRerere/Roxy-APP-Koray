@@ -31,7 +31,7 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @name UserGetOperateLogList
    * @summary 操作日志->获取日志
    * @request GET:/user_get_operate_log
-   * @response `200` `UserGetOperateLogListData` 成功
+   * @response `200` `UserGetOperateLogListData`
    */
   userGetOperateLogList = (query: UserGetOperateLogListParams, params: RequestParams = {}) =>
     this.http.request<UserGetOperateLogListData, any>({
@@ -48,7 +48,7 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @name UserGetLoginLogList
    * @summary 登录日志->获取日志
    * @request GET:/user_get_login_log
-   * @response `200` `UserGetLoginLogListData` 成功
+   * @response `200` `UserGetLoginLogListData`
    */
   userGetLoginLogList = (query: UserGetLoginLogListParams, params: RequestParams = {}) =>
     this.http.request<UserGetLoginLogListData, any>({

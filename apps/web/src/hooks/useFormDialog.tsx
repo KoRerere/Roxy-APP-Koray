@@ -47,9 +47,10 @@ export function useFormDialog() {
     if (_modalInstance) {
       return _modalInstance
     }
+    const div = document.createElement('div')
     const vnode = createVNode(FormDialogComponent)
     vnode.appContext = appContext
-    render(vnode, document.body)
+    render(vnode, div)
     _modalInstance = vnode.component!
     await nextTick()
     return _modalInstance
