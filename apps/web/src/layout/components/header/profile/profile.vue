@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+
 const inputs = [
   {
     label: 'Email address',
@@ -16,12 +18,24 @@ const inputs = [
 
 <template>
   <div class="w-full">
-    <div>Profile</div>
-    <div>Manage your account info and email.</div>
-    <div>Profile picture</div>
-    <div>Picture resolution should be 64px*64px and less than 2MB</div>
+    <div class="title">
+      Profile
+    </div>
+    <div class="description">
+      Manage your account info and email.
+    </div>
+    <div class="sub-title">
+      Profile picture
+    </div>
+    <div class="sub-description">
+      Picture resolution should be 64px*64px and less than 2MB
+    </div>
     <div class="upload-area">
-      11
+      <img class="upload-area-avatar" src="https://via.placeholder.com/64x64">
+      <div class="upload-area-buttons">
+        <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_delete" label="Remove" />
+        <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload" />
+      </div>
     </div>
     <div v-for="input in inputs" :key="input.label" class="inputs">
       <div class="inputs-label">
@@ -36,15 +50,56 @@ const inputs = [
 </template>
 
 <style lang="scss" scoped>
+.title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+}
+
+.description {
+  color: var(--Colors-Text-text-secondary, #575d61);
+  font-size: 12px;
+  line-height: normal;
+}
+
+.sub-title {
+  margin-top: var(--oversize-spacing-3rem, 48px);
+  color: #000;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.sub-description {
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-size: 10px;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
 .upload-area {
+  position: relative;
   display: flex;
-  height: 200px;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
-  align-self: stretch;
+  justify-content: center;
+  margin-top: 8px;
+  height: 200px;
   border-radius: var(--radius-md, 6px);
   background: var(--Color-neutrals-100, #f0f3f5);
+
+  &-avatar {
+    width: 100px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+
+  &-buttons {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    gap: 8px;
+  }
 }
 
 .inputs {

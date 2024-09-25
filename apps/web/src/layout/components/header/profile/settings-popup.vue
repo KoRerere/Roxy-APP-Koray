@@ -97,6 +97,7 @@ const active = ref('Profiles')
 
 .content {
   margin: 0 auto;
+  padding-top: 24px;
   width: calc(50% - 24px);
 }
 </style>
