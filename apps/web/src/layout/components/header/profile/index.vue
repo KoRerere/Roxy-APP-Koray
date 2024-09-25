@@ -80,8 +80,8 @@ function openSettings() {
 }
 
 function toggle(event: Event) {
-  openSettings()
-  // menuRef.value?.toggle(event)
+  // openSettings()
+  menuRef.value?.toggle(event)
 }
 </script>
 
