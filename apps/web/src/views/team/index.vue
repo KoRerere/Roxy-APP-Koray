@@ -1,21 +1,17 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
-// import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import relatedInfo from '/@/components/related-info.vue'
 
-// import { RxSvgIcon } from '/@/components/rx-icon/'
-import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
-// import { useSimpleDialog } from '/@/components/simplePopup'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Membership, Role, roleLabelMap } from '/@/enums'
+import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
 
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const confirm = useConfirm()
-// const dialog = useDialog()
 const toast = useToast()
-// const [dialogOpen] = useSimpleDialog()
 
 const tableRef = useTemplateRef('team')
 
@@ -124,22 +120,20 @@ function tableOperation() {
 }
 
 async function operationHandler(operate: any, data: any) {
-  const datas = [].concat(toRaw(data))
-
   switch (operate.name) {
     case 'edit':
       handleShowInviteUserFormDialog(data)
       break
     case 'delete':
-      deleteMember(datas)
+      deleteMember(data)
       break
   }
 }
 
-async function deleteMember(datas: any) {
+async function deleteMember(datas: any[]) {
   confirm.require({
     header: '警告',
-    message: '确认删除此插件？',
+    message: '确认移除此成员？',
     rejectProps: {
       label: '取消',
       severity: 'secondary',
@@ -151,11 +145,11 @@ async function deleteMember(datas: any) {
     },
     accept: async () => {
       try {
-        const ids = datas.map((item: any) => item.id)
-        const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
+        // const ids = datas.map((item: any) => item.id)
+        // const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-        filters.resetFilters()
+        // toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        // filters.onChange()
       }
       catch (error) {
         console.log('🚀 ~ accept: ~ error:', error)
@@ -165,15 +159,21 @@ async function deleteMember(datas: any) {
 }
 
 function handleShowInviteUserFormDialog(data?: TableRow) {
-  const { email, project_info, role } = data || {}
+  const { email, project_info, role, user_id } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
-  showInviteUserFormDialog({ email, projectIds, role })
+  showInviteUserFormDialog({ email, projectIds, role, user_id })
 }
 </script>
 
 <template>
   <div class="header">
-    Teams
+    <div class="flex-1">
+      Teams
+    </div>
+    <div class="header-guide">
+      <RxSvgIcon name="base/rx_ic_books" />
+      <span>Access control guide</span>
+    </div>
     <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
       @click="handleShowInviteUserFormDialog" />
   </div>
@@ -208,6 +208,9 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 
 <style lang="scss" scoped>
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
   gap: 10px;
   height: 48px;
@@ -218,6 +221,18 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
   font-weight: 600;
   line-height: var(--Line-Height-text-xl, 24px);
   border-bottom: none;
+
+  &-guide {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 4px);
+    color: var(--Colors-Text-text-brand, #12a3fc);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
 }
 
 .member {

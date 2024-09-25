@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { SimpleCache } from '/@/utils/cache'
+import { useWorkspaceStore } from '/@/stores/workspace'
+
+type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 defineProps({
   labels: {
@@ -10,22 +13,27 @@ defineProps({
   },
 })
 
+defineEmits(['update'])
+
+const workspaceStore = useWorkspaceStore()
+
 const [show] = useContextMenu()
-const cache = SimpleCache.getInstance()
-const operation = ref()
 
 async function openMenu(event: any) {
-  await getGroups()
+  const operation = await getGroups()
 
   show(event, {
     type: 'radio',
-    operation: operation.value,
+    operation,
+    onHide: (projectId: string) => {
+      // metaData.value.projectId = projectId
+    },
   })
 }
 
 async function getGroups() {
-  const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
-  operation.value = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.workspaceInfo?.role })
+  return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 }
 </script>
 

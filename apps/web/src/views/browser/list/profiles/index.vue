@@ -264,6 +264,10 @@ async function onEditCookies(cookie: any[]) {
   tableRef.value?.refresh()
 }
 
+function updateProject(projectId: number, data: any) {
+  modifyWindowInfo({ id: data.id, projectId })
+}
+
 function updateTags(labelIds: number[], data: any) {
   modifyWindowInfo({ id: data.id, labelIds })
 }
@@ -426,7 +430,7 @@ defineExpose({
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser(data)" />
     </template>
     <template #project="{ data }">
-      <projectIcon :labels="data.labelInfo" @update="updateTags($event, data)" />
+      <projectIcon :labels="data.labelInfo" @update="updateProject($event, data)" />
     </template>
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="updateTags($event, data)" />
