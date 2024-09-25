@@ -30,7 +30,7 @@ const props = defineProps({
     type: Object as PropType<MetaData>,
     default: () => ({
       projectName: 'No project',
-      projectId: '',
+      projectId: undefined,
       labelIds: [],
       windowRemark: '',
     }),

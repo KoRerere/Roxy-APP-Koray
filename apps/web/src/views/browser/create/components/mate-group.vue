@@ -17,7 +17,7 @@ const cache = SimpleCache.getInstance()
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
     projectName: 'No project',
-    projectId: '',
+    projectId: undefined,
     labelIds: [],
     windowRemark: '',
   },
@@ -31,7 +31,8 @@ async function selectProject(event: Event) {
     type: 'radio',
     operation,
     onHide: (projectId: string) => {
-      metaData.value.projectId = projectId
+      metaData.value.projectId = Number(projectId)
+      metaData.value.projectName = operation.find(item => item.value === projectId)?.label || 'No project'
     },
   })
 }
@@ -57,8 +58,7 @@ function onConfirm(windowRemark: string) {
 <template>
   <div class="flex items-center gap-2">
     <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
-              @click="selectProject"
-    />
+      @click="selectProject" />
     <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
     <remarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
