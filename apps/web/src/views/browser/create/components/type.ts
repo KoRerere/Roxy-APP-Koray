@@ -1,6 +1,6 @@
 export interface MetaData {
   projectName?: string
-  projectId: string
+  projectId: number | undefined
   labelIds: number[]
   windowRemark: string
 }
