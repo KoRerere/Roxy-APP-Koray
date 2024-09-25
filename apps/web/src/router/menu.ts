@@ -112,6 +112,12 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'settings',
         name: 'settings',
         meta: { title: 'Settings', icon: 'base/rx_ic_gear' },
+        component: () => import('/@/views/workspace-setting/index.vue'),
+      },
+      {
+        path: 'settings2',
+        name: 'settings2',
+        meta: { title: 'Settings', icon: 'base/rx_ic_gear' },
         redirect: { name: 'profile' },
         component: () => import('/@/views/setting/index.vue'),
         children: [

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api/'
 import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -8,9 +9,9 @@ import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 const workspaceStore = useWorkspaceStore()
-const selectedWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>({})
-const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
+const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
 const [dialog] = useFormDialog()
+const toast = useToast()
 
 const formSchemas = defineFormSchema([
   {
@@ -37,48 +38,44 @@ const formSchemas = defineFormSchema([
   },
 ])
 
-async function getWorkspace() {
-  const { data } = await API.limit.userGetWorkspaceListList()
-  workspaceList.value = data.rows
-  selectedWorkspace.value = data.rows.find(item => item.id === workspaceStore.workspaceID || item.workspaceDefault)
-}
-
 function showCreateWorkspaceDialog() {
   dialog.showModal({
     header: 'Create new workspace',
     class: 'w-[500px]',
     schemas: formSchemas,
     async handleOk(formModel) {
-      const { data } = await API.limit.userAddWorkspaceInfoCreate(formModel)
-      console.log(data)
-      getWorkspace()
+      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(formModel)
+      if (code === 0) {
+        console.log(data)
+        workspaceStore.getWorkspaceList()
+      }
+      else {
+        console.log(msg)
+        toast.add({ severity: 'error', summary: 'Error', detail: msg })
+        return Promise.reject()
+      }
     },
   })
 }
 
-watch(selectedWorkspace, (value) => {
-  if (value.id) {
-    workspaceStore.setWorkspaceID(value.id)
-    workspaceStore.setWorkspaceInfo(value)
-  }
-})
-
 onBeforeMount(() => {
-  getWorkspace()
+  workspaceStore.getWorkspaceList()
 })
 </script>
 
 <template>
   <div class="workspace">
-    <Select v-model="selectedWorkspace" :options="workspaceList" option-label="name" placeholder="Select a Country"
-      class="workspace-select" :overlay-class="$style['workspace-select-overlay']">
+    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" placeholder="Select a Country"
+            class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
+    >
       <template #value="slotProps">
         <img :alt="slotProps.value.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png">
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
       </template>
       <template #option="slotProps">
         <img :alt="slotProps.option.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-          class="mr-2" style="width: 18px">
+             class="mr-2" style="width: 18px"
+        >
         <div>{{ slotProps.option.workspaceName }}</div>
         <span class="role-tag">
           <RxSvgIcon name="base/rx_ic_internet" size="10" />

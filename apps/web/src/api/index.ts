@@ -20,10 +20,10 @@ export const httpClient = new HttpClient({
 
 httpClient.instance.interceptors.request.use((config) => {
   const { token } = useUserStore()
-  const { workspaceID } = useWorkspaceStore()
+  const { currentWorkspace } = useWorkspaceStore()
   config.headers.token = token
   config.headers.appVersion = '3.0.0'
-  config.headers.workspaceId = workspaceID
+  config.headers.workspaceId = currentWorkspace?.id
   return config
 })
 

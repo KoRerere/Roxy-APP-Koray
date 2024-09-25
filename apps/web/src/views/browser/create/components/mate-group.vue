@@ -24,7 +24,7 @@ const metaData = defineModel<MetaData>('modelValue', {
 })
 
 async function selectProject(event: Event) {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.workspaceInfo?.role })
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
   const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 
   show(event, {
@@ -57,7 +57,8 @@ function onConfirm(windowRemark: string) {
 <template>
   <div class="flex items-center gap-2">
     <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
-      @click="selectProject" />
+              @click="selectProject"
+    />
     <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
     <remarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>

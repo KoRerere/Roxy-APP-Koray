@@ -1,20 +1,23 @@
-import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { API } from '/@/api'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
-  const workspaceID = ref<number>()
-  const workspaceInfo = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
-
-  function setWorkspaceID(id: number) {
-    workspaceID.value = id
-  }
+  const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
+  const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
 
   function setWorkspaceInfo(info: UnwrapRowType<UserGetWorkspaceListListData>) {
-    workspaceInfo.value = info
+    currentWorkspace.value = info
   }
 
-  return { workspaceID, setWorkspaceID, workspaceInfo, setWorkspaceInfo }
+  async function getWorkspaceList() {
+    const { data } = await API.limit.userGetWorkspaceListList()
+    workspaceList.value = data.rows
+    currentWorkspace.value = data.rows.find(item => item.id === currentWorkspace.value?.id || item.workspaceDefault)
+  }
+
+  return { workspaceList, currentWorkspace, setWorkspaceInfo, getWorkspaceList }
 }, {
   persist: true,
 })
