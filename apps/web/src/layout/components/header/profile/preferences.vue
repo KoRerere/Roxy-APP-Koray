@@ -81,9 +81,7 @@ function getList() {
   ]
 }
 
-watch(() => props.data, (value) => {
-  console.log('🚀 ~ watch ~ value:', value)
-
+watch(() => props.data, () => {
   list.value = getList()
 })
 </script>
