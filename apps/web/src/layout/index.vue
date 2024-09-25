@@ -6,7 +6,7 @@ import RxLayoutHeader from './components/header/index.vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
-const { workspaceID } = storeToRefs(useWorkspaceStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
 
 onMounted(() => {
@@ -41,13 +41,13 @@ onMounted(() => {
           </div>
         </template>
       </div>
-      <AsideMenu v-if="workspaceID" :collapsed />
+      <AsideMenu v-if="currentWorkspace?.id" :collapsed />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-content">
-        <RouterView v-if="workspaceID" :key="workspaceID" />
+        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
       </div>
     </main>
   </div>

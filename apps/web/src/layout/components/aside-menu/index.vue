@@ -14,7 +14,7 @@ defineProps({
 })
 
 const router = useRouter()
-const { workspaceID } = storeToRefs(useWorkspaceStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 
 const projectList = computed(() => {
@@ -40,7 +40,7 @@ const menus = computed(() => {
   ]
 })
 
-watch(workspaceID, () => {
+watch(currentWorkspace, () => {
   projectStore.getProjects()
 }, { immediate: true })
 

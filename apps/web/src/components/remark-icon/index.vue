@@ -65,7 +65,8 @@ function onRemark() {
 <template>
   <div class="cursor-pointer" :class="{ 'mode-button': mode === 'button' }" @click.stop="onRemark">
     <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon"
-      :class="{ 'text-gray-200': disabled, 'active': hasRemark }" />
+               :class="{ 'text-gray-200': disabled, 'active': hasRemark }"
+    />
   </div>
 </template>
 

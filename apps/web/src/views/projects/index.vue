@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
@@ -11,7 +10,6 @@ import actions from '/@/components/actions.vue'
 
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
-import { Role } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useProjectStore } from '/@/stores/project'

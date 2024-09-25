@@ -35,7 +35,7 @@ async function openMenu(event: any) {
 }
 
 async function getGroups() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.workspaceInfo?.role })
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
   return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 }
 </script>
