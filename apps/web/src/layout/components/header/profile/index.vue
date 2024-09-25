@@ -17,7 +17,7 @@ const items = ref([
     label: 'Profiles',
     icon: 'base/rx_ic_user_circle',
     command: () => {
-      // router.push({ name: 'profile' })
+      openSettings()
     },
   },
   {
@@ -80,7 +80,6 @@ function openSettings() {
 }
 
 function toggle(event: Event) {
-  // openSettings()
   menuRef.value?.toggle(event)
 }
 </script>

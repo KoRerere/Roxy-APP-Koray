@@ -1,5 +1,5 @@
 import type RyTable from '/@/components/ry-table'
-import type { UserMdfTeamInfoCreatePayload } from '@roxy/backend-api'
+import type { UserMdfTeamInfoV2CreateData } from '@roxy/backend-api'
 import type { Ref } from 'vue'
 import Checkbox from 'primevue/checkbox'
 import { useToast } from 'primevue/usetoast'
@@ -57,7 +57,7 @@ export function useInviteUserFormDialog() {
       },
       async handleOk(formModel) {
         const { code, data, msg } = originl.user_id
-          ? await API.team.userMdfTeamInfoCreate({ ...formModel, userId: originl.user_id } as UserMdfTeamInfoCreatePayload)
+          ? await API.team.userMdfTeamInfoV2Create({ ...formModel, userId: originl.user_id } as UserMdfTeamInfoV2CreateData)
           : await API.limit.userInviteCreate(formModel)
         tableRef?.value?.refresh()
         if (code === 0) {

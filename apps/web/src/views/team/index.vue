@@ -7,11 +7,13 @@ import relatedInfo from '/@/components/related-info.vue'
 
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Membership, Role, roleLabelMap } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
 
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const confirm = useConfirm()
 const toast = useToast()
+const workspaceStore = useWorkspaceStore()
 
 const tableRef = useTemplateRef('team')
 
@@ -98,12 +100,15 @@ async function tableRequest(params: any) {
   return API.team.userGetMemberInfoByWorkspaceList(params)
 }
 
-function tableOperation() {
+function tableOperation(data: TableRow) {
+  const disabled = workspaceStore.currentWorkspace?.role && workspaceStore.currentWorkspace.role <= data.role
   return [
     {
       name: 'edit',
       label: 'check update',
       icon: 'base/rx_ic_edit',
+      disabled,
+      disabledTips: 'Insufficient permissions',
       quick: true,
     },
     {
@@ -113,6 +118,8 @@ function tableOperation() {
       name: 'delete',
       label: 'Delete',
       icon: 'base/rx_ic_bin_1',
+      disabled,
+      disabledTips: 'Insufficient permissions',
       quick: true,
     },
   ]
