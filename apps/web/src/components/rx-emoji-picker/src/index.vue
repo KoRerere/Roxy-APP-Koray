@@ -2,7 +2,6 @@
 import data from '@emoji-mart/data'
 import { Picker } from 'emoji-mart'
 
-let emojiInstance: Picker | null = null
 const modelValue = defineModel<string>()
 
 const op = useTemplateRef('op')
@@ -15,16 +14,23 @@ function onEmojiSelect(emoji: any) {
 }
 
 async function showEmojiPicker(event: MouseEvent) {
-  emojiInstance ||= new Picker({ data, onEmojiSelect })
+  const emojiInstance = new Picker({ data, onEmojiSelect })
   op.value?.toggle(event)
   await nextTick()
   emojiContainerRef.value?.appendChild(emojiInstance)
+  op.value?.alignOverlay()
 }
 </script>
 
 <template>
   <div v-bind="$attrs" class="cursor-pointer" @click="showEmojiPicker">
-    <slot />
+    <slot>
+      <div class="default-box">
+        <div class="emoji-preview">
+          {{ modelValue }}
+        </div>
+      </div>
+    </slot>
   </div>
   <Popover ref="op" :class="$style.popover">
     <div ref="emojiContainer" />
@@ -35,6 +41,42 @@ async function showEmojiPicker(event: MouseEvent) {
   .popover {
   :global(.p-popover-content) {
     padding: 0;
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+.default-box {
+  width: fit-content;
+  display: flex;
+  padding: var(--spacing-sm, 4px);
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-lg, 8px);
+  border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  /* shadow-sm */
+  box-shadow:
+    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+
+  .emoji-preview {
+    display: flex;
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-sm, 4px);
+    background: var(--Color-neutrals-100, #f0f3f5);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--Color-neutrals-100, #f0f3f5);
+    color: var(--Colors-Text-text-subtle, #c7cdd1);
+    text-align: center;
+    font-family: 'JetBrains Mono';
+    font-size: 40px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 28px; /* 70% */
   }
 }
 </style>

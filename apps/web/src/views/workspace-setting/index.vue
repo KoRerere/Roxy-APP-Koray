@@ -17,8 +17,15 @@ const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
 const workspaceInfo = ref({
-  icon: '🚀',
-  name: 'Workspace name',
+  id: currentWorkspace.value?.id,
+  workspacePicture: currentWorkspace.value?.workspacePicture,
+  workspaceName: currentWorkspace.value?.workspaceName,
+})
+
+watch(currentWorkspace, () => {
+  workspaceInfo.value.id = currentWorkspace.value?.id
+  workspaceInfo.value.workspacePicture = currentWorkspace.value?.workspacePicture
+  workspaceInfo.value.workspaceName = currentWorkspace.value?.workspaceName
 })
 
 function showMoreActions(event: MouseEvent) {
@@ -26,18 +33,22 @@ function showMoreActions(event: MouseEvent) {
 }
 
 function handleDeleteConfirm() {
+  const workspaceName = ref('')
   dialog.open(() => {
     const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')!
 
     async function confirmDelete() {
-      const { code, data, msg } = await API.limit.userDelWorkspaceInfoCreate({ workspaceId: currentWorkspace.value?.id })
+      const { code, msg } = await API.limit.userDelWorkspaceInfoCreate({
+        workspaceName: workspaceName.value,
+        workspaceId: currentWorkspace.value?.id,
+      })
       if (code === 0) {
         workspaceStore.getWorkspaceList()
         dialogRef.value.close()
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace deleted successfully' })
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace deleted successfully', life: 3000 })
       }
       else {
-        toast.add({ severity: 'error', summary: 'Error', detail: msg })
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
       }
     }
 
@@ -47,9 +58,11 @@ function handleDeleteConfirm() {
           Are you sure to delete the Workspace?
         </div>
         <div class={styles['delete-confirm-content']}>
-          This action can’t be undo, please type this workspace’s name below, then click the delete button.
+          This action can’t be undo, To confirm, type "
+          <b>{currentWorkspace.value?.workspaceName}</b>
+          " in the box below.
         </div>
-        <InputText class="w-full" placeholder="Workspace name" />
+        <InputText v-model={workspaceName.value} class="w-full" placeholder="Workspace name" />
         <div class="w-full flex justify-end gap-2">
           <RyButton outlined label="Cancel" onClick={() => dialogRef.value.close()} />
           <RyButton severity="danger" label="Delete Workspace" onClick={confirmDelete} />
@@ -63,6 +76,17 @@ function handleDeleteConfirm() {
       blockScroll: true,
     },
   })
+}
+
+async function handleSaveChange() {
+  const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
+  if (code === 0) {
+    workspaceStore.getWorkspaceList()
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace updated successfully', life: 3000 })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+  }
 }
 </script>
 
@@ -78,12 +102,12 @@ function handleDeleteConfirm() {
             Default icon show first 2 letters of your workspace’s name.
           </div>
         </div>
-        <RxEmojiPicker v-model="workspaceInfo.icon" class="logo-wrap">
-          <div class="logo">
-            {{ workspaceInfo.icon }}
+        <div class="emoji-picker-box">
+          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" />
+          <div class="choose-icon-desc">
+            Choose icon
           </div>
-          <div>Choose icon</div>
-        </RxEmojiPicker>
+        </div>
       </div>
 
       <div class="row">
@@ -96,9 +120,9 @@ function handleDeleteConfirm() {
           </div>
         </div>
         <IconField>
-          <InputText v-model="workspaceInfo.name" />
+          <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" />
           <InputIcon>
-            18/30
+            {{ workspaceInfo.workspaceName?.length }}/30
           </InputIcon>
           <div class="description">
             Profile ID: IAM-001, IAM-002
@@ -108,11 +132,11 @@ function handleDeleteConfirm() {
     </div>
 
     <div class="footer">
-      <RyButton type="button" severity="secondary" @click="showMoreActions">
+      <RyButton severity="secondary" @click="showMoreActions">
         <RxSvgIcon name="base/rx_ic_more-h" />
         More
       </RyButton>
-      <Button type="button" label="Save changes" />
+      <RyButton label="Save changes" @click="handleSaveChange" />
     </div>
   </div>
 
@@ -136,7 +160,7 @@ function handleDeleteConfirm() {
 .delete-confirm {
   display: flex;
   width: var(--width-xs, 384px);
-  padding: 24px;
+  padding: 24px 24px 0 24px;
 
   flex-direction: column;
   align-items: flex-start;
@@ -206,39 +230,23 @@ function handleDeleteConfirm() {
       line-height: var(--Line-Height-text-xs, 16px); /* 160% */
     }
 
-    .logo-wrap {
-      display: flex;
-      padding: var(--spacing-sm, 4px);
-      align-items: center;
-      gap: 10px;
-      border-radius: var(--radius-lg, 8px);
-      border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
-
-      /* shadow-sm */
-      box-shadow:
-        0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-        0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-
-      .logo {
-        display: flex;
-        width: 48px;
-        height: 48px;
-        justify-content: center;
-        align-items: center;
-        border-radius: var(--radius-sm, 4px);
-        background: var(--Color-neutrals-100, #f0f3f5);
-        border-radius: var(--radius-sm, 4px);
-        background: var(--Color-neutrals-100, #f0f3f5);
-        color: var(--Colors-Text-text-subtle, #c7cdd1);
-        text-align: center;
-        font-family: 'JetBrains Mono';
-        font-size: 40px;
-        font-style: normal;
-        font-weight: 700;
-        line-height: 28px; /* 70% */
-      }
+    .choose-icon-desc {
+      color: var(--Colors-Text-text-tertiary, #7c8387);
+      text-align: center;
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
     }
   }
+}
+
+.emoji-picker-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm, 4px);
 }
 
 .footer {

@@ -1,7 +1,7 @@
-<script setup lang="ts">
-import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+<script setup lang="tsx">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api/'
+import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { roleLabelMap } from '/@/enums/'
@@ -33,8 +33,8 @@ const formSchemas = defineFormSchema([
   },
   {
     field: 'workspacePicture',
-    component: 'InputText',
-    label: 'Logo',
+    component: ({ formModel }) => <RxEmojiPicker v-model={formModel.workspacePicture} class="!w-[fit-content]" />,
+    label: 'Icon',
   },
 ])
 
@@ -51,7 +51,7 @@ function showCreateWorkspaceDialog() {
       }
       else {
         console.log(msg)
-        toast.add({ severity: 'error', summary: 'Error', detail: msg })
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
         return Promise.reject()
       }
     },

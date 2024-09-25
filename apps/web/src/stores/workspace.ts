@@ -14,7 +14,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   async function getWorkspaceList() {
     const { data } = await API.limit.userGetWorkspaceListList()
     workspaceList.value = data.rows
-    currentWorkspace.value = data.rows.find(item => item.id === currentWorkspace.value?.id || item.workspaceDefault)
+    currentWorkspace.value = data.rows.find((item) => {
+      if (currentWorkspace.value) {
+        return item.id === currentWorkspace.value?.id
+      }
+      return item.workspaceDefault
+    })
+
+    if (!currentWorkspace.value) {
+      currentWorkspace.value = data.rows.find(item => item.workspaceDefault)
+    }
   }
 
   return { workspaceList, currentWorkspace, setWorkspaceInfo, getWorkspaceList }
