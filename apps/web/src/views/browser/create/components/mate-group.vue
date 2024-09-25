@@ -5,6 +5,7 @@ import { API } from '/@/api'
 import remarkIcon from '/@/components/remark-icon'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { isEmptyValue } from '/@/utils'
 import { SimpleCache } from '/@/utils/cache'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
@@ -31,8 +32,10 @@ async function selectProject(event: Event) {
     type: 'radio',
     operation,
     onHide: (projectId: string) => {
-      metaData.value.projectId = Number(projectId)
-      metaData.value.projectName = operation.find(item => item.value === projectId)?.label || 'No project'
+      if (!isEmptyValue(projectId)) {
+        metaData.value.projectId = Number(projectId)
+        metaData.value.projectName = operation.find(item => item.value === projectId)?.label || 'No project'
+      }
     },
   })
 }
@@ -45,7 +48,9 @@ async function selectTags(event: Event) {
     type: 'checkbox',
     operation,
     onHide: (labelIds: string[]) => {
-      metaData.value.labelIds = labelIds.map(Number)
+      if (!isEmptyValue(labelIds)) {
+        metaData.value.labelIds = labelIds.map(Number)
+      }
     },
   })
 }

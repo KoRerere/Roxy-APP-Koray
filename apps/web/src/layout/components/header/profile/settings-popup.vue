@@ -23,7 +23,7 @@ const list = [
   },
 ]
 
-const active = ref('Profiles')
+const active = ref('Preferences')
 </script>
 
 <template>

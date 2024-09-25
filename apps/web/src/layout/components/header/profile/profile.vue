@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-
 const inputs = [
   {
     label: 'Email address',

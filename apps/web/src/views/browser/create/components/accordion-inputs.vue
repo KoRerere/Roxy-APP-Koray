@@ -7,7 +7,7 @@ import urlsItem from './urls.vue'
 
 import inputLabel from '/@/components/ry-form/input-label.vue'
 
-import { filterFieldByValue, getFormDataByList, isEmptyValue } from '/@/utils'
+import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 
 const props = defineProps({
   openBrowser: {
@@ -26,23 +26,37 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
-  metaData: {
-    type: Object as PropType<MetaData>,
-    default: () => ({
-      projectName: 'No project',
-      projectId: undefined,
-      labelIds: [],
-      windowRemark: '',
-    }),
-  },
 })
 
 const emits = defineEmits(['createOpen', 'create'])
 
-const metaData = reactive(props.metaData)
+const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRefs(reactive(useAttrs()))
+
+const hasOuterMetadata = isFunction(onUpdateMetadata?.value)
+
+const innerMetaData = ref<MetaData>({
+  projectName: 'No project',
+  projectId: undefined,
+  labelIds: [],
+  windowRemark: '',
+})
+
+const metaData = computed({
+  get() {
+    return hasOuterMetadata ? outerMetadata.value : innerMetaData.value
+  },
+  set(value: MetaData) {
+    if (hasOuterMetadata) {
+      (onUpdateMetadata?.value as any)(value)
+    }
+    else {
+      innerMetaData.value = value
+    }
+  },
+})
 
 function getFormData(isOpen: boolean) {
-  const _metaData = filterFieldByValue(toRaw(metaData), v => !isEmptyValue(v))
+  const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(props!.inputsGroup, _metaData)
   emits(isOpen ? 'createOpen' : 'create', formData)
 }

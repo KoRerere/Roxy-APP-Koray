@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { MetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { getInputsGroup } from './form-inputs'
@@ -18,6 +19,7 @@ const accordions = ref({
 })
 const inputsGroup = ref()
 const original = ref()
+const metaData = ref<MetaData>()
 
 const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
 
@@ -39,6 +41,12 @@ onMounted(() => {
   windowName.value = data.windowName
   inputsGroup.value = getInputsGroup(data)
   original.value = data
+  metaData.value = {
+    projectName: data.projectName,
+    projectId: data.projectId,
+    labelIds: data.labelIds,
+    windowRemark: data.windowRemark,
+  }
 })
 
 onUnmounted(() => {
@@ -53,7 +61,7 @@ onUnmounted(() => {
         <rxEditDiv v-model="windowName" class="window-name" />
       </div>
       <div class="flex-ovh-1">
-        <accordionInputs v-model:window-name="windowName" :accordions="accordions" :inputs-group="inputsGroup"
+        <accordionInputs v-model:metadata="metaData" :accordions="accordions" :inputs-group="inputsGroup"
           :open-browser="false" is-edit @create="createProfile" />
       </div>
     </div>
