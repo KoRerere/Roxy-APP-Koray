@@ -33,10 +33,6 @@ async function createProfile(formData: any) {
   router.replace({ name: 'browser-list' })
 }
 
-function cancel() {
-  router.back()
-}
-
 onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
 
@@ -58,7 +54,7 @@ onUnmounted(() => {
       </div>
       <div class="flex-ovh-1">
         <accordionInputs v-model:window-name="windowName" :accordions="accordions" :inputs-group="inputsGroup"
-          :open-browser="false" is-edit @cancel="cancel" @create="createProfile" />
+          :open-browser="false" is-edit @create="createProfile" />
       </div>
     </div>
     <previewCard :data="previewData" />

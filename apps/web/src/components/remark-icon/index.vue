@@ -5,9 +5,9 @@ import popup from '/@/components/simplePopup'
 
 const props = defineProps({
   value: String,
-  rows: {
-    type: Array,
-    default: () => [],
+  mode: {
+    type: String as PropType<'icon' | 'button'>,
+    default: 'icon',
   },
   disabled: {
     type: Boolean,
@@ -40,12 +40,13 @@ function onRemark() {
     },
     data: {
       props: {
-        title: '这是标题',
-        content: '这是描述',
+        title: 'Add notes to profile',
+        content: 'Please add notes down below.',
         inputs: [
           {
-            type: 'text',
+            type: 'textarea',
             name: 'remark',
+            placeholder: 'Your notes here...',
             value: props.value,
           },
         ],
@@ -62,9 +63,9 @@ function onRemark() {
 </script>
 
 <template>
-  <div class="flex items-center">
-    <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon cursor-pointer" :size="16"
-      :class="{ 'text-gray-200': disabled, 'active': hasRemark }" @click.stop="onRemark" />
+  <div class="cursor-pointer" :class="{ 'mode-button': mode === 'button' }" @click.stop="onRemark">
+    <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon"
+      :class="{ 'text-gray-200': disabled, 'active': hasRemark }" />
   </div>
 </template>
 
@@ -75,5 +76,15 @@ function onRemark() {
 
 .active {
   color: orange;
+}
+
+.mode-button {
+  display: flex;
+  padding: var(--p-button-sm-padding-y) var(--p-button-sm-padding-x);
+  color: var(--p-button-outlined-secondary-color);
+  background: transparent;
+  border: 1px solid var(--p-button-secondary-border-color);
+  border-color: var(--p-button-outlined-secondary-border-color);
+  border-radius: var(--p-button-border-radius);
 }
 </style>

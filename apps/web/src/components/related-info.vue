@@ -3,8 +3,12 @@ import type { SvgNames } from '/@/components/rx-icon/'
 import ryTag from '/@/components/ry-tag'
 
 const props = defineProps({
+  field: {
+    type: String as PropType<string>,
+    default: '',
+  },
   list: {
-    type: Array as PropType<string[]>,
+    type: Array as PropType<{ [key: string]: any }[]>,
     default: undefined,
   },
   showMax: {
@@ -21,13 +25,15 @@ const hasBindCount = computed(() => {
 })
 
 const bindData = computed(() => {
-  const list = props.list?.slice(0, props.showMax)
-  const surplus = props.list?.slice(props.showMax)
-
+  const _list = props.field
+    ? props.list?.map(item => item[props.field])
+    : props.list
+  const list = _list?.slice(0, props.showMax)
+  const surplus = _list?.slice(props.showMax)
   return {
     list,
     count: surplus?.length,
-    tooltip: `profiles id: ${surplus?.join(', ')}`,
+    tooltip: `other profiles: ${surplus?.join(', ')}`,
   }
 })
 </script>

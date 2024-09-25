@@ -38,7 +38,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserGetUserListList
    * @summary 获取用户列表
    * @request GET:/user_get_user_list
-   * @response `200` `UserGetUserListListData`
+   * @response `200` `UserGetUserListListData` 成功
    */
   userGetUserListList = (query: UserGetUserListListParams, params: RequestParams = {}) =>
     this.http.request<UserGetUserListListData, any>({
@@ -55,7 +55,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserSelectStaffList
    * @summary 添加员工->选择员工列表
    * @request GET:/user_select_staff
-   * @response `200` `UserSelectStaffListData`
+   * @response `200` `UserSelectStaffListData` 成功
    */
   userSelectStaffList = (params: RequestParams = {}) =>
     this.http.request<UserSelectStaffListData, any>({
@@ -71,7 +71,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserSelectManagerList
    * @summary 添加员工->选择所属经理列表
    * @request GET:/user_select_manager
-   * @response `200` `UserSelectManagerListData`
+   * @response `200` `UserSelectManagerListData` 成功
    */
   userSelectManagerList = (params: RequestParams = {}) =>
     this.http.request<UserSelectManagerListData, any>({
@@ -87,7 +87,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserSelectGroupList
    * @summary 添加员工->选择授权分组列表
    * @request GET:/user_select_group
-   * @response `200` `UserSelectGroupListData`
+   * @response `200` `UserSelectGroupListData` 成功
    */
   userSelectGroupList = (params: RequestParams = {}) =>
     this.http.request<UserSelectGroupListData, any>({
@@ -103,7 +103,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserAddUserListCreate
    * @summary 添加员工
    * @request POST:/user_add_user_list
-   * @response `200` `UserAddUserListCreateData`
+   * @response `200` `UserAddUserListCreateData` 成功
    */
   userAddUserListCreate = (data: UserAddUserListCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddUserListCreateData, any>({
@@ -121,7 +121,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserMdfUserListCreate
    * @summary 修改员工
    * @request POST:/user_mdf_user_list
-   * @response `200` `UserMdfUserListCreateData`
+   * @response `200` `UserMdfUserListCreateData` 成功
    */
   userMdfUserListCreate = (data: UserMdfUserListCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfUserListCreateData, any>({
@@ -139,7 +139,7 @@ export class TeamApi<SecurityDataType = unknown> {
    * @name UserDelUserListCreate
    * @summary 员工管理->删除员工
    * @request POST:/user_del_user_list
-   * @response `200` `UserDelUserListCreateData`
+   * @response `200` `UserDelUserListCreateData` 成功
    */
   userDelUserListCreate = (data: UserDelUserListCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelUserListCreateData, any>({

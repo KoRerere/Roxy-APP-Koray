@@ -11,22 +11,26 @@ defineProps({
   },
 })
 
+defineEmits(['update'])
+
 const [show] = useContextMenu()
 const cache = SimpleCache.getInstance()
-const operation = ref()
 
 async function openMenu(event: any) {
-  await getGroups()
+  const operation = await getGroups()
 
   show(event, {
     type: 'checkbox',
-    operation: operation.value,
+    operation,
+    onHide: (labelIds: string[]) => {
+      // metaData.value.labelIds = labelIds.map(Number)
+    },
   })
 }
 
 async function getGroups() {
   const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
-  operation.value = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+  return data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
 }
 </script>
 

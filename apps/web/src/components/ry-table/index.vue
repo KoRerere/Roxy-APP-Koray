@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
-import selectionOperation from './selection-operation.vue'
-import tableConfig from './table-config.vue'
-import tableFilter from './table-filter.vue'
-import tableSort from './table-sort.vue'
+import SelectionOperation from './selection-operation.vue'
+import TableDisplay from './table-display.vue'
+import TableFilter from './table-filter.vue'
+import TableSort from './table-sort.vue'
 
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { isEmptyValue, isFunction } from '/@/utils'
@@ -67,11 +67,15 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  showConfig: {
+  showDisplay: {
     type: Boolean,
     default: true,
   },
   showActions: {
+    type: Boolean,
+    default: true,
+  },
+  showActionsMenu: {
     type: Boolean,
     default: true,
   },
@@ -223,18 +227,16 @@ defineExpose({
   <div class="position-relative w-full h-full rxtable">
     <div v-if="showTableHeader" class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
-        <table-filter :filters="_filters" @change="(data: any) => onChangeParams('filters', data)" />
+        <TableFilter :filters="_filters" @change="onChangeParams('filters', $event)" />
         <slot name="header-extra" />
       </div>
       <div class="flex gap-2">
-        <table-config v-if="showConfig" :columns="columns"
-          @update:columns="(columns: any) => $emit('update:columns', columns)">
+        <TableDisplay v-if="showDisplay" :columns="columns" @update:columns="$emit('update:columns', $event)">
           <template #footer>
             <slot name="config-footer" />
           </template>
-        </table-config>
-
-        <table-sort v-if="sorts.length > 0" :sorts="sorts" @sort="(data: any) => onChangeParams('sort', data)" />
+        </TableDisplay>
+        <TableSort v-if="sorts.length > 0" :sorts="sorts" @sort="onChangeParams('sort', $event)" />
       </div>
     </div>
     <div class="rxtable-body">
@@ -267,9 +269,8 @@ defineExpose({
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <actions :operation="_getOperation(data)"
-                  @quick-click="(operate: any) => operationHandler(operate, data)"
-                  @more="(event: Event) => showOperationMenu(event, data)" />
+                <actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
+                  @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
               </slot>
             </div>
           </template>
@@ -294,13 +295,13 @@ defineExpose({
     </div>
   </div>
   <Transition>
-    <selection-operation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
+    <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
       v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
       @batch-operation="batchOperation">
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
       </template>
-    </selection-operation>
+    </SelectionOperation>
   </Transition>
 </template>
 

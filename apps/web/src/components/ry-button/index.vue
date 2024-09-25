@@ -4,7 +4,7 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 interface Props extends /* @vue-ignore */ ButtonProps {
   icon?: SvgNames
-  onClick?: (e: MouseEvent) => Promise<void> | void
+  onClick?: (e: any) => Promise<void> | void
 }
 
 const props = defineProps<Props>()

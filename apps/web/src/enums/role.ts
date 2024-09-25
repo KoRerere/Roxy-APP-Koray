@@ -15,3 +15,8 @@ export const roleLabelMap = {
   [Role.MANAGER]: '管理者',
   [Role.OWNER]: '拥有者',
 } as const
+
+export enum Membership {
+  notJoined = 0,
+  joinIn = 1,
+}

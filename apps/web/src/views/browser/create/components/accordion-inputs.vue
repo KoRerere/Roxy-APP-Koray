@@ -1,20 +1,13 @@
 <script lang="ts" setup>
+import type { Accordions, MetaData } from './type.ts'
 import accountItem from './account.vue'
+import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
-import ryButton from '/@/components/ry-button'
-import ryForm from '/@/components/ry-form'
+
 import inputLabel from '/@/components/ry-form/input-label.vue'
 
-import { getFormDataByList } from '/@/utils'
-
-interface Accordions {
-  value: string[]
-  panels: {
-    title: string
-    value: string
-  }[]
-}
+import { filterFieldByValue, getFormDataByList, isEmptyValue } from '/@/utils'
 
 const props = defineProps({
   openBrowser: {
@@ -33,24 +26,38 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  metaData: {
+    type: Object as PropType<MetaData>,
+    default: () => ({
+      projectName: 'No project',
+      projectId: '',
+      labelIds: [],
+      windowRemark: '',
+    }),
+  },
 })
-const emits = defineEmits(['cancel', 'createOpen', 'create'])
+
+const emits = defineEmits(['createOpen', 'create'])
+
+const metaData = reactive(props.metaData)
 
 function getFormData(isOpen: boolean) {
-  const formData = getFormDataByList(props!.inputsGroup)
+  const _metaData = filterFieldByValue(toRaw(metaData), v => !isEmptyValue(v))
+  const formData = getFormDataByList(props!.inputsGroup, _metaData)
   emits(isOpen ? 'createOpen' : 'create', formData)
 }
 </script>
 
 <template>
   <div class="flex-ovh-1 flex-col">
-    <div v-if="accordions" class="flex-1 overflow-auto accordion-contianer">
-      <Accordion :value="accordions.value" multiple>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value">
+    <div v-if="accordions" class="flex-1 overflow-auto content">
+      <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
-          <AccordionContent>
+          <AccordionContent :pt="{ content: '!py-4 !px-2' }">
             <ryForm :inputs="inputsGroup[index]" label-position="left">
               <template #System="{ input }">
                 <div class="flex flex-row">
@@ -94,8 +101,7 @@ function getFormData(isOpen: boolean) {
       </Accordion>
     </div>
     <div class="footer">
-      <ryButton class="ma-auto ml-0" size="small" severity="secondary" label="Cancel" text
-        @click.stop="$emit('cancel')" />
+      <mateGroup v-model="metaData" class="flex-1" />
       <ryButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
         @click.stop="getFormData(true)" />
       <ryButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
@@ -105,8 +111,8 @@ function getFormData(isOpen: boolean) {
 </template>
 
 <style lang="scss" scoped>
-.accordion-contianer {
-  padding: 0 var(--spacing-md, 12px);
+.content {
+  padding: 0 var(--spacing-md, 12px) 40px;
 }
 
 .accordion-header {
@@ -115,13 +121,11 @@ function getFormData(isOpen: boolean) {
   border-radius: 4px;
 }
 
-:deep(.p-accordioncontent-content) {
-  padding: 16px 8px;
-}
-
 .footer {
   display: flex;
-  gap: var(--spacing-xl, 12px);
-  padding: var(--spacing-md, 6px) 8px;
+  align-items: center;
+  padding: var(--spacing-2xl, 16px) 66px;
+  gap: var(--spacing-lg, 8px);
+  border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 </style>

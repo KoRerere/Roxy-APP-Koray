@@ -107,7 +107,7 @@ function saveSelected() {
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="agent" v-model:selection="selection" :table-request="getTableList" :show-gridlines="false"
-        :columns="columns" :show-config="false" selection-mode="single" :context-menu="false">
+        :columns="columns" :show-display="false" selection-mode="single" :context-menu="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"

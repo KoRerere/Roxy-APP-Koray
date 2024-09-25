@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type { ToastMessageOptions } from 'primevue/toast'
+import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
-// import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import relatedInfo from '/@/components/related-info.vue'
+
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { Membership, Role, roleLabelMap } from '/@/enums'
+import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
 
-// import { useSimpleDialog } from '/@/components/simplePopup'
-import { Role } from '/@/enums'
-
+const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const confirm = useConfirm()
-// const dialog = useDialog()
 const toast = useToast()
-// const [dialogOpen] = useSimpleDialog()
 
-const tableRef = useTemplateRef('extable')
+const tableRef = useTemplateRef('team')
+
+type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
 const columns = ref([
   {
@@ -25,12 +25,13 @@ const columns = ref([
   },
   {
     title: 'Status',
-    key: 'useStatus',
+    key: 'status',
+    getText: (row: TableRow) => row.status === Membership.joinIn ? 'Active' : 'Pending',
   },
   {
     title: 'Membership',
     key: 'source',
-    getText: (row: any) => row.uploader || row.source || '未知',
+    getText: (row: TableRow) => roleLabelMap[row.role as Role],
   },
   {
     title: 'Related Projects',
@@ -60,7 +61,7 @@ const filters = reactive({
     },
   ],
   onChange() {
-    tableRef.value?.refresh({ status: filters.value })
+    tableRef.value?.refresh({ role: filters.value })
   },
   resetFilters() {
     filters.value = null
@@ -94,21 +95,16 @@ const sorts = ref([
 ])
 
 async function tableRequest(params: any) {
-  return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })// 不分页
+  return API.limit.userGetMemberInfoByWorkspaceList(params)
 }
 
 function tableOperation() {
   return [
     {
-      name: 'checkUpdate',
+      name: 'edit',
       label: 'check update',
-      icon: 'base/rx_ic_clock_rotate',
-    },
-    {
-      name: 'setting',
-      label: 'Setting',
-      icon: 'base/rx_ic_gear',
-      multiple: true,
+      icon: 'base/rx_ic_edit',
+      quick: true,
     },
     {
       separator: true,
@@ -117,29 +113,27 @@ function tableOperation() {
       name: 'delete',
       label: 'Delete',
       icon: 'base/rx_ic_bin_1',
+      quick: true,
       multiple: true,
     },
   ]
 }
 
 async function operationHandler(operate: any, data: any) {
-  const datas = [].concat(toRaw(data))
-
   switch (operate.name) {
-    case 'updateLocal':
-      break
-    case 'setting':
+    case 'edit':
+      handleShowInviteUserFormDialog(data)
       break
     case 'delete':
-      deleteMember(datas)
+      deleteMember(data)
       break
   }
 }
 
-async function deleteMember(datas: any) {
+async function deleteMember(datas: any[]) {
   confirm.require({
     header: '警告',
-    message: '确认删除此插件？',
+    message: '确认移除此成员？',
     rejectProps: {
       label: '取消',
       severity: 'secondary',
@@ -151,11 +145,11 @@ async function deleteMember(datas: any) {
     },
     accept: async () => {
       try {
-        const ids = datas.map((item: any) => item.id)
-        const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
+        // const ids = datas.map((item: any) => item.id)
+        // const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-        filters.resetFilters()
+        // toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        // filters.onChange()
       }
       catch (error) {
         console.log('🚀 ~ accept: ~ error:', error)
@@ -163,16 +157,30 @@ async function deleteMember(datas: any) {
     },
   })
 }
+
+function handleShowInviteUserFormDialog(data?: TableRow) {
+  const { email, project_info, role, user_id } = data || {}
+  const projectIds = project_info?.map(item => item.project_id)
+  showInviteUserFormDialog({ email, projectIds, role, user_id })
+}
 </script>
 
 <template>
   <div class="header">
-    Teams
+    <div class="flex-1">
+      Teams
+    </div>
+    <div class="header-guide">
+      <RxSvgIcon name="base/rx_ic_books" />
+      <span>Access control guide</span>
+    </div>
+    <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
+      @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
+  <ry-table ref="team" scrollable selection-mode="multiple" :table-operation="tableOperation"
     :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-config="false" :show-gridlines="false" :paginator="false">
+    :show-gridlines="false" :paginator="false" :show-actions-menu="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
@@ -181,26 +189,28 @@ async function deleteMember(datas: any) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <img class="member-image" :src="data.pluginIcon">
+        <img class="member-image" :src="data.avatar">
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
-            {{ data.pluginName }}
+            {{ data.email }}
           </div>
           <div class="member-info-name">
-            {{ data.pluginVersion }}
+            {{ data.userName }}
           </div>
         </div>
       </div>
     </template>
     <template #related="{ data }">
-      <!-- {{ data.relatedProjects }} -->
-      <relatedInfo />
+      <relatedInfo :list="data.project_info" :show-max="2" icon="base/rx_ic_stack" field="projectName" />
     </template>
   </ry-table>
 </template>
 
 <style lang="scss" scoped>
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
   gap: 10px;
   height: 48px;
@@ -211,6 +221,18 @@ async function deleteMember(datas: any) {
   font-weight: 600;
   line-height: var(--Line-Height-text-xl, 24px);
   border-bottom: none;
+
+  &-guide {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 4px);
+    color: var(--Colors-Text-text-brand, #12a3fc);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
 }
 
 .member {

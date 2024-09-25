@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { MenuItem } from 'primevue/menuitem'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-defineProps({
+const props = defineProps({
   type: {
     type: String as PropType<'default' | 'checkbox' | 'radio'>,
     default: 'default',
@@ -15,13 +15,23 @@ defineProps({
     type: Function as PropType<(item: MenuItem) => void>,
     default: () => () => { },
   },
+  selected: {
+    type: Array as PropType<any>,
+    default: undefined,
+  },
+  onHide: {
+    type: Function as PropType<(select: any) => void>,
+    default: () => () => { },
+  },
 })
 
-const selected = ref()
+const selected = ref(props.selected)
 
 const ctxMenu = ref()
 
 function onHide() {
+  props.onHide(toRaw(selected.value))
+  selected.value = undefined
 }
 </script>
 
@@ -29,13 +39,20 @@ function onHide() {
   <ContextMenu ref="ctxMenu" :model="operation" @hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
+        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
+          @click.stop>
+          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop />
+          <span>{{ item.label }}</span>
+        </label>
+
         <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
           @click.stop>
           <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
+
         <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">
-          <RxSvgIcon v-if="item.icon" :name="item.icon" :size="16" />
+          <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" :size="16" />
           <span>{{ item.label }}</span>
         </div>
       </a>
