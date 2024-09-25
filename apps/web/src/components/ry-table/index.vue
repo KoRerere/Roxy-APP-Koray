@@ -185,7 +185,7 @@ async function _request(outerParams?: any) {
 }
 
 function _getOperation(data: any) {
-  return !isEmptyValue(props.operation) ? props.operation : props.tableOperation(data).filter((item: any) => item.power !== false)
+  return (!isEmptyValue(props.operation) ? props.operation : props.tableOperation(data)).filter((item: any) => item.power !== false)
 }
 
 function _clearSelection() {

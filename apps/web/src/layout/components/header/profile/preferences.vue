@@ -1,71 +1,91 @@
 <script setup lang="ts">
-const list = ref([
-  {
-    title: 'Interface',
-    items: [
-      {
-        label: 'Language',
-        text: 'Not your language include? <span class="text-blue">Contact us</span>',
-        value: null,
-        options: [
-          { label: 'New York', value: 'NY' },
-          { label: 'London', value: 'LDN' },
-          { label: 'Paris', value: 'PRS' },
-        ],
-      },
-      {
-        label: 'Timezone',
-        text: 'Some hints for you',
-        value: null,
-        options: [
-          { label: 'Rome', value: 'RM' },
-          { label: 'London', value: 'LDN' },
-          { label: 'Paris', value: 'PRS' },
-        ],
-      },
-      {
-        label: 'Appearance',
-        text: 'Themes for different mode',
-        value: null,
-        options: [
-          { label: 'London', value: 'LDN' },
-          { label: 'London', value: 'LDN' },
-          { label: 'Paris', value: 'PRS' },
-        ],
-      },
-    ],
+import type { UserConfig } from './type'
+
+const props = defineProps({
+  data: {
+    type: Object as PropType<UserConfig>,
+    default: undefined,
   },
-  {
-    title: 'Local Settings',
-    items: [
-      {
-        label: 'Cash Folder Directory',
-        text: 'Where to store your cash files in roxy',
-        value: null,
-        options: [
-          { label: 'Istanbul', value: 'IST' },
-          { label: 'London', value: 'LDN' },
-          { label: 'Paris', value: 'PRS' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Behavior',
-    items: [
-      {
-        label: 'Close Button',
-        text: 'Behavior while click the close button',
-        value: 'pop',
-        options: [
-          { label: 'Popup tips', value: 'pop' },
-          { label: 'Hide client', value: 'min' },
-          { label: 'Close client', value: 'exit' },
-        ],
-      },
-    ],
-  },
-])
+})
+
+const list = ref()
+
+function getList() {
+  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+  return [
+    {
+      title: 'Interface',
+      items: [
+        {
+          label: 'Language',
+          name: 'language',
+          text: 'Not your language include? <span class="text-blue">Contact us</span>',
+          value: props.data?.language,
+          options: [
+            { label: 'New York', value: 'NY' },
+            { label: 'London', value: 'LDN' },
+            { label: 'Paris', value: 'PRS' },
+          ],
+        },
+        {
+          label: 'Timezone',
+          name: 'timezone',
+          text: 'Some hints for you',
+          value: props.data?.timeZone,
+          options: $dict_map.timeZone,
+        },
+        {
+          label: 'Appearance',
+          text: 'Themes for different mode',
+          value: null,
+          options: [
+            { label: 'London', value: 'LDN' },
+            { label: 'London', value: 'LDN' },
+            { label: 'Paris', value: 'PRS' },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Local Settings',
+      items: [
+        {
+          label: 'Cash Folder Directory',
+          text: 'Where to store your cash files in roxy',
+          name: 'cacheDir',
+          value: props.data?.cacheDir,
+          options: [
+            { label: 'Istanbul', value: 'IST' },
+            { label: 'London', value: 'LDN' },
+            { label: 'Paris', value: 'PRS' },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Behavior',
+      items: [
+        {
+          label: 'Close Button',
+          text: 'Behavior while click the close button',
+          name: 'closeSoft',
+          value: props.data?.closeSoft,
+          options: [
+            { label: 'Popup tips', value: 'pop' },
+            { label: 'Hide client', value: 'min' },
+            { label: 'Close client', value: 'exit' },
+          ],
+        },
+      ],
+    },
+  ]
+}
+
+watch(() => props.data, (value) => {
+  console.log('🚀 ~ watch ~ value:', value)
+
+  list.value = getList()
+})
 </script>
 
 <template>

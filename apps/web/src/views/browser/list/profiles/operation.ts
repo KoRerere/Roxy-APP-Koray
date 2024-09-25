@@ -1,9 +1,12 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { setInputValueByFormData } from '/@/utils'
+import { Role } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { SimpleCache } from '/@/utils/cache'
 
 const cache = SimpleCache.getInstance()
+const workspaceStore = useWorkspaceStore()
+
 export function tableFilters(_params: any = {}) {
   return [
     // {
@@ -229,13 +232,17 @@ export function getSorts(params: any = {}) {
 }
 
 export function getOperation(_params: any = {}) {
+  const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
+
   return [
     {
       name: 'edit',
       label: '编辑',
       icon: 'base/rx_ic_edit',
+      power: !isViewer,
     },
     {
+      power: !isViewer,
       separator: true,
     },
     {
@@ -274,6 +281,7 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
+      power: !isViewer,
       separator: true,
       multiple: true,
     },
@@ -281,14 +289,17 @@ export function getOperation(_params: any = {}) {
       name: 'editCookies',
       label: '编辑cookies',
       icon: 'base/rx_ic_edit',
+      power: !isViewer,
     },
     {
+      power: !isViewer,
       separator: true,
     },
     {
       name: 'delete',
       label: '删除',
       icon: 'base/rx_ic_bin_1',
+      power: !isViewer,
       multiple: true,
     },
   ]
