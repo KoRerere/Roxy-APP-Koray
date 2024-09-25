@@ -264,12 +264,10 @@ async function onEditCookies(cookie: any[]) {
   tableRef.value?.refresh()
 }
 
-function updateProject(projectId: number, data: any) {
-  modifyWindowInfo({ id: data.id, projectId })
-}
-
-function updateTags(labelIds: number[], data: any) {
-  modifyWindowInfo({ id: data.id, labelIds })
+async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
+  const { msg } = await modifyWindowInfo({ id: data.id, ...params })
+  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  tableRef.value?.refresh()
 }
 
 function modifyWindowInfo(params: any) {
@@ -430,10 +428,10 @@ defineExpose({
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser(data)" />
     </template>
     <template #project="{ data }">
-      <projectIcon :labels="data.labelInfo" @update="updateProject($event, data)" />
+      <projectIcon :project-name="data.projectName" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
-      <tagsIcon :labels="data.labelInfo" @update="updateTags($event, data)" />
+      <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">

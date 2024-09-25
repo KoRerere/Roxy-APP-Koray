@@ -44,8 +44,6 @@ import {
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
-  UserMdfTeamInfoCreateData,
-  UserMdfTeamInfoCreatePayload,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
   UserSendEmailVerifyCodeListData,
@@ -387,24 +385,6 @@ export class BaseApi<SecurityDataType = unknown> {
   userGetSystemDictV2Create = (data: UserGetSystemDictV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserGetSystemDictV2CreateData, any>({
       path: `/user_get_system_dict_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserMdfTeamInfoCreate
-   * @summary 修改团队
-   * @request POST:/user_mdf_team_info
-   * @response `200` `UserMdfTeamInfoCreateData` 成功
-   */
-  userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfTeamInfoCreateData, any>({
-      path: `/user_mdf_team_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,

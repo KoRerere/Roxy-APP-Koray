@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { isEmptyValue } from '/@/utils'
 import { SimpleCache } from '/@/utils/cache'
 
 defineProps({
@@ -11,7 +12,7 @@ defineProps({
   },
 })
 
-defineEmits(['update'])
+const emit = defineEmits(['update'])
 
 const [show] = useContextMenu()
 const cache = SimpleCache.getInstance()
@@ -23,7 +24,9 @@ async function openMenu(event: any) {
     type: 'checkbox',
     operation,
     onHide: (labelIds: string[]) => {
-      // metaData.value.labelIds = labelIds.map(Number)
+      if (!isEmptyValue(labelIds)) {
+        emit('update', { labelIds: labelIds.map(Number) })
+      }
     },
   })
 }

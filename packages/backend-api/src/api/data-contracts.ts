@@ -385,8 +385,12 @@ export interface UserGetSystemDictV2CreateData {
 }
 
 export interface UserMdfTeamInfoCreatePayload {
-  /** 团队名称 */
-  name: string;
+  /** 用户ID */
+  userId: number;
+  /** 权限 */
+  role: number;
+  /** 项目ID列表 */
+  projectIds: number[];
 }
 
 export interface UserMdfTeamInfoCreateData {
@@ -4484,16 +4488,6 @@ export interface UserGetProjectInfoByWorkspaceListData {
   msg: string;
 }
 
-export interface UserDelWorkspaceInfoCreatePayload {
-  /** 工作空间ID */
-  id: number;
-}
-
-export interface UserDelWorkspaceInfoCreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserGetMemberInfoByWorkspaceListParams {
   /**
    *  Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1) Manager(管理者,枚举：2)，不传查询所有
@@ -4514,13 +4508,17 @@ export interface UserGetMemberInfoByWorkspaceListData {
       status: number;
       /** 用户邮箱 */
       email?: string;
+      /** 项目信息 */
       project_info: {
         /** 项目ID */
         project_id: number;
         /** 项目名称 */
         projectName: string;
       }[];
+      /** 用户名 */
       userName?: string;
+      /** 用户头像 */
+      avatar: string;
     }[];
   };
   msg: string;
@@ -4580,6 +4578,40 @@ export interface UserAddUserByProjectInfoCreatePayload {
 }
 
 export interface UserAddUserByProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDelProjectInfoCreatePayload {
+  /** 项目ID */
+  projectId: number;
+}
+
+export interface UserDelProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDelWorkspaceInfoCreatePayload {
+  /** 工作空间ID */
+  workspaceId: number;
+}
+
+export interface UserDelWorkspaceInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDelTeamInfoCreatePayload {
+  /** 用户ID */
+  userId: number;
+  /** 权限 */
+  role: number;
+  /** 项目ID列表 */
+  projectIds: number[];
+}
+
+export interface UserDelTeamInfoCreateData {
   code: number;
   msg: string;
 }

@@ -3,17 +3,18 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { isEmptyValue } from '/@/utils'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 defineProps({
-  labels: {
-    type: Array as PropType<any[]>,
-    default: () => ([]),
+  projectName: {
+    type: String,
+    default: undefined,
   },
 })
 
-defineEmits(['update'])
+const emit = defineEmits(['update'])
 
 const workspaceStore = useWorkspaceStore()
 
@@ -26,7 +27,9 @@ async function openMenu(event: any) {
     type: 'radio',
     operation,
     onHide: (projectId: string) => {
-      // metaData.value.projectId = projectId
+      if (!isEmptyValue(projectId)) {
+        emit('update', { projectId: Number(projectId) })
+      }
     },
   })
 }
@@ -38,7 +41,7 @@ async function getGroups() {
 </script>
 
 <template>
-  <ryButton severity="secondary" size="small" icon="base/rx_ic_stack" :label="labels[0]?.labelName" @click="openMenu" />
+  <ryButton severity="secondary" size="small" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
 </template>
 
 <style scoped></style>

@@ -95,7 +95,7 @@ const sorts = ref([
 ])
 
 async function tableRequest(params: any) {
-  return API.limit.userGetMemberInfoByWorkspaceList(params)
+  return API.team.userGetMemberInfoByWorkspaceList(params)
 }
 
 function tableOperation() {
@@ -114,12 +114,11 @@ function tableOperation() {
       label: 'Delete',
       icon: 'base/rx_ic_bin_1',
       quick: true,
-      multiple: true,
     },
   ]
 }
 
-async function operationHandler(operate: any, data: any) {
+async function operationHandler(operate: any, data: TableRow) {
   switch (operate.name) {
     case 'edit':
       handleShowInviteUserFormDialog(data)
@@ -130,7 +129,7 @@ async function operationHandler(operate: any, data: any) {
   }
 }
 
-async function deleteMember(datas: any[]) {
+async function deleteMember(data: TableRow) {
   confirm.require({
     header: '警告',
     message: '确认移除此成员？',
@@ -145,11 +144,10 @@ async function deleteMember(datas: any[]) {
     },
     accept: async () => {
       try {
-        // const ids = datas.map((item: any) => item.id)
-        // const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
-
-        // toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-        // filters.onChange()
+        const projectIds = data.project_info.map(item => item.project_id)
+        const { msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
+        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        filters.onChange()
       }
       catch (error) {
         console.log('🚀 ~ accept: ~ error:', error)
@@ -178,9 +176,9 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="team" scrollable selection-mode="multiple" :table-operation="tableOperation"
-    :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-gridlines="false" :paginator="false" :show-actions-menu="false">
+  <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler"
+    :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
+    :show-actions-menu="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"

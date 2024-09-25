@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Network from './network.vue'
 import Notification from './notification.vue'
-import Profile from './profile.vue'
+import Profile from './profile'
 import ResourceUpdater from './resource-updater.vue'
 import WorkspaceSelect from './workspace-select.vue'
 </script>
@@ -19,7 +19,7 @@ import WorkspaceSelect from './workspace-select.vue'
 </template>
 
 <style lang="scss" scoped>
- .rx-layout-header {
+.rx-layout-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
