@@ -12,10 +12,16 @@
 import {
   UserAddUserListCreateData,
   UserAddUserListCreatePayload,
+  UserDelTeamInfoCreateData,
+  UserDelTeamInfoCreatePayload,
   UserDelUserListCreateData,
   UserDelUserListCreatePayload,
+  UserGetMemberInfoByWorkspaceListData,
+  UserGetMemberInfoByWorkspaceListParams,
   UserGetUserListListData,
   UserGetUserListListParams,
+  UserMdfTeamInfoCreateData,
+  UserMdfTeamInfoCreatePayload,
   UserMdfUserListCreateData,
   UserMdfUserListCreatePayload,
   UserSelectGroupListData,
@@ -31,6 +37,24 @@ export class TeamApi<SecurityDataType = unknown> {
     this.http = http;
   }
 
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserMdfTeamInfoCreate
+   * @summary 修改团队信息(新团队管理修改)
+   * @request POST:/user_mdf_team_info
+   * @response `200` `UserMdfTeamInfoCreateData` 成功
+   */
+  userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfTeamInfoCreateData, any>({
+      path: `/user_mdf_team_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
   /**
    * No description
    *
@@ -144,6 +168,41 @@ export class TeamApi<SecurityDataType = unknown> {
   userDelUserListCreate = (data: UserDelUserListCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelUserListCreateData, any>({
       path: `/user_del_user_list`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserGetMemberInfoByWorkspaceList
+   * @summary 获取成员所在的项目(新团队管理列表)
+   * @request GET:/user_get_member_info_by_workspace
+   * @response `200` `UserGetMemberInfoByWorkspaceListData` 成功
+   */
+  userGetMemberInfoByWorkspaceList = (query: UserGetMemberInfoByWorkspaceListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetMemberInfoByWorkspaceListData, any>({
+      path: `/user_get_member_info_by_workspace`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Team
+   * @name UserDelTeamInfoCreate
+   * @summary 删除团队信息(新团队管理删除)
+   * @request POST:/user_del_team_info
+   * @response `200` `UserDelTeamInfoCreateData` 成功
+   */
+  userDelTeamInfoCreate = (data: UserDelTeamInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDelTeamInfoCreateData, any>({
+      path: `/user_del_team_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,
