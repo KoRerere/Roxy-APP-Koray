@@ -56,11 +56,11 @@ const list = ref([
       {
         label: 'Close Button',
         text: 'Behavior while click the close button',
-        value: null,
+        value: 'pop',
         options: [
-          { label: 'Paris', value: 'PRS' },
-          { label: 'London', value: 'LDN' },
-          { label: 'Paris', value: 'PRS' },
+          { label: 'Popup tips', value: 'pop' },
+          { label: 'Hide client', value: 'min' },
+          { label: 'Close client', value: 'exit' },
         ],
       },
     ],

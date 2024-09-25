@@ -34,8 +34,8 @@ function quickClick(item: any) {
   <div class="flex items-center">
     <div class="quick">
       <RxSvgIcon v-for="item in quickOperation" :key="item.name"
-        v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500 }" class="quick-item"
-        :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
+        v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }"
+        class="quick-item" :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
         :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]"
         @click.stop="quickClick(item)" />
     </div>
