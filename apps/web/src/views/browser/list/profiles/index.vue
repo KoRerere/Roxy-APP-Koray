@@ -13,13 +13,14 @@ import drawersitems from './components/drawers-item.vue'
 import editCookies from './components/edit-cookies.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
-
 import projectIcon from './components/project-icon.vue'
+
 import tagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
-
 import { API } from '/@/api'
+
 import actions from '/@/components/actions.vue'
+
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
@@ -37,12 +38,12 @@ const props = defineProps({
 
 const emit = defineEmits(['updateFilterTabs'])
 
+const route = useRoute()
+const router = useRouter()
+
 const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
-
-const route = useRoute()
-const router = useRouter()
 
 const [columns] = useColumns(columnsRow)
 const [show] = useContextMenu()
@@ -407,6 +408,7 @@ defineExpose({
 })
 </script>
 
+<!-- :show-actions="isViewer" :context-menu="isViewer" -->
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
@@ -420,7 +422,6 @@ defineExpose({
         Save for default display
       </div>
     </template>
-
     <template #profile="{ data }">
       <profile-info :data="data" @profile-operate="profileOperate($event, data)" />
     </template>

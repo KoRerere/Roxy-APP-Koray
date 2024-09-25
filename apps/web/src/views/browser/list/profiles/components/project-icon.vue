@@ -2,11 +2,11 @@
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
-
 defineProps({
   projectName: {
     type: String,
@@ -19,6 +19,7 @@ const emit = defineEmits(['update'])
 const workspaceStore = useWorkspaceStore()
 
 const [show] = useContextMenu()
+const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
 
 async function openMenu(event: any) {
   const operation = await getGroups()
@@ -41,7 +42,8 @@ async function getGroups() {
 </script>
 
 <template>
-  <ryButton severity="secondary" size="small" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
+  <ryButton :disabled="isViewer" severity="secondary" size="small" icon="base/rx_ic_stack" :label="projectName"
+    @click="openMenu" />
 </template>
 
 <style scoped></style>

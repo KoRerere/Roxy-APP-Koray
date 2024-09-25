@@ -2,7 +2,7 @@
 import Network from './network.vue'
 import Preferences from './preferences.vue'
 import Profile from './profile.vue'
-
+import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 const list = [
@@ -24,6 +24,17 @@ const list = [
 ]
 
 const active = ref('Preferences')
+
+const userConfig = ref()
+
+async function getUserConfig() {
+  const { data } = await API.base.userGetUserConfigList()
+  userConfig.value = data
+}
+
+onMounted(() => {
+  getUserConfig()
+})
 </script>
 
 <template>
@@ -43,7 +54,7 @@ const active = ref('Preferences')
     <div class="settings-content">
       <div class="settings-content-wrapper">
         <Profile v-show="active === 'Profiles'" />
-        <Preferences v-show="active === 'Preferences'" />
+        <Preferences v-show="active === 'Preferences'" :data="userConfig" />
         <Network v-show="active === 'Network'" />
       </div>
     </div>
