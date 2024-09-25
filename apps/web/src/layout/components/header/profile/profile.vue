@@ -2,13 +2,13 @@
 const inputs = [
   {
     label: 'Email address',
-    help: '',
+    text: '',
     value: 'iamhandian@gmail.com',
     disabled: true,
   },
   {
     label: 'Username',
-    help: 'Usually used in teamworks and members.',
+    text: 'Usually used in teamworks and members.',
     value: 'username',
   },
 ]
@@ -39,8 +39,8 @@ const inputs = [
       <div class="inputs-label">
         {{ input.label }}
       </div>
-      <div class="inputs-help">
-        {{ input.help }}
+      <div class="inputs-text">
+        {{ input.text }}
       </div>
       <InputText v-model="input.value" class="inputs-input" type="text" :disabled="input.disabled" />
     </div>
@@ -117,7 +117,7 @@ const inputs = [
     line-height: normal;
   }
 
-  &-help {
+  &-text {
     grid-area: left-bottom;
     color: var(--Colors-Text-text-tertiary, #7c8387);
     font-size: 10px;
