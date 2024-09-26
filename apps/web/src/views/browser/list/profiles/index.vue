@@ -34,6 +34,10 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
+  enabledFilterSave: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['updateFilterTabs'])
@@ -98,15 +102,13 @@ const drawer = reactive({
 })
 
 watch(() => props.currentFilter, (params: any) => {
-  if (params && params.name !== 'recycle') {
+  if (params?.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         ctmFilters.value = data
         filterChange()
       })
   }
-}, {
-  immediate: true,
 })
 
 watch(
@@ -396,6 +398,10 @@ let canceCloselListener: any
 onMounted(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
+
+  getCustomFilters().then((data) => {
+    ctmFilters.value ??= data
+  })
 })
 
 onBeforeUnmount(() => {
@@ -415,7 +421,8 @@ defineExpose({
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple">
     <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
+      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="enabledFilterSave" @filter-change="filterChange"
+        @save-filters="saveFilters" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { he } from 'date-fns/locale'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'

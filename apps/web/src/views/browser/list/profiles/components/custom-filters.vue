@@ -12,6 +12,10 @@ const _props = defineProps({
     type: Array as PropType<any[]>,
     default: () => [],
   },
+  enabledFilterSave: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['filterChange', 'saveFilters'])
@@ -195,7 +199,7 @@ const items = [
         <span v-if="!filterTagList.length">Add filters</span>
       </ryButton>
     </div>
-    <div v-show="isChanged" class="filter-actions">
+    <div v-show="enabledFilterSave && isChanged" class="filter-actions">
       <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
       <ryButton severity="info" size="small" label="Save" @click="saveFilters" />
 

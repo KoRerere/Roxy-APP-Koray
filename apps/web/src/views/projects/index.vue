@@ -15,6 +15,8 @@ import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useProjectStore } from '/@/stores/project'
 
+import { useRoleStore } from '/@/stores/role'
+
 const tableRef = useTemplateRef('accountTable')
 const [dialog] = useFormDialog()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
@@ -24,23 +26,30 @@ const { getProjects } = useProjectStore()
 
 const [columns] = useColumns(columnsRow)
 
+const role = useRoleStore()
+
+const hasPermission = computed(() => role.isOwner || role.isManager)
+
 const operation = ref([
   {
     name: 'edit',
     label: '编辑',
     icon: 'base/rx_ic_edit',
+    power: hasPermission.value,
     quick: true,
   },
   {
     name: 'invite',
     label: '邀请',
     icon: 'base/rx_ic_user_add',
+    power: hasPermission.value,
     quick: true,
   },
   {
     name: 'delete',
     label: '删除',
     icon: 'base/rx_ic_bin_1',
+    power: hasPermission.value,
     quick: true,
     multiple: true,
   },
@@ -138,14 +147,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Projects</div>
-      <RxButton size="small" severity="info" icon="base/rx_ic_plus" label="Add project"
-                @click="operationHandler({ name: 'create' })"
-      />
+      <RxButton v-if="hasPermission" size="small" severity="info" icon="base/rx_ic_plus" label="Add project"
+        @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-      >
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false">
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -160,13 +167,6 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
               Detail
             </router-link>
           </RxButton>
-        </template>
-        <template #actions="{ data }">
-          <div class="flex gap-2">
-            <actions :operation="operation" :show-menu="false"
-                     @quick-click="(operate: any) => operationHandler(operate, data)"
-            />
-          </div>
         </template>
       </ry-table>
     </div>

@@ -27,10 +27,11 @@ function handleShowInviteUserFormDialog() {
         </div>
       </div>
       <div>
-        <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite" @click="handleShowInviteUserFormDialog" />
+        <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
+          @click="handleShowInviteUserFormDialog" />
       </div>
     </div>
-    <Profiles ref="profiles" />
+    <Profiles ref="profiles" :enabled-filter-save="false" />
   </div>
 </template>
 

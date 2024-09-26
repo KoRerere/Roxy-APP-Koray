@@ -47,6 +47,12 @@ export class SimpleCache<T> {
     return fetchPromise
   }
 
+  async updateCacheByFetch<U>(request: (params: U) => Promise<any>, params: U, ttl: number = CACHE_EXPIRY): Promise<T> {
+    const key = this.generateKey(request)
+    this.delete(key)
+    return this.fetch(request, params, ttl)
+  }
+
   private async fetchAndCache(request: () => Promise<any>, key: string, ttl: number): Promise<T> {
     try {
       const promise = request()
@@ -118,6 +124,17 @@ export class SimpleCache<T> {
 
 // cache.fetch(request, params, 5000).then(data => console.log(data)); // 第一次请求
 // cache.fetch(request, params, 5000).then(data => console.log(data)); // 第二次请求返回缓存
+
+// 支持并发，相同请求只会发送一次，其他请求返回缓存
+// Promise.all([
+// cache.fetch(request, params, 5000).then(data => console.log(data));
+// cache.fetch(request, params, 5000).then(data => console.log(data));
+// cache.fetch(request, params, 5000).then(data => console.log(data));
+// cache.fetch(request, params, 5000).then(data => console.log(data));
+// ])
+
+// 更新缓存
+// cache.updateCacheByFetch(request, params, 5000).then(data => console.log(data));
 
 // 获取所有缓存键
 // console.log(cache.getKeys());
