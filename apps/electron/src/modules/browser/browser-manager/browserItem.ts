@@ -2,12 +2,12 @@ import { createReadStream } from 'node:fs'
 import { readdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { AfterLaunchTask } from './afterLaunchTask'
-import { BeforeLaunchTask } from './beforeLaunchTask'
 import { API } from '/@/api'
 import { appConfig, ossObject } from '/@/constants'
 import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { aliOSS, filesToZip, getProcessIdsByExePath, proxyDetection } from '/@/utils'
+import { AfterLaunchTask } from './afterLaunchTask'
+import { BeforeLaunchTask } from './beforeLaunchTask'
 
 export class BrowserItem {
   private beforeLaunchTask!: BeforeLaunchTask

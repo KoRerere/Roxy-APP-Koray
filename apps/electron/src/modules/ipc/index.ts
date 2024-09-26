@@ -1,7 +1,9 @@
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
-import crypto from 'node:crypto'
+
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
+import crypto from 'node:crypto'
+
 import { appConfig } from '/@/constants'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'

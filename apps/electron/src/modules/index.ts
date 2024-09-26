@@ -1,9 +1,9 @@
-import { setupApp } from './app/'
 import './ipc'
 import { setupLog } from '/@/modules/log'
 import { openAPIServer } from '/@/modules/openapi'
 import { setupStore } from '/@/modules/store'
 import { isProd } from '/@/utils'
+import { setupApp } from './app/'
 
 /**
  * Setup the modules.

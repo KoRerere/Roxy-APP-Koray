@@ -1,5 +1,5 @@
-import { ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
+import { ipcRenderer } from 'electron'
 import type { MessageObj } from './types/'
 
 export class IPCRenderer<
@@ -18,26 +18,27 @@ export class IPCRenderer<
   send = <T extends keyof MessageType>(
     name: T,
     ...payload: Parameters<MessageType[T]>
-  ): Promise<Awaited<ReturnType<MessageType[T]>>> => {
-    return new Promise((resolve, reject) => {
-      // console.log("send", name, payload);
-      ipcRenderer.invoke(this.channel, {
-        name,
-        payload,
-      }).then((data) => {
-        if (data.type === 'success') {
-          return resolve(data.result)
-        }
-        else {
-          //  主进程如果返回错误的话，在这里显示到 UI 上
-          console.log(data.error)
-          return resolve(data.error)
-        }
-      }).catch((err) => {
-        console.log(err)
-        reject(err)
-      })
+  ) => {
+    const { promise, resolve, reject } = Promise.withResolvers<Awaited<ReturnType<MessageType[T]>>>()
+
+    ipcRenderer.invoke(this.channel, {
+      name,
+      payload,
+    }).then((data) => {
+      if (data.type === 'success') {
+        return resolve(data.result)
+      }
+      else {
+        //  主进程如果返回错误的话，在这里显示到 UI 上
+        console.log(data)
+        return reject(data.error)
+      }
+    }).catch((err) => {
+      console.log(err)
+      reject(err)
     })
+
+    return promise
   }
 
   on = <T extends keyof BackgroundMessageType>(
@@ -48,7 +49,9 @@ export class IPCRenderer<
 
     this.listeners[name].push(fn)
 
-    //  提供删除方法
+    /**
+     *  提供删除方法
+     */
     return () => {
       if (this.listeners[name]?.includes(fn)) {
         const index = this.listeners[name].indexOf(fn)

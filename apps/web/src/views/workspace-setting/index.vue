@@ -119,15 +119,17 @@ async function handleSaveChange() {
             First 3 letters of your workspace name will be the prefix of all profiles’ ID
           </div>
         </div>
-        <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" />
-          <InputIcon>
-            {{ workspaceInfo.workspaceName?.length }}/30
-          </InputIcon>
+        <div>
+          <IconField>
+            <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" />
+            <InputIcon>
+              {{ workspaceInfo.workspaceName?.length }}/30
+            </InputIcon>
+          </IconField>
           <div class="description">
             Profile ID: IAM-001, IAM-002
           </div>
-        </IconField>
+        </div>
       </div>
     </div>
 

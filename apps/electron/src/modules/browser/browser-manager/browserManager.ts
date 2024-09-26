@@ -1,3 +1,4 @@
+import { setTimeout } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
@@ -11,13 +12,12 @@ export class BrowserManager {
 
   /** 根据 dirId 获取已经打开的浏览器 */
   async getOpenedBrowser(dirId: string) {
-    const { promise, resolve } = Promise.withResolvers<BrowserItem>()
     if (this.openingBrowserMap.has(dirId)) {
       await this.openingBrowserMap.get(dirId)
     }
     // 这里需要延迟到下一次事件循环，因为浏览器启动是异步的
-    setTimeout(() => resolve(this.openedBrowserMap.get(dirId)!))
-    return promise
+    await setTimeout()
+    return this.openedBrowserMap.get(dirId)
   }
 
   /** 启动浏览器 */

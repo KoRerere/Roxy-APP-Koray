@@ -1,5 +1,5 @@
-import { readFile, stat } from 'node:fs/promises'
 import type { Browser } from 'puppeteer-core'
+import { readFile, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 
 /** 浏览器启动后要做的事情 */

@@ -1,8 +1,9 @@
+import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData, UserGetUserInfoListData } from '@roxy/backend-api'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
-import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData, UserGetUserInfoListData } from '@roxy/backend-api'
+
 import type { ResourceUpdateMessage } from './mainMessage'
 
 export interface RenderMessage {

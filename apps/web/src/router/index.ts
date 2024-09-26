@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { menuRoutes } from './menu'
 import { baseRoutes } from '/@/router/base'
 import { useUserStore } from '/@/stores/user'
+import { menuRoutes } from './menu'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -13,6 +13,10 @@ const router = createRouter({
       component: () => import('/@/layout/index.vue'),
       redirect: { name: 'browser-list' },
       children: menuRoutes,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: { name: 'home' },
     },
   ],
 })

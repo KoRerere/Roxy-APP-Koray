@@ -19,7 +19,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
 <template>
   <div v-if="items.length" class="sub-menu">
-    <template v-for="item in items.filter(n => !n.meta?.hideInMenu)" :key="item.name">
+    <template v-for="item in items" :key="item.name">
       <!-- 分组 -->
       <template v-if="isGroup(item)">
         <div v-if="!collapsed" class="group-title">
@@ -33,7 +33,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
       <!-- 递归生成子菜单 -->
       <template v-if="item.children?.length">
         <SubMenuItem
-          :items="item.children.filter(n => !n.meta?.hideInMenu)"
+          :items="item.children"
           :level="isGroup(item) ? level : level + 1" :collapsed
           :class="{ collapsedChildren: collapsedMap[item.name!] }"
         />

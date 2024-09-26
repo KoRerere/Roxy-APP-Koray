@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
-import type Popover from 'primevue/popover'
 import { onMounted, ref, useTemplateRef } from 'vue'
 
 const popoverRef = useTemplateRef('popover')
@@ -119,7 +118,7 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small">
-      <ry-button icon="base/rx_ic_renew" outlined size="small" @click="toggle" />
+      <ry-button icon="base/rx_ic_updates" outlined size="small" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">

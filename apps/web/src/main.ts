@@ -1,3 +1,10 @@
+import './polyfill'
+import '/@/styles/index.css'
+import '@mdi/font/css/materialdesignicons.css'
+import '@unocss/reset/normalize.css'
+import 'primeicons/primeicons.css'
+import 'virtual:uno.css'
+
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
@@ -7,16 +14,11 @@ import Ripple from 'primevue/ripple'
 import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
 import { createApp } from 'vue'
+
 import App from './App.vue'
 import i18n from './i18n'
 import router from './router'
 
-import '/@/styles/index.css'
-
-import '@mdi/font/css/materialdesignicons.css'
-import '@unocss/reset/normalize.css'
-import 'primeicons/primeicons.css'
-import 'virtual:uno.css'
 import { store } from '/@/stores'
 import myPreset from '/@/styles/primevuePresets'
 

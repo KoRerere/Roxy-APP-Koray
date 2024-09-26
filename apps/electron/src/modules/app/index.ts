@@ -1,9 +1,9 @@
-import path from 'node:path'
 import { app, autoUpdater, shell } from 'electron'
-import { restoreOrCreateWindow } from './mainWindow'
+import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { createTray } from '/@/modules/app/tray'
 import { ipcMain } from '/@/modules/ipc'
+import { restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
