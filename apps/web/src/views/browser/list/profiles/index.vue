@@ -34,9 +34,9 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
-  enabledFilterSave: {
+  isProjectProfile: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 })
 
@@ -49,7 +49,9 @@ const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
 
-const [columns] = useColumns(columnsRow)
+const filterColumnKeys = props.isProjectProfile ? ['project'] : undefined
+
+const [columns] = useColumns(columnsRow, filterColumnKeys)
 const [show] = useContextMenu()
 const ctmFilters = ref()
 const sorts = ref(getSorts())
@@ -414,14 +416,13 @@ defineExpose({
 })
 </script>
 
-<!-- :show-actions="isViewer" :context-menu="isViewer" -->
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple">
     <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="enabledFilterSave" @filter-change="filterChange"
+      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" @filter-change="filterChange"
         @save-filters="saveFilters" />
     </template>
     <template #config-footer>

@@ -31,7 +31,8 @@ function handleShowInviteUserFormDialog() {
           @click="handleShowInviteUserFormDialog" />
       </div>
     </div>
-    <Profiles ref="profiles" :enabled-filter-save="false" />
+    <!-- eslint-disable-next-line vue/no-unused-refs -->
+    <Profiles ref="profiles" is-project-profile />
   </div>
 </template>
 

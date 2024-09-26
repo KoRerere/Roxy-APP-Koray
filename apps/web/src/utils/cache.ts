@@ -85,6 +85,10 @@ export class SimpleCache<T> {
     return entry.value
   }
 
+  claer() {
+    this.cache.clear()
+  }
+
   delete(key: string) {
     this.cache.delete(key)
   }

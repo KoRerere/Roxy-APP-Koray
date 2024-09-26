@@ -6,14 +6,12 @@ import remarkIcon from '/@/components/remark-icon'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
-import { SimpleCache } from '/@/utils/cache'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 const workspaceStore = useWorkspaceStore()
 const [show] = useContextMenu()
-const cache = SimpleCache.getInstance()
 
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
@@ -25,7 +23,7 @@ const metaData = defineModel<MetaData>('modelValue', {
 })
 
 async function selectProject(event: Event) {
-  const { data } = await cache.fetch(API.limit.userGetProjectInfoByWorkspaceList, { role: workspaceStore.currentWorkspace?.role })
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
   const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 
   show(event, {
@@ -41,7 +39,7 @@ async function selectProject(event: Event) {
 }
 
 async function selectTags(event: Event) {
-  const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
+  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: Tag) => ({ label: item.name, value: `${item.id}` }))
 
   show(event, {

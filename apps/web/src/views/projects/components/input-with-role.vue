@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { Role } from '/@/enums'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 defineOptions({
   inheritAttrs: false,
 })
+
+const workspaceStore = useWorkspaceStore()
+const role = (workspaceStore.currentWorkspace?.role ?? -1)
 
 const modelValue = defineModel<string>()
 const roleModelValue = defineModel('role')
@@ -12,19 +16,22 @@ const items = ref([
   {
     label: 'Viewer',
     value: Role.VIEWER,
+    visible: role > Role.VIEWER,
     description: 'Can only open and view profiles/proxies/accounts related to selected project.',
   },
   {
     label: 'Editor',
     value: Role.EDITOR,
+    visible: role > Role.EDITOR,
     description: 'Can edit and view profiles/proxies/accounts related to selected project. Can manage viewers related to selected projects.',
   },
   {
     label: 'Manager',
     value: Role.MANAGER,
+    visible: role > Role.MANAGER,
     description: 'Can manage all profiles and resources in all projects. Can manage all viewers and editors.',
   },
-])
+].filter(item => item.visible))
 
 const selectedRoleLabel = computed(() => {
   return items.value.find(item => item.value === roleModelValue.value)?.label

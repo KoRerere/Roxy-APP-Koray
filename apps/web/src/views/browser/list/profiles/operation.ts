@@ -2,9 +2,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { SimpleCache } from '/@/utils/cache'
 
-const cache = SimpleCache.getInstance()
 const workspaceStore = useWorkspaceStore()
 
 export function tableFilters(_params: any = {}) {
@@ -26,9 +24,9 @@ export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
   const [{ data: platformList }, { data: labelList }, { data: projectList }] = await Promise.all([
-    cache.fetch(API.platform.userGetPlatformInfoV2List, { page_index: 1, page_size: 999 }),
-    cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' }),
-    cache.fetch(API.limit.userGetProjectInfoByWorkspaceList, { role: workspaceStore.currentWorkspace?.role }),
+    API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
+    API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
+    API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role }),
   ])
 
   const inputs = [
