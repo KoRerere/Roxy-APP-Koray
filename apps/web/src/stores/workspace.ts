@@ -4,8 +4,16 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
+  const router = useRouter()
+
   const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
+
+  watch(currentWorkspace, () => {
+    if (router.currentRoute.value.name === 'project-item') {
+      router.replace({ name: 'project-list' })
+    }
+  })
 
   function setWorkspaceInfo(info: UnwrapRowType<UserGetWorkspaceListListData>) {
     currentWorkspace.value = info

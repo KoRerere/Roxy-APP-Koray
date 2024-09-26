@@ -70,11 +70,13 @@ function toCreateBrowser() {
   isolation: isolate;
 
   .menu {
+    flex: auto;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
+    overflow: auto;
   }
 
   &.collapsed {
