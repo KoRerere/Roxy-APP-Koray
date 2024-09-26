@@ -32,6 +32,9 @@ app.use(ConfirmationService)
 app.use(PrimeVue, {
   ripple: true,
   theme: {
+    options: {
+      darkModeSelector: '.my-app-dark',
+    },
     preset: definePreset(Aura, {
       primitive: myPreset,
       semantic: {
@@ -46,6 +49,15 @@ app.use(PrimeVue, {
           800: '{Color.blue.600}',
           900: '{Color.blue.600}',
           950: '{Color.blue.600}',
+        },
+      },
+      components: {
+        toast: {
+          colorScheme: {
+            light: {
+              blur: '3px',
+            },
+          },
         },
       },
     }),
