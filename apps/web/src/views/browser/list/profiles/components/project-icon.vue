@@ -5,17 +5,17 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { SimpleCache } from '/@/utils/cache'
 
-type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 defineProps({
   projectName: {
     type: String,
     default: undefined,
   },
 })
-
 const emit = defineEmits(['update'])
-
+const cache = SimpleCache.getInstance()
+type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const workspaceStore = useWorkspaceStore()
 
 const [show] = useContextMenu()
@@ -36,7 +36,7 @@ async function openMenu(event: any) {
 }
 
 async function getGroups() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
+  const { data } = await cache.fetch(API.limit.userGetProjectInfoByWorkspaceList, { role: workspaceStore.currentWorkspace?.role })
   return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 }
 </script>

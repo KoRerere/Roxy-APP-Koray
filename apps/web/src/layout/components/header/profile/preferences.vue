@@ -29,7 +29,7 @@ function getList() {
         },
         {
           label: 'Timezone',
-          name: 'timezone',
+          name: 'timeZone',
           text: 'Some hints for you',
           value: props.data?.timeZone,
           options: $dict_map.timeZone,
@@ -50,15 +50,12 @@ function getList() {
       title: 'Local Settings',
       items: [
         {
+          type: 'upload',
           label: 'Cash Folder Directory',
           text: 'Where to store your cash files in roxy',
           name: 'cacheDir',
           value: props.data?.cacheDir,
-          options: [
-            { label: 'Istanbul', value: 'IST' },
-            { label: 'London', value: 'LDN' },
-            { label: 'Paris', value: 'PRS' },
-          ],
+          disabled: true,
         },
       ],
     },
@@ -84,6 +81,11 @@ function getList() {
 watch(() => props.data, () => {
   list.value = getList()
 })
+
+async function selectDir(subItem: any) {
+  const dir = await window.electronAPI.send('dialog:selectDir')
+  subItem.value = dir
+}
 </script>
 
 <template>
@@ -106,7 +108,11 @@ watch(() => props.data, () => {
           {{ subItem.label }}
         </div>
         <div class="inputs-text" v-html="subItem.text" />
-        <Select v-model="subItem.value" class="inputs-input" :options="subItem.options" option-label="label"
+        <div v-if="subItem.type === 'upload'" class="flex gap-2 inputs-input">
+          <InputText v-model="subItem.value" class="!w-0 flex-1" type="text" :disabled="subItem.disabled" />
+          <RyButton outlined severity="secondary" icon="base/rx_ic_folder" @click="selectDir(subItem)" />
+        </div>
+        <Select v-else v-model="subItem.value" class="inputs-input" :options="subItem.options" option-label="label"
           option-value="value" />
       </div>
     </div>
@@ -162,5 +168,12 @@ watch(() => props.data, () => {
     grid-area: right;
     width: 100%;
   }
+}
+
+:deep(.p-inputtext),
+:deep(.p-select-label) {
+  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  font-size: 12px;
+  line-height: var(--Line-Height-text-lg, 20px);
 }
 </style>

@@ -23,7 +23,7 @@ const list = [
   },
 ]
 
-const active = ref('Preferences')
+const active = ref('Network')
 
 const userConfig = ref()
 

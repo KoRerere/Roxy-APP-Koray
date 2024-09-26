@@ -25,16 +25,16 @@ const metaData = defineModel<MetaData>('modelValue', {
 })
 
 async function selectProject(event: Event) {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
+  const { data } = await cache.fetch(API.limit.userGetProjectInfoByWorkspaceList, { role: workspaceStore.currentWorkspace?.role })
   const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 
   show(event, {
     type: 'radio',
     operation,
-    onHide: (projectId: string) => {
+    onChange: (projectId: string) => {
       if (!isEmptyValue(projectId)) {
         metaData.value.projectId = Number(projectId)
-        metaData.value.projectName = operation.find(item => item.value === projectId)?.label || 'No project'
+        metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || 'No project'
       }
     },
   })
@@ -47,7 +47,7 @@ async function selectTags(event: Event) {
   show(event, {
     type: 'checkbox',
     operation,
-    onHide: (labelIds: string[]) => {
+    onChange: (labelIds: string[]) => {
       if (!isEmptyValue(labelIds)) {
         metaData.value.labelIds = labelIds.map(Number)
       }

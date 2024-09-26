@@ -210,7 +210,7 @@ const items = [
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes['browser-item']" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
-            @click.stop @change="() => onChange(item)" />
+            @click.stop @change="onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">

@@ -23,6 +23,10 @@ const props = defineProps({
     type: Function as PropType<(select: any) => void>,
     default: () => () => { },
   },
+  onChange: {
+    type: Function as PropType<(select: any) => void>,
+    default: () => () => { },
+  },
 })
 
 const selected = ref(props.selected)
@@ -30,18 +34,23 @@ const selected = ref(props.selected)
 const ctxMenu = ref()
 
 function onHide() {
-  props.onHide(toRaw(selected.value))
+  props.onHide?.(toRaw(selected.value))
   selected.value = undefined
+}
+
+function onChange() {
+  props.onChange?.(toRaw(selected.value))
 }
 </script>
 
 <template>
-  <ContextMenu ref="ctxMenu" :model="operation" @hide="onHide">
+  <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
         <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
           @click.stop>
-          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop />
+          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop
+            @change="onChange" />
           <span>{{ item.label }}</span>
         </label>
 
