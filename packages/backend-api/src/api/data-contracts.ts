@@ -245,7 +245,7 @@ export interface UserGetUserConfigListData {
   code: number;
   data: {
     language: string;
-    timezone: string;
+    timeZone: string;
     closeSoft: string;
     cacheDir: string;
     autoDelDays: string;

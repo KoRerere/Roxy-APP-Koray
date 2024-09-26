@@ -7,6 +7,7 @@ import relatedInfo from '/@/components/related-info.vue'
 
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Membership, Role, roleLabelMap } from '/@/enums'
+import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
 
@@ -14,6 +15,7 @@ const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const confirm = useConfirm()
 const toast = useToast()
 const workspaceStore = useWorkspaceStore()
+const role = useRoleStore()
 
 const tableRef = useTemplateRef('team')
 
@@ -103,14 +105,16 @@ async function tableRequest(params: any) {
 console.log(toRaw(workspaceStore.currentWorkspace))
 
 function tableOperation(data: TableRow) {
+  // 只能修改比自己权限低的成员
   const disabled = (workspaceStore.currentWorkspace?.role ?? -1) <= data.role
   return [
     {
       name: 'edit',
-      label: 'check update',
+      label: 'Edit',
       icon: 'base/rx_ic_edit',
       disabled,
       disabledTips: 'Insufficient permissions',
+      power: !role.isViewer,
       quick: true,
     },
     {
@@ -122,6 +126,7 @@ function tableOperation(data: TableRow) {
       icon: 'base/rx_ic_bin_1',
       disabled,
       disabledTips: 'Insufficient permissions',
+      power: !role.isViewer,
       quick: true,
     },
   ]
@@ -181,7 +186,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       <RxSvgIcon name="base/rx_ic_books" />
       <span>Access control guide</span>
     </div>
-    <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
+    <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
       @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->

@@ -34,6 +34,10 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
+  isProjectProfile: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['updateFilterTabs'])
@@ -45,7 +49,9 @@ const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
 
-const [columns] = useColumns(columnsRow)
+const filterColumnKeys = props.isProjectProfile ? ['project'] : undefined
+
+const [columns] = useColumns(columnsRow, filterColumnKeys)
 const [show] = useContextMenu()
 const ctmFilters = ref()
 const sorts = ref(getSorts())
@@ -98,15 +104,13 @@ const drawer = reactive({
 })
 
 watch(() => props.currentFilter, (params: any) => {
-  if (params && params.name !== 'recycle') {
+  if (params?.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         ctmFilters.value = data
         filterChange()
       })
   }
-}, {
-  immediate: true,
 })
 
 watch(
@@ -396,6 +400,10 @@ let canceCloselListener: any
 onMounted(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
+
+  getCustomFilters().then((data) => {
+    ctmFilters.value ??= data
+  })
 })
 
 onBeforeUnmount(() => {
@@ -408,14 +416,14 @@ defineExpose({
 })
 </script>
 
-<!-- :show-actions="isViewer" :context-menu="isViewer" -->
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple">
     <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" @filter-change="filterChange" @save-filters="saveFilters" />
+      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" @filter-change="filterChange"
+        @save-filters="saveFilters" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">

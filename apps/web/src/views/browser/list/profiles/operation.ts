@@ -2,9 +2,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { SimpleCache } from '/@/utils/cache'
 
-const cache = SimpleCache.getInstance()
 const workspaceStore = useWorkspaceStore()
 
 export function tableFilters(_params: any = {}) {
@@ -25,9 +23,10 @@ export function tableFilters(_params: any = {}) {
 export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
-  const [{ data: platformList }, { data: labelList }] = await Promise.all([
-    cache.fetch(API.platform.userGetPlatformInfoV2List, { page_index: 1, page_size: 999 }),
-    cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' }),
+  const [{ data: platformList }, { data: labelList }, { data: projectList }] = await Promise.all([
+    API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
+    API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
+    API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role }),
   ])
 
   const inputs = [
@@ -52,7 +51,6 @@ export async function getCustomFilters(params: any = {}) {
       name: 'osList',
       icon: 'base/rx_ic_laptop',
       options: ($dict_map.os || []).map((item: any) => ({
-        parentLabel: '操作系统',
         parentName: 'osList',
         value: item.value,
         label: item.label,
@@ -64,7 +62,6 @@ export async function getCustomFilters(params: any = {}) {
       label: '账号平台',
       icon: 'base/rx_ic_keys',
       options: platformList.rows.map((item: any) => ({
-        parentLabel: '账号平台',
         parentName: 'platformUrlIds',
         value: `${item.id}`,
         label: new URL(item.platformUrl).hostname,
@@ -95,11 +92,21 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
+      name: 'projectIds',
+      label: '项目',
+      icon: 'base/rx_ic_stack',
+      options: projectList.rows.map((item: any) => ({
+        parentName: 'projectIds',
+        value: `${item.project_id}`,
+        label: item.projectName,
+      })),
+    },
+    {
+      type: 'Checkbox',
       name: 'labelIds',
       label: '窗口标签',
       icon: 'base/rx_ic_tag',
       options: labelList.rows.map((item: any) => ({
-        parentLabel: '窗口分组',
         parentName: 'labelIds',
         value: `${item.id}`,
         label: item.name,
@@ -136,7 +143,6 @@ export async function getCustomFilters(params: any = {}) {
       label: '代理协议',
       icon: 'base/rx_ic_internet_pin',
       options: ($dict_map.protocol || []).map((item: any) => ({
-        parentLabel: '代理协议',
         parentName: 'proxyProtocoList',
         value: item.value,
         label: item.label,

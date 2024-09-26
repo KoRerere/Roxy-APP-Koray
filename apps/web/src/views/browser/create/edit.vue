@@ -27,9 +27,9 @@ createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
 async function createProfile(formData: any) {
   const params = {
-    windowName: windowName.value,
     ...original.value,
     ...formData,
+    windowName: windowName.value,
   }
   await API.window.userMdfWindowInfoSingleCreate(params)
   router.replace({ name: 'browser-list' })

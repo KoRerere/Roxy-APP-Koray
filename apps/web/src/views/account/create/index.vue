@@ -4,7 +4,6 @@ import drawerContent from '/@/components/drawer-content.vue'
 import remarkIcon from '/@/components/remark-icon'
 import ryForm from '/@/components/ry-form'
 import { checkCookieFormat, clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
-import { SimpleCache } from '/@/utils/cache'
 
 const props = defineProps({
   data: {
@@ -24,13 +23,12 @@ const props = defineProps({
 const emits = defineEmits(['confirm', 'close'])
 
 const isEdit = computed(() => !!props.data.id)
-const cache = SimpleCache.getInstance()
 
 const formInputs = ref()
 const original = ref()
 
 async function getInputs(data: any = {}) {
-  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
   const platformOptions = rows.map((item: any) => ({
     image: item.platformIcon,

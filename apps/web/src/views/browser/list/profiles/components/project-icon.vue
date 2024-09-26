@@ -6,16 +6,14 @@ import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
 
-type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 defineProps({
   projectName: {
     type: String,
     default: undefined,
   },
 })
-
 const emit = defineEmits(['update'])
-
+type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const workspaceStore = useWorkspaceStore()
 
 const [show] = useContextMenu()

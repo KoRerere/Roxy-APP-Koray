@@ -7,7 +7,7 @@ interface Columns {
   data: any[]
 }
 
-function useColumns(columns: Columns) {
+function useColumns(columns: Columns, filterColumnKeys?: string[]) {
   const { key, data } = columns
 
   const cache = (localStorage.getItem(key)?.split(',') || []).reduce(
@@ -33,7 +33,7 @@ function useColumns(columns: Columns) {
           _sort,
         }
       })
-      .slice()
+      .filter(item => !filterColumnKeys || !filterColumnKeys.includes(item.key))
       .sort((a, b) => a._sort - b._sort),
   )
 

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { isEmptyValue } from '/@/utils'
-import { SimpleCache } from '/@/utils/cache'
 
 defineProps({
   labels: {
@@ -15,10 +13,10 @@ defineProps({
 const emit = defineEmits(['update'])
 
 const [show] = useContextMenu()
-const cache = SimpleCache.getInstance()
 
 async function openMenu(event: any) {
-  const operation = await getGroups()
+  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
+  const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
 
   show(event, {
     type: 'checkbox',
@@ -30,17 +28,12 @@ async function openMenu(event: any) {
     },
   })
 }
-
-async function getGroups() {
-  const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
-  return data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
-}
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <RxSvgIcon v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" name="base/rx_ic_tag" :size="16"
-      @click.stop="openMenu" />
+    <RyButton v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" severity="secondary" size="small" text
+      icon="base/rx_ic_tag" @click.stop="openMenu" />
     <div v-for="label in labels" :key="label.labelId" class="label">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path

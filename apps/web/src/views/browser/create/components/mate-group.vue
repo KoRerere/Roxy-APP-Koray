@@ -6,14 +6,12 @@ import remarkIcon from '/@/components/remark-icon'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
-import { SimpleCache } from '/@/utils/cache'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 const workspaceStore = useWorkspaceStore()
 const [show] = useContextMenu()
-const cache = SimpleCache.getInstance()
 
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
@@ -31,23 +29,23 @@ async function selectProject(event: Event) {
   show(event, {
     type: 'radio',
     operation,
-    onHide: (projectId: string) => {
+    onChange: (projectId: string) => {
       if (!isEmptyValue(projectId)) {
         metaData.value.projectId = Number(projectId)
-        metaData.value.projectName = operation.find(item => item.value === projectId)?.label || 'No project'
+        metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || 'No project'
       }
     },
   })
 }
 
 async function selectTags(event: Event) {
-  const { data } = await cache.fetch(API.window.userGetLabelInfoList, { page_index: '1', page_size: '999' })
+  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: Tag) => ({ label: item.name, value: `${item.id}` }))
 
   show(event, {
     type: 'checkbox',
     operation,
-    onHide: (labelIds: string[]) => {
+    onChange: (labelIds: string[]) => {
       if (!isEmptyValue(labelIds)) {
         metaData.value.labelIds = labelIds.map(Number)
       }
