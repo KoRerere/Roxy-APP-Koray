@@ -103,12 +103,12 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: 'Appearance',
             text: 'Themes for different mode',
             name: 'appearance',
-            value: data?.appearance,
+            value: data?.appearance ?? 'system',
             props: {
               options: [
-                { label: 'Option 1', value: '1' },
-                { label: 'Option 2', value: '2' },
-                { label: 'Option 3', value: '3' },
+                { label: 'System', value: 'system' },
+                { label: 'Dark', value: 'dark' },
+                { label: 'Light', value: 'light' },
               ],
             },
             component: (props: any) => {
@@ -215,13 +215,13 @@ export function getNetworkPanel(data?: any): SettingsModule {
           {
             label: 'Default IP checker',
             text: 'Checkers to test your proxies in projects',
-            name: 'language',
+            name: 'ipChecker',
             value: '1',
             props: {
               options: [
-                { label: 'Option 1', value: '1' },
-                { label: 'Option 2', value: '2' },
-                { label: 'Option 3', value: '3' },
+                { label: 'ip123.in', value: '1' },
+                { label: 'ip124.in', value: '2' },
+                { label: 'ip125.in', value: '3' },
               ],
             },
             component: (props: any) => {
