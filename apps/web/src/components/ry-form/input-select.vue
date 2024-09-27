@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { RxSvgIcon } from '/@/components/rx-icon/'
+
 defineOptions({
   inheritAttrs: false,
 })
@@ -15,7 +17,7 @@ defineEmits(['change'])
     @change="$emit('change')">
     <template #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
-        <span v-if="option.icon" :class="option.icon" />
+        <RxSvgIcon v-if="option.icon" :name="option.icon" />
         <img v-if="option.image" class="select-item-image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>
@@ -25,7 +27,7 @@ defineEmits(['change'])
     </template>
     <template #option="{ option }">
       <div class="select-item">
-        <span v-if="option.icon" :class="option.icon" />
+        <RxSvgIcon v-if="option.icon" :name="option.icon" />
         <img v-if="option.image" class="select-item-image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>

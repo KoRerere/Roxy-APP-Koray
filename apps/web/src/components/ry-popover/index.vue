@@ -13,19 +13,20 @@ defineExpose({
 </script>
 
 <template>
-  <Popover ref="popover" :class="classes['table-display-pop']">
-    <div class="content">
+  <Popover ref="popover" :class="classes.popover">
+    <div>
       <slot />
     </div>
-    <div v-if="footerSlot" class="footer">
+    <div v-if="footerSlot" :class="classes.footer">
       <slot name="footer" />
     </div>
   </Popover>
 </template>
 
 <style lang="scss" module="classes">
-.table-display-pop {
+.popover {
   margin-top: 6px !important;
+  overflow: hidden;
 
   &::before,
   &::after {
@@ -35,17 +36,6 @@ defineExpose({
   :global(.p-popover-content) {
     padding: 0;
   }
-}
-</style>
-
-<style lang="scss" scoped>
-.content {
-  display: flex;
-  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px);
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-none, 0px);
-  align-self: stretch;
 }
 
 .footer {

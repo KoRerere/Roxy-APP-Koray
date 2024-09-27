@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import inputLabel from './input-label.vue'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 defineOptions({
   inheritAttrs: false,
@@ -31,7 +32,7 @@ defineEmits(['iconClick', 'change'])
       <div class="flex-1">
         <IconField v-if="type !== 'password'" class="w-full">
           <InputIcon v-if="leftIcon">
-            <span :class="leftIcon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
+            <RxSvgIcon :name="(leftIcon as SvgNames)" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
           </InputIcon>
 
           <Textarea v-if="type === 'textarea'" :id="name" class="w-full" rows="5" cols="30" auto-resize v-bind="$attrs"
@@ -40,7 +41,7 @@ defineEmits(['iconClick', 'change'])
           <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" @input="$emit('change')" />
 
           <InputIcon v-if="icon" :class="{ 'textarea-icon': type === 'textarea' }">
-            <span :class="icon" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
+            <RxSvgIcon :name="(icon as SvgNames)" class="rx-icon cursor-pointer" @click="$emit('iconClick')" />
           </InputIcon>
         </IconField>
         <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs"

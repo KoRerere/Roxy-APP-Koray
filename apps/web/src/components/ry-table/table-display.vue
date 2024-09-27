@@ -1,23 +1,8 @@
 <script setup lang="ts">
 import { VueDraggable } from 'vue-draggable-plus'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
-const props = defineProps({
-  columns: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-})
-
-const emit = defineEmits(['update:columns'])
-
-const sortColumns = computed({
-  get() {
-    return props.columns
-  },
-  set(value) {
-    emit('update:columns', value)
-  },
-})
+const sortColumns: any[] = defineModel('columns')
 
 const popRef = ref()
 
@@ -28,15 +13,16 @@ function toggle(event: Event) {
 
 <template>
   <ryButton severity="secondary" size="small" outlined icon="base/rx_ic_slider_v" label="Display" @click="toggle" />
-  <ryPopover ref="popRef" footer :class="display['table-popover']">
-    <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
-      <div v-for="item in sortColumns" :key="item.key" class="flex items-center"
-        :class="display['table-popover-column']">
-        <span class="cursor-grab mdi mdi-drag handle" />
-        <span class="flex-auto">{{ item.title }}</span>
-        <rxToggleSwitch v-model="item._visible" />
-      </div>
-    </VueDraggable>
+  <ryPopover ref="popRef">
+    <div :class="display.content">
+      <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
+        <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
+          <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
+          <span class="flex-auto">{{ item.title }}</span>
+          <rxToggleSwitch v-model="item._visible" />
+        </div>
+      </VueDraggable>
+    </div>
     <template #footer>
       <slot name="footer" />
     </template>
@@ -44,11 +30,13 @@ function toggle(event: Event) {
 </template>
 
 <style lang="scss" module="display">
-.table-popover {
-  &-column {
-    padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
-    gap: var(--spacing-sm, 4px);
-    min-width: 260px;
-  }
+.content {
+  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px);
+}
+
+.column {
+  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+  gap: var(--spacing-sm, 4px);
+  min-width: 260px;
 }
 </style>

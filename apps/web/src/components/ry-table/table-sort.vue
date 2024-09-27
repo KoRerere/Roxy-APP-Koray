@@ -32,12 +32,14 @@ function onUpdate() {
   <div v-ripple class="cursor-pointer sort-icon" @click="toggle">
     <RxSvgIcon name="base/rx_ic_sort_ascending" />
   </div>
-  <ryPopover ref="popRef" footer :class="classes['sort-popover']">
-    <div v-for="item in _sorts" :key="item.name" :class="classes['sort-popover-item']">
-      <RxSvgIcon :name="item.icon" :size="16" />
-      <span class="flex-1">{{ item.label }}</span>
-      <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
-        option-value="value" checkmark :highlight-on-select="false" />
+  <ryPopover ref="popRef">
+    <div :class="classes.content">
+      <div v-for="item in _sorts" :key="item.name" :class="classes.item">
+        <RxSvgIcon :name="item.icon" :size="16" />
+        <span class="flex-1">{{ item.label }}</span>
+        <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
+          option-value="value" checkmark :highlight-on-select="false" />
+      </div>
     </div>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
@@ -49,15 +51,17 @@ function onUpdate() {
 </template>
 
 <style lang="scss" module="classes">
-.sort-popover {
-  &-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-sm, 4px);
-    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-    min-width: 300px;
-  }
+.content {
+  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px);
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm, 4px);
+  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  min-width: 300px;
 }
 </style>
 
