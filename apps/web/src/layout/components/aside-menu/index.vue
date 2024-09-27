@@ -89,6 +89,14 @@ function toCreateBrowser() {
   isolation: isolate;
   overflow: hidden;
 
+  &.collapsed {
+    overflow: unset;
+
+    .new-profile-btn {
+      margin-left: -3px;
+    }
+  }
+
   .menu {
     flex: auto;
     display: flex;
@@ -97,12 +105,6 @@ function toCreateBrowser() {
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
     overflow-y: auto;
-  }
-
-  &.collapsed {
-    .new-profile-btn {
-      margin-left: -3px;
-    }
   }
 }
 </style>

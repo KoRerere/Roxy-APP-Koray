@@ -1,7 +1,6 @@
-import { join } from 'node:path'
 import { app } from 'electron'
 import Store from 'electron-store'
-import type { UserGetUserInfoListData } from '@roxy/backend-api'
+import { join } from 'node:path'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
@@ -16,7 +15,10 @@ interface StoreType {
   closeSoft: 'pop' | 'min' | 'exit'
   /** 性能监控 */
   memoryLimit: number
-  userInfo: UserGetUserInfoListData['data'] & { token?: string }
+  /** 用户 token */
+  token?: string
+  /** 空间 ID */
+  workspaceId?: number
 }
 
 const sessionDir = app.getPath('sessionData')
@@ -25,7 +27,6 @@ const defaultValues: StoreType = {
   closeSoft: 'pop',
   memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
-  userInfo: {} as UserGetUserInfoListData['data'],
 }
 
 const _store = new Store<StoreType>({

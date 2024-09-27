@@ -1,8 +1,8 @@
 <script setup lang="tsx">
-import type { SettingsModule } from './type'
-import { getNetworkPanel, getPreferencesPanel, getProfilePanel } from './panel'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import type { SettingsModule } from './type'
+import { getNetworkPanel, getPreferencesPanel, getProfilePanel } from './panel'
 
 interface Active {
   key: string
@@ -65,7 +65,8 @@ onBeforeMount(() => {
       </div>
       <div class="settings-menu-list">
         <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.label === active.key }" @click="item.command">
+             :class="{ active: item.label === active.key }" @click="item.command"
+        >
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -95,7 +96,8 @@ onBeforeMount(() => {
               </div>
               <div class="flex-1 flex justify-end w-full">
                 <component :is="subItem.component" v-bind="subItem.props" v-model="subItem.value"
-                  class="panel-item-value" />
+                           class="panel-item-value"
+                />
               </div>
             </div>
           </div>

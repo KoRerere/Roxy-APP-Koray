@@ -1,9 +1,7 @@
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
-
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
-
 import { appConfig } from '/@/constants'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
@@ -63,9 +61,13 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 })
 
 /** 登录成功后，保存用户信息 */
-ipcMain.on('user:setUserInfo', (userInfo) => {
-  store.userInfo = userInfo
+ipcMain.on('user:setToken', (token) => {
+  store.token = token
   aliOSS.init()
+})
+/** 切换空间时设置当前空间 ID  */
+ipcMain.on('user:setWorkspaceId', (workspaceId) => {
+  store.workspaceId = workspaceId
 })
 
 /** 保存软件设置 */

@@ -40,16 +40,18 @@ function batchOperation(item: any) {
   <div class="multiple">
     <div class="multiple-group">
       <span class="multiple-group-text"><span class=" text-white">{{ selection.length }}</span> of <span
-          class=" text-white">{{ total }}</span>
+        class=" text-white"
+      >{{ total }}</span>
         selected</span>
       <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
         <RxSvgIcon v-for="item in list" :key="item.name"
-          v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }"
-          class="multiple-group-icon" :name="item.icon" :size="16" :class="{ disabled: item.disabled }" color="white"
-          @click="batchOperation(item)" />
+                   v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }"
+                   class="multiple-group-icon" :name="item.icon" :size="16" :class="{ disabled: item.disabled }" color="white"
+                   @click="batchOperation(item)"
+        />
       </div>
     </slot>
   </div>

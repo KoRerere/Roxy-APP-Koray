@@ -1,7 +1,7 @@
-import { createWriteStream } from 'node:fs'
-import OSS from 'ali-oss'
 import type { UserGetOssCredentialListData } from '@roxy/backend-api'
 import type { ReadStream } from 'node:fs'
+import OSS from 'ali-oss'
+import { createWriteStream } from 'node:fs'
 import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
@@ -24,7 +24,7 @@ const _aliOSS = new class AliOSS {
    * 定时刷新 OSS 上传凭证
    */
   async refreshUploadTokenInterval() {
-    this.promise ||= API.base.userGetOssCredentialList()
+    this.promise ||= API.base.userGetOssCredentialV2List()
     const { data } = await this.promise.finally(() => {
       this.promise = undefined
     })

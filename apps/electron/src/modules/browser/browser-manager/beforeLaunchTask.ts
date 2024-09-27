@@ -1,17 +1,17 @@
-import { freemem, totalmem } from 'node:os'
-import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-import type { BrowserItem } from './browserItem'
-import type { proxyDetection } from '/@/utils'
-import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
-import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
-import AdmZip from 'adm-zip'
-import { chromeCoreManager } from '/@/modules/browser'
 import type { Browser } from 'puppeteer-core'
+import AdmZip from 'adm-zip'
+import { readFile, writeFile } from 'node:fs/promises'
+import { freemem, totalmem } from 'node:os'
+import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
+import type { proxyDetection } from '/@/utils'
+import { chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
-import { extensionManager } from '/@/modules/extension'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
+import { extensionManager } from '/@/modules/extension'
+import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
+import type { BrowserItem } from './browserItem'
+import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
 
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
@@ -283,7 +283,7 @@ export class BeforeLaunchTask {
       return
     }
 
-    const remoteCacheFilePath = `${this.browserItem.ossRemoteCacheDir}/${this.browserItem.browserCacheFileName}`
+    const remoteCacheFilePath = `${this.browserItem.winInfo.ossDirPath}${this.browserItem.browserCacheFileName}`
     const localCacheFilePath = join(this.browserItem.ossCacheDir, this.browserItem.browserCacheFileName)
 
     try {

@@ -133,9 +133,11 @@ onMounted(() => {
     <template #footer>
       <div class="button-group">
         <remarkIcon class="ma-auto ml-0 button-group-remark" :value="original?.platformRemarks"
-          :on-confirm="addRemark" />
+                    :on-confirm="addRemark"
+        />
         <ry-button v-if="!isEdit && showCreateMore" label="Save & Create more" severity="secondary" outlined
-          @click="confirm(true)" />
+                   @click="confirm(true)"
+        />
         <ry-button :label="isEdit ? 'Edit account' : 'Create account'" severity="info" @click="confirm(false)" />
       </div>
     </template>

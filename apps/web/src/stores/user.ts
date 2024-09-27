@@ -19,6 +19,7 @@ export const useUserStore = defineStore('user', () => {
 
   function setToken(token: string) {
     tokenRef.value = token
+    window.electronAPI.send('user:setToken', token)
   }
 
   return { token: tokenRef, userInfo, setUserInfo, clearUserInfo, setToken }

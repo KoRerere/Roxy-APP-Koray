@@ -1,12 +1,10 @@
-import type { SettingsModule } from './type'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-
 import Textarea from 'primevue/textarea'
-import UploadAvatar from './upload-avatar.vue'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
-
 import RyButton from '/@/components/ry-button'
+import type { SettingsModule } from './type'
+import UploadAvatar from './upload-avatar.vue'
 
 export function getProfilePanel(data?: any): SettingsModule {
   return {

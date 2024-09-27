@@ -1,7 +1,7 @@
 import { BaseApi, HttpClient, LoggingApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
-import { store } from '/@/modules/store'
 import { app } from 'electron'
 import { osConfig } from '/@/constants/osConfig'
+import { store } from '/@/modules/store'
 
 export const httpClient = new HttpClient({
   baseURL: 'https://lumitest.lumibrowser.com/',
@@ -15,8 +15,10 @@ const commonRequestHeaders = {
 }
 
 httpClient.instance.interceptors.request.use((config) => {
-  console.log('store.userInfo.token', store.userInfo.token)
-  config.headers.token = store.userInfo.token
+  if (import.meta.env.DEV) {
+    console.log('store.token', store.token)
+  }
+  config.headers.token = store.token
   Object.assign(config.headers, commonRequestHeaders)
   return config
 })

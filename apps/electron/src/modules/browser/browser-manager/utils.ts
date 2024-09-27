@@ -390,7 +390,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     /** 在任务栏ICON上绘制小圆点 */
     taskBarIcon: {
       /** 圆点的颜色 */
-      color: 'FF0000AA',
+      color: 'FF6000d7',
       /** 圆点里面的内容，这个内容同时也会显示到左边工具栏 */
       text: String(winInfo.windowSortNum),
     },

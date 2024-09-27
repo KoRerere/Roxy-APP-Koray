@@ -19,11 +19,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role)) {
       router.replace({ path: '/' })
     }
-  })
 
-  function setWorkspaceInfo(info: UnwrapRowType<UserGetWorkspaceListListData>) {
-    currentWorkspace.value = info
-  }
+    if (val?.id) {
+      window.electronAPI.send('user:setWorkspaceId', val.id)
+    }
+  }, { immediate: true })
 
   async function getWorkspaceList() {
     const { data } = await API.limit.userGetWorkspaceListList()
@@ -40,7 +40,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  return { workspaceList, currentWorkspace, setWorkspaceInfo, getWorkspaceList }
+  return { workspaceList, currentWorkspace, getWorkspaceList }
 }, {
   persist: true,
 })

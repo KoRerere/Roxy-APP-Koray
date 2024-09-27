@@ -295,17 +295,21 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
-    :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-display="false" :show-gridlines="false" :paginator="false">
+            :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
+            :show-display="false" :show-gridlines="false" :paginator="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+                      data-key="value" @change="filters.onChange"
+        />
         <div class="group-button">
           <ryButton severity="info" size="small" icon="base/rx_ic_download_cloud" label="Add with URL"
-            @click="installViaUrl" />
+                    @click="installViaUrl"
+          />
           <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload"
-            @click="onUploadExtension" />
+                    @click="onUploadExtension"
+          />
         </div>
       </div>
     </template>
@@ -324,14 +328,16 @@ defineExpose({
     </template>
     <template #toggle="{ data }">
       <rxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? 'Active' : 'Disable'"
-        @change="onSwitch(data)" />
+                      @change="onSwitch(data)"
+      />
     </template>
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
         <ryButton label="Update" size="small" @click="updateExtension(data)" />
         <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }"
-          name="base/rx_ic_info" />
+                   name="base/rx_ic_info"
+        />
       </div>
       <div v-else>
         --
@@ -340,7 +346,8 @@ defineExpose({
 
     <template #actions-extra="{ data }">
       <ryButton icon="base/rx_ic_install_extension" label="Intall" size="small" severity="secondary" text
-        @click="operationHandler({ name: 'install' }, data)" />
+                @click="operationHandler({ name: 'install' }, data)"
+      />
     </template>
   </ry-table>
 </template>

@@ -26,7 +26,7 @@
     "compile": "pnpm build && turbo run compile",
     "pack:dev": "pnpm run build && pnpm -F roxybrowser run pack:dev",
     "pack:prod": "pnpm run build && pnpm -F roxybrowser run pack:prod",
-    "openapi": "pnpm run build && pnpm -F @roxy/backend-api run openapi",
+    "openapi": "pnpm -F @roxy/backend-api run openapi",
     "postinstall": "npm run build:pkg",
     "lint": "turbo run lint",
     "lint:fix": "eslint . --fix",

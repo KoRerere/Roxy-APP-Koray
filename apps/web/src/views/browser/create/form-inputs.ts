@@ -93,14 +93,14 @@ export function getInputsGroup(data: any = {}) {
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
-      host: data.host, // 代理主机
-      ipType: data.ipType, // 网络协议
-      port: data.port, // 代理端口
-      proxyCategory: data.proxyCategory, // 代理类型
-      proxyPassword: data.proxyPassword, // 代理密码
-      proxyUserName: data.proxyUserName, // 代理账号
-      refreshUrl: data.refreshUrl, // 刷新URL
-    }]
+        host: data.host, // 代理主机
+        ipType: data.ipType, // 网络协议
+        port: data.port, // 代理端口
+        proxyCategory: data.proxyCategory, // 代理类型
+        proxyPassword: data.proxyPassword, // 代理密码
+        proxyUserName: data.proxyUserName, // 代理账号
+        refreshUrl: data.refreshUrl, // 刷新URL
+      }]
     : []
 
   const inputsGroup: any = []
