@@ -98,7 +98,7 @@ export function getInputs(data: any = {}) {
       value: data.refreshUrl || '',
       placeholder: 'Please enter a valid URL',
       tooltip: 'mamba out!',
-      icon: 'mdi mdi-refresh',
+      icon: 'base/rx_ic_refresh',
       iconClick: async () => {
         const input = findInputByName(inputs, 'refreshUrl')
         if (input.value) {

@@ -154,7 +154,7 @@ async function operationHandler(operate: any, data: any) {
 }
 
 async function uploadRecordCheck() {
-  const { data } = await API.plugins.userRecordPluginUploadList()
+  const { data } = await API.plugins.userRecordPluginUploadV2List()
   if (data) {
     return Promise.resolve()
   }

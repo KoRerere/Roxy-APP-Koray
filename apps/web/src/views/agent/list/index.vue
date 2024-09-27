@@ -7,6 +7,7 @@ import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
@@ -131,7 +132,7 @@ function createProxy() {
         </template>
         <template #checker="{ data }">
           <ryTag severity="info">
-            <span class="mdi mdi-web" />
+            <RxSvgIcon name="base/rx_ic_earth" />
             <span>{{ data.checkChannel }}</span>
           </ryTag>
         </template>

@@ -145,7 +145,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写ua',
       name: 'userAgent',
       value: data.userAgent,
-      icon: 'mdi mdi-shuffle-variant',
+      icon: 'base/rx_ic_shuffle',
       disabled: true,
       iconClick: () => {
         setUaWebgl(inputsGroup)
@@ -196,7 +196,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: 'Paste your cookies with JSON format',
       name: 'cookie',
       value: data.cookies,
-      icon: 'mdi mdi-paperclip',
+      icon: 'base/rx_ic_attachment',
       errorMsg: 'cookie格式错误, 请检查格式',
       formatValue: (self: any) => {
         return self.value
@@ -473,7 +473,7 @@ export function getInputsGroup(data: any = {}) {
       label: 'WebGL厂商',
       name: 'webGLManufacturer',
       value: data.webGLManufacturer,
-      icon: 'mdi mdi-shuffle-variant',
+      icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: true,
       iconClick: () => {
@@ -486,7 +486,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'webGLRender',
       value: data.webGLRender,
       rows: 3,
-      icon: 'mdi mdi-shuffle-variant',
+      icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: true,
       iconClick: () => {
@@ -582,7 +582,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       name: 'deviceName',
       value: data.deviceName,
-      icon: 'mdi mdi-shuffle-variant',
+      icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: true,
       iconClick: () => {
@@ -611,7 +611,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       name: 'macAddr',
       value: data.macAddr,
-      icon: 'mdi mdi-shuffle-variant',
+      icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: true,
       iconClick: () => {

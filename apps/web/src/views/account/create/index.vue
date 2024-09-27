@@ -91,7 +91,7 @@ async function getInputs(data: any = {}) {
       value: '',
       placeholder: 'Paste JSON format or upload cookies JSON file',
       tooltip: 'man!',
-      icon: 'mdi mdi-paperclip',
+      icon: 'base/rx_ic_attachment',
       formatValue: (input: any) => {
         return checkCookieFormat(input.value) ? input.value : ''
       },

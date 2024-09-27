@@ -42,7 +42,7 @@ function batchOperation(item: any) {
       <span class="multiple-group-text"><span class=" text-white">{{ selection.length }}</span> of <span
           class=" text-white">{{ total }}</span>
         selected</span>
-      <span class="mdi mdi-close cursor-pointer" @click="$emit('update:selection', [])" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">

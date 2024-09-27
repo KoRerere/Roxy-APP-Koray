@@ -30,6 +30,7 @@ import {
   UserMdfPluginStatusCreateData,
   UserMdfPluginStatusCreatePayload,
   UserRecordPluginUploadListData,
+  UserRecordPluginUploadV2ListData,
   UserUpgradePluginsCreateData,
   UserUpgradePluginsCreatePayload,
   UserUploadChromePluginsCreateData,
@@ -307,6 +308,22 @@ export class PluginsApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserRecordPluginUploadV2List
+   * @summary 获取上传谷歌插件次数 (新版本使用)
+   * @request GET:/user_record_plugin_upload_v2
+   * @response `200` `UserRecordPluginUploadV2ListData` 成功
+   */
+  userRecordPluginUploadV2List = (params: RequestParams = {}) =>
+    this.http.request<UserRecordPluginUploadV2ListData, any>({
+      path: `/user_record_plugin_upload_v2`,
+      method: "GET",
       format: "json",
       ...params,
     });

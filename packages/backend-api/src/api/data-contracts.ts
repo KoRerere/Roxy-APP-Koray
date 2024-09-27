@@ -4625,3 +4625,9 @@ export interface UserDelTeamInfoCreateData {
   code: number;
   msg: string;
 }
+
+export interface UserRecordPluginUploadV2ListData {
+  code: number;
+  data: number;
+  msg: string;
+}

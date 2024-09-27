@@ -1,38 +1,58 @@
-<script setup lang="ts">
-import Network from './network.vue'
-import Preferences from './preferences.vue'
-import Profile from './profile.vue'
+<script setup lang="tsx">
+import type { SettingsModule } from './type'
+import { getNetworkPanel, getPreferencesPanel, getProfilePanel } from './panel'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-const list = [
+interface Active {
+  key: string
+  panel: SettingsModule | null
+}
+
+const active = reactive<Active>({
+  key: 'Profiles',
+  panel: null,
+})
+const profile = ref()
+const preferences = ref()
+const network = ref()
+const menuList = ref([
   {
     label: 'Profiles',
     icon: 'base/rx_ic_user_circle',
     command: () => {
-      // router.push({ name: 'profile' })
+      active.key = 'Profiles'
+      active.panel = profile.value
     },
   },
   {
     label: 'Preferences',
     icon: 'base/rx_ic_slider',
+    command: () => {
+      active.key = 'Preferences'
+      active.panel = preferences.value
+    },
   },
   {
     label: 'Network',
     icon: 'base/rx_ic_wifi',
+    command: () => {
+      active.key = 'Network'
+      active.panel = network.value
+    },
   },
-]
-
-const active = ref('Network')
-
-const userConfig = ref()
+])
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  userConfig.value = data
+  console.log('🚀 ~ getUserConfig ~ data:', data)
+  profile.value = getProfilePanel(data)
+  preferences.value = getPreferencesPanel(data)
+  network.value = getNetworkPanel(data)
+  active.panel = profile.value
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   getUserConfig()
 })
 </script>
@@ -44,8 +64,8 @@ onMounted(() => {
         Client Settings
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in list" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.label === active }" @click="active = item.label">
+        <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
+          :class="{ active: item.label === active.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -53,9 +73,33 @@ onMounted(() => {
     </div>
     <div class="settings-content">
       <div class="settings-content-wrapper">
-        <Profile v-show="active === 'Profiles'" />
-        <Preferences v-show="active === 'Preferences'" :data="userConfig" />
-        <Network v-show="active === 'Network'" />
+        <div v-if="active.panel" class="w-full panel">
+          <div>
+            <div class="panel-title">
+              {{ active.panel.title }}
+            </div>
+            <div class="panel-description">
+              {{ active.panel.description }}
+            </div>
+          </div>
+          <div v-for="item in active.panel.list" :key="item.subtitle">
+            <div v-if="item.subtitle" class="mb-3">
+              {{ item.subtitle }}
+            </div>
+            <div v-for="subItem in item.items" :key="subItem.label" class="panel-item" :class="subItem.classes">
+              <div class="flex-1">
+                <div class="panel-item-label">
+                  {{ subItem.label }}
+                </div>
+                <div class="panel-item-text" v-html="subItem.text" />
+              </div>
+              <div class="flex-1 flex justify-end w-full">
+                <component :is="subItem.component" v-bind="subItem.props" v-model="subItem.value"
+                  class="panel-item-value" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -118,6 +162,51 @@ onMounted(() => {
       margin: 0 auto;
       padding-top: 24px;
       width: calc(100% / 3 * 2);
+    }
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oversize-spacing-3rem, 48px);
+
+  &-title {
+    color: #000;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: var(--Line-Height-text-xl, 24px);
+  }
+
+  &-description {
+    color: var(--Colors-Text-text-secondary, #575d61);
+    font-size: 12px;
+    line-height: normal;
+  }
+
+  &-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-2xl, 16px) 0px;
+    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+    &-label {
+      color: #000;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: normal;
+    }
+
+    &-text {
+      color: var(--Colors-Text-text-tertiary, #7c8387);
+      font-size: 10px;
+      line-height: var(--Line-Height-text-xs, 16px);
+    }
+
+    &-value {
+      color: #000;
+      font-size: 12px;
+      line-height: var(--Line-Height-text-lg, 20px);
     }
   }
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
+
 defineEmits(['close'])
 </script>
 
 <template>
   <div class="rx-card">
-    <span class="cursor-pointer mdi mdi-close-circle rx-card-close" @click="$emit('close')" />
+    <RxSvgIcon class="cursor-pointer rx-card-close" name="base/rx_ic_delete_fill" @click="$emit('close')" />
     <slot />
   </div>
 </template>

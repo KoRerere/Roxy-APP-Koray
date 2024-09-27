@@ -13,7 +13,7 @@ function addInputs() {
     name: (new Date().getTime()).toString(32),
     value: '',
     placeholder: '请输入url',
-    leftIcon: 'mdi mdi-link',
+    leftIcon: 'base/rx_ic_attachment',
   })
 }
 
