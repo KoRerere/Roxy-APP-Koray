@@ -11,6 +11,7 @@ import ryTable from '/@/components/ry-table'
 import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
+import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading } from '/@/utils'
 import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -22,6 +23,7 @@ const tableRef = useTemplateRef('proxyTable')
 
 const toast = useToast()
 const [columns] = useColumns(columnsConfig)
+const role = useRoleStore()
 
 const dataList = ref()
 
@@ -110,15 +112,15 @@ function createProxy() {
       <div class="flex-1">
         Proxies
       </div>
-      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy" @click="createProxy" />
+      <ryButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy"
+        @click="createProxy" />
       <ryButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
-                :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
-                :show-gridlines="false"
-      >
+        :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
+        :show-gridlines="false">
         <template #proxy="{ data }">
           <div class="proxy-host">
             <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
@@ -142,8 +144,7 @@ function createProxy() {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
-                     :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)"
-            />
+              :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
             <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
-import { group } from 'node:console'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
-
 import { API } from '/@/api'
 import editPopup from '/@/views/browser/list/tags/edit.vue'
 

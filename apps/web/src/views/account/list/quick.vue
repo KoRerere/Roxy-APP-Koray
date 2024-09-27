@@ -37,18 +37,18 @@ const columns = [
 
 function tableFilters() {
   return [
-    {
-      type: 'select',
-      label: 'city',
-      name: 'city',
-      value: '',
-      placeholder: '选择平台',
-      options: [
-        { label: '所有平台', value: 'all' },
-        { label: 'mac', value: 'mac' },
-        { label: 'win', value: 'win' },
-      ],
-    },
+    // {
+    //   type: 'select',
+    //   label: 'city',
+    //   name: 'city',
+    //   value: 'all',
+    //   placeholder: '选择平台',
+    //   options: [
+    //     { label: '所有平台', value: 'all' },
+    //     { label: 'mac', value: 'mac' },
+    //     { label: 'win', value: 'win' },
+    //   ],
+    // },
   ]
 }
 
@@ -81,7 +81,7 @@ function handleSave() {
       <ry-table ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
         :table-request="tableRequest" :columns="columns" :show-display="false" :table-filters="tableFilters">
         <template #header-extra>
-          <input-base type="text" left-icon="mdi mdi-magnify" name="search" placeholder="search" />
+          <input-base type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template>
         <template #platform="{ data: row }">
           <div class="platform">

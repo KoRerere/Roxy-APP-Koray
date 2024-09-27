@@ -3,16 +3,17 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import { API } from '/@/api'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { useRoleStore } from '/@/stores/role'
+import tags from '/@/views/browser/list/tags'
 import profiles from './profiles'
 import recycle from './recycle'
-import { API } from '/@/api'
-
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import tags from '/@/views/browser/list/tags'
 
 const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
+const role = useRoleStore()
 
 const rawTabs = [
   { label: '所有窗口', id: '1000', name: 'profiles' },
@@ -110,7 +111,7 @@ onMounted(() => {
   <div class="flex flex-col h-full w-full">
     <div class="profile-header">
       <div>Profiles</div>
-      <div v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
+      <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
         <div>Manage Category</div>
       </div>

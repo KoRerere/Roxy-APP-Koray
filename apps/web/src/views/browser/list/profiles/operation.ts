@@ -238,7 +238,7 @@ export function getSorts(params: any = {}) {
 }
 
 export function getOperation(_params: any = {}) {
-  const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
+  const isViewer = (workspaceStore.currentWorkspace?.role ?? -1) <= Role.VIEWER
 
   return [
     {
