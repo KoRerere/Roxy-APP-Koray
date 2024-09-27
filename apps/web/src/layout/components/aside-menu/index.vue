@@ -87,6 +87,7 @@ function toCreateBrowser() {
   white-space: nowrap;
   word-break: keep-all;
   isolation: isolate;
+  overflow: hidden;
 
   .menu {
     flex: auto;
@@ -95,7 +96,7 @@ function toCreateBrowser() {
     align-items: flex-start;
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
-    overflow: auto;
+    overflow-y: auto;
   }
 
   &.collapsed {

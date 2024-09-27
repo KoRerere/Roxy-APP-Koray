@@ -49,13 +49,13 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   align-items: flex-start;
   gap: var(--spacing-md, 6px);
   align-self: stretch;
-  overflow: hidden;
   transition: height 0.3s;
   padding-left: calc(26px * v-bind(level));
 
   &.collapsedChildren {
     height: calc-size(auto);
     height: 0;
+    overflow: hidden;
   }
 }
 
