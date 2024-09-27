@@ -1,8 +1,8 @@
 <script setup>
-import inputLabel from './input-label.vue'
-import inputSelect from './input-select.vue'
-import inputRadio from './input-radio.vue'
 import inputDate from './input-date.vue'
+import inputLabel from './input-label.vue'
+import inputRadio from './input-radio.vue'
+import inputSelect from './input-select.vue'
 
 defineOptions({
   inheritAttrs: false,

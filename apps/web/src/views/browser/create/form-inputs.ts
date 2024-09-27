@@ -75,7 +75,21 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
 }
 
 export function getInputsGroup(data: any = {}) {
+  const os_map = {
+    Windows: 'platforms/rx_os_windows',
+    Linux: 'base/logo',
+    macOS: 'platforms/rx_os_macOS',
+    Android: 'platforms/rx_os_android',
+    IOS: 'platforms/rx_os_iOS',
+  } as const
+
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, icon: os_map[label as keyof typeof os_map] }))
+
+  const osVersion = Object.fromEntries(Object.keys(os_map).map((key: string) => {
+    const version = $dict_map[`osVersion-${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
+    return [key, version]
+  }))
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
@@ -89,7 +103,7 @@ export function getInputsGroup(data: any = {}) {
       }]
     : []
 
-  let inputsGroup: any = []
+  const inputsGroup: any = []
 
   const windowInputs = reactive([
     {
@@ -100,15 +114,15 @@ export function getInputsGroup(data: any = {}) {
           type: 'select',
           placeholder: '请选择系统',
           name: 'os',
-          value: data.os ?? $dict_map.os[0].value,
-          options: $dict_map.os,
+          value: os.find((item: any) => item.value === data.os) ?? os[0],
+          options: os,
           change(self: any, items: any) {
             const osVersionInput = items.find(
               (item: any) => item.name === 'osVersion',
             )
             if (self.value) {
-              const osVersionOptions = $dict_map[`osVersion-${self.value}`]
-              osVersionInput.value = osVersionOptions[0].value
+              const osVersionOptions = osVersion[self.value.value]
+              osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
               osVersionInput.disabled = false
             }
@@ -123,10 +137,10 @@ export function getInputsGroup(data: any = {}) {
           type: 'select',
           placeholder: '请选择版本',
           name: 'osVersion',
-          value: data.osVersion ?? $dict_map['osVersion-Windows'][0].value,
+          value: osVersion[data.os]?.find((item: any) => item.value === data.osVersion) ?? osVersion.Windows[0],
           options:
-            $dict_map[`osVersion-${data.os}`]
-            || $dict_map['osVersion-Windows'],
+            osVersion[data.os]
+            || osVersion.Windows,
         },
       ],
     },
@@ -137,6 +151,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'coreVersion',
       value: $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,
+      icon: 'base/rx_ic_chrome',
     },
     {
       type: 'textarea',
@@ -881,12 +896,7 @@ export function getInputsGroup(data: any = {}) {
     },
   ])
 
-  inputsGroup = [
-    windowInputs,
-    basicInputs,
-    highLevelInputs,
-    otherInputs,
-  ]
+  inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])
 
   return inputsGroup
 }

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { isEmptyValue, isFunction } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableSort from './table-sort.vue'
-
-import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { isEmptyValue, isFunction } from '/@/utils'
 
 defineOptions({
   inheritAttrs: false,
@@ -149,6 +148,8 @@ const paginatorConfig = reactive({
   },
 })
 
+const paginatorInfo = computed(() => `Showing ${(paginatorConfig.page - 1) * paginatorConfig.rows + 1}-${Math.min(paginatorConfig.page * paginatorConfig.rows, paginatorConfig.totalRecords)} of ${paginatorConfig.totalRecords} profiles,`)
+
 function batchOperation(item: any) {
   props.operationHandler(item, selectionData.value)
   _clearSelection()
@@ -282,7 +283,7 @@ defineExpose({
         :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rxtable-paginator-jump">
-            <div>Showing 11-20 of 300 profiles, </div>
+            <div>{{ paginatorInfo }}</div>
             <Select v-model="paginatorConfig.rows" :options="paginatorConfig.rowsPerPageOptions"
               @change="paginatorConfig.onRowsChange" />
             <div>profiles/page</div>

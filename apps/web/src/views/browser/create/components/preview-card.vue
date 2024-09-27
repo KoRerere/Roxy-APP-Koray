@@ -20,7 +20,7 @@ const visible = ref(true)
         :class="[visible ? 'mdi-arrow-collapse-right' : 'mdi-arrow-collapse-left']" @click="visible = !visible" />
       <span v-if="visible">Preview Card</span>
     </div>
-    <div v-if="visible" class="preview-content">
+    <div v-if="visible" class="w-full preview-content">
       <div class="preview-content-list">
         <div v-for="(value, key) in data" :key="key" class="preview-content-item">
           <div class="preview-content-item-label">

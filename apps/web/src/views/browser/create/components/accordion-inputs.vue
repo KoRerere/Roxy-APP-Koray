@@ -1,13 +1,12 @@
 <script lang="ts" setup>
+import inputLabel from '/@/components/ry-form/input-label.vue'
+import inputSelect from '/@/components/ry-form/input-select.vue'
+import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 import type { Accordions, MetaData } from './type.ts'
 import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
-
-import inputLabel from '/@/components/ry-form/input-label.vue'
-
-import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 
 const props = defineProps({
   openBrowser: {
@@ -78,8 +77,8 @@ function getFormData(isOpen: boolean) {
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
-                      <Select v-bind="item" v-model="item.value" option-label="label" option-value="value" show-clear
-                        @change="() => item.change?.(item, input.items)" />
+                      <inputSelect v-bind="item" v-model="item.value" :filter="false"
+                        @change="item.change?.(item, input.items)" />
                     </template>
                   </InputGroup>
                 </div>
@@ -115,7 +114,7 @@ function getFormData(isOpen: boolean) {
       </Accordion>
     </div>
     <div class="footer">
-      <mateGroup v-model="metaData" class="flex-1" />
+      <mateGroup v-model="metaData as MetaData" class="flex-1" />
       <ryButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
         @click.stop="getFormData(true)" />
       <ryButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
