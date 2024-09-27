@@ -25,28 +25,26 @@ const [columns] = useColumns(columnsRow)
 
 const role = useRoleStore()
 
-const hasPermission = computed(() => role.isOwner || role.isManager)
-
 const operation = ref([
   {
     name: 'edit',
     label: '编辑',
     icon: 'base/rx_ic_edit',
-    power: hasPermission.value,
+    power: role.isOwner || role.isManager,
     quick: true,
   },
   {
     name: 'invite',
     label: '邀请',
     icon: 'base/rx_ic_user_add',
-    power: hasPermission.value,
+    power: role.isOwner || role.isManager,
     quick: true,
   },
   {
     name: 'delete',
     label: '删除',
     icon: 'base/rx_ic_bin_1',
-    power: hasPermission.value,
+    power: role.isOwner,
     quick: true,
     multiple: true,
   },
@@ -63,7 +61,7 @@ async function operationHandler(operate: any, data?: any) {
           layout: 'vertical',
         },
         async handleOk(formModel) {
-          const { code, data, msg } = await API.limit.userAddProjectInfoCreate(formModel)
+          const { code, msg } = await API.limit.userAddProjectInfoCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
             toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })
@@ -87,7 +85,7 @@ async function operationHandler(operate: any, data?: any) {
           layout: 'vertical',
         },
         async handleOk(formModel) {
-          const { code, data, msg } = await API.limit.userMdfProjectInfoCreate(formModel)
+          const { code, msg } = await API.limit.userMdfProjectInfoCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
             toast.add({ severity: 'success', summary: '成功', detail: '编辑成功', life: 3000 })
@@ -127,7 +125,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       severity: 'danger',
     },
     accept: async () => {
-      const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id })
+      const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()
         toast.add({ severity: 'success', summary: '成功', detail: '删除成功', life: 3000 })
@@ -144,14 +142,13 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Projects</div>
-      <RxButton v-if="hasPermission" size="small" severity="info" icon="base/rx_ic_plus" label="Add project"
-                @click="operationHandler({ name: 'create' })"
-      />
+      <RxButton v-if="role.isOwner || role.isManager" size="small" severity="info" icon="base/rx_ic_plus"
+        label="Add project" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
+      <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
-      >
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false">
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -162,7 +159,9 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
         </template>
         <template #open="{ data }">
           <RxButton outlined>
-            <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
+            <router-link
+              :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
+              class="text-black">
               Detail
             </router-link>
           </RxButton>

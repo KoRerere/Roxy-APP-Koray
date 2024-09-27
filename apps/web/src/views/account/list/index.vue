@@ -3,7 +3,6 @@ import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import columnsRow from './columns'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
@@ -11,8 +10,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
-
+import { useRoleStore } from '/@/stores/role'
 import accountCreate from '/@/views/account/create'
+import columnsRow from './columns'
 
 const tableRef = useTemplateRef('accountTable')
 
@@ -20,18 +20,21 @@ const toast = useToast()
 const confirm = useConfirm()
 
 const [columns] = useColumns(columnsRow)
+const role = useRoleStore()
 
 const operation = ref([
   {
     name: 'edit',
     label: '编辑',
     icon: 'base/rx_ic_edit',
+    power: !role.isViewer,
     quick: true,
   },
   {
     name: 'delete',
     label: '删除',
     icon: 'base/rx_ic_bin_1',
+    power: !role.isViewer,
     quick: true,
     multiple: true,
   },
@@ -112,7 +115,7 @@ function deletePopup(data: any) {
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Accounts</div>
-      <ryButton size="small" severity="info" icon="base/rx_ic_plus" label="Create account"
+      <ryButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create account"
         @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">

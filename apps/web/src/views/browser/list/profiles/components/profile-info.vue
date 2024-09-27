@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
+import { useRoleStore } from '/@/stores/role'
 
 const props = defineProps({
   data: {
@@ -12,9 +13,9 @@ const props = defineProps({
     default: false,
   },
 })
-
 const emits = defineEmits(['profileOperate'])
 
+const role = useRoleStore()
 const os_image: any = {
   windows: 'platforms/rx_os_windows',
   macos: 'platforms/rx_os_macOS',
@@ -66,7 +67,7 @@ function getProxyOperation() {
   return [
     {
       label: 'Add proxy',
-      visible: !isProxy.value,
+      visible: !isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'addProxy')
       },
@@ -99,7 +100,7 @@ function getProxyOperation() {
     },
     {
       label: 'Edit proxy',
-      visible: isProxy.value,
+      visible: isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'editProxy')
       },
@@ -117,7 +118,7 @@ function getProxyOperation() {
     },
     {
       label: 'Delete',
-      visible: isProxy.value,
+      visible: isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'deleteProxy')
       },
@@ -129,6 +130,7 @@ function getAccountOperation() {
   return [
     {
       label: 'Add account',
+      visible: !role.isViewer,
       command: () => {
         emits('profileOperate', 'addAccount')
       },

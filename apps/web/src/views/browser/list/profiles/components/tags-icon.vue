@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { useRoleStore } from '/@/stores/role'
 import { isEmptyValue } from '/@/utils'
 
 defineProps({
@@ -13,6 +14,7 @@ defineProps({
 const emit = defineEmits(['update'])
 
 const [show] = useContextMenu()
+const role = useRoleStore()
 
 async function openMenu(event: any) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
@@ -32,8 +34,8 @@ async function openMenu(event: any) {
 
 <template>
   <div class="flex items-center gap-2">
-    <RyButton v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" severity="secondary" size="small" text
-      icon="base/rx_ic_tag" @click.stop="openMenu" />
+    <RyButton v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="role.isViewer" severity="secondary"
+      size="small" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <div v-for="label in labels" :key="label.labelId" class="label">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path
