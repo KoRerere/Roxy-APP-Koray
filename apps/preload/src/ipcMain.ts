@@ -1,5 +1,7 @@
-import { BrowserWindow, ipcMain } from 'electron'
 import type { IpcMainInvokeEvent } from 'electron'
+
+import { BrowserWindow, ipcMain } from 'electron'
+
 import type { MessageObj } from './types/'
 
 export class IPCMain<

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import type { ChildProcess } from 'node:child_process'
+import type { LogLevel, ViteDevServer } from 'vite'
+import electronPath from 'electron'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { build, createServer } from 'vite'
-import type { LogLevel, ViteDevServer } from 'vite'
-import electronPath from 'electron'
 
 /** @type 'production' | 'development'' */
 const mode = (process.env.MODE = process.env.MODE || 'development')

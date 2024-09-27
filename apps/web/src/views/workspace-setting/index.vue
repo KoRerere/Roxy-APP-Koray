@@ -119,15 +119,17 @@ async function handleSaveChange() {
             First 3 letters of your workspace name will be the prefix of all profiles’ ID
           </div>
         </div>
-        <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" />
-          <InputIcon>
-            {{ workspaceInfo.workspaceName?.length }}/30
-          </InputIcon>
+        <div class="w-full">
+          <IconField>
+            <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
+            <InputIcon class="input-limit-text">
+              {{ workspaceInfo.workspaceName?.length }}/30
+            </InputIcon>
+          </IconField>
           <div class="description">
             Profile ID: IAM-001, IAM-002
           </div>
-        </IconField>
+        </div>
       </div>
     </div>
 
@@ -240,6 +242,15 @@ async function handleSaveChange() {
       line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
     }
   }
+}
+
+.input-limit-text {
+  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  text-align: right;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
 }
 
 .emoji-picker-box {

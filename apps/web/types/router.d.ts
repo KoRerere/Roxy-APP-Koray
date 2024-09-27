@@ -3,6 +3,7 @@
 import type { SvgNames } from '/@/components/rx-icon/src/svg-icon-types'
 // 项目的 `tsconfig.json` 中的 "file" 字段内。
 import 'vue-router'
+import type { Role } from '/@/enums/role'
 
 // 为了确保这个文件被当作一个模块，添加至少一个 `export` 声明
 export { }
@@ -19,5 +20,7 @@ declare module 'vue-router' {
     type?: 'group'
     /** 路由参数 */
     params?: Record<string, any>
+    /** 哪些角色可以查看此页面，不传则所有人可以查看，传则只有传入的角色才能查看 */
+    roles?: Role[]
   }
 }

@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
+import { Role } from '/@/enums'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
@@ -105,35 +106,14 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'history-logs',
         name: 'history-logs',
-        meta: { title: 'History-Logs', icon: 'base/rx_ic_doc_data' },
+        meta: { title: 'History-Logs', icon: 'base/rx_ic_doc_data', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/history-logs'),
       },
       {
         path: 'settings',
         name: 'settings',
-        meta: { title: 'Settings', icon: 'base/rx_ic_gear' },
+        meta: { title: 'Settings', icon: 'base/rx_ic_gear', roles: [Role.OWNER] },
         component: () => import('/@/views/workspace-setting/index.vue'),
-      },
-      {
-        path: 'settings2',
-        name: 'settings2',
-        meta: { title: 'Settings', icon: 'base/rx_ic_gear' },
-        redirect: { name: 'profile' },
-        component: () => import('/@/views/setting/index.vue'),
-        children: [
-          {
-            path: 'profile',
-            name: 'profile',
-            meta: { title: '个人信息' },
-            component: () => import('/@/views/setting/profile.vue'),
-          },
-          {
-            path: 'soft-config',
-            name: 'soft-config',
-            meta: { title: '软件设置' },
-            component: () => import('/@/views/setting/soft-config.vue'),
-          },
-        ],
       },
     ],
   },

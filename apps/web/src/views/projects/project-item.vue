@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import Profiles from '/@/views/browser/list/profiles/index.vue'
+import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 
 const route = useRoute()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const profilesRef = useTemplateRef('profiles')
-
+console.log('route', route)
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({ tableRef: profilesRef.value?.tableRef })
 }
@@ -28,7 +28,8 @@ function handleShowInviteUserFormDialog() {
       </div>
       <div>
         <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
-          @click="handleShowInviteUserFormDialog" />
+                  @click="handleShowInviteUserFormDialog"
+        />
       </div>
     </div>
     <!-- eslint-disable-next-line vue/no-unused-refs -->

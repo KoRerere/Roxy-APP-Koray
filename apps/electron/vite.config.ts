@@ -1,5 +1,5 @@
-import { join } from 'node:path'
 import type { UserConfig } from 'vite'
+import { join } from 'node:path'
 import { node } from './.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname

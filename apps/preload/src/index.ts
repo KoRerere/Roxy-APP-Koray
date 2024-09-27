@@ -2,9 +2,13 @@
  * @module preload
  */
 
+import './polyfill'
+
 import { contextBridge } from 'electron'
-import { IPCRenderer } from './ipcRenderer'
+
 import type { MainMessage, RenderMessage } from './types/'
+
+import { IPCRenderer } from './ipcRenderer'
 
 export * from './types/'
 

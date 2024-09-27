@@ -28,6 +28,30 @@ export default antfu(
           argsIgnorePattern: '^_', // 忽略以 _ 开头的参数
         },
       ],
+      'perfectionist/sort-imports': [
+        'error',
+        {
+          type: 'alphabetical',
+          order: 'asc',
+          ignoreCase: true,
+          internalPattern: ['~/**', '/@/**', '@/**'],
+          newlinesBetween: 'never',
+          maxLineLength: undefined,
+          groups: [
+            'type',
+            ['side-effect', 'side-effect-style'],
+            ['builtin', 'external'],
+            'internal-type',
+            'internal',
+            ['parent-type', 'sibling-type', 'index-type'],
+            ['parent', 'sibling', 'index'],
+            'object',
+            'unknown',
+          ],
+          customGroups: { type: {}, value: {} },
+          environment: 'node',
+        },
+      ],
     },
   },
 )
