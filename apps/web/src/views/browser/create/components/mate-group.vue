@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetLabelInfoListData, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
-import type { MetaData } from './type.ts'
 import { API } from '/@/api'
 import remarkIcon from '/@/components/remark-icon'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import type { MetaData } from './type.ts'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
