@@ -1,7 +1,6 @@
-import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 import { API } from '/@/api'
-
 import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -80,14 +79,14 @@ export function getInputsGroup(data: any = {}) {
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
-      host: data.host, // 代理主机
-      ipType: data.ipType, // 网络协议
-      port: data.port, // 代理端口
-      proxyCategory: data.proxyCategory, // 代理类型
-      proxyPassword: data.proxyPassword, // 代理密码
-      proxyUserName: data.proxyUserName, // 代理账号
-      refreshUrl: data.refreshUrl, // 刷新URL
-    }]
+        host: data.host, // 代理主机
+        ipType: data.ipType, // 网络协议
+        port: data.port, // 代理端口
+        proxyCategory: data.proxyCategory, // 代理类型
+        proxyPassword: data.proxyPassword, // 代理密码
+        proxyUserName: data.proxyUserName, // 代理账号
+        refreshUrl: data.refreshUrl, // 刷新URL
+      }]
     : []
 
   let inputsGroup: any = []

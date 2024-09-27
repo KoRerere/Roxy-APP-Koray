@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
-import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
-import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
+import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
+import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
 const { setUserInfo, setToken } = useUserStore()
 const router = useRouter()
@@ -36,8 +36,6 @@ async function afterLogin(token: string) {
   setUserInfo(data)
   console.log(data)
   toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
-
-  window.electronAPI.send('user:setUserInfo', { token, ...data })
   router.push({ name: 'home' })
 }
 

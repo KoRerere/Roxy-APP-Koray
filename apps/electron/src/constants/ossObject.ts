@@ -8,15 +8,14 @@ import { store } from '/@/modules/store'
 
 export const ossObject = {
   /** 用户数据目录 */
-  groupdata: 'groupdata',
-  /** 用户窗口数据目录 */
-  get userWindowDataDir() {
-    const { mainId } = store.userInfo
-    return `/${this.groupdata}/${mainId}/window`
-  },
+  // groupdata: 'groupdata',
+  // /** 用户窗口数据目录 */
+  // get userWindowDataDir() {
+  //   const { mainId } = store.userInfo
+  //   return `/${this.groupdata}/${mainId}/window`
+  // },
   /** 用户插件目录 */
   get userPluginDataDir() {
-    const { mainId } = store.userInfo
-    return `/${this.groupdata}/${mainId}/plugin`
+    return `/groupdata/workspace/${store.workspaceId}/plugin`
   },
 } as const

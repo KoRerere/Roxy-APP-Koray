@@ -1,18 +1,18 @@
-import crypto from 'node:crypto'
-import { readdir, readFile, rm, stat } from 'node:fs/promises'
-import path from 'node:path'
-import { Worker } from 'node:worker_threads'
+import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 import { unzip } from '@tomjs/unzip-crx'
 import AdmZip from 'adm-zip'
 import { compare } from 'compare-versions'
 import { dialog } from 'electron'
+import crypto from 'node:crypto'
+import { readdir, readFile, rm, stat } from 'node:fs/promises'
+import path from 'node:path'
+import { Worker } from 'node:worker_threads'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
-import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData } from '@roxy/backend-api'
-import { getPluginManifestInfo, getPluginMeta } from './helper'
 import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { getPluginManifestInfo, getPluginMeta } from './helper'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
@@ -96,13 +96,13 @@ export const extensionManager = new class ExtensionManager {
     const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
 
     if (!pluginDir || !pluginIcon) {
-      return Promise.reject('插件目录或插件图标不能为空')
+      return Promise.reject(new Error('插件目录或插件图标不能为空'))
     }
 
     const manifestExist = await fileExists(path.join(pluginDir, 'manifest.json'))
 
     if (!manifestExist) {
-      return Promise.reject('插件目录下不存在 manifest.json 文件')
+      return Promise.reject(new Error('插件目录下不存在 manifest.json 文件'))
     }
     const manifestFile = await readFile(path.join(pluginDir, 'manifest.json'), 'utf-8')
 

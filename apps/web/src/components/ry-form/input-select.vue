@@ -14,7 +14,8 @@ defineEmits(['change'])
 
 <template>
   <Select filter show-clear option-label="label" v-bind="$attrs" :input-id="name" class="w-full"
-    @change="$emit('change')">
+          @change="$emit('change')"
+  >
     <template #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
         <RxSvgIcon v-if="option.icon" :name="option.icon" />

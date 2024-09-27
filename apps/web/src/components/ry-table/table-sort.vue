@@ -38,7 +38,8 @@ function onUpdate() {
         <RxSvgIcon :name="item.icon" :size="16" />
         <span class="flex-1">{{ item.label }}</span>
         <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
-          option-value="value" checkmark :highlight-on-select="false" />
+                option-value="value" checkmark :highlight-on-select="false"
+        />
       </div>
     </div>
     <template #footer>

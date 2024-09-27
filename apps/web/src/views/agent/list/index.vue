@@ -2,8 +2,6 @@
 import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import columnsConfig from './columns'
-import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
@@ -14,9 +12,10 @@ import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { setRowsLoading } from '/@/utils'
-
 import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import columnsConfig from './columns'
+import { type ProxyItem, tableOperation, tableRequest } from './operation'
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
@@ -117,8 +116,9 @@ function createProxy() {
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
-        :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
-        :show-gridlines="false">
+                :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
+                :show-gridlines="false"
+      >
         <template #proxy="{ data }">
           <div class="proxy-host">
             <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
@@ -142,7 +142,8 @@ function createProxy() {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
-              :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+                     :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)"
+            />
             <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>

@@ -1,6 +1,4 @@
 <script setup>
-import { RxSvgIcon } from '/@/components/rx-icon'
-
 const pop = ref()
 
 const tabs = ref([
@@ -16,7 +14,7 @@ const tabs = ref([
   },
 ])
 
-function toggle (event) {
+function toggle(event) {
   pop.value.getRef().toggle(event)
 }
 </script>
@@ -31,12 +29,14 @@ function toggle (event) {
             Message
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
-            label="Mark all as read" />
+                    label="Mark all as read"
+          />
         </div>
         <Tabs value="0">
           <TabList :pt="{ tablist: 'px-4 gap-4' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-              class="flex flex-1 justify-center items-center gap-1.5">
+                 class="flex flex-1 justify-center items-center gap-1.5"
+            >
               <span>{{ tab.title }}</span>
               <Badge value="3" severity="danger" size="small" />
             </Tab>

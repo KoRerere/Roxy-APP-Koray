@@ -56,7 +56,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserUploadChromePluginsCreate
    * @summary 谷歌商店上传谷歌插件
    * @request POST:/user_upload_chrome_plugins
-   * @response `200` `UserUploadChromePluginsCreateData` 成功
+   * @response `200` `UserUploadChromePluginsCreateData`
    */
   userUploadChromePluginsCreate = (data: UserUploadChromePluginsCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUploadChromePluginsCreateData, any>({
@@ -74,7 +74,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserRecordPluginUploadList
    * @summary 获取上传谷歌插件次数
    * @request GET:/user_record_plugin_upload
-   * @response `200` `UserRecordPluginUploadListData` 成功
+   * @response `200` `UserRecordPluginUploadListData`
    */
   userRecordPluginUploadList = (params: RequestParams = {}) =>
     this.http.request<UserRecordPluginUploadListData, any>({
@@ -90,7 +90,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserUploadPluginInfoCreate
    * @summary 本地上传谷歌插件
    * @request POST:/user_upload_plugin_info
-   * @response `200` `UserUploadPluginInfoCreateData` 成功
+   * @response `200` `UserUploadPluginInfoCreateData`
    */
   userUploadPluginInfoCreate = (data: UserUploadPluginInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUploadPluginInfoCreateData, any>({
@@ -108,7 +108,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserGetPluginCategoryList
    * @summary 获取系统扩展插件类别
    * @request GET:/user_get_plugin_category
-   * @response `200` `UserGetPluginCategoryListData` 成功
+   * @response `200` `UserGetPluginCategoryListData`
    */
   userGetPluginCategoryList = (params: RequestParams = {}) =>
     this.http.request<UserGetPluginCategoryListData, any>({
@@ -124,7 +124,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserGetSystemPluginList
    * @summary 获取系统扩展的插件
    * @request GET:/user_get_system_plugin
-   * @response `200` `UserGetSystemPluginListData` 成功
+   * @response `200` `UserGetSystemPluginListData`
    */
   userGetSystemPluginList = (query: UserGetSystemPluginListParams, params: RequestParams = {}) =>
     this.http.request<UserGetSystemPluginListData, any>({
@@ -141,7 +141,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserAddSystemPluginCreate
    * @summary 添加系统扩展到用户扩展列表
    * @request POST:/user_add_system_plugin
-   * @response `200` `UserAddSystemPluginCreateData` 成功
+   * @response `200` `UserAddSystemPluginCreateData`
    */
   userAddSystemPluginCreate = (data: UserAddSystemPluginCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddSystemPluginCreateData, any>({
@@ -159,7 +159,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserGetPluginListList
    * @summary 获取用户自己添加的插件
    * @request GET:/user_get_plugin_list
-   * @response `200` `UserGetPluginListListData` 成功
+   * @response `200` `UserGetPluginListListData`
    */
   userGetPluginListList = (query: UserGetPluginListListParams, params: RequestParams = {}) =>
     this.http.request<UserGetPluginListListData, any>({
@@ -176,7 +176,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserDelPluginInfoCreate
    * @summary 删除用户自己添加的插件
    * @request POST:/user_del_plugin_info
-   * @response `200` `UserDelPluginInfoCreateData` 成功
+   * @response `200` `UserDelPluginInfoCreateData`
    */
   userDelPluginInfoCreate = (data: UserDelPluginInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelPluginInfoCreateData, any>({
@@ -194,7 +194,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserMdfPluginStatusCreate
    * @summary 启用或关闭用户自己的插件
    * @request POST:/user_mdf_plugin_status
-   * @response `200` `UserMdfPluginStatusCreateData` 成功
+   * @response `200` `UserMdfPluginStatusCreateData`
    */
   userMdfPluginStatusCreate = (data: UserMdfPluginStatusCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfPluginStatusCreateData, any>({
@@ -212,7 +212,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserCheckAllPluginsVersionList
    * @summary 用户检查自己所有插件版本
    * @request GET:/user_check_all_plugins_version
-   * @response `200` `UserCheckAllPluginsVersionListData` 成功
+   * @response `200` `UserCheckAllPluginsVersionListData`
    */
   userCheckAllPluginsVersionList = (query: UserCheckAllPluginsVersionListParams, params: RequestParams = {}) =>
     this.http.request<UserCheckAllPluginsVersionListData, any>({
@@ -229,7 +229,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserUpgradePluginsCreate
    * @summary 用户升级自己插件
    * @request POST:/user_upgrade_plugins
-   * @response `200` `UserUpgradePluginsCreateData` 成功
+   * @response `200` `UserUpgradePluginsCreateData`
    */
   userUpgradePluginsCreate = (data: UserUpgradePluginsCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpgradePluginsCreateData, any>({
@@ -247,7 +247,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserUploadChromePluginsV2Create
    * @summary 谷歌商店上传谷歌插件 (新版浏览器使用)
    * @request POST:/user_upload_chrome_plugins_v2
-   * @response `200` `UserUploadChromePluginsV2CreateData` 成功
+   * @response `200` `UserUploadChromePluginsV2CreateData`
    */
   userUploadChromePluginsV2Create = (data: UserUploadChromePluginsV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUploadChromePluginsV2CreateData, any>({
@@ -265,7 +265,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserBatchDelPluginInfoCreate
    * @summary 批量删除用户自己添加的插件
    * @request POST:/user_batch_del_plugin_info
-   * @response `200` `UserBatchDelPluginInfoCreateData` 成功
+   * @response `200` `UserBatchDelPluginInfoCreateData`
    */
   userBatchDelPluginInfoCreate = (data: UserBatchDelPluginInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserBatchDelPluginInfoCreateData, any>({
@@ -283,7 +283,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserGetPluginWindowList
    * @summary 获取插件所在的窗口
    * @request GET:/user_get_plugin_window
-   * @response `200` `UserGetPluginWindowListData` 成功
+   * @response `200` `UserGetPluginWindowListData`
    */
   userGetPluginWindowList = (query: UserGetPluginWindowListParams, params: RequestParams = {}) =>
     this.http.request<UserGetPluginWindowListData, any>({
@@ -300,7 +300,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserAddPluginToWindowCreate
    * @summary 安装插件到窗口
    * @request POST:/user_add_plugin_to_window
-   * @response `200` `UserAddPluginToWindowCreateData` 成功
+   * @response `200` `UserAddPluginToWindowCreateData`
    */
   userAddPluginToWindowCreate = (data: UserAddPluginToWindowCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddPluginToWindowCreateData, any>({
@@ -318,7 +318,7 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @name UserRecordPluginUploadV2List
    * @summary 获取上传谷歌插件次数 (新版本使用)
    * @request GET:/user_record_plugin_upload_v2
-   * @response `200` `UserRecordPluginUploadV2ListData` 成功
+   * @response `200` `UserRecordPluginUploadV2ListData`
    */
   userRecordPluginUploadV2List = (params: RequestParams = {}) =>
     this.http.request<UserRecordPluginUploadV2ListData, any>({
