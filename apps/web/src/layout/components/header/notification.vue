@@ -1,21 +1,74 @@
-<script setup>
-const pop = ref()
+<script lang="ts" setup>
+import type { UserGetNotifyListData } from '@roxy/backend-api'
+import { API } from '/@/api'
+import { NotifyModule, NotifyStatus } from '/@/enums'
 
-const tabs = ref([
+type Message = UserGetNotifyListData['data'][0]
+
+interface Tab {
+  value: string
+  title: string
+  list: Message[]
+  noRead: number
+}
+
+const pop = ref()
+const tabs = ref<Tab[]>([
   {
-    value: '0',
+    value: 'teams',
     title: 'Teams',
-    content: 'Tab 1 Content',
+    list: [],
+    noRead: 0,
   },
   {
-    value: '1',
+    value: 'sys',
     title: 'System',
-    content: 'Tab 2 Content',
+    list: [],
+    noRead: 0,
   },
 ])
 
-function toggle(event) {
+const tabsValue = ref('teams')
+
+function toggle(event: Event) {
+  getMessageList()
+
   pop.value.getRef().toggle(event)
+}
+
+async function getMessageList() {
+  const { data } = await API.base.userGetNotifyList()
+  const [teamsTab, sysTab] = tabs.value
+
+  const { teams, sys, teamsRead, sysRead } = data.reduce((acc, item) => {
+    if (item.messageModule === NotifyModule.team) {
+      acc.teams.push(item)
+      acc.teamsRead += item.status
+    }
+    else {
+      acc.sys.push(item)
+      acc.sysRead += item.status
+    }
+    return acc
+  }, { teams: [], sys: [], teamsRead: 0, sysRead: 0 } as any)
+
+  teamsTab.noRead = teams.length - teamsRead
+  sysTab.noRead = sys.length - sysRead
+  teamsTab.list = teams
+  sysTab.list = sys
+}
+
+async function onRead(item: Message | Message[]) {
+  const items = ([] as Message[]).concat(item)
+  const ids = items.map(item => item.id)
+  await API.base.userReadNotifyCreate({ ids })
+  tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
+  items.forEach(item => item.status = NotifyStatus.read)
+}
+
+function markAllAsRead() {
+  const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread)
+  list?.length && onRead(list)
 }
 </script>
 
@@ -29,33 +82,38 @@ function toggle(event) {
             Message
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
-                    label="Mark all as read"
-          />
+            label="Mark all as read" @click="markAllAsRead" />
         </div>
-        <Tabs value="0">
+        <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-                 class="flex flex-1 justify-center items-center gap-1.5"
-            >
+              class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
-              <Badge value="3" severity="danger" size="small" />
+              <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
           </TabList>
           <TabPanels class="!pa-0">
-            <TabPanel v-for="tab in tabs" :key="tab.content" :value="tab.value">
-              <div v-for="i in 3" :key="i" class="flex" :class="message.item">
-                <OverlayBadge severity="danger" class="inline-flex">
-                  <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" />
-                </OverlayBadge>
-                <div>
-                  <div :class="message.value">
-                    Jason Chan just invite you into Amazon's Working Space Store
+            <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
+              <template v-if="tab.list?.length">
+                <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
+                  <div :class="[message.avatar, !item.status && message.badge]">
+                    <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" />
                   </div>
-                  <div :class="message.time">
-                    6 hours ago
+                  <div>
+                    <div :class="message.value">
+                      {{ item.notify }}
+                    </div>
+                    <div :class="message.time">
+                      {{ item.createTime }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </template>
+              <template v-else>
+                <div class="flex justify-center items-center min-h-40 text-6">
+                  No Message
+                </div>
+              </template>
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -100,6 +158,24 @@ function toggle(event) {
 
   &:last-of-type {
     border-bottom: none;
+  }
+}
+
+.avatar {
+  position: relative;
+  aspect-ratio: 1;
+
+  &.badge {
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 8px;
+      background-color: var(--Color-Rainbow-Red, #f53838);
+      border-radius: 50%;
+    }
   }
 }
 
