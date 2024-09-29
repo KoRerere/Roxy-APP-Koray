@@ -16,9 +16,13 @@ const _props = defineProps({
     type: Boolean,
     default: true,
   },
+  saveFilters: {
+    type: Function as PropType<(params: any) => void>,
+    default: () => { },
+  },
 })
 
-const emit = defineEmits(['filterChange', 'saveFilters'])
+const emit = defineEmits(['filterChange'])
 const dialog = useDialog()
 
 const rawOptions = computed(() => {
@@ -32,7 +36,17 @@ const rawOptions = computed(() => {
     .flat()
 })
 
-const filterTagList = computed(() => _props.ctmFilters.filter((item: any) => item.type !== 'Separator' && !isEmptyValue(item.value)))
+const filterTagList = computed(() => {
+  return _props.ctmFilters.reduce((acc, item) => {
+    if (!isEmptyValue(item.value)) {
+      const value = !Array.isArray(item.value)
+        ? item.value
+        : item.options.filter((option: any) => item.value.includes(option.value)).map((option: any) => option.label).join(', ')
+      acc.push({ ...toRaw(item), value })
+    }
+    return acc
+  }, [])
+})
 
 const menuRef = useTemplateRef('tmenu')
 const isChildren = ref(false)
@@ -170,7 +184,7 @@ function saveFilters() {
         ],
       },
       onConfirm: (formData: any) => {
-        emit('saveFilters', formData)
+        _props.saveFilters(formData)
       },
     },
   })
@@ -214,7 +228,7 @@ const items = [
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes['browser-item']" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
-            @click.stop @change="onChange(item)" />
+            @change="onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">
