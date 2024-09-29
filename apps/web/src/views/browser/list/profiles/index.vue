@@ -438,14 +438,12 @@ defineExpose({
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />
     </template>
-    <template #actions="{ data }">
+    <template #actions-extra="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
           :class="{ 'text-orange': data.isOften }" class="mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
           :class="{ 'text-orange': data.windowRemark }" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <actions :operation="operation" @quick-click="operationHandler($event, data)"
-          @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">

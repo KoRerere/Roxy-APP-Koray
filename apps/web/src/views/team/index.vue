@@ -172,7 +172,7 @@ async function deleteMember(data: TableRow) {
 function handleShowInviteUserFormDialog(data?: TableRow) {
   const { email, project_info, role, user_id } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
-  showInviteUserFormDialog({ email, projectIds, role, user_id })
+  showInviteUserFormDialog({ tableRef, email, projectIds, role, user_id })
 }
 </script>
 

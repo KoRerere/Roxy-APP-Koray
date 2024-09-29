@@ -19,7 +19,7 @@ const props = defineProps({
 
 const emit = defineEmits(['quickClick', 'more'])
 
-const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick))
+const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick && item.power !== false))
 const loadingQuickOperation: any = computed(() => props.loadingOperationMap)
 
 function quickClick(item: any) {

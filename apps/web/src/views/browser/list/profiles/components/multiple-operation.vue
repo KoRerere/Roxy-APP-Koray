@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import actions from '/@/components/actions.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const props = defineProps({
