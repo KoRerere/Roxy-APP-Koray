@@ -1,7 +1,8 @@
-import http from 'node:http'
-import https from 'node:https'
+import type { AxiosProxyConfig } from 'axios'
 import axios from 'axios'
 import { HttpsProxyAgent } from 'https-proxy-agent'
+import http from 'node:http'
+import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 
@@ -28,6 +29,7 @@ const protocolCheckMap = {
 } as const
 
 type ProtocolMapType = keyof typeof protocolCheckMap
+export type ProxyDetectionParams = Partial<Pick<WindowItemType, 'checkChannel' | 'ipType' | 'proxyCategory' | 'protocol' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'>>
 
 // 检测超时时间
 const TIMEOUT = 6000
@@ -56,10 +58,12 @@ export function tryRefreshUrl(refreshUrl: string) {
 }
 
 /** 代理检测 */
-export async function proxyDetection(winInfo: WindowItemType): Promise<ProxyDetectionResult> {
+export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
+  const { checkChannel, ipType } = proxyDetectionParams
+
   const params = {
-    ...winInfo,
-    checkChannel: getCheckUrl(winInfo.checkChannel, winInfo.ipType) || `http://ip123.in/ip.json`,
+    ...proxyDetectionParams,
+    checkChannel: getCheckUrl(checkChannel, ipType) || `http://ip123.in/ip.json`,
   }
 
   console.log('params.proxyCategory', params.proxyCategory, params.protocol)
@@ -77,7 +81,7 @@ export async function proxyDetection(winInfo: WindowItemType): Promise<ProxyDete
   return result
 }
 
-function logProxyConfig(params: any, name = ``) {
+function logProxyConfig(params: ProxyDetectionParams, name = ``) {
   // return
   const { checkChannel, host, port, proxyUserName, proxyPassword, proxyNetwork } = params
   console.log(`${name}\n
@@ -92,7 +96,7 @@ function logProxyConfig(params: any, name = ``) {
 /**
  * 无代理
  */
-async function noProxy(winInfo: WindowItemType) {
+async function noProxy(winInfo: ProxyDetectionParams) {
   const { checkChannel = `https://ip123.in/ip.json` } = winInfo
   const response = await axios.get(checkChannel, { timeout: TIMEOUT })
 
@@ -102,7 +106,7 @@ async function noProxy(winInfo: WindowItemType) {
 /**
  * Https 代理
  */
-function checkHttpsProxy(winInfo: WindowItemType) {
+function checkHttpsProxy(winInfo: ProxyDetectionParams) {
   const { promise, resolve, reject } = Promise.withResolvers()
   const { checkChannel, host, port, proxyUserName, proxyPassword } = winInfo
 
@@ -152,23 +156,25 @@ function checkHttpsProxy(winInfo: WindowItemType) {
 /**
  * Http 代理
  */
-async function checkHttpProxy(winInfo: WindowItemType) {
+async function checkHttpProxy(winInfo: ProxyDetectionParams) {
   const { proxyUserName, proxyPassword, host, port, checkChannel } = winInfo
   logProxyConfig(winInfo, `Http`)
+
+  let auth: AxiosProxyConfig['auth']
+
+  if (proxyUserName && proxyPassword) {
+    auth = {
+      username: proxyUserName,
+      password: proxyPassword,
+    }
+  }
 
   const api = axios.create({
     timeout: TIMEOUT,
     proxy: {
       host,
       port: Number(port),
-      ...(proxyUserName === `` || proxyPassword === ``
-        ? {}
-        : {
-          auth: {
-            username: proxyUserName,
-            password: proxyPassword,
-          },
-        }),
+      auth,
     },
   })
   api.interceptors.request.use((config) => {

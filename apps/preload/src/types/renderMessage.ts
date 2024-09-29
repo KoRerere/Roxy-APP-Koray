@@ -2,7 +2,7 @@ import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetS
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
-import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
+import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
 
@@ -17,7 +17,9 @@ export interface RenderMessage {
   'browser:batchRemove': (dirIds: string[]) => void
 
   /** 代理检测 */
-  'proxy:detection': (winItemList: WindowItemType) => ProxyDetectionResult
+  'proxy:detection': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
+  /** 获取系统代理 */
+  'proxy:getSystemProxy': () => Promise<string>
   /** 代理 => 刷新 URL */
   'proxy:refreshUrl': (refreshUrl: string) => Promise<boolean>
 
@@ -26,7 +28,7 @@ export interface RenderMessage {
   /** 切换空间时设置当前空间 ID  */
   'user:setWorkspaceId': (workspaceId: number) => void
   /** 用户上传头像  */
-  'user:uploadAvatar': (avatarPath: string) => void
+  'user:uploadAvatar': (avatarPath: string) => Promise<string>
 
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void

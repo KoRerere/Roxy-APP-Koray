@@ -34,20 +34,16 @@ function handleSideTransitionstart() {
   transitionend.value = false
 }
 
-async function uploadAvatar() {
-  const path = await electronAPI.send('dialog:selectFile', [{ name: 'Images', extensions: ['jpg', 'png', 'jpeg'] }])
-  console.log('path', path)
-  const previewUrl = await electronAPI.send('util:to-mediaPath', path)
-  console.log('previewUrl', previewUrl)
-  const res = await electronAPI.send('user:uploadAvatar', path)
-  console.log('res', res)
-}
+onMounted(async () => {
+  const systemProxy = await electronAPI.send('proxy:getSystemProxy')
+  const [host, port] = systemProxy.split(':')
+  console.log('systemProxy', systemProxy)
+  const data = await electronAPI.send('proxy:detection', { protocol: 'HTTP', host, port })
+  console.log('data', data)
+})
 </script>
 
 <template>
-  <div @click="uploadAvatar">
-    测试
-  </div>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart" @transitionend="handleSideTransitionend">
       <div class="logo">
