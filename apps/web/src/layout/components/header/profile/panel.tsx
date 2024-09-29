@@ -17,7 +17,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             label: 'Whitelist',
             text: 'Visiting sites using local network without proxy',
             name: 'avatar',
-            value: data?.avatar,
+            value: data?.avatar ?? 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png',
             classes: 'flex-col !items-start gap-4',
             props: {
               class: 'resize-none w-full',
