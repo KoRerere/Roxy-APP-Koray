@@ -17,6 +17,8 @@ interface StoreType {
   memoryLimit: number
   /** 用户 token */
   token?: string
+  /** 用户 ID */
+  userId?: number
   /** 空间 ID */
   workspaceId?: number
 }

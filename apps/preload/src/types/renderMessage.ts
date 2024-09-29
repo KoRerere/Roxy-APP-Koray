@@ -21,14 +21,18 @@ export interface RenderMessage {
   'proxy:refreshUrl': (refreshUrl: string) => Promise<boolean>
 
   /** 保存用户信息 */
-  'user:setToken': (token: string) => void
+  'user:setUserInfo': (userInfo: { token: string, userId: number }) => void
   /** 切换空间时设置当前空间 ID  */
   'user:setWorkspaceId': (workspaceId: number) => void
+  /** 用户上传头像  */
+  'user:uploadAvatar': (avatarPath: string) => void
 
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
   /** 选择文件夹 */
   'dialog:selectDir': () => Promise<string>
+  /** 选择文件 */
+  'dialog:selectFile': () => Promise<string>
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
   /** 安装并更新 */
