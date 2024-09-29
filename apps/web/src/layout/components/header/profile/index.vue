@@ -6,10 +6,10 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
 import SettingsPopup from './settings-popup.vue'
 
-const { clearUserInfo } = useUserStore()
 const router = useRouter()
 const toast = useToast()
 const dialog = useDialog()
+const userStore = useUserStore()
 
 const menuRef = useTemplateRef('menu')
 const items = ref([
@@ -49,7 +49,7 @@ const items = ref([
     label: 'Log out',
     icon: 'base/rx_ic_logout',
     command: () => {
-      clearUserInfo()
+      userStore.clearUserInfo()
       router.push({ name: 'login' })
       toast.add({ severity: 'success', summary: 'Success', detail: '退出登录成功', life: 5000 })
     },
@@ -85,7 +85,8 @@ function toggle(event: Event) {
 </script>
 
 <template>
-  <Avatar class="cursor-pointer mr-2" image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+  <Avatar class="cursor-pointer mr-2"
+    :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
     shape="circle" @click="toggle" />
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>
