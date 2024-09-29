@@ -3,7 +3,8 @@ import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import path from 'node:path'
-import { appConfig } from '/@/constants'
+import url from 'node:url'
+import { appConfig, mediaProtocolName } from '/@/constants'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
 import { store } from '/@/modules/store'
@@ -102,9 +103,9 @@ ipcMain.on('dialog:selectDir', async () => {
 })
 
 /** 选择文件 */
-ipcMain.on('dialog:selectFile', async () => {
+ipcMain.on('dialog:selectFile', async (filters) => {
   try {
-    const { filePaths } = await dialog.showOpenDialog({ properties: ['openFile'] })
+    const { filePaths } = await dialog.showOpenDialog({ properties: ['openFile'], filters })
     return filePaths[0]
   }
   catch (error) {
@@ -179,4 +180,13 @@ ipcMain.on('extension:getInstalledExtensions', () => {
 ipcMain.on('base:apikey', () => {
   const str = `${Date.now()}`
   return Promise.resolve(crypto.createHash('md5').update(str, 'utf8').digest('hex'))
+})
+
+/** 将本地绝对路径转为自定义媒体协议路径 */
+ipcMain.on('util:to-mediaPath', (pathname) => {
+  return url.format({
+    protocol: mediaProtocolName,
+    slashes: true,
+    pathname,
+  })
 })

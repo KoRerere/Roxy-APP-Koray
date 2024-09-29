@@ -35,10 +35,12 @@ function handleSideTransitionstart() {
 }
 
 async function uploadAvatar() {
-  const path = await electronAPI.send('dialog:selectFile')
-  console.log(path)
+  const path = await electronAPI.send('dialog:selectFile', [{ name: 'Images', extensions: ['jpg', 'png', 'jpeg'] }])
+  console.log('path', path)
+  const previewUrl = await electronAPI.send('util:to-mediaPath', path)
+  console.log('previewUrl', previewUrl)
   const res = await electronAPI.send('user:uploadAvatar', path)
-  console.log(res)
+  console.log('res', res)
 }
 </script>
 
