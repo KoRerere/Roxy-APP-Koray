@@ -10,6 +10,10 @@ export const useUserStore = defineStore('user', () => {
 
   function setUserInfo(info: UserInfo) {
     userInfo.value = info
+    window.electronAPI.send('user:setUserInfo', {
+      token: tokenRef.value,
+      userId: userInfo.value.id!,
+    })
   }
 
   function clearUserInfo() {
@@ -21,7 +25,6 @@ export const useUserStore = defineStore('user', () => {
 
   function setToken(token: string) {
     tokenRef.value = token
-    window.electronAPI.send('user:setToken', token)
   }
 
   return { token: tokenRef, userInfo, setUserInfo, clearUserInfo, setToken }

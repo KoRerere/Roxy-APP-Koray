@@ -33,9 +33,19 @@ function handleSideTransitionend() {
 function handleSideTransitionstart() {
   transitionend.value = false
 }
+
+async function uploadAvatar() {
+  const path = await electronAPI.send('dialog:selectFile')
+  console.log(path)
+  const res = await electronAPI.send('user:uploadAvatar', path)
+  console.log(res)
+}
 </script>
 
 <template>
+  <div @click="uploadAvatar">
+    测试
+  </div>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart" @transitionend="handleSideTransitionend">
       <div class="logo">

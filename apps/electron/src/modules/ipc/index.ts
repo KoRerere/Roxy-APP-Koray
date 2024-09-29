@@ -2,6 +2,7 @@ import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electr
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
+import path from 'node:path'
 import { appConfig } from '/@/constants'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
@@ -61,13 +62,23 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 })
 
 /** 登录成功后，保存用户信息 */
-ipcMain.on('user:setToken', (token) => {
-  store.token = token
+ipcMain.on('user:setUserInfo', (userInfo) => {
+  store.token = userInfo.token
+  store.userId = userInfo.userId
   aliOSS.init()
 })
+
 /** 切换空间时设置当前空间 ID  */
 ipcMain.on('user:setWorkspaceId', (workspaceId) => {
   store.workspaceId = workspaceId
+})
+
+/** 用户上传头像 */
+ipcMain.on('user:uploadAvatar', (avatarPath) => {
+  const userId = store.userId
+  const extname = path.extname(avatarPath)
+  console.log('上传头像', userId, avatarPath, extname)
+  return aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
 })
 
 /** 保存软件设置 */
@@ -82,6 +93,18 @@ ipcMain.on('app:saveSoftConfig', (config) => {
 ipcMain.on('dialog:selectDir', async () => {
   try {
     const { filePaths } = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    return filePaths[0]
+  }
+  catch (error) {
+    console.log(error)
+    return ''
+  }
+})
+
+/** 选择文件 */
+ipcMain.on('dialog:selectFile', async () => {
+  try {
+    const { filePaths } = await dialog.showOpenDialog({ properties: ['openFile'] })
     return filePaths[0]
   }
   catch (error) {
