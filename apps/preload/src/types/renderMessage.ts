@@ -3,6 +3,7 @@ import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manage
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
+import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
 
 export interface RenderMessage {
@@ -32,7 +33,7 @@ export interface RenderMessage {
   /** 选择文件夹 */
   'dialog:selectDir': () => Promise<string>
   /** 选择文件 */
-  'dialog:selectFile': () => Promise<string>
+  'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
   /** 安装并更新 */
@@ -60,4 +61,6 @@ export interface RenderMessage {
   'extension:getInstalledExtensions': () => Promise<PluginMeta[]>
   /** 生成 api key */
   'base:apikey': () => Promise<string>
+  /** 将本地绝对路径转为自定义媒体协议路径 */
+  'util:to-mediaPath': (pathname: string) => string
 }
