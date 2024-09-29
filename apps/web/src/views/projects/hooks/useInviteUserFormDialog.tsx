@@ -61,7 +61,7 @@ export function useInviteUserFormDialog() {
           : await API.limit.userInviteCreate(formModel)
         tableRef?.value?.refresh()
         if (code === 0) {
-          toast.add({ severity: 'success', summary: '成功', detail: '发送邀请成功', life: 3000 })
+          toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
         }
         else {
           toast.add({ severity: 'error', summary: '失败', detail: msg || '发送邀请失败', life: 3000 })
