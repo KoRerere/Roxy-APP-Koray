@@ -82,14 +82,12 @@ function markAllAsRead() {
             Message
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
-                    label="Mark all as read" @click="markAllAsRead"
-          />
+            label="Mark all as read" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-                 class="flex flex-1 justify-center items-center gap-1.5"
-            >
+              class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
@@ -99,7 +97,8 @@ function markAllAsRead() {
               <template v-if="tab.list?.length">
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" />
+                    <Avatar :image="item.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
+                      shape="circle" />
                   </div>
                   <div>
                     <div :class="message.value">

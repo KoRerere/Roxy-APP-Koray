@@ -64,7 +64,7 @@ export async function getCustomFilters(params: any = {}) {
       options: platformList.rows.map((item: any) => ({
         parentName: 'platformUrlIds',
         value: `${item.id}`,
-        label: new URL(item.platformUrl).hostname,
+        label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
       })),
     },
     {
@@ -195,7 +195,7 @@ export async function getCustomFilters(params: any = {}) {
       input.value = params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined
       input.items.forEach((it: any) => it.value = params[it.name])
     }
-    else {
+    else if (!input.separator) {
       input.value = params[input.name]
     }
     return input

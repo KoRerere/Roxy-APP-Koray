@@ -2,9 +2,9 @@
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import SettingsPopup from './settings-popup.vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
+import SettingsPopup from './settings-popup.vue'
 
 const { clearUserInfo } = useUserStore()
 const router = useRouter()

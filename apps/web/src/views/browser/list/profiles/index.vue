@@ -4,8 +4,16 @@ import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
-
 import { useTemplateRef } from 'vue'
+import { API } from '/@/api'
+import actions from '/@/components/actions.vue'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import ryTable from '/@/components/ry-table'
+import popup from '/@/components/simplePopup'
+import { ProxyCheckStatus } from '/@/enums'
+import useColumns from '/@/hooks/useColumns'
+import { createDefaultObject, getFormData } from '/@/utils/index'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
@@ -14,20 +22,8 @@ import editCookies from './components/edit-cookies.vue'
 import multipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 import projectIcon from './components/project-icon.vue'
-
 import tagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
-import { API } from '/@/api'
-
-import actions from '/@/components/actions.vue'
-
-import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryTable from '/@/components/ry-table'
-import popup from '/@/components/simplePopup'
-import { ProxyCheckStatus } from '/@/enums'
-import useColumns from '/@/hooks/useColumns'
-import { createDefaultObject, getFormData } from '/@/utils/index'
 
 const props = defineProps({
   currentFilter: {
@@ -422,8 +418,8 @@ defineExpose({
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple">
     <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" @filter-change="filterChange"
-        @save-filters="saveFilters" />
+      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters"
+        @filter-change="filterChange" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">

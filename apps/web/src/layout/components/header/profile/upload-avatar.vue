@@ -1,13 +1,32 @@
 <script setup lang="ts">
+const emit = defineEmits(['change'])
+const modelValue = defineModel<string>()
+const previewUrl = ref(modelValue.value)
 
+async function uploadAvatar() {
+  const localPath = await electronAPI.send('dialog:selectFile', [{ name: 'Images', extensions: ['jpg', 'png', 'jpeg', 'bmp'] }])
+
+  previewUrl.value = await electronAPI.send('util:to-mediaPath', localPath)
+
+  if (previewUrl.value) {
+    try {
+      modelValue.value = await electronAPI.send('user:uploadAvatar', localPath)
+      emit('change')
+    }
+    catch (error) {
+      console.log('🚀 ~ uploadAvatar ~ error:', error)
+    }
+  }
+}
 </script>
 
 <template>
   <div class="upload-area">
-    <img class="upload-area-avatar" src="https://via.placeholder.com/64x64">
+    <img class="upload-area-avatar" :src="previewUrl || 'https://via.placeholder.com/64x64'">
     <div class="upload-area-buttons">
       <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_delete" label="Remove" />
-      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload" />
+      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload"
+        @click="uploadAvatar" />
     </div>
   </div>
 </template>
