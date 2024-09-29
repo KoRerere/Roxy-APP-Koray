@@ -21,6 +21,8 @@ interface StoreType {
   userId?: number
   /** 空间 ID */
   workspaceId?: number
+  /** 是否使用系统代理 */
+  useSystemProxy?: boolean
 }
 
 const sessionDir = app.getPath('sessionData')
@@ -29,6 +31,7 @@ const defaultValues: StoreType = {
   closeSoft: 'pop',
   memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
+  useSystemProxy: true,
 }
 
 const _store = new Store<StoreType>({

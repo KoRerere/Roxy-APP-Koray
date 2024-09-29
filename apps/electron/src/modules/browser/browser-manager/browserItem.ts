@@ -5,6 +5,7 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { store } from '/@/modules/store'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
@@ -53,7 +54,7 @@ export class BrowserItem {
   constructor(winItem: WindowItemType) {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
-    this.userDataDir = join(appConfig.browserCacheRootDir, winItem.dirId!)
+    this.userDataDir = join(appConfig.browserCacheRootDir, String(store.workspaceId), String(winItem.projectId || 'default'), winItem.dirId!)
   }
 
   /** 获取浏览器实例 */
@@ -148,6 +149,8 @@ export class BrowserItem {
       // 同步窗口状态
       await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
         console.log('user_mdf_window_sync_v2', res)
+      }).catch((error) => {
+        console.error('user_mdf_window_sync_v2 error: ', error)
       })
     }
     catch (error) {

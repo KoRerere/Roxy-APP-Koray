@@ -69,13 +69,12 @@ onBeforeMount(() => {
             class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
     >
       <template #value="slotProps">
-        <img :alt="slotProps.value.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png">
+        <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.at(0)" class="!w-[26px] !h-[26px]" />
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
       </template>
       <template #option="slotProps">
-        <img :alt="slotProps.option.label" src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-             class="mr-2" style="width: 18px"
-        >
+        <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.at(0)" class="!w-[26px] !h-[26px]" />
+
         <div>{{ slotProps.option.workspaceName }}</div>
         <span class="role-tag">
           <RxSvgIcon name="base/rx_ic_internet" size="10" />
