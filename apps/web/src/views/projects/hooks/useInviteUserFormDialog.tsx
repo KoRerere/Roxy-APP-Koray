@@ -1,8 +1,8 @@
-import type RyTable from '/@/components/ry-table'
 import type { UserMdfTeamInfoV2CreateData } from '@roxy/backend-api'
 import type { Ref } from 'vue'
 import Checkbox from 'primevue/checkbox'
 import { useToast } from 'primevue/usetoast'
+import type RyTable from '/@/components/ry-table'
 import { API } from '/@/api'
 import RxButton from '/@/components/ry-button'
 import { Role } from '/@/enums'
@@ -26,7 +26,7 @@ export function useInviteUserFormDialog() {
     const originl = data
 
     await dialog.showModal({
-      header: 'Invite users',
+      header: originl.user_id ? 'Edit user' : 'Invite user',
       class: 'w-[500px]',
       formProps: {
         layout: 'vertical',
@@ -56,7 +56,7 @@ export function useInviteUserFormDialog() {
         ),
       },
       async handleOk(formModel) {
-        const { code, data, msg } = originl.user_id
+        const { code, msg } = originl.user_id
           ? await API.team.userMdfTeamInfoV2Create({ ...formModel, userId: originl.user_id } as UserMdfTeamInfoV2CreateData)
           : await API.limit.userInviteCreate(formModel)
         tableRef?.value?.refresh()

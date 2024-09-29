@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { useUserStore } from '/@/stores/user'
 import type { SettingsModule } from './type'
 import { getNetworkPanel, getPreferencesPanel, getProfilePanel } from './panel'
 
@@ -8,7 +9,7 @@ interface Active {
   key: string
   panel: SettingsModule | null
 }
-
+const userStore = useUserStore()
 const active = reactive<Active>({
   key: 'Profiles',
   panel: null,
@@ -45,8 +46,7 @@ const menuList = ref([
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  console.log('🚀 ~ getUserConfig ~ data:', data)
-  profile.value = getProfilePanel(data)
+  profile.value = getProfilePanel(toRaw(userStore.userInfo))
   preferences.value = getPreferencesPanel(data)
   network.value = getNetworkPanel(data)
   active.panel = profile.value
@@ -65,8 +65,7 @@ onBeforeMount(() => {
       </div>
       <div class="settings-menu-list">
         <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
-             :class="{ active: item.label === active.key }" @click="item.command"
-        >
+          :class="{ active: item.label === active.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -95,9 +94,7 @@ onBeforeMount(() => {
                 <div class="panel-item-text" v-html="subItem.text" />
               </div>
               <div class="flex-1 flex justify-end w-full">
-                <component :is="subItem.component" v-bind="subItem.props" v-model="subItem.value"
-                           class="panel-item-value"
-                />
+                <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
               </div>
             </div>
           </div>

@@ -141,6 +141,7 @@ export interface UserGetUserInfoListData {
     realName: string;
     phone: string;
     email: string;
+    avatar: string;
     maxWindowCount: number;
     useWindowCount: number;
     maxUserCount: number;
@@ -244,14 +245,30 @@ export interface UserGetCoreUpgradeCreateData {
 export interface UserGetUserConfigListData {
   code: number;
   data: {
+    /** 语言 */
     language: string;
+    /** 时区 */
     timeZone: string;
+    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
     closeSoft: string;
+    /** 文件下载目录 */
+    uploadDir: string;
+    /** 文件缓存目录 */
     cacheDir: string;
+    /** 缓存删除条件，5天前的 */
     autoDelDays: string;
+    /** 缓存删除条件，2GB以上的 */
     autoDelSize: string;
+    /** 性能监控，内存使用率%95以上时停止打开窗口 */
     memoryLimit: string;
+    /** app 风格 0:系统 ,1:亮色,2:暗色 */
+    appearance: number;
+    /** 系统代理开关，true,false,默认false */
+    systemProxySwitch: boolean;
+    /** ip检测 */
+    ipChecker: string;
     ipBlackList: string[];
+    /** api token */
     apiToken: string;
   };
   msg: string;
@@ -260,51 +277,80 @@ export interface UserGetUserConfigListData {
 export interface UserGetDefConfigListData {
   code: number;
   data: {
+    /** 语言 */
     language: string;
-    timezone: string;
+    /** 时区 */
+    timeZone: string;
+    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
     closeSoft: string;
+    /** 文件下载目录 */
+    uploadDir: string;
+    /** 文件缓存目录 */
     cacheDir: string;
+    /** 缓存删除条件，5天前的 */
     autoDelDays: string;
+    /** 缓存删除条件，2GB以上的 */
     autoDelSize: string;
+    /** 性能监控，内存使用率%95以上时停止打开窗口 */
     memoryLimit: string;
+    /** app 风格 0:系统 ,1:亮色,2:暗色 */
+    appearance: number;
+    /** 系统代理开关，true,false,默认false */
+    systemProxySwitch: boolean;
+    /** ip检测 */
+    ipChecker: string;
     ipBlackList: string[];
+    /** api token */
+    apiToken: string;
   };
   msg: string;
 }
 
 export interface UserSetUserConfigCreatePayload {
   /** 语言 */
-  language: string;
+  language?: string;
   /** 时区 */
-  timezone: string;
+  timezone?: string;
   /**
    * 软件关闭时
    * 枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
    */
-  closeSoft: string;
+  closeSoft?: string;
   /** 件下载目录 */
-  uploadDir: string;
+  uploadDir?: string;
   /** 文件缓存目录 */
-  cacheDir: string;
+  cacheDir?: string;
   /**
    * 缓存删除条件
    * 5天前的
    */
-  autoDelDays: string;
+  autoDelDays?: string;
   /**
    * 缓存删除条件
    * 2GB以上的
    */
-  autoDelSize: string;
+  autoDelSize?: string;
   /**
    * 性能监控
    * 内存使用率%95以上时停止打开窗口
    */
-  memoryLimit: string;
+  memoryLimit?: string;
   /** 通过本地网络打开的网站列表 */
-  ipBlackList: string[];
+  ipBlackList?: string[];
   /** api token */
-  apiToken: string;
+  apiToken?: string;
+  /**
+   * 系统代理开关
+   * 枚举：flase:关闭,true:打开
+   */
+  systemProxySwitch?: string;
+  /** ip检测地址 */
+  ipChecker?: string;
+  /**
+   * app 风格
+   * 0:系统 ,1:亮色,2:暗色
+   */
+  appearance?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -365,6 +411,7 @@ export interface UserGetDictVersionListData {
     addType: string;
     exeType: string;
     frequency: string;
+    ipCheckAddress: string;
   };
   msg: string;
 }

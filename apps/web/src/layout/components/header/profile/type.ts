@@ -2,7 +2,7 @@ import type { UserGetUserConfigListData } from '@roxy/backend-api'
 
 export type UserConfig = UserGetUserConfigListData['data']
 
-interface Items {
+export interface Items {
   label?: string
   text?: string
   name?: string
@@ -11,7 +11,7 @@ interface Items {
   props?: any
   component?: any
 }
-interface List {
+export interface List {
   subtitle?: string
   items: Items[]
 }
