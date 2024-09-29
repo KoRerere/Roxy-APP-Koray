@@ -1,13 +1,13 @@
 <script lang="ts" setup>
+import { API } from '/@/api'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
 
-import { API } from '/@/api'
-import { useWorkspaceStore } from '/@/stores/workspace'
-
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
+const transitionend = ref<boolean>(true)
 
 onMounted(() => {
   const dict = localStorage.getItem('$dict_map')
@@ -25,11 +25,19 @@ onMounted(() => {
       })
   }
 })
+
+function handleSideTransitionend() {
+  transitionend.value = true
+}
+
+function handleSideTransitionstart() {
+  transitionend.value = false
+}
 </script>
 
 <template>
   <div class="rx-layout">
-    <div class="rx-sider" :class="{ collapsed }">
+    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart" @transitionend="handleSideTransitionend">
       <div class="logo">
         <SvgIcon name="base/logo" size="32" />
         <template v-if="!collapsed">
@@ -41,7 +49,7 @@ onMounted(() => {
           </div>
         </template>
       </div>
-      <AsideMenu v-if="currentWorkspace?.id" :collapsed />
+      <AsideMenu v-if="currentWorkspace?.id" :collapsed :transitionend />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
     <main class="rx-main">
@@ -62,7 +70,7 @@ onMounted(() => {
   background: var(--Colors-Background-bg-page, #fafbfc);
 }
 
-.rx-sider {
+.rx-side {
   position: relative;
   display: flex;
   width: 220px;
