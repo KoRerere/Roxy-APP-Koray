@@ -9,7 +9,7 @@ import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { aliOSS, getMacAddress, proxyDetection, tryRefreshUrl } from '/@/utils'
+import { aliOSS, getMacAddress, getSystemProxy, proxyDetection, tryRefreshUrl } from '/@/utils'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -35,6 +35,11 @@ export function errorDataWrapper(message = 'error', data?: any, error?: any): Ma
 /** 代理检测 */
 ipcMain.on('proxy:detection', (winItemInfo) => {
   return proxyDetection(winItemInfo)
+})
+
+/** 获取系统代理 */
+ipcMain.on('proxy:getSystemProxy', () => {
+  return getSystemProxy()
 })
 
 /** 代理 => 刷新 URL */
@@ -75,11 +80,12 @@ ipcMain.on('user:setWorkspaceId', (workspaceId) => {
 })
 
 /** 用户上传头像 */
-ipcMain.on('user:uploadAvatar', (avatarPath) => {
+ipcMain.on('user:uploadAvatar', async (avatarPath) => {
   const userId = store.userId
   const extname = path.extname(avatarPath)
   console.log('上传头像', userId, avatarPath, extname)
-  return aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
+  const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
+  return url
 })
 
 /** 保存软件设置 */
