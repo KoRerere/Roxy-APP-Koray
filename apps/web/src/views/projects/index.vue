@@ -112,9 +112,18 @@ function tableRequest(params: any) {
 }
 
 function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>) {
+  let message = ''
+
+  if (Array.isArray(item)) {
+    message = `确定删除选中的 ${item.length} 个项目吗？`
+  }
+  else {
+    message = `确定删除项目 ${item.projectName} 吗？`
+  }
+
   confirm.require({
     header: '警告',
-    message: `确定删除此项目(${item.projectName})吗?`,
+    message,
     rejectProps: {
       label: '取消',
       severity: 'secondary',

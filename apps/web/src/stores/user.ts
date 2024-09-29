@@ -13,7 +13,9 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function clearUserInfo() {
-    userInfo.value = {}
+    userInfo.value = {
+      userName: userInfo.value.userName,
+    }
     tokenRef.value = ''
   }
 

@@ -6,11 +6,11 @@ import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
-const { setUserInfo, setToken } = useUserStore()
+const { setUserInfo, setToken, userInfo } = useUserStore()
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
-  user_name: '',
+  user_name: userInfo.userName || '',
   password: '',
 })
 

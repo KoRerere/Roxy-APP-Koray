@@ -82,12 +82,14 @@ function markAllAsRead() {
             Message
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
-            label="Mark all as read" @click="markAllAsRead" />
+                    label="Mark all as read" @click="markAllAsRead"
+          />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-              class="flex flex-1 justify-center items-center gap-1.5">
+                 class="flex flex-1 justify-center items-center gap-1.5"
+            >
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>

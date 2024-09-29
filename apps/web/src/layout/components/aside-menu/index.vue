@@ -12,6 +12,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  transitionend: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const router = useRouter()
@@ -67,7 +71,7 @@ function toCreateBrowser() {
 </script>
 
 <template>
-  <aside class="aside" :class="{ collapsed }">
+  <aside class="aside" :class="{ collapsed, transitionend }">
     <template v-if="!roleStore.isViewer">
       <ry-button :label="collapsed ? '' : 'New profile'" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
     </template>
@@ -97,6 +101,16 @@ function toCreateBrowser() {
     }
   }
 
+  &.transitionend {
+    .menu {
+      overflow-y: auto;
+    }
+  }
+
+  .new-profile-btn {
+    flex-shrink: 0;
+  }
+
   .menu {
     flex: auto;
     display: flex;
@@ -104,7 +118,7 @@ function toCreateBrowser() {
     align-items: flex-start;
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
-    overflow-y: auto;
+    overflow: hidden;
   }
 }
 </style>
