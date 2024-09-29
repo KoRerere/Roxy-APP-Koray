@@ -13,21 +13,34 @@ const { setUserInfo } = useUserStore()
 
 async function updateAvatar(item: Items) {
   await API.base.userUploadAvatarCreate({ avatar: item.value })
-  const { data } = await API.base.userGetUserInfoList()
-  setUserInfo(data)
+  updateUserInfo()
 }
 
 async function updateUserName(item: Items) {
   API.base.userChangeAccountCreate({ realName: item.value })
+  updateUserInfo()
+}
+
+async function updateUserInfo() {
+  const { data } = await API.base.userGetUserInfoList()
+  setUserInfo(data)
 }
 
 async function saveUserConfig(item: Items) {
-  const { name, value } = item
-  API.base.userSetUserConfigCreate({ [name as any]: value })
+  const value = item.formatValue?.(item) ?? item.value
+  API.base.userSetUserConfigCreate({ [item.name as any]: value })
 }
 
-// function DetectLocalNetwork() { }
-// function DetectSystemNetwork() { }
+async function detectLocalNetwork() {
+  const data = await electronAPI.send('proxy:detection', {})
+  console.log('data', data)
+}
+async function detectSystemNetwork() {
+  const systemProxy = await electronAPI.send('proxy:getSystemProxy')
+  const [host, port] = systemProxy.split(':')
+  const data = await electronAPI.send('proxy:detection', { protocol: 'HTTP', host, port })
+  console.log('data', data)
+}
 
 async function selectDir() {
   const _dir = await window.electronAPI.send('dialog:selectDir')
@@ -102,7 +115,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
             component: ({ item, ...props }: any) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" />
+                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
             },
           },
@@ -116,7 +129,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
             component: ({ item, ...props }: any) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" />
+                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
             },
           },
@@ -128,13 +141,14 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             props: {
               options: [
                 { label: 'System', value: `${settingAppearance.system}` },
-                { label: 'Dark', value: `${settingAppearance.dark}` },
                 { label: 'Light', value: `${settingAppearance.light}` },
+                { label: 'Dark', value: `${settingAppearance.dark}` },
               ],
             },
+            formatValue: (item: Items) => Number(item.value),
             component: ({ item, ...props }: any) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" />
+                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
             },
           },
@@ -179,7 +193,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
             component: ({ item, ...props }: any) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" />
+                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
             },
           },
@@ -214,7 +228,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: 'Some hints',
             component: () => {
               return (
-                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect"></RyButton>
+                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={detectLocalNetwork}></RyButton>
               )
             },
           },
@@ -223,7 +237,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: 'Some hints',
             component: () => {
               return (
-                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect"></RyButton>
+                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={detectSystemNetwork}></RyButton>
               )
             },
           },

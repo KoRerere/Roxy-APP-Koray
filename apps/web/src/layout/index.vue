@@ -1,6 +1,8 @@
 <script lang="ts" setup>
+import type { UserGetDictVersionListData, UserGetSystemDictV2CreateData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { isEmptyValue } from '/@/utils'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
@@ -9,21 +11,34 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
 
-onMounted(() => {
-  const dict = localStorage.getItem('$dict_map')
-  if (!dict) {
-    API.base.userGetDictVersionList()
-      .then(({ data }) => API.base.userGetSystemDictV2Create({ type: Object.keys(data) }))
-      .then(({ data }) => {
-        const dict = {}
-        data.forEach((item) => {
-          if (!dict[item.type])
-            dict[item.type] = []
-          dict[item.type].push(item)
-        })
-        localStorage.setItem('$dict_map', JSON.stringify(dict))
-      })
+type DictMap = UserGetDictVersionListData['data']
+type DictItem = UserGetSystemDictV2CreateData['data'][0]
+
+async function getDictVersion() {
+  const { data: newVersion } = await API.base.userGetDictVersionList()
+  const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
+
+  const needUpdateDict = isEmptyValue(oldVersion)
+    ? newVersion
+    : Object.fromEntries(Object.entries(newVersion).filter(([key, value]) => oldVersion[key as keyof DictMap] !== value))
+
+  if (!isEmptyValue(needUpdateDict)) {
+    localStorage.setItem('$dict_version', JSON.stringify(newVersion))
+    getDictData(Object.keys(needUpdateDict))
   }
+}
+
+async function getDictData(type: any) {
+  const { data } = await API.base.userGetSystemDictV2Create({ type })
+  const dictMap = data.reduce((map, item) => {
+    (map[item.type] || (map[item.type] = [])).push(item)
+    return map
+  }, {} as Record<string, DictItem[]>)
+  localStorage.setItem('$dict_map', JSON.stringify(dictMap))
+}
+
+onMounted(() => {
+  getDictVersion()
 })
 
 function handleSideTransitionend() {
@@ -45,7 +60,8 @@ onMounted(async () => {
 
 <template>
   <div class="rx-layout">
-    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart" @transitionend="handleSideTransitionend">
+    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
+      @transitionend="handleSideTransitionend">
       <div class="logo">
         <SvgIcon name="base/logo" size="32" />
         <template v-if="!collapsed">

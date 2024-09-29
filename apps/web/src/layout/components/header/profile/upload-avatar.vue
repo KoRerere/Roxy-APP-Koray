@@ -10,8 +10,7 @@ async function uploadAvatar() {
 
   if (previewUrl.value) {
     try {
-      const { url } = await electronAPI.send('user:uploadAvatar', localPath)
-      modelValue.value = url
+      modelValue.value = await electronAPI.send('user:uploadAvatar', localPath)
       emit('change')
     }
     catch (error) {
