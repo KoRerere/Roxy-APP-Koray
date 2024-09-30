@@ -26,7 +26,7 @@ async function testProxy() {
   const data = getFormData(formInputs.value)
 
   loading.value = true
-  window.electronAPI.send('proxy:detection', toRaw(data)).then(async (checkRes) => {
+  window.electronAPI.send('proxy:detect', toRaw(data)).then(async (checkRes) => {
     loading.value = false
 
     if (!checkRes.ip) {

@@ -11,13 +11,14 @@ import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } fro
 import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
+import { store } from '/@/modules/store'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
 import { getPluginManifestInfo, getPluginMeta } from './helper'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
   get extensionDir() {
-    return appConfig.browserExtensionsDir
+    return path.join(appConfig.browserExtensionsDir, String(store.workspaceId))
   }
 
   /** 获取本地所有插件 */
@@ -149,7 +150,7 @@ export const extensionManager = new class ExtensionManager {
 
   /** 获取并解析用户本地选择的插件信息 */
   async getUserSelectedExtensionInfo(selectType: 'dir' | 'file') {
-    const { promise, resolve } = Promise.withResolvers()
+    const { promise, resolve } = Promise.withResolvers<{ type: string, message?: string, data?: any }>()
     const { canceled, filePaths } = await dialog.showOpenDialog(getMainWindow()!, {
       properties: [selectType === 'dir' ? 'openDirectory' : 'openFile'],
       // .crx .zip

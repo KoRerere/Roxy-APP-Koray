@@ -320,7 +320,7 @@ function profileOperate(key: string, data: any) {
 }
 
 async function testProxy(data: any) {
-  const checkRes = await window.electronAPI.send('proxy:detection', toRaw(data) as any)
+  const checkRes = await window.electronAPI.send('proxy:detect', toRaw(data) as any)
   const params = {
     checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
     lastCity: checkRes.city ?? '',

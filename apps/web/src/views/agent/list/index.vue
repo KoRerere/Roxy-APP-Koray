@@ -64,7 +64,7 @@ function refreshUrl(datas: ProxyItem[]) {
 
 async function testProxy(datas: ProxyItem[], operateName: string) {
   datas.forEach((item) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item) as any))
+    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detect', toRaw(item) as any))
       .then(async (checkRes) => {
         const params = {
           id: item.id,

@@ -38,14 +38,16 @@ function handleDeleteConfirm() {
     const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')!
 
     async function confirmDelete() {
+      const workspaceId = currentWorkspace.value!.id!
       const { code, msg } = await API.limit.userDelWorkspaceInfoCreate({
         workspaceName: workspaceName.value,
-        workspaceId: currentWorkspace.value?.id,
+        workspaceId,
       })
       if (code === 0) {
         workspaceStore.getWorkspaceList()
         dialogRef.value.close()
         toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace deleted successfully', life: 3000 })
+        electronAPI.send('util:removeWorkspace', workspaceId)
       }
       else {
         toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })

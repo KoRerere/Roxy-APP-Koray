@@ -3,10 +3,11 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { useDateFormat, useMediaQuery, useNow } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
-import { fingerprintInfoList, profileInfoList } from '../constants'
-import { getTimeOffset } from '../utils'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { fingerprintInfoList, profileInfoList } from '../constants'
+import { getTimeOffset } from '../utils'
+import TwoFactorAuth from './two-factor-auth.vue'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
 
@@ -176,42 +177,53 @@ onBeforeMount(() => {
       <div class="dashboard-bg" v-html="dashboardBgSvg" />
     </div>
 
-    <div class="card more-info">
-      <div class="list">
-        <div class="title">
-          Profile Info
-        </div>
-        <template v-for="item in profileInfoList" :key="item.label">
-          <div class="item">
-            <div class="label">
-              {{ item.label }}:
-            </div>
-            <div class="value">
-              <component :is="item.customRender(windowInfo)" />
-            </div>
+    <div class="card-horizontal">
+      <div class="card more-info profile">
+        <div class="list">
+          <div class="title">
+            Profile Info
           </div>
-        </template>
+          <template v-for="item in profileInfoList" :key="item.label">
+            <div class="item">
+              <div class="label">
+                {{ item.label }}:
+              </div>
+              <div class="value">
+                <component :is="item.customRender(windowInfo)" />
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="list">
+          <div class="title">
+            Fingerprint Info
+          </div>
+          <template v-for="item in fingerprintInfoList" :key="item.label">
+            <div class="item">
+              <div class="label">
+                {{ item.label }}:
+              </div>
+              <div class="value">
+                <template v-if="fetchWindowInfoLoading">
+                  <Skeleton :width="item.width" height="1.3rem" />
+                </template>
+                <template v-else>
+                  {{ item.format(windowInfo) }}
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
 
-      <div class="list">
-        <div class="title">
-          Fingerprint Info
-        </div>
-        <template v-for="item in fingerprintInfoList" :key="item.label">
-          <div class="item">
-            <div class="label">
-              {{ item.label }}:
-            </div>
-            <div class="value">
-              <template v-if="fetchWindowInfoLoading">
-                <Skeleton :width="item.width" height="1.3rem" />
-              </template>
-              <template v-else>
-                {{ item.format(windowInfo) }}
-              </template>
-            </div>
+      <div class="card more-info account">
+        <div class="list">
+          <div class="title">
+            Accounts & URLs
           </div>
-        </template>
+          <TwoFactorAuth :win-info="windowInfo" />
+        </div>
       </div>
     </div>
 
@@ -310,6 +322,14 @@ onBeforeMount(() => {
   padding: var(--spacing-4xl, 24px);
   /* shadow-xs */
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+
+  &.profile {
+    flex: 2;
+  }
+
+  &.account {
+    flex: 1;
+  }
 
   .list {
     display: flex;
@@ -452,6 +472,19 @@ onBeforeMount(() => {
       mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0) 20.36%, rgba(255, 255, 255, 0.9) 92.52%);
       -webkit-mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0) 20.36%, rgba(255, 255, 255, 0.9) 92.52%);
       flex-shrink: 0;
+    }
+  }
+}
+
+.card-horizontal {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  align-self: stretch;
+
+  @media (max-width: 800px) {
+    & {
+      flex-direction: column;
     }
   }
 }

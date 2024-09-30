@@ -135,7 +135,7 @@ async function refreshUrl(data: any, operateName: string) {
 async function testProxy(data: any, operateName: string) {
   const datas = [].concat(data)
   datas.forEach((item: any) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detection', toRaw(item)))
+    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detect', toRaw(item)))
       .then(async (checkRes) => {
         item.checkStatus = checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success
         item.lastIp = checkRes.ip ?? ''

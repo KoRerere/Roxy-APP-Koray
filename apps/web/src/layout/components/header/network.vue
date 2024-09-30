@@ -1,13 +1,35 @@
 <script setup lang="ts">
+const loading = ref(false)
+const proxyInfo = ref({
+  city: '',
+  ip: '',
+})
 
+async function detectNetwork() {
+  loading.value = true
+  const result = await electronAPI.send('proxy:detectNetwork').finally(() => {
+    loading.value = false
+  })
+  proxyInfo.value.city = result.city || result.country
+  proxyInfo.value.ip = result.ip
+  console.log('result', result)
+}
+
+detectNetwork()
 </script>
 
 <template>
   <div class="network">
-    <ry-button icon="base/rx_ic_route" outlined size="small" />
+    <ry-button icon="base/rx_ic_route" outlined size="small" @click="detectNetwork" />
     <div class="info">
-      <span class="city">HongKong</span>
-      <span class="ip">Local IP Address</span>
+      <template v-if="loading">
+        <Skeleton width="4rem" height="12px" />
+        <Skeleton width="3rem" height="10px" />
+      </template>
+      <template v-else>
+        <span class="city">{{ proxyInfo.city }}</span>
+        <span class="ip">{{ proxyInfo.ip }}</span>
+      </template>
     </div>
   </div>
 </template>

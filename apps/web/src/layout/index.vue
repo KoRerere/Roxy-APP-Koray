@@ -53,7 +53,7 @@ onMounted(async () => {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
   console.log('systemProxy', systemProxy)
-  const data = await electronAPI.send('proxy:detection', { protocol: 'HTTP', host, port })
+  const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
   console.log('data', data)
 })
 </script>

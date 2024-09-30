@@ -17,7 +17,9 @@ export interface RenderMessage {
   'browser:batchRemove': (dirIds: string[]) => void
 
   /** 代理检测 */
-  'proxy:detection': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
+  'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
+  /** 检测本地网络/系统代理 */
+  'proxy:detectNetwork': () => ProxyDetectionResult
   /** 获取系统代理 */
   'proxy:getSystemProxy': () => Promise<string>
   /** 代理 => 刷新 URL */
@@ -30,12 +32,13 @@ export interface RenderMessage {
   /** 用户上传头像  */
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
 
-  /** 保存软件设置 */
-  'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
   /** 选择文件夹 */
   'dialog:selectDir': () => Promise<string>
   /** 选择文件 */
   'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
+
+  /** 保存软件设置 */
+  'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
   /** 安装并更新 */
@@ -63,6 +66,11 @@ export interface RenderMessage {
   'extension:getInstalledExtensions': () => Promise<PluginMeta[]>
   /** 生成 api key */
   'base:apikey': () => Promise<string>
+
   /** 将本地绝对路径转为自定义媒体协议路径 */
-  'util:to-mediaPath': (pathname: string) => string
+  'util:toMediaPath': (pathname: string) => string
+  /** 删除工作空间 */
+  'util:removeWorkspace': (workspaceId: number) => void
+  /** 删除项目 */
+  'util:removeProject': (payload: { workspaceId: number, projectId: number }) => void
 }

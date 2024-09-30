@@ -6,7 +6,7 @@ const previewUrl = ref(modelValue.value)
 async function uploadAvatar() {
   const localPath = await electronAPI.send('dialog:selectFile', [{ name: 'Images', extensions: ['jpg', 'png', 'jpeg', 'bmp'] }])
 
-  previewUrl.value = await electronAPI.send('util:to-mediaPath', localPath)
+  previewUrl.value = await electronAPI.send('util:toMediaPath', localPath)
 
   if (previewUrl.value) {
     try {
