@@ -2,7 +2,6 @@
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
@@ -10,6 +9,7 @@ import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { projectFormSchemas } from './schemas'
@@ -20,6 +20,7 @@ const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
+const { currentWorkspace } = useWorkspaceStore()
 
 const [columns] = useColumns(columnsRow)
 
@@ -138,6 +139,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       if (code === 0) {
         tableRef.value?.refresh()
         toast.add({ severity: 'success', summary: '成功', detail: '删除成功', life: 3000 })
+        electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       }
       else {
         toast.add({ severity: 'error', summary: '失败', detail: msg || '删除失败', life: 3000 })
@@ -152,12 +154,14 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     <div class="flex justify-between account-header">
       <div>Projects</div>
       <RxButton v-if="role.isOwner || role.isManager" size="small" severity="info" icon="base/rx_ic_plus"
-        label="Add project" @click="operationHandler({ name: 'create' })" />
+                label="Add project" @click="operationHandler({ name: 'create' })"
+      />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false">
+                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
+      >
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -170,7 +174,8 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
           <RxButton outlined>
             <router-link
               :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
-              class="text-black">
+              class="text-black"
+            >
               Detail
             </router-link>
           </RxButton>

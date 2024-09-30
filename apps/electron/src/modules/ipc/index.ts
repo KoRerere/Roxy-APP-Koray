@@ -2,6 +2,7 @@ import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electr
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
+import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import url from 'node:url'
 import { appConfig, mediaProtocolName } from '/@/constants'
@@ -33,8 +34,21 @@ export function errorDataWrapper(message = 'error', data?: any, error?: any): Ma
 }
 
 /** 代理检测 */
-ipcMain.on('proxy:detection', (winItemInfo) => {
+ipcMain.on('proxy:detect', (winItemInfo) => {
   return proxyDetection(winItemInfo)
+})
+
+/** 根据用户设置，检测本地网络/系统代理 */
+ipcMain.on('proxy:detectNetwork', async () => {
+  const { systemProxySwitch } = store
+  if (systemProxySwitch) {
+    const systemProxy = await getSystemProxy()
+    const [host, port] = systemProxy.split(':')
+    return proxyDetection({ host, port, protocol: 'HTTP' })
+  }
+  else {
+    return proxyDetection({})
+  }
 })
 
 /** 获取系统代理 */
@@ -92,6 +106,7 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
 ipcMain.on('app:saveSoftConfig', (config) => {
   // @ts-expect-error 后端字段不是一个枚举
   store.closeSoft = config.closeSoft
+  store.systemProxySwitch = config.systemProxySwitch
   store.memoryLimit = Number(config.memoryLimit) ? Number(config.memoryLimit) : 95
   store.browserCacheRootDir = config.cacheDir
 })
@@ -189,10 +204,20 @@ ipcMain.on('base:apikey', () => {
 })
 
 /** 将本地绝对路径转为自定义媒体协议路径 */
-ipcMain.on('util:to-mediaPath', (pathname) => {
+ipcMain.on('util:toMediaPath', (pathname) => {
   return url.format({
     protocol: mediaProtocolName,
     slashes: true,
     pathname,
   })
+})
+
+/** 删除工作空间 */
+ipcMain.on('util:removeWorkspace', (workspaceId) => {
+  return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId)), { recursive: true, force: true })
+})
+
+/** 删除项目 */
+ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
+  return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId), String(projectId)), { recursive: true, force: true })
 })

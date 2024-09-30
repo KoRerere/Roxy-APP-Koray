@@ -32,13 +32,13 @@ async function saveUserConfig(item: Items) {
 }
 
 async function detectLocalNetwork() {
-  const data = await electronAPI.send('proxy:detection', {})
+  const data = await electronAPI.send('proxy:detect', {})
   console.log('data', data)
 }
 async function detectSystemNetwork() {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
-  const data = await electronAPI.send('proxy:detection', { protocol: 'HTTP', host, port })
+  const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
   console.log('data', data)
 }
 
