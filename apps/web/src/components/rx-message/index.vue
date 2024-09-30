@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MessageProps } from 'primevue/message'
+import type { MessageEmitsOptions, MessageProps } from 'primevue/message'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 interface Props extends /* @vue-ignore */ MessageProps {
@@ -7,6 +7,7 @@ interface Props extends /* @vue-ignore */ MessageProps {
 }
 
 defineProps<Props>()
+defineEmits<MessageEmitsOptions>()
 
 const { icon: iconSlot, ...slots } = useSlots()
 </script>
@@ -15,7 +16,9 @@ const { icon: iconSlot, ...slots } = useSlots()
   <Message>
     <template v-if="icon || iconSlot" #icon="slotProps">
       <slot name="icon" :slot-props="slotProps">
-        <RxSvgIcon v-if="icon" :name="icon" />
+        <div class="flex items-center h-6">
+          <RxSvgIcon v-if="icon" :name="icon" />
+        </div>
       </slot>
     </template>
     <template v-for="(_, name) in slots" #[name]="slotProps">
@@ -24,4 +27,8 @@ const { icon: iconSlot, ...slots } = useSlots()
   </Message>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+:deep(.p-message-close-button) {
+  height: 24px;
+}
+</style>

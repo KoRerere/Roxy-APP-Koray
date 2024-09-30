@@ -10,6 +10,7 @@ export interface Items {
   classes?: string
   props?: any
   component?: any
+  afterComponent?: any
   formatValue?: (item: Items) => any
 }
 export interface List {
