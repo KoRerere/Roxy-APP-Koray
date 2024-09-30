@@ -86,16 +86,19 @@ onBeforeMount(() => {
             <div v-if="item.subtitle" class="mb-3">
               {{ item.subtitle }}
             </div>
-            <div v-for="subItem in item.items" :key="subItem.label" class="panel-item" :class="subItem.classes">
-              <div class="flex-1">
-                <div class="panel-item-label">
-                  {{ subItem.label }}
+            <div v-for="subItem in item.items" :key="subItem.label" class="panel-item">
+              <div class="flex flex-1 items-center" :class="subItem.classes">
+                <div class="flex-1">
+                  <div class="panel-item-label">
+                    {{ subItem.label }}
+                  </div>
+                  <div class="panel-item-text" v-html="subItem.text" />
                 </div>
-                <div class="panel-item-text" v-html="subItem.text" />
+                <div class="flex-1 flex justify-end w-full">
+                  <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
+                </div>
               </div>
-              <div class="flex-1 flex justify-end w-full">
-                <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
-              </div>
+              <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
             </div>
           </div>
         </div>
@@ -184,8 +187,6 @@ onBeforeMount(() => {
   }
 
   &-item {
-    display: flex;
-    align-items: center;
     padding: var(--spacing-2xl, 16px) 0px;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 

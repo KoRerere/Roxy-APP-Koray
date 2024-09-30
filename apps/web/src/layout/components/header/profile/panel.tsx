@@ -1,4 +1,5 @@
 import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import { API } from '/@/api'
@@ -7,6 +8,7 @@ import RyButton from '/@/components/ry-button'
 import { settingAppearance } from '/@/enums'
 import { useUserStore } from '/@/stores/user'
 import type { Items, SettingsModule } from './type'
+import FolderDirectory from './folder-directory.vue'
 import UploadAvatar from './upload-avatar.vue'
 
 const { setUserInfo } = useUserStore()
@@ -31,20 +33,21 @@ async function saveUserConfig(item: Items) {
   API.base.userSetUserConfigCreate({ [item.name as any]: value })
 }
 
-async function detectLocalNetwork() {
+async function detectLocalNetwork(item: Items) {
   const data = await electronAPI.send('proxy:detection', {})
-  console.log('data', data)
+  item.value = data
 }
-async function detectSystemNetwork() {
+async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
   const data = await electronAPI.send('proxy:detection', { protocol: 'HTTP', host, port })
-  console.log('data', data)
+  item.value = data
 }
 
-async function selectDir() {
-  const _dir = await window.electronAPI.send('dialog:selectDir')
-}
+// async function selectDir(item: Items) {
+//   const dirPath = await window.electronAPI.send('dialog:selectDir')
+//   item.value = dirPath
+// }
 
 export function getProfilePanel(data?: any): SettingsModule {
   return {
@@ -137,7 +140,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: 'Appearance',
             text: 'Themes for different mode',
             name: 'appearance',
-            value: data?.appearance ?? '',
+            value: `${data?.appearance}` ?? '',
             props: {
               options: [
                 { label: 'System', value: `${settingAppearance.system}` },
@@ -163,14 +166,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             name: 'cacheDir',
             value: data?.cacheDir ?? '',
             props: {
-              disabled: true,
+              disabled: false,
             },
             component: ({ item, ...props }: any) => {
               return (
-                <div class="flex gap-2">
-                  <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" />
-                  <RyButton outlined severity="secondary" icon="base/rx_ic_folder" onClick={selectDir} />
-                </div>
+                <FolderDirectory item={item} {...item.props} {...props}></FolderDirectory>
               )
             },
           },
@@ -226,18 +226,60 @@ export function getNetworkPanel(data?: any): SettingsModule {
           {
             label: 'Detect local network',
             text: 'Some hints',
-            component: () => {
+            component: ({ item }: any) => {
               return (
-                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={detectLocalNetwork}></RyButton>
+                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={() => detectLocalNetwork(item)}></RyButton>
+              )
+            },
+            afterComponent: ({ item }: any) => {
+              return (
+                item.value && (
+                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
+                    <div class="text-3 color-[#171C1F]">
+                      Detection passed
+                    </div>
+                    <div class="text-3 line-height-normal color-[#575D61]">
+                      Location:
+                      {item.value.country_code}
+                      /
+                      {item.value.country}
+                    </div>
+                    <div class="text-3 line-height-normal color-[#575D61]">
+                      IP:
+                      {item.value.ip}
+                    </div>
+                  </Message>
+                )
               )
             },
           },
           {
             label: 'Detect system network',
             text: 'Some hints',
-            component: () => {
+            component: ({ item }: any) => {
               return (
-                <RyButton size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={detectSystemNetwork}></RyButton>
+                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={() => detectSystemNetwork(item)}></RyButton>
+              )
+            },
+            afterComponent: ({ item }: any) => {
+              return (
+                item.value && (
+                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
+                    <div class="text-3 color-[#171C1F]">
+                      Detection passed
+                    </div>
+                    <div class="text-3 line-height-normal color-[#575D61]">
+                      Location:
+                      {item.value.country_code}
+                      /
+                      {item.value.country}
+                    </div>
+                    <div class="text-3 line-height-normal color-[#575D61]">
+                      IP:
+                      {item.value.ip}
+                    </div>
+                  </Message>
+                )
               )
             },
           },
@@ -251,7 +293,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             name: 'ipChecker',
             value: data?.ipChecker ?? '',
             props: {
-              options: $dict_map.ipCheckAddress,
+              options: $dict_map.checkChannel,
             },
             component: ({ item, ...props }: any) => {
               return (
