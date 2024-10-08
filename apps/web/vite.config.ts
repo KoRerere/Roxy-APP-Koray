@@ -1,15 +1,15 @@
 /* eslint-env node */
 
 import type { UserConfig } from 'vite'
-import { accessSync } from 'node:fs'
-import { access, readdir, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
+import LanguageLocalization from '@roxy/language-localization/vite'
 import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-
 import { debounce } from 'es-toolkit'
+import { accessSync } from 'node:fs'
+import { access, readdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
@@ -66,7 +66,7 @@ const config: UserConfig = {
   css: {
     preprocessorOptions: {
       scss: {
-        api: 'modern-compiler', // or "modern", "legacy"
+        api: 'modern', // or "modern", "legacy"
       },
     },
   },
@@ -88,6 +88,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
+    LanguageLocalization({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs') }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
     svgLoader({

@@ -3,6 +3,7 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import SettingsPopup from './settings-popup.vue'
 
@@ -10,6 +11,7 @@ const router = useRouter()
 const toast = useToast()
 const dialog = useDialog()
 const userStore = useUserStore()
+const simpleLocale = useSimpleLocale()
 
 const menuRef = useTemplateRef('menu')
 const items = ref([
@@ -34,17 +36,43 @@ const items = ref([
     items: [
       {
         label: '简体中文',
+        locale: 'zh-CN',
         icon: 'country-code/CN',
+        command: () => {
+          simpleLocale.setSimpleLocale('zh-CN')
+        },
       },
       {
         label: 'English',
+        locale: 'en-US',
         icon: 'country-code/US',
+        command: () => {
+          simpleLocale.setSimpleLocale('en-US')
+        },
       },
     ],
   },
   {
     separator: true,
   },
+  ...(import.meta.env.DEV
+    ? [
+        {
+          label: '图标(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/figma-icons')
+          },
+        },
+        {
+          label: '多语言(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/__language-localization__')
+          },
+        },
+      ]
+    : []),
   {
     label: 'Log out',
     icon: 'base/rx_ic_logout',
@@ -86,8 +114,9 @@ function toggle(event: Event) {
 
 <template>
   <Avatar class="cursor-pointer mr-2"
-    :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
-    shape="circle" @click="toggle" />
+          :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
+          shape="circle" @click="toggle"
+  />
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>
     <template #item="{ item, props, hasSubmenu }">
@@ -95,6 +124,7 @@ function toggle(event: Event) {
         <RxSvgIcon :name="(item.icon as SvgNames)" />
         <span class="ml-2">{{ item.label }}</span>
         <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
+        <RxSvgIcon v-if="simpleLocale.currentLocale === item.locale" class="ml-auto" name="base/rx_ic_check" />
       </a>
     </template>
   </TieredMenu>
