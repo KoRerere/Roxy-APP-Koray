@@ -172,7 +172,8 @@ async function deleteMember(data: TableRow) {
 function handleShowInviteUserFormDialog(data?: TableRow) {
   const { email, project_info, role, user_id } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
-  showInviteUserFormDialog({ tableRef, email, projectIds, role, user_id })
+  const disableds = email ? ['email'] : []
+  showInviteUserFormDialog({ tableRef, email, projectIds, role, user_id, disableds })
 }
 </script>
 
@@ -200,7 +201,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <img class="member-image" :src="data.avatar">
+        <img class="member-image rounded-full" :src="data.avatar">
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}

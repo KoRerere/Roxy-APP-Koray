@@ -15,6 +15,7 @@ interface PropsType {
   email?: string
   role?: Role
   projectIds?: number[]
+  disableds?: string[]
 }
 
 export function useInviteUserFormDialog() {
@@ -22,7 +23,7 @@ export function useInviteUserFormDialog() {
   const isInviteMore = ref(false)
   const toast = useToast()
 
-  const showDialog = async ({ tableRef, ...data }: PropsType) => {
+  const showDialog = async ({ tableRef, disableds, ...data }: PropsType) => {
     const originl = data
 
     await dialog.showModal({
@@ -72,14 +73,15 @@ export function useInviteUserFormDialog() {
         }
       },
     })
-    if (data?.email) {
+
+    disableds?.forEach((item) => {
       dialog.formRef.value?.updateSchema({
-        field: 'email',
+        field: item,
         componentProps: {
           disabled: true,
         },
       })
-    }
+    })
   }
 
   return [showDialog]
