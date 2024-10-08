@@ -34,7 +34,9 @@ async function getDictData(type: any) {
     (map[item.type] || (map[item.type] = [])).push(item)
     return map
   }, {} as Record<string, DictItem[]>)
-  localStorage.setItem('$dict_map', JSON.stringify(dictMap))
+
+  const oldDict = JSON.parse(localStorage.getItem('$dict_map') || '{}')
+  localStorage.setItem('$dict_map', JSON.stringify(Object.assign(oldDict, dictMap)))
 }
 
 onMounted(() => {
