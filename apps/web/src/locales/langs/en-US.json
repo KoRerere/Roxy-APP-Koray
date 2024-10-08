@@ -1,4 +1,7 @@
 {
+  "common": {
+    "Skip": "Skip"
+  },
   "menus": {
     "AllProfiles": "All Profiles",
     "Projects": "Projects",
@@ -10,5 +13,9 @@
     "HistoryLogs": "History-Logs",
     "Settings": "Settings",
     "Api-keys": "Api-keys"
+  },
+  "workspace": {
+    "invitationTips": "You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!",
+    "joinWorkspace": "Join Workspace"
   }
 }

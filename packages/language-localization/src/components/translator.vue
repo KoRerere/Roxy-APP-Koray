@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const emit = defineEmits(['save'])
 
@@ -10,6 +10,10 @@ const translateLoading = ref(false)
 const currentRow = defineModel('currentRow', {
   type: Object,
   default: {},
+})
+
+const disabledSaveBtn = computed(() => {
+  return !translateResult.value || !currentRow.value.targetKey
 })
 
 function translate() {
@@ -58,7 +62,7 @@ watch(currentRow, () => {
         type="textarea"
         placeholder="Enter translation here"
       />
-      <el-button type="primary" class="mt-[12px] ml-[86%]" :disabled="!translateResult" @click="saveTranslateResult">
+      <el-button type="primary" class="mt-[12px] ml-[86%]" :disabled="disabledSaveBtn" @click="saveTranslateResult">
         保存
       </el-button>
     </el-card>
