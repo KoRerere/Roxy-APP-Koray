@@ -1,6 +1,7 @@
 import type { PluginOption } from 'vite'
 import { GoogleTranslator } from '@roxy/puppeteer-google-translate'
 import bodyParser from 'body-parser'
+import { set } from 'es-toolkit/compat'
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
@@ -24,6 +25,7 @@ export default (options: OptionsType): PluginOption => {
 
       server.middlewares.use(`${baseUrl}/api`, async (req, res, next) => {
         const url = req.url
+        // 获取语言列表
         if (url === '/getLangs') {
           const files = await readdir(targetDir, { withFileTypes: true })
           const promiseArr = files.map(async (file) => {
@@ -36,16 +38,29 @@ export default (options: OptionsType): PluginOption => {
           console.log('result', result)
           res.end(JSON.stringify(result))
         }
+        // 翻译文本
         else if (url === '/translate') {
           const { text, from = 'auto', to } = req.body
           googleTranslator ||= new GoogleTranslator()
 
           // googleTranslator.translateText('A bird in hand is worth two in the bush.', 'auto', 'zh-CN')
-          // googleTranslator.translateText('Better be the head of a dog than the tail of a lion.', 'auto', 'zh-CN')
-          // googleTranslator.translateText('Treat yourself well. ', 'auto', 'zh-CN')
           try {
             const result = await googleTranslator.translateText(text, from, to)
             res.end(result)
+          }
+          catch (error) {
+            res.end(error.message)
+          }
+        }
+        else if (url === '/saveTranslate') {
+          const { fileName, key, value } = req.body
+          const filePath = join(targetDir, `${fileName}.json`)
+          try {
+            const data = await readFile(filePath, 'utf-8')
+            const jsonData = JSON.parse(data)
+            set(jsonData, key, value)
+            await writeFile(filePath, JSON.stringify(jsonData, null, 2))
+            res.end('ok')
           }
           catch (error) {
             res.end(error.message)

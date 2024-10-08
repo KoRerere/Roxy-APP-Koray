@@ -1,6 +1,13 @@
 {
   "menus": {
     "AllProfiles": "所有窗口",
-    "Projects": "项目列表"
+    "Projects": "项目列表",
+    "Extensions": "扩展",
+    "Accounts": "帐户",
+    "Proxies": "代理",
+    "HistoryLogs": "操作日志",
+    "Teams": "团队",
+    "Api-keys": "Api-Keys",
+    "Settings": "设置"
   }
 }
