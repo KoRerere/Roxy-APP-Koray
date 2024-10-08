@@ -57,13 +57,13 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'account',
         name: 'account-list',
-        meta: { title: 'Accounts', icon: 'base/rx_ic_keys' },
+        meta: { title: $t('menus.Accounts'), icon: 'base/rx_ic_keys' },
         component: () => import('/@/views/account/list'),
       },
       {
         path: 'agent',
         name: 'agent-list',
-        meta: { title: 'Proxies', icon: 'base/rx_ic_internet' },
+        meta: { title: $t('menus.Proxies'), icon: 'base/rx_ic_internet' },
         component: () => import('/@/views/agent/list'),
       },
       {
@@ -81,7 +81,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'extensions',
         name: 'extensions',
-        meta: { title: 'Extensions', icon: 'base/rx_ic_extension_store' },
+        meta: { title: $t('menus.Extensions'), icon: 'base/rx_ic_extension_store' },
         component: () => import('/@/views/extensions'),
       },
       {
@@ -101,19 +101,19 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'teams',
         name: 'teams',
-        meta: { title: 'Teams', icon: 'base/rx_ic_user' },
+        meta: { title: $t('menus.Teams'), icon: 'base/rx_ic_user' },
         component: () => import('/@/views/team'),
       },
       {
         path: 'history-logs',
         name: 'history-logs',
-        meta: { title: 'History-Logs', icon: 'base/rx_ic_doc_data', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('menus.HistoryLogs'), icon: 'base/rx_ic_doc_data', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/history-logs'),
       },
       {
         path: 'settings',
         name: 'settings',
-        meta: { title: 'Settings', icon: 'base/rx_ic_gear', roles: [Role.OWNER] },
+        meta: { title: $t('menus.Settings'), icon: 'base/rx_ic_gear', roles: [Role.OWNER] },
         component: () => import('/@/views/workspace-setting/index.vue'),
       },
     ],
@@ -121,7 +121,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'api-keys',
     name: 'api-keys',
-    meta: { title: 'Api-keys', icon: 'base/rx_ic_doc_code' },
+    meta: { title: $t('menus.Api-keys'), icon: 'base/rx_ic_doc_code' },
     component: () => import('/@/views/api-keys'),
   },
 ]

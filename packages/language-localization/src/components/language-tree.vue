@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { TreeOption } from 'naive-ui'
 import { flattenObject } from 'es-toolkit'
-import { computed, h, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
+import AddDialog from './add-dialog.vue'
 
 const sourceLangKey = 'en-US'
+const activeLang = ref('en-US')
 const sourceLang = ref<Record<string, string>>({})
 const langMap = ref<Record<string, any>>({})
 
@@ -41,11 +42,11 @@ fetch('./api/getLangs').then(res => res.json()).then((data) => {
       return [item.fileName, flattenObject(item.body)]
     })
     .reduce((acc, [fileName, body]) => {
-      const translateObject = Object.groupBy(Object.keys(sourceLang.value), (key) => {
+      const { translated = [], untranslated = [] } = Object.groupBy(Object.keys(sourceLang.value), (key) => {
         return body[key] ? 'translated' : 'untranslated'
       })
       acc[fileName] = {
-        translated: translateObject.translated?.map((sourceKey) => {
+        translated: translated.map((sourceKey) => {
           return {
             sourceKey,
             sourceValue: sourceLang.value[sourceKey],
@@ -53,7 +54,7 @@ fetch('./api/getLangs').then(res => res.json()).then((data) => {
             targetKey: fileName,
           }
         }),
-        untranslated: translateObject.untranslated?.map((sourceKey) => {
+        untranslated: untranslated.map((sourceKey) => {
           return {
             sourceKey,
             sourceValue: sourceLang.value[sourceKey],
@@ -65,8 +66,8 @@ fetch('./api/getLangs').then(res => res.json()).then((data) => {
           if (isSourceLang) {
             return `${fileName} (源语言)`
           }
-          const targetLength = Object.keys(langMap.value[fileName]).length
-          return `${fileName} (进度${targetLength / sourceLangKeyLength.value * 100}%)`
+          const translatedLength = Object.keys(langMap.value[fileName].translated).length
+          return `${fileName} (进度${Math.ceil(translatedLength / Object.keys(sourceLang.value).length * 100)}%)`
         }),
       }
       return acc
@@ -89,6 +90,20 @@ function handleSave() {
   else {
     currentRow.value.hasChanged = true
   }
+  fetch('./api/saveTranslate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      fileName: currentRow.value.targetKey,
+      key: currentRow.value.sourceKey,
+      value: currentRow.value.targetValue,
+    }),
+  })
+  if (currentRow.value.targetKey === sourceLangKey) {
+    currentRow.value.sourceValue = currentRow.value.targetValue
+  }
 }
 
 defineExpose({
@@ -97,9 +112,10 @@ defineExpose({
 </script>
 
 <template>
-  <el-tabs tab-position="left">
+  <el-tabs v-model="activeLang" tab-position="left">
     <template v-for="(map, lang) in langMap" :key="lang">
-      <el-tab-pane :label="map.progress">
+      <el-tab-pane :label="map.progress" :name="lang">
+        <AddDialog v-if="currentRow.targetKey === sourceLangKey" class="mb-[12px]" />
         <el-tabs type="border-card">
           <template v-for="tranTabItem in translateTabs" :key="tranTabItem.key">
             <el-tab-pane :label="`${tranTabItem.label}(${map[tranTabItem.key]?.length || 0})`">
