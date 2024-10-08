@@ -35,7 +35,7 @@ const props = defineProps({
     default: () => [],
   },
   tableFilters: {
-    type: Function as PropType<() => any[]>,
+    type: Function as PropType<() => any>,
     default: () => [],
   },
   sorts: {
