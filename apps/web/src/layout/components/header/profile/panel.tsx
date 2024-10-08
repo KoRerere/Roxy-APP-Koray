@@ -19,7 +19,7 @@ async function updateAvatar(item: Items) {
 }
 
 async function updateUserName(item: Items) {
-  API.base.userChangeAccountCreate({ realName: item.value })
+  await API.base.userChangeAccountCreate({ realName: item.value })
   updateUserInfo()
 }
 
@@ -140,7 +140,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: 'Appearance',
             text: 'Themes for different mode',
             name: 'appearance',
-            value: `${data?.appearance}` ?? '',
+            value: data?.appearance?.toString() ?? '',
             props: {
               options: [
                 { label: 'System', value: `${settingAppearance.system}` },

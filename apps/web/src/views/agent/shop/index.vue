@@ -1,29 +1,27 @@
-<script setup lang="ts">
-const showMessage = ref(false)
+<script setup lang="tsx">
+import { API } from '/@/api'
+import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 
-function closeMessage() {
-  setTimeout(() => {
-    showMessage.value = false
-  }, 300)
+const [showMenu] = usePopoverMenu()
+
+async function handleClick(event: any) {
+  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
+  const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+
+  // const operation = [{ name: 'a1', label: 'a1', value: '104' }, { name: 'a2', label: 'a2', value: '103' }, { name: 'a3', label: 'a3', value: '102' }, { name: 'a4', label: 'a4', value: '101' }]
+
+  showMenu(event, {
+    operation,
+    afterCmp: () => (<h1>scccccccccr</h1>),
+  })
 }
 </script>
 
 <template>
-  <div class="pa-50">
-    <Button label="Detect" @click="showMessage = true" />
-
-    <RxMessage v-if="showMessage" icon="status/rx_ic_check_fill" severity="success" closable
-      :pt="{ content: '!items-start' }" @close="closeMessage">
-      <div class="text-3 color-[#171C1F]">
-        Detection passed
-      </div>
-      <div class="text-3 line-height-normal color-[#575D61]">
-        Location: HK/HongKong
-      </div>
-      <div class="text-3 line-height-normal color-[#575D61]">
-        IP: 2600:1700:cc70:7580:b8c4:3fe5:88ee:9
-      </div>
-    </RxMessage>
+  <div class="flex pa-50 gap-5">
+    <RyButton v-for="item in 3" :key="item" @click="handleClick">
+      123
+    </RyButton>
   </div>
 </template>
 

@@ -1,10 +1,10 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useRoleStore } from '/@/stores/role'
-import { isEmptyValue } from '/@/utils'
+// import { isEmptyValue } from '/@/utils'
+import { usePopoverMenu } from './popover-menu'
 
-defineProps({
+const props = defineProps({
   labels: {
     type: Array as PropType<any[]>,
     default: () => ([]),
@@ -13,22 +13,28 @@ defineProps({
 
 const emit = defineEmits(['update'])
 
-const [show] = useContextMenu()
+const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
 async function openMenu(event: any) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+  const value = props.labels.map((item: any) => `${item.labelId}`)
 
-  show(event, {
+  showMenu(event, {
     type: 'checkbox',
+    value,
     operation,
     onHide: (labelIds: string[]) => {
-      if (!isEmptyValue(labelIds)) {
-        emit('update', { labelIds: labelIds.map(Number) })
+      if (!isEq(value, toRaw(labelIds))) {
+        emit('update', { labelIds: (labelIds || []).map(Number) })
       }
     },
   })
+}
+
+function isEq(oldIds: any, newIds: any) {
+  return oldIds.slice().sort().join(',') === newIds.slice().sort().join(',')
 }
 </script>
 
