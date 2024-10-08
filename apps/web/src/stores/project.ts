@@ -5,8 +5,10 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 
+type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data', string>
+
 export const useProjectStore = defineStore('project', () => {
-  const inviteInfo = ref()
+  const inviteInfo = ref<InviteInfo>()
   const projects = ref<UnwrapRowsType<UserGetProjectInfoByWorkspaceListData>>([])
   let getProjectPromise: Promise<UserGetProjectInfoByWorkspaceListData> | null = null
 
@@ -17,7 +19,7 @@ export const useProjectStore = defineStore('project', () => {
     // 替换加号为 %2B，然后使用 URLSearchParams
     const queryString = searchStr.replace(/\+/g, '%2B')
     const params = new URLSearchParams(queryString)
-    inviteInfo.value = Object.fromEntries(params)
+    inviteInfo.value = Object.fromEntries(params) as InviteInfo
 
     console.log('inviteInfo: ', inviteInfo.value)
 
@@ -31,7 +33,7 @@ export const useProjectStore = defineStore('project', () => {
 
   /** 接受邀请 */
   async function acceptInvitation() {
-    if (!inviteInfo.value.data) {
+    if (!inviteInfo.value?.data) {
       toast.add({ severity: 'error', summary: 'Error', detail: 'Invite code is null', life: 3000 })
       return
     }

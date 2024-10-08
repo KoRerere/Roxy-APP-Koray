@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import 'element-plus/es/components/message/style/css'
+import { CopyDocument } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { computed, ref, watch } from 'vue'
 
 const emit = defineEmits(['save'])
@@ -48,12 +51,21 @@ watch(currentRow, () => {
   console.log('currentRow changed: ', currentRow.value)
   translate()
 })
+
+function handleCopy() {
+  navigator.clipboard.writeText(currentRow.value.sourceValue).then(() => {
+    ElMessage.success('复制成功')
+  }).catch(() => {
+    ElMessage.error('复制失败')
+  })
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-[20px]">
     <el-card header="原文" shadow="never">
       {{ currentRow.sourceValue }}
+      <CopyDocument v-if="currentRow.sourceValue" class="w-[14px] h-[14px] cursor-pointer" @click="handleCopy" />
     </el-card>
     <el-card header="翻译" shadow="never">
       <el-input
