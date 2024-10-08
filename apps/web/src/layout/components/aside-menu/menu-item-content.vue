@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
-import { computed, onBeforeMount, type UnwrapRef } from 'vue'
+import { computed } from 'vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 const props = defineProps<{
@@ -39,15 +39,18 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }"
-      :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
+                :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom
+    >
       <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
-        :href="canOpen ? undefined : href" :class="{ active: isActive }" @click="handleClickItem(navigate)">
+         :href="canOpen ? undefined : href" :class="{ active: isActive }" @click="handleClickItem(navigate)"
+      >
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />
         <div class="menu-title">
-          {{ item.meta?.title }}
+          <i18n-t :keypath="item.meta?.title" scope="global" />
         </div>
         <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
-          @click.stop="toggle" />
+                   @click.stop="toggle"
+        />
       </a>
     </RouterLink>
   </div>

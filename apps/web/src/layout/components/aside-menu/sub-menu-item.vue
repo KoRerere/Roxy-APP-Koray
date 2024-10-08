@@ -23,7 +23,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
       <!-- 分组 -->
       <template v-if="isGroup(item)">
         <div v-if="!collapsed" class="group-title">
-          {{ item.meta?.title }}
+          <i18n-t :keypath="item.meta?.title" scope="global" />
         </div>
         <div v-else class="line" />
       </template>

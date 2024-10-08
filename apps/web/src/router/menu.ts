@@ -1,11 +1,12 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { Role } from '/@/enums'
+import { $t } from '/@/locales'
 
 export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'browser',
     name: 'browser',
-    meta: { title: 'All Profiles', icon: 'base/rx_ic_browser' },
+    meta: { title: $t('menus.AllProfiles'), icon: 'base/rx_ic_browser' },
     redirect: { name: 'browser-list' },
     children: [
       {
@@ -31,7 +32,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'projects',
     name: 'projects',
-    meta: { title: 'Projects', icon: 'base/rx_ic_stack' },
+    meta: { title: $t('menus.Projects'), icon: 'base/rx_ic_stack' },
     redirect: { name: 'project-list' },
     children: [
       {

@@ -1,0 +1,14 @@
+{
+  "menus": {
+    "AllProfiles": "All Profiles",
+    "Projects": "Projects",
+    "Accounts": "Accounts",
+    "Proxies": "Proxies",
+    "Extensions": "Extensions",
+    "RPAs": "RPAs",
+    "Teams": "Teams",
+    "HistoryLogs": "History-Logs",
+    "Settings": "Settings",
+    "Api-keys": "Api-keys"
+  }
+}

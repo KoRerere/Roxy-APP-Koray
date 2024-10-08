@@ -4,7 +4,6 @@ import '@mdi/font/css/materialdesignicons.css'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
-
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
@@ -14,20 +13,18 @@ import Ripple from 'primevue/ripple'
 import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
 import { createApp } from 'vue'
-
-import App from './App.vue'
-import i18n from './i18n'
-import router from './router'
-
+import { setupI18n } from '/@/locales'
 import { store } from '/@/stores'
+import { useSimpleLocale } from '/@/stores/locale'
 import myPreset from '/@/styles/primevuePresets'
+import App from './App.vue'
+import router from './router'
 
 console.log('myPreset', myPreset)
 const app = createApp(App)
 
 app.use(store)
 app.use(router)
-app.use(i18n)
 app.use(ToastService)
 app.use(DialogService)
 app.use(ConfirmationService)
@@ -69,4 +66,10 @@ app.use(PrimeVue, {
 app.directive('ripple', Ripple)
 app.directive('tooltip', Tooltip)
 
-app.mount('#app')
+queueMicrotask(async () => {
+  const { currentLocale } = useSimpleLocale()
+
+  setupI18n(app, { defaultLocale: currentLocale }).then(() => {
+    app.mount('#app')
+  })
+})

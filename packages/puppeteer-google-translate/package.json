@@ -1,19 +1,32 @@
 {
-  "name": "puppeteer-google-translate",
+  "name": "@roxy/puppeteer-google-translate",
+  "type": "commonjs",
   "version": "1.0.0",
   "description": "",
   "author": "",
   "license": "ISC",
   "keywords": [],
-  "main": "index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "dev": "npx tsx watch ./src/index.ts"
+    "build": "tsup --clean",
+    "prepare:type": "tsup --dts-only",
+    "stub": "tsup --watch --onSuccess 'tsup --dts-only'"
   },
   "dependencies": {
     "chrome-launcher": "^1.1.2",
-    "puppeteer-core": "23.0.2"
+    "puppeteer-core": "23.5.1"
   },
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.2"
   }
 }

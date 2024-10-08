@@ -1,13 +1,13 @@
-import puppeteer from 'puppeteer-core'
-import type { Browser } from 'puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
 import * as ChromeLauncher from 'chrome-launcher'
+import puppeteer from 'puppeteer-core'
 import type { ISO639Type } from './ISO-639-code'
 
 export class GoogleTranslator {
   private browser!: Browser
   private browserLaunching!: Promise<Browser>
 
-  constructor() {
+  constructor(private options?: PuppeteerLaunchOptions) {
     this.init()
   }
 
@@ -15,6 +15,7 @@ export class GoogleTranslator {
     const chromePath = ChromeLauncher.getChromePath()
 
     this.browserLaunching = puppeteer.launch({
+      ...this.options,
       executablePath: chromePath,
       // headless: false, // 设置为 false 以便看到浏览器操作
       // slowMo: 250, // 减慢操作速度，方便观察
@@ -41,6 +42,7 @@ export class GoogleTranslator {
     const html = await Promise.all(promises)
     console.log('[puppeteer-google-translate]', html.join(''))
     // await browser.close();
+    page.close()
     return html.join('')
   }
 
