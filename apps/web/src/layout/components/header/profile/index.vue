@@ -55,6 +55,24 @@ const items = ref([
   {
     separator: true,
   },
+  ...(import.meta.env.DEV
+    ? [
+        {
+          label: '图标(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/figma-icons')
+          },
+        },
+        {
+          label: '多语言(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/__language-localization__')
+          },
+        },
+      ]
+    : []),
   {
     label: 'Log out',
     icon: 'base/rx_ic_logout',

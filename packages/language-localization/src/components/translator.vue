@@ -63,8 +63,8 @@ watch(currentRow, () => {
       </el-button>
     </el-card>
 
-    <el-card style="width: 480px" shadow="hover" header="翻译建议">
-      <el-skeleton style="width: 240px" :loading="translateLoading" animated variant="h1" :rows="1">
+    <el-card shadow="hover" header="翻译建议">
+      <el-skeleton :loading="translateLoading" animated variant="h1" :rows="1">
         <div class="cursor-pointer" @click="translateResult = translateSuggestionText">
           {{ translateSuggestionText }}
         </div>
