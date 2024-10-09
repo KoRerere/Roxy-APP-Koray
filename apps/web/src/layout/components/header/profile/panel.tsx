@@ -2,6 +2,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import RyButton from '/@/components/ry-button'
@@ -13,15 +14,17 @@ import UploadAvatar from './upload-avatar.vue'
 
 const { setUserInfo } = useUserStore()
 
+const toast = ref()
+
 async function updateAvatar(item: Items) {
-  const { msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
-  console.log('🚀 ~ updateAvatar ~ msg:', msg)
+  await API.base.userUploadAvatarCreate({ avatar: item.value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
   updateUserInfo()
 }
 
 async function updateUserName(item: Items) {
-  const { msg } = await API.base.userChangeAccountCreate({ realName: item.value })
-  console.log('🚀 ~ updateUserName ~ msg:', msg)
+  await API.base.userChangeAccountCreate({ realName: item.value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
   updateUserInfo()
 }
 
@@ -32,7 +35,8 @@ async function updateUserInfo() {
 
 async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
-  API.base.userSetUserConfigCreate({ [item.name as any]: value })
+  await API.base.userSetUserConfigCreate({ [item.name as any]: value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
 }
 
 async function detectLocalNetwork(item: Items) {
@@ -53,6 +57,7 @@ async function detectSystemNetwork(item: Items) {
 // }
 
 export function getSettings() {
+  toast.value = useToast()
   return [
     {
       label: 'Profiles',

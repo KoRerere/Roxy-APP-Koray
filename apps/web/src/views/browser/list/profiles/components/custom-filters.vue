@@ -8,6 +8,10 @@ import simplePopup from '/@/components/simplePopup'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
+  currentFilter: {
+    type: Object as PropType<any>,
+    default: undefined,
+  },
   ctmFilters: {
     type: Array as PropType<any[]>,
     default: () => [],
@@ -24,6 +28,14 @@ const _props = defineProps({
 
 const emit = defineEmits(['filterChange'])
 const dialog = useDialog()
+
+const isAllProfiles = ref(true)
+const isChanged = ref(false)
+
+watch(() => _props.currentFilter.id, (value) => {
+  isChanged.value = false
+  isAllProfiles.value = value === '1000'
+})
 
 const rawOptions = computed(() => {
   return _props.ctmFilters
@@ -53,7 +65,6 @@ const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref([])
-const isChanged = ref(false)
 
 function showMenu(event: any) {
   menuRef.value?.show(event)
@@ -160,7 +171,13 @@ function clearFilters() {
 }
 
 function onFilterChange() {
-  isChanged.value = filterTagList.value.length > 0
+  if (isAllProfiles.value) {
+    isChanged.value = filterTagList.value.length > 0
+  }
+  else {
+    isChanged.value = true
+  }
+
   emit('filterChange')
 }
 
@@ -215,9 +232,8 @@ const items = [
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
       <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
-      <ryButton severity="info" size="small" label="Save" @click="saveFilters" />
-
-      <SplitButton severity="info" size="small" label="Save" :model="items" />
+      <ryButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
+      <SplitButton v-else severity="info" size="small" label="Save" :model="items" />
       <div>|</div>
     </div>
   </div>

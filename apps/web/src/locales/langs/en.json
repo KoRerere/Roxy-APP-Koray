@@ -2,6 +2,11 @@
   "common": {
     "Skip": "Skip"
   },
+  "table": {
+    "noData": "No Data",
+    "display": "Display",
+    "paginator": "Showing {start}-{end} of {total} profiles,"
+  },
   "menus": {
     "AllProfiles": "All Profiles",
     "Projects": "Projects",

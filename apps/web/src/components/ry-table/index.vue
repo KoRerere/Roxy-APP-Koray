@@ -2,6 +2,7 @@
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { $t } from '/@/locales'
 import { isEmptyValue, isFunction } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
@@ -144,11 +145,18 @@ const paginatorConfig = reactive({
     _request()
   },
   onRowsChange() {
+    if (paginatorConfig.rows >= paginatorConfig.totalRecords) {
+      paginatorConfig.page = 1
+    }
     _request()
   },
 })
 
-const paginatorInfo = computed(() => `Showing ${(paginatorConfig.page - 1) * paginatorConfig.rows + 1}-${Math.min(paginatorConfig.page * paginatorConfig.rows, paginatorConfig.totalRecords)} of ${paginatorConfig.totalRecords} profiles,`)
+const paginatorInfo = computed(() => $t('table.paginator', {
+  start: (paginatorConfig.page - 1) * paginatorConfig.rows + 1,
+  end: Math.min(paginatorConfig.page * paginatorConfig.rows, paginatorConfig.totalRecords),
+  total: paginatorConfig.totalRecords,
+}))
 
 function batchOperation(item: any) {
   props.operationHandler(item, selectionData.value)
@@ -249,12 +257,12 @@ defineExpose({
         <template #empty>
           <slot name="table-empty">
             <div class="text-center">
-              暂无数据
+              {{ $t('table.noData') }}
             </div>
           </slot>
         </template>
         <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
-        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
+        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="$t(column.title)"
           :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">

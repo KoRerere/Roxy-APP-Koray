@@ -407,8 +407,8 @@ defineExpose({
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple">
     <template #header-extra>
-      <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters"
-        @filter-change="onRefreshTable" />
+      <customFilters :current-filter="currentFilter" :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile"
+        :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">

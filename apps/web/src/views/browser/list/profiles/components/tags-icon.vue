@@ -54,16 +54,20 @@ function onAddTag() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RyButton v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="role.isViewer" severity="secondary"
-      size="small" text icon="base/rx_ic_tag" @click.stop="openMenu" />
-    <div v-for="label in labels" :key="label.labelId" class="label">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path
-          d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
-          :fill="label.labelColor" />
-      </svg>
-      {{ label.labelName }}
-    </div>
+    <RyButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="role.isViewer"
+      severity="secondary" size="small" text icon="base/rx_ic_tag" @click.stop="openMenu" />
+    <template v-else>
+      <div v-for="label in labels" :key="label.labelId" class="select-none cursor-pointer label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
+            :fill="label.labelColor" />
+        </svg>
+        <div @click.stop="openMenu">
+          {{ label.labelName }}
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 

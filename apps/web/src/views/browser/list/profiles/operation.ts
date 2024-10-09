@@ -177,6 +177,7 @@ export async function getCustomFilters(params: any = {}) {
         {
           placeholder: '请选择开始时间',
           name: 'startDate',
+          maxDate: new Date(),
           formatValue: (self: any) => {
             return self.value && format(self.value, 'yyyy-MM-dd')
           },
@@ -184,6 +185,7 @@ export async function getCustomFilters(params: any = {}) {
         {
           placeholder: '请选择结束时间',
           name: 'endDate',
+          maxDate: new Date(),
           formatValue: (self: any) => {
             return self.value && format(self.value, 'yyyy-MM-dd')
           },
