@@ -81,13 +81,17 @@ const drawer = reactive({
         drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }
+      case 'editCookies': {
+        drawer.updateProfile({ id, cookie: data })
+        break
+      }
     }
   },
   updateProfile: async (data: any) => {
     try {
-      const { msg } = await modifyWindowInfo(data)
+      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-      tableRef.value?.refresh()
+      onRefreshTable()
     }
     catch (error) {
       toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
@@ -103,7 +107,7 @@ watch(() => props.currentFilter, (params: any) => {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         ctmFilters.value = data
-        filterChange()
+        onRefreshTable()
       })
   }
 })
@@ -117,7 +121,7 @@ watch(
   },
 )
 
-function filterChange() {
+function onRefreshTable() {
   const params = getFormData(ctmFilters.value)
   tableRef.value!.refresh(params)
 }
@@ -184,17 +188,6 @@ async function operationHandler(operate: any, data: any) {
   }
 }
 
-async function batchModifyWindow(params: any) {
-  try {
-    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-    tableRef.value?.refresh()
-  }
-  catch (error) {
-    console.log('🚀 ~ deleteWindow ~ error:', error)
-  }
-}
-
 function autoOpenBrowser(list: any) {
   const query = route.query.browser && JSON.parse(route.query.browser as string)
   if (query?.openBrowser) {
@@ -256,22 +249,19 @@ function onRemark(datas: any) {
   })
 }
 
-async function onEditCookies(cookie: any[]) {
-  const params = Object.assign({}, drawer.data, { cookie })
-  const { msg } = await modifyWindowInfo(params)
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  drawer.visible = false
-  tableRef.value?.refresh()
-}
-
 async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  const { msg } = await modifyWindowInfo({ id: data.id, ...params })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  tableRef.value?.refresh()
+  await batchModifyWindow({ ids: [data.id], ...params })
 }
 
-function modifyWindowInfo(params: any) {
-  return API.window.userMdfWindowInfoSingleCreate(params)
+async function batchModifyWindow(params: any) {
+  try {
+    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    onRefreshTable()
+  }
+  catch (error) {
+    console.log('🚀 ~ deleteWindow ~ error:', error)
+  }
 }
 
 /**
@@ -418,7 +408,7 @@ defineExpose({
     selection-mode="multiple">
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters"
-        @filter-change="filterChange" />
+        @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
@@ -454,7 +444,8 @@ defineExpose({
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
     :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!"
+        @confirm="drawer.confirm(drawer.type, $event)" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
         @confirm="drawer.confirm(drawer.type, $event)" />
     </template>

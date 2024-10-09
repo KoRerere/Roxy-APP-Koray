@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import { useToast } from 'primevue/usetoast'
-import proxyColumns from './columns'
-import { type ProxyItem, tableOperation, tableRequest } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
@@ -11,8 +9,9 @@ import ryTable from '/@/components/ry-table'
 import { ProxyProtocol } from '/@/enums/proxy'
 import { setRowsLoading } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
-
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import proxyColumns from './columns'
+import { type ProxyItem, tableOperation, tableRequest } from './operation'
 
 const props = defineProps({
   data: {
