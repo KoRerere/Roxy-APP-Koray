@@ -14,12 +14,15 @@ import UploadAvatar from './upload-avatar.vue'
 const { setUserInfo } = useUserStore()
 
 async function updateAvatar(item: Items) {
-  await API.base.userUploadAvatarCreate({ avatar: item.value })
+  const { msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
+  console.log('🚀 ~ updateAvatar ~ msg:', msg)
   updateUserInfo()
 }
 
 async function updateUserName(item: Items) {
-  API.base.userChangeAccountCreate({ realName: item.value })
+  const { msg } = await API.base.userChangeAccountCreate({ realName: item.value })
+  console.log('🚀 ~ updateUserName ~ msg:', msg)
+
   updateUserInfo()
 }
 
@@ -44,11 +47,6 @@ async function detectSystemNetwork(item: Items) {
   item.value = data
 }
 
-// async function selectDir(item: Items) {
-//   const dirPath = await window.electronAPI.send('dialog:selectDir')
-//   item.value = dirPath
-// }
-
 export function getProfilePanel(data?: any): SettingsModule {
   return {
     title: 'Profile',
@@ -65,8 +63,9 @@ export function getProfilePanel(data?: any): SettingsModule {
             props: {
               class: 'resize-none w-full',
               placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
+              realName: data.realName,
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <UploadAvatar {...item.props} {...props} onChange={() => updateAvatar(item)} />
               )
@@ -76,7 +75,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             label: 'Email address',
             name: 'email',
             value: data?.email ?? '',
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" disabled />
               )
@@ -87,7 +86,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             text: 'Usually used in teamworks and members.',
             name: 'realName',
             value: data?.realName ?? '',
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" onBlur={() => updateUserName(item)} />
               )
@@ -116,7 +115,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             props: {
               options: $dict_map.language,
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
@@ -130,7 +129,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             props: {
               options: $dict_map.timeZone,
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
@@ -140,7 +139,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: 'Appearance',
             text: 'Themes for different mode',
             name: 'appearance',
-            value: `${data?.appearance}` ?? '',
+            value: data?.appearance?.toString() ?? '',
             props: {
               options: [
                 { label: 'System', value: `${settingAppearance.system}` },
@@ -149,7 +148,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
               ],
             },
             formatValue: (item: Items) => Number(item.value),
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
@@ -168,7 +167,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             props: {
               disabled: false,
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <FolderDirectory item={item} {...item.props} {...props}></FolderDirectory>
               )
@@ -191,7 +190,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
                 { label: 'Close client', value: 'exit' },
               ],
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
@@ -217,7 +216,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: 'Use system proxy',
             name: 'systemProxySwitch',
             value: data?.systemProxySwitch ?? false,
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item)}></RxToggleSwitch>
               )
@@ -295,7 +294,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             props: {
               options: $dict_map.checkChannel,
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
               )
@@ -311,7 +310,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
               class: 'resize-none w-full',
               placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
             },
-            component: ({ item, ...props }: any) => {
+            component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <Textarea {...item.props} {...props} rows="8" onBlur={() => saveUserConfig(item)} />
               )

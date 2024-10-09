@@ -72,12 +72,12 @@ export const menuRoutes: RouteRecordRaw[] = [
         meta: { title: '新建代理', hideInMenu: true },
         component: () => import('/@/views/agent/create'),
       },
-      // {
-      //   path: 'shop',
-      //   name: 'account-shop',
-      //   meta: { title: '代理商店(dome test)x', hideInMenu: false },
-      //   component: () => import('/@/views/agent/shop'),
-      // },
+      {
+        path: 'shop',
+        name: 'account-shop',
+        meta: { title: '代理商店(dome test)x', hideInMenu: false },
+        component: () => import('/@/views/agent/shop'),
+      },
       {
         path: 'extensions',
         name: 'extensions',

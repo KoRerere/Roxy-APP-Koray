@@ -9,3 +9,14 @@ export const ZipAccept = {
   'application/zip': ['.zip'],
   'application/x-rar-compressed': ['.rar'],
 }
+
+export const defaultColors = [
+  '#F53838',
+  '#FC9D12',
+  '#F7E40B',
+  '#1CC94D',
+  '#12A3FC',
+  '#FF85E5',
+  '#7558F5',
+  '#A3A9AD',
+]

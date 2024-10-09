@@ -6,14 +6,13 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
-import { createDefaultObject, getFormData } from '/@/utils/index'
+import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
@@ -82,13 +81,17 @@ const drawer = reactive({
         drawer.updateProfile({ id, dirId, platformUrlIds })
         break
       }
+      case 'editCookies': {
+        drawer.updateProfile({ id, cookie: data })
+        break
+      }
     }
   },
   updateProfile: async (data: any) => {
     try {
-      const { msg } = await modifyWindowInfo(data)
+      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
       toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-      tableRef.value?.refresh()
+      onRefreshTable()
     }
     catch (error) {
       toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
@@ -104,7 +107,7 @@ watch(() => props.currentFilter, (params: any) => {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         ctmFilters.value = data
-        filterChange()
+        onRefreshTable()
       })
   }
 })
@@ -118,8 +121,8 @@ watch(
   },
 )
 
-function filterChange() {
-  const params = getFormData(ctmFilters.value)
+function onRefreshTable() {
+  const params = filterFieldByValue(getFormData(ctmFilters.value))
   tableRef.value!.refresh(params)
 }
 
@@ -147,7 +150,7 @@ async function coverDefaultDisplay() {
 
 async function tableRequest(params: any) {
   // 0: 未删除
-  const data = await API.window.userGetWindowInfoV2List({ ...params, projectId: route.params.id, isDelete: 0 })
+  const data = await API.window.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
   autoOpenBrowser(data.data?.rows)
   return data
 }
@@ -182,17 +185,6 @@ async function operationHandler(operate: any, data: any) {
       warnPopup('确定要删除所选窗口？')
         .then(() => batchModifyWindow({ ids, isDelete: true }))
       break
-  }
-}
-
-async function batchModifyWindow(params: any) {
-  try {
-    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-    tableRef.value?.refresh()
-  }
-  catch (error) {
-    console.log('🚀 ~ deleteWindow ~ error:', error)
   }
 }
 
@@ -257,22 +249,19 @@ function onRemark(datas: any) {
   })
 }
 
-async function onEditCookies(cookie: any[]) {
-  const params = Object.assign({}, drawer.data, { cookie })
-  const { msg } = await modifyWindowInfo(params)
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  drawer.visible = false
-  tableRef.value?.refresh()
-}
-
 async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  const { msg } = await modifyWindowInfo({ id: data.id, ...params })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-  tableRef.value?.refresh()
+  await batchModifyWindow({ ids: [data.id], ...params })
 }
 
-function modifyWindowInfo(params: any) {
-  return API.window.userMdfWindowInfoSingleCreate(params)
+async function batchModifyWindow(params: any) {
+  try {
+    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    onRefreshTable()
+  }
+  catch (error) {
+    console.log('🚀 ~ deleteWindow ~ error:', error)
+  }
 }
 
 /**
@@ -419,7 +408,7 @@ defineExpose({
     selection-mode="multiple">
     <template #header-extra>
       <customFilters :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters"
-        @filter-change="filterChange" />
+        @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
@@ -433,7 +422,7 @@ defineExpose({
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser(data)" />
     </template>
     <template #project="{ data }">
-      <projectIcon :project-name="data.projectName" @update="updateMeta($event, data)" />
+      <projectIcon :project-name="data.projectName" :project-id="data.projectId" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />
@@ -455,7 +444,8 @@ defineExpose({
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
     :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="onEditCookies" />
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!"
+        @confirm="drawer.confirm(drawer.type, $event)" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
         @confirm="drawer.confirm(drawer.type, $event)" />
     </template>

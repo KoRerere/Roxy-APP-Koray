@@ -1,10 +1,11 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useRoleStore } from '/@/stores/role'
-import { isEmptyValue } from '/@/utils'
+import { useTagsActions } from '/@/views/browser/list/tags/hook'
+import { usePopoverMenu } from './popover-menu'
 
-defineProps({
+const props = defineProps({
   labels: {
     type: Array as PropType<any[]>,
     default: () => ([]),
@@ -13,22 +14,41 @@ defineProps({
 
 const emit = defineEmits(['update'])
 
-const [show] = useContextMenu()
+const [addTag] = useTagsActions()
+const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
 async function openMenu(event: any) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+  const value = props.labels.map((item: any) => `${item.labelId}`)
 
-  show(event, {
+  showMenu(event, {
     type: 'checkbox',
+    value,
     operation,
     onHide: (labelIds: string[]) => {
-      if (!isEmptyValue(labelIds)) {
-        emit('update', { labelIds: labelIds.map(Number) })
+      if (!isEq(value, toRaw(labelIds))) {
+        emit('update', { labelIds: (labelIds || []).map(Number) })
       }
     },
+    afterCmp: () => {
+      return (
+        <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer" onClick={onAddTag}>
+          <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
+          <div>Add Tag</div>
+        </div>
+      )
+    },
   })
+}
+
+function isEq(oldIds: any, newIds: any) {
+  return oldIds.slice().sort().join(',') === newIds.slice().sort().join(',')
+}
+
+function onAddTag() {
+  addTag()
 }
 </script>
 

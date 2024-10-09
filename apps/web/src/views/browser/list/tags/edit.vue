@@ -1,23 +1,13 @@
 <script setup lang="ts">
-// import { deepClone } from '/@/utils/index'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { defaultColors } from '/@/utils/constants'
 
 const dialogRef = inject<any>('dialogRef')
-
-const colors = [
-  '#F53838',
-  '#FC9D12',
-  '#F7E40B',
-  '#1CC94D',
-  '#12A3FC',
-  '#FF85E5',
-  '#7558F5',
-  '#A3A9AD',
-]
 
 const selectdColor = ref()
 const tagName = ref('')
 const loading = ref(false)
+const isEdit = ref(false)
 const _onConfirm = ref()
 const _onCancel = ref()
 
@@ -35,9 +25,9 @@ async function confirm() {
 
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
-
+  isEdit.value = props?.name !== undefined
   tagName.value = props?.name
-  selectdColor.value = props?.color || colors[1]
+  selectdColor.value = props?.color || defaultColors[1]
 
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
@@ -53,7 +43,7 @@ onMounted(() => {
       Select a color and type your new tag name below
     </div>
     <div class="colors">
-      <template v-for="color in colors" :key="color">
+      <template v-for="color in defaultColors" :key="color">
         <RxSvgIcon v-if="color === selectdColor" name="base/rx_ic_check_line" :size="20" :color="color" />
         <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }"
           @click="selectdColor = color" />
@@ -64,7 +54,7 @@ onMounted(() => {
     <InputText v-model="tagName" type="text" placeholder="Tag name" />
     <div class="footer">
       <Button label="Cancel" text severity="secondary" @click="close" />
-      <Button label="Create" severity="info" :loading="loading" @click="confirm" />
+      <Button :label="isEdit ? 'Modify' : 'Create'" severity="info" :loading="loading" @click="confirm" />
     </div>
   </div>
 </template>

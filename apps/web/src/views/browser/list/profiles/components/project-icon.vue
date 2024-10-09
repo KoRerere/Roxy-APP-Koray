@@ -1,12 +1,17 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
+// import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { usePopoverMenu } from './popover-menu'
 
-defineProps({
+const props = defineProps({
+  projectId: {
+    type: [Number, String],
+    default: undefined,
+  },
   projectName: {
     type: String,
     default: undefined,
@@ -16,26 +21,25 @@ const emit = defineEmits(['update'])
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const workspaceStore = useWorkspaceStore()
 
-const [show] = useContextMenu()
+const [showMenu] = usePopoverMenu()
+
 const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
 
 async function openMenu(event: any) {
-  const operation = await getGroups()
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
+  const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
+  const value = props.projectId?.toString()
 
-  show(event, {
+  showMenu(event, {
     type: 'radio',
+    value,
     operation,
     onHide: (projectId: string) => {
-      if (!isEmptyValue(projectId)) {
+      if (!isEmptyValue(projectId) && projectId !== value) {
         emit('update', { projectId: Number(projectId) })
       }
     },
   })
-}
-
-async function getGroups() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
-  return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
 }
 </script>
 

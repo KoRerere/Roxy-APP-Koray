@@ -1,4 +1,4 @@
-function getRawType(data: any) {
+export function getRawType(data: any) {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
 }
 
@@ -8,6 +8,14 @@ export function isObject(data: any) {
 
 export function isFunction(fn: any) {
   return getRawType(fn) === 'function'
+}
+
+export function isAsyncFunction(fn: any) {
+  return getRawType(fn) === 'asyncfunction'
+}
+
+export function isLikeFunction(fn: any) {
+  return ['function', 'asyncfunction'].includes(getRawType(fn))
 }
 
 export function hasOwnProperty(data: any, key: any) {

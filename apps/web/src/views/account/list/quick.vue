@@ -53,7 +53,7 @@ function tableFilters() {
 }
 
 const tableRef = useTemplateRef('account')
-const selection = ref(props.data.windowPlatformList.filter((item: any) => item.id))
+const selection = ref(props.data?.windowPlatformList.filter((item: any) => item.id))
 
 async function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
@@ -79,7 +79,8 @@ function handleSave() {
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
-        :table-request="tableRequest" :columns="columns" :show-display="false" :table-filters="tableFilters">
+        :table-request="tableRequest" :table-filters="tableFilters" :columns="columns" :show-display="false"
+        :context-menu="false">
         <template #header-extra>
           <input-base type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template>

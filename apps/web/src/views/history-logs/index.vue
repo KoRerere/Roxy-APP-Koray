@@ -40,7 +40,8 @@ function tableRequest(params: any) {
   return API.logging.userGetOperateLogList(params)
 }
 
-function tableFilters() {
+async function tableFilters() {
+  const { data } = await API.team.userGetMemberInfoByWorkspaceList({})
   return [
     {
       type: 'multiple',
@@ -54,7 +55,7 @@ function tableFilters() {
         { label: 'Projects', value: 'Projects' },
         { label: 'Extensions', value: 'Extensions' },
         { label: 'Members', value: 'Members' },
-        { label: 'Team settings', value: 'Team settings' },
+        { label: 'Team settings', value: 'Teams' },
       ],
     },
     {
@@ -62,12 +63,7 @@ function tableFilters() {
       name: 'userNameIds',
       value: [],
       placeholder: 'All users',
-      options: [
-        { label: 'Match one', value: '1' },
-        { label: 'Match two', value: '2' },
-        { label: 'Match three', value: '3' },
-        { label: 'Match four', value: '4' },
-      ],
+      options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
     },
     {
       type: 'date',
