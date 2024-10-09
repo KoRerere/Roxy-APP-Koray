@@ -4,7 +4,7 @@ import { loadLocaleMessages } from '/@/locales'
 
 export const useSimpleLocale = defineStore('locale', () => {
   const primevue = usePrimeVue()
-  const currentLocale = ref(navigator.language || 'zh-CN')
+  const currentLocale = ref(navigator.language || 'en')
 
   const setSimpleLocale = (locale) => {
     loadLocaleMessages(locale)

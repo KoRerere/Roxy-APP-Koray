@@ -1,5 +1,7 @@
 import { app } from 'electron'
 
+const webReadyPromise = Promise.withResolvers<true>()
+
 /** 是否处于开发环境 */
 export const isDev = import.meta.env.DEV
 /** 是否处于生产环境 */
@@ -9,5 +11,10 @@ export const isPackaged = app.isPackaged
 
 export const isMac = process.platform === 'darwin'
 export const isWindows = process.platform === 'win32'
+
+/** 前端是否准备就绪 */
+export const isWebReady = () => webReadyPromise.promise
+/** 前端已经准备就绪 */
+export const setWebReady = () => webReadyPromise.resolve(true)
 
 console.log('isDev', isDev)

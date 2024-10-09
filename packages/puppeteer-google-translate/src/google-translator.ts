@@ -1,5 +1,4 @@
 import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
-import * as ChromeLauncher from 'chrome-launcher'
 import puppeteer from 'puppeteer-core'
 import type { ISO639Type } from './ISO-639-code'
 
@@ -12,6 +11,7 @@ export class GoogleTranslator {
   }
 
   async init() {
+    const ChromeLauncher = await import('chrome-launcher')
     const chromePath = ChromeLauncher.getChromePath()
 
     this.browserLaunching = puppeteer.launch({

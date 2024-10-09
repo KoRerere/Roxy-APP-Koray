@@ -1,4 +1,5 @@
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
+import type { Config } from 'electron'
 import { IPCMain } from '@roxy/electron-preload/main'
 import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
@@ -6,11 +7,12 @@ import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import url from 'node:url'
 import { appConfig, mediaProtocolName } from '/@/constants'
+import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { aliOSS, getMacAddress, getSystemProxy, proxyDetection, tryRefreshUrl } from '/@/utils'
+import { aliOSS, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -168,6 +170,22 @@ ipcMain.on('app:showLogDir', () => {
   shell.openPath(appConfig.logsDir)
 })
 
+/** 开启系统代理 */
+ipcMain.on('app:setProxy', async (payload: Config) => {
+  const mainWindow = getMainWindow()!
+  console.log(payload)
+  await mainWindow.webContents.session.setProxy({
+    ...payload,
+    proxyBypassRules: 'localhost',
+  })
+  console.log('代理设置完毕')
+})
+/** 关闭系统代理 */
+ipcMain.on('app:removeProxy', () => {
+  const mainWindow = getMainWindow()!
+  mainWindow.webContents.session.setProxy({})
+})
+
 /** 下载指定插件 */
 ipcMain.on('extension:download', (extensions) => {
   return extensionManager.downloadExtensions(extensions)
@@ -221,4 +239,10 @@ ipcMain.on('util:removeWorkspace', (workspaceId) => {
 /** 删除项目 */
 ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
   return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId), String(projectId)), { recursive: true, force: true })
+})
+
+/** 前端已准备就绪 */
+ipcMain.on('web:ready', () => {
+  console.log('web:ready')
+  setWebReady()
 })

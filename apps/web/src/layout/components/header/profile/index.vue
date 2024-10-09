@@ -44,10 +44,10 @@ const items = ref([
       },
       {
         label: 'English',
-        locale: 'en-US',
+        locale: 'en',
         icon: 'country-code/US',
         command: () => {
-          simpleLocale.setSimpleLocale('en-US')
+          simpleLocale.setSimpleLocale('en')
         },
       },
     ],

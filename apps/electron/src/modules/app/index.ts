@@ -3,6 +3,7 @@ import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { createTray } from '/@/modules/app/tray'
 import { ipcMain } from '/@/modules/ipc'
+import { isWebReady } from '/@/utils'
 import { restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
@@ -70,6 +71,7 @@ export function setupApp() {
   app.on('second-instance', async (event, commandLine) => {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
+    await isWebReady()
     // Windows 系统需要通过这种方式获取参数
     if (commandLine.at(-1)?.includes(`${appProtocolName}://oauth2callback`)) {
       console.log('oauth2callback: ', commandLine)
@@ -83,7 +85,8 @@ export function setupApp() {
   })
 
   // macOS 系统通过 open-url 事件获取参数
-  app.on('open-url', (event, url) => {
+  app.on('open-url', async (event, url) => {
+    await isWebReady
     ipcMain.send('oauth2:google-callback', `?${url.split('?')[1]}`)
   })
 
