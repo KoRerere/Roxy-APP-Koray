@@ -17,16 +17,17 @@ export function usePopoverMenu() {
     async function _onHide() {
       await onHide?.(selected.value)
     }
-
     return () => (
-      <Popover ref={opRef} onHide={_onHide}>
+      <Popover ref={opRef} onHide={_onHide} pt={{ root: '!border-0', content: '!pa-0' }}>
+        {innerProps.value.beforeCmp?.()}
         {operation && (
           <Menu
+            pt={{ root: '!rounded-none', list: '!py-1.5 !px-1 !gap-0' }}
             model={operation}
             v-slots={{
               item: ({ item, props }: any) => (
-                <a v-ripple class="flex items-center" {...props.action}>
-                  <label class="cursor-pointer w-full" for={item.value}>
+                <a v-ripple class="flex items-center !py-2 !px-2.5" {...props.action}>
+                  <label class="flex items-center gap-1 cursor-pointer w-full" for={item.value}>
                     {
                       type === 'radio'
                       && <RadioButton v-model={selected.value} name="radio" input-id={item.value} value={item.value} />

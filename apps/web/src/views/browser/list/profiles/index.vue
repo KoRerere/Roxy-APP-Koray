@@ -6,7 +6,6 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
@@ -433,7 +432,7 @@ defineExpose({
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser(data)" />
     </template>
     <template #project="{ data }">
-      <projectIcon :project-name="data.projectName" @update="updateMeta($event, data)" />
+      <projectIcon :project-name="data.projectName" :project-id="data.projectId" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />

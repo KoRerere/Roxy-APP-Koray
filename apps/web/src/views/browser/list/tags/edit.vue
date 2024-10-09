@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import { deepClone } from '/@/utils/index'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const dialogRef = inject<any>('dialogRef')
@@ -18,6 +17,7 @@ const colors = [
 const selectdColor = ref()
 const tagName = ref('')
 const loading = ref(false)
+const isEdit = ref(false)
 const _onConfirm = ref()
 const _onCancel = ref()
 
@@ -35,7 +35,7 @@ async function confirm() {
 
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
-
+  isEdit.value = props?.name !== undefined
   tagName.value = props?.name
   selectdColor.value = props?.color || colors[1]
 
@@ -64,7 +64,7 @@ onMounted(() => {
     <InputText v-model="tagName" type="text" placeholder="Tag name" />
     <div class="footer">
       <Button label="Cancel" text severity="secondary" @click="close" />
-      <Button label="Create" severity="info" :loading="loading" @click="confirm" />
+      <Button :label="isEdit ? 'Modify' : 'Create'" severity="info" :loading="loading" @click="confirm" />
     </div>
   </div>
 </template>

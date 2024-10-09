@@ -1,7 +1,8 @@
 <script setup lang="tsx">
 import { API } from '/@/api'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useRoleStore } from '/@/stores/role'
-// import { isEmptyValue } from '/@/utils'
+import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopoverMenu } from './popover-menu'
 
 const props = defineProps({
@@ -13,6 +14,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update'])
 
+const [addTag] = useTagsActions()
 const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
@@ -30,11 +32,23 @@ async function openMenu(event: any) {
         emit('update', { labelIds: (labelIds || []).map(Number) })
       }
     },
+    afterCmp: () => {
+      return (
+        <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer" onClick={onAddTag}>
+          <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
+          <div>Add Tag</div>
+        </div>
+      )
+    },
   })
 }
 
 function isEq(oldIds: any, newIds: any) {
   return oldIds.slice().sort().join(',') === newIds.slice().sort().join(',')
+}
+
+function onAddTag() {
+  addTag()
 }
 </script>
 

@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
-import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import editPopup from '/@/views/browser/list/tags/edit.vue'
+import { useTagsActions } from './hook'
 
-const dialog = useDialog()
 const toast = useToast()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
+
+const [onEdit] = useTagsActions()
 
 const columns = ref([
   {
@@ -58,26 +57,10 @@ function operationHandler(operate: any, data: any) {
 }
 
 function editTag(data?: any) {
-  dialog.open(editPopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: data,
-      onConfirm: async (params: UserAddLabelInfoCreatePayload) => {
-        const { code, msg } = data?.id
-          ? await API.window.userMdfLabelInfoCreate({ ...params, id: data.id })
-          : await API.window.userAddLabelInfoCreate(params)
-
-        if (code === 0) {
-          tableRef.value?.refresh()
-        }
-
-        toast.add({ severity: code === 0 ? 'success' : 'error', summary: code === 0 ? 'success' : 'error', detail: msg, life: 5000 })
-      },
-      onCancel: () => { },
+  onEdit({
+    ...(data || {}),
+    confirmNext: () => {
+      tableRef.value?.refresh()
     },
   })
 }
