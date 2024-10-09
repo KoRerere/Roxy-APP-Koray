@@ -113,7 +113,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'settings',
         name: 'settings',
-        meta: { title: $t('menus.Settings'), icon: 'base/rx_ic_gear', roles: [Role.OWNER] },
+        meta: { title: $t('menus.Settings'), icon: 'base/rx_ic_gear' },
         component: () => import('/@/views/workspace-setting/index.vue'),
       },
     ],

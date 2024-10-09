@@ -1,19 +1,23 @@
 <script setup lang="tsx">
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 import InputText from 'primevue/inputtext'
+import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import RyButton from '/@/components/ry-button'
+import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
+const confirm = useConfirm()
 
 const workspaceStore = useWorkspaceStore()
+const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
 const workspaceInfo = ref({
@@ -90,6 +94,36 @@ async function handleSaveChange() {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
   }
 }
+
+function leaveWorkspace() {
+  confirm.require({
+    group: 'deleteConfirmDialog',
+    class: 'w-[450px]',
+    message: 'This action can’t be undone, your related profiles can’t not be reach after leaving workspace.',
+    header: 'Are you sure to leave the Workspace? ',
+    icon: 'pi pi-info-circle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Leave workspace',
+      severity: 'danger',
+    },
+    accept: async () => {
+      const { code, msg } = await API.limit.userLeaveWorkspaceList()
+      if (code === 0) {
+        workspaceStore.getWorkspaceList()
+        toast.add({ severity: 'success', summary: 'Success', detail: 'You have left the workspace', life: 3000 })
+      }
+      else {
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -136,11 +170,16 @@ async function handleSaveChange() {
     </div>
 
     <div class="footer">
-      <RyButton severity="secondary" @click="showMoreActions">
-        <RxSvgIcon name="base/rx_ic_more-h" />
-        More
-      </RyButton>
-      <RyButton label="Save changes" @click="handleSaveChange" />
+      <template v-if="isOwner">
+        <RyButton severity="secondary" @click="showMoreActions">
+          <RxSvgIcon name="base/rx_ic_more-h" />
+          More
+        </RyButton>
+        <RyButton label="Save changes" @click="handleSaveChange" />
+      </template>
+      <div v-else class="w-full flex justify-end">
+        <RyButton label="Leave workspace" severity="danger" @click="leaveWorkspace" />
+      </div>
     </div>
   </div>
 
@@ -263,6 +302,7 @@ async function handleSaveChange() {
 }
 
 .footer {
+  width: 100%;
   display: flex;
   width: 452px;
   padding: var(--spacing-2xl, 16px) var(--spacing-none, 0px) var(--spacing-3xl, 20px) var(--spacing-none, 0px);
