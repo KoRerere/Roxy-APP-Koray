@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
-import { useLoginContext } from '../hooks/useLoginContext'
-import { formSchemas } from './schemas'
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
+import { useLoginContext } from '../hooks/useLoginContext'
+import { formSchemas } from './schemas'
 
 const signFormData = defineModel({ type: Object, default: {} })
 
@@ -52,32 +52,32 @@ function switchFormMode(val: boolean) {
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
-      <label for="remember-me" class="ml-2"> Remember me </label>
+      <label for="remember-me" class="ml-2"> {{ $t('login.rememberMe') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">
-      Forget password
+      {{ $t('login.forgotPassword') }}
     </div>
   </div>
   <div class="login-ways">
     <ry-button type="button" class="w-full" label="Search" @click="handleSubmit">
-      {{ isRegister ? 'Sign up' : 'Log in' }}
+      {{ isRegister ? $t('login.signUp') : $t('login.signIn') }}
     </ry-button>
     <div class="divider">
       <span class="mx-2">OR</span>
     </div>
     <ry-button class="w-full" outlined @click="openGoogleAuth2Login">
-      <img src="/google.svg"> Log in with Google
+      <img src="/google.svg"> {{ $t('login.signInWithGoogle') }}
     </ry-button>
     <div v-if="isRegister" class="signup-tips">
-      Already have an account?
+      {{ $t('login.alreadyHaveAccount') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">
-        Log in
+        {{ $t('login.signIn') }}
       </a>
     </div>
     <div v-else class="signup-tips">
-      Didn’t have an account?
+      {{ $t('login.noAccount') }}
       <a class="cursor-pointer" @click="switchFormMode(true)">
-        Sign up
+        {{ $t('login.signUp') }}
       </a>
     </div>
   </div>

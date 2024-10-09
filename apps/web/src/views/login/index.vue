@@ -2,6 +2,7 @@
 import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
@@ -79,6 +80,9 @@ provideLoginContext({
 </script>
 
 <template>
+  <div class="flex justify-end">
+    <LanguageSelect />
+  </div>
   <div class="sign-card">
     <div class="sign-card-header">
       <div class="sign-card-content">

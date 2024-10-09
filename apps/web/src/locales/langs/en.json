@@ -1,6 +1,31 @@
 {
   "common": {
-    "Skip": "Skip"
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "confirm": "Confirm",
+    "Skip": "Skip",
+    "cancel": "Cancel",
+    "more": "More",
+    "saveChanges": "Save Changes"
+  },
+  "login": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "emailAddress": "Email Address",
+    "emailRequired": "Email is required",
+    "password": "Sign in password",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordMaxLength": "Password must be at most 20 characters",
+    "passwordPlaceholder": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Didn’t have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "rememberMe": "Remember me",
+    "signInWithGoogle": "Sign in with Google"
   },
   "menus": {
     "AllProfiles": "All Profiles",
@@ -15,7 +40,14 @@
     "Api-keys": "Api-keys"
   },
   "workspace": {
+    "chooseIcon": "Choose icon",
     "invitationTips": "You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!",
-    "joinWorkspace": "Join Workspace"
+    "joinWorkspace": "Join Workspace",
+    "leaveWorkspace": "Leave Workspace",
+    "deleteWorkspace": "Delete Workspace",
+    "workspaceIcon": "Workspace icon",
+    "workspaceIconDescription": "Default icon show first 2 letters of your workspace’s name. ",
+    "workspaceName": "Workspace name",
+    "workspaceNameDescription": "First 3 letters of your workspace name will be the prefix of all profiles’ ID "
   }
 }

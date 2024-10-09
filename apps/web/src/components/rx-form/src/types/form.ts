@@ -76,7 +76,7 @@ type ComponentSchema<T extends object = Recordable> =
 export type FormSchema<T extends object = Recordable> = ComponentSchema<T> & {
   /** 字段名 */
   field: string
-  label?: string
+  label?: string | (() => any)
   /** 表单项校验规则 */
   rule?: Rule
   /** 默认值 */
