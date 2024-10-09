@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { Items } from './type'
 
-// defineOptions({
-//   inheritAttrs: false,
-// })
+defineOptions({
+  inheritAttrs: false,
+})
 
 defineProps({
   item: {

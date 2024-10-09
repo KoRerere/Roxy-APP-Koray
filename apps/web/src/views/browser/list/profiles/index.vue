@@ -12,7 +12,7 @@ import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
-import { createDefaultObject, getFormData } from '/@/utils/index'
+import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
@@ -122,7 +122,7 @@ watch(
 )
 
 function onRefreshTable() {
-  const params = getFormData(ctmFilters.value)
+  const params = filterFieldByValue(getFormData(ctmFilters.value))
   tableRef.value!.refresh(params)
 }
 
@@ -150,7 +150,7 @@ async function coverDefaultDisplay() {
 
 async function tableRequest(params: any) {
   // 0: 未删除
-  const data = await API.window.userGetWindowInfoV2List({ ...params, projectId: route.params.id, isDelete: 0 })
+  const data = await API.window.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
   autoOpenBrowser(data.data?.rows)
   return data
 }
