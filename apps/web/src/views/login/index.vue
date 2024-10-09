@@ -7,7 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
-const { setUserInfo, setToken, userInfo } = useUserStore()
+const { getUserInfo, setToken, userInfo } = useUserStore()
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
@@ -32,10 +32,7 @@ async function handleSubmit() {
 
 async function afterLogin(token: string) {
   setToken(token)
-  const { data } = await API.base.userGetUserInfoList()
-
-  setUserInfo(data)
-  console.log(data)
+  getUserInfo()
   toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
   router.push({ name: 'home' })
 }

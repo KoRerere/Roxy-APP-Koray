@@ -41,7 +41,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
     <RouterLink v-slot="{ navigate, href, isActive }"
                 :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom
     >
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
+      <a v-ripple v-tooltip="{ value: $t(item.meta?.title), disabled: !collapsed }" class="menu-item"
          :href="canOpen ? undefined : href" :class="{ active: isActive }" @click="handleClickItem(navigate)"
       >
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />

@@ -15,14 +15,19 @@ const currentRow = defineModel('currentRow', {
   default: {},
 })
 
+let controller: AbortController
+
 const disabledSaveBtn = computed(() => {
   return !translateResult.value || !currentRow.value.targetKey
 })
 
 function translate() {
+  controller?.abort()
+  controller = new AbortController()
   translateSuggestionText.value = ''
   translateLoading.value = true
   fetch('./api/translate', {
+    signal: controller.signal,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -37,6 +42,8 @@ function translate() {
     console.log('翻译结果: ', text)
     translateSuggestionText.value = text
     translateLoading.value = false
+  }).catch((err) => {
+    console.log(err.message)
   })
 }
 
@@ -65,9 +72,9 @@ function handleCopy() {
   <div class="flex flex-col gap-[20px]">
     <el-card header="原文" shadow="never">
       {{ currentRow.sourceValue }}
-      <CopyDocument v-if="currentRow.sourceValue" class="w-[14px] h-[14px] cursor-pointer" @click="handleCopy" />
+      <CopyDocument v-if="currentRow.sourceValue" class="w-[14px] h-[14px] cursor-pointer align-middle" @click="handleCopy" />
     </el-card>
-    <el-card header="翻译" shadow="never">
+    <el-card header="译文" shadow="never">
       <el-input
         v-model="translateResult"
         show-word-limit

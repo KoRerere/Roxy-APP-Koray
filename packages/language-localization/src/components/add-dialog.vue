@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { FormRules } from 'element-plus'
 import { reactive, ref, useTemplateRef } from 'vue'
+import { sourceLangKey } from './ISO-639'
 
 const dialogFormVisible = ref(false)
 const ruleFormRef = useTemplateRef('ruleForm')
@@ -33,7 +34,7 @@ async function handleSave() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: 'en-US',
+          fileName: sourceLangKey,
           key: form.key,
           value: form.value,
         }),
@@ -49,7 +50,7 @@ async function handleSave() {
 </script>
 
 <template>
-  <el-button plain @click="dialogFormVisible = true">
+  <el-button v-bind="$attrs" type="primary" @click="dialogFormVisible = true">
     新增
   </el-button>
 

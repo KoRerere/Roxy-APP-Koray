@@ -43,6 +43,7 @@ ipcMain.on('proxy:detectNetwork', async () => {
   const { systemProxySwitch } = store
   if (systemProxySwitch) {
     const systemProxy = await getSystemProxy()
+    console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
     return proxyDetection({ host, port, protocol: 'HTTP' })
   }
