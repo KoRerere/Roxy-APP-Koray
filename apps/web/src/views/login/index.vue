@@ -2,7 +2,6 @@
 import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import InviteIntoWorkspace from '/@/components/business/invite-into-workspace.vue'
 import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
@@ -92,7 +91,6 @@ provideLoginContext({
     <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" />
     <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" />
     <ResetPassword v-else-if="currentComp === 'resetPassword'" />
-    <InviteIntoWorkspace v-else-if="currentComp === 'InviteIntoWorkspace'" />
   </div>
   <div class="sign-bg">
     <div class="blue" />

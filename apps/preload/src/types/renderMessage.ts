@@ -73,4 +73,6 @@ export interface RenderMessage {
   'util:removeWorkspace': (workspaceId: number) => void
   /** 删除项目 */
   'util:removeProject': (payload: { workspaceId: number, projectId: number }) => void
+  /** 前端已准备就绪 */
+  'web:ready': () => void
 }

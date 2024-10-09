@@ -64,7 +64,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="workspace">
+  <div v-if="currentWorkspace" class="workspace">
     <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" placeholder="Select a Country"
             class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
     >
