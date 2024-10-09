@@ -4,10 +4,6 @@ import GlobalComponent from '/@/components/business/global-component/index.vue'
 
 <template>
   <RouterView />
-  <Toast />
-  <Toast position="top-center" group="tc" />
-  <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
-  <DynamicDialog />
   <GlobalComponent />
 </template>
 
