@@ -32,7 +32,7 @@ const dialog = useDialog()
 const isAllProfiles = ref(true)
 const isChanged = ref(false)
 
-watch(() => _props.currentFilter.id, (value) => {
+watch(() => _props.currentFilter?.id, (value) => {
   isChanged.value = false
   isAllProfiles.value = value === '1000'
 })

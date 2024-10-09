@@ -4,7 +4,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 
 const sortColumns: any[] = defineModel('columns')
-console.log('🚀 ~ sortColumns:', sortColumns)
 
 const popRef = ref()
 
