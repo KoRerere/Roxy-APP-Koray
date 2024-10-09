@@ -6,6 +6,8 @@ import HelloWorld from './components/main.vue'
   <HelloWorld />
 </template>
 
-<style scoped>
-
+<style>
+body {
+  overflow: hidden;
+}
 </style>

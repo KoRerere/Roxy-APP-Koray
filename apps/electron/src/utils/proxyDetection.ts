@@ -66,7 +66,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     checkChannel: getCheckUrl(checkChannel, ipType) || `http://ip123.in/ip.json`,
   }
 
-  console.log('params.proxyCategory', params.proxyCategory, params.protocol)
+  console.log('proxyDetectionParams', proxyDetectionParams)
   const protocol = params.proxyCategory || params.protocol
   const checkMode = getCheckFunction(protocol as ProtocolMapType)
 

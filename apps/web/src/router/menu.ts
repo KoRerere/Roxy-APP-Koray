@@ -87,7 +87,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'rpa',
         name: 'rpa',
-        meta: { title: 'RPAs', icon: 'base/rx_ic_browser_smile' },
+        meta: { title: $t('menus.RPAs'), icon: 'base/rx_ic_browser_smile' },
         component: () => import('/@/views/agent/shop'),
       },
     ],

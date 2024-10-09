@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./*": "./dist/*"
+    "./*": "./dist/*",
+    "./vite": {
+      "import": "./dist/vite/index.js",
+      "require": "./dist/vite/index.js"
+    }
   },
   "files": [
     "dist"
@@ -21,15 +25,16 @@
     "serve-static": "^1.16.2"
   },
   "devDependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
     "@types/body-parser": "^1.19.5",
     "@types/formidable": "^3.4.5",
     "@types/serve-static": "^1.15.7",
-    "@unocss/reset": "^0.63.3",
+    "@unocss/reset": "^0.63.4",
     "@vitejs/plugin-vue": "^5.1.4",
     "element-plus": "^2.8.4",
     "sass-embedded": "^1.79.4",
     "typescript": "^5.6.2",
-    "unocss": "^0.63.3",
+    "unocss": "^0.63.4",
     "unplugin-auto-import": "^0.18.3",
     "unplugin-vue-components": "^0.27.4",
     "vite": "^5.4.8",

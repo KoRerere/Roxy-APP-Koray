@@ -2,7 +2,7 @@ import type { PluginOption } from 'vite'
 import { GoogleTranslator } from '@roxy/puppeteer-google-translate'
 import bodyParser from 'body-parser'
 import { set } from 'es-toolkit/compat'
-import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
 
@@ -18,6 +18,7 @@ export default (options: OptionsType): PluginOption => {
   const { targetDir } = options
   return {
     name: 'roxy:language-localization',
+    apply: 'serve',
     configureServer(server) {
       server.middlewares.use(bodyParser.urlencoded({ extended: false }))
       // 使用 body-parser 中间件解析 JSON 数据
@@ -74,37 +75,4 @@ export default (options: OptionsType): PluginOption => {
       server.middlewares.use(baseUrl, serveStatic(join(__dirname, '../page'), { index: ['index.html'] }))
     },
   }
-}
-
-async function genVariables(files: { fileName: string, body: Record<string, any> }[], targetDir: string) {
-  try {
-    await access(targetDir)
-  }
-  catch (error) {
-    await mkdir(targetDir, { recursive: true })
-  }
-  files = files.filter(n => Object.keys(n.body).length)
-  const genPromises = files.map(async (item) => {
-    // 将斜杆替换为双下划线
-    item.fileName = item.fileName.replaceAll('/', '__').replaceAll('.', '_').replaceAll(' ', '')
-    if (!item.fileName.startsWith('_')) {
-      item.fileName = `_${item.fileName}`
-    }
-    const { fileName, body } = item
-    if (!Object.keys(body).length) {
-      return
-    }
-    await writeFile(`${targetDir}/${fileName}.json`, JSON.stringify(body, null, 2))
-  })
-  await Promise.all(genPromises)
-  console.log('生成 CSS 变量文件成功')
-  /** 入口文件内容 */
-  const indexContent = `/** 此文件自动生成，请勿修改！ */\n
-${files.map(({ fileName }) => `import ${fileName} from './${fileName}.json';`).join('\n')}
-
-export default {
-${files.map(file => `  ...${file.fileName},`).join('\n')}
-}
-  `
-  await writeFile(`${targetDir}/index.ts`, indexContent)
 }

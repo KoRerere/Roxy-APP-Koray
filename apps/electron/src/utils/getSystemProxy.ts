@@ -1,26 +1,11 @@
 import { exec } from 'node:child_process'
 
-function getProxyByEnv() {
-  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy
-  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy
-
-  if (httpProxy || httpsProxy) {
-    console.log('系统代理设置:')
-    if (httpProxy) {
-      console.log(`HTTP 代理: ${httpProxy}`)
-      return httpProxy
-    }
-    if (httpsProxy) {
-      console.log(`HTTPS 代理: ${httpsProxy}`)
-      return httpsProxy
-    }
-  }
-  else {
-    console.log('环境变量中没有设置代理')
-    throw new Error('未检测到代理设置')
-  }
+/** 获取环境变量中的代理设置 */
+function getProxyByEnv(): Promise<string> {
+  return Promise.resolve(process.env.HTTP_PROXY || process.env.HTTPS_PROXY || '')
 }
 
+/** 获取 Windows 系统的代理设置 */
 function getWindowsProxy() {
   const { promise, resolve, reject } = Promise.withResolvers<string>()
   exec('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyServer', (error, stdout) => {
@@ -44,7 +29,8 @@ function getWindowsProxy() {
   return promise
 }
 
-function getMacProxy() {
+/** 获取 macOS 系统的代理设置 */
+function getMacProxy(): Promise<string> {
   const { promise, resolve, reject } = Promise.withResolvers<string>()
   exec('networksetup -getwebproxy Wi-Fi', (error, stdout) => {
     if (error) {
@@ -55,13 +41,27 @@ function getMacProxy() {
 
     console.log('macOS 代理设置:')
     console.log(stdout)
-    resolve(stdout)
+
+    const proxyEnabledMatch = stdout.match(/Enabled:\s*(\w+)/)
+    const proxyServerMatch = stdout.match(/Server:\s*(\S+)/)
+    const proxyPortMatch = stdout.match(/Port:\s*(\d+)/)
+
+    if (proxyEnabledMatch && proxyEnabledMatch[1] === 'Yes' && proxyServerMatch && proxyPortMatch) {
+      const proxy = `${proxyServerMatch[1]}:${proxyPortMatch[1]}`
+      console.log(`检测到代理服务器: ${proxy}`)
+      resolve(proxy)
+    }
+    else {
+      console.log('没有检测到代理服务器')
+      reject(new Error('未检测到代理设置'))
+    }
   })
   return promise
 }
 
+/** 获取系统代理设置 */
 export async function getSystemProxy() {
-  let fn
+  let fn: () => Promise<string>
   if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
     fn = getProxyByEnv
   }
@@ -72,7 +72,8 @@ export async function getSystemProxy() {
     fn = getMacProxy
   }
   else {
-    console.log('不支持的操作系统')
+    console.log('getSystemProxy 不支持的操作系统')
+    throw new Error('不支持的操作系统')
   }
   try {
     return await fn()

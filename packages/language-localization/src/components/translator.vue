@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import 'element-plus/es/components/message/style/css'
+import { CopyDocument } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { computed, ref, watch } from 'vue'
 
 const emit = defineEmits(['save'])
 
@@ -12,10 +15,19 @@ const currentRow = defineModel('currentRow', {
   default: {},
 })
 
+let controller: AbortController
+
+const disabledSaveBtn = computed(() => {
+  return !translateResult.value || !currentRow.value.targetKey
+})
+
 function translate() {
+  controller?.abort()
+  controller = new AbortController()
   translateSuggestionText.value = ''
   translateLoading.value = true
   fetch('./api/translate', {
+    signal: controller.signal,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,6 +42,8 @@ function translate() {
     console.log('翻译结果: ', text)
     translateSuggestionText.value = text
     translateLoading.value = false
+  }).catch((err) => {
+    console.log(err.message)
   })
 }
 
@@ -44,21 +58,30 @@ watch(currentRow, () => {
   console.log('currentRow changed: ', currentRow.value)
   translate()
 })
+
+function handleCopy() {
+  navigator.clipboard.writeText(currentRow.value.sourceValue).then(() => {
+    ElMessage.success('复制成功')
+  }).catch(() => {
+    ElMessage.error('复制失败')
+  })
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-[20px]">
     <el-card header="原文" shadow="never">
       {{ currentRow.sourceValue }}
+      <CopyDocument v-if="currentRow.sourceValue" class="w-[14px] h-[14px] cursor-pointer align-middle" @click="handleCopy" />
     </el-card>
-    <el-card header="翻译" shadow="never">
+    <el-card header="译文" shadow="never">
       <el-input
         v-model="translateResult"
         show-word-limit
         type="textarea"
         placeholder="Enter translation here"
       />
-      <el-button type="primary" class="mt-[12px] ml-[86%]" :disabled="!translateResult" @click="saveTranslateResult">
+      <el-button type="primary" class="mt-[12px] ml-[86%]" :disabled="disabledSaveBtn" @click="saveTranslateResult">
         保存
       </el-button>
     </el-card>

@@ -2,11 +2,12 @@
 import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import InviteIntoWorkspace from '/@/components/business/invite-into-workspace.vue'
 import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
-const { setUserInfo, setToken, userInfo } = useUserStore()
+const { getUserInfo, setToken, userInfo } = useUserStore()
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
@@ -31,10 +32,7 @@ async function handleSubmit() {
 
 async function afterLogin(token: string) {
   setToken(token)
-  const { data } = await API.base.userGetUserInfoList()
-
-  setUserInfo(data)
-  console.log(data)
+  getUserInfo()
   toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
   router.push({ name: 'home' })
 }
@@ -94,6 +92,7 @@ provideLoginContext({
     <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" />
     <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" />
     <ResetPassword v-else-if="currentComp === 'resetPassword'" />
+    <InviteIntoWorkspace v-else-if="currentComp === 'InviteIntoWorkspace'" />
   </div>
   <div class="sign-bg">
     <div class="blue" />
