@@ -1,58 +1,47 @@
-<script setup lang="tsx">
+<script setup lang="ts">
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
 import type { SettingsModule } from './type'
-import { getNetworkPanel, getPreferencesPanel, getProfilePanel } from './panel'
+import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getSettings } from './panel'
+
+type PanelKeyType = ReturnType<typeof getSettings>[number]['label']
 
 interface Active {
-  key: string
+  key: PanelKeyType
   panel: SettingsModule | null
 }
+
+const dialogRef = inject<any>('dialogRef')
+
 const userStore = useUserStore()
 const active = reactive<Active>({
   key: 'Profiles',
   panel: null,
 })
-const profile = ref()
-const preferences = ref()
-const network = ref()
-const menuList = ref([
-  {
-    label: 'Profiles',
-    icon: 'base/rx_ic_user_circle',
+
+const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({})
+
+const menuList = ref(
+  getSettings().map(item => ({
+    ...item,
     command: () => {
-      active.key = 'Profiles'
-      active.panel = profile.value
+      active.key = item.label
+      active.panel = settingsPanel[active.key]
     },
-  },
-  {
-    label: 'Preferences',
-    icon: 'base/rx_ic_slider',
-    command: () => {
-      active.key = 'Preferences'
-      active.panel = preferences.value
-    },
-  },
-  {
-    label: 'Network',
-    icon: 'base/rx_ic_wifi',
-    command: () => {
-      active.key = 'Network'
-      active.panel = network.value
-    },
-  },
-])
+  })),
+)
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  profile.value = getProfilePanel(toRaw(userStore.userInfo))
-  preferences.value = getPreferencesPanel(data)
-  network.value = getNetworkPanel(data)
-  active.panel = profile.value
+  settingsPanel.Profiles = getProfilePanel(toRaw(userStore.userInfo))
+  settingsPanel.Preferences = getPreferencesPanel(data)
+  settingsPanel.Network = getNetworkPanel(data)
+  active.panel = settingsPanel[active.key]
 }
 
-onBeforeMount(() => {
+onMounted(() => {
+  active.key = dialogRef.value.data.props.activeKey
   getUserConfig()
 })
 </script>

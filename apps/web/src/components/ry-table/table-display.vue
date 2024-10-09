@@ -3,6 +3,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const sortColumns: any[] = defineModel('columns')
+console.log('🚀 ~ sortColumns:', sortColumns)
 
 const popRef = ref()
 
@@ -19,7 +20,7 @@ function toggle(event: Event) {
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
           <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
           <span class="flex-auto">{{ item.title }}</span>
-          <rxToggleSwitch v-model="item._visible" />
+          <rxToggleSwitch v-if="!item.disabledToggle" v-model="item._visible" />
         </div>
       </VueDraggable>
     </div>

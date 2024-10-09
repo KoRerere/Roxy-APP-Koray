@@ -140,10 +140,10 @@ onMounted(() => {
   </div>
 
   <ryPopover ref="popRef" @hide="hidePopover">
-    <!-- <div class="sort-item">
+    <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>所有窗口</span>
-    </div> -->
+    </div>
     <VueDraggable v-model="sortTabs" :animation="150">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
         <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
@@ -152,10 +152,10 @@ onMounted(() => {
         <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item.label)" />
       </div>
     </VueDraggable>
-    <!-- <div class="sort-item">
+    <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>回收站</span>
-    </div> -->
+    </div>
     <template #footer>
       <div class="sort-reset">
         Reset to default

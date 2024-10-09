@@ -22,7 +22,6 @@ async function updateAvatar(item: Items) {
 async function updateUserName(item: Items) {
   const { msg } = await API.base.userChangeAccountCreate({ realName: item.value })
   console.log('🚀 ~ updateUserName ~ msg:', msg)
-
   updateUserInfo()
 }
 
@@ -40,11 +39,34 @@ async function detectLocalNetwork(item: Items) {
   const data = await electronAPI.send('proxy:detect', {})
   item.value = data
 }
+
 async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
   const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
   item.value = data
+}
+
+// async function selectDir(item: Items) {
+//   const dirPath = await window.electronAPI.send('dialog:selectDir')
+//   item.value = dirPath
+// }
+
+export function getSettings() {
+  return [
+    {
+      label: 'Profiles',
+      icon: 'base/rx_ic_user_circle',
+    },
+    {
+      label: 'Preferences',
+      icon: 'base/rx_ic_slider',
+    },
+    {
+      label: 'Network',
+      icon: 'base/rx_ic_wifi',
+    },
+  ] as const
 }
 
 export function getProfilePanel(data?: any): SettingsModule {
@@ -305,7 +327,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: 'Visiting sites using local network without proxy',
             name: 'ipBlackList',
             classes: 'flex-col !items-start gap-4',
-            value: (data?.ipBlackList || []).join('\n'),
+            value: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
+            formatValue: (item: Items) => {
+              return item.value.split('\n')
+            },
             props: {
               class: 'resize-none w-full',
               placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
