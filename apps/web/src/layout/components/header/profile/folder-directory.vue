@@ -12,9 +12,12 @@ defineProps({
   },
 })
 
+const emit = defineEmits(['change'])
+
 async function selectDir(item: Items) {
   const dirPath = await window.electronAPI.send('dialog:selectDir')
   item.value = dirPath
+  emit('change')
 }
 </script>
 

@@ -187,11 +187,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             name: 'cacheDir',
             value: data?.cacheDir ?? '',
             props: {
-              disabled: false,
+              disabled: true,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
-                <FolderDirectory item={item} {...item.props} {...props}></FolderDirectory>
+                <FolderDirectory item={item} {...item.props} {...props} onChange={() => saveUserConfig(item)}></FolderDirectory>
               )
             },
           },
