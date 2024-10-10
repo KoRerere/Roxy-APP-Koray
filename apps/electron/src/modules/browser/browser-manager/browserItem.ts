@@ -200,4 +200,25 @@ export class BrowserItem {
   isValidURL(url: string) {
     return !invalidUrls.some(n => url.includes(n!))
   }
+
+  // async syncWindowOpenStatus(openStatus: boolean) {
+  //   const { id } = this.winInfo
+
+  //   const uploadParams = {
+  //     id,
+  //     cookie: Array.isArray(parmes.cookie) ? JSON.stringify(parmes.cookie) : parmes.cookie,
+  //     defaultOpenUrl: parmes.defaultOpenUrl,
+  //     lumiLogin: parmes.lumiLogin,
+  //     syncValue: {
+  //       version: newVersion,
+  //     },
+  //     openStatus: false
+  //   }
+  //   // 同步窗口状态
+  //   await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
+  //     console.log('user_mdf_window_sync_v2', res)
+  //   }).catch((error) => {
+  //     console.error('user_mdf_window_sync_v2 error: ', error)
+  //   })
+  // }
 }

@@ -8,6 +8,7 @@ import { API } from '/@/api'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import RyButton from '/@/components/ry-button'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
@@ -101,16 +102,8 @@ function leaveWorkspace() {
     class: 'w-[450px]',
     message: 'This action can’t be undone, your related profiles can’t not be reach after leaving workspace.',
     header: 'Are you sure to leave the Workspace? ',
-    icon: 'pi pi-info-circle',
-    rejectLabel: 'Cancel',
-    rejectProps: {
-      label: 'Cancel',
-      severity: 'secondary',
-      outlined: true,
-    },
     acceptProps: {
-      label: 'Leave workspace',
-      severity: 'danger',
+      label: $t('workspace.leaveWorkspace'),
     },
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
@@ -132,16 +125,16 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            Workspace icon
+            {{ $t('workspace.workspaceIcon') }}
           </div>
           <div class="description">
-            Default icon show first 2 letters of your workspace’s name.
+            {{ $t('workspace.workspaceIconDescription') }}
           </div>
         </div>
         <div class="emoji-picker-box">
           <RxEmojiPicker v-model="workspaceInfo.workspacePicture" />
           <div class="choose-icon-desc">
-            Choose icon
+            {{ $t('workspace.chooseIcon') }}
           </div>
         </div>
       </div>
@@ -149,10 +142,10 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            Workspace name
+            {{ $t('workspace.workspaceName') }}
           </div>
           <div class="description">
-            First 3 letters of your workspace name will be the prefix of all profiles’ ID
+            {{ $t('workspace.workspaceNameDescription') }}
           </div>
         </div>
         <div class="w-full">
@@ -173,12 +166,12 @@ function leaveWorkspace() {
       <template v-if="isOwner">
         <RyButton severity="secondary" @click="showMoreActions">
           <RxSvgIcon name="base/rx_ic_more-h" />
-          More
+          {{ $t('common.more') }}
         </RyButton>
-        <RyButton label="Save changes" @click="handleSaveChange" />
+        <RyButton :label="$t('common.saveChanges')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
-        <RyButton label="Leave workspace" severity="danger" @click="leaveWorkspace" />
+        <RyButton :label="$t('workspace.leaveWorkspace')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>
@@ -187,7 +180,7 @@ function leaveWorkspace() {
     <div class="action-list">
       <div class="action-item danger" @click="handleDeleteConfirm">
         <RxSvgIcon name="base/rx_ic_bin_1" />
-        Delete workspace
+        {{ $t('workspace.deleteWorkspace') }}
       </div>
     </div>
   </Popover>

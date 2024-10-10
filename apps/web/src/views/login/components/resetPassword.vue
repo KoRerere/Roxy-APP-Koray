@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
-import { useLoginContext } from '../hooks/useLoginContext'
-import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
+import { useLoginContext } from '../hooks/useLoginContext'
+import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
@@ -78,28 +78,28 @@ function receiveEmailCode(code: string) {
           content="Please checkout your email and try again."
         />
         <div class="title">
-          Reset your password
+          {{ $t('login.resetPassword') }}
         </div>
         <div class="description">
-          Enter your email address and we will send you a code for your reset process.
+          {{ $t('login.resetPasswordDescription') }}
         </div>
         <div class="flex flex-col gap-2 w-full">
           <template v-if="currentStep === 'step1'">
-            <label for="email" class="label">Email</label>
-            <InputText id="email" v-model="email" placeholder="Email for your account" />
+            <label for="email" class="label">{{ $t('login.email') }}</label>
+            <InputText id="email" v-model="email" :placeholder="$t('login.emailForYourAccount')" />
           </template>
           <template v-else>
-            <label for="new-password" class="label">New password</label>
-            <Password id="new-password" v-model="newPassword" :feedback="false" placeholder="Enter new password" />
-            <label for="re-new-password" class="label">Re-enter new password</label>
-            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" placeholder="Re-enter new password" />
+            <label for="new-password" class="label">{{ $t('login.newPassword') }}</label>
+            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('login.enterNewPassword')" />
+            <label for="re-new-password" class="label">{{ $t('login.confirmPassword') }}</label>
+            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('login.confirmPassword')" />
           </template>
         </div>
       </div>
       <ry-button class="w-full" @click="handleSubmit">
-        {{ currentStep === 'step1' ? 'Next' : 'Confirm' }}
+        {{ currentStep === 'step1' ? $t('login.next') : $t('common.confirm') }}
       </ry-button>
-      <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">Back to sign in</a>
+      <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('login.backToSignIn') }}</a>
     </div>
   </template>
   <template v-else>

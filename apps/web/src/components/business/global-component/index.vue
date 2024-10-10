@@ -23,12 +23,13 @@ onMounted(() => {
           <span class="p-confirmdialog-message"> {{ message.message }}</span>
         </div>
         <div class="p-dialog-footer">
-          <RxButton outlined v-bind="message.rejectProps" @click="rejectCallback" />
+          <RxButton outlined :label="$t('common.cancel')" v-bind="message.rejectProps" @click="rejectCallback" />
           <RxButton severity="danger" v-bind="message.acceptProps" @click="acceptCallback" />
         </div>
       </div>
     </template>
   </ConfirmDialog>
   <DynamicDialog />
+  <!-- 通过邮箱邀请链接拉起弹窗 -->
   <InviteIntoWorkspace />
 </template>

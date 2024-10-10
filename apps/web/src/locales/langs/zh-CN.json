@@ -9,5 +9,52 @@
     "Teams": "团队",
     "Api-keys": "Api-Keys",
     "Settings": "设置"
+  },
+  "common": {
+    "cancel": "取消",
+    "Skip": "跳过",
+    "saveChanges": "保存更改",
+    "more": "更多",
+    "success": "成功",
+    "error": "错误",
+    "warning": "警告",
+    "info": "信息",
+    "confirm": "确认"
+  },
+  "workspace": {
+    "joinWorkspace": "加入工作空间",
+    "leaveWorkspace": "离开工作空间",
+    "invitationTips": "邀请您参加{workspaceName}，请单击下面的按钮加入工作空间并开始协作！",
+    "deleteWorkspace": "删除工作空间",
+    "chooseIcon": "选择图标",
+    "workspaceIcon": "工作空间图标",
+    "workspaceIconDescription": "默认图标显示工作空间名称的前2个字母。",
+    "workspaceName": "工作空间名称",
+    "workspaceNameDescription": "您的工作空间名称的前3个字母将是所有配置文件ID的前缀"
+  },
+  "login": {
+    "signIn": "登录",
+    "signUp": "注册",
+    "email": "邮箱",
+    "password": "登录密码",
+    "emailAddress": "邮箱地址",
+    "passwordPlaceholder": "登录密码",
+    "noAccount": "没有帐户？",
+    "rememberMe": "记住我",
+    "forgotPassword": "忘记密码？",
+    "alreadyHaveAccount": "已经有一个帐户？",
+    "signInWithGoogle": "通过 Google 登录",
+    "emailRequired": "电子邮件不能为空",
+    "passwordRequired": "密码不能为空",
+    "passwordMaxLength": "密码长度不能超过 20 个字符",
+    "passwordMinLength": "密码长度不能少于 6 个字符",
+    "resetPassword": "重置您的密码",
+    "resetPasswordDescription": "输入您的电子邮件地址，我们将向您发送一个代码以进行重置流程。",
+    "newPassword": "新密码",
+    "enterNewPassword": "输入新密码",
+    "confirmPassword": "重新输入新密码",
+    "backToSignIn": "返回登录",
+    "next": "下一步",
+    "emailForYourAccount": "给您的帐户发送电子邮件"
   }
 }

@@ -1,8 +1,8 @@
 <script setup lang="tsx">
 import type { ZodObject } from 'zod'
-import type { CustomRenderFn, FormSchema, RenderCallbackParams } from './types/form'
 import { isFunction, isPlainObject, isString } from 'es-toolkit'
 import { isVNode } from 'vue'
+import type { CustomRenderFn, FormSchema, RenderCallbackParams } from './types/form'
 import { componentMap } from './componentMap'
 import { useFormContext } from './hooks'
 
@@ -101,6 +101,15 @@ const getComponentProps = computed(() => {
   }
 })
 
+const LabelComponent = computed(() => {
+  return isFunction(props.schema.label) ? props.schema.label : () => props.schema.label
+})
+
+const getPlaceholder = computed(() => {
+  const { placeholder } = getComponentProps.value
+  return isFunction(placeholder) ? placeholder() : () => placeholder
+})
+
 /**
  * 单独验证某个字段
  */
@@ -131,13 +140,16 @@ onMounted(async () => {
 <template>
   <div class="field">
     <div class="form-item-row" :class="formProps.layout">
-      <label v-if="schema.label" :for="compId">{{ schema.label }} </label>
+      <label v-if="schema.label" :for="compId">
+        <component :is="LabelComponent" />
+      </label>
       <div class="form-item-control">
         <component
           :is="getComponent"
           v-bind="getComponentProps"
           :id="compId"
           v-model="modelValue"
+          :placeholder="getPlaceholder"
           class="w-full"
           :class="{ 'p-invalid': errors[schema.field] }"
           @[triggerEventName]="validateField"

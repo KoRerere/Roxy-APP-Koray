@@ -2,26 +2,33 @@ import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
 import puppeteer from 'puppeteer-core'
 import type { ISO639Type } from './ISO-639-code'
 
+let resolve: (b: Browser) => void, reject
+const promise = new Promise<Browser>((res, rej) => {
+  resolve = res
+  reject = rej
+})
+
 export class GoogleTranslator {
   private browser!: Browser
-  private browserLaunching!: Promise<Browser>
+  private browserLaunching: Promise<Browser> = promise
 
   constructor(private options?: PuppeteerLaunchOptions) {
     this.init()
   }
 
   async init() {
-    const ChromeLauncher = await import('chrome-launcher')
-    const chromePath = ChromeLauncher.getChromePath()
-
-    this.browserLaunching = puppeteer.launch({
+    this.browser = await puppeteer.launch({
       ...this.options,
-      executablePath: chromePath,
+      executablePath: await this.getChromePath(),
       // headless: false, // 设置为 false 以便看到浏览器操作
       // slowMo: 250, // 减慢操作速度，方便观察
     })
+    resolve(this.browser)
+  }
 
-    this.browser = await this.browserLaunching
+  async getChromePath() {
+    const ChromeLauncher = await import('chrome-launcher')
+    return ChromeLauncher.getChromePath()
   }
 
   async translateText(text: string, from: string, to: ISO639Type) {

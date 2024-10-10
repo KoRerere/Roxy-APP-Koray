@@ -5,6 +5,7 @@ import { freemem, totalmem } from 'node:os'
 import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
 import type { proxyDetection } from '/@/utils'
+import { API } from '/@/api'
 import { chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
@@ -63,6 +64,11 @@ export class BeforeLaunchTask {
     // 清空任务队列
     this.taskMap.clear()
     this.sendSuccessMessage('浏览器启动成功')
+    // 同步窗口状态
+    API.window.userMdfWindowSyncV2Create([{
+      id: this.browserItem.winInfo.id,
+      openStatus: true,
+    }])
   }
 
   /** 启动浏览器 */
