@@ -6,3 +6,9 @@ import Dashboard from './components/dashboard.vue'
   <Toast />
   <Dashboard />
 </template>
+
+<style>
+body {
+  overflow: auto;
+}
+</style>

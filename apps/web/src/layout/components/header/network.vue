@@ -10,7 +10,7 @@ async function detectNetwork() {
   const result = await electronAPI.send('proxy:detectNetwork').finally(() => {
     loading.value = false
   })
-  proxyInfo.value.city = result.city || result.country
+  proxyInfo.value.city = `${result.country_code}/${result.city}`
   proxyInfo.value.ip = result.ip
   console.log('result', result)
 }

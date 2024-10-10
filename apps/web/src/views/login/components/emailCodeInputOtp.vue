@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
-import { useLoginContext } from '../hooks/useLoginContext'
 import { API } from '/@/api'
+import { useLoginContext } from '../hooks/useLoginContext'
 
 const props = defineProps({
   type: {
@@ -25,7 +25,7 @@ const getEmail = computed(() => {
 })
 
 function toReEnter() {
-  setCurrentComponent('signForm')
+  setCurrentComponent('signForm', { type: 'signUp' })
 }
 
 async function handleSubmit() {
@@ -40,9 +40,8 @@ async function handleSubmit() {
 
   const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
-    // TODO: remove this hardcode
-    user_name: 'bqytest5',
     ...signFormData,
+    user_name: signFormData.user_name.split('@')[0].replace(/[^a-z0-9]/gi, ''),
     email: signFormData.user_name,
     ver_code: emailCode.value,
   })

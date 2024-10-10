@@ -1,13 +1,8 @@
+import type { BrowserProcessMessage } from '@roxy/electron-preload'
 import { errorDataWrapper, ipcMain, successDataWrapper } from '/@/modules/ipc'
 
-interface MessageParams {
-  dirId: string
-  percent: number
-  message: string
-}
-
 /** 发送成功的消息到渲染进程 */
-export function sendSuccessMessage(params: MessageParams) {
+export function sendSuccessMessage(params: BrowserProcessMessage) {
   ipcMain.send('browser:launch-process-message', successDataWrapper(params))
 }
 

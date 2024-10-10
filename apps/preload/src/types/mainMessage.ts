@@ -12,6 +12,8 @@ export interface BrowserProcessMessage {
   percent: number
   /** 信息 */
   message: string
+  /** 不影响浏览器打开的警告信息 */
+  warningMessages: string[]
 }
 
 /** 资源更新消息体 */

@@ -114,26 +114,32 @@ importers:
         specifier: 22.3.27
         version: 22.3.27
       electron-builder:
-        specifier: 25.0.5
-        version: 25.0.5(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5))
+        specifier: 25.1.7
+        version: 25.1.7(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7))
       electron-store:
         specifier: ^8.2.0
         version: 8.2.0
       electron-updater:
-        specifier: 6.3.4
-        version: 6.3.4
+        specifier: 6.3.9
+        version: 6.3.9
       es-toolkit:
-        specifier: ^1.21.0
+        specifier: ^1.24.0
         version: 1.24.0
       express:
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^5.0.1
+        version: 5.0.1
+      font-list:
+        specifier: ^1.5.1
+        version: 1.5.1
       https-proxy-agent:
         specifier: ^7.0.5
         version: 7.0.5
       iconv-lite:
         specifier: ^0.6.3
         version: 0.6.3
+      node-2fa:
+        specifier: ^2.0.3
+        version: 2.0.3
       puppeteer-core:
         specifier: 21.3.8
         version: 21.3.8(encoding@0.1.13)
@@ -145,13 +151,13 @@ importers:
         version: 5.3.10(esbuild@0.23.1)(webpack@5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4))
       ts-loader:
         specifier: ^9.5.1
-        version: 9.5.1(typescript@5.6.2)(webpack@5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4))
+        version: 9.5.1(typescript@5.6.3)(webpack@5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4))
       tsconfig-paths-webpack-plugin:
         specifier: ^4.1.0
         version: 4.1.0
       typescript:
-        specifier: 5.6.2
-        version: 5.6.2
+        specifier: 5.6.3
+        version: 5.6.3
       vite:
         specifier: 5.4.8
         version: 5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
@@ -162,7 +168,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack@5.95.0)
       winston:
-        specifier: ^3.14.2
+        specifier: ^3.15.0
         version: 3.15.0
       winston-daily-rotate-file:
         specifier: ^5.0.0
@@ -738,6 +744,11 @@ packages:
 
   '@electron/rebuild@3.6.0':
     resolution: {integrity: sha512-zF4x3QupRU3uNGaP5X1wjpmcjfw1H87kyqZ00Tc3HvriV+4gmOGuvQjGNkrJuXdsApssdNyVwLsy+TaeTGGcVw==}
+    engines: {node: '>=12.13.0'}
+    hasBin: true
+
+  '@electron/rebuild@3.6.1':
+    resolution: {integrity: sha512-f6596ZHpEq/YskUd8emYvOUne89ij8mQgjYFA5ru25QwbrRO+t1SImofdDv7kKOuWCmVOuU5tvfkbgGxIl3E/w==}
     engines: {node: '>=12.13.0'}
     hasBin: true
 
@@ -1525,6 +1536,9 @@ packages:
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
 
+  '@types/notp@2.0.5':
+    resolution: {integrity: sha512-ZsZS0PYUa6ZE4K3yOGerBvaxCp4ePf6ZmkFbPeilcqz2Ui/lmXox7KlRt7XZkXzqUgXhFLkc09ixyVmFLCU3gQ==}
+
   '@types/plist@3.0.5':
     resolution: {integrity: sha512-E6OCaRmAe4WDmWNsL/9RMqdkkzDCY1etutkflWk4c+AcjDU07Pcz1fQwTX0TQz+Pxqn9i4L1TU3UFpjnrcDgxA==}
 
@@ -2082,6 +2096,9 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
+  app-builder-bin@5.0.0-alpha.10:
+    resolution: {integrity: sha512-Ev4jj3D7Bo+O0GPD2NMvJl+PGiBAfS7pUGawntBNpCbxtpncfUixqFj9z9Jme7V7s3LBGqsWZZP54fxBX3JKJw==}
+
   app-builder-bin@5.0.0-alpha.7:
     resolution: {integrity: sha512-ww2mK4ITUvqisnqOuUWAeHzokpPidyZ7a0ZkwW+V7sF5/Pdi2OldkRjAWqEzn6Xtmj3SLVT84as4wB59A6jJ4g==}
 
@@ -2091,6 +2108,13 @@ packages:
     peerDependencies:
       dmg-builder: 25.0.5
       electron-builder-squirrel-windows: 25.0.5
+
+  app-builder-lib@25.1.7:
+    resolution: {integrity: sha512-JxmN+D/Dn7BLQoN+cTFO+zbMHcpI10v/xjyjFO1FKpHbApOG+OQt/xUyVjKWp4FYplIfuHdpxqTXo1PN/Wzm/A==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      dmg-builder: 25.1.7
+      electron-builder-squirrel-windows: 25.1.7
 
   aproba@2.0.0:
     resolution: {integrity: sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==}
@@ -2287,12 +2311,19 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
+  builder-util-runtime@9.2.10:
+    resolution: {integrity: sha512-6p/gfG1RJSQeIbz8TK5aPNkoztgY1q5TgmGFMAXcY8itsGW6Y2ld1ALsZ5UJn8rog7hKF3zHx5iQbNQ8uLcRlw==}
+    engines: {node: '>=12.0.0'}
+
   builder-util-runtime@9.2.5:
     resolution: {integrity: sha512-HjIDfhvqx/8B3TDN4GbABQcgpewTU4LMRTQPkVpKYV3lsuxEJoIfvg09GyWTNmfVNSUAYf+fbTN//JX4TH20pg==}
     engines: {node: '>=12.0.0'}
 
   builder-util@25.0.3:
     resolution: {integrity: sha512-eH5c1ukdY2xjtFQWQ6jlzEuXuqcuAVc3UQ6V6fdYu9Kg3CkDbCR82Mox42uaJDmee9WXSbP/88cOworFdOHPhw==}
+
+  builder-util@25.1.7:
+    resolution: {integrity: sha512-7jPjzBwEGRbwNcep0gGNpLXG9P94VA3CPAZQCzxkFXiV2GMQKlziMbY//rXPI7WKfhsvGgFXjTcXdBEwgXw9ww==}
 
   builtin-modules@3.3.0:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
@@ -2594,8 +2625,8 @@ packages:
     resolution: {integrity: sha512-78KWk9T26NhzXtuL26cIJ8/qNHANyJ/ZYrmEXFzUmhZdjpBv+DlWlOANRTGBt48YcyslsLrj0bMLFTmXvLRCOw==}
     engines: {node: '>=6.6.0'}
 
-  cookie@0.6.0:
-    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+  cookie@0.7.1:
+    resolution: {integrity: sha512-6DnInpx7SJ2AK3+CTUE/ZM0vWTUboZCegxhC2xiIydHR9jNuTAASBrfEpHhiGOZw/nX51bHt6YQl8jsGo4y/0w==}
     engines: {node: '>= 0.6'}
 
   copy-anything@3.0.5:
@@ -2865,8 +2896,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  dmg-builder@25.0.5:
-    resolution: {integrity: sha512-ocnZV44ZqInoSFaY54fF7BlCtw+WtbrjyPrkBhaB+Ztn7GPKjmFgRbIKytifJ8h9Cib8jdFRMgjCUtkU45Y6DA==}
+  dmg-builder@25.1.7:
+    resolution: {integrity: sha512-Hac0AfXQrAV62JT99Had6bvUJb/f7vjJTaLOsmA/gAQcrc/cLmNAqCJ0ZZDqwKy2+LKXnxx45TvMXvovKd4iMg==}
 
   dmg-license@1.0.11:
     resolution: {integrity: sha512-ZdzmqwKmECOWJpqefloC5OJy1+WZBBse5+MR88z9g9Zn4VY+WYUkAyojmhzJckH5YbbZGcYIuGAkY5/Ys5OM2Q==}
@@ -2924,8 +2955,8 @@ packages:
   electron-builder-squirrel-windows@25.0.5:
     resolution: {integrity: sha512-N2U7LGSdt4hmEhjEeIV2XJbjj2YIrTL6enfsGKfOhGTpL6GEejUmT3gjdKUqKBS5+NBx0GWhnEwD3MpO2P6Nfg==}
 
-  electron-builder@25.0.5:
-    resolution: {integrity: sha512-Uj5LFRbUqNiVajsgqcwlKe+CHtwubK3hcoJsW5C2YiWodej2mmxM+LrTqga0rrWWHVMNmrcmGcS/WHpKwy6KEw==}
+  electron-builder@25.1.7:
+    resolution: {integrity: sha512-lsKtX93GSHWnmuteNRvBzgJIjRiiYB0qrJVRjShwBi75Ns+mRdWeOGZiXItqOWj+3g5UyY722kgoq2WlqCB87A==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -2936,14 +2967,17 @@ packages:
   electron-publish@25.0.3:
     resolution: {integrity: sha512-wSGm+TFK2lArswIFBPLuIRHbo945s3MCvG5y1xVC57zL/PsrElUkaGH2ERtRrcKNpaDNq77rDA9JnMJhAFJjUg==}
 
+  electron-publish@25.1.7:
+    resolution: {integrity: sha512-+jbTkR9m39eDBMP4gfbqglDd6UvBC7RLh5Y0MhFSsc6UkGHj9Vj9TWobxevHYMMqmoujL11ZLjfPpMX+Pt6YEg==}
+
   electron-store@8.2.0:
     resolution: {integrity: sha512-ukLL5Bevdil6oieAOXz3CMy+OgaItMiVBg701MNlG6W5RaC0AHN7rvlqTCmeb6O7jP0Qa1KKYTE0xV0xbhF4Hw==}
 
   electron-to-chromium@1.5.32:
     resolution: {integrity: sha512-M+7ph0VGBQqqpTT2YrabjNKSQ2fEl9PVx6AK3N558gDH9NO8O6XN9SXXFWRo9u9PbEg/bWq+tjXQr+eXmxubCw==}
 
-  electron-updater@6.3.4:
-    resolution: {integrity: sha512-uZUo7p1Y53G4tl6Cgw07X1yF8Jlz6zhaL7CQJDZ1fVVkOaBfE2cWtx80avwDVi8jHp+I/FWawrMgTAeCCNIfAg==}
+  electron-updater@6.3.9:
+    resolution: {integrity: sha512-2PJNONi+iBidkoC5D1nzT9XqsE8Q1X28Fn6xRQhO3YX8qRRyJ3mkV4F1aQsuRnYPqq6Hw+E51y27W75WgDoofw==}
 
   electron@22.3.27:
     resolution: {integrity: sha512-7Rht21vHqj4ZFRnKuZdFqZFsvMBCmDqmjetiMqPtF+TmTBiGne1mnstVXOA/SRGhN2Qy5gY5bznJKpiqogjM8A==}
@@ -3314,8 +3348,8 @@ packages:
   exponential-backoff@3.1.1:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
 
-  express@5.0.0:
-    resolution: {integrity: sha512-V4UkHQc+B7ldh1YC84HCXHwf60M4BOMvp9rkvTUWCK5apqDC1Esnbid4wm6nFyVuDy8XMfETsJw5lsIGBWyo0A==}
+  express@5.0.1:
+    resolution: {integrity: sha512-ORF7g6qGnD+YtUG9yx4DFoqCShNMmUKiXuT5oWMHiOvt/4WFbHC6yCwQMTSBMno7AqntNCAzzcnnjowRkTL9eQ==}
     engines: {node: '>= 18'}
 
   extend-shallow@2.0.1:
@@ -3439,6 +3473,9 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  font-list@1.5.1:
+    resolution: {integrity: sha512-Hr5V0dsSv91wH3FgirXd7qh1PydqA/vMQyWjFFWn+lUPJtC+3i2tzgVqbLRcvQh87TGdbTGbAR3mEo4VlwC1jw==}
 
   foreground-child@3.3.0:
     resolution: {integrity: sha512-Ld2g8rrAyMYFXBhEqMz8ZAHBi4J4uS1i/CxGMDnjyFWddMXLVcDp051DZfu+t7+ab7Wv6SMqpWmyFIj5UbfFvg==}
@@ -4564,6 +4601,9 @@ packages:
     resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
     engines: {node: '>= 0.4.0'}
 
+  node-2fa@2.0.3:
+    resolution: {integrity: sha512-PQldrOhjuoZyoydMvMSctllPN1ZPZ1/NwkEcgYwY9faVqE/OymxR+3awPpbWZxm6acLKqvmNqQmdqTsqYyflFw==}
+
   node-abi@3.68.0:
     resolution: {integrity: sha512-7vbj10trelExNjFSBm5kTvZXXa7pZyKWx9RCKIyqe6I9Ev3IzGpQoqBP3a+cOdxY+pWj6VkP28n/2wWysBHD/A==}
     engines: {node: '>=10'}
@@ -4623,6 +4663,10 @@ packages:
 
   normalize-wheel-es@1.2.0:
     resolution: {integrity: sha512-Wj7+EJQ8mSuXr2iWfnujrimU35R2W4FAErEyTmJoJ7ucwTn2hOUSsRehMb5RSYkxXGTM7Y9QpvPmp++w5ftoJw==}
+
+  notp@2.0.3:
+    resolution: {integrity: sha512-oBig/2uqkjQ5AkBuw4QJYwkEWa/q+zHxI5/I5z6IeP2NT0alpJFsP/trrfCC+9xOAgQSZXssNi962kp5KBmypQ==}
+    engines: {node: '> v0.6.0'}
 
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
@@ -5788,6 +5832,10 @@ packages:
   thenify@3.3.1:
     resolution: {integrity: sha512-RVZSIV5IG10Hk3enotrhvz0T9em6cyHBLkH/YAZuKqd8hRkKhSfCGIcP2KUY0EPxndzANBmNllzWPwak+bheSw==}
 
+  thirty-two@1.0.2:
+    resolution: {integrity: sha512-OEI0IWCe+Dw46019YLl6V10Us5bi574EvlJEOcAkB29IzQ/mYD1A6RyNHLjZPiHCmuodxvgF6U+vZO1L15lxVA==}
+    engines: {node: '>=0.2.6'}
+
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
 
@@ -6897,6 +6945,26 @@ snapshots:
       - bluebird
       - supports-color
 
+  '@electron/rebuild@3.6.1':
+    dependencies:
+      '@malept/cross-spawn-promise': 2.0.0
+      chalk: 4.1.2
+      debug: 4.3.7
+      detect-libc: 2.0.3
+      fs-extra: 10.1.0
+      got: 11.8.6
+      node-abi: 3.68.0
+      node-api-version: 0.2.0
+      node-gyp: 9.4.1
+      ora: 5.4.1
+      read-binary-file-arch: 1.0.6
+      semver: 7.6.3
+      tar: 6.2.1
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+
   '@electron/universal@2.0.1':
     dependencies:
       '@electron/asar': 3.2.13
@@ -7618,6 +7686,10 @@ snapshots:
       undici-types: 6.19.8
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/notp@2.0.5':
+    dependencies:
+      '@types/node': 22.7.4
 
   '@types/plist@3.0.5':
     dependencies:
@@ -8459,9 +8531,11 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
+  app-builder-bin@5.0.0-alpha.10: {}
+
   app-builder-bin@5.0.0-alpha.7: {}
 
-  app-builder-lib@25.0.5(dmg-builder@25.0.5(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5)):
+  app-builder-lib@25.0.5(dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7)):
     dependencies:
       '@develar/schema-utils': 2.6.5
       '@electron/notarize': 2.3.2
@@ -8476,9 +8550,9 @@ snapshots:
       builder-util-runtime: 9.2.5
       chromium-pickle-js: 0.2.0
       debug: 4.3.7
-      dmg-builder: 25.0.5(electron-builder-squirrel-windows@25.0.5)
+      dmg-builder: 25.1.7(electron-builder-squirrel-windows@25.0.5)
       ejs: 3.1.10
-      electron-builder-squirrel-windows: 25.0.5(dmg-builder@25.0.5)
+      electron-builder-squirrel-windows: 25.0.5(dmg-builder@25.1.7)
       electron-publish: 25.0.3
       form-data: 4.0.0
       fs-extra: 10.1.0
@@ -8489,6 +8563,46 @@ snapshots:
       lazy-val: 1.0.5
       minimatch: 10.0.1
       read-config-file: 6.4.0
+      resedit: 1.7.1
+      sanitize-filename: 1.6.3
+      semver: 7.6.3
+      tar: 6.2.1
+      temp-file: 3.4.0
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+
+  app-builder-lib@25.1.7(dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7)):
+    dependencies:
+      '@develar/schema-utils': 2.6.5
+      '@electron/notarize': 2.5.0
+      '@electron/osx-sign': 1.3.1
+      '@electron/rebuild': 3.6.1
+      '@electron/universal': 2.0.1
+      '@malept/flatpak-bundler': 0.4.0
+      '@types/fs-extra': 9.0.13
+      async-exit-hook: 2.0.1
+      bluebird-lst: 1.0.9
+      builder-util: 25.1.7
+      builder-util-runtime: 9.2.10
+      chromium-pickle-js: 0.2.0
+      config-file-ts: 0.2.8-rc1
+      debug: 4.3.7
+      dmg-builder: 25.1.7(electron-builder-squirrel-windows@25.0.5)
+      dotenv: 16.4.5
+      dotenv-expand: 11.0.6
+      ejs: 3.1.10
+      electron-builder-squirrel-windows: 25.0.5(dmg-builder@25.1.7)
+      electron-publish: 25.1.7
+      form-data: 4.0.0
+      fs-extra: 10.1.0
+      hosted-git-info: 4.1.0
+      is-ci: 3.0.1
+      isbinaryfile: 5.0.2
+      js-yaml: 4.1.0
+      json5: 2.2.3
+      lazy-val: 1.0.5
+      minimatch: 10.0.1
       resedit: 1.7.1
       sanitize-filename: 1.6.3
       semver: 7.6.3
@@ -8747,6 +8861,13 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
+  builder-util-runtime@9.2.10:
+    dependencies:
+      debug: 4.3.7
+      sax: 1.4.1
+    transitivePeerDependencies:
+      - supports-color
+
   builder-util-runtime@9.2.5:
     dependencies:
       debug: 4.3.7
@@ -8767,6 +8888,27 @@ snapshots:
       fs-extra: 10.1.0
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
+      is-ci: 3.0.1
+      js-yaml: 4.1.0
+      source-map-support: 0.5.21
+      stat-mode: 1.0.0
+      temp-file: 3.4.0
+    transitivePeerDependencies:
+      - supports-color
+
+  builder-util@25.1.7:
+    dependencies:
+      7zip-bin: 5.2.0
+      '@types/debug': 4.1.12
+      app-builder-bin: 5.0.0-alpha.10
+      bluebird-lst: 1.0.9
+      builder-util-runtime: 9.2.10
+      chalk: 4.1.2
+      cross-spawn: 7.0.3
+      debug: 4.3.7
+      fs-extra: 10.1.0
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.5
       is-ci: 3.0.1
       js-yaml: 4.1.0
       source-map-support: 0.5.21
@@ -9102,7 +9244,7 @@ snapshots:
 
   cookie-signature@1.2.1: {}
 
-  cookie@0.6.0: {}
+  cookie@0.7.1: {}
 
   copy-anything@3.0.5:
     dependencies:
@@ -9331,11 +9473,11 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  dmg-builder@25.0.5(electron-builder-squirrel-windows@25.0.5):
+  dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5):
     dependencies:
-      app-builder-lib: 25.0.5(dmg-builder@25.0.5(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5))
-      builder-util: 25.0.3
-      builder-util-runtime: 9.2.5
+      app-builder-lib: 25.1.7(dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7))
+      builder-util: 25.1.7
+      builder-util-runtime: 9.2.10
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
       js-yaml: 4.1.0
@@ -9406,9 +9548,9 @@ snapshots:
     dependencies:
       jake: 10.9.2
 
-  electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5):
+  electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7):
     dependencies:
-      app-builder-lib: 25.0.5(dmg-builder@25.0.5(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5))
+      app-builder-lib: 25.0.5(dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7))
       archiver: 5.3.2
       builder-util: 25.0.3
       fs-extra: 10.1.0
@@ -9417,17 +9559,16 @@ snapshots:
       - dmg-builder
       - supports-color
 
-  electron-builder@25.0.5(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5)):
+  electron-builder@25.1.7(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7)):
     dependencies:
-      app-builder-lib: 25.0.5(dmg-builder@25.0.5(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.0.5))
-      builder-util: 25.0.3
-      builder-util-runtime: 9.2.5
+      app-builder-lib: 25.1.7(dmg-builder@25.1.7(electron-builder-squirrel-windows@25.0.5))(electron-builder-squirrel-windows@25.0.5(dmg-builder@25.1.7))
+      builder-util: 25.1.7
+      builder-util-runtime: 9.2.10
       chalk: 4.1.2
-      dmg-builder: 25.0.5(electron-builder-squirrel-windows@25.0.5)
+      dmg-builder: 25.1.7(electron-builder-squirrel-windows@25.0.5)
       fs-extra: 10.1.0
       is-ci: 3.0.1
       lazy-val: 1.0.5
-      read-config-file: 6.4.0
       simple-update-notifier: 2.0.0
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -9449,6 +9590,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  electron-publish@25.1.7:
+    dependencies:
+      '@types/fs-extra': 9.0.13
+      builder-util: 25.1.7
+      builder-util-runtime: 9.2.10
+      chalk: 4.1.2
+      fs-extra: 10.1.0
+      lazy-val: 1.0.5
+      mime: 2.6.0
+    transitivePeerDependencies:
+      - supports-color
+
   electron-store@8.2.0:
     dependencies:
       conf: 10.2.0
@@ -9456,9 +9609,9 @@ snapshots:
 
   electron-to-chromium@1.5.32: {}
 
-  electron-updater@6.3.4:
+  electron-updater@6.3.9:
     dependencies:
-      builder-util-runtime: 9.2.5
+      builder-util-runtime: 9.2.10
       fs-extra: 10.1.0
       js-yaml: 4.1.0
       lazy-val: 1.0.5
@@ -9972,13 +10125,13 @@ snapshots:
 
   exponential-backoff@3.1.1: {}
 
-  express@5.0.0:
+  express@5.0.1:
     dependencies:
       accepts: 2.0.0
       body-parser: 2.0.1
       content-disposition: 1.0.0
       content-type: 1.0.5
-      cookie: 0.6.0
+      cookie: 0.7.1
       cookie-signature: 1.2.1
       debug: 4.3.6
       depd: 2.0.0
@@ -10126,6 +10279,8 @@ snapshots:
   fn.name@1.1.0: {}
 
   follow-redirects@1.15.9: {}
+
+  font-list@1.5.1: {}
 
   foreground-child@3.3.0:
     dependencies:
@@ -11381,6 +11536,13 @@ snapshots:
 
   netmask@2.0.2: {}
 
+  node-2fa@2.0.3:
+    dependencies:
+      '@types/notp': 2.0.5
+      notp: 2.0.3
+      thirty-two: 1.0.2
+      tslib: 2.7.0
+
   node-abi@3.68.0:
     dependencies:
       semver: 7.6.3
@@ -11445,6 +11607,8 @@ snapshots:
   normalize-url@6.1.0: {}
 
   normalize-wheel-es@1.2.0: {}
+
+  notp@2.0.3: {}
 
   npm-run-path@4.0.1:
     dependencies:
@@ -12741,6 +12905,8 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
+  thirty-two@1.0.2: {}
+
   through@2.3.8: {}
 
   tiny-typed-emitter@2.1.0: {}
@@ -12796,14 +12962,14 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-loader@9.5.1(typescript@5.6.2)(webpack@5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4)):
+  ts-loader@9.5.1(typescript@5.6.3)(webpack@5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4)):
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.17.1
       micromatch: 4.0.8
       semver: 7.6.3
       source-map: 0.7.4
-      typescript: 5.6.2
+      typescript: 5.6.3
       webpack: 5.95.0(esbuild@0.23.1)(webpack-cli@5.1.4)
 
   tsconfig-paths-webpack-plugin@4.1.0:

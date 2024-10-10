@@ -1,7 +1,8 @@
 import express from 'express'
+import twoFactor from 'node-2fa'
+import { API } from '/@/api'
 import { defaultBrowserCreateParams } from './constants/'
 import { randomFingerprint } from './util'
-import { API } from '/@/api'
 
 const router = express.Router()
 
@@ -44,7 +45,19 @@ router.get('/list', async (req, res) => {
   const { page_index = 1, page_size = 15, dirId } = req.query as Record<string, any>
   try {
     const result = await API.window.userGetWindowInfoV2List({ page_index, page_size, dirId })
-    res.send(result)
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+/* 获取浏览器窗口列表 */
+router.get('/two_factor_token', async (req, res) => {
+  const { code } = req.query as Record<string, any>
+  try {
+    const { token } = twoFactor.generateToken(code)
+    res.success(token)
   }
   catch (error) {
     res.error(error)

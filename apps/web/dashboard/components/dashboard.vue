@@ -217,12 +217,12 @@ onBeforeMount(() => {
         </div>
       </div>
 
-      <div class="card more-info account">
+      <div v-if="windowInfo?.platformUrlList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
         <div class="list">
           <div class="title">
             Accounts & URLs
           </div>
-          <TwoFactorAuth :win-info="windowInfo" />
+          <TwoFactorAuth v-model:win-info="windowInfo" />
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { aliOSS, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
+import { aliOSS, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -47,7 +47,10 @@ ipcMain.on('proxy:detectNetwork', async () => {
     const systemProxy = await getSystemProxy()
     console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
-    return proxyDetection({ host, port, protocol: 'HTTP' })
+    return proxyDetection({ host, port, protocol: 'HTTP' }).catch(() => {
+      // 如果系统代理检测失败，则走本地网络检测
+      return proxyDetection({})
+    })
   }
   else {
     return proxyDetection({})
@@ -239,6 +242,11 @@ ipcMain.on('util:removeWorkspace', (workspaceId) => {
 /** 删除项目 */
 ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
   return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId), String(projectId)), { recursive: true, force: true })
+})
+
+/** 随机生成字体 */
+ipcMain.on('util:genRandomFonts', () => {
+  return genRandomFonts()
 })
 
 /** 前端已准备就绪 */
