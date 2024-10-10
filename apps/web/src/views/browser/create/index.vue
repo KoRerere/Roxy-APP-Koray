@@ -18,7 +18,7 @@ const tabs = ref([
   { title: '批量创建', value: 'batch' },
   { title: '批量导入', value: 'import' },
 ])
-const tabsValue = ref('batch')
+const tabsValue = ref('single')
 const isBatch = ref(false)
 
 const windowName = ref('Untitled profile')

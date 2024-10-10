@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { API } from '/@/api'
 import batchProxies from './components/batch-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
-import { API } from '/@/api'
 
 const router = useRouter()
 
@@ -14,7 +14,7 @@ const tabsValue = ref('single')
 async function saveProxies(proxies: any) {
   const res = await API.proxy.userAddProxyModuleCreate(proxies)
   console.log('🚀 ~ saveProxies ~ res:', res)
-  router.replace({ name: 'agent' })
+  router.replace({ name: 'agent-list' })
 }
 
 function cancel() {

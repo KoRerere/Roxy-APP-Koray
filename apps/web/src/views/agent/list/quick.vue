@@ -13,6 +13,13 @@ import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import proxyColumns from './columns'
 import { type ProxyItem, tableOperation, tableRequest } from './operation'
 
+interface Boundeds {
+  [id: number]: {
+    value: number
+    disabled: boolean
+  }
+}
+
 const props = defineProps({
   data: {
     type: [Object, Array] as PropType<any>,
@@ -35,10 +42,11 @@ const columns = setColumns(proxyColumns.data, {
   filters: ['ipChecker'],
 })
 
-const selection: any = ref(props.isBatch ? props.data : { id: props.data?.moduleId })
+const selection = ref(props.data)
+
 const dataList = ref()
 
-const boundeds = ref()
+const boundeds = ref<Boundeds>({})
 
 const filterButtons = reactive({
   value: null,
@@ -77,8 +85,16 @@ const tableProps = {
       onRowSelect({ data }: any) {
         boundeds.value[data.id].disabled = false
       },
+      onRowSelectAll({ data }: any) {
+        data.forEach((item: any) => {
+          boundeds.value[item.id].disabled = false
+        })
+      },
       onRowUnselect({ data }: any) {
         boundeds.value[data.id].disabled = true
+      },
+      onRowUnselectAll() {
+        boundeds.value = Object.fromEntries(Object.entries(boundeds.value).map(([id, item]) => [id, { ...item, disabled: true }]))
       },
     }),
 }

@@ -1,8 +1,9 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
+import { isEmptyValue } from '/@/utils'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import proxyTable from '/@/views/agent/list/quick.vue'
@@ -37,11 +38,8 @@ function deleteProxy(index: number) {
 }
 
 function confirm(data: any) {
-  if (isBatch.value) {
-    proxyList.value = data
-  }
-  else {
-    proxyList.value[0] = data
+  if (!isEmptyValue(data)) {
+    proxyList.value = [].concat(data)
   }
 }
 
@@ -123,7 +121,8 @@ function tooltipValue(item: any) {
 
       <template v-else>
         <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
-          <RxSvgIcon class="single-img" name="base/rx_ic_earth" :size="16" />
+          <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
+            fallback="base/rx_ic_earth" />
           <div class="flex justify-between single-region ">
             <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
             <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"

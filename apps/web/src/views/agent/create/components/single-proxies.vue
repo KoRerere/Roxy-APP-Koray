@@ -1,11 +1,10 @@
 <script lang="ts" setup>
 import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
+import { ProxyCheckStatus } from '/@/enums'
+import { getFormData } from '/@/utils'
 import { getInputs } from './form-inputs'
 import proxiesForm from './proxies-form.vue'
-import { ProxyCheckStatus } from '/@/enums'
-
-import { getFormData } from '/@/utils'
 
 const emit = defineEmits(['cancel', 'save'])
 
@@ -35,6 +34,8 @@ async function testProxy() {
     else {
       toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
     }
+
+    console.log('🚀 ~ window.electronAPI.send ~ checkRes:', checkRes)
 
     checkeResult.value = {
       checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
