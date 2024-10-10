@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
+import { API } from '/@/api'
+import rxEditDiv from '/@/components/rx-edit-div'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { API } from '/@/api'
-import rxEditDiv from '/@/components/rx-edit-div'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 
 const router = useRouter()
 const toast = useToast()

@@ -12,7 +12,7 @@ const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
 
 type DictMap = UserGetDictVersionListData['data']
-type DictItem = UserGetSystemDictV2CreateData['data'][0]
+type DictItem = UserGetSystemDictV2CreateData['data'][number]
 
 async function getDictVersion() {
   const { data: newVersion } = await API.base.userGetDictVersionList()
@@ -31,7 +31,11 @@ async function getDictVersion() {
 async function getDictData(type: any) {
   const { data } = await API.base.userGetSystemDictV2Create({ type })
   const dictMap = data.reduce((map, item) => {
-    (map[item.type] || (map[item.type] = [])).push(item)
+    const type = item.type.includes('osVersion')
+      ? item.type.toLocaleLowerCase().replace('-', '_')
+      : item.type;
+
+    (map[type] || (map[type] = [])).push(item)
     return map
   }, {} as Record<string, DictItem[]>)
 

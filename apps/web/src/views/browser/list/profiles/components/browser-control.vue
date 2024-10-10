@@ -18,7 +18,7 @@ const emits = defineEmits(['open'])
 
 const userStore = useUserStore()
 
-const viewUsers = computed(() => props.data.statusInfo
+const usePeoples = computed(() => props.data.statusInfo
   .filter((item: any) => item.openUserId !== userStore.userInfo.id)
   .map((item: any) => item.openUserName)
   .join(', '),
@@ -64,7 +64,7 @@ function openBrowser() {
       <span>{{ browser.complted ? 'View' : browser?.msg }}</span>
     </div>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
-    <RxSvgIcon v-if="viewUsers" v-tooltip.top="viewUsers" name="base/rx_ic_user_group" class="text-orange" />
+    <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />
   </div>
 </template>
 
