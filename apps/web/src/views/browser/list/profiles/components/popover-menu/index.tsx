@@ -18,11 +18,11 @@ export function usePopoverMenu() {
       await onHide?.(selected.value)
     }
     return () => (
-      <Popover ref={opRef} onHide={_onHide} pt={{ root: '!border-0', content: '!pa-0' }}>
+      <Popover ref={opRef} onHide={_onHide} pt={{ root: '!before:content-none !after:content-none', content: '!pa-0' }}>
         {innerProps.value.beforeCmp?.()}
         {operation && (
           <Menu
-            pt={{ root: '!rounded-none', list: '!py-1.5 !px-1 !gap-0' }}
+            pt={{ root: '!border-0 !rounded-b-none', list: '!py-1.5 !px-1 !gap-0' }}
             model={operation}
             v-slots={{
               item: ({ item, props }: any) => (

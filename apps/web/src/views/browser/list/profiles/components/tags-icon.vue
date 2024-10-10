@@ -18,6 +18,8 @@ const [addTag] = useTagsActions()
 const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
+// const styles = useCssModule()
+
 async function openMenu(event: any) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
@@ -34,7 +36,7 @@ async function openMenu(event: any) {
     },
     afterCmp: () => {
       return (
-        <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer" onClick={onAddTag}>
+        <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
           <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
           <div>Add Tag</div>
         </div>
