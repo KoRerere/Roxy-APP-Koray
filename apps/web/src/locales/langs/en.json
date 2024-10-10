@@ -25,7 +25,16 @@
     "noAccount": "Didn’t have an account?",
     "alreadyHaveAccount": "Already have an account?",
     "rememberMe": "Remember me",
-    "signInWithGoogle": "Sign in with Google"
+    "signInWithGoogle": "Sign in with Google",
+    "resetPassword": "Reset your password",
+    "resetPasswordDescription": "Enter your email address and we will send you a code for your reset process.",
+    "newPassword": "New password",
+    "enterNewPassword": "Enter new password",
+    "confirmPassword": "Re-enter new password",
+    "backToSignIn": "Back to sign in",
+    "emailForYourAccount": "Email for your account",
+    "next": "Next",
+    "checkYourEmailForACode": "Check your email for a code"
   },
   "menus": {
     "AllProfiles": "All Profiles",

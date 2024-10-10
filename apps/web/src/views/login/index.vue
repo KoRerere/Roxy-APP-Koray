@@ -80,7 +80,7 @@ provideLoginContext({
 </script>
 
 <template>
-  <div class="flex justify-end">
+  <div class="flex justify-end p-5">
     <LanguageSelect />
   </div>
   <div class="sign-card">

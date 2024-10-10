@@ -1,47 +1,83 @@
-<script setup>
+<script lang="ts" setup>
 import { ref } from 'vue'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { useSimpleLocale } from '/@/stores/locale'
 
-const selectedCountry = ref()
-const countries = ref([
-  { name: 'Australia', code: 'AU' },
-  { name: 'Brazil', code: 'BR' },
-  { name: 'China', code: 'CN' },
-  { name: 'Egypt', code: 'EG' },
-  { name: 'France', code: 'FR' },
-  { name: 'Germany', code: 'DE' },
-  { name: 'India', code: 'IN' },
-  { name: 'Japan', code: 'JP' },
-  { name: 'Spain', code: 'ES' },
-  { name: 'United States', code: 'US' },
+const simpleLocale = useSimpleLocale()
+
+const ISO639 = ref([
+  {
+    lang: '中文（简体）',
+    code: 'zh-CN',
+    icon: 'country-code/CN',
+  },
+  {
+    lang: '英语',
+    code: 'en',
+    icon: 'country-code/US',
+  },
+  {
+    lang: '法语',
+    code: 'fr',
+    icon: 'country-code/FR',
+  },
+  {
+    lang: '西班牙语',
+    code: 'es',
+    icon: 'country-code/ES',
+  },
+  {
+    lang: '德语',
+    code: 'de',
+    icon: 'country-code/DE',
+  },
+  {
+    lang: '日语',
+    code: 'ja',
+    icon: 'country-code/JP',
+  },
+  {
+    lang: '俄语',
+    code: 'ru',
+    icon: 'country-code/RU',
+  },
+  {
+    lang: '意大利语',
+    code: 'it',
+    icon: 'country-code/IT',
+  },
+  {
+    lang: '葡萄牙语',
+    code: 'pt',
+    icon: 'country-code/PT',
+  },
+  {
+    lang: '韩语',
+    code: 'ko',
+    icon: 'country-code/KR',
+  },
 ])
+
+const currentLocale = ref(ISO639.value.find(item => item.code === simpleLocale.currentLocale) || ISO639.value[0])
+
+watch(() => currentLocale.value, (val) => {
+  simpleLocale.setSimpleLocale(val.code)
+})
 </script>
 
 <template>
   <div class="card flex justify-center">
-    <Select v-model="selectedCountry" :options="countries" option-label="name" placeholder="Select a Country" class="w-full md:w-56">
+    <Select v-model="currentLocale" :options="ISO639" option-label="lang" class="w-full md:w-56">
       <template #value="slotProps">
-        <div v-if="slotProps.value" class="flex items-center">
-          <img :alt="slotProps.value.label" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.value.code.toLowerCase()}`" style="width: 18px">
-          <div>{{ slotProps.value.name }}</div>
+        <div class="flex items-center">
+          <RxSvgIcon :name="slotProps.value?.icon" class="mr-2" />
+          <div>{{ slotProps.value.lang }}</div>
         </div>
-        <span v-else>
-          {{ slotProps.placeholder }}
-        </span>
       </template>
       <template #option="slotProps">
         <div class="flex items-center">
-          <img :alt="slotProps.option.label" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.code.toLowerCase()}`" style="width: 18px">
-          <div>{{ slotProps.option.name }}</div>
-        </div>
-      </template>
-      <template #header>
-        <div class="font-medium p-3">
-          Available Countries
-        </div>
-      </template>
-      <template #footer>
-        <div class="p-3">
-          <Button label="Add New" fluid severity="secondary" text size="small" icon="pi pi-plus" />
+          <RxSvgIcon :name="slotProps.option?.icon" class="mr-2" />
+          <div>{{ slotProps.option.lang }}</div>
         </div>
       </template>
     </Select>

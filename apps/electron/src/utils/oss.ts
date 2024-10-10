@@ -16,6 +16,7 @@ const _aliOSS = new class AliOSS {
 
   /** 用户切换账号之后需要重新 init */
   init() {
+    this.promise = undefined
     // 定时刷新 OSS 上传凭证
     this.refreshUploadTokenInterval()
   }
