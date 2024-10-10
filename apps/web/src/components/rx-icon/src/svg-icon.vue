@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { SvgNames } from './svg-icon-types'
-import { defineAsyncComponent } from 'vue'
 import { svgIcons } from './svgIcons'
 
 const props = defineProps({
@@ -16,6 +15,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  fallback: {
+    type: String,
+    default: '',
+  },
 })
 
 const fontSize = computed(() => {
@@ -24,7 +27,7 @@ const fontSize = computed(() => {
 })
 
 const SvgComponent = computed(() => {
-  return svgIcons[`../../../assets/images/${props.name}.svg`]
+  return svgIcons[`../../../assets/images/${props.name}.svg`] ?? svgIcons[`../../../assets/images/${props.fallback}.svg`]
 })
 </script>
 

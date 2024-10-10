@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 defineProps({
   image: {
@@ -24,7 +24,8 @@ defineProps({
 <template>
   <div class="outbound">
     <img v-if="image" class="outbound-img" :src="image">
-    <RxSvgIcon v-else class="outbound-img" name="base/rx_ic_earth" :size="16" />
+    <RxSvgIcon v-else class="outbound-img" :name="(`country-code/${country}` as SvgNames)"
+      fallback="base/rx_ic_earth" />
     <div class="flex justify-between outbound-region">
       <span>{{ country || '--' }}/{{ city }}</span>
     </div>

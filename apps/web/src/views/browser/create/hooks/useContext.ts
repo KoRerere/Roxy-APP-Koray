@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-
 import { injectLocal, provideLocal } from '@vueuse/core'
 
 interface DynamicTableType {

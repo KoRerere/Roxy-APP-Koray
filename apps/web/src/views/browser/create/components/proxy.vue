@@ -1,40 +1,31 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
-import { useTableContext } from '../hooks/useContext'
-import rxCard from '/@/components/rx-card'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryButton from '/@/components/ry-button'
-import ryTag from '/@/components/ry-tag'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
+import { isEmptyValue } from '/@/utils'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
-
-// @ts-ignore
 import proxyTable from '/@/views/agent/list/quick.vue'
-
-const proxyList = defineModel('modelValue')
+import { useTableContext } from '../hooks/useContext'
 
 const dialog = useDialog()
 const { isBatch, createCount } = useTableContext()
+
+const [checkProxy, checkResult] = useCheckProxy()
+
+const proxyList = defineModel<any>('modelValue')
+
+const drawer = reactive({
+  visible: false,
+  type: 'create',
+})
 
 const isOverload = computed(() => {
   const sum = proxyList.value.reduce((sum: number, item: any) => {
     return sum + (item?._proxyCount || 0)
   }, 0)
   return sum > (createCount?.value || 0)
-})
-
-const [checkProxy, checkResult] = useCheckProxy()
-
-const proxyState = reactive({
-  state: 'success',
-  loading: 'mdi mdi-selection-ellipse',
-})
-
-const drawer = reactive({
-  visible: false,
-  type: 'create',
 })
 
 function toggleDrawer(type: 'create' | 'list') {
@@ -47,14 +38,8 @@ function deleteProxy(index: number) {
 }
 
 function confirm(data: any) {
-  if (isBatch.value) {
-    proxyList.value.push({
-      ...toRaw(data),
-      _proxyCount: 1,
-    })
-  }
-  else {
-    proxyList.value[0] = data
+  if (!isEmptyValue(data)) {
+    proxyList.value = [].concat(data)
   }
 }
 
@@ -109,9 +94,9 @@ function tooltipValue(item: any) {
 <template>
   <div>
     <div class="button-group">
-      <ry-button size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
+      <RyButton size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
         @click="toggleDrawer('list')" />
-      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add proxy"
+      <RyButton size="small" severity="secondary" icon="base/rx_ic_plus" label="Add proxy"
         @click="toggleDrawer('create')" />
     </div>
     <div>
@@ -119,26 +104,27 @@ function tooltipValue(item: any) {
         <Message v-if="isOverload" severity="warn" class="multiple">
           Bound profiles must not exceed {{ createCount }}
         </Message>
-        <rx-card v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
+        <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
           <div class="multiple-region">
             <RxSvgIcon name="base/rx_ic_earth" :size="16" />
             <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
             <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
           </div>
-          <ryTag severity="secondary" class="cursor-pointer" @click="modifyProxyCount(item)">
+          <RyTag severity="secondary" class="cursor-pointer" @click="modifyProxyCount(item)">
             <RxSvgIcon name="base/rx_ic_browser" :size="16" />
             <span>{{ item._proxyCount }}</span>
-          </ryTag>
+          </RyTag>
           <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
             :size="16" @click="testProxy(item)" />
-        </rx-card>
+        </RxCard>
       </template>
 
       <template v-else>
-        <rx-card v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
-          <RxSvgIcon class="single-img" name="base/rx_ic_earth" :size="16" />
+        <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
+          <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
+            fallback="base/rx_ic_earth" />
           <div class="flex justify-between single-region ">
-            <span :class="proxyState.state">{{ item.lastCountry }}/{{ item.lastCity }}</span>
+            <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
             <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
               :size="16" @click="testProxy(item)" />
           </div>
@@ -146,14 +132,14 @@ function tooltipValue(item: any) {
             <span>{{ `${item.ipType || ''} ${item.proxyCategory || ''}://${item.host || ''}:${item.port || ''}`
               }}</span>
           </div>
-        </rx-card>
+        </RxCard>
       </template>
     </div>
 
     <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
       :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <proxyTable v-if="drawer.type === 'list'" @close="() => closeCallback()"
+        <proxyTable v-if="drawer.type === 'list'" :data="proxyList" :is-batch="isBatch" @close="() => closeCallback()"
           @confirm="(data: any) => { closeCallback(); confirm(data) }" />
         <proxyCreate v-if="drawer.type === 'create'" @close="() => closeCallback()"
           @confirm="(data: any) => { closeCallback(); confirm(data) }" />

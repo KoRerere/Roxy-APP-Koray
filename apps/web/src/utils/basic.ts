@@ -97,3 +97,9 @@ export function copyText(text: string) {
     // console.log('Copied to clipboard:', text)
   })
 }
+
+export function getUserAgentOs() {
+  const userAgent = navigator.userAgent
+  const osMatch = userAgent.match(/(Windows|Mac OS X|Android|iPhone|iPad|iPod|Linux)/)
+  return osMatch ? osMatch[0] : 'Unknown OS'
+}

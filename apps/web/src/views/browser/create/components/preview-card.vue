@@ -1,14 +1,46 @@
 <script setup lang="ts">
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 
-defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
+const props = defineProps({
+  inputsGroup: {
+    type: Array,
+    default: () => [],
   },
 })
-
 defineEmits(['shuffle'])
+
+const previewData = computed(() => {
+  return getPreview(props.inputsGroup.flat())
+})
+
+function getPreview(list: any[]) {
+  const _list: any = []
+
+  list.forEach((item) => {
+    if (item.preview) {
+      _list.push(item)
+    }
+    else if (item.items && Array.isArray(item.items)) {
+      item.items.forEach((subItem: any) => {
+        if (subItem.preview) {
+          _list.push(subItem)
+        }
+      })
+    }
+  })
+
+  return _list.map(({ options, value, preview }: any) => {
+    const _value = (value?.value || value)
+    const pvalue = Array.isArray(options)
+      ? options.find((option: any) => option.value === _value).label
+      : _value
+    return {
+      ...preview,
+      value: pvalue,
+    }
+  })
+}
 
 const visible = ref(true)
 </script>
@@ -16,18 +48,18 @@ const visible = ref(true)
 <template>
   <div class="preview" :class="[visible ? '' : 'hide']">
     <div class="preview-header">
-      <span class="text-4 cursor-pointer select-none mdi"
-        :class="[visible ? 'mdi-arrow-collapse-right' : 'mdi-arrow-collapse-left']" @click="visible = !visible" />
+      <RxSvgIcon class="cursor-pointer" :class="{ 'rotate-180': visible }" name="base/rx_ic_fold_right"
+        @click="visible = !visible" />
       <span v-if="visible">Preview Card</span>
     </div>
     <div v-if="visible" class="w-full preview-content">
       <div class="preview-content-list">
-        <div v-for="(value, key) in data" :key="key" class="preview-content-item">
+        <div v-for="(item, key) in previewData" :key="key" class="preview-content-item">
           <div class="preview-content-item-label">
-            {{ key }}
+            {{ item.label }}
           </div>
           <div class="preview-content-item-value">
-            {{ value }}
+            {{ item.value }}
           </div>
         </div>
       </div>

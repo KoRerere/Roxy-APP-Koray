@@ -17,7 +17,7 @@ defineProps({
 </script>
 
 <template>
-  <proxyList v-if="type === 'proxyList'" :data="data" v-bind="$attrs" />
+  <proxyList v-if="type === 'proxyList'" :data="{ id: data.moduleId }" v-bind="$attrs" />
   <proxyCreate v-if="type === 'proxyForm'" :data="data" v-bind="$attrs" />
   <accountList v-if="type === 'accountList'" :data="data" v-bind="$attrs" />
   <accountCreate v-if="type === 'accountForm'" :show-create-more="false" v-bind="$attrs" />

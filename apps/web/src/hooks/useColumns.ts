@@ -1,3 +1,5 @@
+import { deepClone } from '/@/utils'
+
 interface ColumnCache {
   [key: string]: { visible: string, sort: string }
 }
@@ -5,6 +7,11 @@ interface ColumnCache {
 interface Columns {
   key: string
   data: any[]
+}
+
+interface Options {
+  inserts?: [number, any][]
+  filters?: string[]
 }
 
 function useColumns(columns: Columns, filterColumnKeys?: string[]) {
@@ -53,5 +60,16 @@ function useColumns(columns: Columns, filterColumnKeys?: string[]) {
 //   "sort": 1,
 //   "status": 1
 // }
+
+export function setColumns(columns: any, options: Options) {
+  const _columns = deepClone(columns)
+  const { filters, inserts } = options
+  if (Array.isArray(inserts)) {
+    inserts.forEach(([index, item]) => {
+      _columns.splice(index, 0, item)
+    })
+  }
+  return _columns.filter((item: any) => !filters || !filters.includes(item.key))
+}
 
 export default useColumns

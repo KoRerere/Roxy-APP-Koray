@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
+import { API } from '/@/api'
+import rxEditDiv from '/@/components/rx-edit-div'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { API } from '/@/api'
-import rxEditDiv from '/@/components/rx-edit-div'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 
 const router = useRouter()
 const toast = useToast()
@@ -39,6 +39,7 @@ const inputsGroup = computed(() => {
     ? [basicInputs, highLevelInputs, otherInputs]
     : [windowInputs, basicInputs, highLevelInputs, otherInputs]
 })
+
 const accordions = computed(() => {
   const startIndex = tabsValue.value === 'import' ? 1 : 0
   return {
@@ -46,13 +47,11 @@ const accordions = computed(() => {
     panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
 })
+
 const previewInputs = computed(() => {
   return tabsValue.value === 'import'
     ? [rawWindowInputs.value, ...inputsGroup.value]
     : inputsGroup.value
-})
-const previewData = computed(() => {
-  return getFormDataByList(previewInputs.value, {}, { keyName: 'label', valueName: 'value' })
 })
 
 watch(() => tabsValue.value, (value: any) => {
@@ -117,7 +116,7 @@ async function batchCreateProfile(params: any) {
   const fingerDetail = await ceateRandomFinger(previewInputs.value, createCount.value)
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
-  await API.window.userBatchWindowInfoCreate(params)
+  await API.window.userBatchWindowInfoV2Create(params)
   router.replace({ name: 'browser-list' })
 }
 
@@ -153,7 +152,7 @@ onMounted(() => {
           <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
             <div>Profiles amount</div>
             <div class="flex flex-col items-end">
-              <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
+              <InputNumber v-model="createCount" :min="1" :max="maxWindowCount" class="batch-input" show-buttons
                 button-layout="horizontal" :step="1" fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
@@ -176,7 +175,7 @@ onMounted(() => {
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>
-    <previewCard :data="previewData" @shuffle="onShuffle" />
+    <previewCard :inputs-group="previewInputs" @shuffle="onShuffle" />
   </div>
 </template>
 

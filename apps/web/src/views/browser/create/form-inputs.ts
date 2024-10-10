@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, getUserAgentOs, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
@@ -76,31 +76,33 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
 
 export function getInputsGroup(data: any = {}) {
   const os_map = {
-    Windows: 'platforms/rx_os_windows',
-    Linux: 'base/logo',
-    macOS: 'platforms/rx_os_macOS',
-    Android: 'platforms/rx_os_android',
-    IOS: 'platforms/rx_os_iOS',
+    windows: 'platforms/rx_os_windows',
+    linux: 'base/logo',
+    macos: 'platforms/rx_os_macOS',
+    android: 'platforms/rx_os_android',
+    ios: 'platforms/rx_os_iOS',
   } as const
 
+  const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
+
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, icon: os_map[label as keyof typeof os_map] }))
+  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, label, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
 
   const osVersion = Object.fromEntries(Object.keys(os_map).map((key: string) => {
-    const version = $dict_map[`osVersion-${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
+    const version = $dict_map[`osversion_${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
     return [key, version]
   }))
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
-        host: data.host, // 代理主机
-        ipType: data.ipType, // 网络协议
-        port: data.port, // 代理端口
-        proxyCategory: data.proxyCategory, // 代理类型
-        proxyPassword: data.proxyPassword, // 代理密码
-        proxyUserName: data.proxyUserName, // 代理账号
-        refreshUrl: data.refreshUrl, // 刷新URL
-      }]
+      host: data.host, // 代理主机
+      ipType: data.ipType, // 网络协议
+      port: data.port, // 代理端口
+      proxyCategory: data.proxyCategory, // 代理类型
+      proxyPassword: data.proxyPassword, // 代理密码
+      proxyUserName: data.proxyUserName, // 代理账号
+      refreshUrl: data.refreshUrl, // 刷新URL
+    }]
     : []
 
   const inputsGroup: any = []
@@ -114,14 +116,14 @@ export function getInputsGroup(data: any = {}) {
           type: 'select',
           placeholder: '请选择系统',
           name: 'os',
-          value: os.find((item: any) => item.value === data.os) ?? os[0],
+          value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
           change(self: any, items: any) {
             const osVersionInput = items.find(
               (item: any) => item.name === 'osVersion',
             )
             if (self.value) {
-              const osVersionOptions = osVersion[self.value.value]
+              const osVersionOptions = osVersion[self.value.value.toLocaleLowerCase()]
               osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
               osVersionInput.disabled = false
@@ -132,15 +134,16 @@ export function getInputsGroup(data: any = {}) {
               osVersionInput.disabled = true
             }
           },
+          preview: {
+            label: '操作系统',
+          },
         },
         {
           type: 'select',
           placeholder: '请选择版本',
           name: 'osVersion',
-          value: osVersion[data.os]?.find((item: any) => item.value === data.osVersion) ?? osVersion.Windows[0],
-          options:
-            osVersion[data.os]
-            || osVersion.Windows,
+          value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs][0],
+          options: osVersion[userOs],
         },
       ],
     },
@@ -164,6 +167,9 @@ export function getInputsGroup(data: any = {}) {
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
+      preview: {
+        label: 'User Agent',
+      },
     },
     {
       separator: true,
@@ -175,7 +181,7 @@ export function getInputsGroup(data: any = {}) {
       slot: 'proxy',
       formatValue: (input: any, _inputs: any, formData: any) => {
         const { id, ...value } = input.value[0] || {
-          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
+          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
@@ -237,6 +243,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'language', self.value === false)
       },
+      preview: {
+        label: '语言',
+      },
     },
     {
       type: 'select',
@@ -283,6 +292,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'timeZone', self.value === false)
       },
+      preview: {
+        label: '时区',
+      },
     },
     {
       type: 'select',
@@ -317,6 +329,9 @@ export function getInputsGroup(data: any = {}) {
           }
         }
       },
+      preview: {
+        label: '地理位置提示',
+      },
     },
     {
       type: 'radio',
@@ -334,6 +349,9 @@ export function getInputsGroup(data: any = {}) {
           ['longitude', 'latitude', 'precisionPos'],
           self.value === false,
         )
+      },
+      preview: {
+        label: '地理位置',
       },
     },
     {
@@ -423,6 +441,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'resolution', self.value === true)
       },
+      preview: {
+        label: '分辨率',
+      },
     },
     {
       type: 'select',
@@ -443,6 +464,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '系统默认', value: false },
       ],
+      preview: {
+        label: '字体指纹',
+      },
     },
     {
       type: 'radio',
@@ -454,6 +478,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '真实', value: 1 },
         { label: '禁止', value: 2 },
       ],
+      preview: {
+        label: 'WebRTC',
+      },
     },
     {
       type: 'radio',
@@ -464,6 +491,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'WebGL图像',
+      },
     },
     {
       type: 'radio',
@@ -480,6 +510,9 @@ export function getInputsGroup(data: any = {}) {
           ['webGLManufacturer', 'webGLRender'],
           self.value === false,
         )
+      },
+      preview: {
+        label: 'WebGL Info',
       },
     },
     {
@@ -520,13 +553,16 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'canvas',
+      label: 'Canvas',
       name: 'canvas',
       value: data.canvas ?? true,
       options: [
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'Canvas',
+      },
     },
     {
       type: 'radio',
@@ -537,6 +573,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'AudioContext',
+      },
     },
     {
       type: 'radio',
@@ -547,6 +586,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'SpeechVoices',
+      },
     },
     {
       type: 'radio',
@@ -557,6 +599,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
+      preview: {
+        label: 'Do Not Track',
+      },
     },
     {
       type: 'radio',
@@ -567,6 +612,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'ClientRects',
+      },
     },
     {
       type: 'radio',
@@ -577,6 +625,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: '媒体设备',
+      },
     },
     {
       type: 'radio',
@@ -589,6 +640,9 @@ export function getInputsGroup(data: any = {}) {
       ],
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'deviceName', self.value === false)
+      },
+      preview: {
+        label: '设备名称',
       },
     },
     {
@@ -619,6 +673,9 @@ export function getInputsGroup(data: any = {}) {
           setMacAddr(inputsGroup)
         }
       },
+      preview: {
+        label: 'MAC地址',
+      },
     },
     {
       type: 'text',
@@ -637,16 +694,22 @@ export function getInputsGroup(data: any = {}) {
       label: '硬件并发数',
       placeholder: '请选择硬件并发数',
       name: 'hardwareConcurrent',
-      value: data.hardwareConcurrent,
+      value: data.hardwareConcurrent ?? $dict_map.hardwareConcurrent.find((item: any) => item.value === '4'),
       options: $dict_map.hardwareConcurrent,
+      preview: {
+        label: '硬件并发数',
+      },
     },
     {
       type: 'select',
       label: '设备内存',
       placeholder: '请选择设备内存',
       name: 'deviceMemory',
-      value: data.deviceMemory,
+      value: data.deviceMemory ?? $dict_map.deviceMemory.find((item: any) => item.value === '8'),
       options: $dict_map.deviceMemory,
+      preview: {
+        label: '设备内存',
+      },
     },
     {
       type: 'radio',
@@ -659,6 +722,9 @@ export function getInputsGroup(data: any = {}) {
       ],
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'disableSslList', self.value === true)
+      },
+      preview: {
+        label: 'SSL指纹设置',
       },
     },
     {
@@ -685,6 +751,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'portScanList', self.value === true)
       },
+      preview: {
+        label: '端口扫描保护',
+      },
     },
     {
       type: 'text',
@@ -703,6 +772,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
+      preview: {
+        label: '硬件加速模式',
+      },
     },
     {
       type: 'radio',
@@ -902,6 +974,7 @@ export function getInputsGroup(data: any = {}) {
 }
 
 export function getDefaultValue() {
+  // 界面上未显示的数据，跟随旧版本
   return {
     openMult: true,
     clearHistory: false,
