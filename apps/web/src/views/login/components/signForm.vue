@@ -3,15 +3,23 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
 import { useLoginContext } from '../hooks/useLoginContext'
-import { formSchemas } from './schemas'
+import { getFormSchemas } from './schemas'
+
+const props = defineProps({
+  type: {
+    type: String as PropType<'signUp' | 'signIn'>,
+    required: true,
+  },
+})
 
 const signFormData = defineModel({ type: Object, default: {} })
 
 const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
+const formSchemas = ref(getFormSchemas())
 const rememberMe = ref(false)
-const isRegister = ref(false)
+const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
 
 async function handleSubmit() {
@@ -43,6 +51,7 @@ function openGoogleAuth2Login() {
 
 function switchFormMode(val: boolean) {
   isRegister.value = val
+  formSchemas.value = getFormSchemas(val)
 }
 </script>
 

@@ -16,6 +16,7 @@ const signFormData = ref<LoginCreatePayload>({
 })
 
 const currentComp = ref<CurrentComp>('signForm')
+const currentCompProps = ref<Recordable>()
 
 async function handleSubmit() {
   console.log(signFormData)
@@ -48,8 +49,9 @@ async function googleAuth2Login(googleToken: string) {
   }
 }
 
-function setCurrentComponent(comp: CurrentComp) {
+function setCurrentComponent(comp: CurrentComp, compProps?: Recordable) {
   currentComp.value = comp
+  currentCompProps.value = compProps
 }
 
 const cancelCallback = window.electronAPI.on('oauth2:google-callback', (searchStr) => {
@@ -92,9 +94,9 @@ provideLoginContext({
         </div>
       </div>
     </div>
-    <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" />
-    <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" />
-    <ResetPassword v-else-if="currentComp === 'resetPassword'" />
+    <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" />
+    <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
+    <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
   </div>
   <div class="sign-bg">
     <div class="blue" />

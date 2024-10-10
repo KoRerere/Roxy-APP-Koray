@@ -16,7 +16,7 @@ export interface LoginContext {
   /** 登录 */
   toSignIn: () => Promise<void>
   /** 切换组件 */
-  setCurrentComponent: (comp: CurrentComp) => void
+  setCurrentComponent: (comp: CurrentComp, compProps?: Recordable) => void
   /** 保存当前表单的数据 */
   setSignFormData: (signFormData: LoginCreatePayload) => void
   /** 获取当前表单的数据 */
