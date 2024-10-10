@@ -41,7 +41,7 @@ async function handleSubmit() {
   const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
     ...signFormData,
-    user_name: signFormData.user_name.split('@')[0],
+    user_name: signFormData.user_name.split('@')[0].replace(/[^a-z0-9]/gi, ''),
     email: signFormData.user_name,
     ver_code: emailCode.value,
   })

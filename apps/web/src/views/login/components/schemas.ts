@@ -35,7 +35,7 @@ export function getFormSchemas(isRegister = false) {
           const z = zod.string()
             .min(1, $t('login.passwordRequired'))
             .min(6, $t('login.passwordMinLength'))
-            .max(12, $t('login.passwordMaxLength'))
+            .max(20, $t('login.passwordMaxLength'))
 
           if (isRegister) {
             return z.refine((val) => {
