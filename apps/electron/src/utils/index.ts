@@ -1,6 +1,7 @@
 export * from './common'
 export * from './crypto-aes-256-gcm'
 export * from './file'
+export * from './fonts/'
 export * from './getErrorMessage'
 export * from './getSystemProxy'
 export * from './os'

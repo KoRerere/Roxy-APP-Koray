@@ -54,6 +54,7 @@
     "electron-updater": "6.3.4",
     "es-toolkit": "^1.21.0",
     "express": "^5.0.0",
+    "font-list": "^1.5.1",
     "https-proxy-agent": "^7.0.5",
     "iconv-lite": "^0.6.3",
     "puppeteer-core": "21.3.8",

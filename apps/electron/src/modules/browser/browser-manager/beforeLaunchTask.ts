@@ -1,6 +1,6 @@
 import type { Browser } from 'puppeteer-core'
 import AdmZip from 'adm-zip'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { freemem, totalmem } from 'node:os'
 import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
@@ -19,6 +19,8 @@ export class BeforeLaunchTask {
   browser: Browser | null = null
   /** 代理检测结果 */
   private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
+  /** 不影响浏览器打开的警告信息 */
+  private warningMessages: string[] = []
   /** 内核执行程序路径 */
   exePath = ''
   /** 总任务数 */
@@ -93,6 +95,8 @@ export class BeforeLaunchTask {
     const launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', launchArgs)
 
+    // 根据用户设置，是否要清楚浏览器缓存
+    await this.clearBrowserCache()
     // 写入登录信息
     await this.writeLoginData()
 
@@ -235,6 +239,7 @@ export class BeforeLaunchTask {
       if (stopOpenNet) {
         return Promise.reject(new Error('网络不通停止打开'))
       }
+      this.warningMessages.push('代理检测失败')
     }
 
     // IP发生变化停止打开
@@ -338,7 +343,54 @@ export class BeforeLaunchTask {
         console.log('写入 LumiLogin 成功')
       }
       catch (error) {
+        this.warningMessages.push('登录信息写入失败')
         console.error('写入 LumiLogin 失败', error)
+      }
+    }
+  }
+
+  /** 根据用户设置，是否要清除浏览器缓存 */
+  async clearBrowserCache() {
+    const { clearCookie, clearLocalStorage } = this.browserItem.winInfo
+
+    // 当清空缓存先删除cookie文件
+    console.log(`是否清空cookie:${clearCookie}`)
+    if (clearCookie) {
+      const cookieFilePath = join(
+        this.browserItem.userDataDir,
+        'Default',
+        'Network',
+        'Cookies',
+      )
+
+      try {
+        console.log('cookieFilePath: ', cookieFilePath)
+        await rm(cookieFilePath, { recursive: true })
+        console.log('cookieFilePath 删除成功')
+      }
+      catch (err) {
+        this.warningMessages.push('cookie文件删除失败')
+        console.log(`cookieFilePath 删除失败`, err)
+      }
+    }
+
+    console.log(`是否清空 localStorage:${clearLocalStorage}`)
+    // 当清空缓存先删除
+    if (clearLocalStorage) {
+      const localStorageFilePath = join(
+        this.browserItem.userDataDir,
+        'Default',
+        'Local Storage',
+      )
+
+      try {
+        console.log('localStorageFilePath: ', localStorageFilePath)
+        await rm(localStorageFilePath, { recursive: true })
+        console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
+      }
+      catch (err) {
+        console.log(`localStorage_fileUrl 删失败`, err)
+        this.warningMessages.push('localStorage文件删除失败')
       }
     }
   }
@@ -375,6 +427,7 @@ export class BeforeLaunchTask {
       dirId: this.browserItem.winInfo.dirId!,
       percent,
       message,
+      warningMessages: this.warningMessages,
     })
   }
 
