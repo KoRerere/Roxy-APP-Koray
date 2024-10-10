@@ -2,6 +2,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import RyButton from '/@/components/ry-button'
@@ -13,16 +14,17 @@ import UploadAvatar from './upload-avatar.vue'
 
 const { setUserInfo } = useUserStore()
 
+const toast = ref()
+
 async function updateAvatar(item: Items) {
-  const { msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
-  console.log('🚀 ~ updateAvatar ~ msg:', msg)
+  await API.base.userUploadAvatarCreate({ avatar: item.value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
   updateUserInfo()
 }
 
 async function updateUserName(item: Items) {
-  const { msg } = await API.base.userChangeAccountCreate({ realName: item.value })
-  console.log('🚀 ~ updateUserName ~ msg:', msg)
-
+  await API.base.userChangeAccountCreate({ realName: item.value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
   updateUserInfo()
 }
 
@@ -33,18 +35,43 @@ async function updateUserInfo() {
 
 async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
-  API.base.userSetUserConfigCreate({ [item.name as any]: value })
+  await API.base.userSetUserConfigCreate({ [item.name as any]: value })
+  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
 }
 
 async function detectLocalNetwork(item: Items) {
   const data = await electronAPI.send('proxy:detect', {})
   item.value = data
 }
+
 async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
   const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
   item.value = data
+}
+
+// async function selectDir(item: Items) {
+//   const dirPath = await window.electronAPI.send('dialog:selectDir')
+//   item.value = dirPath
+// }
+
+export function getSettings() {
+  toast.value = useToast()
+  return [
+    {
+      label: 'Profiles',
+      icon: 'base/rx_ic_user_circle',
+    },
+    {
+      label: 'Preferences',
+      icon: 'base/rx_ic_slider',
+    },
+    {
+      label: 'Network',
+      icon: 'base/rx_ic_wifi',
+    },
+  ] as const
 }
 
 export function getProfilePanel(data?: any): SettingsModule {
@@ -165,11 +192,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             name: 'cacheDir',
             value: data?.cacheDir ?? '',
             props: {
-              disabled: false,
+              disabled: true,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
-                <FolderDirectory item={item} {...item.props} {...props}></FolderDirectory>
+                <FolderDirectory item={item} {...item.props} {...props} onChange={() => saveUserConfig(item)}></FolderDirectory>
               )
             },
           },
@@ -305,7 +332,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: 'Visiting sites using local network without proxy',
             name: 'ipBlackList',
             classes: 'flex-col !items-start gap-4',
-            value: (data?.ipBlackList || []).join('\n'),
+            value: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
+            formatValue: (item: Items) => {
+              return item.value.split('\n')
+            },
             props: {
               class: 'resize-none w-full',
               placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',

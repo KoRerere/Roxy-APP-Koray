@@ -52,6 +52,9 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
   if (typeof source !== 'object' || source === null) {
     return source
   }
+  if (source instanceof Date) {
+    return new Date(source.getTime()) as any
+  }
   if (hash.has(source)) {
     return hash.get(source)
   }

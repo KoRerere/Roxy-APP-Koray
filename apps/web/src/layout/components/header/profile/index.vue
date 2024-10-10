@@ -5,6 +5,7 @@ import { useTemplateRef } from 'vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
+import { getSettings } from './panel'
 import SettingsPopup from './settings-popup.vue'
 
 const router = useRouter()
@@ -15,21 +16,7 @@ const simpleLocale = useSimpleLocale()
 
 const menuRef = useTemplateRef('menu')
 const items = ref([
-  {
-    label: 'Profiles',
-    icon: 'base/rx_ic_user_circle',
-    command: () => {
-      openSettings()
-    },
-  },
-  {
-    label: 'Preferences',
-    icon: 'base/rx_ic_slider',
-  },
-  {
-    label: 'Network',
-    icon: 'base/rx_ic_wifi',
-  },
+  ...getSettings().map(item => ({ ...item, command: () => openSettings(item.label) })),
   {
     label: 'Language',
     icon: 'base/rx_ic_language',
@@ -57,21 +44,21 @@ const items = ref([
   },
   ...(import.meta.env.DEV
     ? [
-        {
-          label: '图标(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/figma-icons')
-          },
+      {
+        label: '图标(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/figma-icons')
         },
-        {
-          label: '多语言(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/__language-localization__')
-          },
+      },
+      {
+        label: '多语言(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/__language-localization__')
         },
-      ]
+      },
+    ]
     : []),
   {
     label: 'Log out',
@@ -84,7 +71,7 @@ const items = ref([
   },
 ])
 
-function openSettings() {
+function openSettings(activeKey: string) {
   dialog.open(SettingsPopup, {
     props: {
       showHeader: false,
@@ -98,10 +85,7 @@ function openSettings() {
     },
     data: {
       props: {
-        title: 'Add notes to profile',
-        content: 'Please add notes down below.',
-      },
-      onConfirm: async (_formData: any) => {
+        activeKey,
       },
     },
   })
@@ -114,9 +98,8 @@ function toggle(event: Event) {
 
 <template>
   <Avatar class="cursor-pointer mr-2"
-          :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
-          shape="circle" @click="toggle"
-  />
+    :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
+    shape="circle" @click="toggle" />
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>
     <template #item="{ item, props, hasSubmenu }">

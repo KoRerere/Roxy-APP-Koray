@@ -146,18 +146,26 @@ function getAccountOperation() {
 </script>
 
 <template>
-  <div class="flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
+  <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
     <div class="w-[40px]">
       {{ data.windowSortNum }}
     </div>
-    <div class="flex justify-between state" @click.stop>
+    <div class="position-relative flex justify-between state" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
         class="state-item">
-        <div class="flex-cc cursor-pointer state-icons" :class="item.classes"
-          @click.stop="(event: any) => onClick(event, item.key)">
+        <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
           <img v-if="item.image" :src="item.image" class="state-icons-img">
           <RxSvgIcon v-else :name="item.svg" />
         </div>
+      </div>
+      <div class="state-line">
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="5" viewBox="0 0 60 5" fill="none">
+          <g>
+            <path
+              d="M0 2.5C1 0.5 2 0.5 3 2.5C4 4.5 5 4.5 6 2.5C7 0.5 8 0.5 9 2.5C10 4.5 11 4.5 12 2.5C13 0.5 14 0.5 15 2.5C16 4.5 17 4.5 18 2.5C19 0.5 20 0.5 21 2.5C22 4.5 23 4.5 24 2.5C25 0.5 26 0.5 27 2.5C28 4.5 29 4.5 30 2.5C31 0.5 32 0.5 33 2.5C34 4.5 35 4.5 36 2.5C37 0.5 38 0.5 39 2.5C40 4.5 41 4.5 42 2.5C43 0.5 44 0.5 45 2.5C46 4.5 47 4.5 48 2.5C49 0.5 50 0.5 51 2.5C52 4.5 53 4.5 54 2.5C55 0.5 56 0.5 57 2.5C58 4.5 59 4.5 60 2.5"
+              stroke="#12A3FC" />
+          </g>
+        </svg>
       </div>
     </div>
     <div>{{ data.windowName }}</div>
@@ -178,6 +186,17 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .state {
   width: 104px;
+  z-index: 0;
+
+  &-line {
+    z-index: -1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+  }
 
   &-item {
     width: 24px;

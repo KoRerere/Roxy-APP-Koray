@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import circleProgress from '/@/components/circle-progress.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useUserStore } from '/@/stores/user'
 
 const props = defineProps({
   data: {
@@ -13,6 +15,14 @@ const props = defineProps({
 })
 
 const emits = defineEmits(['open'])
+
+const userStore = useUserStore()
+
+const viewUsers = computed(() => props.data.statusInfo
+  .filter((item: any) => item.openUserId !== userStore.userInfo.id)
+  .map((item: any) => item.openUserName)
+  .join(', '),
+)
 
 const browser = computed(() => {
   const message = props.openMessage[props.data.dirId]
@@ -47,13 +57,14 @@ function openBrowser() {
 </script>
 
 <template>
-  <div class="flex gap-2">
+  <div class="flex items-center gap-2">
     <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
       <circle-progress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-      <span v-if="!browser.percent && !browser.pending" class="mdi mdi-google-chrome text-4" />
+      <RxSvgIcon v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
       <span>{{ browser.complted ? 'View' : browser?.msg }}</span>
     </div>
-    <span v-if="browser?.error" v-tooltip.top="browser.error" class="mdi mdi-alert-circle cursor-pointer text-red" />
+    <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
+    <RxSvgIcon v-if="viewUsers" v-tooltip.top="viewUsers" name="base/rx_ic_user_group" class="text-orange" />
   </div>
 </template>
 

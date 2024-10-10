@@ -1,28 +1,21 @@
-<script setup lang="tsx">
-import { API } from '/@/api'
-import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
+<script setup>
+import { ref } from 'vue'
 
-const [showMenu] = usePopoverMenu()
+const today = new Date()
+const month = today.getMonth()
+const year = today.getFullYear()
+const nextMonth = (month === 11) ? 0 : month + 1
+const nextYear = (nextMonth === 0) ? year + 1 : year
 
-async function handleClick(event: any) {
-  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
-  const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+const date = ref()
+const maxDate = ref(new Date())
 
-  // const operation = [{ name: 'a1', label: 'a1', value: '104' }, { name: 'a2', label: 'a2', value: '103' }, { name: 'a3', label: 'a3', value: '102' }, { name: 'a4', label: 'a4', value: '101' }]
-
-  showMenu(event, {
-    operation,
-    afterCmp: () => (<h1>scccccccccr</h1>),
-  })
-}
+// maxDate.value.setMonth(nextMonth)
+// maxDate.value.setFullYear(nextYear)
 </script>
 
 <template>
-  <div class="flex pa-50 gap-5">
-    <RyButton v-for="item in 3" :key="item" @click="handleClick">
-      123
-    </RyButton>
+  <div class="card flex justify-center">
+    <DatePicker v-model="date" :max-date="today" :manual-input="false" />
   </div>
 </template>
-
-<style scoped></style>

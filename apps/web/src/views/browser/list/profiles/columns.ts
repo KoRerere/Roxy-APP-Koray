@@ -4,11 +4,13 @@ const columnsConfig = {
     {
       title: '配置文件信息',
       key: 'profile',
+      disabledToggle: true,
       slot: 'profile',
     },
     {
       title: '打开/预览',
       key: 'open',
+      disabledToggle: true,
       slot: 'open',
     },
     {

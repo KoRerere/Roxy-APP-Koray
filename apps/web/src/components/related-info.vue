@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon/'
 import ryTag from '/@/components/ry-tag'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const props = defineProps({
   field: {
@@ -19,6 +20,8 @@ const props = defineProps({
     type: String as PropType<SvgNames>,
   },
 })
+
+const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
 
 const hasBindCount = computed(() => {
   return (props.list?.length ?? 0) > 0
@@ -40,7 +43,7 @@ const bindData = computed(() => {
 
 <template>
   <div v-if="hasBindCount" class="flex gap-2">
-    <ryTag v-for="item in bindData.list" :key="item" :icon="icon" :value="item" />
+    <ryTag v-for="item in bindData.list" :key="item" :icon="icon" :value="`${workspaceName}_${item}`" />
     <ryTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }"
       :value="`+${bindData.count}`" />
   </div>

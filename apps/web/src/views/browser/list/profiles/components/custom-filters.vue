@@ -8,6 +8,10 @@ import simplePopup from '/@/components/simplePopup'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
+  currentFilter: {
+    type: Object as PropType<any>,
+    default: undefined,
+  },
   ctmFilters: {
     type: Array as PropType<any[]>,
     default: () => [],
@@ -24,6 +28,14 @@ const _props = defineProps({
 
 const emit = defineEmits(['filterChange'])
 const dialog = useDialog()
+
+const isAllProfiles = ref(true)
+const isChanged = ref(false)
+
+watch(() => _props.currentFilter?.id, (value) => {
+  isChanged.value = false
+  isAllProfiles.value = value === '1000'
+})
 
 const rawOptions = computed(() => {
   return _props.ctmFilters
@@ -53,7 +65,6 @@ const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref([])
-const isChanged = ref(false)
 
 function showMenu(event: any) {
   menuRef.value?.show(event)
@@ -160,7 +171,13 @@ function clearFilters() {
 }
 
 function onFilterChange() {
-  isChanged.value = filterTagList.value.length > 0
+  if (isAllProfiles.value) {
+    isChanged.value = filterTagList.value.length > 0
+  }
+  else {
+    isChanged.value = true
+  }
+
   emit('filterChange')
 }
 
@@ -215,23 +232,22 @@ const items = [
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
       <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
-      <ryButton severity="info" size="small" label="Save" @click="saveFilters" />
-
-      <SplitButton severity="info" size="small" label="Save" :model="items" />
+      <ryButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
+      <SplitButton v-else severity="info" size="small" label="Save" :model="items" />
       <div>|</div>
     </div>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="tmenu" :model="menuOptions" popup
-    :pt="{ separator: classes['browser-separator'], menu: { transition: classes['browser-content'] } }" @hide="onHide">
+    :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
-        <label v-if="isChildren" class="cursor-pointer" :class="classes['browser-item']" :for="item.value" @click.stop>
+        <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @change="onChange(item)" />
           <span>{{ item.label }}</span>
         </label>
-        <div v-else :class="classes['browser-item']" @click.stop="operationHandler(item)">
+        <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -241,22 +257,25 @@ const items = [
 </template>
 
 <style lang="scss" module="classes">
-.browser {
-  &-content {
-    padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
-  }
+.content {
+  max-height: 400px;
+  overflow-y: auto;
+}
 
-  &-separator {
-    margin: var(--spacing-md, 6px) 0;
-  }
+.list {
+  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
+}
 
-  &-item {
-    display: flex;
-    align-items: center;
-    padding: 8px var(--spacing-md, 6px) 8px 10px !important;
-    gap: var(--spacing-md, 6px) !important;
-    width: 100%;
-  }
+.separator {
+  margin: var(--spacing-md, 6px) 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  padding: 8px var(--spacing-md, 6px) 8px 10px !important;
+  gap: var(--spacing-md, 6px) !important;
+  width: 100%;
 }
 </style>
 

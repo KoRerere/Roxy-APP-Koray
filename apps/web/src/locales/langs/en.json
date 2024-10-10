@@ -36,6 +36,11 @@
     "next": "Next",
     "checkYourEmailForACode": "Check your email for a code"
   },
+  "table": {
+    "noData": "No Data",
+    "display": "Display",
+    "paginator": "Showing {start}-{end} of {total} profiles,"
+  },
   "menus": {
     "AllProfiles": "All Profiles",
     "Projects": "Projects",
