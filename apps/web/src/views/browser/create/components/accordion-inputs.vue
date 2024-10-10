@@ -66,8 +66,7 @@ function getFormData(isOpen: boolean) {
     <div v-if="accordions" class="flex-1 overflow-auto content">
       <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
-                        :pt="{ root: '!border-none' }"
-        >
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
@@ -79,8 +78,7 @@ function getFormData(isOpen: boolean) {
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
                       <inputSelect v-bind="item" v-model="item.value" :filter="false"
-                                   @change="item.change?.(item, input.items)"
-                      />
+                        @change="item.change?.(item, input.items)" />
                     </template>
                   </InputGroup>
                 </div>
@@ -104,7 +102,7 @@ function getFormData(isOpen: boolean) {
                 <div class="flex flex-row">
                   <inputLabel v-bind="input" />
                   <InputGroup>
-                    <template v-for="(item, idx) in input.items" :key="idx">
+                    <template v-for="item in input.items" :key="item.name">
                       <InputText v-bind="item" v-model="item.value" type="text" />
                     </template>
                   </InputGroup>
@@ -117,12 +115,10 @@ function getFormData(isOpen: boolean) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <ryButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
-                @click.stop="getFormData(true)"
-      />
-      <ryButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
-                @click.stop="getFormData(false)"
-      />
+      <RyButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
+        @click.stop="getFormData(true)" />
+      <RyButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
+        @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

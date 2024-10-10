@@ -4,9 +4,9 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
-import ryButton from '/@/components/ry-button'
-import ryTable from '/@/components/ry-table'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyProtocol } from '/@/enums/proxy'
+import { setColumns } from '/@/hooks/useColumns'
 import { setRowsLoading } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -15,8 +15,12 @@ import { type ProxyItem, tableOperation, tableRequest } from './operation'
 
 const props = defineProps({
   data: {
-    type: Object as PropType<any>,
+    type: [Object, Array] as PropType<any>,
     default: undefined,
+  },
+  isBatch: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -26,9 +30,15 @@ const toast = useToast()
 const [checkProxy] = useCheckProxy()
 const tableRef = useTemplateRef('agent')
 
-const columns = proxyColumns.data.filter(column => column.key !== 'ipChecker')
-const selection = ref({ id: props.data?.moduleId })
+const columns = setColumns(proxyColumns.data, {
+  inserts: props.isBatch ? [[4, { title: 'Bounded Profiles', slot: 'bounded' }]] : [],
+  filters: ['ipChecker'],
+})
+
+const selection: any = ref(props.isBatch ? props.data : { id: props.data?.moduleId })
 const dataList = ref()
+
+const boundeds = ref()
 
 const filterButtons = reactive({
   value: null,
@@ -55,9 +65,36 @@ const filterButtons = reactive({
   },
 })
 
+const tableProps = {
+  columns,
+  showDisplay: false,
+  showGridlines: false,
+  contextMenu: false,
+  multipleOperation: false,
+  ...(!props.isBatch
+    ? {}
+    : {
+      onRowSelect({ data }: any) {
+        boundeds.value[data.id].disabled = false
+      },
+      onRowUnselect({ data }: any) {
+        boundeds.value[data.id].disabled = true
+      },
+    }),
+}
+
 async function getTableList(params: any) {
   const data = await tableRequest(params)
   dataList.value = data.data.rows
+  if (props.isBatch) {
+    boundeds.value = Object.fromEntries(
+      data.data.rows.map(item => [item.id, {
+        value: 1,
+        disabled: !props.data.some((it: any) => item.id === it.id),
+      }],
+      ),
+    )
+  }
   return data
 }
 
@@ -94,10 +131,12 @@ function testAllProxy() {
   testProxy(dataList.value, 'test')
 }
 
-// ====================
-
 function saveSelected() {
-  emit('confirm', selection.value)
+  const _selection = !props.isBatch
+    ? selection.value
+    : selection.value.map((item: any) => ({ ...item, _proxyCount: boundeds.value[item.id].value }))
+
+  emit('confirm', _selection)
 }
 </script>
 
@@ -105,8 +144,8 @@ function saveSelected() {
   <drawer-content title="代理列表" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="agent" v-model:selection="selection" :table-request="getTableList" :show-gridlines="false"
-        :columns="columns" :show-display="false" selection-mode="single" :context-menu="false">
+      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList"
+        :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
@@ -128,14 +167,27 @@ function saveSelected() {
         <template #related="{ data: row }">
           <relatedInfo :list="row.bindList" />
         </template>
+        <template #bounded="{ data: row }">
+          <div class="w-30">
+            <InputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="0" show-buttons
+              button-layout="horizontal" :step="1" fluid>
+              <template #incrementicon>
+                <RxSvgIcon name="base/rx_ic_plus" />
+              </template>
+              <template #decrementicon>
+                <RxSvgIcon name="base/rx_ic_minus" />
+              </template>
+            </InputNumber>
+          </div>
+        </template>
         <template #actions="{ data: row }">
           <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
-            @quick-click="(operate: any) => operationHandler(operate, row)" />
+            @quick-click="operationHandler($event, row)" />
         </template>
-      </ry-table>
+      </RyTable>
     </div>
     <template #footer>
-      <ry-button label="Save selected" severity="info" @click="saveSelected" />
+      <RyButton label="Save selected" severity="info" @click="saveSelected" />
     </template>
   </drawer-content>
 </template>

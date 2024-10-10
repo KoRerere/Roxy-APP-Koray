@@ -42,7 +42,7 @@ function confirm(data: any) {
           {{ item.platformUrl }}
         </div>
         <div class="card-list-item-time">
-          {{ item.platformName }}
+          {{ item.platformName }} {{ item.platformUserName }}
         </div>
       </rx-card>
     </div>

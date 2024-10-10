@@ -10,6 +10,7 @@ const columns = ref([
   {
     title: 'User',
     key: 'userName',
+    getText: (data: Data) => `${data.userName} ${data.email || ''}`,
   },
   {
     title: 'Actions',

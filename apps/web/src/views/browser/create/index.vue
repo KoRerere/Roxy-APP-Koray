@@ -18,7 +18,7 @@ const tabs = ref([
   { title: '批量创建', value: 'batch' },
   { title: '批量导入', value: 'import' },
 ])
-const tabsValue = ref('single')
+const tabsValue = ref('batch')
 const isBatch = ref(false)
 
 const windowName = ref('Untitled profile')
@@ -39,6 +39,7 @@ const inputsGroup = computed(() => {
     ? [basicInputs, highLevelInputs, otherInputs]
     : [windowInputs, basicInputs, highLevelInputs, otherInputs]
 })
+
 const accordions = computed(() => {
   const startIndex = tabsValue.value === 'import' ? 1 : 0
   return {
@@ -46,6 +47,7 @@ const accordions = computed(() => {
     panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
 })
+
 const previewInputs = computed(() => {
   return tabsValue.value === 'import'
     ? [rawWindowInputs.value, ...inputsGroup.value]
@@ -150,7 +152,7 @@ onMounted(() => {
           <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
             <div>Profiles amount</div>
             <div class="flex flex-col items-end">
-              <InputNumber v-model="createCount" :max="maxWindowCount" class="batch-input" show-buttons
+              <InputNumber v-model="createCount" :min="1" :max="maxWindowCount" class="batch-input" show-buttons
                 button-layout="horizontal" :step="1" fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
