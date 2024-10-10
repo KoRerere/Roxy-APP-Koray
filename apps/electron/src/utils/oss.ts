@@ -8,7 +8,7 @@ const _aliOSS = new class AliOSS {
   store = {} as OSS
   #timer?: NodeJS.Timeout
   /** 避免重复请求 */
-  promise?: Promise<UserGetOssCredentialListData>
+  controller: AbortController | null = null
 
   constructor() {
     this.refreshUploadTokenInterval()
@@ -16,7 +16,6 @@ const _aliOSS = new class AliOSS {
 
   /** 用户切换账号之后需要重新 init */
   init() {
-    this.promise = undefined
     // 定时刷新 OSS 上传凭证
     this.refreshUploadTokenInterval()
   }
@@ -25,10 +24,19 @@ const _aliOSS = new class AliOSS {
    * 定时刷新 OSS 上传凭证
    */
   async refreshUploadTokenInterval() {
-    this.promise ||= API.base.userGetOssCredentialV2List()
-    const { data } = await this.promise.finally(() => {
-      this.promise = undefined
+    // 如果上一次请求还没结束，取消上一次请求
+    if (this.controller) {
+      this.controller.abort() // 中止之前的请求
+    }
+
+    // 创建一个新的 AbortController 实例
+    this.controller = new AbortController()
+    const { signal } = this.controller
+
+    const { data } = await API.base.userGetOssCredentialV2List({ signal }).finally(() => {
+      this.controller = null
     })
+
     this.store = new OSS({
       region: data.region,
       accessKeyId: data.accessKeyId,
