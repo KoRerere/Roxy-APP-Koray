@@ -1,15 +1,15 @@
 <script lang="ts" setup>
+import { API } from '/@/api'
+import rxEditDiv from '/@/components/rx-edit-div'
 import type { MetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
-import { getInputsGroup } from './form-inputs'
+import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { API } from '/@/api'
-import rxEditDiv from '/@/components/rx-edit-div'
-import { getFormDataByList } from '/@/utils'
 
 const router = useRouter()
 const route = useRoute()
+createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
 const windowName = ref('edit profile')
 const accordions = ref({
@@ -21,9 +21,9 @@ const inputsGroup = ref()
 const original = ref()
 const metaData = ref<MetaData>()
 
-const previewData = computed(() => getFormDataByList(inputsGroup.value, {}, { keyName: 'label', valueName: 'value' }))
-
-createTableContext({ isBatch: ref(false), createCount: ref(0) })
+function onShuffle() {
+  ceateRandomFinger(inputsGroup.value)
+}
 
 async function createProfile(formData: any) {
   const params = {
@@ -65,7 +65,7 @@ onUnmounted(() => {
           :open-browser="false" is-edit @create="createProfile" />
       </div>
     </div>
-    <previewCard :data="previewData" />
+    <previewCard :inputs-group="inputsGroup" @shuffle="onShuffle" />
   </div>
 </template>
 

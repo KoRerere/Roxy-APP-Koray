@@ -3,7 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { deepClone, getFormDataByList, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
@@ -50,9 +50,6 @@ const previewInputs = computed(() => {
   return tabsValue.value === 'import'
     ? [rawWindowInputs.value, ...inputsGroup.value]
     : inputsGroup.value
-})
-const previewData = computed(() => {
-  return getFormDataByList(previewInputs.value, {}, { keyName: 'label', valueName: 'value' })
 })
 
 watch(() => tabsValue.value, (value: any) => {
@@ -176,7 +173,7 @@ onMounted(() => {
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>
-    <previewCard :data="previewData" @shuffle="onShuffle" />
+    <previewCard :inputs-group="previewInputs" @shuffle="onShuffle" />
   </div>
 </template>
 

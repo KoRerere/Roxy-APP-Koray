@@ -86,7 +86,7 @@ export function getInputsGroup(data: any = {}) {
   const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
 
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
+  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, label, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
 
   const osVersion = Object.fromEntries(Object.keys(os_map).map((key: string) => {
     const version = $dict_map[`osversion_${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
@@ -134,6 +134,9 @@ export function getInputsGroup(data: any = {}) {
               osVersionInput.disabled = true
             }
           },
+          preview: {
+            label: '操作系统',
+          },
         },
         {
           type: 'select',
@@ -163,6 +166,9 @@ export function getInputsGroup(data: any = {}) {
       disabled: true,
       iconClick: () => {
         setUaWebgl(inputsGroup)
+      },
+      preview: {
+        label: 'User Agent',
       },
     },
     {
@@ -237,6 +243,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'language', self.value === false)
       },
+      preview: {
+        label: '语言',
+      },
     },
     {
       type: 'select',
@@ -283,6 +292,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'timeZone', self.value === false)
       },
+      preview: {
+        label: '时区',
+      },
     },
     {
       type: 'select',
@@ -317,6 +329,9 @@ export function getInputsGroup(data: any = {}) {
           }
         }
       },
+      preview: {
+        label: '地理位置提示',
+      },
     },
     {
       type: 'radio',
@@ -334,6 +349,9 @@ export function getInputsGroup(data: any = {}) {
           ['longitude', 'latitude', 'precisionPos'],
           self.value === false,
         )
+      },
+      preview: {
+        label: '地理位置',
       },
     },
     {
@@ -423,6 +441,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'resolution', self.value === true)
       },
+      preview: {
+        label: '分辨率',
+      },
     },
     {
       type: 'select',
@@ -443,6 +464,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '系统默认', value: false },
       ],
+      preview: {
+        label: '字体指纹',
+      },
     },
     {
       type: 'radio',
@@ -454,6 +478,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '真实', value: 1 },
         { label: '禁止', value: 2 },
       ],
+      preview: {
+        label: 'WebRTC',
+      },
     },
     {
       type: 'radio',
@@ -464,6 +491,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'WebGL图像',
+      },
     },
     {
       type: 'radio',
@@ -480,6 +510,9 @@ export function getInputsGroup(data: any = {}) {
           ['webGLManufacturer', 'webGLRender'],
           self.value === false,
         )
+      },
+      preview: {
+        label: 'WebGL Info',
       },
     },
     {
@@ -520,13 +553,16 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'canvas',
+      label: 'Canvas',
       name: 'canvas',
       value: data.canvas ?? true,
       options: [
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'Canvas',
+      },
     },
     {
       type: 'radio',
@@ -537,6 +573,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'AudioContext',
+      },
     },
     {
       type: 'radio',
@@ -547,6 +586,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'SpeechVoices',
+      },
     },
     {
       type: 'radio',
@@ -557,6 +599,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
+      preview: {
+        label: 'Do Not Track',
+      },
     },
     {
       type: 'radio',
@@ -567,6 +612,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: 'ClientRects',
+      },
     },
     {
       type: 'radio',
@@ -577,6 +625,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: true },
         { label: '真实', value: false },
       ],
+      preview: {
+        label: '媒体设备',
+      },
     },
     {
       type: 'radio',
@@ -589,6 +640,9 @@ export function getInputsGroup(data: any = {}) {
       ],
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'deviceName', self.value === false)
+      },
+      preview: {
+        label: '设备名称',
       },
     },
     {
@@ -619,6 +673,9 @@ export function getInputsGroup(data: any = {}) {
           setMacAddr(inputsGroup)
         }
       },
+      preview: {
+        label: 'MAC地址',
+      },
     },
     {
       type: 'text',
@@ -637,16 +694,22 @@ export function getInputsGroup(data: any = {}) {
       label: '硬件并发数',
       placeholder: '请选择硬件并发数',
       name: 'hardwareConcurrent',
-      value: data.hardwareConcurrent,
+      value: data.hardwareConcurrent ?? $dict_map.hardwareConcurrent.find((item: any) => item.value === '4'),
       options: $dict_map.hardwareConcurrent,
+      preview: {
+        label: '硬件并发数',
+      },
     },
     {
       type: 'select',
       label: '设备内存',
       placeholder: '请选择设备内存',
       name: 'deviceMemory',
-      value: data.deviceMemory,
+      value: data.deviceMemory ?? $dict_map.deviceMemory.find((item: any) => item.value === '8'),
       options: $dict_map.deviceMemory,
+      preview: {
+        label: '设备内存',
+      },
     },
     {
       type: 'radio',
@@ -659,6 +722,9 @@ export function getInputsGroup(data: any = {}) {
       ],
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'disableSslList', self.value === true)
+      },
+      preview: {
+        label: 'SSL指纹设置',
       },
     },
     {
@@ -685,6 +751,9 @@ export function getInputsGroup(data: any = {}) {
       change(_v: any, self: any, inputs: any) {
         setInputVisible(inputs, 'portScanList', self.value === true)
       },
+      preview: {
+        label: '端口扫描保护',
+      },
     },
     {
       type: 'text',
@@ -703,6 +772,9 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
+      preview: {
+        label: '硬件加速模式',
+      },
     },
     {
       type: 'radio',
