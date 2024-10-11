@@ -62,7 +62,7 @@ const drawer = reactive({
     const { id, dirId, windowPlatformList } = drawer.data!
     switch (type) {
       case 'proxyForm': {
-        drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
+        drawer.updateProfile({ ...data, id, dirId, moduleId: 0, proxyMethod: 'custom' })
         break
       }
       case 'proxyList': {
