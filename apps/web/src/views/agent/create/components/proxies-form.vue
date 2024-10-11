@@ -3,14 +3,14 @@ import inputLabel from '/@/components/ry-form/input-label.vue'
 
 defineProps({
   inputs: {
-    type: Array,
+    type: Array as PropType<any>,
     default: () => [],
   },
 })
 </script>
 
 <template>
-  <ry-form :inputs="inputs">
+  <RyForm :inputs="inputs">
     <template #server="{ input }">
       <div>
         <inputLabel label="Server" />
@@ -23,7 +23,7 @@ defineProps({
         </InputGroup>
       </div>
     </template>
-  </ry-form>
+  </RyForm>
 </template>
 
 <style scoped></style>

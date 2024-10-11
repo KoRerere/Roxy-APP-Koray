@@ -4,6 +4,7 @@ import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
+import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
@@ -244,11 +245,11 @@ const items = [
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @change="onChange(item)" />
-          <span>{{ item.label }}</span>
+          <span>{{ $t(item.label as string) }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
-          <RxSvgIcon :name="(item.icon as SvgNames)" />
-          <span>{{ item.label }}</span>
+          <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
+          <span>{{ $t(item.label as string) }}</span>
         </div>
       </a>
     </template>
@@ -257,7 +258,7 @@ const items = [
 
 <style lang="scss" module="classes">
 .content {
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 

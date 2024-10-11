@@ -1,6 +1,5 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -10,9 +9,9 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
-import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
@@ -43,10 +42,9 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
+const [checkProxy] = useCheckProxy()
+const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 
-const filterColumnKeys = props.isProjectProfile ? ['project'] : undefined
-
-const [columns] = useColumns(columnsRow, filterColumnKeys)
 const [show] = useContextMenu()
 const ctmFilters = ref()
 const sorts = ref(getSorts())
@@ -64,7 +62,7 @@ const drawer = reactive({
     const { id, dirId, windowPlatformList } = drawer.data!
     switch (type) {
       case 'proxyForm': {
-        drawer.updateProfile({ ...data, id, dirId, proxyMethod: 'custom' })
+        drawer.updateProfile({ ...data, id, dirId, moduleId: 0, proxyMethod: 'custom' })
         break
       }
       case 'proxyList': {
@@ -309,20 +307,13 @@ function profileOperate(key: string, data: any) {
 }
 
 async function testProxy(data: any) {
-  const checkRes = await window.electronAPI.send('proxy:detect', toRaw(data) as any)
-  const params = {
-    checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-    lastCity: checkRes.city ?? '',
-    lastCountry: checkRes.country_code ?? '',
-    lastIp: checkRes.ip ?? '',
-    checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-  }
+  const checkRes = await checkProxy(toRaw(data))
 
   if (data.moduleId) {
-    await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...params }] as any)
+    await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
   }
 
-  drawer.updateProfile({ id: data.id, dirId: data.dirId, ...params })
+  drawer.updateProfile({ id: data.id, dirId: data.dirId, ...checkRes })
 }
 
 async function refreshUrl(data: any) {
