@@ -2,7 +2,6 @@
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-// @ts-ignore
 import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'

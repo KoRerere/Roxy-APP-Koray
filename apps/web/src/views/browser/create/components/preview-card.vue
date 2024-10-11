@@ -33,7 +33,7 @@ function getPreview(list: any[]) {
   return _list.map(({ options, value, preview }: any) => {
     const _value = (value?.value || value)
     const pvalue = Array.isArray(options)
-      ? options.find((option: any) => option.value === _value).label
+      ? options.find((option: any) => option.value === _value)?.label
       : _value
     return {
       ...preview,

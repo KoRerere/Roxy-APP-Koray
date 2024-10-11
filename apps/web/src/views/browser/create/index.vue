@@ -106,7 +106,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 async function batchCreateProfile(params: any) {
-  // 差异数量，代理总数量在 formatValue 时已处理
+  // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
     toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 5000 })
