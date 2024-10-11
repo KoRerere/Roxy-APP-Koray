@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import { getInputs } from './components/form-inputs'
-import proxiesForm from './components/proxies-form.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import { getFormData } from '/@/utils'
-
 import { useCheckProxy } from '/@/views/agent/hooks'
+import { getInputs } from './components/form-inputs'
+import proxiesForm from './components/proxies-form.vue'
 
 const props = defineProps({
   data: {
@@ -26,7 +25,6 @@ async function testProxy() {
   const data = getFormData(formInputs.value)
 
   await checkProxy(data)
-  // console.log('🚀 ~ testProxy ~ checkResult:', checkResult)
 }
 
 function onConfirm() {

@@ -1,10 +1,11 @@
 <script setup lang="tsx">
-import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyCheckStatus } from '/@/enums'
+import { $t } from '/@/locales'
 import { setRowsLoading, sleep } from '/@/utils'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import { parseProxyUrl } from './hooks'
 import parseTextarea from './parse-textarea.vue'
@@ -12,6 +13,7 @@ import parseTextarea from './parse-textarea.vue'
 const emit = defineEmits(['cancel', 'save'])
 const toast = useToast()
 const confirm = useConfirm()
+const [checkProxy] = useCheckProxy()
 
 const proxiesText = ref('')
 const dataList: any = ref([])
@@ -22,43 +24,43 @@ const showMessage = ref(false)
 const columns = ref([
   {
     key: 'protocol',
-    title: 'Protocol',
+    title: $t('Protocol'),
     getText: (data: any) => data.protocol || '--',
   },
   {
     key: 'host',
-    title: 'Host',
+    title: $t('Host'),
     getText: (data: any) => data.host || '--',
   },
   {
     key: 'port',
-    title: 'Port',
+    title: $t('Port'),
     getText: (data: any) => data.port || '--',
   },
   {
     key: 'proxyUserName',
-    title: 'Username',
+    title: $t('Username'),
     getText: (data: any) => data.proxyUserName || '--',
   },
   {
     key: 'proxyPassword',
-    title: 'Password',
+    title: $t('Password'),
     getText: (data: any) => data.proxyPassword || '--',
   },
   {
     key: 'refreshUrl',
-    title: 'Refreshing URL',
+    title: $t('Refreshing URL'),
     width: 100,
     getText: (data: any) => data.refreshUrl || '--',
   },
   {
     key: 'remark',
-    title: 'Notes',
+    title: $t('Notes'),
     width: 100,
     getText: (data: any) => data.remark || '--',
   },
   {
-    title: 'Outbound IP',
+    title: $t('Outbound IP'),
     render: ({ data }: any) => {
       return (
         data.checkTime
@@ -146,18 +148,14 @@ async function refreshUrl(data: any, operateName: string) {
   toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: data.refreshUrl, life: 5000 })
 }
 
-async function testProxy(data: any, operateName: string) {
+function testProxy(data: any, operateName: string) {
   const datas = [].concat(data)
-  datas.forEach((item: any) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detect', toRaw(item)))
-      .then(async (checkRes) => {
-        item.checkStatus = checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success
-        item.lastIp = checkRes.ip ?? ''
-        item.lastCity = checkRes.city ?? ''
-        item.lastCountry = checkRes.country_code ?? ''
-        item.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+  for (const item of datas) {
+    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
+      .then((checkResult) => {
+        Object.assign(item, toRaw(checkResult))
       })
-  })
+  }
 }
 
 function deleteProxy(data: any) {

@@ -9,7 +9,7 @@ import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
 import { setRowsLoading } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import proxyColumns from './columns'
 import { type ProxyItem, tableOperation, tableRequest } from './operation'
 
@@ -178,7 +178,7 @@ function saveSelected() {
           </div>
         </template>
         <template #outbound="{ data: row }">
-          <outboundIp :image="row.region" :country="row.lastCountry" :city="row.lastCity" :time="row.checkTime" />
+          <OutboundIp :image="row.region" :country="row.lastCountry" :city="row.lastCity" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
           <relatedInfo :list="row.bindList" />

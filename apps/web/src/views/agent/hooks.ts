@@ -11,13 +11,13 @@ export interface CheckResult {
   checkTime?: string
 }
 
-const checkeResult: CheckResult = reactive({
-  loading: false,
-  checkStatus: ProxyCheckStatus.failure,
-})
-
-export function useCheckProxy() {
+export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResult] {
   const toast = useToast()
+
+  const checkeResult: CheckResult = reactive({
+    loading: false,
+    checkStatus: ProxyCheckStatus.failure,
+  })
 
   async function testProxy(data: any) {
     checkeResult.loading = true

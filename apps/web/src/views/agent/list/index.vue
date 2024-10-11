@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
-import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import editProxy from '/@/views/agent/create/quick.vue'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import columnsConfig from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
@@ -21,6 +20,7 @@ const tableRef = useTemplateRef('proxyTable')
 const toast = useToast()
 const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
+const [checkProxy] = useCheckProxy()
 
 const ctmFilters = ref(getCustomFilters())
 const dataList = ref()
@@ -61,21 +61,13 @@ function refreshUrl(datas: ProxyItem[]) {
 }
 
 async function testProxy(datas: ProxyItem[], operateName: string) {
-  datas.forEach((item) => {
-    setRowsLoading(item, operateName, () => window.electronAPI.send('proxy:detect', toRaw(item) as any))
-      .then(async (checkRes) => {
-        const params = {
-          id: item.id,
-          checkStatus: checkRes.error ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-          lastCity: checkRes.city ?? '',
-          lastCountry: checkRes.country_code ?? '',
-          lastIp: checkRes.ip ?? '',
-          checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-        }
-        onEdit(params)
-        toast.add({ severity: 'success', summary: 'Success', detail: '刷新成功', life: 5000 })
+  for (const item of datas) {
+    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
+      .then(async (checkResult) => {
+        await onEdit({ ...toRaw(checkResult), id: item.id })
+        Object.assign(item, toRaw(checkResult))
       })
-  })
+  }
 }
 
 function testAllProxy() {

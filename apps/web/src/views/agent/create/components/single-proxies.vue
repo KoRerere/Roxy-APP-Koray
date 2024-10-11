@@ -1,56 +1,24 @@
 <script lang="ts" setup>
-import { format } from 'date-fns'
-import { useToast } from 'primevue/usetoast'
-import { ProxyCheckStatus } from '/@/enums'
 import { getFormData } from '/@/utils'
+import { useCheckProxy } from '/@/views/agent/hooks'
 import { getInputs } from './form-inputs'
 import proxiesForm from './proxies-form.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 
-const toast = useToast()
+const [checkProxy, checkeResult] = useCheckProxy()
 
 const formInputs: any = ref(getInputs())
-const checkeResult = ref({
-  checkStatus: ProxyCheckStatus.failure,
-  lastIp: '',
-  lastCity: '',
-  lastCountry: '',
-  checkTime: '',
-})
 
-const loading = ref(false)
-
-async function testProxy() {
+function testProxy() {
   const data = getFormData(formInputs.value)
-
-  loading.value = true
-  window.electronAPI.send('proxy:detect', toRaw(data)).then(async (checkRes) => {
-    loading.value = false
-
-    if (!checkRes.ip) {
-      toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
-    }
-    else {
-      toast.add({ severity: 'success', summary: 'Proxy test success', detail: `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
-    }
-
-    console.log('🚀 ~ window.electronAPI.send ~ checkRes:', checkRes)
-
-    checkeResult.value = {
-      checkStatus: !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success,
-      lastIp: checkRes.ip ?? '',
-      lastCity: checkRes.city ?? '',
-      lastCountry: checkRes.country_code ?? '',
-      checkTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-    }
-  })
+  checkProxy(toRaw(data))
 }
 
 function save() {
   const formData = getFormData(formInputs.value)
   emit('save', [{
-    ...checkeResult.value,
+    ...checkeResult,
     ...formData,
     protocol: formData.proxyCategory, // 兼容新版接口字段名 protocol
   }])
@@ -62,8 +30,8 @@ function save() {
     <proxiesForm :inputs="formInputs" />
     <div class="flex flex-1 items-end justify-between w-full">
       <div class="flex items-center gap-3">
-        <Button size="small" severity="secondary" :loading="loading" label="Test proxies" icon="base/rx_ic_speed_test"
-          @click="testProxy" />
+        <Button size="small" severity="secondary" :loading="checkeResult.loading" label="Test proxies"
+          icon="base/rx_ic_speed_test" @click="testProxy" />
         <span class="mdi mdi-list-box-outline remark cursor-pointer" />
       </div>
       <div class="flex gap-3">
