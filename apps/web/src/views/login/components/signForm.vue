@@ -68,7 +68,7 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <ry-button type="button" class="w-full" label="Search" @click="handleSubmit">
+    <ry-button type="button" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('Sign up') : $t('Sign in') }}
     </ry-button>
     <div class="divider">

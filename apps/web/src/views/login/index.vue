@@ -33,7 +33,7 @@ async function handleSubmit() {
 
 async function afterLogin(token: string) {
   setToken(token)
-  getUserInfo()
+  await getUserInfo()
   toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
   router.push({ name: 'home' })
 }
