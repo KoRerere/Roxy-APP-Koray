@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref } from 'vue'
 import LangSelect from './lang-select.vue'
 
@@ -19,6 +19,24 @@ function handleCreateLang() {
   lang.value = ''
   dialogFormVisible.value = false
 }
+
+function handleCommit() {
+  ElMessageBox.confirm(
+    '确认提交将会把本地语言代码提交到远程仓库，是否继续？',
+    '提示',
+  )
+    .then(() => {
+      return fetch('./api/commit').then(res => res.text()).then((data) => {
+        console.log('提交结果: ', data)
+        if (data === 'ok') {
+          ElMessage.success('提交成功')
+        }
+        else {
+          ElMessage.error(data)
+        }
+      })
+    })
+}
 </script>
 
 <template>
@@ -29,6 +47,9 @@ function handleCreateLang() {
       </el-button>
     </div>
     <div>
+      <el-button type="primary" @click="handleCommit">
+        提交修改
+      </el-button>
       <el-button type="primary" @click="handlePublish">
         发布
       </el-button>

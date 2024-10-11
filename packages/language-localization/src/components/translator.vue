@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import 'element-plus/es/components/message/style/css'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, ref, watch } from 'vue'

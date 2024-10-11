@@ -59,22 +59,22 @@ async function handleSubmit() {
 <template>
   <div class="container">
     <div class="title">
-      Check your email for a code
+      {{ $t('Check your email for a code') }}
     </div>
     <div class="description">
-      We've send a 6-character verification code to your email: <br>
+      {{ $t("We've send a 6-character verification code to your email:") }} <br>
       <span class="email-text">{{ getEmail }}</span> <br><br>
-      Please checkout your email and fill the code below to complete the sign up.
+      {{ $t('Please checkout your email and fill the code below to complete the sign up.') }}
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
     <ry-button class="w-full" @click="handleSubmit">
-      {{ type === 'signUp' ? 'Complete sign up' : 'Next' }}
+      {{ type === 'signUp' ? $t('Complete sign up') : $t('Next') }}
     </ry-button>
     <div class="tips">
       <span>
-        Can't find the email? Check your spam, or
+        {{ $t("Can't find the email? Check your spam, or") }}
       </span> <br>
-      <a class="re-enter-text" @click="toReEnter">re-enter your email and try again.</a>
+      <a class="re-enter-text" @click="toReEnter">{{ $t('re-enter your email and try again.') }}</a>
     </div>
   </div>
 </template>

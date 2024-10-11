@@ -1,7 +1,7 @@
 import type { PluginOption } from 'vite'
 import { GoogleTranslator } from '@roxy/puppeteer-google-translate'
 import bodyParser from 'body-parser'
-import { set } from 'es-toolkit/compat'
+import { exec } from 'node:child_process'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
@@ -59,13 +59,26 @@ export default (options: OptionsType): PluginOption => {
           try {
             const data = await readFile(filePath, 'utf-8')
             const jsonData = JSON.parse(data)
-            set(jsonData, key, value)
+            jsonData[key] = value
             await writeFile(filePath, JSON.stringify(jsonData, null, 2))
             res.end('ok')
           }
           catch (error) {
             res.end(error.message)
           }
+        }
+        else if (url === '/commit') {
+          console.log('commit', targetDir)
+          exec(`git add ${targetDir} && git commit -m "update language files" && git push`, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`exec error: ${error}`)
+              res.end(error.message)
+              return
+            }
+            console.log(`stdout: ${stdout}`)
+            console.error(`stderr: ${stderr}`)
+            res.end('ok')
+          })
         }
         else {
           next()

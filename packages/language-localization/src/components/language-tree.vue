@@ -6,6 +6,7 @@ import { ISO639, sourceLangKey } from './ISO-639'
 const emit = defineEmits(['langListChange'])
 
 const activeLang = ref(sourceLangKey)
+const activeTranTab = ref('untranslated')
 const langList = ref<Record<string, any>[]>([])
 
 const translateTabs = ref([
@@ -144,9 +145,9 @@ defineExpose({
           </div>
         </template>
         <AddDialog v-if="activeLang === sourceLangKey" class="mb-[12px]" />
-        <el-tabs type="border-card">
+        <el-tabs v-model="activeTranTab" type="border-card">
           <template v-for="tranTabItem in translateTabs" :key="tranTabItem.key">
-            <el-tab-pane :label="`${tranTabItem.label}(${langItem[tranTabItem.key]?.length || 0})`">
+            <el-tab-pane :label="`${tranTabItem.label}(${langItem[tranTabItem.key]?.length || 0})`" :name="tranTabItem.key">
               <el-table
                 :data="langItem[tranTabItem.key]"
                 highlight-current-row
@@ -156,7 +157,7 @@ defineExpose({
               >
                 <el-table-column type="index" width="50" />
                 <el-table-column property="key" :label="`源语言(${sourceLangKey})`" />
-                <el-table-column property="value" :label="langItem.ISO639.lang">
+                <el-table-column v-if="activeTranTab === 'translated'" property="value" :label="langItem.ISO639.lang">
                   <template #default="{ row }">
                     {{ row.value }}
                     <el-tag v-if="row.isNew" type="success">

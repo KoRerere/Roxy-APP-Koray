@@ -3,6 +3,7 @@ import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
+import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
@@ -21,7 +22,7 @@ const currentCompProps = ref<Recordable>()
 async function handleSubmit() {
   console.log(signFormData)
   signFormData.value.user_name = signFormData.value.user_name.trim()
-  const { code, data, msg = '登录失败' } = await API.base.loginCreate(signFormData.value)
+  const { code, data, msg = $t('Logon failed') } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
@@ -34,12 +35,12 @@ async function handleSubmit() {
 async function afterLogin(token: string) {
   setToken(token)
   await getUserInfo()
-  toast.add({ severity: 'success', summary: 'Success', detail: '登录成功', life: 5000 })
+  toast.add({ severity: 'success', summary: 'Success', detail: $t('Sign Success'), life: 5000 })
   router.push({ name: 'home' })
 }
 
 async function googleAuth2Login(googleToken: string) {
-  const { code, data, msg = '登录失败' } = await API.base.loginGoogleV2Create({ googleToken })
+  const { code, data, msg = $t('Logon failed') } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
     afterLogin(data.token)
   }
