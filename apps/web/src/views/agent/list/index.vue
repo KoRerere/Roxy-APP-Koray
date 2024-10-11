@@ -110,8 +110,7 @@ function createProxy() {
 
 function onRefreshTable() {
   const params = filterFieldByValue(getFormData(ctmFilters.value))
-  console.log('🚀 ~ onRefreshTable ~ params:', params)
-  // tableRef.value!.refresh(params)
+  tableRef.value!.refresh(params)
 }
 </script>
 

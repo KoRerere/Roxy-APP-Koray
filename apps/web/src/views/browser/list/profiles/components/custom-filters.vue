@@ -4,6 +4,7 @@ import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
+import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
@@ -238,19 +239,17 @@ const items = [
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="tmenu" :model="menuOptions" popup
-              :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide"
-  >
+    :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
-                    @change="onChange(item)"
-          />
-          <span>{{ item.label }}</span>
+            @change="onChange(item)" />
+          <span>{{ $t(item.label as string) }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-          <span>{{ item.label }}</span>
+          <span>{{ $t(item.label as string) }}</span>
         </div>
       </a>
     </template>
