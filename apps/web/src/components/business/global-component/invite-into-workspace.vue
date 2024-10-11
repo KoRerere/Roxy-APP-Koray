@@ -49,7 +49,7 @@ async function acceptInvitation() {
   const { code, msg, data } = await API.limit.userAddUserByProjectInfoCreate(inviteInfo.value.data)
 
   if (code === 0) {
-    toast.add({ severity: 'success', summary: 'Success', detail: $t('加入成功'), life: 3000 })
+    toast.add({ severity: 'success', summary: 'Success', detail: $t('Join Success'), life: 3000 })
     await workspaceStore.getWorkspaceList()
     const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === Number(data))
     if (targetWorkspace) {
@@ -81,15 +81,15 @@ function skipInvitation() {
             {{ inviteInfo?.workspaceName }}
           </div>
           <div class="detail-content">
-            {{ $t('workspace.invitationTips', { workspaceName: inviteInfo?.workspaceName }) }}
+            {{ $t('You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!', { workspaceName: inviteInfo?.workspaceName }) }}
           </div>
         </div>
         <RyButton class="w-full" @click="acceptInvitation">
-          {{ $t('workspace.joinWorkspace') }}
+          {{ $t('Join Workspace') }}
         </RyButton>
         <rx-divider />
         <RyButton class="w-full" outlined @click="skipInvitation">
-          {{ $t('common.Skip') }}
+          {{ $t('Skip') }}
         </RyButton>
       </div>
     </div>

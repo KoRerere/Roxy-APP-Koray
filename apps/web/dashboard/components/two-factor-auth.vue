@@ -1,38 +1,69 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { copyText } from '/@/utils/'
 
 const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo', { default: {} })
 
+const toast = useToast()
+
 const hostname = location.hostname
 
-async function getTwoFactorCode() {
-  winInfo.value.platformUrlList?.forEach(async (item) => {
-    item.loading = true
-    try {
-      const response = await fetch(`http://${hostname}:8888/api/browser/two_factor_token?code=${item.platformEfa}`)
-      const { data } = await response.json()
-      console.log('data', data)
-      item.efaToken = data
-      item.countDown = 10
-    }
-    catch (error) {
+function startCountdown(item) {
+  const duration = 30
+  const interval = 100
+  let elapsed = 0
 
+  const timer = setInterval(() => {
+    elapsed += interval / 1000
+    item.progress = ((elapsed / duration)).toFixed(2)
+
+    if (elapsed >= duration) {
+      clearInterval(timer)
+      item.progress = 0
+      getTwoFactorCode(item)
     }
-    finally {
-      item.loading = false
-    }
+  }, interval)
+}
+
+function initTwoFactorCodeList() {
+  winInfo.value.platformUrlList?.forEach((item) => {
+    getTwoFactorCode(item)
   })
 }
 
-getTwoFactorCode()
+async function getTwoFactorCode(item) {
+  item.loading = true
+  try {
+    const response = await fetch(`http://${hostname}:8888/api/browser/two_factor_token?code=${item.platformEfa}`)
+    const { data } = await response.json()
+    console.log('data', data)
+    item.efaToken = data
+    startCountdown(item)
+  }
+  catch (error) {
+
+  }
+  finally {
+    item.loading = false
+  }
+}
+
+function handleCopyEfaToken(token) {
+  copyText(token)
+  toast.add({
+    severity: 'success',
+    summary: '复制成功',
+    detail: token,
+    life: 2000,
+  })
+}
+
+initTwoFactorCodeList()
 </script>
 
 <template>
-  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
-    <path d="M24.662 20.2252C25.5151 18.6621 25.9999 16.8692 25.9999 14.963C25.9999 9.23559 21.6228 4.53052 16.0312 4.0105" stroke="#E4E8EB" stroke-width="3.66675" stroke-linecap="round" />
-    <path d="M11.9446 4.39282C7.35593 5.71694 3.99998 9.94811 3.99998 14.9631C3.99998 21.0384 8.92495 25.9633 15.0002 25.9633C17.6199 25.9633 20.0256 25.0476 21.9149 23.5189" stroke="#12A3FC" stroke-width="3.66675" stroke-linecap="round" />
-  </svg>
   <div class="two-factor-auth">
     <template v-for="item in winInfo.platformUrlList" :key="item.id">
       <div class="box">
@@ -54,15 +85,14 @@ getTwoFactorCode()
           <RxSvgIcon name="base/rx_ic_2fa" />
           <Skeleton v-if="item.loading" shape="circle" size="3rem" class="mr-2" />
           <template v-else>
-            <div class="code">
+            <div class="code cursor-pointer" @click="handleCopyEfaToken(item.efaToken)">
               {{ item.efaToken }}
             </div>
+            <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
+              <circle class="progress-bg" cx="18" cy="18" r="14" />
+              <circle class="progress" cx="18" cy="18" r="14" :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#FFA500' : '#12a3fc' }" />
+            </svg>
           </template>
-
-          <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
-            <circle class="progress-bg" cx="18" cy="18" r="16" />
-            <circle class="progress" cx="18" cy="18" r="16" />
-          </svg>
         </div>
       </div>
     </template>
@@ -79,10 +109,6 @@ getTwoFactorCode()
 </template>
 
 <style lang="scss" scoped>
-.two-factor-auth {
-  /* 样式 */
-}
-
 .progress-circle {
   transform: rotate(-90deg);
 }
@@ -90,31 +116,17 @@ getTwoFactorCode()
 .progress-bg {
   fill: none;
   stroke: #e6e6e6;
-  stroke-width: 4;
+  stroke-width: 4.5;
 }
 
 .progress {
   fill: none;
-  stroke-width: 4;
-  stroke-dasharray: 100, 100;
-  animation: countdown 30s linear infinite;
-}
-
-@keyframes countdown {
-  0% {
-    stroke: #12a3fc; /* 初始颜色 */
-    stroke-dasharray: 100, 100;
-  }
-  65% {
-    stroke: #12a3fc; /* 保持初始颜色 */
-  }
-  66% {
-    stroke: #face08; /* 瞬时变为橙色 */
-  }
-  100% {
-    stroke: #face08; /* 保持橙色 */
-    stroke-dasharray: 0, 100;
-  }
+  stroke-width: 4.5;
+  stroke-dasharray: calc(2 * 3.14159 * 14); /* 计算圆的周长 */
+  stroke: var(--stroke-color, #12a3fc);
+  stroke-linecap: round;
+  stroke-dashoffset: calc(2 * 3.14159 * 14 * var(--progress));
+  transition: stroke-dashoffset calc(1 / 30 * 1s);
 }
 
 .two-factor-auth {

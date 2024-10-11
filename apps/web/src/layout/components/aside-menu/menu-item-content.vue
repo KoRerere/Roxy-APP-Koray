@@ -46,7 +46,8 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
       >
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />
         <div class="menu-title">
-          <i18n-t :keypath="item.meta?.title" scope="global" />
+          <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
+          {{ $t(item.meta?.title) }}
         </div>
         <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
                    @click.stop="toggle"

@@ -61,32 +61,32 @@ function switchFormMode(val: boolean) {
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
-      <label for="remember-me" class="ml-2"> {{ $t('login.rememberMe') }} </label>
+      <label for="remember-me" class="ml-2"> {{ $t('Remember me') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">
-      {{ $t('login.forgotPassword') }}
+      {{ $t('Forgot password?') }}
     </div>
   </div>
   <div class="login-ways">
     <ry-button type="button" class="w-full" label="Search" @click="handleSubmit">
-      {{ isRegister ? $t('login.signUp') : $t('login.signIn') }}
+      {{ isRegister ? $t('Sign up') : $t('Sign in') }}
     </ry-button>
     <div class="divider">
       <span class="mx-2">OR</span>
     </div>
     <ry-button class="w-full" outlined @click="openGoogleAuth2Login">
-      <img src="/google.svg"> {{ $t('login.signInWithGoogle') }}
+      <img src="/google.svg"> {{ $t('Sign in with Google') }}
     </ry-button>
     <div v-if="isRegister" class="signup-tips">
-      {{ $t('login.alreadyHaveAccount') }}
+      {{ $t('Already have an account?') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">
-        {{ $t('login.signIn') }}
+        {{ $t('Sign in') }}
       </a>
     </div>
     <div v-else class="signup-tips">
-      {{ $t('login.noAccount') }}
+      {{ $t('Didn’t have an account?') }}
       <a class="cursor-pointer" @click="switchFormMode(true)">
-        {{ $t('login.signUp') }}
+        {{ $t('Sign up') }}
       </a>
     </div>
   </div>

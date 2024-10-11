@@ -41,7 +41,8 @@ async function handleSubmit() {
   const signFormData = getSignFormData()
   const { code, msg } = await API.base.postBase({
     ...signFormData,
-    user_name: signFormData.user_name.split('@')[0].replace(/[^a-z0-9]/gi, ''),
+    // 用户名不能包含特殊字符
+    user_name: signFormData.user_name.split('@')[0].replace(/[^a-z0-9]/gi, '').slice(0, 20),
     email: signFormData.user_name,
     ver_code: emailCode.value,
   })
@@ -109,6 +110,7 @@ async function handleSubmit() {
 
 .inputotp {
   gap: var(--spacing-md, 6px);
+
   :deep(.p-inputotp-input) {
     display: flex;
     width: 50px;

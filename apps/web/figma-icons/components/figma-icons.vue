@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
-import UploadIcons from './upload-icons.vue'
 import { RxSvgIcon, svgIcons, type SvgNames } from '/@/components/rx-icon/'
 import { copyText } from '/@/utils/'
+import UploadIcons from './upload-icons.vue'
 
 const toast = useToast()
 const currentIcon = ref<SvgNames>()

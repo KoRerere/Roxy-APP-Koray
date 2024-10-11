@@ -3,6 +3,7 @@ import { builtinModules } from 'node:module'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
+import { dependencies } from './package.json'
 
 export default defineConfig({
   build: {
@@ -14,9 +15,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         ...builtinModules.map(m => `node:${m}`),
-        'body-parser',
-        'formidable',
-        'adm-zip',
+        ...Object.keys(dependencies),
       ],
     },
   },
