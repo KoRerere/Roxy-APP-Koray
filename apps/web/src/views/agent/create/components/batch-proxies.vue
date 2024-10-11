@@ -1,60 +1,71 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import { parseProxyUrl } from './hooks'
-import parseTextarea from './parse-textarea.vue'
-
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyCheckStatus } from '/@/enums'
 import { setRowsLoading, sleep } from '/@/utils'
-
-import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import { parseProxyUrl } from './hooks'
+import parseTextarea from './parse-textarea.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 const toast = useToast()
 const confirm = useConfirm()
-
-// ===============================================
 
 const proxiesText = ref('')
 const dataList: any = ref([])
 const errorList: any = ref([])
 const isDuplicate = ref(true)
 const showMessage = ref(false)
+
 const columns = ref([
   {
-    key: 'id',
-    title: 'ID',
+    key: 'protocol',
+    title: 'Protocol',
+    getText: (data: any) => data.protocol || '--',
   },
   {
     key: 'host',
     title: 'Host',
+    getText: (data: any) => data.host || '--',
   },
   {
     key: 'port',
     title: 'Port',
+    getText: (data: any) => data.port || '--',
   },
   {
     key: 'proxyUserName',
     title: 'Username',
+    getText: (data: any) => data.proxyUserName || '--',
   },
   {
     key: 'proxyPassword',
     title: 'Password',
+    getText: (data: any) => data.proxyPassword || '--',
   },
   {
     key: 'refreshUrl',
     title: 'Refreshing URL',
     width: 100,
+    getText: (data: any) => data.refreshUrl || '--',
   },
   {
     key: 'remark',
     title: 'Notes',
     width: 100,
+    getText: (data: any) => data.remark || '--',
   },
   {
     title: 'Outbound IP',
-    slot: 'outbound',
+    render: ({ data }: any) => {
+      return (
+        data.checkTime
+          ? <OutboundIp image={data.region} country={data.lastCountry} city={data.lastCity} time={data.checkTime} />
+          : <div>未检测</div>
+      )
+    },
   },
 ])
 
@@ -124,6 +135,9 @@ function operationHandler(operate: any, data: any) {
     case 'test':
       testProxy(data, operate.name)
       break
+    case 'delete':
+      deleteProxy(data)
+      break
   }
 }
 
@@ -146,6 +160,10 @@ async function testProxy(data: any, operateName: string) {
   })
 }
 
+function deleteProxy(data: any) {
+  console.log('🚀 ~ deleteProxy ~ data:', data)
+}
+
 function testAll() {
   testProxy(dataList.value, 'test')
 }
@@ -164,12 +182,12 @@ function deleteFailProxy() {
       severity: 'danger',
     },
     accept: () => {
-      dataList.value = dataList.value.filter((item: any) => item.checkStatus === ProxyCheckStatus.failure)
+      dataList.value = dataList.value.filter((item: any) => item.checkStatus !== ProxyCheckStatus.failure)
     },
   })
 }
 
-function save() {
+function onSave() {
   emit('save', dataList.value)
 }
 </script>
@@ -186,10 +204,10 @@ function save() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center">
               <Checkbox v-model="isDuplicate" input-id="wrap" binary />
-              <label for="wrap" class="select-none ml-2 cursor-pointer">Filter duplicates</label>
-              <span class="mdi mdi-information-outline" />
+              <label for="wrap" class="select-none mx-2 cursor-pointer">Filter duplicates</label>
+              <RxSvgIcon name="base/rx_ic_info_line" :size="14" />
             </div>
-            <ryButton outlined severity="secondary" size="small" label="Parse proxies" icon="base/rx_ic_play"
+            <RyButton outlined severity="secondary" size="small" label="Parse proxies" icon="base/rx_ic_play"
               @click="parseValue" />
           </div>
         </div>
@@ -217,9 +235,9 @@ function save() {
       <div class="flex items-center justify-between">
         <div>Parsed proxies</div>
         <div class="flex gap-2">
-          <ryButton severity="secondary" text size="small" label="Delete fail" icon="base/rx_ic_bin_1"
+          <RyButton severity="secondary" text size="small" label="Delete fail" icon="base/rx_ic_bin_1"
             :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <ryButton severity="secondary" size="small" label="Test all proxies" icon="base/rx_ic_speed_test"
+          <RyButton severity="secondary" size="small" label="Test all proxies" icon="base/rx_ic_speed_test"
             @click="testAll" />
         </div>
       </div>
@@ -229,12 +247,6 @@ function save() {
       <div class="flex-ovh-1 items-center justify-center">
         <ry-table :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
           :show-table-header="false">
-          <template #outbound="{ data }">
-            <outboundIp v-if="data.checkTime" :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
-            <div v-else>
-              未检测
-            </div>
-          </template>
           <template #actions="{ data }">
             <actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
               :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
@@ -243,8 +255,8 @@ function save() {
       </div>
     </div>
     <div class="flex justify-between">
-      <ryButton severity="secondary" text size="small" label="Cancel" @click="$emit('cancel')" />
-      <ryButton severity="info" size="small" label="Save proxies" @click="save" />
+      <RyButton severity="secondary" text size="small" label="Cancel" @click="$emit('cancel')" />
+      <RyButton severity="info" size="small" label="Save proxies" @click="onSave" />
     </div>
   </div>
 </template>
