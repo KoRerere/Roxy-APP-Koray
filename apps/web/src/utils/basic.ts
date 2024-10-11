@@ -128,3 +128,11 @@ export function getUserAgentOs() {
     return 'Windows'
   }
 }
+
+export function strConcat(str1: string, str2: string) {
+  if (!str1)
+    return str1
+  if (!str2)
+    return str2
+  return `${str1}${str2}`
+}

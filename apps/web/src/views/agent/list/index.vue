@@ -12,7 +12,7 @@ import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
-import { setRowsLoading } from '/@/utils'
+import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -134,14 +134,16 @@ function onRefreshTable() {
         </template>
         <template #proxy="{ data }">
           <div class="proxy-host">
-            <span>{{ data.protocol }}://</span><span>{{ data.host }}</span><span>:{{ data.port }}</span>
+            <span>{{ strConcat(data.protocol, '://') }}</span>
+            <span>{{ data.host }}</span>
+            <span>{{ strConcat(':', data.port) }}</span>
           </div>
           <div class="ip-type">
             {{ data.ipType }}
           </div>
         </template>
         <template #outbound="{ data }">
-          <outboundIp :image="data.region" :country="data.lastCountry" :time="data.checkTime" />
+          <outboundIp :image="data.region" :country="data.lastCountry" :city="data.lastCity" :time="data.checkTime" />
         </template>
         <template #checker="{ data }">
           <ryTag severity="info">

@@ -35,7 +35,6 @@ export async function tableRequest(params: any) {
 
 export function getCustomFilters() {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  console.log('🚀 ~ getCustomFilters ~ $dict_map:', $dict_map)
 
   const inputs = [
     {

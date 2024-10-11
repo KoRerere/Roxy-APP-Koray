@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { strConcat } from '/@/utils'
 
 defineProps({
   image: {
@@ -27,7 +28,7 @@ defineProps({
     <RxSvgIcon v-else class="outbound-img" :name="(`country-code/${country}` as SvgNames)"
       fallback="base/rx_ic_earth" />
     <div class="flex justify-between outbound-region">
-      <span>{{ country || '--' }}/{{ city }}</span>
+      <span>{{ country || '--' }}{{ strConcat('/', city) }}</span>
     </div>
     <div class="flex items-center outbound-email">
       <span>{{ time }}</span>
