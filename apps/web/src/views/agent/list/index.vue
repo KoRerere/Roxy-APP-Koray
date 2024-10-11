@@ -5,17 +5,12 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryButton from '/@/components/ry-button'
-import ryTable from '/@/components/ry-table'
-import ryTag from '/@/components/ry-tag'
 import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import editProxy from '/@/views/agent/create/quick.vue'
-import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import columnsConfig from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
@@ -120,13 +115,13 @@ function onRefreshTable() {
       <div class="flex-1">
         Proxies
       </div>
-      <ryButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy"
+      <RyButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy"
         @click="createProxy" />
-      <ryButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
+      <RyButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
+      <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
         :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #header-extra>
@@ -140,19 +135,8 @@ function onRefreshTable() {
           </div>
           <div class="ip-type">
             {{ data.ipType }}
+            {{ data.proxyUserName }}
           </div>
-        </template>
-        <template #outbound="{ data }">
-          <outboundIp :image="data.region" :country="data.lastCountry" :city="data.lastCity" :time="data.checkTime" />
-        </template>
-        <template #checker="{ data }">
-          <ryTag severity="info">
-            <RxSvgIcon name="base/rx_ic_earth" />
-            <span>{{ data.checkChannel }}</span>
-          </ryTag>
-        </template>
-        <template #related="{ data }">
-          <relatedInfo :list="data.bindList" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
@@ -161,7 +145,7 @@ function onRefreshTable() {
             <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
-      </ry-table>
+      </RyTable>
     </div>
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[auto]">
