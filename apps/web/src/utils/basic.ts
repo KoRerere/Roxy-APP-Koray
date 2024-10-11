@@ -99,7 +99,26 @@ export function copyText(text: string) {
 }
 
 export function getUserAgentOs() {
-  const userAgent = navigator.userAgent
-  const osMatch = userAgent.match(/(Windows|Mac OS X|Android|iPhone|iPad|iPod|Linux)/)
-  return osMatch ? osMatch[0] : 'Unknown OS'
+  if (navigator.userAgentData) {
+    return navigator.userAgentData.platform
+  }
+  else {
+    const userAgent = navigator.userAgent
+    if (userAgent.includes('Windows'))
+      return 'Windows'
+    if (userAgent.includes('Mac'))
+      return 'macOS'
+    if (userAgent.includes('Android'))
+      return 'Android'
+    if (userAgent.includes('iPhone'))
+      return 'iPhone'
+    if (userAgent.includes('iPad'))
+      return 'iPad'
+    if (userAgent.includes('iPod'))
+      return 'iPod'
+    if (userAgent.includes('Linux'))
+      return 'Linux'
+
+    return 'Windows'
+  }
 }

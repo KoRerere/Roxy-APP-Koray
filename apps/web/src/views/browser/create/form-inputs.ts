@@ -137,13 +137,15 @@ export function getInputsGroup(data: any = {}) {
           preview: {
             label: '操作系统',
           },
+          required: true,
         },
         {
           type: 'select',
           placeholder: '请选择版本',
           name: 'osVersion',
-          value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs][0],
+          value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs]?.[0],
           options: osVersion[userOs],
+          required: true,
         },
       ],
     },
@@ -155,6 +157,7 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,
       icon: 'base/rx_ic_chrome',
+      required: true,
     },
     {
       type: 'textarea',
@@ -255,7 +258,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.language,
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: false,
+      visible: data.isLanguageBaseIp === false,
     },
     {
       type: 'radio',
@@ -278,7 +281,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.displayLanguage,
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: false,
+      visible: data.isDisplayLanguageBaseIp === false,
     },
     {
       type: 'radio',
@@ -304,7 +307,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.timeZone,
       options: $dict_map.timeZone,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: false,
+      visible: data.isTimeZone === false,
     },
     {
       type: 'radio',
@@ -360,7 +363,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写经度, 示例: -40.123',
       name: 'longitude',
       value: data.longitude,
-      visible: false,
+      visible: data.isPositionBaseIp === false,
     },
     {
       type: 'text',
@@ -368,7 +371,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写纬度, 示例: 30.123',
       name: 'latitude',
       value: data.latitude,
-      visible: false,
+      visible: data.isPositionBaseIp === false,
     },
     {
       type: 'text',
@@ -376,7 +379,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写精度, 范围: 10-5000',
       name: 'precisionPos',
       value: data.precisionPos,
-      visible: false,
+      visible: data.isPositionBaseIp === false,
     },
     {
       type: 'radio',
@@ -392,10 +395,10 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '图片',
       name: 'forbidImage',
-      value: data.forbidImage ?? 1,
+      value: data.forbidImage ?? true,
       options: [
-        { label: '加载', value: 1 },
-        { label: '禁止', value: 2 },
+        { label: '加载', value: true },
+        { label: '禁止', value: false },
       ],
     },
     {
@@ -450,10 +453,17 @@ export function getInputsGroup(data: any = {}) {
       label: '分辨率值',
       placeholder: '请选择分辨率',
       name: 'resolution',
-      value: data.resolution,
+      value: data.resolutionX && $dict_map.resolution.find((item: any) => item.value.includes(data.resolutionX) && item.value.includes(data.resolutionY)),
       options: $dict_map.resolution,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: false,
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        const [resolutionX, resolutionY] = input.value.value.split('x')
+        Object.assign(formData, {
+          resolutionX: resolutionX.trim(),
+          resolutionY: resolutionY.trim(),
+        })
+      },
+      visible: !!data.resolutionType,
     },
     {
       type: 'radio',
@@ -761,7 +771,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'portScanList',
       value: data.portScanList,
       placeholder: '输入整数，多个用英文逗号隔开',
-      visible: false,
+      visible: data.portScanProtect === true,
     },
     {
       type: 'radio',
