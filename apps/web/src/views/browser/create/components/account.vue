@@ -7,6 +7,7 @@ import accountList from '/@/views/account/list/quick.vue'
 const windowPlatformList: any = defineModel('modelValue')
 
 const drawer = reactive({
+  dismissable: false,
   visible: false,
   type: 'list',
 })
@@ -14,6 +15,7 @@ const drawer = reactive({
 function toggleDrawer(type: 'create' | 'list') {
   drawer.visible = true
   drawer.type = type
+  drawer.dismissable = type === 'list'
 }
 
 function deleteAccount(item: any) {
@@ -47,8 +49,8 @@ function confirm(data: any) {
       </rx-card>
     </div>
 
-    <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[50%]"
-      :pt="{ mask: 'browser-drawer' }">
+    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right"
+      class="browser-drawer-content !w-[50%]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
         <accountList v-if="drawer.type === 'list'" @close="closeCallback"
           @confirm="(data: any) => { confirm(data); closeCallback() }" />

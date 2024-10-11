@@ -19,18 +19,17 @@ const emits = defineEmits(['confirm'])
 
 const formInputs = ref(getInputs(props.data || {}))
 const original = ref({ id: props.data?.id })
-const [checkProxy] = useCheckProxy()
+const [checkProxy, checkResult] = useCheckProxy()
 
 async function testProxy() {
   const data = getFormData(formInputs.value)
-
   await checkProxy(data)
 }
 
 function onConfirm() {
   try {
     const formData = getFormData(formInputs.value, original.value)
-    emits('confirm', formData)
+    emits('confirm', { ...formData, ...checkResult })
   }
   catch (error) {
     console.log(error)

@@ -1,4 +1,3 @@
-import { useDebounceFn } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { findInputByName, isEmptyValue, setInputValueByFormData } from '/@/utils'
 import { parseProxyUrl } from './hooks'
@@ -6,37 +5,44 @@ import { parseProxyUrl } from './hooks'
 export function getInputs(data: any = {}) {
   const toast = useToast()
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+
+  const proxyCategory = data.proxyCategory || data.protocol
+
   const inputs = reactive([
     {
       type: 'textarea',
       label: '智能检测',
       name: 'proxyRules',
       value: '',
-      placeholder: 'Paste proxy rules like:\nhost:port:user:password:refreshingURL',
+      placeholder: 'Paste proxy rules like:\nHost:Port:Username:Password[RefreshURL]',
       rows: 5,
       errorMsg: '解析内容有误',
       tooltip: 'man!',
-      change: useDebounceFn((input: any) => {
-        input.invalid = false
-        const ipType = input.value?.startsWith('*') ? 'IPV6' : 'IPV4'
-        const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(input.value)
-        const formData = {
-          proxyCategory: protocol?.toLocaleUpperCase(),
-          host,
-          port,
-          proxyUserName,
-          proxyPassword,
-          refreshUrl,
-        }
+      invalid: false,
+      onBlur: () => {
+        const input = inputs.find((item: any) => item.name === 'proxyRules')
 
-        if (isEmptyValue(Object.values(formData).filter(Boolean))) {
-          input.invalid = true
+        if (input && input.value.trim()) {
+          input.invalid = false
+          const ipType = input.value?.startsWith('*') ? 'IPV6' : 'IPV4'
+          const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(input.value)
+          const formData = {
+            proxyCategory: protocol?.toLocaleUpperCase(),
+            host,
+            port,
+            proxyUserName,
+            proxyPassword,
+            refreshUrl,
+          }
+
+          if (isEmptyValue(Object.values(formData).filter(Boolean))) {
+            input.invalid = true
+          }
+          else {
+            setInputValueByFormData(inputs, { ipType, ...formData })
+          }
         }
-        else {
-          setInputValueByFormData(inputs, { ipType, ...formData })
-        }
-        input.value = undefined
-      }, 500),
+      },
     },
     {
       separator: true,
@@ -56,8 +62,12 @@ export function getInputs(data: any = {}) {
           type: 'select',
           name: 'proxyCategory',
           placeholder: '请选择网络协议',
-          value: !data.proxyCategory || data.proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : data.proxyCategory,
+          value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : proxyCategory,
           options: $dict_map.protocol,
+          formatValue: (input: any, _inputs: any, formData: any) => {
+            Object.assign(formData, { protocol: input.value })
+            return input.value
+          },
         },
         {
           type: 'text',

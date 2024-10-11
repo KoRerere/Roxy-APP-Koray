@@ -3,7 +3,7 @@
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
-import { isEmptyValue } from '/@/utils'
+import { isEmptyValue, strConcat } from '/@/utils'
 import proxyCreate from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import proxyTable from '/@/views/agent/list/quick.vue'
@@ -17,6 +17,7 @@ const [checkProxy, checkResult] = useCheckProxy()
 const proxyList = defineModel<any>('modelValue')
 
 const drawer = reactive({
+  dismissable: false,
   visible: false,
   type: 'create',
 })
@@ -31,13 +32,14 @@ const isOverload = computed(() => {
 function toggleDrawer(type: 'create' | 'list') {
   drawer.visible = true
   drawer.type = type
+  drawer.dismissable = type === 'list'
 }
 
 function deleteProxy(index: number) {
   proxyList.value.splice(index, 1)
 }
 
-function confirm(data: any) {
+function onConfirm(data: any) {
   if (!isEmptyValue(data)) {
     proxyList.value = [].concat(data)
   }
@@ -45,6 +47,7 @@ function confirm(data: any) {
 
 async function testProxy(data: any) {
   await checkProxy(toRaw(data))
+  Object.assign(data, checkResult)
 }
 
 function modifyProxyCount(item: any) {
@@ -124,25 +127,27 @@ function tooltipValue(item: any) {
           <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
             fallback="base/rx_ic_earth" />
           <div class="flex justify-between single-region ">
-            <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
-            <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
-              :size="16" @click="testProxy(item)" />
+            <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
+            <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }"
+              :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+              @click="testProxy(item)" />
           </div>
           <div class="flex justify-between single-time">
-            <span>{{ `${item.ipType || ''} ${item.proxyCategory || ''}://${item.host || ''}:${item.port || ''}`
-              }}</span>
+            <span>
+              {{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{ item.host }}{{ strConcat(':', item.port) }}
+            </span>
           </div>
         </RxCard>
       </template>
     </div>
 
-    <Drawer v-model:visible="drawer.visible" position="right" class="browser-drawer-content !w-[auto]"
-      :pt="{ mask: 'browser-drawer' }">
+    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right"
+      class="browser-drawer-content !w-[auto]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <proxyTable v-if="drawer.type === 'list'" :data="proxyList" :is-batch="isBatch" @close="() => closeCallback()"
-          @confirm="(data: any) => { closeCallback(); confirm(data) }" />
-        <proxyCreate v-if="drawer.type === 'create'" @close="() => closeCallback()"
-          @confirm="(data: any) => { closeCallback(); confirm(data) }" />
+        <proxyTable v-if="drawer.type === 'list'" :data="proxyList" :is-batch="isBatch" @close="closeCallback"
+          @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <proxyCreate v-if="drawer.type === 'create'" @close="closeCallback"
+          @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
       </template>
     </Drawer>
   </div>
