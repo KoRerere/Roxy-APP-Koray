@@ -5,7 +5,7 @@ import { useRoleStore } from '/@/stores/role'
 
 const props = defineProps({
   data: {
-    type: Object,
+    type: Object as PropType<any>,
     default: () => ({}),
   },
   disabled: {
@@ -35,7 +35,7 @@ const list = computed(() => [
   {
     key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
-    svg: isProxy.value ? 'base/rx_ic_earth' : 'base/rx_ic_plus',
+    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : 'base/rx_ic_plus',
     tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
   },
   {
@@ -155,7 +155,7 @@ function getAccountOperation() {
         class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
           <img v-if="item.image" :src="item.image" class="state-icons-img">
-          <RxSvgIcon v-else :name="item.svg" />
+          <RxSvgIcon v-else :name="item.svg" fallback="base/rx_ic_earth" />
         </div>
       </div>
       <div class="state-line">

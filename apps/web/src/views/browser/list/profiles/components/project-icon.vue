@@ -1,7 +1,6 @@
 <script setup lang="tsx">
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-// import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'

@@ -280,7 +280,6 @@ export function getOperation(_params: any = {}) {
       name: 'fav',
       label: '收藏',
       icon: 'base/rx_ic_bookmark',
-      multiple: true,
     },
     {
       name: 'addNotes',

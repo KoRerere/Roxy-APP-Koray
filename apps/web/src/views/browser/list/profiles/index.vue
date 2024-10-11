@@ -10,6 +10,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import columnsRow from './columns'
@@ -44,6 +45,7 @@ const toast = useToast()
 const dialog = useDialog()
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
+const [showToast] = useResponseToast()
 
 const [show] = useContextMenu()
 const ctmFilters = ref()
@@ -87,8 +89,8 @@ const drawer = reactive({
   },
   updateProfile: async (data: any) => {
     try {
-      const { msg } = await API.window.userMdfWindowInfoSingleCreate(data)
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      const { code, msg } = await API.window.userMdfWindowInfoSingleCreate(data)
+      showToast(code, msg, 5000)
       onRefreshTable()
     }
     catch (error) {
@@ -169,7 +171,7 @@ async function operationHandler(operate: any, data: any) {
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
       break
     case 'fav':
-      batchModifyWindow({ ids, isOften: !data.isOften })
+      drawer.updateProfile({ id: data.id, isOften: !data.isOften })
       break
     case 'addNotes':
       onRemark(datas)
@@ -421,9 +423,11 @@ defineExpose({
     <template #actions-extra="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
-          :class="{ 'text-orange': data.isOften }" class="mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
+          :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
+          @click.stop="operationHandler({ name: 'fav' }, data)" />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
-          :class="{ 'text-orange': data.windowRemark }" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+          :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
+          @click.stop="operationHandler({ name: 'addNotes' }, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">

@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
-import columnsRow from './columns'
-import { getOperation, getSorts } from './operation'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import columnsRow from './columns'
+import { getOperation, getSorts } from './operation'
 
 const confirm = useConfirm()
-const toast = useToast()
 
 const [columns] = useColumns(columnsRow)
+
+const [showToast] = useResponseToast()
 
 const operation = getOperation()
 const sorts = ref(getSorts())
@@ -58,8 +59,8 @@ async function deleteHandler(datas: any) {
     },
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
-      const { msg } = await API.window.userDelWindowInfoCreate({ ids })
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
+      showToast(code, msg, 5000)
       tableRef.value?.refresh()
     },
   })
