@@ -1,6 +1,5 @@
 {
   "All Profiles": "All Profiles",
-  "Projects": "Projects",
   "Accounts": "Accounts",
   "Proxies": "Proxies",
   "Extensions": "Extensions",
@@ -72,5 +71,6 @@
   "Join Success": "Join Success",
   "You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!": "You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!",
   "Join Workspace": "Join Workspace",
-  "Skip": "Skip"
+  "Skip": "Skip",
+  "Projects": "Projects"
 }

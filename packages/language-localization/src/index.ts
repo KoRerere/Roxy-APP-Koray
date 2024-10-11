@@ -60,6 +60,10 @@ export default (options: OptionsType): PluginOption => {
             const data = await readFile(filePath, 'utf-8')
             const jsonData = JSON.parse(data)
             jsonData[key] = value
+            if (fileName === 'en') {
+              jsonData[value] = value
+              delete jsonData[key]
+            }
             await writeFile(filePath, JSON.stringify(jsonData, null, 2))
             res.end('ok')
           }
