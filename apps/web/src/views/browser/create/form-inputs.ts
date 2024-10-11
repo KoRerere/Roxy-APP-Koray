@@ -127,6 +127,7 @@ export function getInputsGroup(data: any = {}) {
               osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
               osVersionInput.disabled = false
+              ceateRandomFinger(inputsGroup)
             }
             else {
               osVersionInput.value = null

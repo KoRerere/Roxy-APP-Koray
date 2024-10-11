@@ -28,7 +28,7 @@ export function extractI18n(options: OptionsType): Plugin {
     enforce: 'post',
     handleHotUpdate({ file }) {
       if (!file.endsWith('.json')) {
-        debounceGenLangFiles()
+        // debounceGenLangFiles()
       }
     },
   }
