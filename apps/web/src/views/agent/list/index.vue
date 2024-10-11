@@ -13,10 +13,12 @@ import { ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading } from '/@/utils'
+import { filterFieldByValue, getFormData } from '/@/utils/index'
 import editProxy from '/@/views/agent/create/quick.vue'
 import outboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import columnsConfig from './columns'
-import { type ProxyItem, tableOperation, tableRequest } from './operation'
+import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
@@ -25,6 +27,7 @@ const toast = useToast()
 const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
 
+const ctmFilters = ref(getCustomFilters())
 const dataList = ref()
 
 const drawer: any = reactive({
@@ -104,6 +107,12 @@ async function onEdit(data: any) {
 function createProxy() {
   router.push({ name: 'agent-create' })
 }
+
+function onRefreshTable() {
+  const params = filterFieldByValue(getFormData(ctmFilters.value))
+  console.log('🚀 ~ onRefreshTable ~ params:', params)
+  // tableRef.value!.refresh(params)
+}
 </script>
 
 <template>
@@ -122,7 +131,7 @@ function createProxy() {
         :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #header-extra>
-          <customFilters />
+          <CustomFilter :ctm-filters="ctmFilters" @filter-change="onRefreshTable" />
         </template>
         <template #proxy="{ data }">
           <div class="proxy-host">

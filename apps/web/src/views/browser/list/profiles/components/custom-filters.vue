@@ -238,16 +238,18 @@ const items = [
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="tmenu" :model="menuOptions" popup
-    :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
+              :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide"
+  >
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
-            @change="onChange(item)" />
+                    @change="onChange(item)"
+          />
           <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
-          <RxSvgIcon :name="(item.icon as SvgNames)" />
+          <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
       </a>
@@ -257,7 +259,7 @@ const items = [
 
 <style lang="scss" module="classes">
 .content {
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
