@@ -18,7 +18,7 @@ const currentRow = defineModel('currentRow', {
 let controller: AbortController
 
 const disabledSaveBtn = computed(() => {
-  return !translateResult.value || !currentRow.value.targetKey
+  return !translateResult.value || !currentRow.value.targetLang
 })
 
 function translate() {
@@ -33,9 +33,9 @@ function translate() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      text: currentRow.value.sourceValue,
-      from: currentRow.value.sourceKey,
-      to: currentRow.value.targetKey,
+      text: currentRow.value.key,
+      from: currentRow.value.sourceLang,
+      to: currentRow.value.targetLang,
     }),
   }).then(res => res.text()).then((text) => {
   // googleTranslator.translateText('A bird in hand is worth two in the bush.', 'auto', 'zh-CN')
@@ -49,18 +49,18 @@ function translate() {
 
 function saveTranslateResult() {
   console.log('保存翻译结果: ', translateResult.value)
-  currentRow.value.targetValue = translateResult.value
+  currentRow.value.value = translateResult.value
   emit('save', currentRow.value)
 }
 
 watch(currentRow, () => {
-  translateResult.value = currentRow.value.targetValue
+  translateResult.value = currentRow.value.value
   console.log('currentRow changed: ', currentRow.value)
   translate()
 })
 
 function handleCopy() {
-  navigator.clipboard.writeText(currentRow.value.sourceValue).then(() => {
+  navigator.clipboard.writeText(currentRow.value.key).then(() => {
     ElMessage.success('复制成功')
   }).catch(() => {
     ElMessage.error('复制失败')
@@ -71,8 +71,8 @@ function handleCopy() {
 <template>
   <div class="flex flex-col gap-[20px]">
     <el-card header="原文" shadow="never">
-      {{ currentRow.sourceValue }}
-      <CopyDocument v-if="currentRow.sourceValue" class="w-[14px] h-[14px] cursor-pointer align-middle" @click="handleCopy" />
+      {{ currentRow.key }}
+      <CopyDocument v-if="currentRow.key" class="w-[14px] h-[14px] cursor-pointer align-middle" @click="handleCopy" />
     </el-card>
     <el-card header="译文" shadow="never">
       <el-input

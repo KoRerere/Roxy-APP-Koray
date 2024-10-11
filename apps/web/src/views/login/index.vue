@@ -155,7 +155,6 @@ provideLoginContext({
   opacity: 0.6;
   filter: blur(150px);
   transform: rotate(10deg);
-  z-index: -1;
 
   .blue {
     width: 866.302px;

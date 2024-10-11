@@ -152,7 +152,7 @@ const paginatorConfig = reactive({
   },
 })
 
-const paginatorInfo = computed(() => $t('table.paginator', {
+const paginatorInfo = computed(() => $t('Showing {start}-{end} of {total} profiles,', {
   start: (paginatorConfig.page - 1) * paginatorConfig.rows + 1,
   end: Math.min(paginatorConfig.page * paginatorConfig.rows, paginatorConfig.totalRecords),
   total: paginatorConfig.totalRecords,
@@ -250,37 +250,42 @@ defineExpose({
     </div>
     <div class="rxtable-body">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
-        @row-contextmenu="onRowContextMenu">
+                 @row-contextmenu="onRowContextMenu"
+      >
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
         <template #empty>
           <slot name="table-empty">
             <div class="text-center">
-              {{ $t('table.noData') }}
+              {{ $t('No Data') }}
             </div>
           </slot>
         </template>
         <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="$t(column.title)"
-          :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen">
+                :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
+        >
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <div :style="{ width: `${column.width}px` || 'auto' }" class="rxtable-cell" :class="column.classes"
-                :title="column.getText?.(data) || data[column.key]">
+                   :title="column.getText?.(data) || data[column.key]"
+              >
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
             </slot>
           </template>
         </Column>
         <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen
-          header-style="width: 9rem">
+                header-style="width: 9rem"
+        >
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
                 <actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+                         @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)"
+                />
               </slot>
             </div>
           </template>
@@ -289,12 +294,14 @@ defineExpose({
     </div>
     <div v-if="paginator" class="rxtable-paginator">
       <Paginator template="PrevPageLink PageLinks NextPageLink" :rows="paginatorConfig.rows"
-        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+                 :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage"
+      >
         <template #start>
           <div class="flex flex-1 items-center rxtable-paginator-jump">
             <div>{{ paginatorInfo }}</div>
             <Select v-model="paginatorConfig.rows" :options="paginatorConfig.rowsPerPageOptions"
-              @change="paginatorConfig.onRowsChange" />
+                    @change="paginatorConfig.onRowsChange"
+            />
             <div>profiles/page</div>
             <div>Go to</div>
             <InputNumber class="rxtable-paginator-jump-input" />
@@ -306,8 +313,9 @@ defineExpose({
   </div>
   <Transition>
     <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-      v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-      @batch-operation="batchOperation">
+                        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
+                        @batch-operation="batchOperation"
+    >
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
       </template>

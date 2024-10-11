@@ -62,14 +62,14 @@ function handleDeleteConfirm() {
     return (
       <div class={styles['delete-confirm']}>
         <div class={styles['delete-confirm-title']}>
-          Are you sure to delete the Workspace?
+          {$t('Are you sure to delete the Workspace?')}
         </div>
         <div class={styles['delete-confirm-content']}>
-          This action can’t be undo, To confirm, type "
-          <b>{currentWorkspace.value?.workspaceName}</b>
-          " in the box below.
+          {$t('This action can’t be undo, To confirm, type {workspaceName} in the box below.', {
+            workspaceName: <b class="mx-1">{currentWorkspace.value?.workspaceName}</b>,
+          })}
         </div>
-        <InputText v-model={workspaceName.value} class="w-full" placeholder="Workspace name" />
+        <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />
         <div class="w-full flex justify-end gap-2">
           <RyButton outlined label="Cancel" onClick={() => dialogRef.value.close()} />
           <RyButton severity="danger" label="Delete Workspace" onClick={confirmDelete} />
@@ -100,10 +100,10 @@ function leaveWorkspace() {
   confirm.require({
     group: 'deleteConfirmDialog',
     class: 'w-[450px]',
-    message: 'This action can’t be undone, your related profiles can’t not be reach after leaving workspace.',
-    header: 'Are you sure to leave the Workspace? ',
+    message: $t('This action can’t be undone, your related profiles can’t not be reach after leaving workspace.'),
+    header: $t('Are you sure to leave the Workspace? '),
     acceptProps: {
-      label: $t('workspace.leaveWorkspace'),
+      label: $t('Leave Workspace'),
     },
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
@@ -125,16 +125,16 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            {{ $t('workspace.workspaceIcon') }}
+            {{ $t('Workspace icon') }}
           </div>
           <div class="description">
-            {{ $t('workspace.workspaceIconDescription') }}
+            {{ $t('Default icon show first 2 letters of your workspace’s name. ') }}
           </div>
         </div>
         <div class="emoji-picker-box">
           <RxEmojiPicker v-model="workspaceInfo.workspacePicture" />
           <div class="choose-icon-desc">
-            {{ $t('workspace.chooseIcon') }}
+            {{ $t('Choose icon') }}
           </div>
         </div>
       </div>
@@ -142,10 +142,10 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            {{ $t('workspace.workspaceName') }}
+            {{ $t('Workspace name') }}
           </div>
           <div class="description">
-            {{ $t('workspace.workspaceNameDescription') }}
+            {{ $t('First 3 letters of your workspace name will be the prefix of all profiles’ ID ') }}
           </div>
         </div>
         <div class="w-full">
@@ -166,12 +166,12 @@ function leaveWorkspace() {
       <template v-if="isOwner">
         <RyButton severity="secondary" @click="showMoreActions">
           <RxSvgIcon name="base/rx_ic_more-h" />
-          {{ $t('common.more') }}
+          {{ $t('More') }}
         </RyButton>
-        <RyButton :label="$t('common.saveChanges')" @click="handleSaveChange" />
+        <RyButton :label="$t('Save Changes')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
-        <RyButton :label="$t('workspace.leaveWorkspace')" severity="danger" @click="leaveWorkspace" />
+        <RyButton :label="$t('Save Changes')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>
@@ -180,7 +180,7 @@ function leaveWorkspace() {
     <div class="action-list">
       <div class="action-item danger" @click="handleDeleteConfirm">
         <RxSvgIcon name="base/rx_ic_bin_1" />
-        {{ $t('workspace.deleteWorkspace') }}
+        {{ $t('Delete Workspace') }}
       </div>
     </div>
   </Popover>

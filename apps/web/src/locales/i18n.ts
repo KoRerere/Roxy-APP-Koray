@@ -1,6 +1,7 @@
 import type { Locale } from 'vue-i18n'
 import { type App, unref } from 'vue'
 import { createI18n } from 'vue-i18n'
+import { $t } from '/@/locales'
 import type {
   ImportLocaleFn,
   LoadMessageFn,

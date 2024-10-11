@@ -6,42 +6,42 @@ export function getFormSchemas(isRegister = false) {
     {
       field: 'user_name',
       component: 'InputText',
-      label: () => $t('login.email'),
+      label: () => $t('Email'),
       componentProps: {
-        placeholder: () => $t('login.email'),
+        placeholder: () => $t('Email'),
       },
       rule: {
         trigger: 'change',
         validator(zod) {
-          const z = zod.string().min(1, $t('login.emailRequired'))
+          const z = zod.string().min(1, $t('Email is required'))
           if (isRegister) {
-            return z.email('Invalid email address')
+            return z.email($t('Invalid email address'))
           }
-          return z.min(1, $t('login.emailRequired'))
+          return z.min(1, $t('Email is required'))
         },
       },
     },
     {
       field: 'password',
       component: 'Password',
-      label: () => $t('login.password'),
+      label: () => $t('Password'),
       componentProps: {
         feedback: false,
         toggleMask: true,
-        placeholder: () => $t('login.password'),
+        placeholder: () => $t('Sign in password'),
       },
       rule: {
         validator(zod) {
           const z = zod.string()
-            .min(1, $t('login.passwordRequired'))
-            .min(6, $t('login.passwordMinLength'))
-            .max(20, $t('login.passwordMaxLength'))
+            .min(1, $t('Password is required'))
+            .min(6, $t('Password must be at least 6 characters'))
+            .max(20, $t('Password must be at most 20 characters'))
 
           if (isRegister) {
             return z.refine((val) => {
               return /[a-z]/i.test(val) && /\d/.test(val)
             }, {
-              message: 'Password must contain at least one letter and one number',
+              message: $t('Password must contain at least one letter and one number'),
             })
           }
           return z

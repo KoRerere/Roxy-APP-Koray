@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { flattenObject } from 'es-toolkit'
 import { computed, ref } from 'vue'
 import AddDialog from './add-dialog.vue'
 import { ISO639, sourceLangKey } from './ISO-639'
@@ -7,7 +6,6 @@ import { ISO639, sourceLangKey } from './ISO-639'
 const emit = defineEmits(['langListChange'])
 
 const activeLang = ref(sourceLangKey)
-const sourceLang = ref<Record<string, string>>({})
 const langList = ref<Record<string, any>[]>([])
 
 const translateTabs = ref([
@@ -33,37 +31,38 @@ function handleCurrentChange(val) {
 }
 
 fetch('./api/getLangs').then(res => res.json()).then((data) => {
-  console.log(data)
+  console.log('/api/getLangs', data)
   const result = data
-    .map((item) => {
-      if (item.fileName === sourceLangKey) {
-        sourceLang.value = flattenObject(item.body)
-      }
-      return [item.fileName, flattenObject(item.body)]
-    })
-    .reduce((acc, [fileName, body]) => {
-      const { translated = [], untranslated = [] } = Object.groupBy(Object.keys(sourceLang.value), (key) => {
-        return body[key] ? 'translated' : 'untranslated'
+    // .map((item) => {
+    //   return [item.fileName, item.body]
+    // })
+    .reduce((acc, item) => {
+      const { translated = [], untranslated = [] } = Object.groupBy(Object.entries<string>(item.body), ([key, value]) => {
+        return value ? 'translated' : 'untranslated'
       })
 
+      const { fileName } = item
       const langItem = ISO639.find(n => n.code === fileName)
 
       acc.push({
         ISO639: langItem,
         fileName,
-        translated: translated.map((sourceKey) => {
+        translated: translated.map(([key, value]) => {
           return {
-            sourceKey,
-            sourceValue: sourceLang.value[sourceKey],
-            targetValue: body[sourceKey],
-            targetKey: fileName,
+            key,
+            value,
+            fileName,
+            sourceLang: sourceLangKey,
+            targetLang: fileName,
           }
         }),
-        untranslated: untranslated.map((sourceKey) => {
+        untranslated: untranslated.map(([key, value]) => {
           return {
-            sourceKey,
-            sourceValue: sourceLang.value[sourceKey],
-            targetKey: fileName,
+            key,
+            value,
+            fileName,
+            sourceLang: sourceLangKey,
+            targetLang: fileName,
           }
         }),
         label: `${langItem?.icon}${langItem?.lang}(${fileName})`,
@@ -72,8 +71,8 @@ fetch('./api/getLangs').then(res => res.json()).then((data) => {
           if (isSourceLang) {
             return 100
           }
-          const translatedLength = Object.keys(langList.value.find(n => n.fileName === fileName)?.translated).length
-          return Math.ceil(translatedLength / Object.keys(sourceLang.value).length * 100)
+          const { translated = [], untranslated = [] } = langList.value.find(n => n.fileName === fileName)!
+          return Math.ceil(translated?.length / untranslated.length * 100)
         }),
       })
       return acc
@@ -90,13 +89,13 @@ fetch('./api/getLangs').then(res => res.json()).then((data) => {
     return a.progress - b.progress
   })
   emit('langListChange', langList.value)
-  console.log(langList.value)
+  console.log('langList', langList.value)
 })
 
 function handleSave() {
-  console.log('targetValue changed: ', currentRow.value.targetValue)
-  const currentLangMap = langList.value.find(n => n.fileName === currentRow.value.targetKey)!
-  const untranslatedIndex = currentLangMap.untranslated?.findIndex(item => item.sourceKey === currentRow.value.sourceKey)
+  console.log('targetValue changed: ', currentRow.value.value)
+  const currentLangMap = langList.value.find(n => n.fileName === currentRow.value.fileName)!
+  const untranslatedIndex = currentLangMap.untranslated?.findIndex(item => item.key === currentRow.value.key)
   if (untranslatedIndex > -1) {
     currentLangMap.untranslated.splice(untranslatedIndex, 1)
     currentLangMap.translated.unshift({
@@ -112,14 +111,10 @@ function handleSave() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      fileName: currentRow.value.targetKey,
-      key: currentRow.value.sourceKey,
-      value: currentRow.value.targetValue,
-    }),
+    body: JSON.stringify(currentRow.value),
   })
-  if (currentRow.value.targetKey === sourceLangKey) {
-    currentRow.value.sourceValue = currentRow.value.targetValue
+  if (currentRow.value.fileName === sourceLangKey) {
+    currentRow.value.key = currentRow.value.value
   }
 }
 
@@ -160,11 +155,10 @@ defineExpose({
                 @current-change="handleCurrentChange"
               >
                 <el-table-column type="index" width="50" />
-                <el-table-column property="sourceKey" label="key" />
-                <el-table-column property="sourceValue" label="源语言" />
-                <el-table-column property="targetValue" :label="langItem.ISO639.lang">
+                <el-table-column property="key" :label="`源语言(${sourceLangKey})`" />
+                <el-table-column property="value" :label="langItem.ISO639.lang">
                   <template #default="{ row }">
-                    {{ row.targetValue }}
+                    {{ row.value }}
                     <el-tag v-if="row.isNew" type="success">
                       新
                     </el-tag>

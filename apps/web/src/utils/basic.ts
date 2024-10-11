@@ -93,9 +93,15 @@ export function getRandomInt(min: number, max: number) {
 }
 
 export function copyText(text: string) {
-  navigator.clipboard.writeText(text).then(() => {
-    // console.log('Copied to clipboard:', text)
-  })
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text)
+  }
+  const input = document.createElement('input')
+  input.value = text
+  document.body.appendChild(input)
+  input.select()
+  document.execCommand('copy')
+  document.body.removeChild(input)
 }
 
 export function getUserAgentOs() {
