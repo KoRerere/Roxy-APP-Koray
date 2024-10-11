@@ -2,6 +2,7 @@
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
+import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 
@@ -22,7 +23,7 @@ async function handleSubmit() {
     })
 
     if (code === 0) {
-      toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
+      toast.add({ severity: 'success', summary: $t('The email was sent successfully, please check it carefully!'), life: 5000 })
       currentStep.value = 'step2'
     }
     else {
@@ -31,11 +32,11 @@ async function handleSubmit() {
   }
   else if (currentStep.value === 'step3') {
     if (newPassword.value !== reNewPassword.value) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'The two passwords are inconsistent', life: 5000 })
+      toast.add({ severity: 'error', summary: 'Error', detail: $t('The two passwords are inconsistent'), life: 5000 })
       return
     }
     if (newPassword.value.length < 6) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Password must be at least 6 characters', life: 5000 })
+      toast.add({ severity: 'error', summary: 'Error', detail: $t('Password must be at least 6 characters'), life: 5000 })
       return
     }
 
@@ -45,7 +46,7 @@ async function handleSubmit() {
       ver_code: emailCode.value,
     })
     if (code === 0) {
-      toast.add({ severity: 'success', summary: 'Success', detail: 'Password reset successfully', life: 5000 })
+      toast.add({ severity: 'success', summary: 'Success', detail: $t('Password reset successfully'), life: 5000 })
       setSignFormData({ user_name: email.value, password: newPassword.value })
       setCurrentComponent('signForm')
     }

@@ -2,6 +2,7 @@
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
+import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { getFormSchemas } from './schemas'
 
@@ -31,7 +32,7 @@ async function handleSubmit() {
   if (isRegister.value) {
     const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: formData.user_name })
     if (code === 0) {
-      toast.add({ severity: 'success', summary: '邮件发送成功，请注意查收！', life: 5000 })
+      toast.add({ severity: 'success', summary: $t('The email was sent successfully, please check it carefully!'), life: 5000 })
       setCurrentComponent('emailCodeInputOtp')
     }
     else {
@@ -68,7 +69,7 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <ry-button type="button" class="w-full" label="Search" @click="handleSubmit">
+    <ry-button type="button" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('Sign up') : $t('Sign in') }}
     </ry-button>
     <div class="divider">

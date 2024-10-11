@@ -88,7 +88,7 @@ const config: UserConfig = {
   plugins: [
     vue(),
     vueJsx(),
-    extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'de', 'es', 'ja'] }),
+    extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
     LanguageLocalization({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs') }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),

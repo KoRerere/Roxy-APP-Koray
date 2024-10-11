@@ -51,7 +51,7 @@ function handleDeleteConfirm() {
       if (code === 0) {
         workspaceStore.getWorkspaceList()
         dialogRef.value.close()
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace deleted successfully', life: 3000 })
+        toast.add({ severity: 'success', summary: 'Success', detail: $t('Workspace deleted successfully'), life: 3000 })
         electronAPI.send('util:removeWorkspace', workspaceId)
       }
       else {
@@ -71,8 +71,8 @@ function handleDeleteConfirm() {
         </div>
         <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />
         <div class="w-full flex justify-end gap-2">
-          <RyButton outlined label="Cancel" onClick={() => dialogRef.value.close()} />
-          <RyButton severity="danger" label="Delete Workspace" onClick={confirmDelete} />
+          <RyButton outlined label={$t('Cancel')} onClick={() => dialogRef.value.close()} />
+          <RyButton severity="danger" label={$t('Delete Workspace')} onClick={confirmDelete} />
         </div>
       </div>
     )
@@ -89,7 +89,7 @@ async function handleSaveChange() {
   const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
   if (code === 0) {
     workspaceStore.getWorkspaceList()
-    toast.add({ severity: 'success', summary: 'Success', detail: 'Workspace updated successfully', life: 3000 })
+    toast.add({ severity: 'success', summary: 'Success', detail: $t('Workspace updated successfully'), life: 3000 })
   }
   else {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })

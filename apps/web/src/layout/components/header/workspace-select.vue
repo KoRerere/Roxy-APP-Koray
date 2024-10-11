@@ -6,6 +6,7 @@ import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { roleLabelMap } from '/@/enums/'
 import { useFormDialog } from '/@/hooks/useFormDialog'
+import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 const workspaceStore = useWorkspaceStore()
@@ -19,15 +20,15 @@ const formSchemas = defineFormSchema([
     component: 'InputText',
     label: 'Name',
     componentProps: {
-      placeholder: 'Please enter your workspace name',
+      placeholder: $t('Please enter your workspace name'),
     },
     rule: {
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, 'Workspace name is required')
-          .min(2, 'Workspace name must be at least 2 characters long')
-          .max(30, 'Workspace name must be less than 30 characters')
+          .min(1, $t('Workspace name is required'))
+          .min(2, $t('Workspace name must be at least 2 characters long'))
+          .max(30, $t('Workspace name must be less than 30 characters'))
       },
     },
   },
@@ -40,7 +41,7 @@ const formSchemas = defineFormSchema([
 
 function showCreateWorkspaceDialog() {
   dialog.showModal({
-    header: 'Create new workspace',
+    header: $t('Create new workspace'),
     class: 'w-[500px]',
     schemas: formSchemas,
     async handleOk(formModel) {
@@ -65,7 +66,7 @@ onBeforeMount(() => {
 
 <template>
   <div v-if="currentWorkspace" class="workspace">
-    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" placeholder="Select a Country"
+    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name"
             class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
     >
       <template #value="slotProps">
@@ -84,7 +85,7 @@ onBeforeMount(() => {
       <template #footer>
         <div class="select-footer" @click="showCreateWorkspaceDialog">
           <RxSvgIcon name="base/rx_ic_plus" />
-          <span>Create new workspace</span>
+          <span>{{ $t('Create new workspace') }}</span>
         </div>
       </template>
     </Select>
