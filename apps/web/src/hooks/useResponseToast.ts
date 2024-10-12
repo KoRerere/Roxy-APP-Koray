@@ -3,7 +3,7 @@ import { useToast } from 'primevue/usetoast'
 export function useResponseToast() {
   const toast = useToast()
 
-  function showToast(code: number, message: string, life: number) {
+  function showToast(code: number, message: string, life: number = 3000) {
     if (code === 0) {
       toast.add({ severity: 'success', summary: '成功', detail: message, life })
     }

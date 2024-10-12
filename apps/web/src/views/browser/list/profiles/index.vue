@@ -11,6 +11,7 @@ import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import columnsRow from './columns'
@@ -181,10 +182,16 @@ async function operationHandler(operate: any, data: any) {
       drawer.data = data
       drawer.type = 'editCookies'
       break
-    case 'delete':
-      warnPopup('确定要删除所选窗口？')
-        .then(() => batchModifyWindow({ ids, isDelete: true }))
+    case 'delete': {
+      if (datas.some((item: any) => item.openStatus)) {
+        toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
+      }
+      else {
+        warnPopup('确定要删除所选窗口？')
+          .then(() => batchModifyWindow({ ids, isDelete: true }))
+      }
       break
+    }
   }
 }
 

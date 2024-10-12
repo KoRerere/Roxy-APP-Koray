@@ -3,6 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
@@ -12,6 +13,7 @@ import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
 const toast = useToast()
+const { currentWorkspace } = useWorkspaceStore()
 
 const tabs = ref([
   { title: '单个创建', value: 'single' },
@@ -127,7 +129,7 @@ async function importProfile(params: any) {
   }
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, fingerCount)
-  await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail })
+  await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
   router.replace({ name: 'browser-list' })
 }
 

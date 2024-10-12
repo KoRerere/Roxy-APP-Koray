@@ -35,14 +35,16 @@ function save() {
 
 <template>
   <div class="flex items-center flex-col w-50% mx-auto">
-    <ProxiesForm :inputs="formInputs" />
-    <div class="flex flex-1 items-end justify-between w-full">
+    <div class="flex-1 overflow-y-auto">
+      <ProxiesForm :inputs="formInputs" />
+    </div>
+    <div class="flex justify-between w-full">
       <div class="flex items-center gap-3">
         <RyButton size="small" severity="secondary" label="Test proxies" icon="base/rx_ic_speed_test"
           @click="testProxy" />
         <RemarkIcon class="remark" :value="remark" :on-confirm="addRemark" />
       </div>
-      <div class="flex gap-3">
+      <div class="flex gap-3 py-4">
         <RyButton text size="small" severity="secondary" label="Cancel" @click="$emit('cancel')" />
         <RyButton size="small" severity="info" label="Save proxies" @click="save" />
       </div>

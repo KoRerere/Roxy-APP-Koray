@@ -59,6 +59,9 @@ async function getMessageList() {
 }
 
 async function onRead(item: Message | Message[]) {
+  if (!Array.isArray(item) && item.status === NotifyStatus.read)
+    return
+
   const items = ([] as Message[]).concat(item)
   const ids = items.map(item => item.id)
   await API.base.userReadNotifyCreate({ ids })
