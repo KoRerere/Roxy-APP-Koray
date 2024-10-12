@@ -125,7 +125,6 @@ export class BrowserItem {
       destPath: url,
     }))
 
-    // build pages
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     try {
       await filesToZip(needSyncFiles, outputZipPath)

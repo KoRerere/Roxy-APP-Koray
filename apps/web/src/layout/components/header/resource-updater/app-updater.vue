@@ -52,15 +52,17 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
               </div>
               <span class="release-time">{{ item.releaseTime }}</span>
             </div>
-            <rich-text :html="item.upgradeContent" />
-            <Button
-              type="button"
-              :label="formatClientBtnLabel(item)"
-              icon="pi pi-download"
-              :loading="item.status === 'downloading'"
-              class="mt-[6px]"
-              @click="handleClientItemClick(item)"
-            />
+            <div class="pl-[60px]">
+              <rich-text :html="item.upgradeContent" />
+              <Button
+                type="button"
+                :label="formatClientBtnLabel(item)"
+                icon="pi pi-download"
+                :loading="item.status === 'downloading'"
+                class="mt-[6px]"
+                @click="handleClientItemClick(item)"
+              />
+            </div>
           </div>
         </div>
       </template>

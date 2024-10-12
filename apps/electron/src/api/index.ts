@@ -17,9 +17,13 @@ const commonRequestHeaders = {
 httpClient.instance.interceptors.request.use((config) => {
   if (import.meta.env.DEV) {
     console.log('store.token', store.token)
+    console.log('store.workspaceId', store.workspaceId)
   }
   config.headers.token = store.token
-  Object.assign(config.headers, commonRequestHeaders)
+  Object.assign(config.headers, {
+    ...commonRequestHeaders,
+    workspaceId: store.workspaceId,
+  })
   return config
 })
 

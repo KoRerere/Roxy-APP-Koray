@@ -45,6 +45,7 @@ const _aliOSS = new class AliOSS {
       bucket: data.bucket,
       stsToken: data.securityToken,
     })
+    console.log('aliOSS init success', data)
     // 避免存在多个定时器
     // clearTimeout(this.#timer)
     // 提前 2 分钟刷新
@@ -78,10 +79,11 @@ const _aliOSS = new class AliOSS {
 
 export const aliOSS = new Proxy({} as OSS & typeof _aliOSS, {
   get(_, key: keyof OSS) {
-    const target = Reflect.has(_aliOSS.store, key) ? _aliOSS.store : _aliOSS
     return async (...args: any[]) => {
       // 每次都重新获取上传凭证
       await _aliOSS.refreshUploadTokenInterval()
+      const target = Reflect.has(_aliOSS.store, key) ? _aliOSS.store : _aliOSS
+
       try {
         return Reflect.apply(target[key], target, args)
       }

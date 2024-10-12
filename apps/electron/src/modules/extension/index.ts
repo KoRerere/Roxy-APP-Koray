@@ -132,6 +132,8 @@ export const extensionManager = new class ExtensionManager {
         aliOSS.put(`${basePath}/${dirName}.zip`, zipBuffer),
         aliOSS.put(`${basePath}/${dirName}${iconExtName}`, pluginIcon),
       ]
+      console.log('upload-plugin promises', `${basePath}/${dirName}.zip`)
+      console.log('upload-plugin promises', `${basePath}/${dirName}${iconExtName}`)
       const [pluginResult, iconResult] = await Promise.all(promises)
       const result: UploadExtensionToOSSResult = {
         pluginRoute: pluginResult.url,
