@@ -25,7 +25,7 @@ const [showMenu] = usePopoverMenu()
 const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
 
 async function openMenu(event: any) {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
   const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
   const value = props.projectId?.toString()
 

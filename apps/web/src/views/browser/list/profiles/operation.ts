@@ -26,7 +26,7 @@ export async function getCustomFilters(params: any = {}) {
   const [{ data: platformList }, { data: labelList }, { data: projectList }] = await Promise.all([
     API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
     API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
-    API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role }),
+    API.limit.userGetProjectInfoByWorkspaceList(),
   ])
 
   const inputs = [
