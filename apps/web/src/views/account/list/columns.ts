@@ -8,6 +8,7 @@ const columnsConfig = {
     {
       title: 'Platform & Password',
       key: 'status',
+      disabledToggle: true,
       slot: 'platform',
     },
     {

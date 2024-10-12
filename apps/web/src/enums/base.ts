@@ -1,6 +1,6 @@
 export enum NotifyModule {
   sys = 'sys', // 系统消息
-  team = 'team', // 团队消息
+  teams = 'teams', // 团队消息
 }
 
 export enum NotifyStatus {

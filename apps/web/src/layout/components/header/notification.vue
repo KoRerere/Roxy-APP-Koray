@@ -41,7 +41,7 @@ async function getMessageList() {
   const [teamsTab, sysTab] = tabs.value
 
   const { teams, sys, teamsRead, sysRead } = data.reduce((acc, item) => {
-    if (item.messageModule === NotifyModule.team) {
+    if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
       acc.teamsRead += item.status
     }
@@ -74,7 +74,7 @@ function markAllAsRead() {
 
 <template>
   <div class="flex justify-center">
-    <ry-button icon="base/rx_ic_mail" outlined size="small" @click="toggle" />
+    <RyButton icon="base/rx_ic_mail" outlined size="small" @click="toggle" />
     <RyPopover ref="pop">
       <div :class="message.wrapper">
         <div :class="message.header">
