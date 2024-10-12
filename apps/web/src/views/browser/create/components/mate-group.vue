@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetLabelInfoListData, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import remarkIcon from '/@/components/remark-icon'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
+import RemarkIcon from '/@/components/remark-icon'
+import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 import type { MetaData } from './type.ts'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
+const [showMenu] = usePopoverMenu()
 const workspaceStore = useWorkspaceStore()
-const [show] = useContextMenu()
 
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
@@ -22,15 +23,19 @@ const metaData = defineModel<MetaData>('modelValue', {
   },
 })
 
-async function selectProject(event: Event) {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ role: workspaceStore.currentWorkspace?.role })
-  const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
+const isOwner = computed(() => workspaceStore.currentWorkspace?.role === Role.OWNER)
 
-  show(event, {
+async function selectProject(event: Event) {
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+  const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
+  const value = metaData.value.projectId?.toString() ?? (!isOwner.value ? operation[0]?.value : undefined)
+
+  showMenu(event, {
     type: 'radio',
+    value,
     operation,
-    onChange: (projectId: string) => {
-      if (!isEmptyValue(projectId)) {
+    onHide: (projectId: string) => {
+      if (!isEmptyValue(projectId) && projectId !== value) {
         metaData.value.projectId = Number(projectId)
         metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || 'No project'
       }
@@ -41,16 +46,22 @@ async function selectProject(event: Event) {
 async function selectTags(event: Event) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: Tag) => ({ label: item.name, value: `${item.id}` }))
+  const value = metaData.value.labelIds.map((item: any) => `${item}`)
 
-  show(event, {
+  showMenu(event, {
     type: 'checkbox',
+    value,
     operation,
-    onChange: (labelIds: string[]) => {
-      if (!isEmptyValue(labelIds)) {
+    onHide: (labelIds: string[]) => {
+      if (!isEq(value, toRaw(labelIds))) {
         metaData.value.labelIds = labelIds.map(Number)
       }
     },
   })
+}
+
+function isEq(oldIds: any, newIds: any) {
+  return oldIds.slice().sort().join(',') === newIds.slice().sort().join(',')
 }
 
 function onConfirm(windowRemark: string) {
@@ -60,10 +71,10 @@ function onConfirm(windowRemark: string) {
 
 <template>
   <div class="flex items-center gap-2">
-    <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
+    <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
       @click="selectProject" />
-    <ryButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
-    <remarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
+    <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
+    <RemarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 

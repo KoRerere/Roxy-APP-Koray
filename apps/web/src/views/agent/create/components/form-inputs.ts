@@ -4,7 +4,12 @@ import { parseProxyUrl } from './hooks'
 
 export function getInputs(data: any = {}) {
   const toast = useToast()
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+
+  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
+    get(target, key) {
+      return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
+    },
+  })
 
   const proxyCategory = data.proxyCategory || data.protocol
 
@@ -51,7 +56,7 @@ export function getInputs(data: any = {}) {
       type: 'radio',
       label: '网络协议',
       name: 'ipType',
-      value: data.ipType || $dict_map.ipType[0].value,
+      value: data.ipType || $dict_map.ipType[0]?.value,
       options: $dict_map.ipType,
       tooltip: 'what can i say',
     },
@@ -62,7 +67,7 @@ export function getInputs(data: any = {}) {
           type: 'select',
           name: 'proxyCategory',
           placeholder: '请选择网络协议',
-          value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0].value : proxyCategory,
+          value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory,
           options: $dict_map.protocol,
           formatValue: (input: any, _inputs: any, formData: any) => {
             Object.assign(formData, { protocol: input.value })

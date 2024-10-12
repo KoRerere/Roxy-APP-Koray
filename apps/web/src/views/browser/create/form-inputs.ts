@@ -85,7 +85,12 @@ export function getInputsGroup(data: any = {}) {
 
   const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
 
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
+    get(target, key) {
+      return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
+    },
+  })
+
   const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, label, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
 
   const osVersion = Object.fromEntries(Object.keys(os_map).map((key: string) => {
