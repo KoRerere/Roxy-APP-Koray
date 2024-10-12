@@ -14,7 +14,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update'])
 
-const [addTag] = useTagsActions()
+const [addTag] = useTagsActions({ toast: false })
 const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
@@ -50,7 +50,11 @@ function isEq(oldIds: any, newIds: any) {
 }
 
 function onAddTag() {
-  addTag()
+  addTag({
+    confirmNext: ({ res }: any) => {
+      emit('update', { labelIds: [res.data.id] })
+    },
+  })
 }
 </script>
 

@@ -8,7 +8,7 @@ import { setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import { parseProxyUrl } from './hooks'
-import parseTextarea from './parse-textarea.vue'
+import ParseTextarea from './parse-textarea.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 const toast = useToast()
@@ -17,9 +17,9 @@ const [checkProxy] = useCheckProxy()
 
 const proxiesText = ref('')
 const dataList: any = ref([])
-const errorList: any = ref([])
 const isDuplicate = ref(true)
 const showMessage = ref(false)
+const filterCount = ref(0)
 
 const columns = ref([
   {
@@ -79,15 +79,10 @@ function parseValue() {
     return
   }
 
-  const errorLine: number[] = []
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
-    .map((url, index) => {
+    .map((url) => {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
-
-      if (!host || !port) {
-        errorLine.push(index + 1)
-      }
 
       return {
         ipType,
@@ -100,7 +95,8 @@ function parseValue() {
         remark,
       }
     })
-  errorList.value = errorLine
+
+  filterCount.value = list.length - dataList.value.length
   showMessage.value = true
 }
 
@@ -198,7 +194,7 @@ function onSave() {
           Proxies information
         </div>
         <div class="information">
-          <parseTextarea v-model="proxiesText" />
+          <ParseTextarea v-model="proxiesText" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center">
               <Checkbox v-model="isDuplicate" input-id="wrap" binary />
@@ -240,16 +236,16 @@ function onSave() {
         </div>
       </div>
       <Message v-if="showMessage" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
-        {{ dataList.length }} proxies are successfully parsed. {{ errorList.length }} proxies has been filtered.
+        {{ dataList.length }} proxies are successfully parsed. {{ filterCount }} proxies has been filtered.
       </Message>
       <div class="flex-ovh-1 items-center justify-center">
-        <ry-table :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
+        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
           :show-table-header="false">
           <template #actions="{ data }">
             <actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
               :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
           </template>
-        </ry-table>
+        </RyTable>
       </div>
     </div>
     <div class="flex justify-between">

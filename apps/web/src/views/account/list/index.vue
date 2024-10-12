@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
@@ -9,6 +10,7 @@ import remarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
+import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
 import accountCreate from '/@/views/account/create'
@@ -21,8 +23,15 @@ const confirm = useConfirm()
 
 const [columns] = useColumns(columnsRow)
 const role = useRoleStore()
+const dialog = useDialog()
 
 const operation = ref([
+  {
+    name: 'remark',
+    label: '备注',
+    icon: 'base/rx_ic_doc_add',
+    power: !role.isViewer,
+  },
   {
     name: 'edit',
     label: '编辑',
@@ -64,6 +73,9 @@ function operationHandler(operate: any, data?: any) {
       drawer.title = '编辑账号'
       drawer.visible = true
       break
+    case 'remark':
+      onRemark(data)
+      break
     case 'delete':
       deletePopup(data)
       break
@@ -80,6 +92,33 @@ function createAccount(formData: UserMdfPlatformInfoCreatePayload) {
 
 function editAccount(formData: UserMdfPlatformInfoCreatePayload) {
   return API.platform.userMdfPlatformInfoCreate(formData)
+}
+
+function onRemark(data: any) {
+  dialog.open(popup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        title: 'Add notes to profile',
+        content: 'Please add notes down below.',
+        inputs: [
+          {
+            type: 'textarea',
+            name: 'platformRemarks',
+            placeholder: 'Your notes here...',
+            value: data.platformRemarks,
+          },
+        ],
+      },
+      onConfirm: async (formData: any) => {
+        addRemark(formData.platformRemarks, data)
+      },
+    },
+  })
 }
 
 async function addRemark(platformRemarks: string, data: any) {

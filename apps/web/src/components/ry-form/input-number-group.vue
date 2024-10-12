@@ -1,10 +1,13 @@
 <script lang="ts" setup>
-defineProps({
+const props = defineProps({
   inputs: {
     type: Array as PropType<any[]>,
     default: () => [],
   },
 })
+
+const base = ['text', 'number']
+const _inputs = computed(() => props.inputs.filter(item => item.separator || base.includes(item.type)))
 
 function parseInput(input: any) {
   const { onblur, oninput } = input
@@ -24,7 +27,7 @@ function parseInput(input: any) {
 
 <template>
   <div class="number-group">
-    <template v-for="(item, index) in inputs" :key="index">
+    <template v-for="(item, index) in _inputs" :key="index">
       <div v-if="!item.separator" class="number-group-item">
         <input v-model="item.value" class="number-group-item-input" type="number" v-bind="parseInput(item)">
         <div class="number-group-item-error">

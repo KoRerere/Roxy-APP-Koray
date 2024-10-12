@@ -1,13 +1,22 @@
 import type { UserAddLabelInfoCreatePayload } from '@roxy/backend-api'
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { isLikeFunction } from '/@/utils'
 import editPopup from '/@/views/browser/list/tags/edit.vue'
 
-export function useTagsActions() {
-  const toast = useToast()
+interface TagActionsOptions {
+  toast?: boolean
+}
+
+const defaultOptions: TagActionsOptions = {
+  toast: true,
+}
+
+export function useTagsActions(options: TagActionsOptions = defaultOptions) {
   const dialog = useDialog()
+
+  const [showToast] = useResponseToast()
 
   function editDialog(props?: any) {
     const { confirmNext, ...data } = props || {}
@@ -21,15 +30,17 @@ export function useTagsActions() {
       data: {
         props: data,
         onConfirm: async (params: UserAddLabelInfoCreatePayload) => {
-          const { code, msg } = data?.id
+          const res = data?.id
             ? await API.window.userMdfLabelInfoCreate({ ...params, id: data.id })
             : await API.window.userAddLabelInfoCreate(params)
 
-          if (code === 0) {
-            isLikeFunction(confirmNext) && confirmNext()
+          if (res.code === 0) {
+            isLikeFunction(confirmNext) && await confirmNext({ params, res })
           }
 
-          toast.add({ severity: code === 0 ? 'success' : 'error', summary: code === 0 ? 'success' : 'error', detail: msg, life: 5000 })
+          if (options.toast || res.code !== 0) {
+            showToast(res.code, res.msg, 5000)
+          }
         },
         onCancel: () => { },
       },

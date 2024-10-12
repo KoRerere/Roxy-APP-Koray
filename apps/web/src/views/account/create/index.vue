@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
-import remarkIcon from '/@/components/remark-icon'
-import ryForm from '/@/components/ry-form'
+import RemarkIcon from '/@/components/remark-icon'
 import { checkCookieFormat, clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
 
 const props = defineProps({
@@ -129,36 +128,32 @@ onMounted(() => {
 
 <template>
   <drawer-content :title="title" v-bind="$attrs" @close="$emit('close')">
-    <ry-form :inputs="formInputs" />
+    <RyForm :inputs="formInputs" />
     <template #footer>
-      <div class="button-group">
-        <remarkIcon class="ma-auto ml-0 button-group-remark" :value="original?.platformRemarks"
-                    :on-confirm="addRemark"
-        />
-        <ry-button v-if="!isEdit && showCreateMore" label="Save & Create more" severity="secondary" outlined
-                   @click="confirm(true)"
-        />
-        <ry-button :label="isEdit ? 'Edit account' : 'Create account'" severity="info" @click="confirm(false)" />
+      <div class="flex flex-1 justify-end gap-3">
+        <RemarkIcon class="remark" :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RyButton v-if="!isEdit && showCreateMore" size="small" label="Save & Create more" severity="secondary" outlined
+          @click="confirm(true)" />
+        <RyButton size="small" :label="isEdit ? 'Edit account' : 'Create account'" severity="info"
+          @click="confirm(false)" />
       </div>
     </template>
   </drawer-content>
 </template>
 
 <style lang="scss" scoped>
-.button-group {
+.remark {
   display: flex;
-  flex: 1;
-  justify-content: flex-end;
-  gap: var(--spacing-xl, 12px);
-
-  &-remark {
-    padding: var(--spacing-md, 6px);
-    border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-    box-shadow:
-      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-  }
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  margin-left: 0;
+  padding: var(--spacing-md, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  box-shadow:
+    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 }
 </style>
