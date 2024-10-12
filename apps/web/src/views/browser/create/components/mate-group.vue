@@ -25,10 +25,14 @@ const metaData = defineModel<MetaData>('modelValue', {
 
 const isOwner = computed(() => workspaceStore.currentWorkspace?.role === Role.OWNER)
 
-async function selectProject(event: Event) {
+async function getProjectOperation() {
   const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
-  const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
-  const value = metaData.value.projectId?.toString() ?? (!isOwner.value ? operation[0]?.value : undefined)
+  return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
+}
+
+async function selectProject(event: Event) {
+  const operation = await getProjectOperation()
+  const value = metaData.value.projectId?.toString()
 
   showMenu(event, {
     type: 'radio',
@@ -67,15 +71,39 @@ function isEq(oldIds: any, newIds: any) {
 function onConfirm(windowRemark: string) {
   metaData.value.windowRemark = windowRemark
 }
+
+onBeforeMount(() => {
+  if (!isOwner.value) {
+    getProjectOperation().then((operation) => {
+      metaData.value.projectId = Number(operation[0].value)
+      metaData.value.projectName = operation[0].label
+    })
+  }
+})
 </script>
 
 <template>
   <div class="flex items-center gap-2">
     <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
       @click="selectProject" />
-    <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
+    <div class="position-relative" :class="{ selected: metaData?.labelIds.length }">
+      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
+    </div>
     <RemarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 
-<style lang="scss"></style>
+<style lang="scss" scoped>
+.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  transform: translate(30%, -30%);
+  background-color: red;
+  border-radius: 50%;
+  z-index: 99;
+}
+</style>
