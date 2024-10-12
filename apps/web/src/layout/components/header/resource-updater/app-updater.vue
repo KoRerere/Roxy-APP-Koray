@@ -52,7 +52,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
               </div>
               <span class="release-time">{{ item.releaseTime }}</span>
             </div>
-            <FeatureContent :feature-title-list="featureTitleList" :updater-item="item">
+            <FeatureContent :feature-title-list="featureTitleList" :updater-item="item" class="feature-content">
               <template #footer>
                 <Button
                   type="button"
@@ -130,6 +130,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     font-weight: 500;
     line-height: normal;
   }
+}
+
+.feature-content {
+  padding-left: 57px;
 }
 
 .client-no-data {

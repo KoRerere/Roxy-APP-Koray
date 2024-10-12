@@ -5,11 +5,15 @@ const props = defineProps<{
   updaterItem: ResourceUpdateMessage
   featureTitleList: any[]
 }>()
+
+const featureList = computed(() => {
+  return props.featureTitleList.filter(m => props.updaterItem.upgradeContent?.[m.key])
+})
 </script>
 
 <template>
   <div class="updater-content">
-    <template v-for="n in featureTitleList.filter(m => updaterItem.upgradeContent[m.key])" :key="n.key">
+    <template v-for="n in featureList" :key="n.key">
       <div class="feature-item">
         <div class="feature-title">
           {{ n.title }}

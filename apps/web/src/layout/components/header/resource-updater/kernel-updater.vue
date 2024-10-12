@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxButton from '/@/components/ry-button'
 import { $t } from '/@/locales'
 import FeatureContent from './feature-content.vue'
 
@@ -8,6 +9,8 @@ const props = defineProps<{
   upgradeList: ResourceUpdateMessage[]
   featureTitleList: any[]
 }>()
+
+const collapsedMap = ref<Recordable<boolean>>({})
 
 function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -34,34 +37,35 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
 }
 
 function handleCollapsed(item: ResourceUpdateMessage) {
-  item.collapsed = !item.collapsed
+  console.log('handleCollapsed', item)
+  collapsedMap.value[item.coreVersion] = !collapsedMap.value[item.coreVersion]
 }
 </script>
 
 <template>
   <div class="kernel-updater">
     <template v-for="item in upgradeList" :key="item.releaseTime">
-      <div class="updater-item">
+      <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion] }">
         <div class="updater-header">
           <div class="updater-header-left">
-            <RxSvgIcon :name="item.collapsed ? 'base/rx_ic_chevron_down' : 'base/rx_ic_chevron_right'" class="cursor-pointer" @click="handleCollapsed(item)" />
-            <img src="/kernel-logo.png" class="w-[32px] h-[32px] mr-[6px]">
+            <RxSvgIcon :name="collapsedMap[item.coreVersion] ? 'base/rx_ic_chevron_down' : 'base/rx_ic_chevron_right'" class="cursor-pointer" @click="handleCollapsed(item)" />
+            <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
             <div class="updater-title">
               {{ item.title }} {{ item.coreVersion }}
             </div>
           </div>
-          <Button
-            type="button"
-            severity="secondary"
+          <RxButton
+            severity="contrast"
+            outlined
             size="small"
             :label="formatKernelBtnLabel(item)"
-            :icon="`pi ${item.status === 'downloaded' ? 'pi-check' : 'pi-download'}`"
+            :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
             :loading="item.status === 'downloading'"
             :disabled="item.status === 'downloaded'"
             @click="handleKernelItemClick(item)"
           />
         </div>
-        <FeatureContent :feature-title-list="featureTitleList" :updater-item="item" class="updater-content" :class="{ collapsed: item.collapsed }" />
+        <FeatureContent :feature-title-list="featureTitleList" :updater-item="item" class="updater-content" />
       </div>
     </template>
   </div>
@@ -70,10 +74,8 @@ function handleCollapsed(item: ResourceUpdateMessage) {
 <style lang="scss" scoped>
 .kernel-updater {
   display: flex;
-  padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-xl, 12px);
 }
 
 .updater-item {
@@ -81,8 +83,18 @@ function handleCollapsed(item: ResourceUpdateMessage) {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-xl, 12px);
-  border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
+  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
+  background: var(--Color-neutrals-0, #fff);
+
+  &.collapsed {
+    gap: var(--spacing-xl, 12px);
+    border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
+    background: var(--Color-blue-100, #e8f5fc);
+
+    .updater-content {
+      max-height: 300px;
+    }
+  }
 }
 
 .updater-header {
@@ -113,9 +125,6 @@ function handleCollapsed(item: ResourceUpdateMessage) {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s;
-
-  &.collapsed {
-    max-height: 300px;
-  }
+  padding-left: 78px;
 }
 </style>
