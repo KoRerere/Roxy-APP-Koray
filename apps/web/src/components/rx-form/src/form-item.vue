@@ -107,7 +107,7 @@ const LabelComponent = computed(() => {
 
 const getPlaceholder = computed(() => {
   const { placeholder } = getComponentProps.value
-  return isFunction(placeholder) ? placeholder() : () => placeholder
+  return isFunction(placeholder) ? placeholder() : placeholder
 })
 
 /**
@@ -144,16 +144,9 @@ onMounted(async () => {
         <component :is="LabelComponent" />
       </label>
       <div class="form-item-control">
-        <component
-          :is="getComponent"
-          v-bind="getComponentProps"
-          :id="compId"
-          v-model="modelValue"
-          :placeholder="getPlaceholder"
-          class="w-full"
-          :class="{ 'p-invalid': errors[schema.field] }"
-          @[triggerEventName]="validateField"
-        />
+        <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue"
+          :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
+          @[triggerEventName]="validateField" />
         <small class="p-error">
           {{ errors[schema.field] }}
         </small>
@@ -166,6 +159,7 @@ onMounted(async () => {
 .form-item-control {
   flex: auto;
 }
+
 label {
   display: flex;
   align-items: center;
@@ -186,6 +180,7 @@ label {
   display: block;
   color: red;
 }
+
 .form-item-row {
   display: flex;
 

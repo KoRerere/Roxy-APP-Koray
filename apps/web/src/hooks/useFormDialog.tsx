@@ -38,7 +38,7 @@ export function useFormDialog() {
 
   async function showModal(props: FormDialogProps) {
     innerProps.value = rewriteProps(props)
-    dialogInstance.showModal({
+    await dialogInstance.showModal({
       ...innerProps.value,
       slots: {
         default: () => {
@@ -57,7 +57,7 @@ export function useFormDialog() {
     formRef,
     showModal,
     hideModal,
-    handleOk: () => innerProps.value.handleOk?.(),
+    handleOk: (formModel: Recordable) => innerProps.value.handleOk?.(formModel),
     handleCancel: () => innerProps.value.handleCancel?.(),
   }
 
