@@ -1,4 +1,5 @@
 import { useToast } from 'primevue/usetoast'
+import { z } from 'zod'
 import { findInputByName, isEmptyValue, setInputValueByFormData } from '/@/utils'
 import { parseProxyUrl } from './hooks'
 
@@ -78,15 +79,27 @@ export function getInputs(data: any = {}) {
           type: 'text',
           name: 'host',
           value: data.host || '',
-          placeholder: '代理主机',
+          placeholder: 'host',
           required: true,
         },
+        { separator: true },
         {
-          type: 'text',
+          type: 'number',
           name: 'port',
           value: data.port || '',
-          placeholder: '代理端口',
+          placeholder: 'port',
           required: true,
+          onblur: () => {
+            // const formData = getFormData(inputs.value)
+            // const result = z.number().min(0).max(65535).safeParse(formData.port)
+            // if (result.error) {
+            //   setInputFieldByInputKey(inputs.value, 'port', 'errorMsg', 'between 0~65535')
+            // }
+            // else {
+            //   port.value = formData.port
+            //   updateApiKeys()
+            // }
+          },
         },
       ],
       tooltip: 'what can i say',

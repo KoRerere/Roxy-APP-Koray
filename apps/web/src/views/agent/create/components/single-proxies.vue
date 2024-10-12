@@ -3,7 +3,7 @@ import RemarkIcon from '/@/components/remark-icon'
 import { getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getInputs } from './form-inputs'
-import proxiesForm from './proxies-form.vue'
+import ProxiesForm from './proxies-form.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 
@@ -35,16 +35,16 @@ function save() {
 
 <template>
   <div class="flex items-center flex-col w-50% mx-auto">
-    <proxiesForm :inputs="formInputs" />
+    <ProxiesForm :inputs="formInputs" />
     <div class="flex flex-1 items-end justify-between w-full">
       <div class="flex items-center gap-3">
-        <ryButton size="small" severity="secondary" label="Test proxies" icon="base/rx_ic_speed_test"
+        <RyButton size="small" severity="secondary" label="Test proxies" icon="base/rx_ic_speed_test"
           @click="testProxy" />
         <RemarkIcon class="remark" :value="remark" :on-confirm="addRemark" />
       </div>
       <div class="flex gap-3">
-        <ryButton text size="small" severity="secondary" label="Cancel" @click="$emit('cancel')" />
-        <ryButton size="small" severity="info" label="Save proxies" @click="save" />
+        <RyButton text size="small" severity="secondary" label="Cancel" @click="$emit('cancel')" />
+        <RyButton size="small" severity="info" label="Save proxies" @click="save" />
       </div>
     </div>
   </div>
