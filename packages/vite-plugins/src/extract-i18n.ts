@@ -21,7 +21,7 @@ export function extractI18n(options: OptionsType): Plugin {
     }, 5000)
   }
 
-  genLangFiles(langFileNames, targetDir)
+  // genLangFiles(langFileNames, targetDir)
 
   return {
     name: '@roxy:vite-plugin-extract-i18n',
