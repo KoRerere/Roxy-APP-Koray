@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const dialogRef = inject<any>('dialogRef')
+const toast = useToast()
 
 const loading = ref(false)
 const _props = ref()
@@ -29,13 +31,8 @@ async function selectExtension(selectType: 'dir' | 'file') {
 }
 
 async function uploadToOSS() {
-  try {
-    const { pluginDir, pluginIcon } = extension.value
-    extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
-  }
-  catch (error) {
-    console.log('uploadToOSS ~ error:', error)
-  }
+  const { pluginDir, pluginIcon } = extension.value
+  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
 }
 
 async function confirm() {
@@ -50,7 +47,7 @@ async function confirm() {
     close()
   }
   catch (error) {
-    console.log('🚀 ~ confirm ~ error:', error)
+    toast.add({ severity: 'error', summary: 'Error', detail: error, life: 5000 })
   }
   finally {
     loading.value = false
@@ -87,10 +84,10 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-4 mt-1">
         <ryButton outlined severity="info" icon="base/rx_ic_export" label="Select a file"
-          @click="selectExtension('dir')" />
+          @click="selectExtension('file')" />
         <span class="upload-or">OR</span>
         <ryButton outlined severity="secondary" icon="base/rx_ic_folder" label="Select a folder"
-          @click="selectExtension('file')" />
+          @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />

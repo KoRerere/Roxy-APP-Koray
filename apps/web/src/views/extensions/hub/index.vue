@@ -125,9 +125,9 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <ryButton v-if="plugin.addStatus" size="small" outlined severity="secondary"
+                <RyButton v-if="plugin.addStatus" size="small" outlined severity="secondary"
                   icon="base/rx_ic_check_line" label="Installed" disabled />
-                <ryButton v-else size="small" outlined severity="secondary" icon="base/rx_ic_download_cloud"
+                <RyButton v-else size="small" outlined severity="secondary" icon="base/rx_ic_download_cloud"
                   label="Install" @click="addSystemPlugin(plugin)" />
               </div>
             </div>

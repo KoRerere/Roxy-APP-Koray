@@ -23,8 +23,7 @@ const categories = ref([
 const columns = [
   {
     title: 'Profile info',
-    key: 'profile',
-    slot: 'profile',
+    key: 'projectName',
   },
 ]
 const dataList = ref()
@@ -56,7 +55,7 @@ async function confirm() {
       installType: Number(installType.value),
       pluginId: _props.value.id,
       projectId: dataList.value.map((item: any) => item.id),
-      installStatus: getInstallStatus(),
+      installStatus: getInstallStatus(), // 跟 projectId 中的顺序对应
     }
     loading.value = true
     await _onConfirm.value?.(params)
@@ -109,18 +108,10 @@ onMounted(() => {
         <label :for="category.value">{{ category.label }}</label>
       </div>
     </div>
-    <div v-show="installType === partialInstall" class="profile-table">
-      <ryTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
+    <div v-show="installType === partialInstall" class="h-60">
+      <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
         :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
-        selection-mode="multiple">
-        <template #profile="{ data }">
-          <div class="profile">
-            <span class="profile-uid">UID-</span>
-            <span>{{ data.id }}</span>
-            <span class="ml-6">{{ data.projectName }}</span>
-          </div>
-        </template>
-      </ryTable>
+        selection-mode="multiple" />
     </div>
     <div>
       <RxSvgIcon name="base/rx_ic_info" />
@@ -150,10 +141,6 @@ onMounted(() => {
     font-weight: 500;
     line-height: normal;
   }
-}
-
-.profile-table {
-  max-height: 240px;
 }
 
 .extension {
@@ -208,11 +195,6 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-lg, 20px);
-
-  &-uid {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
-    font-family: 'JetBrains Mono';
-  }
 }
 
 .footer {
