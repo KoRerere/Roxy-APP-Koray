@@ -20,7 +20,7 @@ function handleShowInviteUserFormDialog() {
 </script>
 
 <template>
-  <div>
+  <div class="flex flex-col h-full w-full">
     <div class="project-header">
       <div class="flex items-center gap-2">
         <RxSvgIcon name="base/rx_ic_stack" />

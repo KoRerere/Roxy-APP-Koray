@@ -85,8 +85,8 @@ async function operationHandler(operate: any, data?: any) {
         formProps: {
           layout: 'vertical',
         },
-        async handleOk(formModel) {
-          const { code, msg } = await API.limit.userMdfProjectInfoCreate(formModel)
+        async handleOk(formModel: any) {
+          const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, ...formModel })
           tableRef.value?.refresh()
           if (code === 0) {
             toast.add({ severity: 'success', summary: '成功', detail: '编辑成功', life: 3000 })
@@ -108,8 +108,8 @@ async function operationHandler(operate: any, data?: any) {
   }
 }
 
-function tableRequest(params: any) {
-  return getProjects(params)
+function tableRequest() {
+  return getProjects()
 }
 
 function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>) {
@@ -154,14 +154,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     <div class="flex justify-between account-header">
       <div>Projects</div>
       <RxButton v-if="role.isOwner || role.isManager" size="small" severity="info" icon="base/rx_ic_plus"
-                label="Add project" @click="operationHandler({ name: 'create' })"
-      />
+        label="Add project" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-                :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
-      >
+        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false">
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -175,8 +173,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
           <RxButton outlined>
             <router-link
               :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
-              class="text-black"
-            >
+              class="text-black">
               Detail
             </router-link>
           </RxButton>
