@@ -2,7 +2,7 @@
 import Network from './network.vue'
 import Notification from './notification.vue'
 import Profile from './profile'
-import ResourceUpdater from './resource-updater.vue'
+import ResourceUpdater from './resource-updater/index.vue'
 import WorkspaceSelect from './workspace-select.vue'
 </script>
 

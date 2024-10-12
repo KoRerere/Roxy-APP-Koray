@@ -86,6 +86,17 @@ export async function writeKeysToFile(fileContent: string, outputFile: string) {
 
 const langFiles = ['zh-CN', 'en', 'de']
 
+function replacer(key, value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    // 对对象的键进行排序
+    return Object.keys(value).sort().reduce((sorted, k) => {
+      sorted[k] = value[k]
+      return sorted
+    }, {})
+  }
+  return value
+}
+
 /**
  * 扫描文件并生成语言文件
  */
@@ -108,6 +119,6 @@ export async function genLangFiles(langFiles: string[] = [], outputDir: string, 
       acc[key] = defaultLang === lang ? key : langFileObj[key] || ''
       return acc
     }, {})
-    await writeKeysToFile(JSON.stringify(newLangFileObj, null, 2), langFilePath) // 将提取的键
+    await writeKeysToFile(JSON.stringify(newLangFileObj, replacer, 2), langFilePath) // 将提取的键
   })
 }

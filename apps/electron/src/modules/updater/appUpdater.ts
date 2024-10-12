@@ -1,7 +1,8 @@
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
 import { MacUpdater, NsisUpdater } from 'electron-updater'
-import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { join } from 'node:path'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
@@ -73,7 +74,7 @@ export const appUpdater = new class AppUpdater {
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
-      // this.#autoUpdater.updateConfigPath = path.join(__dirname, '../dev-app-update.yml')
+      this.#autoUpdater.updateConfigPath = join(__dirname, '../dev-app-update.yml')
     }
 
     this.#autoUpdater.autoInstallOnAppQuit = true
