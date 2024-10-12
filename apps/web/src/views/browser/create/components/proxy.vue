@@ -16,6 +16,8 @@ const [checkProxy, checkResult] = useCheckProxy()
 
 const proxyList = defineModel<any>('modelValue')
 
+const checkIndex = ref()
+
 const drawer = reactive({
   dismissable: false,
   visible: false,
@@ -41,11 +43,14 @@ function deleteProxy(index: number) {
 
 function onConfirm(data: any) {
   if (!isEmptyValue(data)) {
-    proxyList.value = [].concat(data)
+    proxyList.value = [].concat(data).map(({ bindList: _bindList, ...item }: any) => {
+      return toRaw(item)
+    })
   }
 }
 
-async function testProxy(data: any) {
+async function testProxy(data: any, index: number) {
+  checkIndex.value = index
   await checkProxy(toRaw(data))
   Object.assign(data, checkResult)
 }
@@ -109,16 +114,18 @@ function tooltipValue(item: any) {
         </Message>
         <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
           <div class="multiple-region">
-            <RxSvgIcon name="base/rx_ic_earth" :size="16" />
-            <span>{{ item.lastCountry }}/{{ item.lastCity }}</span>
+            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
+              fallback="base/rx_ic_earth" />
+            <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
             <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
           </div>
           <RyTag severity="secondary" class="cursor-pointer" @click="modifyProxyCount(item)">
             <RxSvgIcon name="base/rx_ic_browser" :size="16" />
             <span>{{ item._proxyCount }}</span>
           </RyTag>
-          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" name="base/rx_ic_speed_test"
-            :size="16" @click="testProxy(item)" />
+          <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex === index && checkResult.loading }"
+            :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+            @click="testProxy(item, index)" />
         </RxCard>
       </template>
 
@@ -130,7 +137,7 @@ function tooltipValue(item: any) {
             <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
             <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }"
               :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-              @click="testProxy(item)" />
+              @click="testProxy(item, index)" />
           </div>
           <div class="flex justify-between single-time">
             <span>

@@ -158,8 +158,8 @@ const paginatorInfo = computed(() => $t('Showing {start}-{end} of {total} profil
   total: paginatorConfig.totalRecords,
 }))
 
-function batchOperation(item: any) {
-  props.operationHandler(item, selectionData.value)
+async function batchOperation(item: any) {
+  await props.operationHandler(item, selectionData.value)
   _clearSelection()
 }
 
