@@ -19,12 +19,7 @@ const clientUpdates = ref<ResourceUpdateMessage[]>([
     version: '1.4', // 版本号，我们自己定义的版本号，用来和客户端的比对
     upgradeTitle: 'update available', // 升级标题
     upgradeDesc: 'test-content-1\ntest-content-2\ntest-content-3', // 升级描述
-    upgradeContent: {
-      new_function: '<li>增加xxxx</li><li>增加xxxx</li>',
-      optimize: '<li>We’ve improved the performance of the profiles list rendering</li>',
-      resolve_bug: `<li>We’ve fixed a couple of bugs and RoxyBrowser is now compatible with macOS</li>
-       <li>Various memory leaks were fixed in RoxyBrowser and certain profiles will now render correctly</li>`,
-    }, // 新版升级内容描述
+    upgradeContent: `<p><strong>Improvements</strong></p><ul><li style=\"line-height: 1;\">We’ve improved the performance of the profiles list rendering</li></ul><p style=\"line-height: 1;\"><strong>Bug fixes</strong></p><ul><li style=\"line-height: 1;\">We’ve fixed a couple of bugs and RoxyBrowser is now compatible with macOS</li><li style=\"line-height: 1;\">Various memory leaks were fixed in RoxyBrowser and certain profiles will now render correctly</li></ul>`, // 新版升级内容描述
     releaseTime: '2024-04-16', // 发布时间
     webDomain: 'https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com', // 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港
   },

@@ -33,13 +33,14 @@ export const appUpdater = new class AppUpdater {
       this.init()
     }, this.timeout)
 
+    console.log(`user_get_app_upgrade request`, osConfig)
     const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
 
-    console.log(`AppUpdater init data`, data)
+    console.log(`user_get_app_upgrade result`, data)
 
-    const { downloadUrl, version, upgradeDesc, upgradeTitle, releaseTime } = data
+    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = data
     this.#updateMessageData.originUpgradeData = data
-    this.#updateMessageData.description = upgradeDesc
+    this.#updateMessageData.description = upgradeContent
     this.#updateMessageData.title = upgradeTitle
     this.#updateMessageData.version = version
     this.#updateMessageData.releaseTime = releaseTime

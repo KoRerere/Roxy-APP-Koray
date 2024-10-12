@@ -3,7 +3,6 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxButton from '/@/components/ry-button'
 import { $t } from '/@/locales'
-import FeatureContent from './feature-content.vue'
 
 const props = defineProps<{
   upgradeList: ResourceUpdateMessage[]
