@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import FeatureContent from './feature-content.vue'
 
 const props = defineProps<{
   upgradeList: ResourceUpdateMessage[]
@@ -52,18 +52,15 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
               </div>
               <span class="release-time">{{ item.releaseTime }}</span>
             </div>
-            <FeatureContent :feature-title-list="featureTitleList" :updater-item="item" class="feature-content">
-              <template #footer>
-                <Button
-                  type="button"
-                  :label="formatClientBtnLabel(item)"
-                  icon="pi pi-download"
-                  :loading="item.status === 'downloading'"
-                  class="mt-[6px]"
-                  @click="handleClientItemClick(item)"
-                />
-              </template>
-            </FeatureContent>
+            <rich-text :html="item.upgradeContent" />
+            <Button
+              type="button"
+              :label="formatClientBtnLabel(item)"
+              icon="pi pi-download"
+              :loading="item.status === 'downloading'"
+              class="mt-[6px]"
+              @click="handleClientItemClick(item)"
+            />
           </div>
         </div>
       </template>

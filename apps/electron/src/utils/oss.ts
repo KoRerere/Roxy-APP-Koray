@@ -6,18 +6,18 @@ import { API } from '../api'
 
 const _aliOSS = new class AliOSS {
   store = {} as OSS
-  #timer?: NodeJS.Timeout
-  /** 避免重复请求 */
-  controller: AbortController | null = null
+  // #timer?: NodeJS.Timeout
+  // /** 避免重复请求 */
+  // controller: AbortController | null = null
 
   constructor() {
-    this.refreshUploadTokenInterval()
+    // this.refreshUploadTokenInterval()
   }
 
   /** 用户切换账号之后需要重新 init */
   init() {
     // 定时刷新 OSS 上传凭证
-    this.refreshUploadTokenInterval()
+    // this.refreshUploadTokenInterval()
   }
 
   /**
@@ -25,17 +25,18 @@ const _aliOSS = new class AliOSS {
    */
   async refreshUploadTokenInterval() {
     // 如果上一次请求还没结束，取消上一次请求
-    if (this.controller) {
-      this.controller.abort() // 中止之前的请求
-    }
+    // if (this.controller) {
+    //   this.controller.abort() // 中止之前的请求
+    // }
 
     // 创建一个新的 AbortController 实例
-    this.controller = new AbortController()
-    const { signal } = this.controller
+    // this.controller = new AbortController()
+    // const { signal } = this.controller
 
-    const { data } = await API.base.userGetOssCredentialV2List({ signal }).finally(() => {
-      this.controller = null
-    })
+    const { data } = await API.base.userGetOssCredentialV2List()
+    // .finally(() => {
+    //   this.controller = null
+    // })
 
     this.store = new OSS({
       region: data.region,
@@ -45,12 +46,12 @@ const _aliOSS = new class AliOSS {
       stsToken: data.securityToken,
     })
     // 避免存在多个定时器
-    clearTimeout(this.#timer)
+    // clearTimeout(this.#timer)
     // 提前 2 分钟刷新
-    const timeout = +new Date(data.expiration) - Date.now() - 1000 * 60 * 2
-    this.#timer = setTimeout(() => {
-      this.refreshUploadTokenInterval()
-    }, timeout)
+    // const timeout = +new Date(data.expiration) - Date.now() - 1000 * 60 * 2
+    // this.#timer = setTimeout(() => {
+    //   this.refreshUploadTokenInterval()
+    // }, timeout)
   }
 
   /** 流式下载文件到本地 */
@@ -79,6 +80,8 @@ export const aliOSS = new Proxy({} as OSS & typeof _aliOSS, {
   get(_, key: keyof OSS) {
     const target = Reflect.has(_aliOSS.store, key) ? _aliOSS.store : _aliOSS
     return async (...args: any[]) => {
+      // 每次都重新获取上传凭证
+      await _aliOSS.refreshUploadTokenInterval()
       try {
         return Reflect.apply(target[key], target, args)
       }
