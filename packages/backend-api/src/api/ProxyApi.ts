@@ -45,7 +45,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserGetProxyModuleList
    * @summary 代理IP列表
    * @request GET:/user_get_proxy_module
-   * @response `200` `UserGetProxyModuleListData`
+   * @response `200` `UserGetProxyModuleListData` 成功
    */
   userGetProxyModuleList = (query: UserGetProxyModuleListParams, params: RequestParams = {}) =>
     this.http.request<UserGetProxyModuleListData, any>({
@@ -62,7 +62,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserAddProxyModuleCreate
    * @summary 批量导入代理
    * @request POST:/user_add_proxy_module
-   * @response `200` `UserAddProxyModuleCreateData`
+   * @response `200` `UserAddProxyModuleCreateData` 成功
    */
   userAddProxyModuleCreate = (data: UserAddProxyModuleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserAddProxyModuleCreateData, any>({
@@ -80,7 +80,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserMdfProxyModuleCreate
    * @summary 单个代理修改
    * @request POST:/user_mdf_proxy_module
-   * @response `200` `UserMdfProxyModuleCreateData`
+   * @response `200` `UserMdfProxyModuleCreateData` 成功
    */
   userMdfProxyModuleCreate = (data: UserMdfProxyModuleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfProxyModuleCreateData, any>({
@@ -98,7 +98,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserDelProxyModuleCreate
    * @summary 批量删除代理
    * @request POST:/user_del_proxy_module
-   * @response `200` `UserDelProxyModuleCreateData`
+   * @response `200` `UserDelProxyModuleCreateData` 成功
    */
   userDelProxyModuleCreate = (data: UserDelProxyModuleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserDelProxyModuleCreateData, any>({
@@ -116,7 +116,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserUnbindProxyModuleCreate
    * @summary  批量解绑代理
    * @request POST:/user_unbind_proxy_module
-   * @response `200` `UserUnbindProxyModuleCreateData`
+   * @response `200` `UserUnbindProxyModuleCreateData` 成功
    */
   userUnbindProxyModuleCreate = (data: UserUnbindProxyModuleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUnbindProxyModuleCreateData, any>({
@@ -134,7 +134,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @summary 检测单个静态IP
    * @request POST:/user_check_ip
    * @deprecated
-   * @response `200` `UserCheckIpCreateData`
+   * @response `200` `UserCheckIpCreateData` 成功
    */
   userCheckIpCreate = (data: UserCheckIpCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserCheckIpCreateData, any>({
@@ -152,7 +152,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserGetProxyTableSortOrderList
    * @summary 获取代理列表排序规则
    * @request GET:/user_get_proxy_table_sort_order
-   * @response `200` `UserGetProxyTableSortOrderListData`
+   * @response `200` `UserGetProxyTableSortOrderListData` 成功
    */
   userGetProxyTableSortOrderList = (params: RequestParams = {}) =>
     this.http.request<UserGetProxyTableSortOrderListData, any>({
@@ -168,7 +168,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserSaveProxyTableSortOrderCreate
    * @summary 保存代理列表排序规则
    * @request POST:/user_save_proxy_table_sort_order
-   * @response `200` `UserSaveProxyTableSortOrderCreateData`
+   * @response `200` `UserSaveProxyTableSortOrderCreateData` 成功
    */
   userSaveProxyTableSortOrderCreate = (data: UserSaveProxyTableSortOrderCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserSaveProxyTableSortOrderCreateData, any>({
@@ -186,7 +186,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserUpdateProxyTableRowsCreate
    * @summary 修改代理表格列顺序
    * @request POST:/user_update_proxy_table_rows
-   * @response `200` `UserUpdateProxyTableRowsCreateData`
+   * @response `200` `UserUpdateProxyTableRowsCreateData` 成功
    */
   userUpdateProxyTableRowsCreate = (data: UserUpdateProxyTableRowsCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpdateProxyTableRowsCreateData, any>({
@@ -204,7 +204,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @name UserGetProxyTableRowsList
    * @summary 获取代理表格列顺序
    * @request GET:/user_get_proxy_table_rows
-   * @response `200` `UserGetProxyTableRowsListData`
+   * @response `200` `UserGetProxyTableRowsListData` 成功
    */
   userGetProxyTableRowsList = (params: RequestParams = {}) =>
     this.http.request<UserGetProxyTableRowsListData, any>({

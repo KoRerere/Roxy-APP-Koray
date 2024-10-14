@@ -54,9 +54,9 @@ async function getInputs(data: any = {}) {
       required: true,
       editable: true,
       tooltip: 'man!',
-      change(value: any, self: any) {
-        self.invalid = false
-        original.value.platformIcon = value?.image || ''
+      change(input: any) {
+        input.invalid = false
+        original.value.platformIcon = input.value?.image || ''
       },
     },
     {

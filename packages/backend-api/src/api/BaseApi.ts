@@ -30,6 +30,8 @@ import {
   UserChangeEmailCreatePayload,
   UserChangePwdCreateData,
   UserChangePwdCreatePayload,
+  UserChangeUsernameCreateData,
+  UserChangeUsernameCreatePayload,
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
@@ -74,7 +76,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name LoginCreate
    * @summary 登录
    * @request POST:/login
-   * @response `200` `LoginCreateData`
+   * @response `200` `LoginCreateData` 成功
    */
   loginCreate = (data: LoginCreatePayload, params: RequestParams = {}) =>
     this.http.request<LoginCreateData, any>({
@@ -92,7 +94,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name PostBase
    * @summary 注册
    * @request POST:/reg
-   * @response `200` `PostBaseData`
+   * @response `200` `PostBaseData` 成功
    */
   postBase = (data: PostBasePayload, params: RequestParams = {}) =>
     this.http.request<PostBaseData, any>({
@@ -110,7 +112,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name SendEmailForgetVerifyCodeList
    * @summary 找回密码->验证码
    * @request GET:/send_email_forget_verify_code
-   * @response `200` `SendEmailForgetVerifyCodeListData`
+   * @response `200` `SendEmailForgetVerifyCodeListData` 成功
    */
   sendEmailForgetVerifyCodeList = (query: SendEmailForgetVerifyCodeListParams, params: RequestParams = {}) =>
     this.http.request<SendEmailForgetVerifyCodeListData, any>({
@@ -127,7 +129,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name ForgetPasswordCreate
    * @summary 找回密码
    * @request POST:/forget_password
-   * @response `200` `ForgetPasswordCreateData`
+   * @response `200` `ForgetPasswordCreateData` 成功
    */
   forgetPasswordCreate = (data: ForgetPasswordCreatePayload, params: RequestParams = {}) =>
     this.http.request<ForgetPasswordCreateData, any>({
@@ -145,7 +147,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name SendEmailRegisterVerifyCodeList
    * @summary  注册验证码
    * @request GET:/send_email_register_verify_code
-   * @response `200` `SendEmailRegisterVerifyCodeListData`
+   * @response `200` `SendEmailRegisterVerifyCodeListData` 成功
    */
   sendEmailRegisterVerifyCodeList = (query: SendEmailRegisterVerifyCodeListParams, params: RequestParams = {}) =>
     this.http.request<SendEmailRegisterVerifyCodeListData, any>({
@@ -162,7 +164,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangeAccountCreate
    * @summary 修改姓名
    * @request POST:/user_change_account
-   * @response `200` `UserChangeAccountCreateData`
+   * @response `200` `UserChangeAccountCreateData` 成功
    */
   userChangeAccountCreate = (data: UserChangeAccountCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserChangeAccountCreateData, any>({
@@ -180,7 +182,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangePwdCreate
    * @summary 修改密码
    * @request POST:/user_change_pwd
-   * @response `200` `UserChangePwdCreateData`
+   * @response `200` `UserChangePwdCreateData` 成功
    */
   userChangePwdCreate = (data: UserChangePwdCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserChangePwdCreateData, any>({
@@ -198,7 +200,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSendEmailVerifyCodeList
    * @summary 修改邮箱验证码
    * @request GET:/user_send_email_verify_code
-   * @response `200` `UserSendEmailVerifyCodeListData`
+   * @response `200` `UserSendEmailVerifyCodeListData` 成功
    */
   userSendEmailVerifyCodeList = (query: UserSendEmailVerifyCodeListParams, params: RequestParams = {}) =>
     this.http.request<UserSendEmailVerifyCodeListData, any>({
@@ -215,7 +217,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserChangeEmailCreate
    * @summary 修改邮箱
    * @request POST:/user_change_email
-   * @response `200` `UserChangeEmailCreateData`
+   * @response `200` `UserChangeEmailCreateData` 成功
    */
   userChangeEmailCreate = (data: UserChangeEmailCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserChangeEmailCreateData, any>({
@@ -233,7 +235,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserInfoList
    * @summary 用户基本信息
    * @request GET:/user_get_user_info
-   * @response `200` `UserGetUserInfoListData`
+   * @response `200` `UserGetUserInfoListData` 成功
    */
   userGetUserInfoList = (params: RequestParams = {}) =>
     this.http.request<UserGetUserInfoListData, any>({
@@ -249,7 +251,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetAppUpgradeCreate
    * @summary app升版
    * @request POST:/user_get_app_upgrade
-   * @response `200` `UserGetAppUpgradeCreateData`
+   * @response `200` `UserGetAppUpgradeCreateData` 成功
    */
   userGetAppUpgradeCreate = (data: UserGetAppUpgradeCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserGetAppUpgradeCreateData, any>({
@@ -267,7 +269,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetCoreUpgradeCreate
    * @summary core升版
    * @request POST:/user_get_core_upgrade
-   * @response `200` `UserGetCoreUpgradeCreateData`
+   * @response `200` `UserGetCoreUpgradeCreateData` 成功
    */
   userGetCoreUpgradeCreate = (data: UserGetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserGetCoreUpgradeCreateData, any>({
@@ -285,7 +287,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserConfigList
    * @summary 获取软件设置
    * @request GET:/user_get_user_config
-   * @response `200` `UserGetUserConfigListData`
+   * @response `200` `UserGetUserConfigListData` 成功
    */
   userGetUserConfigList = (params: RequestParams = {}) =>
     this.http.request<UserGetUserConfigListData, any>({
@@ -301,7 +303,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetDefConfigList
    * @summary 系统默认配置
    * @request GET:/user_get_def_config
-   * @response `200` `UserGetDefConfigListData`
+   * @response `200` `UserGetDefConfigListData` 成功
    */
   userGetDefConfigList = (params: RequestParams = {}) =>
     this.http.request<UserGetDefConfigListData, any>({
@@ -317,7 +319,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSetUserConfigCreate
    * @summary 保存软件设置
    * @request POST:/user_set_user_config
-   * @response `200` `UserSetUserConfigCreateData`
+   * @response `200` `UserSetUserConfigCreateData` 成功
    */
   userSetUserConfigCreate = (data: UserSetUserConfigCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserSetUserConfigCreateData, any>({
@@ -335,7 +337,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetUserApiList
    * @summary 获取用户api
    * @request GET:/user_get_user_api
-   * @response `200` `UserGetUserApiListData`
+   * @response `200` `UserGetUserApiListData` 成功
    */
   userGetUserApiList = (params: RequestParams = {}) =>
     this.http.request<UserGetUserApiListData, any>({
@@ -351,7 +353,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserSetUserApiCreate
    * @summary 保存用户api
    * @request POST:/user_set_user_api
-   * @response `200` `UserSetUserApiCreateData`
+   * @response `200` `UserSetUserApiCreateData` 成功
    */
   userSetUserApiCreate = (data: UserSetUserApiCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserSetUserApiCreateData, any>({
@@ -369,7 +371,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetDictVersionList
    * @summary 获取字典版本
    * @request GET:/user_get_dict_version
-   * @response `200` `UserGetDictVersionListData`
+   * @response `200` `UserGetDictVersionListData` 成功
    */
   userGetDictVersionList = (params: RequestParams = {}) =>
     this.http.request<UserGetDictVersionListData, any>({
@@ -385,7 +387,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetSystemDictV2Create
    * @summary 获取字典内容V2
    * @request POST:/user_get_system_dict_v2
-   * @response `200` `UserGetSystemDictV2CreateData`
+   * @response `200` `UserGetSystemDictV2CreateData` 成功
    */
   userGetSystemDictV2Create = (data: UserGetSystemDictV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserGetSystemDictV2CreateData, any>({
@@ -403,7 +405,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserMdfTeamInfoCreate
    * @summary 修改团队
    * @request POST:/user_mdf_team_info
-   * @response `200` `UserMdfTeamInfoCreateData`
+   * @response `200` `UserMdfTeamInfoCreateData` 成功
    */
   userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfTeamInfoCreateData, any>({
@@ -421,7 +423,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetAnntListList
    * @summary 用户获取公告【返回最近的5条】
    * @request GET:/user_get_annt_list
-   * @response `200` `UserGetAnntListListData`
+   * @response `200` `UserGetAnntListListData` 成功
    */
   userGetAnntListList = (params: RequestParams = {}) =>
     this.http.request<UserGetAnntListListData, any>({
@@ -437,7 +439,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetNotifyList
    * @summary 获取通知【最近的10条】
    * @request GET:/user_get_notify
-   * @response `200` `UserGetNotifyListData`
+   * @response `200` `UserGetNotifyListData` 成功
    */
   userGetNotifyList = (params: RequestParams = {}) =>
     this.http.request<UserGetNotifyListData, any>({
@@ -453,7 +455,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserReadNotifyCreate
    * @summary 通知已读
    * @request POST:/user_read_notify
-   * @response `200` `UserReadNotifyCreateData`
+   * @response `200` `UserReadNotifyCreateData` 成功
    */
   userReadNotifyCreate = (data: UserReadNotifyCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserReadNotifyCreateData, any>({
@@ -471,7 +473,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetOssCredentialList
    * @summary oss窗口数据同步上传和下载权限获取
    * @request GET:/user_get_oss_credential
-   * @response `200` `UserGetOssCredentialListData`
+   * @response `200` `UserGetOssCredentialListData` 成功
    */
   userGetOssCredentialList = (params: RequestParams = {}) =>
     this.http.request<UserGetOssCredentialListData, any>({
@@ -487,7 +489,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name LoginGoogleCreate
    * @summary 谷歌登录
    * @request POST:/login_google
-   * @response `200` `LoginGoogleCreateData`
+   * @response `200` `LoginGoogleCreateData` 成功
    */
   loginGoogleCreate = (data: LoginGoogleCreatePayload, params: RequestParams = {}) =>
     this.http.request<LoginGoogleCreateData, any>({
@@ -505,7 +507,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name LoginGoogleV2Create
    * @summary 谷歌登录 (新版浏览器使用)
    * @request POST:/login_google_v2
-   * @response `200` `LoginGoogleV2CreateData`
+   * @response `200` `LoginGoogleV2CreateData` 成功
    */
   loginGoogleV2Create = (data: LoginGoogleV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<LoginGoogleV2CreateData, any>({
@@ -523,7 +525,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserGetOssCredentialV2List
    * @summary oss窗口数据同步上传和下载权限获取 (新版本使用)
    * @request GET:/user_get_oss_credential_v2
-   * @response `200` `UserGetOssCredentialV2ListData`
+   * @response `200` `UserGetOssCredentialV2ListData` 成功
    */
   userGetOssCredentialV2List = (params: RequestParams = {}) =>
     this.http.request<UserGetOssCredentialV2ListData, any>({
@@ -539,11 +541,29 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserUploadAvatarCreate
    * @summary 用户上传头像
    * @request POST:/user_upload_avatar
-   * @response `200` `UserUploadAvatarCreateData`
+   * @response `200` `UserUploadAvatarCreateData` 成功
    */
   userUploadAvatarCreate = (data: UserUploadAvatarCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUploadAvatarCreateData, any>({
       path: `/user_upload_avatar`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserChangeUsernameCreate
+   * @summary 修改用户名（新版本用）
+   * @request POST:/user_change_username
+   * @response `200` `UserChangeUsernameCreateData` 成功
+   */
+  userChangeUsernameCreate = (data: UserChangeUsernameCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserChangeUsernameCreateData, any>({
+      path: `/user_change_username`,
       method: "POST",
       body: data,
       type: ContentType.Json,
