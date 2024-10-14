@@ -1,3 +1,5 @@
+import { $t } from '/@/locales'
+
 export enum Role {
   /** 查看者 */
   VIEWER = 0,
@@ -9,12 +11,14 @@ export enum Role {
   OWNER = 3,
 }
 
-export const roleLabelMap = {
-  [Role.VIEWER]: '查看者',
-  [Role.EDITOR]: '编辑者',
-  [Role.MANAGER]: '管理者',
-  [Role.OWNER]: '拥有者',
-} as const
+export function getRoleLabelMap() {
+  return ({
+    [Role.VIEWER]: $t('Viewer'),
+    [Role.EDITOR]: $t('Editor'),
+    [Role.MANAGER]: $t('Manager'),
+    [Role.OWNER]: $t('Owner'),
+  }) as const
+}
 
 export enum Membership {
   notJoined = 0,

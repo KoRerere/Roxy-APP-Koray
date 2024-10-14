@@ -4,11 +4,12 @@ import { API } from '/@/api/'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import { roleLabelMap } from '/@/enums/'
+import { getRoleLabelMap, Role } from '/@/enums/'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
+const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
 const [dialog] = useFormDialog()
@@ -77,7 +78,7 @@ onBeforeMount(() => {
         <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.at(0)" class="!w-[26px] !h-[26px]" />
 
         <div>{{ slotProps.option.workspaceName }}</div>
-        <span class="role-tag">
+        <span v-if="slotProps.option.role !== Role.OWNER" class="role-tag">
           <RxSvgIcon name="base/rx_ic_internet" size="10" />
           {{ roleLabelMap[slotProps.option.role] }}
         </span>
