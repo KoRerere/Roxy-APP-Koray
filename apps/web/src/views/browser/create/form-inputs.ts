@@ -660,10 +660,10 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '设备名称',
       name: 'deviceNameSwitch',
-      value: data.deviceNameSwitch ?? false,
+      value: data.deviceNameSwitch ?? true,
       options: [
-        { label: '随机', value: false },
-        { label: '真实', value: true },
+        { label: '随机', value: true },
+        { label: '真实', value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'deviceName', input.value === false)
