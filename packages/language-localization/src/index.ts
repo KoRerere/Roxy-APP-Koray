@@ -63,8 +63,20 @@ export default (options: OptionsType): PluginOption => {
             if (fileName === 'en') {
               jsonData[value] = value
               delete jsonData[key]
+              // 更新其他语言文件
+              const files = await readdir(targetDir, { withFileTypes: true })
+              const promiseArr = files.map(async (file) => {
+                if (file.isFile() && file.name.endsWith('.json')) {
+                  const data = await readFile(join(targetDir, file.name), 'utf-8')
+                  const json = JSON.parse(data)
+                  json[value] = ''
+                  delete json[key]
+                  await writeFile(join(targetDir, file.name), JSON.stringify(json, replacer, 2))
+                }
+              })
+              await Promise.all(promiseArr)
             }
-            await writeFile(filePath, JSON.stringify(jsonData, null, 2))
+            await writeFile(filePath, JSON.stringify(jsonData, replacer, 2))
             res.end('ok')
           }
           catch (error) {
@@ -92,4 +104,15 @@ export default (options: OptionsType): PluginOption => {
       server.middlewares.use(baseUrl, serveStatic(join(__dirname, '../page'), { index: ['index.html'] }))
     },
   }
+}
+
+function replacer(key, value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    // 对对象的键进行排序
+    return Object.keys(value).sort().reduce((sorted, k) => {
+      sorted[k] = value[k]
+      return sorted
+    }, {})
+  }
+  return value
 }
