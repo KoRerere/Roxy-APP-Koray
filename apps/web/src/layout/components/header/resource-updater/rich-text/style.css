@@ -1,6 +1,15 @@
 .editor-content-view {
 }
-
+p {
+  margin: 0;
+}
+ul {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  align-self: stretch;
+}
 .editor-content-view p,
 .editor-content-view li {
   white-space: pre-wrap; /* 保留空格 */
