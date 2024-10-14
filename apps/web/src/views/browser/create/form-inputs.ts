@@ -70,7 +70,6 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
       Object.assign(fingerDetail[index], formData)
     })
   })
-  console.log('fingerDetail', fingerDetail)
   return fingerDetail
 }
 
@@ -112,6 +111,11 @@ export function getInputsGroup(data: any = {}) {
 
   const inputsGroup: any = []
 
+  const original = reactive({
+    ...getDefaultValue(),
+    ...data,
+  })
+
   const windowInputs = reactive([
     {
       label: '系统选择',
@@ -123,16 +127,15 @@ export function getInputsGroup(data: any = {}) {
           name: 'os',
           value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
-          change(item: any, items: any) {
-            const osVersionInput = items.find(
-              (item: any) => item.name === 'osVersion',
-            )
+          change: async (item: any, items: any) => {
+            const osVersionInput = items.find((item: any) => item.name === 'osVersion')
             if (item.value) {
               const osVersionOptions = osVersion[item.value.value.toLocaleLowerCase()]
               osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
               osVersionInput.disabled = false
-              ceateRandomFinger(inputsGroup)
+              const fingerData = await ceateRandomFinger(inputsGroup)
+              Object.assign(original, fingerData[0])
             }
             else {
               osVersionInput.value = null
@@ -688,10 +691,10 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: 'MAC地址',
       name: 'macInfo',
-      value: data.macInfo ?? false,
+      value: data.macInfo ?? true,
       options: [
-        { label: '真实', value: true },
-        { label: '自定义', value: false },
+        { label: '真实', value: false },
+        { label: '自定义', value: true },
       ],
       change(input: any, inputs: any) {
         const showMacAddr = input.value === false
@@ -997,7 +1000,7 @@ export function getInputsGroup(data: any = {}) {
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])
 
-  return inputsGroup
+  return [inputsGroup, original]
 }
 
 export function getDefaultValue() {

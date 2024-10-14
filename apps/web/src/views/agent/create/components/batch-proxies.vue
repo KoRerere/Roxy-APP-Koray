@@ -86,13 +86,14 @@ function parseValue() {
 
       return {
         ipType,
-        protocol,
+        protocol: protocol?.toLocaleUpperCase(),
         host,
         port,
         proxyUserName,
         proxyPassword,
         refreshUrl,
         remark,
+        _validator: [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1]),
       }
     })
 
@@ -182,6 +183,14 @@ function deleteFailProxy() {
 }
 
 function onSave() {
+  const index = dataList.value.findIndex((item: any) => item._validator.length)
+
+  if (index > -1) {
+    const { _validator } = dataList.value[index]
+    toast.add({ severity: 'error', summary: 'Error', detail: `proxies[${index + 1}] ${_validator[0][0]} missing`, life: 5000 })
+    return
+  }
+
   emit('save', dataList.value)
 }
 </script>
@@ -250,7 +259,7 @@ function onSave() {
     </div>
     <div class="flex justify-between">
       <RyButton severity="secondary" text size="small" label="Cancel" @click="$emit('cancel')" />
-      <RyButton severity="info" size="small" label="Save proxies" @click="onSave" />
+      <RyButton severity="info" size="small" label="Save proxies" :disabled="!dataList?.length" @click="onSave" />
     </div>
   </div>
 </template>

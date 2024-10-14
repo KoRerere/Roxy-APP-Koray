@@ -120,13 +120,12 @@ function addRemark(platformRemarks: string) {
 function onConfirm(more: boolean) {
   try {
     const formData = getFormData(formInputs.value, original.value)
-    console.log('🚀 ~ onConfirm ~ formData:', formData)
 
-    // if (!more) {
-    //   emits('close')
-    // }
-    // clearInputsValue(formInputs.value)
-    // emits('confirm', formData)
+    if (!more) {
+      emits('close')
+    }
+    clearInputsValue(formInputs.value)
+    emits('confirm', formData)
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)

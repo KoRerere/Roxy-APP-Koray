@@ -8,12 +8,16 @@ import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
-import { ceateRandomFinger, getDefaultValue, getInputsGroup } from './form-inputs'
+import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
 const toast = useToast()
 const { currentWorkspace } = useWorkspaceStore()
+
+const isBatch = ref(false)
+const createCount = ref(1)
+createTableContext({ isBatch, createCount })
 
 const tabs = ref([
   { title: '单个创建', value: 'single' },
@@ -21,25 +25,25 @@ const tabs = ref([
   { title: '批量导入', value: 'import' },
 ])
 const tabsValue = ref('single')
-const isBatch = ref(false)
-
 const windowName = ref('Untitled profile')
-const createCount = ref(1)
 const maxWindowCount = ref()
 const fileAnalyzeData = ref()
-createTableContext({ isBatch, createCount })
+const rawMainSetting: any = ref([])
+const mainSetting: any = ref([])
+const extraSetting: any = ref([])
 
-const [windowInputs, basicInputs, highLevelInputs, otherInputs] = getInputsGroup()
-/**
- *批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
- */
-const rawWindowInputs = ref(windowInputs.map((input: any) => deepClone(input)))
-const original = ref(getDefaultValue())
+const original = ref()
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
-    ? [basicInputs, highLevelInputs, otherInputs]
-    : [windowInputs, basicInputs, highLevelInputs, otherInputs]
+    ? [...extraSetting.value]
+    : [...mainSetting.value, ...extraSetting.value]
+})
+
+const previewInputs = computed(() => {
+  return tabsValue.value === 'import'
+    ? [rawMainSetting.value, ...inputsGroup.value]
+    : inputsGroup.value
 })
 
 const accordions = computed(() => {
@@ -50,38 +54,45 @@ const accordions = computed(() => {
   }
 })
 
-const previewInputs = computed(() => {
-  return tabsValue.value === 'import'
-    ? [rawWindowInputs.value, ...inputsGroup.value]
-    : inputsGroup.value
-})
-
 watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'batch'
   if (isBatch.value) {
-    getUserInfo()
+    getUserMaxCount()
   }
-  ceateRandomFinger(previewInputs.value)
+  onUpdateFinger()
 })
 
-async function getUserInfo() {
+function initFormInputs() {
+  const [inputsGroup, _original] = getInputsGroup()
+  const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
+  rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
+  mainSetting.value = [windowInputs]
+  extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
+  original.value = _original
+
+  onUpdateFinger()
+}
+
+function onUpdateFinger() {
+  ceateRandomFinger(previewInputs.value).then((data) => {
+    Object.assign(original.value, data[0])
+  })
+}
+
+async function getUserMaxCount() {
   try {
     const { data } = await API.base.userGetUserInfoList()
     maxWindowCount.value = Math.min(data.maxWindowCount, 100)
   }
   catch (error) {
-    console.log('🚀 ~ getUserInfo ~ error:', error)
+    console.log('🚀 ~ getUserMaxCount ~ error:', error)
   }
 }
 
 function importSuccess(data: any) {
   fileAnalyzeData.value = data
-}
-
-function onShuffle() {
-  ceateRandomFinger(previewInputs.value)
 }
 
 async function createProfile(formData: any, openBrowser: boolean) {
@@ -132,8 +143,8 @@ async function importProfile(params: any) {
   router.replace({ name: 'browser-list' })
 }
 
-onMounted(() => {
-  ceateRandomFinger(inputsGroup.value)
+onBeforeMount(() => {
+  initFormInputs()
 })
 </script>
 
@@ -176,7 +187,7 @@ onMounted(() => {
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>
-    <previewCard :inputs-group="previewInputs" @shuffle="onShuffle" />
+    <previewCard :inputs-group="previewInputs" @shuffle="onUpdateFinger" />
   </div>
 </template>
 
