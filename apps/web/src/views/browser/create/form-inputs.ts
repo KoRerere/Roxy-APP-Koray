@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, getUserAgentOs, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
-import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
+import { getCanvasContextNoiseValue, getClientRectsValue, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -37,7 +37,7 @@ function getMacAddr(params: any) {
 export async function ceateRandomFinger(inupts: any, count: number = 1) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
 
-  const fingerDetail = Array.from({ length: count }, () => {
+  const fingerDetail = await Promise.all(Array.from({ length: count }, async () => {
     return filterFieldByValue({
       mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
       mediaDeviceList: [
@@ -48,7 +48,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
           groupId: '',
         },
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-      font: fontType ? getRandomFonts() : null,
+      font: fontType ? (await electronAPI.send('util:genRandomFonts')).join(';') : null,
       canvasValue: canvas ? getCanvasContextNoiseValue() : null,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : null,
@@ -56,7 +56,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
       speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
       clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
     }, value => value !== null) // 跟随老版本逻辑过滤没有值的属性
-  })
+  }))
 
   await Promise.all([
     getUaWebgl({ os, osVersion, coreVersion, count }),
@@ -65,12 +65,12 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
   ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
     setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
 
-    uaWebgl.forEach((item, index) => {
+    uaWebgl.forEach(async (item, index) => {
       const formData = { ...item, ...deviceName[index], ...macAddr[index] }
       Object.assign(fingerDetail[index], formData)
     })
   })
-
+  console.log('fingerDetail', fingerDetail)
   return fingerDetail
 }
 

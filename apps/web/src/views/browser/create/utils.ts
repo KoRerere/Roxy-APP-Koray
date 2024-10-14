@@ -300,22 +300,6 @@ export function getClientRectsValue() {
   }
 }
 
-/**
- * 生成随机字体
- */
-export function getRandomFonts(number = 20) {
-  const selectedFonts = []
-
-  // 从字体列表中随机选择20个字体
-  for (let i = 0; i < number; i++) {
-    const randomIndex = Math.floor(Math.random() * fontArray.length)
-    selectedFonts.push(fontArray[randomIndex])
-  }
-
-  // 将选择的字体用逗号分隔，保存到字符串 str 中
-  const str = selectedFonts.join(';')
-  return str
-}
 // 获取speechVoices随机值
 // 生成不同的系统中可用的语音列表,语言列表有很多。
 // 以下是随机举例，按照参考list 一般是18-20个。
