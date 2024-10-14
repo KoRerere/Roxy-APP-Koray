@@ -65,7 +65,7 @@ function handleCollapsed(item: ResourceUpdateMessage) {
             @click="handleKernelItemClick(item)"
           />
         </div>
-        <FeatureContent :feature-title-list="featureTitleList" :updater-item="item" class="updater-content" />
+        <rich-text :html="item.upgradeContent" class="updater-content" />
       </div>
     </template>
   </div>
@@ -79,6 +79,7 @@ function handleCollapsed(item: ResourceUpdateMessage) {
 }
 
 .updater-item {
+  width: 100%;
   display: flex;
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
@@ -125,6 +126,6 @@ function handleCollapsed(item: ResourceUpdateMessage) {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s;
-  padding-left: 78px;
+  padding-left: 42px;
 }
 </style>

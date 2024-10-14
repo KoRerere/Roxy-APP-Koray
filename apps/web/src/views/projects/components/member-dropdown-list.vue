@@ -34,12 +34,12 @@ getMembers()
     <span class="text">{{ $t('Members') }}({{ members.length }}) </span> <RxSvgIcon name="base/rx_ic_chevron_down" />
   </div>
 
-  <Popover ref="op">
+  <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">
     <div class="flex flex-col gap-4 w-[20rem]">
       <div>
-        <ul class="list-none p-0 m-0 flex flex-col gap-4">
-          <li v-for="member in members" :key="member.email" class="flex items-center gap-2">
-            <Avatar v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName[0] }" style="width: 32px" shape="circle" />
+        <div class="member-list">
+          <div v-for="member in members" :key="member.email" class="member-item">
+            <Avatar v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName.slice(0, 2) }" style="width: 32px" shape="circle" />
             <div>
               <span class="font-medium">{{ member.userName }}</span>
               <div class="text-sm text-surface-500 dark:text-surface-400">
@@ -49,15 +49,23 @@ getMembers()
             <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm">
               <span>{{ roleLabelMap[member.role] }}</span>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </div>
     <div class="manage-users">
-      {{ $t('Manage Users') }}
+      <RouterLink :to="{ name: 'teams' }">
+        {{ $t('Manage Users') }}
+      </RouterLink>
     </div>
   </Popover>
 </template>
+
+<style lang="scss" module>
+.popper-content {
+  padding: 0 !important;
+}
+</style>
 
 <style lang="scss" scoped>
 .drop-btn {
@@ -78,5 +86,44 @@ getMembers()
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
   }
+}
+
+.manage-users {
+  display: flex;
+  padding: 10px var(--spacing-md, 6px) 10px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  align-self: stretch;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--Colors-Background-bg-body, #fff);
+  color: var(--Colors-Text-text-brand, #12a3fc);
+  text-align: center;
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+}
+
+.member-list {
+  display: flex;
+  padding: var(--spacing-sm, 4px);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-none, 0px);
+  align-self: stretch;
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+}
+
+.member-item {
+  display: flex;
+  padding: 8px var(--spacing-md, 6px) 8px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  align-self: stretch;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--Colors-Background-bg-body, #fff);
 }
 </style>

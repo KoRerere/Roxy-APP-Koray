@@ -1,7 +1,9 @@
 <script setup lang="tsx">
 import data from '@emoji-mart/data'
 import { Picker } from 'emoji-mart'
+import { RxSvgIcon } from '../../rx-icon'
 
+const props = defineProps<{ disabled?: boolean, fallbackText?: string }>()
 const modelValue = defineModel<string>()
 
 const op = useTemplateRef('op')
@@ -14,20 +16,33 @@ function onEmojiSelect(emoji: any) {
 }
 
 async function showEmojiPicker(event: MouseEvent) {
+  if (props.disabled)
+    return
   const emojiInstance = new Picker({ data, onEmojiSelect })
   op.value?.toggle(event)
   await nextTick()
   emojiContainerRef.value?.appendChild(emojiInstance)
   op.value?.alignOverlay()
 }
+
+function handleClose(e: MouseEvent) {
+  e.stopPropagation()
+  modelValue.value = ''
+}
 </script>
 
 <template>
-  <div v-bind="$attrs" class="cursor-pointer" @click="showEmojiPicker">
+  <div v-bind="$attrs" :style="{ cursor: disabled ? 'not-allowed' : '' }" class="rx-emoji-picker" @click="showEmojiPicker">
+    <RxSvgIcon v-if="modelValue && !disabled" name="base/rx_ic_delete" class="close-icon" @click="handleClose" />
     <slot>
       <div class="default-box">
         <div class="emoji-preview">
-          {{ modelValue }}
+          <template v-if="modelValue">
+            {{ modelValue }}
+          </template>
+          <template v-else>
+            {{ fallbackText }}
+          </template>
         </div>
       </div>
     </slot>
@@ -46,6 +61,24 @@ async function showEmojiPicker(event: MouseEvent) {
 </style>
 
 <style lang="scss" scoped>
+.rx-emoji-picker {
+  position: relative;
+  cursor: pointer;
+
+  &:hover {
+    .close-icon {
+      display: block;
+    }
+  }
+}
+.close-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  display: none;
+}
+
 .default-box {
   width: fit-content;
   display: flex;
@@ -73,7 +106,7 @@ async function showEmojiPicker(event: MouseEvent) {
     color: var(--Colors-Text-text-subtle, #c7cdd1);
     text-align: center;
     font-family: 'JetBrains Mono';
-    font-size: 40px;
+    font-size: 34px;
     font-style: normal;
     font-weight: 700;
     line-height: 28px; /* 70% */
