@@ -23,7 +23,7 @@ async function updateAvatar(item: Items) {
 }
 
 async function updateUserName(item: Items) {
-  await API.base.userChangeAccountCreate({ realName: item.value })
+  await API.base.userChangeUsernameCreate({ userName: item.value })
   toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
   updateUserInfo()
 }

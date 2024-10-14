@@ -31,6 +31,8 @@ const isOverload = computed(() => {
   return sum > (createCount?.value || 0)
 })
 
+const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
+
 function toggleDrawer(type: 'create' | 'list') {
   drawer.visible = true
   drawer.type = type
@@ -41,11 +43,24 @@ function deleteProxy(index: number) {
   proxyList.value.splice(index, 1)
 }
 
-function onConfirm(data: any) {
+function addProxy(data: any) {
+  if (isBatch.value) {
+    proxyList.value.push({ ...data, _proxyCount: 1 })
+  }
+  else {
+    proxyList.value = [data]
+  }
+}
+
+function onChoose(data: any) {
   if (!isEmptyValue(data)) {
-    proxyList.value = [].concat(data).map(({ bindList: _bindList, ...item }: any) => {
-      return toRaw(item)
-    })
+    if (isBatch.value) {
+      const addsProxy = proxyList.value.filter((item: any) => !item.id)
+      proxyList.value = addsProxy.concat(data).map(({ bindList: _bindList, ...item }: any) => toRaw(item))
+    }
+    else {
+      proxyList.value = [toRaw(data)]
+    }
   }
 }
 
@@ -151,10 +166,10 @@ function tooltipValue(item: any) {
     <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right"
       class="browser-drawer-content !w-[auto]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <proxyTable v-if="drawer.type === 'list'" :data="proxyList" :is-batch="isBatch" @close="closeCallback"
-          @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <proxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback"
+          @confirm="(data: any) => { onChoose(data); closeCallback() }" />
         <proxyCreate v-if="drawer.type === 'create'" @close="closeCallback"
-          @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+          @confirm="(data: any) => { addProxy(data); closeCallback() }" />
       </template>
     </Drawer>
   </div>

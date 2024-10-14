@@ -102,7 +102,6 @@ async function createProfile(formData: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
-  params.proxyMethod = params.moduleId ? 'choose' : 'custom'// 单个创建时兼容老接口
   const { data } = await API.window.userAddWindowInfoCreate(params)
   router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
 }

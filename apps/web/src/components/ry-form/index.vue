@@ -18,6 +18,10 @@ const _props = defineProps({
 const _inputs: any = computed(() => _props.inputs.filter((input: any) => input.visible !== false))
 
 const baseInput = ['text', 'password', 'number', 'textarea']
+
+function onChange(input: any, inputs: any) {
+  input.change?.(input, inputs)
+}
 </script>
 
 <template>
@@ -28,10 +32,10 @@ const baseInput = ['text', 'password', 'number', 'textarea']
 
         <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value" v-bind="input"
           :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)"
-          @change="() => input.change?.(input, inputs)" />
+          @change="onChange(input, inputs)" />
 
         <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition"
-          @change="() => input.change?.(input.value, input, inputs)" />
+          @change="onChange(input, inputs)" />
       </slot>
     </template>
   </form>

@@ -115,7 +115,7 @@ export function getInputsGroup(data: any = {}) {
   const windowInputs = reactive([
     {
       label: '系统选择',
-      slot: 'System',
+      slot: 'System', // items 特殊实现
       items: [
         {
           type: 'select',
@@ -123,12 +123,12 @@ export function getInputsGroup(data: any = {}) {
           name: 'os',
           value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
-          change(self: any, items: any) {
+          change(item: any, items: any) {
             const osVersionInput = items.find(
               (item: any) => item.name === 'osVersion',
             )
-            if (self.value) {
-              const osVersionOptions = osVersion[self.value.value.toLocaleLowerCase()]
+            if (item.value) {
+              const osVersionOptions = osVersion[item.value.value.toLocaleLowerCase()]
               osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
               osVersionInput.disabled = false
@@ -194,8 +194,8 @@ export function getInputsGroup(data: any = {}) {
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
-        Object.assign(formData, { ...value, moduleId: id })// 赋值给表单，批量创建这些值会无视（以上字段为空则代表删除代理）
-        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => item)).flat()
+        Object.assign(formData, { ...value, moduleId: id, proxyMethod: id ? 'choose' : 'custom' })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
+        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
       },
     },
     {
@@ -227,8 +227,8 @@ export function getInputsGroup(data: any = {}) {
       value: data.cookies,
       icon: 'base/rx_ic_attachment',
       errorMsg: 'cookie格式错误, 请检查格式',
-      formatValue: (self: any) => {
-        return self.value
+      formatValue: (input: any) => {
+        return input.value
       },
       onBlur() {
         const { cookie } = getFormData(windowInputs)
@@ -249,8 +249,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '跟随ip匹配', value: true },
         { label: '自定义', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'language', self.value === false)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'language', input.value === false)
       },
       preview: {
         label: '语言',
@@ -275,8 +275,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '跟随ip匹配', value: true },
         { label: '自定义', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'displayLanguage', self.value === false)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'displayLanguage', input.value === false)
       },
     },
     {
@@ -298,8 +298,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '跟随ip匹配', value: true },
         { label: '自定义', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'timeZone', self.value === false)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'timeZone', input.value === false)
       },
       preview: {
         label: '时区',
@@ -325,16 +325,16 @@ export function getInputsGroup(data: any = {}) {
         { label: '允许', value: 1 },
         { label: '禁用', value: 2 },
       ],
-      change(_v: any, self: any, inputs: any) {
+      change(input: any, inputs: any) {
         const ipt = inputs.find(
           (ipt: any) => ipt.name === 'isPositionBaseIp',
         )
         if (ipt) {
-          const visible = self.value !== 2
+          const visible = input.value !== 2
           ipt.visible = visible
           if (!visible) {
             ipt.value = true
-            ipt.change(ipt.value, ipt, inputs)
+            ipt.change(ipt, inputs)
           }
         }
       },
@@ -352,11 +352,11 @@ export function getInputsGroup(data: any = {}) {
         { label: '自定义', value: false },
       ],
       visible: true,
-      change(_v: any, self: any, inputs: any) {
+      change(input: any, inputs: any) {
         setInputVisible(
           inputs,
           ['longitude', 'latitude', 'precisionPos'],
-          self.value === false,
+          input.value === false,
         )
       },
       preview: {
@@ -447,8 +447,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '跟随电脑', value: false },
         { label: '自定义', value: true },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'resolution', self.value === true)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'resolution', input.value === true)
       },
       preview: {
         label: '分辨率',
@@ -520,11 +520,11 @@ export function getInputsGroup(data: any = {}) {
         { label: '真实', value: true },
         { label: '自定义', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
+      change(input: any, inputs: any) {
         setInputVisible(
           inputs,
           ['webGLManufacturer', 'webGLRender'],
-          self.value === false,
+          input.value === false,
         )
       },
       preview: {
@@ -654,8 +654,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '随机', value: false },
         { label: '真实', value: true },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'deviceName', self.value === false)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'deviceName', input.value === false)
       },
       preview: {
         label: '设备名称',
@@ -682,8 +682,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '真实', value: true },
         { label: '自定义', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        const showMacAddr = self.value === false
+      change(input: any, inputs: any) {
+        const showMacAddr = input.value === false
         setInputVisible(inputs, 'macAddr', showMacAddr)
         if (showMacAddr) {
           setMacAddr(inputsGroup)
@@ -736,8 +736,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'disableSslList', self.value === true)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'disableSslList', input.value === true)
       },
       preview: {
         label: 'SSL指纹设置',
@@ -751,8 +751,8 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.disableSslList[0],
       options: $dict_map.disableSslList,
       visible: true,
-      formatValue: (self: any) => {
-        return [self.value]
+      formatValue: (input: any) => {
+        return [input.value]
       },
     },
     {
@@ -764,8 +764,8 @@ export function getInputsGroup(data: any = {}) {
         { label: '开启', value: true },
         { label: '关闭', value: false },
       ],
-      change(_v: any, self: any, inputs: any) {
-        setInputVisible(inputs, 'portScanList', self.value === true)
+      change(input: any, inputs: any) {
+        setInputVisible(inputs, 'portScanList', input.value === true)
       },
       preview: {
         label: '端口扫描保护',
