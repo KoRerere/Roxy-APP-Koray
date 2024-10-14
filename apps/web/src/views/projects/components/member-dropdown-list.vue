@@ -1,12 +1,19 @@
 <script setup>
 import { ref } from 'vue'
+import { API } from '/@/api'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import { getRoleLabelMap } from '/@/enums/'
 
+const props = defineProps({
+  projectId: {
+    type: Number,
+    required: true,
+  },
+})
+
+const roleLabelMap = getRoleLabelMap()
 const op = ref()
-const members = ref([
-  { name: 'Amy Elsner', image: 'amyelsner.png', email: 'amy@email.com', role: 'Owner' },
-  { name: 'Bernardo Dominic', image: 'bernardodominic.png', email: 'bernardo@email.com', role: 'Editor' },
-  { name: 'Ioni Bowcher', image: 'ionibowcher.png', email: 'ioni@email.com', role: 'Viewer' },
-])
+const members = ref([])
 
 function toggle(event) {
   op.value.toggle(event)
@@ -16,51 +23,107 @@ async function getMembers() {
   const { data } = await API.limit.userGetMemberInfoByProjectIdList({
     projectId: props.projectId,
   })
-  // members.value = data.rows
+  members.value = data.rows
 }
+
+getMembers()
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <Button type="button" icon="pi pi-share-alt" label="Share" @click="toggle" />
+  <div class="drop-btn" @click="toggle">
+    <span class="text">{{ $t('Members') }}({{ members.length }}) </span> <RxSvgIcon name="base/rx_ic_chevron_down" />
+  </div>
 
-    <Popover ref="op">
-      <div class="flex flex-col gap-4 w-[25rem]">
-        <div>
-          <span class="font-medium block mb-2">Share this document</span>
-          <InputGroup>
-            <InputText value="https://primevue.org/12323ff26t2g243g423g234gg52hy25XADXAG3" readonly class="w-[25rem]" />
-            <InputGroupAddon>
-              <i class="pi pi-copy" />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-        <div>
-          <span class="font-medium block mb-2">Invite Member</span>
-          <InputGroup>
-            <InputText disabled />
-            <Button label="Invite" icon="pi pi-users" />
-          </InputGroup>
-        </div>
-        <div>
-          <span class="font-medium block mb-2">Team Members</span>
-          <ul class="list-none p-0 m-0 flex flex-col gap-4">
-            <li v-for="member in members" :key="member.name" class="flex items-center gap-2">
-              <img :src="`https://primefaces.org/cdn/primevue/images/avatar/${member.image}`" style="width: 32px">
-              <div>
-                <span class="font-medium">{{ member.name }}</span>
-                <div class="text-sm text-surface-500 dark:text-surface-400">
-                  {{ member.email }}
-                </div>
+  <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">
+    <div class="flex flex-col gap-4 w-[20rem]">
+      <div>
+        <div class="member-list">
+          <div v-for="member in members" :key="member.email" class="member-item">
+            <Avatar v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName.slice(0, 2) }" style="width: 32px" shape="circle" />
+            <div>
+              <span class="font-medium">{{ member.userName }}</span>
+              <div class="text-sm text-surface-500 dark:text-surface-400">
+                {{ member.email }}
               </div>
-              <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm">
-                <span>{{ member.role }}</span>
-                <i class="pi pi-angle-down" />
-              </div>
-            </li>
-          </ul>
+            </div>
+            <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm">
+              <span>{{ roleLabelMap[member.role] }}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </Popover>
-  </div>
+    </div>
+    <div class="manage-users">
+      <RouterLink :to="{ name: 'teams' }">
+        {{ $t('Manage Users') }}
+      </RouterLink>
+    </div>
+  </Popover>
 </template>
+
+<style lang="scss" module>
+.popper-content {
+  padding: 0 !important;
+}
+</style>
+
+<style lang="scss" scoped>
+.drop-btn {
+  display: flex;
+  min-width: 24px;
+  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm, 4px);
+  cursor: pointer;
+
+  .text {
+    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    text-align: center;
+    font-family: Inter;
+    font-size: var(--Font-Size-text-sm, 12px);
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  }
+}
+
+.manage-users {
+  display: flex;
+  padding: 10px var(--spacing-md, 6px) 10px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  align-self: stretch;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--Colors-Background-bg-body, #fff);
+  color: var(--Colors-Text-text-brand, #12a3fc);
+  text-align: center;
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+}
+
+.member-list {
+  display: flex;
+  padding: var(--spacing-sm, 4px);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-none, 0px);
+  align-self: stretch;
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+}
+
+.member-item {
+  display: flex;
+  padding: 8px var(--spacing-md, 6px) 8px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  align-self: stretch;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--Colors-Background-bg-body, #fff);
+}
+</style>

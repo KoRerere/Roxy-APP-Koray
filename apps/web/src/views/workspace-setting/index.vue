@@ -132,7 +132,7 @@ function leaveWorkspace() {
           </div>
         </div>
         <div class="emoji-picker-box">
-          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" />
+          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
           <div class="choose-icon-desc">
             {{ $t('Choose icon') }}
           </div>
@@ -150,7 +150,7 @@ function leaveWorkspace() {
         </div>
         <div class="w-full">
           <IconField>
-            <InputText v-model="workspaceInfo.workspaceName" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
+            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
             <InputIcon class="input-limit-text">
               {{ workspaceInfo.workspaceName?.length }}/30
             </InputIcon>

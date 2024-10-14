@@ -12,7 +12,7 @@ import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
-import { aliOSS, downloadZipFile, fileExists, getErrorMessage, unzipFile } from '/@/utils'
+import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { getPluginManifestInfo, getPluginMeta } from './helper'
 
 export const extensionManager = new class ExtensionManager {
@@ -114,7 +114,8 @@ export const extensionManager = new class ExtensionManager {
     // 计算并获取哈希值的十六进制表示插件目录名
     const dirName = hash.digest('hex')
 
-    pluginIcon = pluginIcon.replace(`${mediaProtocolName}:///`, '')
+    pluginIcon = pluginIcon.replace(`${mediaProtocolName}:///`, isMac ? '/' : '')
+
     const zip = new AdmZip()
     // 获取目录名
     // const dirName = path.basename(pluginDir);

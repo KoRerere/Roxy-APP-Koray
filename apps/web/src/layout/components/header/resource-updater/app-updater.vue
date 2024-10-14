@@ -50,9 +50,9 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
                 <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
                 <span>{{ item.version }} {{ item.upgradeTitle }} </span>
               </div>
-              <span class="release-time">{{ item.releaseTime }}</span>
+              <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
             </div>
-            <div class="pl-[60px]">
+            <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
               <Button
                 type="button"
@@ -100,6 +100,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
+  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
 }
 
 .upgrade-header {
@@ -119,18 +120,16 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   font-style: normal;
   font-weight: 600;
   line-height: normal;
-
-  .release-time {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
-    text-align: right;
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-  }
 }
-
+.release-time {
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  text-align: right;
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
 .feature-content {
   padding-left: 57px;
 }

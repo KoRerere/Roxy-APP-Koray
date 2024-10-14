@@ -40,7 +40,7 @@ export const appUpdater = new class AppUpdater {
 
     const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = data
     this.#updateMessageData.originUpgradeData = data
-    this.#updateMessageData.description = upgradeContent
+    this.#updateMessageData.upgradeContent = upgradeContent
     this.#updateMessageData.title = upgradeTitle
     this.#updateMessageData.version = version
     this.#updateMessageData.releaseTime = releaseTime

@@ -92,6 +92,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       enableCanvasContextNoise: winInfo.canvas,
       /** 16位 0-9,a-z字符串组合，前两位是数字如：54RGV5FTO1Q7C5NK  */
       canvasContextNoiseValue: winInfo.canvasValue,
+      canvasContextNoiseValueV2: winInfo.canvasValueV2,
     },
     /** 给不同的环境生成不同的ClientRects */
     clientRects: {
