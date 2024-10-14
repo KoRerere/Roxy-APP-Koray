@@ -171,7 +171,7 @@ function leaveWorkspace() {
         <RyButton :label="$t('Save Changes')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
-        <RyButton :label="$t('Save Changes')" severity="danger" @click="leaveWorkspace" />
+        <RyButton :label="$t('Leave workspace')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>
