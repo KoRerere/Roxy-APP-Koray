@@ -92,6 +92,10 @@ function handleCollapsed(item: ResourceUpdateMessage) {
     border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
     background: var(--Color-blue-100, #e8f5fc);
 
+    &:last-of-type {
+      border-bottom: 0;
+    }
+
     .updater-content {
       max-height: 300px;
     }

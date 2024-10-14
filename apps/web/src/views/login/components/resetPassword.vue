@@ -47,7 +47,7 @@ async function handleSubmit() {
     })
     if (code === 0) {
       toast.add({ severity: 'success', summary: 'Success', detail: $t('Password reset successfully'), life: 5000 })
-      setSignFormData({ user_name: email.value, password: newPassword.value })
+      setSignFormData({ user_name: email.value, password: '' })
       setCurrentComponent('signForm')
     }
     else {
