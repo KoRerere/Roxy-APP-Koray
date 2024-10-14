@@ -1,21 +1,40 @@
-<script setup>
-import { ref } from 'vue'
+<script lang="ts" setup>
+async function readLocalCookie() {
+  try {
+    const file = await window.showOpenFilePicker({
+      types: [
+        {
+          description: 'cookies Files',
+          accept: {
+            'application/json': ['.json'],
+          },
+        },
+      ],
+      excludeAcceptAllOption: true,
+      multiple: false,
+    }).then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
 
-const today = new Date()
-const month = today.getMonth()
-const year = today.getFullYear()
-const nextMonth = (month === 11) ? 0 : month + 1
-const nextYear = (nextMonth === 0) ? year + 1 : year
+    const reader = new FileReader()
+    reader.readAsText(file)
+    return new Promise((resolve) => {
+      reader.onload = function fileReadCompleted() {
+        resolve(reader.result)
+      }
+    })
+  }
+  catch (error) {
+    console.log('🚀 ~ readLocalCookie ~ error:', error)
+  }
+}
 
-const date = ref()
-const maxDate = ref(new Date())
-
-// maxDate.value.setMonth(nextMonth)
-// maxDate.value.setFullYear(nextYear)
+async function test() {
+  const xxx = await readLocalCookie()
+  console.log('🚀 ~ test ~ xxx:', xxx)
+}
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <DatePicker v-model="date" :max-date="today" :manual-input="false" />
+  <div class="card flex justify-center" @click="test">
+    test
   </div>
 </template>

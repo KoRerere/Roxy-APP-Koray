@@ -88,6 +88,39 @@ export function checkCookieFormat(cookie: string): boolean {
   return true
 }
 
+export async function readCookiesFile(): Promise<any> {
+  try {
+    const file = await window.showOpenFilePicker({
+      types: [
+        {
+          description: 'cookies Files',
+          accept: {
+            'application/json': ['.json'],
+          },
+        },
+      ],
+      excludeAcceptAllOption: true,
+      multiple: false,
+    }).then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
+
+    const reader = new FileReader()
+    reader.readAsText(file)
+    return new Promise((resolve) => {
+      reader.onload = function fileReadCompleted() {
+        const isOk = reader.result && checkCookieFormat(reader.result as string)
+        resolve({
+          code: isOk ? 0 : 1,
+          data: isOk ? reader.result : null,
+          message: isOk ? '读取成功' : 'cookie格式错误, 请检查格式',
+        })
+      }
+    })
+  }
+  catch (error) {
+    console.log(error)
+  }
+}
+
 export function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
@@ -135,4 +168,15 @@ export function strConcat(str1: string, str2: string) {
   if (!str2)
     return str2
   return `${str1}${str2}`
+}
+
+export function isValidUrl(string: string) {
+  try {
+    // eslint-disable-next-line no-new
+    new URL(string)
+    return true
+  }
+  catch (err) {
+    return false
+  }
 }
