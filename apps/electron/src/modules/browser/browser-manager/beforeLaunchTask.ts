@@ -351,7 +351,19 @@ export class BeforeLaunchTask {
 
   /** 根据用户设置，是否要清除浏览器缓存 */
   async clearBrowserCache() {
-    const { clearCookie, clearLocalStorage } = this.browserItem.winInfo
+    const { clearCookie, clearLocalStorage, clearCacheFile } = this.browserItem.winInfo
+
+    if (clearCacheFile) {
+      const cacheFilePath = this.browserItem.userDataDir
+      try {
+        await rm(cacheFilePath, { recursive: true })
+        console.log('cacheFilePath 删除成功')
+      }
+      catch (err) {
+        console.log(`cacheFilePath 删除失败`, err)
+        this.warningMessages.push('缓存文件删除失败')
+      }
+    }
 
     // 当清空缓存先删除cookie文件
     console.log(`是否清空cookie:${clearCookie}`)
