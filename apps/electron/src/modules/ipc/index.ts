@@ -91,7 +91,15 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
   store.userId = userInfo.userId
-  aliOSS.init()
+  // aliOSS.init()
+})
+
+/** 登录成功后，保存用户信息 */
+ipcMain.on('user:logout', () => {
+  browserManager.closeAll().finally(() => {
+    store.token = ''
+    store.userId = undefined
+  })
 })
 
 /** 切换空间时设置当前空间 ID  */

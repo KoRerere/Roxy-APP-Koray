@@ -27,6 +27,8 @@ export interface RenderMessage {
 
   /** 保存用户信息 */
   'user:setUserInfo': (userInfo: { token: string, userId: number }) => void
+  /** 用户退出登录 */
+  'user:logout': () => void
   /** 切换空间时设置当前空间 ID  */
   'user:setWorkspaceId': (workspaceId: number) => void
   /** 用户上传头像  */
