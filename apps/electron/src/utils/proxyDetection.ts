@@ -21,6 +21,8 @@ export interface ProxyDetectionResult {
   region: string
 }
 
+const defaultCheckChannel = 'https://iprust.io/ip.json'
+
 const protocolCheckMap = {
   SOCKS5: checkSocks5Proxy,
   HTTP: checkHttpProxy,
@@ -40,7 +42,7 @@ function getCheckFunction(protocol: ProtocolMapType) {
 }
 
 /** 获取检测渠道 url */
-function getCheckUrl(url = `http://ip123.in/ip.json`, ipType: string) {
+function getCheckUrl(url = defaultCheckChannel, ipType: string) {
   // console.log(`transIpUrl`, url, ipType)
   if (ipType === `IPV6`) {
     return `http://api.ip2location.io/?key=266EF4FE57093F065C2FA5C5835686AE`
@@ -63,7 +65,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
   const params = {
     ...proxyDetectionParams,
-    checkChannel: getCheckUrl(checkChannel, ipType) || `http://ip123.in/ip.json`,
+    checkChannel: getCheckUrl(checkChannel, ipType) || defaultCheckChannel,
   }
 
   console.log('proxyDetectionParams', proxyDetectionParams)
@@ -75,7 +77,8 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   if (result.info && result.data) {
     result.data.region ||= result.data.region_name
     result.data.city ||= result.data.city_name
-    result.data.country ||= result.data.country_name
+    result.data.country ||= result.data.country_name || result.data.country_long
+    result.data.country_code ||= result.data.country_short
   }
 
   return result
@@ -97,8 +100,10 @@ function logProxyConfig(params: ProxyDetectionParams, name = ``) {
  * 无代理
  */
 async function noProxy(winInfo: ProxyDetectionParams) {
-  const { checkChannel = `https://ip123.in/ip.json` } = winInfo
+  const { checkChannel = defaultCheckChannel } = winInfo
   const response = await axios.get(checkChannel, { timeout: TIMEOUT })
+  response.data.country ||= response.data.country_name || response.data.country_long
+  response.data.country_code ||= response.data.country_short
 
   return response.data
 }

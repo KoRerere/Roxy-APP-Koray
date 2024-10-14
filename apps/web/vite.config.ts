@@ -86,7 +86,13 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: tag => tag.includes('rich-text'),
+        },
+      },
+    }),
     vueJsx(),
     extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
     LanguageLocalization({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs') }),

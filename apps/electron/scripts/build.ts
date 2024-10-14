@@ -1,8 +1,8 @@
-import { cpSync, rmSync } from 'node:fs'
-import { exit, platform } from 'node:process'
-import path from 'node:path'
-import { Platform, build } from 'electron-builder'
 import type { Configuration } from 'electron-builder'
+import { build, Platform } from 'electron-builder'
+import { cpSync, rmSync } from 'node:fs'
+import path from 'node:path'
+import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac'
 
 const version = process.env.VITE_APP_VERSION
@@ -61,6 +61,19 @@ const options: Configuration = {
         arch: ['ia32', 'x64'],
       },
     ],
+    ...(!isDev
+      ? {
+        verifyUpdateCodeSignature: false,
+        signingHashAlgorithms: [
+          'sha256',
+          'sha1',
+        ],
+        signDlls: false,
+        rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+        certificateFile: './pfx/linkv.pfx',
+        certificatePassword: '0000',
+      }
+      : {}),
   },
   nsis: {
     installerSidebar: './buildResources/a1.bmp',

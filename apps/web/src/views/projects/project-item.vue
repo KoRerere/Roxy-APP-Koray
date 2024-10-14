@@ -3,17 +3,19 @@ import { useRoute } from 'vue-router'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useRoleStore } from '/@/stores/role'
 import Profiles from '/@/views/browser/list/profiles/index.vue'
+import MemberDropdownList from '/@/views/projects/components/member-dropdown-list.vue'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 
 const role = useRoleStore()
 const route = useRoute()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const profilesRef = useTemplateRef('profiles')
+const projectId = Number(route.params.id)
 console.log('route', route)
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({
     tableRef: profilesRef.value?.tableRef,
-    projectIds: [Number(route.params.id)],
+    projectIds: [projectId],
     disableds: ['projectIds'],
   })
 }
@@ -32,9 +34,11 @@ function handleShowInviteUserFormDialog() {
           {{ route.query.title }}
         </div>
       </div>
-      <div>
+      <div class="flex gap-3">
+        <MemberDropdownList :project-id="projectId" />
         <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add"
-          label="Invite" @click="handleShowInviteUserFormDialog" />
+                  :label="$t('Invite')" @click="handleShowInviteUserFormDialog"
+        />
       </div>
     </div>
     <!-- eslint-disable-next-line vue/no-unused-refs -->

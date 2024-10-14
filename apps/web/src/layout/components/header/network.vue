@@ -42,7 +42,6 @@ detectNetwork()
 
   .info {
     display: flex;
-    width: 70px;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm, 4px);
