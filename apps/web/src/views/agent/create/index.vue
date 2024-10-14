@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { $t } from '/@/locales'
 import batchProxies from './components/batch-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
 
 const router = useRouter()
+const toast = useToast()
 
 const tabs = ref([
   { title: '单个代理', value: 'single' },
@@ -12,9 +15,13 @@ const tabs = ref([
 const tabsValue = ref('single')
 
 async function saveProxies(proxies: any) {
-  const res = await API.proxy.userAddProxyModuleCreate(proxies)
-  console.log('🚀 ~ saveProxies ~ res:', res)
-  router.replace({ name: 'agent-list' })
+  const { code, msg } = await API.proxy.userAddProxyModuleCreate(proxies)
+  if (code === 0) {
+    router.replace({ name: 'agent-list' })
+  }
+  else {
+    toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 5000 })
+  }
 }
 
 function cancel() {

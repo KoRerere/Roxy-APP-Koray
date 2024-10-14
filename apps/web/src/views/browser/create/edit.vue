@@ -22,7 +22,9 @@ const original = ref()
 const metaData = ref<MetaData>()
 
 function onShuffle() {
-  ceateRandomFinger(inputsGroup.value)
+  ceateRandomFinger(inputsGroup.value).then((data) => {
+    Object.assign(original.value, data[0])
+  })
 }
 
 async function createProfile(formData: any) {
@@ -37,10 +39,10 @@ async function createProfile(formData: any) {
 
 onMounted(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
-
+  const [_inputsGroup, _original] = getInputsGroup(data)
+  inputsGroup.value = _inputsGroup
+  original.value = _original
   windowName.value = data.windowName
-  inputsGroup.value = getInputsGroup(data)
-  original.value = data
   metaData.value = {
     projectName: data.projectName,
     projectId: data.projectId,

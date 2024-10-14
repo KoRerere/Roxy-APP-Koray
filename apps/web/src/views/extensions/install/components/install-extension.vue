@@ -16,8 +16,8 @@ const loading = ref(false)
 
 const installType = ref(allInstall)
 const categories = ref([
-  { label: 'All profiles', value: allInstall },
-  { label: 'Partial profiles', value: partialInstall },
+  { label: 'All project', value: allInstall },
+  { label: 'Partial project', value: partialInstall },
 ])
 
 const columns = [
