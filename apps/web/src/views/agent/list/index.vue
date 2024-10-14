@@ -117,7 +117,7 @@ function onRefreshTable() {
         :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #header-extra>
-          <CustomFilter :ctm-filters="ctmFilters" @filter-change="onRefreshTable" />
+          <CustomFilter :enabled-filter-save="false" :ctm-filters="ctmFilters" @filter-change="onRefreshTable" />
         </template>
         <template #proxy="{ data }">
           <div class="proxy-host">

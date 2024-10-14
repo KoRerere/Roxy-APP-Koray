@@ -489,10 +489,10 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '字体指纹',
       name: 'fontType',
-      value: data.fontType ?? true,
+      value: data.fontType ?? false,
       options: [
         { label: '随机', value: true },
-        { label: '系统默认', value: false },
+        { label: '跟随系统', value: false },
       ],
       preview: {
         label: '字体指纹',
@@ -745,7 +745,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: 'SSL指纹设置',
       name: 'disableSsl',
-      value: data.disableSsl ?? true,
+      value: data.disableSsl ?? false,
       options: [
         { label: '开启', value: true },
         { label: '关闭', value: false },
@@ -760,11 +760,11 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: ' ',
-      placeholder: '选择SSL指纹设置',
+      placeholder: '选择要禁用的SSL特性',
       name: 'disableSslList',
       value: $dict_map.disableSslList.find((item: any) => item.value === data.disableSslList) ?? $dict_map.disableSslList[0],
       options: $dict_map.disableSslList,
-      visible: true,
+      visible: data.disableSsl === true,
       formatValue: (input: any) => {
         return [input.value]
       },
@@ -773,7 +773,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '端口扫描保护',
       name: 'portScanProtect',
-      value: data.portScanProtect ?? false,
+      value: data.portScanProtect ?? true,
       options: [
         { label: '开启', value: true },
         { label: '关闭', value: false },
