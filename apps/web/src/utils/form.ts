@@ -77,7 +77,7 @@ function formValidator(hadKey: Set<string>, input: any) {
     throw new Error(`Input '${input.name}' is required`)
   }
 
-  if (isFunction(input.validator) && !input.validator(input)) {
+  if (input.invalid || (isFunction(input.validator) && !input.validator(input))) {
     input.invalid = true
     throw new Error(`Input '${input.name}' is invalid`)
   }

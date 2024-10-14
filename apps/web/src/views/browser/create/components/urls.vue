@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
 import inputBase from '/@/components/ry-form/input-base.vue'
-import { getFormData } from '/@/utils'
-
-const emits = defineEmits(['update:modelValue'])
+import { isValidUrl } from '/@/utils'
 
 const urlInputs = ref<any>([])
+
+const modelValue = defineModel<string[]>()
 
 function addInputs() {
   urlInputs.value.push({
     type: 'text',
     name: (new Date().getTime()).toString(32),
     value: '',
-    placeholder: '请输入url',
+    errorMsg: 'invalid url',
+    placeholder: 'Please enter url',
     leftIcon: 'base/rx_ic_attachment',
   })
 }
@@ -21,13 +22,16 @@ function deleteInput(index: number) {
   urlInputs.value.splice(index, 1)
 }
 
-function onBlur() {
-  try {
-    const formData = getFormData(urlInputs.value)
-    emits('update:modelValue', Object.values(formData))
+function onChange(input: any) {
+  input.invalid = false
+}
+
+function onBlur(input: any) {
+  if (isValidUrl(input.value)) {
+    modelValue.value = urlInputs.value.filter((item: any) => !item.invalid).map((item: any) => item.value)
   }
-  catch (error) {
-    console.log('🚀 ~ onBlur ~ error:', error)
+  else {
+    input.invalid = true
   }
 }
 </script>
@@ -39,7 +43,7 @@ function onBlur() {
       <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add URLs" @click="addInputs" />
       <div class="inputs">
         <rxCard v-for="(input, index) in urlInputs" :key="input.name" class="inputs-item" @close="deleteInput(index)">
-          <inputBase v-model="input.value" v-bind="input" @blur="onBlur" />
+          <inputBase v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />
         </rxCard>
       </div>
     </div>

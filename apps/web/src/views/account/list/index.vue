@@ -27,17 +27,17 @@ const dialog = useDialog()
 
 const operation = ref([
   {
-    name: 'remark',
-    label: '备注',
-    icon: 'base/rx_ic_doc_add',
-    power: !role.isViewer,
-  },
-  {
     name: 'edit',
     label: '编辑',
     icon: 'base/rx_ic_edit',
     power: !role.isViewer,
     quick: true,
+  },
+  {
+    name: 'remark',
+    label: '备注',
+    icon: 'base/rx_ic_doc_add',
+    power: !role.isViewer,
   },
   {
     name: 'delete',

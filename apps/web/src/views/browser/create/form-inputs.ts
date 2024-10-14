@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormData, getFormDataByList, getRandomInt, getUserAgentOs, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
@@ -160,7 +160,7 @@ export function getInputsGroup(data: any = {}) {
       label: '浏览器内核',
       placeholder: '请选择浏览器内核',
       name: 'coreVersion',
-      value: $dict_map.coreVersion[0],
+      value: $dict_map.coreVersion.find((item: any) => item.value === data.coreVersion) ?? $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,
       icon: 'base/rx_ic_chrome',
       required: true,
@@ -226,13 +226,24 @@ export function getInputsGroup(data: any = {}) {
       name: 'cookie',
       value: data.cookies,
       icon: 'base/rx_ic_attachment',
-      errorMsg: 'cookie格式错误, 请检查格式',
+      errorMsg: 'Invalid cookie format',
+      autoResize: false,
       formatValue: (input: any) => {
         return input.value
       },
-      onBlur() {
-        const { cookie } = getFormData(windowInputs)
-        if (!checkCookieFormat(cookie)) {
+      iconClick: async (input: any) => {
+        const res = await readCookiesFile()
+        if (res?.data) {
+          input.value = res.data
+          input.invalid = false
+        }
+        else {
+          input.value = ''
+          input.invalid = true
+        }
+      },
+      onBlur(event: any) {
+        if (!checkCookieFormat(event.target.value)) {
           setInputFieldByInputKey(windowInputs, 'cookie', 'invalid', true)
         }
       },
@@ -261,7 +272,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       placeholder: '请选择语言',
       name: 'language',
-      value: data.language,
+      value: $dict_map.language?.find((item: any) => item.value === data.language),
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: data.isLanguageBaseIp === false,
@@ -284,7 +295,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       placeholder: '请选择语言',
       name: 'displayLanguage',
-      value: data.displayLanguage,
+      value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage),
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: data.isDisplayLanguageBaseIp === false,
@@ -310,7 +321,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       placeholder: '请选择时区',
       name: 'timeZone',
-      value: data.timeZone,
+      value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone),
       options: $dict_map.timeZone,
       virtualScrollerOptions: { itemSize: 38 },
       visible: data.isTimeZone === false,
@@ -515,10 +526,10 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: 'WebGL Info',
       name: 'webGLInfo',
-      value: data.webGLInfo ?? false,
+      value: data.webGLInfo ?? true,
       options: [
-        { label: '真实', value: true },
-        { label: '自定义', value: false },
+        { label: '真实', value: false },
+        { label: '自定义', value: true },
       ],
       change(input: any, inputs: any) {
         setInputVisible(
@@ -710,7 +721,7 @@ export function getInputsGroup(data: any = {}) {
       label: '硬件并发数',
       placeholder: '请选择硬件并发数',
       name: 'hardwareConcurrent',
-      value: data.hardwareConcurrent ?? $dict_map.hardwareConcurrent.find((item: any) => item.value === '4'),
+      value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '4')),
       options: $dict_map.hardwareConcurrent,
       preview: {
         label: '硬件并发数',
@@ -721,7 +732,7 @@ export function getInputsGroup(data: any = {}) {
       label: '设备内存',
       placeholder: '请选择设备内存',
       name: 'deviceMemory',
-      value: data.deviceMemory ?? $dict_map.deviceMemory.find((item: any) => item.value === '8'),
+      value: $dict_map.deviceMemory.find((item: any) => item.value === (data.deviceMemory ?? '8')),
       options: $dict_map.deviceMemory,
       preview: {
         label: '设备内存',
@@ -748,7 +759,7 @@ export function getInputsGroup(data: any = {}) {
       label: ' ',
       placeholder: '选择SSL指纹设置',
       name: 'disableSslList',
-      value: $dict_map.disableSslList[0],
+      value: $dict_map.disableSslList.find((item: any) => item.value === data.disableSslList) ?? $dict_map.disableSslList[0],
       options: $dict_map.disableSslList,
       visible: true,
       formatValue: (input: any) => {

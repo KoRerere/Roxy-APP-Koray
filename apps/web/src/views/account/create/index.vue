@@ -2,7 +2,7 @@
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
-import { checkCookieFormat, clearInputsValue, getFormData, setInputValueByFormData } from '/@/utils'
+import { checkCookieFormat, clearInputsValue, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData } from '/@/utils'
 
 const props = defineProps({
   data: {
@@ -35,12 +35,11 @@ async function getInputs(data: any = {}) {
     value: item.platformUrl,
   }))
 
-  const inputs = [
+  const inputs = reactive([
     {
       type: 'text',
       label: '平台名称',
       name: 'platformName',
-      value: '',
       placeholder: 'Better name to identify',
       tooltip: 'man!',
     },
@@ -63,7 +62,6 @@ async function getInputs(data: any = {}) {
       type: 'text',
       label: '平台账号',
       name: 'platformUserName',
-      value: '',
       placeholder: 'Username for your website',
       tooltip: 'mamba out!',
     },
@@ -71,7 +69,6 @@ async function getInputs(data: any = {}) {
       type: 'password',
       label: '平台密码',
       name: 'platformPassword',
-      value: '',
       placeholder: 'Password for your server',
       tooltip: 'man!',
     },
@@ -79,23 +76,39 @@ async function getInputs(data: any = {}) {
       type: 'text',
       label: '2FA密钥',
       name: 'platformEfa',
-      value: '',
       placeholder: '32-digit Keys',
       tooltip: 'mamba out!',
     },
     {
       type: 'textarea',
-      label: '平台cookeies',
+      label: '平台cookies',
       name: 'platformCookies',
-      value: '',
       placeholder: 'Paste JSON format or upload cookies JSON file',
+      errorMsg: 'Invalid cookie format',
       tooltip: 'man!',
       icon: 'base/rx_ic_attachment',
+      autoResize: false,
       formatValue: (input: any) => {
         return checkCookieFormat(input.value) ? input.value : ''
       },
+      onBlur(event: any) {
+        if (!checkCookieFormat(event.target.value)) {
+          setInputFieldByInputKey(inputs, 'platformCookies', 'invalid', true)
+        }
+      },
+      iconClick: async (input: any) => {
+        const res = await readCookiesFile()
+        if (res?.data) {
+          input.value = res.data
+          input.invalid = false
+        }
+        else {
+          input.value = ''
+          input.invalid = true
+        }
+      },
     },
-  ]
+  ])
   setInputValueByFormData(inputs, data)
   return inputs
 }
@@ -104,14 +117,16 @@ function addRemark(platformRemarks: string) {
   original.value.platformRemarks = platformRemarks
 }
 
-function confirm(more: boolean) {
+function onConfirm(more: boolean) {
   try {
     const formData = getFormData(formInputs.value, original.value)
-    if (!more) {
-      emits('close')
-    }
-    clearInputsValue(formInputs.value)
-    emits('confirm', formData)
+    console.log('🚀 ~ onConfirm ~ formData:', formData)
+
+    // if (!more) {
+    //   emits('close')
+    // }
+    // clearInputsValue(formInputs.value)
+    // emits('confirm', formData)
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
@@ -133,9 +148,9 @@ onMounted(() => {
       <div class="flex flex-1 justify-end gap-3">
         <RemarkIcon class="remark" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RyButton v-if="!isEdit && showCreateMore" size="small" label="Save & Create more" severity="secondary" outlined
-          @click="confirm(true)" />
+          @click="onConfirm(true)" />
         <RyButton size="small" :label="isEdit ? 'Edit account' : 'Create account'" severity="info"
-          @click="confirm(false)" />
+          @click="onConfirm(false)" />
       </div>
     </template>
   </drawer-content>

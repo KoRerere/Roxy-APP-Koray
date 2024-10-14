@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import inputLabel from './input-label.vue'
 
 defineOptions({
@@ -36,8 +37,7 @@ defineEmits(['iconClick', 'change'])
           </InputIcon>
 
           <Textarea v-if="type === 'textarea'" :id="name" class="w-full" rows="5" cols="30" auto-resize v-bind="$attrs"
-                    @input="$emit('change')"
-          />
+            @input="$emit('change')" />
           <InputText v-if="type === 'text'" :id="name" class="w-full" v-bind="$attrs" @input="$emit('change')" />
           <InputNumber v-if="type === 'number'" :id="name" class="w-full" v-bind="$attrs" @input="$emit('change')" />
 
@@ -46,9 +46,10 @@ defineEmits(['iconClick', 'change'])
           </InputIcon>
         </IconField>
         <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs"
-                  @input="$emit('change')"
-        />
-        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg || $attrs.placeholder }}</small>
+          @input="$emit('change')" />
+        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg ? $t($attrs.errorMsg as string)
+          : $attrs.placeholder
+          }}</small>
         <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
       </div>
     </slot>

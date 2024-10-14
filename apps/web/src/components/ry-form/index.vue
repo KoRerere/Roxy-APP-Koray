@@ -20,6 +20,8 @@ const _inputs: any = computed(() => _props.inputs.filter((input: any) => input.v
 const baseInput = ['text', 'password', 'number', 'textarea']
 
 function onChange(input: any, inputs: any) {
+  if (input.invalid)
+    input.invalid = false
   input.change?.(input, inputs)
 }
 </script>
