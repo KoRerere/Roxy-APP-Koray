@@ -1,9 +1,9 @@
-import { access, mkdir, rm, stat } from 'node:fs/promises'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { dirname } from 'node:path'
-import compressing from 'compressing'
-import axios from 'axios'
 import archiver from 'archiver'
+import axios from 'axios'
+import compressing from 'compressing'
+import { createReadStream, createWriteStream } from 'node:fs'
+import { access, mkdir, rm, stat } from 'node:fs/promises'
+import { dirname } from 'node:path'
 
 /**
  * 文件或目录是否存在
@@ -134,7 +134,7 @@ export async function filesToZip(files: { path: string, destPath: string }[], ou
       archive.directory(item.path, item.destPath || false)
     }
     else if (fileInfo.isFile()) {
-      archive.append(createReadStream(item.path))
+      archive.append(createReadStream(item.path), { name: item.destPath })
     }
   })
 

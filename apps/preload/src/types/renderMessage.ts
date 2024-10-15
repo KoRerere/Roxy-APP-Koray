@@ -1,5 +1,6 @@
 import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
+import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
@@ -59,7 +60,7 @@ export interface RenderMessage {
   /** 删除指定插件 */
   'extension:remove': (extIDs: string[]) => void
   /** 获取并解析用户本地选择的插件信息 */
-  'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => any
+  'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => UserSelectedExtensionInfo
   /** 上传本地插件到 OSS */
   'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData>) => Promise<UploadExtensionToOSSResult>
   /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */

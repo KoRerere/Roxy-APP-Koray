@@ -52,7 +52,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: 'Resource/Tool', type: 'group' },
+    meta: { title: 'Resource/Tool', type: 'group', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
     children: [
       {
         path: 'account',
@@ -101,13 +101,13 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'teams',
         name: 'teams',
-        meta: { title: $t('Teams'), icon: 'base/rx_ic_user' },
+        meta: { title: $t('Teams'), icon: 'base/rx_ic_user', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/team'),
       },
       {
         path: 'history-logs',
         name: 'history-logs',
-        meta: { title: $t('HistoryLogs'), icon: 'base/rx_ic_doc_data', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('HistoryLogs'), icon: 'base/rx_ic_doc_data' },
         component: () => import('/@/views/history-logs'),
       },
       {
@@ -121,7 +121,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'api-keys',
     name: 'api-keys',
-    meta: { title: $t('Api-keys'), icon: 'base/rx_ic_doc_code' },
+    meta: { title: $t('Api-keys'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
     component: () => import('/@/views/api-keys'),
   },
 ]

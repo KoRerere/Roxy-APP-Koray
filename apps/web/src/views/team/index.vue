@@ -205,7 +205,13 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <img class="member-image rounded-full" :src="data.avatar">
+        <template v-if="data.avatar">
+          <img class="member-image rounded-full" :src="data.avatar">
+        </template>
+        <template v-else>
+          <Avatar :label="data.email.slice(0, 2)" shape="circle" />
+        </template>
+
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}
