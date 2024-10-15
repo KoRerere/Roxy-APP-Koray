@@ -79,6 +79,7 @@ function initFormInputs() {
 function onUpdateFinger() {
   ceateRandomFinger(previewInputs.value).then((data) => {
     Object.assign(original.value, data[0])
+    // console.log(toRaw(original.value))
   })
 }
 

@@ -333,7 +333,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '地理位置提示',
       name: 'position',
-      value: data.position ?? 0,
+      value: data.position ?? 1,
       options: [
         { label: '询问', value: 0 },
         { label: '允许', value: 1 },
@@ -437,13 +437,13 @@ export function getInputsGroup(data: any = {}) {
           type: 'text',
           placeholder: '请输入宽度',
           name: 'openWidth',
-          value: data.openWidth,
+          value: data.openWidth ?? 1000,
         },
         {
           type: 'text',
           placeholder: '请输入高度',
           name: 'openHeight',
-          value: data.openHeight,
+          value: data.openHeight ?? 1000,
         },
       ],
     },
@@ -508,7 +508,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: 'WebRTC',
       name: 'webRTC',
-      value: data.webRTC ?? 0,
+      value: data.webRTC ?? 2,
       options: [
         { label: '替换', value: 0 },
         { label: '真实', value: 1 },
@@ -1006,7 +1006,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '弹出保存密码提示',
       name: 'forbidSavePassword',
-      value: data.forbidSavePassword ?? false,
+      value: data.forbidSavePassword ?? true,
       options: [
         { label: '开启', value: true },
         { label: '关闭', value: false },
