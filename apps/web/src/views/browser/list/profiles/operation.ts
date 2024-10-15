@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { setInputValueByFormData } from '/@/utils'
 
 const workspaceStore = useWorkspaceStore()
 
@@ -192,15 +193,11 @@ export async function getCustomFilters(params: any = {}) {
         },
       ],
     },
-  ].map((input: any) => {
-    if (input.type === 'date') {
-      input.value = params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined
-      input.items.forEach((it: any) => it.value = params[it.name])
-    }
-    else if (!input.separator) {
-      input.value = params[input.name]
-    }
-    return input
+  ]
+
+  setInputValueByFormData(inputs, {
+    ...params,
+    createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
   })
 
   return inputs

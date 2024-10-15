@@ -5,14 +5,14 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'
-import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
+import { deepClone, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 
 const _props = defineProps({
   currentFilter: {
     type: Object as PropType<any>,
     default: undefined,
   },
-  ctmFilters: {
+  filtersMenu: {
     type: Array as PropType<any[]>,
     default: () => [],
   },
@@ -38,7 +38,7 @@ watch(() => _props.currentFilter?.id, (value) => {
 })
 
 const rawOptions = computed(() => {
-  return _props.ctmFilters
+  return _props.filtersMenu
     .map((item) => {
       if (item.type === 'radio' && Array.isArray(item.options) && item.options.length > 0) {
         return item.options.map((it: any) => ({ ...it, parentName: item.name, type: item.type }))
@@ -49,7 +49,7 @@ const rawOptions = computed(() => {
 })
 
 const filterTagList = computed(() => {
-  return _props.ctmFilters.reduce((acc, item) => {
+  return _props.filtersMenu.reduce((acc, item) => {
     if (!isEmptyValue(item.value)) {
       const value = !Array.isArray(item.value)
         ? item.value
@@ -60,6 +60,14 @@ const filterTagList = computed(() => {
   }, [])
 })
 
+const splitButtonItems = [
+  {
+    label: 'Save As',
+    command: () => {
+      saveFilters()
+    },
+  },
+]
 const menuRef = useTemplateRef('tmenu')
 const isChildren = ref(false)
 const subMenuOptions = ref()
@@ -105,10 +113,10 @@ function inputPopup(data: any) {
       onConfirm: async (formData: any) => {
         if (data.type === 'date') {
           const value = Object.values(formData).join('~')
-          setInputFieldByInputKey(_props.ctmFilters, data.name, 'value', value)// 用于筛选标签展示
+          setInputFieldByInputKey(_props.filtersMenu, data.name, 'value', value)// 用于筛选标签展示
         }
         Object.entries(formData).forEach(([name, value]) => {
-          setInputFieldByInputKey(_props.ctmFilters, name, 'value', value)
+          setInputFieldByInputKey(_props.filtersMenu, name, 'value', value)
         })
         onFilterChange()
       },
@@ -117,7 +125,7 @@ function inputPopup(data: any) {
 }
 
 function onRadioChose(item: any) {
-  setInputFieldByInputKey(_props.ctmFilters, item.parentName, 'value', item.value)
+  setInputFieldByInputKey(_props.filtersMenu, item.parentName, 'value', item.value)
   menuRef.value?.hide()
   onFilterChange()
 }
@@ -151,23 +159,33 @@ function onHide() {
 }
 
 function onChange(item: any) {
-  _props.ctmFilters.find(input => input.name === item.parentName).value = toRaw(selectedCategories.value)
+  _props.filtersMenu.find(input => input.name === item.parentName).value = toRaw(selectedCategories.value)
 }
 
 function deleteFilterItem(item: any) {
   const names = item.type !== 'date' ? item.name : [item.name, item.items.map((it: any) => it.name)].flat()
-  setInputFieldByInputKey(_props.ctmFilters, names, 'value', null)
+  setInputFieldByInputKey(_props.filtersMenu, names, 'value', null)
   onFilterChange()
 }
 
-function clearFilters() {
-  _props.ctmFilters.forEach((item) => {
-    item.value = null
-    if (Array.isArray(item.items)) {
-      item.items.forEach((it: any) => it.value = null)
-    }
-  })
-  onFilterChange()
+function resetFilters() {
+  if (_props.currentFilter.filter_condition) {
+    const params = _props.currentFilter.filter_condition
+    setInputValueByFormData(_props.filtersMenu, {
+      ...params,
+      createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
+    })
+  }
+  else {
+    _props.filtersMenu.forEach((item) => {
+      item.value = null
+      if (Array.isArray(item.items)) {
+        item.items.forEach((it: any) => it.value = null)
+      }
+    })
+  }
+  isChanged.value = false
+  emit('filterChange')
 }
 
 function onFilterChange() {
@@ -207,14 +225,10 @@ function saveFilters() {
   })
 }
 
-const items = [
-  {
-    label: 'Save As',
-    command: () => {
-      saveFilters()
-    },
-  },
-]
+async function modifyFilter() {
+  await _props.saveFilters(_props.currentFilter)
+  isChanged.value = false
+}
 </script>
 
 <template>
@@ -231,9 +245,11 @@ const items = [
       </ryButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
-      <ryButton text severity="secondary" size="small" label="Reset" @click="clearFilters" />
-      <ryButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
-      <SplitButton v-else severity="info" size="small" label="Save" :model="items" />
+      <ryButton text severity="secondary" size="small" label="Reset" @click="resetFilters" />
+      <template v-if="filterTagList.length">
+        <ryButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
+        <SplitButton v-else severity="info" size="small" label="Save" :model="splitButtonItems" @click="modifyFilter" />
+      </template>
       <div>|</div>
     </div>
   </div>

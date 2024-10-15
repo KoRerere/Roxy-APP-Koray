@@ -49,7 +49,7 @@ const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : 
 const [showToast] = useResponseToast()
 
 const [show] = useContextMenu()
-const ctmFilters = ref()
+const filtersMenu = ref()
 const sorts = ref(getSorts())
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
@@ -107,7 +107,7 @@ watch(() => props.currentFilter, (params: any) => {
   if (params && params.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
-        ctmFilters.value = data
+        filtersMenu.value = data
         onRefreshTable()
       })
   }
@@ -123,17 +123,30 @@ watch(
 )
 
 function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(ctmFilters.value))
+  const params = filterFieldByValue(getFormData(filtersMenu.value))
   tableRef.value!.refresh(params)
 }
 
-async function saveFilters(formData: { filter_name: string }) {
-  if (!ctmFilters.value.some((item: any) => item.value)) {
+async function saveFilters(formData: any) {
+  if (!filtersMenu.value.some((item: any) => item.value)) {
     return
   }
-  const filter_condition = getFormData(ctmFilters.value)
-  const filter_rule = columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
-  const { code, msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
+  const { filter_name, filter_rule, sort } = formData
+  const filter_condition = getFormData(filtersMenu.value)
+
+  const { code, msg } = sort
+    ? await API.window.userUpdateWindowFilterNameCreate({
+      sort,
+      filter_rule,
+      filter_condition,
+      old_filter_name: filter_name,
+      new_filter_name: filter_name,
+    })
+    : await API.window.userAddWindowFilterNameCreate({
+      filter_name,
+      filter_condition,
+      filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
+    })
   if (code === 0) {
     emit('updateFilterTabs')
   }
@@ -384,7 +397,7 @@ onMounted(() => {
   canceCloselListener = listenCloseMessage()
 
   getCustomFilters().then((data) => {
-    ctmFilters.value ??= data
+    filtersMenu.value ??= data
   })
 })
 
@@ -404,8 +417,8 @@ defineExpose({
     :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" selection-mode="multiple"
     :show-actions="false">
     <template #header-extra>
-      <customFilters :current-filter="currentFilter" :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile"
-        :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
+        :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
