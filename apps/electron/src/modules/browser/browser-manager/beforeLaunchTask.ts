@@ -73,6 +73,13 @@ export class BeforeLaunchTask {
       id: this.browserItem.winInfo.id,
       openStatus: true,
     }])
+    API.window.userMdfWindowInfoSingleCreate({
+      id: this.browserItem.winInfo.id!,
+      lastIp: this.proxyInfo.ip,
+      lastCountry: this.proxyInfo.country_code,
+    }).then(() => {
+      console.log('同步ip信息成功')
+    })
   }
 
   /** 启动浏览器 */
