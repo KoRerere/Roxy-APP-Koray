@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
-import { getCanvasContextNoiseValue, getClientRectsValue, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
+import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -48,7 +48,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
           groupId: '',
         },
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-      font: fontType ? (await electronAPI.send('util:genRandomFonts')).join(';') : null,
+      font: fontType ? await getRandomFonts() : null,
       canvasValue: canvas ? getCanvasContextNoiseValue() : null,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : null,
@@ -494,6 +494,10 @@ export function getInputsGroup(data: any = {}) {
       ],
       preview: {
         label: '字体指纹',
+      },
+      change: async (input: any) => {
+        // Reflect.deleteProperty(target, name)
+
       },
     },
     {
