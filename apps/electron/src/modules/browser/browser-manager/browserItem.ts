@@ -128,6 +128,7 @@ export class BrowserItem {
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     try {
       await filesToZip(needSyncFiles, outputZipPath)
+      console.log('filesToZip success')
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)
@@ -153,7 +154,7 @@ export class BrowserItem {
       })
     }
     catch (error) {
-      console.log('filesToZip error: ', error)
+      console.log('uploadData error: ', error)
     }
   }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 
 const dialogRef = inject<any>('dialogRef')
 const toast = useToast()
@@ -16,13 +17,19 @@ const extensionOss = ref()
 async function selectExtension(selectType: 'dir' | 'file') {
   try {
     const { type, data, message: msg } = await window.electronAPI.send('extension:getSelectedExtensionInfo', selectType)
+    console.log('selectExtension ~ type, data, msg:', type, data, msg)
     const isSuccess = type === 'success'
-    const message = isSuccess ? 'Extension parse successfully' : (msg || data)
-    extension.value = {
-      type,
-      message,
-      isSuccess,
-      ...(isSuccess ? data : {}),
+    if (isSuccess) {
+      const message = isSuccess ? $t('Extension parse successfully') : (msg || data)
+      extension.value = {
+        type,
+        message,
+        isSuccess,
+        ...(isSuccess ? data : {}),
+      }
+    }
+    else {
+      toast.add({ severity: type, summary: msg, life: 2500 })
     }
   }
   catch (error) {
@@ -71,27 +78,30 @@ onMounted(() => {
 <template>
   <div class="flex flex-col popup">
     <div class="popup-title">
-      Upload Extension
+      {{ $t('Upload Extension') }}
     </div>
 
     <rxMessage v-if="extension" :severity="extension.type"
-      :icon="extension.isSuccess ? 'status/rx_ic_check_fill' : 'status/rx_ic_delete_fill'" closable>
+               :icon="extension.isSuccess ? 'status/rx_ic_check_fill' : 'status/rx_ic_delete_fill'" closable
+    >
       {{ extension.message }}
     </rxMessage>
     <div>
       <div class="upload-title">
-        Select your extension
+        {{ $t('Select your extension') }}
       </div>
       <div class="flex items-center gap-4 mt-1">
-        <ryButton outlined severity="info" icon="base/rx_ic_export" label="Select a file"
-          @click="selectExtension('file')" />
+        <ryButton outlined severity="info" icon="base/rx_ic_export" :label="$t('Select a file')"
+                  @click="selectExtension('file')"
+        />
         <span class="upload-or">OR</span>
-        <ryButton outlined severity="secondary" icon="base/rx_ic_folder" label="Select a folder"
-          @click="selectExtension('dir')" />
+        <ryButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('Select a folder')"
+                  @click="selectExtension('dir')"
+        />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">Zip, CRX file supported, file limited to 50MB max.</span>
+        <span class="upload-tip">{{ $t('Zip, CRX file supported, file limited to 50MB max.') }}</span>
       </div>
     </div>
 
@@ -100,7 +110,7 @@ onMounted(() => {
         <img class="extension-icon-image" :src="extension.pluginIcon">
       </div>
       <div class="flex justify-between items-center extension-name">
-        <span>Extension name</span>
+        <span>{{ $t('Extension name') }}</span>
         <span class="extension-name-length">{{ extension.pluginName.length }}/50</span>
       </div>
       <InputText v-model="extension.pluginName" class="extension-input" maxlength="50" type="text" />
@@ -108,7 +118,7 @@ onMounted(() => {
 
     <div v-if="extension?.isSuccess" class="description">
       <div class="flex justify-between items-center">
-        <span>Description</span>
+        <span>{{ $t('Description') }}</span>
         <span class="description-length">{{ extension.pluginDesc.length }}/500</span>
       </div>
       <Textarea v-model="extension.pluginDesc" class="w-full description-input" maxlength="500" rows="3" />
@@ -116,16 +126,18 @@ onMounted(() => {
 
     <div class="guide">
       * Please note that your extension should follow the <span
-        class="text-blue decoration-underline cursor-pointer">chrome extension
+        class="text-blue decoration-underline cursor-pointer"
+      >chrome extension
         guideline</span> in
       order to install in
       our chrome
       kernel.
     </div>
     <div class="footer">
-      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
-      <Button size="small" label="Upload and Install" severity="info" :disabled="!extension?.isSuccess"
-        :loading="loading" autofocus @click="confirm" />
+      <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
+      <Button size="small" :label="$t('Upload and Install')" severity="info" :disabled="!extension?.isSuccess"
+              :loading="loading" autofocus @click="confirm"
+      />
     </div>
   </div>
 </template>

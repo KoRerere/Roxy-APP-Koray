@@ -14,6 +14,12 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { getPluginManifestInfo, getPluginMeta } from './helper'
 
+export interface UserSelectedExtensionInfo {
+  type: 'warn' | 'success' | 'error'
+  message?: string
+  data?: Awaited<ReturnType<typeof getPluginMeta>>
+}
+
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
   get extensionDir() {
@@ -152,7 +158,7 @@ export const extensionManager = new class ExtensionManager {
 
   /** 获取并解析用户本地选择的插件信息 */
   async getUserSelectedExtensionInfo(selectType: 'dir' | 'file') {
-    const { promise, resolve } = Promise.withResolvers<{ type: string, message?: string, data?: any }>()
+    const { promise, resolve } = Promise.withResolvers<UserSelectedExtensionInfo>()
     const { canceled, filePaths } = await dialog.showOpenDialog(getMainWindow()!, {
       properties: [selectType === 'dir' ? 'openDirectory' : 'openFile'],
       // .crx .zip
@@ -169,12 +175,12 @@ export const extensionManager = new class ExtensionManager {
       const pluginStat = await stat(pluginDir)
 
       if (pluginStat.size > 1024 * 1024 * 100) {
-        resolve({ type: 'warning', message: '插件大小不能超过100MB' })
+        resolve({ type: 'warn', message: '插件大小不能超过100MB' })
         return promise
       }
 
       if (pluginStat.isFile() && fileExtname !== '.crx' && fileExtname !== '.zip') {
-        resolve({ type: 'warning', message: '请选择正确的插件文件' })
+        resolve({ type: 'warn', message: '请选择正确的插件文件' })
         return promise
       }
 
@@ -248,7 +254,7 @@ export const extensionManager = new class ExtensionManager {
         if (type === 'calculatePluginSize') {
           console.log('calculatePluginSize', data)
           if (data > 1024 * 1024 * 100) {
-            resolve({ type: 'warning', message: '插件大小不能超过100MB' })
+            resolve({ type: 'warn', message: '插件大小不能超过100MB' })
           }
           else {
             try {
@@ -275,7 +281,7 @@ export const extensionManager = new class ExtensionManager {
       worker.postMessage({ type: 'calculatePluginSize', data: pluginDir })
     }
     else {
-      resolve({ type: 'warning', message: '未选择插件目录' })
+      resolve({ type: 'warn', message: '未选择插件目录' })
     }
 
     return promise
