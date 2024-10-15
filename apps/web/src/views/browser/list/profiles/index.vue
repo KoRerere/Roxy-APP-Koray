@@ -104,7 +104,7 @@ const drawer = reactive({
 })
 
 watch(() => props.currentFilter, (params: any) => {
-  if (params?.name !== 'recycle') {
+  if (params && params.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         ctmFilters.value = data

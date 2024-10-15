@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import simplePopup from '/@/components/simplePopup'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 // import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import tags from '/@/views/browser/list/tags'
@@ -12,9 +13,9 @@ import profiles from './profiles'
 import recycle from './recycle'
 
 const confirm = useConfirm()
-const toast = useToast()
 const dialog = useDialog()
 const role = useRoleStore()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const rawTabs = [
   { label: '所有窗口', id: '1000', name: 'profiles' },
@@ -37,9 +38,18 @@ const isRecycle = computed(() => active.value === '1001')
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 async function getFilterList() {
-  const { data } = await API.window.userGetWindowFilterNameListList()
-  const list = data.map((item, index: number) => ({ ...item, label: item.filter_name, icon: '', id: `${index}`, name: item.filter_name }))
-  tabs.value = [rawTabs[0], ...list, rawTabs[1]]
+  const { code, data, msg } = await API.window.userGetWindowFilterNameListList()
+  if (code === 0) {
+    const list = data.map((item, index) => ({
+      ...item,
+      id: `${index}`,
+      icon: '',
+      name: item.filter_name,
+      label: item.filter_name,
+    }))
+    tabs.value = [rawTabs[0], ...list, rawTabs[1]]
+  }
+  onlyErrorToast(code, msg)
 }
 
 async function updateFilterTabs() {
@@ -48,7 +58,43 @@ async function updateFilterTabs() {
   active.value = tabs.value[last].id
 }
 
-async function deleteFilterItem(filter_name: string) {
+async function onEditFilter(item: any) {
+  dialog.open(simplePopup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        title: 'Edit filter',
+        inputs: [
+          {
+            type: 'text',
+            placeholder: 'filter name...',
+            name: 'filter_name',
+            required: true,
+            value: item.label,
+          },
+        ],
+      },
+      onConfirm: async (formData: any) => {
+        const { code, msg } = await API.window.userUpdateWindowFilterNameCreate({
+          ...item,
+          old_filter_name: item.filter_name,
+          new_filter_name: formData.filter_name,
+        })
+        if (code === 0) {
+          item.name = formData.filter_name
+          item.label = formData.filter_name
+        }
+        onlyErrorToast(code, msg)
+      },
+    },
+  })
+}
+
+async function deleteFilterItem(item: any) {
   confirm.require({
     header: '警告',
     message: '确认删除此筛选组？',
@@ -63,18 +109,18 @@ async function deleteFilterItem(filter_name: string) {
     },
     accept: async () => {
       try {
-        const isActive = currentFilter.value?.name === filter_name
-        const { msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name })
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        const { code, msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name: item.label })
+        showToast(code, msg)
+        const isActive = currentFilter.value?.label === item.label
         if (isActive) {
-          getFilterList()
+          updateFilterTabs()
         }
         else {
-          tabs.value = tabs.value.filter((tab: any) => tab.name !== filter_name)
+          tabs.value = tabs.value.filter((tab: any) => tab.name !== item.label)
         }
       }
       catch (error) {
-        console.log('🚀 ~ accept: ~ error:', error)
+        onlyErrorToast(-1, error as string, 5000)
       }
     },
   })
@@ -149,8 +195,8 @@ onMounted(() => {
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
         <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>
-        <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" />
-        <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item.label)" />
+        <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" @click="onEditFilter(item)" />
+        <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item)" />
       </div>
     </VueDraggable>
     <div class="sort-item">
