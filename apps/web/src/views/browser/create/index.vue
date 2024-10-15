@@ -114,7 +114,7 @@ async function createProfile(formData: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
-  const { code, data, msg } = await API.window.userAddWindowInfoCreate(params)
+  const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
     router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
   }

@@ -90,7 +90,7 @@ const drawer = reactive({
   },
   updateProfile: async (data: any) => {
     try {
-      const { code, msg } = await API.window.userMdfWindowInfoSingleCreate(data)
+      const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(data)
       showToast(code, msg, 5000)
       onRefreshTable()
     }
@@ -151,7 +151,7 @@ async function coverDefaultDisplay() {
 
 async function tableRequest(params: any) {
   // 0: 未删除
-  const data = await API.window.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
+  const data = await API.api.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
   autoOpenBrowser(data.data?.rows)
   return data
 }

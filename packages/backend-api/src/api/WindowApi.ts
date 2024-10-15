@@ -18,6 +18,8 @@ import {
   UserAddWindowFilterNameCreatePayload,
   UserAddWindowInfoCreateData,
   UserAddWindowInfoCreatePayload,
+  UserAddWindowInfoV2CreateData,
+  UserAddWindowInfoV2CreatePayload,
   UserBatchUpdateWindowTableRowsCreateData,
   UserBatchUpdateWindowTableRowsCreatePayload,
   UserBatchWindowInfoCreateData,
@@ -57,8 +59,6 @@ import {
   UserGetWindowInfoListParams,
   UserGetWindowInfoRecycleListData,
   UserGetWindowInfoRecycleListParams,
-  UserGetWindowInfoV2ListData,
-  UserGetWindowInfoV2ListParams,
   UserGetWindowTableRowsListData,
   UserGetWindowTableSortOrderListData,
   UserImportWindowInfoCreateData,
@@ -75,6 +75,8 @@ import {
   UserMdfWindowInfoRandomCreatePayload,
   UserMdfWindowInfoSingleCreateData,
   UserMdfWindowInfoSingleCreatePayload,
+  UserMdfWindowInfoSingleV2CreateData,
+  UserMdfWindowInfoSingleV2CreatePayload,
   UserMdfWindowSyncStatusCreateData,
   UserMdfWindowSyncStatusCreatePayload,
   UserMdfWindowSyncV2CreateData,
@@ -244,7 +246,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserMdfWindowInfoRandomCreate
-   * @summary 一键随机指纹
+   * @summary 浏览器窗口->窗口随机指纹api（旧版本使用）
    * @request POST:/user_mdf_window_info_random
    * @response `200` `UserMdfWindowInfoRandomCreateData` 成功
    */
@@ -279,7 +281,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserClearWindowCacheApiCreate
-   * @summary API清空所有缓存
+   * @summary 清空所有缓存api(旧版本使用)
    * @request POST:/user_clear_window_cache_api
    * @response `200` `UserClearWindowCacheApiCreateData` 成功
    */
@@ -296,7 +298,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserDelWindowInfoCreate
-   * @summary 回收站->批量删除窗口
+   * @summary 批量删除窗口
    * @request POST:/user_del_window_info
    * @response `200` `UserDelWindowInfoCreateData` 成功
    */
@@ -313,7 +315,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserDelWindowInfoApiCreate
-   * @summary 回收站->api批量删除窗口
+   * @summary 批量删除窗口api (旧版本使用)
    * @request POST:/user_del_window_info_api
    * @response `200` `UserDelWindowInfoApiCreateData` 成功
    */
@@ -730,28 +732,11 @@ export class WindowApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description 新版本回收站列表也用此接口，is_delete传1即可
-   *
-   * @tags Window
-   * @name UserGetWindowInfoV2List
-   * @summary 窗口列表 (新版本接口)
-   * @request GET:/user_get_window_info_v2
-   * @response `200` `UserGetWindowInfoV2ListData` 成功
-   */
-  userGetWindowInfoV2List = (query: UserGetWindowInfoV2ListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetWindowInfoV2ListData, any>({
-      path: `/user_get_window_info_v2`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
    * No description
    *
    * @tags Window
    * @name UserBatchWindowInfoV2Create
-   * @summary 批量创建窗口 (新浏览器版本)
+   * @summary 批量创建窗口 (新版本浏览器使用)
    * @request POST:/user_batch_window_info_v2
    * @response `200` `UserBatchWindowInfoV2CreateData` 成功
    */
@@ -798,6 +783,42 @@ export class WindowApi<SecurityDataType = unknown> {
   userImportWindowInfoV2Create = (data: UserImportWindowInfoV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserImportWindowInfoV2CreateData, any>({
       path: `/user_import_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAddWindowInfoV2Create
+   * @summary 单个创建窗口 (新版本浏览器使用)
+   * @request POST:/user_add_window_info_v2
+   * @response `200` `UserAddWindowInfoV2CreateData` 成功
+   */
+  userAddWindowInfoV2Create = (data: UserAddWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddWindowInfoV2CreateData, any>({
+      path: `/user_add_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowInfoSingleV2Create
+   * @summary 单个修改窗口 (新版本浏览器使用)
+   * @request POST:/user_mdf_window_info_single_v2
+   * @response `200` `UserMdfWindowInfoSingleV2CreateData` 成功
+   */
+  userMdfWindowInfoSingleV2Create = (data: UserMdfWindowInfoSingleV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfWindowInfoSingleV2CreateData, any>({
+      path: `/user_mdf_window_info_single_v2`,
       method: "POST",
       body: data,
       type: ContentType.Json,
