@@ -3,21 +3,20 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
+import { baseUrl } from '../constants'
 
 const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo', { default: {} })
 
 const toast = useToast()
 
-const hostname = location.hostname
-
 function startCountdown(item) {
   const duration = 30
-  const interval = 100
+  const interval = 10
   let elapsed = 0
 
   const timer = setInterval(() => {
     elapsed += interval / 1000
-    item.progress = ((elapsed / duration)).toFixed(2)
+    item.progress = ((elapsed / duration)).toFixed(10)
 
     if (elapsed >= duration) {
       clearInterval(timer)
@@ -36,7 +35,7 @@ function initTwoFactorCodeList() {
 async function getTwoFactorCode(item) {
   item.loading = true
   try {
-    const response = await fetch(`http://${hostname}:8888/api/browser/two_factor_token?code=${item.platformEfa}`)
+    const response = await fetch(`${baseUrl}/api/browser/two_factor_token?code=${item.platformEfa}`)
     const { data } = await response.json()
     console.log('data', data)
     item.efaToken = data
@@ -90,7 +89,9 @@ initTwoFactorCodeList()
             </div>
             <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress" cx="18" cy="18" r="14" :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#FFA500' : '#12a3fc' }" />
+              <circle class="progress" cx="18" cy="18" r="14"
+                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#FFA500' : '#12a3fc' }"
+              />
             </svg>
           </template>
         </div>
@@ -122,11 +123,12 @@ initTwoFactorCodeList()
 .progress {
   fill: none;
   stroke-width: 4.5;
-  stroke-dasharray: calc(2 * 3.14159 * 14); /* 计算圆的周长 */
+  stroke-dasharray: calc(2 * 3.14159 * 14);
+  /* 计算圆的周长 */
   stroke: var(--stroke-color, #12a3fc);
   stroke-linecap: round;
   stroke-dashoffset: calc(2 * 3.14159 * 14 * var(--progress));
-  transition: stroke-dashoffset calc(1 / 30 * 1s);
+  // transition: stroke-dashoffset calc(1 / 30 * 1s);
 }
 
 .two-factor-auth {
@@ -137,6 +139,7 @@ initTwoFactorCodeList()
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
 }
+
 .box {
   display: flex;
   padding: var(--spacing-xl, 12px);
@@ -168,7 +171,8 @@ initTwoFactorCodeList()
         font-size: 14px;
         font-style: normal;
         font-weight: 500;
-        line-height: var(--Line-Height-text-lg, 20px); /* 142.857% */
+        line-height: var(--Line-Height-text-lg, 20px);
+        /* 142.857% */
         text-decoration-line: underline;
       }
 
@@ -179,7 +183,8 @@ initTwoFactorCodeList()
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
-        line-height: 16px; /* 133.333% */
+        line-height: 16px;
+        /* 133.333% */
       }
     }
   }
@@ -197,7 +202,8 @@ initTwoFactorCodeList()
       font-size: 24px;
       font-style: normal;
       font-weight: 600;
-      line-height: var(--Line-Height-text-3xl, 30px); /* 125% */
+      line-height: var(--Line-Height-text-3xl, 30px);
+      /* 125% */
     }
   }
 }
@@ -214,6 +220,7 @@ initTwoFactorCodeList()
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 133.333% */
 }
 </style>

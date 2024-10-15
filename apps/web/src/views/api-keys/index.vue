@@ -80,7 +80,7 @@ async function resetApiKey() {
       severity: 'info',
     },
     accept: async () => {
-      apiKey.value = await window.electronAPI.send('base:apikey')
+      apiKey.value = await window.electronAPI.send('util:genApiKey')
       updateApiKeys()
     },
   })

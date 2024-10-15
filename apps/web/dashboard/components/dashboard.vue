@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { fingerprintInfoList, profileInfoList } from '../constants'
+import { baseUrl, fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import TwoFactorAuth from './two-factor-auth.vue'
 
@@ -27,12 +27,10 @@ const offsetHours = getTimeOffset()
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
-const hostname = location.hostname
-
 /** 获取当前窗口信息 */
 function getWindowInfo() {
   fetchWindowInfoLoading.value = true
-  fetch(`http://${hostname}:8888/api/browser/list?dirId=${dirId}`)
+  fetch(`${baseUrl}/api/browser/list?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       console.log(result)
@@ -55,7 +53,7 @@ function getWindowInfo() {
 async function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
   try {
-    const response = await fetch(`http://${hostname}:8888/api/proxy/detection?dirId=${dirId}`)
+    const response = await fetch(`${baseUrl}/api/proxy/detection?dirId=${dirId}`)
     const result = await response.json()
     console.log(result)
     if (result.code === 0) {
@@ -84,7 +82,7 @@ async function proxyDetection(event?: MouseEvent) {
 async function refreshURL() {
   refreshUrlLoading.value = true
   try {
-    const response = await fetch(`http://${hostname}:8888/api/proxy/refresh-url`, {
+    const response = await fetch(`${baseUrl}/api/proxy/refresh-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

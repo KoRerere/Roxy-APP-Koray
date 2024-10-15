@@ -228,9 +228,8 @@ ipcMain.on('extension:getInstalledExtensions', () => {
 })
 
 /** 生成 api key */
-ipcMain.on('base:apikey', () => {
-  const str = `${Date.now()}`
-  return Promise.resolve(crypto.createHash('md5').update(str, 'utf8').digest('hex'))
+ipcMain.on('util:genApiKey', () => {
+  return crypto.createHash('md5').update(String(Date.now()), 'utf8').digest('hex')
 })
 
 /** 将本地绝对路径转为自定义媒体协议路径 */

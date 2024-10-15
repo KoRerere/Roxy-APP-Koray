@@ -10,6 +10,7 @@ import { chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { extensionManager } from '/@/modules/extension'
+import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
 import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
@@ -139,7 +140,7 @@ export class BeforeLaunchTask {
       '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      `http://127.0.0.1:8888/dashboard?id=${dirId}`,
+      `http://127.0.0.1:${store.dashboardPort}/dashboard?id=${dirId}`,
     ]
 
     // 如果用户开启了插件

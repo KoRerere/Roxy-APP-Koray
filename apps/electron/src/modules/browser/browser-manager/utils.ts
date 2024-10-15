@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import language from '/@/constants/language.json'
+import { store } from '/@/modules/store'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
@@ -306,7 +307,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     portScan: {
       enablePortScanWhiteList: winInfo.portScanProtect,
       // TODO: 从配置中获取
-      portScanWhiteList: `${8888};${winInfo.portScanList.replaceAll(',', ';')}`,
+      portScanWhiteList: `${store.dashboardPort};${winInfo.portScanList.replaceAll(',', ';')}`,
     },
     /** 选填 屏幕分辨率 */
     get screen() {
