@@ -49,7 +49,7 @@ const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : 
 const [showToast] = useResponseToast()
 
 const [show] = useContextMenu()
-const ctmFilters = ref()
+const filtersMenu = ref()
 const sorts = ref(getSorts())
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
@@ -107,7 +107,7 @@ watch(() => props.currentFilter, (params: any) => {
   if (params && params.name !== 'recycle') {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
-        ctmFilters.value = data
+        filtersMenu.value = data
         onRefreshTable()
       })
   }
@@ -123,17 +123,30 @@ watch(
 )
 
 function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(ctmFilters.value))
+  const params = filterFieldByValue(getFormData(filtersMenu.value))
   tableRef.value!.refresh(params)
 }
 
-async function saveFilters(formData: { filter_name: string }) {
-  if (!ctmFilters.value.some((item: any) => item.value)) {
+async function saveFilters(formData: any) {
+  if (!filtersMenu.value.some((item: any) => item.value)) {
     return
   }
-  const filter_condition = getFormData(ctmFilters.value)
-  const filter_rule = columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
-  const { code, msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
+  const { filter_name, filter_rule, sort } = formData
+  const filter_condition = getFormData(filtersMenu.value)
+
+  const { code, msg } = sort
+    ? await API.window.userUpdateWindowFilterNameCreate({
+      sort,
+      filter_rule,
+      filter_condition,
+      old_filter_name: filter_name,
+      new_filter_name: filter_name,
+    })
+    : await API.window.userAddWindowFilterNameCreate({
+      filter_name,
+      filter_condition,
+      filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
+    })
   if (code === 0) {
     emit('updateFilterTabs')
   }
@@ -384,7 +397,7 @@ onMounted(() => {
   canceCloselListener = listenCloseMessage()
 
   getCustomFilters().then((data) => {
-    ctmFilters.value ??= data
+    filtersMenu.value ??= data
   })
 })
 
@@ -401,13 +414,11 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
-            :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" selection-mode="multiple"
-            :show-actions="false"
-  >
+    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" selection-mode="multiple"
+    :show-actions="false">
     <template #header-extra>
-      <customFilters :current-filter="currentFilter" :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile"
-                     :save-filters="saveFilters" @filter-change="onRefreshTable"
-      />
+      <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
+        :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
@@ -429,35 +440,28 @@ defineExpose({
     <template #actions="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
-                   :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
-                   @click.stop="operationHandler({ name: 'fav' }, data)"
-        />
+          :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
+          @click.stop="operationHandler({ name: 'fav' }, data)" />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
-                   :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
-                   @click.stop="operationHandler({ name: 'addNotes' }, data)"
-        />
+          :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
+          @click.stop="operationHandler({ name: 'addNotes' }, data)" />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)"
-                 @more="showOperationMenu($event, data)"
-        />
+          @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-                         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-                         @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)"
-      />
+        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
+        @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </ry-table>
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
-          :pt="{ mask: classes['browser-drawer'] }"
-  >
+    :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!"
-                   @confirm="drawer.confirm(drawer.type, $event)"
-      />
+        @confirm="drawer.confirm(drawer.type, $event)" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
-                    @confirm="drawer.confirm(drawer.type, $event)"
-      />
+        @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
   </Drawer>
 </template>
