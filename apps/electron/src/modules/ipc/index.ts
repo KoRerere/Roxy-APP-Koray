@@ -87,6 +87,11 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
   return browserManager.batchDelete(dirIds)
 })
 
+/** 获取所有已打开的窗口 */
+ipcMain.on('browser:getOpenedBrowser', () => {
+  return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => browserItem.winInfo.id!)
+})
+
 /** 登录成功后，保存用户信息 */
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
