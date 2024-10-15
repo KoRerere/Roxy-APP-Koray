@@ -22,7 +22,7 @@ const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
 
-const ctmFilters = ref(getCustomFilters())
+const filtersMenu = ref(getCustomFilters())
 const dataList = ref()
 
 const drawer: any = reactive({
@@ -96,7 +96,7 @@ function createProxy() {
 }
 
 function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(ctmFilters.value))
+  const params = filterFieldByValue(getFormData(filtersMenu.value))
   tableRef.value!.refresh(params)
 }
 </script>
@@ -117,7 +117,7 @@ function onRefreshTable() {
         :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #header-extra>
-          <CustomFilter :enabled-filter-save="false" :ctm-filters="ctmFilters" @filter-change="onRefreshTable" />
+          <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
         <template #proxy="{ data }">
           <div class="proxy-host">

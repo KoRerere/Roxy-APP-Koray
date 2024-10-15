@@ -32,16 +32,24 @@ const open = ref()
 const port = ref()
 
 const updateApiKeys = useDebounceFn(() => {
-  API.base.userSetUserApiCreate({ apiKey: apiKey.value, open: open.value, port: port.value })
+  API.base.userSetUserApiCreate({
+    apiKey: apiKey.value,
+    open: open.value,
+    port: port.value,
+  }).then(({ msg }) => {
+    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  })
 }, 300)
 
 const inputs = ref([
   {
+    type: 'number',
     placeholder: '127.0.0.1',
     disabled: true,
   },
   { separator: true },
   {
+    type: 'number',
     name: 'port',
     placeholder: '0~65535',
     onblur: () => {
@@ -91,7 +99,7 @@ async function onCopy() {
   toast.add({ severity: 'success', summary: '成功', detail: '复制成功', life: 5000 })
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   getApiKeys()
 })
 </script>
@@ -107,43 +115,45 @@ onMounted(() => {
         <div>API keys usage:</div>
         <rxToggleSwitch v-model="open" :label="open ? 'Active' : 'Disable'" @change="updateApiKeys" />
       </div>
-      <div class="api-content">
-        <div class="api-content-reset">
-          <div>API keys:</div>
-          <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" label="Reset API Key"
-            @click="resetApiKey" />
-        </div>
-        <div class="api-content-desc">
-          <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
-          <div class="flex-1">
-            IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently
-            have
-            within the workspace.
+      <template v-if="open">
+        <div class="api-content">
+          <div class="api-content-reset">
+            <div>API keys:</div>
+            <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" label="Reset API Key"
+              @click="resetApiKey" />
           </div>
-        </div>
-        <div class="api-content-key">
-          <div class="flex items-center justify-between">
-            <div class="api-content-key-value">
-              {{ apiKey }}
+          <div class="api-content-desc">
+            <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
+            <div class="flex-1">
+              IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently
+              have
+              within the workspace.
             </div>
-            <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
           </div>
-          <div class="api-content-key-desc">
-            * Please keep your API keys safe and should not abuse it.
+          <div class="api-content-key">
+            <div class="flex items-center justify-between">
+              <div class="api-content-key-value">
+                {{ apiKey }}
+              </div>
+              <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
+            </div>
+            <div class="api-content-key-desc">
+              * Please keep your API keys safe and should not abuse it.
+            </div>
           </div>
-        </div>
-        <div class="api-content-proxy">
-          <div>
+          <div class="api-content-proxy">
             <div>
-              Proxy port:
+              <div>
+                Port:
+              </div>
+              <div class="api-content-proxy-desc">
+                Port should be in between 0~65535
+              </div>
             </div>
-            <div class="api-content-proxy-desc">
-              Port should be in between 0~65535
-            </div>
+            <inputNumberGroup :inputs="inputs" />
           </div>
-          <inputNumberGroup :inputs="inputs" />
         </div>
-      </div>
+      </template>
 
       <div class="api-illustrate">
         <div v-for="item in illustrate" :key="item.title">

@@ -52,10 +52,13 @@ async function getFilterList() {
   onlyErrorToast(code, msg)
 }
 
-async function updateFilterTabs() {
+async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterList()
-  const last = tabs.value.length - 2
-  active.value = tabs.value[last].id
+
+  if (!isEdit) {
+    const last = tabs.value.length - 2
+    active.value = tabs.value[last].id
+  }
 }
 
 async function onEditFilter(item: any) {

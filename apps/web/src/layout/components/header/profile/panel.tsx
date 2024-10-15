@@ -82,15 +82,15 @@ export function getProfilePanel(data?: any): SettingsModule {
       {
         items: [
           {
-            label: 'Whitelist',
-            text: 'Visiting sites using local network without proxy',
+            label: 'Profile picture',
+            text: 'Size should be 64px*64px and less than 2MB',
             name: 'avatar',
             classes: 'flex-col !items-start gap-4',
             value: data?.avatar ?? '',
             props: {
               class: 'resize-none w-full',
               placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
-              realName: data.realName,
+              userName: data.userName,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
@@ -111,8 +111,8 @@ export function getProfilePanel(data?: any): SettingsModule {
           {
             label: 'Username',
             text: 'Usually used in teamworks and members.',
-            name: 'realName',
-            value: data?.realName ?? '',
+            name: 'userName',
+            value: data?.userName ?? '',
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" onBlur={() => updateUserName(item)} />

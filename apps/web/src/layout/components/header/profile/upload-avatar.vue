@@ -3,7 +3,7 @@ import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 
 defineProps({
-  realName: String,
+  userName: String,
 })
 
 const emit = defineEmits(['change'])
@@ -39,7 +39,7 @@ async function removeAvatar() {
   <div class="upload-area">
     <img v-if="previewUrl" class="upload-area-avatar" :src="previewUrl">
     <div v-else class="upload-area-color" :style="{ backgroundColor: color }">
-      {{ realName?.slice(0, 1) }}
+      {{ userName?.slice(0, 1) }}
     </div>
     <div class="upload-area-buttons">
       <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete" label="Remove"
