@@ -496,8 +496,12 @@ export function getInputsGroup(data: any = {}) {
         label: '字体指纹',
       },
       change: async (input: any) => {
-        // Reflect.deleteProperty(target, name)
-
+        if (input.value) {
+          Object.assign(original, { font: await getRandomFonts() })
+        }
+        else {
+          Reflect.deleteProperty(original, 'font')
+        }
       },
     },
     {
@@ -525,6 +529,14 @@ export function getInputsGroup(data: any = {}) {
       ],
       preview: {
         label: 'WebGL图像',
+      },
+      change: async (input: any) => {
+        if (input.value) {
+          Object.assign(original, { webGLValue: getwebGLNoiseValue() })
+        }
+        else {
+          Reflect.deleteProperty(original, 'webGLValue')
+        }
       },
     },
     {
@@ -595,6 +607,14 @@ export function getInputsGroup(data: any = {}) {
       preview: {
         label: 'Canvas',
       },
+      change: async (input: any) => {
+        if (input.value) {
+          Object.assign(original, { canvasValue: getCanvasContextNoiseValue() })
+        }
+        else {
+          Reflect.deleteProperty(original, 'canvasValue')
+        }
+      },
     },
     {
       type: 'radio',
@@ -608,6 +628,14 @@ export function getInputsGroup(data: any = {}) {
       preview: {
         label: 'AudioContext',
       },
+      change: async (input: any) => {
+        if (input.value) {
+          Object.assign(original, { audioContextValue: getwebGLNoiseValue() })
+        }
+        else {
+          Reflect.deleteProperty(original, 'audioContextValue')
+        }
+      },
     },
     {
       type: 'radio',
@@ -620,6 +648,14 @@ export function getInputsGroup(data: any = {}) {
       ],
       preview: {
         label: 'SpeechVoices',
+      },
+      change: async (input: any) => {
+        if (input.value) {
+          Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis() } })
+        }
+        else {
+          Reflect.deleteProperty(original, 'speechVoicesValue')
+        }
       },
     },
     {
@@ -646,6 +682,14 @@ export function getInputsGroup(data: any = {}) {
       ],
       preview: {
         label: 'ClientRects',
+      },
+      change: async (input: any) => {
+        if (input.value) {
+          Object.assign(original, { clientRectsValue: { enable: true, ...getClientRectsValue() } })
+        }
+        else {
+          Reflect.deleteProperty(original, 'clientRectsValue')
+        }
       },
     },
     {
