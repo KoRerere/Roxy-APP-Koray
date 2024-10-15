@@ -16,8 +16,6 @@ import {
   UserDelPlatformInfoCreatePayload,
   UserGetPlatformInfoListData,
   UserGetPlatformInfoListParams,
-  UserGetPlatformInfoV2ListData,
-  UserGetPlatformInfoV2ListParams,
   UserGetPlatformTableRowsListData,
   UserGetPlatformTableSortOrderListData,
   UserMdfPlatformInfoCreateData,
@@ -104,23 +102,6 @@ export class PlatformApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Platform
-   * @name UserGetPlatformInfoV2List
-   * @summary 业务平台查询（只显示当前用户添加的平台）
-   * @request GET:/user_get_platform_info_v2
-   * @response `200` `UserGetPlatformInfoV2ListData` 成功
-   */
-  userGetPlatformInfoV2List = (query: UserGetPlatformInfoV2ListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetPlatformInfoV2ListData, any>({
-      path: `/user_get_platform_info_v2`,
-      method: "GET",
-      query: query,
       format: "json",
       ...params,
     });

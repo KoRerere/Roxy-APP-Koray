@@ -1,4 +1,5 @@
 import {
+  ApiApi,
   BaseApi,
   HttpClient,
   LimitApi,
@@ -36,4 +37,5 @@ export const API = {
   base: new BaseApi(httpClient),
   platform: new PlatformApi(httpClient),
   limit: new LimitApi(httpClient),
+  api: new ApiApi(httpClient),
 }

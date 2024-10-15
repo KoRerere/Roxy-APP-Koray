@@ -36,7 +36,7 @@ async function createProfile(formData: any) {
     ...formData,
     windowName: windowName.value,
   }
-  const { code, msg } = await API.window.userMdfWindowInfoSingleCreate(params)
+  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
     router.replace({ name: 'browser-list' })
