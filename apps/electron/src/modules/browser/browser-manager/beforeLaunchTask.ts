@@ -45,6 +45,7 @@ export class BeforeLaunchTask {
   async run() {
     this.taskMap.set(this.memoryDetection, '内存检测中')
     this.taskMap.set(this.handleProxyDetection, '代理检测中')
+    this.taskMap.set(this.clearBrowserCache, '判断是否需要清理浏览器缓存')
     this.taskMap.set(this.pullRemoteCacheFiles, '拉取远程缓存文件')
     this.taskMap.set(this.createFingerprintConfigFile, '生成指纹配置文件')
     this.taskMap.set(this.launch, '准备启动浏览器')
@@ -96,8 +97,6 @@ export class BeforeLaunchTask {
     const launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', launchArgs)
 
-    // 根据用户设置，是否要清楚浏览器缓存
-    await this.clearBrowserCache()
     // 写入登录信息
     await this.writeLoginData()
 
@@ -357,53 +356,54 @@ export class BeforeLaunchTask {
     if (clearCacheFile) {
       const cacheFilePath = this.browserItem.userDataDir
       try {
-        await rm(cacheFilePath, { recursive: true })
-        console.log('cacheFilePath 删除成功')
+        await rm(cacheFilePath, { recursive: true, force: true })
+        console.log('cacheFilePath 删除成功', cacheFilePath)
       }
       catch (err) {
-        console.log(`cacheFilePath 删除失败`, err)
-        this.warningMessages.push('缓存文件删除失败')
+        // console.log(`cacheFilePath 删除失败`, err)
+        // this.warningMessages.push('缓存文件删除失败')
       }
     }
+    else {
+      // 当清空缓存先删除cookie文件
+      console.log(`是否清空cookie:${clearCookie}`)
+      if (clearCookie) {
+        const cookieFilePath = join(
+          this.browserItem.userDataDir,
+          'Default',
+          'Network',
+          'Cookies',
+        )
 
-    // 当清空缓存先删除cookie文件
-    console.log(`是否清空cookie:${clearCookie}`)
-    if (clearCookie) {
-      const cookieFilePath = join(
-        this.browserItem.userDataDir,
-        'Default',
-        'Network',
-        'Cookies',
-      )
-
-      try {
-        console.log('cookieFilePath: ', cookieFilePath)
-        await rm(cookieFilePath, { recursive: true })
-        console.log('cookieFilePath 删除成功')
+        try {
+          console.log('cookieFilePath: ', cookieFilePath)
+          await rm(cookieFilePath, { recursive: true })
+          console.log('cookieFilePath 删除成功')
+        }
+        catch (err) {
+          this.warningMessages.push('cookie文件删除失败')
+          console.log(`cookieFilePath 删除失败`, err)
+        }
       }
-      catch (err) {
-        this.warningMessages.push('cookie文件删除失败')
-        console.log(`cookieFilePath 删除失败`, err)
-      }
-    }
 
-    console.log(`是否清空 localStorage:${clearLocalStorage}`)
-    // 当清空缓存先删除
-    if (clearLocalStorage) {
-      const localStorageFilePath = join(
-        this.browserItem.userDataDir,
-        'Default',
-        'Local Storage',
-      )
+      console.log(`是否清空 localStorage:${clearLocalStorage}`)
+      // 当清空缓存先删除
+      if (clearLocalStorage) {
+        const localStorageFilePath = join(
+          this.browserItem.userDataDir,
+          'Default',
+          'Local Storage',
+        )
 
-      try {
-        console.log('localStorageFilePath: ', localStorageFilePath)
-        await rm(localStorageFilePath, { recursive: true })
-        console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
-      }
-      catch (err) {
-        console.log(`localStorage_fileUrl 删失败`, err)
-        this.warningMessages.push('localStorage文件删除失败')
+        try {
+          console.log('localStorageFilePath: ', localStorageFilePath)
+          await rm(localStorageFilePath, { recursive: true })
+          console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
+        }
+        catch (err) {
+          console.log(`localStorage_fileUrl 删失败`, err)
+          this.warningMessages.push('localStorage文件删除失败')
+        }
       }
     }
   }
