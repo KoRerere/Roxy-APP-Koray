@@ -18,14 +18,17 @@ function handleFilterChange() {
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-center">
     <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label"
-      option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item" @hide="handleFilterChange" />
+                 option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item" @hide="handleFilterChange"
+    />
     <Select v-else-if="item.type === 'select'" v-model="item.value" class="mw-150" show-clear checkmark
-      :highlight-on-select="false" option-label="label" option-value="value" v-bind="item"
-      @change="handleFilterChange" />
+            :highlight-on-select="false" option-label="label" option-value="value" v-bind="item"
+            @change="handleFilterChange"
+    />
 
     <DatePicker v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse"
-      selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
-      :placeholder="item.placeholder" @hide="handleFilterChange" />
+                selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+                :placeholder="item.placeholder" @hide="handleFilterChange"
+    />
   </div>
 </template>
 

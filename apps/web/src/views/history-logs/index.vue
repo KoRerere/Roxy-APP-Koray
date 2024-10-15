@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
@@ -10,7 +10,12 @@ const columns = ref([
   {
     title: 'User',
     key: 'userName',
-    getText: (data: Data) => `${data.userName} ${data.email || ''}`,
+    render: ({ data }: { data: Data }) => (
+      <div>
+        <div>{data.email}</div>
+        <div class="text-[#7C8387]">{data.userName}</div>
+      </div>
+    ),
   },
   {
     title: 'Actions',
@@ -71,7 +76,7 @@ async function tableFilters() {
       name: 'date',
       placeholder: 'All time',
       formatValue: (input: any, _: any, formData: any) => {
-        const [startDate, endDate] = (input.value || []).map((date: Date) => format(date, 'yyyy-MM-dd'))
+        const [startDate, endDate] = (input.value || []).map((date: Date) => format(date || input.value[0], 'yyyy-MM-dd'))
         Object.assign(formData, { startDate, endDate })
       },
     },
@@ -87,13 +92,15 @@ async function tableFilters() {
     </div>
     <div class="flex flex-1 overflow-hidden">
       <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
-        :show-display="false" :context-menu="false">
+                :show-display="false" :context-menu="false"
+      >
         <template #location="{ data }">
           <div class="flex items-center gap-1">
             <RxSvgIcon name="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
             <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
-              :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12" />
+                       :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12"
+            />
           </div>
         </template>
       </ry-table>

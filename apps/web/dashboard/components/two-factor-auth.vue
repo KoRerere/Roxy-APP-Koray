@@ -27,12 +27,15 @@ function startCountdown(item) {
 }
 
 function initTwoFactorCodeList() {
-  winInfo.value.platformUrlList?.forEach((item) => {
+  winInfo.value.windowPlatformList?.forEach((item) => {
     getTwoFactorCode(item)
   })
 }
 
 async function getTwoFactorCode(item) {
+  if (!item.platformEfa) {
+    return
+  }
   item.loading = true
   try {
     const response = await fetch(`${baseUrl}/api/browser/two_factor_token?code=${item.platformEfa}`)
@@ -64,10 +67,11 @@ initTwoFactorCodeList()
 
 <template>
   <div class="two-factor-auth">
-    <template v-for="item in winInfo.platformUrlList" :key="item.id">
+    <template v-for="item in winInfo.windowPlatformList" :key="item.id">
       <div class="box">
         <div class="platform-info">
-          <RxSvgIcon name="websites/rx_site_facebook" class="platform-icon" />
+          <img v-if="item.platformIcon" :src="item.platformIcon" class="platform-icon">
+          <Avatar v-else label="?" shape="circle" class="platform-icon" />
           <div class="platform-account">
             <a :href="item.platformUrl" target="_blank" class="platform-url">
               {{ item.platformUrl }}
@@ -80,7 +84,7 @@ initTwoFactorCodeList()
             <RxSvgIcon name="base/rx_ic_outlink" />
           </a>
         </div>
-        <div class="two-factor">
+        <div v-if="item.platformEfa" class="two-factor">
           <RxSvgIcon name="base/rx_ic_2fa" />
           <Skeleton v-if="item.loading" shape="circle" size="3rem" class="mr-2" />
           <template v-else>

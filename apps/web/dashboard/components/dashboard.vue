@@ -138,7 +138,7 @@ onBeforeMount(() => {
     <div class="card base-info">
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
-        <RxSvgIcon v-else class="city-logo" :name="`country-code/${isTestSuccess ? proxyInfo.country_code : 'rx_ic_earth'}`" />
+        <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
             <ry-button
@@ -435,6 +435,9 @@ onBeforeMount(() => {
       height: 48px;
       background-color: #171c1f;
       border-radius: 50%;
+      &.fail {
+        background-color: #f0f3f5;
+      }
     }
   }
 

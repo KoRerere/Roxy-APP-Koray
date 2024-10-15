@@ -168,7 +168,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     /** 禁止弹出google翻译 */
     // disableGoogleTranslate: true,
     /** 禁止保存密码弹窗 */
-    disablePasswordSaveTips: winInfo.forbidSavePassword,
+    disablePasswordSaveTips: !winInfo.forbidSavePassword,
 
     /** 媒体网络,给不同的环境生成不同的媒体设备ID  */
     // mediaDeviceList: [

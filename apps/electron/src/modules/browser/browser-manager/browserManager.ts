@@ -17,6 +17,8 @@ export class BrowserManager {
     }
     // 这里需要延迟到下一次事件循环，因为浏览器启动是异步的
     await setTimeout()
+    console.log(`BrowserManager ${dirId} === 获取已打开的浏览器`)
+    console.log(this.openedBrowserMap.values())
     return this.openedBrowserMap.get(dirId)
   }
 
