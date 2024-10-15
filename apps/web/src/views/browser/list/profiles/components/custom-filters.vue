@@ -169,21 +169,28 @@ function deleteFilterItem(item: any) {
 }
 
 function resetFilters() {
-  if (_props.currentFilter.filter_condition) {
-    const params = _props.currentFilter.filter_condition
-    setInputValueByFormData(_props.filtersMenu, {
-      ...params,
-      createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
-    })
+  const condition = _props.currentFilter.filter_condition || {}
+  const params = {
+    ...condition,
+    createTime: condition.startDate && condition.endDate ? [condition.startDate, condition.endDate].join('~') : undefined,
   }
-  else {
-    _props.filtersMenu.forEach((item) => {
-      item.value = null
-      if (Array.isArray(item.items)) {
-        item.items.forEach((it: any) => it.value = null)
-      }
-    })
-  }
+
+  // if (_props.currentFilter.filter_condition) {
+  //   setInputValueByFormData(_props.filtersMenu, {
+  //     ...params,
+  //     createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
+  //   })
+  // }
+  // else {
+
+  // }
+
+  _props.filtersMenu.forEach((item) => {
+    item.value = params[item.name]
+    if (Array.isArray(item.items)) {
+      item.items.forEach((it: any) => it.value = params[item.name])
+    }
+  })
   isChanged.value = false
   emit('filterChange')
 }

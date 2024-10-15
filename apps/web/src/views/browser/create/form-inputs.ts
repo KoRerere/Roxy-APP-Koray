@@ -96,6 +96,7 @@ export function getInputsGroup(data: any = {}) {
     const version = $dict_map[`osversion_${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
     return [key, version]
   }))
+  console.log('🚀 ~ getInputsGroup ~ data:', data)
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
@@ -106,6 +107,8 @@ export function getInputsGroup(data: any = {}) {
       proxyPassword: data.proxyPassword, // 代理密码
       proxyUserName: data.proxyUserName, // 代理账号
       refreshUrl: data.refreshUrl, // 刷新URL
+      lastCountry: data.lastCountry, // 出口国家
+      lastCity: data.lastCity, // 出口城市
     }]
     : []
 
@@ -552,7 +555,7 @@ export function getInputsGroup(data: any = {}) {
         setInputVisible(
           inputs,
           ['webGLManufacturer', 'webGLRender'],
-          input.value === false,
+          input.value === true,
         )
       },
       preview: {
@@ -566,7 +569,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.webGLManufacturer,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.webGLInfo, false, false),
+      visible: initInputVisible(data.webGLInfo, true, true),
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
@@ -579,7 +582,7 @@ export function getInputsGroup(data: any = {}) {
       rows: 3,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.webGLInfo, false, false),
+      visible: initInputVisible(data.webGLInfo, true, true),
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
@@ -715,7 +718,7 @@ export function getInputsGroup(data: any = {}) {
         { label: '真实', value: false },
       ],
       change(input: any, inputs: any) {
-        setInputVisible(inputs, 'deviceName', input.value === false)
+        setInputVisible(inputs, 'deviceName', input.value === true)
       },
       preview: {
         label: '设备名称',
@@ -728,7 +731,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.deviceName,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.deviceNameSwitch, false, false),
+      visible: initInputVisible(data.deviceNameSwitch, true, true),
       iconClick: () => {
         setDeviceName(inputsGroup)
       },
@@ -743,7 +746,7 @@ export function getInputsGroup(data: any = {}) {
         { label: '自定义', value: true },
       ],
       change(input: any, inputs: any) {
-        const showMacAddr = input.value === false
+        const showMacAddr = input.value === true
         setInputVisible(inputs, 'macAddr', showMacAddr)
         if (showMacAddr) {
           setMacAddr(inputsGroup)
@@ -760,7 +763,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.macAddr,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: initInputVisible(data.macInfo, false, false),
+      visible: initInputVisible(data.macInfo, true, true),
       iconClick: () => {
         setMacAddr(inputsGroup)
       },

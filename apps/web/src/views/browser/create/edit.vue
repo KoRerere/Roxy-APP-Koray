@@ -58,7 +58,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  localStorage.removeItem(`$editWindow_${original.value.id}`)
+  // localStorage.removeItem(`$editWindow_${original.value.id}`)
 })
 </script>
 
