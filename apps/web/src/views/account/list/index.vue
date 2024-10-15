@@ -83,7 +83,7 @@ function operationHandler(operate: any, data?: any) {
 }
 
 function tableRequest(params: any) {
-  return API.platform.userGetPlatformInfoV2List(params)
+  return API.api.userGetPlatformInfoV2List(params)
 }
 
 function createAccount(formData: UserMdfPlatformInfoCreatePayload) {

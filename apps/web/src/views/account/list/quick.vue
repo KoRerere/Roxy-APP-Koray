@@ -56,7 +56,7 @@ const tableRef = useTemplateRef('account')
 const selection = ref(props.data?.windowPlatformList.filter((item: any) => item.id))
 
 async function tableRequest(params: any) {
-  return API.platform.userGetPlatformInfoV2List(params)
+  return API.api.userGetPlatformInfoV2List(params)
 }
 
 async function addRemark(platformRemarks: string, row: any) {

@@ -135,12 +135,9 @@ async function saveFilters(formData: { filter_name: string }) {
   const filter_rule = columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 }))
   const { code, msg } = await API.window.userAddWindowFilterNameCreate({ ...formData, filter_condition, filter_rule })
   if (code === 0) {
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
     emit('updateFilterTabs')
   }
-  else {
-    toast.add({ severity: 'error', summary: '失败', detail: msg, life: 5000 })
-  }
+  showToast(code, msg, 5000)
 }
 
 async function coverDefaultDisplay() {
