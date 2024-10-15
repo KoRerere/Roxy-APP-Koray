@@ -16,6 +16,8 @@ const toast = useToast()
 const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
 /** 获取窗口详情 loading */
 const fetchWindowInfoLoading = ref(false)
+/** 是否测试成功 */
+const isTestSuccess = ref(true)
 const refreshUrlLoading = ref(false)
 const testProxyLoading = ref(false)
 const proxyInfo = ref<Record<string, any>>({})
@@ -57,6 +59,7 @@ async function proxyDetection(event?: MouseEvent) {
     const result = await response.json()
     console.log(result)
     if (result.code === 0) {
+      isTestSuccess.value = true
       proxyInfo.value = result.data
       // 通过点击事件触发的检查，显示成功提示
       if (event) {
@@ -67,6 +70,7 @@ async function proxyDetection(event?: MouseEvent) {
       console.error('代理检查失败')
       toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
       proxyInfo.value = {}
+      isTestSuccess.value = false
     }
   }
   catch (error) {
@@ -134,7 +138,7 @@ onBeforeMount(() => {
     <div class="card base-info">
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
-        <RxSvgIcon v-else class="city-logo" :name="`country-code/${proxyInfo.country_code}`" />
+        <RxSvgIcon v-else class="city-logo" :name="`country-code/${isTestSuccess ? proxyInfo.country_code : 'rx_ic_earth'}`" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
             <ry-button
