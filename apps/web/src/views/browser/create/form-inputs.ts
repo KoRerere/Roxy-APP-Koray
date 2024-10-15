@@ -232,7 +232,7 @@ export function getInputsGroup(data: any = {}) {
       errorMsg: 'Invalid cookie format',
       autoResize: false,
       formatValue: (input: any) => {
-        return input.value ? JSON.parse(input.value) : ''
+        return input.value ? JSON.parse(input.value) : []
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()

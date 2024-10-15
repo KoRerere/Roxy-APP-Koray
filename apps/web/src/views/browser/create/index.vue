@@ -3,6 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
@@ -14,7 +15,7 @@ import { createTableContext } from './hooks/useContext'
 const router = useRouter()
 const toast = useToast()
 const { currentWorkspace } = useWorkspaceStore()
-
+const [showToast] = useResponseToast()
 const isBatch = ref(false)
 const createCount = ref(1)
 createTableContext({ isBatch, createCount })
@@ -117,9 +118,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   if (code === 0) {
     router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
   }
-  else {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg })
-  }
+  showToast(code, msg)
 }
 
 async function batchCreateProfile(params: any) {

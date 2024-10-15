@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { MetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
@@ -9,6 +10,8 @@ import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
 const route = useRoute()
+const [showToast] = useResponseToast()
+
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
 const windowName = ref('edit profile')
@@ -33,8 +36,11 @@ async function createProfile(formData: any) {
     ...formData,
     windowName: windowName.value,
   }
-  await API.window.userMdfWindowInfoSingleCreate(params)
-  router.replace({ name: 'browser-list' })
+  const { code, msg } = await API.window.userMdfWindowInfoSingleCreate(params)
+  showToast(code, msg)
+  if (code === 0) {
+    router.replace({ name: 'browser-list' })
+  }
 }
 
 onMounted(() => {
