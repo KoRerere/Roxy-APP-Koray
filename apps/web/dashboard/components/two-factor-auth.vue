@@ -33,6 +33,9 @@ function initTwoFactorCodeList() {
 }
 
 async function getTwoFactorCode(item) {
+  if (!item.platformEfa) {
+    return
+  }
   item.loading = true
   try {
     const response = await fetch(`${baseUrl}/api/browser/two_factor_token?code=${item.platformEfa}`)
@@ -80,7 +83,7 @@ initTwoFactorCodeList()
             <RxSvgIcon name="base/rx_ic_outlink" />
           </a>
         </div>
-        <div class="two-factor">
+        <div v-if="item.platformEfa" class="two-factor">
           <RxSvgIcon name="base/rx_ic_2fa" />
           <Skeleton v-if="item.loading" shape="circle" size="3rem" class="mr-2" />
           <template v-else>
