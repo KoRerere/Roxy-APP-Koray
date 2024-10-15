@@ -76,7 +76,7 @@ export class BeforeLaunchTask {
       console.log('启动前同步窗口状态成功')
     })
     if (this.proxyInfo?.ip) {
-      API.window.userMdfWindowInfoSingleCreate({
+      API.window.userMdfWindowInfoSingleV2Create({
         id: this.browserItem.winInfo.id!,
         lastIp: this.proxyInfo.ip,
         lastCountry: this.proxyInfo.country_code,

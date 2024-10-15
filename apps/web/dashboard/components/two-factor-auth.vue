@@ -64,7 +64,7 @@ initTwoFactorCodeList()
 
 <template>
   <div class="two-factor-auth">
-    <template v-for="item in winInfo.platformUrlList" :key="item.id">
+    <template v-for="item in winInfo.windowPlatformList" :key="item.id">
       <div class="box">
         <div class="platform-info">
           <RxSvgIcon name="websites/rx_site_facebook" class="platform-icon" />
