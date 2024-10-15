@@ -1,6 +1,6 @@
 import { API } from '/@/api'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
-import { getCanvasContextNoiseValue, getClientRectsValue, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -48,7 +48,7 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
           groupId: '',
         },
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-      font: fontType ? (await electronAPI.send('util:genRandomFonts')).join(';') : null,
+      font: fontType ? await getRandomFonts() : null,
       canvasValue: canvas ? getCanvasContextNoiseValue() : null,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : null,
@@ -232,7 +232,7 @@ export function getInputsGroup(data: any = {}) {
       errorMsg: 'Invalid cookie format',
       autoResize: false,
       formatValue: (input: any) => {
-        return input.value
+        return input.value ? JSON.parse(input.value) : ''
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()
@@ -278,7 +278,7 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.language?.find((item: any) => item.value === data.language),
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: data.isLanguageBaseIp === false,
+      visible: initInputVisible(data.isLanguageBaseIp, false, false),
     },
     {
       type: 'radio',
@@ -301,7 +301,7 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage),
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: data.isDisplayLanguageBaseIp === false,
+      visible: initInputVisible(data.isDisplayLanguageBaseIp, false, false),
     },
     {
       type: 'radio',
@@ -327,7 +327,7 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone),
       options: $dict_map.timeZone,
       virtualScrollerOptions: { itemSize: 38 },
-      visible: data.isTimeZone === false,
+      visible: initInputVisible(data.isTimeZone, false, false),
     },
     {
       type: 'radio',
@@ -340,9 +340,7 @@ export function getInputsGroup(data: any = {}) {
         { label: '禁用', value: 2 },
       ],
       change(input: any, inputs: any) {
-        const ipt = inputs.find(
-          (ipt: any) => ipt.name === 'isPositionBaseIp',
-        )
+        const ipt = inputs.find((ipt: any) => ipt.name === 'isPositionBaseIp')
         if (ipt) {
           const visible = input.value !== 2
           ipt.visible = visible
@@ -383,7 +381,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写经度, 示例: -40.123',
       name: 'longitude',
       value: data.longitude,
-      visible: data.isPositionBaseIp === false,
+      visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'text',
@@ -391,7 +389,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写纬度, 示例: 30.123',
       name: 'latitude',
       value: data.latitude,
-      visible: data.isPositionBaseIp === false,
+      visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'text',
@@ -399,7 +397,7 @@ export function getInputsGroup(data: any = {}) {
       placeholder: '请填写精度, 范围: 10-5000',
       name: 'precisionPos',
       value: data.precisionPos,
-      visible: data.isPositionBaseIp === false,
+      visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'radio',
@@ -483,19 +481,23 @@ export function getInputsGroup(data: any = {}) {
           resolutionY: resolutionY.trim(),
         })
       },
-      visible: !!data.resolutionType,
+      visible: initInputVisible(data.resolutionType, true, false),
     },
     {
       type: 'radio',
       label: '字体指纹',
       name: 'fontType',
-      value: data.fontType ?? true,
+      value: data.fontType ?? false,
       options: [
         { label: '随机', value: true },
-        { label: '系统默认', value: false },
+        { label: '跟随系统', value: false },
       ],
       preview: {
         label: '字体指纹',
+      },
+      change: async (input: any) => {
+        // Reflect.deleteProperty(target, name)
+
       },
     },
     {
@@ -552,7 +554,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.webGLManufacturer,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: true,
+      visible: initInputVisible(data.webGLInfo, false, false),
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
@@ -565,7 +567,7 @@ export function getInputsGroup(data: any = {}) {
       rows: 3,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: true,
+      visible: initInputVisible(data.webGLInfo, false, false),
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
@@ -682,7 +684,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.deviceName,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: true,
+      visible: initInputVisible(data.deviceNameSwitch, false, false),
       iconClick: () => {
         setDeviceName(inputsGroup)
       },
@@ -714,7 +716,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.macAddr,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
-      visible: true,
+      visible: initInputVisible(data.macInfo, false, false),
       iconClick: () => {
         setMacAddr(inputsGroup)
       },
@@ -745,7 +747,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: 'SSL指纹设置',
       name: 'disableSsl',
-      value: data.disableSsl ?? true,
+      value: data.disableSsl ?? false,
       options: [
         { label: '开启', value: true },
         { label: '关闭', value: false },
@@ -760,11 +762,11 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: ' ',
-      placeholder: '选择SSL指纹设置',
+      placeholder: '选择要禁用的SSL特性',
       name: 'disableSslList',
       value: $dict_map.disableSslList.find((item: any) => item.value === data.disableSslList) ?? $dict_map.disableSslList[0],
       options: $dict_map.disableSslList,
-      visible: true,
+      visible: initInputVisible(data.disableSsl, true, false),
       formatValue: (input: any) => {
         return [input.value]
       },
@@ -773,7 +775,7 @@ export function getInputsGroup(data: any = {}) {
       type: 'radio',
       label: '端口扫描保护',
       name: 'portScanProtect',
-      value: data.portScanProtect ?? false,
+      value: data.portScanProtect ?? true,
       options: [
         { label: '开启', value: true },
         { label: '关闭', value: false },
@@ -791,7 +793,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'portScanList',
       value: data.portScanList,
       placeholder: '输入整数，多个用英文逗号隔开',
-      visible: data.portScanProtect === true,
+      visible: initInputVisible(data.portScanProtect, true, true),
     },
     {
       type: 'radio',
@@ -1014,5 +1016,6 @@ export function getDefaultValue() {
     enablePlugin: false,
     enablePluginList: [],
     mediaDevice: false,
+    disableSslList: [],
   }
 }

@@ -404,8 +404,8 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
-    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    selection-mode="multiple">
+    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" selection-mode="multiple"
+    :show-actions="false">
     <template #header-extra>
       <customFilters :current-filter="currentFilter" :ctm-filters="ctmFilters" :enabled-filter-save="!isProjectProfile"
         :save-filters="saveFilters" @filter-change="onRefreshTable" />
@@ -427,7 +427,7 @@ defineExpose({
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />
     </template>
-    <template #actions-extra="{ data }">
+    <template #actions="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
           :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
@@ -435,6 +435,8 @@ defineExpose({
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
           :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
           @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+        <Actions :operation="operation" @quick-click="operationHandler($event, data)"
+          @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
