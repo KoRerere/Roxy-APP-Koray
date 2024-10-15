@@ -23,6 +23,8 @@ interface StoreType {
   workspaceId?: number
   /** 是否使用系统代理 */
   systemProxySwitch?: boolean
+  /** 浏览器工作台端口号 */
+  dashboardPort: number
 }
 
 const sessionDir = app.getPath('sessionData')
@@ -32,6 +34,7 @@ const defaultValues: StoreType = {
   memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
   systemProxySwitch: true,
+  dashboardPort: 45535,
 }
 
 const _store = new Store<StoreType>({

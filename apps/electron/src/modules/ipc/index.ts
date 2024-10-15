@@ -91,7 +91,15 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
   store.userId = userInfo.userId
-  aliOSS.init()
+  // aliOSS.init()
+})
+
+/** 登录成功后，保存用户信息 */
+ipcMain.on('user:logout', () => {
+  browserManager.closeAll().finally(() => {
+    store.token = ''
+    store.userId = undefined
+  })
 })
 
 /** 切换空间时设置当前空间 ID  */
@@ -220,9 +228,8 @@ ipcMain.on('extension:getInstalledExtensions', () => {
 })
 
 /** 生成 api key */
-ipcMain.on('base:apikey', () => {
-  const str = `${Date.now()}`
-  return Promise.resolve(crypto.createHash('md5').update(str, 'utf8').digest('hex'))
+ipcMain.on('util:genApiKey', () => {
+  return crypto.createHash('md5').update(String(Date.now()), 'utf8').digest('hex')
 })
 
 /** 将本地绝对路径转为自定义媒体协议路径 */

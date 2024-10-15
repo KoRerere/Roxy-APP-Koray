@@ -1,8 +1,12 @@
+import type { Server } from 'node:http'
 import express from 'express'
+import { API } from '/@/api'
 import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
 
-export const openAPIServer = new class OpenAPIServer {
+class OpenAPIServer {
+  #server?: Server
+
   constructor(private app = express()) {
     // 注册中间件
     setupMiddlewares(this.app)
@@ -12,14 +16,23 @@ export const openAPIServer = new class OpenAPIServer {
     // this.printRoutes()
   }
 
-  start() {
-    this.app.listen(8888, () => {
-      console.log(`OpenAPI server is running on ${8888}`)
-    })
+  async start() {
+    this.stop()
+
+    const { code, data, msg } = await API.base.userGetUserApiList()
+
+    if (code === 0 && data.open) {
+      this.#server = this.app.listen(data.port, () => {
+        console.log(`OpenAPI server is running on ${data.port}`)
+      })
+    }
+    else {
+      console.log('OpenAPI server failed to start:', msg)
+    }
   }
 
   stop() {
-    this.app.listen().close()
+    this.#server?.close()
   }
 
   private printRoutes() {
@@ -47,4 +60,12 @@ export const openAPIServer = new class OpenAPIServer {
 
     console.log('Registered routes:', routes)
   }
-}()
+}
+
+let openAPIServer: OpenAPIServer
+
+export function setupOpenAPIServer() {
+  openAPIServer ||= new OpenAPIServer()
+  openAPIServer.start()
+  return openAPIServer
+}

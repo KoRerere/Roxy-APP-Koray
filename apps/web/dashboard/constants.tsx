@@ -2,6 +2,8 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 
+export const baseUrl = `http://${location.hostname}:${globalThis.serverPort || new URLSearchParams(window.location.search).get('port')}`
+
 export const fingerprintInfoList = [
   {
     label: 'OS/Kernal',

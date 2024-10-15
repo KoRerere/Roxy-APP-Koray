@@ -1,18 +1,20 @@
 import './ipc'
 import { setupLog } from '/@/modules/log'
-import { openAPIServer } from '/@/modules/openapi'
+import { setupOpenAPIServer } from '/@/modules/openapi'
+import { setupStaticServer } from '/@/modules/staticServer'
 import { setupStore } from '/@/modules/store'
-import { isProd } from '/@/utils'
+import { isPackaged } from '/@/utils'
 import { setupApp } from './app/'
 
 /**
  * Setup the modules.
  */
 export async function setupModules() {
-  if (isProd) {
+  if (isPackaged) {
     setupLog()
   }
   await setupStore()
   setupApp()
-  openAPIServer.start()
+  setupOpenAPIServer()
+  setupStaticServer()
 }

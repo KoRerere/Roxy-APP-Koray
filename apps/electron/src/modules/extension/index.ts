@@ -11,14 +11,13 @@ import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } fro
 import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
-import { store } from '/@/modules/store'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { getPluginManifestInfo, getPluginMeta } from './helper'
 
 export const extensionManager = new class ExtensionManager {
   /** 插件目录 */
   get extensionDir() {
-    return path.join(appConfig.browserExtensionsDir, String(store.workspaceId))
+    return appConfig.browserExtensionsDir
   }
 
   /** 获取本地所有插件 */

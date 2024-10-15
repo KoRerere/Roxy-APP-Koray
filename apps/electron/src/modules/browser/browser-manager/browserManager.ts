@@ -87,6 +87,13 @@ export class BrowserManager {
     }
   }
 
+  /** 关闭所有已打开的浏览器 */
+  async closeAll() {
+    for (const dirId of this.openedBrowserMap.keys()) {
+      await this.close(dirId)
+    }
+  }
+
   /** 停止打开后续窗口 */
   async stopOpen() {
     this.openingBrowserMap.clear()

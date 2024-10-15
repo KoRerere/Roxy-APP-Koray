@@ -2,6 +2,7 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxButton from '/@/components/ry-button/'
 import { $t } from '/@/locales'
 
 const props = defineProps<{
@@ -54,10 +55,11 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             </div>
             <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
-              <Button
+              <RxButton
                 type="button"
+                size="small"
                 :label="formatClientBtnLabel(item)"
-                icon="pi pi-download"
+                icon="base/rx_ic_download"
                 :loading="item.status === 'downloading'"
                 class="mt-[6px]"
                 @click="handleClientItemClick(item)"
@@ -104,6 +106,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
 }
 
 .upgrade-header {
+  width: 100%;
   display: flex;
   padding: 0px var(--spacing-2xl, 16px);
   justify-content: space-between;

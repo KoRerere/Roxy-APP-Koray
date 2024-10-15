@@ -27,6 +27,8 @@ export interface RenderMessage {
 
   /** 保存用户信息 */
   'user:setUserInfo': (userInfo: { token: string, userId: number }) => void
+  /** 用户退出登录 */
+  'user:logout': () => void
   /** 切换空间时设置当前空间 ID  */
   'user:setWorkspaceId': (workspaceId: number) => void
   /** 用户上传头像  */
@@ -44,7 +46,7 @@ export interface RenderMessage {
   /** 安装并更新 */
   'app:quitAndInstall': (info: ResourceUpdateMessage) => any
   /** 获取所有可用的内核列表 */
-  'app:getCoreList': () => Promise<ResourceUpdateMessage[]>
+  'app:getCoreList': () => ResourceUpdateMessage[]
   /** 下载指定内核 */
   'app:download-chrome-core': (coreVersion: string) => void
   /** 显示系统日志所在目录 */
@@ -65,7 +67,7 @@ export interface RenderMessage {
   /** 获取本地已安装的插件 */
   'extension:getInstalledExtensions': () => Promise<PluginMeta[]>
   /** 生成 api key */
-  'base:apikey': () => Promise<string>
+  'util:genApiKey': () => string
 
   /** 将本地绝对路径转为自定义媒体协议路径 */
   'util:toMediaPath': (pathname: string) => string
