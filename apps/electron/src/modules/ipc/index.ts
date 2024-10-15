@@ -89,7 +89,7 @@ ipcMain.on('browser:batchRemove', (dirIds) => {
 
 /** 获取所有已打开的窗口 */
 ipcMain.on('browser:getOpenedBrowser', () => {
-  return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => browserItem.winInfo.id!)
+  return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => browserItem.lastMessage!)
 })
 
 /** 登录成功后，保存用户信息 */

@@ -1,6 +1,6 @@
 import type { UserAddWindowInfoCreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api/'
-import { getMacAddress } from '/@/utils'
+import { genRandomFonts, getMacAddress } from '/@/utils'
 import { fontArray, voices } from './constants/'
 
 /**
@@ -27,6 +27,11 @@ function getClientRectsValue() {
     clientRectsNoiseFactorY: (2 * Math.random() - 1), // y轴
   }
 }
+
+export function getRandomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 /**
  * 生成随机字体
  */
@@ -97,7 +102,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
             groupId: '',
           },
         ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-        font: fontType ? await getRandomFonts() : null,
+        font: fontType ? await genRandomFonts() : null,
         canvasValue: canvas ? getCanvasContextNoiseValue() : null,
         canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
         webGLValue: webGL ? getwebGLNoiseValue() : null,

@@ -51,6 +51,11 @@ export class BrowserItem {
     return needSyncLocalFileMap.filter(item => this.winInfo[item.key]).map(item => item.path)
   }
 
+  /** 最后一次发送的消息 */
+  get lastMessage() {
+    return this.beforeLaunchTask.lastMessage
+  }
+
   constructor(winItem: WindowItemType) {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响

@@ -15,6 +15,14 @@ import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
 import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
 
+/** 最后一次发送的消息 */
+export interface LastMessage {
+  dirId: string
+  percent: number
+  message: string
+  warningMessages: string[]
+}
+
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
   browser: Browser | null = null
@@ -24,6 +32,9 @@ export class BeforeLaunchTask {
   private warningMessages: string[] = []
   /** 内核执行程序路径 */
   exePath = ''
+  /** 最后一次发送的消息 */
+  lastMessage?: LastMessage
+
   /** 总任务数 */
   private totalTasks = 0
   /** 已完成任务数 */
@@ -447,12 +458,13 @@ export class BeforeLaunchTask {
 
   /** 发送成功的消息到渲染进程 */
   private sendSuccessMessage(message: string, percent = this.progress) {
-    sendSuccessMessage({
+    this.lastMessage = {
       dirId: this.browserItem.winInfo.dirId!,
       percent,
       message,
       warningMessages: this.warningMessages,
-    })
+    }
+    sendSuccessMessage(this.lastMessage)
   }
 
   /** 发送错误的消息到渲染进程 */

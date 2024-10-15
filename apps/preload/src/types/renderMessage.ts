@@ -1,5 +1,5 @@
 import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
-import type { BrowserItem } from '#roxybrowser/modules/browser/browser-manager/browserItem'
+import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
@@ -18,7 +18,7 @@ export interface RenderMessage {
   /** 批量删除窗口 */
   'browser:batchRemove': (dirIds: string[]) => void
   /** 批量删除窗口 */
-  'browser:getOpenedBrowser': () => number[]
+  'browser:getOpenedBrowser': () => LastMessage[]
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
