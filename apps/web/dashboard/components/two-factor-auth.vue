@@ -27,7 +27,7 @@ function startCountdown(item) {
 }
 
 function initTwoFactorCodeList() {
-  winInfo.value.platformUrlList?.forEach((item) => {
+  winInfo.value.windowPlatformList?.forEach((item) => {
     getTwoFactorCode(item)
   })
 }
@@ -70,7 +70,8 @@ initTwoFactorCodeList()
     <template v-for="item in winInfo.windowPlatformList" :key="item.id">
       <div class="box">
         <div class="platform-info">
-          <RxSvgIcon name="websites/rx_site_facebook" class="platform-icon" />
+          <img v-if="item.platformIcon" :src="item.platformIcon" class="platform-icon">
+          <Avatar v-else label="?" shape="circle" class="platform-icon" />
           <div class="platform-account">
             <a :href="item.platformUrl" target="_blank" class="platform-url">
               {{ item.platformUrl }}
