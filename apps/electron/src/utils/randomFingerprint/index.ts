@@ -1,7 +1,7 @@
 import type { UserAddWindowInfoCreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api/'
 import { genRandomFonts, getMacAddress } from '/@/utils'
-import { fontArray, voices } from './constants/'
+import { voices } from './constants/'
 
 /**
  * 获取canvas随机值
@@ -32,23 +32,6 @@ export function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-/**
- * 生成随机字体
- */
-function getRandomFonts(number = 20) {
-  const selectedFonts: string[] = []
-
-  // 从字体列表中随机选择20个字体
-  for (let i = 0; i < number; i++) {
-    const randomIndex = Math.floor(Math.random() * fontArray.length)
-    selectedFonts.push(fontArray[randomIndex])
-  }
-
-  // 将选择的字体用逗号分隔，保存到字符串 str 中
-  const str = selectedFonts.join(';')
-  return str
-}
-
 // 获取speechVoices随机值
 // 生成不同的系统中可用的语音列表,语言列表有很多。
 // 以下是随机举例，按照参考list 一般是18-20个。
@@ -75,6 +58,8 @@ function getSpeechSynthesis() {
   return [...newArray, ...newVoices]
 }
 
+export type RandomFingerprint = ReturnType<typeof genRandomFingerprint>
+
 /** 生成随机指纹 */
 export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePayload, count = 1) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = payload
@@ -87,44 +72,30 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       : API.window.userGetMacAddrV2List({ count }),
   ])
 
-  const fingerDetail = await Promise.all(Array.from({ length: count }).map(async (_, index) => {
-    return JSON.parse(JSON.stringify(
-      {
-        ...uaWebgls[index],
-        ...deviceNames[index],
-        ...macAddrs[index],
-        mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
-        mediaDeviceList: [
-          {
-            deviceType: 'audioinput',
-            deviceId: '',
-            label: '',
-            groupId: '',
-          },
-        ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-        font: fontType ? await genRandomFonts() : null,
-        canvasValue: canvas ? getCanvasContextNoiseValue() : null,
-        canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
-        webGLValue: webGL ? getwebGLNoiseValue() : null,
-        audioContextValue: audioContext ? getwebGLNoiseValue() : null,
-        speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
-        clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
-      },
-    )) // 跟随老版本逻辑过滤没有值的属性
-  }))
+  const promiseArr = Array.from({ length: count }).map(async (_, index) => {
+    return {
+      ...uaWebgls[index],
+      ...deviceNames[index],
+      ...macAddrs[index],
+      mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
+      mediaDeviceList: [
+        {
+          deviceType: 'audioinput',
+          deviceId: '',
+          label: '',
+          groupId: '',
+        },
+      ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
+      font: fontType ? await genRandomFonts() : undefined,
+      canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
+      canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
+      webGLValue: webGL ? getCanvasContextNoiseValue() : undefined,
+      audioContextValue: audioContext ? getCanvasContextNoiseValue() : undefined,
+      speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : undefined,
+      clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : undefined,
+    } // 跟随老版本逻辑过滤没有值的属性
+  })
 
-  // const [{ data: uaWebgl }, { data: deviceName }, { data: macAddr }] = await Promise.all([
-  //   API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }),
-  //   API.window.userGetDeviceNameV2List({ os, count }),
-  //   macInfo
-  //   ? { data: [{ macAddr: getMacAddress() }] }
-  //   : API.window.userGetMacAddrV2List(params)({ macInfo, count }),
-  // ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
-
-  //   uaWebgl.forEach(async (item, index) => {
-  //     const formData = { ...item, ...deviceName[index], ...macAddr[index] }
-  //     Object.assign(fingerDetail[index], formData)
-  //   })
-  // })
-  return fingerDetail
+  // 将 undefined 的属性过滤掉
+  return JSON.parse(JSON.stringify(await Promise.all(promiseArr)))
 }
