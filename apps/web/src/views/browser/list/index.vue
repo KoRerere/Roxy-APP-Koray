@@ -145,10 +145,6 @@ function hidePopover() {
   console.log('🚀 ~ hidePopover ~ hidePopover:')
 }
 
-window.electronAPI.on('browser:on-close', (dirId) => {
-  console.log('browser:on-close', dirId)
-})
-
 onMounted(() => {
   getFilterList()
 })

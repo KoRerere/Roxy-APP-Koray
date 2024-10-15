@@ -380,7 +380,7 @@ function warnPopup(message: string) {
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
     const id = event.data?.dirId || event.data
-    openMessage[id as string] = event
+    Reflect.set(openMessage, id as string, event)
   })
 }
 
@@ -392,9 +392,17 @@ function listenCloseMessage() {
 
 let canceOpenlListener: any
 let canceCloselListener: any
-onMounted(() => {
+onBeforeMount(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
+
+  window.electronAPI
+    .send('browser:getOpenedBrowser')
+    .then((state) => {
+      state.forEach((item: any) => {
+        Reflect.set(openMessage, item.dirId, { data: item })
+      })
+    })
 
   getCustomFilters().then((data) => {
     filtersMenu.value ??= data
