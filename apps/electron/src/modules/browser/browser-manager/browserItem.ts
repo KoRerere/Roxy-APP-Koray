@@ -7,6 +7,7 @@ import { appConfig } from '/@/constants'
 import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { store } from '/@/modules/store'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
+import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 
@@ -75,6 +76,16 @@ export class BrowserItem {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
       return
+    }
+
+    if (this.winInfo.randomFingerprint) {
+      const [fingerprint] = await genRandomFingerprint(this.winInfo)
+      await API.window.userMdfWindowInfoSingleV2Create({ ...this.winInfo, ...fingerprint })
+      const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id })
+      if (code === 0 && data.rows[0]) {
+        console.log('获取窗口信息成功', data.rows[0])
+        this.winInfo = data.rows[0]
+      }
     }
 
     // 创建启动任务

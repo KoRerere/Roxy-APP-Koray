@@ -1,10 +1,11 @@
-import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
+import type { RandomFingerprint } from '#roxybrowser/utils/randomFingerprint'
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
 
@@ -81,6 +82,8 @@ export interface RenderMessage {
   'util:removeProject': (payload: { workspaceId: number, projectId: number }) => void
   /** 随机生成字体 */
   'util:genRandomFonts': () => string[]
+  /** 生成随机指纹 */
+  'util:genRandomFingerprint': (payload: UserAddWindowInfoCreatePayload, count?: number) => RandomFingerprint
 
   /** 前端已准备就绪 */
   'web:ready': () => void

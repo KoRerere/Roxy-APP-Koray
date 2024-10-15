@@ -13,6 +13,7 @@ import { extensionManager } from '/@/modules/extension'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
+import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -259,6 +260,11 @@ ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
 /** 随机生成字体 */
 ipcMain.on('util:genRandomFonts', () => {
   return genRandomFonts()
+})
+
+/** 生成随机指纹 */
+ipcMain.on('util:genRandomFingerprint', (payload, count = 1) => {
+  return genRandomFingerprint(payload, count)
 })
 
 /** 前端已准备就绪 */
