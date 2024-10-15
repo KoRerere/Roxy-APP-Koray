@@ -147,6 +147,10 @@ export function filterFieldByValue(obj: object, filter: (value: any) => boolean 
   return Object.fromEntries(Object.entries(obj).filter(([_, v]) => filter(v)))
 }
 
+export function initInputVisible(value: any, assert: boolean, def: boolean) {
+  return value !== undefined ? value === assert : def
+}
+
 // export function getValidByObject(
 //   obj: { [key: string]: any },
 //   keys: string[],

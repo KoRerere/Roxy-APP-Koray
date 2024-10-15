@@ -113,8 +113,13 @@ async function createProfile(formData: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
-  const { data } = await API.window.userAddWindowInfoCreate(params)
-  router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
+  const { code, data, msg } = await API.window.userAddWindowInfoCreate(params)
+  if (code === 0) {
+    router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Error', detail: msg })
+  }
 }
 
 async function batchCreateProfile(params: any) {
