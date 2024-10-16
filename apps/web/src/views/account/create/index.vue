@@ -24,7 +24,7 @@ const emits = defineEmits(['confirm', 'close'])
 const isEdit = computed(() => !!props.data.id)
 
 const formInputs = ref()
-const original = ref()
+const original = ref(props.data)
 
 async function getInputs(data: any = {}) {
   const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
@@ -55,7 +55,7 @@ async function getInputs(data: any = {}) {
       tooltip: 'man!',
       change(input: any) {
         input.invalid = false
-        original.value.platformIcon = input.value?.image || ''
+        Reflect.set(original.value, 'platformIcon', input.value?.image || '')
       },
     },
     {
@@ -114,7 +114,7 @@ async function getInputs(data: any = {}) {
 }
 
 function addRemark(platformRemarks: string) {
-  original.value.platformRemarks = platformRemarks
+  Reflect.set(original.value, 'platformRemarks', platformRemarks)
 }
 
 function onConfirm(more: boolean) {
@@ -132,11 +132,11 @@ function onConfirm(more: boolean) {
   }
 }
 
-onMounted(() => {
-  getInputs(props.data).then((inputs) => {
-    formInputs.value = inputs
-  })
-  original.value = props.data
+onBeforeMount(() => {
+  getInputs(props.data)
+    .then((inputs) => {
+      formInputs.value = inputs
+    })
 })
 </script>
 

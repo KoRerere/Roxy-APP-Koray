@@ -16,6 +16,7 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['confirm'])
+console.log('🚀 ~ props.data:', props.data)
 
 const formInputs = ref(getInputs(props.data || {}))
 const original = ref({ id: props.data?.id })
