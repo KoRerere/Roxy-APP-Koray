@@ -19,6 +19,7 @@ export default defineConfig({
         'body-parser',
         'formidable',
         'serve-static',
+        'glob',
         '@roxy/puppeteer-google-translate',
       ],
     },

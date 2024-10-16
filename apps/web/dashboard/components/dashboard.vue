@@ -174,7 +174,7 @@ onBeforeMount(() => {
         <div class="ip">
           <Skeleton v-if="testProxyLoading" class="mt-2" height="2rem" />
           <template v-else>
-            IP: {{ proxyInfo.ip || '--' }}
+            <span :class="{ 'is-ip-changed': proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP: {{ proxyInfo.ip || '--' }}</span>
           </template>
         </div>
       </div>
@@ -570,6 +570,10 @@ onBeforeMount(() => {
   font-style: normal;
   font-weight: 600;
   line-height: var(--Line-Height-display-sm, 38px); /* 118.75% */
+
+  .is-ip-changed {
+    color: var(--Color-yellow-300, #fc9d12);
+  }
 }
 
 .footer {
