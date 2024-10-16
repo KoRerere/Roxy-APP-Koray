@@ -30,8 +30,8 @@ function getDeviceName(params: any) {
 
 function getMacAddr(params: any) {
   return params.macInfo
-    ? window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
-    : API.window.userGetMacAddrV2List(params)
+    ? API.window.userGetMacAddrV2List(params)
+    : window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
 }
 
 export async function ceateRandomFinger(inupts: any, count: number = 1) {
