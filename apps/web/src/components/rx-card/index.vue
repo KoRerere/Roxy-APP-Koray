@@ -6,7 +6,7 @@ defineEmits(['close'])
 
 <template>
   <div class="rx-card">
-    <RxSvgIcon class="cursor-pointer rx-card-close" name="base/rx_ic_delete_fill" @click="$emit('close')" />
+    <RxSvgIcon class="cursor-pointer rx-card-close" name="base/rx_ic_delete_fill" @click.stop="$emit('close')" />
     <slot />
   </div>
 </template>

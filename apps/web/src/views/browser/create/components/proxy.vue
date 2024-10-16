@@ -22,6 +22,7 @@ const drawer = reactive({
   dismissable: false,
   visible: false,
   type: 'create',
+  data: undefined,
 })
 
 const isOverload = computed(() => {
@@ -33,10 +34,11 @@ const isOverload = computed(() => {
 
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 
-function toggleDrawer(type: 'create' | 'list') {
+function toggleDrawer(type: 'create' | 'list', data?: any) {
   drawer.visible = true
   drawer.type = type
   drawer.dismissable = type === 'list'
+  drawer.data = data
 }
 
 function deleteProxy(index: number) {
@@ -112,6 +114,15 @@ function tooltipValue(item: any) {
     showDelay: 500,
   }
 }
+
+function onEdit(item: any) {
+  if (item.id) {
+    toggleDrawer('list')
+  }
+  else {
+    toggleDrawer('create', item)
+  }
+}
 </script>
 
 <template>
@@ -119,15 +130,16 @@ function tooltipValue(item: any) {
     <div class="button-group">
       <RyButton size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
         @click="toggleDrawer('list')" />
-      <RyButton size="small" severity="secondary" icon="base/rx_ic_plus" label="Add proxy"
-        @click="toggleDrawer('create')" />
+      <RyButton v-if="isBatch || !proxyList?.length" size="small" severity="secondary" icon="base/rx_ic_plus"
+        label="Add proxy" @click="toggleDrawer('create')" />
     </div>
     <div>
       <template v-if="isBatch">
         <Message v-if="isOverload" severity="warn" class="multiple">
           Bound profiles must not exceed {{ createCount }}
         </Message>
-        <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @close="deleteProxy(index)">
+        <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)"
+          @close="deleteProxy(index)">
           <div class="multiple-region">
             <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
               fallback="base/rx_ic_earth" />
@@ -145,7 +157,8 @@ function tooltipValue(item: any) {
       </template>
 
       <template v-else>
-        <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @close="deleteProxy(index)">
+        <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @click="onEdit(item)"
+          @close="deleteProxy(index)">
           <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
             fallback="base/rx_ic_earth" />
           <div class="flex justify-between single-region ">
@@ -168,7 +181,7 @@ function tooltipValue(item: any) {
       <template #container="{ closeCallback }">
         <proxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback"
           @confirm="(data: any) => { onChoose(data); closeCallback() }" />
-        <proxyCreate v-if="drawer.type === 'create'" @close="closeCallback"
+        <proxyCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback"
           @confirm="(data: any) => { addProxy(data); closeCallback() }" />
       </template>
     </Drawer>

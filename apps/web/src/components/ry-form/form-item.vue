@@ -31,6 +31,7 @@ defineEmits(['change'])
       <input-label class="input-label" v-bind="{ name, label, tooltip }" />
     </slot>
     <slot name="input">
+      <MultiSelect v-if="type === 'multiSelect'" class="flex-1" v-bind="$attrs" @change="$emit('change')" />
       <input-select v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
       <input-radio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
       <input-date v-if="type === 'date'" v-bind="$attrs" />
