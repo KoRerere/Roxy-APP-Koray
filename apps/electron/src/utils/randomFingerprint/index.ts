@@ -72,7 +72,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       : API.window.userGetMacAddrV2List({ count }),
   ])
 
-  const promiseArr = Array.from({ length: count }).map(async (_, index) => {
+  const fingerDetail = Array.from({ length: count }).map((_, index) => {
     return {
       ...uaWebgls[index],
       ...deviceNames[index],
@@ -86,7 +86,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
           groupId: '',
         },
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-      font: fontType ? await genRandomFonts() : undefined,
+      font: fontType ? genRandomFonts().join(';') : undefined,
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getCanvasContextNoiseValue() : undefined,
@@ -97,5 +97,5 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
   })
 
   // 将 undefined 的属性过滤掉
-  return JSON.parse(JSON.stringify(await Promise.all(promiseArr)))
+  return JSON.parse(JSON.stringify(fingerDetail))
 }
