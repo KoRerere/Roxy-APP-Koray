@@ -1,7 +1,5 @@
 import { useToast } from 'primevue/usetoast'
-import { z } from 'zod'
-import { findInputByName, isEmptyValue, setInputValueByFormData } from '/@/utils'
-import { parseProxyUrl } from './hooks'
+import { findInputByName, isEmptyValue, parseProxyUrl, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
   const toast = useToast()

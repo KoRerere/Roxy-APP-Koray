@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import relatedInfo from '/@/components/related-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
+import { setColumns } from '/@/hooks/useColumns'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
@@ -21,7 +22,7 @@ const tableRef = useTemplateRef('team')
 
 type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
-const columns = ref([
+const columns = ref(setColumns([
   {
     title: 'Member info',
     key: 'member',
@@ -39,10 +40,12 @@ const columns = ref([
   },
   {
     title: 'Related Projects',
-    key: 'lateUpdateTime',
+    key: 'relatedProjects',
     slot: 'related',
   },
-])
+], {
+  filters: (role.isOwner || role.isManager) ? [] : ['relatedProjects'],
+}))
 
 const filters = reactive({
   value: null,
@@ -188,19 +191,16 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       <span>Access control guide</span>
     </div>
     <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
-              @click="handleShowInviteUserFormDialog"
-    />
+      @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler"
-            :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
-            :show-actions-menu="false"
-  >
+    :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
+    :show-actions-menu="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-                      data-key="value" @change="filters.onChange"
-        />
+          data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #member="{ data }">
@@ -223,7 +223,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       </div>
     </template>
     <template #related="{ data }">
-      <relatedInfo :list="data.project_info" :show-max="2" icon="base/rx_ic_stack" field="projectName" />
+      <relatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
     </template>
   </ry-table>
 </template>

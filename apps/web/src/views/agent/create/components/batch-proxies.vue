@@ -4,10 +4,9 @@ import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyCheckStatus } from '/@/enums'
 import { $t } from '/@/locales'
-import { setRowsLoading, sleep } from '/@/utils'
+import { parseProxyUrl, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
-import { parseProxyUrl } from './hooks'
 import ParseTextarea from './parse-textarea.vue'
 
 const emit = defineEmits(['cancel', 'save'])

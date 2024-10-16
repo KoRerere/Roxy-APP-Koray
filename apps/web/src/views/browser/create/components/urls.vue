@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
 import inputBase from '/@/components/ry-form/input-base.vue'
-import { isValidUrl } from '/@/utils'
+import { parseUrl } from '/@/utils'
 
 interface Input {
   type: string
@@ -40,7 +40,9 @@ function onChange(input: any) {
 }
 
 function onBlur(input: any) {
-  if (isValidUrl(input.value)) {
+  const { protocol, domain } = parseUrl(input.value) || {}
+
+  if (protocol && domain) {
     modelValue.value = urlInputs.value.filter((item: any) => !item.invalid).map((item: any) => item.value)
   }
   else {
