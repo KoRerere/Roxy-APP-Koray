@@ -3,19 +3,32 @@ import rxCard from '/@/components/rx-card'
 import inputBase from '/@/components/ry-form/input-base.vue'
 import { isValidUrl } from '/@/utils'
 
-const urlInputs = ref<any>([])
+interface Input {
+  type: string
+  name: string
+  value: string | undefined
+  errorMsg: string
+  placeholder: string
+  leftIcon: string
+  invalid?: boolean
+}
 
-const modelValue = defineModel<string[]>()
+const modelValue = defineModel({ type: Array as PropType<string[]>, default: [] })
+const urlInputs = ref<Input[]>(modelValue.value.map(value => createInput(value)))
 
-function addInputs() {
-  urlInputs.value.push({
+function createInput(value?: string) {
+  return {
     type: 'text',
     name: (new Date().getTime()).toString(32),
-    value: '',
+    value,
     errorMsg: 'invalid url',
     placeholder: 'Please enter url',
     leftIcon: 'base/rx_ic_attachment',
-  })
+  }
+}
+
+function addInputs() {
+  urlInputs.value.push(createInput())
 }
 
 function deleteInput(index: number) {

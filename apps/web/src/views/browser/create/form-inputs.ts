@@ -96,7 +96,6 @@ export function getInputsGroup(data: any = {}) {
     const version = $dict_map[`osversion_${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
     return [key, version]
   }))
-  console.log('🚀 ~ getInputsGroup ~ data:', data)
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{

@@ -43,7 +43,7 @@ async function createProfile(formData: any) {
   }
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
   const [_inputsGroup, _original] = getInputsGroup(data)
   inputsGroup.value = _inputsGroup
@@ -58,7 +58,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  localStorage.removeItem(`$editWindow_${original.value.id}`)
+  // localStorage.removeItem(`$editWindow_${original.value.id}`)
 })
 </script>
 
