@@ -3,10 +3,11 @@ import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
-import remarkIcon from '/@/components/remark-icon'
+import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import inputBase from '/@/components/ry-form/input-base.vue'
-import ryTable from '/@/components/ry-table'
+import InputBase from '/@/components/ry-form/input-base.vue'
+import { setColumns } from '/@/hooks/useColumns'
+import columnsRow from './columns'
 
 const props = defineProps({
   data: {
@@ -18,22 +19,9 @@ const emit = defineEmits(['confirm'])
 
 const toast = useToast()
 
-const columns = [
-  {
-    title: '平台',
-    key: 'platform',
-    slot: 'platform',
-  },
-  {
-    title: '账号名称',
-    key: 'platformUserName',
-  },
-  {
-    title: '相关简介',
-    key: 'related',
-    slot: 'related',
-  },
-]
+const columns = setColumns(columnsRow.data, {
+  filters: ['actions'],
+})
 
 function tableFilters() {
   return [
@@ -78,11 +66,11 @@ function handleSave() {
   <drawerContent title="账号列表" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
+      <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
         :table-request="tableRequest" :table-filters="tableFilters" :columns="columns" :show-display="false"
         :context-menu="false">
         <template #header-extra>
-          <input-base type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
+          <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template>
         <template #platform="{ data: row }">
           <div class="platform">
@@ -100,12 +88,12 @@ function handleSave() {
           <relatedInfo :list="row.window_info" />
         </template>
         <template #actions="{ data: row }">
-          <remarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />
+          <RemarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />
         </template>
-      </ry-table>
+      </RyTable>
     </div>
     <template #footer>
-      <ryButton severity="info" size="small" label="Save selected" @click="handleSave" />
+      <RyButton severity="info" size="small" label="Save selected" @click="handleSave" />
     </template>
   </drawerContent>
 </template>

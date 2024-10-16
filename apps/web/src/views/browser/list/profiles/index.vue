@@ -133,8 +133,9 @@ async function saveFilters(formData: any) {
   }
   const { filter_name, filter_rule, sort } = formData
   const filter_condition = getFormData(filtersMenu.value)
+  const isEdit = !!sort
 
-  const { code, msg } = sort
+  const { code, msg } = isEdit
     ? await API.window.userUpdateWindowFilterNameCreate({
       sort,
       filter_rule,
@@ -148,7 +149,7 @@ async function saveFilters(formData: any) {
       filter_rule: columns.value.map((column: any) => ({ name: column.key, sort: column._sort, status: column._visible ? 1 : 0 })),
     })
   if (code === 0) {
-    emit('updateFilterTabs')
+    emit('updateFilterTabs', isEdit)
   }
   showToast(code, msg, 5000)
 }
@@ -192,16 +193,9 @@ async function operationHandler(operate: any, data: any) {
       drawer.data = data
       drawer.type = 'editCookies'
       break
-    case 'delete': {
-      if (datas.some((item: any) => item.openStatus)) {
-        toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
-      }
-      else {
-        warnPopup('确定要删除所选窗口？')
-          .then(() => batchModifyWindow({ ids, isDelete: true }))
-      }
+    case 'delete':
+      deleteBrowser(datas, ids)
       break
-    }
   }
 }
 
@@ -227,6 +221,16 @@ function openBrowser(data: any) {
     return toRaw(item)
   })
   window.electronAPI.send('browser:batchLaunch', params)
+}
+
+function deleteBrowser(datas: any, ids: number[]) {
+  if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
+    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
+  }
+  else {
+    warnPopup($t('Are you sure to perform this operation?'))
+      .then(() => batchModifyWindow({ ids, isDelete: true }))
+  }
 }
 
 function showOperationMenu(event: Event, data: any, extra?: any) {

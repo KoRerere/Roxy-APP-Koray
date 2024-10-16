@@ -61,9 +61,9 @@ function useColumns(columns: Columns, filterColumnKeys?: string[]) {
 //   "status": 1
 // }
 
-export function setColumns(columns: any, options: Options) {
+export function setColumns(columns: any, options?: Options) {
   const _columns = deepClone(columns)
-  const { filters, inserts } = options
+  const { filters, inserts }: Options = Object.assign({ filters: [], inserts: [] }, options)
   if (Array.isArray(inserts)) {
     inserts.forEach(([index, item]) => {
       _columns.splice(index, 0, item)
