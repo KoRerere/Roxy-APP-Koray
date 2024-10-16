@@ -2,8 +2,12 @@
 import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginListData } from '@roxy/backend-api'
 import { useDebounceFn } from '@vueuse/core'
 import Fuse from 'fuse.js'
+import { useDialog } from 'primevue/usedialog'
+import type { InstallType } from '/@/views/extensions/install/components/type'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 
 type CategoryItem = UnwrapRowType<UserGetPluginCategoryListData>
 type PluginItem = UnwrapRowType<UserGetSystemPluginListData>
@@ -14,6 +18,8 @@ interface PluginMap {
     items: PluginItem[]
   }
 }
+const [showToast, onlyErrorToast] = useResponseToast()
+const dialog = useDialog()
 
 const needsync = defineModel('needsync')
 
@@ -64,11 +70,34 @@ function jumpToCategory(item: CategoryItem) {
 }
 
 async function addSystemPlugin(plugin: PluginItem) {
-  const { code } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
-  if (code === 0) {
-    plugin.addStatus = true
-    needsync.value = true
-  }
+  dialog.open(installExtension, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: plugin,
+      onConfirm: async (params: InstallType) => {
+        try {
+          const data = await API.plugins.userAddSystemPluginCreate({ id: params.pluginId })
+          onlyErrorToast(data.code, data.msg)
+          if (data.code === 0) {
+            plugin.addStatus = true
+            needsync.value = true
+            const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
+            if (code === 0) {
+              window.electronAPI.send('extension:download', [toRaw(plugin)])
+            }
+            showToast(code, msg, 5000)
+          }
+        }
+        catch (error) {
+          console.log('🚀 ~ onConfirm: ~ error:', error)
+        }
+      },
+    },
+  })
 }
 
 onBeforeMount(() => {

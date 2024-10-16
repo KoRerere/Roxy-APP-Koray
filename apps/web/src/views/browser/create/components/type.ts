@@ -1,8 +1,8 @@
 export interface MetaData {
   projectName?: string
   projectId: number | undefined
-  labelIds: number[]
-  windowRemark: string
+  labelIds: number[] | undefined
+  windowRemark: string | undefined
 }
 
 export interface Accordions {

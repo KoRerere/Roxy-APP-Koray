@@ -176,7 +176,6 @@ async function operationHandler(operate: any, data: any) {
 
   switch (operate.name) {
     case 'edit':
-      localStorage.setItem(`$editWindow_${data.id}`, JSON.stringify(data))
       router.push({ name: 'browser-edit', query: { id: data.id } })
       break
     case 'close':
@@ -441,7 +440,7 @@ defineExpose({
       <profile-info :data="data" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
-      <browser-control :data="data" :open-message="openMessage" @open="openBrowser(data)" />
+      <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
     </template>
     <template #project="{ data }">
       <projectIcon :project-name="data.projectName" :project-id="data.projectId" @update="updateMeta($event, data)" />

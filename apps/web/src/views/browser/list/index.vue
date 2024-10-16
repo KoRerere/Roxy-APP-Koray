@@ -148,7 +148,7 @@ function hidePopover() {
   console.log('🚀 ~ hidePopover ~ hidePopover:')
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   getFilterList()
 })
 </script>
@@ -202,11 +202,6 @@ onMounted(() => {
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>回收站</span>
     </div>
-    <template #footer>
-      <div class="sort-reset">
-        Reset to default
-      </div>
-    </template>
   </ryPopover>
 </template>
 
@@ -247,16 +242,5 @@ onMounted(() => {
   font-family: Inter;
   font-size: 13px;
   line-height: normal;
-}
-
-.sort-reset {
-  width: 100%;
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-  text-align: right;
-  font-family: Inter;
-  font-size: var(--Font-Size-text-sm, 12px);
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

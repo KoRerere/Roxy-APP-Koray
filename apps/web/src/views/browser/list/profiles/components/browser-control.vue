@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { API } from '/@/api'
 import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
@@ -48,11 +49,12 @@ const browser = computed(() => {
   }
 })
 
-function openBrowser() {
+async function openBrowser() {
   if (browser.value.pending) {
     return
   }
-  emits('open')
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0 })
+  emits('open', data)
 }
 </script>
 
