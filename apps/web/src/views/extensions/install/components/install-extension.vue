@@ -3,6 +3,7 @@ import type { UnwrapRowType, UserGetPluginWindowListData } from '@roxy/backend-a
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType } from '/@/enums'
+import type { InstallType } from './type'
 
 type DataItem = UnwrapRowType<UserGetPluginWindowListData>
 const allInstall = ExtensionsInstallType.all.toString()
@@ -45,16 +46,19 @@ async function getProfileList() {
 }
 
 function getInstallStatus() {
-  const map = new Map(selection.value.map((item: DataItem) => [item.id, item.id]))
-  return dataList.value.map((item: DataItem) => map.get(item.id) === item.id ? ExtensionsInstallStatus.installed : ExtensionsInstallStatus.notInstalled)
+  if (installType.value === allInstall) {
+    return dataList.value?.map(() => ExtensionsInstallStatus.installed)
+  }
+  const map = new Map(selection.value?.map((item: DataItem) => [item.id, item.id]))
+  return dataList.value?.map((item: DataItem) => map.get(item.id) === item.id ? ExtensionsInstallStatus.installed : ExtensionsInstallStatus.notInstalled)
 }
 
 async function confirm() {
   try {
-    const params = {
+    const params: InstallType = {
       installType: Number(installType.value),
       pluginId: _props.value.id,
-      projectId: dataList.value.map((item: any) => item.id),
+      projectId: dataList.value?.map((item: any) => item.id),
       installStatus: getInstallStatus(), // 跟 projectId 中的顺序对应
     }
     loading.value = true
@@ -80,6 +84,7 @@ onMounted(() => {
   _props.value = props
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
+  getProfileList()
 })
 </script>
 

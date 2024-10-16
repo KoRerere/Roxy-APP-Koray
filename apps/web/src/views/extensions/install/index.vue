@@ -7,6 +7,7 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsStatus } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 
@@ -15,6 +16,7 @@ const dialog = useDialog()
 const toast = useToast()
 const [dialogOpen] = useSimpleDialog()
 
+const [showToast] = useResponseToast()
 const needsync = defineModel('needsync')
 
 const tableRef = useTemplateRef('extable')
@@ -240,9 +242,11 @@ async function onInstall(data: any) {
       props: data,
       onConfirm: async (params: any) => {
         try {
-          await API.plugins.userAddPluginToWindowCreate(params)
-          await window.electronAPI.send('extension:download', [toRaw(data)])
-          toast.add({ severity: 'success', summary: '成功', detail: '插件安装完成', life: 5000 })
+          const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
+          if (code === 0) {
+            window.electronAPI.send('extension:download', [toRaw(data)])
+          }
+          showToast(code, msg, 5000)
         }
         catch (error) {
           console.log('🚀 ~ onConfirm: ~ error:', error)
