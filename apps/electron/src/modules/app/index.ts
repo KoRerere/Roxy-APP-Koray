@@ -2,8 +2,9 @@ import { app, autoUpdater, shell } from 'electron'
 import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { createTray } from '/@/modules/app/tray'
+import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isWebReady } from '/@/utils'
+import { isWebReady, killProcessByName } from '/@/utils'
 import { restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
@@ -34,17 +35,27 @@ autoUpdater.on('before-quit-for-update', () => {
   console.log('Application is quitting for update.')
 })
 
-app.on('before-quit', (event) => {
+app.on('before-quit', async (event) => {
   if (isQuittingForUpdate) {
     console.log('Application is quitting for update.')
   }
   else {
     event.preventDefault()
-    console.log('Application is quitting normally.')
-    setTimeout(() => {
+    try {
+      // 关闭所有浏览器进程，并同步数据
+      await browserManager.closeAll()
+      console.log('Application is quitting normally.')
+    }
+    catch (error) {
+      console.error('browserManager.closeAll error:', error)
+    }
+    finally {
+      console.log('Application is quitting finally.')
+      // 退出所有浏览器进程, 避免有漏网之鱼
+      killProcessByName('lumibrowser')
       // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
       app.exit()
-    }, 5000)
+    }
   }
 })
 

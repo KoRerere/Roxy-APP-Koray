@@ -349,7 +349,8 @@ export class BeforeLaunchTask {
     }
     catch (error) {
       console.error('拉取远程缓存文件失败', error)
-      return Promise.reject(error)
+      this.warningMessages.push('拉取远程缓存文件失败')
+      // return Promise.reject(error)
     }
   }
 
