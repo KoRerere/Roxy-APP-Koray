@@ -389,6 +389,11 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       username: winInfo.platformUserName,
       password: winInfo.platformPassword,
     },
+    autofillWebSiteMult: winInfo.windowPlatformList.map(item => ({
+      url: item.platformUrl,
+      username: item.platformUserName,
+      password: item.platformPassword,
+    })),
     /** 在任务栏ICON上绘制小圆点 */
     taskBarIcon: {
       /** 圆点的颜色 */
