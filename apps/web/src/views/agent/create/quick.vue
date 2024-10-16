@@ -16,10 +16,9 @@ const props = defineProps({
   },
 })
 const emits = defineEmits(['confirm'])
-console.log('🚀 ~ props.data:', props.data)
 
 const formInputs = ref(getInputs(props.data || {}))
-const original = ref({ id: props.data?.id })
+const original = ref(props.data)
 const [checkProxy, checkResult] = useCheckProxy()
 
 async function testProxy() {

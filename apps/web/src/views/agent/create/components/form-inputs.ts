@@ -76,7 +76,7 @@ export function getInputs(data: any = {}) {
         {
           type: 'text',
           name: 'host',
-          value: data.host || '',
+          value: data.host ?? '',
           placeholder: 'host',
           required: true,
         },
@@ -84,7 +84,7 @@ export function getInputs(data: any = {}) {
         {
           type: 'number',
           name: 'port',
-          value: data.port || '',
+          value: data.port ?? '',
           placeholder: 'port',
           required: true,
           onblur: () => {
@@ -107,21 +107,21 @@ export function getInputs(data: any = {}) {
       type: 'text',
       label: '代理账号',
       name: 'proxyUserName',
-      value: data.proxyUserName || '',
+      value: data.proxyUserName ?? '',
       placeholder: 'Username for your server',
     },
     {
       type: 'password',
       label: '代理密码',
       name: 'proxyPassword',
-      value: data.proxyPassword || '',
+      value: data.proxyPassword ?? '',
       placeholder: 'Password for your server',
     },
     {
       type: 'text',
       label: '刷新URL',
       name: 'refreshUrl',
-      value: data.refreshUrl || '',
+      value: data.refreshUrl ?? '',
       placeholder: 'Please enter a valid URL',
       tooltip: 'mamba out!',
       icon: 'base/rx_ic_refresh',
