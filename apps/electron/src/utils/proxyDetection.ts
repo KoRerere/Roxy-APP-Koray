@@ -21,7 +21,7 @@ export interface ProxyDetectionResult {
   region: string
 }
 
-const defaultCheckChannel = 'https://iprust.io/ip.json'
+const defaultCheckChannel = 'http://iprust.io/ip.json'
 
 const protocolCheckMap = {
   SOCKS5: checkSocks5Proxy,
