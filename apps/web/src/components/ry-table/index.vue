@@ -268,7 +268,8 @@ defineExpose({
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
-              <div v-else :style="{ width: `${column.width}px` || 'auto' }" class="rxtable-cell" :class="column.classes"
+              <div v-else :style="{ width: `${column.width}px` || 'auto' }"
+                :class="[cssmodule['column-title'], column.classes]"
                 :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
@@ -289,18 +290,20 @@ defineExpose({
         </Column>
       </DataTable>
     </div>
-    <div v-if="paginator" class="rxtable-paginator">
-      <Paginator template="PrevPageLink PageLinks NextPageLink" :rows="paginatorConfig.rows"
+    <div v-if="paginator" class="rx-paginator">
+      <Paginator template="PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
         :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
-          <div class="flex flex-1 items-center rxtable-paginator-jump">
+          <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
             <Select v-model="paginatorConfig.rows" :options="paginatorConfig.rowsPerPageOptions"
               @change="paginatorConfig.onRowsChange" />
             <div>profiles/page</div>
-            <div>Go to</div>
-            <InputNumber class="rxtable-paginator-jump-input" />
-            <div>|</div>
+            <div class="flex flex-1 items-center gap-2 justify-end">
+              <div>Go to</div>
+              <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
+              <div>|</div>
+            </div>
           </div>
         </template>
       </Paginator>
@@ -327,31 +330,60 @@ defineExpose({
     align-self: stretch;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
   }
-
-  &-cell {
-    color: var(--Color-neutrals-950, #0e1214);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: normal;
-  }
-
-  &-paginator {
-    &-jump {
-      display: flex;
-      gap: var(--spacing-lg, 8px);
-
-      &-input {
-        :deep(.p-inputnumber-input) {
-          width: 60px;
-        }
-      }
-    }
-  }
 }
 
 :deep(.p-paginator-content-start) {
   flex: 1;
+}
+
+.rx-paginator {
+
+  :deep(.p-paginator-prev),
+  :deep(.p-paginator-next),
+  :deep(.p-paginator-page) {
+    min-width: auto;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  :deep(.p-paginator-page) {
+    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    font-family: Inter;
+    font-size: var(--Font-Size-text-sm, 12px);
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+
+  :deep(.p-paginator-page-selected) {
+    background: none;
+    color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+    border-radius: var(--radius-sm, 4px);
+    border: 0.5px solid var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
+    background: var(--Component-Colors-Buttons-Ghost-bg, #fff);
+    box-shadow:
+      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+  }
+
+  &-jump {
+    display: flex;
+    gap: var(--spacing-lg, 8px);
+    color: var(--Colors-Text-text-secondary, #575d61);
+    font-family: Inter;
+    font-size: 12px;
+    line-height: var(--Line-Height-text-xs, 16px);
+
+    &-input {
+      :deep(.p-inputnumber-input) {
+        width: 60px;
+        color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+        font-family: Inter;
+        font-size: 12px;
+        line-height: var(--Line-Height-text-xs, 16px);
+      }
+    }
+  }
 }
 
 .v-enter-active,
@@ -372,5 +404,13 @@ defineExpose({
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
+}
+
+.column-cell {
+  color: var(--Color-neutrals-950, #0e1214);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>

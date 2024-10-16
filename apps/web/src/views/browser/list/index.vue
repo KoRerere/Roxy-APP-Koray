@@ -158,7 +158,10 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="profile-header">
-      <div>Profiles</div>
+      <div class="flex items-center gap-2.5">
+        <RxSvgIcon name="base/rx_ic_browser" />
+        <span>All Profiles</span>
+      </div>
       <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
         <div>Manage Category</div>
