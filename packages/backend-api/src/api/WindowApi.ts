@@ -89,6 +89,8 @@ import {
   UserSaveWindowTableSortOrderCreatePayload,
   UserUpdateWindowFilterNameCreateData,
   UserUpdateWindowFilterNameCreatePayload,
+  UserUpdateWindowFilterSortCreateData,
+  UserUpdateWindowFilterSortCreatePayload,
   UserUpdateWindowTableRowsCreateData,
   UserUpdateWindowTableRowsCreatePayload,
 } from "./data-contracts";
@@ -838,6 +840,24 @@ export class WindowApi<SecurityDataType = unknown> {
   userImportWindowInfoV2Create = (data: UserImportWindowInfoV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserImportWindowInfoV2CreateData, any>({
       path: `/user_import_window_info_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserUpdateWindowFilterSortCreate
+   * @summary 修改窗口过滤器排序
+   * @request POST:/user_update_window_filter_sort
+   * @response `200` `UserUpdateWindowFilterSortCreateData`
+   */
+  userUpdateWindowFilterSortCreate = (data: UserUpdateWindowFilterSortCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserUpdateWindowFilterSortCreateData, any>({
+      path: `/user_update_window_filter_sort`,
       method: "POST",
       body: data,
       type: ContentType.Json,

@@ -304,7 +304,7 @@ export interface UserGetWindowInfoV2ListParams {
    * 是否删除，绑定回收站功能，1.删除，0.不删除
    * @example 0
    */
-  is_delete: number;
+  isDelete: number;
   /** 项目ID，默认不传查询所有 */
   "projectIds "?: string[];
 }
@@ -4062,6 +4062,18 @@ export interface UserImportWindowInfoV2CreateData {
     windowUserId: number;
     windowId: number;
   };
+  msg: string;
+}
+
+export interface UserUpdateWindowFilterSortCreatePayload {
+  sort_data: {
+    name?: string;
+    sort?: number;
+  }[];
+}
+
+export interface UserUpdateWindowFilterSortCreateData {
+  code: number;
   msg: string;
 }
 
