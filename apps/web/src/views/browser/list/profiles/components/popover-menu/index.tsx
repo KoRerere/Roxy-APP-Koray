@@ -17,8 +17,11 @@ export function usePopoverMenu() {
     async function _onHide() {
       await onHide?.(selected.value)
     }
+    /**
+     * .length > 0
+     */
     return () => (
-      <Popover ref={opRef} onHide={_onHide} pt={{ root: '!before:content-none !after:content-none', content: '!pa-0' }}>
+      <Popover ref={opRef} onHide={_onHide} pt={{ root: 'min-w-50 !before:content-none !after:content-none', content: '!pa-0' }}>
         {innerProps.value.beforeCmp?.()}
         {operation && (
           <Menu

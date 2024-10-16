@@ -242,7 +242,7 @@ export function getOperation(_params: any = {}) {
   return [
     {
       name: 'edit',
-      label: '编辑',
+      label: 'Edit',
       icon: 'base/rx_ic_edit',
       power: !isViewer,
     },
@@ -251,20 +251,28 @@ export function getOperation(_params: any = {}) {
       separator: true,
     },
     {
+      name: 'copyId',
+      label: 'Copy profile ID',
+      icon: 'base/rx_ic_copy',
+    },
+    {
+      separator: true,
+    },
+    {
       name: 'view',
-      label: 'view',
-      icon: 'base/rx_ic_eye',
+      label: 'View',
+      icon: 'base/rx_ic_browser',
     },
     {
       name: 'restart',
-      label: '重启',
+      label: 'Restart',
       icon: 'base/rx_ic_refresh',
       multiple: true,
       groupName: 'first',
     },
     {
       name: 'close',
-      label: '关闭',
+      label: 'Close',
       icon: 'base/rx_ic_shut_down',
       multiple: true,
       groupName: 'first',
@@ -274,13 +282,21 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
+      name: 'addTag',
+      label: 'Add Tag',
+      icon: 'base/rx_ic_tag',
+    },
+    {
+      separator: true,
+    },
+    {
       name: 'fav',
-      label: '收藏',
+      label: 'Fav',
       icon: 'base/rx_ic_bookmark',
     },
     {
       name: 'addNotes',
-      label: '新增笔记',
+      label: 'Add Notes',
       icon: 'base/rx_ic_doc_add',
       multiple: true,
     },
@@ -291,8 +307,8 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'editCookies',
-      label: '编辑cookies',
-      icon: 'base/rx_ic_edit',
+      label: 'Edit cookies',
+      icon: 'base/rx_ic_cookies',
       power: !isViewer,
     },
     {
@@ -301,7 +317,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'delete',
-      label: '删除',
+      label: 'Delete',
       icon: 'base/rx_ic_bin_1',
       power: !isViewer,
       multiple: true,

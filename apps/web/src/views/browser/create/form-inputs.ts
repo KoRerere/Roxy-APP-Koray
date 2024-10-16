@@ -120,8 +120,14 @@ export function getInputsGroup(data: any = {}) {
 
   const windowInputs = reactive([
     {
+      label: 'Profile ID',
+      value: data.dirId,
+      slot: 'profileId',
+      visible: !!data.dirId,
+    },
+    {
       label: '系统选择',
-      slot: 'System', // items 特殊实现
+      slot: 'system', // items 特殊实现
       items: [
         {
           type: 'select',
