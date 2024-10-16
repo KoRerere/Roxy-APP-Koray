@@ -36,10 +36,10 @@ export const profileInfoList = [
     },
   },
   {
-    label: 'Group',
+    label: 'Project',
     width: '15rem',
     customRender: (winInfo: WinInfo) => {
-      return <>{winInfo.groupName || '--'}</>
+      return <>{winInfo.projectName || '--'}</>
     },
   },
   {

@@ -7,11 +7,12 @@ const proxiesList = ref<UnwrapRowsType<UserGetProxyRecommendInfoListData>>([])
 
 function getProxiesList() {
   API.proxy.userGetProxyRecommendInfoList().then((res) => {
-    res.data.rows.forEach((item) => {
-      item.proxyJumpAddress = new URL(item.proxyJumpAddress).hostname
-    })
     proxiesList.value = res.data.rows
   })
+}
+
+function formatProxyJumpAddressText(item) {
+  return new URL(item.proxyJumpAddress).hostname
 }
 
 getProxiesList()
@@ -30,7 +31,7 @@ getProxiesList()
         </div>
         <div class="footer">
           <a class="site-name" :href="item.proxyJumpAddress" target="_blank">
-            {{ item.proxyJumpAddress }}
+            {{ formatProxyJumpAddressText(item) }}
           </a>
           <RxButton as="a" label="Visit website" size="small" icon="base/rx_ic_attachment" outlined class="visit-website" :href="item.proxyVisitAddress" target="_blank" />
         </div>

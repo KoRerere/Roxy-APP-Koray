@@ -9,7 +9,7 @@ import { getFormSchemas } from './schemas'
 const props = defineProps({
   type: {
     type: String as PropType<'signUp' | 'signIn'>,
-    required: true,
+    default: 'signIn',
   },
 })
 
@@ -18,29 +18,36 @@ const signFormData = defineModel({ type: Object, default: {} })
 const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
+const submitLoading = ref(false)
 const formSchemas = ref(getFormSchemas())
 const rememberMe = ref(false)
 const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
 
 async function handleSubmit() {
-  const formData = await formInstance.value?.submit()
-  // const params = getFormData(inputs.value)
-  setSignFormData(formData)
-  console.log(formData)
-  // if sign up, switch to emailCodeInputOtp component
-  if (isRegister.value) {
-    const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: formData.user_name })
-    if (code === 0) {
-      toast.add({ severity: 'success', summary: $t('The email was sent successfully, please check it carefully!'), life: 5000 })
-      setCurrentComponent('emailCodeInputOtp')
+  submitLoading.value = true
+  try {
+    const formData = await formInstance.value?.submit()
+    // const params = getFormData(inputs.value)
+    setSignFormData(formData)
+    console.log(formData)
+    // if sign up, switch to emailCodeInputOtp component
+    if (isRegister.value) {
+      const { code, msg } = await API.base.sendEmailRegisterVerifyCodeList({ email: formData.user_name })
+      if (code === 0) {
+        toast.add({ severity: 'success', summary: $t('The email was sent successfully, please check it carefully!'), life: 5000 })
+        setCurrentComponent('emailCodeInputOtp')
+      }
+      else {
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+      }
     }
     else {
-      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+      await toSignIn()
     }
   }
-  else {
-    await toSignIn()
+  finally {
+    submitLoading.value = false
   }
 }
 
@@ -58,7 +65,7 @@ function switchFormMode(val: boolean) {
 
 <template>
   <!-- <ry-form class="w-full" :inputs="inputs" /> -->
-  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" />
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
@@ -69,7 +76,7 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <ry-button type="button" class="w-full" @click="handleSubmit">
+    <ry-button :loading="submitLoading" type="button" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('Sign up') : $t('Sign in') }}
     </ry-button>
     <div class="divider">
