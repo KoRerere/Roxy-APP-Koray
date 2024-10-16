@@ -7,6 +7,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 
 type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data', string>
 
+const router = useRouter()
 const toast = useToast()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
@@ -56,6 +57,7 @@ async function acceptInvitation() {
       workspaceStore.currentWorkspace = targetWorkspace
     }
     skipInvitation()
+    router.push({ name: 'browser' })
   }
   else {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })

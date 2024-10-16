@@ -219,7 +219,7 @@ onBeforeMount(() => {
         </div>
       </div>
 
-      <div v-if="windowInfo?.platformUrlList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
+      <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
         <div class="list">
           <div class="title">
             Accounts & URLs
