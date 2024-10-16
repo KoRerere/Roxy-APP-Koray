@@ -94,7 +94,7 @@ initTwoFactorCodeList()
             <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
               <circle class="progress" cx="18" cy="18" r="14"
-                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#FFA500' : '#12a3fc' }"
+                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F5222D' : '#12a3fc' }"
               />
             </svg>
           </template>
@@ -143,7 +143,9 @@ initTwoFactorCodeList()
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
 }
-
+.platform-icon {
+  height: 20px;
+}
 .box {
   display: flex;
   padding: var(--spacing-xl, 12px);
