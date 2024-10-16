@@ -1,5 +1,6 @@
 import type { UnwrapRowsType, UserGetCoreUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { compare } from 'compare-versions'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
@@ -113,8 +114,8 @@ export const chromeCoreManager = new class ChromeCoreManager {
     try {
       // 本地内核版本
       const localCoreVersion = await readFile(join(coreDir, 'version'), 'utf-8')
-      // 如果本地内核版本与远程内核版本不一致
-      if (localCoreVersion.trim() !== availableCore.version) {
+      // 如果本地内核版本小于远程内核版本
+      if (compare(localCoreVersion.trim(), availableCore.version, '<')) {
         // 重新下载
         this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
         msgCallback?.('正在下载内核')

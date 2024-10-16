@@ -485,7 +485,6 @@ onBeforeMount(() => {
     .city-logo {
       width: 48px;
       height: 48px;
-      background-color: #171c1f;
       border-radius: 50%;
       &.fail {
         background-color: #f0f3f5;
