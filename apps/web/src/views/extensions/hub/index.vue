@@ -70,6 +70,16 @@ function jumpToCategory(item: CategoryItem) {
 }
 
 async function addSystemPlugin(plugin: PluginItem) {
+  const { code, data, msg } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
+  if (code === 0) {
+    plugin.addStatus = true
+    needsync.value = true
+    onInstall({ ...plugin, id: data.plugin_id })
+  }
+  onlyErrorToast(code, msg)
+}
+
+async function onInstall(data: any) {
   dialog.open(installExtension, {
     props: {
       showHeader: false,
@@ -77,23 +87,17 @@ async function addSystemPlugin(plugin: PluginItem) {
       blockScroll: true,
     },
     data: {
-      props: plugin,
-      onConfirm: async (params: InstallType) => {
+      props: data,
+      onConfirm: async (params: any) => {
         try {
-          const data = await API.plugins.userAddSystemPluginCreate({ id: params.pluginId })
-          onlyErrorToast(data.code, data.msg)
-          if (data.code === 0) {
-            plugin.addStatus = true
-            needsync.value = true
-            const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
-            if (code === 0) {
-              window.electronAPI.send('extension:download', [toRaw(plugin)])
-            }
-            showToast(code, msg, 5000)
+          const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
+          if (code === 0) {
+            window.electronAPI.send('extension:download', [toRaw(data)])
           }
+          showToast(code, msg, 5000)
         }
         catch (error) {
-          console.log('🚀 ~ onConfirm: ~ error:', error)
+          onlyErrorToast(-1, error as string)
         }
       },
     },

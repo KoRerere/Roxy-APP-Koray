@@ -1,21 +1,35 @@
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
 import ryButton from '/@/components/ry-button'
+import { deepClone } from '/@/utils'
 import accountCreate from '/@/views/account/create'
 import accountList from '/@/views/account/list/quick.vue'
 
 const windowPlatformList: any = defineModel('modelValue')
 
+const selectedAccount = computed(() => windowPlatformList.value.filter((item: any) => item.id))
+
 const drawer = reactive({
   dismissable: false,
   visible: false,
   type: 'list',
+  data: undefined,
 })
 
-function toggleDrawer(type: 'create' | 'list') {
+function toggleDrawer(type: 'create' | 'list', data?: any) {
   drawer.visible = true
   drawer.type = type
   drawer.dismissable = type === 'list'
+  drawer.data = deepClone(data)
+}
+
+function onEdit(item: any) {
+  if (item.id) {
+    toggleDrawer('list')
+  }
+  else {
+    toggleDrawer('create', item)
+  }
 }
 
 function deleteAccount(item: any) {
@@ -23,8 +37,23 @@ function deleteAccount(item: any) {
   windowPlatformList.value.splice(index, 1)
 }
 
-function confirm(data: any) {
+function onConfirm(data: any) {
+  if (data._tempId) {
+    replaceData(data)
+    return
+  }
+
+  if (!data.id) {
+    data._tempId = (new Date().getTime()).toString(32)
+  }
   windowPlatformList.value.push(...([].concat(data)))
+}
+
+function replaceData(data: any) {
+  const index = windowPlatformList.value.findIndex((item: any) => item._tempId === data._tempId)
+  if (index > -1) {
+    Reflect.set(windowPlatformList.value, index, data)
+  }
 }
 </script>
 
@@ -38,7 +67,7 @@ function confirm(data: any) {
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="card-list">
-      <rx-card class="card-list-item" @close="deleteAccount(item)">
+      <rx-card class="card-list-item" @click="onEdit(item)" @close="deleteAccount(item)">
         <img class="card-list-item-img" :src="item.platformIcon">
         <div class="card-list-item-nation">
           {{ item.platformUrl }}
@@ -52,9 +81,10 @@ function confirm(data: any) {
     <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right"
       class="browser-drawer-content !w-[50%]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <accountList v-if="drawer.type === 'list'" @close="closeCallback"
-          @confirm="(data: any) => { confirm(data); closeCallback() }" />
-        <accountCreate v-if="drawer.type === 'create'" @close="closeCallback" @confirm="confirm" />
+        <accountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }"
+          @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <accountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback"
+          @confirm="onConfirm" />
       </template>
     </Drawer>
   </div>
