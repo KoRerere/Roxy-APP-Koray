@@ -806,16 +806,18 @@ export function getInputsGroup(data: any = {}) {
       },
     },
     {
-      type: 'select',
+      type: 'multiSelect',
       label: ' ',
       placeholder: '选择要禁用的SSL特性',
       name: 'disableSslList',
-      value: $dict_map.disableSslList.find((item: any) => item.value === data.disableSslList) ?? $dict_map.disableSslList[0],
+      value: data.disableSslList ?? [],
       options: $dict_map.disableSslList,
+      display: 'chip',
+      optionLabel: 'label',
+      optionValue: 'value',
+      filter: true,
+      maxSelectedLabels: 1,
       visible: initInputVisible(data.disableSsl, true, false),
-      formatValue: (input: any) => {
-        return [input.value]
-      },
     },
     {
       type: 'radio',
