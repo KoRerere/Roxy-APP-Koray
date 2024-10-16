@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue'
 
 const emit = defineEmits(['save'])
 
+const saveLoading = ref(false)
 const translateResult = ref('')
 const translateSuggestionText = ref('')
 const translateLoading = ref(false)
@@ -46,10 +47,23 @@ function translate() {
   })
 }
 
-function saveTranslateResult() {
+async function saveTranslateResult() {
+  saveLoading.value = true
   console.log('保存翻译结果: ', translateResult.value)
   currentRow.value.value = translateResult.value
-  emit('save', currentRow.value)
+
+  fetch('./api/saveTranslate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(currentRow.value),
+  }).then(res => res.text()).then((data) => {
+    console.log('/api/saveTranslate', data)
+    emit('save', currentRow.value)
+  }).finally(() => {
+    saveLoading.value = false
+  })
 }
 
 watch(currentRow, () => {
@@ -80,7 +94,7 @@ function handleCopy() {
         type="textarea"
         placeholder="Enter translation here"
       />
-      <el-button type="primary" class="mt-[12px] ml-[86%]" :disabled="disabledSaveBtn" @click="saveTranslateResult">
+      <el-button type="primary" class="mt-[12px] ml-[86%]" :loading="saveLoading" :disabled="disabledSaveBtn" @click="saveTranslateResult">
         保存
       </el-button>
     </el-card>

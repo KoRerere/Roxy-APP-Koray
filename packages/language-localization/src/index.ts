@@ -72,11 +72,12 @@ export default (options: OptionsType): PluginOption => {
             const data = await readFile(filePath, 'utf-8')
             const jsonData = JSON.parse(data)
             jsonData[key] = value
+            // 如果更新的是英文文件，需要更新其他文件中的对应键
             if (fileName === 'en') {
               jsonData[value] = value
               delete jsonData[key]
               // 更新使用到该键的文件
-              scanFilesAndReplaceKey(key, value)
+              await scanFilesAndReplaceKey(key, value)
               // 更新其他语言文件
               const files = await readdir(targetDir, { withFileTypes: true })
               const promiseArr = files.map(async (file) => {

@@ -75,13 +75,18 @@ export async function scanFilesAndReplaceKey(oldKey: string, newKey: string) {
   const promiseArr = files.map(async (file) => {
     try {
       const content = await readFile(file, 'utf-8')
+      let isContentChanged = false
       const newContent = content.replaceAll(translationRegex, (match, key) => {
         if (key === oldKey) {
+          isContentChanged = true
           return match.replace(oldKey, newKey)
         }
         return match
       })
-      await writeFile(file, newContent, 'utf-8')
+      // await writeFile(file, newContent, 'utf-8')
+      if (isContentChanged) {
+        await writeFile(file, newContent, 'utf-8')
+      }
     }
     catch (error) {
       console.error(`读取文件出错: ${file}`)
