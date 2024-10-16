@@ -4496,6 +4496,33 @@ export interface UserGetProxyTableRowsListData {
   msg: string;
 }
 
+export interface UserGetProxyRecommendInfoListData {
+  code: number;
+  data: {
+    rows: {
+      /** ID */
+      id?: number;
+      /** 代理标题 */
+      proxytitle?: string;
+      /** 代理Icon */
+      proxyIcon?: string;
+      /** 代理描述 */
+      proxyDesc?: string;
+      /** 代理跳转地址 */
+      proxyJumpAddress?: string;
+      /** 代理访问地址 */
+      proxyVisitAddress?: string;
+      /** 代理状态 */
+      proxyStatus?: number;
+      /** 创建时间 */
+      createTime?: string;
+      /** 修改时间 */
+      updateTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserUploadChromePluginsCreatePayload {
   /** 插件下载地址 */
   url: string;

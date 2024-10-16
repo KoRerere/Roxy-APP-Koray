@@ -1,3 +1,4 @@
+import macaddress from 'macaddress'
 import { execSync } from 'node:child_process'
 import { networkInterfaces, platform } from 'node:os'
 
@@ -33,15 +34,15 @@ export function getOSVersion(): string {
 
 /** 获取本机 MAC 地址 */
 export function getMacAddress() {
-  const interfaces = networkInterfaces()
+  // const interfaces = networkInterfaces()
 
-  for (const name of Object.keys(interfaces)) {
-    const iface = interfaces[name] || []
-    for (const alias of iface) {
-      if (alias.family === 'IPv4' && !alias.internal) {
-        return alias.mac
-      }
-    }
-  }
-  return ''
+  // for (const name of Object.keys(interfaces)) {
+  //   const iface = interfaces[name] || []
+  //   for (const alias of iface) {
+  //     if (alias.family === 'IPv4' && !alias.internal && alias.mac !== '00:00:00:00:00:00') {
+  //       return alias.mac
+  //     }
+  //   }
+  // }
+  return macaddress.one()
 }

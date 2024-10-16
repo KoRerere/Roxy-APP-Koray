@@ -3,6 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import batchProxies from './components/batch-proxies.vue'
+import RecommendedProxies from './components/recommended-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
 
 const router = useRouter()
@@ -11,6 +12,7 @@ const toast = useToast()
 const tabs = ref([
   { title: '单个代理', value: 'single' },
   { title: '批量代理', value: 'batch' },
+  { title: $t('Recommended Proxies'), value: 'recommended' },
 ])
 const tabsValue = ref('single')
 
@@ -46,6 +48,7 @@ function cancel() {
     <div class="flex-ovh-1 w-full">
       <singleProxies v-show="tabsValue === 'single'" @cancel="cancel" @save="saveProxies" />
       <batchProxies v-show="tabsValue === 'batch'" @cancel="cancel" @save="saveProxies" />
+      <RecommendedProxies v-show="tabsValue === 'recommended'" />
     </div>
   </div>
 </template>

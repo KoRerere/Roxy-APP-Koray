@@ -124,11 +124,11 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
 
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
-  // @ts-expect-error 后端字段不是一个枚举
-  store.closeSoft = config.closeSoft
-  store.systemProxySwitch = config.systemProxySwitch
-  store.memoryLimit = Number(config.memoryLimit) ? Number(config.memoryLimit) : 95
-  store.browserCacheRootDir = config.cacheDir
+  Object.keys(config).forEach((key) => {
+    if (Reflect.has(store, key)) {
+      Reflect.set(store, key, Reflect.get(config, key))
+    }
+  })
 })
 
 /** 选择文件夹 */

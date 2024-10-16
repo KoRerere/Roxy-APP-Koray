@@ -68,8 +68,8 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
     API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }),
     API.window.userGetDeviceNameV2List({ os, count }),
     macInfo
-      ? { data: [{ macAddr: getMacAddress() }] }
-      : API.window.userGetMacAddrV2List({ count }),
+      ? API.window.userGetMacAddrV2List({ count })
+      : { data: [{ macAddr: await getMacAddress() }] },
   ])
 
   const fingerDetail = Array.from({ length: count }).map((_, index) => {

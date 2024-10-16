@@ -377,8 +377,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
           username: winInfo.proxyUserName || ``,
           // 密码，选填
           password: winInfo.proxyPassword || ``,
-          // TODO 不走代理的地址 - google会导致代理被墙，开发环境默认加上
-          // proxyByPassList: $config.userConfig?.ipBlackList?.join?.(';'),
+          // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
+          proxyByPassList: store.ipBlackList?.join?.(';'),
         }
         // $LOG(`newData.fproxy.ipBlackList`, $config.userConfig?.ipBlackList?.join?.(';'))
       }
