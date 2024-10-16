@@ -8,14 +8,16 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 
 const confirm = useConfirm()
 const dialog = useDialog()
 const toast = useToast()
-const [dialogOpen] = useSimpleDialog()
+const role = useRoleStore()
 
+const [dialogOpen] = useSimpleDialog()
 const [showToast] = useResponseToast()
 const needsync = defineModel('needsync')
 
@@ -115,20 +117,20 @@ function tableOperation(data: any) {
       name: 'updateLocal',
       label: 'update local',
       icon: 'base/rx_ic_clock_rotate',
-      power: data.source === 'local',
+      power: data.source === 'local' && !role.isViewer,
     },
     {
       name: 'checkUpdate',
       label: 'check update',
       icon: 'base/rx_ic_clock_rotate',
-      power: data.source !== 'local',
+      power: data.source !== 'local' && !role.isViewer,
     },
-    {
-      name: 'setting',
-      label: 'Setting',
-      icon: 'base/rx_ic_gear',
-      multiple: true,
-    },
+    // {
+    //   name: 'setting',
+    //   label: 'Setting',
+    //   icon: 'base/rx_ic_gear',
+    //   multiple: true,
+    // },
     {
       separator: true,
     },
@@ -137,6 +139,7 @@ function tableOperation(data: any) {
       label: 'Delete',
       icon: 'base/rx_ic_bin_1',
       multiple: true,
+      power: role.isOwner || role.isManager,
     },
   ]
 }
