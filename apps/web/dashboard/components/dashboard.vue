@@ -240,10 +240,55 @@ onBeforeMount(() => {
         version 1.0.0
       </div>
     </div>
+
+    <div class="ellipse-bg">
+      <div class="blue" />
+      <div class="purple" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.ellipse-bg {
+  display: flex;
+  position: fixed;
+  top: 104%;
+  left: -200px;
+  right: -30px;
+  height: 656.408px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  filter: blur(150px);
+  transform: rotate(10deg);
+
+  .blue {
+    width: 866.302px;
+    height: 648.468px;
+    flex-shrink: 0;
+    border-radius: var(--radius-none, 866.302px);
+    background: var(--Color-blue-300, #12a3fc);
+    animation: ripple 15s linear infinite;
+  }
+
+  .purple {
+    width: 617.019px;
+    height: 461.868px;
+    flex-shrink: 0;
+    border-radius: var(--radius-none, 617.019px);
+    background: #ca59ff;
+    animation: ripple 15s linear infinite;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .layout {
   display: flex;
   max-width: 1000px;
@@ -252,6 +297,10 @@ onBeforeMount(() => {
   align-items: flex-end;
   gap: var(--spacing-2xl, 16px);
   padding: 16px 15px 90px 15px;
+
+  *:not(.ellipse-bg) {
+    z-index: 1;
+  }
 }
 
 .header {
@@ -436,7 +485,6 @@ onBeforeMount(() => {
     .city-logo {
       width: 48px;
       height: 48px;
-      background-color: #171c1f;
       border-radius: 50%;
       &.fail {
         background-color: #f0f3f5;

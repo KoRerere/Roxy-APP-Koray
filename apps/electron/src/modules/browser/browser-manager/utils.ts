@@ -354,8 +354,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     ssl: {
       /** 禁用SSL特性，选填. 为空表示不禁用 */
       get cipherSuiteBlacklist() {
-        if (Array.isArray(winInfo.disableSsl)) {
-          return winInfo.disableSsl.join(',')
+        if (winInfo.disableSsl && Array.isArray(winInfo.disableSslList)) {
+          return winInfo.disableSslList.join(',')
         }
         return ''
       },
