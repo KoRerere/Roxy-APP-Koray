@@ -52,18 +52,18 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: 'Resource/Tool', type: 'group', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+    meta: { title: 'Resource/Tool', type: 'group' },
     children: [
       {
         path: 'account',
         name: 'account-list',
-        meta: { title: $t('Accounts'), icon: 'base/rx_ic_keys' },
+        meta: { title: $t('Accounts'), icon: 'base/rx_ic_keys', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/account/list'),
       },
       {
         path: 'agent',
         name: 'agent-list',
-        meta: { title: $t('Proxies'), icon: 'base/rx_ic_internet' },
+        meta: { title: $t('Proxies'), icon: 'base/rx_ic_internet', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/agent/list'),
       },
       {
@@ -84,12 +84,12 @@ export const menuRoutes: RouteRecordRaw[] = [
         meta: { title: $t('Extensions'), icon: 'base/rx_ic_extension_store' },
         component: () => import('/@/views/extensions'),
       },
-      {
-        path: 'rpa',
-        name: 'rpa',
-        meta: { title: $t('RPAs'), icon: 'base/rx_ic_browser_smile' },
-        component: () => import('/@/views/agent/shop'),
-      },
+      // {
+      //   path: 'rpa',
+      //   name: 'rpa',
+      //   meta: { title: $t('RPAs'), icon: 'base/rx_ic_browser_smile' },
+      //   component: () => import('/@/views/agent/shop'),
+      // },
     ],
   },
   {

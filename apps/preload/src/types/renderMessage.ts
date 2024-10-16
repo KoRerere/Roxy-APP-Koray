@@ -57,7 +57,7 @@ export interface RenderMessage {
   /** 显示系统日志所在目录 */
   'app:showLogDir': () => void
   /** 获取本机 mac address */
-  'app:getMacAddress': () => string
+  'app:getMacAddress': () => Promise<string>
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void

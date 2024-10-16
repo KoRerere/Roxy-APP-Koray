@@ -68,7 +68,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
     API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }),
     API.window.userGetDeviceNameV2List({ os, count }),
     macInfo
-      ? { data: [{ macAddr: getMacAddress() }] }
+      ? { data: [{ macAddr: await getMacAddress() }] }
       : API.window.userGetMacAddrV2List({ count }),
   ])
 
