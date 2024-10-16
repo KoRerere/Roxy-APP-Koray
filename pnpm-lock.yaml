@@ -330,11 +330,11 @@ importers:
         specifier: ^13.0.22
         version: 13.0.22(encoding@0.1.13)
       vite:
-        specifier: ^5.4.7
-        version: 5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
+        specifier: ^5.4.9
+        version: 5.4.9(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
       vite-plugin-dts:
-        specifier: ^4.2.2
-        version: 4.2.3(@types/node@22.7.4)(rollup@4.24.0)(typescript@5.5.4)(vite@5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1))
+        specifier: ^4.2.4
+        version: 4.2.4(@types/node@22.7.4)(rollup@4.24.0)(typescript@5.5.4)(vite@5.4.9(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1))
 
   packages/gen-primevue-preset:
     devDependencies:
@@ -6231,6 +6231,16 @@ packages:
 
   vite-plugin-dts@4.2.3:
     resolution: {integrity: sha512-O5NalzHANQRwVw1xj8KQun3Bv8OSDAlNJXrnqoAz10BOuW8FVvY5g4ygj+DlJZL5mtSPuMu9vd3OfrdW5d4k6w==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    peerDependencies:
+      typescript: '*'
+      vite: '*'
+    peerDependenciesMeta:
+      vite:
+        optional: true
+
+  vite-plugin-dts@4.2.4:
+    resolution: {integrity: sha512-REcYoxO90Pi8c0P1J7XAa/nVwNVGkX2eYkBEIfFSfcKE4g1W8sB0R23a7SU3aLEMfdOdb0SVHq3JlJ+Qb6gjgA==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
       typescript: '*'
@@ -13423,25 +13433,6 @@ snapshots:
     dependencies:
       vite: 5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
 
-  vite-plugin-dts@4.2.3(@types/node@22.7.4)(rollup@4.24.0)(typescript@5.5.4)(vite@5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)):
-    dependencies:
-      '@microsoft/api-extractor': 7.47.7(@types/node@22.7.4)
-      '@rollup/pluginutils': 5.1.2(rollup@4.24.0)
-      '@volar/typescript': 2.4.6
-      '@vue/language-core': 2.1.6(typescript@5.5.4)
-      compare-versions: 6.1.1
-      debug: 4.3.7
-      kolorist: 1.8.0
-      local-pkg: 0.5.0
-      magic-string: 0.30.11
-      typescript: 5.5.4
-    optionalDependencies:
-      vite: 5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
-    transitivePeerDependencies:
-      - '@types/node'
-      - rollup
-      - supports-color
-
   vite-plugin-dts@4.2.3(@types/node@22.7.4)(rollup@4.24.0)(typescript@5.6.2)(vite@5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
       '@microsoft/api-extractor': 7.47.7(@types/node@22.7.4)
@@ -13475,6 +13466,25 @@ snapshots:
       typescript: 5.6.3
     optionalDependencies:
       vite: 5.4.8(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
+
+  vite-plugin-dts@4.2.4(@types/node@22.7.4)(rollup@4.24.0)(typescript@5.5.4)(vite@5.4.9(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)):
+    dependencies:
+      '@microsoft/api-extractor': 7.47.7(@types/node@22.7.4)
+      '@rollup/pluginutils': 5.1.2(rollup@4.24.0)
+      '@volar/typescript': 2.4.6
+      '@vue/language-core': 2.1.6(typescript@5.5.4)
+      compare-versions: 6.1.1
+      debug: 4.3.7
+      kolorist: 1.8.0
+      local-pkg: 0.5.0
+      magic-string: 0.30.11
+      typescript: 5.5.4
+    optionalDependencies:
+      vite: 5.4.9(@types/node@22.7.4)(sass-embedded@1.79.4)(sass@1.79.4)(terser@5.34.1)
     transitivePeerDependencies:
       - '@types/node'
       - rollup

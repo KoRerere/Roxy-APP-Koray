@@ -56,8 +56,8 @@ function handleCopyEfaToken(token) {
   copyText(token)
   toast.add({
     severity: 'success',
-    summary: '复制成功',
-    detail: token,
+    summary: 'Copied successfully',
+    // detail: token,
     life: 2000,
   })
 }
@@ -88,13 +88,15 @@ initTwoFactorCodeList()
           <RxSvgIcon name="base/rx_ic_2fa" />
           <Skeleton v-if="item.loading" shape="circle" size="3rem" class="mr-2" />
           <template v-else>
-            <div class="code cursor-pointer" @click="handleCopyEfaToken(item.efaToken)">
-              {{ item.efaToken }}
+            <div class="code">
+              <span v-tooltip.top="'Click to copy'" class="cursor-pointer" @click="handleCopyEfaToken(item.efaToken)">
+                {{ item.efaToken }}
+              </span>
             </div>
             <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
               <circle class="progress" cx="18" cy="18" r="14"
-                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F5222D' : '#12a3fc' }"
+                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F53838' : '#12a3fc' }"
               />
             </svg>
           </template>

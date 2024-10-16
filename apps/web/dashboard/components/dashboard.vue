@@ -7,6 +7,7 @@ import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { baseUrl, fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
+import IpChangeWarnMessage from './ip-change-warn-message.vue'
 import TwoFactorAuth from './two-factor-auth.vue'
 
 const dirId = new URLSearchParams(window.location.search).get('id')
@@ -42,7 +43,7 @@ function getWindowInfo() {
       }
       else {
         console.error('获取窗口信息失败')
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+        toast.add({ severity: 'error', summary: 'Errors occur', detail: msg, life: 3000 })
       }
     })
     .catch(error => console.error(error))
@@ -68,14 +69,14 @@ async function proxyDetection(event?: MouseEvent) {
     }
     else {
       console.error('代理检查失败')
-      toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+      toast.add({ severity: 'error', summary: 'Errors occur', detail: result.message, life: 3000 })
       proxyInfo.value = {}
       isTestSuccess.value = false
     }
   }
   catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: 'Error', detail: '代理检查失败', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Errors occur', detail: '代理检查失败', life: 3000 })
   }
   finally {
     testProxyLoading.value = false
@@ -101,12 +102,12 @@ async function refreshURL() {
     }
     else {
       console.error('刷新 URL 失败')
-      toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+      toast.add({ severity: 'error', summary: 'Errors occur', detail: result.message, life: 3000 })
     }
   }
   catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: 'Error', detail: '刷新 URL 失败', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Errors occur', detail: '刷新 URL 失败', life: 3000 })
   }
   finally {
     refreshUrlLoading.value = false
@@ -134,6 +135,8 @@ onBeforeMount(() => {
         {{ timeZone }} (GMT{{ offsetHours }}) <span class="now">{{ now }}</span>
       </div>
     </div>
+
+    <IpChangeWarnMessage v-if="!testProxyLoading && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
 
     <div class="card base-info">
       <div class="card-header">
