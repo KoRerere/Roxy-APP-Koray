@@ -45,7 +45,7 @@ export interface RenderMessage {
   'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
 
   /** 保存软件设置 */
-  'app:saveSoftConfig': (config: UserGetUserConfigListData['data']) => void
+  'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
   /** 安装并更新 */

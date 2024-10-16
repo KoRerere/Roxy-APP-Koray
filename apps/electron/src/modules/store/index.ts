@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import Store from 'electron-store'
 import { join } from 'node:path'
+import { API } from '/@/api'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
@@ -25,6 +26,8 @@ interface StoreType {
   systemProxySwitch?: boolean
   /** 浏览器工作台端口号 */
   dashboardPort: number
+  /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
+  ipBlackList: string[]
 }
 
 const sessionDir = app.getPath('sessionData')
@@ -35,6 +38,7 @@ const defaultValues: StoreType = {
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
   systemProxySwitch: true,
   dashboardPort: 45535,
+  ipBlackList: [],
 }
 
 const _store = new Store<StoreType>({
@@ -61,6 +65,18 @@ export const store = new Proxy(latestStore, {
 })
 
 export async function setupStore() {
+  try {
+    const { data } = await API.base.userGetUserConfigList()
+    Object.keys(data).forEach((key) => {
+      if (Reflect.has(store, key)) {
+        Reflect.set(store, key, Reflect.get(data, key))
+      }
+    })
+  }
+  catch (error) {
+    console.error('setupStore userGetUserConfigList', error)
+  }
+
   const isExists = await fileExists(latestStore.browserCacheRootDir)
   if (!isExists) {
     latestStore.browserCacheRootDir = defaultValues.browserCacheRootDir

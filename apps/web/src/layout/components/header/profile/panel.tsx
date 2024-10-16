@@ -37,6 +37,7 @@ async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
   await API.base.userSetUserConfigCreate({ [item.name as any]: value })
   toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  electronAPI.send('app:saveSoftConfig', { [item.name]: value })
 }
 
 async function detectLocalNetwork(item: Items) {

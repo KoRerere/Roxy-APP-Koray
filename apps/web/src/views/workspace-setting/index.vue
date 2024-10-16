@@ -12,6 +12,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
+const router = useRouter()
 const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
@@ -108,8 +109,9 @@ function leaveWorkspace() {
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
       if (code === 0) {
-        workspaceStore.getWorkspaceList()
         toast.add({ severity: 'success', summary: 'Success', detail: 'You have left the workspace', life: 3000 })
+        await workspaceStore.getWorkspaceList()
+        router.push({ name: 'browser' })
       }
       else {
         toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
