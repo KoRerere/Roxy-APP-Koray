@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import { useToast } from 'primevue/usetoast'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import inputSelect from '/@/components/ry-form/input-select.vue'
 import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
+import { copyText } from '/@/utils/'
 import type { Accordions, MetaData } from './type.ts'
 import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
@@ -28,6 +30,8 @@ const props = defineProps({
 })
 
 const emits = defineEmits(['createOpen', 'create'])
+
+const toast = useToast()
 
 const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRefs(reactive(useAttrs()))
 
@@ -59,6 +63,11 @@ function getFormData(isOpen: boolean) {
   const formData = getFormDataByList(props!.inputsGroup, _metaData)
   emits(isOpen ? 'createOpen' : 'create', formData)
 }
+
+function onCopy(dirId: string) {
+  copyText(dirId)
+  toast.add({ severity: 'success', summary: 'Copy success', life: 3000 })
+}
 </script>
 
 <template>
@@ -72,8 +81,15 @@ function getFormData(isOpen: boolean) {
           </AccordionHeader>
           <AccordionContent :pt="{ content: '!py-4 !px-2' }">
             <ryForm :inputs="inputsGroup[index]" label-position="left">
-              <template #System="{ input }">
-                <div class="flex flex-row">
+              <template #profileId="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <span>{{ input.value }}</span>
+                  <span class="color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+                </div>
+              </template>
+              <template #system="{ input }">
+                <div class="flex">
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
@@ -84,13 +100,13 @@ function getFormData(isOpen: boolean) {
                 </div>
               </template>
               <template #proxy="{ input }">
-                <div class="flex flex-row">
+                <div class="flex">
                   <inputLabel v-bind="input" />
                   <proxyItem v-model="input.value" class="flex-1" />
                 </div>
               </template>
               <template #accounts="{ input }">
-                <div class="flex flex-row">
+                <div class="flex">
                   <inputLabel v-bind="input" />
                   <accountItem v-model="input.value" class="flex-1" />
                 </div>
@@ -99,7 +115,7 @@ function getFormData(isOpen: boolean) {
                 <urlsItem v-model="input.value" v-bind="input" />
               </template>
               <template #windowSize="{ input }">
-                <div class="flex flex-row">
+                <div class="flex">
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">

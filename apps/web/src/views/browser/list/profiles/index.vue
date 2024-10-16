@@ -12,8 +12,9 @@ import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { createDefaultObject, filterFieldByValue, getFormData } from '/@/utils/index'
+import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
+import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
 import customFilters from './components/custom-filters.vue'
@@ -47,6 +48,7 @@ const dialog = useDialog()
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const [showToast] = useResponseToast()
+const [addTag] = useTagsActions({ toast: false })
 
 const [show] = useContextMenu()
 const filtersMenu = ref()
@@ -178,8 +180,19 @@ async function operationHandler(operate: any, data: any) {
     case 'edit':
       router.push({ name: 'browser-edit', query: { id: data.id } })
       break
+    case 'copyId':
+      copyText(data.dirId)
+      toast.add({ severity: 'success', summary: 'Copy success', life: 3000 })
+      break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
+      break
+    case 'addTag':
+      addTag({
+        confirmNext: ({ res }: any) => {
+          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, data)
+        },
+      })
       break
     case 'fav':
       drawer.updateProfile({ id: data.id, isOften: !data.isOften })
@@ -270,7 +283,7 @@ function onRemark(datas: any) {
 }
 
 async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  await batchModifyWindow({ ids: [data.id], ...params })
+  await batchModifyWindow({ ...params, ids: [data.id] })
 }
 
 async function batchModifyWindow(params: any) {
