@@ -44,21 +44,19 @@ async function createProfile(formData: any) {
 }
 
 onBeforeMount(() => {
-  const data = JSON.parse(localStorage.getItem(`$editWindow_${route.query.id}`) || '{}')
-  const [_inputsGroup, _original] = getInputsGroup(data)
-  inputsGroup.value = _inputsGroup
-  original.value = _original
-  windowName.value = data.windowName
-  metaData.value = {
-    projectName: data.projectName,
-    projectId: data.projectId,
-    labelIds: data.labelIds,
-    windowRemark: data.windowRemark,
-  }
-})
-
-onUnmounted(() => {
-  // localStorage.removeItem(`$editWindow_${original.value.id}`)
+  API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0 })
+    .then(({ data: { rows: [data] } }) => {
+      const [_inputsGroup, _original] = getInputsGroup(data)
+      inputsGroup.value = _inputsGroup
+      original.value = _original
+      windowName.value = data.windowName as string
+      metaData.value = {
+        projectName: data.projectName,
+        projectId: data.projectId as number | undefined,
+        labelIds: data.labelIds,
+        windowRemark: data.windowRemark,
+      }
+    })
 })
 </script>
 
