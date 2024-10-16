@@ -18,6 +18,7 @@ import {
   UserDelProxyModuleCreatePayload,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
+  UserGetProxyRecommendInfoListData,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
   UserMdfProxyModuleCreateData,
@@ -209,6 +210,22 @@ export class ProxyApi<SecurityDataType = unknown> {
   userGetProxyTableRowsList = (params: RequestParams = {}) =>
     this.http.request<UserGetProxyTableRowsListData, any>({
       path: `/user_get_proxy_table_rows`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyRecommendInfoList
+   * @summary 代理推荐列表
+   * @request GET:/user_get_proxy_recommend_info
+   * @response `200` `UserGetProxyRecommendInfoListData`
+   */
+  userGetProxyRecommendInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyRecommendInfoListData, any>({
+      path: `/user_get_proxy_recommend_info`,
       method: "GET",
       format: "json",
       ...params,

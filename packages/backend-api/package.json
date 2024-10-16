@@ -18,14 +18,14 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",
-    "openapi": "npx tsx openapi.config.ts"
+    "openapi": "npx tsx openapi.config.ts && npm run build"
   },
   "peerDependencies": {
     "axios": "^1.7.4"
   },
   "devDependencies": {
     "swagger-typescript-api": "^13.0.22",
-    "vite": "^5.4.7",
-    "vite-plugin-dts": "^4.2.2"
+    "vite": "^5.4.9",
+    "vite-plugin-dts": "^4.2.4"
   }
 }
