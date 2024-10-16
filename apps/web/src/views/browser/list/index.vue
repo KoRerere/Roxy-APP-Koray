@@ -144,8 +144,10 @@ function showPopover(event: Event) {
   popRef.value.getRef().show(event)
 }
 
-function hidePopover() {
-  console.log('🚀 ~ hidePopover ~ hidePopover:')
+async function hidePopover() {
+  const sort_data = tabs.value.slice(1, -1).map((item: any, index) => ({ name: item.label, sort: index }))
+  const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
+  onlyErrorToast(code, msg)
 }
 
 onBeforeMount(() => {

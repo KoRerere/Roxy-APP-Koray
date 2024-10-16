@@ -220,7 +220,7 @@ function showOperationMenu(event: Event, data: any) {
   })
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   _getFilters()
   _request()
 })
@@ -233,7 +233,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="position-relative w-full h-full rxtable">
+  <div class="position-relative w-full h-full flex flex-col">
     <div v-if="showTableHeader" class="flex items-center rxtable-header">
       <div class="flex flex-auto gap-2">
         <TableFilter :filters="_filters" @change="onChangeParams('filters', $event)" />
@@ -248,7 +248,7 @@ defineExpose({
         <TableSort v-if="sorts.length > 0" :sorts="sorts" @sort="onChangeParams('sort', $event)" />
       </div>
     </div>
-    <div class="rxtable-body">
+    <div class="flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
         @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
@@ -263,7 +263,8 @@ defineExpose({
         </template>
         <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="$t(column.title)"
-          :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen">
+          :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
+          :pt="{ columntitle: cssmodule['column-title'] }">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
@@ -318,9 +319,6 @@ defineExpose({
 
 <style lang="scss" scoped>
 .rxtable {
-  display: flex;
-  flex-direction: column;
-
   &-header {
     display: flex;
     padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
@@ -331,20 +329,11 @@ defineExpose({
   }
 
   &-cell {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--Color-neutrals-950, #0e1214);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 16px;
-  }
-
-  &-body {
-    flex: 1;
-    overflow: hidden;
+    font-weight: 500;
+    line-height: normal;
   }
 
   &-paginator {
@@ -373,5 +362,15 @@ defineExpose({
 .v-enter-from,
 .v-leave-to {
   opacity: 0;
+}
+</style>
+
+<style lang="scss" module="cssmodule">
+.column-title {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
 }
 </style>
