@@ -261,7 +261,7 @@ defineExpose({
             </div>
           </slot>
         </template>
-        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
+        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" class="rx-selection" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="$t(column.title)"
           :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
           :pt="{ columntitle: cssmodule['column-title'] }">
@@ -335,6 +335,8 @@ defineExpose({
 :deep(.p-paginator-content-start) {
   flex: 1;
 }
+
+.rx-selection {}
 
 .rx-paginator {
 

@@ -84,6 +84,7 @@ function parseValue() {
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
       return {
+        checkStatus: ProxyCheckStatus.failure,
         ipType,
         protocol: protocol?.toLocaleUpperCase(),
         host,

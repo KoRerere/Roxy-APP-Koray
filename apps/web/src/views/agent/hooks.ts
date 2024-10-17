@@ -36,6 +36,7 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
 
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
+      console.log('🚀 ~ testProxy ~ checkRes:', checkRes)
       if (!checkRes.ip) {
         toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
       }

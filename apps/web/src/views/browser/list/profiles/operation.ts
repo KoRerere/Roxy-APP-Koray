@@ -34,12 +34,12 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'text',
       name: 'windowName',
-      label: '窗口名称',
+      label: 'Name',
       icon: 'base/rx_ic_browser',
     },
     {
       type: 'number',
-      label: '窗口序号',
+      label: 'Nums',
       name: 'sortNums',
       icon: 'base/rx_ic_id',
     },
@@ -48,7 +48,7 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
-      label: '操作系统',
+      label: 'System',
       name: 'osList',
       icon: 'base/rx_ic_laptop',
       options: ($dict_map.os || []).map((item: any) => ({
@@ -60,7 +60,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'platformUrlIds',
-      label: '账号平台',
+      label: 'Account',
       icon: 'base/rx_ic_keys',
       options: platformList.rows.map((item: any) => ({
         parentName: 'platformUrlIds',
@@ -74,16 +74,16 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'radio',
       name: 'openStatus',
-      label: '窗口状态',
+      label: 'Status',
       options: [
         {
           icon: 'base/rx_ic_browsers_line',
-          label: '窗口打开',
+          label: 'Status Open',
           value: true,
         },
         {
           icon: 'base/rx_ic_browsers_line',
-          label: '窗口关闭',
+          label: 'Status Close',
           value: false,
         },
       ],
@@ -94,7 +94,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'projectIds',
-      label: '项目',
+      label: 'Project',
       icon: 'base/rx_ic_stack',
       options: projectList.rows.map((item: any) => ({
         parentName: 'projectIds',
@@ -105,7 +105,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'labelIds',
-      label: '窗口标签',
+      label: 'Tag',
       icon: 'base/rx_ic_tag',
       options: labelList.rows.map((item: any) => ({
         parentName: 'labelIds',
@@ -119,12 +119,12 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'switch',
       name: 'isOften',
-      label: '窗口收藏',
+      label: 'Fav',
       icon: 'base/rx_ic_bookmark',
     },
     {
       type: 'textarea',
-      label: '窗口备注',
+      label: 'Notes',
       name: 'windowRemark',
       icon: 'base/rx_ic_doc_article',
     },
@@ -133,15 +133,15 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'text',
-      label: '关联代理ID',
+      label: 'Proxy ID',
       name: 'proxyIds',
-      placeholder: '多个代理ID逗号分隔',
+      placeholder: 'multiple proxy id comma separation',
       icon: 'base/rx_ic_internet',
     },
     {
       type: 'Checkbox',
       name: 'proxyProtocoList',
-      label: '代理协议',
+      label: 'Proxy Protocol',
       icon: 'base/rx_ic_internet_pin',
       options: ($dict_map.protocol || []).map((item: any) => ({
         parentName: 'proxyProtocoList',
@@ -152,16 +152,16 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'radio',
       name: 'proxyTestStatus',
-      label: '检测状态',
+      label: 'Check Status',
       options: [
         {
           icon: 'base/rx_ic_internet_check',
-          label: '检测成功的代理',
+          label: 'Test Success',
           value: '1',
         },
         {
           icon: 'base/rx_ic_internet_error',
-          label: '检测失败的代理',
+          label: 'Test Failed',
           value: '2',
         },
       ],
@@ -172,11 +172,11 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'date',
       name: 'createTime',
-      label: '窗口创建时间',
+      label: 'Cteate Time',
       icon: 'base/rx_ic_calendar',
       items: [
         {
-          placeholder: '请选择开始时间',
+          placeholder: 'start date',
           name: 'startDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -184,7 +184,7 @@ export async function getCustomFilters(params: any = {}) {
           },
         },
         {
-          placeholder: '请选择结束时间',
+          placeholder: 'end date',
           name: 'endDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
