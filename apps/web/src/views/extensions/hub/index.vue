@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetPluginCategoryListData, UserGetSystemPluginL
 import { useDebounceFn } from '@vueuse/core'
 import Fuse from 'fuse.js'
 import { useDialog } from 'primevue/usedialog'
-import type { InstallType } from '/@/views/extensions/install/components/type'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -123,7 +122,8 @@ defineExpose({
     <div>
       <div class="hub-categories">
         <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
-          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+             :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)"
+        >
           {{ item.categoryName }}
         </div>
       </div>
@@ -133,7 +133,7 @@ defineExpose({
         <InputGroupAddon>
           <RxSvgIcon name="base/rx_ic_magnify" />
         </InputGroupAddon>
-        <InputText v-model="search" placeholder="Search your most used chrome extensions" @input="searchPlugins" />
+        <InputText v-model="search" :placeholder="$t('Search your most used chrome extensions')" @input="searchPlugins" />
       </InputGroup>
       <div class="flex-1 overflow-y-auto dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
@@ -159,9 +159,11 @@ defineExpose({
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
                 <RyButton v-if="plugin.addStatus" size="small" outlined severity="secondary"
-                  icon="base/rx_ic_check_line" label="Installed" disabled />
+                          icon="base/rx_ic_check_line" :label="$t('Installed')" disabled
+                />
                 <RyButton v-else size="small" outlined severity="secondary" icon="base/rx_ic_download_cloud"
-                  label="Install" @click="addSystemPlugin(plugin)" />
+                          :label="$t('Install')" @click="addSystemPlugin(plugin)"
+                />
               </div>
             </div>
           </div>

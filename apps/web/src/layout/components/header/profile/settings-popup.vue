@@ -50,11 +50,12 @@ onMounted(() => {
   <div class="flex h-full">
     <div class="settings-menu">
       <div class="settings-menu-title">
-        Client Settings
+        {{ $t('Client Settings') }}
       </div>
       <div class="settings-menu-list">
         <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.label === active.key }" @click="item.command">
+             :class="{ active: item.label === active.key }" @click="item.command"
+        >
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>

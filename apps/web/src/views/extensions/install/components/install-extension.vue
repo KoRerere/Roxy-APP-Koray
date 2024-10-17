@@ -3,6 +3,7 @@ import type { UnwrapRowType, UserGetPluginWindowListData } from '@roxy/backend-a
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType } from '/@/enums'
+import { $t } from '/@/locales'
 import type { InstallType } from './type'
 
 type DataItem = UnwrapRowType<UserGetPluginWindowListData>
@@ -17,13 +18,13 @@ const loading = ref(false)
 
 const installType = ref(allInstall)
 const categories = ref([
-  { label: 'All project', value: allInstall },
-  { label: 'Partial project', value: partialInstall },
+  { label: $t('All project'), value: allInstall },
+  { label: $t('Partial project'), value: partialInstall },
 ])
 
 const columns = [
   {
-    title: 'Profile info',
+    title: $t('Profile info'),
     key: 'projectName',
   },
 ]
@@ -91,7 +92,7 @@ onMounted(() => {
 <template>
   <div class="flex flex-col overflow-y-hidden popup">
     <div class="popup-title">
-      Install to profiles
+      {{ $t('Install to profiles') }}
     </div>
     <div v-if="_props" class="extension">
       <div class="extension-icon">
@@ -106,25 +107,27 @@ onMounted(() => {
     </div>
 
     <div class="flex flex-col gap-1">
-      <div>Install to:</div>
+      <div>{{ $t('Install to:') }}</div>
       <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
         <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value"
-          @change="onChange" />
+                     @change="onChange"
+        />
         <label :for="category.value">{{ category.label }}</label>
       </div>
     </div>
     <div v-show="installType === partialInstall" class="h-60">
       <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
-        :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
-        selection-mode="multiple" />
+               :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+               selection-mode="multiple"
+      />
     </div>
     <div>
       <RxSvgIcon name="base/rx_ic_info" />
-      <span>You can only install extension to profiles related to your projects.</span>
+      <span>{{ $t('You can only install extension to profiles related to your projects.') }}</span>
     </div>
     <div class="footer">
-      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
-      <Button size="small" label="Save and install" severity="info" :loading="loading" autofocus @click="confirm" />
+      <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
+      <Button size="small" :label="$t('Save and install')" severity="info" :loading="loading" autofocus @click="confirm" />
     </div>
   </div>
 </template>

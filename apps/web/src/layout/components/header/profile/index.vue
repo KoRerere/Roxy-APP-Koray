@@ -3,6 +3,8 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { ISO639List } from '/@/constants/iso-639'
+import { $t } from '/@/locales'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { getSettings } from './panel'
@@ -18,47 +20,37 @@ const menuRef = useTemplateRef('menu')
 const items = ref([
   ...getSettings().map(item => ({ ...item, command: () => openSettings(item.label) })),
   {
-    label: 'Language',
+    label: $t('Language'),
     icon: 'base/rx_ic_language',
-    items: [
-      {
-        label: '简体中文',
-        locale: 'zh-CN',
-        icon: 'country-code/CN',
+    items: ISO639List.map((item) => {
+      return {
+        ...item,
         command: () => {
-          simpleLocale.setSimpleLocale('zh-CN')
+          simpleLocale.setSimpleLocale(item.locale)
         },
-      },
-      {
-        label: 'English',
-        locale: 'en',
-        icon: 'country-code/US',
-        command: () => {
-          simpleLocale.setSimpleLocale('en')
-        },
-      },
-    ],
+      }
+    }),
   },
   {
     separator: true,
   },
   ...(import.meta.env.DEV
     ? [
-      {
-        label: '图标(仅开发)',
-        icon: 'base/rx_ic_outlink',
-        command: () => {
-          window.open('/figma-icons')
+        {
+          label: '图标(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/figma-icons')
+          },
         },
-      },
-      {
-        label: '多语言(仅开发)',
-        icon: 'base/rx_ic_outlink',
-        command: () => {
-          window.open('/__language-localization__')
+        {
+          label: '多语言(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/__language-localization__')
+          },
         },
-      },
-    ]
+      ]
     : []),
   {
     label: 'Log out',
@@ -98,8 +90,9 @@ function toggle(event: Event) {
 
 <template>
   <Avatar class="cursor-pointer mr-2"
-    :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
-    shape="circle" @click="toggle" />
+          :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
+          shape="circle" @click="toggle"
+  />
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>
     <template #item="{ item, props, hasSubmenu }">

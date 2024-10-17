@@ -1,22 +1,23 @@
 import { API } from '/@/api'
 import { defineFormSchema } from '/@/components/rx-form'
+import { $t } from '/@/locales'
 import InputWithRole from './components/input-with-role.vue'
 
 export const projectFormSchemas = defineFormSchema([
   {
     field: 'projectName',
     component: 'InputText',
-    label: 'Type your project name down below',
+    label: $t('Type your project name down below'),
     componentProps: {
-      placeholder: 'Project name...',
+      placeholder: $t('Project name...'),
     },
     rule: {
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, 'Project name is required')
-          .min(2, 'Project name must be at least 2 characters long')
-          .max(30, 'Project name must be less than 30 characters')
+          .min(1, $t('Project name is required'))
+          .min(2, $t('Project name must be at least 2 characters long'))
+          .max(30, $t('Project name must be less than 30 characters'))
       },
     },
   },
@@ -29,21 +30,21 @@ export const inviteUsersFormSchemas = defineFormSchema([
       return <InputWithRole v-model:role={formModel.value.role}></InputWithRole>
     },
     componentProps: {
-      placeholder: 'Enter email...',
+      placeholder: $t('Enter email...'),
     },
     rule: {
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, 'Email is required')
-          .email('Invalid email address')
+          .min(1, $t('Email is required'))
+          .email($t('Invalid email address'))
       },
     },
   },
   {
     field: 'projectIds',
     component: 'MultiSelect',
-    label: 'Invite to projects',
+    label: $t('Invite to projects'),
     componentProps: {
       filter: true,
       optionLabel: 'projectName',
@@ -59,7 +60,7 @@ export const inviteUsersFormSchemas = defineFormSchema([
       validator(zod) {
         return zod.number()
           .array()
-          .min(1, 'Project is required')
+          .min(1, $t('Project is required'))
       },
     },
   },

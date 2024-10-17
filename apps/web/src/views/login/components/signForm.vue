@@ -39,7 +39,7 @@ async function handleSubmit() {
         setCurrentComponent('emailCodeInputOtp')
       }
       else {
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 5000 })
       }
     }
     else {
@@ -68,7 +68,7 @@ function switchFormMode(val: boolean) {
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
-      <Checkbox v-model="rememberMe" input-id="remember-me" name="pizza" value="Cheese" />
+      <Checkbox v-model="rememberMe" input-id="remember-me" />
       <label for="remember-me" class="ml-2"> {{ $t('Remember me') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">

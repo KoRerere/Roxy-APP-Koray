@@ -90,7 +90,7 @@ onMounted(() => {
       <div :class="message.wrapper">
         <div :class="message.header">
           <div :class="message.title">
-            Message
+            {{ $t('Message') }}
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
                     label="Mark all as read" @click="markAllAsRead"
@@ -126,7 +126,7 @@ onMounted(() => {
               </template>
               <template v-else>
                 <div class="flex justify-center items-center min-h-40 text-6">
-                  No Message
+                  {{ $t('No Message') }}
                 </div>
               </template>
             </TabPanel>

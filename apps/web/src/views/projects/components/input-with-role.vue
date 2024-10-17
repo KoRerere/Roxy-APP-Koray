@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { Role } from '/@/enums'
+import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 defineOptions({
@@ -14,22 +15,22 @@ const modelValue = defineModel<string>()
 const roleModelValue = defineModel('role')
 const items = ref([
   {
-    label: 'Viewer',
+    label: $t('Viewer'),
     value: Role.VIEWER,
     visible: role > Role.VIEWER,
-    description: 'Can only open and view profiles/proxies/accounts related to selected project.',
+    description: $t('Can only open and view profiles/proxies/accounts related to selected project.'),
   },
   {
-    label: 'Editor',
+    label: $t('Editor'),
     value: Role.EDITOR,
     visible: role > Role.EDITOR,
-    description: 'Can edit and view profiles/proxies/accounts related to selected project. Can manage viewers related to selected projects.',
+    description: $t('Can edit and view profiles/proxies/accounts related to selected project. Can manage viewers related to selected projects.'),
   },
   {
-    label: 'Manager',
+    label: $t('Manager'),
     value: Role.MANAGER,
     visible: role > Role.MANAGER,
-    description: 'Can manage all profiles and resources in all projects. Can manage all viewers and editors.',
+    description: $t('Can manage all profiles and resources in all projects. Can manage all viewers and editors.'),
   },
 ].filter(item => item.visible))
 
@@ -43,7 +44,7 @@ const selectedRoleLabel = computed(() => {
     <InputIcon>
       <RxSvgIcon name="base/rx_ic_mail" />
     </InputIcon>
-    <InputText v-bind="$attrs" v-model="modelValue" placeholder="Enter email" class="w-full" />
+    <InputText v-bind="$attrs" v-model="modelValue" :placeholder="$t('Enter email')" class="w-full" />
     <InputIcon class="position-y-center !mt-0">
       <SplitButton :model="items" severity="secondary" size="small">
         {{ selectedRoleLabel }}

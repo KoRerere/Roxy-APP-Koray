@@ -10,13 +10,14 @@ import { genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
 interface OptionsType {
   targetDir: string
   langFileNames: string[]
+  immediate?: boolean
 }
 const baseUrl = '/__language-localization__'
 
 let googleTranslator: GoogleTranslator
 
 export default (options: OptionsType): PluginOption => {
-  const { targetDir, langFileNames } = options
+  const { targetDir, langFileNames, immediate = false } = options
 
   let timer: NodeJS.Timeout
   const debounceGenLangFiles = () => {
@@ -26,7 +27,7 @@ export default (options: OptionsType): PluginOption => {
     }, 5000)
   }
 
-  // genLangFiles(langFileNames, targetDir)
+  immediate && genLangFiles(langFileNames, targetDir)
 
   return {
     name: 'roxy:language-localization',

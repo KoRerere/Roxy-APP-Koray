@@ -7,6 +7,7 @@ import { API } from '/@/api'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import RyButton from '/@/components/ry-button'
 import { settingAppearance } from '/@/enums'
+import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import type { Items, SettingsModule } from './type'
 import FolderDirectory from './folder-directory.vue'
@@ -18,13 +19,13 @@ const toast = ref()
 
 async function updateAvatar(item: Items) {
   await API.base.userUploadAvatarCreate({ avatar: item.value })
-  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('修改成功'), life: 5000 })
   updateUserInfo()
 }
 
 async function updateUserName(item: Items) {
   await API.base.userChangeUsernameCreate({ userName: item.value })
-  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
   updateUserInfo()
 }
 
@@ -36,7 +37,7 @@ async function updateUserInfo() {
 async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
   await API.base.userSetUserConfigCreate({ [item.name as any]: value })
-  toast.value?.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
   electronAPI.send('app:saveSoftConfig', { [item.name]: value })
 }
 
@@ -61,15 +62,15 @@ export function getSettings() {
   toast.value = useToast()
   return [
     {
-      label: 'Profiles',
+      label: $t('Profiles'),
       icon: 'base/rx_ic_user_circle',
     },
     {
-      label: 'Preferences',
+      label: $t('Preferences'),
       icon: 'base/rx_ic_slider',
     },
     {
-      label: 'Network',
+      label: $t('Network'),
       icon: 'base/rx_ic_wifi',
     },
   ] as const
@@ -77,20 +78,20 @@ export function getSettings() {
 
 export function getProfilePanel(data?: any): SettingsModule {
   return {
-    title: 'Profile',
-    description: 'Manage your account info and email.',
+    title: $t('Profile'),
+    description: $t('Manage your account info and email.'),
     list: [
       {
         items: [
           {
-            label: 'Profile picture',
-            text: 'Size should be 64px*64px and less than 2MB',
+            label: $t('Profile picture'),
+            text: $t('Size should be 64px*64px and less than 2MB'),
             name: 'avatar',
             classes: 'flex-col !items-start gap-4',
             value: data?.avatar ?? '',
             props: {
               class: 'resize-none w-full',
-              placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
+              placeholder: $t('Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com'),
               userName: data.userName,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -100,7 +101,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Email address',
+            label: $t('Email address'),
             name: 'email',
             value: data?.email ?? '',
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -110,8 +111,8 @@ export function getProfilePanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Username',
-            text: 'Usually used in teamworks and members.',
+            label: $t('Username'),
+            text: $t('Usually used in teamworks and members.'),
             name: 'userName',
             value: data?.userName ?? '',
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -129,15 +130,15 @@ export function getProfilePanel(data?: any): SettingsModule {
 export function getPreferencesPanel(data?: any): SettingsModule {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   return {
-    title: 'Preferences',
-    description: 'Manage client experience settings. Including languages and appearance.',
+    title: $t('Preferences'),
+    description: $t('Manage client experience settings. Including languages and appearance.'),
     list: [
       {
-        subtitle: 'Interface',
+        subtitle: $t('Interface'),
         items: [
           {
-            label: 'Language',
-            text: 'Not your language include? <span class="text-blue">Contact us</span>',
+            label: $t('Language'),
+            text: $t('Not your language include? <span class="text-blue">Contact us</span>'),
             name: 'language',
             value: data?.language ?? '',
             props: {
@@ -150,8 +151,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Timezone',
-            text: 'Some hints for you',
+            label: $t('Timezone'),
+            text: $t('Some hints for you'),
             name: 'timeZone',
             value: data?.timeZone ?? '',
             props: {
@@ -164,15 +165,15 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Appearance',
-            text: 'Themes for different mode',
+            label: $t('Appearance'),
+            text: $t('Themes for different mode'),
             name: 'appearance',
             value: data?.appearance?.toString() ?? '',
             props: {
               options: [
-                { label: 'System', value: `${settingAppearance.system}` },
-                { label: 'Light', value: `${settingAppearance.light}` },
-                { label: 'Dark', value: `${settingAppearance.dark}` },
+                { label: $t('System'), value: `${settingAppearance.system}` },
+                { label: $t('Light'), value: `${settingAppearance.light}` },
+                { label: $t('Dark'), value: `${settingAppearance.dark}` },
               ],
             },
             formatValue: (item: Items) => Number(item.value),
@@ -185,11 +186,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
         ],
       },
       {
-        subtitle: 'Local Settings',
+        subtitle: $t('Local Settings'),
         items: [
           {
-            label: 'Cash Folder Directory',
-            text: 'Where to store your cash files in roxy',
+            label: $t('Cash Folder Directory'),
+            text: $t('Where to store your cash files in roxy'),
             name: 'cacheDir',
             value: data?.cacheDir ?? '',
             props: {
@@ -204,18 +205,18 @@ export function getPreferencesPanel(data?: any): SettingsModule {
         ],
       },
       {
-        subtitle: 'Behavior',
+        subtitle: $t('Behavior'),
         items: [
           {
-            label: 'Close Button',
-            text: 'Behavior while click the close button',
+            label: $t('Close Button'),
+            text: $t('Behavior while click the close button'),
             name: 'closeSoft',
             value: data?.closeSoft ?? '',
             props: {
               options: [
-                { label: 'Popup tips', value: 'pop' },
-                { label: 'Hide client', value: 'min' },
-                { label: 'Close client', value: 'exit' },
+                { label: $t('Popup tips'), value: 'pop' },
+                { label: $t('Hide client'), value: 'min' },
+                { label: $t('Close client'), value: 'exit' },
               ],
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -233,15 +234,15 @@ export function getPreferencesPanel(data?: any): SettingsModule {
 export function getNetworkPanel(data?: any): SettingsModule {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   return {
-    title: 'Network',
-    description: 'Manage anything related to network, including whitelist, IP checker',
+    title: $t('Network'),
+    description: $t('Manage anything related to network, including whitelist, IP checker'),
     list: [
       {
-        subtitle: 'Network detection',
+        subtitle: $t('Network detection'),
         items: [
           {
-            label: 'Use system proxy for connection',
-            text: 'Use system proxy',
+            label: $t('Use system proxy for connection'),
+            text: $t('Use system proxy'),
             name: 'systemProxySwitch',
             value: data?.systemProxySwitch ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -251,11 +252,11 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Detect local network',
-            text: 'Some hints',
+            label: $t('Detect local network'),
+            text: $t('Some hints'),
             component: ({ item }: any) => {
               return (
-                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={() => detectLocalNetwork(item)}></RyButton>
+                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectLocalNetwork(item)}></RyButton>
               )
             },
             afterComponent: ({ item }: any) => {
@@ -263,10 +264,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
                 item.value && (
                   <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
                     <div class="text-3 color-[#171C1F]">
-                      Detection passed
+                      {$t('Detection passed')}
                     </div>
                     <div class="text-3 line-height-normal color-[#575D61]">
-                      Location:
+                      {$t('Location:')}
                       {item.value.country_code}
                       /
                       {item.value.country}
@@ -281,8 +282,8 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Detect system network',
-            text: 'Some hints',
+            label: $t('Detect system network'),
+            text: $t('Some hints'),
             component: ({ item }: any) => {
               return (
                 <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={() => detectSystemNetwork(item)}></RyButton>
@@ -293,10 +294,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
                 item.value && (
                   <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
                     <div class="text-3 color-[#171C1F]">
-                      Detection passed
+                      {$t('Detection passed')}
                     </div>
                     <div class="text-3 line-height-normal color-[#575D61]">
-                      Location:
+                      {$t('Location:')}
                       {item.value.country_code}
                       /
                       {item.value.country}
@@ -315,8 +316,8 @@ export function getNetworkPanel(data?: any): SettingsModule {
       {
         items: [
           {
-            label: 'Default IP checker',
-            text: 'Checkers to test your proxies in projects',
+            label: $t('Default IP checker'),
+            text: $t('Checkers to test your proxies in projects'),
             name: 'ipChecker',
             value: data?.ipChecker ?? '',
             props: {
@@ -329,8 +330,8 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: 'Whitelist',
-            text: 'Visiting sites using local network without proxy',
+            label: $t('Whitelist'),
+            text: $t('Visiting sites using local network without proxy'),
             name: 'ipBlackList',
             classes: 'flex-col !items-start gap-4',
             value: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
@@ -339,7 +340,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
             props: {
               class: 'resize-none w-full',
-              placeholder: 'Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com',
+              placeholder: $t('Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com'),
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
