@@ -44,13 +44,13 @@ window.electronAPI.on('invite:to-project', async (searchStr) => {
 /** 接受邀请 */
 async function acceptInvitation() {
   if (!inviteInfo.value?.data) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Invite code is null', life: 3000 })
+    toast.add({ severity: 'error', summary: $t('Error'), detail: $t('Invite code is null'), life: 3000 })
     return
   }
   const { code, msg, data } = await API.limit.userAddUserByProjectInfoCreate(inviteInfo.value.data)
 
   if (code === 0) {
-    toast.add({ severity: 'success', summary: 'Success', detail: $t('Join Success'), life: 3000 })
+    toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Join Success'), life: 3000 })
     await workspaceStore.getWorkspaceList()
     const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === Number(data))
     if (targetWorkspace) {
@@ -60,7 +60,7 @@ async function acceptInvitation() {
     router.push({ name: 'browser' })
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+    toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
   }
 }
 

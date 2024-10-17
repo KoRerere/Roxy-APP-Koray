@@ -44,7 +44,7 @@ export async function getPluginManifestInfo(pluginDir: string) {
     const targetPluginDir = await getPluginDir(pluginDir)
 
     if (!targetPluginDir) {
-      return Promise.reject('插件目录下不存在 manifest.json 文件')
+      throw new Error('插件目录下不存在 manifest.json 文件')
     }
 
     // https://developer.chrome.com/docs/extensions/reference/api/i18n?hl=zh-cn
@@ -110,6 +110,6 @@ export async function getPluginMeta(pluginDir: string) {
   }
   catch (error) {
     console.log('manifestInfo error', error)
-    return Promise.reject('manifest.json 文件不存在或格式有误')
+    throw new Error('manifest.json 文件不存在或格式有误')
   }
 }

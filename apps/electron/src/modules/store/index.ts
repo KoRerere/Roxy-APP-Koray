@@ -5,6 +5,7 @@ import { API } from '/@/api'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
+  language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
   /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
   /**
@@ -33,6 +34,7 @@ interface StoreType {
 const sessionDir = app.getPath('sessionData')
 
 const defaultValues: StoreType = {
+  language: 'en',
   closeSoft: 'pop',
   memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
@@ -48,7 +50,7 @@ const _store = new Store<StoreType>({
 })
 
 let latestStore = { ..._store.store }
-console.log('latestStore', JSON.stringify(latestStore))
+console.log('latestStore', JSON.stringify(latestStore, null, 2))
 
 _store.onDidAnyChange((newValue) => {
   latestStore = newValue!
@@ -64,8 +66,10 @@ export const store = new Proxy(latestStore, {
   },
 })
 
-export async function setupStore() {
+/** 获取用户远程软件配置 */
+export async function fetchUserConfig() {
   try {
+    // 启动时，获取用户配置
     const { data } = await API.base.userGetUserConfigList()
     Object.keys(data).forEach((key) => {
       if (Reflect.has(store, key)) {
@@ -81,4 +85,8 @@ export async function setupStore() {
   if (!isExists) {
     latestStore.browserCacheRootDir = defaultValues.browserCacheRootDir
   }
+}
+
+export async function setupStore() {
+  await fetchUserConfig()
 }

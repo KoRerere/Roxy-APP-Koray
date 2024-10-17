@@ -53,12 +53,12 @@ const items = ref([
       ]
     : []),
   {
-    label: 'Log out',
+    label: $t('Log out'),
     icon: 'base/rx_ic_logout',
     command: () => {
       userStore.clearUserInfo()
       router.push({ name: 'login' })
-      toast.add({ severity: 'success', summary: 'Success', detail: '退出登录成功', life: 5000 })
+      toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Log out successfully'), life: 5000 })
     },
   },
 ])

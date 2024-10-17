@@ -54,12 +54,12 @@ export class BeforeLaunchTask {
 
   /** 开始执行任务 */
   async run() {
-    this.taskMap.set(this.memoryDetection, '内存检测中')
-    this.taskMap.set(this.handleProxyDetection, '代理检测中')
-    this.taskMap.set(this.clearBrowserCache, '判断是否需要清理浏览器缓存')
-    this.taskMap.set(this.pullRemoteCacheFiles, '拉取远程缓存文件')
-    this.taskMap.set(this.createFingerprintConfigFile, '生成指纹配置文件')
-    this.taskMap.set(this.launch, '准备启动浏览器')
+    this.taskMap.set(this.memoryDetection, $t('内存检测中'))
+    this.taskMap.set(this.handleProxyDetection, $t('代理检测中'))
+    this.taskMap.set(this.clearBrowserCache, $t('判断是否需要清理浏览器缓存'))
+    this.taskMap.set(this.pullRemoteCacheFiles, $t('拉取远程缓存文件'))
+    this.taskMap.set(this.createFingerprintConfigFile, $t('生成指纹配置文件'))
+    this.taskMap.set(this.launch, $t('准备启动浏览器'))
 
     this.totalTasks = this.taskMap.size
 

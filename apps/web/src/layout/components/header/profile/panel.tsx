@@ -19,7 +19,7 @@ const toast = ref()
 
 async function updateAvatar(item: Items) {
   await API.base.userUploadAvatarCreate({ avatar: item.value })
-  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('修改成功'), life: 5000 })
+  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
   updateUserInfo()
 }
 
@@ -286,7 +286,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: $t('Some hints'),
             component: ({ item }: any) => {
               return (
-                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label="Start Detect" onClick={() => detectSystemNetwork(item)}></RyButton>
+                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectSystemNetwork(item)}></RyButton>
               )
             },
             afterComponent: ({ item }: any) => {

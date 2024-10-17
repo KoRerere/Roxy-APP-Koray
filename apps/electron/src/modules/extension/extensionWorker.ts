@@ -1,7 +1,7 @@
-import path from 'node:path'
-import { isMainThread, parentPort } from 'node:worker_threads'
 import AdmZip from 'adm-zip'
 import iconv from 'iconv-lite'
+import path from 'node:path'
+import { isMainThread, parentPort } from 'node:worker_threads'
 
 if (!isMainThread && parentPort) {
   parentPort.on('message', (message) => {

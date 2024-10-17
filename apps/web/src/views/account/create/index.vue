@@ -75,7 +75,7 @@ async function getInputs(data: any = {}) {
     },
     {
       type: 'text',
-      label: $t('2FA'),
+      label: '2FA',
       placeholder: $t('32-character Keys'),
       name: 'platformEfa',
       tooltip: 'mamba out!',

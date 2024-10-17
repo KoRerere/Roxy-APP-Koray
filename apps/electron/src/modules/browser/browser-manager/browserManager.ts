@@ -1,5 +1,6 @@
 import { setTimeout } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { API } from '/@/api'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ipcMain } from '/@/modules/ipc'
@@ -9,6 +10,10 @@ export class BrowserManager {
   private openingBrowserMap = new Map<string, Promise<void>>()
   /** 已经打开的浏览器集合 */
   openedBrowserMap = new Map<string, BrowserItem>()
+
+  constructor() {
+    this.#syncWindowStatus()
+  }
 
   /** 根据 dirId 获取已经打开的浏览器 */
   async getOpenedBrowser(dirId: string) {
@@ -113,5 +118,20 @@ export class BrowserManager {
         console.error(`BrowserManager ${dirId} === 删除失败`, error)
       }
     }
+  }
+
+  /** 每隔 5分钟 定时同步窗口状态 */
+  async #syncWindowStatus() {
+    setInterval(() => {
+      const ids = [...this.openedBrowserMap.values().map(item => item.winInfo.id!)]
+      if (ids.length) {
+        API.window.userModifyWindowReportTimeCreate({ ids }).then(() => {
+          console.log(`定时同步窗口状态`, ids)
+        }).catch((e) => {
+          console.error(`窗口 ids:`, ids)
+          console.error(`定时同步窗口状态失败`, e)
+        })
+      }
+    }, 1000 * 60 * 5)
   }
 }
