@@ -11,6 +11,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
@@ -22,7 +23,9 @@ export const httpClient = new HttpClient({
 httpClient.instance.interceptors.request.use((config) => {
   const { token } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
+  const { currentLocale } = useSimpleLocale()
   config.headers.token = token
+  config.headers.language = currentLocale
   config.headers.appVersion = '3.0.0'
   config.headers.workspaceId = currentWorkspace?.id
   return config
