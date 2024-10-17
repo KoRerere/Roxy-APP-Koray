@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { Role } from '/@/enums'
+import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { setInputValueByFormData } from '/@/utils'
 
@@ -10,12 +11,12 @@ export function tableFilters(_params: any = {}) {
   return [
     // {
     //   type: 'select',
-    //   label: ' ',
+    //   label: $t' ',
     //   name: 'match',
     //   value: params.match ?? 'every',
     //   options: [
-    //     { label: 'Match Every', value: 'every' },
-    //     { label: 'Match Any', value: 'any' },
+    //     { label: $t'Match Every', value: 'every' },
+    //     { label: $t'Match Any', value: 'any' },
     //   ],
     // },
   ]
@@ -34,12 +35,12 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'text',
       name: 'windowName',
-      label: 'Name',
+      label: $t('Name'),
       icon: 'base/rx_ic_browser',
     },
     {
       type: 'number',
-      label: 'Nums',
+      label: $t('Nums'),
       name: 'sortNums',
       icon: 'base/rx_ic_id',
     },
@@ -48,7 +49,7 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
-      label: 'System',
+      label: $t('System'),
       name: 'osList',
       icon: 'base/rx_ic_laptop',
       options: ($dict_map.os || []).map((item: any) => ({
@@ -60,7 +61,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'platformUrlIds',
-      label: 'Account',
+      label: $t('Account'),
       icon: 'base/rx_ic_keys',
       options: platformList.rows.map((item: any) => ({
         parentName: 'platformUrlIds',
@@ -74,16 +75,16 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'radio',
       name: 'openStatus',
-      label: 'Status',
+      label: $t('Status'),
       options: [
         {
           icon: 'base/rx_ic_browsers_line',
-          label: 'Status Open',
+          label: $t('Status Open'),
           value: true,
         },
         {
           icon: 'base/rx_ic_browsers_line',
-          label: 'Status Close',
+          label: $t('Status Close'),
           value: false,
         },
       ],
@@ -94,7 +95,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'projectIds',
-      label: 'Project',
+      label: $t('Project'),
       icon: 'base/rx_ic_stack',
       options: projectList.rows.map((item: any) => ({
         parentName: 'projectIds',
@@ -105,7 +106,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'labelIds',
-      label: 'Tag',
+      label: $t('Tag'),
       icon: 'base/rx_ic_tag',
       options: labelList.rows.map((item: any) => ({
         parentName: 'labelIds',
@@ -119,12 +120,12 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'switch',
       name: 'isOften',
-      label: 'Fav',
+      label: $t('Fav'),
       icon: 'base/rx_ic_bookmark',
     },
     {
       type: 'textarea',
-      label: 'Notes',
+      label: $t('Notes'),
       name: 'windowRemark',
       icon: 'base/rx_ic_doc_article',
     },
@@ -133,15 +134,15 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'text',
-      label: 'Proxy ID',
+      label: $t('Proxy ID'),
       name: 'proxyIds',
-      placeholder: 'multiple proxy id comma separation',
+      placeholder: $t('multiple proxy id comma separation'),
       icon: 'base/rx_ic_internet',
     },
     {
       type: 'Checkbox',
       name: 'proxyProtocoList',
-      label: 'Proxy Protocol',
+      label: $t('Proxy Protocol'),
       icon: 'base/rx_ic_internet_pin',
       options: ($dict_map.protocol || []).map((item: any) => ({
         parentName: 'proxyProtocoList',
@@ -152,16 +153,16 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'radio',
       name: 'proxyTestStatus',
-      label: 'Check Status',
+      label: $t('Check Status'),
       options: [
         {
           icon: 'base/rx_ic_internet_check',
-          label: 'Test Success',
+          label: $t('Test Success'),
           value: '1',
         },
         {
           icon: 'base/rx_ic_internet_error',
-          label: 'Test Failed',
+          label: $t('Test Failed'),
           value: '2',
         },
       ],
@@ -172,11 +173,11 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'date',
       name: 'createTime',
-      label: 'Cteate Time',
+      label: $t('Cteate Time'),
       icon: 'base/rx_ic_calendar',
       items: [
         {
-          placeholder: 'start date',
+          placeholder: $t('start date'),
           name: 'startDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -184,7 +185,7 @@ export async function getCustomFilters(params: any = {}) {
           },
         },
         {
-          placeholder: 'end date',
+          placeholder: $t('end date'),
           name: 'endDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -206,30 +207,30 @@ export async function getCustomFilters(params: any = {}) {
 export function getSorts(params: any = {}) {
   return [
     {
-      label: '排序规则',
-      placeholder: '请选择排序规则',
+      label: $t('Sort by'),
+      placeholder: $t('please select sorting rules'),
       name: 'orderName',
       value: params.orderName ?? 'createTime',
       options: [
-        { label: '创建时间', value: 'createTime' },
-        { label: '修改时间', value: 'updateTime' },
-        { label: '最后打开时间', value: 'openTime' },
-        { label: '最后关闭时间', value: 'closeTime' },
-        { label: '代理检测时间', value: 'checkTime' },
-        { label: '窗口序号', value: 'windowSortNum' },
-        { label: '窗口名称', value: 'name' },
-        { label: '国家', value: 'lastCountry' },
+        { label: $t('creation time'), value: 'createTime' },
+        { label: $t('modify time'), value: 'updateTime' },
+        { label: $t('last opening time'), value: 'openTime' },
+        { label: $t('last closure time'), value: 'closeTime' },
+        { label: $t('agent detection time'), value: 'checkTime' },
+        { label: $t('window serial number'), value: 'windowSortNum' },
+        { label: $t('window name'), value: 'name' },
+        { label: $t('nation'), value: 'lastCountry' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
     {
-      label: '排序类型',
-      placeholder: '请选择排序类型',
+      label: $t('Order'),
+      placeholder: $t('please select sort type'),
       name: 'orderType',
       value: params.orderType ?? 'desc',
       options: [
-        { label: '降序', value: 'desc' },
-        { label: '升序', value: 'asc' },
+        { label: $t('desc'), value: 'desc' },
+        { label: $t('asc'), value: 'asc' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
@@ -242,7 +243,7 @@ export function getOperation(_params: any = {}) {
   return [
     {
       name: 'edit',
-      label: 'Edit',
+      label: $t('Edit'),
       icon: 'base/rx_ic_edit',
       power: !isViewer,
     },
@@ -252,7 +253,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'copyId',
-      label: 'Copy profile ID',
+      label: $t('Copy profile ID'),
       icon: 'base/rx_ic_copy',
     },
     {
@@ -260,19 +261,19 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'view',
-      label: 'View',
+      label: $t('View'),
       icon: 'base/rx_ic_browser',
     },
     {
       name: 'restart',
-      label: 'Restart',
+      label: $t('Restart'),
       icon: 'base/rx_ic_refresh',
       multiple: true,
       groupName: 'first',
     },
     {
       name: 'close',
-      label: 'Close',
+      label: $t('Close'),
       icon: 'base/rx_ic_shut_down',
       multiple: true,
       groupName: 'first',
@@ -283,20 +284,21 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'addTag',
-      label: 'Add Tag',
+      label: $t('Add Tag'),
       icon: 'base/rx_ic_tag',
+      power: !isViewer,
     },
     {
       separator: true,
     },
     {
       name: 'fav',
-      label: 'Fav',
+      label: $t('Fav'),
       icon: 'base/rx_ic_bookmark',
     },
     {
       name: 'addNotes',
-      label: 'Add Notes',
+      label: $t('Add Notes'),
       icon: 'base/rx_ic_doc_add',
       multiple: true,
     },
@@ -307,7 +309,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'editCookies',
-      label: 'Edit cookies',
+      label: $t('Edit cookies'),
       icon: 'base/rx_ic_cookies',
       power: !isViewer,
     },
@@ -317,7 +319,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'delete',
-      label: 'Delete',
+      label: $t('Delete'),
       icon: 'base/rx_ic_bin_1',
       power: !isViewer,
       multiple: true,

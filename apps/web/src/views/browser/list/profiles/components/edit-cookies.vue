@@ -10,7 +10,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '创建代理',
+    default: '',
   },
 })
 
@@ -30,13 +30,13 @@ function onConfirm() {
     emit('confirm', JSON.parse(cookies.value))
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'cookie 格式错误', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Errors occur', detail: 'cookie format error', life: 5000 })
   }
 }
 </script>
 
 <template>
-  <drawerContent title="编辑 cookies" v-bind="$attrs">
+  <drawerContent :title="$t('Edit cookies for [UID-{uid}]', { uid: data.windowSortNum })" v-bind="$attrs">
     <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookie with JSON format" cols="40"
       :auto-resize="false" />
     <template #footer>
@@ -53,7 +53,6 @@ function onConfirm() {
 
 <style lang="scss" scoped>
 .cookies-textarea {
-  // margin: var(--spacing-2xl, 16px) 0;
   margin-top: var(--spacing-2xl, 16px);
   resize: none;
   height: calc(100% - var(--spacing-2xl, 16px));

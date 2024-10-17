@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
-import { useToast } from 'primevue/usetoast'
 import { ProxyCheckStatus } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 export interface CheckResult {
   loading: boolean
@@ -24,8 +24,7 @@ interface ProxyCheckParams {
 }
 
 export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResult] {
-  const toast = useToast()
-
+  const [showToast, onlyErrorToast] = useResponseToast()
   const checkeResult: CheckResult = reactive({
     loading: false,
     checkStatus: ProxyCheckStatus.failure,
@@ -36,14 +35,11 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
 
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
-      console.log('🚀 ~ testProxy ~ checkRes:', checkRes)
-      if (!checkRes.ip) {
-        toast.add({ severity: 'error', summary: 'Errors occur', detail: 'Please checkout your IP configuration and local network then try again.', life: 5000 })
-      }
-      else {
-        toast.add({ severity: 'success', summary: 'Test success', detail: `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`, life: 5000 })
-      }
+      const [code, msg] = !checkRes.ip
+        ? [-1, 'Please checkout your IP configuration and local network then try again.']
+        : [0, `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`]
 
+      showToast(code, msg, 5000)
       checkeResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkeResult.lastIp = checkRes.ip ?? ''
       checkeResult.lastCity = checkRes.city ?? ''
@@ -51,7 +47,7 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
       checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }
     catch (error: any) {
-      toast.add({ severity: 'error', summary: 'Errors occur', detail: error, life: 5000 })
+      onlyErrorToast(-1, error, 5000)
     }
     finally {
       checkeResult.loading = false

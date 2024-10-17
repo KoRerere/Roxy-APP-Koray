@@ -3,7 +3,6 @@
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
-import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
@@ -257,11 +256,11 @@ async function modifyFilter() {
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @change="onChange(item)" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </div>
       </a>
     </template>

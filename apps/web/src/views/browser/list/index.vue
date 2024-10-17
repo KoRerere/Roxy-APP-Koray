@@ -6,7 +6,7 @@ import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-// import { $t } from '/@/locales'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import tags from '/@/views/browser/list/tags'
 import profiles from './profiles'
@@ -18,8 +18,8 @@ const role = useRoleStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const rawTabs = [
-  { label: '所有窗口', id: '1000', name: 'profiles' },
-  { label: '回收站', icon: 'base/rx_ic_bin_2', id: '1001', name: 'recycle' },
+  { label: $t('All Profiles'), id: '1000', name: 'profiles' },
+  { label: $t('Trash'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'recycle' },
 ]
 
 const tabs = ref(rawTabs.slice())
@@ -99,15 +99,15 @@ async function onEditFilter(item: any) {
 
 async function deleteFilterItem(item: any) {
   confirm.require({
-    header: '警告',
-    message: '确认删除此筛选组？',
+    header: $t('Are you sure to delete the views you selected?'),
+    message: $t('Don\'t worry, your profiles won\'t be delete.'),
     rejectProps: {
-      label: '取消',
+      label: $t('cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('confirm'),
       severity: 'danger',
     },
     accept: async () => {
@@ -132,7 +132,7 @@ async function deleteFilterItem(item: any) {
 async function openManageCategory() {
   dialog.open(tags, {
     props: {
-      header: 'Manage Tags',
+      header: $t('Manage Category'),
       modal: true,
       style: { width: '70vw', height: '50vh' },
     },
@@ -160,11 +160,11 @@ onBeforeMount(() => {
     <div class="profile-header">
       <div class="flex items-center gap-2.5">
         <RxSvgIcon name="base/rx_ic_browser" />
-        <span>All Profiles</span>
+        <span>{{ $t('All Profiles') }}</span>
       </div>
       <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
-        <div>Manage Category</div>
+        <div> {{ $t('Manage Category') }}</div>
       </div>
     </div>
     <div class="flex items-center justify-between">
@@ -193,7 +193,7 @@ onBeforeMount(() => {
   <ryPopover ref="popRef" @hide="hidePopover">
     <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>所有窗口</span>
+      <span>{{ rawTabs[0].label }}</span>
     </div>
     <VueDraggable v-model="sortTabs" :animation="150">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
@@ -205,7 +205,7 @@ onBeforeMount(() => {
     </VueDraggable>
     <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>回收站</span>
+      <span>{{ rawTabs[1].label }}</span>
     </div>
   </ryPopover>
 </template>

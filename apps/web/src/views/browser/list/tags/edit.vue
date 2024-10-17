@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import { defaultColors } from '/@/utils/constants'
 
 const dialogRef = inject<any>('dialogRef')
 
 const selectdColor = ref()
 const tagName = ref('')
-const loading = ref(false)
 const isEdit = ref(false)
 const _onConfirm = ref()
 const _onCancel = ref()
 
 function close() {
-  loading.value = false
   dialogRef.value.close()
   _onCancel.value?.()
 }
 
-async function confirm() {
-  loading.value = true
+async function onConfirm() {
   await _onConfirm.value?.({ name: tagName.value, color: selectdColor.value })
   close()
 }
@@ -37,10 +35,10 @@ onMounted(() => {
 <template>
   <div class="flex flex-col popup">
     <div class="popup-title">
-      Create new tag
+      {{ $t('Create new tag') }}
     </div>
     <div class="popup-content">
-      Select a color and type your new tag name below
+      {{ $t('Select a color and type your new tag name below') }}
     </div>
     <div class="colors">
       <template v-for="color in defaultColors" :key="color">
@@ -51,10 +49,10 @@ onMounted(() => {
     </div>
 
     <div class="square-container" />
-    <InputText v-model="tagName" type="text" placeholder="Tag name" />
+    <InputText v-model="tagName" type="text" :placeholder="$t('Tag name')" />
     <div class="footer">
-      <Button label="Cancel" text severity="secondary" @click="close" />
-      <Button :label="isEdit ? 'Modify' : 'Create'" severity="info" :loading="loading" @click="confirm" />
+      <RyButton :label="$t('Cancel')" text severity="secondary" @click="close" />
+      <RyButton :label="$t(isEdit ? 'Modify' : 'Create')" severity="info" @click="onConfirm" />
     </div>
   </div>
 </template>

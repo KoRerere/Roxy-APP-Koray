@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
 import inputLabel from './input-label.vue'
 
 defineOptions({
@@ -47,7 +46,7 @@ defineEmits(['iconClick', 'change'])
         </IconField>
         <Password v-else :id="name" class="w-full" :feedback="false" toggle-mask v-bind="$attrs"
           @input="$emit('change')" />
-        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg ? $t($attrs.errorMsg as string)
+        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg ? $attrs.errorMsg
           : $attrs.placeholder
           }}</small>
         <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>

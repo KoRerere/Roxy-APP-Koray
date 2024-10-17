@@ -1,17 +1,19 @@
+import { $t } from '/@/locales'
+
 const columnsConfig = {
   key: 'browser.recycl',
   data: [
     {
-      title: '配置文件信息',
+      title: $t('Profile Info'),
       key: 'profile',
       slot: 'profile',
     },
     {
-      title: 'Groups/Tags',
+      title: $t('Tags'),
       key: 'open',
     },
     {
-      title: 'Delete Log',
+      title: $t('Delete Log'),
       key: 'group',
       slot: 'log',
     },

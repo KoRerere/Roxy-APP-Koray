@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopoverMenu } from './popover-menu'
@@ -38,7 +39,7 @@ async function openMenu(event: any) {
       return (
         <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
           <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
-          <div>Add Tag</div>
+          <div>{$t('Add Tag')}</div>
         </div>
       )
     },

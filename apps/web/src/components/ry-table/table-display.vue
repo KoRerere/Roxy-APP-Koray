@@ -14,14 +14,13 @@ function toggle(event: Event) {
 
 <template>
   <ryButton severity="secondary" size="small" outlined icon="base/rx_ic_slider_v" :label="$t('Display')"
-            @click="toggle"
-  />
+    @click="toggle" />
   <ryPopover ref="popRef">
     <div :class="display.content">
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
           <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
-          <span class="flex-auto">{{ $t(item.title) }}</span>
+          <span class="flex-auto">{{ item.title }}</span>
           <rxToggleSwitch v-if="!item.disabledToggle" v-model="item._visible" />
         </div>
       </VueDraggable>

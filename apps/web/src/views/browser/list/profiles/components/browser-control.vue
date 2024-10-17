@@ -53,7 +53,7 @@ async function openBrowser() {
   if (browser.value.pending) {
     return
   }
-  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0 })
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
   emits('open', data)
 }
 </script>

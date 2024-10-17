@@ -47,7 +47,7 @@ const toast = useToast()
 const dialog = useDialog()
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
 
 const [show] = useContextMenu()
@@ -97,7 +97,7 @@ const drawer = reactive({
       onRefreshTable()
     }
     catch (error) {
-      toast.add({ severity: 'error', summary: '错误', detail: error, life: 5000 })
+      onlyErrorToast(-1, error as string, 5000)
     }
     finally {
       drawer.visible = false
@@ -182,7 +182,7 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'copyId':
       copyText(data.dirId)
-      toast.add({ severity: 'success', summary: 'Copy success', life: 3000 })
+      showToast(0, $t('success'), 3000)
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
@@ -227,7 +227,7 @@ function openBrowser(data: any) {
     openMessage[item.dirId] = {
       pending: true,
       data: {
-        message: index === 0 ? '启动中...' : '正在排队...',
+        message: `${index === 0 ? $t('start') : $t('padding')}...`,
       },
     }
     return toRaw(item)
@@ -264,8 +264,8 @@ function onRemark(datas: any) {
     },
     data: {
       props: {
-        title: 'Install via Chrome Store',
-        content: 'Please paste the chrome extension URL down below then click the install button.',
+        title: $t('Add notes to profile'),
+        content: $t('Please add notes down below.'),
         inputs: [
           {
             type: 'text',
@@ -288,12 +288,14 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, d
 
 async function batchModifyWindow(params: any) {
   try {
-    const { msg } = await API.window.userMdfWindowInfoBatchCreate(params)
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
-    onRefreshTable()
+    const { code, msg } = await API.window.userMdfWindowInfoBatchCreate(params)
+    showToast(code, msg)
+    if (code === 0) {
+      onRefreshTable()
+    }
   }
   catch (error) {
-    console.log('🚀 ~ deleteWindow ~ error:', error)
+    onlyErrorToast(-1, error as string, 5000)
   }
 }
 
@@ -307,17 +309,17 @@ function profileOperate(key: string, data: any) {
     case 'addProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.title = `新建代理 [UID-${data.windowSortNum}]`
+      drawer.title = $t('Add proxy for [UID-{uid}]', { uid: data.windowSortNum })
       break
     case 'editProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.title = `编辑代理 [UID-${data.windowSortNum}]`
+      drawer.title = $t('Edit proxy for [UID-{uid}]', { uid: data.windowSortNum })
       break
     case 'selectProxy':
       drawer.visible = true
       drawer.type = 'proxyList'
-      drawer.title = `选择代理 [UID-${data.windowSortNum}]`
+      drawer.title = $t('Select proxy for [UID-{uid}]', { uid: data.windowSortNum })
       break
     case 'testProxy':
       testProxy(_data)
@@ -331,12 +333,12 @@ function profileOperate(key: string, data: any) {
     case 'addAccount':
       drawer.visible = true
       drawer.type = 'accountForm'
-      drawer.title = `新建账号 [UID-${data.windowSortNum}]`
+      drawer.title = $t('Add accounts for [UID-{uid}]', { uid: data.windowSortNum })
       break
     case 'selectAccount':
       drawer.visible = true
       drawer.type = 'accountList'
-      drawer.title = `选择账号 [UID-${data.windowSortNum}]`
+      drawer.title = $t('Select accounts for [UID-{uid}]', { uid: data.windowSortNum })
       break
   }
 }
@@ -353,12 +355,12 @@ async function testProxy(data: any) {
 
 async function refreshUrl(data: any) {
   const isOK = await window.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
-  toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: data.refreshUrl, life: 5000 })
+  showToast(isOK ? 0 : -1, data.refreshUrl)
 }
 
 async function deleteProxy(data: any) {
   try {
-    await warnPopup('您确定要删除此代理吗')
+    await warnPopup($t('Related profiles won\'t be infected.'))
     // 删除代理也是调用修改接口
     drawer.updateProfile({
       id: data.id,
@@ -370,22 +372,22 @@ async function deleteProxy(data: any) {
     })
   }
   catch (error) {
-    toast.add({ severity: 'warn', summary: '警告', detail: error, life: 5000 })
+    onlyErrorToast(-1, error as string, 5000)
   }
 }
 
 function warnPopup(message: string) {
   return new Promise((resolve, _reject) => {
     confirm.require({
-      header: '警告',
+      header: $t('warn'),
       message,
       rejectProps: {
-        label: '取消',
+        label: $t('cancel'),
         severity: 'secondary',
         outlined: true,
       },
       acceptProps: {
-        label: '确定',
+        label: $t('confirm'),
         severity: 'danger',
       },
       accept: () => resolve(null),
@@ -463,10 +465,10 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" :size="16" name="base/rx_ic_bookmark"
+        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" name="base/rx_ic_bookmark"
           :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
           @click.stop="operationHandler({ name: 'fav' }, data)" />
-        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :size="16" name="base/rx_ic_doc_add"
+        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add"
           :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
           @click.stop="operationHandler({ name: 'addNotes' }, data)" />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)"

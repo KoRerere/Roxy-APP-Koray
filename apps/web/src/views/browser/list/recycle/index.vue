@@ -3,9 +3,9 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
-import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import columnsRow from './columns'
 import { getOperation, getSorts } from './operation'
@@ -29,7 +29,7 @@ async function tableRequest(params: any) {
 function operationHandler(operate: any, data: any) {
   const datas = [].concat(data)
   switch (operate.name) {
-    case 'recover':
+    case 'restore':
       recoverHandler(datas)
       break
     case 'delete':
@@ -46,15 +46,15 @@ async function recoverHandler(datas: any) {
 
 async function deleteHandler(datas: any) {
   confirm.require({
-    header: '警告',
-    message: '此操作不可逆, 确认要彻底删除吗？',
+    header: $t('Are you sure to delete the profiles you selected? '),
+    message: $t('This action can not be undone.'),
     rejectProps: {
-      label: '取消',
+      label: $t('cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('confirm'),
       severity: 'danger',
     },
     accept: async () => {
@@ -70,11 +70,11 @@ async function deleteHandler(datas: any) {
 <template>
   <div class="flex flex-col flex-1 proxies">
     <div class="proxies-header">
-      回收站
+      {{ $t('Trash') }}
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
+      <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
         :operation="operation" :operation-handler="operationHandler" :sorts="sorts" :show-gridlines="false">
         <template #profile="{ data }">
           <profileInfo :data="data" disabled />
@@ -90,7 +90,7 @@ async function deleteHandler(datas: any) {
               @quick-click="(operate) => operationHandler(operate, data)" />
           </div>
         </template>
-      </ry-table>
+      </RyTable>
     </div>
   </div>
 </template>
