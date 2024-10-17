@@ -7,6 +7,7 @@ import { API } from '/@/api'
 import RxButton from '/@/components/ry-button'
 import { Role } from '/@/enums'
 import { useFormDialog } from '/@/hooks/useFormDialog'
+import { $t } from '/@/locales'
 import { inviteUsersFormSchemas } from '/@/views/projects/schemas'
 
 interface PropsType {
@@ -27,7 +28,7 @@ export function useInviteUserFormDialog() {
     const originl = data
 
     await dialog.showModal({
-      header: originl.user_id ? 'Edit user' : 'Invite user',
+      header: originl.user_id ? $t('Edit user') : $t('Invite user'),
       class: 'w-[500px]',
       formProps: {
         layout: 'vertical',
@@ -47,11 +48,15 @@ export function useInviteUserFormDialog() {
                 !originl.user_id && (
                   <div class="flex items-center">
                     <Checkbox v-model={isInviteMore.value} input-id="ingredient1" binary />
-                    <label for="ingredient1" class="ml-2"> Invite more </label>
+                    <label for="ingredient1" class="ml-2">
+                      {' '}
+                      {$t('Invite more')}
+                      {' '}
+                    </label>
                   </div>
                 )
               }
-              <RxButton label={originl.user_id ? 'Save' : 'Send invitation'} severity="primary" onClick={dialog.handleOk} />
+              <RxButton label={originl.user_id ? $t('Save') : $t('Send invitation')} severity="primary" onClick={dialog.handleOk} />
             </div>
           </div>
         ),
@@ -62,10 +67,10 @@ export function useInviteUserFormDialog() {
           : await API.limit.userInviteCreate(formModel)
         tableRef?.value?.refresh()
         if (code === 0) {
-          toast.add({ severity: 'success', summary: '成功', detail: msg, life: 3000 })
+          toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 3000 })
         }
         else {
-          toast.add({ severity: 'error', summary: '失败', detail: msg || '发送邀请失败', life: 3000 })
+          toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Failed to send invitation'), life: 3000 })
         }
         if (isInviteMore.value) {
           dialog.formRef.value?.resetFields()

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
+import { $t } from '/@/locales'
 import { getFormData, setInputFieldByInputKey, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
 
@@ -14,16 +15,16 @@ const confirm = useConfirm()
 
 const illustrate = [
   {
-    title: 'Introductions:',
-    content: 'Users can read and write account configuration information, create, open, and manage environments via API, and also achieve browser automation by integrating with automation frameworks such as Selenium, Puppeteer, and Playwright.',
+    title: $t('Introductions:'),
+    content: $t('Users can read and write account configuration information, create, open, and manage environments via API, and also achieve browser automation by integrating with automation frameworks such as Selenium, Puppeteer, and Playwright.'),
   },
   {
-    title: 'Restriction:',
-    content: 'API request rate limit: 100 requests per minute<br>Team API concurrent devices limit: 200',
+    title: $t('Restriction:'),
+    content: $t('API request rate limit: 100 requests per minute<br>Team API concurrent devices limit: 200'),
   },
   {
-    title: 'Resources:',
-    content: 'For API installations and instructions, please visit: <a class="decoration-underline" href="">API Documentation.</a>',
+    title: $t('Resources:'),
+    content: $t('For API installations and instructions, please visit: <a class="decoration-underline" href="">API Documentation.</a>'),
   },
 ]
 
@@ -37,7 +38,7 @@ const updateApiKeys = useDebounceFn(() => {
     open: open.value,
     port: port.value,
   }).then(({ msg }) => {
-    toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+    toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
   })
 }, 300)
 
@@ -76,15 +77,15 @@ async function getApiKeys() {
 
 async function resetApiKey() {
   confirm.require({
-    header: 'Are you sure to reset the API Key? ',
-    message: 'Projects using this key will be affected.?',
+    header: $t('Are you sure to reset the API Key?'),
+    message: $t('Projects using this key will be affected.?'),
     rejectProps: {
-      label: 'Cancel',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: 'Reset',
+      label: $t('Reset'),
       severity: 'info',
     },
     accept: async () => {
@@ -96,7 +97,7 @@ async function resetApiKey() {
 
 async function onCopy() {
   copyText(apiKey.value)
-  toast.add({ severity: 'success', summary: '成功', detail: '复制成功', life: 5000 })
+  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Copied successfully'), life: 5000 })
 }
 
 onBeforeMount(() => {
@@ -112,22 +113,21 @@ onBeforeMount(() => {
     </div>
     <div class="flex-1 w-1/2 mx-auto">
       <div class="api-usage">
-        <div>API keys usage:</div>
-        <rxToggleSwitch v-model="open" :label="open ? 'Active' : 'Disable'" @change="updateApiKeys" />
+        <div>{{ $t('API keys usage:') }}</div>
+        <rxToggleSwitch v-model="open" :label="open ? $t('Active') : $t('Disable')" @change="updateApiKeys" />
       </div>
       <template v-if="open">
         <div class="api-content">
           <div class="api-content-reset">
             <div>API keys:</div>
-            <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" label="Reset API Key"
-              @click="resetApiKey" />
+            <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" :label="$t('Reset API Key')"
+                      @click="resetApiKey"
+            />
           </div>
           <div class="api-content-desc">
             <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
             <div class="flex-1">
-              IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently
-              have
-              within the workspace.
+              {{ $t('IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently have within the workspace.') }}
             </div>
           </div>
           <div class="api-content-key">
@@ -138,16 +138,16 @@ onBeforeMount(() => {
               <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
             </div>
             <div class="api-content-key-desc">
-              * Please keep your API keys safe and should not abuse it.
+              * {{ $t('Please keep your API keys safe and should not abuse it.') }}
             </div>
           </div>
           <div class="api-content-proxy">
             <div>
               <div>
-                Port:
+                {{ $t('Port') }}:
               </div>
               <div class="api-content-proxy-desc">
-                Port should be in between 0~65535
+                {{ $t('Port should be in between 0~65535') }}
               </div>
             </div>
             <inputNumberGroup :inputs="inputs" />

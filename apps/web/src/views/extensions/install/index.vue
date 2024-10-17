@@ -8,6 +8,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
@@ -25,32 +26,32 @@ const tableRef = useTemplateRef('extable')
 
 const columns = ref([
   {
-    title: 'Extension',
+    title: $t('Extension'),
     key: 'extension',
     slot: 'extension',
   },
   {
-    title: 'Toggle',
+    title: $t('Toggle'),
     key: 'toggle',
     getText: (row: any) => row.useStatus ? 'Active' : 'Disable',
     // slot: 'toggle',
   },
   {
-    title: 'Source',
+    title: $t('Source'),
     key: 'source',
     getText: (row: any) => row.uploader || row.source || '未知',
   },
   {
-    title: 'Installed Profiles',
+    title: $t('Installed Profiles'),
     key: 'installType',
     getText: (row: any) => !row.installType
       ? '--'
       : Number(row.installType) === ExtensionsInstallType.all
-        ? 'Full'
-        : 'Partial',
+        ? $t('Full')
+        : $t('Partial'),
   },
   {
-    title: 'Update',
+    title: $t('Update'),
     key: 'pluginUpdateState',
     slot: 'update',
   },
@@ -60,15 +61,15 @@ const filters = reactive({
   value: null,
   options: [
     {
-      name: 'All',
+      name: $t('All'),
       value: null,
     },
     {
-      name: 'Active',
+      name: $t('Active'),
       value: true,
     },
     {
-      name: 'Disabled',
+      name: $t('Disabled'),
       value: false,
     },
   ],
@@ -84,24 +85,24 @@ const filters = reactive({
 
 const sorts = ref([
   {
-    label: '排序规则',
-    placeholder: '请选择排序规则',
+    label: $t('Sorting rules'),
+    placeholder: $t('Please select a sorting rule'),
     name: 'orderName',
     value: 'createTime',
     options: [
-      { label: '创建时间', value: 'createTime' },
-      { label: '更新时间', value: 'lateUpdateTime' },
+      { label: $t('Create time'), value: 'createTime' },
+      { label: $t('Update time'), value: 'lateUpdateTime' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
   {
-    label: '排序类型',
-    placeholder: '请选择排序类型',
+    label: $t('Sort type'),
+    placeholder: $t('Please select sort type'),
     name: 'orderType',
     value: 'desc',
     options: [
-      { label: '降序', value: 'desc' },
-      { label: '升序', value: 'asc' },
+      { label: $t('Descending order'), value: 'desc' },
+      { label: $t('Ascending order'), value: 'asc' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
@@ -115,13 +116,13 @@ function tableOperation(data: any) {
   return [
     {
       name: 'updateLocal',
-      label: 'update local',
+      label: $t('Update local'),
       icon: 'base/rx_ic_clock_rotate',
       power: data.source === 'local' && !role.isViewer,
     },
     {
       name: 'checkUpdate',
-      label: 'check update',
+      label: $t('Check update'),
       icon: 'base/rx_ic_clock_rotate',
       power: data.source !== 'local' && !role.isViewer,
     },
@@ -136,7 +137,7 @@ function tableOperation(data: any) {
     },
     {
       name: 'delete',
-      label: 'Delete',
+      label: $t('Delete'),
       icon: 'base/rx_ic_bin_1',
       multiple: true,
       power: role.isOwner || role.isManager,
@@ -170,19 +171,19 @@ async function uploadRecordCheck() {
     return Promise.resolve()
   }
   else {
-    throw new Error('您的上传次数已用完')
+    throw new Error($t('Your upload limit has been exhausted'))
   }
 }
 
 function installViaUrl() {
   dialogOpen({
     props: {
-      title: 'Install via Chrome Store',
-      content: 'Please paste the chrome extension URL down below then click the install button.',
+      title: $t('Install via Chrome Store'),
+      content: $t('Please paste the chrome extension URL down below then click the install button.'),
       inputs: [
         {
           type: 'text',
-          placeholder: 'Extension URL',
+          placeholder: $t('Extension URL'),
           name: 'url',
           leftIcon: 'base/rx_ic_link',
         },
@@ -192,7 +193,7 @@ function installViaUrl() {
       try {
         await uploadRecordCheck()
         const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
-        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', '安装成功'] : ['error', '安装失败']
+        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Installation successful')] : ['error', $t('Installation failed')]
         toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 
         if (code === 0) {
@@ -200,7 +201,7 @@ function installViaUrl() {
         }
       }
       catch (error) {
-        toast.add({ severity: 'warn', summary: '警告', detail: error, life: 5000, group: 'tc' })
+        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 5000, group: 'tc' })
       }
     },
   })
@@ -230,7 +231,7 @@ function onUploadExtension() {
 
 async function onSwitch(item: any) {
   const { code, msg } = await API.plugins.userMdfPluginStatusCreate(item)
-  const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', '成功'] : ['error', '失败']
+  const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Success')] : ['error', $t('Error')]
   toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 }
 
@@ -261,7 +262,7 @@ async function onInstall(data: any) {
 
 async function checkUpdate(data: any) {
   await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
-  toast.add({ severity: 'success', summary: '成功', detail: '检测完成', life: 5000 })
+  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Check completed'), life: 5000 })
   filters.onChange()
 }
 
@@ -272,15 +273,15 @@ async function updateExtension(data: any) {
 
 async function deleteExtension(datas: any) {
   confirm.require({
-    header: '警告',
-    message: '确认删除此插件？',
+    header: $t('Warning'),
+    message: $t('Are you sure you want to delete this plugin?'),
     rejectProps: {
-      label: '取消',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {
@@ -288,7 +289,7 @@ async function deleteExtension(datas: any) {
         const ids = datas.map((item: any) => item.id)
         const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
         filters.resetFilters()
       }
       catch (error) {
@@ -308,17 +309,21 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
-    :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-display="false" :show-gridlines="false" :paginator="false">
+           :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
+           :show-display="false" :show-gridlines="false" :paginator="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+                      data-key="value" @change="filters.onChange"
+        />
         <div class="group-button">
-          <RyButton severity="info" size="small" icon="base/rx_ic_download_cloud" label="Add with URL"
-            @click="installViaUrl" />
-          <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload"
-            @click="onUploadExtension" />
+          <RyButton severity="info" size="small" icon="base/rx_ic_download_cloud" :label="$t('Add with URL')"
+                    @click="installViaUrl"
+          />
+          <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" :label="$t('Upload')"
+                    @click="onUploadExtension"
+          />
         </div>
       </div>
     </template>
@@ -336,15 +341,17 @@ defineExpose({
       </div>
     </template>
     <template #toggle="{ data }">
-      <RxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? 'Active' : 'Disable'"
-        @change="onSwitch(data)" />
+      <RxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? $t('Active') : $t('Disable')"
+                      @change="onSwitch(data)"
+      />
     </template>
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RyButton label="Update" size="small" @click="updateExtension(data)" />
+        <RyButton :label="$t('Update')" size="small" @click="updateExtension(data)" />
         <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }"
-          name="base/rx_ic_info" />
+                   name="base/rx_ic_info"
+        />
       </div>
       <div v-else>
         --
@@ -352,8 +359,9 @@ defineExpose({
     </template>
 
     <template #actions-extra="{ data }">
-      <RyButton icon="base/rx_ic_install_extension" label="Intall" size="small" severity="secondary" text
-        @click="operationHandler({ name: 'install' }, data)" />
+      <RyButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="small" severity="secondary" text
+                @click="operationHandler({ name: 'install' }, data)"
+      />
     </template>
   </RyTable>
 </template>

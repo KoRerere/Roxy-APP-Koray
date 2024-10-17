@@ -7,6 +7,7 @@ import relatedInfo from '/@/components/related-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFormDialog'
@@ -24,22 +25,22 @@ type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
 const columns = ref(setColumns([
   {
-    title: 'Member info',
+    title: $t('Member info'),
     key: 'member',
     slot: 'member',
   },
   {
-    title: 'Status',
+    title: $t('Status'),
     key: 'status',
     getText: (row: TableRow) => row.status === Membership.joinIn ? 'Active' : 'Pending',
   },
   {
-    title: 'Membership',
+    title: $t('Membership'),
     key: 'source',
     getText: (row: TableRow) => roleLabelMap[row.role as Role],
   },
   {
-    title: 'Related Projects',
+    title: $t('Related Projects'),
     key: 'relatedProjects',
     slot: 'related',
   },
@@ -51,19 +52,19 @@ const filters = reactive({
   value: null,
   options: [
     {
-      name: 'All',
+      name: $t('All'),
       value: null,
     },
     {
-      name: 'Manager',
+      name: $t('Manager'),
       value: Role.MANAGER,
     },
     {
-      name: 'Editor',
+      name: $t('Editor'),
       value: Role.EDITOR,
     },
     {
-      name: 'Viewer',
+      name: $t('Viewer'),
       value: Role.VIEWER,
     },
   ],
@@ -78,24 +79,24 @@ const filters = reactive({
 
 const sorts = ref([
   {
-    label: '排序规则',
-    placeholder: '请选择排序规则',
+    label: $t('Sorting rules'),
+    placeholder: $t('Please select a sorting rule'),
     name: 'orderName',
     value: 'createTime',
     options: [
-      { label: '创建时间', value: 'createTime' },
-      { label: '更新时间', value: 'lateUpdateTime' },
+      { label: $t('Create time'), value: 'createTime' },
+      { label: $t('Update time'), value: 'lateUpdateTime' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
   {
-    label: '排序类型',
-    placeholder: '请选择排序类型',
+    label: $t('Sort type'),
+    placeholder: $t('Please select sort type'),
     name: 'orderType',
     value: 'desc',
     options: [
-      { label: '降序', value: 'desc' },
-      { label: '升序', value: 'asc' },
+      { label: $t('descending order'), value: 'desc' },
+      { label: $t('ascending order'), value: 'asc' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
@@ -113,10 +114,10 @@ function tableOperation(data: TableRow) {
   return [
     {
       name: 'edit',
-      label: 'Edit',
+      label: $t('Edit'),
       icon: 'base/rx_ic_edit',
       disabled,
-      disabledTips: 'Insufficient permissions',
+      disabledTips: $t('Insufficient permissions'),
       power: !role.isViewer,
       quick: true,
     },
@@ -125,10 +126,10 @@ function tableOperation(data: TableRow) {
     },
     {
       name: 'delete',
-      label: 'Delete',
+      label: $t('Delete'),
       icon: 'base/rx_ic_bin_1',
       disabled,
-      disabledTips: 'Insufficient permissions',
+      disabledTips: $t('Insufficient permissions'),
       power: !role.isViewer,
       quick: true,
     },
@@ -148,22 +149,22 @@ async function operationHandler(operate: any, data: TableRow) {
 
 async function deleteMember(data: TableRow) {
   confirm.require({
-    header: '警告',
-    message: '确认移除此成员？',
+    header: $t('Warning'),
+    message: $t('Confirm to remove this member?'),
     rejectProps: {
-      label: '取消',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {
       try {
         const projectIds = data.project_info.map(item => item.project_id)
         const { msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
-        toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
         filters.onChange()
       }
       catch (error) {
@@ -184,23 +185,26 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 <template>
   <div class="header">
     <div class="flex-1">
-      Teams
+      {{ $t('Teams') }}
     </div>
     <div class="header-guide">
       <RxSvgIcon name="base/rx_ic_books" />
-      <span>Access control guide</span>
+      <span>{{ $t('Access control guide') }}</span>
     </div>
     <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
-      @click="handleShowInviteUserFormDialog" />
+              @click="handleShowInviteUserFormDialog"
+    />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler"
-    :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
-    :show-actions-menu="false">
+            :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
+            :show-actions-menu="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+                      data-key="value" @change="filters.onChange"
+        />
       </div>
     </template>
     <template #member="{ data }">

@@ -42,10 +42,12 @@ async function removeAvatar() {
       {{ userName?.slice(0, 1) }}
     </div>
     <div class="upload-area-buttons">
-      <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete" label="Remove"
-        @click="removeAvatar" />
-      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" label="Upload"
-        @click="uploadAvatar" />
+      <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete" :label="$t('Remove')"
+                @click="removeAvatar"
+      />
+      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" :label="$t('Upload')"
+                @click="uploadAvatar"
+      />
     </div>
   </div>
 </template>

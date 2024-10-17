@@ -54,7 +54,7 @@ async function confirm() {
     close()
   }
   catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: error, life: 5000 })
+    toast.add({ severity: 'error', summary: $t('Error'), detail: error, life: 5000 })
   }
   finally {
     loading.value = false
@@ -125,13 +125,11 @@ onMounted(() => {
     </div>
 
     <div class="guide">
-      * Please note that your extension should follow the <span
-        class="text-blue decoration-underline cursor-pointer"
-      >chrome extension
-        guideline</span> in
-      order to install in
-      our chrome
-      kernel.
+      <i18n-t :keypath="$t('Please note that your extension should follow the {guide} in order to install in our chrome kernel.', { guide: '{guide}' })" scope="global">
+        <template #guide>
+          <a href="https://chromewebstore.google.com/" target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('chrome extension  guideline') }}</a>
+        </template>
+      </i18n-t>
     </div>
     <div class="footer">
       <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />

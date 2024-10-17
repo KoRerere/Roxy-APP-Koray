@@ -41,7 +41,7 @@ type RequestConfig =
   }
 
 /** 组件属性 */
-export type ComponentProps<T extends ComponentType = ComponentType> = ComponentMapProps[T] & {
+export type ComponentProps<T extends ComponentType = ComponentType> = Omit<ComponentMapProps[T], 'placeholder'> & {
   /** 组件异步请求数据 */
   request?: RequestConfig
   /** 组件异步请求数据结果 */
@@ -49,6 +49,7 @@ export type ComponentProps<T extends ComponentType = ComponentType> = ComponentM
   style?: CSSProperties
   /** 手动指定v-model绑定的key */
   vModelKey?: string
+  placeholder: string | (() => any)
   [key: string]: any
 }
 

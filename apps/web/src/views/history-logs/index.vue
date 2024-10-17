@@ -3,12 +3,13 @@ import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api
 import { format } from 'date-fns'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
 
 const columns = ref([
   {
-    title: 'User',
+    title: $t('User'),
     key: 'userName',
     render: ({ data }: { data: Data }) => (
       <div>
@@ -18,25 +19,25 @@ const columns = ref([
     ),
   },
   {
-    title: 'Actions',
+    title: $t('Actions'),
     key: 'operateType',
   },
   {
-    title: 'Detail',
+    title: $t('Detail'),
     key: 'operateDetail',
     width: 240,
   },
   {
-    title: 'Date',
+    title: $t('Date'),
     key: 'operateTime',
   },
   {
-    title: 'Result',
+    title: $t('Result'),
     key: 'status',
-    getText: (data: Data) => data.status ? 'Success' : 'Failed',
+    getText: (data: Data) => data.status ? $t('Success') : $t('Failed'),
   },
   {
-    title: 'Location IP',
+    title: $t('Location IP'),
     key: 'location',
     slot: 'location',
   },
@@ -53,28 +54,28 @@ async function tableFilters() {
       type: 'multiple',
       name: 'operateModule',
       value: [],
-      placeholder: 'All actions',
+      placeholder: $t('All actions'),
       options: [
-        { label: 'Profiles', value: 'Profiles' },
-        { label: 'Proxies', value: 'Proxies' },
-        { label: 'Accounts', value: 'Accounts' },
-        { label: 'Projects', value: 'Projects' },
-        { label: 'Extensions', value: 'Extensions' },
-        { label: 'Members', value: 'Members' },
-        { label: 'Team settings', value: 'Teams' },
+        { label: $t('Profiles'), value: 'Profiles' },
+        { label: $t('Proxies'), value: 'Proxies' },
+        { label: $t('Accounts'), value: 'Accounts' },
+        { label: $t('Projects'), value: 'Projects' },
+        { label: $t('Extensions'), value: 'Extensions' },
+        { label: $t('Members'), value: 'Members' },
+        { label: $t('Team settings'), value: 'Teams' },
       ],
     },
     {
       type: 'multiple',
       name: 'userNameIds',
       value: [],
-      placeholder: 'All users',
+      placeholder: $t('All users'),
       options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
     },
     {
       type: 'date',
       name: 'date',
-      placeholder: 'All time',
+      placeholder: $t('All time'),
       formatValue: (input: any, _: any, formData: any) => {
         const [startDate, endDate] = (input.value || []).map((date: Date) => format(date || input.value[0], 'yyyy-MM-dd'))
         Object.assign(formData, { startDate, endDate })
@@ -88,7 +89,7 @@ async function tableFilters() {
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
       <RxSvgIcon name="base/rx_ic_doc_data" />
-      <span>History Logs</span>
+      <span>{{ $t('History Logs') }}</span>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"

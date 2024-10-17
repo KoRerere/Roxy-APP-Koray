@@ -27,7 +27,7 @@ function handleShowInviteUserFormDialog() {
       <div class="flex items-center gap-2">
         <RxSvgIcon name="base/rx_ic_stack" />
         <div class="project-header-project">
-          Projects
+          {{ $t('Projects') }}
         </div>
         <RxSvgIcon name="base/rx_ic_play" :size="8" />
         <div class="project-header-subproject">

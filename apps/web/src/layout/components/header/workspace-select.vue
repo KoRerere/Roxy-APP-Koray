@@ -53,7 +53,7 @@ function showCreateWorkspaceDialog() {
       }
       else {
         console.log(msg)
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
         return Promise.reject()
       }
     },

@@ -1,19 +1,20 @@
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
+import { $t } from '/@/locales'
 
 const columnsConfig = {
   key: 'project.list',
   data: [
     {
-      title: 'Profile Info',
+      title: $t('Profile Info'),
       key: 'projectName',
     },
     {
-      title: 'Open',
+      title: $t('Open'),
       key: 'open',
       slot: 'open',
     },
     {
-      title: 'Members',
+      title: $t('Members'),
       slot: 'members',
     },
   ],

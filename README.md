@@ -15,3 +15,5 @@ Uses:
 pnpm install
 pnpm run dev
 ```
+
+https://vue-i18n.intlify.dev/guide/advanced/component

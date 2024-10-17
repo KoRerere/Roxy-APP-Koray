@@ -23,7 +23,7 @@ async function handleSubmit() {
     })
 
     if (code === 0) {
-      toast.add({ severity: 'success', summary: $t('The email was sent successfully, please check it carefully!'), life: 5000 })
+      toast.add({ severity: 'success', summary: $t('Verification code sent!'), detail: $t('Please checkout your email.'), life: 5000 })
       currentStep.value = 'step2'
     }
     else {

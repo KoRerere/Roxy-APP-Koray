@@ -7,6 +7,7 @@ import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
+import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -29,21 +30,21 @@ const role = useRoleStore()
 const operation = ref([
   {
     name: 'edit',
-    label: '编辑',
+    label: $t('Edit'),
     icon: 'base/rx_ic_edit',
     power: role.isOwner || role.isManager,
     quick: true,
   },
   {
     name: 'invite',
-    label: '邀请',
+    label: $t('Invite'),
     icon: 'base/rx_ic_user_add',
     power: role.isOwner || role.isManager,
     quick: true,
   },
   {
     name: 'delete',
-    label: '删除',
+    label: $t('Delete'),
     icon: 'base/rx_ic_bin_1',
     power: role.isOwner,
     quick: true,
@@ -55,7 +56,7 @@ async function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
       dialog.showModal({
-        header: 'Create project',
+        header: $t('Create project'),
         class: 'w-[500px]',
         schemas: projectFormSchemas,
         formProps: {
@@ -65,10 +66,10 @@ async function operationHandler(operate: any, data?: any) {
           const { code, msg } = await API.limit.userAddProjectInfoCreate(formModel)
           tableRef.value?.refresh()
           if (code === 0) {
-            toast.add({ severity: 'success', summary: '成功', detail: '创建成功', life: 3000 })
+            toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Create Success!'), life: 3000 })
           }
           else {
-            toast.add({ severity: 'error', summary: '失败', detail: msg || '创建失败', life: 3000 })
+            toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Create failed!'), life: 3000 })
           }
         },
       })
@@ -79,7 +80,7 @@ async function operationHandler(operate: any, data?: any) {
       break
     case 'edit':
       await dialog.showModal({
-        header: 'Edit project',
+        header: $t('Edit project'),
         class: 'w-[500px]',
         schemas: projectFormSchemas,
         formProps: {
@@ -89,10 +90,10 @@ async function operationHandler(operate: any, data?: any) {
           const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, ...formModel })
           tableRef.value?.refresh()
           if (code === 0) {
-            toast.add({ severity: 'success', summary: '成功', detail: '编辑成功', life: 3000 })
+            toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Edited successfully'), life: 3000 })
           }
           else {
-            toast.add({ severity: 'error', summary: '失败', detail: msg || '编辑失败', life: 3000 })
+            toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Edit failed'), life: 3000 })
           }
         },
       })
@@ -116,33 +117,33 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
   let message = ''
 
   if (Array.isArray(item)) {
-    message = `确定删除选中的 ${item.length} 个项目吗？`
+    message = $t(`Are you sure you want to delete the {count} selected items?`, { count: item.length })
   }
   else {
-    message = `确定删除项目 ${item.projectName} 吗？`
+    message = $t('Are you sure you want to delete the project {projectName}?', { projectName: item.projectName })
   }
 
   confirm.require({
-    header: '警告',
+    header: $t('Warn'),
     message,
     rejectProps: {
-      label: '取消',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()
-        toast.add({ severity: 'success', summary: '成功', detail: '删除成功', life: 3000 })
+        toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Delete successfully'), life: 3000 })
         electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       }
       else {
-        toast.add({ severity: 'error', summary: '失败', detail: msg || '删除失败', life: 3000 })
+        toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Delete failed'), life: 3000 })
       }
     },
   })
@@ -152,9 +153,9 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
 <template>
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
-      <div>Projects</div>
+      <div>{{ $t('Projects') }}</div>
       <RxButton v-if="role.isOwner || role.isManager" size="small" severity="info" icon="base/rx_ic_plus"
-                label="Add project" @click="operationHandler({ name: 'create' })"
+                :label="$t('Add project')" @click="operationHandler({ name: 'create' })"
       />
     </div>
     <div class="account-content">
