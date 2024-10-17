@@ -1,4 +1,5 @@
 import { API } from '/@/api'
+import { $t } from '/@/locales'
 import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
@@ -120,14 +121,13 @@ export function getInputsGroup(data: any = {}) {
 
   const windowInputs = reactive([
     {
-      label: 'Profile ID',
+      label: $t('Profile ID'),
       value: data.dirId,
-      slot: 'profileId',
       visible: !!data.dirId,
+      slot: 'profileId',
     },
     {
-      label: '系统选择',
-      slot: 'system', // items 特殊实现
+      label: $t('System'),
       items: [
         {
           type: 'select',
@@ -165,11 +165,11 @@ export function getInputsGroup(data: any = {}) {
           required: true,
         },
       ],
+      slot: 'system', // items 特殊实现
     },
     {
       type: 'select',
-      label: '浏览器内核',
-      placeholder: '请选择浏览器内核',
+      label: $t('Kernel'),
       name: 'coreVersion',
       value: $dict_map.coreVersion.find((item: any) => item.value === data.coreVersion) ?? $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,
@@ -178,8 +178,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'textarea',
-      label: 'User-Agent',
-      placeholder: '请填写ua',
+      label: $t('User-Agent'),
       name: 'userAgent',
       value: data.userAgent,
       icon: 'base/rx_ic_shuffle',
@@ -195,10 +194,9 @@ export function getInputsGroup(data: any = {}) {
       separator: true,
     },
     {
-      label: 'Proxy(Direct)',
+      label: $t('Proxy(Direct)'),
       name: 'proxyInfoList',
       value: proxyInfoList,
-      slot: 'proxy',
       formatValue: (input: any, _inputs: any, formData: any) => {
         const { id, ...value } = input.value[0] || {
           ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
@@ -208,31 +206,32 @@ export function getInputsGroup(data: any = {}) {
         Object.assign(formData, { ...value, moduleId: id, proxyMethod: id ? 'choose' : 'custom' })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
         return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
       },
+      slot: 'proxy',
     },
     {
       separator: true,
     },
     {
-      label: 'Accounts',
+      label: $t('Accounts'),
       name: 'windowPlatformList',
       value: data.windowPlatformList ?? [],
-      slot: 'accounts',
       formatValue: (input: any, _inputs: any, formData: any) => {
         const platformUrlIds = input.value.map((item: any) => item.id).filter(Boolean)
         Object.assign(formData, { platformUrlIds })// 关联账号库选择的账号id
         return input.value.filter((item: any) => !item.id)// 过滤需要关联的账号
       },
+      slot: 'accounts',
     },
     {
-      label: 'URLs',
+      label: $t('URLs'),
       name: 'defaultOpenUrl',
       value: data.defaultOpenUrl ?? [],
-      slot: 'urls',
       tooltip: 'man!',
+      slot: 'urls',
     },
     {
       type: 'textarea',
-      label: 'Cookies',
+      label: $t('Cookies'),
       placeholder: 'Paste your cookies with JSON format',
       name: 'cookie',
       value: data.cookies,
@@ -264,24 +263,23 @@ export function getInputsGroup(data: any = {}) {
   const basicInputs = reactive([
     {
       type: 'radio',
-      label: '语言',
+      label: $t('language'),
       name: 'isLanguageBaseIp',
       value: data.isLanguageBaseIp ?? true,
       options: [
-        { label: '跟随ip匹配', value: true },
-        { label: '自定义', value: false },
+        { label: $t('follow Ip'), value: true },
+        { label: $t('custom'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'language', input.value === false)
       },
       preview: {
-        label: '语言',
+        label: $t('language'),
       },
     },
     {
       type: 'select',
       label: ' ',
-      placeholder: '请选择语言',
       name: 'language',
       value: $dict_map.language?.find((item: any) => item.value === data.language),
       options: $dict_map.language,
@@ -290,12 +288,12 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '语言界面',
+      label: $t('language interface'),
       name: 'isDisplayLanguageBaseIp',
       value: data.isDisplayLanguageBaseIp ?? true,
       options: [
-        { label: '跟随ip匹配', value: true },
-        { label: '自定义', value: false },
+        { label: $t('follow Ip'), value: true },
+        { label: $t('custom'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'displayLanguage', input.value === false)
@@ -304,7 +302,6 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: ' ',
-      placeholder: '请选择语言',
       name: 'displayLanguage',
       value: $dict_map.language?.find((item: any) => item.value === data.displayLanguage),
       options: $dict_map.language,
@@ -313,24 +310,23 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '时区',
+      label: $t('time zone'),
       name: 'isTimeZone',
       value: data.isTimeZone ?? true,
       options: [
-        { label: '跟随ip匹配', value: true },
-        { label: '自定义', value: false },
+        { label: $t('follow Ip'), value: true },
+        { label: $t('custom'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'timeZone', input.value === false)
       },
       preview: {
-        label: '时区',
+        label: $t('time zone'),
       },
     },
     {
       type: 'select',
       label: ' ',
-      placeholder: '请选择时区',
       name: 'timeZone',
       value: $dict_map.timeZone?.find((item: any) => item.value === data.timeZone),
       options: $dict_map.timeZone,
@@ -339,13 +335,13 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '地理位置提示',
+      label: $t('geographical tip'),
       name: 'position',
       value: data.position ?? 1,
       options: [
-        { label: '询问', value: 0 },
-        { label: '允许', value: 1 },
-        { label: '禁用', value: 2 },
+        { label: $t('ask'), value: 0 },
+        { label: $t('allow'), value: 1 },
+        { label: $t('disable'), value: 2 },
       ],
       change(input: any, inputs: any) {
         const ipt = inputs.find((ipt: any) => ipt.name === 'isPositionBaseIp')
@@ -359,17 +355,17 @@ export function getInputsGroup(data: any = {}) {
         }
       },
       preview: {
-        label: '地理位置提示',
+        label: $t('geographical tip'),
       },
     },
     {
       type: 'radio',
-      label: '地理位置',
+      label: $t('geographical'),
       name: 'isPositionBaseIp',
       value: data.isPositionBaseIp ?? true,
       options: [
-        { label: '跟随ip匹配', value: true },
-        { label: '自定义', value: false },
+        { label: $t('follow Ip'), value: true },
+        { label: $t('custom'), value: false },
       ],
       visible: true,
       change(input: any, inputs: any) {
@@ -380,104 +376,104 @@ export function getInputsGroup(data: any = {}) {
         )
       },
       preview: {
-        label: '地理位置',
+        label: $t('geographical'),
       },
     },
     {
       type: 'text',
-      label: '经度',
-      placeholder: '请填写经度, 示例: -40.123',
+      label: $t('longitude'),
+      placeholder: `${$t('example')}: -40.123`,
       name: 'longitude',
       value: data.longitude,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'text',
-      label: '纬度',
-      placeholder: '请填写纬度, 示例: 30.123',
+      label: $t('latitude'),
+      placeholder: `${$t('example')}: 30.123`,
       name: 'latitude',
       value: data.latitude,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'text',
-      label: '精度(米)',
-      placeholder: '请填写精度, 范围: 10-5000',
+      label: $t('precision(metre)'),
+      placeholder: `${$t('range')}: 10-5000`,
       name: 'precisionPos',
       value: data.precisionPos,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
       type: 'radio',
-      label: '声音',
+      label: $t('audio'),
       name: 'forbidAudio',
       value: data.forbidAudio ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '图片',
+      label: $t('image'),
       name: 'forbidImage',
       value: data.forbidImage ?? true,
       options: [
-        { label: '加载', value: true },
-        { label: '禁止', value: false },
+        { label: $t('load'), value: true },
+        { label: $t('ban'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '视频',
+      label: $t('video'),
       name: 'forbidMedia',
       value: data.forbidMedia ?? true,
       options: [
-        { label: '允许', value: true },
-        { label: '禁止', value: false },
+        { label: $t('allow'), value: true },
+        { label: $t('ban'), value: false },
       ],
     },
     {
-      label: '窗口大小',
-      slot: 'windowSize',
+      label: $t('window size'),
       items: [
         {
           type: 'text',
-          placeholder: '请输入宽度',
+          placeholder: `${$t('please enter the')} ${$t('width')}`,
           name: 'openWidth',
           value: data.openWidth ?? 1000,
         },
         {
           type: 'text',
-          placeholder: '请输入高度',
+          placeholder: `${$t('please enter the')} ${$t('height')}`,
           name: 'openHeight',
           value: data.openHeight ?? 1000,
         },
       ],
+      slot: 'windowSize',
     },
   ])
 
   const highLevelInputs = reactive([
     {
       type: 'radio',
-      label: '分辨率',
+      label: $t('resolution'),
       name: 'resolutionType',
       value: data.resolutionType ?? false,
       options: [
-        { label: '跟随电脑', value: false },
-        { label: '自定义', value: true },
+        { label: $t('follow system'), value: false },
+        { label: $t('custom'), value: true },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'resolution', input.value === true)
       },
       preview: {
-        label: '分辨率',
+        label: $t('resolution'),
       },
     },
     {
       type: 'select',
-      label: '分辨率值',
-      placeholder: '请选择分辨率',
+      label: $t('resolution value'),
+      placeholder: `${$t('please enter the')} ${$t('resolution')}`,
       name: 'resolution',
       value: data.resolutionX && $dict_map.resolution.find((item: any) => item.value.includes(data.resolutionX) && item.value.includes(data.resolutionY)),
       options: $dict_map.resolution,
@@ -493,15 +489,15 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '字体指纹',
+      label: $t('font'),
       name: 'fontType',
       value: data.fontType ?? false,
       options: [
-        { label: '随机', value: true },
-        { label: '跟随系统', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('follow system'), value: false },
       ],
       preview: {
-        label: '字体指纹',
+        label: $t('font'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -514,13 +510,13 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'WebRTC',
+      label: $t('WebRTC'),
       name: 'webRTC',
       value: data.webRTC ?? 2,
       options: [
-        { label: '替换', value: 0 },
-        { label: '真实', value: 1 },
-        { label: '禁止', value: 2 },
+        { label: $t('replace'), value: 0 },
+        { label: $t('reality'), value: 1 },
+        { label: $t('ban'), value: 2 },
       ],
       preview: {
         label: 'WebRTC',
@@ -528,15 +524,15 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'WebGL图像',
+      label: $t('WebGL image'),
       name: 'webGL',
       value: data.webGL ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: 'WebGL图像',
+        label: $t('WebGL image'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -549,12 +545,12 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'WebGL Info',
+      label: $t('WebGL Info'),
       name: 'webGLInfo',
       value: data.webGLInfo ?? true,
       options: [
-        { label: '真实', value: false },
-        { label: '自定义', value: true },
+        { label: $t('reality'), value: false },
+        { label: $t('custom'), value: true },
       ],
       change(input: any, inputs: any) {
         setInputVisible(
@@ -564,12 +560,12 @@ export function getInputsGroup(data: any = {}) {
         )
       },
       preview: {
-        label: 'WebGL Info',
+        label: $t('WebGL Info'),
       },
     },
     {
       type: 'text',
-      label: 'WebGL厂商',
+      label: $t('WebGL manufacturer'),
       name: 'webGLManufacturer',
       value: data.webGLManufacturer,
       icon: 'base/rx_ic_shuffle',
@@ -581,7 +577,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'textarea',
-      label: 'WebGL渲染',
+      label: $t('WebGL render'),
       name: 'webGLRender',
       value: data.webGLRender,
       rows: 3,
@@ -594,26 +590,26 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'WebGpu',
+      label: $t('WebGpu'),
       name: 'webGpu',
       value: data.webGpu ?? 'webgl',
       options: [
-        { label: '基于WebGL匹配', value: 'webgl' },
-        { label: '真实', value: 'real' },
-        { label: '禁用', value: 'block' },
+        { label: $t('based on webgl matching'), value: 'webgl' },
+        { label: $t('reality'), value: 'real' },
+        { label: $t('disable'), value: 'block' },
       ],
     },
     {
       type: 'radio',
-      label: 'Canvas',
+      label: $t('Canvas'),
       name: 'canvas',
       value: data.canvas ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: 'Canvas',
+        label: $t('Canvas'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -626,15 +622,15 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'AudioContext',
+      label: $t('AudioContext'),
       name: 'audioContext',
       value: data.audioContext ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: 'AudioContext',
+        label: $t('AudioContext'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -647,15 +643,15 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'Speech Voices',
+      label: $t('Speech Voices'),
       name: 'speechVoices',
       value: data.speechVoices ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: 'SpeechVoices',
+        label: $t('Speech Voices'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -668,28 +664,28 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'Do Not Track',
+      label: $t('Do Not Track'),
       name: 'doNotTrack',
       value: data.doNotTrack ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
       preview: {
-        label: 'Do Not Track',
+        label: $t('Do Not Track'),
       },
     },
     {
       type: 'radio',
-      label: 'ClientRects',
+      label: $t('Client Rects'),
       name: 'clientRects',
       value: data.clientRects ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: 'ClientRects',
+        label: $t('Client Rects'),
       },
       change: async (input: any) => {
         if (input.value) {
@@ -702,31 +698,31 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '媒体设备',
+      label: $t('Media Device'),
       name: 'deviceInfo',
       value: data.deviceInfo ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       preview: {
-        label: '媒体设备',
+        label: $t('Media Device'),
       },
     },
     {
       type: 'radio',
-      label: '设备名称',
+      label: $t('Device Name'),
       name: 'deviceNameSwitch',
       value: data.deviceNameSwitch ?? true,
       options: [
-        { label: '随机', value: true },
-        { label: '真实', value: false },
+        { label: $t('random'), value: true },
+        { label: $t('reality'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'deviceName', input.value === true)
       },
       preview: {
-        label: '设备名称',
+        label: $t('Device Name'),
       },
     },
     {
@@ -743,12 +739,12 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: 'MAC地址',
+      label: $t('MAC Address'),
       name: 'macInfo',
       value: data.macInfo ?? true,
       options: [
-        { label: '真实', value: false },
-        { label: '自定义', value: true },
+        { label: $t('reality'), value: false },
+        { label: $t('custom'), value: true },
       ],
       change(input: any, inputs: any) {
         const showMacAddr = input.value === true
@@ -758,7 +754,7 @@ export function getInputsGroup(data: any = {}) {
         }
       },
       preview: {
-        label: 'MAC地址',
+        label: $t('MAC Address'),
       },
     },
     {
@@ -775,46 +771,46 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'select',
-      label: '硬件并发数',
-      placeholder: '请选择硬件并发数',
+      label: $t('Hardware concurrency'),
+      placeholder: `${$t('please enter the')} ${$t('hardware concurrency')}`,
       name: 'hardwareConcurrent',
       value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '4')),
       options: $dict_map.hardwareConcurrent,
       preview: {
-        label: '硬件并发数',
+        label: $t('Hardware concurrency'),
       },
     },
     {
       type: 'select',
-      label: '设备内存',
-      placeholder: '请选择设备内存',
+      label: $t('Device Memory'),
+      placeholder: `${$t('please enter the')} ${$t('Device Memory')}`,
       name: 'deviceMemory',
       value: $dict_map.deviceMemory.find((item: any) => item.value === (data.deviceMemory ?? '8')),
       options: $dict_map.deviceMemory,
       preview: {
-        label: '设备内存',
+        label: $t('Device Memory'),
       },
     },
     {
       type: 'radio',
-      label: 'SSL指纹设置',
+      label: $t('SSL setting'),
       name: 'disableSsl',
       value: data.disableSsl ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'disableSslList', input.value === true)
       },
       preview: {
-        label: 'SSL指纹设置',
+        label: $t('SSL setting'),
       },
     },
     {
       type: 'multiSelect',
       label: ' ',
-      placeholder: '选择要禁用的SSL特性',
+      placeholder: $t('Disabled SSL features'),
       name: 'disableSslList',
       value: data.disableSslList ?? [],
       options: $dict_map.disableSslList,
@@ -827,229 +823,229 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '端口扫描保护',
+      label: $t('Port scan protection'),
       name: 'portScanProtect',
       value: data.portScanProtect ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
       change(input: any, inputs: any) {
         setInputVisible(inputs, 'portScanList', input.value === true)
       },
       preview: {
-        label: '端口扫描保护',
+        label: $t('Port scan protection'),
       },
     },
     {
       type: 'text',
-      label: '扫描白名单',
+      label: $t('Scan whitelist'),
       name: 'portScanList',
       value: data.portScanList,
-      placeholder: '输入整数，多个用英文逗号隔开',
+      placeholder: 'input integer comma separated',
       visible: initInputVisible(data.portScanProtect, true, true),
     },
     {
       type: 'radio',
-      label: '硬件加速模式',
+      label: $t('Hardware acceleration'),
       name: 'useGpu',
       value: data.useGpu ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
       preview: {
-        label: '硬件加速模式',
+        label: $t('Hardware acceleration'),
       },
     },
     {
       type: 'radio',
-      label: '禁用沙盒',
+      label: $t('Disable Sandbox'),
       name: 'sandboxPermission',
       value: data.sandboxPermission ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'text',
-      label: '启动参数',
+      label: $t('startup parameter'),
       name: 'startupParam',
       value: data.startupParam,
-      placeholder: '浏览器启动参数,如 --mute,多个参数以英文逗号分隔',
+      placeholder: 'Browser startup parameters; example: --mute; multiple parameters separated by commas',
     },
   ])
 
   const otherInputs = reactive([
     {
       type: 'radio',
-      label: '窗口名称',
+      label: $t('Window Name'),
       name: 'isDisplayName',
       value: data.isDisplayName ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步书签',
+      label: $t('Sync Bookmark'),
       name: 'syncBookmark',
       value: data.syncBookmark ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步历史记录',
+      label: $t('Sync History'),
       name: 'syncHistory',
       value: data.syncHistory ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步标签页',
+      label: $t('Sync Tab'),
       name: 'syncTab',
       value: data.syncTab ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步Cookie',
+      label: $t('Sync cookie'),
       name: 'syncCookie',
       value: data.syncCookie ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步扩展应用程序',
+      label: $t('Sync Extensions'),
       name: 'syncExtensions',
       value: data.syncExtensions ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步已保存的用户名密码',
+      label: $t('Sync Password'),
       name: 'syncPassword',
       value: data.syncPassword ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步IndexedDB',
+      label: $t('Sync IndexedDb'),
       name: 'syncIndexedDb',
       value: data.syncIndexedDb ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '同步Local Storage',
+      label: $t('Sync LocalStorage'),
       name: 'syncLocalStorage',
       value: data.syncLocalStorage ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '启动浏览器前删除缓存文件',
+      label: $t('Delete cache files before start'),
       name: 'clearCacheFile',
       value: data.clearCacheFile ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '启动浏览器前删除Cookie',
+      label: $t('Delete cookie before start'),
       name: 'clearCookie',
       value: data.clearCookie ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '启动浏览器前删除Local Storage',
+      label: $t('Delete LocalStorage before start'),
       name: 'clearLocalStorage',
       value: data.clearLocalStorage ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '启动浏览器时随机指纹',
+      label: $t('Random fingerprint when starting'),
       name: 'randomFingerprint',
       value: data.randomFingerprint ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '弹出保存密码提示',
+      label: $t('Save password prompt'),
       name: 'forbidSavePassword',
       value: data.forbidSavePassword ?? true,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: '网络不通停止打开',
+      label: $t('Stop opening due to network failure'),
       name: 'stopOpenNet',
       value: data.stopOpenNet ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: 'IP发生变化停止打开',
+      label: $t('Stop opening due to ip changed'),
       name: 'stopOpenIP',
       value: data.stopOpenIP ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
     {
       type: 'radio',
-      label: 'IP对应国家 / 地区发生改变停止打开',
+      label: $t('Stop opening due to The country/region corresponding to the IP has changed'),
       name: 'stopOpenPosition',
       value: data.stopOpenPosition ?? false,
       options: [
-        { label: '开启', value: true },
-        { label: '关闭', value: false },
+        { label: $t('open'), value: true },
+        { label: $t('closure'), value: false },
       ],
     },
   ])
