@@ -133,10 +133,11 @@ const params = reactive<any>({
 
 const paginatorConfig = reactive({
   page: 1,
-  rows: 15,
+  rows: 10,
+  first: 0,
   totalRecords: 0,
-  rowsPerPageOptions: [5, 15, 30, 50],
-  onResetPage(page: number = 1, rows: number = 15) {
+  rowsPerPageOptions: [5, 10, 20, 50, 100],
+  onResetPage(page: number = 1, rows: number = 10) {
     paginatorConfig.page = page
     paginatorConfig.rows = rows
   },
@@ -145,16 +146,14 @@ const paginatorConfig = reactive({
     _request()
   },
   onRowsChange() {
-    if (paginatorConfig.rows >= paginatorConfig.totalRecords) {
-      paginatorConfig.page = 1
-    }
+    paginatorConfig.page = Math.ceil(paginatorConfig.first / paginatorConfig.rows)
     _request()
   },
 })
 
 const paginatorInfo = computed(() => $t('Showing {start}-{end} of {total} profiles,', {
-  start: (paginatorConfig.page - 1) * paginatorConfig.rows + 1,
-  end: Math.min(paginatorConfig.page * paginatorConfig.rows, paginatorConfig.totalRecords),
+  start: paginatorConfig.first + 1,
+  end: Math.min(paginatorConfig.first + paginatorConfig.rows, paginatorConfig.totalRecords),
   total: paginatorConfig.totalRecords,
 }))
 
@@ -291,8 +290,9 @@ defineExpose({
       </DataTable>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator template="PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
-        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
+        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
+        @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
@@ -301,8 +301,8 @@ defineExpose({
             <div>profiles/page</div>
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>Go to</div>
-              <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
-              <div>|</div>
+              <!-- <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
+              <div>|</div> -->
             </div>
           </div>
         </template>

@@ -438,13 +438,13 @@ export function getInputsGroup(data: any = {}) {
       items: [
         {
           type: 'text',
-          placeholder: `${$t('please enter the')} ${$t('width')}`,
+          placeholder: `${$t('Please Enter The')} ${$t('width')}`,
           name: 'openWidth',
           value: data.openWidth ?? 1000,
         },
         {
           type: 'text',
-          placeholder: `${$t('please enter the')} ${$t('height')}`,
+          placeholder: `${$t('Please Enter The')} ${$t('height')}`,
           name: 'openHeight',
           value: data.openHeight ?? 1000,
         },
@@ -473,7 +473,7 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: $t('resolution value'),
-      placeholder: `${$t('please enter the')} ${$t('resolution')}`,
+      placeholder: `${$t('Please Enter The')} ${$t('resolution')}`,
       name: 'resolution',
       value: data.resolutionX && $dict_map.resolution.find((item: any) => item.value.includes(data.resolutionX) && item.value.includes(data.resolutionY)),
       options: $dict_map.resolution,
@@ -510,7 +510,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: $t('WebRTC'),
+      label: 'WebRTC',
       name: 'webRTC',
       value: data.webRTC ?? 2,
       options: [
@@ -590,7 +590,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: $t('WebGpu'),
+      label: 'WebGpu',
       name: 'webGpu',
       value: data.webGpu ?? 'webgl',
       options: [
@@ -601,7 +601,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'radio',
-      label: $t('Canvas'),
+      label: 'Canvas',
       name: 'canvas',
       value: data.canvas ?? true,
       options: [
@@ -772,7 +772,7 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: $t('Hardware concurrency'),
-      placeholder: `${$t('please enter the')} ${$t('hardware concurrency')}`,
+      placeholder: `${$t('Please Enter The')} ${$t('hardware concurrency')}`,
       name: 'hardwareConcurrent',
       value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '4')),
       options: $dict_map.hardwareConcurrent,
@@ -783,7 +783,7 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: $t('Device Memory'),
-      placeholder: `${$t('please enter the')} ${$t('Device Memory')}`,
+      placeholder: `${$t('Please Enter The')} ${$t('Device Memory')}`,
       name: 'deviceMemory',
       value: $dict_map.deviceMemory.find((item: any) => item.value === (data.deviceMemory ?? '8')),
       options: $dict_map.deviceMemory,

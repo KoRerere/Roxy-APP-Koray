@@ -72,12 +72,8 @@ function receiveEmailCode(code: string) {
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
       <div class="box">
-        <RxAlert
-          v-model:visible="isShowAlert"
-          type="error"
-          :title="$t('Your email haven’t been signed up.')"
-          :content="$t('Please checkout your email and try again.')"
-        />
+        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('Your email haven’t been signed up.')"
+          :content="$t('Please checkout your email and try again.')" />
         <div class="title">
           {{ $t('Reset your password') }}
         </div>
@@ -91,9 +87,11 @@ function receiveEmailCode(code: string) {
           </template>
           <template v-else>
             <label for="new-password" class="label">{{ $t('New password') }}</label>
-            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('Enter new password')" toggle-mask />
+            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('Enter new password')"
+              toggle-mask />
             <label for="re-new-password" class="label">{{ $t('Re-enter new password') }}</label>
-            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('Re-enter new password')" toggle-mask />
+            <Password id="re-new-password" v-model="reNewPassword" :feedback="false"
+              :placeholder="$t('Re-enter new password')" toggle-mask />
           </template>
         </div>
       </div>
@@ -129,13 +127,15 @@ function receiveEmailCode(code: string) {
       font-weight: 600;
       line-height: normal;
     }
+
     .message-desc {
       color: var(--Colors-Text-text-secondary, #575d61);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
       font-weight: 400;
-      line-height: 18px; /* 150% */
+      line-height: 18px;
+      /* 150% */
     }
   }
 }
@@ -152,6 +152,7 @@ function receiveEmailCode(code: string) {
     width: 100%;
   }
 }
+
 .box {
   display: flex;
   flex-direction: column;
@@ -165,7 +166,8 @@ function receiveEmailCode(code: string) {
     font-size: 16px;
     font-style: normal;
     font-weight: 700;
-    line-height: var(--Line-Height-text-xs, 16px); /* 100% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 100% */
   }
 
   .description {
@@ -174,7 +176,8 @@ function receiveEmailCode(code: string) {
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-lg, 20px); /* 166.667% */
+    line-height: var(--Line-Height-text-lg, 20px);
+    /* 166.667% */
   }
 
   .label {
@@ -183,7 +186,8 @@ function receiveEmailCode(code: string) {
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-lg, 20px); /* 166.667% */
+    line-height: var(--Line-Height-text-lg, 20px);
+    /* 166.667% */
   }
 }
 </style>

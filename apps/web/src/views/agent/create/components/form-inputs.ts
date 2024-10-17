@@ -1,4 +1,5 @@
 import { useToast } from 'primevue/usetoast'
+import { $t } from '/@/locales'
 import { findInputByName, isEmptyValue, parseProxyUrl, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
@@ -10,17 +11,16 @@ export function getInputs(data: any = {}) {
     },
   })
 
-  const proxyCategory = data.proxyCategory || data.protocol
+  const proxyCategory: string = data.proxyCategory || data.protocol
 
   const inputs = reactive([
     {
       type: 'textarea',
-      label: '智能检测',
+      label: $t('Smart detection'),
+      placeholder: `${$t('Paste proxy rules like')}:\nHost:Port:Username:Password[RefreshURL]`,
       name: 'proxyRules',
-      value: '',
-      placeholder: 'Paste proxy rules like:\nHost:Port:Username:Password[RefreshURL]',
       rows: 5,
-      errorMsg: '解析内容有误',
+      errorMsg: $t('Error in parsing content'),
       tooltip: 'man!',
       invalid: false,
       onBlur: () => {
@@ -53,7 +53,7 @@ export function getInputs(data: any = {}) {
     },
     {
       type: 'radio',
-      label: '网络协议',
+      label: $t('Protocol'),
       name: 'ipType',
       value: data.ipType || $dict_map.ipType[0]?.value,
       options: $dict_map.ipType,
@@ -65,7 +65,6 @@ export function getInputs(data: any = {}) {
         {
           type: 'select',
           name: 'proxyCategory',
-          placeholder: '请选择网络协议',
           value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory,
           options: $dict_map.protocol,
           formatValue: (input: any, _inputs: any, formData: any) => {
@@ -105,24 +104,24 @@ export function getInputs(data: any = {}) {
     },
     {
       type: 'text',
-      label: '代理账号',
+      label: $t('Username'),
       name: 'proxyUserName',
       value: data.proxyUserName ?? '',
-      placeholder: 'Username for your server',
+      placeholder: $t('Username for your server'),
     },
     {
       type: 'password',
-      label: '代理密码',
+      label: $t('Password'),
       name: 'proxyPassword',
       value: data.proxyPassword ?? '',
-      placeholder: 'Password for your server',
+      placeholder: $t('Password for your server'),
     },
     {
       type: 'text',
-      label: '刷新URL',
+      label: $t('Refreshing URL'),
       name: 'refreshUrl',
       value: data.refreshUrl ?? '',
-      placeholder: 'Please enter a valid URL',
+      placeholder: $t('Please enter a valid URL'),
       tooltip: 'mamba out!',
       icon: 'base/rx_ic_refresh',
       iconClick: async () => {

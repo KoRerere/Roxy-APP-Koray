@@ -134,7 +134,8 @@ function leaveWorkspace() {
           </div>
         </div>
         <div class="emoji-picker-box">
-          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner"
+            :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
           <div class="choose-icon-desc">
             {{ $t('Choose icon') }}
           </div>
@@ -152,7 +153,8 @@ function leaveWorkspace() {
         </div>
         <div class="w-full">
           <IconField>
-            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
+            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner"
+              :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
             <InputIcon class="input-limit-text">
               {{ workspaceInfo.workspaceName?.length }}/30
             </InputIcon>
@@ -211,7 +213,8 @@ function leaveWorkspace() {
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: var(--Line-Height-text-lg, 20px); /* 142.857% */
+  line-height: var(--Line-Height-text-lg, 20px);
+  /* 142.857% */
 }
 
 .delete-confirm-content {
@@ -220,7 +223,8 @@ function leaveWorkspace() {
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-sm, 18px); /* 150% */
+  line-height: var(--Line-Height-text-sm, 18px);
+  /* 150% */
 }
 </style>
 
@@ -233,6 +237,7 @@ function leaveWorkspace() {
   margin: 0 auto;
   height: 100%;
 }
+
 .content {
   display: flex;
   flex-direction: column;
@@ -256,8 +261,10 @@ function leaveWorkspace() {
       font-size: 12px;
       font-style: normal;
       font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+      line-height: var(--Line-Height-text-xs, 16px);
+      /* 133.333% */
     }
+
     .description {
       align-self: stretch;
       color: var(--Colors-Text-text-tertiary, #7c8387);
@@ -265,7 +272,8 @@ function leaveWorkspace() {
       font-size: 10px;
       font-style: normal;
       font-weight: 400;
-      line-height: var(--Line-Height-text-xs, 16px); /* 160% */
+      line-height: var(--Line-Height-text-xs, 16px);
+      /* 160% */
     }
 
     .choose-icon-desc {
@@ -275,7 +283,8 @@ function leaveWorkspace() {
       font-size: 12px;
       font-style: normal;
       font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+      line-height: var(--Line-Height-text-xs, 16px);
+      /* 133.333% */
     }
   }
 }
@@ -313,6 +322,7 @@ function leaveWorkspace() {
   gap: var(--spacing-none, 0px);
   align-self: stretch;
 }
+
 .action-item {
   display: flex;
   padding: 8px var(--spacing-md, 6px) 8px 10px;
@@ -330,7 +340,8 @@ function leaveWorkspace() {
     font-size: 13px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 123.077% */
   }
 }
 </style>

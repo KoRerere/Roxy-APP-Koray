@@ -82,8 +82,7 @@ onMounted(() => {
     </div>
 
     <rxMessage v-if="extension" :severity="extension.type"
-               :icon="extension.isSuccess ? 'status/rx_ic_check_fill' : 'status/rx_ic_delete_fill'" closable
-    >
+      :icon="extension.isSuccess ? 'status/rx_ic_check_fill' : 'status/rx_ic_delete_fill'" closable>
       {{ extension.message }}
     </rxMessage>
     <div>
@@ -92,12 +91,10 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-4 mt-1">
         <ryButton outlined severity="info" icon="base/rx_ic_export" :label="$t('Select a file')"
-                  @click="selectExtension('file')"
-        />
+          @click="selectExtension('file')" />
         <span class="upload-or">OR</span>
         <ryButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('Select a folder')"
-                  @click="selectExtension('dir')"
-        />
+          @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
@@ -125,17 +122,19 @@ onMounted(() => {
     </div>
 
     <div class="guide">
-      <i18n-t :keypath="$t('Please note that your extension should follow the {guide} in order to install in our chrome kernel.', { guide: '{guide}' })" scope="global">
+      <i18n-t
+        :keypath="$t('Please note that your extension should follow the {guide} in order to install in our chrome kernel.', { guide: '{guide}' })"
+        scope="global">
         <template #guide>
-          <a href="https://chromewebstore.google.com/" target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('chrome extension  guideline') }}</a>
+          <a href="https://chromewebstore.google.com/" target="_blank"
+            class="text-blue decoration-underline cursor-pointer">{{ $t('chrome extension guideline') }}</a>
         </template>
       </i18n-t>
     </div>
     <div class="footer">
       <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
       <Button size="small" :label="$t('Upload and Install')" severity="info" :disabled="!extension?.isSuccess"
-              :loading="loading" autofocus @click="confirm"
-      />
+        :loading="loading" autofocus @click="confirm" />
     </div>
   </div>
 </template>

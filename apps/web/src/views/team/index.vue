@@ -192,19 +192,16 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       <span>{{ $t('Access control guide') }}</span>
     </div>
     <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add" label="Invite"
-              @click="handleShowInviteUserFormDialog"
-    />
+      @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler"
-            :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
-            :show-actions-menu="false"
-  >
+    :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false" :paginator="false"
+    :show-actions-menu="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-                      data-key="value" @change="filters.onChange"
-        />
+          data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #member="{ data }">

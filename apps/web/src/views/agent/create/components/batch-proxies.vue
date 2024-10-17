@@ -3,6 +3,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyCheckStatus } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { parseProxyUrl, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -13,6 +14,7 @@ const emit = defineEmits(['cancel', 'save'])
 const toast = useToast()
 const confirm = useConfirm()
 const [checkProxy] = useCheckProxy()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const proxiesText = ref('')
 const dataList: any = ref([])
@@ -74,7 +76,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
   if (!list.length) {
-    toast.add({ severity: 'warn', summary: '警告', detail: '解析内容不能为空', life: 5000, group: 'tc' })
+    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('The parsing content cannot be empty'), life: 5000, group: 'tc' })
     return
   }
 
@@ -111,15 +113,15 @@ function tableOperation(data: any) {
   return [
     {
       name: 'refresh',
-      label: '刷新',
+      label: $t('Refresh'),
       icon: 'base/rx_ic_refresh',
       quick: true,
       disabled: !data.refreshUrl,
-      disabledTips: '缺少刷新地址',
+      disabledTips: $t('Missing refresh url'),
     },
     {
       name: 'test',
-      label: '测速',
+      label: $t('Test'),
       icon: 'base/rx_ic_speed_test',
       quick: true,
     },
@@ -142,7 +144,7 @@ function operationHandler(operate: any, data: any) {
 
 async function refreshUrl(data: any, operateName: string) {
   const isOK = await setRowsLoading(data, operateName, () => window.electronAPI.send('proxy:refreshUrl', data.refreshUrl!))
-  toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: data.refreshUrl, life: 5000 })
+  showToast(isOK ? 0 : -1, data.refreshUrl as string, 5000)
 }
 
 function testProxy(data: any, operateName: string) {
@@ -165,15 +167,15 @@ function testAll() {
 
 function deleteFailProxy() {
   confirm.require({
-    header: '警告',
+    header: $t('warn'),
     message: '确定删除所有测速失败的代理?',
     rejectProps: {
-      label: '取消',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: () => {
@@ -187,7 +189,7 @@ function onSave() {
 
   if (index > -1) {
     const { _validator } = dataList.value[index]
-    toast.add({ severity: 'error', summary: 'Error', detail: `proxies[${index + 1}] ${_validator[0][0]} missing`, life: 5000 })
+    onlyErrorToast(-1, $t('proxies[{index}] {key} missing', { index: index + 1, key: _validator[0][0] }), 5000)
     return
   }
 

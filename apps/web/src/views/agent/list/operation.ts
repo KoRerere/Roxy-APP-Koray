@@ -1,6 +1,7 @@
 import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 
 export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
@@ -15,13 +16,13 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
   return [
     {
       name: 'edit',
-      label: '编辑',
+      label: $t('Edit'),
       icon: 'base/rx_ic_edit',
       power: !role.isViewer,
     },
     {
       name: 'test',
-      label: '测速',
+      label: $t('Test'),
       icon: 'base/rx_ic_speed_test',
       quick: true,
       multiple: true,
@@ -39,12 +40,12 @@ export function getCustomFilters() {
   const inputs = [
     {
       type: 'text',
+      label: $t('ID'),
       name: 'id',
-      label: 'ID',
     },
     {
       type: 'Checkbox',
-      label: 'Type',
+      label: $t('Type'),
       name: 'protocol',
       options: ($dict_map.protocol || []).map((item: any) => ({
         parentName: 'protocol',
@@ -54,22 +55,22 @@ export function getCustomFilters() {
     },
     {
       type: 'text',
-      label: 'Info/IP Range',
+      label: $t('Info/IP Range'),
       name: 'host',
     },
     {
       type: 'text',
-      label: 'Notes',
+      label: $t('Notes'),
       name: 'remark',
     },
     {
       type: 'text',
-      label: 'Related profiles',
+      label: $t('Related profiles'),
       name: 'windowId',
     },
     {
       type: 'Checkbox',
-      label: 'Country/Region',
+      label: $t('Country/Region'),
       name: 'lastCountry',
       options: ($dict_map.country || []).map((item: any) => ({
         parentName: 'lastCountry',
@@ -79,15 +80,15 @@ export function getCustomFilters() {
     },
     {
       type: 'radio',
+      label: $t('Check Status'),
       name: 'checkStatus',
-      label: 'Check Status',
       options: [
         {
-          label: 'Test success',
+          label: $t('Test success'),
           value: '1',
         },
         {
-          label: 'Test fail',
+          label: $t('Test fail'),
           value: '2',
         },
       ],
@@ -97,11 +98,11 @@ export function getCustomFilters() {
     },
     {
       type: 'date',
+      label: $t('Create time'),
       name: 'createTime',
-      label: 'Create time',
       items: [
         {
-          placeholder: 'Start time',
+          placeholder: `${$t('Please Enter The')} ${$t('start time')}`,
           name: 'startDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -109,7 +110,7 @@ export function getCustomFilters() {
           },
         },
         {
-          placeholder: 'End time',
+          placeholder: `${$t('Please Enter The')} ${$t('end time')}`,
           name: 'endDate',
           maxDate: new Date(),
           formatValue: (self: any) => {

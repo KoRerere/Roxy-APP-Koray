@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { setRowsLoading } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -33,12 +34,13 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm'])
 
-const toast = useToast()
 const [checkProxy] = useCheckProxy()
+const [showToast] = useResponseToast()
+
 const tableRef = useTemplateRef('agent')
 
 const columns = setColumns(proxyColumns.data, {
-  inserts: props.isBatch ? [[4, { title: 'Bounded Profiles', slot: 'bounded' }]] : [],
+  inserts: props.isBatch ? [[4, { title: $t('Bounded Profiles'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
 
@@ -52,19 +54,19 @@ const filterButtons = reactive({
   value: null,
   options: [
     {
-      name: 'All',
+      label: 'All',
       value: null,
     },
     {
-      name: 'SOCKS 5',
+      label: 'SOCKS 5',
       value: ProxyProtocol.SOCKS5,
     },
     {
-      name: 'HTTP',
+      label: 'HTTP',
       value: ProxyProtocol.HTTP,
     },
     {
-      name: 'HTTPS',
+      label: 'HTTPS',
       value: ProxyProtocol.HTTPS,
     },
   ],
@@ -129,7 +131,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 function refreshUrl(datas: ProxyItem[]) {
   datas.forEach(async (item) => {
     const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
-    toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: item.refreshUrl, life: 5000 })
+    showToast(isOK ? 0 : -1, item.refreshUrl as string, 5000)
   })
 }
 
@@ -157,14 +159,14 @@ function saveSelected() {
 </script>
 
 <template>
-  <drawer-content title="代理列表" v-bind="$attrs">
+  <drawer-content :title="$t('proxy list')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList"
         :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
-            <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="name"
+            <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label"
               option-value="value" data-key="value" @change="filterButtons.onChange" />
             <ryButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
           </div>

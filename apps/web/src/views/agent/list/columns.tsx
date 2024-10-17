@@ -1,18 +1,19 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RyTag from '/@/components/ry-tag'
+import { $t } from '/@/locales'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
 const columnsConfig = {
   key: 'agent.list',
   data: [
     {
-      title: 'Proxy Info',
+      title: $t('Proxy Info'),
       key: 'proxy',
       slot: 'proxy',
     },
     {
-      title: 'Outbound IP',
+      title: $t('Outbound IP'),
       key: 'outbound',
       render: ({ data }: any) => {
         return (
@@ -21,7 +22,7 @@ const columnsConfig = {
       },
     },
     {
-      title: 'IP Checker',
+      title: $t('IP Checker'),
       key: 'ipChecker',
       render: ({ data }: any) => {
         return (
@@ -33,7 +34,7 @@ const columnsConfig = {
       },
     },
     {
-      title: 'Related Profiles',
+      title: $t('Related Profiles'),
       key: 'relatedProfiles',
       render: ({ data }: any) => {
         return (

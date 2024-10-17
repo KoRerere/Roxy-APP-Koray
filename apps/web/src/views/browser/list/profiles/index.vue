@@ -382,12 +382,12 @@ function warnPopup(message: string) {
       header: $t('warn'),
       message,
       rejectProps: {
-        label: $t('cancel'),
+        label: $t('Cancel'),
         severity: 'secondary',
         outlined: true,
       },
       acceptProps: {
-        label: $t('confirm'),
+        label: $t('Confirm'),
         severity: 'danger',
       },
       accept: () => resolve(null),

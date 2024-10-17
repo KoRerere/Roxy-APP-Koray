@@ -49,12 +49,12 @@ async function deleteHandler(datas: any) {
     header: $t('Are you sure to delete the profiles you selected? '),
     message: $t('This action can not be undone.'),
     rejectProps: {
-      label: $t('cancel'),
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('confirm'),
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {

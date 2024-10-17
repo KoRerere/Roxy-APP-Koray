@@ -121,13 +121,13 @@ onBeforeMount(() => {
           <div class="api-content-reset">
             <div>API keys:</div>
             <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" :label="$t('Reset API Key')"
-                      @click="resetApiKey"
-            />
+              @click="resetApiKey" />
           </div>
           <div class="api-content-desc">
             <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
             <div class="flex-1">
-              {{ $t('IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently have within the workspace.') }}
+              {{ $t('IMPORTANT: The content that can be accessed with this API key is related to the permissions you
+              currently have within the workspace.') }}
             </div>
           </div>
           <div class="api-content-key">

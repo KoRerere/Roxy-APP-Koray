@@ -1,4 +1,5 @@
 import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
+import { $t } from '/@/locales'
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
@@ -6,18 +7,18 @@ const columnsConfig = {
   key: 'account.list',
   data: [
     {
-      title: 'Platform & Password',
+      title: $t('Platform & Password'),
       key: 'status',
       disabledToggle: true,
       slot: 'platform',
     },
     {
-      title: 'Alias',
+      title: $t('Alias'),
       key: 'link',
       getText: (data: Data) => data.platformName || '--',
     },
     {
-      title: 'Related Profiles',
+      title: $t('Related Profiles'),
       slot: 'related',
     },
   ],

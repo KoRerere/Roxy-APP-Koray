@@ -102,12 +102,12 @@ async function deleteFilterItem(item: any) {
     header: $t('Are you sure to delete the views you selected?'),
     message: $t('Don\'t worry, your profiles won\'t be delete.'),
     rejectProps: {
-      label: $t('cancel'),
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('confirm'),
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {
