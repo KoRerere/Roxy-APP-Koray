@@ -2,10 +2,8 @@
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import ryButton from '/@/components/ry-button'
 import simplePopup from '/@/components/simplePopup'
-import { $t } from '/@/locales'
-import { deepClone, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
+import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
   currentFilter: {
@@ -175,16 +173,6 @@ function resetFilters() {
     createTime: condition.startDate && condition.endDate ? [condition.startDate, condition.endDate].join('~') : undefined,
   }
 
-  // if (_props.currentFilter.filter_condition) {
-  //   setInputValueByFormData(_props.filtersMenu, {
-  //     ...params,
-  //     createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
-  //   })
-  // }
-  // else {
-
-  // }
-
   _props.filtersMenu.forEach((item) => {
     item.value = params[item.name]
     if (Array.isArray(item.items)) {
@@ -246,15 +234,15 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
-      <ryButton class="filter-list-button" text @click="showMenu">
+      <RyButton class="filter-list-button" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
         <span v-if="!filterTagList.length">Add filters</span>
-      </ryButton>
+      </RyButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
-      <ryButton text severity="secondary" size="small" label="Reset" @click="resetFilters" />
+      <RyButton text severity="secondary" size="small" label="Reset" @click="resetFilters" />
       <template v-if="filterTagList.length">
-        <ryButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
+        <RyButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
         <SplitButton v-else severity="info" size="small" label="Save" :model="splitButtonItems" @click="modifyFilter" />
       </template>
       <div>|</div>
@@ -268,11 +256,11 @@ async function modifyFilter() {
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @change="onChange(item)" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </div>
       </a>
     </template>

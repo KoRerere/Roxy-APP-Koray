@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
@@ -7,6 +6,7 @@ import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import InputBase from '/@/components/ry-form/input-base.vue'
 import { setColumns } from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import columnsRow from './columns'
 
 const props = defineProps({
@@ -17,7 +17,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['confirm'])
 
-const toast = useToast()
+const [showToast] = useResponseToast()
 
 const columns = setColumns(columnsRow.data, {
   filters: ['actions'],
@@ -48,8 +48,8 @@ async function tableRequest(params: any) {
 }
 
 async function addRemark(platformRemarks: string, row: any) {
-  const { msg } = await editAccount({ ...row, platformRemarks })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  const { code, msg } = await editAccount({ ...row, platformRemarks })
+  showToast(code, msg, 5000)
   tableRef.value?.refresh()
 }
 
@@ -63,7 +63,7 @@ function handleSave() {
 </script>
 
 <template>
-  <drawerContent title="账号列表" v-bind="$attrs">
+  <drawerContent :title="$t('account list')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"

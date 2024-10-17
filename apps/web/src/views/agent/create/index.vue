@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import batchProxies from './components/batch-proxies.vue'
 import RecommendedProxies from './components/recommended-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
 
 const router = useRouter()
-const toast = useToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 const tabs = ref([
-  { title: '单个代理', value: 'single' },
-  { title: '批量代理', value: 'batch' },
+  { title: $t('Single Proxy'), value: 'single' },
+  { title: $t('Multi Proxies'), value: 'batch' },
   { title: $t('Recommended Proxies'), value: 'recommended' },
 ])
 const tabsValue = ref('single')
@@ -21,9 +21,7 @@ async function saveProxies(proxies: any) {
   if (code === 0) {
     router.replace({ name: 'agent-list' })
   }
-  else {
-    toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 5000 })
-  }
+  onlyErrorToast(code, msg)
 }
 
 function cancel() {
@@ -35,7 +33,7 @@ function cancel() {
   <div class="flex flex-col h-full w-full overflow-hidden">
     <div class="flex justify-end proxies-header">
       <div class="flex-1">
-        Proxies
+        {{ $t('Proxies') }}
       </div>
     </div>
     <Tabs v-model:value="tabsValue">

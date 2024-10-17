@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { MenuItem } from 'primevue/menuitem'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
 
 const props = defineProps({
   type: {
@@ -52,18 +51,18 @@ function onChange() {
           @click.stop>
           <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop
             @change="onChange" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </label>
 
         <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
           @click.stop>
           <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </label>
 
         <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" :size="16" />
-          <span>{{ $t(item.label as string) }}</span>
+          <span>{{ item.label }}</span>
         </div>
       </a>
     </template>

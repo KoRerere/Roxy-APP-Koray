@@ -12,7 +12,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '创建代理',
+    default: '',
   },
 })
 const emits = defineEmits(['confirm'])
@@ -44,9 +44,9 @@ function onConfirm() {
     </div>
     <template #footer>
       <div class="flex items-center w-full gap-3">
-        <RyButton size="small" label="Test Proxy" icon="base/rx_ic_internet" severity="secondary" outlined
+        <RyButton size="small" :label="$t('Test Proxy')" icon="base/rx_ic_internet" severity="secondary" outlined
           @click="testProxy" />
-        <RyButton class="mx-auto mr-0" size="small" :label="original?.id ? 'Update Proxy' : 'Create Proxy'"
+        <RyButton class="mx-auto mr-0" size="small" :label="$t(original?.id ? 'Update Proxy' : 'Create Proxy')"
           severity="info" @click="onConfirm" />
       </div>
     </template>

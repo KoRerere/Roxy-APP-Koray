@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
+import { $t } from '/@/locales'
 import { checkCookieFormat, clearInputsValue, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData } from '/@/utils'
 
 const props = defineProps({
@@ -11,7 +12,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '创建账号',
+    default: '',
   },
   showCreateMore: {
     type: Boolean,
@@ -38,16 +39,16 @@ async function getInputs(data: any = {}) {
   const inputs = reactive([
     {
       type: 'text',
-      label: '平台名称',
+      label: $t('Alias'),
+      placeholder: $t('Better name to identify'),
       name: 'platformName',
-      placeholder: 'Better name to identify',
       tooltip: 'man!',
     },
     {
       type: 'select',
-      label: '平台URL',
+      label: $t('Website'),
+      placeholder: $t('Search or enter your platform URL'),
       name: 'platformUrl',
-      placeholder: 'Search or enter your platform URL',
       value: null,
       options: platformOptions,
       required: true,
@@ -60,30 +61,30 @@ async function getInputs(data: any = {}) {
     },
     {
       type: 'text',
-      label: '平台账号',
+      label: $t('Account name'),
+      placeholder: $t('Username for your website'),
       name: 'platformUserName',
-      placeholder: 'Username for your website',
       tooltip: 'mamba out!',
     },
     {
       type: 'password',
-      label: '平台密码',
+      label: $t('Password'),
+      placeholder: $t('Password for your server'),
       name: 'platformPassword',
-      placeholder: 'Password for your server',
       tooltip: 'man!',
     },
     {
       type: 'text',
-      label: '2FA密钥',
+      label: $t('2FA'),
+      placeholder: $t('32-character Keys'),
       name: 'platformEfa',
-      placeholder: '32-digit Keys',
       tooltip: 'mamba out!',
     },
     {
       type: 'textarea',
-      label: '平台cookies',
+      label: 'Cookies',
       name: 'platformCookies',
-      placeholder: 'Paste JSON format or upload cookies JSON file',
+      placeholder: $t('Paste JSON format or upload cookies JSON file'),
       errorMsg: 'Invalid cookie format',
       tooltip: 'man!',
       icon: 'base/rx_ic_attachment',
@@ -146,9 +147,9 @@ onBeforeMount(() => {
     <template #footer>
       <div class="flex flex-1 justify-end gap-3">
         <RemarkIcon class="remark" :value="original?.platformRemarks" :on-confirm="addRemark" />
-        <RyButton v-if="!isEdit && showCreateMore" size="small" label="Save & Create more" severity="secondary" outlined
-          @click="onConfirm(true)" />
-        <RyButton size="small" :label="isEdit ? 'Edit account' : 'Create account'" severity="info"
+        <RyButton v-if="!isEdit && showCreateMore" size="small" :label="$t('Save & Create more')" severity="secondary"
+          outlined @click="onConfirm(true)" />
+        <RyButton size="small" :label="$t(isEdit ? 'Edit Account' : 'Create Account')" severity="info"
           @click="onConfirm(false)" />
       </div>
     </template>

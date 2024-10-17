@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { $t } from '/@/locales'
 import { useTagsActions } from './hook'
 
 const toast = useToast()
@@ -11,12 +12,12 @@ const [onEdit] = useTagsActions()
 
 const columns = ref([
   {
-    title: 'Tag',
+    title: $t('Tag'),
     key: 'name',
     slot: 'tag',
   },
   {
-    title: 'Related Profiles',
+    title: $t('Related Profiles'),
     key: 'relatedProfiles',
     slot: 'related',
   },
@@ -24,13 +25,13 @@ const columns = ref([
 
 const operation = ref([
   {
-    label: 'Edit',
+    label: $t('Edit'),
     name: 'edit',
     icon: 'base/rx_ic_edit',
     quick: true,
   },
   {
-    label: 'Delete',
+    label: $t('Delete'),
     name: 'delete',
     icon: 'base/rx_ic_bin_1',
     quick: true,
@@ -77,10 +78,10 @@ async function deleteTag(data: any) {
   <div class="flex-ovh-1 flex-col h-full">
     <div class="flex justify-between items-center px-4 py-3 gap-2">
       <div class="flex-1 total-tags">
-        All Tags ({{ totalNum }})
+        {{ $t('All Tags') }} ({{ totalNum }})
       </div>
-      <ryButton size="small" severity="secondary" icon="base/rx_ic_plus" label="Add tag" @click="editTag()" />
-      <ryButton size="small" severity="secondary" icon="base/rx_ic_bin_1" label="Delete" disabled />
+      <ryButton size="small" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
+      <ryButton size="small" severity="secondary" icon="base/rx_ic_bin_1" :label="$t('Delete')" disabled />
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->

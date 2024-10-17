@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
 import useColumns from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
@@ -17,10 +17,10 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from '
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
 
-const toast = useToast()
 const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
+const [showToast] = useResponseToast()
 
 const filtersMenu = ref(getCustomFilters())
 const dataList = ref()
@@ -56,7 +56,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 function refreshUrl(datas: ProxyItem[]) {
   datas.forEach(async (item) => {
     const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
-    toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: item.refreshUrl, life: 5000 })
+    showToast(isOK ? 0 : -1, item.refreshUrl as string, 5000)
   })
 }
 
@@ -75,14 +75,14 @@ function testAllProxy() {
 }
 
 async function addRemark(remark: string, data: any) {
-  await onEdit({ ...data, remark })
-  toast.add({ severity: 'success', summary: 'Success', detail: '添加成功', life: 5000 })
+  const { code, msg } = await onEdit({ ...data, remark })
+  showToast(code, msg, 5000)
   tableRef.value?.refresh()
 }
 
 async function onEditConfirm(data: any) {
-  await onEdit(data)
-  toast.add({ severity: 'success', summary: 'Success', detail: '修改成功', life: 5000 })
+  const { code, msg } = await onEdit(data)
+  showToast(code, msg, 5000)
   tableRef.value?.refresh()
   drawer.visible = false
 }
@@ -142,7 +142,7 @@ function onRefreshTable() {
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[auto]">
     <template #container="{ closeCallback }">
-      <editProxy :data="drawer.data" title="编辑代理" @close="closeCallback" @confirm="onEditConfirm" />
+      <editProxy :data="drawer.data" :title="$t('Edit proxy')" @close="closeCallback" @confirm="onEditConfirm" />
     </template>
   </Drawer>
 </template>

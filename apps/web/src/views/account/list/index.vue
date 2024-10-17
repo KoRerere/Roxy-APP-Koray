@@ -2,7 +2,6 @@
 import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
@@ -12,15 +11,16 @@ import ryButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import accountCreate from '/@/views/account/create'
 import columnsRow from './columns'
 
 const tableRef = useTemplateRef('accountTable')
 
-const toast = useToast()
 const confirm = useConfirm()
-
+const [showToast] = useResponseToast()
 const [columns] = useColumns(columnsRow)
 const role = useRoleStore()
 const dialog = useDialog()
@@ -28,20 +28,20 @@ const dialog = useDialog()
 const operation = ref([
   {
     name: 'edit',
-    label: '编辑',
+    label: $t('Edit'),
     icon: 'base/rx_ic_edit',
     power: !role.isViewer,
     quick: true,
   },
   {
     name: 'remark',
-    label: '备注',
+    label: $t('Add Notes'),
     icon: 'base/rx_ic_doc_add',
     power: !role.isViewer,
   },
   {
     name: 'delete',
-    label: '删除',
+    label: $t('Delete'),
     icon: 'base/rx_ic_bin_1',
     power: !role.isViewer,
     quick: true,
@@ -52,7 +52,7 @@ const operation = ref([
 const drawer = reactive({
   visible: false,
   data: {},
-  title: '创建账号',
+  title: '',
   confirm: async (formData: UserMdfPlatformInfoCreatePayload) => {
     const _data = formData.id
       ? await editAccount(formData)
@@ -65,12 +65,12 @@ function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
       drawer.data = {}
-      drawer.title = '创建账号'
+      drawer.title = $t('Create Account')
       drawer.visible = true
       break
     case 'edit':
       drawer.data = data
-      drawer.title = '编辑账号'
+      drawer.title = $t('Edit Account')
       drawer.visible = true
       break
     case 'remark':
@@ -103,13 +103,13 @@ function onRemark(data: any) {
     },
     data: {
       props: {
-        title: 'Add notes to profile',
-        content: 'Please add notes down below.',
+        title: $t('Add notes to profile'),
+        content: $t('Please add notes down below.'),
         inputs: [
           {
             type: 'textarea',
             name: 'platformRemarks',
-            placeholder: 'Your notes here...',
+            placeholder: $t('Your notes here...'),
             value: data.platformRemarks,
           },
         ],
@@ -122,29 +122,29 @@ function onRemark(data: any) {
 }
 
 async function addRemark(platformRemarks: string, data: any) {
-  const { msg } = await editAccount({ ...data, platformRemarks })
-  toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+  const { code, msg } = await editAccount({ ...data, platformRemarks })
+  showToast(code, msg, 5000)
   tableRef.value?.refresh()
 }
 
 function deletePopup(data: any) {
   const datas = [].concat(data)
   confirm.require({
-    header: '警告',
-    message: '您确定要删除此账号吗?',
+    header: $t('warn'),
+    message: $t('This operation is irreversible?'),
     rejectProps: {
-      label: '取消',
+      label: $t('Cancel'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: '确定',
+      label: $t('Confirm'),
       severity: 'danger',
     },
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
-      const { msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      toast.add({ severity: 'success', summary: '成功', detail: msg, life: 5000 })
+      const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
+      showToast(code, msg, 5000)
     },
   })
 }

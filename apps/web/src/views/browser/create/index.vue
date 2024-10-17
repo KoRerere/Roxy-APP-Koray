@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
 import accordionInputs from './components/accordion-inputs.vue'
@@ -13,17 +13,16 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 
 const router = useRouter()
-const toast = useToast()
 const { currentWorkspace } = useWorkspaceStore()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const isBatch = ref(false)
 const createCount = ref(1)
 createTableContext({ isBatch, createCount })
 
 const tabs = ref([
-  { title: '单个创建', value: 'single' },
-  { title: '批量创建', value: 'batch' },
-  { title: '批量导入', value: 'import' },
+  { title: $t('Single Profiles'), value: 'single' },
+  { title: $t('Multi Profiles'), value: 'batch' },
+  { title: $t('Import Profiles'), value: 'import' },
 ])
 const tabsValue = ref('single')
 const windowName = ref('Untitled profile')
@@ -79,7 +78,6 @@ function initFormInputs() {
 function onUpdateFinger() {
   ceateRandomFinger(previewInputs.value).then((data) => {
     Object.assign(original.value, data[0])
-    // console.log(toRaw(original.value))
   })
 }
 
@@ -89,7 +87,7 @@ async function getUserMaxCount() {
     maxWindowCount.value = Math.min(data.maxWindowCount, 100)
   }
   catch (error) {
-    console.log('🚀 ~ getUserMaxCount ~ error:', error)
+    onlyErrorToast(-1, error as string)
   }
 }
 
@@ -126,7 +124,7 @@ async function batchCreateProfile(params: any) {
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
-    toast.add({ severity: 'error', summary: '错误', detail: '代理数量不能大于创建窗口数量', group: 'tc', life: 5000 })
+    onlyErrorToast(-1, $t('The number of agents is greater than the number of profile'), 5000)
     return
   }
 
@@ -139,7 +137,7 @@ async function batchCreateProfile(params: any) {
 
 async function importProfile(params: any) {
   if (!fileAnalyzeData.value) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Please select a file to import.' })
+    onlyErrorToast(-1, $t('Please select a file to import.'), 5000)
     return
   }
   const fingerCount = fileAnalyzeData.value.excelData.length

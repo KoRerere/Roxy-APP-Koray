@@ -1,30 +1,32 @@
+import { $t } from '/@/locales'
+
 export function getSorts(params: any = {}) {
   return [
     {
-      label: '排序规则',
-      placeholder: '请选择排序规则',
+      label: $t('Sort by'),
+      placeholder: $t('please select sorting rules'),
       name: 'orderName',
       value: params.orderName ?? 'createTime',
       options: [
-        { label: '创建时间', value: 'createTime' },
-        { label: '修改时间', value: 'updateTime' },
-        { label: '最后打开时间', value: 'openTime' },
-        { label: '最后关闭时间', value: 'closeTime' },
-        { label: '代理检测时间', value: 'checkTime' },
-        { label: '窗口序号', value: 'windowSortNum' },
-        { label: '窗口名称', value: 'name' },
-        { label: '国家', value: 'lastCountry' },
+        { label: $t('creation time'), value: 'createTime' },
+        { label: $t('modify time'), value: 'updateTime' },
+        { label: $t('last opening time'), value: 'openTime' },
+        { label: $t('last closure time'), value: 'closeTime' },
+        { label: $t('agent detection time'), value: 'checkTime' },
+        { label: $t('window serial number'), value: 'windowSortNum' },
+        { label: $t('window name'), value: 'name' },
+        { label: $t('nation'), value: 'lastCountry' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
     {
-      label: '排序类型',
-      placeholder: '请选择排序类型',
+      label: $t('Order'),
+      placeholder: $t('please select sort type'),
       name: 'orderType',
       value: params.orderType ?? 'desc',
       options: [
-        { label: '降序', value: 'desc' },
-        { label: '升序', value: 'asc' },
+        { label: $t('desc'), value: 'desc' },
+        { label: $t('asc'), value: 'asc' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
@@ -34,8 +36,8 @@ export function getSorts(params: any = {}) {
 export function getOperation() {
   return [
     {
-      name: 'recover',
-      label: '恢复',
+      name: 'restore',
+      label: $t('Restore'),
       icon: 'base/rx_ic_refresh',
       classes: 'text-gray-500',
       quick: true,
@@ -43,7 +45,7 @@ export function getOperation() {
     },
     {
       name: 'delete',
-      label: '删除',
+      label: $t('Delete Permanently'),
       icon: 'base/rx_ic_bin_1',
       classes: 'text-red',
       quick: true,

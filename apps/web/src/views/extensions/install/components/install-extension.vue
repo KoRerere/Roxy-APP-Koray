@@ -110,16 +110,14 @@ onMounted(() => {
       <div>{{ $t('Install to:') }}</div>
       <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
         <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value"
-                     @change="onChange"
-        />
+          @change="onChange" />
         <label :for="category.value">{{ category.label }}</label>
       </div>
     </div>
     <div v-show="installType === partialInstall" class="h-60">
       <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
-               :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
-               selection-mode="multiple"
-      />
+        :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+        selection-mode="multiple" />
     </div>
     <div>
       <RxSvgIcon name="base/rx_ic_info" />
@@ -127,7 +125,8 @@ onMounted(() => {
     </div>
     <div class="footer">
       <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
-      <Button size="small" :label="$t('Save and install')" severity="info" :loading="loading" autofocus @click="confirm" />
+      <Button size="small" :label="$t('Save and install')" severity="info" :loading="loading" autofocus
+        @click="confirm" />
     </div>
   </div>
 </template>
