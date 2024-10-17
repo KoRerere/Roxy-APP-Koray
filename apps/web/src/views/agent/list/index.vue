@@ -107,9 +107,9 @@ function onRefreshTable() {
       <div class="flex-1">
         Proxies
       </div>
-      <RyButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create proxy"
+      <RyButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" :label="$t('Create Proxy')"
         @click="createProxy" />
-      <RyButton size="small" icon="base/rx_ic_speed_test" label="Test all" @click="testAllProxy" />
+      <RyButton size="small" icon="base/rx_ic_speed_test" :label="$t('Test all')" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->

@@ -12,6 +12,7 @@ import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
@@ -49,14 +50,15 @@ const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
-
 const [show] = useContextMenu()
+const workspaceStore = useWorkspaceStore()
 const filtersMenu = ref()
 const sorts = ref(getSorts())
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 
 const tableRef = useTemplateRef('windownTable')
+console.log('🚀 ~ workspaceStore:', workspaceStore.currentWorkspace)
 
 const drawer = reactive({
   type: 'proxyList',
@@ -452,7 +454,8 @@ defineExpose({
       </div>
     </template>
     <template #profile="{ data }">
-      <profile-info :data="data" @profile-operate="profileOperate($event, data)" />
+      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data"
+        @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />

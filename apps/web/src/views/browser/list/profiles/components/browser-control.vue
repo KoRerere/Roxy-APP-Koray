@@ -62,7 +62,7 @@ async function openBrowser() {
   <div class="flex items-center gap-2">
     <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
       <circle-progress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
-      <RxSvgIcon v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
+      <RxSvgIcon v-if="!browser.percent && !browser.pending" color="#12A3FC" name="base/rx_ic_chrome" />
       <span>{{ browser.complted ? 'View' : browser?.msg }}</span>
     </div>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />

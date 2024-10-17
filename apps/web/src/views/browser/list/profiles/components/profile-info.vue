@@ -1,9 +1,15 @@
 <script lang="ts" setup>
+import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
 import { useRoleStore } from '/@/stores/role'
 
+type CurrentWorkspace = UnwrapRowType<UserGetWorkspaceListListData>
+
 const props = defineProps({
+  currentWorkspace: {
+    type: Object as PropType<CurrentWorkspace>,
+  },
   data: {
     type: Object as PropType<any>,
     default: () => ({}),
@@ -147,8 +153,9 @@ function getAccountOperation() {
 
 <template>
   <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
-    <div class="w-[40px]">
-      {{ data.windowSortNum }}
+    <div>
+      <span class="profile-name">{{ currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase() }}-</span>
+      <span class="profile-num">{{ data.windowSortNum }}</span>
     </div>
     <div class="position-relative flex justify-between state" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
@@ -182,6 +189,21 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .profile {
   gap: var(--spacing-xl, 12px);
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+
+  &-name {
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: 'JetBrains Mono';
+  }
+
+  &-num {
+    font-family: 'JetBrains Mono';
+  }
 }
 
 .state {

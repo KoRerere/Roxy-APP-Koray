@@ -44,10 +44,9 @@ function onConfirm() {
     </div>
     <template #footer>
       <div class="flex items-center w-full gap-3">
-        <RyButton size="small" :label="$t('Test Proxy')" icon="base/rx_ic_internet" severity="secondary" outlined
+        <RyButton size="small" icon="base/rx_ic_internet" :label="$t('Test Proxy')" severity="secondary" outlined
           @click="testProxy" />
-        <RyButton class="mx-auto mr-0" size="small" :label="$t(original?.id ? 'Update Proxy' : 'Create Proxy')"
-          severity="info" @click="onConfirm" />
+        <RyButton class="mx-auto mr-0" size="small" :label="$t('Save Proxy')" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawer-content>
