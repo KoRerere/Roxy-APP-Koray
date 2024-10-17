@@ -74,11 +74,13 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
   const result = await checkMode(params)
 
-  if (result.info && result.data) {
-    result.data.region ||= result.data.region_name
-    result.data.city ||= result.data.city_name
-    result.data.country ||= result.data.country_name || result.data.country_long
-    result.data.country_code ||= result.data.country_short
+  console.log('proxyDetection result', result)
+
+  if (result) {
+    result.region ||= result.region_name
+    result.city ||= result.city_name
+    result.country ||= result.country_name || result.country_long
+    result.country_code ||= result.country_short
   }
 
   return result
