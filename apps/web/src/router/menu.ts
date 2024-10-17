@@ -107,7 +107,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'history-logs',
         name: 'history-logs',
-        meta: { title: $t('HistoryLogs'), icon: 'base/rx_ic_doc_data' },
+        meta: { title: $t('History Logs'), icon: 'base/rx_ic_doc_data' },
         component: () => import('/@/views/history-logs'),
       },
       {
