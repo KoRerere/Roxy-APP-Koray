@@ -25,7 +25,7 @@ const tabs = ref([
   { title: $t('Import Profiles'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const windowName = ref('Untitled profile')
+const windowName = ref('Untitled Profile')
 const maxWindowCount = ref()
 const fileAnalyzeData = ref()
 const rawMainSetting: any = ref([])

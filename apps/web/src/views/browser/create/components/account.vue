@@ -83,8 +83,8 @@ function replaceData(data: any) {
       <template #container="{ closeCallback }">
         <accountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }"
           @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
-        <accountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback"
-          @confirm="onConfirm" />
+        <accountCreate v-if="drawer.type === 'create'" :title="$t('Create Account')" :data="drawer.data"
+          @close="closeCallback" @confirm="onConfirm" />
       </template>
     </Drawer>
   </div>

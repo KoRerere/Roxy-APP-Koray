@@ -148,11 +148,8 @@ onBeforeMount(() => {
       <div class="flex flex-1 justify-end gap-3">
         <RemarkIcon class="remark" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RyButton v-if="!isEdit && showCreateMore" size="small" :label="$t('Save & Create more')" severity="secondary"
-                  outlined @click="onConfirm(true)"
-        />
-        <RyButton size="small" :label="$t(isEdit ? 'Edit Account' : 'Create Account')" severity="info"
-                  @click="onConfirm(false)"
-        />
+          outlined @click="onConfirm(true)" />
+        <RyButton size="small" :label="$t('Save Account')" severity="info" @click="onConfirm(false)" />
       </div>
     </template>
   </drawer-content>

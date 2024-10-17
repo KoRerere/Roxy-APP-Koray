@@ -146,7 +146,7 @@ const paginatorConfig = reactive({
     _request()
   },
   onRowsChange() {
-    paginatorConfig.page = Math.ceil(paginatorConfig.first / paginatorConfig.rows)
+    paginatorConfig.page = Math.max(Math.ceil(paginatorConfig.first / paginatorConfig.rows), 1)
     _request()
   },
 })
@@ -233,7 +233,7 @@ defineExpose({
 
 <template>
   <div class="position-relative w-full h-full flex flex-col">
-    <div v-if="showTableHeader" class="flex items-center rxtable-header">
+    <div v-if="showTableHeader" class="flex items-center rx-header">
       <div class="flex flex-auto gap-2">
         <TableFilter :filters="_filters" @change="onChangeParams('filters', $event)" />
         <slot name="header-extra" />
@@ -260,7 +260,7 @@ defineExpose({
             </div>
           </slot>
         </template>
-        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" class="rx-selection" />
+        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
           :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
           :pt="{ columntitle: cssmodule['column-title'] }">
@@ -321,22 +321,24 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-.rxtable {
-  &-header {
-    display: flex;
-    padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-    justify-content: space-between;
-    align-items: center;
-    align-self: stretch;
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
+.rx-header {
+  display: flex;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 
-:deep(.p-paginator-content-start) {
-  flex: 1;
+:deep(.p-checkbox-box) {
+  width: 16px;
+  height: 16px;
 }
 
 .rx-paginator {
+  :deep(.p-paginator-content-start) {
+    flex: 1;
+  }
 
   :deep(.p-paginator-prev),
   :deep(.p-paginator-next),
@@ -364,6 +366,38 @@ defineExpose({
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),
       0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+  }
+
+  :deep(.p-inputtext) {
+    padding: 4px 4px 4px 6px;
+    width: 60px;
+    border-radius: var(--radius-sm, 4px);
+    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+
+    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    font-family: Inter;
+    font-size: 12px;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
+
+  :deep(.p-select) {
+    padding: 4px 4px 4px 6px;
+    gap: 6px;
+    width: 60px;
+    border-radius: var(--radius-sm, 4px);
+    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+
+    .p-select-label {
+      padding: 0;
+    }
+
+    .p-select-dropdown {
+      width: auto;
+    }
   }
 
   &-jump {

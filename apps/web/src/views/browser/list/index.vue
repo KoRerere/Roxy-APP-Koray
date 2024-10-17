@@ -17,24 +17,22 @@ const dialog = useDialog()
 const role = useRoleStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
-const rawTabs = [
-  { label: $t('All Profiles'), id: '1000', name: 'profiles' },
-  { label: $t('Trash'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'recycle' },
-]
+const allProfiles = { label: $t('All Profiles'), id: '1000', name: 'profiles' }
+const trash = { label: $t('Trash'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'trash' }
 
-const tabs = ref(rawTabs.slice())
+const tabs = ref([allProfiles])
 
 const sortTabs = computed({
   get() {
-    return tabs.value.length > 2 ? tabs.value.slice(1, -1) : []
+    return tabs.value.length > 1 ? tabs.value.slice(1) : []
   },
   set(value: any) {
-    tabs.value.splice(1, tabs.value.length - 2, ...value)
+    tabs.value.splice(1, tabs.value.length - 1, ...value)
   },
 })
 
 const active = ref(tabs.value[0].id)
-const isRecycle = computed(() => active.value === '1001')
+const isRecycle = computed(() => active.value === trash.id)
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 async function getFilterList() {
@@ -43,11 +41,10 @@ async function getFilterList() {
     const list = data.map((item, index) => ({
       ...item,
       id: `${index}`,
-      icon: '',
       name: item.filter_name,
       label: item.filter_name,
     }))
-    tabs.value = [rawTabs[0], ...list, rawTabs[1]]
+    tabs.value = [allProfiles, ...list]
   }
   onlyErrorToast(code, msg)
 }
@@ -56,8 +53,7 @@ async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterList()
 
   if (!isEdit) {
-    const last = tabs.value.length - 2
-    active.value = tabs.value[last].id
+    active.value = tabs.value[tabs.value.length - 1].id
   }
 }
 
@@ -119,7 +115,7 @@ async function deleteFilterItem(item: any) {
           updateFilterTabs()
         }
         else {
-          tabs.value = tabs.value.filter((tab: any) => tab.name !== item.label)
+          tabs.value = tabs.value.filter((tab: any) => tab.label !== item.label)
         }
       }
       catch (error) {
@@ -145,7 +141,7 @@ function showPopover(event: Event) {
 }
 
 async function hidePopover() {
-  const sort_data = tabs.value.slice(1, -1).map((item: any, index) => ({ name: item.label, sort: index }))
+  const sort_data = tabs.value.slice(1).map((item: any, index) => ({ name: item.label, sort: index }))
   const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
   onlyErrorToast(code, msg)
 }
@@ -168,16 +164,19 @@ onBeforeMount(() => {
       </div>
     </div>
     <div class="flex items-center justify-between">
-      <Tabs v-model:value="active" class="flex-1 overflow-hidden" scrollable>
+      <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
             <div class="flex items-center text-inherit">
-              <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />
-              <span>{{ item.label }}</span>
+              {{ item.label }}
             </div>
           </Tab>
         </TabList>
       </Tabs>
+      <div class="flex-1 flex items-center text-inherit" @click="active = trash.id">
+        <RxSvgIcon name="base/rx_ic_bin_2" />
+        <span>{{ $t('Trash') }}</span>
+      </div>
       <div @click="showPopover">
         <RxSvgIcon name="base/rx_ic_gear" class="cursor-pointer" />
       </div>
@@ -190,10 +189,10 @@ onBeforeMount(() => {
     </div>
   </div>
 
-  <ryPopover ref="popRef" @hide="hidePopover">
+  <RyPopover ref="popRef" @hide="hidePopover">
     <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>{{ rawTabs[0].label }}</span>
+      <span>{{ allProfiles.label }}</span>
     </div>
     <VueDraggable v-model="sortTabs" :animation="150">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
@@ -205,9 +204,9 @@ onBeforeMount(() => {
     </VueDraggable>
     <div class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>{{ rawTabs[1].label }}</span>
+      <span>{{ trash.label }}</span>
     </div>
-  </ryPopover>
+  </RyPopover>
 </template>
 
 <style scoped lang="scss">
