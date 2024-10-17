@@ -108,7 +108,7 @@ const drawer = reactive({
 })
 
 watch(() => props.currentFilter, (params: any) => {
-  if (params && params.name !== 'recycle') {
+  if (params) {
     getCustomFilters(params.filter_condition || {})
       .then((data) => {
         filtersMenu.value = data
