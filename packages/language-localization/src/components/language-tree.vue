@@ -112,19 +112,12 @@ function handleSave() {
     currentRow.value.hasChanged = true
   }
   const isSourceLangChange = currentRow.value.fileName === sourceLangKey
-  fetch('./api/saveTranslate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(currentRow.value),
-  }).then(res => res.text()).then((data) => {
-    console.log('/api/saveTranslate', data)
-    isSourceLangChange && getLangs()
-  })
+
   if (isSourceLangChange) {
     currentRow.value.key = currentRow.value.value
   }
+
+  isSourceLangChange && getLangs()
 }
 
 defineExpose({

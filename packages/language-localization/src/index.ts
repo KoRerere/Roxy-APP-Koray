@@ -5,17 +5,29 @@ import { exec } from 'node:child_process'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
+import { genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
 
 interface OptionsType {
   targetDir: string
+  langFileNames: string[]
 }
-
 const baseUrl = '/__language-localization__'
 
 let googleTranslator: GoogleTranslator
 
 export default (options: OptionsType): PluginOption => {
-  const { targetDir } = options
+  const { targetDir, langFileNames } = options
+
+  let timer: NodeJS.Timeout
+  const debounceGenLangFiles = () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      genLangFiles(langFileNames, targetDir)
+    }, 5000)
+  }
+
+  // genLangFiles(langFileNames, targetDir)
+
   return {
     name: 'roxy:language-localization',
     apply: 'serve',
@@ -60,16 +72,19 @@ export default (options: OptionsType): PluginOption => {
             const data = await readFile(filePath, 'utf-8')
             const jsonData = JSON.parse(data)
             jsonData[key] = value
+            // 如果更新的是英文文件，需要更新其他文件中的对应键
             if (fileName === 'en') {
               jsonData[value] = value
               delete jsonData[key]
+              // 更新使用到该键的文件
+              await scanFilesAndReplaceKey(key, value)
               // 更新其他语言文件
               const files = await readdir(targetDir, { withFileTypes: true })
               const promiseArr = files.map(async (file) => {
                 if (file.isFile() && file.name.endsWith('.json')) {
                   const data = await readFile(join(targetDir, file.name), 'utf-8')
                   const json = JSON.parse(data)
-                  json[value] = ''
+                  json[value] = json[key]
                   delete json[key]
                   await writeFile(join(targetDir, file.name), JSON.stringify(json, replacer, 2))
                 }

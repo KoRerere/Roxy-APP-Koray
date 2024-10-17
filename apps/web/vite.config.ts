@@ -3,7 +3,7 @@
 import type { UserConfig } from 'vite'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import LanguageLocalization from '@roxy/language-localization/vite'
-import { extractI18n, genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
+import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
@@ -94,8 +94,11 @@ const config: UserConfig = {
       },
     }),
     vueJsx(),
-    extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
-    LanguageLocalization({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs') }),
+    // extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
+    LanguageLocalization({
+      targetDir: join(PACKAGE_ROOT, 'src/locales/langs'),
+      langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'],
+    }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
     svgLoader({

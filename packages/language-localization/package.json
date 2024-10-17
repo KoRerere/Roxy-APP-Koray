@@ -21,7 +21,8 @@
   "dependencies": {
     "@roxy/puppeteer-google-translate": "workspace:*",
     "body-parser": "^1.20.3",
-    "es-toolkit": "^1.24.0",
+    "es-toolkit": "^1.25.2",
+    "glob": "^11.0.0",
     "serve-static": "^1.16.2"
   },
   "devDependencies": {
@@ -31,15 +32,15 @@
     "@types/serve-static": "^1.15.7",
     "@unocss/reset": "^0.63.4",
     "@vitejs/plugin-vue": "^5.1.4",
-    "element-plus": "^2.8.4",
-    "sass-embedded": "^1.79.4",
-    "typescript": "^5.6.2",
+    "element-plus": "^2.8.5",
+    "sass-embedded": "^1.79.5",
+    "typescript": "^5.6.3",
     "unocss": "^0.63.4",
     "unplugin-auto-import": "^0.18.3",
     "unplugin-vue-components": "^0.27.4",
-    "vite": "^5.4.8",
-    "vite-plugin-dts": "^4.2.3",
-    "vue": "^3.5.11",
+    "vite": "^5.4.9",
+    "vite-plugin-dts": "^4.2.4",
+    "vue": "^3.5.12",
     "vue-tsc": "^2.1.6"
   }
 }
