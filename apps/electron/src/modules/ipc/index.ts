@@ -10,7 +10,7 @@ import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
-import { store } from '/@/modules/store'
+import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
@@ -97,6 +97,8 @@ ipcMain.on('browser:getOpenedBrowser', () => {
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
   store.userId = userInfo.userId
+  // 重新获取用户配置
+  fetchUserConfig()
   // aliOSS.init()
 })
 

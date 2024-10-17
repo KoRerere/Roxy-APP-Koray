@@ -2,6 +2,7 @@
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
+import { $t } from '/@/locales'
 
 type Message = UserGetNotifyListData['data'][0]
 
@@ -16,13 +17,13 @@ const pop = ref()
 const tabs = ref<Tab[]>([
   {
     value: 'teams',
-    title: 'Teams',
+    title: $t('Teams'),
     list: [],
     noRead: 0,
   },
   {
     value: 'sys',
-    title: 'System',
+    title: $t('System'),
     list: [],
     noRead: 0,
   },
@@ -93,7 +94,7 @@ onMounted(() => {
             {{ $t('Message') }}
           </div>
           <RyButton severity="secondary" :class="message.read" size="small" text icon="base/rx_ic_done"
-                    label="Mark all as read" @click="markAllAsRead"
+                    :label="$t('Mark all as read')" @click="markAllAsRead"
           />
         </div>
         <Tabs v-model:value="tabsValue">

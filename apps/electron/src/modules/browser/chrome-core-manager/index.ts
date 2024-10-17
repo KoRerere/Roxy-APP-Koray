@@ -19,8 +19,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
   /** 正在使用中的内核 */
   get usingCores() {
-    const cores = [...browserManager.openedBrowserMap.values()]
-      .map(browserItem => browserItem.winInfo.coreVersion)
+    const cores = [...browserManager.openedBrowserMap.values()].map(browserItem => browserItem.winInfo.coreVersion)
     return new Set(cores)
   }
 
@@ -69,7 +68,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
     const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
-    console.log('fetchAvailableCoreList', result)
+    console.log('fetchAvailableCoreList', JSON.stringify(result, null, 2))
     this.availableCoreList = result.data.rows
     return this.availableCoreList
   }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { $t } from '/@/locales'
+
 const collapsed = defineModel('collapsed', { default: false })
 
 const list = [
   {
-    text: 'Hide',
+    text: $t('Hide'),
     icon: 'base/rx_ic_fold_right',
     handler() {
       collapsed.value = !collapsed.value

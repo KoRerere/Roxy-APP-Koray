@@ -18,7 +18,7 @@ function onEmojiSelect(emoji: any) {
 async function showEmojiPicker(event: MouseEvent) {
   if (props.disabled)
     return
-  const emojiInstance = new Picker({ data, onEmojiSelect })
+  const emojiInstance = new Picker({ data, onEmojiSelect, theme: 'light' })
   op.value?.toggle(event)
   await nextTick()
   emojiContainerRef.value?.appendChild(emojiInstance)
