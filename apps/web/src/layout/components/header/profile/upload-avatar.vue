@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NameAvatar from '/@/components/name-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar.vue'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 
@@ -39,8 +39,8 @@ async function removeAvatar() {
 
 <template>
   <div class="upload-area">
-    <img v-if="previewUrl" class="upload-area-avatar" :src="previewUrl">
-    <NameAvatar v-else :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100" :font-size="52" />
+    <RxAvatar :avatar="previewUrl" :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100"
+      :font-size="52" />
     <div class="upload-area-buttons">
       <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete"
         :label="$t('Remove')" @click="removeAvatar" />

@@ -91,7 +91,7 @@ function operationHandler(item: any) {
       onRadioChose(item)
       break
     case 'Checkbox':
-      openChild(item)
+      openCheckbox(item)
       break
   }
 }
@@ -134,7 +134,7 @@ function onSwitch(item: any, value: any = true) {
   onFilterChange()
 }
 
-function openChild(item: any) {
+async function openCheckbox(item: any) {
   if (item.options) {
     sleep(20).then(() => {
       isChildren.value = true

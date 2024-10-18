@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { API } from '/@/api'
-import NameAvatar from '/@/components/name-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -32,6 +32,7 @@ const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 
 // const styles = useCssModule()
+console.log('🚀 ~ openMenu ~ props.labels:', props.labels)
 
 async function openMenu(event: any) {
   const tagList = await getTags()
@@ -69,15 +70,7 @@ async function getProjectMember(): Promise<Operation[]> {
   return data.rows.map(item => ({
     value: `u_${item.userId}`,
     render: () => {
-      return (
-        <>
-          {
-            item.avatar
-              ? <img src={item.avatar} class="w-6 h-6 rounded-full" />
-              : <NameAvatar size={24} fontSize={12} name={item.userName?.slice(0, 2)} color={item.avatarColor}></NameAvatar>
-          }
-        </>
-      )
+      return (<RxAvatar avatar={item.avatar} size={24} fontSize={12} name={item.userName?.slice(0, 2)} color={item.avatarColor} />)
     },
   }))
 }
@@ -101,14 +94,18 @@ function onAddTag() {
       severity="secondary" size="small" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <div v-for="label in labels" :key="label.labelId" class="select-none cursor-pointer label">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
-            :fill="label.labelColor" />
-        </svg>
-        <div @click.stop="openMenu">
-          {{ label.labelName }}
-        </div>
+        <RxAvatar v-if="`${label.labelId}`.startsWith('u_')" :avatar="label.avatar" :name="label.labelName?.slice(0, 2)"
+          :color="label.labelColor" :size="24" :font-size="12" @click.stop="openMenu" />
+        <template v-else>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
+              :fill="label.labelColor" />
+          </svg>
+          <div @click.stop="openMenu">
+            {{ label.labelName }}
+          </div>
+        </template>
       </div>
     </template>
   </div>
