@@ -69,9 +69,6 @@ async function deleteHandler(datas: any) {
 
 <template>
   <div class="flex flex-col flex-1 proxies">
-    <div class="proxies-header">
-      {{ $t('Trash') }}
-    </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
