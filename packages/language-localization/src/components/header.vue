@@ -26,9 +26,9 @@ function handleCommit() {
     '提示',
   )
     .then(() => {
-      return fetch('./api/commit').then(res => res.text()).then((data) => {
+      return fetch('./api/commit').then(res => res.json()).then((data) => {
         console.log('提交结果: ', data)
-        if (data === 'ok') {
+        if (data.code === 0) {
           ElMessage.success('提交成功')
         }
         else {
@@ -36,6 +36,18 @@ function handleCommit() {
         }
       })
     })
+}
+
+function handlePullCode() {
+  return fetch('./api/pull-code').then(res => res.json()).then((data) => {
+    console.log('拉去代码: ', data)
+    if (data.code === 0) {
+      ElMessage.success('拉取成功')
+    }
+    else {
+      ElMessage.error(data)
+    }
+  })
 }
 </script>
 
@@ -47,6 +59,9 @@ function handleCommit() {
       </el-button>
     </div>
     <div>
+      <el-button type="primary" @click="handlePullCode">
+        拉取代码
+      </el-button>
       <el-button type="primary" @click="handleCommit">
         提交修改
       </el-button>
