@@ -5,12 +5,15 @@ import { exec } from 'node:child_process'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
-import { genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
+import { genKeysPositionMap, genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
 import { runGitCommands } from './utils/run-git-commands'
 
 interface OptionsType {
+  /** 语言文件目录 */
   targetDir: string
+  /** 语言文件名 */
   langFileNames: string[]
+  /** 是否立即生成语言文件 */
   immediate?: boolean
 }
 const baseUrl = '/__language-localization__'
@@ -42,11 +45,12 @@ export default (options: OptionsType): PluginOption => {
         const url = req.url
         // 获取语言列表
         if (url === '/getLangs') {
+          const keysPositionMap = Object.fromEntries(await genKeysPositionMap())
           const files = await readdir(targetDir, { withFileTypes: true })
           const promiseArr = files.map(async (file) => {
             if (file.isFile() && file.name.endsWith('.json')) {
               const data = await readFile(join(targetDir, file.name), 'utf-8')
-              return { fileName: file.name.replace('.json', ''), body: JSON.parse(data) }
+              return { fileName: file.name.replace('.json', ''), body: JSON.parse(data), keysPositionMap }
             }
           })
           const result = await Promise.all(promiseArr)
