@@ -3,6 +3,7 @@ import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
 import { useRoleStore } from '/@/stores/role'
+import { strConcat } from '/@/utils'
 
 type CurrentWorkspace = UnwrapRowType<UserGetWorkspaceListListData>
 
@@ -42,7 +43,7 @@ const list = computed(() => [
     key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
     svg: isProxy.value ? `country-code/${data.value.lastCountry}` : 'base/rx_ic_plus',
-    tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
+    tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}${strConcat('/', data.value.lastCity) || ''}\nIP: ${data.value.lastIp || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
   },
   {
     key: 'account',

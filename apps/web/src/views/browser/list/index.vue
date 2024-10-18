@@ -154,16 +154,13 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="profile-header">
-      <div class="flex items-center gap-2.5">
-        <RxSvgIcon name="base/rx_ic_browser" />
-        <span>{{ $t('All Profiles') }}</span>
-      </div>
+      <div>{{ $t('All Profiles') }}</div>
       <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
         <div> {{ $t('Manage Category') }}</div>
       </div>
     </div>
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between filter-tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList>
           <Tab v-for="item in tabs" :key="item.label" :value="item.id">
@@ -173,12 +170,12 @@ onBeforeMount(() => {
           </Tab>
         </TabList>
       </Tabs>
-      <div class="flex-1 flex items-center text-inherit" @click="active = trash.id">
+      <div class="cursor-pointer filter-tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
         <RxSvgIcon name="base/rx_ic_bin_2" />
         <span>{{ $t('Trash') }}</span>
       </div>
-      <div @click="showPopover">
-        <RxSvgIcon name="base/rx_ic_gear" class="cursor-pointer" />
+      <div class="cursor-pointer filter-tabs-settings" @click="showPopover">
+        <RxSvgIcon name="base/rx_ic_gear" />
       </div>
     </div>
     <div class="flex flex-1 overflow-hidden">
@@ -246,5 +243,55 @@ onBeforeMount(() => {
   font-family: Inter;
   font-size: 13px;
   line-height: normal;
+}
+
+.filter-tabs {
+  padding: 0px var(--spacing-4xl, 24px);
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  :deep(.p-tablist-tab-list) {
+    gap: var(--spacing-2xl, 16px);
+    border-color: transparent;
+
+    .p-tab {
+      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      font-family: Inter;
+      font-size: var(--Font-Size-text-sm, 12px);
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+      border-color: transparent;
+
+      &:not(.p-tab-active):not(.p-disabled):hover {
+        border-color: transparent;
+      }
+    }
+  }
+
+  &-trash {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin: 0 var(--spacing-2xl, 16px);
+    padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+    gap: var(--spacing-md, 6px);
+    color: var(--Colors-Text-text-secondary, #575d61);
+    font-family: Inter;
+    font-size: var(--Font-Size-text-sm, 12px);
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+
+    &.active {
+      color: var(--p-tabs-tab-active-color);
+    }
+  }
+
+  &-settings {
+    display: flex;
+    padding: var(--spacing-sm, 4px);
+    border-radius: 4px;
+    border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+    color: var(--Colors-Text-text-secondary, #575d61);
+  }
 }
 </style>

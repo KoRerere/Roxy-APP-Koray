@@ -95,7 +95,7 @@ const drawer = reactive({
   updateProfile: async (data: any) => {
     try {
       const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(data)
-      showToast(code, msg, 5000)
+      onlyErrorToast(code, msg, 5000)
       onRefreshTable()
     }
     catch (error) {
