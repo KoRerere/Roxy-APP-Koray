@@ -470,7 +470,7 @@ defineExpose({
       <projectIcon :project-name="data.projectName" :project-id="data.projectId" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
-      <tagsIcon :labels="data.labelInfo" @update="updateMeta($event, data)" />
+      <tagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">

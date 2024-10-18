@@ -38,7 +38,7 @@ async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
   await API.base.userSetUserConfigCreate({ [item.name as any]: value })
   toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
-  electronAPI.send('app:saveSoftConfig', { [item.name]: value })
+  electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
 }
 
 async function detectLocalNetwork(item: Items) {
@@ -93,6 +93,7 @@ export function getProfilePanel(data?: any): SettingsModule {
               class: 'resize-none w-full',
               placeholder: $t('Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com'),
               userName: data.userName,
+              avatarColor: data.avatarColor,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (

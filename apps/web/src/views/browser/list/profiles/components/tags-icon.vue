@@ -1,15 +1,27 @@
 <script setup lang="tsx">
 import { API } from '/@/api'
+import NameAvatar from '/@/components/name-avatar.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopoverMenu } from './popover-menu'
 
+interface Operation {
+  name?: string
+  label?: string
+  value: string
+  render?: () => any
+}
+
 const props = defineProps({
   labels: {
     type: Array as PropType<any[]>,
     default: () => ([]),
+  },
+  projectId: {
+    type: Number as PropType<number>,
+    default: 0,
   },
 })
 
@@ -22,14 +34,15 @@ const role = useRoleStore()
 // const styles = useCssModule()
 
 async function openMenu(event: any) {
-  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
-  const operation = data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+  const tagList = await getTags()
+  const memberList = await getProjectMember()
+
   const value = props.labels.map((item: any) => `${item.labelId}`)
 
   showMenu(event, {
     type: 'checkbox',
     value,
-    operation,
+    operation: memberList.concat(tagList),
     onHide: (labelIds: string[]) => {
       if (!isEq(value, toRaw(labelIds))) {
         emit('update', { labelIds: (labelIds || []).map(Number) })
@@ -44,6 +57,29 @@ async function openMenu(event: any) {
       )
     },
   })
+}
+
+async function getTags(): Promise<Operation[]> {
+  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
+  return data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
+}
+
+async function getProjectMember(): Promise<Operation[]> {
+  const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId: props.projectId })
+  return data.rows.map(item => ({
+    value: `u_${item.userId}`,
+    render: () => {
+      return (
+        <>
+          {
+            item.avatar
+              ? <img src={item.avatar} class="w-6 h-6 rounded-full" />
+              : <NameAvatar size={24} fontSize={12} name={item.userName?.slice(0, 2)} color={item.avatarColor}></NameAvatar>
+          }
+        </>
+      )
+    },
+  }))
 }
 
 function isEq(oldIds: any, newIds: any) {

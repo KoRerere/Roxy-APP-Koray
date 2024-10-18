@@ -455,7 +455,7 @@ defineExpose({
     background: var(--Colors-Background-bg-secondary, #e8f5fc);
 
     .bodycell {
-      border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
+      border-color: var(--Color-blue-200, #7eccfc);
     }
   }
 
@@ -463,13 +463,14 @@ defineExpose({
     background: var(--Colors-Background-bg-body-hover, #f0f3f5);
 
     .bodycell {
-      border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+      border-color: var(--Colors-Border-border-container, #c7cdd1);
     }
   }
 
   .bodycell {
     padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px) !important;
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+    border-bottom-width: 0.5px;
 
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px) !important;

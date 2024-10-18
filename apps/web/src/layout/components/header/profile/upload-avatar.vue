@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import NameAvatar from '/@/components/name-avatar.vue'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 
 defineProps({
   userName: String,
+  avatarColor: String,
 })
 
 const emit = defineEmits(['change'])
@@ -38,16 +40,12 @@ async function removeAvatar() {
 <template>
   <div class="upload-area">
     <img v-if="previewUrl" class="upload-area-avatar" :src="previewUrl">
-    <div v-else class="upload-area-color" :style="{ backgroundColor: color }">
-      {{ userName?.slice(0, 1) }}
-    </div>
+    <NameAvatar v-else :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100" :font-size="52" />
     <div class="upload-area-buttons">
-      <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete" :label="$t('Remove')"
-                @click="removeAvatar"
-      />
+      <RyButton v-if="previewUrl" outlined severity="secondary" size="small" icon="base/rx_ic_delete"
+        :label="$t('Remove')" @click="removeAvatar" />
       <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" :label="$t('Upload')"
-                @click="uploadAvatar"
-      />
+        @click="uploadAvatar" />
     </div>
   </div>
 </template>
