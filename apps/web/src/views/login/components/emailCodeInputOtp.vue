@@ -63,8 +63,7 @@ async function handleSubmit() {
     </div>
     <div class="description">
       {{ $t("We've send a 6-character verification code to your email:") }} <br>
-      <span class="email-text">{{ getEmail }}</span> <br><br>
-      {{ $t('Please checkout your email and fill the code below to complete the sign up.') }}
+      <span class="email-text">{{ getEmail }}</span> <br>
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
     <ry-button class="w-full" @click="handleSubmit">

@@ -11,6 +11,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
+import { handleRequest, handleResponse } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -20,7 +21,7 @@ export const httpClient = new HttpClient({
   paramsSerializer(params) { return qs.stringify(params, { arrayFormat: 'comma' }) },
 })
 
-httpClient.instance.interceptors.request.use((config) => {
+httpClient.instance.interceptors.request.use(async (config) => {
   const { token } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
   const { currentLocale } = useSimpleLocale()
@@ -28,7 +29,15 @@ httpClient.instance.interceptors.request.use((config) => {
   config.headers.language = currentLocale
   config.headers.appVersion = '3.0.0'
   config.headers.workspaceId = currentWorkspace?.id
+
+  await handleRequest(config)
+
   return config
+})
+
+httpClient.instance.interceptors.response.use(async (response) => {
+  await handleResponse(response)
+  return response
 })
 
 export const API = {

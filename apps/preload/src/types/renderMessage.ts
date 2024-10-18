@@ -84,6 +84,10 @@ export interface RenderMessage {
   'util:genRandomFonts': () => string[]
   /** 生成随机指纹 */
   'util:genRandomFingerprint': (payload: UserAddWindowInfoCreatePayload, count?: number) => RandomFingerprint
+  /** AES-GCM 加密 */
+  'util:encryptAESGCM': (payload: string) => string
+  /** AES-GCM 解密 */
+  'util:decryptAESGCM': (payload: string) => string
 
   /** 前端已准备就绪 */
   'web:ready': () => void

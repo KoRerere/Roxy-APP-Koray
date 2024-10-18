@@ -3,7 +3,7 @@ import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 // 匹配 $t('key') 或 $t('key', {params})，包括带点或破折号的键
-export const translationRegex = /\$t\(\s*['"]([^'"]+)['"]\s*(?:,\s*([\s\S]*?)\s*)?\)/g
+export const translationRegex = /\$t\(\s*(['"])(.*?)\1\s*(?:,\s*([\s\S]*?)\s*)?\)/g
 
 // 用于移除注释的正则表达式模式（包括单行和多行注释）
 const commentRegexList = [
@@ -32,11 +32,38 @@ function extractKeys(content: string) {
 
   let match
   while ((match = translationRegex.exec(noCommentsContent)) !== null) {
-    if (match[1])
-      keys.add(match[1]) // 将唯一键添加到集合中
+    keys.add(match[2]) // match[2] 是捕获的键
   }
 
   return [...keys] // 以数组形式返回键
+}
+
+async function matchFiles() {
+  return glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**', 'packages/**'] })
+}
+
+export async function genKeysPositionMap() {
+  const files = await matchFiles()
+  const keysPositionMap = new Map<string, string[]>()
+  const promiseArr = files.map(async (file) => {
+    try {
+      const content = await readFile(file, 'utf-8')
+      const keys = extractKeys(content)
+      keys.forEach((key) => {
+        if (keysPositionMap.has(key)) {
+          keysPositionMap.get(key)?.push(file)
+        }
+        else {
+          keysPositionMap.set(key, [file])
+        }
+      })
+    }
+    catch (error) {
+      console.error(`读取文件出错: ${file}`)
+    }
+  })
+  await Promise.all(promiseArr)
+  return keysPositionMap
 }
 
 /**
@@ -44,7 +71,7 @@ function extractKeys(content: string) {
  */
 export async function scanFiles() {
   // 匹配项目目录中的所有 .vue, .ts, .js 和 .tsx 文件
-  const files = await glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**'] })
+  const files = await matchFiles()
 
   const allKeys = new Set<string>()
 
@@ -71,7 +98,7 @@ export async function scanFiles() {
 
 export async function scanFilesAndReplaceKey(oldKey: string, newKey: string) {
   // 匹配项目目录中的所有 .vue, .ts, .js 和 .tsx 文件
-  const files = await glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**'] })
+  const files = await matchFiles()
   const promiseArr = files.map(async (file) => {
     try {
       const content = await readFile(file, 'utf-8')

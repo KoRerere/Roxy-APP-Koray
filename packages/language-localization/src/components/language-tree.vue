@@ -32,6 +32,7 @@ function handleCurrentChange(val) {
 }
 
 function getLangs() {
+  const chineseRegex = /[\u4E00-\u9FA5]/g
   fetch('./api/getLangs').then(res => res.json()).then((data) => {
     console.log('/api/getLangs', data)
     const result = data
@@ -40,7 +41,7 @@ function getLangs() {
     // })
       .reduce((acc, item) => {
         const { translated = [], untranslated = [] } = Object.groupBy(Object.entries<string>(item.body), ([key, value]) => {
-          return value ? 'translated' : 'untranslated'
+          return !chineseRegex.test(key) && value ? 'translated' : 'untranslated'
         })
 
         const { fileName } = item
@@ -56,6 +57,7 @@ function getLangs() {
               fileName,
               sourceLang: sourceLangKey,
               targetLang: fileName,
+              position: item.keysPositionMap[key],
             }
           }),
           untranslated: untranslated.map(([key, value]) => {
@@ -65,6 +67,7 @@ function getLangs() {
               fileName,
               sourceLang: sourceLangKey,
               targetLang: fileName,
+              position: item.keysPositionMap[key],
             }
           }),
           label: `${langItem?.icon}${langItem?.lang}(${fileName})`,
@@ -157,6 +160,7 @@ defineExpose({
                 @current-change="handleCurrentChange"
               >
                 <el-table-column type="index" width="50" />
+                <!-- <el-table-column property="position" label="位置" /> -->
                 <el-table-column property="key" :label="`源语言(${sourceLangKey})`" />
                 <el-table-column v-if="activeTranTab === 'translated'" property="value" :label="langItem.ISO639.lang">
                   <template #default="{ row }">
