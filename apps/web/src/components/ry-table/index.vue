@@ -260,16 +260,16 @@ defineExpose({
             </div>
           </slot>
         </template>
-        <Column v-if="selectionMode" :selection-mode="selectionMode" header-style="width: 3rem" />
+        <Column v-if="selectionMode" header-style="width: 3rem"
+          :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
           :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
-          :pt="{ columntitle: cssmodule['column-title'] }">
+          :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
               <div v-else :style="{ width: `${column.width}px` || 'auto' }"
-                :class="[cssmodule['column-title'], column.classes]"
-                :title="column.getText?.(data) || data[column.key]">
+                :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
             </slot>
@@ -327,7 +327,7 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
 }
 
 :deep(.p-checkbox-box) {
@@ -431,8 +431,8 @@ defineExpose({
 }
 </style>
 
-<style lang="scss" module="cssmodule">
-.column-title {
+<style lang="scss" module="Css_Module">
+.columntitle {
   color: #000;
   font-family: Inter;
   font-size: 12px;
@@ -440,11 +440,22 @@ defineExpose({
   line-height: 16px;
 }
 
-.column-cell {
-  color: var(--Color-neutrals-950, #0e1214);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: normal;
+.headercell {
+  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px) !important;
+  background: var(--Colors-Background-bg-page, #fafbfc) !important;
+  border-color: var(--Colors-Border-border-subtle, #e4e8eb) !important;
+
+  &:first-of-type {
+    padding-left: var(--spacing-4xl, 24px) !important;
+  }
+}
+
+.bodycell {
+  padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px) !important;
+  border-color: var(--Colors-Border-border-subtle, #e4e8eb) !important;
+
+  &:first-of-type {
+    padding-left: var(--spacing-4xl, 24px) !important;
+  }
 }
 </style>
