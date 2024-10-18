@@ -121,7 +121,7 @@ function onRefreshTable() {
         </template>
         <template #proxy="{ data }">
           <div class="proxy-host">
-            <span>{{ strConcat(data.protocol, '://') }}</span>
+            <span>{{ strConcat(data.protocol?.toLocaleLowerCase(), '://') }}</span>
             <span>{{ data.host }}</span>
             <span>{{ strConcat(':', data.port) }}</span>
           </div>

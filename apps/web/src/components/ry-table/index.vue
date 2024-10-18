@@ -249,7 +249,7 @@ defineExpose({
     </div>
     <div class="flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
-        @row-contextmenu="onRowContextMenu">
+        :pt="{ bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -450,12 +450,30 @@ defineExpose({
   }
 }
 
-.bodycell {
-  padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px) !important;
-  border-color: var(--Colors-Border-border-subtle, #e4e8eb) !important;
+.bodyrow {
+  &[data-p-selected='true'] {
+    background: var(--Colors-Background-bg-secondary, #e8f5fc);
 
-  &:first-of-type {
-    padding-left: var(--spacing-4xl, 24px) !important;
+    .bodycell {
+      border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
+    }
+  }
+
+  &:not([data-p-selected='true']):hover {
+    background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+
+    .bodycell {
+      border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    }
+  }
+
+  .bodycell {
+    padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px) !important;
+    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+
+    &:first-of-type {
+      padding-left: var(--spacing-4xl, 24px) !important;
+    }
   }
 }
 </style>
