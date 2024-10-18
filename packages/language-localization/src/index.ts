@@ -6,6 +6,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import serveStatic from 'serve-static'
 import { genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
+import { runGitCommands } from './utils/run-git-commands'
 
 interface OptionsType {
   targetDir: string
@@ -49,7 +50,7 @@ export default (options: OptionsType): PluginOption => {
             }
           })
           const result = await Promise.all(promiseArr)
-          console.log('result', result)
+          // console.log('result', result)
           res.end(JSON.stringify(result))
         }
         // 翻译文本
@@ -100,16 +101,36 @@ export default (options: OptionsType): PluginOption => {
           }
         }
         else if (url === '/commit') {
-          console.log('commit', targetDir)
-          exec(`git add ${targetDir} && git commit -m "update language files" && git push`, (error, stdout, stderr) => {
+          console.log('commit', process.cwd())
+          try {
+            const result = await runGitCommands()
+            res.end(JSON.stringify({
+              code: 0,
+              message: result,
+            }))
+          }
+          catch (error) {
+            res.end(JSON.stringify({
+              code: 1,
+              message: error.message,
+            }))
+          }
+        }
+        else if (url === '/pull-code') {
+          console.log('pull code', process.cwd())
+          exec('git pull origin main', (error, stdout, stderr) => {
             if (error) {
-              console.error(`exec error: ${error}`)
-              res.end(error.message)
-              return
+              res.end(JSON.stringify({
+                code: 1,
+                message: error.message,
+              }))
             }
-            console.log(`stdout: ${stdout}`)
-            console.error(`stderr: ${stderr}`)
-            res.end('ok')
+            else {
+              res.end(JSON.stringify({
+                code: 0,
+                message: stdout,
+              }))
+            }
           })
         }
         else {
