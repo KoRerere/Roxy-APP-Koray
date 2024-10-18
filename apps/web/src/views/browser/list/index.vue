@@ -289,7 +289,6 @@ onBeforeMount(() => {
     display: flex;
     padding: var(--spacing-sm, 4px);
     border-radius: 4px;
-    border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
     background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
     color: var(--Colors-Text-text-secondary, #575d61);
   }

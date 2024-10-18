@@ -58,7 +58,6 @@ const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 
 const tableRef = useTemplateRef('windownTable')
-console.log('🚀 ~ workspaceStore:', workspaceStore.currentWorkspace)
 
 const drawer = reactive({
   type: 'proxyList',
