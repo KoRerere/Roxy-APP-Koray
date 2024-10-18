@@ -175,7 +175,7 @@ async function operationHandler(operate: any, data: any) {
   /**
    * 兼容批量操作
    */
-  const datas = [].concat(data)
+  const datas = [].concat(toRaw(data))
   const ids: number[] = datas.map((item: any) => item.id)
 
   switch (operate.name) {
@@ -185,6 +185,12 @@ async function operationHandler(operate: any, data: any) {
     case 'copyId':
       copyText(data.dirId)
       showToast(0, $t('success'), 3000)
+      break
+    case 'view':
+      openBrowser(data)
+      break
+    case 'restart':
+      window.electronAPI.send('browser:batchRelaunch', datas)
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
@@ -208,7 +214,7 @@ async function operationHandler(operate: any, data: any) {
       drawer.type = 'editCookies'
       break
     case 'delete':
-      deleteBrowser(datas, ids)
+      deleteProfile(datas, ids)
       break
   }
 }
@@ -237,7 +243,7 @@ function openBrowser(data: any) {
   window.electronAPI.send('browser:batchLaunch', params)
 }
 
-function deleteBrowser(datas: any, ids: number[]) {
+function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
     toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
   }

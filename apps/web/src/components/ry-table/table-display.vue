@@ -40,5 +40,9 @@ function toggle(event: Event) {
   padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
   gap: var(--spacing-sm, 4px);
   min-width: 260px;
+  color: var(--Color-neutrals-900, #171c1f);
+  font-family: Inter;
+  font-size: 13px;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

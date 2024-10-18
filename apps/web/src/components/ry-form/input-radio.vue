@@ -1,24 +1,27 @@
-<script setup>
+<script lang="ts" setup>
+import type { RadioButtonProps } from 'primevue/radiobutton'
+
+type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined
+
+interface Props extends RadioButtonProps {
+  size?: Size
+  options: Array<{ value: string | number, label: string }>
+}
+
 defineOptions({
   inheritAttrs: false,
 })
 
-defineProps({
-  name: String,
-  options: {
-    type: Array,
-    default: () => [],
-  },
-})
+defineProps<Props>()
 
 defineEmits(['change'])
 </script>
 
 <template>
   <div class="rx-radio">
-    <label v-for="option in options" :key="option.value" :for="`${name}_${option.value}`"
+    <label v-for="option in $props.options" :key="option.value" :for="`${$props.name}_${option.value}`"
       class="cursor-pointer rx-radio-item">
-      <RadioButton v-bind="$attrs" :input-id="`${name}_${option.value}`" :name="name" :value="option.value"
+      <RadioButton v-bind="{ ...$attrs, ...$props }" :input-id="`${$props.name}_${option.value}`" :value="option.value"
         @change="$emit('change')" />
       <div>{{ option.label }}</div>
     </label>

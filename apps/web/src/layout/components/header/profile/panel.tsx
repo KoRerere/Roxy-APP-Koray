@@ -128,63 +128,64 @@ export function getProfilePanel(data?: any): SettingsModule {
 }
 
 export function getPreferencesPanel(data?: any): SettingsModule {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+  // const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   return {
     title: $t('Preferences'),
     description: $t('Manage client experience settings. Including languages and appearance.'),
     list: [
-      {
-        subtitle: $t('Interface'),
-        items: [
-          {
-            label: $t('Language'),
-            text: $t('Not your language include? <span class="text-blue">Contact us</span>'),
-            name: 'language',
-            value: data?.language ?? '',
-            props: {
-              options: $dict_map.language,
-            },
-            component: ({ item, ...props }: { item: Items, props: any }) => {
-              return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
-              )
-            },
-          },
-          {
-            label: $t('Timezone'),
-            text: $t('Some hints for you'),
-            name: 'timeZone',
-            value: data?.timeZone ?? '',
-            props: {
-              options: $dict_map.timeZone,
-            },
-            component: ({ item, ...props }: { item: Items, props: any }) => {
-              return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
-              )
-            },
-          },
-          {
-            label: $t('Appearance'),
-            text: $t('Themes for different mode'),
-            name: 'appearance',
-            value: data?.appearance?.toString() ?? '',
-            props: {
-              options: [
-                { label: $t('System'), value: `${settingAppearance.system}` },
-                { label: $t('Light'), value: `${settingAppearance.light}` },
-                { label: $t('Dark'), value: `${settingAppearance.dark}` },
-              ],
-            },
-            formatValue: (item: Items) => Number(item.value),
-            component: ({ item, ...props }: { item: Items, props: any }) => {
-              return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
-              )
-            },
-          },
-        ],
-      },
+      // !todo: 后台暂时没做，一期暂时隐藏
+      // {
+      //   subtitle: $t('Interface'),
+      //   items: [
+      //     {
+      //       label: $t('Language'),
+      //       text: $t('Not your language include? <span class="text-blue">Contact us</span>'),
+      //       name: 'language',
+      //       value: data?.language ?? '',
+      //       props: {
+      //         options: $dict_map.language,
+      //       },
+      //       component: ({ item, ...props }: { item: Items, props: any }) => {
+      //         return (
+      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //         )
+      //       },
+      //     },
+      //     {
+      //       label: $t('Timezone'),
+      //       text: $t('Some hints for you'),
+      //       name: 'timeZone',
+      //       value: data?.timeZone ?? '',
+      //       props: {
+      //         options: $dict_map.timeZone,
+      //       },
+      //       component: ({ item, ...props }: { item: Items, props: any }) => {
+      //         return (
+      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //         )
+      //       },
+      //     },
+      //     {
+      //       label: $t('Appearance'),
+      //       text: $t('Themes for different mode'),
+      //       name: 'appearance',
+      //       value: data?.appearance?.toString() ?? '',
+      //       props: {
+      //         options: [
+      //           { label: $t('System'), value: `${settingAppearance.system}` },
+      //           { label: $t('Light'), value: `${settingAppearance.light}` },
+      //           { label: $t('Dark'), value: `${settingAppearance.dark}` },
+      //         ],
+      //       },
+      //       formatValue: (item: Items) => Number(item.value),
+      //       component: ({ item, ...props }: { item: Items, props: any }) => {
+      //         return (
+      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //         )
+      //       },
+      //     },
+      //   ],
+      // },
       {
         subtitle: $t('Local Settings'),
         items: [

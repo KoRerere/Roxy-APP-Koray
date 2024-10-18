@@ -15,7 +15,9 @@ defineProps<Props>()
 <template>
   <div class="flex gap-2">
     <ToggleSwitch v-bind="$attrs" />
-    <div>{{ label }}</div>
+    <div v-if="label">
+      {{ label }}
+    </div>
   </div>
 </template>
 
