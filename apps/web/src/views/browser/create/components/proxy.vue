@@ -122,9 +122,9 @@ function tooltipValue(item: any) {
   const value = [
     `Proxy Info`,
     item.ipType,
-    `${item.protocol}://${item.host}:${item.port}`,
+    `${strConcat(item.protocol, '://')}${item.host}${strConcat(':', item.port)}`,
     `Refresh URL: ${item.refreshUrl}`,
-    `Country: ${item.lastCountry}/${item.lastCity}`,
+    `Country: ${item.lastCountry}${strConcat('/', item.lastCity) || ''}`,
     `Check Time: ${item.checkTime}`,
   ]
   return {

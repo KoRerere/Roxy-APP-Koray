@@ -8,7 +8,7 @@ import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { setRowsLoading } from '/@/utils'
+import { setRowsLoading, strConcat } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import proxyColumns from './columns'
@@ -173,7 +173,9 @@ function saveSelected() {
         </template>
         <template #proxy="{ data: row }">
           <div class="proxy-host">
-            <span>{{ row.protocol }}://</span><span>{{ row.host }}</span><span>:{{ row.port }}</span>
+            <span>{{ strConcat(row.protocol?.toLocaleLowerCase(), '://') }}</span>
+            <span>{{ row.host }}</span>
+            <span>{{ strConcat(':', row.port) }}</span>
           </div>
           <div class="ip-type">
             {{ row.ipType }}
