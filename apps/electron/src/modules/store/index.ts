@@ -29,8 +29,10 @@ interface StoreType {
   luminetLocalHttpPort?: number
   /** luminet 代理端口 */
   luminetProxyPort?: number
-  /** 浏览器工作台端口号 */
+  /** APP 本地服务端口 */
   appPort: number
+  /** openapi key */
+  apiKey?: string
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
   ipBlackList: string[]
 }

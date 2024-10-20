@@ -29,7 +29,7 @@ export async function startLuminet() {
   }
 
   const originText = JSON.stringify(launchParams)
-  console.log('加密前:', originText)
+  console.log('originText:', originText)
   const encText = encryptByDESModeCBC(originText)
   const exePath = path.join(__dirname, `../buildResources/${isWindows ? 'windows' : 'macos'}/${isWindows ? `x${osConfig.osBit}` : 'apple'}/${isWindows ? 'luminet.exe' : 'luminet'}`)
 
