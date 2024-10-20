@@ -307,7 +307,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     portScan: {
       enablePortScanWhiteList: winInfo.portScanProtect,
       // TODO: 从配置中获取
-      portScanWhiteList: `${store.dashboardPort};${winInfo.portScanList.replaceAll(',', ';')}`,
+      portScanWhiteList: `${store.appPort};${winInfo.portScanList.replaceAll(',', ';')}`,
     },
     /** 选填 屏幕分辨率 */
     get screen() {
@@ -370,13 +370,13 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
           // 代理类型 http https,socks5
           type: winInfo.protocol.toLocaleLowerCase(),
           // 代理主机
-          host: winInfo.host,
+          host: '127.0.0.1',
           // 代理端口
-          port: Number(winInfo.port),
+          port: store.luminetProxyPort,
           // 用户名 ，选填
-          username: winInfo.proxyUserName || ``,
+          username: winInfo.dirId,
           // 密码，选填
-          password: winInfo.proxyPassword || ``,
+          password: winInfo.dirId,
           // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
           proxyByPassList: store.ipBlackList?.join?.(';'),
         }

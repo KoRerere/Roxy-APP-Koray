@@ -54,20 +54,13 @@ function handleSideTransitionend() {
 function handleSideTransitionstart() {
   transitionend.value = false
 }
-
-onMounted(async () => {
-  const systemProxy = await electronAPI.send('proxy:getSystemProxy')
-  const [host, port] = systemProxy.split(':')
-  console.log('systemProxy', systemProxy)
-  const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
-  console.log('data', data)
-})
 </script>
 
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
-      @transitionend="handleSideTransitionend">
+         @transitionend="handleSideTransitionend"
+    >
       <div class="logo">
         <SvgIcon name="base/logo" size="32" />
         <template v-if="!collapsed">

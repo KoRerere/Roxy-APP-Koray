@@ -5,6 +5,8 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { setLuminetProxy } from '/@/modules/luminet'
+import { store } from '/@/modules/store'
 
 export interface ProxyDetectionResult {
   ip: string
@@ -31,7 +33,7 @@ const protocolCheckMap = {
 } as const
 
 type ProtocolMapType = keyof typeof protocolCheckMap
-export type ProxyDetectionParams = Partial<Pick<WindowItemType, 'checkChannel' | 'ipType' | 'proxyCategory' | 'protocol' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'>>
+export type ProxyDetectionParams = Pick<WindowItemType, 'dirId' | 'checkChannel' | 'ipType' | 'protocol' | 'proxyCategory' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'>
 
 // 检测超时时间
 const TIMEOUT = 6000
@@ -61,17 +63,35 @@ export function tryRefreshUrl(refreshUrl: string) {
 
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
-  const { checkChannel, ipType } = proxyDetectionParams
+  const { dirId, checkChannel, protocol, proxyCategory = protocol, ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
 
-  const params = {
-    ...proxyDetectionParams,
+  console.log(`dirId && proxyUserName`, dirId && proxyUserName)
+  const luminetParams = {
+    addr: host && port ? `${host}:${port}` : '',
+    user_name: proxyUserName || '',
+    password: proxyPassword || '',
+    protocal: proxyCategory.toLocaleLowerCase(),
+  }
+
+  if (dirId) {
+    await setLuminetProxy({
+      [dirId]: luminetParams,
+    })
+  }
+
+  const params: ProxyDetectionParams = {
+    proxyCategory,
+    host: dirId ? '127.0.0.1' : host,
+    port: dirId ? store.luminetProxyPort : port,
+    proxyUserName: dirId || proxyUserName,
+    proxyPassword: dirId || proxyPassword,
     checkChannel: getCheckUrl(checkChannel, ipType) || defaultCheckChannel,
   }
 
-  console.log('proxyDetectionParams', proxyDetectionParams)
-  const protocol = params.proxyCategory || params.protocol
-  const checkMode = getCheckFunction(protocol as ProtocolMapType)
-
+  // console.log('proxyDetectionParams', proxyDetectionParams)
+  const checkMode = getCheckFunction(proxyCategory as ProtocolMapType)
+  console.log('luminetParams', luminetParams)
+  console.log('proxyDetection params', params)
   const result = await checkMode(params)
 
   console.log('proxyDetection result', result)
@@ -92,7 +112,7 @@ function logProxyConfig(params: ProxyDetectionParams, name = ``) {
   console.log(`${name}\n
         checkChannel:${checkChannel}\n
         proxyUserName:${proxyUserName}\n
-        password:${proxyPassword}\n
+        proxyPassword:${proxyPassword}\n
         host:${host}\n
         port:${port}\n
         proxyNetwork:${proxyNetwork}`)
@@ -121,9 +141,9 @@ function checkHttpsProxy(winInfo: ProxyDetectionParams) {
 
   // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
 
-  const httpUrl = `https://${auth}${host}:${port}`
-  console.log(`httpUrl`, httpUrl);
-  (!(`${checkChannel}`).includes(`https`) ? http : https).get(checkChannel, {
+  const httpUrl = `http://${auth}${host}:${port}`
+  console.log(`httpUrl`, httpUrl)
+  http.get(checkChannel, {
     headers: {
       'user-agent': 'electron ',
     },
@@ -139,6 +159,7 @@ function checkHttpsProxy(winInfo: ProxyDetectionParams) {
 
     res.on('end', () => {
       try {
+        console.log(`checkHttpsProxy data`, data)
         const json = JSON.parse(data)
         resolve(json)
       }

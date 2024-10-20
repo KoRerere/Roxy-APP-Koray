@@ -25,8 +25,12 @@ interface StoreType {
   workspaceId?: number
   /** 是否使用系统代理 */
   systemProxySwitch?: boolean
+  /** luminet 本地 http 服务端口 */
+  luminetLocalHttpPort?: number
+  /** luminet 代理端口 */
+  luminetProxyPort?: number
   /** 浏览器工作台端口号 */
-  dashboardPort: number
+  appPort: number
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
   ipBlackList: string[]
 }
@@ -39,7 +43,7 @@ const defaultValues: StoreType = {
   memoryLimit: 95,
   browserCacheRootDir: join(sessionDir, 'browser-cache'),
   systemProxySwitch: true,
-  dashboardPort: 45535,
+  appPort: 45535,
   ipBlackList: [],
 }
 

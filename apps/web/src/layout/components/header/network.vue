@@ -15,6 +15,8 @@ async function detectNetwork() {
   console.log('result', result)
 }
 
+window.addEventListener('online', detectNetwork)
+window.addEventListener('offline', detectNetwork)
 detectNetwork()
 </script>
 

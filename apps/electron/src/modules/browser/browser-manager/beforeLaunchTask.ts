@@ -161,7 +161,7 @@ export class BeforeLaunchTask {
       '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      `http://127.0.0.1:${store.dashboardPort}/dashboard?id=${dirId}`,
+      `http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`,
     ]
 
     // 如果用户开启了插件
