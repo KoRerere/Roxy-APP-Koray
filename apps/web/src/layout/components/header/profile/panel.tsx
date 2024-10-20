@@ -49,7 +49,7 @@ async function detectLocalNetwork(item: Items) {
 async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
-  const data = await electronAPI.send('proxy:detect', { protocol: 'HTTP', host, port })
+  const data = await electronAPI.send('proxy:detect', { proxyCategory: 'HTTP', host, port })
   item.value = data
 }
 

@@ -1,7 +1,8 @@
 import './ipc'
+import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
+import { startLuminet } from '/@/modules/luminet'
 import { setupOpenAPIServer } from '/@/modules/openapi'
-import { setupStaticServer } from '/@/modules/staticServer'
 import { setupStore } from '/@/modules/store'
 import { isPackaged } from '/@/utils'
 import { setupApp } from './app/'
@@ -11,10 +12,17 @@ import { setupApp } from './app/'
  */
 export async function setupModules() {
   if (isPackaged) {
+    // 设置日志
     setupLog()
   }
+  // 设置 store
   await setupStore()
+  // 启动 app
   setupApp()
+  // 启动 openapi 服务
   setupOpenAPIServer()
-  setupStaticServer()
+  // 启动 app 内置服务
+  await setupAppServer()
+  // 启动 luminet 服务
+  startLuminet()
 }

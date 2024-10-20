@@ -15,7 +15,6 @@ interface ProxyCheckParams {
   checkChannel?: string | undefined
   ipType?: string | undefined
   proxyCategory?: string | undefined
-  protocol?: string | undefined
   proxyUserName?: string | undefined
   proxyPassword?: string | undefined
   host?: string | undefined

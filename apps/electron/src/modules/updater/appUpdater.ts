@@ -38,6 +38,11 @@ export const appUpdater = new class AppUpdater {
 
     console.log(`user_get_app_upgrade result`, data)
 
+    if (!data) {
+      console.log(`没有获取到更新信息`)
+      return
+    }
+
     const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = data
     this.#updateMessageData.originUpgradeData = data
     this.#updateMessageData.upgradeContent = upgradeContent

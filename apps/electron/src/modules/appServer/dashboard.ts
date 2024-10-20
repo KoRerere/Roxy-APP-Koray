@@ -2,16 +2,12 @@ import express from 'express'
 import twoFactor from 'node-2fa'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { isPackaged, tryRefreshUrl } from '/@/utils'
 
-export async function setupDashboardServer() {
-  const app = express()
-  setupMiddlewares(app)
+export async function setupDashboardServer(app: express.Application) {
   // 工作台
   // 设置静态资源目录
   app.use('/dashboard', async (req, res, next) => {
@@ -23,7 +19,7 @@ export async function setupDashboardServer() {
       try {
         const data = await readFile(filePath, 'utf8')
         // 注入 <script> 标签到 HTML 内容
-        const scriptTag = `<script> globalThis.serverPort =  ${store.dashboardPort} </script>`
+        const scriptTag = `<script> globalThis.serverPort =  ${store.appPort} </script>`
         /**
          * 在关闭 body 标签之前插入 script 标签
          */
@@ -37,7 +33,7 @@ export async function setupDashboardServer() {
       }
     }
     else {
-      res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}&port=${store.dashboardPort}`)
+      res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}&port=${store.appPort}`)
     }
   })
 
@@ -109,15 +105,4 @@ export async function setupDashboardServer() {
   })
 
   app.use(express.static(join(__dirname, './web')))
-
-  try {
-    const port = await getPortPromise({ port: store.dashboardPort })
-    app.listen(port, () => {
-      console.log(`Dashboard server is running at http://localhost:${port}`)
-      store.dashboardPort = port
-    })
-  }
-  catch (error) {
-    console.error('setupDashboardServer', error)
-  }
 }

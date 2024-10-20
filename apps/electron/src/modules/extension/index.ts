@@ -48,7 +48,7 @@ export const extensionManager = new class ExtensionManager {
 
     let downloadedArr: string[] = []
     if (noExists.length) {
-      msgCallback?.('正在下载插件')
+      msgCallback?.($t('正在下载插件'))
       const promiseArr = await this.downloadUserExtensions(noExists)
       downloadedArr = promiseArr.filter(p => p.status === 'fulfilled').map(p => p.value)
       const failedArr = promiseArr.filter(p => p.status === 'rejected').map(p => getErrorMessage(p.reason))
@@ -102,13 +102,13 @@ export const extensionManager = new class ExtensionManager {
     const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
 
     if (!pluginDir || !pluginIcon) {
-      return Promise.reject(new Error('插件目录或插件图标不能为空'))
+      return Promise.reject(new Error($t('插件目录或插件图标不能为空')))
     }
 
     const manifestExist = await fileExists(path.join(pluginDir, 'manifest.json'))
 
     if (!manifestExist) {
-      return Promise.reject(new Error('插件目录下不存在 manifest.json 文件'))
+      return Promise.reject(new Error($t('插件目录下不存在 manifest.json 文件')))
     }
     const manifestFile = await readFile(path.join(pluginDir, 'manifest.json'), 'utf-8')
 
@@ -175,12 +175,12 @@ export const extensionManager = new class ExtensionManager {
       const pluginStat = await stat(pluginDir)
 
       if (pluginStat.size > 1024 * 1024 * 100) {
-        resolve({ type: 'warn', message: '插件大小不能超过100MB' })
+        resolve({ type: 'warn', message: $t('插件大小不能超过100MB') })
         return promise
       }
 
       if (pluginStat.isFile() && fileExtname !== '.crx' && fileExtname !== '.zip') {
-        resolve({ type: 'warn', message: '请选择正确的插件文件' })
+        resolve({ type: 'warn', message: $t('请选择正确的插件文件') })
         return promise
       }
 
