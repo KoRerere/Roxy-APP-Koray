@@ -38,26 +38,26 @@ function divInput(ev: any) {
 </script>
 
 <template>
-  <div class="flex edit">
-    <div ref="divRef" class="edit-text" :contenteditable="contenteditable" :data-placeholder="placeholder"
+  <div class="flex editdiv">
+    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder"
       @input="divInput" @blur="contenteditable = false">
       {{ myTitle }}
     </div>
-    <RxSvgIcon class="cursor-pointer" name="base/rx_ic_edit" :size="16" @click="focusEditableDiv" />
+    <RxSvgIcon class="cursor-pointer" name="base/rx_ic_edit" color="#A3A9AD" :size="16" @click="focusEditableDiv" />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.edit {
+.editdiv {
   display: flex;
   gap: 10px;
+  padding: var(--spacing-md, 6px) 8px;
 
   &-text {
     position: relative;
     color: var(--Color-neutrals-600, #575d61);
     font-family: Inter;
     font-size: 14px;
-    font-style: normal;
     font-weight: 600;
     line-height: normal;
 

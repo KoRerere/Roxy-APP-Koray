@@ -154,17 +154,23 @@ onBeforeMount(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <Tabs v-model:value="tabsValue">
-        <TabList>
-          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
-            {{ tab.title }}
-          </Tab>
-        </TabList>
-      </Tabs>
+      <div class="profile-header">
+        <RxSvgIcon name="base/rx_ic_chevron_left" :size="24" />
+        <span>Create profile</span>
+      </div>
+      <div class="profile-tabs">
+        <Tabs v-model:value="tabsValue">
+          <TabList>
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
+              {{ tab.title }}
+            </Tab>
+          </TabList>
+        </Tabs>
+      </div>
       <div class="flex-ovh-1 flex-col">
-        <div class="top-content">
-          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" class="top-content-windown-name" />
-          <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
+        <div class="profile-basic">
+          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
+          <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch-block">
             <div>Profiles amount</div>
             <div class="flex flex-col items-end">
               <InputNumber v-model="createCount" :min="1" :max="maxWindowCount" class="batch-input" show-buttons
@@ -195,15 +201,52 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
-.top-content {
-  padding: var(--spacing-md, 16px) var(--spacing-sm, 12px);
+.profile-header {
+  display: flex;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  align-items: center;
+  gap: 10px;
 
-  &-windown-name {
-    padding: var(--spacing-md, 6px) 8px;
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+}
+
+.profile-tabs {
+  padding: 0px var(--spacing-4xl, 24px);
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  :deep(.p-tablist-tab-list) {
+    gap: var(--spacing-2xl, 16px);
+    border-color: transparent;
+
+    .p-tab {
+      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      color: var(--Colors-Text-text-secondary, #575d61);
+      font-family: Inter;
+      font-size: var(--Font-Size-text-sm, 12px);
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+      border-color: transparent;
+
+      &:not(.p-tab-active):not(.p-disabled):hover {
+        border-color: transparent;
+      }
+    }
+
+    .p-tab-active {
+      color: var(--Colors-Text-text-brand, #12a3fc);
+    }
   }
 }
 
-.batch {
+.profile-basic {
+  padding: var(--spacing-md, 16px) 66px;
+}
+
+.batch-block {
   padding: var(--spacing-none, 0px) 8px;
 
   &-input {

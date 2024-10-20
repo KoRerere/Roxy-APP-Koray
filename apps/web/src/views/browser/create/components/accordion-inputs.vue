@@ -140,20 +140,27 @@ function onCopy(dirId: string) {
 </template>
 
 <style lang="scss" scoped>
+$spacing-x: 66px;
+
 .content {
-  padding: 0 var(--spacing-md, 12px) 40px;
+  padding: 0 $spacing-x 40px;
 }
 
-.accordion-header {
+:deep(.p-accordionheader) {
   padding: var(--spacing-md, 6px) 8px;
   background: var(--Color-neutrals-100, #f0f3f5) !important;
   border-radius: 4px;
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .footer {
   display: flex;
   align-items: center;
-  padding: var(--spacing-2xl, 16px) 66px;
+  padding: var(--spacing-2xl, 16px) $spacing-x;
   gap: var(--spacing-lg, 8px);
   max-height: 64px;
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);

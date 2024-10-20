@@ -255,6 +255,7 @@ onBeforeMount(() => {
 
     .p-tab {
       padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      color: var(--Colors-Text-text-secondary, #575d61);
       font-family: Inter;
       font-size: var(--Font-Size-text-sm, 12px);
       font-weight: 500;
@@ -264,6 +265,10 @@ onBeforeMount(() => {
       &:not(.p-tab-active):not(.p-disabled):hover {
         border-color: transparent;
       }
+    }
+
+    .p-tab-active {
+      color: var(--Colors-Text-text-brand, #12a3fc);
     }
   }
 
