@@ -1,5 +1,6 @@
 import axios from 'axios'
 import CryptoJS from 'crypto-js'
+import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 
 const key = '098otIp!'
@@ -64,5 +65,8 @@ export async function setLuminetProxy(payload: SetLuminetProxyPayload) {
  * GET /del_proxy?id=dirId
  */
 export async function delLuminetProxy(dirId: string) {
-  return axios.get(`http://127.0.0.1:${store.luminetLocalHttpPort}/del_proxy?id=${dirId}`)
+  // 如果浏览器已经关闭，直接删除luminet中的代理
+  if (!browserManager.openedBrowserMap.has(dirId)) {
+    return axios.get(`http://127.0.0.1:${store.luminetLocalHttpPort}/del_proxy?id=${dirId}`)
+  }
 }

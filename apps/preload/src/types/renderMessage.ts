@@ -23,6 +23,8 @@ export interface RenderMessage {
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
+  /** 删除 luminet 代理 */
+  'proxy:delLuminetProxy': (dirId: string) => void
   /** 检测本地网络/系统代理 */
   'proxy:detectNetwork': () => ProxyDetectionResult
   /** 获取系统代理 */

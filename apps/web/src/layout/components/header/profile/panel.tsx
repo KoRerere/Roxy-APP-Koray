@@ -42,14 +42,20 @@ async function saveUserConfig(item: Items) {
 }
 
 async function detectLocalNetwork(item: Items) {
-  const data = await electronAPI.send('proxy:detect', {})
+  const dirId = Math.random().toString(36).slice(2)
+  const data = await electronAPI.send('proxy:detect', { dirId }).finally(() => {
+    window.electronAPI.send('proxy:delLuminetProxy', dirId)
+  })
   item.value = data
 }
 
 async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
-  const data = await electronAPI.send('proxy:detect', { proxyCategory: 'HTTP', host, port })
+  const dirId = Math.random().toString(36).slice(2)
+  const data = await electronAPI.send('proxy:detect', { dirId, proxyCategory: 'HTTP', host, port, outerParamFirst: true }).finally(() => {
+    window.electronAPI.send('proxy:delLuminetProxy', dirId)
+  })
   item.value = data
 }
 

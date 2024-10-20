@@ -1,9 +1,10 @@
 import type { ChildProcess } from 'node:child_process'
 import { execFile } from 'node:child_process'
 import path from 'node:path'
+import { osConfig } from '/@/constants'
 import { decryptByDESModeCBC, encryptByDESModeCBC } from '/@/modules/luminet/util'
 import { store } from '/@/modules/store'
-import { getSystemProxy } from '/@/utils'
+import { getSystemProxy, isMac, isWindows } from '/@/utils'
 
 export * from './util'
 
@@ -30,21 +31,15 @@ export async function startLuminet() {
   const originText = JSON.stringify(launchParams)
   console.log('加密前:', originText)
   const encText = encryptByDESModeCBC(originText)
+  const exePath = path.join(__dirname, `../buildResources/${isWindows ? 'windows' : 'macos'}/${isWindows ? `x${osConfig.osBit}` : 'apple'}/${isWindows ? 'luminet.exe' : 'luminet'}`)
 
-  luminetProcess = execFile(path.join(__dirname, '../buildResources/luminet.exe'), ['--arg', encText], (error, stdout, stderr) => {
-    if (error) {
-      console.error(`execFile error: ${error}`)
-      return
-    }
-    console.log(`stdout: ${stdout}`)
-    console.error(`stderr: ${stderr}`)
-  })
+  if (isMac) {
+    execFile('chmod', ['+x', exePath])
+  }
+
+  luminetProcess = execFile(exePath, ['--arg', encText])
 
   console.log(`Child process ID: ${luminetProcess.pid}`)
-
-  console.log('加密后:', encText)
-  const decText = decryptByDESModeCBC(encText)
-  console.log('解密后:', decText)
 }
 
 export function stopLuminet() {
