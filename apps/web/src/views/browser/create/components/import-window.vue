@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import { read, utils } from 'xlsx'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
 
-const toast = useToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const nameMap = {
   '窗口名称': 'windowName',
@@ -35,7 +35,7 @@ function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
-    toast.add({ severity: 'error', summary: 'Upload error', detail: $t('Only supports Excel type files'), life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('Only supports Excel type files'), { group: 'tc' })
     return
   }
   handleBeforeUpload(file)
@@ -66,7 +66,7 @@ const fileData = reactive({
 
 async function handleBeforeUpload(rawFile: any) {
   if (rawFile.size > MAX_FILE_SIZE) {
-    toast.add({ severity: 'error', summary: 'Upload error', detail: '文件大小不能超过5MB', life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('The file size cannot exceed 5MB'), { group: 'tc' })
     return
   }
 
@@ -107,7 +107,8 @@ async function handleBeforeUpload(rawFile: any) {
   }
 
   if (excelData.length === 0) {
-    return toast.add({ severity: 'error', summary: 'Upload error', detail: '导入的窗口数量不能为0', life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('The imported content cannot be 0'), { group: 'tc' })
+    return
   }
 
   fileData.status = true
@@ -115,7 +116,7 @@ async function handleBeforeUpload(rawFile: any) {
   fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
   fileData.successCount = excelData.length
   emit('importSuccess', fileAnalyzeData)
-  toast.add({ severity: 'success', summary: 'Upload success', detail: `${fileData.successCount} profiles imported`, life: 5000, group: 'tc' })
+  showToast(0, `${fileData.successCount} ${$t('profiles imported')}`, { group: 'tc' })
   return false
 }
 </script>
