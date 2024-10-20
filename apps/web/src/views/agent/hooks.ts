@@ -31,6 +31,8 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
 
   async function testProxy(data: ProxyCheckParams) {
     checkeResult.loading = true
+    const dirId = data.dirId || Math.random().toString(36).slice(2)
+    data.dirId = dirId
 
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
@@ -50,6 +52,7 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
     }
     finally {
       checkeResult.loading = false
+      dirId && window.electronAPI.send('proxy:delLuminetProxy', dirId)
     }
     return checkeResult
   }

@@ -33,7 +33,10 @@ const protocolCheckMap = {
 } as const
 
 type ProtocolMapType = keyof typeof protocolCheckMap
-export type ProxyDetectionParams = Pick<WindowItemType, 'dirId' | 'checkChannel' | 'ipType' | 'protocol' | 'proxyCategory' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'>
+export type ProxyDetectionParams = Pick<WindowItemType, 'dirId' | 'checkChannel' | 'ipType' | 'protocol' | 'proxyCategory' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'> & {
+  /** 是否优先使用外部的参数 */
+  outerParamFirst: boolean
+}
 
 // 检测超时时间
 const TIMEOUT = 6000
@@ -63,7 +66,11 @@ export function tryRefreshUrl(refreshUrl: string) {
 
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
-  const { dirId, checkChannel, protocol, proxyCategory = protocol, ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
+  const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
+
+  if (!dirId) {
+    throw new Error(`dirId is required`)
+  }
 
   console.log(`dirId && proxyUserName`, dirId && proxyUserName)
   const luminetParams = {
@@ -81,10 +88,10 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
   const params: ProxyDetectionParams = {
     proxyCategory,
-    host: dirId ? '127.0.0.1' : host,
-    port: dirId ? store.luminetProxyPort : port,
-    proxyUserName: dirId || proxyUserName,
-    proxyPassword: dirId || proxyPassword,
+    host: '127.0.0.1',
+    port: outerParamFirst ? port : store.luminetProxyPort,
+    proxyUserName: dirId,
+    proxyPassword: dirId,
     checkChannel: getCheckUrl(checkChannel, ipType) || defaultCheckChannel,
   }
 
