@@ -1,5 +1,9 @@
 <script setup lang="ts">
 const props = defineProps({
+  avatar: {
+    type: String,
+    default: undefined,
+  },
   name: {
     type: String,
     default: undefined,
@@ -23,13 +27,20 @@ const backgroundColor = computed(() => props.color)
 </script>
 
 <template>
-  <div class="avatar">
+  <img v-if="avatar" class="avatar" :src="avatar">
+  <div v-else class="name-avatar">
     {{ name?.toLocaleUpperCase() }}
   </div>
 </template>
 
 <style lang="scss" scoped>
 .avatar {
+  width: v-bind(size);
+  height: v-bind(size);
+  border-radius: 50%;
+}
+
+.name-avatar {
   width: v-bind(size);
   height: v-bind(size);
   line-height: v-bind(size);

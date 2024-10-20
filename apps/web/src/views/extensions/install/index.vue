@@ -250,7 +250,7 @@ async function onInstall(data: any) {
           if (code === 0) {
             window.electronAPI.send('extension:download', [toRaw(data)])
           }
-          showToast(code, msg, 5000)
+          showToast(code, msg)
         }
         catch (error) {
           console.log('🚀 ~ onConfirm: ~ error:', error)

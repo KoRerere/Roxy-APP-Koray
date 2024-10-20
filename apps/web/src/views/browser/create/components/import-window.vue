@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import { read, utils } from 'xlsx'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
 
-const toast = useToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const nameMap = {
   '窗口名称': 'windowName',
@@ -34,7 +35,7 @@ function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
-    toast.add({ severity: 'error', summary: 'Upload error', detail: '请选择 Excel 文件', life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('Only supports Excel type files'), { group: 'tc' })
     return
   }
   handleBeforeUpload(file)
@@ -65,7 +66,7 @@ const fileData = reactive({
 
 async function handleBeforeUpload(rawFile: any) {
   if (rawFile.size > MAX_FILE_SIZE) {
-    toast.add({ severity: 'error', summary: 'Upload error', detail: '文件大小不能超过5MB', life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('The file size cannot exceed 5MB'), { group: 'tc' })
     return
   }
 
@@ -106,7 +107,8 @@ async function handleBeforeUpload(rawFile: any) {
   }
 
   if (excelData.length === 0) {
-    return toast.add({ severity: 'error', summary: 'Upload error', detail: '导入的窗口数量不能为0', life: 5000, group: 'tc' })
+    onlyErrorToast(-1, $t('The imported content cannot be 0'), { group: 'tc' })
+    return
   }
 
   fileData.status = true
@@ -114,7 +116,7 @@ async function handleBeforeUpload(rawFile: any) {
   fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
   fileData.successCount = excelData.length
   emit('importSuccess', fileAnalyzeData)
-  toast.add({ severity: 'success', summary: 'Upload success', detail: `${fileData.successCount} profiles imported`, life: 5000, group: 'tc' })
+  showToast(0, `${fileData.successCount} ${$t('profiles imported')}`, { group: 'tc' })
   return false
 }
 </script>
@@ -124,9 +126,7 @@ async function handleBeforeUpload(rawFile: any) {
     <div class="upload-title">
       Please download our <a
         href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls"
-        target="_blank"
-        class="upload-title-link"
-      >template file</a> here. After you finish editing, upload it
+        target="_blank" class="upload-title-link">template file</a> here. After you finish editing, upload it
       through the
       following steps.
     </div>
@@ -134,14 +134,13 @@ async function handleBeforeUpload(rawFile: any) {
       * We only support create up to 500 profiles every time.
     </div>
     <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
-      <span class="mdi mdi-file-outline upload-area-icon" />
+      <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="#E4E8EB" />
       <div class="text-center">
         <div>{{ fileData.name || 'Choose file and drop it here' }}</div>
         <div>{{ fileData.size || 'Only .xlsx files supported, up to 5MB.' }}</div>
       </div>
       <ryButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined
-                severity="secondary" @click="chooseFile"
-      />
+        severity="secondary" @click="chooseFile" />
     </div>
     <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">
       {{ fileData.successCount }} profiles imported
@@ -187,11 +186,6 @@ async function handleBeforeUpload(rawFile: any) {
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
   border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
   background: var(--Color-neutrals-50, #fafbfc);
-
-  &-icon {
-    font-size: 48px;
-    line-height: 1;
-  }
 }
 
 .upload-message {

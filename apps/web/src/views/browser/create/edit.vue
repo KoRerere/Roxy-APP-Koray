@@ -44,7 +44,7 @@ async function createProfile(formData: any) {
 }
 
 onBeforeMount(() => {
-  API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0 })
+  API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
     .then(({ data: { rows: [data] } }) => {
       const [_inputsGroup, _original] = getInputsGroup(data)
       inputsGroup.value = _inputsGroup
@@ -63,8 +63,8 @@ onBeforeMount(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex-ovh-1 flex-col">
-      <div class="top-content">
-        <rxEditDiv v-model="windowName" class="window-name" />
+      <div class="profile-basic">
+        <rxEditDiv v-model="windowName" />
       </div>
       <div class="flex-ovh-1">
         <accordionInputs v-model:metadata="metaData" :accordions="accordions" :inputs-group="inputsGroup"
@@ -76,11 +76,7 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
-.top-content {
-  padding: var(--spacing-md, 16px) var(--spacing-sm, 12px);
-
-  &-windown-name {
-    padding: var(--spacing-md, 6px) 8px;
-  }
+.profile-basic {
+  padding: var(--spacing-md, 16px) 66px;
 }
 </style>

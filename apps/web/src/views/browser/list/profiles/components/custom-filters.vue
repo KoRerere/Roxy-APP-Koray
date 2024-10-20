@@ -1,9 +1,10 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
+import RxAvatar from '/@/components/rx-avatar.vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
-import { deepClone, isEmptyValue, setInputFieldByInputKey, sleep } from '/@/utils'
+import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
   currentFilter: {
@@ -38,7 +39,7 @@ watch(() => _props.currentFilter?.id, (value) => {
 const rawOptions = computed(() => {
   return _props.filtersMenu
     .map((item) => {
-      if (item.type === 'radio' && Array.isArray(item.options) && item.options.length > 0) {
+      if (item.type === 'switchGroup' && Array.isArray(item.options) && item.options.length > 0) {
         return item.options.map((it: any) => ({ ...it, parentName: item.name, type: item.type }))
       }
       return item
@@ -51,7 +52,7 @@ const filterTagList = computed(() => {
     if (!isEmptyValue(item.value)) {
       const value = !Array.isArray(item.value)
         ? item.value
-        : item.options.filter((option: any) => item.value.includes(option.value)).map((option: any) => option.label).join(', ')
+        : item._options?.filter((option: any) => item.value.includes(option.value)).map((option: any) => option.label).join(', ')
       acc.push({ ...toRaw(item), value })
     }
     return acc
@@ -87,11 +88,11 @@ function operationHandler(item: any) {
     case 'switch':
       onSwitch(item)
       break
-    case 'radio':
+    case 'switchGroup':
       onRadioChose(item)
       break
     case 'Checkbox':
-      openChild(item)
+      openCheckbox(item)
       break
   }
 }
@@ -134,13 +135,14 @@ function onSwitch(item: any, value: any = true) {
   onFilterChange()
 }
 
-function openChild(item: any) {
-  if (item.options) {
-    sleep(20).then(() => {
-      isChildren.value = true
-      subMenuOptions.value = item.options
-      selectedCategories.value = item.value
-    })
+async function openCheckbox(item: any) {
+  if (isLikeFunction(item.getOptions)) {
+    // 20ms 延迟非异步 getOptions()
+    const [options] = await Promise.all([item.getOptions(), sleep(20)])
+    item._options = options
+    isChildren.value = true
+    subMenuOptions.value = item._options
+    selectedCategories.value = item.value
     return
   }
   menuRef.value?.hide()
@@ -256,7 +258,9 @@ async function modifyFilter() {
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
             @change="onChange(item)" />
-          <span>{{ item.label }}</span>
+          <RxAvatar v-if="item.value.startsWith('u_')" :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)"
+            :color="item.avatarColor" :size="24" :font-size="12" />
+          <span v-else>{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />

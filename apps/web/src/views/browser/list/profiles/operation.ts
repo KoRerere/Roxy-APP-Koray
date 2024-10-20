@@ -25,12 +25,6 @@ export function tableFilters(_params: any = {}) {
 export async function getCustomFilters(params: any = {}) {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
 
-  const [{ data: platformList }, { data: labelList }, { data: projectList }] = await Promise.all([
-    API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 }),
-    API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
-    API.limit.userGetProjectInfoByWorkspaceList(),
-  ])
-
   const inputs = [
     {
       type: 'text',
@@ -52,28 +46,33 @@ export async function getCustomFilters(params: any = {}) {
       label: $t('System'),
       name: 'osList',
       icon: 'base/rx_ic_laptop',
-      options: ($dict_map.os || []).map((item: any) => ({
-        parentName: 'osList',
-        value: item.value,
-        label: item.label,
-      })),
+      getOptions: () => {
+        return ($dict_map.os || []).map((item: any) => ({
+          parentName: 'osList',
+          value: item.value,
+          label: item.label,
+        }))
+      },
     },
     {
       type: 'Checkbox',
       name: 'platformUrlIds',
       label: $t('Account'),
       icon: 'base/rx_ic_keys',
-      options: platformList.rows.map((item: any) => ({
-        parentName: 'platformUrlIds',
-        value: `${item.id}`,
-        label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
-      })),
+      getOptions: async () => {
+        const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
+        return data.rows.map((item: any) => ({
+          parentName: 'platformUrlIds',
+          value: `${item.id}`,
+          label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
+        }))
+      },
     },
     {
       separator: true,
     },
     {
-      type: 'radio',
+      type: 'switchGroup',
       name: 'openStatus',
       label: $t('Status'),
       options: [
@@ -97,22 +96,43 @@ export async function getCustomFilters(params: any = {}) {
       name: 'projectIds',
       label: $t('Project'),
       icon: 'base/rx_ic_stack',
-      options: projectList.rows.map((item: any) => ({
-        parentName: 'projectIds',
-        value: `${item.project_id}`,
-        label: item.projectName,
-      })),
+      getOptions: async () => {
+        const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+        return data.rows.map((item: any) => ({
+          parentName: 'projectIds',
+          value: `${item.project_id}`,
+          label: item.projectName,
+        }))
+      },
     },
     {
       type: 'Checkbox',
       name: 'labelIds',
       label: $t('Tag'),
       icon: 'base/rx_ic_tag',
-      options: labelList.rows.map((item: any) => ({
-        parentName: 'labelIds',
-        value: `${item.id}`,
-        label: item.name,
-      })),
+      getOptions: async () => {
+        const [{ data: labelList }, { data: memberList }] = await Promise.all([
+          await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' }),
+          await API.team.userGetMemberInfoByWorkspaceList({}),
+        ])
+
+        const menbers = memberList.rows.map((item: any) => ({
+          parentName: 'labelIds',
+          value: `u_${item.user_id}`,
+          label: item.userName,
+          avatar: item.avatar,
+          avatarColor: item.avatarColor,
+        }))
+        console.log('🚀 ~ menbers ~ menbers:', menbers)
+
+        const labels = labelList.rows.map((item: any) => ({
+          parentName: 'labelIds',
+          value: `${item.id}`,
+          label: item.name,
+        }))
+
+        return menbers.concat(labels as any)
+      },
     },
     {
       separator: true,
@@ -144,14 +164,16 @@ export async function getCustomFilters(params: any = {}) {
       name: 'proxyProtocoList',
       label: $t('Proxy Protocol'),
       icon: 'base/rx_ic_internet_pin',
-      options: ($dict_map.protocol || []).map((item: any) => ({
-        parentName: 'proxyProtocoList',
-        value: item.value,
-        label: item.label,
-      })),
+      getOptions: () => {
+        return ($dict_map.protocol || []).map((item: any) => ({
+          parentName: 'proxyProtocoList',
+          value: item.value,
+          label: item.label,
+        }))
+      },
     },
     {
-      type: 'radio',
+      type: 'switchGroup',
       name: 'proxyTestStatus',
       label: $t('Check Status'),
       options: [

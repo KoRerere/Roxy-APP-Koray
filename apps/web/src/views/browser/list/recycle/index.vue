@@ -60,7 +60,7 @@ async function deleteHandler(datas: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
-      showToast(code, msg, 5000)
+      showToast(code, msg)
       tableRef.value?.refresh()
     },
   })

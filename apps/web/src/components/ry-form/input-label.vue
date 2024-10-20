@@ -16,8 +16,7 @@ defineProps({
     <div class="rx-label__content">
       <span>{{ label }}</span>
       <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" name="base/rx_ic_info" :size="12"
-                 color="#C7CDD1"
-      />
+        color="#C7CDD1" />
     </div>
   </label>
 </template>
@@ -29,9 +28,10 @@ defineProps({
   width: v-bind(labelWidth);
   min-width: 120px;
   color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  font-family: Inter;
   font-size: 12px;
   font-weight: 500;
-  line-height: var(--Line-Height-text-lg, 20px);
+  line-height: var(--Line-Height-text-xs, 16px);
 
   &__content {
     display: flex;

@@ -21,7 +21,7 @@ createTableContext({ isBatch, createCount })
 
 const tabs = ref([
   { title: $t('Single Profiles'), value: 'single' },
-  { title: $t('Multi Profiles'), value: 'batch' },
+  { title: $t('Multi Profiles'), value: 'multi' },
   { title: $t('Import Profiles'), value: 'import' },
 ])
 const tabsValue = ref('single')
@@ -57,7 +57,7 @@ const accordions = computed(() => {
 watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
-  isBatch.value = tabsValue.value === 'batch'
+  isBatch.value = tabsValue.value === 'multi'
   if (isBatch.value) {
     getUserMaxCount()
   }
@@ -105,7 +105,7 @@ async function createProfile(formData: any, openBrowser: boolean) {
   switch (tabsValue.value) {
     case 'single':
       return singleCreateProfile(params, openBrowser)
-    case 'batch':
+    case 'multi':
       return batchCreateProfile(params)
     case 'import':
       return importProfile(params)
@@ -124,7 +124,7 @@ async function batchCreateProfile(params: any) {
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
-    onlyErrorToast(-1, $t('The number of agents is greater than the number of profile'), 5000)
+    onlyErrorToast(-1, $t('The number of agents is greater than the number of profile'))
     return
   }
 
@@ -137,7 +137,7 @@ async function batchCreateProfile(params: any) {
 
 async function importProfile(params: any) {
   if (!fileAnalyzeData.value) {
-    onlyErrorToast(-1, $t('Please select a file to import.'), 5000)
+    onlyErrorToast(-1, $t('Please select a file to import.'))
     return
   }
   const fingerCount = fileAnalyzeData.value.excelData.length
@@ -154,21 +154,27 @@ onBeforeMount(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <Tabs v-model:value="tabsValue">
-        <TabList>
-          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
-            {{ tab.title }}
-          </Tab>
-        </TabList>
-      </Tabs>
+      <div class="profile-header">
+        <RxSvgIcon name="base/rx_ic_chevron_left" :size="24" />
+        <span>Create profile</span>
+      </div>
+      <div class="profile-tabs">
+        <Tabs v-model:value="tabsValue">
+          <TabList>
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
+              {{ tab.title }}
+            </Tab>
+          </TabList>
+        </Tabs>
+      </div>
       <div class="flex-ovh-1 flex-col">
-        <div class="top-content">
-          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" class="top-content-windown-name" />
-          <div v-show="tabsValue === 'batch'" class="flex items-center justify-between batch">
-            <div>Profiles amount</div>
-            <div class="flex flex-col items-end">
-              <InputNumber v-model="createCount" :min="1" :max="maxWindowCount" class="batch-input" show-buttons
-                button-layout="horizontal" :step="1" fluid>
+        <div class="profile-basic">
+          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
+          <div v-show="tabsValue === 'multi'" class="multi-block">
+            <div class="flex items-center justify-between">
+              <div>Profiles amount</div>
+              <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1"
+                :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
                 </template>
@@ -176,11 +182,10 @@ onBeforeMount(() => {
                   <RxSvgIcon name="base/rx_ic_minus" />
                 </template>
               </InputNumber>
-              <div class="batch-info">
-                Max profiles: {{ maxWindowCount }}. For more profiles please <span class="batch-info-jump"
-                  @click="tabsValue = 'import'">import
-                  profiles</span>.
-              </div>
+            </div>
+            <div class="multi-block-info">
+              Max profiles: {{ maxWindowCount }}. For more profiles please <span class="multi-block-info-jump"
+                @click="tabsValue = 'import'">import profiles</span>.
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
@@ -195,34 +200,88 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
-.top-content {
-  padding: var(--spacing-md, 16px) var(--spacing-sm, 12px);
+.profile-header {
+  display: flex;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  align-items: center;
+  gap: 10px;
 
-  &-windown-name {
-    padding: var(--spacing-md, 6px) 8px;
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+}
+
+.profile-tabs {
+  padding: 0px var(--spacing-4xl, 24px);
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  :deep(.p-tablist-tab-list) {
+    gap: var(--spacing-2xl, 16px);
+    border-color: transparent;
+
+    .p-tab {
+      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      color: var(--Colors-Text-text-secondary, #575d61);
+      font-family: Inter;
+      font-size: var(--Font-Size-text-sm, 12px);
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+      border-color: transparent;
+
+      &:not(.p-tab-active):not(.p-disabled):hover {
+        border-color: transparent;
+      }
+    }
+
+    .p-tab-active {
+      color: var(--Colors-Text-text-brand, #12a3fc);
+    }
   }
 }
 
-.batch {
-  padding: var(--spacing-none, 0px) 8px;
+.profile-basic {
+  padding: var(--spacing-md, 16px) 66px;
+}
 
-  &-input {
-    margin-bottom: var(--spacing-xs, 4px);
-    width: 150px;
+.multi-block {
+  padding: 0 var(--spacing-lg, 8px);
+  color: var(--Color-neutrals-900, #171c1f);
+  font-family: Inter;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
 
-    :deep(.p-inputnumber-input) {
+  :deep(.p-inputnumber) {
+    width: 120px;
+
+    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+
+    .p-inputnumber-input {
+      padding: 0;
+      border: none;
+      color: var(--Component-Colors-TextInput-text-text, #171c1f);
       text-align: center;
+      font-family: Inter;
+      font-size: 12px;
+      line-height: var(--Line-Height-text-lg, 20px);
+    }
+
+    .p-inputnumber-button {
+      padding: var(--spacing-md, 6px);
+      width: auto;
+      border: none;
     }
   }
 
   &-info {
+    margin-top: var(--spacing-xs, 4px);
     color: var(--Colors-Text-text-tertiary, #7c8387);
     text-align: right;
-    font-family: Inter;
     font-size: 10px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
 
     &-jump {
       color: var(--Colors-Text-text-brand, #12a3fc);

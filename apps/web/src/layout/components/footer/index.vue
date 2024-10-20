@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { SvgNames } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 
 const collapsed = defineModel('collapsed', { default: false })
@@ -18,7 +19,7 @@ const list = [
   <div class="rx-layout-footer" :class="{ collapsed }">
     <template v-for="item in list" :key="item.text">
       <div class="item" @click="item.handler">
-        <SvgIcon :name="item.icon" />
+        <SvgIcon :class="{ 'rotate-180': collapsed }" :name="(item.icon as SvgNames)" />
         <span v-if="!collapsed">{{ item.text }}</span>
       </div>
     </template>
@@ -50,7 +51,8 @@ const list = [
     font-style: normal;
     font-weight: 500;
     min-height: var(--Line-Height-text-lg, 20px);
-    line-height: var(--Line-Height-text-lg, 20px); /* 153.846% */
+    line-height: var(--Line-Height-text-lg, 20px);
+    /* 153.846% */
     cursor: pointer;
   }
 }

@@ -47,11 +47,13 @@ export function getCustomFilters() {
       type: 'Checkbox',
       label: $t('Type'),
       name: 'protocol',
-      options: ($dict_map.protocol || []).map((item: any) => ({
-        parentName: 'protocol',
-        value: item.value,
-        label: item.label,
-      })),
+      getOptions: () => {
+        return ($dict_map.protocol || []).map((item: any) => ({
+          parentName: 'protocol',
+          value: item.value,
+          label: item.label,
+        }))
+      },
     },
     {
       type: 'text',
@@ -72,14 +74,16 @@ export function getCustomFilters() {
       type: 'Checkbox',
       label: $t('Country/Region'),
       name: 'lastCountry',
-      options: ($dict_map.country || []).map((item: any) => ({
-        parentName: 'lastCountry',
-        value: item.value,
-        label: item.label,
-      })),
+      getOptions: () => {
+        return ($dict_map.country || []).map((item: any) => ({
+          parentName: 'lastCountry',
+          value: item.value,
+          label: item.label,
+        }))
+      },
     },
     {
-      type: 'radio',
+      type: 'switchGroup',
       label: $t('Check Status'),
       name: 'checkStatus',
       options: [

@@ -58,7 +58,6 @@ const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 
 const tableRef = useTemplateRef('windownTable')
-console.log('🚀 ~ workspaceStore:', workspaceStore.currentWorkspace)
 
 const drawer = reactive({
   type: 'proxyList',
@@ -93,17 +92,8 @@ const drawer = reactive({
     }
   },
   updateProfile: async (data: any) => {
-    try {
-      const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(data)
-      onlyErrorToast(code, msg, 5000)
-      onRefreshTable()
-    }
-    catch (error) {
-      onlyErrorToast(-1, error as string, 5000)
-    }
-    finally {
-      drawer.visible = false
-    }
+    await singleModifyWindow(data)
+    drawer.visible = false
   },
 })
 
@@ -155,7 +145,7 @@ async function saveFilters(formData: any) {
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
-  showToast(code, msg, 5000)
+  showToast(code, msg)
 }
 
 async function coverDefaultDisplay() {
@@ -184,7 +174,7 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'copyId':
       copyText(data.dirId)
-      showToast(0, $t('success'), 3000)
+      showToast(0, $t('success'))
       break
     case 'view':
       openBrowser(data)
@@ -203,7 +193,7 @@ async function operationHandler(operate: any, data: any) {
       })
       break
     case 'fav':
-      drawer.updateProfile({ id: data.id, isOften: !data.isOften })
+      singleModifyWindow({ id: data.id, isOften: !data.isOften })
       break
     case 'addNotes':
       onRemark(datas)
@@ -243,16 +233,6 @@ function openBrowser(data: any) {
   window.electronAPI.send('browser:batchLaunch', params)
 }
 
-function deleteProfile(datas: any, ids: number[]) {
-  if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
-  }
-  else {
-    warnPopup($t('Are you sure to perform this operation?'))
-      .then(() => batchModifyWindow({ ids, isDelete: true }))
-  }
-}
-
 function showOperationMenu(event: Event, data: any, extra?: any) {
   show(event, {
     operation: extra?.cmpOperation || operation.value,
@@ -261,6 +241,10 @@ function showOperationMenu(event: Event, data: any, extra?: any) {
       extra?.clearSelection()
     },
   })
+}
+
+async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
+  await singleModifyWindow({ ...params, id: data.id })
 }
 
 function onRemark(datas: any) {
@@ -290,8 +274,27 @@ function onRemark(datas: any) {
   })
 }
 
-async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  await batchModifyWindow({ ...params, ids: [data.id] })
+function deleteProfile(datas: any, ids: number[]) {
+  if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
+    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
+  }
+  else {
+    warnPopup($t('Are you sure to perform this operation?'))
+      .then(() => batchModifyWindow({ ids, isDelete: true }))
+  }
+}
+
+async function singleModifyWindow(params: any) {
+  try {
+    const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
+    showToast(code, msg)
+    if (code === 0) {
+      onRefreshTable()
+    }
+  }
+  catch (error) {
+    onlyErrorToast(-1, error as string)
+  }
 }
 
 async function batchModifyWindow(params: any) {
@@ -303,7 +306,7 @@ async function batchModifyWindow(params: any) {
     }
   }
   catch (error) {
-    onlyErrorToast(-1, error as string, 5000)
+    onlyErrorToast(-1, error as string)
   }
 }
 
@@ -358,7 +361,7 @@ async function testProxy(data: any) {
     await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
   }
 
-  drawer.updateProfile({ id: data.id, dirId: data.dirId, ...checkRes })
+  singleModifyWindow({ id: data.id, dirId: data.dirId, ...checkRes })
 }
 
 async function refreshUrl(data: any) {
@@ -370,7 +373,7 @@ async function deleteProxy(data: any) {
   try {
     await warnPopup($t('Related profiles won\'t be infected.'))
     // 删除代理也是调用修改接口
-    drawer.updateProfile({
+    singleModifyWindow({
       id: data.id,
       dirId: data.dirId,
       moduleId: 0, // 为0表示解除关联
@@ -380,7 +383,7 @@ async function deleteProxy(data: any) {
     })
   }
   catch (error) {
-    onlyErrorToast(-1, error as string, 5000)
+    onlyErrorToast(-1, error as string)
   }
 }
 

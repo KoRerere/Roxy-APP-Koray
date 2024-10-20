@@ -119,7 +119,7 @@ async function deleteFilterItem(item: any) {
         }
       }
       catch (error) {
-        onlyErrorToast(-1, error as string, 5000)
+        onlyErrorToast(-1, error as string)
       }
     },
   })
@@ -255,6 +255,7 @@ onBeforeMount(() => {
 
     .p-tab {
       padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      color: var(--Colors-Text-text-secondary, #575d61);
       font-family: Inter;
       font-size: var(--Font-Size-text-sm, 12px);
       font-weight: 500;
@@ -264,6 +265,10 @@ onBeforeMount(() => {
       &:not(.p-tab-active):not(.p-disabled):hover {
         border-color: transparent;
       }
+    }
+
+    .p-tab-active {
+      color: var(--Colors-Text-text-brand, #12a3fc);
     }
   }
 
@@ -289,7 +294,6 @@ onBeforeMount(() => {
     display: flex;
     padding: var(--spacing-sm, 4px);
     border-radius: 4px;
-    border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
     background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
     color: var(--Colors-Text-text-secondary, #575d61);
   }
