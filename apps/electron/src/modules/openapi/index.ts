@@ -1,6 +1,7 @@
 import type { Server } from 'node:http'
 import express from 'express'
 import { API } from '/@/api'
+import { store } from '/@/modules/store'
 import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
 
@@ -25,6 +26,7 @@ class OpenAPIServer {
       this.#server = this.app.listen(data.port, () => {
         console.log(`OpenAPI server is running on ${data.port}`)
       })
+      store.apiKey = data.apiKey
     }
     else {
       console.log('OpenAPI server failed to start:', msg)
