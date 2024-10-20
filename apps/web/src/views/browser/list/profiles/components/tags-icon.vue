@@ -23,6 +23,10 @@ const props = defineProps({
     type: Number as PropType<number>,
     default: 0,
   },
+  disabled: {
+    type: Boolean as PropType<boolean>,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update'])
@@ -33,7 +37,12 @@ const role = useRoleStore()
 
 // const styles = useCssModule()
 
+const _disabled = computed(() => props.disabled || role.isViewer)
+
 async function openMenu(event: any) {
+  if (_disabled.value)
+    return
+
   const tagList = await getTags()
   const memberList = await getProjectMember()
 
@@ -89,10 +98,11 @@ function onAddTag() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RyButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="role.isViewer"
+    <RyButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="_disabled"
       severity="secondary" size="small" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
-      <div v-for="label in labels" :key="label.labelId" class="flex items-center select-none cursor-pointer">
+      <div v-for="label in labels" :key="label.labelId" class="flex items-center select-none"
+        :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']">
         <RxAvatar v-if="`${label.labelId}`.startsWith('u_')" :avatar="label.avatar" :name="label.labelName?.slice(0, 2)"
           :color="label.labelColor" :size="24" :font-size="12" @click.stop="openMenu" />
         <template v-else>

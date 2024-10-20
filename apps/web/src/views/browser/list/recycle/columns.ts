@@ -10,12 +10,16 @@ const columnsConfig = {
     },
     {
       title: $t('Tags'),
-      key: 'open',
+      slot: 'tags',
     },
     {
       title: $t('Delete Log'),
       key: 'group',
       slot: 'log',
+    },
+    {
+      title: $t('Actions'),
+      slot: 'actions',
     },
   ],
 }
