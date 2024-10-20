@@ -49,7 +49,7 @@ async function tableRequest(params: any) {
 
 async function addRemark(platformRemarks: string, row: any) {
   const { code, msg } = await editAccount({ ...row, platformRemarks })
-  showToast(code, msg, 5000)
+  showToast(code, msg)
   tableRef.value?.refresh()
 }
 

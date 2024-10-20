@@ -119,7 +119,7 @@ async function deleteFilterItem(item: any) {
         }
       }
       catch (error) {
-        onlyErrorToast(-1, error as string, 5000)
+        onlyErrorToast(-1, error as string)
       }
     },
   })

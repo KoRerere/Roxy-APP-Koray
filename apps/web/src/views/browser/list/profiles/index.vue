@@ -145,7 +145,7 @@ async function saveFilters(formData: any) {
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
-  showToast(code, msg, 5000)
+  showToast(code, msg)
 }
 
 async function coverDefaultDisplay() {
@@ -174,7 +174,7 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'copyId':
       copyText(data.dirId)
-      showToast(0, $t('success'), 3000)
+      showToast(0, $t('success'))
       break
     case 'view':
       openBrowser(data)
@@ -293,7 +293,7 @@ async function singleModifyWindow(params: any) {
     }
   }
   catch (error) {
-    onlyErrorToast(-1, error as string, 5000)
+    onlyErrorToast(-1, error as string)
   }
 }
 
@@ -306,7 +306,7 @@ async function batchModifyWindow(params: any) {
     }
   }
   catch (error) {
-    onlyErrorToast(-1, error as string, 5000)
+    onlyErrorToast(-1, error as string)
   }
 }
 
@@ -383,7 +383,7 @@ async function deleteProxy(data: any) {
     })
   }
   catch (error) {
-    onlyErrorToast(-1, error as string, 5000)
+    onlyErrorToast(-1, error as string)
   }
 }
 

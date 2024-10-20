@@ -123,7 +123,7 @@ function onRemark(data: any) {
 
 async function addRemark(platformRemarks: string, data: any) {
   const { code, msg } = await editAccount({ ...data, platformRemarks })
-  showToast(code, msg, 5000)
+  showToast(code, msg)
   tableRef.value?.refresh()
 }
 
@@ -144,7 +144,7 @@ function deletePopup(data: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      showToast(code, msg, 5000)
+      showToast(code, msg)
     },
   })
 }

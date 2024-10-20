@@ -56,7 +56,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 function refreshUrl(datas: ProxyItem[]) {
   datas.forEach(async (item) => {
     const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
-    showToast(isOK ? 0 : -1, item.refreshUrl as string, 5000)
+    showToast(isOK ? 0 : -1, item.refreshUrl as string)
   })
 }
 
@@ -76,13 +76,13 @@ function testAllProxy() {
 
 async function addRemark(remark: string, data: any) {
   const { code, msg } = await onEdit({ ...data, remark })
-  showToast(code, msg, 5000)
+  showToast(code, msg)
   tableRef.value?.refresh()
 }
 
 async function onEditConfirm(data: any) {
   const { code, msg } = await onEdit(data)
-  showToast(code, msg, 5000)
+  showToast(code, msg)
   tableRef.value?.refresh()
   drawer.visible = false
 }

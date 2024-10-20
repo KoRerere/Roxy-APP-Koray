@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
 import { read, utils } from 'xlsx'
+import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
@@ -34,7 +35,7 @@ function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
-    toast.add({ severity: 'error', summary: 'Upload error', detail: '请选择 Excel 文件', life: 5000, group: 'tc' })
+    toast.add({ severity: 'error', summary: 'Upload error', detail: $t('Only supports Excel type files'), life: 5000, group: 'tc' })
     return
   }
   handleBeforeUpload(file)
@@ -124,9 +125,7 @@ async function handleBeforeUpload(rawFile: any) {
     <div class="upload-title">
       Please download our <a
         href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls"
-        target="_blank"
-        class="upload-title-link"
-      >template file</a> here. After you finish editing, upload it
+        target="_blank" class="upload-title-link">template file</a> here. After you finish editing, upload it
       through the
       following steps.
     </div>
@@ -134,14 +133,13 @@ async function handleBeforeUpload(rawFile: any) {
       * We only support create up to 500 profiles every time.
     </div>
     <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
-      <span class="mdi mdi-file-outline upload-area-icon" />
+      <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="#E4E8EB" />
       <div class="text-center">
         <div>{{ fileData.name || 'Choose file and drop it here' }}</div>
         <div>{{ fileData.size || 'Only .xlsx files supported, up to 5MB.' }}</div>
       </div>
       <ryButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined
-                severity="secondary" @click="chooseFile"
-      />
+        severity="secondary" @click="chooseFile" />
     </div>
     <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">
       {{ fileData.successCount }} profiles imported
@@ -187,11 +185,6 @@ async function handleBeforeUpload(rawFile: any) {
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
   border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
   background: var(--Color-neutrals-50, #fafbfc);
-
-  &-icon {
-    font-size: 48px;
-    line-height: 1;
-  }
 }
 
 .upload-message {

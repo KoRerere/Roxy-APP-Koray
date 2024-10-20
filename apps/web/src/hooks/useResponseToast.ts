@@ -17,7 +17,7 @@ export function useResponseToast() {
     }
   }
 
-  function onlyErrorToast(code: number, message: string, life: number = 3000) {
+  function onlyErrorToast(code: number, message: string, life: number = 5000) {
     if (code !== 0) {
       toast.add({ severity: 'error', summary: summary.fail, detail: message, life })
     }

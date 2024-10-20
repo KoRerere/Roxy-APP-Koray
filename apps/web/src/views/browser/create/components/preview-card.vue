@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryButton from '/@/components/ry-button'
-
 const props = defineProps({
   inputsGroup: {
     type: Array,
@@ -46,10 +43,10 @@ const visible = ref(true)
 </script>
 
 <template>
-  <div class="preview" :class="[visible ? '' : 'hide']">
-    <div class="preview-header">
-      <RxSvgIcon class="cursor-pointer" :class="{ 'rotate-180': visible }" name="base/rx_ic_fold_right"
-        @click="visible = !visible" />
+  <div class="flex flex-col items-start preview" :class="[visible ? '' : 'hide']">
+    <div class="flex flex-row-reverse items-center justify-between self-stretch preview-header">
+      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61"
+        name="base/rx_ic_fold_right" @click="visible = !visible" />
       <span v-if="visible">Preview Card</span>
     </div>
     <div v-if="visible" class="w-full preview-content">
@@ -65,17 +62,16 @@ const visible = ref(true)
       </div>
     </div>
     <div v-if="visible" class="preview-footer">
-      <ryButton label="Shuffle profiles" icon="base/rx_ic_shuffle" outlined severity="secondary"
+      <RyButton size="small" label="Shuffle profiles" icon="base/rx_ic_shuffle" outlined severity="secondary"
         @click="$emit('shuffle')" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+$spacing-x: var(--spacing-xl, 12px);
+
 .preview {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   margin: 12px;
   margin-left: 0;
   padding: var(--spacing-lg, 8px) 0;
@@ -89,24 +85,18 @@ const visible = ref(true)
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
-  transition: all 0.2s ease-in;
+  transition: all 0.3s ease-in;
 
   &.hide {
-    width: 42px;
-    height: 42px;
+    width: 49px;
+    height: 41px;
   }
 
   &-header {
-    display: flex;
-    flex-direction: row-reverse;
-    align-self: stretch;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--spacing-xl, 12px);
+    padding: 0 $spacing-x;
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
     font-weight: 600;
     line-height: normal;
   }
@@ -128,10 +118,14 @@ const visible = ref(true)
     }
 
     &-list {
-      padding: 0 var(--spacing-xl, 12px);
+      padding: 0 $spacing-x;
       width: 100%;
       height: 100%;
-      overflow-y: scroll;
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
 
     &-item {
@@ -164,7 +158,7 @@ const visible = ref(true)
     align-self: stretch;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 var(--spacing-xl, 12px);
+    padding: 0 $spacing-x;
     height: 40px;
   }
 }

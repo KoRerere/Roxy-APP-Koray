@@ -38,7 +38,7 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
         ? [-1, 'Please checkout your IP configuration and local network then try again.']
         : [0, `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`]
 
-      showToast(code, msg, 5000)
+      showToast(code, msg)
       checkeResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkeResult.lastIp = checkRes.ip ?? ''
       checkeResult.lastCity = checkRes.city ?? ''
@@ -46,7 +46,7 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
       checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }
     catch (error: any) {
-      onlyErrorToast(-1, error, 5000)
+      onlyErrorToast(-1, error)
     }
     finally {
       checkeResult.loading = false

@@ -80,7 +80,7 @@ function onCopy(dirId: string) {
             {{ panels.title }}
           </AccordionHeader>
           <AccordionContent :pt="{ content: '!py-4 !px-2' }">
-            <ryForm :inputs="inputsGroup[index]" label-position="left">
+            <RyForm :inputs="inputsGroup[index]" label-position="left">
               <template #profileId="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
@@ -124,7 +124,7 @@ function onCopy(dirId: string) {
                   </InputGroup>
                 </div>
               </template>
-            </ryForm>
+            </RyForm>
           </AccordionContent>
         </AccordionPanel>
       </Accordion>
@@ -144,6 +144,10 @@ $spacing-x: 66px;
 
 .content {
   padding: 0 $spacing-x 40px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 :deep(.p-accordionheader) {

@@ -39,7 +39,7 @@ export function useTagsActions(options: TagActionsOptions = defaultOptions) {
           }
 
           if (options.toast || res.code !== 0) {
-            showToast(res.code, res.msg, 5000)
+            showToast(res.code, res.msg)
           }
         },
         onCancel: () => { },

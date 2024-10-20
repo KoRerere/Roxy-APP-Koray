@@ -144,7 +144,7 @@ function operationHandler(operate: any, data: any) {
 
 async function refreshUrl(data: any, operateName: string) {
   const isOK = await setRowsLoading(data, operateName, () => window.electronAPI.send('proxy:refreshUrl', data.refreshUrl!))
-  showToast(isOK ? 0 : -1, data.refreshUrl as string, 5000)
+  showToast(isOK ? 0 : -1, data.refreshUrl as string)
 }
 
 function testProxy(data: any, operateName: string) {
@@ -189,7 +189,7 @@ function onSave() {
 
   if (index > -1) {
     const { _validator } = dataList.value[index]
-    onlyErrorToast(-1, $t('proxies[{index}] {key} missing', { index: index + 1, key: _validator[0][0] }), 5000)
+    onlyErrorToast(-1, $t('proxies[{index}] {key} missing', { index: index + 1, key: _validator[0][0] }))
     return
   }
 

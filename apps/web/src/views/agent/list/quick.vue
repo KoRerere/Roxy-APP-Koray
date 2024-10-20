@@ -131,7 +131,7 @@ function operationHandler(operate: any, data: ProxyItem) {
 function refreshUrl(datas: ProxyItem[]) {
   datas.forEach(async (item) => {
     const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
-    showToast(isOK ? 0 : -1, item.refreshUrl as string, 5000)
+    showToast(isOK ? 0 : -1, item.refreshUrl as string)
   })
 }
 
