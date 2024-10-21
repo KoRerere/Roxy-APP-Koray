@@ -169,4 +169,8 @@ $spacing-x: 66px;
   max-height: 64px;
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
+
+:deep(.rx-label) {
+  max-width: 120px;
+}
 </style>
