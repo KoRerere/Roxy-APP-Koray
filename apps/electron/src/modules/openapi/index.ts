@@ -18,13 +18,13 @@ class OpenAPIServer {
   }
 
   async start() {
+    console.log('Starting OpenAPI server...')
     this.stop()
-
     const { code, data, msg } = await API.base.userGetUserApiList()
-
+    console.log('userGetUserApiList:', code, data, msg)
     if (code === 0 && data.open) {
       this.#server = this.app.listen(data.port, () => {
-        console.log(`OpenAPI server is running on ${data.port}`)
+        console.log(`OpenAPI server is running on ${this.app.get('port')}`)
       })
       store.apiKey = data.apiKey
     }

@@ -363,25 +363,26 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
 
     get fproxy() {
       // proxyMethod noproxy 直连  platform 购买的ip import 自定义
-      if (winInfo.proxyMethod !== `noproxy`) {
-        // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
+      // if (winInfo.proxyMethod !== `noproxy`) {
+      // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
 
-        return {
-          // 代理类型 http https,socks5
-          type: winInfo.protocol.toLocaleLowerCase(),
-          // 代理主机
-          host: '127.0.0.1',
-          // 代理端口
-          port: store.luminetProxyPort,
-          // 用户名 ，选填
-          username: winInfo.dirId,
-          // 密码，选填
-          password: winInfo.dirId,
-          // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
-          proxyByPassList: store.ipBlackList?.join?.(';'),
-        }
-        // $LOG(`newData.fproxy.ipBlackList`, $config.userConfig?.ipBlackList?.join?.(';'))
+      return {
+        // 代理类型 http https,socks5
+        // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
+        type: winInfo.protocol.toLocaleLowerCase() === 'https' ? 'http' : winInfo.protocol.toLocaleLowerCase(),
+        // 代理主机
+        host: '127.0.0.1',
+        // 代理端口
+        port: store.luminetProxyPort,
+        // 用户名 ，选填
+        username: winInfo.dirId,
+        // 密码，选填
+        password: winInfo.dirId,
+        // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
+        proxyByPassList: store.ipBlackList?.join?.(';'),
       }
+      // $LOG(`newData.fproxy.ipBlackList`, $config.userConfig?.ipBlackList?.join?.(';'))
+      // }
     },
     autofillWebSite: {
       /** 自动填写账号密码的网站 */

@@ -27,7 +27,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
 
   constructor() {
-    this.fetchAvailableCoreList()
+    queueMicrotask(() => {
+      this.fetchAvailableCoreList()
+    })
     // 定时更新可用内核列表
     setInterval(() => {
       this.fetchAvailableCoreList()
