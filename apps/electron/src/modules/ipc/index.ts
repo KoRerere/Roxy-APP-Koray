@@ -1,7 +1,7 @@
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import type { Config } from 'electron'
 import { IPCMain } from '@roxy/electron-preload/main'
-import { dialog, shell } from 'electron'
+import { app, dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
@@ -139,19 +139,9 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
   return url
 })
 
-/** 进入主应用 */
-ipcMain.on('app:into-main-app', async () => {
-  const win = getMainWindow()!
-  win.hide()
-  win.setResizable(true)
-  win.loadURL(await getHtmlUrl())
-  win.setBounds({ width: 1280, height: 832 })
-  // win.setMinimumSize(minWidth, minHeight)
-  win.center()
-  console.log('进入主应用')
-  setTimeout(() => {
-    win.show()
-  }, 600)
+/** 获取应用版本号 */
+ipcMain.on('app:getAppVersion', () => {
+  return app.getVersion()
 })
 
 /** 保存软件设置 */

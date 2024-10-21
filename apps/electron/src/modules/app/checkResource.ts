@@ -106,7 +106,7 @@ async function checkLuminetBin(webDomain: string) {
     writer.on('finish', () => {
       writer.close()
       sendLaunchMessage('Download luminet complete')
-      // resolve(true)
+      resolve(true)
     })
   }
   else {

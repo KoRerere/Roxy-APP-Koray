@@ -2,10 +2,15 @@
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 const message = ref('')
+const appVersion = ref('')
 
 electronAPI.on('app:launch-message', (msg) => {
   console.log('app:launch-message: ', msg)
   message.value = msg
+})
+
+electronAPI.send('app:getAppVersion').then((version) => {
+  appVersion.value = version
 })
 </script>
 
@@ -17,16 +22,16 @@ electronAPI.on('app:launch-message', (msg) => {
         <div class="product-name">
           RoxyBrowser
         </div>
-        <span class="version">Beta  v1.0.5</span>
+        <span class="version">v{{ appVersion }}</span>
       </div>
     </div>
     <div class="message">
       {{ message }}
     </div>
 
-    <div class="rectangle-1" />
-    <div class="rectangle-2" />
-    <div class="rectangle-3" />
+    <div class="bg" />
+    <div class="bg bg2" />
+    <div class="bg bg3" />
   </div>
 </template>
 
@@ -51,7 +56,7 @@ electronAPI.on('app:launch-message', (msg) => {
   z-index: 10;
   display: flex;
   gap: 12px;
-  line-height: normal;
+  line-height: 0.7;
 
   .product-name {
     color: #042144;
@@ -65,7 +70,7 @@ electronAPI.on('app:launch-message', (msg) => {
   .version {
     color: var(--Color-neutrals-800, #252a2e);
     font-family: Archivo;
-    font-size: 10px;
+    font-size: 12px;
     font-style: normal;
     font-weight: 500;
     line-height: normal;
@@ -87,36 +92,33 @@ electronAPI.on('app:launch-message', (msg) => {
   z-index: 10;
 }
 
-.rectangle-1 {
-  position: fixed;
-  top: 50%;
-  left: 15%;
-  width: 408.089px;
-  height: 618.175px;
-  transform: translateY(-50%) rotate(37.7deg);
-  flex-shrink: 0;
-  background: linear-gradient(153deg, #bfe4ff -60.02%, #fff 76.62%);
+.bg {
+  animation: slide 10s ease-in-out infinite alternate;
+  background-image: linear-gradient(-30deg, rgba(193, 235, 255, 0.5) 50%, rgba(255, 255, 255, 0.4) 50%);
+  bottom: 0;
+  left: -50%;
+  opacity: 0.6;
+  position: absolute;
+  right: -50%;
+  top: 0;
+  z-index: 0;
 }
 
-.rectangle-2 {
-  position: fixed;
-  top: 50%;
-  left: 33%;
-  width: 408.089px;
-  height: 618.175px;
-  transform: translateY(-50%) rotate(37.7deg);
-  flex-shrink: 0;
-  background: linear-gradient(154deg, #8bc9f6 -76.36%, #fff 80.91%);
+.bg2 {
+  animation-direction: alternate-reverse;
+  animation-duration: 20s;
 }
 
-.rectangle-3 {
-  position: fixed;
-  top: 50%;
-  left: 66%;
-  width: 408.089px;
-  height: 618.175px;
-  transform: translateY(-50%) rotate(37.7deg);
-  flex-shrink: 0;
-  background: linear-gradient(153deg, rgba(27, 152, 243, 0.4) -52.67%, rgba(255, 255, 255, 0.4) 76.62%);
+.bg3 {
+  animation-duration: 30s;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(25%);
+  }
 }
 </style>
