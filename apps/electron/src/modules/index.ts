@@ -18,7 +18,7 @@ export async function setupModules() {
   // 设置 store
   await setupStore()
   // 启动 app
-  setupApp()
+  await setupApp()
   // 启动 openapi 服务
   setupOpenAPIServer()
   // 启动 app 内置服务

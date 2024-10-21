@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { store } from '/@/modules/store'
+import { isMac } from '/@/utils'
 
 const sessionDir = app.getPath('sessionData')
 
@@ -24,6 +25,8 @@ export const appConfig = {
   tempDir: join(sessionDir, 'temp'),
   /** 应用日志目录 */
   logsDir: app.getPath('logs'),
+  /** luminet 执行文件路径 */
+  luminetBinPath: join(sessionDir, 'luminet-bin', isMac ? 'luminet' : 'luminet.exe'),
 } as const
 
 console.log('appConfig', appConfig)

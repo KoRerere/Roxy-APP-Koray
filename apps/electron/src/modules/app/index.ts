@@ -1,11 +1,12 @@
 import { app, autoUpdater, shell } from 'electron'
 import path from 'node:path'
 import { appProtocolName } from '/@/constants'
+import { checkResource } from '/@/modules/app/checkResource'
 import { createTray } from '/@/modules/app/tray'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
 import { isWebReady, killProcessByName } from '/@/utils'
-import { restoreOrCreateWindow } from './mainWindow'
+import { intoMainPage, restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
@@ -59,7 +60,7 @@ app.on('before-quit', async (event) => {
   }
 })
 
-export function setupApp() {
+export async function setupApp() {
   /**
    * 防止多实例
    */
@@ -97,7 +98,7 @@ export function setupApp() {
 
   // macOS 系统通过 open-url 事件获取参数
   app.on('open-url', async (event, url) => {
-    await isWebReady
+    await isWebReady()
     ipcMain.send('oauth2:google-callback', `?${url.split('?')[1]}`)
   })
 
@@ -127,10 +128,17 @@ export function setupApp() {
   /**
    * Create app window when background process will be ready
    */
-  app.whenReady()
-    .then(async () => {
-      const browserWindow = await restoreOrCreateWindow()
-      createTray(browserWindow)
-    })
-    .catch(e => console.error('Failed create window:', e))
+  try {
+    await app.whenReady()
+
+    const browserWindow = await restoreOrCreateWindow()
+    createTray(browserWindow)
+    // 检查资源是否准备完毕
+    await checkResource()
+    // 进入主页
+    await intoMainPage()
+  }
+  catch (error) {
+    console.error('Failed create window:', error)
+  }
 }

@@ -139,6 +139,21 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
   return url
 })
 
+/** 进入主应用 */
+ipcMain.on('app:into-main-app', async () => {
+  const win = getMainWindow()!
+  win.hide()
+  win.setResizable(true)
+  win.loadURL(await getHtmlUrl())
+  win.setBounds({ width: 1280, height: 832 })
+  // win.setMinimumSize(minWidth, minHeight)
+  win.center()
+  console.log('进入主应用')
+  setTimeout(() => {
+    win.show()
+  }, 600)
+})
+
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
   Object.keys(config).forEach((key) => {
