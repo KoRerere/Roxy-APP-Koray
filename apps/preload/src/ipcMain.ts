@@ -1,7 +1,5 @@
 import type { IpcMainInvokeEvent } from 'electron'
-
 import { BrowserWindow, ipcMain } from 'electron'
-
 import type { MessageObj } from './types/'
 
 export class IPCMain<
@@ -21,7 +19,6 @@ export class IPCMain<
     name: T,
     fn: (...args: Parameters<MessageType[T]>) => ReturnType<MessageType[T]>,
   ): void {
-    console.log('on', name)
     if (this.listeners[name])
       throw new Error(`消息处理器 ${String(name)} 已存在`)
     this.listeners[name] = fn

@@ -61,6 +61,11 @@ export const chromeCoreManager = new class ChromeCoreManager {
     return join(this.genCoreDir(coreVersion), this.chromeBinName)
   }
 
+  /** 根据内核版本获取内核驱动文件路径 */
+  genCoreDriverPath(coreVersion: string) {
+    return join(this.genCoreDir(coreVersion), isMac ? `chromedriver` : 'chromedriver.exe')
+  }
+
   /** 获取指定的可用内核 */
   getAvailableCore(coreVersion: string) {
     return this.availableCoreList.find(core => core.coreVersion === coreVersion)
@@ -79,7 +84,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   async getCoreExePath(coreVersion: string, msgCallback?: (msg: string) => void) {
     if (!this.availableCoreList.length) {
       await this.fetchAvailableCoreList().catch((error) => {
-        msgCallback?.('获取内核列表失败')
+        msgCallback?.($t('获取内核列表失败'))
         return Promise.reject(error)
       })
     }
@@ -99,9 +104,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
     if (!isExeExists || !isVersionFileExists) {
       // 如果是第一次下载该内核，则将该内核加入下载队列
       if (!this.downloadingMap.has(coreVersion)) {
-        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
+        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion, msgCallback))
       }
-      msgCallback?.('正在下载内核')
+      msgCallback?.($t('正在下载内核'))
       // 等待下载完成
       await this.downloadingMap.get(coreVersion)
     }
@@ -118,8 +123,8 @@ export const chromeCoreManager = new class ChromeCoreManager {
       // 如果本地内核版本小于远程内核版本
       if (compare(localCoreVersion.trim(), availableCore.version, '<')) {
         // 重新下载
-        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion))
-        msgCallback?.('正在下载内核')
+        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion, msgCallback))
+        msgCallback?.($t('正在下载内核'))
         await this.downloadingMap.get(coreVersion)
       }
     }
@@ -134,7 +139,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   }
 
   /** 下载内核 */
-  async downloadCore(coreVersion: string) {
+  async downloadCore(coreVersion: string, msgCallback?: (msg: string) => void) {
     if (this.downloadingMap.has(coreVersion)) {
       return this.downloadingMap.get(coreVersion)
     }
@@ -142,7 +147,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
     const availableCore = this.getAvailableCore(coreVersion)
 
     if (!availableCore) {
-      throw new Error('当前系统不支持使用该内核')
+      throw new Error($t('当前系统不支持使用该内核'))
     }
 
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`)
@@ -172,8 +177,10 @@ export const chromeCoreManager = new class ChromeCoreManager {
       ipcMain.send('app:resource-update', payload)
       // 删除本地内核
       await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })
+      msgCallback?.($t('正在解压内核'))
       // 解压缩内核
       await unzipFile(outputZipPath, appConfig.chromeBinDir)
+      msgCallback?.($t('内核解压完成'))
       // 异步删除下载的 zip 文件，不需要等待
       rm(outputZipPath)
     }

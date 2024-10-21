@@ -1,4 +1,4 @@
-import { BaseApi, HttpClient, LoggingApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
+import { ApiApi, BaseApi, HttpClient, LoggingApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
 import { app } from 'electron'
 import https from 'node:https'
 import { handleRequest, handleResponse } from '/@/api/util'
@@ -27,12 +27,13 @@ httpClient.instance.interceptors.request.use((config) => {
   if (isDev) {
     console.log('store.token', store.token)
     console.log('store.workspaceId', store.workspaceId)
+    console.log('config.headers.workspaceId', config.headers.workspaceId)
   }
   handleRequest(config)
   config.headers.token = store.token
   Object.assign(config.headers, {
     ...commonRequestHeaders,
-    workspaceId: store.workspaceId,
+    workspaceId: config.headers.workspaceId || store.workspaceId,
     language: store.language,
   })
   return config
@@ -50,4 +51,5 @@ export const API = {
   logging: new LoggingApi(httpClient),
   team: new TeamApi(httpClient),
   base: new BaseApi(httpClient),
+  api: new ApiApi(httpClient),
 } as const

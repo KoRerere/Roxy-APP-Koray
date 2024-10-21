@@ -1,11 +1,18 @@
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
+import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { appConfig } from '/@/constants'
 import language from '/@/constants/language.json'
 import { store } from '/@/modules/store'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
+}
+
+/** 获取浏览器用户数据目录路径 */
+export function getUserDataDirPath(winItem: WindowItemType, workspaceId = store.workspaceId) {
+  return join(appConfig.browserCacheRootDir, `workspace_${workspaceId}`, `project_${winItem.projectId || 'default'}`, winItem.dirId!)
 }
 
 /** 转换数字, 如果转换后为 NaN, 则返回 null */

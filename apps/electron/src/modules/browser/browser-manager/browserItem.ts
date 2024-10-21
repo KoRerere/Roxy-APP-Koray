@@ -5,6 +5,8 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
+import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { delLuminetProxy } from '/@/modules/luminet'
 import { store } from '/@/modules/store'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
@@ -58,10 +60,32 @@ export class BrowserItem {
     return this.beforeLaunchTask.lastMessage
   }
 
+  /** 启动成功后的信息 */
+  get launchInfo() {
+    return {
+      /** 用于自动化工具的ws接口 */
+      ws: this.#browser?.wsEndpoint(),
+      /** 用于自动化工具的http接口 */
+      // http: '127.0.0.1:52314',
+      /** 内核版本 */
+      coreVersion: this.winInfo.coreVersion,
+      /** 用于自动化工具的 webdriver */
+      driver: chromeCoreManager.genCoreDriverPath(this.winInfo.coreVersion),
+      /** 窗口排序号 */
+      sortNum: this.winInfo.windowSortNum,
+      /** 窗口名称 */
+      windowName: this.winInfo.windowName,
+      /** 窗口备注 */
+      windowRemark: this.winInfo.windowRemark,
+      /** 进程id */
+      pid: this.#browser?.process()?.pid,
+    }
+  }
+
   constructor(winItem: WindowItemType) {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
-    this.userDataDir = join(appConfig.browserCacheRootDir, `workspace_${store.workspaceId}`, `project_${winItem.projectId || 'default'}`, winItem.dirId!)
+    this.userDataDir = getUserDataDirPath(winItem)
   }
 
   /** 获取浏览器实例 */
