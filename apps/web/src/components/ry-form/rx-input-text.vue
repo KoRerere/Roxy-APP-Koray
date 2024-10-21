@@ -16,7 +16,7 @@ defineOptions({
 
 const { size = 'sm', leftIcon, icon, ...props } = defineProps<Props>()
 
-defineEmits(['iconClick', 'change'])
+defineEmits(['iconClick'])
 </script>
 
 <template>
@@ -32,7 +32,7 @@ defineEmits(['iconClick', 'change'])
 </template>
 
 <style lang="scss" scoped>
-@mixin input-styles($pt, $pr, $pb, $pl, $gap, $bw, $radius) {
+@mixin input-styles($pt, $pr, $pb, $pl, $gap, $borderWidth, $radius, $fontSize, $lineHeight) {
   .p-inputicon:first-child {
     left: $pl;
   }
@@ -43,8 +43,12 @@ defineEmits(['iconClick', 'change'])
 
   .p-inputtext {
     padding: $pt $pr $pb $pl;
-    border-width: $bw;
+    border-width: $borderWidth;
     border-radius: $radius;
+    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    font-family: Inter;
+    font-size: $fontSize;
+    line-height: $lineHeight;
 
     &:not(:first-child) {
       padding-left: calc($pl + var(--p-icon-size) + $gap);
@@ -63,7 +67,9 @@ defineEmits(['iconClick', 'change'])
     var(--spacing-xl, 12px),
     8px,
     1px,
-    var(--Component-Colors-TextInput-radius-radius-lg, 8px));
+    var(--Component-Colors-TextInput-radius-radius-lg, 8px),
+    14px,
+    var(--Line-Height-text-lg, 20px));
 }
 
 .md {
@@ -73,7 +79,9 @@ defineEmits(['iconClick', 'change'])
     10px,
     var(--spacing-md, 6px),
     1px,
-    var(--Component-Colors-TextInput-radius-radius-md, 6px));
+    var(--Component-Colors-TextInput-radius-radius-md, 6px),
+    13px,
+    var(--Line-Height-text-lg, 20px));
 }
 
 .sm {
@@ -83,7 +91,9 @@ defineEmits(['iconClick', 'change'])
     8px,
     var(--spacing-md, 6px),
     1px,
-    var(--Component-Colors-TextInput-radius-radius-md, 6px));
+    var(--Component-Colors-TextInput-radius-radius-md, 6px),
+    12px,
+    var(--Line-Height-text-lg, 20px));
 }
 
 .xs {
@@ -93,7 +103,9 @@ defineEmits(['iconClick', 'change'])
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     0.5px,
-    var(--radius-sm, 4px));
+    var(--radius-sm, 4px),
+    12px,
+    var(--Line-Height-text-xs, 16px));
 }
 
 .xxs {
@@ -103,6 +115,8 @@ defineEmits(['iconClick', 'change'])
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     0.5px,
-    var(--radius-sm, 4px));
+    var(--radius-sm, 4px),
+    12px,
+    var(--Line-Height-text-xs, 16px));
 }
 </style>

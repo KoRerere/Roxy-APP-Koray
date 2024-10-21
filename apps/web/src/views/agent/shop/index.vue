@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import RxInputText from '/@/components/ry-form/rx-input-text.vue'
+import RxInputNumber from '/@/components/ry-form/rx-input-number.vue'
 
 const inputs = reactive<any>([
   {
-    type: 'text',
+    type: 'number',
     label: 'language',
     name: 'isLanguageBaseIp',
     placeholder: 'language',
     leftIcon: 'base/rx_ic_chrome',
     icon: 'base/rx_ic_user',
-    size: 'lg',
     slot: 'language',
   },
 ])
@@ -20,7 +19,7 @@ const inputs = reactive<any>([
     {{ inputs[0].value }}
     <RyForm label-position="left" :inputs="inputs">
       <template #language="{ input }">
-        <RxInputText v-model="input.value" v-bind="input" @icon-click="() => input.iconClick?.(input, inputs)" />
+        <RxInputNumber v-model="input.value" v-bind="input" @icon-click="() => input.iconClick?.(input, inputs)" />
       </template>
     </RyForm>
   </div>
