@@ -21,12 +21,11 @@ export function getInputs(data: any = {}) {
       name: 'proxyRules',
       rows: 5,
       errorMsg: $t('Error in parsing content'),
-      tooltip: 'man!',
       invalid: false,
       onBlur: () => {
         const input = inputs.find((item: any) => item.name === 'proxyRules')
 
-        if (input && input.value.trim()) {
+        if (input?.value?.trim()) {
           input.invalid = false
           const ipType = input.value?.startsWith('*') ? 'IPV6' : 'IPV4'
           const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(input.value)
@@ -57,7 +56,7 @@ export function getInputs(data: any = {}) {
       name: 'ipType',
       value: data.ipType || $dict_map.ipType[0]?.value,
       options: $dict_map.ipType,
-      tooltip: 'what can i say',
+      size: 'lg',
     },
     {
       label: 'Server',

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { RadioButtonProps } from 'primevue/radiobutton'
 
-type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined
+type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends RadioButtonProps {
   size?: Size
@@ -12,21 +12,68 @@ defineOptions({
   inheritAttrs: false,
 })
 
-defineProps<Props>()
+const { size = 'sm', options, ...props } = defineProps<Props>()
 
 defineEmits(['change'])
 </script>
 
 <template>
   <div class="radio-group">
-    <label v-for="option in $props.options" :key="option.value" :for="`${$props.name}_${option.value}`"
-      class="cursor-pointer radio-group-item">
-      <RadioButton v-bind="{ ...$attrs, ...$props }" :input-id="`${$props.name}_${option.value}`" :value="option.value"
+    <label v-for="option in options" :key="option.value" :for="`${props.name}_${option.value}`"
+      class="cursor-pointer radio-group-item" :class="styles[size]">
+      <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value"
         @change="$emit('change')" />
       <div class="select-none radio-group-item__text">{{ option.label }}</div>
     </label>
   </div>
 </template>
+
+<style lang="scss" module="styles">
+.xxs {
+  padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  gap: var(--spacing-md, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border-width: 0.5px;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.xs {
+  padding: var(--spacing-md, 6px);
+  gap: var(--spacing-md, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border-width: 0.5px;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.sm {
+  padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
+  gap: var(--spacing-md, 6px);
+  border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+  border-width: 1px;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.md {
+  padding: 8px 8px 8px 10px;
+  gap: var(--spacing-md, 6px);
+  border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+  border-width: 1px;
+  font-size: 13px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.lg {
+  padding: 10px 10px 10px var(--spacing-xl, 12px);
+  gap: 8px;
+  border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
+  border-width: 1px;
+  font-size: 14px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+</style>
 
 <style lang="scss" scoped>
 $size: 16px;
@@ -34,25 +81,19 @@ $size: 16px;
 .radio-group {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: var(--spacing-lg, 8px);
 
   &-item {
     display: flex;
     align-items: center;
-    padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
-    gap: var(--spacing-md, 6px);
     min-width: 110px;
-    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+    border-style: solid;
+    border-color: var(--Component-Colors-TextInput-border-border, #c7cdd1);
     background: var(--Component-Colors-TextInput-bg-bg, #fff);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-
-    &__text {
-      color: var(--Component-Colors-TextInput-text-text, #171c1f);
-      font-family: Inter;
-      font-size: 12px;
-      line-height: var(--Line-Height-text-lg, 20px);
-    }
+    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    font-family: Inter;
   }
 }
 

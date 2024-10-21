@@ -28,7 +28,7 @@ defineEmits(['change'])
 <template>
   <div class="rx-input" :class="{ 'rx-label-left': labelPosition === 'left' }">
     <slot name="label">
-      <input-label class="input-label" v-bind="{ name, label, tooltip }" />
+      <input-label v-bind="{ name, label, tooltip }" />
     </slot>
     <slot name="input">
       <MultiSelect v-if="type === 'multiSelect'" class="flex-1" v-bind="$attrs" @change="$emit('change')" />

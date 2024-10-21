@@ -5,26 +5,21 @@ import { $t } from '/@/locales'
 const inputs = reactive<any>([
   {
     type: 'radio',
-    label: $t('language'),
+    label: 'language',
     name: 'isLanguageBaseIp',
-    value: true,
+    value: '1',
     options: [
-      { label: $t('follow Ip'), value: true },
-      { label: $t('custom'), value: false },
+      { label: $t('some'), value: '0' },
+      { label: $t('custom'), value: '1' },
+      { label: $t('follow Ip'), value: '2' },
     ],
   },
 ])
-
-// function handleClick() {
-//   console.log('🚀 ~ handleClick ~ handleClick:')
-// }
 </script>
 
 <template>
   <div class="h-full flex-cc">
-    <RyForm :inputs="inputs" />
-    <!-- <test /> -->
-    <!-- <RyButton label="Submit" @click="handleClick" /> -->
+    <RyForm label-position="left" :inputs="inputs" />
   </div>
 </template>
 

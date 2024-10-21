@@ -27,7 +27,7 @@ defineEmits(['iconClick', 'change'])
   <div class="rx-input" :class="{ 'rx-label-left': labelPosition === 'left' }">
     <slot>
       <slot name="label">
-        <input-label class="input-label" :name="name" v-bind="$attrs" />
+        <input-label :name="name" v-bind="$attrs" />
       </slot>
       <div class="flex-1">
         <IconField v-if="type !== 'password'" class="w-full">
