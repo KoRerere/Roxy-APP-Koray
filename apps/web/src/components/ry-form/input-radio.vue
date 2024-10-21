@@ -13,16 +13,13 @@ defineOptions({
 })
 
 const { size = 'sm', options, ...props } = defineProps<Props>()
-
 defineEmits(['change'])
 </script>
 
 <template>
   <div class="radio-group">
-    <label v-for="option in options" :key="option.value" :for="`${props.name}_${option.value}`"
-      class="cursor-pointer radio-group-item" :class="styles[size]">
-      <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value"
-        @change="$emit('change')" />
+    <label v-for="option in options" :key="option.value" :for="`${props.name}_${option.value}`" class="cursor-pointer radio-group-item" :class="styles[size]">
+      <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value" @change="$emit('change')" />
       <div class="select-none radio-group-item__text">{{ option.label }}</div>
     </label>
   </div>
