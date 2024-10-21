@@ -1,10 +1,9 @@
 import type { ChildProcess } from 'node:child_process'
 import { execFile } from 'node:child_process'
-import path from 'node:path'
-import { appConfig, osConfig } from '/@/constants'
-import { decryptByDESModeCBC, encryptByDESModeCBC } from '/@/modules/luminet/util'
+import { appConfig } from '/@/constants'
+import { encryptByDESModeCBC } from '/@/modules/luminet/util'
 import { store } from '/@/modules/store'
-import { getSystemProxy, isMac, isWindows } from '/@/utils'
+import { getSystemProxy, isMac } from '/@/utils'
 
 export * from './util'
 
@@ -26,7 +25,7 @@ export async function startLuminet() {
       v2: false, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,
-    api_token: 'a6411a0a0779ff748ea1d6ae4babf6ac',
+    api_token: store.apiKey,
   }
 
   const originText = JSON.stringify(launchParams)

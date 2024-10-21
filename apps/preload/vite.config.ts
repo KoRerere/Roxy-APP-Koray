@@ -1,6 +1,6 @@
+import type { UserConfig } from 'vite'
 import { join } from 'node:path'
 import dts from 'vite-plugin-dts'
-import type { UserConfig } from 'vite'
 import { chrome } from '../electron/.electron-vendors.cache.json'
 
 const PACKAGE_ROOT = __dirname
@@ -37,6 +37,7 @@ const config: UserConfig = {
     tsconfigPath: join(PACKAGE_ROOT, 'tsconfig.build.json'),
     rollupTypes: true,
     clearPureImport: false,
+    logLevel: 'silent',
   })],
 }
 

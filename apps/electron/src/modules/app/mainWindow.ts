@@ -77,12 +77,12 @@ export async function intoMainPage() {
   win.setBounds({ width: 1280, height: 832 }, false)
   // win.setMinimumSize(minWidth, minHeight)
   win.center()
-  win.setTitle(`${win.getTitle()} | ${app.getVersion()}`)
   await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
+  win.setTitle(`${win.getTitle()} | ${app.getVersion()}`)
   console.log('进入主应用')
   setTimeout(() => {
     win.show()
-  }, 300)
+  }, 200)
 }
 
 let mainWindow: BrowserWindow | undefined
