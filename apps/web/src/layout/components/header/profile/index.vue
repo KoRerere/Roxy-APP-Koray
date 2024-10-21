@@ -90,9 +90,11 @@ function toggle(event: Event) {
 
 <template>
   <Avatar class="cursor-pointer mr-2"
-          :image="userStore.userInfo.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
-          shape="circle" @click="toggle"
+          v-bind="{ [userStore.userInfo.avatar ? 'image' : 'label']: userStore.userInfo.avatar || userStore.userInfo.userName?.slice(0, 2) }"
+          :style="{ backgroundColor: userStore.userInfo.avatar ? '' : userStore.userInfo.avatarColor }"
+          style="width: 32px; color: white" shape="circle" @click="toggle"
   />
+
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>
     <template #item="{ item, props, hasSubmenu }">

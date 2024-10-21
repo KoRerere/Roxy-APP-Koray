@@ -23,6 +23,7 @@ export async function startLuminet() {
     system_proxy: {
       addr: systemProxy,
       protocal: 'http',
+      v2: false, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,
     api_token: 'a6411a0a0779ff748ea1d6ae4babf6ac',

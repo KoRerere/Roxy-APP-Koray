@@ -75,7 +75,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'shop',
         name: 'account-shop',
-        meta: { title: '代理商店(dome test)x', hideInMenu: false },
+        meta: { title: '代理商店(dome test)x', hideInMenu: import.meta.env.PROD },
         component: () => import('/@/views/agent/shop'),
       },
       {
