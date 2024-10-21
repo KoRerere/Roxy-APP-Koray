@@ -17,7 +17,7 @@ export interface RenderMessage {
   /** 批量关闭窗口 */
   'browser:batchClose': (dirIds: string[]) => void
   /** 批量删除窗口 */
-  'browser:batchRemove': (dirIds: string[]) => void
+  'browser:batchRemove': (winItems: WindowItemType[]) => void
   /** 批量删除窗口 */
   'browser:getOpenedBrowser': () => LastMessage[]
 

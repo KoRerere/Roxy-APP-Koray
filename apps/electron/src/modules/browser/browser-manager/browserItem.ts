@@ -203,13 +203,6 @@ export class BrowserItem {
     }
   }
 
-  /** 删除本地浏览器数据 */
-  async removeLocalData() {
-    await this.close()
-    // 删除本地浏览器数据目录
-    rm(this.userDataDir, { recursive: true })
-  }
-
   /** 清除本地缓存（扩展数据除外） */
   async removeLocalDataExcludeExtension() {
     await this.close()

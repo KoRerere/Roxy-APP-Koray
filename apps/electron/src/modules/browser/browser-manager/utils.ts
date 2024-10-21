@@ -12,7 +12,17 @@ function getCityCode(key: string) {
 
 /** 获取浏览器用户数据目录路径 */
 export function getUserDataDirPath(winItem: WindowItemType, workspaceId = store.workspaceId) {
-  return join(appConfig.browserCacheRootDir, `workspace_${workspaceId}`, `project_${winItem.projectId || 'default'}`, winItem.dirId!)
+  return join(getProjectPath(winItem, workspaceId), winItem.dirId!)
+}
+
+/** 获取项目所在路径 */
+export function getProjectPath(winItem: Partial<WindowItemType>, workspaceId = store.workspaceId) {
+  return join(getWorkspacePath(workspaceId), `project_${winItem.projectId || 'default'}`)
+}
+
+/** 获取空间所在路径 */
+export function getWorkspacePath(workspaceId = store.workspaceId) {
+  return join(appConfig.browserCacheRootDir, `workspace_${workspaceId}`)
 }
 
 /** 转换数字, 如果转换后为 NaN, 则返回 null */
