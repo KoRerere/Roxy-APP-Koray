@@ -1,25 +1,28 @@
 <script setup lang="ts">
-import test from '/@/components/rx-form/demos/index.vue'
-import { $t } from '/@/locales'
+import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 
 const inputs = reactive<any>([
   {
-    type: 'radio',
+    type: 'text',
     label: 'language',
     name: 'isLanguageBaseIp',
-    value: '1',
-    options: [
-      { label: $t('some'), value: '0' },
-      { label: $t('custom'), value: '1' },
-      { label: $t('follow Ip'), value: '2' },
-    ],
+    placeholder: 'language',
+    leftIcon: 'base/rx_ic_chrome',
+    icon: 'base/rx_ic_user',
+    size: 'lg',
+    slot: 'language',
   },
 ])
 </script>
 
 <template>
   <div class="h-full flex-cc">
-    <RyForm label-position="left" :inputs="inputs" />
+    {{ inputs[0].value }}
+    <RyForm label-position="left" :inputs="inputs">
+      <template #language="{ input }">
+        <RxInputText v-model="input.value" v-bind="input" @icon-click="() => input.iconClick?.(input, inputs)" />
+      </template>
+    </RyForm>
   </div>
 </template>
 
