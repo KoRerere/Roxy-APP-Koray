@@ -15,15 +15,17 @@ const inputs = reactive<any>([
   },
 ])
 
-function handleClick() {
-  console.log('🚀 ~ handleClick ~ handleClick:')
-}
+// function handleClick() {
+//   console.log('🚀 ~ handleClick ~ handleClick:')
+// }
 </script>
 
 <template>
-  <RyForm :inputs="inputs" />
-  <!-- <test /> -->
-  <RyButton label="Submit" @click="handleClick" />
+  <div class="h-full flex-cc">
+    <RyForm :inputs="inputs" />
+    <!-- <test /> -->
+    <!-- <RyButton label="Submit" @click="handleClick" /> -->
+  </div>
 </template>
 
 <style scoped></style>

@@ -2,10 +2,12 @@
 import type { UnwrapRowType, UserGetOperateLogListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
+
+const styles = useCssModule()
 
 const columns = ref([
   {
@@ -13,8 +15,8 @@ const columns = ref([
     key: 'userName',
     render: ({ data }: { data: Data }) => (
       <div>
-        <div>{data.email}</div>
-        <div class="text-[#7C8387]">{data.userName}</div>
+        <div class={styles['user-email']}>{data.email}</div>
+        <div class={styles['user-name']}>{data.userName}</div>
       </div>
     ),
   },
@@ -88,40 +90,59 @@ async function tableFilters() {
 <template>
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
-      <RxSvgIcon name="base/rx_ic_doc_data" />
-      <span>{{ $t('History Logs') }}</span>
+      {{ $t('History Logs') }}
     </div>
     <div class="flex flex-1 overflow-hidden">
-      <ry-table :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
-                :show-display="false" :context-menu="false"
-      >
+      <RyTable :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
+        :show-display="false" :context-menu="false">
         <template #location="{ data }">
-          <div class="flex items-center gap-1">
-            <RxSvgIcon name="base/rx_ic_earth" />
+          <div class="flex items-center gap-1 locationip ">
+            <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
             <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
-                       :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12"
-            />
+              :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12" />
           </div>
         </template>
-      </ry-table>
+      </RyTable>
     </div>
   </div>
 </template>
 
+<style lang="scss" module>
+.user-email {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.user-name {
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-family: Inter;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+</style>
+
 <style lang="scss" scoped>
-.logs {
-  &-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-    color: var(--Colors-Text-text-primary, #171c1f);
-    font-family: Inter;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: var(--Line-Height-text-xl, 24px);
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
+.logs-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+}
+
+.locationip {
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 12px;
+  line-height: 16px;
 }
 </style>
