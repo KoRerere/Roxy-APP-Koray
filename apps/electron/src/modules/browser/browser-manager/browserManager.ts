@@ -1,8 +1,10 @@
+import { rm } from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
+import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
 
 export class BrowserManager {
@@ -58,6 +60,8 @@ export class BrowserManager {
       this.openedBrowserMap.delete(winInfo.dirId!)
       ipcMain.send('browser:on-close', winInfo.dirId!)
     })
+
+    return browserItem.launchInfo
   }
 
   /** 批量启动浏览器 */
@@ -107,16 +111,29 @@ export class BrowserManager {
   }
 
   /** 批量删除窗口 */
-  async batchDelete(dirIds: string[]) {
-    for (const dirId of dirIds) {
-      const browserItem = this.openedBrowserMap.get(dirId)
-      try {
-        await this.close(dirId)
-        await browserItem?.removeLocalData()
-      }
-      catch (error) {
-        console.error(`BrowserManager ${dirId} === 删除失败`, error)
-      }
+  async batchDelete(winItems: WindowItemType[]) {
+    for (const winItem of winItems) {
+      this.removeLocalData(winItem)
+    }
+  }
+
+  /** 删除本地浏览器数据 */
+  async removeLocalData(winItem: WindowItemType, workspaceId?: number) {
+    const { dirId } = winItem
+    const browserItem = this.openedBrowserMap.get(winItem.dirId!)
+
+    if (browserItem) {
+      await this.close(dirId)
+    }
+
+    try {
+      // 删除本地浏览器数据目录
+      await rm(getUserDataDirPath(winItem, workspaceId), { recursive: true })
+      return { dirId, success: true }
+    }
+    catch (error) {
+      console.error(`BrowserManager ${dirId} === 删除失败`, error)
+      return { dirId, success: false }
     }
   }
 

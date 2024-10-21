@@ -39,7 +39,11 @@ getMembers()
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
-            <Avatar v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName.slice(0, 2) }" style="width: 32px" shape="circle" />
+            <Avatar
+              v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName.slice(0, 2) }"
+              :style="{ backgroundColor: member.avatarColor }"
+              style="width: 32px; color: white" shape="circle"
+            />
             <div>
               <span class="font-medium">{{ member.userName }}</span>
               <div class="text-sm text-surface-500 dark:text-surface-400">

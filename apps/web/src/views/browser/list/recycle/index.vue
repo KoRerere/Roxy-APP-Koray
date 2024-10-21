@@ -63,6 +63,9 @@ async function deleteHandler(datas: any) {
       const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
       showToast(code, msg)
       tableRef.value?.refresh()
+      if (code === 0) {
+        electronAPI.send('browser:batchRemove', toRaw(datas))
+      }
     },
   })
 }
@@ -71,8 +74,9 @@ async function deleteHandler(datas: any) {
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-    :operation="operation" :operation-handler="operationHandler" :sorts="sorts" :show-gridlines="false"
-    :show-actions="false">
+           :operation="operation" :operation-handler="operationHandler" :sorts="sorts" :show-gridlines="false"
+           :show-actions="false"
+  >
     <template #profile="{ data }">
       <profileInfo :data="data" disabled />
     </template>
@@ -91,7 +95,8 @@ async function deleteHandler(datas: any) {
       <div class="flex gap-2">
         <remarkIcon :value="data.windowRemark" disabled />
         <actions :operation="operation" :show-menu="false"
-          @quick-click="(operate) => operationHandler(operate, data)" />
+                 @quick-click="(operate) => operationHandler(operate, data)"
+        />
       </div>
     </template>
   </RyTable>

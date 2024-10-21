@@ -9,6 +9,7 @@ import url from 'node:url'
 import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
+import { getProjectPath, getUserDataDirPath, getWorkspacePath } from '/@/modules/browser/browser-manager/utils'
 import { extensionManager } from '/@/modules/extension'
 import { delLuminetProxy } from '/@/modules/luminet'
 import { fetchUserConfig, store } from '/@/modules/store'
@@ -98,8 +99,8 @@ ipcMain.on('browser:batchRelaunch', (winItemList) => {
 })
 
 /** 批量删除本地浏览器 */
-ipcMain.on('browser:batchRemove', (dirIds) => {
-  return browserManager.batchDelete(dirIds)
+ipcMain.on('browser:batchRemove', (winItems) => {
+  return browserManager.batchDelete(winItems)
 })
 
 /** 获取所有已打开的窗口 */
@@ -265,12 +266,12 @@ ipcMain.on('util:toMediaPath', (pathname) => {
 
 /** 删除工作空间 */
 ipcMain.on('util:removeWorkspace', (workspaceId) => {
-  return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId)), { recursive: true, force: true })
+  return rm(getWorkspacePath(workspaceId), { recursive: true, force: true })
 })
 
 /** 删除项目 */
 ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
-  return rm(path.join(appConfig.browserCacheRootDir, String(workspaceId), String(projectId)), { recursive: true, force: true })
+  return rm(getProjectPath({ workspaceId, projectId }), { recursive: true, force: true })
 })
 
 /** 随机生成字体 */

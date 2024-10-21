@@ -5,10 +5,10 @@ export function responseMiddleware(req: Request, res: Response, next: NextFuncti
   /**
    * 统一的成功响应
    */
-  res.success = (data, message = 'success') => {
+  res.success = (data, msg = 'ok') => {
     res.json({
       code: 0,
-      message,
+      msg,
       data,
     })
   }
@@ -16,10 +16,10 @@ export function responseMiddleware(req: Request, res: Response, next: NextFuncti
   /**
    * 统一的错误响应
    */
-  res.error = (message = 'error', code = 1) => {
+  res.error = (msg = 'error', code = 1) => {
     res.json({
       code,
-      message: getErrorMessage(message),
+      msg: getErrorMessage(msg),
       data: null,
     })
   }

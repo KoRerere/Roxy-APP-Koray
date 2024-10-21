@@ -78,7 +78,7 @@ export class BeforeLaunchTask {
     }
     // 清空任务队列
     this.taskMap.clear()
-    this.sendSuccessMessage('浏览器启动成功')
+    this.sendSuccessMessage($t('浏览器启动成功'))
     // 同步窗口状态
     API.window.userMdfWindowSyncV2Create([{
       id: this.browserItem.winInfo.id,
@@ -102,13 +102,14 @@ export class BeforeLaunchTask {
     const { coreVersion } = this.browserItem.winInfo
 
     if (!coreVersion) {
-      this.sendErrorMessage('没有指定内核版本')
-      throw new Error('没有指定内核版本')
+      this.sendErrorMessage($t('没有指定内核版本'))
+      throw new Error($t('没有指定内核版本'))
     }
 
+    let initCount = 1
     // 获取内核执行程序路径
     this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (msg: string) => {
-      this.sendSuccessMessage(msg, this.progress + 1)
+      this.sendSuccessMessage(msg, this.progress + initCount++)
     })
       .catch((error) => {
         this.sendErrorMessage(error.message, error)
@@ -121,6 +122,8 @@ export class BeforeLaunchTask {
 
     // 写入登录信息
     await this.writeLoginData()
+
+    this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
     this.makeBrowserActive = () => {
       return puppeteer.launch({
