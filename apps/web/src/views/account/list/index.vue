@@ -4,7 +4,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import popup from '/@/components/simplePopup'
@@ -149,14 +148,15 @@ function deletePopup(data: any) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full account">
+  <div class="flex flex-col w-full h-full account">
     <div class="flex justify-between account-header">
       <div>Accounts</div>
-      <RxButton v-if="!role.isViewer" size="sm" severity="info" icon="base/rx_ic_plus" label="Create account" @click="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" label="Create account" @click="operationHandler({ name: 'create' })" />
     </div>
-    <div class="account-content">
+    <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
+      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+        :show-actions="false">
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
@@ -173,9 +173,9 @@ function deletePopup(data: any) {
           <relatedInfo :list="data.window_info" />
         </template>
         <template #actions="{ data }">
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <RemarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
-            <actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </RyTable>
@@ -193,7 +193,6 @@ function deletePopup(data: any) {
   &-header {
     padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
     gap: 10px;
-    height: 48px;
     color: #000;
     font-family: Inter;
     font-size: 16px;
@@ -201,10 +200,6 @@ function deletePopup(data: any) {
     font-weight: 600;
     line-height: var(--Line-Height-text-xl, 24px);
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
-
-  &-content {
-    height: calc(100% - 48px);
   }
 }
 

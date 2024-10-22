@@ -455,14 +455,10 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts"
-            :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" selection-mode="multiple"
-            :show-actions="false"
-  >
+  <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    selection-mode="multiple" :show-actions="false">
     <template #header-extra>
-      <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
-                     :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable"
-      />
+      <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
@@ -470,9 +466,7 @@ defineExpose({
       </div>
     </template>
     <template #profile="{ data }">
-      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data"
-                    @profile-operate="profileOperate($event, data)"
-      />
+      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
@@ -485,36 +479,23 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" name="base/rx_ic_bookmark"
-                   :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
-                   @click.stop="operationHandler({ name: 'fav' }, data)"
-        />
-        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add"
-                   :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
-                   @click.stop="operationHandler({ name: 'addNotes' }, data)"
-        />
-        <Actions :operation="operation" @quick-click="operationHandler($event, data)"
-                 @more="showOperationMenu($event, data)"
-        />
+        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
+          @click.stop="operationHandler({ name: 'fav' }, data)" />
+        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add" :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
+          @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+        <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-                         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })"
-                         @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)"
-      />
+        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })" @open-browser="openBrowser(selection)"
+        @quick-click="operationHandler($event, selection)" />
     </template>
   </ry-table>
-  <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]"
-          :pt="{ mask: classes['browser-drawer'] }"
-  >
+  <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!"
-                   @confirm="drawer.confirm(drawer.type, $event)"
-      />
-      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
-                    @confirm="drawer.confirm(drawer.type, $event)"
-      />
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="drawer.confirm(drawer.type, $event)" />
+      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
   </Drawer>
 </template>

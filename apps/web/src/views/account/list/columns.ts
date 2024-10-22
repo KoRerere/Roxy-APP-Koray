@@ -21,6 +21,10 @@ const columnsConfig = {
       title: $t('Related Profiles'),
       slot: 'related',
     },
+    {
+      title: $t('Actions'),
+      slot: 'actions',
+    },
   ],
 }
 

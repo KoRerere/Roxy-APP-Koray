@@ -83,8 +83,8 @@ function onCopy(dirId: string) {
               <template #profileId="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <span>{{ input.value }}</span>
-                  <span class="color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+                  <span class="text-3">{{ input.value }}</span>
+                  <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
                 </div>
               </template>
               <template #system="{ input }">

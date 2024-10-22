@@ -2,7 +2,6 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -92,7 +91,7 @@ async function deleteHandler(datas: any) {
     <template #actions="{ data }">
       <div class="flex gap-2">
         <RemarkIcon :value="data.windowRemark" disabled />
-        <actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
+        <Actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
       </div>
     </template>
   </RyTable>

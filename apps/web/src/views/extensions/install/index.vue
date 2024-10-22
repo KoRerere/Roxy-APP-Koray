@@ -4,6 +4,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsStatus } from '/@/enums'
@@ -20,6 +21,8 @@ const role = useRoleStore()
 
 const [dialogOpen] = useSimpleDialog()
 const [showToast] = useResponseToast()
+const [show] = useContextMenu()
+
 const needsync = defineModel('needsync')
 
 const tableRef = useTemplateRef('extable')
@@ -54,6 +57,10 @@ const columns = ref([
     title: $t('Update'),
     key: 'pluginUpdateState',
     slot: 'update',
+  },
+  {
+    title: $t('Actions'),
+    slot: 'actions',
   },
 ])
 
@@ -299,6 +306,16 @@ async function deleteExtension(datas: any) {
   })
 }
 
+function showOperationMenu(event: Event, data: any, extra?: any) {
+  show(event, {
+    operation: extra?.cmpOperation || tableOperation(data),
+    operationHandler: (operate: any) => {
+      operationHandler(operate, data)
+      extra?.clearSelection()
+    },
+  })
+}
+
 defineExpose({
   refresh: () => {
     tableRef.value?.refresh({ status: filters.value })
@@ -309,7 +326,7 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-display="false" :show-gridlines="false" :paginator="false">
+    :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
@@ -346,8 +363,11 @@ defineExpose({
       </div>
     </template>
 
-    <template #actions-extra="{ data }">
-      <RxButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="sm" severity="secondary" text @click="operationHandler({ name: 'install' }, data)" />
+    <template #actions="{ data }">
+      <div class="flex items-center">
+        <RxButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="sm" severity="secondary" text @click="operationHandler({ name: 'install' }, data)" />
+        <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
+      </div>
     </template>
   </RyTable>
 </template>

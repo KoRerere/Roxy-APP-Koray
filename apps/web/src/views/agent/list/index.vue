@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -102,18 +101,18 @@ function onRefreshTable() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full proxies">
+  <div class="flex flex-col w-full h-full proxies">
     <div class="flex justify-end proxies-header">
       <div class="flex-1">
         Proxies
       </div>
-      <RxButton v-if="!role.isViewer" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('Create Proxy')" @click="createProxy" />
-      <RxButton size="sm" icon="base/rx_ic_speed_test" :label="$t('Test all')" @click="testAllProxy" />
+      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('Create Proxy')" @click="createProxy" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('Test all')" @click="testAllProxy" />
     </div>
-    <div class="proxies-content">
+    <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
-        :show-gridlines="false">
+        :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
@@ -129,8 +128,8 @@ function onRefreshTable() {
           </div>
         </template>
         <template #actions="{ data }">
-          <div class="flex gap-2">
-            <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+          <div class="flex gap-2 items-center">
+            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
             <RemarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
@@ -149,7 +148,6 @@ function onRefreshTable() {
   &-header {
     padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
     gap: 10px;
-    height: 48px;
     color: #000;
     font-family: Inter;
     font-size: 16px;
@@ -157,10 +155,6 @@ function onRefreshTable() {
     font-weight: 600;
     line-height: var(--Line-Height-text-xl, 24px);
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
-
-  &-content {
-    height: calc(100% - 48px);
   }
 }
 
