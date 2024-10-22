@@ -34,7 +34,7 @@ export class IPCRenderer<
         return reject(data.error)
       }
     }).catch((err) => {
-      console.log(err)
+      console.log(name, err)
       reject(err)
     })
 

@@ -140,7 +140,7 @@ export class BrowserManager {
   /** 每隔 5分钟 定时同步窗口状态 */
   async #syncWindowStatus() {
     setInterval(() => {
-      const ids = [...this.openedBrowserMap.values().map(item => item.winInfo.id!)]
+      const ids = [...this.openedBrowserMap.values()].map(item => item.winInfo.id!)
       if (ids.length) {
         API.window.userModifyWindowReportTimeCreate({ ids }).then(() => {
           console.log(`定时同步窗口状态`, ids)
