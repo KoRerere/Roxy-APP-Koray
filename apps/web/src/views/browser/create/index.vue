@@ -146,6 +146,10 @@ async function importProfile(params: any) {
   router.replace({ name: 'browser-list' })
 }
 
+function onBack() {
+  router.back()
+}
+
 onBeforeMount(() => {
   initFormInputs()
 })
@@ -155,7 +159,7 @@ onBeforeMount(() => {
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
-        <RxSvgIcon name="base/rx_ic_chevron_left" :size="24" />
+        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
         <span>Create profile</span>
       </div>
       <div class="profile-tabs">
@@ -173,8 +177,7 @@ onBeforeMount(() => {
           <div v-show="tabsValue === 'multi'" class="multi-block">
             <div class="flex items-center justify-between">
               <div>Profiles amount</div>
-              <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1"
-                :max="maxWindowCount" show-buttons fluid>
+              <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
                 </template>
@@ -184,14 +187,12 @@ onBeforeMount(() => {
               </InputNumber>
             </div>
             <div class="multi-block-info">
-              Max profiles: {{ maxWindowCount }}. For more profiles please <span class="multi-block-info-jump"
-                @click="tabsValue = 'import'">import profiles</span>.
+              Max profiles: {{ maxWindowCount }}. For more profiles please <span class="multi-block-info-jump" @click="tabsValue = 'import'">import profiles</span>.
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
-        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup"
-          :open-browser="tabsValue === 'single'" @create-open="(formData: any) => createProfile(formData, true)"
+        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'" @create-open="(formData: any) => createProfile(formData, true)"
           @create="(formData: any) => createProfile(formData, false)" />
       </div>
     </div>

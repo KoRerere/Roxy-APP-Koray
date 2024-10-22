@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { MetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
@@ -43,6 +44,10 @@ async function createProfile(formData: any) {
   }
 }
 
+function onBack() {
+  router.back()
+}
+
 onBeforeMount(() => {
   API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
     .then(({ data: { rows: [data] } }) => {
@@ -62,13 +67,18 @@ onBeforeMount(() => {
 
 <template>
   <div class="flex justify-between h-full">
-    <div class="flex-ovh-1 flex-col">
-      <div class="profile-basic">
-        <rxEditDiv v-model="windowName" />
+    <div class="flex flex-1 flex-col">
+      <div class="profile-header">
+        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
+        <span>Edit profile</span>
       </div>
-      <div class="flex-ovh-1">
-        <accordionInputs v-model:metadata="metaData" :accordions="accordions" :inputs-group="inputsGroup"
-          :open-browser="false" is-edit @create="createProfile" />
+      <div class="flex-ovh-1 flex-col">
+        <div class="profile-basic">
+          <rxEditDiv v-model="windowName" />
+        </div>
+        <div class="flex-ovh-1">
+          <accordionInputs v-model:metadata="metaData" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
+        </div>
       </div>
     </div>
     <previewCard :inputs-group="inputsGroup" @shuffle="onShuffle" />
@@ -76,6 +86,18 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
+.profile-header {
+  display: flex;
+  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  align-items: center;
+  gap: 10px;
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xl, 24px);
+}
+
 .profile-basic {
   padding: var(--spacing-md, 16px) 66px;
 }

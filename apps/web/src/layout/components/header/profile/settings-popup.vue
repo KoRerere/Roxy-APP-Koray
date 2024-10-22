@@ -40,6 +40,10 @@ async function getUserConfig() {
   active.panel = settingsPanel[active.key]
 }
 
+function closePopup() {
+  dialogRef.value.close()
+}
+
 onMounted(() => {
   active.key = dialogRef.value.data.props.activeKey
   getUserConfig()
@@ -50,12 +54,11 @@ onMounted(() => {
   <div class="flex h-full">
     <div class="settings-menu">
       <div class="settings-menu-title">
-        {{ $t('Client Settings') }}
+        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" @click="closePopup" />
+        <span>{{ $t('Client Settings') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer"
-             :class="{ active: item.label === active.key }" @click="item.command"
-        >
+        <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.label === active.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -110,6 +113,9 @@ onMounted(() => {
     flex-shrink: 0;
 
     &-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xl, 12px);
       color: #000;
       font-size: 14px;
       font-weight: 600;
