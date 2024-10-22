@@ -1,7 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { mediaProtocolName } from '/@/constants'
-import { checkResource } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { isDev, isPackaged } from '/@/utils/'
 

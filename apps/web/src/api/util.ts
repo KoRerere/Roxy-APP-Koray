@@ -1,4 +1,5 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { isString } from 'es-toolkit'
 import { decryptAESGCM, encryptAESGCM, isDev } from '/@/utils'
 
 /** 需要使用 aes-256-gcm 加解密的接口数据 */
@@ -27,6 +28,8 @@ export async function handleRequest(config: InternalAxiosRequestConfig<any>) {
 
 export async function handleResponse(response: AxiosResponse<any, any>) {
   if (!isDev && responseHandleUrls.some(url => response.config.url?.includes(url))) {
-    response.data.data = await decryptAESGCM(response.data.data)
+    if (isString(response.data.data)) {
+      response.data.data = await decryptAESGCM(response.data.data)
+    }
   }
 }

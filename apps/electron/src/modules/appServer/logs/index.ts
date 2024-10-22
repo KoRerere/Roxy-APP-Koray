@@ -58,7 +58,7 @@ app.get('/__logs__', (req, res) => {
 /**
  * 函数：将日志格式化为 HTML
  */
-function formatLogToHtml(logData) {
+function formatLogToHtml(logData = '') {
   const logLines = logData.split('\n').filter(line => line.trim() !== '')
   return logLines.map((line) => {
     /**

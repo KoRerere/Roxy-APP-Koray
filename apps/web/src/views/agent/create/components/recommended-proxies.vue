@@ -23,7 +23,7 @@ getProxiesList()
       <div class="row">
         <div class="header">
           <img :src="item.proxyIcon" class="w-[24px] h-[24px]">
-          <span class="title">{{ item.proxytitle }}</span>
+          <span class="title">{{ item.proxyTitle }}</span>
         </div>
         <div class="description">
           {{ item.proxyDesc }}

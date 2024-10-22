@@ -30,11 +30,11 @@ export class IPCRenderer<
       }
       else {
         //  主进程如果返回错误的话，在这里显示到 UI 上
-        console.log(data)
+        console.log(name, data)
         return reject(data.error)
       }
     }).catch((err) => {
-      console.log(err)
+      console.log(name, err)
       reject(err)
     })
 
