@@ -4,7 +4,6 @@ import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import InputBase from '/@/components/ry-form/input-base.vue'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import columnsRow from './columns'
@@ -56,9 +55,9 @@ function handleSave() {
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"
         :show-display="false" :context-menu="false">
-        <template #header-extra>
+        <!-- <template #header-extra>
           <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
-        </template>
+        </template> -->
         <template #platform="{ data: row }">
           <div class="platform">
             <img class="platform-img" :src="row.platformIcon">

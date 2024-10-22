@@ -99,12 +99,12 @@ function modifyProxyCount(item: any) {
     },
     data: {
       props: {
-        title: 'man!',
+        // title: 'man!',
         content: 'proxy count',
         inputs: [
           {
             type: 'number',
-            placeholder: '请输入代理数量',
+            placeholder: 'Please enter proxy count',
             name: 'proxyCount',
             value: item._proxyCount,
             required: true,

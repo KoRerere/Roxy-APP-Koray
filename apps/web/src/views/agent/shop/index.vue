@@ -6,12 +6,40 @@ const inputs = reactive<any>([
     type: 'text',
     label: 'Kernel',
     name: 'coreVersion',
-    placeholder: '请选择请选择请选择请选择请选择请选择请选择',
+    placeholder: `${$t('Please Enter The')} ${$t('Kernel')}`,
+  },
+  {
+    type: 'number',
+    label: 'number',
+    name: 'coreVersion',
+    placeholder: `${$t('Please Enter The')} ${$t('Kernel')}`,
+  },
+  {
+    type: 'textarea',
+    label: $t('User-Agent'),
+    name: 'userAgent',
+    icon: 'base/rx_ic_shuffle',
+    iconClick: () => {
+      console.log('🚀 ~ iconClick:')
+    },
+    change(input: any) {
+      console.log('🚀 ~ change ~ input:', input)
+    },
   },
   {
     type: 'radio',
     label: $t('language'),
     name: 'isLanguageBaseIp',
+    options: [
+      { label: $t('follow Ip'), value: true },
+      { label: $t('custom'), value: false },
+    ],
+  },
+  {
+    label: $t('System'),
+    type: 'select',
+    placeholder: `${$t('Please Enter The')} ${$t('System')}`,
+    name: 'osVersion',
     options: [
       { label: $t('follow Ip'), value: true },
       { label: $t('custom'), value: false },

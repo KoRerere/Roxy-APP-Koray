@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { SvgNames } from '/@/components/rx-icon'
 import rxCard from '/@/components/rx-card'
-import inputBase from '/@/components/ry-form/input-base.vue'
+import FormItem from '/@/components/ry-form/form-item.vue'
 import { parseUrl } from '/@/utils'
 
 interface Input {
@@ -9,7 +10,7 @@ interface Input {
   value: string | undefined
   errorMsg: string
   placeholder: string
-  leftIcon: string
+  leftIcon: SvgNames
   invalid?: boolean
 }
 
@@ -23,7 +24,7 @@ function createInput(value?: string) {
     value,
     errorMsg: 'invalid url',
     placeholder: 'Please enter url',
-    leftIcon: 'base/rx_ic_attachment',
+    leftIcon: 'base/rx_ic_attachment' as SvgNames,
   }
 }
 
@@ -58,7 +59,7 @@ function onBlur(input: any) {
       <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" label="Add URLs" @click="addInputs" />
       <div class="inputs">
         <rxCard v-for="(input, index) in urlInputs" :key="input.name" class="inputs-item" @close="deleteInput(index)">
-          <inputBase v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />
+          <FormItem v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />
         </rxCard>
       </div>
     </div>

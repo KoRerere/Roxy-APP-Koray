@@ -12,10 +12,12 @@ defineOptions({
 })
 
 const { size = 'sm', ...props } = defineProps<Props>()
+
+defineEmits(['change'])
 </script>
 
 <template>
-  <InputNumber v-bind="{ ...$attrs, ...props }" fluid :pt="{ root: size }" />
+  <InputNumber v-bind="{ ...$attrs, ...props }" :pt="{ root: size }" fluid @input="$emit('change')" />
 </template>
 
 <style lang="scss" scoped>
