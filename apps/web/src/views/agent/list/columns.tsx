@@ -28,7 +28,7 @@ const columnsConfig = {
         return (
           <RyTag severity="info">
             <RxSvgIcon name="base/rx_ic_network" />
-            <span>{data.checkChannel}</span>
+            <span class="text-3">{data.checkChannelValue}</span>
           </RyTag>
         )
       },

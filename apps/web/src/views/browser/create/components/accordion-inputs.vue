@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
 import inputLabel from '/@/components/ry-form/input-label.vue'
-import inputSelect from '/@/components/ry-form/rx-input-select.vue'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 import { copyText } from '/@/utils/'
 import type { Accordions, MetaData } from './type.ts'
@@ -92,7 +92,7 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
-                      <inputSelect v-bind="item" v-model="item.value" :filter="false" @change="item.change?.(item, input.items)" />
+                      <RxInputSelect v-bind="item" v-model="item.value" :filter="false" @change="item.change?.(item, input.items)" />
                     </template>
                   </InputGroup>
                 </div>

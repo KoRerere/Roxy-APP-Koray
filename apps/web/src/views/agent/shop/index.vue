@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RxAvatar from '/@/components/rx-avatar.vue'
 import { $t } from '/@/locales'
 
 const inputs = reactive<any>([
@@ -52,16 +53,37 @@ function onResize(size: any) {
     input.size = size
   })
 }
+
+const avatarList: any = [
+  {
+    avatar: 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png',
+  },
+  {
+    avatar: 'https://primefaces.org/cdn/primevue/images/avatar/annafali.png',
+  },
+  {
+    // avatar: 'https://primefaces.org/cdn/primevue/images/avatar/asiyajavayant.png',
+    name: 'DD',
+    color: '#EDD666',
+  },
+  {
+    avatar: 'https://primefaces.org/cdn/primevue/images/avatar/bernardodominic.png',
+  },
+  {
+    avatar: 'https://primefaces.org/cdn/primevue/images/avatar/elwinsharvill.png',
+  },
+]
 </script>
 
 <template>
   <div class="h-full flex flex-col items-center justify-center overflow-hidden">
+    <RxAvatar :list="avatarList" :max="3" />
     <div class="flex items-end gap-4 mb-4">
-      <RxButton size="xxs" label="xxs" @click="onResize('xxs')" />
-      <RxButton size="xs" label="xs" @click="onResize('xs')" />
-      <RxButton size="sm" label="sm" @click="onResize('sm')" />
-      <RxButton size="md" label="md" @click="onResize('md')" />
-      <RxButton size="lg" label="lg" @click="onResize('lg')" />
+      <RxButton icon="base/rx_ic_package" size="xxs" label="xxs" @click="onResize('xxs')" />
+      <RxButton icon="base/rx_ic_package" size="xs" label="xs" @click="onResize('xs')" />
+      <RxButton icon="base/rx_ic_package" size="sm" label="sm" @click="onResize('sm')" />
+      <RxButton icon="base/rx_ic_package" size="md" label="md" @click="onResize('md')" />
+      <RxButton icon="base/rx_ic_package" size="lg" label="lg" @click="onResize('lg')" />
     </div>
     <RyForm label-position="left" :inputs="inputs" />
   </div>
