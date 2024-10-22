@@ -17,7 +17,7 @@ const _props = defineProps({
 
 const _inputs: any = computed(() => _props.inputs.filter((input: any) => input.visible !== false))
 
-const baseInput = ['text', 'password', 'number', 'textarea']
+const baseInput = ['password']
 
 function onChange(input: any, inputs: any) {
   if (input.invalid)
@@ -32,12 +32,10 @@ function onChange(input: any, inputs: any) {
       <slot :name="input.slot" :input="input" :label-position="labelPosition">
         <div v-if="input.separator" class="ry-form-line" />
 
-        <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value" v-bind="input"
-          :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)"
+        <input-base v-else-if="baseInput.includes(input.type)" v-model="input.value" v-bind="input" :label-position="labelPosition" @icon-click="() => input.iconClick?.(input, inputs)"
           @change="onChange(input, inputs)" />
 
-        <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition"
-          @change="onChange(input, inputs)" />
+        <form-item v-else v-bind="input" v-model="input.value" :label-position="labelPosition" @change="onChange(input, inputs)" @icon-click="() => input.iconClick?.(input, inputs)" />
       </slot>
     </template>
   </form>

@@ -27,7 +27,7 @@ const columnsConfig = {
       render: ({ data }: any) => {
         return (
           <RyTag severity="info">
-            <RxSvgIcon name="base/rx_ic_earth" />
+            <RxSvgIcon name="base/rx_ic_network" />
             <span>{data.checkChannel}</span>
           </RyTag>
         )
@@ -41,6 +41,10 @@ const columnsConfig = {
           <RelatedInfo list={data.bindList}></RelatedInfo>
         )
       },
+    },
+    {
+      title: $t('Actions'),
+      slot: 'actions',
     },
   ],
 }

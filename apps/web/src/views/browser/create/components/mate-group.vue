@@ -50,7 +50,7 @@ async function selectProject(event: Event) {
 async function selectTags(event: Event) {
   const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
   const operation = data.rows.map((item: Tag) => ({ label: item.name, value: `${item.id}` }))
-  const value = metaData.value.labelIds.map((item: any) => `${item}`)
+  const value = metaData.value?.labelIds?.map((item: any) => `${item}`)
 
   showMenu(event, {
     type: 'checkbox',
@@ -85,7 +85,7 @@ onBeforeMount(() => {
 <template>
   <div class="flex items-center gap-2">
     <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
-    <div class="position-relative" :class="{ selected: metaData?.labelIds.length }">
+    <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
       <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" @click="selectTags" />
     </div>
     <RemarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />

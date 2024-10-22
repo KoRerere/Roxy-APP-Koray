@@ -16,15 +16,15 @@ defineOptions({
 
 const { size = 'sm', leftIcon, icon, ...props } = defineProps<Props>()
 
-defineEmits(['iconClick'])
+defineEmits(['iconClick', 'change'])
 </script>
 
 <template>
-  <IconField :pt="{ root: size }">
+  <IconField class="w-full" :pt="{ root: size }">
     <InputIcon v-if="leftIcon">
       <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>
-    <Textarea v-bind="{ ...$attrs, ...props }" rows="3" cols="30" />
+    <Textarea v-bind="{ ...$attrs, ...props }" fluid rows="3" cols="30" @input="$emit('change')" />
     <InputIcon v-if="icon">
       <RxSvgIcon :name="(icon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>

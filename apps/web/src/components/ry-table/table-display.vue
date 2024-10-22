@@ -13,7 +13,7 @@ function toggle(event: Event) {
 </script>
 
 <template>
-  <RxButton severity="secondary" size="sm" outlined icon="base/rx_ic_slider_v" :label="$t('Display')" @click="toggle" />
+  <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('Display')" @click="toggle" />
   <ryPopover ref="popRef">
     <div :class="display.content">
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">

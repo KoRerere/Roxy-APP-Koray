@@ -46,7 +46,7 @@ const selectedRoleLabel = computed(() => {
     </InputIcon>
     <InputText v-bind="$attrs" v-model="modelValue" :placeholder="$t('Enter email')" class="w-full" />
     <InputIcon class="position-y-center !mt-0">
-      <SplitButton :model="items" severity="secondary" size="sm">
+      <SplitButton :model="items" severity="secondary" size="small">
         {{ selectedRoleLabel }}
         <template #item="{ item }">
           <div class="item" @click.stop>

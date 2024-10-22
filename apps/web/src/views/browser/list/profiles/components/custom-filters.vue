@@ -245,7 +245,7 @@ async function modifyFilter() {
       <RxButton text severity="secondary" size="sm" label="Reset" @click="resetFilters" />
       <template v-if="filterTagList.length">
         <RxButton v-if="isAllProfiles" severity="info" size="sm" label="Save" @click="saveFilters" />
-        <SplitButton v-else severity="info" size="sm" label="Save" :model="splitButtonItems" @click="modifyFilter" />
+        <SplitButton v-else severity="info" size="small" label="Save" :model="splitButtonItems" @click="modifyFilter" />
       </template>
       <div>|</div>
     </div>

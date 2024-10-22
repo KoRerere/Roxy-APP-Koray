@@ -99,7 +99,7 @@ async function deleteTag(data: any) {
           <relatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
-          <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
         </template>
       </ryTable>
     </div>

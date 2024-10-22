@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import { API } from '/@/api'
-import actions from '/@/components/actions.vue'
 import drawerContent from '/@/components/drawer-content.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyProtocol } from '/@/enums/proxy'
@@ -198,7 +197,7 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
+          <Actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>

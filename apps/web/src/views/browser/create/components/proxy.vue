@@ -99,12 +99,12 @@ function modifyProxyCount(item: any) {
     },
     data: {
       props: {
-        title: 'man!',
+        // title: 'man!',
         content: 'proxy count',
         inputs: [
           {
             type: 'number',
-            placeholder: '请输入代理数量',
+            placeholder: 'Please enter proxy count',
             name: 'proxyCount',
             value: item._proxyCount,
             required: true,
@@ -145,8 +145,8 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton size="sm" severity="secondary" icon="base/rx_ic_exchange" label="Select" @click="toggleDrawer('list')" />
-      <RxButton v-if="isBatch || !proxyList?.length" size="sm" severity="secondary" icon="base/rx_ic_plus" label="Add proxy" @click="toggleDrawer('create')" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" label="Select" @click="toggleDrawer('list')" />
+      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" label="Add proxy" @click="toggleDrawer('create')" />
     </div>
     <div>
       <template v-if="isBatch">
