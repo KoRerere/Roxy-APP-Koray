@@ -8,18 +8,7 @@ import { setInputValueByFormData } from '/@/utils'
 const workspaceStore = useWorkspaceStore()
 
 export function tableFilters(_params: any = {}) {
-  return [
-    // {
-    //   type: 'select',
-    //   label: $t' ',
-    //   name: 'match',
-    //   value: params.match ?? 'every',
-    //   options: [
-    //     { label: $t'Match Every', value: 'every' },
-    //     { label: $t'Match Any', value: 'any' },
-    //   ],
-    // },
-  ]
+  return []
 }
 
 export async function getCustomFilters(params: any = {}) {

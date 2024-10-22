@@ -131,7 +131,7 @@ export function getInputsGroup(data: any = {}) {
       items: [
         {
           type: 'select',
-          placeholder: '请选择系统',
+          placeholder: `${$t('Please Enter The')} ${$t('System')}`,
           name: 'os',
           value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
@@ -152,13 +152,13 @@ export function getInputsGroup(data: any = {}) {
             }
           },
           preview: {
-            label: '操作系统',
+            label: $t('System'),
           },
           required: true,
         },
         {
           type: 'select',
-          placeholder: '请选择版本',
+          placeholder: `${$t('Please Enter The')} ${$t('System')} ${$t('Version')}`,
           name: 'osVersion',
           value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs]?.[0],
           options: osVersion[userOs],
@@ -170,6 +170,7 @@ export function getInputsGroup(data: any = {}) {
     {
       type: 'select',
       label: $t('Kernel'),
+      placeholder: `${$t('Please Enter The')} ${$t('Kernel')}`,
       name: 'coreVersion',
       value: $dict_map.coreVersion.find((item: any) => item.value === data.coreVersion) ?? $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,

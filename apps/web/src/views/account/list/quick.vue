@@ -25,18 +25,6 @@ const columns = setColumns(columnsRow.data, {
 
 function tableFilters() {
   return [
-    // {
-    //   type: 'select',
-    //   label: 'city',
-    //   name: 'city',
-    //   value: 'all',
-    //   placeholder: '选择平台',
-    //   options: [
-    //     { label: '所有平台', value: 'all' },
-    //     { label: 'mac', value: 'mac' },
-    //     { label: 'win', value: 'win' },
-    //   ],
-    // },
   ]
 }
 

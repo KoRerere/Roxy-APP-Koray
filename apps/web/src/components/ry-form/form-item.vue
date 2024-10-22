@@ -1,8 +1,11 @@
 <script setup>
-import inputDate from './input-date.vue'
-import inputLabel from './input-label.vue'
-import inputRadio from './input-radio.vue'
-import inputSelect from './input-select.vue'
+import InputDate from './input-date.vue'
+import InputLabel from './input-label.vue'
+import InputRadio from './input-radio.vue'
+import InputSelect from './input-select.vue'
+import RxInputNumber from './rx-input-number.vue'
+import RxInputText from './rx-input-text.vue'
+import RxInputTextarea from './rx-input-textarea.vue'
 
 defineOptions({
   inheritAttrs: false,
@@ -28,13 +31,13 @@ defineEmits(['change'])
 <template>
   <div class="rx-input" :class="{ 'rx-label-left': labelPosition === 'left' }">
     <slot name="label">
-      <input-label v-bind="{ name, label, tooltip }" />
+      <InputLabel v-bind="{ name, label, tooltip }" />
     </slot>
     <slot name="input">
       <MultiSelect v-if="type === 'multiSelect'" class="flex-1" v-bind="$attrs" @change="$emit('change')" />
-      <input-select v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-      <input-radio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-      <input-date v-if="type === 'date'" v-bind="$attrs" />
+      <InputSelect v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
+      <InputRadio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
+      <InputDate v-if="type === 'date'" v-bind="$attrs" />
       <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.placeholder }}</small>
       <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
     </slot>
