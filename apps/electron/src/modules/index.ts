@@ -11,10 +11,10 @@ import { setupApp } from './app/'
  * Setup the modules.
  */
 export async function setupModules() {
-  // if (isPackaged) {
-  // 设置日志
-  setupLog()
-  // }
+  if (isPackaged) {
+    // 设置日志
+    setupLog()
+  }
   try {
     // 设置 store
     await setupStore()

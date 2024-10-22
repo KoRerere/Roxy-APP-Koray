@@ -23,7 +23,7 @@ export interface ProxyDetectionResult {
   region: string
 }
 
-const defaultCheckChannel = 'http://iprust.io/ip.json'
+const getDefaultCheckChannel = () => store.ipChecker || 'http://iprust.io/ip.json'
 
 const protocolCheckMap = {
   SOCKS5: checkSocks5Proxy,
@@ -47,7 +47,7 @@ function getCheckFunction(protocol: ProtocolMapType) {
 }
 
 /** 获取检测渠道 url */
-function getCheckUrl(url = defaultCheckChannel, ipType: string) {
+function getCheckUrl(url = getDefaultCheckChannel(), ipType: string) {
   // console.log(`transIpUrl`, url, ipType)
   if (ipType === `IPV6`) {
     return `http://api.ip2location.io/?key=266EF4FE57093F065C2FA5C5835686AE`
@@ -67,37 +67,40 @@ export function tryRefreshUrl(refreshUrl: string) {
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
+  const { systemProxySwitch } = store
 
   if (!dirId) {
     throw new Error(`dirId is required`)
   }
-
+  console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId && proxyUserName)
-  const luminetParams = {
-    addr: host && port ? `${host}:${port}` : '',
-    user_name: proxyUserName || '',
-    password: proxyPassword || '',
-    protocal: proxyCategory.toLocaleLowerCase(),
-  }
+  if (systemProxySwitch) {
+    const luminetParams = {
+      addr: host && port ? `${host}:${port}` : '',
+      user_name: proxyUserName || '',
+      password: proxyPassword || '',
+      protocal: proxyCategory.toLocaleLowerCase(),
+    }
+    console.log('luminetParams', luminetParams)
 
-  if (dirId) {
-    await setLuminetProxy({
-      [dirId]: luminetParams,
-    })
+    if (dirId) {
+      await setLuminetProxy({
+        [dirId]: luminetParams,
+      })
+    }
   }
 
   const params: ProxyDetectionParams = {
     proxyCategory,
-    host: '127.0.0.1',
-    port: outerParamFirst ? port : store.luminetProxyPort,
-    proxyUserName: dirId,
-    proxyPassword: dirId,
-    checkChannel: getCheckUrl(checkChannel, ipType) || defaultCheckChannel,
+    host: systemProxySwitch ? '127.0.0.1' : host,
+    port: systemProxySwitch ? (outerParamFirst ? port : store.luminetProxyPort) : port,
+    proxyUserName: systemProxySwitch ? dirId : proxyUserName,
+    proxyPassword: systemProxySwitch ? dirId : proxyPassword,
+    checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
   }
 
   // console.log('proxyDetectionParams', proxyDetectionParams)
   const checkMode = getCheckFunction(proxyCategory as ProtocolMapType)
-  console.log('luminetParams', luminetParams)
   console.log('proxyDetection params', params)
   const result = await checkMode(params)
 
@@ -129,7 +132,7 @@ function logProxyConfig(params: ProxyDetectionParams, name = ``) {
  * 无代理
  */
 async function noProxy(winInfo: ProxyDetectionParams) {
-  const { checkChannel = defaultCheckChannel } = winInfo
+  const { checkChannel = getDefaultCheckChannel() } = winInfo
   const response = await axios.get(checkChannel, { timeout: TIMEOUT })
   response.data.country ||= response.data.country_name || response.data.country_long
   response.data.country_code ||= response.data.country_short
@@ -147,8 +150,8 @@ function checkHttpsProxy(winInfo: ProxyDetectionParams) {
   const auth = proxyPassword && proxyUserName ? `${proxyUserName}:${proxyPassword}@` : ``
 
   // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
-
-  const httpUrl = `http://${auth}${host}:${port}`
+  const protocol = store.systemProxySwitch ? `http` : `https`
+  const httpUrl = `${protocol}://${auth}${host}:${port}`
   console.log(`httpUrl`, httpUrl)
   http.get(checkChannel, {
     headers: {
@@ -236,7 +239,9 @@ async function checkSocks5Proxy(parmes: any) {
     auth = ``
   }
 
-  const agent = new SocksProxyAgent(`socks5h://${auth}${host}:${port}`, {
+  const url = `socks5h://${auth}${host}:${port}`
+  console.log(`SocksProxyAgent url`, url)
+  const agent = new SocksProxyAgent(url, {
     timeout: TIMEOUT,
   })
 
