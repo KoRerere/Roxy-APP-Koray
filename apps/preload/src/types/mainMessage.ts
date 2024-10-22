@@ -51,4 +51,6 @@ export interface MainMessage {
   'invite:to-project': (payload: string) => void
   /** APP、patch、web 资源更新事件 */
   'app:resource-update': (payload: ResourceUpdateMessage) => void
+  /** APP 启动时的消息 */
+  'app:launch-message': (payload: string) => void
 }

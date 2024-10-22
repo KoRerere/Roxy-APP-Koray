@@ -78,6 +78,7 @@ const config: UserConfig = {
     rollupOptions: {
       input: {
         'main': join(PACKAGE_ROOT, 'index.html'),
+        'launch': join(PACKAGE_ROOT, 'launch.html'),
         'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
         'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
       },

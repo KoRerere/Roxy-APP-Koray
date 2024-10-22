@@ -9,7 +9,7 @@ import { dirname } from 'node:path'
  * 文件或目录是否存在
  *
  * @param filePath 文件或目录路径
- * @param create 不存在时是否创建
+ * @param create 目录不存在时是否创建
  */
 export async function fileExists(filePath: string, create = false) {
   try {

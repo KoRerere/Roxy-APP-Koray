@@ -1,7 +1,7 @@
 import type { MainMessage, MainMessageResult, RenderMessage } from '@roxy/electron-preload'
 import type { Config } from 'electron'
 import { IPCMain } from '@roxy/electron-preload/main'
-import { dialog, shell } from 'electron'
+import { app, dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
@@ -137,6 +137,11 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
   console.log('上传头像', userId, avatarPath, extname)
   const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
   return url
+})
+
+/** 获取应用版本号 */
+ipcMain.on('app:getAppVersion', () => {
+  return app.getVersion()
 })
 
 /** 保存软件设置 */

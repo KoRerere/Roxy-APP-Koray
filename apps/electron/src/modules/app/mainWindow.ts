@@ -1,15 +1,26 @@
-import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
+import { join } from 'node:path'
 import { mediaProtocolName } from '/@/constants'
+import { checkResource } from '/@/modules/app/checkResource'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { isDev, isPackaged } from '/@/utils/'
 
+/** 获取 web 入口地址 */
+export function getWebEntryUrl(path: string) {
+  if (isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
+    return `${import.meta.env.VITE_DEV_SERVER_URL}${path}`
+  }
+  return `file://${join(__dirname, `./web/${path}`)}`
+}
+
+/** 创建窗口 */
 async function createWindow() {
   const browserWindow = new BrowserWindow({
-    width: 1240,
-    height: 765,
+    width: 640,
+    height: 384,
     // Use 'ready-to-show' event to show window
     show: false,
+    resizable: false,
     autoHideMenuBar: true, // 自动隐藏菜单栏
     webPreferences: {
       spellcheck: false,
@@ -44,15 +55,9 @@ async function createWindow() {
     handleCloseWindow(event)
   })
 
-  const pageUrl
-    = isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined
-      ? import.meta.env.VITE_DEV_SERVER_URL
-      : `file://${join(__dirname, './web/index.html')}`
+  await browserWindow.loadURL(getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`))
 
-  await browserWindow.loadURL(pageUrl)
-  browserWindow.setTitle(`${browserWindow.getTitle()} | ${app.getVersion()}`)
-
-  console.log('createWindow', pageUrl)
+  console.log('createWindow', getWebEntryUrl('launch'))
   // setTimeout(() => {
   //   API.window.userGetWindowInfoList({}).then(async (res) => {
   //     const winInfoList = res.data.rows
@@ -61,6 +66,23 @@ async function createWindow() {
   // }, 5000)
 
   return browserWindow
+}
+
+/** 进入主页面 */
+export async function intoMainPage() {
+  const win = getMainWindow()!
+
+  win.hide()
+  win.setResizable(true)
+  win.setBounds({ width: 1280, height: 832 }, false)
+  // win.setMinimumSize(minWidth, minHeight)
+  win.center()
+  await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
+  win.setTitle(`${win.getTitle()} | ${app.getVersion()}`)
+  console.log('进入主应用')
+  setTimeout(() => {
+    win.show()
+  }, 200)
 }
 
 let mainWindow: BrowserWindow | undefined

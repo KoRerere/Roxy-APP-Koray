@@ -50,6 +50,8 @@ export interface RenderMessage {
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 检测更新 */
   'app:checkUpdate': () => Promise<boolean>
+  /** 获取应用版本号 */
+  'app:getAppVersion': () => Promise<string>
   /** 安装并更新 */
   'app:quitAndInstall': (info: ResourceUpdateMessage) => any
   /** 获取所有可用的内核列表 */

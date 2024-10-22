@@ -35,6 +35,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "dashboard/**/*",
+    "launch/**/*",
     "figma-icons/**/*",
     "types/*.d.ts",
     "./*.d.ts",

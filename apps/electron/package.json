@@ -24,6 +24,8 @@
     "pack:app": "npx tsx scripts/build.ts",
     "pack:dev": "pnpm build:dev && dotenvx run -f .env.development -- pnpm pack:app",
     "pack:prod": "pnpm build:prod && dotenvx run -f .env.production -- pnpm pack:app",
+    "pack:only:dev": "dotenvx run -f .env.development -- pnpm pack:app",
+    "pack:only:prod": "dotenvx run -f .env.production -- pnpm pack:app",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "postinstall": "cross-env ELECTRON_RUN_AS_NODE=1 electron ../../scripts/update-electron-vendors.js"
   },
