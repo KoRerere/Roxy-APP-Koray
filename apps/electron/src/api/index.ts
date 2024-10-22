@@ -1,6 +1,7 @@
 import { ApiApi, BaseApi, HttpClient, LoggingApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
 import { app } from 'electron'
 import https from 'node:https'
+import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
@@ -11,7 +12,7 @@ const agent = new https.Agent({
 })
 
 export const httpClient = new HttpClient({
-  baseURL: 'https://lumitest.lumibrowser.com/',
+  // baseURL: 'https://lumitest.lumibrowser.com/',
   timeout: 10000,
   httpsAgent: agent,
 })
@@ -23,7 +24,13 @@ const commonRequestHeaders = {
   appVersion: app.getVersion(),
 }
 
-httpClient.instance.interceptors.request.use((config) => {
+let baseURL = ''
+httpClient.instance.interceptors.request.use(async (config) => {
+  if (!baseURL) {
+    baseURL = await getGatewayConfig()
+  }
+  config.baseURL = baseURL
+
   if (isDev) {
     console.log('store.token', store.token)
     console.log('store.workspaceId', store.workspaceId)

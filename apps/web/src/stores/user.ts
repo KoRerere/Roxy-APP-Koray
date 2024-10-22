@@ -10,10 +10,12 @@ export const useUserStore = defineStore('user', () => {
   const tokenRef = ref('')
 
   async function getUserInfo() {
-    const { data } = await API.base.userGetUserInfoList()
-
-    setUserInfo(data)
+    const { code, data } = await API.base.userGetUserInfoList()
     console.log(data)
+
+    if (code === 0) {
+      setUserInfo(data)
+    }
   }
 
   function setUserInfo(info: UserInfo) {

@@ -92,6 +92,8 @@ export interface RenderMessage {
   'util:encryptAESGCM': (payload: string) => string
   /** AES-GCM 解密 */
   'util:decryptAESGCM': (payload: string) => string
+  /** 获取网关配置 */
+  'util:getGatewayConfig': () => Promise<string>
 
   /** 前端已准备就绪 */
   'web:ready': () => void

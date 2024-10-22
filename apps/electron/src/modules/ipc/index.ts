@@ -6,6 +6,7 @@ import crypto from 'node:crypto'
 import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import url from 'node:url'
+import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
@@ -297,6 +298,11 @@ ipcMain.on('util:encryptAESGCM', (msg) => {
 /** AES-GCM 解密 */
 ipcMain.on('util:decryptAESGCM', (msg) => {
   return decryptAESGCM(msg)
+})
+
+/** 获取网关配置 */
+ipcMain.on('util:getGatewayConfig', () => {
+  return getGatewayConfig()
 })
 
 /** 前端已准备就绪 */
