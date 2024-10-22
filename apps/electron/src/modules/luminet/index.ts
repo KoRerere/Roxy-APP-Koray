@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
-import { execFile } from 'node:child_process'
+import { execFile, execFileSync } from 'node:child_process'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC } from '/@/modules/luminet/util'
 import { store } from '/@/modules/store'
@@ -33,7 +33,7 @@ export async function startLuminet() {
   const encText = encryptByDESModeCBC(originText)
 
   if (isMac) {
-    execFile('chmod', ['+x', appConfig.luminetBinPath])
+    execFileSync('chmod', ['+x', appConfig.luminetBinPath])
   }
 
   luminetProcess = execFile(appConfig.luminetBinPath, ['--arg', encText])
