@@ -308,18 +308,14 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation"
-    :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
+  <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
     :show-display="false" :show-gridlines="false" :paginator="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
-        <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+        <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RyButton severity="info" size="small" icon="base/rx_ic_download_cloud" :label="$t('Add with URL')"
-            @click="installViaUrl" />
-          <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_export" :label="$t('Upload')"
-            @click="onUploadExtension" />
+          <RxButton severity="info" size="sm" icon="base/rx_ic_download_cloud" :label="$t('Add with URL')" @click="installViaUrl" />
+          <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('Upload')" @click="onUploadExtension" />
         </div>
       </div>
     </template>
@@ -337,15 +333,13 @@ defineExpose({
       </div>
     </template>
     <template #toggle="{ data }">
-      <RxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? $t('Active') : $t('Disable')"
-        @change="onSwitch(data)" />
+      <RxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? $t('Active') : $t('Disable')" @change="onSwitch(data)" />
     </template>
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RyButton :label="$t('Update')" size="small" @click="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }"
-          name="base/rx_ic_info" />
+        <RxButton :label="$t('Update')" size="sm" @click="updateExtension(data)" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" />
       </div>
       <div v-else>
         --
@@ -353,8 +347,7 @@ defineExpose({
     </template>
 
     <template #actions-extra="{ data }">
-      <RyButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="small" severity="secondary" text
-        @click="operationHandler({ name: 'install' }, data)" />
+      <RxButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="sm" severity="secondary" text @click="operationHandler({ name: 'install' }, data)" />
     </template>
   </RyTable>
 </template>

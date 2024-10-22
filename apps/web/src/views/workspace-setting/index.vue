@@ -7,7 +7,6 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { RxSvgIcon } from '/@/components/rx-icon'
-import RyButton from '/@/components/ry-button'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -72,8 +71,8 @@ function handleDeleteConfirm() {
         </div>
         <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />
         <div class="w-full flex justify-end gap-2">
-          <RyButton outlined label={$t('Cancel')} onClick={() => dialogRef.value.close()} />
-          <RyButton severity="danger" label={$t('Delete Workspace')} onClick={confirmDelete} />
+          <RxButton outlined label={$t('Cancel')} onClick={() => dialogRef.value.close()} />
+          <RxButton severity="danger" label={$t('Delete Workspace')} onClick={confirmDelete} />
         </div>
       </div>
     )
@@ -134,8 +133,7 @@ function leaveWorkspace() {
           </div>
         </div>
         <div class="emoji-picker-box">
-          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner"
-            :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
           <div class="choose-icon-desc">
             {{ $t('Choose icon') }}
           </div>
@@ -153,8 +151,7 @@ function leaveWorkspace() {
         </div>
         <div class="w-full">
           <IconField>
-            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner"
-              :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
+            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
             <InputIcon class="input-limit-text">
               {{ workspaceInfo.workspaceName?.length }}/30
             </InputIcon>
@@ -168,14 +165,14 @@ function leaveWorkspace() {
 
     <div class="footer">
       <template v-if="isOwner">
-        <RyButton severity="secondary" @click="showMoreActions">
+        <RxButton severity="secondary" @click="showMoreActions">
           <RxSvgIcon name="base/rx_ic_more-h" />
           {{ $t('More') }}
-        </RyButton>
-        <RyButton :label="$t('Save Changes')" @click="handleSaveChange" />
+        </RxButton>
+        <RxButton :label="$t('Save Changes')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
-        <RyButton :label="$t('Leave workspace')" severity="danger" @click="leaveWorkspace" />
+        <RxButton :label="$t('Leave workspace')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>

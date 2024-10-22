@@ -7,8 +7,6 @@ import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
 import remarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryButton from '/@/components/ry-button'
-import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -154,13 +152,11 @@ function deletePopup(data: any) {
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>Accounts</div>
-      <ryButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" label="Create account"
-        @click="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer" size="sm" severity="info" icon="base/rx_ic_plus" label="Create account" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
+      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false">
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
@@ -179,11 +175,10 @@ function deletePopup(data: any) {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <remarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
-            <actions :operation="operation" :show-menu="false"
-              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
-      </ry-table>
+      </RyTable>
     </div>
   </div>
   <Drawer v-model:visible="drawer.visible" position="right" class="!w-[500px]">

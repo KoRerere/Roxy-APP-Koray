@@ -236,30 +236,27 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
-      <RyButton class="filter-list-button" text @click="showMenu">
+      <RxButton class="filter-list-button" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
         <span v-if="!filterTagList.length">Add filters</span>
-      </RyButton>
+      </RxButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
-      <RyButton text severity="secondary" size="small" label="Reset" @click="resetFilters" />
+      <RxButton text severity="secondary" size="sm" label="Reset" @click="resetFilters" />
       <template v-if="filterTagList.length">
-        <RyButton v-if="isAllProfiles" severity="info" size="small" label="Save" @click="saveFilters" />
-        <SplitButton v-else severity="info" size="small" label="Save" :model="splitButtonItems" @click="modifyFilter" />
+        <RxButton v-if="isAllProfiles" severity="info" size="sm" label="Save" @click="saveFilters" />
+        <SplitButton v-else severity="info" size="sm" label="Save" :model="splitButtonItems" @click="modifyFilter" />
       </template>
       <div>|</div>
     </div>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="tmenu" :model="menuOptions" popup
-    :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
+  <TieredMenu ref="tmenu" :model="menuOptions" popup :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
-          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value"
-            @change="onChange(item)" />
-          <RxAvatar v-if="item.value.startsWith('u_')" :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)"
-            :color="item.avatarColor" :size="24" :font-size="12" />
+          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onChange(item)" />
+          <RxAvatar v-if="item.value.startsWith('u_')" :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
           <span v-else>{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">

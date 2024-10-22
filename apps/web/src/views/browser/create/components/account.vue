@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
-import ryButton from '/@/components/ry-button'
 import { deepClone } from '/@/utils'
 import accountCreate from '/@/views/account/create'
 import accountList from '/@/views/account/list/quick.vue'
@@ -60,10 +59,8 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <ry-button size="small" severity="secondary" icon="base/rx_ic_exchange" label="Select"
-        @click="toggleDrawer('list')" />
-      <ry-button size="small" severity="secondary" icon="base/rx_ic_plus" label="Add account"
-        @click="toggleDrawer('create')" />
+      <RxButton size="sm" severity="secondary" icon="base/rx_ic_exchange" label="Select" @click="toggleDrawer('list')" />
+      <RxButton size="sm" severity="secondary" icon="base/rx_ic_plus" label="Add account" @click="toggleDrawer('create')" />
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="card-list">
@@ -78,13 +75,10 @@ function replaceData(data: any) {
       </rx-card>
     </div>
 
-    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right"
-      class="browser-drawer-content !w-[50%]" :pt="{ mask: 'browser-drawer' }">
+    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" class="browser-drawer-content !w-[50%]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
-        <accountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }"
-          @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
-        <accountCreate v-if="drawer.type === 'create'" :title="$t('Create Account')" :data="drawer.data"
-          @close="closeCallback" @confirm="onConfirm" />
+        <accountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }" @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <accountCreate v-if="drawer.type === 'create'" :title="$t('Create Account')" :data="drawer.data" @close="closeCallback" @confirm="onConfirm" />
       </template>
     </Drawer>
   </div>

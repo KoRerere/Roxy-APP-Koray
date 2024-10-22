@@ -37,15 +37,14 @@ function onConfirm() {
 
 <template>
   <drawerContent :title="$t('Edit cookies for [UID-{uid}]', { uid: data.windowSortNum })" v-bind="$attrs">
-    <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookie with JSON format" cols="40"
-      :auto-resize="false" />
+    <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookie with JSON format" cols="40" :auto-resize="false" />
     <template #footer>
       <div class="flex justify-between w-full">
         <div class="flex items-center">
           <Checkbox v-model="isWrap" input-id="wrap" binary />
           <label for="wrap" class="select-none ml-2 cursor-pointer">Text wrap</label>
         </div>
-        <ry-button label="Save Cookies" :loading="loading" severity="info" @click="onConfirm" />
+        <RxButton label="Save Cookies" :loading="loading" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawerContent>

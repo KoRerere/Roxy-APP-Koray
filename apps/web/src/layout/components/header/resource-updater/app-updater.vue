@@ -2,7 +2,6 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import RxButton from '/@/components/ry-button/'
 import { $t } from '/@/locales'
 
 const props = defineProps<{
@@ -55,15 +54,8 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             </div>
             <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
-              <RxButton
-                type="button"
-                size="small"
-                :label="formatClientBtnLabel(item)"
-                icon="base/rx_ic_download"
-                :loading="item.status === 'downloading'"
-                class="mt-[6px]"
-                @click="handleClientItemClick(item)"
-              />
+              <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
+                @click="handleClientItemClick(item)" />
             </div>
           </div>
         </div>
@@ -95,6 +87,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
 }
+
 .upgrade-container {
   display: flex;
   padding: var(--spacing-xl, 12px) 0px var(--spacing-4xl, 24px) 0px;
@@ -124,6 +117,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   font-weight: 600;
   line-height: normal;
 }
+
 .release-time {
   color: var(--Colors-Text-text-tertiary, #7c8387);
   text-align: right;
@@ -133,6 +127,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   font-weight: 500;
   line-height: normal;
 }
+
 .feature-content {
   padding-left: 57px;
 }
@@ -145,6 +140,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-items: center;
   gap: var(--spacing-xl, 0px);
   align-self: stretch;
+
   .box {
     display: flex;
     width: 160px;
@@ -168,6 +164,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
         font-weight: 500;
         line-height: normal;
       }
+
       .tips {
         color: var(--Colors-Text-text-tertiary, #7c8387);
         text-align: center;

@@ -22,7 +22,7 @@ detectNetwork()
 
 <template>
   <div class="network">
-    <ry-button icon="base/rx_ic_route" outlined size="small" @click="detectNetwork" />
+    <RxButton icon="base/rx_ic_route" outlined size="sm" @click="detectNetwork" />
     <div class="info">
       <template v-if="loading">
         <Skeleton width="4rem" height="12px" />
@@ -54,7 +54,8 @@ detectNetwork()
       font-size: 10px;
       font-style: normal;
       font-weight: 500;
-      line-height: 12px; /* 120% */
+      line-height: 12px;
+      /* 120% */
     }
 
     .ip {
@@ -63,7 +64,8 @@ detectNetwork()
       font-size: 8px;
       font-style: normal;
       font-weight: 500;
-      line-height: 10px; /* 125% */
+      line-height: 10px;
+      /* 125% */
     }
   }
 }

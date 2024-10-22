@@ -35,14 +35,9 @@ defineExpose({
       <slot name="footer">
         <div class="label" />
         <div class="buttons">
-          <Button label="Submit" type="submit" />
+          <RxButton label="Submit" type="submit" />
 
-          <Button
-            label="Reset"
-            type="button"
-            class="p-button-secondary"
-            @click="resetFields"
-          />
+          <RxButton label="Reset" type="button" class="p-button-secondary" @click="resetFields" />
         </div>
       </slot>
     </div>
@@ -53,6 +48,7 @@ defineExpose({
 .rx-form {
   width: 100%;
 }
+
 label {
   display: block;
   margin-top: 20px;
@@ -66,6 +62,7 @@ label {
     display: flex;
     gap: 12px;
   }
+
   .label {
     width: v-bind(labelWidth);
   }

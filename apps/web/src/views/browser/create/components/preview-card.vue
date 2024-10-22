@@ -45,8 +45,7 @@ const visible = ref(true)
 <template>
   <div class="flex flex-col items-start preview" :class="[visible ? '' : 'hide']">
     <div class="flex flex-row-reverse items-center justify-between self-stretch preview-header">
-      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61"
-        name="base/rx_ic_fold_right" @click="visible = !visible" />
+      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61" name="base/rx_ic_fold_right" @click="visible = !visible" />
       <span v-if="visible">Preview Card</span>
     </div>
     <div v-if="visible" class="w-full preview-content">
@@ -62,8 +61,7 @@ const visible = ref(true)
       </div>
     </div>
     <div v-if="visible" class="preview-footer">
-      <RyButton size="small" label="Shuffle profiles" icon="base/rx_ic_shuffle" outlined severity="secondary"
-        @click="$emit('shuffle')" />
+      <RxButton size="sm" label="Shuffle profiles" icon="base/rx_ic_shuffle" outlined severity="secondary" @click="$emit('shuffle')" />
     </div>
   </div>
 </template>

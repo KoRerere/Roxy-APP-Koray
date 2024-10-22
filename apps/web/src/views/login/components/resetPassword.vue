@@ -72,8 +72,7 @@ function receiveEmailCode(code: string) {
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
       <div class="box">
-        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('Your email haven’t been signed up.')"
-          :content="$t('Please checkout your email and try again.')" />
+        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('Your email haven’t been signed up.')" :content="$t('Please checkout your email and try again.')" />
         <div class="title">
           {{ $t('Reset your password') }}
         </div>
@@ -87,17 +86,15 @@ function receiveEmailCode(code: string) {
           </template>
           <template v-else>
             <label for="new-password" class="label">{{ $t('New password') }}</label>
-            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('Enter new password')"
-              toggle-mask />
+            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('Enter new password')" toggle-mask />
             <label for="re-new-password" class="label">{{ $t('Re-enter new password') }}</label>
-            <Password id="re-new-password" v-model="reNewPassword" :feedback="false"
-              :placeholder="$t('Re-enter new password')" toggle-mask />
+            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('Re-enter new password')" toggle-mask />
           </template>
         </div>
       </div>
-      <ry-button class="w-full" @click="handleSubmit">
+      <RxButton class="w-full" @click="handleSubmit">
         {{ currentStep === 'step1' ? $t('Next') : $t('Confirm') }}
-      </ry-button>
+      </RxButton>
       <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('Back to sign in') }}</a>
     </div>
   </template>

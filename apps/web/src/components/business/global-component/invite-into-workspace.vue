@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import RyButton from '/@/components/ry-button'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
@@ -86,13 +85,13 @@ function skipInvitation() {
             {{ $t('You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!', { workspaceName: inviteInfo?.workspaceName }) }}
           </div>
         </div>
-        <RyButton class="w-full" @click="acceptInvitation">
+        <RxButton class="w-full" @click="acceptInvitation">
           {{ $t('Join Workspace') }}
-        </RyButton>
+        </RxButton>
         <rx-divider />
-        <RyButton class="w-full" outlined @click="skipInvitation">
+        <RxButton class="w-full" outlined @click="skipInvitation">
           {{ $t('Skip') }}
-        </RyButton>
+        </RxButton>
       </div>
     </div>
   </Dialog>
@@ -134,7 +133,8 @@ function skipInvitation() {
       font-size: 40px;
       font-style: normal;
       font-weight: 700;
-      line-height: 28px; /* 70% */
+      line-height: 28px;
+      /* 70% */
     }
 
     .workspace-name {
@@ -144,7 +144,8 @@ function skipInvitation() {
       font-size: 16px;
       font-style: normal;
       font-weight: 600;
-      line-height: var(--Line-Height-text-lg, 20px); /* 125% */
+      line-height: var(--Line-Height-text-lg, 20px);
+      /* 125% */
     }
 
     .detail-content {
@@ -154,7 +155,8 @@ function skipInvitation() {
       font-size: 14px;
       font-style: normal;
       font-weight: 400;
-      line-height: var(--Line-Height-text-lg, 20px); /* 142.857% */
+      line-height: var(--Line-Height-text-lg, 20px);
+      /* 142.857% */
     }
   }
 }

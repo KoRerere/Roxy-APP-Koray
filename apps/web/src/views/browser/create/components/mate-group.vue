@@ -84,10 +84,9 @@ onBeforeMount(() => {
 
 <template>
   <div class="flex items-center gap-2">
-    <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_stack" :label="metaData.projectName"
-      @click="selectProject" />
+    <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
     <div class="position-relative" :class="{ selected: metaData?.labelIds.length }">
-      <RyButton outlined severity="secondary" size="small" icon="base/rx_ic_tag" @click="selectTags" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" @click="selectTags" />
     </div>
     <RemarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>

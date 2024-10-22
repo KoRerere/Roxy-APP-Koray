@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import RxButton from '/@/components/ry-button/'
 import InviteIntoWorkspace from './invite-into-workspace.vue'
 
 onMounted(() => {

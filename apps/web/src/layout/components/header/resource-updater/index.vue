@@ -80,7 +80,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small">
-      <ry-button icon="base/rx_ic_updates" outlined size="small" @click="toggle" />
+      <RxButton icon="base/rx_ic_updates" outlined size="sm" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">
@@ -107,28 +107,31 @@ window.electronAPI.on('app:resource-update', (data) => {
   :global(.p-popover-content) {
     padding: 0;
   }
+
   :global(.p-tabpanels) {
     padding: 0;
   }
+
   :global(.p-tabpanels:has(.p-tabpanel:first-of-type.p-tabpanel-active)) {
     background: var(--Color-blue-100, #e8f5fc);
   }
+
   :global(.p-tablist-active-bar) {
     height: 2px;
     border-radius: 1px;
   }
 }
+
 .tablist {
   :global(.p-tablist-tab-list) {
     justify-content: space-around;
   }
 }
+
 .tabpanel {
   max-height: 400px;
   overflow: hidden auto;
 }
 </style>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>
