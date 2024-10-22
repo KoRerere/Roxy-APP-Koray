@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { mediaProtocolName } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
+import { store } from '/@/modules/store'
 import { isDev, isPackaged } from '/@/utils/'
 
 /** 获取 web 入口地址 */
@@ -9,7 +10,7 @@ export function getWebEntryUrl(path: string) {
   if (isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
     return `${import.meta.env.VITE_DEV_SERVER_URL}${path}`
   }
-  return `file://${join(__dirname, `./web/${path}`)}`
+  return `http://localhost:${store.appPort}/${path}`
 }
 
 /** 创建窗口 */

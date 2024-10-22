@@ -75,7 +75,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
     const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
-    console.log('fetchAvailableCoreList', JSON.stringify(result, null, 2))
+    console.log(result)
     this.availableCoreList = result.data.rows
     return this.availableCoreList
   }

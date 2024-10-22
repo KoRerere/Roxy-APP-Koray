@@ -9,6 +9,8 @@ const props = defineProps<{
   featureTitleList: any[]
 }>()
 
+const appVersion = ref('')
+
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
     return `${$t('Downloading')} ${Math.floor(item.percent)}%`
@@ -37,6 +39,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     // window.electronAPI.send('app:download-update', info)
   }
 }
+
+electronAPI.send('app:getAppVersion').then((version) => {
+  appVersion.value = version
+})
 </script>
 
 <template>
@@ -55,7 +61,8 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
               <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
-                @click="handleClientItemClick(item)" />
+                        @click="handleClientItemClick(item)"
+              />
             </div>
           </div>
         </div>
@@ -67,7 +74,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           <RxSvgIcon name="base/logo" class="w-[48px] h-[48px]" />
           <div class="content">
             <div class="version">
-              v1.0.5
+              v{{ appVersion }}
             </div>
             <div class="tips">
               {{ $t('Your client is up-to-date') }}

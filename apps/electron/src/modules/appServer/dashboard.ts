@@ -1,4 +1,4 @@
-import express from 'express'
+import type express from 'express'
 import twoFactor from 'node-2fa'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -103,6 +103,4 @@ export async function setupDashboardServer(app: express.Application) {
       res.error(error)
     }
   })
-
-  app.use(express.static(join(__dirname, './web')))
 }

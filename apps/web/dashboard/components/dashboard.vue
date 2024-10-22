@@ -144,7 +144,7 @@ onBeforeMount(() => {
         <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <ry-button
+            <rx-button
               v-if="windowInfo.refreshUrl"
               v-model:loading="refreshUrlLoading"
               icon="base/rx_ic_renew"
@@ -153,7 +153,7 @@ onBeforeMount(() => {
               :disabled="refreshUrlLoading || testProxyLoading"
               @click="refreshURL"
             />
-            <ry-button
+            <rx-button
               v-model:loading="testProxyLoading"
               class="btn"
               icon="base/rx_ic_speed_test"
