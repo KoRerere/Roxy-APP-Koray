@@ -1,27 +1,39 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon'
+import LiveChat from '/@/components/business/live-chat/index.vue'
 import { $t } from '/@/locales'
 
 const collapsed = defineModel('collapsed', { default: false })
 
-const list = [
+const list = ref([
+  {
+    text: $t('Q&A/Help'),
+    icon: 'base/rx_ic_chat_question',
+    component: markRaw(LiveChat),
+  },
   {
     text: $t('Hide'),
     icon: 'base/rx_ic_fold_right',
+    iconAttr: computed(() => {
+      return {
+        class: { 'rotate-180': collapsed.value },
+      }
+    }),
+    itemClass: 'mt-[16px]',
     handler() {
       collapsed.value = !collapsed.value
     },
   },
-]
+])
 </script>
 
 <template>
   <div class="rx-layout-footer" :class="{ collapsed }">
     <template v-for="item in list" :key="item.text">
-      <div class="item" @click="item.handler">
-        <SvgIcon :class="{ 'rotate-180': collapsed }" :name="(item.icon as SvgNames)" />
+      <component :is="item.component || 'div'" class="item" :class="item.itemClass" @click="item.handler">
+        <SvgIcon v-bind="item.iconAttr" :name="(item.icon as SvgNames)" />
         <span v-if="!collapsed">{{ item.text }}</span>
-      </div>
+      </component>
     </template>
   </div>
 </template>

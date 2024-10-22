@@ -230,7 +230,7 @@ export class BeforeLaunchTask {
 
     // 开启同步标签页后，同步标签页
     (allOpenUrl || []).forEach((item) => {
-      if (this.browserItem.isValidURL(item)) {
+      if (item && this.browserItem.isValidURL(item)) {
         args.push(item)
       }
     })

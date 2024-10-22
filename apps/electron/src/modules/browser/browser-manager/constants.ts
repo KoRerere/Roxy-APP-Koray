@@ -1,3 +1,5 @@
+import { store } from '/@/modules/store'
+
 /** 默认的浏览器启动参数 */
 export const defaultCLIArgs = [
   `--disable-background-mode`,
@@ -74,9 +76,13 @@ export const cacheToClear = [
 ]
 
 /** 无效的 URL, 无须同步 */
-export const invalidUrls = [
-  'chrome://newtab/',
-  'chrome-extension://',
-  'about:blank',
-  import.meta.env.VITE_DEV_SERVER_URL,
-]
+export function getInvalidUrls() {
+  return [
+    'chrome://newtab/',
+    'chrome-extension://',
+    'about:blank',
+    import.meta.env.VITE_DEV_SERVER_URL,
+    `http://localhost:${store.appPort}`,
+    `http://127.0.0.1:${store.appPort}`,
+  ]
+}

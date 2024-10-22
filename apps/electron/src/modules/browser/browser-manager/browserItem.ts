@@ -3,12 +3,10 @@ import { readdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
-import { appConfig } from '/@/constants'
-import { cacheToClear, invalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { cacheToClear, getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { delLuminetProxy } from '/@/modules/luminet'
-import { store } from '/@/modules/store'
 import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
@@ -236,7 +234,7 @@ export class BrowserItem {
 
   /** 是否是有效的 URL */
   isValidURL(url: string) {
-    return !invalidUrls.some(n => url.includes(n!))
+    return !getInvalidUrls().some(n => url.startsWith(n!))
   }
 
   // async syncWindowOpenStatus(openStatus: boolean) {

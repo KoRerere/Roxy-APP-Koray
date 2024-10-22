@@ -24,7 +24,7 @@ const illustrate = [
   },
   {
     title: $t('Resources:'),
-    content: $t('For API installations and instructions, please visit: <a class="decoration-underline" href="">API Documentation.</a>'),
+    content: $t('For API installations and instructions, please visit: <a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api">API Documentation.</a>'),
   },
 ]
 

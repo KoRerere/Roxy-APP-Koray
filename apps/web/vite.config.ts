@@ -44,7 +44,7 @@ const primevueComponents = primevueFiles.reduce<string[]>((acc, dir) => {
 const config: UserConfig = {
   mode: process.env.MODE,
   root: PACKAGE_ROOT,
-  envDir: PROJECT_ROOT,
+  envDir: PACKAGE_ROOT,
   resolve: {
     alias: {
       '/@/': `${join(PACKAGE_ROOT, 'src')}/`,

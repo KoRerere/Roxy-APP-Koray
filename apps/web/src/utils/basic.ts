@@ -207,6 +207,6 @@ export function parseProxyUrl(url: string): ProxyObject {
 }
 
 export function parseUrl(url: string) {
-  const match = url?.match(/^(https?):\/\/([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)\/?/)
+  const match = url?.match(/^(https?):\/\/([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)\/?/)
   return match && { protocol: match[1], domain: match[2] }
 }
