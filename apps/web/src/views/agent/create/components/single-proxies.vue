@@ -40,13 +40,12 @@ function save() {
     </div>
     <div class="flex justify-between w-full">
       <div class="flex items-center gap-3">
-        <RyButton size="small" severity="secondary" :label="$t('Test proxies')" icon="base/rx_ic_speed_test"
-          @click="testProxy" />
+        <RxButton size="sm" severity="secondary" :label="$t('Test proxies')" icon="base/rx_ic_speed_test" @click="testProxy" />
         <RemarkIcon class="remark" :value="remark" :on-confirm="addRemark" />
       </div>
       <div class="flex gap-3 py-4">
-        <RyButton text size="small" severity="secondary" :label="$t('Cancel')" @click="$emit('cancel')" />
-        <RyButton size="small" severity="info" :label="$t('Save proxies')" @click="save" />
+        <RxButton text size="sm" severity="secondary" :label="$t('Cancel')" @click="$emit('cancel')" />
+        <RxButton size="sm" severity="info" :label="$t('Save proxies')" @click="save" />
       </div>
     </div>
   </div>

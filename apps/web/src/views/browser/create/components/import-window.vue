@@ -124,9 +124,8 @@ async function handleBeforeUpload(rawFile: any) {
 <template>
   <div>
     <div class="upload-title">
-      Please download our <a
-        href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls"
-        target="_blank" class="upload-title-link">template file</a> here. After you finish editing, upload it
+      Please download our <a href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank"
+        class="upload-title-link">template file</a> here. After you finish editing, upload it
       through the
       following steps.
     </div>
@@ -139,8 +138,7 @@ async function handleBeforeUpload(rawFile: any) {
         <div>{{ fileData.name || 'Choose file and drop it here' }}</div>
         <div>{{ fileData.size || 'Only .xlsx files supported, up to 5MB.' }}</div>
       </div>
-      <ryButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined
-        severity="secondary" @click="chooseFile" />
+      <RxButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined severity="secondary" @click="chooseFile" />
     </div>
     <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">
       {{ fileData.successCount }} profiles imported

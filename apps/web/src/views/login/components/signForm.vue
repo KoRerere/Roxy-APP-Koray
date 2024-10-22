@@ -76,15 +76,15 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <ry-button :loading="submitLoading" type="button" class="w-full" @click="handleSubmit">
+    <RxButton :loading="submitLoading" type="button" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('Sign up') : $t('Sign in') }}
-    </ry-button>
+    </RxButton>
     <div class="divider">
       <span class="mx-2">OR</span>
     </div>
-    <ry-button class="w-full" outlined @click="openGoogleAuth2Login">
+    <RxButton class="w-full" outlined @click="openGoogleAuth2Login">
       <img src="/google.svg"> {{ $t('Sign in with Google') }}
-    </ry-button>
+    </RxButton>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('Already have an account?') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">
@@ -106,6 +106,7 @@ function switchFormMode(val: boolean) {
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
+
   .forget-pwd {
     cursor: pointer;
     color: var(--Color-blue-300, #12a3fc);
@@ -113,7 +114,8 @@ function switchFormMode(val: boolean) {
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 }
 

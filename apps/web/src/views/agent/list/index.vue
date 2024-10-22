@@ -107,14 +107,12 @@ function onRefreshTable() {
       <div class="flex-1">
         Proxies
       </div>
-      <RyButton v-if="!role.isViewer" size="small" severity="info" icon="base/rx_ic_plus" :label="$t('Create Proxy')"
-        @click="createProxy" />
-      <RyButton size="small" icon="base/rx_ic_speed_test" :label="$t('Test all')" @click="testAllProxy" />
+      <RxButton v-if="!role.isViewer" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('Create Proxy')" @click="createProxy" />
+      <RxButton size="sm" icon="base/rx_ic_speed_test" :label="$t('Test all')" @click="testAllProxy" />
     </div>
     <div class="proxies-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList"
-        :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
+      <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
         :show-gridlines="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
@@ -132,8 +130,7 @@ function onRefreshTable() {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
-              :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
             <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>

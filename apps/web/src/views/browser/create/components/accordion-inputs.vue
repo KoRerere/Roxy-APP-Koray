@@ -74,8 +74,7 @@ function onCopy(dirId: string) {
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto content">
       <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
-          :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
@@ -93,8 +92,7 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
-                      <inputSelect v-bind="item" v-model="item.value" :filter="false"
-                        @change="item.change?.(item, input.items)" />
+                      <inputSelect v-bind="item" v-model="item.value" :filter="false" @change="item.change?.(item, input.items)" />
                     </template>
                   </InputGroup>
                 </div>
@@ -131,10 +129,8 @@ function onCopy(dirId: string) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <RyButton v-if="openBrowser" size="small" severity="secondary" outlined label="Carete & Open"
-        @click.stop="getFormData(true)" />
-      <RyButton size="small" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`"
-        @click.stop="getFormData(false)" />
+      <RxButton v-if="openBrowser" size="sm" severity="secondary" outlined label="Carete & Open" @click.stop="getFormData(true)" />
+      <RxButton size="sm" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`" @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

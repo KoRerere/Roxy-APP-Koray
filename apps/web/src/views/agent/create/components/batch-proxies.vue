@@ -212,8 +212,7 @@ function onSave() {
               <label for="wrap" class="select-none mx-2 cursor-pointer">Filter duplicates</label>
               <RxSvgIcon name="base/rx_ic_info_line" :size="14" />
             </div>
-            <RyButton outlined severity="secondary" size="small" label="Parse proxies" icon="base/rx_ic_play"
-              @click="parseValue" />
+            <RxButton outlined severity="secondary" size="sm" label="Parse proxies" icon="base/rx_ic_play" @click="parseValue" />
           </div>
         </div>
       </div>
@@ -225,10 +224,8 @@ function onSave() {
           Allowed formats (IPv4, IPv6 supported):<br><br>
           192.168.0.1:8000<span class="text-blue">{Remark}</span><br>
           192.168.0.1:8000:username:password<span class="text-blue">{Remark}</span><br>
-          socks5://192.168.0.1:8000<span class="text-green">[Refresh IP URL]</span><span
-            class="text-blue">{Remark}</span><br>
-          http://[2001:db8:2de:0:0:0:0:e13]:8000<span class="text-green">[Refresh IP URL]</span><span
-            class="text-blue">{Remark}</span><br><br>
+          socks5://192.168.0.1:8000<span class="text-green">[Refresh IP URL]</span><span class="text-blue">{Remark}</span><br>
+          http://[2001:db8:2de:0:0:0:0:e13]:8000<span class="text-green">[Refresh IP URL]</span><span class="text-blue">{Remark}</span><br><br>
           1. If you do not fill in the proxy type, it will default to HTTP<br>
           2. Only support HTTP, HTTPS, SOCKS5<br>
           3. One proxy per line, add up to 500 proxies at a time<br>
@@ -240,28 +237,24 @@ function onSave() {
       <div class="flex items-center justify-between">
         <div>Parsed proxies</div>
         <div class="flex gap-2">
-          <RyButton severity="secondary" text size="small" label="Delete fail" icon="base/rx_ic_bin_1"
-            :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <RyButton severity="secondary" size="small" label="Test all proxies" icon="base/rx_ic_speed_test"
-            @click="testAll" />
+          <RxButton severity="secondary" text size="sm" label="Delete fail" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
+          <RxButton severity="secondary" size="sm" label="Test all proxies" icon="base/rx_ic_speed_test" @click="testAll" />
         </div>
       </div>
       <Message v-if="showMessage" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
         {{ dataList.length }} proxies are successfully parsed. {{ filterCount }} proxies has been filtered.
       </Message>
       <div class="flex-ovh-1 items-center justify-center">
-        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
-          :show-table-header="false">
+        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false">
           <template #actions="{ data }">
-            <actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
-              :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
+            <actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
           </template>
         </RyTable>
       </div>
     </div>
     <div class="flex justify-between">
-      <RyButton severity="secondary" text size="small" label="Cancel" @click="$emit('cancel')" />
-      <RyButton severity="info" size="small" label="Save proxies" :disabled="!dataList?.length" @click="onSave" />
+      <RxButton severity="secondary" text size="sm" label="Cancel" @click="$emit('cancel')" />
+      <RxButton severity="info" size="sm" label="Save proxies" :disabled="!dataList?.length" @click="onSave" />
     </div>
   </div>
 </template>

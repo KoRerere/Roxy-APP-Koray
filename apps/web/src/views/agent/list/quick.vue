@@ -162,13 +162,11 @@ function saveSelected() {
   <drawer-content :title="$t('proxy list')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList"
-        :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps">
+      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
-            <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label"
-              option-value="value" data-key="value" @change="filterButtons.onChange" />
-            <ryButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
+            <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
+            <RxButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">
@@ -189,8 +187,7 @@ function saveSelected() {
         </template>
         <template #bounded="{ data: row }">
           <div class="w-30">
-            <InputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="0" show-buttons
-              button-layout="horizontal" :step="1" fluid>
+            <InputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="0" show-buttons button-layout="horizontal" :step="1" fluid>
               <template #incrementicon>
                 <RxSvgIcon name="base/rx_ic_plus" />
               </template>
@@ -201,13 +198,12 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
-            @quick-click="operationHandler($event, row)" />
+          <actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>
     <template #footer>
-      <RyButton label="Save selected" severity="info" @click="saveSelected" />
+      <RxButton label="Save selected" severity="info" @click="saveSelected" />
     </template>
   </drawer-content>
 </template>

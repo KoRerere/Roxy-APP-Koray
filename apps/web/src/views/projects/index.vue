@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import RxButton from '/@/components/ry-button'
 import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
@@ -154,13 +153,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>{{ $t('Projects') }}</div>
-      <RxButton v-if="role.isOwner || role.isManager" size="small" severity="info" icon="base/rx_ic_plus"
-        :label="$t('Add project')" @click="operationHandler({ name: 'create' })" />
+      <RxButton v-if="role.isOwner || role.isManager" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('Add project')" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-        :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false">
+      <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+        :show-actions-menu="false">
         <template #members="{ data }">
           <AvatarGroup>
             <template v-for="person in data.user_info" :key="person.userId">
@@ -171,9 +169,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
           </AvatarGroup>
         </template>
         <template #open="{ data }">
-          <router-link
-            :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }"
-            class="text-black">
+          <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <RxButton outlined>
               {{ $t('Detail') }}
             </RxButton>

@@ -66,9 +66,9 @@ async function handleSubmit() {
       <span class="email-text">{{ getEmail }}</span> <br>
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
-    <ry-button class="w-full" @click="handleSubmit">
+    <RxButton class="w-full" @click="handleSubmit">
       {{ type === 'signUp' ? $t('Complete sign up') : $t('Next') }}
-    </ry-button>
+    </RxButton>
     <div class="tips">
       <span>
         {{ $t("Can't find the email? Check your spam, or") }}
@@ -93,7 +93,8 @@ async function handleSubmit() {
     font-size: 16px;
     font-style: normal;
     font-weight: 700;
-    line-height: var(--Line-Height-text-xs, 16px); /* 100% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 100% */
   }
 
   .description {
@@ -103,7 +104,8 @@ async function handleSubmit() {
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-lg, 20px); /* 166.667% */
+    line-height: var(--Line-Height-text-lg, 20px);
+    /* 166.667% */
   }
 }
 
@@ -134,7 +136,8 @@ async function handleSubmit() {
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-lg, 20px); /* 166.667% */
+  line-height: var(--Line-Height-text-lg, 20px);
+  /* 166.667% */
   color: var(--Colors-Text-text-primary, #171c1f);
   font-family: Inter;
   font-size: 12px;
@@ -150,7 +153,8 @@ async function handleSubmit() {
   font-size: 10px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px); /* 160% */
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 160% */
 }
 
 .re-enter-text {

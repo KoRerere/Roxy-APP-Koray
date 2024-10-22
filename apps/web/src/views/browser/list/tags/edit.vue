@@ -43,16 +43,15 @@ onMounted(() => {
     <div class="colors">
       <template v-for="color in defaultColors" :key="color">
         <RxSvgIcon v-if="color === selectdColor" name="base/rx_ic_check_line" :size="20" :color="color" />
-        <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }"
-          @click="selectdColor = color" />
+        <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }" @click="selectdColor = color" />
       </template>
     </div>
 
     <div class="square-container" />
     <InputText v-model="tagName" type="text" :placeholder="$t('Tag name')" />
     <div class="footer">
-      <RyButton :label="$t('Cancel')" text severity="secondary" @click="close" />
-      <RyButton :label="$t(isEdit ? 'Modify' : 'Create')" severity="info" @click="onConfirm" />
+      <RxButton :label="$t('Cancel')" text severity="secondary" @click="close" />
+      <RxButton :label="$t(isEdit ? 'Modify' : 'Create')" severity="info" @click="onConfirm" />
     </div>
   </div>
 </template>

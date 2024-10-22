@@ -4,13 +4,11 @@ import { getFormData } from '/@/utils/index'
 
 const dialogRef = inject<any>('dialogRef')
 
-const loading = ref(false)
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
 
 function close() {
-  loading.value = false
   dialogRef.value.close()
   _onCancel.value?.()
 }
@@ -18,15 +16,11 @@ function close() {
 async function confirm() {
   try {
     const formData = getFormData(_props.value.inputs)
-    loading.value = true
     await _onConfirm.value?.(formData)
     close()
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
-  }
-  finally {
-    loading.value = false
   }
 }
 
@@ -48,8 +42,8 @@ onMounted(() => {
     </div>
     <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
-      <Button size="small" label="Cancel" text severity="secondary" autofocus @click="close" />
-      <Button size="small" label="Save" severity="info" :loading="loading" autofocus @click="confirm" />
+      <RxButton size="sm" label="Cancel" text severity="secondary" autofocus @click="close" />
+      <RxButton size="sm" label="Save" severity="info" autofocus @click="confirm" />
     </div>
   </div>
 </template>

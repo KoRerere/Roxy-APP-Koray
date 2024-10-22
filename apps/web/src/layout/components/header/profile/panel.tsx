@@ -4,8 +4,8 @@ import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
-import RyButton from '/@/components/ry-button'
 import { settingAppearance } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
@@ -264,7 +264,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: $t('Some hints'),
             component: ({ item }: any) => {
               return (
-                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectLocalNetwork(item)}></RyButton>
+                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectLocalNetwork(item)}></RxButton>
               )
             },
             afterComponent: ({ item }: any) => {
@@ -294,7 +294,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: $t('Some hints'),
             component: ({ item }: any) => {
               return (
-                <RyButton class="mb-1.5" size="small" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectSystemNetwork(item)}></RyButton>
+                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectSystemNetwork(item)}></RxButton>
               )
             },
             afterComponent: ({ item }: any) => {

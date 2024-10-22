@@ -1,7 +1,5 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
-import ryButton from '/@/components/ry-button'
-
 defineProps({
   title: {
     type: String,
@@ -28,7 +26,7 @@ defineEmits(['confirm', 'close'])
     <div v-if="footer" class="drawer-footer">
       <slot name="footer">
         <slot name="footer-left" />
-        <ry-button label="Confirm" severity="info" @click="$emit('confirm')" />
+        <RxButton label="Confirm" severity="info" @click="$emit('confirm')" />
       </slot>
     </div>
   </div>

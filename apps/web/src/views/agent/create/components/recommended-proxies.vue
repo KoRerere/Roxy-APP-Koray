@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowsType, UserGetProxyRecommendInfoListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import RxButton from '/@/components/ry-button/'
 
 const proxiesList = ref<UnwrapRowsType<UserGetProxyRecommendInfoListData>>([])
 
@@ -33,7 +32,7 @@ getProxiesList()
           <a class="site-name" :href="item.proxyJumpAddress" target="_blank">
             {{ formatProxyJumpAddressText(item) }}
           </a>
-          <RxButton as="a" label="Visit website" size="small" icon="base/rx_ic_attachment" outlined class="visit-website" :href="item.proxyVisitAddress" target="_blank" />
+          <RxButton as="a" label="Visit website" size="sm" icon="base/rx_ic_attachment" outlined class="visit-website" :href="item.proxyVisitAddress" target="_blank" />
         </div>
       </div>
     </template>
@@ -49,6 +48,7 @@ getProxiesList()
   gap: 14px;
   padding: 20px 0 20px 0;
 }
+
 .row {
   display: flex;
   width: 534px;
@@ -80,7 +80,8 @@ getProxiesList()
     font-size: 13px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 123.077% */
   }
 }
 
@@ -96,7 +97,8 @@ getProxiesList()
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: 16px; /* 133.333% */
+  line-height: 16px;
+  /* 133.333% */
 }
 
 .footer {
@@ -104,13 +106,15 @@ getProxiesList()
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
+
   .site-name {
     color: var(--Colors-Text-text-tertiary, #7c8387);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
     text-decoration-line: underline;
   }
 
@@ -122,7 +126,8 @@ getProxiesList()
     font-size: var(--Font-Size-text-sm, 12px);
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 }
 </style>

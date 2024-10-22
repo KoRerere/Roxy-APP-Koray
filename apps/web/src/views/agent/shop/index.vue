@@ -26,13 +26,6 @@ const inputs = reactive<any>([
 
 <template>
   <div class="h-full flex flex-col items-center justify-center overflow-hidden">
-    <div class="flex gap-2 mb-5">
-      <RyButton label="xxs" @click="inputs[0].size = 'xxs'" />
-      <RyButton label="xs" @click="inputs[0].size = 'xs'" />
-      <RyButton label="sm" @click="inputs[0].size = 'sm'" />
-      <RyButton label="md" @click="inputs[0].size = 'md'" />
-      <RyButton label="lg" @click="inputs[0].size = 'lg'" />
-    </div>
     <RyForm label-position="left" :inputs="inputs">
       <template #test="{ input }">
         <InputSelectCopy v-bind="input" v-model="input.value" />

@@ -35,8 +35,7 @@ function handleShowInviteUserFormDialog() {
       </div>
       <div class="flex gap-3">
         <MemberDropdownList :project-id="projectId" />
-        <ryButton v-if="!role.isViewer" severity="secondary" outlined size="small" icon="base/rx_ic_user_add"
-          :label="$t('Invite')" @click="handleShowInviteUserFormDialog" />
+        <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('Invite')" @click="handleShowInviteUserFormDialog" />
       </div>
     </div>
     <!-- eslint-disable-next-line vue/no-unused-refs -->

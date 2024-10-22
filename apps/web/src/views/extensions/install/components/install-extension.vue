@@ -14,7 +14,6 @@ const dialogRef = inject<any>('dialogRef')
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
-const loading = ref(false)
 
 const installType = ref(allInstall)
 const categories = ref([
@@ -62,20 +61,15 @@ async function confirm() {
       projectId: dataList.value?.map((item: any) => item.id),
       installStatus: getInstallStatus(), // 跟 projectId 中的顺序对应
     }
-    loading.value = true
     await _onConfirm.value?.(params)
     close()
   }
   catch (error) {
     console.log('🚀 ~ confirm ~ error:', error)
   }
-  finally {
-    loading.value = false
-  }
 }
 
 function close() {
-  loading.value = false
   dialogRef.value.close()
   _onCancel.value?.()
 }
@@ -109,14 +103,12 @@ onMounted(() => {
     <div class="flex flex-col gap-1">
       <div>{{ $t('Install to:') }}</div>
       <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
-        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value"
-          @change="onChange" />
+        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value" @change="onChange" />
         <label :for="category.value">{{ category.label }}</label>
       </div>
     </div>
     <div v-show="installType === partialInstall" class="h-60">
-      <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines
-        :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+      <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
         selection-mode="multiple" />
     </div>
     <div>
@@ -124,9 +116,8 @@ onMounted(() => {
       <span>{{ $t('You can only install extension to profiles related to your projects.') }}</span>
     </div>
     <div class="footer">
-      <Button size="small" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
-      <Button size="small" :label="$t('Save and install')" severity="info" :loading="loading" autofocus
-        @click="confirm" />
+      <RxButton size="sm" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
+      <RxButton size="sm" :label="$t('Save and install')" severity="info" autofocus @click="confirm" />
     </div>
   </div>
 </template>

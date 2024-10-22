@@ -37,15 +37,13 @@ function onUpdate() {
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">
         <RxSvgIcon :name="item.icon" :size="16" />
         <span class="flex-1">{{ item.label }}</span>
-        <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label"
-                option-value="value" checkmark :highlight-on-select="false"
-        />
+        <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label" option-value="value" checkmark :highlight-on-select="false" />
       </div>
     </div>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <ryButton size="small" severity="secondary" text label="Reset" @click="onReset" />
-        <ryButton size="small" severity="info" label="Save filter" @click="onUpdate" />
+        <RxButton size="sm" severity="secondary" text label="Reset" @click="onReset" />
+        <RxButton size="sm" severity="info" label="Save filter" @click="onUpdate" />
       </div>
     </template>
   </ryPopover>

@@ -80,18 +80,17 @@ async function deleteTag(data: any) {
       <div class="flex-1 total-tags">
         {{ $t('All Tags') }} ({{ totalNum }})
       </div>
-      <ryButton size="small" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
-      <ryButton size="small" severity="secondary" icon="base/rx_ic_bin_1" :label="$t('Delete')" disabled />
+      <RxButton size="sm" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
+      <RxButton size="sm" severity="secondary" icon="base/rx_ic_bin_1" :label="$t('Delete')" disabled />
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ryTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler"
-        :table-request="tableRequest" :paginator="false" :show-table-header="false" selection-mode="multiple">
+      <ryTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
+        selection-mode="multiple">
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path :fill="data.color"
-                d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
+              <path :fill="data.color" d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
             </svg>
             <span>{{ data.name }}</span>
           </div>
@@ -100,8 +99,7 @@ async function deleteTag(data: any) {
           <relatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
-          <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
-            @quick-click="(operate: any) => operationHandler(operate, data)" />
+          <actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
         </template>
       </ryTable>
     </div>

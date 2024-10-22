@@ -43,8 +43,7 @@ async function openMenu(event: any) {
 </script>
 
 <template>
-  <ryButton :disabled="isViewer" severity="secondary" size="small" icon="base/rx_ic_stack" :label="projectName"
-    @click="openMenu" />
+  <RxButton :disabled="isViewer" severity="secondary" size="sm" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
 </template>
 
 <style scoped></style>

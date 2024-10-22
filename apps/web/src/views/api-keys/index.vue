@@ -120,9 +120,7 @@ onBeforeMount(() => {
         <div class="api-content">
           <div class="api-content-reset">
             <div>API keys:</div>
-            <ryButton severity="secondary" outlined size="small" icon="base/rx_ic_refresh" :label="$t('Reset API Key')"
-                      @click="resetApiKey"
-            />
+            <RxButton severity="secondary" outlined size="sm" icon="base/rx_ic_refresh" :label="$t('Reset API Key')" @click="resetApiKey" />
           </div>
           <div class="api-content-desc">
             <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
@@ -135,7 +133,7 @@ onBeforeMount(() => {
               <div class="api-content-key-value">
                 {{ apiKey }}
               </div>
-              <ryButton severity="secondary" size="small" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
+              <RxButton severity="secondary" size="sm" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
             </div>
             <div class="api-content-key-desc">
               * {{ $t('Please keep your API keys safe and should not abuse it.') }}

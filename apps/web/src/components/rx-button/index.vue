@@ -28,7 +28,7 @@ async function handleClick(e: MouseEvent) {
 </script>
 
 <template>
-  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="loading">
+  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="loading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" />
@@ -50,5 +50,45 @@ async function handleClick(e: MouseEvent) {
 <style lang="scss" scoped>
 :deep(svg) {
   pointer-events: none;
+}
+
+.rx_button {
+  font-family: Inter;
+  font-weight: 500;
+}
+
+.lg {
+  padding: 10px var(--spacing-2xl, 16px);
+  gap: var(--spacing-lg, 8px);
+  font-size: var(--Font-Size-text-lg, 14px);
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.md {
+  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+  gap: var(--spacing-lg, 8px);
+  font-size: 13px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.sm {
+  padding: var(--spacing-md, 6px) 10px;
+  gap: var(--spacing-md, 6px);
+  font-size: 12px;
+  line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.xs {
+  padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+  gap: var(--spacing-sm, 4px);
+  font-size: var(--Font-Size-text-sm, 12px);
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.xxs {
+  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  gap: var(--spacing-sm, 4px);
+  font-size: var(--Font-Size-text-sm, 12px);
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>
