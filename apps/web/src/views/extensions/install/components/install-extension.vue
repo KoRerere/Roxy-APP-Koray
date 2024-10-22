@@ -76,6 +76,7 @@ function close() {
 
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
+  installType.value = props.installType || allInstall
   _props.value = props
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel

@@ -6,6 +6,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { settingAppearance } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
@@ -148,13 +149,15 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       label: $t('Language'),
       //       text: $t('Not your language include? <span class="text-blue">Contact us</span>'),
       //       name: 'language',
-      //       value: data?.language ?? '',
+      //       value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
       //       props: {
       //         options: $dict_map.language,
+      //         virtualScrollerOptions: { itemSize: 38 },
       //       },
+      //       formatValue: (item: Items) => item.value.value,
       //       component: ({ item, ...props }: { item: Items, props: any }) => {
       //         return (
-      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
       //         )
       //       },
       //     },

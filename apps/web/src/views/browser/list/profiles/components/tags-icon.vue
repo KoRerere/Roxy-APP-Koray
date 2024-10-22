@@ -14,20 +14,13 @@ interface Operation {
   render?: () => any
 }
 
-const props = defineProps({
-  labels: {
-    type: Array as PropType<any[]>,
-    default: () => ([]),
-  },
-  projectId: {
-    type: Number as PropType<number>,
-    default: 0,
-  },
-  disabled: {
-    type: Boolean as PropType<boolean>,
-    default: false,
-  },
-})
+interface Props {
+  labels: any[]
+  projectId: number
+  disabled?: boolean
+}
+
+const { labels, projectId, disabled = false } = defineProps<Props>()
 
 const emit = defineEmits(['update'])
 
@@ -37,7 +30,13 @@ const role = useRoleStore()
 
 // const styles = useCssModule()
 
-const _disabled = computed(() => props.disabled || role.isViewer)
+const _disabled = computed(() => disabled || role.isViewer)
+const _members = computed(() =>
+  (labels || [])
+    .filter((item: any) => `${item.labelId}`.startsWith('u_'))
+    .map(item => ({ ...item, color: item.labelColor, name: item.labelName.slice(0, 2) })),
+)
+const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
 
 async function openMenu(event: any) {
   if (_disabled.value)
@@ -46,7 +45,7 @@ async function openMenu(event: any) {
   const tagList = await getTags()
   const memberList = await getProjectMember()
 
-  const value = props.labels.map((item: any) => `${item.labelId}`)
+  const value = labels?.map((item: any) => `${item.labelId}`)
 
   showMenu(event, {
     type: 'checkbox',
@@ -74,7 +73,7 @@ async function getTags(): Promise<Operation[]> {
 }
 
 async function getProjectMember(): Promise<Operation[]> {
-  const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId: props.projectId })
+  const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId })
   return data.rows.map(item => ({
     value: `u_${item.userId}`,
     render: () => {
@@ -98,20 +97,18 @@ function onAddTag() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="_disabled" severity="secondary" size="sm" text icon="base/rx_ic_tag" @click.stop="openMenu" />
+    <RxButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="_disabled" severity="secondary" size="xxs" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
-      <div v-for="label in labels" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">
-        <RxAvatar v-if="`${label.labelId}`.startsWith('u_')" :avatar="label.avatar" :name="label.labelName?.slice(0, 2)" :color="label.labelColor" :size="24" :font-size="12" />
-        <template v-else>
-          <div class="label">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />
-            </svg>
-            <div>
-              {{ label.labelName }}
-            </div>
+      <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
+      <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">
+        <div class="label">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />
+          </svg>
+          <div>
+            {{ label.labelName }}
           </div>
-        </template>
+        </div>
       </div>
     </template>
   </div>

@@ -21,7 +21,6 @@ defineEmits(['change'])
 const defaultProps: SelectProps = {
   inputId: name,
   filter: true,
-  showClear: true,
   optionLabel: 'label',
 }
 </script>

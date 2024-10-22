@@ -466,7 +466,7 @@ defineExpose({
       </div>
     </template>
     <template #profile="{ data }">
-      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data" @profile-operate="profileOperate($event, data)" />
+      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />

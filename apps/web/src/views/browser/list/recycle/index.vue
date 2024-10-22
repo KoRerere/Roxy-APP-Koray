@@ -5,6 +5,7 @@ import { API } from '/@/api'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
 import columnsRow from './columns'
@@ -15,6 +16,7 @@ const confirm = useConfirm()
 const [columns] = useColumns(columnsRow)
 
 const [showToast] = useResponseToast()
+const workspaceStore = useWorkspaceStore()
 
 const operation = getOperation()
 const sorts = ref(getSorts())
@@ -75,7 +77,7 @@ async function deleteHandler(datas: any) {
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :sorts="sorts"
     :show-gridlines="false" :show-actions="false">
     <template #profile="{ data }">
-      <profileInfo :data="data" disabled />
+      <profileInfo :current-workspace="workspaceStore.currentWorkspace" :data="data" disabled />
     </template>
     <template #tags="{ data }">
       <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />

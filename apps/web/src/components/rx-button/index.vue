@@ -68,6 +68,8 @@ async function handleClick(e: MouseEvent) {
   gap: var(--spacing-lg, 8px);
   font-size: var(--Font-Size-text-lg, 14px);
   line-height: var(--Line-Height-text-lg, 20px);
+  border-radius: var(--radius-lg, 8px);
+  border-width: 1px;
 }
 
 .md {
@@ -75,6 +77,8 @@ async function handleClick(e: MouseEvent) {
   gap: var(--spacing-lg, 8px);
   font-size: 13px;
   line-height: var(--Line-Height-text-lg, 20px);
+  border-radius: var(--radius-md, 6px);
+  border-width: 1px;
 }
 
 .sm {
@@ -82,6 +86,8 @@ async function handleClick(e: MouseEvent) {
   gap: var(--spacing-md, 6px);
   font-size: 12px;
   line-height: var(--Line-Height-text-lg, 20px);
+  border-radius: var(--radius-md, 6px);
+  border-width: 1px;
 }
 
 .xs {
@@ -89,6 +95,8 @@ async function handleClick(e: MouseEvent) {
   gap: var(--spacing-sm, 4px);
   font-size: var(--Font-Size-text-sm, 12px);
   line-height: var(--Line-Height-text-xs, 16px);
+  border-radius: var(--radius-sm, 4px);
+  border-width: 0.5px;
 }
 
 .xxs {
@@ -96,5 +104,7 @@ async function handleClick(e: MouseEvent) {
   gap: var(--spacing-sm, 4px);
   font-size: var(--Font-Size-text-sm, 12px);
   line-height: var(--Line-Height-text-xs, 16px);
+  border-radius: var(--radius-sm, 4px);
+  border-width: 0.5px;
 }
 </style>
