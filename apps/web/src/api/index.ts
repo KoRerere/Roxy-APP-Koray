@@ -12,16 +12,27 @@ import {
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { handleRequest, handleResponse } from '/@/api/util'
+import router from '/@/router'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
+console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
+
 export const httpClient = new HttpClient({
-  baseURL: 'https://lumitest.lumibrowser.com/',
+  /**
+   * baseURL: import.meta.env.VITE_BASE_URL,
+   */
   paramsSerializer(params) { return qs.stringify(params, { arrayFormat: 'comma' }) },
 })
 
+let baseURL = ''
 httpClient.instance.interceptors.request.use(async (config) => {
+  if (!baseURL) {
+    baseURL = await electronAPI.send('util:getGatewayConfig')
+  }
+  config.baseURL = baseURL
+
   const { token } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
   const { currentLocale } = useSimpleLocale()
@@ -36,6 +47,12 @@ httpClient.instance.interceptors.request.use(async (config) => {
 })
 
 httpClient.instance.interceptors.response.use(async (response) => {
+  if (response.data.code === 405) {
+    // 未登录
+    useUserStore().clearUserInfo()
+    router.push({ name: 'login' })
+    return response
+  }
   await handleResponse(response)
   return response
 })
