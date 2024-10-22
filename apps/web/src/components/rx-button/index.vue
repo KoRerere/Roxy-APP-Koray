@@ -2,12 +2,15 @@
 import type { ButtonProps } from 'primevue/button'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-interface Props extends /* @vue-ignore */ ButtonProps {
+type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
+
+interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
+  size?: Size
   icon?: SvgNames
   onClick?: (e: any) => Promise<void> | void
 }
 
-const props = defineProps<Props>()
+const { size = 'sm', ...props } = defineProps<Props>()
 
 const loading = defineModel('loading', { default: false })
 
@@ -25,20 +28,20 @@ async function handleClick(e: MouseEvent) {
 </script>
 
 <template>
-  <Button v-bind="{ ...$attrs, ...$props, onClick: handleClick }" :loading="loading">
+  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="loading">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
-        <RxSvgIcon :name="(icon as SvgNames)" :size="16" />
+        <RxSvgIcon :name="(icon as SvgNames)" />
       </slot>
     </template>
     <template #loadingicon>
       <slot name="loadingicon">
-        <RxSvgIcon name="base/rx_ic_spin" class="loading-circle" :size="16" />
+        <RxSvgIcon name="base/rx_ic_spin" class="loading-circle" />
       </slot>
     </template>
     <template v-if="$slots.default" #default>
-      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" :size="16" />
-      <RxSvgIcon v-if="icon" :name="icon" :size="16" />
+      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" />
+      <RxSvgIcon v-if="icon" :name="icon" />
       <slot />
     </template>
   </Button>
