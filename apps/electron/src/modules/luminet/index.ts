@@ -9,7 +9,16 @@ export * from './util'
 
 let luminetProcess: ChildProcess | null = null
 
+export function getLuminetProcess() {
+  return luminetProcess
+}
+
 export async function startLuminet() {
+  if (!store.systemProxySwitch) {
+    console.log('systemProxySwitch is off')
+    return
+  }
+
   if (luminetProcess) {
     console.log('Luminet has been started')
     return

@@ -12,7 +12,7 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { getProjectPath, getUserDataDirPath, getWorkspacePath } from '/@/modules/browser/browser-manager/utils'
 import { extensionManager } from '/@/modules/extension'
-import { delLuminetProxy } from '/@/modules/luminet'
+import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/luminet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, decryptAESGCM, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
@@ -147,11 +147,22 @@ ipcMain.on('app:getAppVersion', () => {
 
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
+  const originSystemProxySwitch = store.systemProxySwitch
+
   Object.keys(config).forEach((key) => {
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(config, key))
     }
   })
+
+  if (config.systemProxySwitch !== originSystemProxySwitch) {
+    if (config.systemProxySwitch) {
+      startLuminet()
+    }
+    else {
+      stopLuminet()
+    }
+  }
 })
 
 /** 选择文件夹 */

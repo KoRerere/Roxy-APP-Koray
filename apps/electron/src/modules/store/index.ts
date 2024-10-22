@@ -35,6 +35,8 @@ interface StoreType {
   apiKey?: string
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
   ipBlackList: string[]
+  /** Default IP checker */
+  ipChecker: string
 }
 
 const sessionDir = app.getPath('sessionData')
@@ -47,6 +49,7 @@ const defaultValues: StoreType = {
   systemProxySwitch: true,
   appPort: 45535,
   ipBlackList: [],
+  ipChecker: 'http://iprust.io/ip.json',
 }
 
 const _store = new Store<StoreType>({

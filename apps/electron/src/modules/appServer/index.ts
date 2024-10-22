@@ -1,5 +1,6 @@
 import './logs/index'
 import express from 'express'
+import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { setupLuminetReceiver } from '/@/modules/appServer/luminet-receiver'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
@@ -16,6 +17,8 @@ export async function setupAppServer() {
   setupDashboardServer(app)
   // 注册 luminet 接收器
   setupLuminetReceiver(app)
+
+  app.use(express.static(join(__dirname, './web')))
 
   try {
     const port = await getPortPromise({ port: store.appPort })
