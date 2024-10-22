@@ -2,8 +2,8 @@
 import InputDate from './input-date.vue'
 import InputLabel from './input-label.vue'
 import InputRadio from './input-radio.vue'
-import InputSelect from './input-select.vue'
 import RxInputNumber from './rx-input-number.vue'
+import InputSelect from './rx-input-select.vue'
 import RxInputText from './rx-input-text.vue'
 import RxInputTextarea from './rx-input-textarea.vue'
 

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
 import inputLabel from '/@/components/ry-form/input-label.vue'
-import inputSelect from '/@/components/ry-form/input-select.vue'
+import inputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 import { copyText } from '/@/utils/'
 import type { Accordions, MetaData } from './type.ts'
