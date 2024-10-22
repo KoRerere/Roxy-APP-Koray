@@ -73,10 +73,8 @@ async function deleteHandler(datas: any) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest"
-           :operation="operation" :operation-handler="operationHandler" :sorts="sorts" :show-gridlines="false"
-           :show-actions="false"
-  >
+  <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :sorts="sorts"
+    :show-gridlines="false" :show-actions="false">
     <template #profile="{ data }">
       <profileInfo :data="data" disabled />
     </template>
@@ -93,10 +91,8 @@ async function deleteHandler(datas: any) {
     </template>
     <template #actions="{ data }">
       <div class="flex gap-2">
-        <remarkIcon :value="data.windowRemark" disabled />
-        <actions :operation="operation" :show-menu="false"
-                 @quick-click="(operate) => operationHandler(operate, data)"
-        />
+        <RemarkIcon :value="data.windowRemark" disabled />
+        <actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
       </div>
     </template>
   </RyTable>

@@ -29,9 +29,7 @@ function onUpdate() {
 </script>
 
 <template>
-  <div v-ripple class="cursor-pointer sort-icon" @click="toggle">
-    <RxSvgIcon name="base/rx_ic_sort_ascending" />
-  </div>
+  <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" @click="toggle" />
   <ryPopover ref="popRef">
     <div :class="classes.content">
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">

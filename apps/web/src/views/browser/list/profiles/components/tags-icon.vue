@@ -100,14 +100,14 @@ function onAddTag() {
   <div class="flex items-center gap-2">
     <RxButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" :disabled="_disabled" severity="secondary" size="sm" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
-      <div v-for="label in labels" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']">
-        <RxAvatar v-if="`${label.labelId}`.startsWith('u_')" :avatar="label.avatar" :name="label.labelName?.slice(0, 2)" :color="label.labelColor" :size="24" :font-size="12" @click.stop="openMenu" />
+      <div v-for="label in labels" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">
+        <RxAvatar v-if="`${label.labelId}`.startsWith('u_')" :avatar="label.avatar" :name="label.labelName?.slice(0, 2)" :color="label.labelColor" :size="24" :font-size="12" />
         <template v-else>
           <div class="label">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />
             </svg>
-            <div @click.stop="openMenu">
+            <div>
               {{ label.labelName }}
             </div>
           </div>
@@ -118,6 +118,10 @@ function onAddTag() {
 </template>
 
 <style scoped>
+svg {
+  pointer-events: none;
+}
+
 .label {
   display: flex;
   justify-content: center;

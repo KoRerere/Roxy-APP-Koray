@@ -63,11 +63,12 @@ function onRemark() {
 </script>
 
 <template>
-  <div class="cursor-pointer" :class="{ 'mode-button': mode === 'button' }" @click.stop="onRemark">
-    <RxSvgIcon v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon"
-               :class="{ 'text-gray-200': disabled, 'active': hasRemark }"
-    />
-  </div>
+  <RxButton v-if="mode === 'button'" v-tooltip.top="value" class="mode-button" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
+    <RxSvgIcon name="base/rx_ic_doc_add" class="remark-icon" :class="{ 'text-gray-200': disabled, 'active': hasRemark }" />
+    <!-- 占位用span用于保持按钮的高度 -->
+    <span class="p-button-label" data-pc-section="label">&nbsp;</span>
+  </RxButton>
+  <RxSvgIcon v-else v-tooltip.top="value" name="base/rx_ic_doc_add" class="remark-icon" :class="{ 'text-gray-200': disabled, 'active': hasRemark }" @click.stop="onRemark" />
 </template>
 
 <style lang="scss" scoped>
@@ -80,12 +81,7 @@ function onRemark() {
 }
 
 .mode-button {
-  display: flex;
-  padding: var(--p-button-sm-padding-y) var(--p-button-sm-padding-x);
-  color: var(--p-button-outlined-secondary-color);
-  background: transparent;
-  border: 1px solid var(--p-button-secondary-border-color);
-  border-color: var(--p-button-outlined-secondary-border-color);
-  border-radius: var(--p-button-border-radius);
+  font-size: 0;
+  gap: 0;
 }
 </style>

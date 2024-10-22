@@ -5,7 +5,7 @@ import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
-import remarkIcon from '/@/components/remark-icon'
+import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
@@ -174,7 +174,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <remarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
+            <RemarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
             <actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>

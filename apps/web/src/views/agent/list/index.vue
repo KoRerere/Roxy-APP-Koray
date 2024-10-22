@@ -2,7 +2,7 @@
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import actions from '/@/components/actions.vue'
-import remarkIcon from '/@/components/remark-icon'
+import RemarkIcon from '/@/components/remark-icon'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
@@ -131,7 +131,7 @@ function onRefreshTable() {
         <template #actions="{ data }">
           <div class="flex gap-2">
             <actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
-            <remarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
+            <RemarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
           </div>
         </template>
       </RyTable>

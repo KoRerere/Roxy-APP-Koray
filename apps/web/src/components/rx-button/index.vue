@@ -7,10 +7,11 @@ type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   size?: Size
   icon?: SvgNames
+  iconSize?: number
   onClick?: (e: any) => Promise<void> | void
 }
 
-const { size = 'sm', ...props } = defineProps<Props>()
+const { size = 'sm', iconSize = 16, ...props } = defineProps<Props>()
 
 const loading = defineModel('loading', { default: false })
 
@@ -31,7 +32,7 @@ async function handleClick(e: MouseEvent) {
   <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="loading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
-        <RxSvgIcon :name="(icon as SvgNames)" />
+        <RxSvgIcon :name="(icon as SvgNames)" :size="iconSize" />
       </slot>
     </template>
     <template #loadingicon>
@@ -40,8 +41,8 @@ async function handleClick(e: MouseEvent) {
       </slot>
     </template>
     <template v-if="$slots.default" #default>
-      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" />
-      <RxSvgIcon v-if="icon" :name="icon" />
+      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" :size="iconSize" />
+      <RxSvgIcon v-if="icon" :name="icon" :size="iconSize" />
       <slot />
     </template>
   </Button>
@@ -55,6 +56,11 @@ async function handleClick(e: MouseEvent) {
 .rx_button {
   font-family: Inter;
   font-weight: 500;
+
+  &.p-button-icon-only {
+    width: auto;
+    gap: 0;
+  }
 }
 
 .lg {

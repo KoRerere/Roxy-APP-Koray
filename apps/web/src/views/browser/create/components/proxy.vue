@@ -145,8 +145,8 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton size="sm" severity="secondary" icon="base/rx_ic_exchange" label="Select" @click="toggleDrawer('list')" />
-      <RxButton v-if="isBatch || !proxyList?.length" size="sm" severity="secondary" icon="base/rx_ic_plus" label="Add proxy" @click="toggleDrawer('create')" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" label="Select" @click="toggleDrawer('list')" />
+      <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" label="Add proxy" @click="toggleDrawer('create')" />
     </div>
     <div>
       <template v-if="isBatch">
