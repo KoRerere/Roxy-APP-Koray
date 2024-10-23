@@ -40,10 +40,8 @@ function openBrowser() {
     <span class="open-text">Open</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
-    <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item"
-      @click="$emit('quickClick', item)" />
-    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v"
-      @click.stop="(event: Event) => $emit('more', [event, multiplePperation])" />
+    <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
+    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v" @click.stop="$emit('more', [$event, multiplePperation])" />
   </div>
 </template>
 

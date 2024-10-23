@@ -42,7 +42,6 @@ const avatars = computed(() => {
   width: v-bind(_size);
   height: v-bind(_size);
   border-radius: 50%;
-  border: 1px solid var(--Component-Colors-Tag-border, #e4e8eb);
 }
 
 .text-avatar {

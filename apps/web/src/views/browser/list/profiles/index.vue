@@ -7,7 +7,6 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import ryTable from '/@/components/ry-table'
 import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -165,7 +164,7 @@ async function operationHandler(operate: any, data: any) {
   /**
    * 兼容批量操作
    */
-  const datas = [].concat(toRaw(data))
+  const datas = [].concat(data).map(item => toRaw(item))
   const ids: number[] = datas.map((item: any) => item.id)
 
   switch (operate.name) {
@@ -204,7 +203,7 @@ async function operationHandler(operate: any, data: any) {
       drawer.type = 'editCookies'
       break
     case 'delete':
-      deleteProfile(datas, ids)
+      await deleteProfile(datas, ids)
       break
   }
 }
@@ -236,8 +235,8 @@ function openBrowser(data: any) {
 function showOperationMenu(event: Event, data: any, extra?: any) {
   show(event, {
     operation: extra?.cmpOperation || operation.value,
-    operationHandler: (operate: any) => {
-      operationHandler(operate, data)
+    operationHandler: async (operate: any) => {
+      await operationHandler(operate, data)
       extra?.clearSelection()
     },
   })
@@ -274,15 +273,15 @@ function onRemark(datas: any) {
   })
 }
 
-function deleteProfile(datas: any, ids: number[]) {
+async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
     toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
   }
   else {
-    warnPopup($t('Are you sure to perform this operation?'))
+    await warnPopup($t('Are you sure to perform this operation?'))
       .then(() => batchModifyWindow({ ids, isDelete: true }))
       .then(() => {
-        window.electronAPI.send('browser:batchRemove', toRaw(datas))
+        window.electronAPI.send('browser:batchRemove', datas)
       })
   }
 }
@@ -455,7 +454,7 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+  <RyTable ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple" :show-actions="false">
     <template #header-extra>
       <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
@@ -491,7 +490,7 @@ defineExpose({
         @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })" @open-browser="openBrowser(selection)"
         @quick-click="operationHandler($event, selection)" />
     </template>
-  </ry-table>
+  </RyTable>
   <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="drawer.confirm(drawer.type, $event)" />

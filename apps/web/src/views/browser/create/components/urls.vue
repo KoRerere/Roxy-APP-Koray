@@ -2,6 +2,7 @@
 import type { SvgNames } from '/@/components/rx-icon'
 import rxCard from '/@/components/rx-card'
 import FormItem from '/@/components/ry-form/form-item.vue'
+import { $t } from '/@/locales'
 import { parseUrl } from '/@/utils'
 
 interface Input {
@@ -22,9 +23,9 @@ function createInput(value?: string) {
     type: 'text',
     name: (new Date().getTime()).toString(32),
     value,
-    errorMsg: 'invalid url',
+    errorMsg: $t('invalid url'),
     placeholder: 'Please enter url',
-    leftIcon: 'base/rx_ic_attachment' as SvgNames,
+    leftIcon: 'base/rx_ic_link' as SvgNames,
   }
 }
 
