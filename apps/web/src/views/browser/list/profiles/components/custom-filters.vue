@@ -4,6 +4,7 @@ import { useDialog } from 'primevue/usedialog'
 import RxAvatar from '/@/components/rx-avatar.vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
+import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, sleep } from '/@/utils'
 
 const _props = defineProps({
@@ -61,7 +62,7 @@ const filterTagList = computed(() => {
 
 const splitButtonItems = [
   {
-    label: 'Save As',
+    label: $t('Save As'),
     command: () => {
       saveFilters()
     },
@@ -205,11 +206,11 @@ function saveFilters() {
     },
     data: {
       props: {
-        title: 'Save filter',
+        title: $t('Save filter'),
         inputs: [
           {
             type: 'text',
-            placeholder: 'filter name...',
+            placeholder: $t('filter name...'),
             name: 'filter_name',
             required: true,
           },
@@ -238,7 +239,7 @@ async function modifyFilter() {
       </div>
       <RxButton class="filter-list-button" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
-        <span v-if="!filterTagList.length">Add filters</span>
+        <span v-if="!filterTagList.length">{{ $t('Add filters') }}</span>
       </RxButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">

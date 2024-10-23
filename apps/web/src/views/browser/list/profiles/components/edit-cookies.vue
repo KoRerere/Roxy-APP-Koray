@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import drawerContent from '/@/components/drawer-content.vue'
+import { $t } from '/@/locales'
 import { checkCookieFormat, isEmptyValue } from '/@/utils'
 
 const props = defineProps({
@@ -30,21 +31,21 @@ function onConfirm() {
     emit('confirm', JSON.parse(cookies.value))
   }
   else {
-    toast.add({ severity: 'error', summary: 'Errors occur', detail: 'cookie format error', life: 5000 })
+    toast.add({ severity: 'error', summary: $t('Errors occur'), detail: $t('cookie format error'), life: 5000 })
   }
 }
 </script>
 
 <template>
   <drawerContent :title="$t('Edit cookies for [UID-{uid}]', { uid: data.windowSortNum })" v-bind="$attrs">
-    <Textarea v-model="cookies" class="cookies-textarea" placeholder="Paste your cookie with JSON format" cols="40" :auto-resize="false" />
+    <Textarea v-model="cookies" class="cookies-textarea" :placeholder="$t('Paste your cookie with JSON format')" cols="40" :auto-resize="false" />
     <template #footer>
       <div class="flex justify-between w-full">
         <div class="flex items-center">
           <Checkbox v-model="isWrap" input-id="wrap" binary />
-          <label for="wrap" class="select-none ml-2 cursor-pointer">Text wrap</label>
+          <label for="wrap" class="select-none ml-2 cursor-pointer">{{ $t('Text wrap') }}</label>
         </div>
-        <RxButton label="Save Cookies" :loading="loading" severity="info" @click="onConfirm" />
+        <RxButton :label="$t('Save Cookies')" :loading="loading" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawerContent>

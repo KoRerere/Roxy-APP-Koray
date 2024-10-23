@@ -20,6 +20,7 @@ export default defineConfig({
         'formidable',
         'serve-static',
         'glob',
+        'p-limit',
         '@roxy/puppeteer-google-translate',
       ],
     },

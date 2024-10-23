@@ -3,11 +3,13 @@ import type { UserGetDictVersionListData, UserGetSystemDictV2CreateData } from '
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { useSimpleLocale } from '../stores/locale'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { currentLocale } = storeToRefs(useSimpleLocale())
 const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
 
@@ -57,7 +59,7 @@ function handleSideTransitionstart() {
 </script>
 
 <template>
-  <div class="rx-layout">
+  <div :key="currentLocale" class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
          @transitionend="handleSideTransitionend"
     >
@@ -78,7 +80,7 @@ function handleSideTransitionstart() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-content">
-        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
+        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id " />
       </div>
     </main>
   </div>

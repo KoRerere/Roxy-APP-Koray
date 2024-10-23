@@ -49,7 +49,9 @@ export interface RenderMessage {
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 检测更新 */
-  'app:checkUpdate': () => Promise<boolean>
+  'app:checkForUpdates': () => Promise<void>
+  /** 检测是否有更新 */
+  'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
   'app:getAppVersion': () => Promise<string>
   /** 安装并更新 */

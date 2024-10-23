@@ -57,7 +57,7 @@ function getLangs() {
               fileName,
               sourceLang: sourceLangKey,
               targetLang: fileName,
-              position: item.keysPositionMap[key],
+              // position: item.keysPositionMap[key],
             }
           }),
           untranslated: untranslated.map(([key, value]) => {
@@ -67,7 +67,7 @@ function getLangs() {
               fileName,
               sourceLang: sourceLangKey,
               targetLang: fileName,
-              position: item.keysPositionMap[key],
+              // position: item.keysPositionMap[key],
             }
           }),
           label: `${langItem?.icon}${langItem?.lang}(${fileName})`,

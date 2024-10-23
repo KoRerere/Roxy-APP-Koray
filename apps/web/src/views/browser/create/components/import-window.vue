@@ -124,24 +124,29 @@ async function handleBeforeUpload(rawFile: any) {
 <template>
   <div>
     <div class="upload-title">
-      Please download our <a href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank"
-        class="upload-title-link">template file</a> here. After you finish editing, upload it
-      through the
-      following steps.
+      <i18n-t
+        :keypath="$t('Please download our {templateFile} here. After you finish editing, upload it through the following steps.', { templateFile: '{templateFile}' })" scope="global"
+      >
+        <template #templateFile>
+          <a href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank"
+             class="upload-title-link"
+          >{{ $t('template file') }}</a>
+        </template>
+      </i18n-t>
     </div>
     <div class="upload-notice">
-      * We only support create up to 500 profiles every time.
+      * {{ $t('We only support create up to 500 profiles every time.') }}
     </div>
     <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
       <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="#E4E8EB" />
       <div class="text-center">
-        <div>{{ fileData.name || 'Choose file and drop it here' }}</div>
-        <div>{{ fileData.size || 'Only .xlsx files supported, up to 5MB.' }}</div>
+        <div>{{ fileData.name || $t('Choose file and drop it here') }}</div>
+        <div>{{ fileData.size || $t('Only .xlsx files supported, up to 5MB.') }}</div>
       </div>
-      <RxButton icon="base/rx_ic_export" :label="fileData.status ? 'Upload again' : 'Upload template file'" outlined severity="secondary" @click="chooseFile" />
+      <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('Upload again') : $t('Upload template file')" outlined severity="secondary" @click="chooseFile" />
     </div>
     <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">
-      {{ fileData.successCount }} profiles imported
+      {{ fileData.successCount }} {{ $t('profiles imported') }}
     </Message>
   </div>
 </template>

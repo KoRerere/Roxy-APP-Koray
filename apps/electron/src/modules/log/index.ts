@@ -15,13 +15,6 @@ export function setupLog() {
       format.timestamp({
         format: 'YYYY-MM-DD HH:mm:ss',
       }),
-      format.printf((info) => {
-        if (info.message.constructor === Object) {
-          info.message = JSON.stringify(info.message, null, 4)
-        }
-
-        return `[${info.timestamp}] [${info.level}] ${info.message}`
-      }),
       format.json(),
 
     ),
@@ -61,7 +54,7 @@ export function setupLog() {
   function formatLogArgs(args: any[]) {
     return args.map((arg) => {
       if (arg && typeof arg === 'object') {
-        return util.format('%o', arg)
+        return arg || util.format('%o', arg)
       }
       return arg
     }).join(' ')

@@ -190,7 +190,12 @@ ipcMain.on('dialog:selectFile', async (filters) => {
 })
 
 /** 检查更新 */
-ipcMain.on('app:checkUpdate', () => {
+ipcMain.on('app:checkForUpdates', () => {
+  return appUpdater.checkForUpdates()
+})
+
+/** 检查是否有更新 */
+ipcMain.on('app:hasUpdate', () => {
   return appUpdater.hasUpdate()
 })
 
