@@ -1,3 +1,5 @@
+import { $t } from '/@/locales'
+
 export function getRawType(data: any) {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
 }
@@ -109,9 +111,9 @@ export async function readCookiesFile(): Promise<any> {
       reader.onload = function fileReadCompleted() {
         const isOk = reader.result && checkCookieFormat(reader.result as string)
         resolve({
-          code: isOk ? 0 : 1,
+          code: isOk ? 0 : -1,
           data: isOk ? reader.result : null,
-          message: isOk ? '读取成功' : 'cookie格式错误, 请检查格式',
+          message: isOk ? $t('Read successfully') : $t('Cookie format error, please check the format'),
         })
       }
     })

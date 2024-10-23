@@ -1,4 +1,5 @@
 import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
@@ -75,6 +76,8 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
 }
 
 export function getInputsGroup(data: any = {}) {
+  const [_, onlyErrorToast] = useResponseToast()
+
   const os_map = {
     windows: 'platforms/rx_os_windows',
     linux: 'base/logo',
@@ -244,13 +247,13 @@ export function getInputsGroup(data: any = {}) {
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()
-        if (res?.data) {
-          input.value = res.data
-          input.invalid = false
-        }
-        else {
-          input.value = ''
-          input.invalid = true
+        if (res) {
+          const { code, data, message } = res
+          onlyErrorToast(code, message)
+          if (data) {
+            input.value = res.data
+            input.invalid = false
+          }
         }
       },
       onBlur(event: any) {
