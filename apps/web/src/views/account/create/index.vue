@@ -92,7 +92,7 @@ async function getInputs(data: any = {}) {
       icon: 'base/rx_ic_attachment',
       autoResize: false,
       formatValue: (input: any) => {
-        return checkCookieFormat(input.value) ? input.value : ''
+        return input.value ? JSON.parse(input.value) : []
       },
       onBlur(event: any) {
         if (!checkCookieFormat(event.target.value)) {
