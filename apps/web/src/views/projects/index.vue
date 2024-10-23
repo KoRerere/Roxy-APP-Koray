@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import ryTable from '/@/components/ry-table'
 import useColumns from '/@/hooks/useColumns'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
@@ -157,17 +156,8 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ry-table ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-        :show-actions-menu="false">
-        <template #members="{ data }">
-          <AvatarGroup>
-            <template v-for="person in data.user_info" :key="person.userId">
-              <Avatar v-if="person.avatar" v-tooltip.top="person.userName" :image="person.avatar" shape="circle" />
-              <Avatar v-else v-tooltip.top="person.userName" :label="person.userName?.at(0)" shape="circle" />
-            </template>
-            <!-- <Avatar label="+2" shape="circle" /> -->
-          </AvatarGroup>
-        </template>
+      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+        :show-actions-menu="false" :show-actions="false">
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <RxButton outlined>
@@ -175,7 +165,18 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
             </RxButton>
           </router-link>
         </template>
-      </ry-table>
+        <template #members="{ data }">
+          <AvatarGroup>
+            <template v-for="person in data.user_info" :key="person.userId">
+              <Avatar v-if="person.avatar" v-tooltip.top="person.userName" :image="person.avatar" shape="circle" />
+              <Avatar v-else v-tooltip.top="person.userName" :label="person.userName?.at(0)" shape="circle" />
+            </template>
+          </AvatarGroup>
+        </template>
+        <template #actions="{ data }">
+          <Actions :operation="operation" :show-menu="false" @quick-click="operationHandler($event, data)" />
+        </template>
+      </RyTable>
     </div>
   </div>
 </template>

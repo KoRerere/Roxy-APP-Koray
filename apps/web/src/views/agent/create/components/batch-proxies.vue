@@ -247,7 +247,7 @@ function onSave() {
       <div class="flex-ovh-1 items-center justify-center">
         <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false">
           <template #actions="{ data }">
-            <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
+            <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </template>
         </RyTable>
       </div>
