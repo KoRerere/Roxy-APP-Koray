@@ -44,6 +44,14 @@ async function createProfile(formData: any) {
   }
 }
 
+function oldFieldsFormat() {
+  // 删除旧版本字段多余数据
+  const oldFields = ['platformUrl', 'platformUserName', 'platformPassword']
+  oldFields.forEach((key) => {
+    Reflect.set(original.value, key, '')
+  })
+}
+
 function onBack() {
   router.back()
 }
@@ -54,6 +62,7 @@ onBeforeMount(() => {
       const [_inputsGroup, _original] = getInputsGroup(data)
       inputsGroup.value = _inputsGroup
       original.value = _original
+      oldFieldsFormat()
       windowName.value = data.windowName as string
       metaData.value = {
         projectName: data.projectName,
