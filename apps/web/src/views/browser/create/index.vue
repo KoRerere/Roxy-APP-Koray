@@ -31,6 +31,7 @@ const fileAnalyzeData = ref()
 const rawMainSetting: any = ref([])
 const mainSetting: any = ref([])
 const extraSetting: any = ref([])
+const loading = ref(false)
 
 const original = ref()
 
@@ -113,11 +114,13 @@ async function createProfile(formData: any, openBrowser: boolean) {
 }
 
 async function singleCreateProfile(params: any, openBrowser: boolean) {
+  loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
     router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
   }
   showToast(code, msg)
+  loading.value = false
 }
 
 async function batchCreateProfile(params: any) {
@@ -128,11 +131,13 @@ async function batchCreateProfile(params: any) {
     return
   }
 
+  loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, createCount.value)
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   await API.window.userBatchWindowInfoV2Create(params)
   router.replace({ name: 'browser-list' })
+  loading.value = false
 }
 
 async function importProfile(params: any) {
@@ -140,10 +145,12 @@ async function importProfile(params: any) {
     onlyErrorToast(-1, $t('Please select a file to import.'))
     return
   }
+  loading.value = true
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, fingerCount)
   await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
   router.replace({ name: 'browser-list' })
+  loading.value = false
 }
 
 function onBack() {
@@ -196,9 +203,8 @@ onBeforeMount(() => {
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
-        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'" @create-open="(formData: any) => createProfile(formData, true)"
-                         @create="(formData: any) => createProfile(formData, false)"
-        />
+        <accordionInputs v-model:loading="loading" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'" @create-open="createProfile($event, true)"
+          @create="createProfile($event, false)" />
       </div>
     </div>
     <previewCard :inputs-group="previewInputs" @shuffle="onUpdateFinger" />

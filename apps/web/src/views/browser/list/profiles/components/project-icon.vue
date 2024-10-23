@@ -1,9 +1,8 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
-import { API } from '/@/api'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from './popover-menu'
 
 const props = defineProps({
@@ -17,16 +16,15 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['update'])
-type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const workspaceStore = useWorkspaceStore()
 
 const [showMenu] = usePopoverMenu()
+const { getProjects } = useMateGroup()
 
 const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
 
 async function openMenu(event: any) {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
-  const operation = data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
+  const operation = await getProjects()
   const value = props.projectId?.toString()
 
   showMenu(event, {

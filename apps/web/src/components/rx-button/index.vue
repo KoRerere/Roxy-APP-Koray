@@ -13,23 +13,25 @@ interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
 
 const { size = 'sm', iconSize = 16, ...props } = defineProps<Props>()
 
-const loading = defineModel('loading', { default: false })
+const outerLoading = defineModel('loading', { default: false })
+
+const _loading = ref(false)
 
 async function handleClick(e: MouseEvent) {
   if (props.onClick) {
-    loading.value = true
+    _loading.value = true
     try {
       await props.onClick(e)
     }
     finally {
-      loading.value = false
+      _loading.value = false
     }
   }
 }
 </script>
 
 <template>
-  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="loading" :pt="{ root: ['rx_button', size] }">
+  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :size="iconSize" />
@@ -41,7 +43,7 @@ async function handleClick(e: MouseEvent) {
       </slot>
     </template>
     <template v-if="$slots.default" #default>
-      <RxSvgIcon v-if="loading" class="loading-circle" name="base/rx_ic_spin" :size="iconSize" />
+      <RxSvgIcon v-if="_loading || outerLoading" class="loading-circle" name="base/rx_ic_spin" :size="iconSize" />
       <RxSvgIcon v-if="icon" :name="icon" :size="iconSize" />
       <slot />
     </template>
