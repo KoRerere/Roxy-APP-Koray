@@ -48,7 +48,7 @@ async function selectTags(event: Event) {
     operation: memberList.concat(tagList),
     onHide: (labelIds: string[]) => {
       if (!isEq(value, toRaw(labelIds))) {
-        metaData.value.labelIds = labelIds.map(Number)
+        metaData.value.labelIds = (labelIds || []).map(value => value.startsWith('u_') ? value : Number(value))
       }
     },
   })
