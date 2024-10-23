@@ -82,7 +82,7 @@ export async function intoMainPage() {
   console.log('进入主应用')
   setTimeout(() => {
     win.show()
-  }, 200)
+  }, 300)
 }
 
 let mainWindow: BrowserWindow | undefined
