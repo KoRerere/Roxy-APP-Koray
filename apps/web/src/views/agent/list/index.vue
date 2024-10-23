@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
@@ -20,6 +22,7 @@ const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
 const [showToast] = useResponseToast()
+const confirm = useConfirm()
 
 const filtersMenu = ref(getCustomFilters())
 const dataList = ref()
@@ -35,7 +38,7 @@ async function getTableList(params: any) {
   return data
 }
 
-function operationHandler(operate: any, data: ProxyItem) {
+async function operationHandler(operate: any, data: ProxyItem) {
   const datas = ([] as ProxyItem[]).concat(data)
 
   switch (operate.name) {
@@ -48,6 +51,9 @@ function operationHandler(operate: any, data: ProxyItem) {
       break
     case 'test':
       testProxy(datas, operate.name)
+      break
+    case 'delete':
+      await deleteProxy(datas)
       break
   }
 }
@@ -94,6 +100,33 @@ function createProxy() {
   router.push({ name: 'agent-create' })
 }
 
+async function deleteProxy(datas: ProxyItem[]) {
+  return new Promise((resolve) => {
+    confirm.require({
+      header: $t('warn'),
+      message: $t('This operation is irreversible?'),
+      rejectProps: {
+        label: $t('Cancel'),
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptProps: {
+        label: $t('Confirm'),
+        severity: 'danger',
+      },
+      accept: async () => {
+        const { code, msg } = await API.proxy.userDelProxyModuleV2Create({ ids: datas.map(item => item.id) })
+        showToast(code, msg)
+        if (code === 0) {
+          onRefreshTable()
+        }
+        resolve(true)
+      },
+      reject: () => resolve(false),
+    })
+  })
+}
+
 function onRefreshTable() {
   const params = filterFieldByValue(getFormData(filtersMenu.value))
   tableRef.value!.refresh(params)
@@ -128,9 +161,9 @@ function onRefreshTable() {
           </div>
         </template>
         <template #actions="{ data }">
-          <div class="flex gap-2 items-center">
-            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <div class="flex gap-2">
             <RemarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
+            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </div>
         </template>
       </RyTable>

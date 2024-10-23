@@ -4,22 +4,22 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import useColumns from '/@/hooks/useColumns'
-import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
-import { projectFormSchemas } from './schemas'
 
 const tableRef = useTemplateRef('accountTable')
-const [dialog] = useFormDialog()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
+
+const [projectModfiyDialog] = useProjectActions()
 
 const [columns] = useColumns(columnsRow)
 
@@ -46,29 +46,15 @@ const operation = ref([
     icon: 'base/rx_ic_bin_1',
     power: role.isOwner,
     quick: true,
-    multiple: true,
   },
 ])
 
-async function operationHandler(operate: any, data?: any) {
+function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
-      dialog.showModal({
-        header: $t('Create project'),
-        class: 'w-[500px]',
-        schemas: projectFormSchemas,
-        formProps: {
-          layout: 'vertical',
-        },
-        async handleOk(formModel) {
-          const { code, msg } = await API.limit.userAddProjectInfoCreate(formModel)
+      projectModfiyDialog({
+        confirmNext: () => {
           tableRef.value?.refresh()
-          if (code === 0) {
-            toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Create Success!'), life: 3000 })
-          }
-          else {
-            toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Create failed!'), life: 3000 })
-          }
         },
       })
       break
@@ -77,28 +63,11 @@ async function operationHandler(operate: any, data?: any) {
 
       break
     case 'edit':
-      await dialog.showModal({
-        header: $t('Edit project'),
-        class: 'w-[500px]',
-        schemas: projectFormSchemas,
-        formProps: {
-          layout: 'vertical',
-        },
-        async handleOk(formModel: any) {
-          const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, ...formModel })
-          tableRef.value?.refresh()
-          if (code === 0) {
-            toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Edited successfully'), life: 3000 })
-          }
-          else {
-            toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Edit failed'), life: 3000 })
-          }
-        },
-      })
-
-      dialog.formRef.value?.setFieldsValue({
-        id: data.project_id,
+      projectModfiyDialog({
         ...data,
+        confirmNext: () => {
+          tableRef.value?.refresh()
+        },
       })
       break
     case 'delete':
@@ -156,8 +125,8 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-        :show-actions-menu="false" :show-actions="false">
+      <RyTable ref="accountTable" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
+        :show-actions="false" data-key="project_id">
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <RxButton outlined>

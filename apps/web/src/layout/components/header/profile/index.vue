@@ -70,6 +70,7 @@ function openSettings(activeKey: string) {
       showHeader: false,
       modal: true,
       blockScroll: true,
+      dismissableMask: true,
       style: {
         width: 'var(--width-1_5xl, 960px)',
         height: '640px',

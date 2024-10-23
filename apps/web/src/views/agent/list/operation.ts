@@ -27,6 +27,14 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
       quick: true,
       multiple: true,
     },
+    {
+      name: 'delete',
+      label: $t('Delete'),
+      icon: 'base/rx_ic_bin_1',
+      power: !role.isViewer,
+      quick: true,
+      multiple: true,
+    },
   ]
 }
 

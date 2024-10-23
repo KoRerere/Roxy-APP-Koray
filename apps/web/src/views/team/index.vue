@@ -140,7 +140,7 @@ function tableOperation(data: TableRow) {
   ]
 }
 
-async function operationHandler(operate: any, data: TableRow) {
+function operationHandler(operate: any, data: TableRow) {
   switch (operate.name) {
     case 'edit':
       handleShowInviteUserFormDialog(data)
