@@ -73,6 +73,10 @@ export const store = new Proxy(latestStore, {
     _store.set(prop, value)
     return true
   },
+  deleteProperty(target, p) {
+    _store.delete(p)
+    return true
+  },
 })
 
 /** 获取用户远程软件配置 */

@@ -3,6 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
 import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { getFormSchemas } from './schemas'
 
@@ -14,13 +15,13 @@ const props = defineProps({
 })
 
 const signFormData = defineModel({ type: Object, default: {} })
+const { rememberMe } = storeToRefs(useUserStore())
 
 const { setSignFormData, setCurrentComponent, toSignIn } = useLoginContext()
 const toast = useToast()
 
 const submitLoading = ref(false)
 const formSchemas = ref(getFormSchemas())
-const rememberMe = ref(false)
 const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
 
@@ -68,7 +69,7 @@ function switchFormMode(val: boolean) {
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
-      <Checkbox v-model="rememberMe" input-id="remember-me" />
+      <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />
       <label for="remember-me" class="ml-2"> {{ $t('Remember me') }} </label>
     </div>
     <div class="forget-pwd" @click="setCurrentComponent('resetPassword')">

@@ -4,6 +4,14 @@ import { RxSvgIcon, svgIcons, type SvgNames } from '/@/components/rx-icon/'
 import { copyText } from '/@/utils/'
 import UploadIcons from './upload-icons.vue'
 
+// 在该模块中拒绝 HMR 更新
+if (import.meta.hot) {
+  // Prevent full reload, see https://github.com/vitejs/vite/issues/5763#issuecomment-1974235806
+  import.meta.hot.on('vite:beforeFullReload', (payload) => {
+    payload.path = '(WORKAROUND).html'
+  })
+}
+
 const toast = useToast()
 const currentIcon = ref<SvgNames>()
 

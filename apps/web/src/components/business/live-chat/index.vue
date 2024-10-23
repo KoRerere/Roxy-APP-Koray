@@ -29,16 +29,17 @@ function handleVisibilityChanged(data) {
 </script>
 
 <template>
-  <div class="cursor-pointer" v-bind="$attrs" @click="toggleChatVisible">
+  <div class="cursor-pointer" @click="toggleChatVisible">
     <slot />
+
+    <LiveChatWidget
+      license="18087441"
+      :customer-name="customerName"
+      :session-variables="sessionVariables"
+      :visibility="visibility"
+      @visibility-changed="handleVisibilityChanged"
+    />
   </div>
-  <LiveChatWidget
-    license="18087441"
-    :customer-name="customerName"
-    :session-variables="sessionVariables"
-    :visibility="visibility"
-    @visibility-changed="handleVisibilityChanged"
-  />
 </template>
 
 <style>

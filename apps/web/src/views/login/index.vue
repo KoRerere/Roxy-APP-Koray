@@ -8,12 +8,13 @@ import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
-const { getUserInfo, setToken, userInfo } = useUserStore()
+const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
+const { rememberMe, password } = storeToRefs(useUserStore())
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
   user_name: userInfo.userName || '',
-  password: '',
+  password: password.value ? atob(password.value) : '',
 })
 
 const currentComp = ref<CurrentComp>('signForm')
@@ -34,7 +35,9 @@ async function handleSubmit() {
 
 async function afterLogin(token: string) {
   setToken(token)
+  console.log('rememberMe', rememberMe.value)
   await getUserInfo()
+  setPassword(rememberMe.value ? signFormData.value.password : '')
   toast.add({ severity: 'success', summary: 'Success', detail: $t('Sign Success'), life: 5000 })
   router.push({ name: 'home' })
 }

@@ -7,8 +7,8 @@ const collapsed = defineModel('collapsed', { default: false })
 
 const list = ref([
   {
-    text: $t('Q&A/Help'),
-    icon: 'base/rx_ic_chat_question',
+    text: $t('Get support'),
+    icon: 'base/rx_ic_headphone_2',
     component: markRaw(LiveChat),
   },
   {
