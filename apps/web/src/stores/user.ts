@@ -8,6 +8,9 @@ type UserInfo = Partial<UserGetUserInfoListData['data']>
 export const useUserStore = defineStore('user', () => {
   const userInfo = ref<UserInfo>({})
   const tokenRef = ref('')
+  const rememberMe = ref(false)
+  /** rememberMe 为 true 的时候有值 */
+  const password = ref('')
 
   async function getUserInfo() {
     const { code, data } = await API.base.userGetUserInfoList()
@@ -30,6 +33,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {
       userName: userInfo.value.userName,
     }
+    password.value = ''
     tokenRef.value = ''
     electronAPI.send('user:logout')
   }
@@ -38,13 +42,18 @@ export const useUserStore = defineStore('user', () => {
     tokenRef.value = token
   }
 
+  /** 记住我的时候需要保存密码 */
+  function setPassword(pwd: string) {
+    password.value = btoa(pwd)
+  }
+
   scheduler.postTask(() => {
     if (tokenRef.value) {
       getUserInfo()
     }
   }, { priority: 'background' })
 
-  return { token: tokenRef, userInfo, setUserInfo, clearUserInfo, setToken, getUserInfo }
+  return { token: tokenRef, rememberMe, userInfo, password, setPassword, clearUserInfo, setToken, getUserInfo }
 }, {
   persist: true,
 })

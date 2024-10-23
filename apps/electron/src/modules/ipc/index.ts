@@ -122,7 +122,7 @@ ipcMain.on('user:setUserInfo', (userInfo) => {
 ipcMain.on('user:logout', () => {
   browserManager.closeAll().finally(() => {
     store.token = ''
-    store.userId = undefined
+    Reflect.deleteProperty(store, 'userId')
   })
 })
 

@@ -1,11 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { PluginOption, ResolvedConfig } from 'vite'
+import AdmZip from 'adm-zip'
+import formidable from 'formidable'
 import { Buffer } from 'node:buffer'
 import { exec } from 'node:child_process'
 import os from 'node:os'
 import path from 'node:path'
-import AdmZip from 'adm-zip'
-import formidable from 'formidable'
 
 interface OptionsType {
   extractDir: string
@@ -113,7 +113,10 @@ function extractZipFromBuffer(zipBuffer: Buffer, res: ServerResponse<IncomingMes
     const zipEntries = zip.getEntries()
 
     // 列出 ZIP 文件内容
-    const filesList = zipEntries.map(entry => entry.entryName)
+    const filesList = zipEntries.map((entry) => {
+      zip.extractEntryTo(entry, extractDir, false, true)
+      return entry.entryName
+    })
     res.statusCode = 200
     res.end(JSON.stringify({
       message: `已解压到：${extractDir}`,
@@ -121,7 +124,7 @@ function extractZipFromBuffer(zipBuffer: Buffer, res: ServerResponse<IncomingMes
       saveDir: extractDir,
     }))
     console.log('ZIP 文件解压成功', extractDir)
-    zip.extractAllTo(extractDir, true)
+    // zip.extractAllTo(extractDir, true)
   }
   catch (error) {
     res.writeHead(500, { 'Content-Type': 'text/plain' })
