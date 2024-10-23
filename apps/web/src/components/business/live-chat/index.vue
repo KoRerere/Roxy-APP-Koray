@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { LiveChatWidget } from '@livechat/widget-vue'
+import { LiveChatWidget, useWidgetIsReady } from '@livechat/widget-vue'
 import { useUserStore } from '/@/stores/user'
 
+const isWidgetReady = useWidgetIsReady()
 const userStore = useUserStore()
 const visibility = ref<'maximized' | 'minimized' | 'hidden'>('hidden')
 
@@ -30,7 +31,7 @@ function handleVisibilityChanged(data) {
 
 <template>
   <div class="cursor-pointer" @click="toggleChatVisible">
-    <slot />
+    <slot v-if="isWidgetReady" />
 
     <LiveChatWidget
       license="18087441"
