@@ -216,6 +216,11 @@ export interface UserGetWindowInfoV2ListParams {
    */
   dirId?: string;
   /**
+   * 窗口目录ids
+   * @example "dc1e73d4dd954a3a8ca087d53d2e18ce,dc1e73d4dd954a3a8ca087d53d2e18ce"
+   */
+  dirIds?: string;
+  /**
    * 窗口类型，枚举值：1：自建窗口，2：团队窗口，3：全部窗口,
    * @example 1
    */
@@ -661,13 +666,15 @@ export interface UserGetWindowInfoV2ListData {
       checkStatus?: number;
       /** 新业务平台列表 */
       platformUrlList?: string[];
+      /** 工作空间ID */
+      workspaceId?: number;
       windowPlatformList?: {
         platformUrl?: string;
         platformIcon?: string;
         platformUserName?: string;
         platformPassword?: string;
         platformEfa?: string;
-        platformcookies?: string;
+        platformCookies?: string;
         platformName?: string;
         platformRemarks?: string;
       }[];
@@ -1297,6 +1304,7 @@ export interface UserGetUserInfoListData {
     phone: string;
     email: string;
     avatar: string;
+    avatarColor: string;
     maxWindowCount: number;
     useWindowCount: number;
     maxUserCount: number;
@@ -1740,6 +1748,20 @@ export interface UserChangeUsernameCreatePayload {
 
 export interface UserChangeUsernameCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UseCheckBindEmailVerCodeListParams {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface UseCheckBindEmailVerCodeListData {
+  code: number;
+  /** 验证码是成功 */
+  data: boolean;
   msg: string;
 }
 
@@ -3607,12 +3629,39 @@ export interface UserUpdateWindowFilterNameCreatePayload {
   new_filter_name: string;
   /** 排序 */
   sort: number;
+  filter_condition: {
+    /** 操作系统 */
+    osList: string;
+    /** 窗口名 */
+    windowName: string;
+    /** 备注内容 */
+    windowRemark: string;
+    /** 序号 */
+    sortNum: string;
+    /** 平台 */
+    platformIds: string;
+    /** 窗口状态 "true"：打开,"false":关闭 */
+    openStatus: string;
+    /** 开始时间 */
+    startDate: string;
+    /** 结束时间 */
+    endDate: string;
+  };
   filter_rule: {
-    /** 名称 */
+    /**
+     * 名称
+     * 名称
+     */
     name?: string;
-    /** 排序 */
+    /**
+     * 排序
+     * 排序
+     */
     sort?: number;
-    /** 状态 */
+    /**
+     * 状态
+     * 状态
+     */
     status?: number;
   }[];
 }
@@ -4419,7 +4468,12 @@ export type UserMdfProxyModuleCreatePayload = {
   loading?: boolean;
 }[];
 
-export type UserMdfProxyModuleCreateData = object;
+export interface UserMdfProxyModuleCreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
+  msg: string;
+}
 
 export interface UserDelProxyModuleCreatePayload {
   /** 要删除的代理id列表 */
@@ -4515,7 +4569,7 @@ export interface UserGetProxyRecommendInfoListData {
       /** ID */
       id?: number;
       /** 代理标题 */
-      proxytitle?: string;
+      proxyTitle?: string;
       /** 代理Icon */
       proxyIcon?: string;
       /** 代理描述 */
@@ -5092,6 +5146,7 @@ export interface UserGetOperateLogListData {
       location?: string;
       country?: string;
       code?: string;
+      email?: string;
     }[];
   };
   msg: string;
@@ -5261,14 +5316,28 @@ export interface UserGetMemberInfoByProjectIdListData {
   code: number;
   data: {
     rows: {
-      /** 权限 */
+      /**
+       * 权限
+       * 权限
+       */
       role?: number;
-      /** 用户名字 */
+      /**
+       * 用户名字
+       * 用户名字
+       */
       userName?: string;
-      /** 用户邮箱 */
+      /**
+       * 用户邮箱
+       * 用户邮箱
+       */
       email?: string;
-      /** 用户头像 */
+      /**
+       * 用户头像
+       * 用户头像
+       */
       avatar?: string;
+      userId?: number;
+      avatarColor?: string;
     }[];
   };
   msg: string;

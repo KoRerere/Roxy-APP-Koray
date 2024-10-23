@@ -147,11 +147,10 @@ async function saveFilters(formData: any) {
   showToast(code, msg)
 }
 
-async function coverDefaultDisplay() {
-
-  // warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
-  //   .then(() => { })
-}
+// async function coverDefaultDisplay() {
+//   warnPopup('此操作将会覆盖所有已保存的筛选条件的Display, 是否继续?')
+//     .then(() => { })
+// }
 
 async function tableRequest(params: any) {
   // 0: 未删除
@@ -459,11 +458,11 @@ defineExpose({
     <template #header-extra>
       <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
-    <template #config-footer>
+    <!-- <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
         Save for default display
       </div>
-    </template>
+    </template> -->
     <template #profile="{ data }">
       <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>

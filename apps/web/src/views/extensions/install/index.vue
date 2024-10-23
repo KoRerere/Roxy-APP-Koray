@@ -383,8 +383,12 @@ defineExpose({
   gap: var(--spacing-xl, 12px);
 
   &-image {
-    width: 32px;
+    padding: var(--spacing-md, 6px);
+    width: 36px;
     aspect-ratio: 1;
+    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    background: var(--Colors-Background-bg-body, #fff);
   }
 
   &-info {
