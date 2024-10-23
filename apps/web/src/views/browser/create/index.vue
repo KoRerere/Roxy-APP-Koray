@@ -160,7 +160,7 @@ onBeforeMount(() => {
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>Create profile</span>
+        <span>{{ $t('Create profile') }}</span>
       </div>
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">
@@ -176,7 +176,7 @@ onBeforeMount(() => {
           <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
           <div v-show="tabsValue === 'multi'" class="multi-block">
             <div class="flex items-center justify-between">
-              <div>Profiles amount</div>
+              <div>{{ $t('Profiles amount') }}</div>
               <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
@@ -187,13 +187,18 @@ onBeforeMount(() => {
               </InputNumber>
             </div>
             <div class="multi-block-info">
-              Max profiles: {{ maxWindowCount }}. For more profiles please <span class="multi-block-info-jump" @click="tabsValue = 'import'">import profiles</span>.
+              <i18n-t :keypath="$t('Max profiles: {maxWindowCount}. For more profiles please {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
+                <template #importProfiles>
+                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('import profiles') }}</span>
+                </template>
+              </i18n-t>
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
         <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'" @create-open="(formData: any) => createProfile(formData, true)"
-          @create="(formData: any) => createProfile(formData, false)" />
+                         @create="(formData: any) => createProfile(formData, false)"
+        />
       </div>
     </div>
     <previewCard :inputs-group="previewInputs" @shuffle="onUpdateFinger" />

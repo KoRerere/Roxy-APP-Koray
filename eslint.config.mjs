@@ -54,4 +54,4 @@ export default antfu(
       ],
     },
   },
-)
+).override('antfu/regexp/rules', () => ({}))

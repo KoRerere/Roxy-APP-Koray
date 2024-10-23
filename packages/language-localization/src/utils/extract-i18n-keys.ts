@@ -1,25 +1,28 @@
 import { glob } from 'glob'
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import pLimit from 'p-limit' // 控制并发
 
-// 匹配 $t('key') 或 $t('key', {params})，包括带点或破折号的键
-export const translationRegex = /\$t\(\s*(['"])(.*?)\1\s*(?:,\s*([\s\S]*?)\s*)?\)/g
-
-// 用于移除注释的正则表达式模式（包括单行和多行注释）
-const commentRegexList = [
-  /\/\/.*$/gm, // 匹配单行注释
-  /\/\*[\s\S]*?\*\//g, // 匹配多行注释
-]
+// 正则匹配 $t('key')，避免多余匹配问题
+export const translationRegex = /\$t\s*\(\s*(['"`])((?:\\\1|[^\\])*?)\1\s*(,.*?\))?/g
+/**
+ * 限制并发数
+ */
+const CONCURRENCY_LIMIT = 5
 
 /**
- * 移除文件内容中的注释
+ * 记录错误日志
  */
-function removeComments(content: string) {
-  let noCommentsContent = content
-  commentRegexList.forEach((regex) => {
-    noCommentsContent = noCommentsContent.replace(regex, '') // 移除所有匹配的注释
-  })
-  return noCommentsContent
+async function logError(error: string) {
+  const errorLogPath = './error.log'
+  await appendFile(errorLogPath, `${new Date().toISOString()} - ${error}\n`, 'utf-8')
+}
+
+/**
+ * 文件匹配，忽略 node_modules 和 dist 目录
+ */
+async function matchFiles() {
+  return glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**', 'packages/**'] })
 }
 
 /**
@@ -27,138 +30,102 @@ function removeComments(content: string) {
  */
 function extractKeys(content: string) {
   const keys = new Set<string>()
-  // 从内容中移除注释
-  const noCommentsContent = removeComments(content)
-
   let match
-  while ((match = translationRegex.exec(noCommentsContent)) !== null) {
-    keys.add(match[2]) // match[2] 是捕获的键
+  while ((match = translationRegex.exec(content)) !== null) {
+    keys.add(match[2]) // 捕获的键
   }
-
-  return [...keys] // 以数组形式返回键
+  return [...keys]
 }
 
-async function matchFiles() {
-  return glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**', 'packages/**'] })
-}
+const limit = pLimit(CONCURRENCY_LIMIT)
 
-export async function genKeysPositionMap() {
+/**
+ * 扫描文件，提取所有翻译键
+ */
+export async function scanFiles() {
   const files = await matchFiles()
-  const keysPositionMap = new Map<string, string[]>()
-  const promiseArr = files.map(async (file) => {
+  const allKeys = new Set<string>()
+
+  const promiseArr = files.map(file => limit(async () => {
     try {
       const content = await readFile(file, 'utf-8')
       const keys = extractKeys(content)
-      keys.forEach((key) => {
-        if (keysPositionMap.has(key)) {
-          keysPositionMap.get(key)?.push(file)
-        }
-        else {
-          keysPositionMap.set(key, [file])
-        }
-      })
+      keys.forEach(key => allKeys.add(key)) // 添加到全局键集合
     }
     catch (error) {
-      console.error(`读取文件出错: ${file}`)
+      await logError(`读取文件出错: ${file} - ${error}`)
     }
-  })
+  }))
+
   await Promise.all(promiseArr)
-  return keysPositionMap
+  return [...allKeys] // 返回去重后的键
 }
 
 /**
- * 扫描文件并提取键
+ * 替换文件中旧的翻译键为新的翻译键
  */
-export async function scanFiles() {
-  // 匹配项目目录中的所有 .vue, .ts, .js 和 .tsx 文件
-  const files = await matchFiles()
-
-  const allKeys = new Set<string>()
-
-  const promiseArr = files.map(async (file) => {
-    // if (file.includes('ry-table/index.vue')) {
-    //   console.log('file', file)
-    //   const content = await readFile(file, 'utf-8')
-    //   const keys = extractKeys(content)
-    //   console.log('keys', keys)
-    // }
-
-    try {
-      const content = await readFile(file, 'utf-8')
-      const keys = extractKeys(content)
-      keys.forEach(key => allKeys.add(key)) // 添加到全局键集合中
-    }
-    catch (error) {
-      console.error(`读取文件出错: ${file}`)
-    }
-  })
-  await Promise.all(promiseArr)
-  return [...allKeys] // 以数组形式返回
-}
-
 export async function scanFilesAndReplaceKey(oldKey: string, newKey: string) {
-  // 匹配项目目录中的所有 .vue, .ts, .js 和 .tsx 文件
   const files = await matchFiles()
+
   const promiseArr = files.map(async (file) => {
     try {
       const content = await readFile(file, 'utf-8')
       let isContentChanged = false
-      const newContent = content.replaceAll(translationRegex, (match, key) => {
+
+      // 正确处理替换，确保仅替换 $t() 中的键
+      const newContent = content.replaceAll(translationRegex, (match, quote, key, args) => {
         if (key === oldKey) {
           isContentChanged = true
+          // 如果匹配到的 key 是目标 key，则进行替换
           return match.replace(oldKey, newKey)
         }
-        return match
+        return match // 否则返回原内容
       })
-      // await writeFile(file, newContent, 'utf-8')
+
       if (isContentChanged) {
-        await writeFile(file, newContent, 'utf-8')
+        await writeFile(file, newContent, 'utf-8') // 仅当内容变化时写入
       }
     }
     catch (error) {
-      console.error(`读取文件出错: ${file}`)
+      console.error(`读取文件出错: ${file} - ${error}`)
     }
   })
+
   await Promise.all(promiseArr)
 }
 
 /**
- * 将键写入输出文件
+ * 将内容写入指定文件
  */
-export async function writeKeysToFile(fileContent: string, outputFile: string) {
+async function writeKeysToFile(fileContent: string, outputFile: string) {
   const outputDir = path.dirname(outputFile)
   try {
-    await access(outputDir)
-  }
-  catch (error) {
-    console.log(`创建目录: ${outputDir}`)
     await mkdir(outputDir, { recursive: true })
   }
-  await writeFile(outputFile, fileContent, 'utf-8') // 以 JSON 格式写入键
-}
-
-const langFiles = ['zh-CN', 'en', 'de']
-
-function replacer(key, value) {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    // 对对象的键进行排序
-    return Object.keys(value).sort().reduce((sorted, k) => {
-      sorted[k] = value[k]
-      return sorted
-    }, {})
+  catch (error) {
+    await logError(`创建目录失败: ${outputDir} - ${error}`)
   }
-  return value
+  await writeFile(outputFile, fileContent, 'utf-8')
 }
 
 /**
- * 扫描文件并生成语言文件
+ * 生成并合并语言文件
  */
 export async function genLangFiles(langFiles: string[] = [], outputDir: string, defaultLang = 'en') {
   /**
-   * 从文件中提取键
+   * 扫描提取的键
    */
   const keys = await scanFiles()
-  console.log('keys', keys)
+  const replacer = (key, value) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return Object.keys(value).sort().reduce((sorted, k) => {
+        sorted[k] = value[k]
+        return sorted
+      }, {})
+    }
+    return value
+  }
+
   langFiles.forEach(async (lang) => {
     const langFilePath = path.join(outputDir, `${lang}.json`)
     let langFileObj = {} as Record<string, string>
@@ -166,12 +133,17 @@ export async function genLangFiles(langFiles: string[] = [], outputDir: string, 
       langFileObj = JSON.parse(await readFile(langFilePath, 'utf-8'))
     }
     catch (error) {
-
+      // 忽略不存在的文件错误，自动生成新的语言文件
     }
+
     const newLangFileObj = keys.reduce<Record<string, string>>((acc, key) => {
       acc[key] = defaultLang === lang ? key : langFileObj[key] || ''
       return acc
     }, {})
-    await writeKeysToFile(JSON.stringify(newLangFileObj, replacer, 2), langFilePath) // 将提取的键
+
+    await writeKeysToFile(JSON.stringify(newLangFileObj, replacer, 2), langFilePath)
   })
 }
+
+// genLangFiles(['zh-CN', 'en', 'de'], './output')
+// scanFilesAndReplaceKey('Remember me', 'Remember me888')

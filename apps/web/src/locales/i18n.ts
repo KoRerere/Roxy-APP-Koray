@@ -22,6 +22,26 @@ const i18n = createI18n({
   },
 })
 
+if (import.meta.hot) {
+  // Prevent full reload, see https://github.com/vitejs/vite/issues/5763#issuecomment-1974235806
+  import.meta.hot.on('vite:beforeFullReload', (payload) => {
+    // console.log('path', payload.path)
+    // console.log('triggeredBy', payload.triggeredBy)
+    // console.log('type', payload.type)
+    payload.path = '(WORKAROUND).html'
+
+    fetch(`/src/locales/langs/zh-CN.json?_t=${Date.now()}`)
+      .then(response => response.json())
+      .then((data) => {
+        // console.log('JSON loaded:', data)
+        i18n.global.setLocaleMessage(i18n.global.locale.value, data)
+      })
+      .catch((error) => {
+        console.error('JSON加载失败:', error)
+      })
+  })
+}
+
 const modules = import.meta.glob('./langs/*.json')
 
 const localesMap = loadLocalesMap(modules)

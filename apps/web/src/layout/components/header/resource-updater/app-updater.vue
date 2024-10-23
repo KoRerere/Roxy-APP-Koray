@@ -33,7 +33,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     return $t('Downloading')
   }
   else if (info.status === 'downloaded') {
-    window.electronAPI.send('app:install-update', info)
+    window.electronAPI.send('app:quitAndInstall', info)
+  }
+  else if (info.status === 'failed') {
+    window.electronAPI.send('app:checkForUpdates')
   }
   else {
     // window.electronAPI.send('app:download-update', info)

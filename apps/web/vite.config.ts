@@ -99,7 +99,7 @@ const config: UserConfig = {
     LanguageLocalization({
       targetDir: join(PACKAGE_ROOT, 'src/locales/langs'),
       langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'],
-      immediate: false,
+      immediate: true,
     }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),
