@@ -1,11 +1,14 @@
 <script lang="ts" setup>
+import type { MetaData } from '/@/views/browser/create/components/type'
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { Role } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
@@ -15,6 +18,8 @@ import { createTableContext } from './hooks/useContext'
 const router = useRouter()
 const { currentWorkspace } = useWorkspaceStore()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { getProjects } = useMateGroup()
+
 const isBatch = ref(false)
 const createCount = ref(1)
 createTableContext({ isBatch, createCount })
@@ -31,9 +36,14 @@ const fileAnalyzeData = ref()
 const rawMainSetting: any = ref([])
 const mainSetting: any = ref([])
 const extraSetting: any = ref([])
-const loading = ref(false)
-
 const original = ref()
+const metaData = ref<MetaData>({
+  projectName: 'No project',
+  projectId: undefined,
+  labelIds: [],
+  windowRemark: '',
+})
+const loading = ref(false)
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -55,6 +65,8 @@ const accordions = computed(() => {
   }
 })
 
+const isOwner = computed(() => currentWorkspace?.role === Role.OWNER)
+
 watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
@@ -72,7 +84,6 @@ function initFormInputs() {
   mainSetting.value = [windowInputs]
   extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
-
   onUpdateFinger()
 }
 
@@ -159,6 +170,12 @@ function onBack() {
 
 onBeforeMount(() => {
   initFormInputs()
+  if (!isOwner.value) {
+    getProjects().then((operation) => {
+      metaData.value.projectId = Number(operation[0].value)
+      metaData.value.projectName = operation[0].label
+    })
+  }
 })
 </script>
 
@@ -203,8 +220,8 @@ onBeforeMount(() => {
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:loading="loading" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'" @create-open="createProfile($event, true)"
-          @create="createProfile($event, false)" />
+        <accordionInputs v-model:metadata="metaData" v-model:loading="loading" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'"
+          @create-open="createProfile($event, true)" @create="createProfile($event, false)" />
       </div>
     </div>
     <previewCard :inputs-group="previewInputs" @shuffle="onUpdateFinger" />

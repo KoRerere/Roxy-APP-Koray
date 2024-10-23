@@ -1,18 +1,11 @@
 <script setup lang="tsx">
-import { API } from '/@/api'
 import RxAvatar from '/@/components/rx-avatar.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopoverMenu } from './popover-menu'
-
-interface Operation {
-  name?: string
-  label?: string
-  value: string
-  render?: () => any
-}
 
 interface Props {
   labels: any[]
@@ -27,6 +20,7 @@ const emit = defineEmits(['update'])
 const [addTag] = useTagsActions({ toast: false })
 const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
+const { getTags, getProjectMember } = useMateGroup()
 
 // const styles = useCssModule()
 
@@ -42,9 +36,7 @@ async function openMenu(event: any) {
   if (_disabled.value)
     return
 
-  const tagList = await getTags()
-  const memberList = await getProjectMember()
-
+  const [tagList, memberList] = await Promise.all([getTags(), getProjectMember(projectId)])
   const value = labels?.map((item: any) => `${item.labelId}`)
 
   showMenu(event, {
@@ -65,21 +57,6 @@ async function openMenu(event: any) {
       )
     },
   })
-}
-
-async function getTags(): Promise<Operation[]> {
-  const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999' })
-  return data.rows.map((item: any) => ({ name: item.name, label: item.name, value: `${item.id}` }))
-}
-
-async function getProjectMember(): Promise<Operation[]> {
-  const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId })
-  return data.rows.map(item => ({
-    value: `u_${item.userId}`,
-    render: () => {
-      return (<RxAvatar avatar={item.avatar} size={24} fontSize={12} name={item.userName?.slice(0, 2)} color={item.avatarColor} />)
-    },
-  }))
 }
 
 function isEq(oldIds: any, newIds: any) {
