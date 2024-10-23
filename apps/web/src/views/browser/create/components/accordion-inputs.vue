@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { useToast } from 'primevue/usetoast'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales/index.js'
 import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
 import { copyText } from '/@/utils/'
 import type { Accordions, MetaData } from './type.ts'
@@ -30,8 +31,9 @@ const props = defineProps({
 })
 
 const emits = defineEmits(['createOpen', 'create'])
+const loading = defineModel('loading', { type: Boolean, default: false })
 
-const toast = useToast()
+const [showToast] = useResponseToast()
 
 const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRefs(reactive(useAttrs()))
 
@@ -66,7 +68,7 @@ function getFormData(isOpen: boolean) {
 
 function onCopy(dirId: string) {
   copyText(dirId)
-  toast.add({ severity: 'success', summary: 'Copy success', life: 3000 })
+  showToast(0, $t('Copy success'))
 }
 </script>
 
@@ -129,8 +131,8 @@ function onCopy(dirId: string) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <RxButton v-if="openBrowser" size="sm" severity="secondary" outlined label="Carete & Open" @click.stop="getFormData(true)" />
-      <RxButton size="sm" severity="primary" :label="`${isEdit ? 'Save' : 'Create'} profile`" @click.stop="getFormData(false)" />
+      <RxButton v-if="openBrowser" outlined severity="secondary" :label="$t('Carete & Open')" :loading="loading" @click.stop="getFormData(true)" />
+      <RxButton severity="primary" :label="`${isEdit ? $t('Save profile') : $t('Create profile')}`" :loading="loading" @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

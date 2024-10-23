@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import type { UnwrapRowType, UserGetLabelInfoListData, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UserGetLabelInfoListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
 import { Role } from '/@/enums'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { isEmptyValue } from '/@/utils'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 import type { MetaData } from './type.ts'
 
 type Tag = UnwrapRowType<UserGetLabelInfoListData>
-type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 const [showMenu] = usePopoverMenu()
 const workspaceStore = useWorkspaceStore()
+
+const { getProjects } = useMateGroup()
 
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
@@ -25,13 +27,8 @@ const metaData = defineModel<MetaData>('modelValue', {
 
 const isOwner = computed(() => workspaceStore.currentWorkspace?.role === Role.OWNER)
 
-async function getProjectOperation() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
-  return data.rows.map((item: Project) => ({ label: item.projectName, value: `${item.project_id}` }))
-}
-
 async function selectProject(event: Event) {
-  const operation = await getProjectOperation()
+  const operation = await getProjects()
   const value = metaData.value.projectId?.toString()
 
   showMenu(event, {
@@ -74,7 +71,7 @@ function onConfirm(windowRemark: string) {
 
 onBeforeMount(() => {
   if (!isOwner.value) {
-    getProjectOperation().then((operation) => {
+    getProjects().then((operation) => {
       metaData.value.projectId = Number(operation[0].value)
       metaData.value.projectName = operation[0].label
     })

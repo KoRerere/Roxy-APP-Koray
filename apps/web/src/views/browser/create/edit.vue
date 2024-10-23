@@ -24,6 +24,7 @@ const accordions = ref({
 const inputsGroup = ref()
 const original = ref()
 const metaData = ref<MetaData>()
+const loading = ref(false)
 
 function onShuffle() {
   ceateRandomFinger(inputsGroup.value).then((data) => {
@@ -37,11 +38,13 @@ async function createProfile(formData: any) {
     ...formData,
     windowName: windowName.value,
   }
+  loading.value = true
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
     router.replace({ name: 'browser-list' })
   }
+  loading.value = false
 }
 
 function oldFieldsFormat() {
@@ -86,7 +89,7 @@ onBeforeMount(() => {
           <rxEditDiv v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
         </div>
       </div>
     </div>
