@@ -14,7 +14,7 @@ function toggle(event: Event) {
 
 <template>
   <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('Display')" @click="toggle" />
-  <ryPopover ref="popRef">
+  <RyPopover ref="popRef">
     <div :class="display.content">
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
@@ -24,10 +24,10 @@ function toggle(event: Event) {
         </div>
       </VueDraggable>
     </div>
-    <template #footer>
+    <template v-if="$slots.footer" #footer>
       <slot name="footer" />
     </template>
-  </ryPopover>
+  </RyPopover>
 </template>
 
 <style lang="scss" module="display">

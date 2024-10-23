@@ -240,7 +240,7 @@ defineExpose({
       </div>
       <div class="flex gap-2">
         <TableDisplay v-if="showDisplay" :columns="columns" @update:columns="$emit('update:columns', $event)">
-          <template #footer>
+          <template v-if="$slots['config-footer']" #footer>
             <slot name="config-footer" />
           </template>
         </TableDisplay>
