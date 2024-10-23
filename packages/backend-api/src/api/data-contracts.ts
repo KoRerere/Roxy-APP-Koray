@@ -1368,7 +1368,6 @@ export interface UserGetAppUpgradeCreateData {
     upgradeTitle: string;
     /** 升级描述 */
     upgradeDesc: string;
-    /** 新版升级内容描述 */
     upgradeContent: {
       new_function: string;
       optimize: string;
@@ -1376,6 +1375,11 @@ export interface UserGetAppUpgradeCreateData {
     };
     /** 发布时间 */
     releaseTime: string;
+    upgradeContentEn: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
     /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
     webDomain: string;
   };
@@ -4347,7 +4351,7 @@ export interface UserGetProxyModuleListData {
     total: number;
     rows: {
       /** 代理id，int */
-      id?: number;
+      id: number;
       /** 代理协议，枚举值：HTTP, HTTPS, SOCKS5， 【取字典】 */
       protocol?: string;
       /** 国家，str */
@@ -4480,7 +4484,12 @@ export interface UserDelProxyModuleCreatePayload {
   ids: number[];
 }
 
-export type UserDelProxyModuleCreateData = object;
+export interface UserDelProxyModuleCreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
+  msg: string;
+}
 
 export interface UserUnbindProxyModuleCreatePayload {
   /** 需要解绑的ip列表 */
@@ -4586,6 +4595,21 @@ export interface UserGetProxyRecommendInfoListData {
       updateTime?: string;
     }[];
   };
+  msg: string;
+}
+
+export interface UserDelProxyModuleV2CreatePayload {
+  /**
+   * 要删除的代理id列表
+   * 要删除的代理id列表
+   */
+  ids: number[];
+}
+
+export interface UserDelProxyModuleV2CreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
   msg: string;
 }
 
@@ -5266,6 +5290,9 @@ export interface UserAddProjectInfoCreatePayload {
 
 export interface UserAddProjectInfoCreateData {
   code: number;
+  data: {
+    projectId: number;
+  };
   msg: string;
 }
 

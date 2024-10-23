@@ -391,6 +391,7 @@ async function deleteProxy(data: any) {
 }
 
 function warnPopup(message: string) {
+  // !todo 待优化
   return new Promise((resolve, _reject) => {
     confirm.require({
       header: $t('warn'),
@@ -470,7 +471,7 @@ defineExpose({
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
     </template>
     <template #project="{ data }">
-      <projectIcon :project-name="data.projectName" :project-id="data.projectId" @update="updateMeta($event, data)" />
+      <projectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
       <tagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />

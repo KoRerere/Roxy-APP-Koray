@@ -16,6 +16,8 @@ import {
   UserCheckIpCreatePayload,
   UserDelProxyModuleCreateData,
   UserDelProxyModuleCreatePayload,
+  UserDelProxyModuleV2CreateData,
+  UserDelProxyModuleV2CreatePayload,
   UserGetProxyModuleListData,
   UserGetProxyModuleListParams,
   UserGetProxyRecommendInfoListData,
@@ -97,7 +99,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserDelProxyModuleCreate
-   * @summary 批量删除代理
+   * @summary 批量删除代理 (旧版本浏览器使用)
    * @request POST:/user_del_proxy_module
    * @response `200` `UserDelProxyModuleCreateData`
    */
@@ -227,6 +229,24 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<UserGetProxyRecommendInfoListData, any>({
       path: `/user_get_proxy_recommend_info`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserDelProxyModuleV2Create
+   * @summary 批量删除代理 (新版本浏览器使用)
+   * @request POST:/user_del_proxy_module_v2
+   * @response `200` `UserDelProxyModuleV2CreateData`
+   */
+  userDelProxyModuleV2Create = (data: UserDelProxyModuleV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDelProxyModuleV2CreateData, any>({
+      path: `/user_del_proxy_module_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

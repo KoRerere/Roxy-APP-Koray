@@ -112,7 +112,7 @@ async function getInputs(data: any = {}) {
       },
     },
   ])
-  setInputValueByFormData(inputs, data)
+  setInputValueByFormData(inputs, { ...data, platformCookies: JSON.stringify(data.platformCookies) })
   return inputs
 }
 
