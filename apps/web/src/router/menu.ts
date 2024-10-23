@@ -6,13 +6,13 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'browser',
     name: 'browser',
-    meta: { title: $t('All Profiles'), icon: 'base/rx_ic_browser' },
+    meta: { title: $t('全部窗口'), icon: 'base/rx_ic_browser' },
     redirect: { name: 'browser-list' },
     children: [
       {
         path: 'list',
         name: 'browser-list',
-        meta: { title: '浏览器窗口', hideInMenu: true },
+        meta: { title: '全部窗口', hideInMenu: true },
         component: () => import('/@/views/browser/list'),
       },
       {
@@ -32,7 +32,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'projects',
     name: 'projects',
-    meta: { title: $t('Projects'), icon: 'base/rx_ic_stack' },
+    meta: { title: $t('项目管理'), icon: 'base/rx_ic_stack' },
     redirect: { name: 'project-list' },
     children: [
       {
@@ -52,18 +52,18 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: 'Resource/Tool', type: 'group' },
+    meta: { title: '资源', type: 'group' },
     children: [
       {
         path: 'account',
         name: 'account-list',
-        meta: { title: $t('Accounts'), icon: 'base/rx_ic_keys', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('平台账号'), icon: 'base/rx_ic_keys', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/account/list'),
       },
       {
         path: 'agent',
         name: 'agent-list',
-        meta: { title: $t('Proxies'), icon: 'base/rx_ic_internet', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('代理资源'), icon: 'base/rx_ic_internet', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/agent/list'),
       },
       {
@@ -81,7 +81,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'extensions',
         name: 'extensions',
-        meta: { title: $t('Extensions'), icon: 'base/rx_ic_extension_store' },
+        meta: { title: $t('扩展中心'), icon: 'base/rx_ic_extension_store' },
         component: () => import('/@/views/extensions'),
       },
       // {
@@ -95,25 +95,25 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'workspace',
     name: 'workspace',
-    meta: { title: 'workspace', type: 'group' },
+    meta: { title: '工作空间', type: 'group' },
     redirect: { name: 'teams' },
     children: [
       {
         path: 'teams',
         name: 'teams',
-        meta: { title: $t('Teams'), icon: 'base/rx_ic_user', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('团队成员'), icon: 'base/rx_ic_user', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/team'),
       },
       {
         path: 'history-logs',
         name: 'history-logs',
-        meta: { title: $t('History Logs'), icon: 'base/rx_ic_doc_data' },
+        meta: { title: $t('操作日志'), icon: 'base/rx_ic_doc_data' },
         component: () => import('/@/views/history-logs'),
       },
       {
         path: 'settings',
         name: 'settings',
-        meta: { title: $t('Settings'), icon: 'base/rx_ic_gear' },
+        meta: { title: $t('空间设置'), icon: 'base/rx_ic_gear' },
         component: () => import('/@/views/workspace-setting/index.vue'),
       },
     ],
@@ -121,7 +121,15 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'api-keys',
     name: 'api-keys',
-    meta: { title: $t('Api-keys'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
-    component: () => import('/@/views/api-keys'),
+    meta: { title: '自动化', type: 'group' },
+    children: [
+      {
+        path: '',
+        name: 'api-keys',
+        meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        component: () => import('/@/views/api-keys'),
+      },
+    ],
   },
+
 ]

@@ -59,7 +59,7 @@ function handleSideTransitionstart() {
 </script>
 
 <template>
-  <div :key="currentLocale" class="rx-layout">
+  <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
          @transitionend="handleSideTransitionend"
     >

@@ -58,22 +58,28 @@ async function handleSubmit() {
 
 <template>
   <div class="container">
-    <div class="title">
-      {{ $t('Check your email for a code') }}
-    </div>
     <div class="description">
-      {{ $t("We've send a 6-character verification code to your email:") }} <br>
       <span class="email-text">{{ getEmail }}</span> <br>
+      {{ $t("我们已经向您的邮箱发送了一个6位数字验证码：") }} <br>
+    </div>
+    <div class="title">
+      {{ $t('请检查邮件以获取验证码') }}
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
     <RxButton class="w-full" @click="handleSubmit">
-      {{ type === 'signUp' ? $t('Complete sign up') : $t('Next') }}
+      {{ type === 'signUp' ? $t('完成注册') : $t('下一步') }}
     </RxButton>
     <div class="tips">
-      <span>
-        {{ $t("Can't find the email? Check your spam, or") }}
-      </span> <br>
-      <a class="re-enter-text" @click="toReEnter">{{ $t('re-enter your email and try again.') }}</a>
+      <i18n-t
+        :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global"
+      >
+        <template #tryAgain>
+          <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
+        </template>
+        <template #contact>
+          <a class="re-enter-text" @click="toReEnter">{{ $t('联系支持人员') }}</a>
+        </template>
+      </i18n-t>
     </div>
   </div>
 </template>

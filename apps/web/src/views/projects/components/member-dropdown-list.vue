@@ -31,7 +31,7 @@ getMembers()
 
 <template>
   <div class="drop-btn" @click="toggle">
-    <span class="text">{{ $t('Members') }}({{ members.length }}) </span> <RxSvgIcon name="base/rx_ic_chevron_down" />
+    <span class="text">{{ $t('成员') }}({{ members.length }}) </span> <RxSvgIcon name="base/rx_ic_chevron_down" />
   </div>
 
   <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">

@@ -26,7 +26,7 @@ function handleShowInviteUserFormDialog() {
     <div class="project-header">
       <div class="flex items-center gap-2">
         <div class="project-header-project">
-          {{ $t('Projects') }}
+          {{ $t('项目') }}
         </div>
         <RxSvgIcon name="base/rx_ic_play" :size="8" />
         <div class="project-header-subproject">
@@ -35,7 +35,7 @@ function handleShowInviteUserFormDialog() {
       </div>
       <div class="flex gap-3">
         <MemberDropdownList :project-id="projectId" />
-        <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('Invite')" @click="handleShowInviteUserFormDialog" />
+        <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
       </div>
     </div>
     <!-- eslint-disable-next-line vue/no-unused-refs -->

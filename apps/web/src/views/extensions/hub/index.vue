@@ -131,7 +131,7 @@ defineExpose({
         <InputGroupAddon>
           <RxSvgIcon name="base/rx_ic_magnify" />
         </InputGroupAddon>
-        <InputText v-model="search" :placeholder="$t('Search your most used chrome extensions')" @input="searchPlugins" />
+        <InputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
       <div class="flex-1 overflow-y-auto dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
@@ -156,8 +156,8 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="sm" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('Installed')" disabled />
-                <RxButton v-else size="sm" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('Install')" @click="addSystemPlugin(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="sm" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
+                <RxButton v-else size="sm" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="addSystemPlugin(plugin)" />
               </div>
             </div>
           </div>

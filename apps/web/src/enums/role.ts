@@ -13,10 +13,10 @@ export enum Role {
 
 export function getRoleLabelMap() {
   return ({
-    [Role.VIEWER]: $t('Viewer'),
-    [Role.EDITOR]: $t('Editor'),
-    [Role.MANAGER]: $t('Manager'),
-    [Role.OWNER]: $t('Owner'),
+    [Role.VIEWER]: $t('查看者'),
+    [Role.EDITOR]: $t('编辑者'),
+    [Role.MANAGER]: $t('管理者'),
+    [Role.OWNER]: $t('所有者'),
   }) as const
 }
 

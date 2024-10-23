@@ -7,22 +7,22 @@ const columnsConfig = {
   key: 'account.list',
   data: [
     {
-      title: $t('Platform & Password'),
+      title: $t('账号信息'),
       key: 'status',
       disabledToggle: true,
       slot: 'platform',
     },
     {
-      title: $t('Alias'),
+      title: $t('备注'),
       key: 'link',
       getText: (data: Data) => data.platformName || '--',
     },
     {
-      title: $t('Related Profiles'),
+      title: $t('已关联窗口'),
       slot: 'related',
     },
     {
-      title: $t('Actions'),
+      title: $t('操作'),
       style: 'width: 9rem',
       slot: 'actions',
     },

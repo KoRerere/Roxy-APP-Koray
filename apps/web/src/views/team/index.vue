@@ -25,27 +25,27 @@ type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
 const columns = ref(setColumns([
   {
-    title: $t('Member info'),
+    title: $t('成员信息'),
     key: 'member',
     slot: 'member',
   },
   {
-    title: $t('Status'),
+    title: $t('成员状态'),
     key: 'status',
-    getText: (row: TableRow) => row.status === Membership.joinIn ? 'Active' : 'Pending',
+    getText: (row: TableRow) => row.status === Membership.joinIn ? '已加入' : '等待确认',
   },
   {
-    title: $t('Membership'),
+    title: $t('身份'),
     key: 'source',
     getText: (row: TableRow) => roleLabelMap[row.role as Role],
   },
   {
-    title: $t('Related Projects'),
+    title: $t('已关联项目'),
     key: 'relatedProjects',
     slot: 'related',
   },
   {
-    title: $t('Actions'),
+    title: $t('操作'),
     slot: 'actions',
   },
 ], {
@@ -56,19 +56,19 @@ const filters = reactive({
   value: null,
   options: [
     {
-      name: $t('All'),
+      name: $t('全部'),
       value: null,
     },
     {
-      name: $t('Manager'),
+      name: $t('管理者'),
       value: Role.MANAGER,
     },
     {
-      name: $t('Editor'),
+      name: $t('编辑者'),
       value: Role.EDITOR,
     },
     {
-      name: $t('Viewer'),
+      name: $t('查看者'),
       value: Role.VIEWER,
     },
   ],
@@ -189,17 +189,18 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 <template>
   <div class="header">
     <div class="flex-1">
-      {{ $t('Teams') }}
+      {{ $route.meta.title }}
     </div>
     <div class="header-guide">
       <RxSvgIcon name="base/rx_ic_books" />
-      <span>{{ $t('Access control guide') }}</span>
+      <span>{{ $t('团队指南') }}</span>
     </div>
-    <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" label="Invite" @click="handleShowInviteUserFormDialog" />
+    <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
-    :paginator="false" :show-actions-menu="false" :show-actions="false">
+            :paginator="false" :show-actions-menu="false" :show-actions="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />

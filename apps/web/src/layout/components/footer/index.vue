@@ -7,12 +7,12 @@ const collapsed = defineModel('collapsed', { default: false })
 
 const list = ref([
   {
-    text: $t('Get support'),
+    text: $t('联系支持人员'),
     icon: 'base/rx_ic_headphone_2',
     component: markRaw(LiveChat),
   },
   {
-    text: $t('Hide'),
+    text: $t('收起'),
     icon: 'base/rx_ic_fold_right',
     iconAttr: computed(() => {
       return {

@@ -5,20 +5,16 @@ const columnsConfig = {
   key: 'project.list',
   data: [
     {
-      title: $t('Profile Info'),
+      title: $t('项目信息'),
       key: 'projectName',
+      slot: 'projectName',
     },
     {
-      title: $t('Open'),
-      key: 'open',
-      slot: 'open',
-    },
-    {
-      title: $t('Members'),
+      title: $t('成员'),
       slot: 'members',
     },
     {
-      title: $t('Actions'),
+      title: $t('其他'),
       style: 'width: 9rem',
       slot: 'actions',
     },

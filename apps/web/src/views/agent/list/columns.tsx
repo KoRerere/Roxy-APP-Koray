@@ -8,12 +8,12 @@ const columnsConfig = {
   key: 'agent.list',
   data: [
     {
-      title: $t('Proxy Info'),
+      title: $t('代理信息'),
       key: 'proxy',
       slot: 'proxy',
     },
     {
-      title: $t('Outbound IP'),
+      title: $t('出口 IP'),
       key: 'outbound',
       render: ({ data }: any) => {
         return (
@@ -22,7 +22,7 @@ const columnsConfig = {
       },
     },
     {
-      title: $t('IP Checker'),
+      title: $t('IP 查询渠道'),
       key: 'ipChecker',
       render: ({ data }: any) => {
         return (
@@ -34,7 +34,7 @@ const columnsConfig = {
       },
     },
     {
-      title: $t('Related Profiles'),
+      title: $t('已关联窗口'),
       key: 'relatedProfiles',
       render: ({ data }: any) => {
         return (
@@ -43,7 +43,7 @@ const columnsConfig = {
       },
     },
     {
-      title: $t('Actions'),
+      title: $t('操作'),
       style: 'width: 9rem',
       slot: 'actions',
     },

@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = {
       userName: userInfo.value.userName,
     }
-    password.value = ''
+    // password.value = ''
     tokenRef.value = ''
     electronAPI.send('user:logout')
   }

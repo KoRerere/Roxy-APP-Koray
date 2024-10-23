@@ -145,8 +145,9 @@ onMounted(async () => {
       </label>
       <div class="form-item-control">
         <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue"
-          :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
-          @[triggerEventName]="validateField" />
+                   :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
+                   @[triggerEventName]="validateField"
+        />
         <small class="p-error">
           {{ errors[schema.field] }}
         </small>
@@ -166,13 +167,13 @@ label {
   height: 32px;
   justify-content: v-bind('labelAlign');
 
-  &::after {
-    content: ':';
-    position: relative;
-    margin-block: 0;
-    margin-inline-start: 2px;
-    margin-inline-end: 8px;
-  }
+  // &::after {
+  //   content: ':';
+  //   position: relative;
+  //   margin-block: 0;
+  //   margin-inline-start: 2px;
+  //   margin-inline-end: 8px;
+  // }
 }
 
 .p-error {

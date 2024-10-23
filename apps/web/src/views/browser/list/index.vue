@@ -17,8 +17,8 @@ const dialog = useDialog()
 const role = useRoleStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
-const allProfiles = { label: $t('All Profiles'), id: '1000', name: 'profiles' }
-const trash = { label: $t('Trash'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'trash' }
+const allProfiles = { label: $t('全部窗口'), id: '1000', name: 'profiles' }
+const trash = { label: $t('回收站'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'trash' }
 
 const tabs = ref([allProfiles])
 
@@ -154,10 +154,10 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="profile-header">
-      <div>{{ $t('All Profiles') }}</div>
+      <div>{{ $route.meta.title }}</div>
       <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
-        <div> {{ $t('Manage Category') }}</div>
+        <div> {{ $t('标签管理') }}</div>
       </div>
     </div>
     <div class="flex items-center justify-between filter-tabs">
@@ -172,7 +172,7 @@ onBeforeMount(() => {
       </Tabs>
       <div class="cursor-pointer filter-tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
         <RxSvgIcon name="base/rx_ic_bin_2" />
-        <span>{{ $t('Trash') }}</span>
+        <span>{{ $t('回收站') }}</span>
       </div>
       <div class="cursor-pointer filter-tabs-settings" @click="showPopover">
         <RxSvgIcon name="base/rx_ic_gear" />

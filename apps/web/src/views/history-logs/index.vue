@@ -11,7 +11,7 @@ const styles = useCssModule()
 
 const columns = ref([
   {
-    title: $t('User'),
+    title: $t('成员'),
     key: 'userName',
     render: ({ data }: { data: Data }) => (
       <div>
@@ -21,25 +21,25 @@ const columns = ref([
     ),
   },
   {
-    title: $t('Actions'),
+    title: $t('操作'),
     key: 'operateType',
   },
   {
-    title: $t('Detail'),
+    title: $t('具体内容'),
     key: 'operateDetail',
     width: 240,
   },
   {
-    title: $t('Date'),
+    title: $t('时间'),
     key: 'operateTime',
   },
   {
-    title: $t('Result'),
+    title: $t('结果'),
     key: 'status',
-    getText: (data: Data) => data.status ? $t('Success') : $t('Failed'),
+    getText: (data: Data) => data.status ? $t('成功') : $t('失败'),
   },
   {
-    title: $t('Location IP'),
+    title: $t('操作者 IP'),
     key: 'location',
     slot: 'location',
   },
@@ -54,30 +54,30 @@ async function tableFilters() {
   return [
     {
       type: 'multiple',
-      name: 'operateModule',
+      name: 'userNameIds',
       value: [],
-      placeholder: $t('All actions'),
-      options: [
-        { label: $t('Profiles'), value: 'Profiles' },
-        { label: $t('Proxies'), value: 'Proxies' },
-        { label: $t('Accounts'), value: 'Accounts' },
-        { label: $t('Projects'), value: 'Projects' },
-        { label: $t('Extensions'), value: 'Extensions' },
-        { label: $t('Members'), value: 'Members' },
-        { label: $t('Team settings'), value: 'Teams' },
-      ],
+      placeholder: $t('全部成员'),
+      options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
     },
     {
       type: 'multiple',
-      name: 'userNameIds',
+      name: 'operateModule',
       value: [],
-      placeholder: $t('All users'),
-      options: data.rows.map(user => ({ label: user.email, value: user.user_id })),
+      placeholder: $t('全部操作'),
+      options: [
+        { label: $t('窗口'), value: 'Profiles' },
+        { label: $t('代理'), value: 'Proxies' },
+        { label: $t('账号'), value: 'Accounts' },
+        { label: $t('项目'), value: 'Projects' },
+        { label: $t('扩展'), value: 'Extensions' },
+        // { label: $t('成员'), value: 'Members' },
+        { label: $t('团队'), value: 'Teams' },
+      ],
     },
     {
       type: 'date',
       name: 'date',
-      placeholder: $t('All time'),
+      placeholder: $t('全部时间'),
       formatValue: (input: any, _: any, formData: any) => {
         const [startDate, endDate] = (input.value || []).map((date: Date) => format(date || input.value[0], 'yyyy-MM-dd'))
         Object.assign(formData, { startDate, endDate })
@@ -90,17 +90,19 @@ async function tableFilters() {
 <template>
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
-      {{ $t('History Logs') }}
+      {{ $route.meta?.title }}
     </div>
     <div class="flex flex-1 overflow-hidden">
       <RyTable :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"
-        :show-display="false" :context-menu="false">
+               :show-display="false" :context-menu="false"
+      >
         <template #location="{ data }">
           <div class="flex items-center gap-1 locationip ">
             <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
             <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
-              :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12" />
+                       :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12"
+            />
           </div>
         </template>
       </RyTable>
