@@ -33,12 +33,12 @@ const columns = ref([
     key: 'extension',
     slot: 'extension',
   },
-  {
-    title: $t('Toggle'),
-    key: 'toggle',
-    getText: (row: any) => row.useStatus ? 'Active' : 'Disable',
-    // slot: 'toggle',
-  },
+  // {
+  //   title: $t('Toggle'),
+  //   key: 'toggle',
+  //   getText: (row: any) => row.useStatus ? 'Active' : 'Disable',
+  //   // slot: 'toggle',
+  // },
   {
     title: $t('Source'),
     key: 'source',
@@ -60,6 +60,7 @@ const columns = ref([
   },
   {
     title: $t('Actions'),
+    style: 'width: 9rem',
     slot: 'actions',
   },
 ])
@@ -306,13 +307,10 @@ async function deleteExtension(datas: any) {
   })
 }
 
-function showOperationMenu(event: Event, data: any, extra?: any) {
+function showOperationMenu(event: Event, data: any) {
   show(event, {
-    operation: extra?.cmpOperation || tableOperation(data),
-    operationHandler: (operate: any) => {
-      operationHandler(operate, data)
-      extra?.clearSelection()
-    },
+    operation: tableOperation(data),
+    operationHandler: (operate: any) => operationHandler(operate, data),
   })
 }
 

@@ -44,6 +44,10 @@ const columns = ref(setColumns([
     key: 'relatedProjects',
     slot: 'related',
   },
+  {
+    title: $t('Actions'),
+    slot: 'actions',
+  },
 ], {
   filters: (role.isOwner || role.isManager) ? [] : ['relatedProjects'],
 }))
@@ -195,7 +199,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
-    :paginator="false" :show-actions-menu="false">
+    :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
@@ -209,7 +213,6 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <template v-else>
           <Avatar :label="data.email.slice(0, 2)" shape="circle" />
         </template>
-
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}
@@ -222,6 +225,9 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #related="{ data }">
       <relatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
+    </template>
+    <template #actions="{ data }">
+      <Actions :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
     </template>
   </ry-table>
 </template>

@@ -39,7 +39,7 @@ function quickClick(item: any) {
           :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
       </div>
     </div>
-    <div v-if="showMenu" class="line-height-none" @click.stop="$emit('more', $event)">
+    <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="$emit('more', $event)">
       <slot name="more-icon">
         <RxSvgIcon name="base/rx_ic_more-v" />
       </slot>

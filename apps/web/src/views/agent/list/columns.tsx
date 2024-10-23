@@ -44,6 +44,7 @@ const columnsConfig = {
     },
     {
       title: $t('Actions'),
+      style: 'width: 9rem',
       slot: 'actions',
     },
   ],

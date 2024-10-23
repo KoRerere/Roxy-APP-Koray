@@ -17,6 +17,11 @@ const columnsConfig = {
       title: $t('Members'),
       slot: 'members',
     },
+    {
+      title: $t('Actions'),
+      style: 'width: 9rem',
+      slot: 'actions',
+    },
   ],
 }
 
