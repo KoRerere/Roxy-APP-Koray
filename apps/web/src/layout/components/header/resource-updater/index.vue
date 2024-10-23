@@ -80,7 +80,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small">
-      <RxButton icon="base/rx_ic_updates" outlined size="sm" @click="toggle" />
+      <RxButton icon="base/rx_ic_updates" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">

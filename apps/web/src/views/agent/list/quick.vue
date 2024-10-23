@@ -161,7 +161,7 @@ function saveSelected() {
   <drawer-content :title="$t('proxy list')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps">
+      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />

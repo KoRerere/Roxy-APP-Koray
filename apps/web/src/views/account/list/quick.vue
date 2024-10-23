@@ -54,7 +54,7 @@ function handleSave() {
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"
-        :show-display="false" :context-menu="false">
+        :show-display="false" :context-menu="false" :show-actions="false">
         <!-- <template #header-extra>
           <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template> -->
