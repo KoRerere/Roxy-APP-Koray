@@ -21,6 +21,11 @@ const columns = ref([
     key: 'relatedProfiles',
     slot: 'related',
   },
+  {
+    title: $t('Actions'),
+    style: 'width: 7rem',
+    slot: 'actions',
+  },
 ])
 
 const operation = ref([
@@ -81,12 +86,11 @@ async function deleteTag(data: any) {
         {{ $t('All Tags') }} ({{ totalNum }})
       </div>
       <RxButton size="sm" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
-      <RxButton size="sm" severity="secondary" icon="base/rx_ic_bin_1" :label="$t('Delete')" disabled />
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <ryTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
-        selection-mode="multiple">
+      <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
+        selection-mode="multiple" :show-actions="false">
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -99,9 +103,9 @@ async function deleteTag(data: any) {
           <relatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
-          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
         </template>
-      </ryTable>
+      </RyTable>
     </div>
   </div>
 </template>

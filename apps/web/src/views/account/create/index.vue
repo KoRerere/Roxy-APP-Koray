@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, clearInputsValue, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData } from '/@/utils'
 
@@ -19,8 +20,9 @@ const props = defineProps({
     default: true,
   },
 })
-
 const emits = defineEmits(['confirm', 'close'])
+
+const [_, onlyErrorToast] = useResponseToast()
 
 const isEdit = computed(() => !!props.data.id)
 
@@ -99,13 +101,13 @@ async function getInputs(data: any = {}) {
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()
-        if (res?.data) {
-          input.value = res.data
-          input.invalid = false
-        }
-        else {
-          input.value = ''
-          input.invalid = true
+        if (res) {
+          const { code, data, message } = res
+          onlyErrorToast(code, message)
+          if (data) {
+            input.value = res.data
+            input.invalid = false
+          }
         }
       },
     },
