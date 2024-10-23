@@ -76,6 +76,7 @@ async function checkLuminetBin(webDomain: string) {
   const remoteVersion = await axios({
     url: versionUrl,
     method: 'get',
+    timeout: 5000,
   }).then(async (response) => {
     const version = response.data.toString()
 

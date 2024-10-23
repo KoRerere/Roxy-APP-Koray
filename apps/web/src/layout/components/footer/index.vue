@@ -44,6 +44,9 @@ const list = ref([
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-none, 0px);
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow: hidden;
 
   &.collapsed {
     .item {
