@@ -33,7 +33,8 @@ const _aliOSS = new class AliOSS {
     // this.controller = new AbortController()
     // const { signal } = this.controller
 
-    const { data } = await API.base.userGetOssCredentialV2List()
+    // TODO 上传凭证接口
+    const { data } = await API.base.userGetOssCredentialV2List({}, { ossUrl: isPackaged ? 'https://lumitest.lumibrowser.com' : '' })
     // .finally(() => {
     //   this.controller = null
     // })
