@@ -12,6 +12,7 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/two_factor_token',
   '/browser/connection_info',
   '/browser/close',
+  '/browser/workspace',
 ]
 
 export function setupRoutes(app: Application) {

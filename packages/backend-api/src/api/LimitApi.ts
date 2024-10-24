@@ -23,6 +23,7 @@ import {
   UserGetMemberInfoByProjectIdListData,
   UserGetMemberInfoByProjectIdListParams,
   UserGetProjectInfoByWorkspaceListData,
+  UserGetProjectInfoByWorkspaceListParams,
   UserGetWorkspaceListListData,
   UserInviteCreateData,
   UserInviteCreatePayload,
@@ -172,10 +173,11 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_get_project_info_by_workspace
    * @response `200` `UserGetProjectInfoByWorkspaceListData`
    */
-  userGetProjectInfoByWorkspaceList = (params: RequestParams = {}) =>
+  userGetProjectInfoByWorkspaceList = (query: UserGetProjectInfoByWorkspaceListParams, params: RequestParams = {}) =>
     this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
       path: `/user_get_project_info_by_workspace`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

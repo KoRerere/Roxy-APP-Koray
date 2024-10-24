@@ -1,4 +1,4 @@
-import { ApiApi, BaseApi, HttpClient, LoggingApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
+import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
 import { app } from 'electron'
 import https from 'node:https'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
@@ -58,5 +58,7 @@ export const API = {
   logging: new LoggingApi(httpClient),
   team: new TeamApi(httpClient),
   base: new BaseApi(httpClient),
+  platform: new PlatformApi(httpClient),
+  limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),
 } as const
