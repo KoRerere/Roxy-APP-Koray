@@ -200,7 +200,7 @@ onBeforeMount(() => {
           <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
           <div v-show="tabsValue === 'multi'" class="multi-block">
             <div class="flex items-center justify-between">
-              <div>{{ $t('Profiles amount') }}</div>
+              <div>{{ $t('窗口数量') }}</div>
               <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
@@ -211,11 +211,12 @@ onBeforeMount(() => {
               </InputNumber>
             </div>
             <div class="multi-block-info">
-              <i18n-t :keypath="$t('Max profiles: {maxWindowCount}. For more profiles please {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
+              {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+              <!-- <i18n-t :keypath="$t('最多一次可批量创建: {maxWindowCount}. 更多窗口请使用 {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
                 <template #importProfiles>
-                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('import profiles') }}</span>
+                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('窗口导入') }}</span>
                 </template>
-              </i18n-t>
+              </i18n-t> -->
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />

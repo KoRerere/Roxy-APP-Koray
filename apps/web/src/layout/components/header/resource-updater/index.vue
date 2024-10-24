@@ -16,13 +16,13 @@ const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const tabs = ref([
   {
-    title: $t('Client updates'),
+    title: $t('客户端升级'),
     list: clientUpdates,
     value: 'client',
     component: markRaw(AppUpdater),
   },
   {
-    title: $t('Kernel updates'),
+    title: $t('内核升级'),
     list: kernelUpdates,
     value: 'kernel',
     component: markRaw(KernelUpdater),

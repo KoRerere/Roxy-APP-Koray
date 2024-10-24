@@ -4,7 +4,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import FeatureContent from './feature-content.vue'
 
-const props = defineProps<{
+defineProps<{
   upgradeList: ResourceUpdateMessage[]
   featureTitleList: any[]
 }>()
@@ -13,22 +13,22 @@ const collapsedMap = ref<Recordable<boolean>>({})
 
 function formatKernelBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return `${$t('Downloading')} ${Math.floor(item.percent)}%`
+    return `${$t('正在下载')} ${Math.floor(item.percent)}%`
   }
   else if (item.status === 'downloaded') {
-    return $t('Installed')
+    return $t('升级完成')
   }
   else if (item.status === 'failed') {
-    return $t('Retry')
+    return $t('重试')
   }
   else {
-    return $t('Install')
+    return $t('升级')
   }
 }
 
 function handleKernelItemClick(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return $t('Downloading')
+    return $t('正在下载')
   }
   else if (item.status === 'uninstalled' && item.coreVersion) {
     window.electronAPI.send('app:download-chrome-core', item.coreVersion)

@@ -71,9 +71,7 @@ onBeforeMount(() => {
 
 <template>
   <div v-if="currentWorkspace" class="workspace">
-    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name"
-            class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
-    >
+    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select" :overlay-class="$style['workspace-select-overlay']">
       <template #value="slotProps">
         <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)" class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.value.workspacePicture)" />
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
@@ -90,7 +88,7 @@ onBeforeMount(() => {
       <template #footer>
         <div class="select-footer" @click="showCreateWorkspaceDialog">
           <RxSvgIcon name="base/rx_ic_plus" />
-          <span>{{ $t('Create new workspace') }}</span>
+          <span>{{ $t('创建新的工作空间') }}</span>
         </div>
       </template>
     </Select>
