@@ -239,7 +239,7 @@ async function modifyFilter() {
       </div>
       <RxButton class="filter-list-button" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
-        <span v-if="!filterTagList.length">{{ $t('Add filters') }}</span>
+        <span v-if="!filterTagList.length">{{ $t('筛选条件') }}</span>
       </RxButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">

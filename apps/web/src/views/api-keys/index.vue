@@ -15,16 +15,16 @@ const confirm = useConfirm()
 
 const illustrate = [
   {
-    title: $t('Introductions:'),
-    content: $t('Users can read and write account configuration information, create, open, and manage environments via API, and also achieve browser automation by integrating with automation frameworks such as Selenium, Puppeteer, and Playwright.'),
+    title: $t('功能概述'),
+    content: $t('用户可以通过 API 的方式来读写账号配置信息、创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等自动化框架实现浏览器操作的自动化'),
   },
   {
-    title: $t('Restriction:'),
-    content: $t('API request rate limit: 100 requests per minute<br>Team API concurrent devices limit: 200'),
+    title: $t('API 接口限制'),
+    content: $t('API 请求频率限制：100 次 / 分钟'),
   },
   {
-    title: $t('Resources:'),
-    content: $t('For API installations and instructions, please visit: <a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api">API Documentation.</a>'),
+    title: $t('API 使用说明'),
+    content: $t('更多 API 功能和使用方法, 请参考<a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2">API 文档</a>'),
   },
 ]
 
@@ -57,7 +57,7 @@ const inputs = ref([
       const formData = getFormData(inputs.value)
       const result = z.number().min(0).max(65535).safeParse(formData.port)
       if (result.error) {
-        setInputFieldByInputKey(inputs.value, 'port', 'errorMsg', 'between 0~65535')
+        setInputFieldByInputKey(inputs.value, 'port', 'errorMsg', $t('端口应设置在 0~65535 之间'))
       }
       else {
         port.value = formData.port
@@ -109,23 +109,23 @@ onBeforeMount(() => {
   <div class="flex flex-col w-full h-full api">
     <div class="api-header">
       <RxSvgIcon name="base/rx_ic_doc_code" />
-      <span>API Keys</span>
+      <span>{{ $route.meta.title }}</span>
     </div>
     <div class="flex-1 w-1/2 mx-auto">
       <div class="api-usage">
-        <div>{{ $t('API keys usage:') }}</div>
-        <rxToggleSwitch v-model="open" :label="open ? $t('Active') : $t('Disable')" @change="updateApiKeys" />
+        <div>{{ $t('API 启用状态') }}</div>
+        <rxToggleSwitch v-model="open" :label="open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
       </div>
       <template v-if="open">
         <div class="api-content">
           <div class="api-content-reset">
-            <div>API keys:</div>
-            <RxButton severity="secondary" outlined size="sm" icon="base/rx_ic_refresh" :label="$t('Reset API Key')" @click="resetApiKey" />
+            <div>{{ $t('API 秘钥') }}</div>
+            <RxButton severity="secondary" outlined size="sm" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
           </div>
           <div class="api-content-desc">
             <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
             <div class="flex-1">
-              {{ $t('IMPORTANT: The content that can be accessed with this API key is related to the permissions you currently have within the workspace.') }}
+              {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
             </div>
           </div>
           <div class="api-content-key">
@@ -133,19 +133,16 @@ onBeforeMount(() => {
               <div class="api-content-key-value">
                 {{ apiKey }}
               </div>
-              <RxButton severity="secondary" size="sm" icon="base/rx_ic_copy" label="Copy" @click="onCopy" />
+              <RxButton severity="secondary" size="sm" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
             </div>
             <div class="api-content-key-desc">
-              * {{ $t('Please keep your API keys safe and should not abuse it.') }}
+              * {{ $t('请确保您的 API 秘钥安全保存') }}
             </div>
           </div>
           <div class="api-content-proxy">
             <div>
               <div>
-                {{ $t('Port') }}:
-              </div>
-              <div class="api-content-proxy-desc">
-                {{ $t('Port should be in between 0~65535') }}
+                {{ $t('端口设置') }}
               </div>
             </div>
             <inputNumberGroup :inputs="inputs" />

@@ -126,16 +126,16 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            {{ $t('Workspace icon') }}
+            {{ $t('空间图标') }}
           </div>
           <div class="description">
-            {{ $t('Default icon show first 2 letters of your workspace’s name. ') }}
+            {{ $t('默认图标展示所有者名称的前两个字符') }}
           </div>
         </div>
         <div class="emoji-picker-box">
           <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
           <div class="choose-icon-desc">
-            {{ $t('Choose icon') }}
+            {{ $t('选泽图标') }}
           </div>
         </div>
       </div>
@@ -143,10 +143,10 @@ function leaveWorkspace() {
       <div class="row">
         <div>
           <div class="title">
-            {{ $t('Workspace name') }}
+            {{ $t('空间名称') }}
           </div>
           <div class="description">
-            {{ $t('First 3 letters of your workspace name will be the prefix of all profiles’ ID ') }}
+            {{ $t('默认窗口信息会展示为空间名称的前三个字符与序号的组合') }}
           </div>
         </div>
         <div class="w-full">
@@ -157,7 +157,7 @@ function leaveWorkspace() {
             </InputIcon>
           </IconField>
           <div class="description">
-            Profile ID: IAM-001, IAM-002
+            窗口信息示例：IAM-001, IAM-002
           </div>
         </div>
       </div>
@@ -167,9 +167,9 @@ function leaveWorkspace() {
       <template v-if="isOwner">
         <RxButton severity="secondary" @click="showMoreActions">
           <RxSvgIcon name="base/rx_ic_more-h" />
-          {{ $t('More') }}
+          {{ $t('更多操作') }}
         </RxButton>
-        <RxButton :label="$t('Save Changes')" @click="handleSaveChange" />
+        <RxButton :label="$t('保存修改')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
         <RxButton :label="$t('Leave workspace')" severity="danger" @click="leaveWorkspace" />
@@ -181,7 +181,7 @@ function leaveWorkspace() {
     <div class="action-list">
       <div class="action-item danger" @click="handleDeleteConfirm">
         <RxSvgIcon name="base/rx_ic_bin_1" />
-        {{ $t('Delete Workspace') }}
+        {{ $t('删除空间') }}
       </div>
     </div>
   </Popover>

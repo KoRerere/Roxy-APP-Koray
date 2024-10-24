@@ -4,29 +4,29 @@ const columnsConfig = {
   key: 'browser.list',
   data: [
     {
-      title: $t('Profile Info'),
+      title: $t('窗口信息'),
       key: 'profile',
       disabledToggle: true,
       slot: 'profile',
     },
     {
-      title: $t('Open/View'),
+      title: $t('操作'),
       key: 'open',
       disabledToggle: true,
       slot: 'open',
     },
     {
-      title: $t('Project'),
+      title: $t('项目'),
       key: 'project',
       slot: 'project',
     },
     {
-      title: $t('Tags'),
+      title: $t('标签'),
       key: 'tags',
       slot: 'tags',
     },
     {
-      title: $t('Actions'),
+      title: $t('其他'),
       key: 'actions',
       slot: 'actions',
     },

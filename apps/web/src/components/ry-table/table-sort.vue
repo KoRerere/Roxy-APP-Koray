@@ -29,7 +29,7 @@ function onUpdate() {
 </script>
 
 <template>
-  <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" @click="toggle" />
+  <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" :label="$t('排序')" @click="toggle" />
   <ryPopover ref="popRef">
     <div :class="classes.content">
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">

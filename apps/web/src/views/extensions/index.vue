@@ -5,8 +5,8 @@ import hub from './hub/index.vue'
 import list from './install/index.vue'
 
 const tabs = ref([
-  { title: $t('Installed'), value: 'Installed' },
-  { title: $t('Extension Hub'), value: 'hub' },
+  { title: $t('已安装扩展'), value: 'Installed' },
+  { title: $t('扩展推荐'), value: 'hub' },
 ])
 
 const tabsValue = ref('Installed')
@@ -32,7 +32,7 @@ function onChange(value: any) {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="extensions-header">
-      {{ $t('Extensions') }}
+      {{ $route.meta.title }}
     </div>
     <Tabs class="flex-1 overflow-hidden" :value="tabsValue" @update:value="onChange">
       <TabList>

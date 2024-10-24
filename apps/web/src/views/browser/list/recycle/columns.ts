@@ -4,21 +4,21 @@ const columnsConfig = {
   key: 'browser.recycl',
   data: [
     {
-      title: $t('Profile Info'),
+      title: $t('窗口信息'),
       key: 'profile',
       slot: 'profile',
     },
     {
-      title: $t('Tags'),
+      title: $t('标签'),
       slot: 'tags',
     },
     {
-      title: $t('Delete Log'),
+      title: $t('删除记录'),
       key: 'group',
       slot: 'log',
     },
     {
-      title: $t('Actions'),
+      title: $t('操作'),
       slot: 'actions',
     },
   ],

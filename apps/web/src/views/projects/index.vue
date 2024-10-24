@@ -120,18 +120,17 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
 <template>
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
-      <div>{{ $t('Projects') }}</div>
-      <RxButton v-if="role.isOwner || role.isManager" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('Add project')" @click="operationHandler({ name: 'create' })" />
+      <div>{{ $t('项目管理') }}</div>
+      <RxButton v-if="role.isOwner || role.isManager" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
-        :show-actions="false" data-key="project_id">
+               :show-actions="false" data-key="project_id"
+      >
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
-            <RxButton outlined>
-              {{ $t('Detail') }}
-            </RxButton>
+            <span class="text-[blue]">{{ data.projectName }}</span>
           </router-link>
         </template>
         <template #members="{ data }">

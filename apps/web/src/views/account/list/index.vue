@@ -150,13 +150,17 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <div class="flex justify-between account-header">
-      <div>Accounts</div>
-      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" label="Create account" @click="operationHandler({ name: 'create' })" />
+      <div>{{ $route.meta.title }}</div>
+      <RxButton
+        v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys"
+        :label="$t('添加账号')" @click="operationHandler({ name: 'create' })"
+      />
     </div>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-        :show-actions="false">
+               :show-actions="false"
+      >
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">

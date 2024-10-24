@@ -136,7 +136,13 @@ const paginatorConfig = reactive({
   rows: 10,
   first: 0,
   totalRecords: 0,
-  rowsPerPageOptions: [5, 10, 20, 50, 100],
+  rowsPerPageOptions: [
+    { label: '5 条/页', value: 5 },
+    { label: '10 条/页', value: 10 },
+    { label: '20 条/页', value: 20 },
+    { label: '50 条/页', value: 50 },
+    { label: '100 条/页', value: 100 },
+  ],
   onResetPage(page: number = 1, rows: number = 10) {
     paginatorConfig.page = page
     paginatorConfig.rows = rows
@@ -151,7 +157,7 @@ const paginatorConfig = reactive({
   },
 })
 
-const paginatorInfo = computed(() => $t('Showing {start}-{end} of {total} profiles,', {
+const paginatorInfo = computed(() => $t('总计 {total} 个', {
   start: paginatorConfig.first + 1,
   end: Math.min(paginatorConfig.first + paginatorConfig.rows, paginatorConfig.totalRecords),
   total: paginatorConfig.totalRecords,
@@ -261,7 +267,8 @@ defineExpose({
         </template>
         <Column v-if="selectionMode" header-style="width: 3rem" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title" :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
-          :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }">
+                :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }"
+        >
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
@@ -285,14 +292,14 @@ defineExpose({
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
-        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+                 :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage"
+      >
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <Select v-model="paginatorConfig.rows" :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
-            <div>profiles/page</div>
+            <Select v-model="paginatorConfig.rows" style="width: fit-content;" option-label="label" option-value="value" :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
-              <div>Go to</div>
+              <div>{{ $t('跳转页数至') }}</div>
               <!-- <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
               <div>|</div> -->
             </div>
@@ -303,7 +310,8 @@ defineExpose({
   </div>
   <Transition>
     <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-      :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
+                        :operation="_getOperation(selectionData)" @batch-operation="batchOperation"
+    >
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
       </template>

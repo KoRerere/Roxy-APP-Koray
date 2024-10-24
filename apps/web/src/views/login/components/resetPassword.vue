@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
+import { z } from 'zod'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
+import { getRegisterValidation } from './schemas'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
@@ -23,7 +25,7 @@ async function handleSubmit() {
     })
 
     if (code === 0) {
-      toast.add({ severity: 'success', summary: $t('Verification code sent!'), detail: $t('Please checkout your email.'), life: 5000 })
+      // toast.add({ severity: 'success', summary: $t('Verification code sent!'), detail: $t('Please checkout your email.'), life: 5000 })
       currentStep.value = 'step2'
     }
     else {
@@ -66,6 +68,44 @@ function receiveEmailCode(code: string) {
   emailCode.value = code
   currentStep.value = 'step3'
 }
+
+const User = z.object({
+  newPassword: getRegisterValidation(),
+  reNewPassword: getRegisterValidation(),
+})
+
+const errorMessage = ref({
+  newPassword: '',
+  reNewPassword: '',
+})
+
+watch([newPassword, reNewPassword], () => {
+  if (true) {
+    const result = User.safeParse({ newPassword: newPassword.value })
+
+    if (result.success) {
+      errorMessage.value.newPassword = ''
+    }
+    else {
+      errorMessage.value.newPassword = result.error.errors[0].message
+    }
+  }
+
+  if (true) {
+    const result = User.safeParse({ reNewPassword: reNewPassword.value })
+
+    if (result.success) {
+      errorMessage.value.reNewPassword = ''
+    }
+    else {
+      errorMessage.value.reNewPassword = result.error.errors[0].message
+    }
+  }
+
+  if (reNewPassword.value && newPassword.value !== reNewPassword.value) {
+    errorMessage.value.reNewPassword = $t('两次输入的密码不一致')
+  }
+})
 </script>
 
 <template>
@@ -74,28 +114,24 @@ function receiveEmailCode(code: string) {
       <div class="box">
         <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('Your email haven’t been signed up.')" :content="$t('Please checkout your email and try again.')" />
         <div class="title">
-          {{ $t('Reset your password') }}
-        </div>
-        <div class="description">
-          {{ $t('Enter your email address and we will send you a code for your reset process.') }}
+          {{ $t('重置密码') }}
         </div>
         <div class="flex flex-col gap-2 w-full">
           <template v-if="currentStep === 'step1'">
-            <label for="email" class="label">{{ $t('Email') }}</label>
-            <InputText id="email" v-model="email" :placeholder="$t('Email for your account')" />
+            <InputText id="email" v-model="email" :placeholder="$t('请输入您的邮箱')" />
           </template>
           <template v-else>
-            <label for="new-password" class="label">{{ $t('New password') }}</label>
-            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('Enter new password')" toggle-mask />
-            <label for="re-new-password" class="label">{{ $t('Re-enter new password') }}</label>
-            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('Re-enter new password')" toggle-mask />
+            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('请输入您的新密码')" toggle-mask />
+            <span>{{ errorMessage.newPassword }}</span>
+            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('请再次输入您的新密码')" toggle-mask />
+            <span>{{ errorMessage.reNewPassword }}</span>
           </template>
         </div>
       </div>
       <RxButton class="w-full" @click="handleSubmit">
-        {{ currentStep === 'step1' ? $t('Next') : $t('Confirm') }}
+        {{ currentStep === 'step1' ? $t('前往验证') : $t('确认') }}
       </RxButton>
-      <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('Back to sign in') }}</a>
+      <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('返回登录') }}</a>
     </div>
   </template>
   <template v-else>
@@ -158,6 +194,8 @@ function receiveEmailCode(code: string) {
   align-self: stretch;
 
   .title {
+    width: 100%;
+    text-align: center;
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 16px;

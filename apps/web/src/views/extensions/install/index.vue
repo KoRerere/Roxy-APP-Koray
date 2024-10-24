@@ -29,7 +29,7 @@ const tableRef = useTemplateRef('extable')
 
 const columns = ref([
   {
-    title: $t('Extension'),
+    title: $t('扩展信息'),
     key: 'extension',
     slot: 'extension',
   },
@@ -40,12 +40,12 @@ const columns = ref([
   //   // slot: 'toggle',
   // },
   {
-    title: $t('Source'),
+    title: $t('来源'),
     key: 'source',
     getText: (row: any) => row.uploader || row.source || '未知',
   },
   {
-    title: $t('Installed Profiles'),
+    title: $t('已关联项目'),
     key: 'installType',
     getText: (row: any) => !row.installType
       ? '--'
@@ -54,12 +54,12 @@ const columns = ref([
         : $t('Partial'),
   },
   {
-    title: $t('Update'),
+    title: $t('更新信息'),
     key: 'pluginUpdateState',
     slot: 'update',
   },
   {
-    title: $t('Actions'),
+    title: $t('操作'),
     style: 'width: 9rem',
     slot: 'actions',
   },
@@ -69,15 +69,15 @@ const filters = reactive({
   value: null,
   options: [
     {
-      name: $t('All'),
+      name: $t('全部'),
       value: null,
     },
     {
-      name: $t('Active'),
+      name: $t('已启用'),
       value: true,
     },
     {
-      name: $t('Disabled'),
+      name: $t('未启用'),
       value: false,
     },
   ],
@@ -324,13 +324,14 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
+           :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton severity="info" size="sm" icon="base/rx_ic_download_cloud" :label="$t('Add with URL')" @click="installViaUrl" />
-          <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('Upload')" @click="onUploadExtension" />
+          <RxButton severity="info" size="sm" icon="base/rx_ic_download_cloud" :label="$t('通过 URL 添加')" @click="installViaUrl" />
+          <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
         </div>
       </div>
     </template>

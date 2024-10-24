@@ -5,7 +5,7 @@ import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
-import { isDev } from '/@/utils'
+import { isDev, isPackaged } from '/@/utils'
 
 const agent = new https.Agent({
   rejectUnauthorized: false,
@@ -29,7 +29,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   if (!baseURL) {
     baseURL = await getGatewayConfig()
   }
-  config.baseURL = baseURL
+  config.baseURL = config.ossUrl || baseURL
 
   if (isDev) {
     console.log('store.token', store.token)

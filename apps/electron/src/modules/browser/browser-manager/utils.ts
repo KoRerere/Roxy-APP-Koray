@@ -323,7 +323,6 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     /** 端口扫描保护.启用后，将会阻止网站检测您使用了本地网络的哪些端口,示例：4000;4001 */
     portScan: {
       enablePortScanWhiteList: winInfo.portScanProtect,
-      // TODO: 从配置中获取
       portScanWhiteList: `${store.appPort};${winInfo.portScanList.replaceAll(',', ';')}`,
     },
     /** 选填 屏幕分辨率 */
