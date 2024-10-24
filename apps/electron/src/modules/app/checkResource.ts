@@ -2,6 +2,7 @@ import axios from 'axios'
 import { createWriteStream } from 'node:fs'
 import { access, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { setTimeout } from 'node:timers/promises'
 import { API } from '/@/api'
 import { appConfig, osConfig } from '/@/constants'
 import { ipcMain } from '/@/modules/ipc'
@@ -13,6 +14,7 @@ function sendLaunchMessage(message: string) {
 }
 
 export async function checkResource() {
+  await setTimeout(200000000)
   const { promise, resolve } = Promise.withResolvers()
   const startCheckTime = Date.now()
   console.log('checkResource start')
