@@ -171,7 +171,7 @@ onBeforeMount(() => {
 .select-footer {
   cursor: pointer;
   display: flex;
-  padding: 8px var(--spacing-md, 6px) 8px 10px;
+  padding: 10px var(--spacing-md, 6px) 10px 10px;
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md, 6px);

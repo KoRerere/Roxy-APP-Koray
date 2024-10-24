@@ -83,12 +83,14 @@ export const store = new Proxy(latestStore, {
 export async function fetchUserConfig() {
   try {
     // 启动时，获取用户配置
-    const { data } = await API.base.userGetUserConfigList()
-    Object.keys(data).forEach((key) => {
-      if (Reflect.has(store, key)) {
-        Reflect.set(store, key, Reflect.get(data, key))
-      }
-    })
+    const { code, data } = await API.base.userGetUserConfigList()
+    if (code === 0) {
+      Object.keys(data).forEach((key) => {
+        if (Reflect.has(store, key)) {
+          Reflect.set(store, key, Reflect.get(data, key))
+        }
+      })
+    }
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)

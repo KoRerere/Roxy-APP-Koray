@@ -56,6 +56,10 @@ function filterMenus(menus: RouteRecordRaw[]) {
       item.children = filterMenus(item.children)
     }
 
+    if (item.meta?.type === 'group' && !item.children?.length) {
+      return false
+    }
+
     let hasRole = true
     if (item.meta?.roles?.length) {
       hasRole = item.meta.roles.includes(currentWorkspace.value?.role)

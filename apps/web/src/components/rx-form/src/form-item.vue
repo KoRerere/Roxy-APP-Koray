@@ -140,7 +140,7 @@ onMounted(async () => {
 <template>
   <div class="field">
     <div class="form-item-row" :class="formProps.layout">
-      <label v-if="schema.label" :for="compId">
+      <label v-if="schema.label" :for="compId" :class="{ colon: formProps.colon }">
         <component :is="LabelComponent" />
       </label>
       <div class="form-item-control">
@@ -167,13 +167,13 @@ label {
   height: 32px;
   justify-content: v-bind('labelAlign');
 
-  // &::after {
-  //   content: ':';
-  //   position: relative;
-  //   margin-block: 0;
-  //   margin-inline-start: 2px;
-  //   margin-inline-end: 8px;
-  // }
+  &.colon::after {
+    content: ':';
+    position: relative;
+    margin-block: 0;
+    margin-inline-start: 2px;
+    margin-inline-end: 8px;
+  }
 }
 
 .p-error {

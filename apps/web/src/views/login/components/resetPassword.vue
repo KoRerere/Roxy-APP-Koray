@@ -75,7 +75,7 @@ function receiveEmailCode(code: string) {
             <InputText id="email" v-model="email" :placeholder="$t('请输入您的邮箱')" />
           </template>
           <template v-else>
-            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
           </template>
         </div>
       </div>

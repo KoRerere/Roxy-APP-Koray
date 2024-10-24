@@ -166,7 +166,7 @@ function leaveWorkspace() {
     </div>
 
     <div class="footer">
-      <template v-if="isOwner">
+      <template v-if="isOwner && !currentWorkspace?.workspaceDefault">
         <RxButton severity="secondary" @click="showMoreActions">
           <RxSvgIcon name="base/rx_ic_more-h" />
           {{ $t('更多操作') }}

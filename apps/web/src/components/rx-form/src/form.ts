@@ -1,6 +1,6 @@
 import type { EmitFn, ExtractPropTypes } from 'vue'
-import type { FormSchema } from './types/form'
 import { isPlainObject } from 'es-toolkit'
+import type { FormSchema } from './types/form'
 
 export const rxFormProps = {
   modelValue: {
@@ -17,6 +17,11 @@ export const rxFormProps = {
   layout: {
     type: String as PropType<'horizontal' | 'vertical' | 'inline'>,
     default: 'horizontal',
+  },
+  /** 是否显示冒号 */
+  colon: {
+    type: Boolean as PropType<boolean>,
+    default: true,
   },
   labelWidth: {
     type: String as PropType<string>,
