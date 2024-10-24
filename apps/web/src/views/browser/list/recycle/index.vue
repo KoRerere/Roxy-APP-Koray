@@ -50,7 +50,7 @@ async function recoverHandler(datas: any) {
       outlined: true,
     },
     acceptProps: {
-      label: $t('确定'),
+      label: $t('确认'),
       severity: 'info',
     },
     accept: async () => {
@@ -71,7 +71,7 @@ async function deleteHandler(datas: any) {
       outlined: true,
     },
     acceptProps: {
-      label: $t('确定'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {

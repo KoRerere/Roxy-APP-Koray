@@ -21,7 +21,7 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
     const { confirmNext, ...data } = props || {}
 
     await dialog.showModal({
-      header: data.project_id ? $t('Edit project') : $t('Create project'),
+      header: data.project_id ? $t('编辑项目') : $t('创建项目'),
       class: 'w-[500px]',
       schemas: projectFormSchemas,
       formProps: {

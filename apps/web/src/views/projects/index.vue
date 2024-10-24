@@ -30,14 +30,14 @@ const operation = ref([
     name: 'edit',
     label: $t('Edit'),
     icon: 'base/rx_ic_edit',
-    power: role.isOwner || role.isManager,
+    power: role.isOwner,
     quick: true,
   },
   {
     name: 'invite',
     label: $t('Invite'),
     icon: 'base/rx_ic_user_add',
-    power: role.isOwner || role.isManager,
+    power: role.isOwner,
     quick: true,
   },
   {
@@ -87,19 +87,19 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     message = $t(`Are you sure you want to delete the {count} selected items?`, { count: item.length })
   }
   else {
-    message = $t('Are you sure you want to delete the project {projectName}?', { projectName: item.projectName })
+    message = $t('您确认要删除 {projectName} 项目吗？该操作会移除所有项目成员，且所有窗口将回归默认项目。', { projectName: item.projectName })
   }
 
   confirm.require({
-    header: $t('Warn'),
+    header: $t('删除项目'),
     message,
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
@@ -121,13 +121,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
   <div class="flex flex-col h-full account">
     <div class="flex justify-between account-header">
       <div>{{ $t('项目管理') }}</div>
-      <RxButton v-if="role.isOwner || role.isManager" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
+      <RxButton v-if="role.isOwner" size="sm" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
-               :show-actions="false" data-key="project_id"
-      >
+        :show-actions="false" data-key="project_id">
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <span class="text-[blue]">{{ data.projectName }}</span>

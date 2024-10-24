@@ -289,7 +289,7 @@ async function deleteProfile(datas: any, ids: number[]) {
         outlined: true,
       },
       acceptProps: {
-        label: $t('确定'),
+        label: $t('确认'),
         severity: 'danger',
       },
       accept: async () => {
@@ -398,7 +398,7 @@ async function deleteProxy(data: any) {
       outlined: true,
     },
     acceptProps: {
-      label: $t('确定'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: () => {
