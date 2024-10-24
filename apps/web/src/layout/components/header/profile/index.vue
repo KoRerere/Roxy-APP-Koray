@@ -18,9 +18,9 @@ const simpleLocale = useSimpleLocale()
 
 const menuRef = useTemplateRef('menu')
 const items = ref([
-  ...getSettings().map(item => ({ ...item, command: () => openSettings(item.label) })),
+  ...getSettings().map(item => ({ ...item, command: () => openSettings(item.name) })),
   {
-    label: $t('Language'),
+    label: $t('语言'),
     icon: 'base/rx_ic_language',
     items: ISO639List.map((item) => {
       return {
@@ -37,24 +37,24 @@ const items = ref([
   },
   ...(import.meta.env.DEV
     ? [
-        {
-          label: '图标(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/figma-icons')
-          },
+      {
+        label: '图标(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/figma-icons')
         },
-        {
-          label: '多语言(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/__language-localization__')
-          },
+      },
+      {
+        label: '多语言(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/__language-localization__')
         },
-      ]
+      },
+    ]
     : []),
   {
-    label: $t('Log out'),
+    label: $t('退出登录'),
     icon: 'base/rx_ic_logout',
     command: () => {
       userStore.clearUserInfo()
@@ -91,8 +91,7 @@ function toggle(event: Event) {
 
 <template>
   <RxAvatar class="cursor-pointer mr-2" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="28" :font-size="16"
-            @click="toggle"
-  />
+    @click="toggle" />
 
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>

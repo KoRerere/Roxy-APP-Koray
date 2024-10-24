@@ -41,8 +41,8 @@ async function removeAvatar() {
   <div class="upload-area">
     <RxAvatar :avatar="previewUrl" :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100" :font-size="52" />
     <div class="upload-area-buttons">
-      <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('Remove')" @click="removeAvatar" />
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('Upload')" @click="uploadAvatar" />
+      <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')" @click="removeAvatar" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')" @click="uploadAvatar" />
     </div>
   </div>
 </template>

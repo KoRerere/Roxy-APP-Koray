@@ -63,6 +63,7 @@ const drawer = reactive({
   title: '',
   data: null,
   visible: false,
+  dismissable: false,
   confirm: (type: any, data: any) => {
     const { id, dirId, windowPlatformList } = drawer.data!
     switch (type) {
@@ -114,6 +115,8 @@ watch(
     }
   },
 )
+
+const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
 function onRefreshTable() {
   const params = filterFieldByValue(getFormData(filtersMenu.value))
@@ -254,12 +257,12 @@ function onRemark(datas: any) {
     },
     data: {
       props: {
-        title: $t('Add notes to profile'),
-        content: $t('Please add notes down below.'),
+        title: $t('为所选窗口添加备注'),
         inputs: [
           {
             type: 'text',
             name: 'windowRemark',
+            placeholder: $t('请输入备注'),
             value: datas[0].windowRemark,
           },
         ],
@@ -277,11 +280,23 @@ async function deleteProfile(datas: any, ids: number[]) {
     toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
   }
   else {
-    await warnPopup($t('Are you sure to perform this operation?'))
-      .then(() => batchModifyWindow({ ids, isDelete: true }))
-      .then(() => {
+    confirm.require({
+      header: $t('删除窗口'),
+      message: $t('您确认要删除所选窗口吗？'),
+      rejectProps: {
+        label: $t('取消'),
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptProps: {
+        label: $t('确认'),
+        severity: 'danger',
+      },
+      accept: async () => {
+        await batchModifyWindow({ ids, isDelete: true })
         window.electronAPI.send('browser:batchRemove', datas)
-      })
+      },
+    })
   }
 }
 
@@ -323,17 +338,18 @@ function profileOperate(key: string, data: any) {
     case 'addProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.title = $t('Add proxy for [UID-{uid}]', { uid: data.windowSortNum })
+      drawer.title = $t('为[{workspaceName}-{uid}]添加代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
+
       break
     case 'editProxy':
       drawer.visible = true
       drawer.type = 'proxyForm'
-      drawer.title = $t('Edit proxy for [UID-{uid}]', { uid: data.windowSortNum })
+      drawer.title = $t('为[{workspaceName}-{uid}]编辑代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
     case 'selectProxy':
       drawer.visible = true
       drawer.type = 'proxyList'
-      drawer.title = $t('Select proxy for [UID-{uid}]', { uid: data.windowSortNum })
+      drawer.title = $t('为[{workspaceName}-{uid}]选择代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
     case 'testProxy':
       testProxy(_data)
@@ -347,12 +363,12 @@ function profileOperate(key: string, data: any) {
     case 'addAccount':
       drawer.visible = true
       drawer.type = 'accountForm'
-      drawer.title = $t('Add accounts for [UID-{uid}]', { uid: data.windowSortNum })
+      drawer.title = $t('为[{workspaceName}-{uid}]添加平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
     case 'selectAccount':
       drawer.visible = true
       drawer.type = 'accountList'
-      drawer.title = $t('Select accounts for [UID-{uid}]', { uid: data.windowSortNum })
+      drawer.title = $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
   }
 }
@@ -373,40 +389,29 @@ async function refreshUrl(data: any) {
 }
 
 async function deleteProxy(data: any) {
-  try {
-    await warnPopup($t('Related profiles won\'t be infected.'))
-    // 删除代理也是调用修改接口
-    singleModifyWindow({
-      id: data.id,
-      dirId: data.dirId,
-      moduleId: 0, // 为0表示解除关联
-      proxyCategory: 'noproxy',
-      proxyMethod: 'custom',
-      ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
-    })
-  }
-  catch (error) {
-    onlyErrorToast(-1, error as string)
-  }
-}
-
-function warnPopup(message: string) {
-  // !todo 待优化
-  return new Promise((resolve, _reject) => {
-    confirm.require({
-      header: $t('warn'),
-      message,
-      rejectProps: {
-        label: $t('Cancel'),
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptProps: {
-        label: $t('Confirm'),
-        severity: 'danger',
-      },
-      accept: () => resolve(null),
-    })
+  confirm.require({
+    header: $t('删除代理'),
+    message: $t('您确认要删除代理吗？'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: () => {
+      // 删除代理也是调用修改接口
+      singleModifyWindow({
+        id: data.id,
+        dirId: data.dirId,
+        moduleId: 0, // 为0表示解除关联
+        proxyCategory: 'noproxy',
+        proxyMethod: 'custom',
+        ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
+      })
+    },
   })
 }
 
@@ -465,7 +470,7 @@ defineExpose({
       </div>
     </template> -->
     <template #profile="{ data }">
-      <profile-info :current-workspace="workspaceStore.currentWorkspace" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
+      <profile-info :workspace-name="workspaceName" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
@@ -478,7 +483,7 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
+        <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
           @click.stop="operationHandler({ name: 'fav' }, data)" />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add" :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
           @click.stop="operationHandler({ name: 'addNotes' }, data)" />
@@ -491,9 +496,9 @@ defineExpose({
         @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
-  <Drawer v-model:visible="drawer.visible" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">
+  <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">
     <template #container="{ closeCallback }">
-      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" @confirm="drawer.confirm(drawer.type, $event)" />
+      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
   </Drawer>

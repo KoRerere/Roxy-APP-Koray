@@ -23,8 +23,8 @@ function createInput(value?: string) {
     type: 'text',
     name: (new Date().getTime()).toString(32),
     value,
-    errorMsg: $t('invalid url'),
-    placeholder: 'Please enter url',
+    errorMsg: $t('请输入正确的 URL'),
+    placeholder: $t('请输入 URL'),
     leftIcon: 'base/rx_ic_link' as SvgNames,
   }
 }
@@ -57,7 +57,7 @@ function onBlur(input: any) {
   <div class="flex flex-row">
     <input-label v-bind="$attrs" />
     <div class="flex-1">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" label="Add URLs" @click="addInputs" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')" @click="addInputs" />
       <div class="inputs">
         <rxCard v-for="(input, index) in urlInputs" :key="input.name" class="inputs-item" @close="deleteInput(index)">
           <FormItem v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />

@@ -5,7 +5,7 @@ import { useUserStore } from '/@/stores/user'
 import type { SettingsModule } from './type'
 import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getSettings } from './panel'
 
-type PanelKeyType = ReturnType<typeof getSettings>[number]['label']
+type PanelKeyType = ReturnType<typeof getSettings>[number]['name']
 
 interface Active {
   key: PanelKeyType
@@ -16,7 +16,7 @@ const dialogRef = inject<any>('dialogRef')
 
 const userStore = useUserStore()
 const active = reactive<Active>({
-  key: 'Profiles',
+  key: 'profiles',
   panel: null,
 })
 
@@ -26,7 +26,7 @@ const menuList = ref(
   getSettings().map(item => ({
     ...item,
     command: () => {
-      active.key = item.label
+      active.key = item.name
       active.panel = settingsPanel[active.key]
     },
   })),
@@ -34,9 +34,9 @@ const menuList = ref(
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  settingsPanel.Profiles = getProfilePanel(toRaw(userStore.userInfo))
-  settingsPanel.Preferences = getPreferencesPanel(data)
-  settingsPanel.Network = getNetworkPanel(data)
+  settingsPanel.profiles = getProfilePanel(toRaw(userStore.userInfo))
+  settingsPanel.preferences = getPreferencesPanel(data)
+  settingsPanel.network = getNetworkPanel(data)
   active.panel = settingsPanel[active.key]
 }
 
@@ -55,10 +55,10 @@ onMounted(() => {
     <div class="settings-menu">
       <div class="settings-menu-title">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" @click="closePopup" />
-        <span>{{ $t('Client Settings') }}</span>
+        <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in menuList" :key="item.label" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.label === active.key }" @click="item.command">
+        <div v-for="item in menuList" :key="item.name" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.name === active.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>

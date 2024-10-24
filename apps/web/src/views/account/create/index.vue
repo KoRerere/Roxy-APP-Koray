@@ -15,6 +15,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  showRemark: {
+    type: Boolean,
+    default: true,
+  },
   showCreateMore: {
     type: Boolean,
     default: true,
@@ -39,23 +43,21 @@ async function getInputs(data: any = {}) {
   }))
 
   const inputs = reactive([
-    {
-      type: 'text',
-      label: $t('Alias'),
-      placeholder: $t('Better name to identify'),
-      name: 'platformName',
-      tooltip: 'man!',
-    },
+    // {
+    //   type: 'text',
+    //   label: $t('alias'),
+    //   placeholder: $t('Better name to identify'),
+    //   name: 'platformName',
+    // },
     {
       type: 'select',
-      label: $t('Website'),
-      placeholder: $t('Search or enter your platform URL'),
+      label: $t('平台'),
+      placeholder: $t('请输入或选择平台网址'),
       name: 'platformUrl',
       value: null,
       options: platformOptions,
       required: true,
       editable: true,
-      tooltip: 'man!',
       change(input: any) {
         input.invalid = false
         Reflect.set(original.value, 'platformIcon', input.value?.image || '')
@@ -63,32 +65,28 @@ async function getInputs(data: any = {}) {
     },
     {
       type: 'text',
-      label: $t('Account name'),
-      placeholder: $t('Username for your website'),
+      label: $t('账号'),
+      placeholder: $t('请输入账号'),
       name: 'platformUserName',
-      tooltip: 'mamba out!',
     },
     {
       type: 'password',
-      label: $t('Password'),
-      placeholder: $t('Password for your server'),
+      label: $t('密码'),
+      placeholder: $t('请输入密码'),
       name: 'platformPassword',
-      tooltip: 'man!',
     },
     {
       type: 'text',
       label: '2FA',
-      placeholder: $t('32-character Keys'),
+      placeholder: $t('请输入 2FA 密钥'),
       name: 'platformEfa',
-      tooltip: 'mamba out!',
     },
     {
       type: 'textarea',
       label: 'Cookies',
       name: 'platformCookies',
-      placeholder: $t('Paste JSON format or upload cookies JSON file'),
+      placeholder: $t('请以 JSON 格式输入 Cookies'),
       errorMsg: 'Invalid cookie format',
-      tooltip: 'man!',
       icon: 'base/rx_ic_attachment',
       autoResize: false,
       formatValue: (input: any) => {
@@ -148,9 +146,9 @@ onBeforeMount(() => {
     <RyForm :inputs="formInputs" />
     <template #footer>
       <div class="flex flex-1 justify-end gap-3">
-        <RemarkIcon class="ma-auto ml-0" mode="button" :value="original?.platformRemarks" :on-confirm="addRemark" />
-        <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('Save & Create more')" severity="secondary" outlined @click="onConfirm(true)" />
-        <RxButton size="sm" :label="$t('Save Account')" severity="info" @click="onConfirm(false)" />
+        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
+        <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm(false)" />
       </div>
     </template>
   </drawer-content>

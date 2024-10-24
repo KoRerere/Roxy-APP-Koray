@@ -69,15 +69,18 @@ export function getSettings() {
   toast.value = useToast()
   return [
     {
-      label: $t('Profiles'),
+      label: $t('个人信息'),
+      name: 'profiles',
       icon: 'base/rx_ic_user_circle',
     },
     {
-      label: $t('Preferences'),
+      label: $t('软件设置'),
+      name: 'preferences',
       icon: 'base/rx_ic_slider',
     },
     {
-      label: $t('Network'),
+      label: $t('网络设置'),
+      name: 'network',
       icon: 'base/rx_ic_wifi',
     },
   ] as const
@@ -85,20 +88,19 @@ export function getSettings() {
 
 export function getProfilePanel(data?: any): SettingsModule {
   return {
-    title: $t('Profile'),
-    description: $t('Manage your account info and email.'),
+    title: $t('个人信息'),
+    description: $t('设置您的账号信息和邮箱'),
     list: [
       {
         items: [
           {
-            label: $t('Profile picture'),
-            text: $t('Size should be 64px*64px and less than 2MB'),
+            label: $t('个人头像'),
+            text: $t('推荐尺寸为 64*64，最大不超过 2MB'),
             name: 'avatar',
             classes: 'flex-col !items-start gap-4',
             value: data?.avatar ?? '',
             props: {
               class: 'resize-none w-full',
-              placeholder: $t('Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com'),
               userName: data.userName,
               avatarColor: data.avatarColor,
             },
@@ -109,7 +111,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('Email address'),
+            label: $t('邮箱地址'),
             name: 'email',
             value: data?.email ?? '',
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -119,8 +121,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('Username'),
-            text: $t('Usually used in teamworks and members.'),
+            label: $t('用户名'),
             name: 'userName',
             value: data?.userName ?? '',
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -138,8 +139,8 @@ export function getProfilePanel(data?: any): SettingsModule {
 export function getPreferencesPanel(data?: any): SettingsModule {
   // const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   return {
-    title: $t('Preferences'),
-    description: $t('Manage client experience settings. Including languages and appearance.'),
+    title: $t('软件设置'),
+    description: $t('设置您的客户端使用偏好'),
     list: [
       // !todo: 后台暂时没做，一期暂时隐藏
       // {
@@ -197,11 +198,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //   ],
       // },
       {
-        subtitle: $t('Local Settings'),
+        subtitle: $t('本地设置'),
         items: [
           {
-            label: $t('Cash Folder Directory'),
-            text: $t('Where to store your cash files in roxy'),
+            label: $t('缓存目录'),
+            text: $t('设置 RoxyBrowser 缓存路径'),
             name: 'cacheDir',
             value: data?.cacheDir ?? '',
             props: {
@@ -213,21 +214,16 @@ export function getPreferencesPanel(data?: any): SettingsModule {
               )
             },
           },
-        ],
-      },
-      {
-        subtitle: $t('Behavior'),
-        items: [
           {
-            label: $t('Close Button'),
-            text: $t('Behavior while click the close button'),
+            label: $t('关闭客户端'),
+            text: $t('当点击关闭客户端时'),
             name: 'closeSoft',
             value: data?.closeSoft ?? '',
             props: {
               options: [
-                { label: $t('Popup tips'), value: 'pop' },
-                { label: $t('Hide client'), value: 'min' },
-                { label: $t('Close client'), value: 'exit' },
+                { label: $t('弹出提示'), value: 'pop' },
+                { label: $t('最小化到托盘'), value: 'min' },
+                { label: $t('退出程序'), value: 'exit' },
               ],
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -245,15 +241,15 @@ export function getPreferencesPanel(data?: any): SettingsModule {
 export function getNetworkPanel(data?: any): SettingsModule {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
   return {
-    title: $t('Network'),
-    description: $t('Manage anything related to network, including whitelist, IP checker'),
+    title: $t('网络设置'),
+    description: $t('设置您的客户端网络连接，包括白名单和默认 IP 查询渠道'),
     list: [
       {
-        subtitle: $t('Network detection'),
+        subtitle: $t('网络连接方式'),
         items: [
           {
-            label: $t('Use system proxy for connection'),
-            text: $t('Use system proxy'),
+            label: $t('使用系统代理'),
+            text: $t('关闭后使用本地网络连接'),
             name: 'systemProxySwitch',
             value: data?.systemProxySwitch ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -263,11 +259,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('Detect local network'),
-            text: $t('Some hints'),
+            label: $t('检查系统代理'),
             component: ({ item }: any) => {
               return (
-                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectLocalNetwork(item)}></RxButton>
+                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('检测')} onClick={() => detectSystemNetwork(item)}></RxButton>
               )
             },
             afterComponent: ({ item }: any) => {
@@ -275,10 +270,11 @@ export function getNetworkPanel(data?: any): SettingsModule {
                 item.value && (
                   <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
                     <div class="text-3 color-[#171C1F]">
-                      {$t('Detection passed')}
+                      {$t('检测成功')}
                     </div>
                     <div class="text-3 line-height-normal color-[#575D61]">
-                      {$t('Location:')}
+                      {$t('位置')}
+                      :
                       {item.value.country_code}
                       /
                       {item.value.country}
@@ -293,11 +289,10 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('Detect system network'),
-            text: $t('Some hints'),
+            label: $t('检测本地网络'),
             component: ({ item }: any) => {
               return (
-                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('Start Detect')} onClick={() => detectSystemNetwork(item)}></RxButton>
+                <RxButton class="mb-1.5" size="sm" outlined severity="secondary" icon="base/rx_ic_speed_test" label={$t('检测')} onClick={() => detectLocalNetwork(item)}></RxButton>
               )
             },
             afterComponent: ({ item }: any) => {
@@ -305,10 +300,11 @@ export function getNetworkPanel(data?: any): SettingsModule {
                 item.value && (
                   <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
                     <div class="text-3 color-[#171C1F]">
-                      {$t('Detection passed')}
+                      {$t('检测成功')}
                     </div>
                     <div class="text-3 line-height-normal color-[#575D61]">
-                      {$t('Location:')}
+                      {$t('位置')}
+                      :
                       {item.value.country_code}
                       /
                       {item.value.country}
@@ -322,13 +318,14 @@ export function getNetworkPanel(data?: any): SettingsModule {
               )
             },
           },
+
         ],
       },
       {
         items: [
           {
-            label: $t('Default IP checker'),
-            text: $t('Checkers to test your proxies in projects'),
+            label: $t('默认 IP 查询渠道'),
+            text: $t('所有 IP 查询结果都会通过该渠道获取'),
             name: 'ipChecker',
             value: data?.ipChecker ?? '',
             props: {
@@ -341,8 +338,8 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('Whitelist'),
-            text: $t('Visiting sites using local network without proxy'),
+            label: $t('白名单'),
+            text: $t('使用本地网络请求以下域名'),
             name: 'ipBlackList',
             classes: 'flex-col !items-start gap-4',
             value: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
@@ -351,7 +348,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
             props: {
               class: 'resize-none w-full',
-              placeholder: $t('Please enter * followed by the domain name, without the protocol at the beginning, such as:\n* google.com\n* facebook.com'),
+              placeholder: `${$t('请直接输入 *域名 用回车键分割')}\n${$t('示例')}:\n* google.com\n* facebook.com`,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (

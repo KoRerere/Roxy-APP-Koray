@@ -35,11 +35,11 @@ onMounted(() => {
 <template>
   <div class="flex flex-col popup">
     <div class="popup-title">
-      {{ $t('Create new tag') }}
+      {{ isEdit ? $t('编辑标签') : $t('新增标签') }}
     </div>
-    <div class="popup-content">
-      {{ $t('Select a color and type your new tag name below') }}
-    </div>
+    <!-- <div class="popup-content">
+      {{ $t('请选择颜色') }}
+    </div> -->
     <div class="colors">
       <template v-for="color in defaultColors" :key="color">
         <RxSvgIcon v-if="color === selectdColor" name="base/rx_ic_check_line" :size="20" :color="color" />
@@ -48,10 +48,10 @@ onMounted(() => {
     </div>
 
     <div class="square-container" />
-    <InputText v-model="tagName" type="text" :placeholder="$t('Tag name')" />
+    <InputText v-model="tagName" type="text" :placeholder="$t('请输入标签名')" />
     <div class="footer">
-      <RxButton :label="$t('Cancel')" text severity="secondary" @click="close" />
-      <RxButton :label="$t(isEdit ? 'Modify' : 'Create')" severity="info" @click="onConfirm" />
+      <RxButton :label="$t('取消')" text severity="secondary" @click="close" />
+      <RxButton :label="$t('保存')" severity="info" @click="onConfirm" />
     </div>
   </div>
 </template>

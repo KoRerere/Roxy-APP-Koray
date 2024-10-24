@@ -66,11 +66,11 @@ async function onEditFilter(item: any) {
     },
     data: {
       props: {
-        title: 'Edit filter',
+        title: $t('编辑筛选器名称'),
         inputs: [
           {
             type: 'text',
-            placeholder: 'filter name...',
+            placeholder: $t('请输入筛选器名称'),
             name: 'filter_name',
             required: true,
             value: item.label,
@@ -95,15 +95,15 @@ async function onEditFilter(item: any) {
 
 async function deleteFilterItem(item: any) {
   confirm.require({
-    header: $t('Are you sure to delete the views you selected?'),
-    message: $t('Don\'t worry, your profiles won\'t be delete.'),
+    header: $t('删除筛选器'),
+    message: $t('您确认要删除所选筛选器吗？'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
@@ -128,7 +128,7 @@ async function deleteFilterItem(item: any) {
 async function openManageCategory() {
   dialog.open(tags, {
     props: {
-      header: $t('Manage Category'),
+      header: $t('标签管理'),
       modal: true,
       style: { width: '70vw', height: '50vh' },
     },

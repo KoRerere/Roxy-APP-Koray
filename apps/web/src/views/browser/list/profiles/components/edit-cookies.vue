@@ -5,6 +5,9 @@ import { $t } from '/@/locales'
 import { checkCookieFormat, isEmptyValue } from '/@/utils'
 
 const props = defineProps({
+  workspaceName: {
+    type: String,
+  },
   data: {
     type: Object,
     default: () => ({}),
@@ -19,10 +22,9 @@ const emit = defineEmits(['confirm'])
 
 const toast = useToast()
 
-const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie)
+const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie, null, 4)
 
 const cookies = ref(cookie)
-const isWrap = ref(false)
 const loading = ref(false)
 
 function onConfirm() {
@@ -37,15 +39,11 @@ function onConfirm() {
 </script>
 
 <template>
-  <drawerContent :title="$t('Edit cookies for [UID-{uid}]', { uid: data.windowSortNum })" v-bind="$attrs">
-    <Textarea v-model="cookies" class="cookies-textarea" :placeholder="$t('Paste your cookie with JSON format')" cols="40" :auto-resize="false" />
+  <drawerContent :title="$t('为[{workspaceName}-{uid}]编辑 Cookies', { workspaceName, uid: data.windowSortNum })" v-bind="$attrs">
+    <Textarea v-model="cookies" class="cookies-textarea" :placeholder="$t('请以 JSON 格式输入 Cookies')" cols="40" :auto-resize="false" />
     <template #footer>
-      <div class="flex justify-between w-full">
-        <div class="flex items-center">
-          <Checkbox v-model="isWrap" input-id="wrap" binary />
-          <label for="wrap" class="select-none ml-2 cursor-pointer">{{ $t('Text wrap') }}</label>
-        </div>
-        <RxButton :label="$t('Save Cookies')" :loading="loading" severity="info" @click="onConfirm" />
+      <div class="flex justify-end w-full">
+        <RxButton :label="$t('保存')" :loading="loading" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawerContent>

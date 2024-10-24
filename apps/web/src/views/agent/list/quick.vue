@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import { API } from '/@/api'
-import drawerContent from '/@/components/drawer-content.vue'
+import DrawerContent from '/@/components/drawer-content.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
@@ -39,7 +39,7 @@ const [showToast] = useResponseToast()
 const tableRef = useTemplateRef('agent')
 
 const columns = setColumns(proxyColumns.data, {
-  inserts: props.isBatch ? [[4, { title: $t('Bounded Profiles'), slot: 'bounded' }]] : [],
+  inserts: props.isBatch ? [[4, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
 
@@ -158,14 +158,14 @@ function saveSelected() {
 </script>
 
 <template>
-  <drawer-content :title="$t('proxy list')" v-bind="$attrs">
+  <DrawerContent :title="$t('代理列表')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
-            <RxButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
+            <RxButton severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">
@@ -202,9 +202,9 @@ function saveSelected() {
       </RyTable>
     </div>
     <template #footer>
-      <RxButton label="Save selected" severity="info" @click="saveSelected" />
+      <RxButton :label="$t('保存')" @click="saveSelected" />
     </template>
-  </drawer-content>
+  </DrawerContent>
 </template>
 
 <style lang="scss" scoped>

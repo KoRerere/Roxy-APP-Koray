@@ -7,17 +7,16 @@ export const projectFormSchemas = defineFormSchema([
   {
     field: 'projectName',
     component: 'InputText',
-    label: $t('Type your project name down below'),
     componentProps: {
-      placeholder: $t('Project name...'),
+      placeholder: $t('请输入您的项目名称'),
     },
     rule: {
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, $t('Project name is required'))
-          .min(2, $t('Project name must be at least 2 characters long'))
-          .max(30, $t('Project name must be less than 30 characters'))
+          .min(1, $t('请输入您的项目名称'))
+          .min(2, $t('项目名称必须大于 1 个字符'))
+          .max(30, $t('项目名称最多不超过 30 个字符'))
       },
     },
   },
@@ -28,9 +27,6 @@ export const inviteUsersFormSchemas = defineFormSchema([
     field: 'email',
     component: ({ formModel }) => {
       return <InputWithRole v-model:role={formModel.value.role}></InputWithRole>
-    },
-    componentProps: {
-      placeholder: $t('Enter email...'),
     },
     rule: {
       trigger: 'blur',
@@ -44,7 +40,7 @@ export const inviteUsersFormSchemas = defineFormSchema([
   {
     field: 'projectIds',
     component: 'MultiSelect',
-    label: $t('Invite to projects'),
+    label: `${$t('邀请至项目')}`,
     componentProps: {
       filter: true,
       optionLabel: 'projectName',
@@ -60,7 +56,7 @@ export const inviteUsersFormSchemas = defineFormSchema([
       validator(zod) {
         return zod.number()
           .array()
-          .min(1, $t('Project is required'))
+          .min(1, $t('请选择项目'))
       },
     },
   },

@@ -8,7 +8,18 @@ import { setInputValueByFormData } from '/@/utils'
 const workspaceStore = useWorkspaceStore()
 
 export function tableFilters(_params: any = {}) {
-  return []
+  return [
+    {
+      type: 'multiple',
+      name: 'operateModule',
+      value: ['Profiles'],
+      placeholder: $t('全部操作'),
+      disabled: true,
+      options: [
+        { label: $t('匹配所有'), value: 'Profiles' },
+      ],
+    },
+  ]
 }
 
 export async function getCustomFilters(params: any = {}) {
@@ -17,13 +28,15 @@ export async function getCustomFilters(params: any = {}) {
   const inputs = [
     {
       type: 'text',
+      label: $t('窗口名称'),
+      placeholder: $t('请输入窗口名称'),
       name: 'windowName',
-      label: $t('Name'),
       icon: 'base/rx_ic_browser',
     },
     {
       type: 'number',
-      label: $t('Nums'),
+      label: $t('序号'),
+      placeholder: $t('请输入序号'),
       name: 'sortNums',
       icon: 'base/rx_ic_id',
     },
@@ -32,7 +45,7 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'Checkbox',
-      label: $t('System'),
+      label: $t('操作系统'),
       name: 'osList',
       icon: 'base/rx_ic_laptop',
       getOptions: () => {
@@ -46,7 +59,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'platformUrlIds',
-      label: $t('Account'),
+      label: $t('业务平台'),
       icon: 'base/rx_ic_keys',
       getOptions: async () => {
         const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
@@ -61,29 +74,9 @@ export async function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
-      type: 'switchGroup',
-      name: 'openStatus',
-      label: $t('Status'),
-      options: [
-        {
-          icon: 'base/rx_ic_browsers_line',
-          label: $t('Status Open'),
-          value: true,
-        },
-        {
-          icon: 'base/rx_ic_browsers_line',
-          label: $t('Status Close'),
-          value: false,
-        },
-      ],
-    },
-    {
-      separator: true,
-    },
-    {
       type: 'Checkbox',
       name: 'projectIds',
-      label: $t('Project'),
+      label: $t('项目'),
       icon: 'base/rx_ic_stack',
       getOptions: async () => {
         const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
@@ -97,7 +90,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'Checkbox',
       name: 'labelIds',
-      label: $t('Tag'),
+      label: $t('标签'),
       icon: 'base/rx_ic_tag',
       getOptions: async () => {
         const [{ data: labelList }, { data: memberList }] = await Promise.all([
@@ -127,14 +120,9 @@ export async function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
-      type: 'switch',
-      name: 'isOften',
-      label: $t('Fav'),
-      icon: 'base/rx_ic_bookmark',
-    },
-    {
       type: 'textarea',
-      label: $t('Notes'),
+      label: $t('备注'),
+      placeholder: $t('请输入备注'),
       name: 'windowRemark',
       icon: 'base/rx_ic_doc_article',
     },
@@ -142,53 +130,13 @@ export async function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
-      type: 'text',
-      label: $t('Proxy ID'),
-      name: 'proxyIds',
-      placeholder: $t('multiple proxy id comma separation'),
-      icon: 'base/rx_ic_internet',
-    },
-    {
-      type: 'Checkbox',
-      name: 'proxyProtocoList',
-      label: $t('Proxy Protocol'),
-      icon: 'base/rx_ic_internet_pin',
-      getOptions: () => {
-        return ($dict_map.protocol || []).map((item: any) => ({
-          parentName: 'proxyProtocoList',
-          value: item.value,
-          label: item.label,
-        }))
-      },
-    },
-    {
-      type: 'switchGroup',
-      name: 'proxyTestStatus',
-      label: $t('Check Status'),
-      options: [
-        {
-          icon: 'base/rx_ic_internet_check',
-          label: $t('Test Success'),
-          value: '1',
-        },
-        {
-          icon: 'base/rx_ic_internet_error',
-          label: $t('Test Failed'),
-          value: '2',
-        },
-      ],
-    },
-    {
-      separator: true,
-    },
-    {
       type: 'date',
       name: 'createTime',
-      label: $t('Cteate Time'),
+      label: $t('创建时间'),
       icon: 'base/rx_ic_calendar',
       items: [
         {
-          placeholder: $t('start date'),
+          placeholder: $t('开始时间'),
           name: 'startDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -196,7 +144,31 @@ export async function getCustomFilters(params: any = {}) {
           },
         },
         {
-          placeholder: $t('end date'),
+          placeholder: $t('结束时间'),
+          name: 'endDate',
+          maxDate: new Date(),
+          formatValue: (self: any) => {
+            return self.value && format(self.value, 'yyyy-MM-dd')
+          },
+        },
+      ],
+    },
+    {
+      type: 'date',
+      name: '#createTime',
+      label: $t('修改时间'),
+      icon: 'base/rx_ic_calendar',
+      items: [
+        {
+          placeholder: $t('开始时间'),
+          name: 'startDate',
+          maxDate: new Date(),
+          formatValue: (self: any) => {
+            return self.value && format(self.value, 'yyyy-MM-dd')
+          },
+        },
+        {
+          placeholder: $t('结束时间'),
           name: 'endDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
@@ -218,30 +190,26 @@ export async function getCustomFilters(params: any = {}) {
 export function getSorts(params: any = {}) {
   return [
     {
-      label: $t('Sort by'),
+      label: $t('排序标准'),
       placeholder: $t('please select sorting rules'),
       name: 'orderName',
       value: params.orderName ?? 'createTime',
       options: [
-        { label: $t('creation time'), value: 'createTime' },
-        { label: $t('modify time'), value: 'updateTime' },
-        { label: $t('last opening time'), value: 'openTime' },
-        { label: $t('last closure time'), value: 'closeTime' },
-        { label: $t('agent detection time'), value: 'checkTime' },
-        { label: $t('window serial number'), value: 'windowSortNum' },
-        { label: $t('window name'), value: 'name' },
-        { label: $t('nation'), value: 'lastCountry' },
+        { label: $t('创建时间'), value: 'createTime' },
+        { label: $t('修改时间'), value: 'updateTime' },
+        { label: $t('最后打开时间'), value: 'openTime' },
+        { label: $t('最后关闭时间'), value: 'closeTime' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
     {
-      label: $t('Order'),
+      label: $t('排序方式'),
       placeholder: $t('please select sort type'),
       name: 'orderType',
       value: params.orderType ?? 'desc',
       options: [
-        { label: $t('desc'), value: 'desc' },
-        { label: $t('asc'), value: 'asc' },
+        { label: $t('倒序'), value: 'desc' },
+        { label: $t('正序'), value: 'asc' },
       ],
       icon: 'base/rx_ic_sort_ascending',
     },
@@ -254,7 +222,7 @@ export function getOperation(_params: any = {}) {
   return [
     {
       name: 'edit',
-      label: $t('Edit'),
+      label: $t('编辑窗口'),
       icon: 'base/rx_ic_edit',
       power: !isViewer,
     },
@@ -263,28 +231,20 @@ export function getOperation(_params: any = {}) {
       separator: true,
     },
     {
-      name: 'copyId',
-      label: $t('Copy profile ID'),
-      icon: 'base/rx_ic_copy',
-    },
-    {
-      separator: true,
-    },
-    {
       name: 'view',
-      label: $t('View'),
+      label: $t('查看窗口'),
       icon: 'base/rx_ic_browser',
     },
     {
       name: 'restart',
-      label: $t('Restart'),
+      label: $t('重启窗口'),
       icon: 'base/rx_ic_refresh',
       multiple: true,
       groupName: 'first',
     },
     {
       name: 'close',
-      label: $t('Close'),
+      label: $t('关闭窗口'),
       icon: 'base/rx_ic_shut_down',
       multiple: true,
       groupName: 'first',
@@ -294,22 +254,8 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
-      name: 'addTag',
-      label: $t('Add Tag'),
-      icon: 'base/rx_ic_tag',
-      power: !isViewer,
-    },
-    {
-      separator: true,
-    },
-    {
-      name: 'fav',
-      label: $t('Fav'),
-      icon: 'base/rx_ic_bookmark',
-    },
-    {
       name: 'addNotes',
-      label: $t('Add Notes'),
+      label: $t('添加备注'),
       icon: 'base/rx_ic_doc_add',
       multiple: true,
     },
@@ -320,9 +266,14 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'editCookies',
-      label: $t('Edit cookies'),
+      label: $t('编辑 Cookies'),
       icon: 'base/rx_ic_cookies',
       power: !isViewer,
+    },
+    {
+      name: 'copyId',
+      label: $t('复制窗口 ID'),
+      icon: 'base/rx_ic_copy',
     },
     {
       power: !isViewer,
@@ -330,7 +281,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'delete',
-      label: $t('Delete'),
+      label: $t('删除窗口'),
       icon: 'base/rx_ic_bin_1',
       power: !isViewer,
       multiple: true,

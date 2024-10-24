@@ -40,7 +40,7 @@ const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRef
 const hasOuterMetadata = isFunction(onUpdateMetadata?.value)
 
 const innerMetaData = ref<MetaData>({
-  projectName: 'No project',
+  projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
   windowRemark: '',
@@ -131,8 +131,8 @@ function onCopy(dirId: string) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <RxButton v-if="openBrowser" outlined severity="secondary" :label="$t('Carete & Open')" :loading="loading" @click.stop="getFormData(true)" />
-      <RxButton severity="primary" :label="`${isEdit ? $t('Save profile') : $t('Create profile')}`" :loading="loading" @click.stop="getFormData(false)" />
+      <RxButton v-if="openBrowser" outlined severity="secondary" :label="$t('创建 & 打开')" :loading="loading" @click.stop="getFormData(true)" />
+      <RxButton severity="primary" :label="`${isEdit ? $t('编辑窗口') : $t('创建窗口')}`" :loading="loading" @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

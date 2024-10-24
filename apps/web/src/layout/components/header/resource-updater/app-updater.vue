@@ -4,7 +4,7 @@ import './rich-text/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 
-const props = defineProps<{
+defineProps<{
   upgradeList: ResourceUpdateMessage[]
   featureTitleList: any[]
 }>()
@@ -13,16 +13,16 @@ const appVersion = ref('')
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
-    return `${$t('Downloading')} ${Math.floor(item.percent)}%`
+    return `${$t('正在下载')} ${Math.floor(item.percent)}%`
   }
   else if (item.status === 'downloaded') {
-    return $t('Install and relaunch')
+    return $t('升级并重启')
   }
   else if (item.status === 'failed') {
-    return $t('Retry')
+    return $t('重试')
   }
   else {
-    return $t('Download')
+    return $t('下载')
   }
 }
 
@@ -30,7 +30,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   const info = toRaw(item)
   console.log('handleItemClick', info)
   if (info.status === 'downloading') {
-    return $t('Downloading')
+    return $t('正在下载')
   }
   else if (info.status === 'downloaded') {
     window.electronAPI.send('app:quitAndInstall', info)
@@ -64,8 +64,7 @@ electronAPI.send('app:getAppVersion').then((version) => {
             <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
               <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
-                        @click="handleClientItemClick(item)"
-              />
+                @click="handleClientItemClick(item)" />
             </div>
           </div>
         </div>
@@ -80,7 +79,7 @@ electronAPI.send('app:getAppVersion').then((version) => {
               v{{ appVersion }}
             </div>
             <div class="tips">
-              {{ $t('Your client is up-to-date') }}
+              {{ $t('您的客户端已是最新版本') }}
             </div>
           </div>
         </div>

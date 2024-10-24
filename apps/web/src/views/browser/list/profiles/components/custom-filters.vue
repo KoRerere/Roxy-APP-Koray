@@ -62,7 +62,7 @@ const filterTagList = computed(() => {
 
 const splitButtonItems = [
   {
-    label: $t('Save As'),
+    label: $t('保存为新筛选器'),
     command: () => {
       saveFilters()
     },
@@ -108,7 +108,7 @@ function inputPopup(data: any) {
     },
     data: {
       props: {
-        inputs: [deepClone(data)],
+        inputs: [deepClone({ ...data, icon: undefined })],
       },
       onConfirm: async (formData: any) => {
         if (data.type === 'date') {
@@ -206,11 +206,11 @@ function saveFilters() {
     },
     data: {
       props: {
-        title: $t('Save filter'),
+        title: $t('保存筛选器'),
         inputs: [
           {
             type: 'text',
-            placeholder: $t('filter name...'),
+            placeholder: $t('请输入筛选器名称'),
             name: 'filter_name',
             required: true,
           },
@@ -237,16 +237,16 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
-      <RxButton class="filter-list-button" text @click="showMenu">
+      <RxButton severity="secondary" size="xxs" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
         <span v-if="!filterTagList.length">{{ $t('筛选条件') }}</span>
       </RxButton>
     </div>
     <div v-show="enabledFilterSave && isChanged" class="filter-actions">
-      <RxButton text severity="secondary" size="sm" label="Reset" @click="resetFilters" />
+      <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
       <template v-if="filterTagList.length">
-        <RxButton v-if="isAllProfiles" severity="info" size="sm" label="Save" @click="saveFilters" />
-        <SplitButton v-else severity="info" size="small" label="Save" :model="splitButtonItems" @click="modifyFilter" />
+        <RxButton v-if="isAllProfiles" severity="info" size="xxs" :label="$t('保存')" @click="saveFilters" />
+        <SplitButton v-else severity="info" size="small" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
       </template>
       <div>|</div>
     </div>
@@ -313,17 +313,6 @@ async function modifyFilter() {
       line-height: var(--Line-Height-text-xs, 16px);
       border-radius: var(--radius-full, 9999px);
       border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-    }
-
-    &-button {
-      padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-      gap: var(--spacing-sm, 4px);
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-      font-family: Inter;
-      font-size: var(--Font-Size-text-sm, 12px);
-      font-style: normal;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
     }
   }
 

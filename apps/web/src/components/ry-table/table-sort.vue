@@ -40,8 +40,8 @@ function onUpdate() {
     </div>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <RxButton size="sm" severity="secondary" text label="Reset" @click="onReset" />
-        <RxButton size="sm" severity="info" label="Save filter" @click="onUpdate" />
+        <RxButton size="sm" severity="secondary" text :label="$t('重置')" @click="onReset" />
+        <RxButton size="sm" severity="info" :label="$t('保存')" @click="onUpdate" />
       </div>
     </template>
   </ryPopover>

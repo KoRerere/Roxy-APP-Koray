@@ -41,22 +41,37 @@ function operationHandler(operate: any, data: any) {
 }
 
 async function recoverHandler(datas: any) {
-  const ids = datas.map((item: any) => item.id)
-  await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: false } as any)
-  tableRef.value?.refresh()
-}
-
-async function deleteHandler(datas: any) {
   confirm.require({
-    header: $t('Are you sure to delete the profiles you selected? '),
-    message: $t('This action can not be undone.'),
+    header: $t('恢复所选窗口'),
+    message: $t('您确认要恢复所选窗口吗？'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
+      severity: 'info',
+    },
+    accept: async () => {
+      const ids = datas.map((item: any) => item.id)
+      await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: false } as any)
+      tableRef.value?.refresh()
+    },
+  })
+}
+
+async function deleteHandler(datas: any) {
+  confirm.require({
+    header: $t('彻底删除所选窗口'),
+    message: $t('您确认要彻底删除所选窗口吗？'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
@@ -75,9 +90,9 @@ async function deleteHandler(datas: any) {
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :sorts="sorts"
-    :show-gridlines="false" :show-actions="false">
+    :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #profile="{ data }">
-      <profileInfo :current-workspace="workspaceStore.currentWorkspace" :data="data" disabled />
+      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
     </template>
     <template #tags="{ data }">
       <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" disabled />
@@ -92,6 +107,7 @@ async function deleteHandler(datas: any) {
     </template>
     <template #actions="{ data }">
       <div class="flex gap-2">
+        <!-- {{ $t('恢复窗口') }} -->
         <RemarkIcon :value="data.windowRemark" disabled />
         <Actions :operation="operation" :show-menu="false" @quick-click="(operate) => operationHandler(operate, data)" />
       </div>

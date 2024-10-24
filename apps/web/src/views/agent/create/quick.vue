@@ -44,8 +44,8 @@ function onConfirm() {
     </div>
     <template #footer>
       <div class="flex items-center w-full gap-3">
-        <RxButton size="sm" icon="base/rx_ic_internet" :label="$t('Test Proxy')" severity="secondary" outlined @click="testProxy" />
-        <RxButton class="mx-auto mr-0" size="sm" :label="$t('Save Proxy')" severity="info" @click="onConfirm" />
+        <RxButton size="sm" icon="base/rx_ic_internet" :label="$t('测试代理')" severity="secondary" outlined @click="testProxy" />
+        <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="onConfirm" />
       </div>
     </template>
   </drawer-content>

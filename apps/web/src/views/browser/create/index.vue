@@ -25,12 +25,12 @@ const createCount = ref(1)
 createTableContext({ isBatch, createCount })
 
 const tabs = ref([
-  { title: $t('Single Profiles'), value: 'single' },
-  { title: $t('Multi Profiles'), value: 'multi' },
-  { title: $t('Import Profiles'), value: 'import' },
+  { title: $t('单个创建'), value: 'single' },
+  { title: $t('批量创建'), value: 'multi' },
+  { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const windowName = ref('Untitled Profile')
+const windowName = ref($t('未命名窗口'))
 const maxWindowCount = ref()
 const fileAnalyzeData = ref()
 const rawMainSetting: any = ref([])
@@ -38,7 +38,7 @@ const mainSetting: any = ref([])
 const extraSetting: any = ref([])
 const original = ref()
 const metaData = ref<MetaData>({
-  projectName: 'No project',
+  projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
   windowRemark: '',
@@ -61,7 +61,7 @@ const accordions = computed(() => {
   const startIndex = tabsValue.value === 'import' ? 1 : 0
   return {
     value: tabsValue.value === 'import' ? [] : ['0'],
-    panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
+    panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
 })
 
@@ -184,7 +184,7 @@ onBeforeMount(() => {
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>{{ $t('Create profile') }}</span>
+        <span>{{ $t('创建窗口') }}</span>
       </div>
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">
@@ -200,7 +200,7 @@ onBeforeMount(() => {
           <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
           <div v-show="tabsValue === 'multi'" class="multi-block">
             <div class="flex items-center justify-between">
-              <div>{{ $t('Profiles amount') }}</div>
+              <div>{{ $t('窗口数量') }}</div>
               <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
@@ -211,11 +211,12 @@ onBeforeMount(() => {
               </InputNumber>
             </div>
             <div class="multi-block-info">
-              <i18n-t :keypath="$t('Max profiles: {maxWindowCount}. For more profiles please {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
+              {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+              <!-- <i18n-t :keypath="$t('最多一次可批量创建: {maxWindowCount}. 更多窗口请使用 {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
                 <template #importProfiles>
-                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('import profiles') }}</span>
+                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('窗口导入') }}</span>
                 </template>
-              </i18n-t>
+              </i18n-t> -->
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />

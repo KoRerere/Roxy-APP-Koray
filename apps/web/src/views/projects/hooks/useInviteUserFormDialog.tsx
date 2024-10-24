@@ -28,7 +28,7 @@ export function useInviteUserFormDialog() {
     const originl = data
 
     await dialog.showModal({
-      header: originl.user_id ? $t('Edit user') : $t('Invite user'),
+      header: originl.user_id ? $t('编辑用户') : $t('邀请用户'),
       class: 'w-[500px]',
       formProps: {
         layout: 'vertical',
@@ -42,7 +42,7 @@ export function useInviteUserFormDialog() {
       dialogSlots: {
         footer: () => (
           <div class="w-full flex justify-between gap-2">
-            <RxButton label="Cancel" severity="secondary" type="button" onClick={dialog.handleCancel} />
+            <RxButton label={$t('取消')} severity="secondary" type="button" onClick={dialog.handleCancel} />
             <div class="flex gap-2">
               {
                 !originl.user_id && (
@@ -50,13 +50,13 @@ export function useInviteUserFormDialog() {
                     <Checkbox v-model={isInviteMore.value} input-id="ingredient1" binary />
                     <label for="ingredient1" class="ml-2">
                       {' '}
-                      {$t('Invite more')}
+                      {$t('发送 & 邀请更多')}
                       {' '}
                     </label>
                   </div>
                 )
               }
-              <RxButton label={originl.user_id ? $t('Save') : $t('Send invitation')} severity="primary" onClick={dialog.handleOk} />
+              <RxButton label={originl.user_id ? $t('保存') : $t('发送邀请')} severity="primary" onClick={dialog.handleOk} />
             </div>
           </div>
         ),

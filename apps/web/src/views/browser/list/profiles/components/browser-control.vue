@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 
 const props = defineProps({
@@ -30,7 +31,7 @@ const browser = computed(() => {
 
   if (!message) {
     return {
-      msg: 'Open',
+      msg: $t('打开'),
       classes: 'cursor-pointer',
     }
   }
@@ -40,7 +41,7 @@ const browser = computed(() => {
   return {
     code,
     pending,
-    msg: error ? 'Open' : data?.message,
+    msg: error ? $t('打开') : data?.message,
     error: error?.message,
     percent: data?.percent || 0,
     complted: data?.percent === 100,
@@ -63,7 +64,7 @@ async function openBrowser() {
     <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
       <circle-progress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
       <RxSvgIcon v-if="!browser.percent && !browser.pending" color="#12A3FC" name="base/rx_ic_chrome" />
-      <span>{{ browser.complted ? 'View' : browser?.msg }}</span>
+      <span>{{ browser.complted ? $t('查看') : browser?.msg }}</span>
     </div>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />

@@ -26,7 +26,7 @@ const proxyData = reactive({
   <proxyList v-if="type === 'proxyList'" :data="proxyData" v-bind="$attrs" />
   <proxyCreate v-if="type === 'proxyForm'" :data="proxyData" v-bind="$attrs" />
   <accountList v-if="type === 'accountList'" :data="data" v-bind="$attrs" />
-  <accountCreate v-if="type === 'accountForm'" :show-create-more="false" v-bind="$attrs" />
+  <accountCreate v-if="type === 'accountForm'" :show-remark="false" :show-create-more="false" v-bind="$attrs" />
 </template>
 
 <style lang="scss" scoped></style>

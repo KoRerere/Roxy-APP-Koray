@@ -17,13 +17,13 @@ const pop = ref()
 const tabs = ref<Tab[]>([
   {
     value: 'teams',
-    title: $t('Teams'),
+    title: $t('团队通知'),
     list: [],
     noRead: 0,
   },
   {
     value: 'sys',
-    title: $t('System'),
+    title: $t('系统通知'),
     list: [],
     noRead: 0,
   },
@@ -85,15 +85,15 @@ onMounted(() => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noRead" severity="danger" size="small">
-      <RxButton icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
+      <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>
     <RyPopover ref="pop">
       <div :class="message.wrapper">
         <div :class="message.header">
           <div :class="message.title">
-            {{ $t('Message') }}
+            {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('Mark all as read')" @click="markAllAsRead" />
+          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4' }">
@@ -108,6 +108,8 @@ onMounted(() => {
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
                     <Avatar :image="item.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'" shape="circle" />
+                    <!-- <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="28"
+                      :font-size="16" @click="toggle" /> -->
                   </div>
                   <div>
                     <div :class="message.value">

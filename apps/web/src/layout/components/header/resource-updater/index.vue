@@ -16,13 +16,13 @@ const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const tabs = ref([
   {
-    title: $t('Client updates'),
+    title: $t('客户端升级'),
     list: clientUpdates,
     value: 'client',
     component: markRaw(AppUpdater),
   },
   {
-    title: $t('Kernel updates'),
+    title: $t('内核升级'),
     list: kernelUpdates,
     value: 'kernel',
     component: markRaw(KernelUpdater),
@@ -80,7 +80,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small">
-      <RxButton icon="base/rx_ic_updates" outlined size="xs" @click="toggle" />
+      <RxButton icon="base/rx_ic_updates" severity="secondary" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">

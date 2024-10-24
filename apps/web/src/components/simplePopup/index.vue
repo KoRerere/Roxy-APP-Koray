@@ -20,7 +20,7 @@ async function confirm() {
     close()
   }
   catch (error) {
-    console.log('🚀 ~ confirm ~ error:', error)
+    console.warn(error)
   }
 }
 
@@ -34,16 +34,16 @@ onMounted(() => {
 
 <template>
   <div v-if="_props" class="flex flex-col popup">
-    <div class="popup-title">
+    <div v-if="_props.title" class="popup-title">
       {{ _props.title }}
     </div>
-    <div class="popup-content">
+    <div v-if="_props.content" class="popup-content">
       {{ _props.content }}
     </div>
     <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
-      <RxButton size="sm" label="Cancel" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" label="Save" severity="info" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
+      <RxButton size="sm" :label="$t('保存')" severity="info" @click="confirm" />
     </div>
   </div>
 </template>

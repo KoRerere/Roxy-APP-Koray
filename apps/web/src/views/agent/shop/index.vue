@@ -77,15 +77,16 @@ const avatarList: any = [
 
 <template>
   <div class="h-full flex flex-col items-center justify-center overflow-hidden">
-    <RxAvatar :list="avatarList" :max="3" />
     <div class="flex items-end gap-4 mb-4">
-      <RxButton icon="base/rx_ic_package" size="xxs" label="xxs" @click="onResize('xxs')" />
-      <RxButton icon="base/rx_ic_package" size="xs" label="xs" @click="onResize('xs')" />
-      <RxButton icon="base/rx_ic_package" size="sm" label="sm" @click="onResize('sm')" />
-      <RxButton icon="base/rx_ic_package" size="md" label="md" @click="onResize('md')" />
-      <RxButton icon="base/rx_ic_package" size="lg" label="lg" @click="onResize('lg')" />
+      <!-- <RxButton severity="info" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('xxs')" /> -->
+      <RxButton style="transform: scale(2);" outlined icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('xs')" />
+      <!-- <RxButton severity="success" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('sm')" /> -->
+      <!-- <RxButton severity="warn" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('md')" /> -->
+      <!-- <RxButton severity="help" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('lg')" /> -->
+      <!-- <RxButton severity="danger" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('lg')" /> -->
+      <!-- <RxButton severity="contrast" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('lg')" /> -->
     </div>
-    <RyForm label-position="left" :inputs="inputs" />
+    <!-- <RyForm label-position="left" :inputs="inputs" /> -->
   </div>
 </template>
 

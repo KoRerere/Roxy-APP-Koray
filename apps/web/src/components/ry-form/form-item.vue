@@ -42,7 +42,7 @@ defineEmits(['change'])
         <RxInputNumber v-if="type === 'number'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <RxInputText v-if="type === 'text'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <RxInputTextarea v-if="type === 'textarea'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.placeholder }}</small>
+        <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg || $attrs.placeholder }}</small>
         <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
       </div>
     </slot>
