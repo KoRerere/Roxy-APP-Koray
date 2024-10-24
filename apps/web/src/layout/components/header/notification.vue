@@ -85,7 +85,7 @@ onMounted(() => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noRead" severity="danger" size="small">
-      <RxButton icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
+      <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>
     <RyPopover ref="pop">
       <div :class="message.wrapper">

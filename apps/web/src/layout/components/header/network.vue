@@ -22,7 +22,7 @@ detectNetwork()
 
 <template>
   <div class="network">
-    <RxButton icon="base/rx_ic_route" outlined size="sm" @click="detectNetwork" />
+    <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="sm" @click="detectNetwork" />
     <div class="info">
       <template v-if="loading">
         <Skeleton width="4rem" height="12px" />
