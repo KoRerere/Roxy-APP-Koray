@@ -483,7 +483,7 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: 'Mark as fav', showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
+        <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
           @click.stop="operationHandler({ name: 'fav' }, data)" />
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add" :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
           @click.stop="operationHandler({ name: 'addNotes' }, data)" />

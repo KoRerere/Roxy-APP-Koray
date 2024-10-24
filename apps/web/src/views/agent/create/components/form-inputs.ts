@@ -109,7 +109,7 @@ export function getInputs(data: any = {}) {
       placeholder: $t('请输入用户名'),
     },
     {
-      type: 'password',
+      type: 'text',
       label: $t('密码'),
       name: 'proxyPassword',
       value: data.proxyPassword ?? '',

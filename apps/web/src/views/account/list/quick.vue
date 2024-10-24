@@ -79,7 +79,7 @@ function handleSave() {
       </RyTable>
     </div>
     <template #footer>
-      <RxButton severity="info" size="sm" label="Save selected" @click="handleSave" />
+      <RxButton severity="info" size="sm" :label="$t('保存')" @click="handleSave" />
     </template>
   </drawerContent>
 </template>

@@ -232,8 +232,8 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'textarea',
-      label: $t('Cookies'),
-      placeholder: 'Paste your cookies with JSON format',
+      label: 'Cookies',
+      placeholder: $t('请以 JSON 格式输入 Cookies'),
       name: 'cookie',
       value: data.cookies,
       icon: 'base/rx_ic_attachment',

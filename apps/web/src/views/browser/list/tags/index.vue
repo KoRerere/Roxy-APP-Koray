@@ -100,7 +100,7 @@ async function deleteTag(data: any) {
   <div class="flex-ovh-1 flex-col h-full">
     <div class="flex justify-between items-center px-4 py-3 gap-2">
       <div class="flex-1 total-tags">
-        {{ $t('All Tags') }} ({{ totalNum }})
+        {{ $t('新增标签') }} ({{ totalNum }})
       </div>
       <RxButton size="sm" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
     </div>

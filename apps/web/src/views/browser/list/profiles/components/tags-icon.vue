@@ -52,7 +52,7 @@ async function openMenu(event: any) {
       return (
         <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
           <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
-          <div>{$t('Add Tag')}</div>
+          <div>{$t('新增标签')}</div>
         </div>
       )
     },
@@ -74,8 +74,7 @@ function onAddTag() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton v-if="!labels?.length" v-tooltip.top="{ value: 'Add tags', showDelay: 500 }" class="!rounded-full" :disabled="_disabled" severity="secondary" size="xxs" text icon="base/rx_ic_tag"
-      @click.stop="openMenu" />
+    <RxButton v-if="!labels?.length" class="!rounded-full" :disabled="_disabled" severity="secondary" size="xxs" text icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
       <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">

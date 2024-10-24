@@ -25,12 +25,12 @@ const createCount = ref(1)
 createTableContext({ isBatch, createCount })
 
 const tabs = ref([
-  { title: $t('Single Profiles'), value: 'single' },
-  { title: $t('Multi Profiles'), value: 'multi' },
-  { title: $t('Import Profiles'), value: 'import' },
+  { title: $t('单个创建'), value: 'single' },
+  { title: $t('批量创建'), value: 'multi' },
+  { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const windowName = ref('Untitled Profile')
+const windowName = ref($t('未命名窗口'))
 const maxWindowCount = ref()
 const fileAnalyzeData = ref()
 const rawMainSetting: any = ref([])
@@ -61,7 +61,7 @@ const accordions = computed(() => {
   const startIndex = tabsValue.value === 'import' ? 1 : 0
   return {
     value: tabsValue.value === 'import' ? [] : ['0'],
-    panels: ['window', 'Basic', 'highLevel', 'other'].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
+    panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
 })
 
@@ -184,7 +184,7 @@ onBeforeMount(() => {
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>{{ $t('Create profile') }}</span>
+        <span>{{ $t('新建窗口') }}</span>
       </div>
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">

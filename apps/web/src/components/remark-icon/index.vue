@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import popup from '/@/components/simplePopup'
+import simplePopup from '/@/components/simplePopup'
 
 const props = defineProps({
   value: String,
+  title: String,
+  content: String,
+  placeholder: String,
   mode: {
     type: String as PropType<'icon' | 'button'>,
     default: 'icon',
@@ -32,7 +35,7 @@ function onRemark() {
     return
   }
 
-  dialog.open(popup, {
+  dialog.open(simplePopup, {
     props: {
       showHeader: false,
       modal: true,
@@ -40,13 +43,13 @@ function onRemark() {
     },
     data: {
       props: {
-        title: 'Add notes to profile',
-        content: 'Please add notes down below.',
+        title: props.title,
+        content: props.content,
         inputs: [
           {
             type: 'textarea',
             name: 'remark',
-            placeholder: 'Your notes here...',
+            placeholder: props.placeholder,
             value: props.value,
           },
         ],
