@@ -14,7 +14,6 @@ function sendLaunchMessage(message: string) {
 }
 
 export async function checkResource() {
-  await setTimeout(200000000)
   const { promise, resolve } = Promise.withResolvers()
   const startCheckTime = Date.now()
   console.log('checkResource start')
