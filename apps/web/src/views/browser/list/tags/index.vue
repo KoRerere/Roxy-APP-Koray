@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useTagsActions } from './hook'
 
+const confirm = useConfirm()
 const toast = useToast()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
@@ -12,17 +14,17 @@ const [onEdit] = useTagsActions()
 
 const columns = ref([
   {
-    title: $t('Tag'),
+    title: $t('标签'),
     key: 'name',
     slot: 'tag',
   },
   {
-    title: $t('Related Profiles'),
+    title: $t('已关联窗口'),
     key: 'relatedProfiles',
     slot: 'related',
   },
   {
-    title: $t('Actions'),
+    title: $t('操作'),
     style: 'width: 7rem',
     slot: 'actions',
   },
@@ -30,13 +32,13 @@ const columns = ref([
 
 const operation = ref([
   {
-    label: $t('Edit'),
+    label: $t('编辑'),
     name: 'edit',
     icon: 'base/rx_ic_edit',
     quick: true,
   },
   {
-    label: $t('Delete'),
+    label: $t('删除'),
     name: 'delete',
     icon: 'base/rx_ic_bin_1',
     quick: true,
@@ -72,10 +74,25 @@ function editTag(data?: any) {
 }
 
 async function deleteTag(data: any) {
-  const ids = data.map((item: any) => item.id)
-  await API.window.userDelLabelInfoCreate({ ids })
-  tableRef.value?.refresh()
-  toast.add({ severity: 'success', summary: '成功', detail: '标签修改成功', life: 5000 })
+  confirm.require({
+    header: $t('删除标签'),
+    message: '您确认要删除所选标签吗？删除后，关联窗口的标签将被清除。',
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: async () => {
+      const ids = data.map((item: any) => item.id)
+      await API.window.userDelLabelInfoCreate({ ids })
+      tableRef.value?.refresh()
+      toast.add({ severity: 'success', summary: '成功', detail: '标签修改成功', life: 5000 })
+    },
+  })
 }
 </script>
 

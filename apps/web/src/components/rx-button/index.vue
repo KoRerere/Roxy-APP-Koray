@@ -214,5 +214,8 @@ async function handleClick(e: MouseEvent) {
   }
 }
 
-.p-button-outlined {}
+.p-button-outlined {
+  background-color: transparent;
+  color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+}
 </style>

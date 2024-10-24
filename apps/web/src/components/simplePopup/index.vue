@@ -42,8 +42,8 @@ onMounted(() => {
     </div>
     <ryForm class="form" :inputs="_props.inputs" />
     <div class="footer">
-      <RxButton size="sm" label="Cancel" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" label="Save" severity="info" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
+      <RxButton size="sm" :label="$t('保存')" severity="info" autofocus @click="confirm" />
     </div>
   </div>
 </template>
