@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 
 const props = defineProps({
@@ -39,7 +40,7 @@ async function handleSubmit() {
   })
 
   if (!verifyCodeRes.data) {
-    toast.add({ severity: 'error', summary: 'Error', detail: verifyCodeRes.msg, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: $t('无效的验证码'), life: 5000 })
     return
   }
 

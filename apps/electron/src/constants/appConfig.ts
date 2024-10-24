@@ -19,7 +19,7 @@ export const appConfig = {
   },
   /** 浏览器扩展目录 */
   get browserExtensionsDir() {
-    return join(this.browserCacheRootDir, String(store.workspaceId), 'RoxyExtensions')
+    return join(this.browserCacheRootDir, `workspace_${store.workspaceId}`, 'RoxyExtensions')
   },
   /** 临时文件目录 */
   tempDir: join(sessionDir, 'temp'),
@@ -27,6 +27,10 @@ export const appConfig = {
   logsDir: app.getPath('logs'),
   /** luminet 执行文件路径 */
   luminetBinPath: join(sessionDir, 'luminet-bin', isMac ? 'luminet' : 'luminet.exe'),
+  /** 配置文件 */
+  configFile: join(sessionDir, 'config.json'),
+  /** 默认浏览器缓存根目录 */
+  defaultBrowserCacheRootDir: join(sessionDir, 'browser-cache'),
 } as const
 
 console.log('appConfig', appConfig)

@@ -44,10 +44,6 @@ async function createWindow() {
    */
   browserWindow.on('ready-to-show', () => {
     browserWindow?.show()
-
-    if (isDev) {
-      browserWindow?.webContents.openDevTools({ mode: 'detach' })
-    }
   })
 
   browserWindow.on('close', (event) => {
@@ -58,12 +54,6 @@ async function createWindow() {
   await browserWindow.loadURL(getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`))
 
   console.log('createWindow', getWebEntryUrl('launch'))
-  // setTimeout(() => {
-  //   API.window.userGetWindowInfoList({}).then(async (res) => {
-  //     const winInfoList = res.data.rows
-  //     await browserManager.batchLaunch(winInfoList.slice(0, 2))
-  //   })
-  // }, 5000)
 
   return browserWindow
 }

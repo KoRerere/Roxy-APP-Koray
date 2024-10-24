@@ -2,6 +2,7 @@ import type { UserGetOssCredentialListData } from '@roxy/backend-api'
 import type { ReadStream } from 'node:fs'
 import OSS from 'ali-oss'
 import { createWriteStream } from 'node:fs'
+import { isPackaged } from '/@/utils'
 import { API } from '../api'
 
 const _aliOSS = new class AliOSS {

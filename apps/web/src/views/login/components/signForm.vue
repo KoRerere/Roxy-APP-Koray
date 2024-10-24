@@ -67,7 +67,7 @@ function switchFormMode(val: boolean) {
 
 <template>
   <!-- <ry-form class="w-full" :inputs="inputs" /> -->
-  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center">
       <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />

@@ -30,7 +30,7 @@ async function handleSubmit() {
     return
   }
 
-  afterLogin(data.token)
+  await afterLogin(data.token)
 }
 
 async function afterLogin(token: string) {
@@ -38,7 +38,6 @@ async function afterLogin(token: string) {
   console.log('rememberMe', rememberMe.value)
   await getUserInfo()
   setPassword(rememberMe.value ? signFormData.value.password : '')
-  toast.add({ severity: 'success', summary: 'Success', detail: $t('Sign Success'), life: 5000 })
   router.push({ name: 'home' })
 }
 

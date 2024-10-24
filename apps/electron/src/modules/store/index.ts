@@ -1,7 +1,7 @@
-import { app } from 'electron'
-import Store from 'electron-store'
-import { join } from 'node:path'
+import { debounce } from 'es-toolkit'
+import { readFile, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
+import { appConfig } from '/@/constants'
 import { fileExists } from '/@/utils/file'
 
 interface StoreType {
@@ -39,42 +39,38 @@ interface StoreType {
   ipChecker: string
 }
 
-const sessionDir = app.getPath('sessionData')
-
 const defaultValues: StoreType = {
   language: 'en',
   closeSoft: 'pop',
   memoryLimit: 95,
-  browserCacheRootDir: join(sessionDir, 'browser-cache'),
+  browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
   appPort: 45535,
   ipBlackList: [],
   ipChecker: 'http://iprust.io/ip.json',
 }
 
-const _store = new Store<StoreType>({
-  defaults: {
-    ...defaultValues,
-  },
-})
+const _store: StoreType = {
+  ...defaultValues,
+}
 
-let latestStore = { ..._store.store }
-console.log('latestStore', JSON.stringify(latestStore, null, 2))
+console.log('_store', JSON.stringify(_store, null, 2))
 
-_store.onDidAnyChange((newValue) => {
-  latestStore = newValue!
-})
+const saveConfig = debounce(() => {
+  writeFile(appConfig.configFile, JSON.stringify(_store, null, 2), 'utf-8')
+}, 300)
 
-export const store = new Proxy(latestStore, {
+export const store = new Proxy({} as StoreType, {
   get(target, prop) {
-    return latestStore[prop]
+    return Reflect.get(_store, prop)
   },
   set(target, prop: keyof StoreType, value) {
-    _store.set(prop, value)
+    Reflect.set(_store, prop, value)
+    saveConfig()
     return true
   },
   deleteProperty(target, p) {
-    _store.delete(p)
+    Reflect.deleteProperty(_store, p)
     return true
   },
 })
@@ -83,23 +79,32 @@ export const store = new Proxy(latestStore, {
 export async function fetchUserConfig() {
   try {
     // 启动时，获取用户配置
-    const { data } = await API.base.userGetUserConfigList()
-    Object.keys(data).forEach((key) => {
-      if (Reflect.has(store, key)) {
-        Reflect.set(store, key, Reflect.get(data, key))
-      }
-    })
+    const { code, data } = await API.base.userGetUserConfigList()
+    if (code === 0) {
+      Object.keys(data).forEach((key) => {
+        if (Reflect.has(store, key)) {
+          Reflect.set(store, key, Reflect.get(data, key))
+        }
+      })
+    }
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
   }
 
-  const isExists = await fileExists(latestStore.browserCacheRootDir)
+  const isExists = await fileExists(store.browserCacheRootDir)
   if (!isExists) {
-    latestStore.browserCacheRootDir = defaultValues.browserCacheRootDir
+    store.browserCacheRootDir = defaultValues.browserCacheRootDir
   }
 }
 
 export async function setupStore() {
+  try {
+    const config = await readFile(appConfig.configFile, 'utf-8')
+    Object.assign(_store, JSON.parse(config))
+  }
+  catch (error) {
+    console.error('setupStore', error)
+  }
   await fetchUserConfig()
 }
