@@ -4,7 +4,9 @@ import InputText from 'primevue/inputtext'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
+import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
+import RxButton from '/@/components/rx-button'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
@@ -65,14 +67,14 @@ function handleDeleteConfirm() {
           {$t('Are you sure to delete the Workspace?')}
         </div>
         <div class={styles['delete-confirm-content']}>
-          {$t('This action can’t be undo, To confirm, type {workspaceName} in the box below.', {
-            workspaceName: <b class="mx-1">{currentWorkspace.value?.workspaceName}</b>,
-          })}
+          <I18nT keypath={$t('This action can’t be undo, To confirm, type {workspaceName} in the box below.', { workspaceName: '{workspaceName}' })}>
+            {{ workspaceName: <b class="mx-1">{currentWorkspace.value?.workspaceName}</b> }}
+          </I18nT>
         </div>
         <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />
         <div class="w-full flex justify-end gap-2">
           <RxButton outlined label={$t('Cancel')} onClick={() => dialogRef.value.close()} />
-          <RxButton severity="danger" label={$t('Delete Workspace')} onClick={confirmDelete} />
+          <RxButton severity="danger" label={$t('Delete Workspace')} disabled={workspaceName.value !== currentWorkspace.value?.workspaceName} onClick={confirmDelete} />
         </div>
       </div>
     )

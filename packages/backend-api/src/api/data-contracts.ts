@@ -5308,6 +5308,14 @@ export interface UserMdfProjectInfoCreateData {
   msg: string;
 }
 
+export interface UserGetProjectInfoByWorkspaceListParams {
+  /**
+   * 1:查询不包括默认项目数据，2:查询包括默认项目数据
+   * @example 1
+   */
+  default?: number;
+}
+
 export interface UserGetProjectInfoByWorkspaceListData {
   code: number;
   data: {
