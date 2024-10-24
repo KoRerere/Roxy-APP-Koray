@@ -1,15 +1,13 @@
 <script lang="ts" setup>
-import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
+import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { strConcat } from '/@/utils'
 
-type CurrentWorkspace = UnwrapRowType<UserGetWorkspaceListListData>
-
 const props = defineProps({
-  currentWorkspace: {
-    type: Object as PropType<CurrentWorkspace>,
+  workspaceName: {
+    type: String,
   },
   data: {
     type: Object as PropType<any>,
@@ -45,13 +43,20 @@ const list = computed(() => [
   {
     key: 'os',
     svg: os_image[(data.value.os as string).toLocaleLowerCase()],
-    tooltip: `System: ${data.value.os} ${data.value.osVersion}\nKernel: Chrome ${data.value.coreVersion}`,
+    tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', { os: data.value.os, osVersion: data.value.osVersion, coreVersion: data.value.coreVersion }),
   },
   {
     key: 'proxy',
     classes: isProxy.value ? '' : 'direct',
     svg: isProxy.value ? `country-code/${data.value.lastCountry}` : 'base/rx_ic_plus',
-    tooltip: isProxy.value ? `Location: ${data.value.lastCountry || '--'}${strConcat('/', data.value.lastCity) || ''}\nIP: ${data.value.lastIp || '--'}\nLast check: ${data.value.checkTime || '--'}` : undefined,
+    tooltip: isProxy.value
+      ? $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
+        lastCountry: data.value.lastCountry || '--',
+        lastCity: strConcat('/', data.value.lastCity) || '',
+        lastIp: data.value.lastIp || '--',
+        checkTime: data.value.checkTime || '--',
+      })
+      : undefined,
   },
   {
     key: 'account',
@@ -81,28 +86,28 @@ function onClick(event: Event, key: string) {
 function getProxyOperation() {
   return [
     {
-      label: 'Add proxy',
+      label: $t('添加代理'),
       visible: !isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'addProxy')
       },
     },
     {
-      label: 'Select proxy',
+      label: $t('选择代理'),
       visible: !isProxy.value,
       command: () => {
         emits('profileOperate', 'selectProxy')
       },
     },
     {
-      label: 'Test proxy',
+      label: $t('测试代理'),
       visible: isProxy.value,
       command: () => {
         emits('profileOperate', 'testProxy')
       },
     },
     {
-      label: 'Refresh Url',
+      label: $t('刷新代理'),
       visible: isProxy.value,
       disabled: !data.value.refreshUrl,
       command: () => {
@@ -114,14 +119,14 @@ function getProxyOperation() {
       separator: true,
     },
     {
-      label: 'Edit proxy',
+      label: $t('编辑代理'),
       visible: isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'editProxy')
       },
     },
     {
-      label: 'Change proxy',
+      label: $t('切换代理'),
       visible: isProxy.value,
       command: () => {
         emits('profileOperate', 'selectProxy')
@@ -132,7 +137,7 @@ function getProxyOperation() {
       separator: true,
     },
     {
-      label: 'Delete',
+      label: $t('删除代理'),
       visible: isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'deleteProxy')
@@ -144,14 +149,14 @@ function getProxyOperation() {
 function getAccountOperation() {
   return [
     {
-      label: 'Add account',
+      label: $t('添加平台账号'),
       visible: !role.isViewer,
       command: () => {
         emits('profileOperate', 'addAccount')
       },
     },
     {
-      label: 'Select account',
+      label: $t('选择平台账号'),
       command: () => {
         emits('profileOperate', 'selectAccount')
       },
@@ -163,7 +168,7 @@ function getAccountOperation() {
 <template>
   <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
     <div>
-      <span class="profile-name">{{ currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase() }}-</span>
+      <span class="profile-name">{{ workspaceName }}-</span>
       <span class="profile-num">{{ data.windowSortNum }}</span>
     </div>
     <div class="position-relative flex justify-between state" @click.stop>

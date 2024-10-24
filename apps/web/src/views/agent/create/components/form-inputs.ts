@@ -16,8 +16,8 @@ export function getInputs(data: any = {}) {
   const inputs = reactive([
     {
       type: 'textarea',
-      label: $t('Smart detection'),
-      placeholder: `${$t('Paste proxy rules like')}:\nHost:Port:Username:Password[RefreshURL]`,
+      label: $t('智能识别'),
+      placeholder: `${$t('请按以下格式输入代理信息')}:\n${$t('代理主机:端口:用户名:密码[刷新URL]')}\n192.168.0.1:8000:username:password[http://www.example.com]`,
       name: 'proxyRules',
       rows: 5,
       errorMsg: $t('Error in parsing content'),
@@ -52,14 +52,14 @@ export function getInputs(data: any = {}) {
     },
     {
       type: 'radio',
-      label: $t('Protocol'),
+      label: $t('代理类型'),
       name: 'ipType',
       value: data.ipType || $dict_map.ipType[0]?.value,
       options: $dict_map.ipType,
       size: 'lg',
     },
     {
-      label: 'Server',
+      label: $t('代理信息'),
       items: [
         {
           type: 'select',
@@ -75,7 +75,7 @@ export function getInputs(data: any = {}) {
           type: 'text',
           name: 'host',
           value: data.host ?? '',
-          placeholder: 'host',
+          placeholder: $t('主机'),
           required: true,
         },
         { separator: true },
@@ -83,7 +83,7 @@ export function getInputs(data: any = {}) {
           type: 'number',
           name: 'port',
           value: data.port ?? '',
-          placeholder: 'port',
+          placeholder: $t('端口'),
           required: true,
           onblur: () => {
             // const formData = getFormData(inputs.value)
@@ -103,25 +103,25 @@ export function getInputs(data: any = {}) {
     },
     {
       type: 'text',
-      label: $t('Username'),
+      label: $t('用户名'),
       name: 'proxyUserName',
       value: data.proxyUserName ?? '',
-      placeholder: $t('Username for your server'),
+      placeholder: $t('请输入用户名'),
     },
     {
       type: 'password',
-      label: $t('Password'),
+      label: $t('密码'),
       name: 'proxyPassword',
       value: data.proxyPassword ?? '',
-      placeholder: $t('Password for your server'),
+      placeholder: $t('请输入密码'),
     },
     {
       type: 'text',
-      label: $t('Refreshing URL'),
+      label: $t('刷新URL'),
       name: 'refreshUrl',
       value: data.refreshUrl ?? '',
-      placeholder: $t('Please enter a valid URL'),
-      tooltip: 'mamba out!',
+      placeholder: $t('请输入刷新URL'),
+      tooltip: $t('请在填写后点击下方刷新按钮测试'),
       icon: 'base/rx_ic_refresh',
       iconClick: async () => {
         const input = findInputByName(inputs, 'refreshUrl')

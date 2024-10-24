@@ -165,7 +165,7 @@ function saveSelected() {
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
             <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
-            <RxButton severity="secondary" icon="base/rx_ic_speed_test" label="Test All" @click="testAllProxy" />
+            <RxButton severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">
@@ -202,7 +202,7 @@ function saveSelected() {
       </RyTable>
     </div>
     <template #footer>
-      <RxButton label="Save selected" severity="info" @click="saveSelected" />
+      <RxButton :label="$t('保存')" @click="saveSelected" />
     </template>
   </drawer-content>
 </template>
