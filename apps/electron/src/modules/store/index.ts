@@ -56,21 +56,19 @@ const _store: StoreType = {
 
 console.log('_store', JSON.stringify(_store, null, 2))
 
-const saveConfig = debounce(() => {
-  writeFile(appConfig.configFile, JSON.stringify(_store, null, 2), 'utf-8')
+const saveConfig = debounce(async () => {
+  try {
+    await writeFile(appConfig.configFile, JSON.stringify(_store, null, 2), 'utf-8')
+  }
+  catch (error) {
+    console.error('saveConfig error: ', error)
+  }
 }, 300)
 
-export const store = new Proxy({} as StoreType, {
-  get(target, prop) {
-    return Reflect.get(_store, prop)
-  },
+export const store = new Proxy(_store, {
   set(target, prop: keyof StoreType, value) {
-    Reflect.set(_store, prop, value)
+    Reflect.set(_store, prop, value, target)
     saveConfig()
-    return true
-  },
-  deleteProperty(target, p) {
-    Reflect.deleteProperty(_store, p)
     return true
   },
 })
