@@ -33,6 +33,16 @@ async function handleSubmit() {
     return
   }
 
+  const verifyCodeRes = await API.base.useCheckBindEmailVerCodeList({
+    email: getEmail.value,
+    ver_code: emailCode.value,
+  })
+
+  if (!verifyCodeRes.data) {
+    toast.add({ severity: 'error', summary: 'Error', detail: verifyCodeRes.msg, life: 5000 })
+    return
+  }
+
   if (props.type === 'resetPassword') {
     emit('ok', emailCode.value)
     return

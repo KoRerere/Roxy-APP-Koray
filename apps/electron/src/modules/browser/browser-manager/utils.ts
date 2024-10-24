@@ -91,7 +91,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     /** 浏览器完整的版本 */
     chromeVersion: winInfo.userAgentVersion,
     /** 浏览器类型， Google Chrome  或者 Edge */
-    chromeType: 'Google Chrome',
+    chromeType: 'Google  Chrome',
     userAgent: winInfo.userAgentNew,
     /** AudioContext 指纹配置 */
     audioBuffer: {

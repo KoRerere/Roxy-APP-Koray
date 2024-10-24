@@ -1,6 +1,6 @@
+import { isFunction, isPlainObject, isString, merge, uniqBy } from 'es-toolkit'
 import type { RxFormEmits } from '/@/components/rx-form/src/form'
 import type { FormSchema } from '/@/components/rx-form/src/types/form'
-import { isFunction, isPlainObject, isString, merge, uniqBy } from 'es-toolkit'
 import { useFormContext } from '/@/components/rx-form/src/hooks/useFormContext'
 
 interface UseFormMethodsParams {
@@ -142,6 +142,13 @@ export function useFormMethods({ emit }: UseFormMethodsParams) {
     emit('reset')
   }
 
+  /** 清除所有验证信息 */
+  function clearValidateMessages() {
+    Object.keys(errors.value).forEach((key) => {
+      errors.value[key] = ''
+    })
+  }
+
   /**
    * 提交表单并验证所有字段
    */
@@ -179,5 +186,6 @@ export function useFormMethods({ emit }: UseFormMethodsParams) {
     removeSchemaByField,
     getSchemaByField,
     updateSchema,
+    clearValidateMessages,
   }
 }

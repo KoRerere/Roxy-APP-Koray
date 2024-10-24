@@ -26,7 +26,7 @@ export interface RenderMessage {
   /** 删除 luminet 代理 */
   'proxy:delLuminetProxy': (dirId: string) => void
   /** 检测本地网络/系统代理 */
-  'proxy:detectNetwork': () => ProxyDetectionResult
+  'proxy:detectNetwork': (type?: 'local' | 'system') => ProxyDetectionResult
   /** 获取系统代理 */
   'proxy:getSystemProxy': () => Promise<string>
   /** 代理 => 刷新 URL */
