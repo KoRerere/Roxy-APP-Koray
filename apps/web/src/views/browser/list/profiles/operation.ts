@@ -86,7 +86,7 @@ export async function getCustomFilters(params: any = {}) {
       label: $t('Project'),
       icon: 'base/rx_ic_stack',
       getOptions: async () => {
-        const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+        const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
         return data.rows.map((item: any) => ({
           parentName: 'projectIds',
           value: `${item.project_id}`,

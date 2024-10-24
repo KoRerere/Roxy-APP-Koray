@@ -2,10 +2,35 @@ import express from 'express'
 import twoFactor from 'node-2fa'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
+import { listTrans } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { defaultBrowserCreateParams } from './constants/'
 
 const router = express.Router()
+
+/** 获取账号列表 */
+router.get('/account', async (req, res) => {
+  const { workspaceId, ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId } })
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+/** 获取空间项目列表 */
+router.get('/workspace', async (req, res) => {
+  const { ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.api.userGetWorkspaceListApiList({ ...rest })
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
 
 /* 创建窗口 */
 router.post('/create', async (req, res) => {
@@ -54,9 +79,12 @@ router.post('/mdf', async (req, res) => {
 
 /* 获取浏览器窗口列表 */
 router.get('/list', async (req, res) => {
-  const { page_index = 1, page_size = 15, dirId, workspaceId } = req.query as Record<string, any>
+  const { dirId, workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.window.userGetWindowInfoV2List({ page_index, page_size, dirId }, { headers: { workspaceId } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId } })
+    if (result.code === 0 && result.data?.rows) {
+      result.data.rows = result.data.rows.map(item => listTrans(item))
+    }
     res.json(result)
   }
   catch (error) {
