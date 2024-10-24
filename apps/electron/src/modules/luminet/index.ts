@@ -1,5 +1,7 @@
 import type { ChildProcess } from 'node:child_process'
-import { execFile, execFileSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
+import { setTimeout } from 'node:timers/promises'
+import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC } from '/@/modules/luminet/util'
 import { store } from '/@/modules/store'
@@ -7,6 +9,7 @@ import { getSystemProxy, isMac } from '/@/utils'
 
 export * from './util'
 
+const execFilePromise = promisify(execFile)
 let luminetProcess: ChildProcess | null = null
 
 export function getLuminetProcess() {
@@ -42,12 +45,13 @@ export async function startLuminet() {
   const encText = encryptByDESModeCBC(originText)
 
   if (isMac) {
-    execFileSync('chmod', ['+x', appConfig.luminetBinPath])
+    await execFilePromise('chmod', ['+x', appConfig.luminetBinPath])
   }
 
   luminetProcess = execFile(appConfig.luminetBinPath, ['--arg', encText])
 
   console.log(`Child process ID: ${luminetProcess.pid}`)
+  await setTimeout(100)
 }
 
 export function stopLuminet() {

@@ -29,9 +29,10 @@ electronAPI.send('app:getAppVersion').then((version) => {
       {{ message }}
     </div>
 
-    <div class="bg" />
-    <div class="bg bg2" />
-    <div class="bg bg3" />
+    <div class="wave wave1" />
+    <div class="wave wave2" />
+    <div class="wave wave3" />
+    <div class="launch-mask" />
   </div>
 </template>
 
@@ -40,7 +41,8 @@ electronAPI.send('app:getAppVersion').then((version) => {
   width: 100vw;
   height: 100vh;
   border-radius: var(--radius-3xl, 16px);
-  background: linear-gradient(180deg, #f2fbff 0%, #fff 100%);
+  background: radial-gradient(circle at top, #bbe1ed, #fff);
+  background-size: 100% 100%;
 
   /* shadow-sm */
   box-shadow:
@@ -92,33 +94,57 @@ electronAPI.send('app:getAppVersion').then((version) => {
   z-index: 10;
 }
 
-.bg {
-  animation: slide 10s ease-in-out infinite alternate;
-  background-image: linear-gradient(-30deg, rgba(193, 235, 255, 0.5) 50%, rgba(255, 255, 255, 0.4) 50%);
-  bottom: 0;
-  left: -50%;
-  opacity: 0.6;
+.launch-mask {
+  width: 100%;
+  height: 100vh;
   position: absolute;
-  right: -50%;
-  top: 0;
+  left: 0;
+  background: linear-gradient(rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 1) 100%);
+}
+.wave {
+  background-image: linear-gradient(-60deg, rgba(193, 235, 255, 0.5) 50%, rgba(255, 255, 255, 0.4) 50%);
+  position: absolute;
   z-index: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.6;
 }
 
-.bg2 {
-  animation-direction: alternate-reverse;
-  animation-duration: 20s;
+.wave1 {
+  animation: slide 15s ease-in-out infinite alternate;
+  left: -50%;
+  right: -50%;
+}
+.wave2 {
+  animation: slide 10s ease-in-out infinite alternate-reverse;
+  left: -80%;
+  right: -70%;
 }
 
-.bg3 {
-  animation-duration: 30s;
+.wave3 {
+  animation: slide3 20s ease-in-out infinite alternate;
+  left: -50%;
+  right: -50%;
 }
 
 @keyframes slide {
   0% {
-    transform: translateX(-25%);
+    transform: translateX(-20%);
   }
   100% {
-    transform: translateX(25%);
+    transform: translateX(20%);
+  }
+}
+
+@keyframes slide3 {
+  0% {
+    transform: translateX(-10%);
+  }
+  50% {
+    transform: translateX(10%);
+  }
+  100% {
+    transform: translateX(-10%);
   }
 }
 </style>

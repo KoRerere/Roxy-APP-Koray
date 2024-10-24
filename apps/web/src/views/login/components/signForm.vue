@@ -61,6 +61,7 @@ function switchFormMode(val: boolean) {
   isRegister.value = val
   formSchemas.value = getFormSchemas(val)
   formInstance.value?.updateSchema(getFormSchemas(val))
+  formInstance.value?.clearValidateMessages()
 }
 </script>
 

@@ -1,20 +1,20 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
-import { z } from 'zod'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
+import { RxForm } from '/@/components/rx-form'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
-import { getRegisterValidation } from './schemas'
+import { getResetPasswordSchemas } from './schemas'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
 
+const rxFormRef = useTemplateRef('rxForm')
 const email = ref('')
 const emailCode = ref('')
-const newPassword = ref('')
-const reNewPassword = ref('')
+const resetPwdFormData = ref({ email: '', newPassword: '', confirmPassword: '' })
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
 const isShowAlert = ref(false)
 
@@ -33,18 +33,10 @@ async function handleSubmit() {
     }
   }
   else if (currentStep.value === 'step3') {
-    if (newPassword.value !== reNewPassword.value) {
-      toast.add({ severity: 'error', summary: 'Error', detail: $t('The two passwords are inconsistent'), life: 5000 })
-      return
-    }
-    if (newPassword.value.length < 6) {
-      toast.add({ severity: 'error', summary: 'Error', detail: $t('Password must be at least 6 characters'), life: 5000 })
-      return
-    }
-
+    const formData = await rxFormRef.value?.submit()
     const { code, msg } = await API.base.forgetPasswordCreate({
       email: email.value,
-      new_pwd: newPassword.value,
+      new_pwd: formData?.newPassword,
       ver_code: emailCode.value,
     })
     if (code === 0) {
@@ -68,44 +60,6 @@ function receiveEmailCode(code: string) {
   emailCode.value = code
   currentStep.value = 'step3'
 }
-
-const User = z.object({
-  newPassword: getRegisterValidation(),
-  reNewPassword: getRegisterValidation(),
-})
-
-const errorMessage = ref({
-  newPassword: '',
-  reNewPassword: '',
-})
-
-watch([newPassword, reNewPassword], () => {
-  if (true) {
-    const result = User.safeParse({ newPassword: newPassword.value })
-
-    if (result.success) {
-      errorMessage.value.newPassword = ''
-    }
-    else {
-      errorMessage.value.newPassword = result.error.errors[0].message
-    }
-  }
-
-  if (true) {
-    const result = User.safeParse({ reNewPassword: reNewPassword.value })
-
-    if (result.success) {
-      errorMessage.value.reNewPassword = ''
-    }
-    else {
-      errorMessage.value.reNewPassword = result.error.errors[0].message
-    }
-  }
-
-  if (reNewPassword.value && newPassword.value !== reNewPassword.value) {
-    errorMessage.value.reNewPassword = $t('两次输入的密码不一致')
-  }
-})
 </script>
 
 <template>
@@ -121,10 +75,7 @@ watch([newPassword, reNewPassword], () => {
             <InputText id="email" v-model="email" :placeholder="$t('请输入您的邮箱')" />
           </template>
           <template v-else>
-            <Password id="new-password" v-model="newPassword" :feedback="false" :placeholder="$t('请输入您的新密码')" toggle-mask />
-            <span>{{ errorMessage.newPassword }}</span>
-            <Password id="re-new-password" v-model="reNewPassword" :feedback="false" :placeholder="$t('请再次输入您的新密码')" toggle-mask />
-            <span>{{ errorMessage.reNewPassword }}</span>
+            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
           </template>
         </div>
       </div>
@@ -195,7 +146,6 @@ watch([newPassword, reNewPassword], () => {
 
   .title {
     width: 100%;
-    text-align: center;
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 16px;

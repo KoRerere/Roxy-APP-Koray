@@ -50,11 +50,11 @@ ipcMain.on('proxy:delLuminetProxy', (dirId) => {
 })
 
 /** 根据用户设置，检测本地网络/系统代理 */
-ipcMain.on('proxy:detectNetwork', async () => {
+ipcMain.on('proxy:detectNetwork', async (type?: 'local' | 'system') => {
   const { systemProxySwitch } = store
   const dirId = Math.random().toString(36).slice(2)
 
-  if (systemProxySwitch) {
+  if (systemProxySwitch || type === 'system') {
     const systemProxy = await getSystemProxy()
     console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
@@ -155,8 +155,8 @@ ipcMain.on('app:saveSoftConfig', (config) => {
     }
   })
 
-  if (config.systemProxySwitch !== originSystemProxySwitch) {
-    if (config.systemProxySwitch) {
+  if (store.systemProxySwitch !== originSystemProxySwitch) {
+    if (store.systemProxySwitch) {
       startLuminet()
     }
     else {

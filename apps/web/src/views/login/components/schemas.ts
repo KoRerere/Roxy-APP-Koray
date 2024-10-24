@@ -1,12 +1,12 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 import { defineFormSchema } from '/@/components/rx-form/'
 import { $t } from '/@/locales'
 
-export function getRegisterValidation() {
-  return z.string().min(1, $t('请设置您的密码')).min(6, $t('必须包含数字和大小写字母，8-20位')).max(20, $t('必须包含数字和大小写字母，8-20位')).refine((val) => {
+export function getRegisterValidation(z: z.ZodString) {
+  return z.min(6, $t('必须包含数字和大小写字母，8-20位')).max(20, $t('必须包含数字和大小写字母，8-20位')).refine((val) => {
     return /[a-z]/i.test(val) && /\d/.test(val)
   }, {
-    message: $t('Password must contain at least one letter and one number'),
+    message: $t('必须包含数字和大小写字母，8-20位'),
   })
 }
 
@@ -44,9 +44,52 @@ export function getFormSchemas(isRegister = false) {
           const z = zod.string()
 
           if (isRegister) {
-            return getRegisterValidation()
+            return getRegisterValidation(zod.string().min(1, $t('请设置您的密码')))
           }
           return z.min(1, $t('请输入您的密码'))
+        },
+      },
+    },
+  ])
+}
+
+export function getResetPasswordSchemas() {
+  return defineFormSchema([
+    {
+      field: 'newPassword',
+      component: 'Password',
+      label: '',
+      componentProps: {
+        feedback: false,
+        toggleMask: true,
+        placeholder: () => $t('请输入您的新密码'),
+      },
+      rule: {
+        validator(zod) {
+          const z = zod.string()
+          return getRegisterValidation(z.min(1, $t('请输入您的新密码')))
+        },
+      },
+    },
+    {
+      field: 'confirmPassword',
+      component: 'Password',
+      label: '',
+      componentProps: {
+        feedback: false,
+        toggleMask: true,
+        placeholder: () => $t('请再次输入您的新密码'),
+      },
+      rule: {
+        validator(zod, formModel) {
+          const z = zod.string()
+          return z
+            .min(1, $t('请再次输入您的新密码'))
+            .refine((val) => {
+              return val === formModel.value.newPassword
+            }, {
+              message: $t('两次输入的密码不一致'),
+            })
         },
       },
     },

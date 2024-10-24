@@ -5,7 +5,7 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { setLuminetProxy } from '/@/modules/luminet'
+import { setLuminetProxy, startLuminet } from '/@/modules/luminet'
 import { store } from '/@/modules/store'
 
 export interface ProxyDetectionResult {
@@ -75,6 +75,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId && proxyUserName)
   if (systemProxySwitch) {
+    await startLuminet()
     const luminetParams = {
       addr: host && port ? `${host}:${port}` : '',
       user_name: proxyUserName || '',
@@ -106,11 +107,13 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
   console.log('proxyDetection result', result)
 
+  // 下面为什么会有这么多的判断？因为不同的检测渠道返回的数据字段名不一样，所以需要做一些兼容处理
   if (result) {
+    result.ip ||= result.query
     result.region ||= result.region_name
     result.city ||= result.city_name
     result.country ||= result.country_name || result.country_long
-    result.country_code ||= result.country_short
+    result.country_code ||= result.country_short || result.countryCode
   }
 
   return result
