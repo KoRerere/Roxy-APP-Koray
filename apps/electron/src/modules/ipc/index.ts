@@ -148,7 +148,6 @@ ipcMain.on('app:getAppVersion', () => {
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
   const originSystemProxySwitch = store.systemProxySwitch
-
   Object.keys(config).forEach((key) => {
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(config, key))

@@ -27,6 +27,7 @@ const items = ref([
         ...item,
         command: () => {
           simpleLocale.setSimpleLocale(item.locale)
+          electronAPI.send('app:saveSoftConfig', { language: item.locale })
         },
       }
     }),
