@@ -73,7 +73,7 @@ function toCreateBrowser() {
 <template>
   <aside class="aside" :class="{ collapsed, transitionend }">
     <template v-if="!roleStore.isViewer">
-      <RxButton :label="collapsed ? '' : $t('新建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
+      <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
     </template>
     <nav class="menu">
       <SubMenuItem :items="menus" :collapsed />

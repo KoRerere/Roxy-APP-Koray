@@ -50,7 +50,7 @@ function handleSave() {
 </script>
 
 <template>
-  <drawerContent :title="$t('account list')" v-bind="$attrs">
+  <drawerContent :title="$t('平台账号列表')" v-bind="$attrs">
     <div class="h-full">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"

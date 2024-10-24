@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import RemarkIcon from '/@/components/remark-icon'
+import { $t } from '/@/locales/index.js'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
@@ -11,7 +12,7 @@ const { getTags, getProjects, getProjectMember } = useMateGroup()
 
 const metaData = defineModel<MetaData>('modelValue', {
   default: {
-    projectName: 'No project',
+    projectName: $t('未指定项目'),
     projectId: undefined,
     labelIds: [],
     windowRemark: '',
@@ -29,7 +30,7 @@ async function selectProject(event: Event) {
     onHide: (projectId: string) => {
       if (!isEmptyValue(projectId) && projectId !== value) {
         metaData.value.projectId = Number(projectId)
-        metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || 'No project'
+        metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || $t('未指定项目')
       }
     },
   })
@@ -67,9 +68,9 @@ function onConfirm(windowRemark: string) {
   <div class="flex items-center gap-2">
     <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
     <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" @click="selectTags" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" label="标签" @click="selectTags" />
     </div>
-    <RemarkIcon mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
+    <RemarkIcon :title="$t('请为窗口添加备注')" label="备注" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 

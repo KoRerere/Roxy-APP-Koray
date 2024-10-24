@@ -38,7 +38,7 @@ const mainSetting: any = ref([])
 const extraSetting: any = ref([])
 const original = ref()
 const metaData = ref<MetaData>({
-  projectName: 'No project',
+  projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
   windowRemark: '',
@@ -184,7 +184,7 @@ onBeforeMount(() => {
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>{{ $t('新建窗口') }}</span>
+        <span>{{ $t('创建窗口') }}</span>
       </div>
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">

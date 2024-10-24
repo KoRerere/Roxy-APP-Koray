@@ -2,12 +2,14 @@
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
+import { $t } from '/@/locales'
 
 const props = defineProps({
   value: String,
   title: String,
   content: String,
   placeholder: String,
+  label: String,
   mode: {
     type: String as PropType<'icon' | 'button'>,
     default: 'icon',
@@ -49,7 +51,7 @@ function onRemark() {
           {
             type: 'textarea',
             name: 'remark',
-            placeholder: props.placeholder,
+            placeholder: props.placeholder || $t('请输入备注'),
             value: props.value,
           },
         ],
@@ -68,6 +70,7 @@ function onRemark() {
 <template>
   <RxButton v-if="mode === 'button'" v-tooltip.top="value" class="mode-button" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
     <RxSvgIcon name="base/rx_ic_doc_add" class="remark-icon" :class="{ 'text-gray-200': disabled, 'active': hasRemark }" />
+    <span v-if="label" class="ml-2 text-3">{{ label }}</span>
     <!-- 占位用span用于保持按钮的高度 -->
     <span class="p-button-label" data-pc-section="label">&nbsp;</span>
   </RxButton>

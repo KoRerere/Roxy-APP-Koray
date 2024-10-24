@@ -146,7 +146,7 @@ onBeforeMount(() => {
     <RyForm :inputs="formInputs" />
     <template #footer>
       <div class="flex flex-1 justify-end gap-3">
-        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :placeholder="$t('请输入备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
         <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm(false)" />
       </div>

@@ -181,7 +181,7 @@ async function handleClick(e: MouseEvent) {
 }
 
 .p-button-text {
-  border: none;
+  border-color: transparent;
   box-shadow: none;
 
   &.p-button {
