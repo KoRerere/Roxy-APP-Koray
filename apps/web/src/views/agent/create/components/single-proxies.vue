@@ -34,18 +34,17 @@ function save() {
 </script>
 
 <template>
-  <div class="flex items-center flex-col w-50% mx-auto">
+  <div class="flex items-center flex-col w-50% mt-5 mx-auto">
     <div class="flex-1 overflow-y-auto">
       <ProxiesForm :inputs="formInputs" />
     </div>
     <div class="flex justify-between w-full">
       <div class="flex items-center gap-3">
-        <RxButton size="sm" severity="secondary" :label="$t('Test proxies')" icon="base/rx_ic_speed_test" @click="testProxy" />
+        <RxButton size="sm" outlined severity="secondary" :label="$t('测试代理')" icon="base/rx_ic_speed_test" @click="testProxy" />
         <RemarkIcon class="ma-auto ml-0" mode="button" :value="remark" :on-confirm="addRemark" />
       </div>
       <div class="flex gap-3 py-4">
-        <RxButton text size="sm" severity="secondary" :label="$t('Cancel')" @click="$emit('cancel')" />
-        <RxButton size="sm" severity="info" :label="$t('Save proxies')" @click="save" />
+        <RxButton size="sm" severity="info" :label="$t('保存')" @click="save" />
       </div>
     </div>
   </div>

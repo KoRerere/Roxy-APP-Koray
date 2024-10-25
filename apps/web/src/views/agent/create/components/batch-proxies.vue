@@ -70,6 +70,10 @@ const columns = ref([
       )
     },
   },
+  {
+    title: $t('Actions'),
+    slot: 'actions',
+  },
 ])
 
 function parseValue() {
@@ -202,66 +206,69 @@ function onSave() {
     <div class="parse-input">
       <div class="panel">
         <div class="panel-title">
-          Proxies information
+          {{ $t('代理信息') }}
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center">
-              <Checkbox v-model="isDuplicate" input-id="wrap" binary />
-              <label for="wrap" class="select-none mx-2 cursor-pointer">Filter duplicates</label>
-              <RxSvgIcon name="base/rx_ic_info_line" :size="14" />
+              <Checkbox v-model="isDuplicate" :pt="{ box: '!w-4 !h-4' }" input-id="wrap" binary />
+              <label for="wrap" class="text-3 select-none mx-1.5 cursor-pointer">Filter duplicates</label>
+              <RxSvgIcon v-tooltip="'Keep all proxies'" name="base/rx_ic_info" :size="12" />
             </div>
-            <RxButton outlined severity="secondary" size="sm" label="Parse proxies" icon="base/rx_ic_play" @click="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" label="Parse proxies" icon="base/rx_ic_play" @click="parseValue" />
           </div>
         </div>
       </div>
       <div class="panel">
         <div class="panel-title">
-          Import rules
+          {{ $t('导入规则') }}
         </div>
         <div class="rules">
-          Allowed formats (IPv4, IPv6 supported):<br><br>
-          192.168.0.1:8000<span class="text-blue">{Remark}</span><br>
-          192.168.0.1:8000:username:password<span class="text-blue">{Remark}</span><br>
-          socks5://192.168.0.1:8000<span class="text-green">[Refresh IP URL]</span><span class="text-blue">{Remark}</span><br>
-          http://[2001:db8:2de:0:0:0:0:e13]:8000<span class="text-green">[Refresh IP URL]</span><span class="text-blue">{Remark}</span><br><br>
-          1. If you do not fill in the proxy type, it will default to HTTP<br>
-          2. Only support HTTP, HTTPS, SOCKS5<br>
-          3. One proxy per line, add up to 500 proxies at a time<br>
-          4. Host support IPv4 and IPv6, if IPv6 host should be filled in []
+          <i18n-t
+            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}*http://2001:db8:2de:0:0:0:0:e13:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 *', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}' })"
+            scope="global">
+            <template #br>
+              <br>
+            </template>
+            <template #refreshurl>
+              <span class="text-green">[{{ $t('刷新 URL') }}]</span>
+            </template>
+            <template #remark>
+              <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+            </template>
+          </i18n-t>
         </div>
       </div>
     </div>
-    <div class="flex flex-col flex-1 overflow-hidden">
-      <div class="flex items-center justify-between">
+    <div class="flex flex-col flex-1 overflow-hidden mt-6">
+      <div class="flex items-center justify-between mb-3">
         <div>Parsed proxies</div>
         <div class="flex gap-2">
-          <RxButton severity="secondary" text size="sm" label="Delete fail" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <RxButton severity="secondary" size="sm" label="Test all proxies" icon="base/rx_ic_speed_test" @click="testAll" />
+          <RxButton text severity="secondary" size="xxs" label="Delete fail" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
+          <RxButton severity="secondary" size="xxs" label="Test all proxies" icon="base/rx_ic_speed_test" @click="testAll" />
         </div>
       </div>
-      <Message v-if="showMessage" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
+      <Message v-if="showMessage" class="mb-3" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
         {{ dataList.length }} proxies are successfully parsed. {{ filterCount }} proxies has been filtered.
       </Message>
       <div class="flex-ovh-1 items-center justify-center">
-        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false">
+        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
           <template #actions="{ data }">
             <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </template>
         </RyTable>
       </div>
     </div>
-    <div class="flex justify-between">
-      <RxButton severity="secondary" text size="sm" label="Cancel" @click="$emit('cancel')" />
-      <RxButton severity="info" size="sm" label="Save proxies" :disabled="!dataList?.length" @click="onSave" />
+    <div class="flex justify-end">
+      <RxButton severity="info" :label="$t('保存')" :disabled="!dataList?.length" @click="onSave" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .proxies-content {
-  padding: 24px 24px 16px;
+  padding: 20px 24px 16px;
 }
 
 .parse-input {
@@ -312,35 +319,7 @@ function onSave() {
     color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
     line-height: var(--Line-Height-text-lg, 20px);
-  }
-}
-
-.empty {
-  gap: var(--spacing-lg, 8px);
-  width: var(--width-sm, 480px);
-  height: 160px;
-  flex-shrink: 0;
-  border-radius: var(--radius-2xl, 12px);
-  border: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
-
-  color: #000;
-  text-align: center;
-  font-family: Inter;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 16px;
-
-  span {
-    color: var(--Colors-Text-text-secondary, #575d61);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 16px;
   }
 }
 </style>

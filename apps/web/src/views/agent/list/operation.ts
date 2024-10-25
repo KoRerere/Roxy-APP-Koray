@@ -16,20 +16,20 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
   return [
     {
       name: 'edit',
-      label: $t('Edit'),
+      label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: !role.isViewer,
     },
     {
       name: 'test',
-      label: $t('Test'),
+      label: $t('测试'),
       icon: 'base/rx_ic_speed_test',
       quick: true,
       multiple: true,
     },
     {
       name: 'delete',
-      label: $t('Delete'),
+      label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       power: !role.isViewer,
       quick: true,

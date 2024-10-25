@@ -187,7 +187,7 @@ function replaceData(data: any) {
     <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" class="browser-drawer-content !w-[auto]" :pt="{ mask: 'browser-drawer' }">
       <template #container="{ closeCallback }">
         <proxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback" @confirm="(data: any) => { onChoose(data); closeCallback() }" />
-        <proxyCreate v-if="drawer.type === 'create'" :title="$t('Create Proxy')" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
+        <proxyCreate v-if="drawer.type === 'create'" :title="$t('添加代理')" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
       </template>
     </Drawer>
   </div>

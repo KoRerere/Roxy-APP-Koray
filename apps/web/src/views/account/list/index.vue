@@ -25,20 +25,20 @@ const dialog = useDialog()
 const operation = ref([
   {
     name: 'edit',
-    label: $t('Edit'),
+    label: $t('编辑'),
     icon: 'base/rx_ic_edit',
     power: !role.isViewer,
     quick: true,
   },
   {
     name: 'remark',
-    label: $t('Add Notes'),
+    label: $t('添加备注'),
     icon: 'base/rx_ic_doc_add',
     power: !role.isViewer,
   },
   {
     name: 'delete',
-    label: $t('Delete'),
+    label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
     power: !role.isViewer,
     quick: true,
@@ -62,12 +62,12 @@ function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
       drawer.data = {}
-      drawer.title = $t('Create Account')
+      drawer.title = $t('添加平台账号')
       drawer.visible = true
       break
     case 'edit':
       drawer.data = data
-      drawer.title = $t('Edit Account')
+      drawer.title = $t('编辑平台账号')
       drawer.visible = true
       break
     case 'remark':
@@ -127,21 +127,24 @@ async function addRemark(platformRemarks: string, data: any) {
 function deletePopup(data: any) {
   const datas = [].concat(data)
   confirm.require({
-    header: $t('warn'),
-    message: $t('This operation is irreversible?'),
+    header: $t('删除平台账号'),
+    message: $t('您确认要删除所选平台账号吗？删除后，将会与所有绑定的窗口解绑，但已有的登陆状态不会丢失'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
       showToast(code, msg)
+      if (code === 0) {
+        tableRef.value?.refresh()
+      }
     },
   })
 }
@@ -151,16 +154,12 @@ function deletePopup(data: any) {
   <div class="flex flex-col w-full h-full account">
     <div class="flex justify-between account-header">
       <div>{{ $route.meta.title }}</div>
-      <RxButton
-        v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys"
-        :label="$t('添加账号')" @click="operationHandler({ name: 'create' })"
-      />
+      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-               :show-actions="false"
-      >
+        :show-actions="false">
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
