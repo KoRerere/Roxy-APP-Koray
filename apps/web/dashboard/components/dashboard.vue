@@ -5,6 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import { baseUrl, fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import IpChangeWarnMessage from './ip-change-warn-message.vue'
@@ -144,23 +145,10 @@ onBeforeMount(() => {
         <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <rx-button
-              v-if="windowInfo.refreshUrl"
-              v-model:loading="refreshUrlLoading"
-              icon="base/rx_ic_renew"
-              class="btn"
-              label="Refresh URL" outlined
-              :disabled="refreshUrlLoading || testProxyLoading"
-              @click="refreshURL"
-            />
-            <rx-button
-              v-model:loading="testProxyLoading"
-              class="btn"
-              icon="base/rx_ic_speed_test"
-              label="Test proxy" outlined
-              :disabled="refreshUrlLoading || testProxyLoading"
-              @click="proxyDetection"
-            />
+            <rx-button v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
+              :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL" />
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')" outlined :disabled="refreshUrlLoading || testProxyLoading"
+              @click="proxyDetection" />
           </div>
         </Teleport>
       </div>
@@ -186,7 +174,7 @@ onBeforeMount(() => {
       <div class="card more-info profile">
         <div class="list">
           <div class="title">
-            Profile Info
+            {{ $t('窗口信息') }}
           </div>
           <template v-for="item in profileInfoList" :key="item.label">
             <div class="item">
@@ -202,7 +190,7 @@ onBeforeMount(() => {
 
         <div class="list">
           <div class="title">
-            Fingerprint Info
+            {{ $t('指纹信息') }}
           </div>
           <template v-for="item in fingerprintInfoList" :key="item.label">
             <div class="item">
@@ -225,7 +213,7 @@ onBeforeMount(() => {
       <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
         <div class="list">
           <div class="title">
-            Accounts & URLs
+            {{ $t('平台账号') }}
           </div>
           <TwoFactorAuth v-model:win-info="windowInfo" />
         </div>
@@ -234,7 +222,11 @@ onBeforeMount(() => {
 
     <div class="footer">
       <div class="info">
-        IP region is tested by <a href="https://ip123.in/" target="_blank">ip123.in</a>. This page costs you about 5KB :)
+        <i18n-t :keypath="$t('IP 查询数据来源于{link}', { link: '{link}' })" scope="global">
+          <template #link>
+            <a href="https://ip123.in/" target="_blank">ip123.in</a>
+          </template>
+        </i18n-t>
       </div>
       <div class="version">
         version 1.0.0
@@ -284,6 +276,7 @@ onBeforeMount(() => {
   0% {
     transform: rotate(0);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -345,7 +338,8 @@ onBeforeMount(() => {
       font-size: 14px;
       font-style: normal;
       font-weight: 600;
-      line-height: var(--Line-Height-text-xs, 16px); /* 114.286% */
+      line-height: var(--Line-Height-text-xs, 16px);
+      /* 114.286% */
     }
   }
 
@@ -398,7 +392,8 @@ onBeforeMount(() => {
       font-size: 14px;
       font-style: normal;
       font-weight: 600;
-      line-height: var(--Line-Height-text-lg, 20px); /* 142.857% */
+      line-height: var(--Line-Height-text-lg, 20px);
+      /* 142.857% */
     }
 
     .item {
@@ -414,7 +409,8 @@ onBeforeMount(() => {
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
-        line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+        line-height: var(--Line-Height-text-xs, 16px);
+        /* 133.333% */
       }
 
       .value {
@@ -424,7 +420,8 @@ onBeforeMount(() => {
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
-        line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+        line-height: var(--Line-Height-text-xs, 16px);
+        /* 133.333% */
 
         .tag-wrap {
           display: flex;
@@ -472,7 +469,7 @@ onBeforeMount(() => {
     }
   }
 
-  > * {
+  >* {
     z-index: 1;
   }
 
@@ -486,6 +483,7 @@ onBeforeMount(() => {
       width: 48px;
       height: 48px;
       border-radius: 50%;
+
       &.fail {
         background-color: #f0f3f5;
       }
@@ -496,6 +494,7 @@ onBeforeMount(() => {
     display: flex;
     align-items: center;
     gap: var(--spacing-xl, 12px);
+
     .btn {
       display: flex;
       min-width: 24px;
@@ -561,15 +560,18 @@ onBeforeMount(() => {
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: var(--Line-Height-text-3xl, 30px); /* 150% */
+  line-height: var(--Line-Height-text-3xl, 30px);
+  /* 150% */
 }
+
 .ip {
   color: var(--Colors-Text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 32px;
   font-style: normal;
   font-weight: 600;
-  line-height: var(--Line-Height-display-sm, 38px); /* 118.75% */
+  line-height: var(--Line-Height-display-sm, 38px);
+  /* 118.75% */
 
   .is-ip-changed {
     color: var(--Color-yellow-300, #fc9d12);
@@ -582,13 +584,15 @@ onBeforeMount(() => {
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
+
   .info {
     color: var(--Colors-Text-text-tertiary, #7c8387);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 
   .version {
@@ -598,7 +602,8 @@ onBeforeMount(() => {
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 }
 </style>

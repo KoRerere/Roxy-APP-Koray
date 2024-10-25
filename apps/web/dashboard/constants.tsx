@@ -1,4 +1,5 @@
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
+import { $t } from '/@/locales'
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 
@@ -6,14 +7,14 @@ export const baseUrl = `http://${location.hostname}:${globalThis.serverPort || n
 
 export const fingerprintInfoList = [
   {
-    label: 'OS/Kernal',
+    label: $t('系统/内核'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
       return `${winInfo.os || '--'} / ${winInfo.coreVersion || '--'}`
     },
   },
   {
-    label: 'Browser Language',
+    label: $t('语言'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
       return winInfo.language || '--'
@@ -29,21 +30,21 @@ export const fingerprintInfoList = [
 
 export const profileInfoList = [
   {
-    label: 'Notes',
+    label: $t('备注'),
     width: '15rem',
     customRender: (winInfo: WinInfo) => {
       return <>{winInfo.windowRemark || '--'}</>
     },
   },
   {
-    label: 'Project',
+    label: $t('项目'),
     width: '15rem',
     customRender: (winInfo: WinInfo) => {
       return <>{winInfo.projectName || '--'}</>
     },
   },
   {
-    label: 'Tags',
+    label: $t('标签'),
     customRender: (winInfo: WinInfo) => {
       const { labelInfo } = winInfo
       return (

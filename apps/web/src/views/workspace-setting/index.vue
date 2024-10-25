@@ -102,10 +102,16 @@ function leaveWorkspace() {
   confirm.require({
     group: 'deleteConfirmDialog',
     class: 'w-[450px]',
-    message: $t('This action can’t be undone, your related profiles can’t not be reach after leaving workspace.'),
-    header: $t('Are you sure to leave the Workspace? '),
+    header: $t('离开空间'),
+    message: $t('您确认要离开该空间吗？离开后将无法查看该空间内的任何内容'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
     acceptProps: {
-      label: $t('离开空间'),
+      label: $t('确认'),
+      severity: 'danger',
     },
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
