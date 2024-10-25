@@ -17,13 +17,13 @@ const _onCancel = ref()
 
 const installType = ref(allInstall)
 const categories = ref([
-  { label: $t('All project'), value: allInstall },
-  { label: $t('Partial project'), value: partialInstall },
+  { label: $t('全部项目'), value: allInstall },
+  { label: $t('部分项目'), value: partialInstall },
 ])
 
 const columns = [
   {
-    title: $t('Profile info'),
+    title: $t('项目名称'),
     key: 'projectName',
   },
 ]
@@ -86,9 +86,6 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col overflow-y-hidden popup">
-    <div class="popup-title">
-      {{ $t('Install to profiles') }}
-    </div>
     <div v-if="_props" class="extension">
       <div class="extension-icon">
         <img class="extension-icon-image" :src="_props.pluginIcon">
@@ -102,7 +99,7 @@ onMounted(() => {
     </div>
 
     <div class="flex flex-col gap-1">
-      <div>{{ $t('Install to:') }}</div>
+      <div>{{ $t('安装到') }}:</div>
       <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
         <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value" @change="onChange" />
         <label :for="category.value">{{ category.label }}</label>
@@ -112,13 +109,9 @@ onMounted(() => {
       <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
         selection-mode="multiple" />
     </div>
-    <div>
-      <RxSvgIcon name="base/rx_ic_info" />
-      <span>{{ $t('You can only install extension to profiles related to your projects.') }}</span>
-    </div>
     <div class="footer">
-      <RxButton size="sm" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" :label="$t('Save and install')" severity="info" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
+      <RxButton size="sm" :label="$t('保存')" severity="info" autofocus @click="confirm" />
     </div>
   </div>
 </template>

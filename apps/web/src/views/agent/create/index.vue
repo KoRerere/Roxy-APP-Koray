@@ -13,7 +13,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
   { title: $t('批量添加'), value: 'batch' },
-  { title: $t('代理推荐'), value: 'recommended' },
+  // { title: $t('代理推荐'), value: 'recommended' },// 第一版不上推荐功能
 ])
 const tabsValue = ref('single')
 
@@ -48,7 +48,7 @@ function onBack() {
     <div class="flex-ovh-1 w-full">
       <singleProxies v-show="tabsValue === 'single'" @save="saveProxies" />
       <batchProxies v-show="tabsValue === 'batch'" @save="saveProxies" />
-      <RecommendedProxies v-show="tabsValue === 'recommended'" />
+      <!-- <RecommendedProxies v-show="tabsValue === 'recommended'" /> -->
     </div>
   </div>
 </template>
