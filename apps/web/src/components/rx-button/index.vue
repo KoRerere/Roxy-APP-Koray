@@ -153,6 +153,11 @@ async function handleClick(e: MouseEvent) {
   }
 }
 
+.p-button.p-button-icon-only {
+  width: auto;
+  gap: 0;
+}
+
 .p-button {
   font-family: Inter;
   font-weight: 500;
@@ -184,13 +189,24 @@ async function handleClick(e: MouseEvent) {
     }
   }
 
-  &.p-button-icon-only {
-    width: auto;
-    gap: 0;
-  }
-
   svg {
     color: var(--Component-Colors-Buttons-Secondary-text, #e8f5fc);
+  }
+
+  &-danger {
+    border-color: var(--Color-red-400, #c72626);
+    background: var(--Color-red-300, #f53838);
+
+    &:not(:disabled):hover {
+      background: var(--p-button-danger-hover-background);
+      border-color: var(--p-button-danger-hover-border-color);
+    }
+
+    &:disabled {
+      background: var(--p-button-danger-hover-background);
+      border-color: var(--p-button-danger-hover-border-color);
+      opacity: var(--p-disabled-opacity);
+    }
   }
 }
 
