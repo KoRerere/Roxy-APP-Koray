@@ -33,12 +33,23 @@ const noticeNum = computed(() => {
   return clientUpdates.value.length + kernelUpdates.value.filter(item => item.status === 'downloading').length
 })
 
+const isDownloading = computed(() => {
+  return [...clientUpdates.value, ...kernelUpdates.value].some(item => item.status === 'downloading')
+})
+
+async function checkForUpdates() {
+  const result = await electronAPI.send('app:checkForUpdates')
+  console.log('checkForUpdates', result)
+}
+
 function toggle(event: Event) {
   popoverRef.value?.toggle(event)
+  checkForUpdates()
 }
 
 onMounted(() => {
   getKernelList()
+  checkForUpdates()
 })
 
 async function getKernelList() {
@@ -80,7 +91,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small">
-      <RxButton icon="base/rx_ic_updates" severity="secondary" outlined size="xs" @click="toggle" />
+      <RxButton icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <Popover ref="popover" :class="classes.popover">
