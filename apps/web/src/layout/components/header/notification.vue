@@ -43,7 +43,7 @@ async function getMessageList() {
   const { data } = await API.base.userGetNotifyList()
   const [teamsTab, sysTab] = tabs.value
 
-  const { teams, sys, teamsRead, sysRead } = data.reduce((acc, item) => {
+  const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
       acc.teamsRead += item.status
@@ -67,7 +67,7 @@ async function onRead(item: Message | Message[]) {
 
   const items = ([] as Message[]).concat(item)
   const ids = items.map(item => item.id)
-  await API.base.userReadNotifyCreate({ ids })
+  await API.base.userReadNotifyCreate({ ids: ids as number[] })
   tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
   items.forEach(item => item.status = NotifyStatus.read)
 }
@@ -107,9 +107,7 @@ onMounted(() => {
               <template v-if="tab.list?.length">
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <Avatar :image="item.avatar || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'" shape="circle" />
-                    <!-- <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="28"
-                      :font-size="16" @click="toggle" /> -->
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div>
                     <div :class="message.value">

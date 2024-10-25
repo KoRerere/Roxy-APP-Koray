@@ -55,17 +55,6 @@ async function handleClick(e: MouseEvent) {
   pointer-events: none;
 }
 
-.rx_button {
-  font-family: Inter;
-  font-weight: 500;
-  border-style: solid;
-
-  &.p-button-icon-only {
-    width: auto;
-    gap: 0;
-  }
-}
-
 .lg {
   padding: 10px var(--spacing-2xl, 16px);
   gap: var(--spacing-lg, 8px);
@@ -73,6 +62,15 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-lg, 20px);
   border-radius: var(--radius-lg, 8px);
   border-width: 1px;
+
+  &.p-button-icon-only {
+    padding: var(--spacing-lg, 8px);
+    aspect-ratio: 1;
+
+    svg {
+      font-size: 24px;
+    }
+  }
 }
 
 .md {
@@ -82,6 +80,15 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-lg, 20px);
   border-radius: var(--radius-md, 6px);
   border-width: 1px;
+
+  &.p-button-icon-only {
+    padding: var(--spacing-lg, 8px);
+    aspect-ratio: 1;
+
+    svg {
+      font-size: 20px;
+    }
+  }
 }
 
 .sm {
@@ -91,6 +98,15 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-lg, 20px);
   border-radius: var(--radius-md, 6px);
   border-width: 1px;
+
+  &.p-button-icon-only {
+    padding: var(--spacing-lg, 8px);
+    aspect-ratio: 1;
+
+    svg {
+      font-size: 16px;
+    }
+  }
 }
 
 .xs {
@@ -100,6 +116,15 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-xs, 16px);
   border-radius: var(--radius-sm, 4px);
   border-width: 0.5px;
+
+  &.p-button-icon-only {
+    padding: var(--spacing-md, 6px);
+    aspect-ratio: 1;
+
+    svg {
+      font-size: 16px;
+    }
+  }
 }
 
 .xxs {
@@ -109,15 +134,32 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-xs, 16px);
   border-radius: var(--radius-sm, 4px);
   border-width: 0.5px;
+
+  &.p-button-icon-only {
+    padding: var(--spacing-sm, 4px);
+    aspect-ratio: 1;
+
+    svg {
+      font-size: 16px;
+    }
+  }
 }
 
 .p-button {
+  font-family: Inter;
+  font-weight: 500;
   color: var(--Component-Colors-Buttons-Primary-text, #fff);
+  border-style: solid;
   border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
   background: var(--Component-Colors-Buttons-Primary-bg, #12a3fc);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+
+  &.p-button-icon-only {
+    width: auto;
+    gap: 0;
+  }
 
   svg {
     color: var(--Component-Colors-Buttons-Secondary-text, #e8f5fc);
@@ -143,39 +185,6 @@ async function handleClick(e: MouseEvent) {
 
     svg {
       color: var(--Component-Colors-Buttons-Secondary-text-inactive, #e8f5fc);
-    }
-  }
-
-  &-secondary {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-    border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-    box-shadow:
-      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-
-    svg {
-      color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
-    }
-
-    &:not(:disabled):hover {
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-      border-color: var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
-      background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f0f3f5);
-
-      svg {
-        color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
-      }
-    }
-
-    &:disabled {
-      color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-      border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-      background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
-
-      svg {
-        color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-      }
     }
   }
 }
@@ -216,6 +225,64 @@ async function handleClick(e: MouseEvent) {
 
 .p-button-outlined {
   background-color: transparent;
+  border-color: var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
   color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+
+  svg {
+    color: var(--Colors-Icon-icon-brand, #12a3fc);
+  }
+
+  &:not(:disabled):hover {
+    background-color: var(--Component-Colors-Buttons-Ghost-bg-hover, #e8f5fc);
+    border-color: var(--Component-Colors-Buttons-Ghost-border-hover, #0881cc);
+    color: var(--Component-Colors-Buttons-Ghost-text-hover, #0881cc);
+
+    svg {
+      color: var(--Colors-Icon-icon-brand-hover, #0881cc);
+    }
+  }
+
+  &:disabled {
+    background-color: transparent;
+    color: var(--Component-Colors-Buttons-Ghost-text-inactive, #7eccfc);
+    border-color: var(--Component-Colors-Buttons-Tertiary-bg-hover, #7eccfc);
+    opacity: 1;
+
+    svg {
+      color: var(--Component-Colors-Buttons-Ghost-text-inactive, #7eccfc);
+    }
+  }
+
+  &.p-button {
+    &-secondary {
+      color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+      border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+      background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+
+      svg {
+        color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
+      }
+
+      &:not(:disabled):hover {
+        color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
+        border-color: var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
+        background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f0f3f5);
+
+        svg {
+          color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
+        }
+      }
+
+      &:disabled {
+        color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
+        border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+        background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+
+        svg {
+          color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
+        }
+      }
+    }
+  }
 }
 </style>
