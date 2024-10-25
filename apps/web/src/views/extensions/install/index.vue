@@ -93,24 +93,22 @@ const filters = reactive({
 
 const sorts = ref([
   {
-    label: $t('Sorting rules'),
-    placeholder: $t('Please select a sorting rule'),
+    label: $t('排序标准'),
     name: 'orderName',
     value: 'createTime',
     options: [
-      { label: $t('Create time'), value: 'createTime' },
-      { label: $t('Update time'), value: 'lateUpdateTime' },
+      { label: $t('添加时间'), value: 'createTime' },
+      { label: $t('更新时间'), value: 'lateUpdateTime' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
   {
-    label: $t('Sort type'),
-    placeholder: $t('Please select sort type'),
+    label: $t('排序方式'),
     name: 'orderType',
     value: 'desc',
     options: [
-      { label: $t('Descending order'), value: 'desc' },
-      { label: $t('Ascending order'), value: 'asc' },
+      { label: $t('倒序'), value: 'desc' },
+      { label: $t('正序'), value: 'asc' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
@@ -122,15 +120,15 @@ async function tableRequest(params: any) {
 
 function tableOperation(data: any) {
   return [
-    {
-      name: 'updateLocal',
-      label: $t('Update local'),
-      icon: 'base/rx_ic_clock_rotate',
-      power: data.source === 'local' && !role.isViewer,
-    },
+    // {
+    //   name: 'updateLocal',
+    //   label: $t('Update local'),
+    //   icon: 'base/rx_ic_clock_rotate',
+    //   power: data.source === 'local' && !role.isViewer,
+    // },
     {
       name: 'checkUpdate',
-      label: $t('Check update'),
+      label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
       power: data.source !== 'local' && !role.isViewer,
     },
@@ -145,7 +143,7 @@ function tableOperation(data: any) {
     },
     {
       name: 'delete',
-      label: $t('Delete'),
+      label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       multiple: true,
       power: role.isOwner || role.isManager,
@@ -186,12 +184,11 @@ async function uploadRecordCheck() {
 function installViaUrl() {
   dialogOpen({
     props: {
-      title: $t('Install via Chrome Store'),
-      content: $t('Please paste the chrome extension URL down below then click the install button.'),
+      title: $t('添加 Google 扩展'),
       inputs: [
         {
           type: 'text',
-          placeholder: $t('Extension URL'),
+          placeholder: $t('请输入 Google Store 中扩展的 URL'),
           name: 'url',
           leftIcon: 'base/rx_ic_link',
         },
@@ -281,15 +278,15 @@ async function updateExtension(data: any) {
 
 async function deleteExtension(datas: any) {
   confirm.require({
-    header: $t('Warning'),
-    message: $t('Are you sure you want to delete this plugin?'),
+    header: $t('删除扩展'),
+    message: $t('您确认要删除所选扩展吗？删除后，所有已关联项目中的窗口扩展将被移除。'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
@@ -324,14 +321,13 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-           :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false"
-  >
+    :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton severity="info" size="sm" icon="base/rx_ic_download_cloud" :label="$t('通过 URL 添加')" @click="installViaUrl" />
-          <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
+          <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click="installViaUrl" />
+          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
         </div>
       </div>
     </template>

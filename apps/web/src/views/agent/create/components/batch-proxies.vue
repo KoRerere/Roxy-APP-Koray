@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { count } from 'node:console'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -25,43 +26,43 @@ const filterCount = ref(0)
 const columns = ref([
   {
     key: 'protocol',
-    title: $t('Protocol'),
+    title: $t('代理类型'),
     getText: (data: any) => data.protocol || '--',
   },
   {
     key: 'host',
-    title: $t('Host'),
+    title: $t('主机'),
     getText: (data: any) => data.host || '--',
   },
   {
     key: 'port',
-    title: $t('Port'),
+    title: $t('端口'),
     getText: (data: any) => data.port || '--',
   },
   {
     key: 'proxyUserName',
-    title: $t('Username'),
+    title: $t('用户名'),
     getText: (data: any) => data.proxyUserName || '--',
   },
   {
     key: 'proxyPassword',
-    title: $t('Password'),
+    title: $t('密码'),
     getText: (data: any) => data.proxyPassword || '--',
   },
   {
     key: 'refreshUrl',
-    title: $t('Refreshing URL'),
+    title: $t('刷新 URL'),
     width: 100,
     getText: (data: any) => data.refreshUrl || '--',
   },
   {
     key: 'remark',
-    title: $t('Notes'),
+    title: $t('备注'),
     width: 100,
     getText: (data: any) => data.remark || '--',
   },
   {
-    title: $t('Outbound IP'),
+    title: $t('出口 IP'),
     render: ({ data }: any) => {
       return (
         data.checkTime
@@ -71,7 +72,7 @@ const columns = ref([
     },
   },
   {
-    title: $t('Actions'),
+    title: $t('操作'),
     slot: 'actions',
   },
 ])
@@ -171,15 +172,15 @@ function testAll() {
 
 function deleteFailProxy() {
   confirm.require({
-    header: $t('warn'),
-    message: '确定删除所有测速失败的代理?',
+    header: $t('删除失败代理'),
+    message: $t('您确认删除所有测速失败的代理吗?共 {count} 个', { count: -1 }),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: () => {
@@ -204,7 +205,7 @@ function onSave() {
 <template>
   <div class="flex-ovh-1 flex-col proxies-content">
     <div class="parse-input">
-      <div class="panel">
+      <div class="flex flex-1 flex-col gap-1">
         <div class="panel-title">
           {{ $t('代理信息') }}
         </div>
@@ -213,14 +214,14 @@ function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center">
               <Checkbox v-model="isDuplicate" :pt="{ box: '!w-4 !h-4' }" input-id="wrap" binary />
-              <label for="wrap" class="text-3 select-none mx-1.5 cursor-pointer">Filter duplicates</label>
-              <RxSvgIcon v-tooltip="'Keep all proxies'" name="base/rx_ic_info" :size="12" />
+              <label for="wrap" class="text-3 select-none mx-1.5 cursor-pointer">{{ $t('自动去重') }}</label>
+              <RxSvgIcon v-tooltip="$t('当输入重复代理信息时不做添加')" name="base/rx_ic_info" :size="12" />
             </div>
-            <RxButton outlined severity="secondary" size="xxs" label="Parse proxies" icon="base/rx_ic_play" @click="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click="parseValue" />
           </div>
         </div>
       </div>
-      <div class="panel">
+      <div class="flex flex-1 flex-col gap-1">
         <div class="panel-title">
           {{ $t('导入规则') }}
         </div>
@@ -243,14 +244,16 @@ function onSave() {
     </div>
     <div class="flex flex-col flex-1 overflow-hidden mt-6">
       <div class="flex items-center justify-between mb-3">
-        <div>Parsed proxies</div>
+        <div class="panel-title">
+          {{ $t('已解析代理') }}
+        </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" label="Delete fail" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <RxButton severity="secondary" size="xxs" label="Test all proxies" icon="base/rx_ic_speed_test" @click="testAll" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试所有')" icon="base/rx_ic_speed_test" @click="testAll" />
         </div>
       </div>
       <Message v-if="showMessage" class="mb-3" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
-        {{ dataList.length }} proxies are successfully parsed. {{ filterCount }} proxies has been filtered.
+        {{ $t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤', { count: dataList.length, filterCount }) }}
       </Message>
       <div class="flex-ovh-1 items-center justify-center">
         <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
@@ -274,22 +277,6 @@ function onSave() {
 .parse-input {
   display: flex;
   gap: 8px;
-
-  .panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm, 4px);
-
-    &-title {
-      color: var(--Component-Colors-TextInput-label-label, #171c1f);
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-lg, 20px);
-    }
-  }
 
   .information {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
@@ -319,6 +306,17 @@ function onSave() {
     color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
     font-family: Inter;
     font-size: 12px;
+    line-height: var(--Line-Height-text-lg, 20px);
+  }
+}
+
+.panel {
+  &-title {
+    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);
   }
 }

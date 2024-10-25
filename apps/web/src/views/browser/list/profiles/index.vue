@@ -475,6 +475,10 @@ defineExpose({
     <template #open="{ data }">
       <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
     </template>
+    <template #note="{ data }">
+      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
+        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+    </template>
     <template #project="{ data }">
       <projectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
     </template>
@@ -483,10 +487,8 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" name="base/rx_ic_bookmark" :class="{ 'text-orange': data.isOften }" class="cursor-pointer mr-2"
-          @click.stop="operationHandler({ name: 'fav' }, data)" />
-        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" name="base/rx_ic_doc_add" :class="{ 'text-orange': data.windowRemark }" class="cursor-pointer"
-          @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+        <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }"
+          class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>

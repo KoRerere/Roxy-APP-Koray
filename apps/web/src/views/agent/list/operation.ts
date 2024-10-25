@@ -47,13 +47,25 @@ export function getCustomFilters() {
 
   const inputs = [
     {
+      type: 'Checkbox',
+      label: $t('国家 / 地区'),
+      name: 'lastCountry',
+      getOptions: () => {
+        return ($dict_map.country || []).map((item: any) => ({
+          parentName: 'lastCountry',
+          value: item.value,
+          label: item.label,
+        }))
+      },
+    },
+    {
       type: 'text',
-      label: $t('ID'),
+      label: $t('代理 ID'),
       name: 'id',
     },
     {
       type: 'Checkbox',
-      label: $t('Type'),
+      label: $t('代理类型'),
       name: 'protocol',
       getOptions: () => {
         return ($dict_map.protocol || []).map((item: any) => ({
@@ -65,72 +77,40 @@ export function getCustomFilters() {
     },
     {
       type: 'text',
-      label: $t('Info/IP Range'),
+      label: $t('代理主机'),
       name: 'host',
     },
     {
       type: 'text',
-      label: $t('Notes'),
+      label: $t('备注'),
       name: 'remark',
     },
-    {
-      type: 'text',
-      label: $t('Related profiles'),
-      name: 'windowId',
-    },
-    {
-      type: 'Checkbox',
-      label: $t('Country/Region'),
-      name: 'lastCountry',
-      getOptions: () => {
-        return ($dict_map.country || []).map((item: any) => ({
-          parentName: 'lastCountry',
-          value: item.value,
-          label: item.label,
-        }))
-      },
-    },
-    {
-      type: 'switchGroup',
-      label: $t('Check Status'),
-      name: 'checkStatus',
-      options: [
-        {
-          label: $t('Test success'),
-          value: '1',
-        },
-        {
-          label: $t('Test fail'),
-          value: '2',
-        },
-      ],
-    },
-    {
-      separator: true,
-    },
-    {
-      type: 'date',
-      label: $t('Create time'),
-      name: 'createTime',
-      items: [
-        {
-          placeholder: `${$t('Please Enter The')} ${$t('start time')}`,
-          name: 'startDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-        {
-          placeholder: `${$t('Please Enter The')} ${$t('end time')}`,
-          name: 'endDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-      ],
-    },
+    // {
+    //   separator: true,
+    // },
+    // {
+    //   type: 'date',
+    //   label: $t('Create time'),
+    //   name: 'createTime',
+    //   items: [
+    //     {
+    //       placeholder: `${$t('Please Enter The')} ${$t('start time')}`,
+    //       name: 'startDate',
+    //       maxDate: new Date(),
+    //       formatValue: (self: any) => {
+    //         return self.value && format(self.value, 'yyyy-MM-dd')
+    //       },
+    //     },
+    //     {
+    //       placeholder: `${$t('Please Enter The')} ${$t('end time')}`,
+    //       name: 'endDate',
+    //       maxDate: new Date(),
+    //       formatValue: (self: any) => {
+    //         return self.value && format(self.value, 'yyyy-MM-dd')
+    //       },
+    //     },
+    //   ],
+    // },
   ]
 
   return inputs

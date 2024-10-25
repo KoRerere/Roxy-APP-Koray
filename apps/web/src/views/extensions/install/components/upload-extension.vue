@@ -19,10 +19,8 @@ async function selectExtension(selectType: 'dir' | 'file') {
     console.log('selectExtension ~ type, data, msg:', type, data, msg)
     const isSuccess = type === 'success'
     if (isSuccess) {
-      const message = isSuccess ? $t('Extension parse successfully') : (msg || data)
       extension.value = {
         type,
-        message,
         isSuccess,
         ...(isSuccess ? data : {}),
       }
@@ -72,24 +70,21 @@ onMounted(() => {
 <template>
   <div class="flex flex-col popup">
     <div class="popup-title">
-      {{ $t('Upload Extension') }}
+      {{ $t('本地上传') }}
     </div>
 
-    <rxMessage v-if="extension" :severity="extension.type" :icon="extension.isSuccess ? 'status/rx_ic_check_fill' : 'status/rx_ic_delete_fill'" closable>
-      {{ extension.message }}
-    </rxMessage>
     <div>
       <div class="upload-title">
-        {{ $t('Select your extension') }}
+        {{ $t('请选择上传方式') }}
       </div>
       <div class="flex items-center gap-4 mt-1">
-        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('Select a file')" @click="selectExtension('file')" />
-        <span class="upload-or">OR</span>
-        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('Select a folder')" @click="selectExtension('dir')" />
+        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
+        <span class="upload-or">或</span>
+        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
-        <span class="upload-tip">{{ $t('Zip, CRX file supported, file limited to 50MB max.') }}</span>
+        <span class="upload-tip">{{ $t('支持Zip, CRX 格式的扩展，最大不超过 50MB') }}</span>
       </div>
     </div>
 
@@ -98,7 +93,7 @@ onMounted(() => {
         <img class="extension-icon-image" :src="extension.pluginIcon">
       </div>
       <div class="flex justify-between items-center extension-name">
-        <span>{{ $t('Extension name') }}</span>
+        <span>{{ $t('扩展名称') }}</span>
         <span class="extension-name-length">{{ extension.pluginName.length }}/50</span>
       </div>
       <InputText v-model="extension.pluginName" class="extension-input" maxlength="50" type="text" />
@@ -106,22 +101,23 @@ onMounted(() => {
 
     <div v-if="extension?.isSuccess" class="description">
       <div class="flex justify-between items-center">
-        <span>{{ $t('Description') }}</span>
+        <span>{{ $t('扩展描述') }}</span>
         <span class="description-length">{{ extension.pluginDesc.length }}/500</span>
       </div>
       <Textarea v-model="extension.pluginDesc" class="w-full description-input" maxlength="500" rows="3" />
     </div>
 
     <div class="guide">
-      <i18n-t :keypath="$t('Please note that your extension should follow the {guide} in order to install in our chrome kernel.', { guide: '{guide}' })" scope="global">
+      <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
-          <a href="https://chromewebstore.google.com/" target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('chrome extension guideline') }}</a>
+          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
+            class="text-blue decoration-underline cursor-pointer">{{ $t('Google扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>
     <div class="footer">
-      <RxButton size="sm" :label="$t('Cancel')" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" :label="$t('Upload and Install')" severity="info" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
+      <RxButton size="sm" :label="$t('上传')" severity="info" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
     </div>
   </div>
 </template>

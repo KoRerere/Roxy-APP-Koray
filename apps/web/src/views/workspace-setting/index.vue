@@ -105,7 +105,7 @@ function leaveWorkspace() {
     message: $t('This action can’t be undone, your related profiles can’t not be reach after leaving workspace.'),
     header: $t('Are you sure to leave the Workspace? '),
     acceptProps: {
-      label: $t('Leave Workspace'),
+      label: $t('离开空间'),
     },
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
@@ -171,7 +171,7 @@ function leaveWorkspace() {
         <RxButton :label="$t('保存修改')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
-        <RxButton :label="$t('Leave workspace')" severity="danger" @click="leaveWorkspace" />
+        <RxButton :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>

@@ -83,24 +83,22 @@ const filters = reactive({
 
 const sorts = ref([
   {
-    label: $t('Sorting rules'),
-    placeholder: $t('Please select a sorting rule'),
+    label: $t('排序标准'),
     name: 'orderName',
     value: 'createTime',
     options: [
-      { label: $t('Create time'), value: 'createTime' },
-      { label: $t('Update time'), value: 'lateUpdateTime' },
+      { label: $t('邀请时间'), value: 'createTime' },
+      { label: $t('修改时间'), value: 'lateUpdateTime' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
   {
-    label: $t('Sort type'),
-    placeholder: $t('Please select sort type'),
+    label: $t('排序方式'),
     name: 'orderType',
     value: 'desc',
     options: [
-      { label: $t('descending order'), value: 'desc' },
-      { label: $t('ascending order'), value: 'asc' },
+      { label: $t('倒序'), value: 'desc' },
+      { label: $t('正序'), value: 'asc' },
     ],
     icon: 'base/rx_ic_sort_ascending',
   },
@@ -118,7 +116,7 @@ function tableOperation(data: TableRow) {
   return [
     {
       name: 'edit',
-      label: $t('Edit'),
+      label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       disabled,
       disabledTips: $t('Insufficient permissions'),
@@ -130,7 +128,7 @@ function tableOperation(data: TableRow) {
     },
     {
       name: 'delete',
-      label: $t('Delete'),
+      label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       disabled,
       disabledTips: $t('Insufficient permissions'),
@@ -153,15 +151,15 @@ function operationHandler(operate: any, data: TableRow) {
 
 async function deleteMember(data: TableRow) {
   confirm.require({
-    header: $t('Warning'),
-    message: $t('Confirm to remove this member?'),
+    header: $t('删除成员'),
+    message: $t('您确认要删除该成员吗？'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Confirm'),
+      label: $t('确认'),
       severity: 'danger',
     },
     accept: async () => {
@@ -198,9 +196,8 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <ry-table ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
-            :paginator="false" :show-actions-menu="false" :show-actions="false"
-  >
+  <RyTable ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
+    :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
@@ -230,7 +227,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     <template #actions="{ data }">
       <Actions :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
     </template>
-  </ry-table>
+  </RyTable>
 </template>
 
 <style lang="scss" scoped>
