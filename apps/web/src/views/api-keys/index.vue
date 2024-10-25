@@ -24,7 +24,7 @@ const illustrate = [
   },
   {
     title: $t('API 使用说明'),
-    content: $t('更多 API 功能和使用方法, 请参考<a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2">API 文档</a>'),
+    content: $t('更多 API 功能和使用方法, 请参考<a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2"> API 文档</a>'),
   },
 ]
 
@@ -77,16 +77,16 @@ async function getApiKeys() {
 
 async function resetApiKey() {
   confirm.require({
-    header: $t('Are you sure to reset the API Key?'),
-    message: $t('Projects using this key will be affected.?'),
+    header: $t('重置 API 密钥'),
+    message: $t('您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作'),
     rejectProps: {
-      label: $t('Cancel'),
+      label: $t('取消'),
       severity: 'secondary',
       outlined: true,
     },
     acceptProps: {
-      label: $t('Reset'),
-      severity: 'info',
+      label: $t('确认'),
+      severity: 'danger',
     },
     accept: async () => {
       apiKey.value = await window.electronAPI.send('util:genApiKey')
