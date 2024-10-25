@@ -29,8 +29,7 @@ onMounted(() => {
 <template>
   <div class="textarea">
     <textarea ref="lineRef" v-model="lineValue" class="textarea-line" wrap="off" cols="2" disabled />
-    <textarea v-model="value" spellcheck="false" class="textarea-content"
-      placeholder="Please fill in your proxy information here" @scroll="syncScroll" @input="handleTextareaInput" />
+    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')" @scroll="syncScroll" @input="handleTextareaInput" />
   </div>
 </template>
 

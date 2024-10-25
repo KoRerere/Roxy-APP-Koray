@@ -79,7 +79,7 @@ const avatarList: any = [
   <div class="h-full flex flex-col items-center justify-center overflow-hidden">
     <div class="flex items-end gap-4 mb-4">
       <!-- <RxButton severity="info" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('xxs')" /> -->
-      <RxButton outlined severity="secondary" style="transform: scale(2);" icon="base/rx_ic_package" size="md" @click="onResize('xs')" />
+      <RxButton disabled text severity="secondary" size="sm" label="Delete fail" icon="base/rx_ic_package" style="transform: scale(2);" @click="onResize('xs')" />
       <!-- <RxButton severity="success" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('sm')" /> -->
       <!-- <RxButton severity="warn" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('md')" /> -->
       <!-- <RxButton severity="help" icon="base/rx_ic_package" size="lg" label="send email" @click="onResize('lg')" /> -->

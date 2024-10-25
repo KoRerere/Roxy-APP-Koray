@@ -1,6 +1,7 @@
 import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
 import { createVNode, type DefineComponent, type FunctionalComponent, type HTMLAttributes, render, type VNode } from 'vue'
 import RxButton from '/@/components/rx-button/'
+import { $t } from '/@/locales'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
   handleCancel?: () => void
@@ -21,8 +22,8 @@ export function useDialog(comp?: VNode | DefineComponent) {
     const __dialogSlots = {
       footer: () => (
         <div class="flex justify-end gap-2">
-          <RxButton type="button" label="Cancel" severity="secondary" onClick={handleCancel}></RxButton>
-          <RxButton type="button" label="Save" onClick={handleOk}></RxButton>
+          <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>
+          <RxButton type="button" label={$t('保存')} onClick={handleOk}></RxButton>
         </div>
       ),
       default: slots?.default || comp,

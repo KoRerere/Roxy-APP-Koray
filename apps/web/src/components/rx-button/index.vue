@@ -165,22 +165,10 @@ async function handleClick(e: MouseEvent) {
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
-  &.p-button-icon-only {
-    width: auto;
-    gap: 0;
-  }
-
-  svg {
-    color: var(--Component-Colors-Buttons-Secondary-text, #e8f5fc);
-  }
-
   &:not(:disabled):hover {
     color: var(--Component-Colors-Buttons-Primary-text, #fff);
     border-color: var(--Component-Colors-Buttons-Primary-border-hover, #015c94);
     background: var(--Component-Colors-Buttons-Primary-bg-hover, #0881cc);
-    box-shadow:
-      0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-      0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
     svg {
       color: var(--Component-Colors-Buttons-Secondary-text-hover, #ffffff);
@@ -196,6 +184,15 @@ async function handleClick(e: MouseEvent) {
       color: var(--Component-Colors-Buttons-Secondary-text-inactive, #e8f5fc);
     }
   }
+
+  &.p-button-icon-only {
+    width: auto;
+    gap: 0;
+  }
+
+  svg {
+    color: var(--Component-Colors-Buttons-Secondary-text, #e8f5fc);
+  }
 }
 
 .p-button-text {
@@ -204,6 +201,10 @@ async function handleClick(e: MouseEvent) {
 
   &:not(:disabled):hover {
     box-shadow: none;
+  }
+
+  &:disabled {
+    border-color: transparent;
   }
 
   &.p-button {

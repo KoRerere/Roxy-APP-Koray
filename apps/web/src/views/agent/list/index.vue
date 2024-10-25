@@ -103,15 +103,15 @@ function createProxy() {
 async function deleteProxy(datas: ProxyItem[]) {
   return new Promise((resolve) => {
     confirm.require({
-      header: $t('warn'),
-      message: $t('This operation is irreversible?'),
+      header: $t('删除代理'),
+      message: $t('您确认要删除所选代理吗？'),
       rejectProps: {
-        label: $t('Cancel'),
+        label: $t('取消'),
         severity: 'secondary',
         outlined: true,
       },
       acceptProps: {
-        label: $t('Confirm'),
+        label: $t('确认'),
         severity: 'danger',
       },
       accept: async () => {
@@ -145,8 +145,7 @@ function onRefreshTable() {
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
-               :show-gridlines="false" :show-actions="false"
-      >
+        :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
