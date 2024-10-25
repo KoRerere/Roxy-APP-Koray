@@ -1,71 +1,72 @@
-import path from 'node:path'
-import util from 'node:util'
+import type { Logger } from 'winston'
 import { createLogger, format, transports } from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 import { appConfig } from '/@/constants/appConfig'
 
 export function setupLog() {
-  const transport: DailyRotateFile = new DailyRotateFile({
-    filename: path.join(appConfig.logsDir, '%DATE%.log'),
+  // 配置 daily rotate file 传输
+  const transport = new DailyRotateFile({
+    filename: '%DATE%.log',
+    dirname: appConfig.logsDir, // 存放日志的目录
     datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    // maxSize: '20m',
-    maxFiles: '14d',
+    zippedArchive: true, // 是否压缩归档
+    maxSize: '20m', // 单个日志文件的最大大小
+    maxFiles: '14d', // 保留的最大天数
+  })
+
+  // 配置 winston logger
+  const logger = createLogger({
+    level: 'info',
     format: format.combine(
       format.timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss',
+        format: 'YYYY-MM-DD HH:mm:ss', // 自定义时间格式
       }),
-      format.json(),
-
+      format.printf(({ timestamp, level, message, ...meta }) => {
+        const metaString = Object.keys(meta).length ? JSON.stringify(meta) : ''
+        return `${timestamp} [${level}]: ${message} ${metaString}`.trim()
+      }),
     ),
-  })
-
-  transport.on('error', (error) => {
-    // log or handle errors here
-    console.error('transport error', error)
-  })
-
-  // transport.on('rotate', (oldFilename, newFilename) => {
-  // do something fun
-  // })
-
-  const logger = createLogger({
     transports: [
-      new transports.Console({
-        format: format.combine(
-          format.json(),
-          format.colorize(), // 彩色输出
-          format.errors({ stack: true }),
-          format.prettyPrint(),
-          format.splat(),
-          format.simple(),
-        ),
-      }), // 控制台输出
+      new transports.Console(),
       transport,
     ],
     exceptionHandlers: [
       new transports.File({
-        dirname: path.join(appConfig.logsDir, 'errorlogs'),
-        filename: 'error.log',
+        filename: 'exceptions.log',
+        dirname: appConfig.logsDir,
       }),
     ],
+    // 防止异常后退出进程
+    exitOnError: false,
   })
 
-  function formatLogArgs(args: any[]) {
-    return args.map((arg) => {
-      if (arg && typeof arg === 'object') {
-        return arg || util.format('%o', arg)
-      }
-      return arg
-    }).join(' ')
+  overrideConsole(logger)
+}
+
+function overrideConsole(logger: Logger) {
+  // 将 logger 函数分配给 console 对象
+  const originalConsoleLog = console.log
+  const originalConsoleError = console.error
+  const originalConsoleWarn = console.warn
+  const originalConsoleInfo = console.info
+
+  console.log = (...args: any[]) => {
+    logger.info(...args)
+    originalConsoleLog(...args)
   }
 
-  // 将 logger 函数分配给 console 对象
-  Object.assign(console, {
-    log: (...args: any[]) => logger.info(formatLogArgs(args)),
-    error: (...args: any[]) => logger.error(formatLogArgs(args)),
-    warn: (...args: any[]) => logger.warn(formatLogArgs(args)),
-    info: (...args: any[]) => logger.info(formatLogArgs(args)),
-    debug: (...args: any[]) => logger.debug(formatLogArgs(args)),
-  })
+  console.error = (...args: any[]) => {
+    logger.error(...args)
+    originalConsoleError(...args)
+  }
+
+  console.warn = (...args: any[]) => {
+    logger.warn(...args)
+    originalConsoleWarn(...args)
+  }
+
+  console.info = (...args: any[]) => {
+    logger.info(...args)
+    originalConsoleInfo(...args)
+  }
 }

@@ -13,7 +13,7 @@ import { setupApp } from './app/'
 export async function setupModules() {
   if (isPackaged) {
     // 设置日志
-    setupLog()
+    // setupLog()
   }
   try {
     // 设置 store
