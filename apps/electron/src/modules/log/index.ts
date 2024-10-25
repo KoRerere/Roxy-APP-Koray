@@ -1,71 +1,55 @@
-import path from 'node:path'
-import util from 'node:util'
-import { createLogger, format, transports } from 'winston'
-import DailyRotateFile from 'winston-daily-rotate-file'
-import { appConfig } from '/@/constants/appConfig'
+import log from 'electron-log/main'
+import { readdir, rm, stat } from 'node:fs/promises'
+import { join } from 'node:path'
+import { appConfig } from '/@/constants'
 
 export function setupLog() {
-  const transport: DailyRotateFile = new DailyRotateFile({
-    filename: path.join(appConfig.logsDir, '%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    // maxSize: '20m',
-    maxFiles: '14d',
-    format: format.combine(
-      format.timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss',
-      }),
-      format.json(),
+  log.transports.console.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
+  log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
+  log.transports.console.useStyles = true
+  /**
+   * 设置日志文件路径和文件名
+   */
+  log.transports.file.resolvePathFn = () => join(appConfig.logsDir, `${new Date().toISOString().split('T')[0]}.log`)
+  // 限制文件大小
+  log.transports.file.maxSize = 20 * 1024 * 1024 // 20 MB
 
-    ),
-  })
+  // 收集渲染进程中 console.log 写入的日志
+  // log.initialize({ spyRendererConsole: true })
 
-  transport.on('error', (error) => {
-    // log or handle errors here
-    console.error('transport error', error)
-  })
+  Object.assign(console, log.functions)
+  log.errorHandler.startCatching()
+  cleanupOldLogs()
+}
 
-  // transport.on('rotate', (oldFilename, newFilename) => {
-  // do something fun
-  // })
+/**
+ * 清理过期日志（保留 14 天）
+ */
+async function cleanupOldLogs() {
+  const logDir = appConfig.logsDir
 
-  const logger = createLogger({
-    transports: [
-      new transports.Console({
-        format: format.combine(
-          format.json(),
-          format.colorize(), // 彩色输出
-          format.errors({ stack: true }),
-          format.prettyPrint(),
-          format.splat(),
-          format.simple(),
-        ),
-      }), // 控制台输出
-      transport,
-    ],
-    exceptionHandlers: [
-      new transports.File({
-        dirname: path.join(appConfig.logsDir, 'errorlogs'),
-        filename: 'error.log',
-      }),
-    ],
-  })
+  try {
+    const files = await readdir(logDir)
 
-  function formatLogArgs(args: any[]) {
-    return args.map((arg) => {
-      if (arg && typeof arg === 'object') {
-        return arg || util.format('%o', arg)
+    const now = Date.now()
+    files.forEach(async (file) => {
+      const filePath = join(logDir, file)
+      const stats = await stat(filePath)
+      const fileAge = now - stats.mtimeMs
+
+      // 删除超过 14 天的日志
+      if (fileAge > 14 * 24 * 60 * 60 * 1000) {
+        rm(filePath)
+          .then(() => {
+            log.info(`已删除过期日志文件: ${file}`)
+          })
+          .catch((err) => {
+            log.error(`删除文件失败: ${file}`, err)
+          })
       }
-      return arg
-    }).join(' ')
+    })
   }
-
-  // 将 logger 函数分配给 console 对象
-  Object.assign(console, {
-    log: (...args: any[]) => logger.info(formatLogArgs(args)),
-    error: (...args: any[]) => logger.error(formatLogArgs(args)),
-    warn: (...args: any[]) => logger.warn(formatLogArgs(args)),
-    info: (...args: any[]) => logger.info(formatLogArgs(args)),
-    debug: (...args: any[]) => logger.debug(formatLogArgs(args)),
-  })
+  catch (error) {
+    log.error('无法读取日志目录:', error)
+  }
 }

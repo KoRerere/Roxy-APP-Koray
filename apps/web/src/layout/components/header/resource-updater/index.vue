@@ -58,7 +58,7 @@ async function getKernelList() {
   list.forEach((item) => {
     item.upgradeContent = `<p><strong>Improvements</strong></p><ul><li style=\"line-height: 1;\">We’ve improved the performance of the profiles list rendering</li></ul><p style=\"line-height: 1;\"><strong>Bug fixes</strong></p><ul><li style=\"line-height: 1;\">We’ve fixed a couple of bugs and RoxyBrowser is now compatible with macOS</li><li style=\"line-height: 1;\">Various memory leaks were fixed in RoxyBrowser and certain profiles will now render correctly</li></ul>`
   })
-  kernelUpdates.value = list
+  kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
 }
 
 window.electronAPI.on('app:resource-update', (data) => {
@@ -73,6 +73,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
+    kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
   // 客户端升级(app、web、patch)
   else {
