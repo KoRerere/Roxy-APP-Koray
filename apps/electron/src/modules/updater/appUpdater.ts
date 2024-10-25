@@ -9,11 +9,15 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
 import { isMac } from '/@/utils'
 
+export type { UpdateInfo } from 'electron-updater'
+
 const isDevelopment = !app.isPackaged
 
 export const appUpdater = new class AppUpdater {
   /** 是否在下载中 */
   isInProgress = false
+  /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
+  isQuittingForUpdate = false
   /** 轮询更新时间 */
   timeout = 1000 * (isDevelopment ? 30 : 60)
   #autoUpdater!: MacUpdater | NsisUpdater
@@ -26,13 +30,13 @@ export const appUpdater = new class AppUpdater {
 
   constructor() {
     this.init()
-  }
 
-  private async init() {
     setTimeout(() => {
       this.init()
     }, this.timeout)
+  }
 
+  private async init() {
     console.log(`user_get_app_upgrade request`, osConfig)
     const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
 
@@ -62,6 +66,8 @@ export const appUpdater = new class AppUpdater {
       url: downloadUrl,
     }
 
+    console.log(`autoUpdater options`, options)
+
     if (this.#autoUpdater) {
       // 动态更新autoUpdater的配置
       this.#autoUpdater.setFeedURL(options)
@@ -70,16 +76,16 @@ export const appUpdater = new class AppUpdater {
       console.log('远程版本是否大于本地版本：', compare(version, app.getVersion(), '>'))
       // 远程版本发生变化，重新检查更新
       if (version && compare(version, app.getVersion(), '>')) {
-        this.checkForUpdates()
+        await this.checkForUpdates()
       }
       return
     }
 
     this.#autoUpdater = isMac ? new MacUpdater(options) : new NsisUpdater(options)
-    this.#autoUpdater.forceDevUpdateConfig = true
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
+      this.#autoUpdater.forceDevUpdateConfig = true
       this.#autoUpdater.updateConfigPath = join(__dirname, '../dev-app-update.yml')
     }
 
@@ -142,6 +148,10 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
+    if (!this.#autoUpdater) {
+      await this.init()
+    }
+
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
       this.isInProgress = false
@@ -149,6 +159,7 @@ export const appUpdater = new class AppUpdater {
     })
 
     console.log(`checkResult`, checkResult)
+    return checkResult?.updateInfo
   }
 
   /** 是否有更新 */
@@ -163,6 +174,7 @@ export const appUpdater = new class AppUpdater {
   upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`立即退出应用并且更新`)
+    this.isQuittingForUpdate = true
     this.#autoUpdater.quitAndInstall(true, true)
   }
 

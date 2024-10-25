@@ -8,6 +8,7 @@ interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   size?: Size
   icon?: SvgNames
   iconSize?: number
+  rotate?: boolean
   onClick?: (e: any) => Promise<void> | void
 }
 
@@ -34,7 +35,7 @@ async function handleClick(e: MouseEvent) {
   <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
-        <RxSvgIcon :name="(icon as SvgNames)" :size="iconSize" />
+        <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" :size="iconSize" />
       </slot>
     </template>
     <template #loadingicon>

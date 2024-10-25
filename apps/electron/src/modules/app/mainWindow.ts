@@ -55,6 +55,10 @@ async function createWindow() {
 
   console.log('createWindow', getWebEntryUrl('launch'))
 
+  if (!isPackaged) {
+    browserWindow?.webContents.openDevTools({ mode: 'detach' })
+  }
+
   return browserWindow
 }
 

@@ -2,9 +2,15 @@ import { app, dialog } from 'electron'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
 import { store } from '/@/modules/store'
+import { appUpdater } from '/@/modules/updater'
 
 /** 处理关闭窗口事件, 根据用户设置决定关闭窗口的行为 */
 export function handleCloseWindow(event: Electron.Event) {
+  // 如果是由更新触发的退出，不做任何处理
+  if (appUpdater.isQuittingForUpdate) {
+    return
+  }
+
   const { closeSoft } = store
   const win = getMainWindow()!
   const tray = getTray()
