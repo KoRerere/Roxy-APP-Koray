@@ -22,6 +22,7 @@ const config: UserConfig = {
     lib: {
       entry: {
         index: join(PACKAGE_ROOT, 'src/index.ts'),
+        // logWorker: join(PACKAGE_ROOT, 'src/workers/log/index.ts'),
       },
       formats: ['cjs'],
     },

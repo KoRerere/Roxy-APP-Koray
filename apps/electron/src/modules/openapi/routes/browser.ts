@@ -2,7 +2,8 @@ import express from 'express'
 import twoFactor from 'node-2fa'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { listTrans } from '/@/modules/openapi/routes/util'
+import { accountMapping, browserListMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
+import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { defaultBrowserCreateParams } from './constants/'
 
@@ -13,6 +14,9 @@ router.get('/account', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
     const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId } })
+    if (result.code === 0 && result.data?.rows) {
+      result.data.rows = mappingKeys(accountMapping, result.data.rows)
+    }
     res.json(result)
   }
   catch (error) {
@@ -25,6 +29,12 @@ router.get('/workspace', async (req, res) => {
   const { ...rest } = req.query as Record<string, any>
   try {
     const result = await API.api.userGetWorkspaceListApiList({ ...rest })
+    if (result.code === 0 && result.data?.rows) {
+      result.data.rows = result.data.rows.map((item) => {
+        Reflect.deleteProperty(item, 'userId')
+        return item
+      })
+    }
     res.json(result)
   }
   catch (error) {
@@ -45,7 +55,7 @@ router.post('/create', async (req, res) => {
   try {
     const data = await genRandomFingerprint(params)
 
-    const result = await API.window.userAddWindowInfoCreate({
+    const result = await API.window.userAddWindowInfoV2Create({
       ...params,
       ...data,
     }, {
@@ -83,6 +93,7 @@ router.get('/list', async (req, res) => {
   try {
     const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId } })
     if (result.code === 0 && result.data?.rows) {
+      console.log('browserListMapping', result.data.rows)
       result.data.rows = result.data.rows.map(item => listTrans(item))
     }
     res.json(result)
