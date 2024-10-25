@@ -18,11 +18,11 @@ watch(() => currentLocale.value, (val) => {
 
 <template>
   <div class="card flex justify-center">
-    <RxButton text class="help-btn">
+    <RxButton text severity="secondary" class="help-btn">
       <LiveChat class="live-chat">
         <SvgIcon name="base/rx_ic_headphone_2" />
         <span class="text">
-          {{ $t('Help') }}
+          {{ $t('帮助') }}
         </span>
       </LiveChat>
     </RxButton>
@@ -70,7 +70,7 @@ watch(() => currentLocale.value, (val) => {
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-lg, 20px); /* 166.667% */
+    line-height: var(--Line-Height-text-lg, 20px);
 
     .live-chat {
       display: flex;

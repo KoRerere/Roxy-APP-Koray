@@ -222,7 +222,7 @@ onBeforeMount(() => {
 
     <div class="footer">
       <div class="info">
-        <i18n-t :keypath="$t('IP 查询数据来源于{link}', { link: '{link}' })" scope="global">
+        <i18n-t :keypath="$t('IP 查询数据来源于 {link}', { link: '{link}' })" scope="global">
           <template #link>
             <a href="https://ip123.in/" target="_blank">ip123.in</a>
           </template>
