@@ -116,7 +116,6 @@ onBeforeMount(() => {
 <style lang="scss" scoped>
 .workspace {
   display: flex;
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px) var(--spacing-sm, 4px) var(--spacing-sm, 4px);
   align-items: center;
   gap: var(--spacing-md, 6px);
 

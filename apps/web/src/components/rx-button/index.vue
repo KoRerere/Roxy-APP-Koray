@@ -118,6 +118,10 @@ async function handleClick(e: MouseEvent) {
   border-radius: var(--radius-sm, 4px);
   border-width: 0.5px;
 
+  &:not(:disabled):hover {
+    border-width: 0.5px;
+  }
+
   &.p-button-icon-only {
     padding: var(--spacing-md, 6px);
     aspect-ratio: 1;
@@ -135,6 +139,10 @@ async function handleClick(e: MouseEvent) {
   line-height: var(--Line-Height-text-xs, 16px);
   border-radius: var(--radius-sm, 4px);
   border-width: 0.5px;
+
+  &:not(:disabled):hover {
+    border-width: 0.5px;
+  }
 
   &.p-button-icon-only {
     padding: var(--spacing-sm, 4px);
@@ -193,6 +201,10 @@ async function handleClick(e: MouseEvent) {
 .p-button-text {
   border-color: transparent;
   box-shadow: none;
+
+  &:not(:disabled):hover {
+    box-shadow: none;
+  }
 
   &.p-button {
     &-secondary {

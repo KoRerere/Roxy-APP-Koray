@@ -167,10 +167,7 @@ function leaveWorkspace() {
 
     <div class="footer">
       <template v-if="isOwner && !currentWorkspace?.workspaceDefault">
-        <RxButton severity="secondary" @click="showMoreActions">
-          <RxSvgIcon name="base/rx_ic_more-h" />
-          {{ $t('更多操作') }}
-        </RxButton>
+        <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
         <RxButton :label="$t('保存修改')" @click="handleSaveChange" />
       </template>
       <div v-else class="w-full flex justify-end">
