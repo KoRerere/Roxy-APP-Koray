@@ -126,11 +126,13 @@ function transKey(a) {
   )
   const key2 = Object.keys(a.proxyInfo)
   const key3 = Object.keys(a.fingerInfo)
+  const key4 = Object.keys(a.windowPlatformList[0])
   return {
-    sum: [...key1, ...key2, ...key3],
+    sum: [...key1, ...key2, ...key3, ...key4],
     key1,
     proxyInfo: key2,
     fingerInfo: key3,
+    windowPlatformList: key4,
   }
 }
 
@@ -141,6 +143,7 @@ export function listTrans(rows) {
 
   const proxyInfo = {}
   const fingerInfo = {}
+
   listMap.key1.forEach((key) => {
     obj[key] = rows[key]
   })
@@ -149,6 +152,15 @@ export function listTrans(rows) {
   })
   listMap.fingerInfo.forEach((key) => {
     fingerInfo[key] = rows[key]
+  })
+
+  const windowPlatformList: any[] = []
+  rows.windowPlatformList.forEach((item) => {
+    const windowPlatform = {}
+    listMap.windowPlatformList.forEach((key) => {
+      windowPlatform[key] = item[key]
+    })
+    windowPlatformList.push(windowPlatform)
   })
 
   return {
