@@ -168,10 +168,10 @@ function leaveWorkspace() {
     <div class="footer">
       <template v-if="isOwner && !currentWorkspace?.workspaceDefault">
         <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
-        <RxButton :label="$t('保存修改')" @click="handleSaveChange" />
       </template>
-      <div v-else class="w-full flex justify-end">
-        <RxButton :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
+      <div class="flex justify-end" :class="{ 'w-full': !(isOwner && !currentWorkspace?.workspaceDefault) }">
+        <RxButton v-if="isOwner" :label="$t('保存修改')" @click="handleSaveChange" />
+        <RxButton v-else :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
       </div>
     </div>
   </div>
