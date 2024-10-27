@@ -3,7 +3,7 @@ import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { $t } from '/@/locales'
-import { isEmptyValue, isFunction } from '/@/utils'
+import { isEmptyValue, isFunction, operationPower } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
@@ -199,7 +199,7 @@ async function _request(outerParams?: any) {
 }
 
 function _getOperation(data: any) {
-  return (!isEmptyValue(props.operation) ? props.operation : props.tableOperation(data)).filter((item: any) => item.power !== false)
+  return operationPower(!isEmptyValue(props.operation) ? props.operation : props.tableOperation(data))
 }
 
 function _clearSelection() {
@@ -218,7 +218,7 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   })
 }
 
-function showOperationMenu(event: Event, data: any) {
+function showOperationMenu({ event }: { event: Event }, data: any) {
   show(event, {
     operation: _getOperation(data),
     operationHandler: (operate: any) => props.operationHandler(operate, data),
@@ -254,21 +254,17 @@ defineExpose({
       </div>
     </div>
     <div class="flex-1 overflow-hidden">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :pt="{ bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
+        :pt="{ table: !tableList?.length ? 'flex-1' : '', emptymessagecell: '!whitespace-normal', bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
         <template #empty>
-          <slot name="table-empty">
-            <div class="text-center">
-              {{ $t('No Data') }}
-            </div>
-          </slot>
+          <slot name="table-empty" />
         </template>
         <Column v-if="selectionMode" header-style="width: 3rem" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title" :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
-                :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }"
-        >
+          :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
@@ -292,12 +288,12 @@ defineExpose({
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
-                 :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage"
-      >
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <Select v-model="paginatorConfig.rows" style="width: fit-content;" option-label="label" option-value="value" :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
+            <Select v-model="paginatorConfig.rows" style="width: fit-content;" option-label="label" option-value="value" :options="paginatorConfig.rowsPerPageOptions"
+              @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
               <!-- <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
@@ -310,8 +306,7 @@ defineExpose({
   </div>
   <Transition>
     <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-                        :operation="_getOperation(selectionData)" @batch-operation="batchOperation"
-    >
+      :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
       <template #custom-operation>
         <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
       </template>

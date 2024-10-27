@@ -102,7 +102,7 @@ async function deleteTag(data: any) {
       <div class="flex-1 total-tags">
         {{ $t('新增标签') }} ({{ totalNum }})
       </div>
-      <RxButton size="sm" severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
+      <RxButton size="sm" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('Add tag')" @click="editTag()" />
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->

@@ -71,7 +71,7 @@ function deleteMembers() {
 </script>
 
 <template>
-  <RxButton :disabled="isViewer" severity="secondary" size="xxs" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
+  <RxButton :disabled="isViewer" text severity="secondary" size="xxs" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
 </template>
 
 <style scoped></style>

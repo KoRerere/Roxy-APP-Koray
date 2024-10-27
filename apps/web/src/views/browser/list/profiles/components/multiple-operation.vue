@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { type Operation, operationPower } from '/@/utils'
 
 const props = defineProps({
   operation: {
-    type: Array as PropType<any[]>,
+    type: Array as PropType<Operation[]>,
     default: () => [],
   },
   selection: {
@@ -18,7 +19,8 @@ const props = defineProps({
 
 const emits = defineEmits(['openBrowser', 'quickClick', 'more'])
 
-const multiplePperation = computed(() => props.operation.filter((item: any) => item.multiple))
+const _operation = computed(() => operationPower(props.operation))
+const multiplePperation = computed(() => _operation.value.filter((item: any) => item.multiple))
 
 const quickGroup = computed<any[]>(() => Object.values(multiplePperation.value.reduce((groups, item) => {
   if (!item.name || !item.groupName || !item.multiple) {
@@ -41,7 +43,7 @@ function openBrowser() {
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
     <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
-    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v" @click.stop="$emit('more', [$event, multiplePperation])" />
+    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v" @click.stop="$emit('more', { event: $event, operation: multiplePperation })" />
   </div>
 </template>
 

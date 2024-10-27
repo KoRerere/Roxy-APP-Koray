@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { type Operation, operationPower } from '/@/utils'
 
 const props = defineProps({
   operation: {
-    type: Array,
+    type: Array as PropType<Operation[]>,
     default: () => [],
   },
   loadingOperationMap: {
@@ -18,7 +19,8 @@ const props = defineProps({
 
 const emit = defineEmits(['quickClick', 'more'])
 
-const quickOperation: any = computed(() => props.operation.filter((item: any) => item.quick && item.power !== false))
+const _operation = computed(() => operationPower(props.operation))
+const quickOperation: any = computed(() => _operation.value.filter((item: any) => item.quick))
 const loadingQuickOperation: any = computed(() => props.loadingOperationMap)
 
 function quickClick(item: any) {
@@ -26,6 +28,10 @@ function quickClick(item: any) {
     return
   }
   emit('quickClick', item)
+}
+
+function onMore(event: Event) {
+  emit('more', { event, operation: toRaw(_operation.value) })
 }
 </script>
 
@@ -39,7 +45,7 @@ function quickClick(item: any) {
           :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
       </div>
     </div>
-    <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="$emit('more', $event)">
+    <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="onMore">
       <slot name="more-icon">
         <RxSvgIcon name="base/rx_ic_more-v" />
       </slot>

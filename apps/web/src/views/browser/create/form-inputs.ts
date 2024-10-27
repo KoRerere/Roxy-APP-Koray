@@ -5,14 +5,18 @@ import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpe
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
-  const { data } = await getUaWebgl({ os, osVersion, coreVersion, count: 1 })
-  setInputValueByFormData(inputsGroup, data[0])
+  const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, count: 1 })
+  if (code === 0) {
+    setInputValueByFormData(inputsGroup, data[0])
+  }
 }
 
 async function setDeviceName(inputsGroup: any) {
   const { os } = getFormDataByList(inputsGroup)
-  const { data } = await getDeviceName({ os, count: 1 })
-  setInputValueByFormData(inputsGroup, data[0])
+  const { code, data } = await getDeviceName({ os, count: 1 })
+  if (code === 0) {
+    setInputValueByFormData(inputsGroup, data[0])
+  }
 }
 
 async function setMacAddr(inputsGroup: any) {
@@ -21,12 +25,17 @@ async function setMacAddr(inputsGroup: any) {
   setInputValueByFormData(inputsGroup, data[0])
 }
 
-function getUaWebgl(params: any) {
-  return API.window.userGetUaWebglV2List(params)
+async function getUaWebgl(params: any) {
+  const res = await API.window.userGetUaWebglV2List(params)
+  if (res.code !== 0) {
+    throw new Error(res.msg)
+  }
+  return res
 }
 
-function getDeviceName(params: any) {
-  return API.window.userGetDeviceNameV2List(params)
+async function getDeviceName(params: any) {
+  const res = await API.window.userGetDeviceNameV2List(params)
+  return res
 }
 
 function getMacAddr(params: any) {
@@ -59,17 +68,16 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
     }, value => value !== null) // 跟随老版本逻辑过滤没有值的属性
   }))
 
-  await Promise.all([
+  const [{ data: uaWebgl }, { data: deviceName }, { data: macAddr }] = await Promise.all([
     getUaWebgl({ os, osVersion, coreVersion, count }),
     getDeviceName({ os, count }),
     getMacAddr({ macInfo, count }),
-  ]).then(([{ data: uaWebgl }, { data: deviceName }, { data: macAddr }]) => {
-    setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
+  ])
 
-    uaWebgl.forEach(async (item, index) => {
-      const formData = { ...item, ...deviceName[index], ...macAddr[index] }
-      Object.assign(fingerDetail[index], formData)
-    })
+  setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
+  uaWebgl.forEach(async (item, index) => {
+    const formData = { ...item, ...deviceName[index], ...macAddr[index] }
+    Object.assign(fingerDetail[index], formData)
   })
   return fingerDetail
 }
@@ -240,12 +248,9 @@ export function getInputsGroup(data: any = {}) {
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()
-        if (res) {
-          const { code, data, message } = res
-          if (data) {
-            input.value = res.data
-            input.invalid = false
-          }
+        if (res?.data) {
+          input.value = res.data
+          input.invalid = false
         }
       },
       onBlur(event: any) {

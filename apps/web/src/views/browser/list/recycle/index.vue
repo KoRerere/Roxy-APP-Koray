@@ -91,6 +91,9 @@ async function deleteHandler(datas: any) {
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :sorts="sorts"
     :show-gridlines="false" :show-actions="false" :show-table-header="false">
+    <template #table-empty>
+      <CustomEmpty title="Your trash bin is empty" desc="Profiles removed from the profiles list will appear here. Profiles deleted from the trash bin cannot be recovered." />
+    </template>
     <template #profile="{ data }">
       <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
     </template>

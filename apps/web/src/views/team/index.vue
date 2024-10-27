@@ -203,6 +203,16 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
+    <template #table-empty>
+      <CustomEmpty title="No members in workspace"
+        desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>.">
+        <template #extra>
+          <div class="flex items-center gap-3">
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" label="Invite members" />
+          </div>
+        </template>
+      </CustomEmpty>
+    </template>
     <template #member="{ data }">
       <div class="member">
         <template v-if="data.avatar">

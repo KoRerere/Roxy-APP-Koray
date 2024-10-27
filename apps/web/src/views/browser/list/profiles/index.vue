@@ -17,10 +17,10 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import columnsRow from './columns'
 import browserControl from './components/browser-control.vue'
-import customFilters from './components/custom-filters.vue'
+import CustomFilters from './components/custom-filters.vue'
 import drawersitems from './components/drawers-item.vue'
 import editCookies from './components/edit-cookies.vue'
-import multipleOperation from './components/multiple-operation.vue'
+import MultipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 import projectIcon from './components/project-icon.vue'
 import tagsIcon from './components/tags-icon.vue'
@@ -234,9 +234,9 @@ function openBrowser(data: any) {
   window.electronAPI.send('browser:batchLaunch', params)
 }
 
-function showOperationMenu(event: Event, data: any, extra?: any) {
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any, extra?: any) {
   show(event, {
-    operation: extra?.cmpOperation || operation.value,
+    operation,
     operationHandler: async (operate: any) => {
       await operationHandler(operate, data)
       extra?.clearSelection()
@@ -462,13 +462,25 @@ defineExpose({
   <RyTable ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :sorts="sorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple" :show-actions="false">
     <template #header-extra>
-      <customFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <!-- <template #config-footer>
       <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
         Save for default display
       </div>
     </template> -->
+    <template #table-empty>
+      <CustomEmpty title="Profiles list is empty"
+        desc="Profile is the core feature of RoxyBrowser. By combining proxies and accounts, Profiles can achieve a variety of business functions. Read more: <a href='www.baidu.com' target='_blank'>Profile documentation</a>.">
+        <template #extra>
+          <div class="flex items-center gap-3">
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" label="Create Profile" />
+            <RxButton text severity="secondary" size="xs" label="Profile document" />
+          </div>
+        </template>
+      </CustomEmpty>
+    </template>
+
     <template #profile="{ data }">
       <profile-info :workspace-name="workspaceName" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
@@ -493,9 +505,8 @@ defineExpose({
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
-      <multipleOperation :selection="selection" :operation="operation" :clear-selection="clearSelection"
-        @more="([event, cmpOperation]) => showOperationMenu(event, selection, { cmpOperation, clearSelection })" @open-browser="openBrowser(selection)"
-        @quick-click="operationHandler($event, selection)" />
+      <MultipleOperation :selection="selection" :clear-selection="clearSelection" :operation="operation" @more="showOperationMenu($event, selection, { clearSelection })"
+        @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
   <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">

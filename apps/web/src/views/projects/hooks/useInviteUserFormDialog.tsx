@@ -42,7 +42,7 @@ export function useInviteUserFormDialog() {
       dialogSlots: {
         footer: () => (
           <div class="w-full flex justify-between gap-2">
-            <RxButton label={$t('取消')} severity="secondary" type="button" onClick={dialog.handleCancel} />
+            <RxButton label={$t('取消')} text severity="secondary" type="button" onClick={dialog.handleCancel} />
             <div class="flex gap-2">
               {
                 !originl.user_id && (

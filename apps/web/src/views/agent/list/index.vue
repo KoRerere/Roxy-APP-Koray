@@ -149,6 +149,18 @@ function onRefreshTable() {
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
+        <template #table-empty>
+          <CustomEmpty title="No proxies available"
+            desc="Create proxies to make it more convenient to reference in the profiles list. For more information about proxy, please visit <a href='www.baidu.com' target='_blank'>proxy documentation</a>.">
+            <template #extra>
+              <div class="flex items-center gap-3">
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" label="Create proxy" />
+                <RxButton text severity="secondary" size="xs" label="Proxy document" />
+              </div>
+            </template>
+          </CustomEmpty>
+        </template>
+
         <template #proxy="{ data }">
           <div class="proxy-host">
             <span>{{ strConcat(data.protocol?.toLocaleLowerCase(), '://') }}</span>

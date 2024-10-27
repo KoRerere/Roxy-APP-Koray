@@ -304,9 +304,9 @@ async function deleteExtension(datas: any) {
   })
 }
 
-function showOperationMenu(event: Event, data: any) {
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
   show(event, {
-    operation: tableOperation(data),
+    operation,
     operationHandler: (operate: any) => operationHandler(operate, data),
   })
 }
@@ -330,6 +330,17 @@ defineExpose({
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
         </div>
       </div>
+    </template>
+
+    <template #table-empty>
+      <CustomEmpty title="No extensions available"
+        desc="Extensions in workspace can be installed into your profiles, and all team members will be able to use all the plugins in the current workspace.">
+        <template #extra>
+          <div class="flex items-center gap-3">
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" label="Search extensions" />
+          </div>
+        </template>
+      </CustomEmpty>
     </template>
     <template #extension="{ data }">
       <div class="extension">

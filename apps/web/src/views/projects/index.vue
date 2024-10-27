@@ -127,6 +127,17 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
         :show-actions="false" data-key="project_id">
+        <template #table-empty>
+          <CustomEmpty title="No projects" desc="Project is a powerful feature that you can consolidate your profiles. You can also assign different team members to different projects. ">
+            <template #extra>
+              <div class="flex items-center gap-3">
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" label="Create project" />
+                <RxButton text severity="secondary" size="xs" label="Project document" />
+              </div>
+            </template>
+          </CustomEmpty>
+        </template>
+
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <span class="text-[blue]">{{ data.projectName }}</span>

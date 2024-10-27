@@ -160,6 +160,16 @@ function deletePopup(data: any) {
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions="false">
+        <template #table-empty>
+          <CustomEmpty title="No accounts available"
+            desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>.">
+            <template #extra>
+              <div class="flex items-center gap-3">
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" label="New account" />
+              </div>
+            </template>
+          </CustomEmpty>
+        </template>
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
