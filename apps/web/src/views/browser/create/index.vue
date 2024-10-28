@@ -164,10 +164,6 @@ async function importProfile(params: any) {
   loading.value = false
 }
 
-function onBack() {
-  router.back()
-}
-
 onBeforeMount(() => {
   initFormInputs()
   if (!isOwner.value) {
@@ -182,10 +178,7 @@ onBeforeMount(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <div class="profile-header">
-        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>{{ $t('创建窗口') }}</span>
-      </div>
+      <ViewsHeader show-back :title="$t('创建窗口')" />
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">
           <TabList>
@@ -230,19 +223,6 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
-.profile-header {
-  display: flex;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  align-items: center;
-  gap: 10px;
-
-  color: var(--Colors-Text-text-primary, #171c1f);
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-}
-
 .profile-tabs {
   padding: 0px var(--spacing-4xl, 24px);
   border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);

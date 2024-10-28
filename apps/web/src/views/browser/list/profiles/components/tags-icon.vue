@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'

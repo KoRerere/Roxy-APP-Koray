@@ -153,13 +153,9 @@ onBeforeMount(() => {
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <div class="profile-header">
-      <i18n-t :keypath="$route.meta.title" scope="global" />
-      <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
-        <RxSvgIcon name="base/rx_ic_group" />
-        <div> {{ $t('标签管理') }}</div>
-      </div>
-    </div>
+    <ViewsHeader :title="($route.meta.title as string)">
+      <RxButton v-if="!role.isViewer" size="xxs" text severity="secondary" icon="base/rx_ic_group" :label="$t('标签管理')" @click="openManageCategory" />
+    </ViewsHeader>
     <div class="flex items-center justify-between filter-tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList>
@@ -207,32 +203,6 @@ onBeforeMount(() => {
 </template>
 
 <style scoped lang="scss">
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-
-  color: #000;
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-
-  &-manage {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-    gap: var(--spacing-sm, 4px);
-
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-    font-size: var(--Font-Size-text-sm, 12px);
-    font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
-}
-
 .sort-item {
   display: flex;
   align-items: center;

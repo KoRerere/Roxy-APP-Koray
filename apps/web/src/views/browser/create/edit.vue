@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import rxEditDiv from '/@/components/rx-edit-div'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
 import type { MetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
@@ -15,10 +15,10 @@ const [showToast] = useResponseToast()
 
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
-const windowName = ref('edit profile')
+const windowName = ref()
 const accordions = ref({
   value: ['0'],
-  panels: ['window', 'Basic', 'highLevel', 'other']
+  panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
     .map((title, index) => ({ title, value: index.toString() })),
 })
 const inputsGroup = ref()
@@ -55,10 +55,6 @@ function oldFieldsFormat() {
   })
 }
 
-function onBack() {
-  router.back()
-}
-
 onBeforeMount(() => {
   API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
     .then(({ data: { rows: [data] } }) => {
@@ -80,10 +76,7 @@ onBeforeMount(() => {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <div class="profile-header">
-        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>{{ $t('编辑窗口') }}</span>
-      </div>
+      <ViewsHeader show-back :title="$t('编辑窗口')" />
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
           <rxEditDiv v-model="windowName" />
@@ -98,18 +91,6 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
-.profile-header {
-  display: flex;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  align-items: center;
-  gap: 10px;
-  color: var(--Colors-Text-text-primary, #171c1f);
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-}
-
 .profile-basic {
   padding: var(--spacing-md, 16px) 66px;
 }

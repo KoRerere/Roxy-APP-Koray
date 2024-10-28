@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import batchProxies from './components/batch-proxies.vue'
-import RecommendedProxies from './components/recommended-proxies.vue'
+// import RecommendedProxies from './components/recommended-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
 
 const router = useRouter()
@@ -24,18 +23,11 @@ async function saveProxies(proxies: any) {
   }
   onlyErrorToast(code, msg)
 }
-
-function onBack() {
-  router.back()
-}
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full overflow-hidden">
-    <div class="proxies-header">
-      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-      <span>{{ $t('添加代理') }}</span>
-    </div>
+    <ViewsHeader show-back :title="$t('添加代理')" />
     <div class="proxies-tabs">
       <Tabs v-model:value="tabsValue">
         <TabList>
@@ -54,18 +46,6 @@ function onBack() {
 </template>
 
 <style lang="scss" scoped>
-.proxies-header {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  gap: 10px;
-  color: var(--Colors-Text-text-primary, #171c1f);
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-}
-
 .proxies-tabs {
   padding: 0px var(--spacing-4xl, 24px);
   border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);

@@ -1,5 +1,5 @@
 import { API } from '/@/api'
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 
 interface Operation {
   name?: string

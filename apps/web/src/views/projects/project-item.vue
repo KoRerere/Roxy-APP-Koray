@@ -23,21 +23,16 @@ function handleShowInviteUserFormDialog() {
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <div class="project-header">
-      <div class="flex items-center gap-2">
-        <div class="project-header-project">
-          {{ $t('项目') }}
-        </div>
+    <ViewsHeader class="project-header" :title="$t('项目')">
+      <template #title-after>
         <RxSvgIcon name="base/rx_ic_play" :size="8" />
         <div class="project-header-subproject">
           {{ route.query.title }}
         </div>
-      </div>
-      <div class="flex gap-3">
-        <MemberDropdownList :project-id="projectId" />
-        <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
-      </div>
-    </div>
+      </template>
+      <MemberDropdownList :project-id="projectId" />
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+    </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <Profiles ref="profiles" is-project-profile />
   </div>
@@ -45,20 +40,8 @@ function handleShowInviteUserFormDialog() {
 
 <style lang="scss" scoped>
 .project-header {
-  display: flex;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  justify-content: space-between;
-  align-items: center;
+  color: var(--Colors-Text-text-secondary, #575d61);
   border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: normal;
-
-  &-project {
-    color: var(--Colors-Text-text-secondary, #575d61);
-  }
 
   &-subproject {
     color: var(--Colors-Text-text-primary, #171c1f);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 import { $t } from '/@/locales'
 
 const inputs = reactive<any>([

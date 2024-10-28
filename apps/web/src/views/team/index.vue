@@ -186,14 +186,13 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 
 <template>
   <div class="header">
-    <div class="flex-1">
-      <i18n-t :keypath="$route.meta.title" scope="global" />
-    </div>
-    <div class="header-guide">
-      <RxSvgIcon name="base/rx_ic_books" />
-      <span>{{ $t('团队指南') }}</span>
-    </div>
-    <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+    <ViewsHeader :title="($route.meta.title as string)">
+      <div class="flex items-center header-guide">
+        <RxSvgIcon name="base/rx_ic_books" />
+        <span>{{ $t('团队指南') }}</span>
+      </div>
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+    </ViewsHeader>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
@@ -242,28 +241,11 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 
 <style lang="scss" scoped>
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  gap: 10px;
-  height: 48px;
-  color: #000;
-  font-family: Inter;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-  border-bottom: none;
-
   &-guide {
-    display: flex;
-    align-items: center;
     gap: var(--spacing-sm, 4px);
     color: var(--Colors-Text-text-brand, #12a3fc);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
   }

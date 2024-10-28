@@ -1,7 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
 import { useDialog } from 'primevue/usedialog'
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'

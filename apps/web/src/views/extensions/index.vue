@@ -34,9 +34,7 @@ function onSearch() {
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <div class="extensions-header">
-      <i18n-t :keypath="($route.meta.title as string)" scope="global" />
-    </div>
+    <ViewsHeader :title="($route.meta.title as string)" />
     <Tabs v-model:value="tabsValue" class="flex-1 overflow-hidden" @update:value="onChange">
       <TabList>
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -57,17 +55,4 @@ function onSearch() {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.extensions-header {
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  gap: 10px;
-  height: 48px;
-  color: #000;
-  font-family: Inter;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: var(--Line-Height-text-xl, 24px);
-  border-bottom: none;
-}
-</style>
+<style lang="scss" scoped></style>

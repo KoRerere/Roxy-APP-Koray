@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { ISO639List } from '/@/constants/iso-639'
 import { $t } from '/@/locales'
@@ -39,21 +38,21 @@ const items = ref([
   },
   ...(import.meta.env.DEV
     ? [
-        {
-          label: '图标(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/figma-icons')
-          },
+      {
+        label: '图标(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/figma-icons')
         },
-        {
-          label: '多语言(仅开发)',
-          icon: 'base/rx_ic_outlink',
-          command: () => {
-            window.open('/__language-localization__')
-          },
+      },
+      {
+        label: '多语言(仅开发)',
+        icon: 'base/rx_ic_outlink',
+        command: () => {
+          window.open('/__language-localization__')
         },
-      ]
+      },
+    ]
     : []),
   {
     label: $t('退出登录'),
@@ -93,8 +92,7 @@ function toggle(event: Event) {
 
 <template>
   <RxAvatar class="cursor-pointer mr-2" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="28" :font-size="16"
-            @click="toggle"
-  />
+    @click="toggle" />
 
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="menu" :model="items" popup>

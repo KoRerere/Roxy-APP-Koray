@@ -152,10 +152,9 @@ function deletePopup(data: any) {
 
 <template>
   <div class="flex flex-col w-full h-full account">
-    <div class="flex justify-between account-header">
-      <i18n-t :keypath="$route.meta.title" scope="global" />
+    <ViewsHeader class="account-header" :title="($route.meta.title as string)">
       <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />
-    </div>
+    </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
@@ -202,18 +201,8 @@ function deletePopup(data: any) {
 </template>
 
 <style lang="scss" scoped>
-.account {
-  &-header {
-    padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-    gap: 10px;
-    color: #000;
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: var(--Line-Height-text-xl, 24px);
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
+.account-header {
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 
 .platform {

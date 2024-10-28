@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RxAvatar from '/@/components/rx-avatar.vue'
+import RxAvatar from '/@/components/rx-avatar'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 

@@ -134,14 +134,11 @@ function onRefreshTable() {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full proxies">
-    <div class="flex justify-end proxies-header">
-      <div class="flex-1">
-        <i18n-t :keypath="$route.meta.title" scope="global" />
-      </div>
+  <div class="flex flex-col w-full h-full">
+    <ViewsHeader class="proxies-header" :title="($route.meta.title as string)">
       <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('添加代理')" @click="createProxy" />
       <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
-    </div>
+    </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
@@ -188,18 +185,8 @@ function onRefreshTable() {
 </template>
 
 <style lang="scss" scoped>
-.proxies {
-  &-header {
-    padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-    gap: 10px;
-    color: #000;
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: var(--Line-Height-text-xl, 24px);
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
+.proxies-header {
+  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 
 .proxy-host {
