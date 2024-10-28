@@ -27,6 +27,9 @@ const defaultProps: SelectProps = {
 
 <template>
   <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size }" @change="$emit('change')">
+    <template #dropdownicon>
+      <RxSvgIcon name="base/rx_ic_chevron_down" />
+    </template>
     <template v-if="!$attrs.optionValue || !props.optionValue" #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" fallback="base/rx_ic_earth" />

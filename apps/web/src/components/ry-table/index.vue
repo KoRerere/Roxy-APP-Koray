@@ -215,8 +215,15 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   if (!tableAttrs['context-menu']) {
     return
   }
+
+  const operation = _getOperation(event.data)
+
+  if (!operation?.length) {
+    return
+  }
+
   show(event.originalEvent, {
-    operation: _getOperation(event.data),
+    operation,
     operationHandler: (operate: any) => props.operationHandler(operate, event.data),
   })
 }

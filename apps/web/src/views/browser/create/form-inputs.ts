@@ -146,16 +146,9 @@ export function getInputsGroup(data: any = {}) {
             const osVersionInput = items.find((item: any) => item.name === 'osVersion')
             if (item.value) {
               const osVersionOptions = osVersion[item.value.value.toLocaleLowerCase()]
-              osVersionInput.value = osVersionOptions[0]
               osVersionInput.options = osVersionOptions
-              osVersionInput.disabled = false
-              const fingerData = await ceateRandomFinger(inputsGroup)
-              Object.assign(original, fingerData[0])
-            }
-            else {
-              osVersionInput.value = null
-              osVersionInput.options = []
-              osVersionInput.disabled = true
+              osVersionInput.value = osVersionOptions[0]
+              osVersionInput.change?.(osVersionInput)
             }
           },
           preview: {
@@ -168,6 +161,23 @@ export function getInputsGroup(data: any = {}) {
           name: 'osVersion',
           value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs]?.[0],
           options: osVersion[userOs],
+          change: async (item: any) => {
+            const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')
+
+            if (item.value) {
+              const [os, version] = item.value.label.split(' ')
+              const coreVersionOptions = os.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version.at(0))
+                ? $dict_map.coreVersion.filter((item: any) => item.value === '109')
+                : $dict_map.coreVersion
+
+              if (coreVersionInput!.options.length !== coreVersionOptions.length) {
+                coreVersionInput!.options = coreVersionOptions
+                coreVersionInput!.value = coreVersionOptions[0]
+              }
+            }
+
+            coreVersionInput!.change?.(coreVersionInput)
+          },
           required: true,
         },
       ],
@@ -181,6 +191,12 @@ export function getInputsGroup(data: any = {}) {
       options: $dict_map.coreVersion,
       icon: 'base/rx_ic_chrome',
       required: true,
+      change: async (item: any) => {
+        if (item.value) {
+          const fingerData = await ceateRandomFinger(inputsGroup)
+          Object.assign(original, fingerData[0])
+        }
+      },
     },
     {
       type: 'textarea',

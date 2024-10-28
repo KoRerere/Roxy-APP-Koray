@@ -20,7 +20,7 @@ export function getInputs(data: any = {}) {
       placeholder: `${$t('请按以下格式输入代理信息')}:\n${$t('代理主机:端口:用户名:密码[刷新URL]')}\n192.168.0.1:8000:username:password[http://www.example.com]`,
       name: 'proxyRules',
       rows: 5,
-      errorMsg: $t('Error in parsing content'),
+      errorMsg: $t('解析错误，请检查格式'),
       invalid: false,
       onBlur: () => {
         const input = inputs.find((item: any) => item.name === 'proxyRules')

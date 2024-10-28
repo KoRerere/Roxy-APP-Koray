@@ -7,7 +7,8 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ExtensionsInstallType, ExtensionsStatus } from '/@/enums'
+import { ExtensionsStatus } from '/@/enums'
+import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -27,31 +28,26 @@ const [show] = useContextMenu()
 const needsync = defineModel('needsync')
 const tableRef = useTemplateRef('extable')
 
-const columns = ref([
+const columns = setColumns([
   {
     title: $t('扩展信息'),
     key: 'extension',
     slot: 'extension',
   },
-  // {
-  //   title: $t('Toggle'),
-  //   key: 'toggle',
-  //   getText: (row: any) => row.useStatus ? 'Active' : 'Disable',
-  //   // slot: 'toggle',
-  // },
   {
     title: $t('来源'),
     key: 'source',
-    getText: (row: any) => row.uploader || row.source || '未知',
+    getText: (row: any) => row.uploader || row.source || $t('未知'),
+  },
+  {
+    title: $t('扩展归属'),
+    key: 'pluginType',
+    getText: (row: any) => row.pluginType ? $t('个人') : $t('团队'),
   },
   {
     title: $t('已关联项目'),
     key: 'installType',
-    getText: (row: any) => !row.installType
-      ? '--'
-      : Number(row.installType) === ExtensionsInstallType.all
-        ? $t('Full')
-        : $t('Partial'),
+    slot: 'related',
   },
   {
     title: $t('更新信息'),
@@ -63,7 +59,9 @@ const columns = ref([
     style: 'width: 9rem',
     slot: 'actions',
   },
-])
+], {
+  filters: role.isOwner ? [] : ['installType'], // 非所有者过滤关联信息
+})
 
 const filters = reactive({
   value: null,
@@ -120,33 +118,22 @@ async function tableRequest(params: any) {
 
 function tableOperation(data: any) {
   return [
-    // {
-    //   name: 'updateLocal',
-    //   label: $t('Update local'),
-    //   icon: 'base/rx_ic_clock_rotate',
-    //   power: data.source === 'local' && !role.isViewer,
-    // },
     {
       name: 'checkUpdate',
       label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
-      power: data.source !== 'local' && !role.isViewer,
+      power: data.pluginType || role.isOwner,
     },
-    // {
-    //   name: 'setting',
-    //   label: 'Setting',
-    //   icon: 'base/rx_ic_gear',
-    //   multiple: true,
-    // },
     {
       separator: true,
+      power: data.pluginType || role.isOwner,
     },
     {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       multiple: true,
-      power: role.isOwner || role.isManager,
+      power: data.pluginType || role.isOwner,
     },
   ]
 }
@@ -232,12 +219,6 @@ function onUploadExtension() {
       },
     },
   })
-}
-
-async function onSwitch(item: any) {
-  const { code, msg } = await API.plugins.userMdfPluginStatusCreate(item)
-  const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Success')] : ['error', $t('Error')]
-  toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
 }
 
 async function onInstall(data: any) {
@@ -355,8 +336,9 @@ defineExpose({
         </div>
       </div>
     </template>
-    <template #toggle="{ data }">
-      <RxToggleSwitch v-model="data.useStatus" :label="data.useStatus ? $t('Active') : $t('Disable')" @change="onSwitch(data)" />
+
+    <template #related="{ data }">
+      <RxTag class="cursor-pointer" icon="base/rx_ic_stack" @click="operationHandler({ name: 'install' }, data)" />
     </template>
 
     <template #update="{ data }">
@@ -370,10 +352,7 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <div class="flex items-center">
-        <RxButton icon="base/rx_ic_install_extension" :label="$t('Install')" size="sm" severity="secondary" text @click="operationHandler({ name: 'install' }, data)" />
-        <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
-      </div>
+      <Actions v-if="data.pluginType || role.isOwner" :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
     </template>
   </RyTable>
 </template>
@@ -408,7 +387,6 @@ defineExpose({
     font-style: normal;
     line-height: var(--Line-Height-text-xs, 16px);
     font-weight: 500;
-    width: 240px;
 
     &-name {
       color: var(--Colors-Text-text-primary, #171c1f);

@@ -6,6 +6,7 @@ import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 
 type CategoryItem = UnwrapRowType<UserGetPluginCategoryListData>
@@ -19,6 +20,7 @@ interface PluginMap {
 }
 const [showToast, onlyErrorToast] = useResponseToast()
 const dialog = useDialog()
+const role = useRoleStore()
 
 const needsync = defineModel('needsync')
 
@@ -73,7 +75,9 @@ async function addSystemPlugin(plugin: PluginItem) {
   if (code === 0) {
     plugin.addStatus = true
     needsync.value = true
-    onInstall({ ...plugin, id: data.plugin_id })
+    if (role.isOwner) {
+      onInstall({ ...plugin, id: data.plugin_id })
+    }
   }
   onlyErrorToast(code, msg)
 }
@@ -156,8 +160,8 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="sm" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
-                <RxButton v-else size="sm" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="addSystemPlugin(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="addSystemPlugin(plugin)" />
               </div>
             </div>
           </div>
