@@ -159,15 +159,13 @@ function deletePopup(data: any) {
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-               :show-actions="false"
-      >
+        :show-actions="false">
         <template #table-empty>
-          <CustomEmpty title="No accounts available"
-                       desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>."
-          >
+          <CustomEmpty icon="empty/rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('新建账号')" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />
+                <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" />
               </div>
             </template>
           </CustomEmpty>

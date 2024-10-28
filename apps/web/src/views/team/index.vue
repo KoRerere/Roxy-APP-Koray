@@ -193,23 +193,22 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       <RxSvgIcon name="base/rx_ic_books" />
       <span>{{ $t('团队指南') }}</span>
     </div>
-    <RxButton v-if="!role.isViewer" severity="secondary" outlined size="sm" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+    <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
-           :paginator="false" :show-actions-menu="false" :show-actions="false"
-  >
+    :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>
-      <CustomEmpty title="No members in workspace"
-        desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>.">
+      <CustomEmpty icon="empty/rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" label="Invite members" />
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+            <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" />
           </div>
         </template>
       </CustomEmpty>

@@ -8,7 +8,7 @@ export function getOperation() {
   return [
     {
       name: 'restore',
-      label: $t('Restore'),
+      label: $t('恢复'),
       icon: 'base/rx_ic_refresh',
       classes: 'text-gray-500',
       quick: true,
@@ -16,7 +16,7 @@ export function getOperation() {
     },
     {
       name: 'delete',
-      label: $t('Delete Permanently'),
+      label: $t('彻底删除'),
       icon: 'base/rx_ic_shredder',
       classes: 'text-red',
       quick: true,

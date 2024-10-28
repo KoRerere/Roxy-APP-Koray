@@ -82,7 +82,7 @@ onBeforeMount(() => {
     <div class="flex flex-1 flex-col">
       <div class="profile-header">
         <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-        <span>Edit profile</span>
+        <span>{{ $t('编辑窗口') }}</span>
       </div>
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">

@@ -1,11 +1,10 @@
 import { format } from 'date-fns'
 import { API } from '/@/api'
-import { Role } from '/@/enums'
 import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRoleStore } from '/@/stores/role'
 import { setInputValueByFormData } from '/@/utils'
 
-const workspaceStore = useWorkspaceStore()
+const role = useRoleStore()
 
 export function tableFilters(_params: any = {}) {
   return [
@@ -217,17 +216,15 @@ export function getSorts(params: any = {}) {
 }
 
 export function getOperation(_params: any = {}) {
-  const isViewer = (workspaceStore.currentWorkspace?.role ?? -1) <= Role.VIEWER
-
   return [
     {
       name: 'edit',
       label: $t('编辑窗口'),
       icon: 'base/rx_ic_edit',
-      power: !isViewer,
+      power: !role.isViewer,
     },
     {
-      power: !isViewer,
+      power: !role.isViewer,
       separator: true,
     },
     {
@@ -260,7 +257,7 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
-      power: !isViewer,
+      power: !role.isViewer,
       separator: true,
       multiple: true,
     },
@@ -268,7 +265,7 @@ export function getOperation(_params: any = {}) {
       name: 'editCookies',
       label: $t('编辑 Cookies'),
       icon: 'base/rx_ic_cookies',
-      power: !isViewer,
+      power: !role.isViewer,
     },
     {
       name: 'copyId',
@@ -276,14 +273,14 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_copy',
     },
     {
-      power: !isViewer,
+      power: !role.isViewer,
       separator: true,
     },
     {
       name: 'delete',
       label: $t('删除窗口'),
       icon: 'base/rx_ic_bin_1',
-      power: !isViewer,
+      power: !role.isViewer,
       multiple: true,
     },
   ]

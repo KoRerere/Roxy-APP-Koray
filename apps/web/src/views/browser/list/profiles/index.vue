@@ -11,6 +11,7 @@ import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -45,6 +46,8 @@ const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 const dialog = useDialog()
+const role = useRoleStore()
+
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -470,15 +473,15 @@ defineExpose({
       </div>
     </template> -->
     <template #table-empty>
-      <CustomEmpty title="Profiles list is empty"
-        desc="Profile is the core feature of RoxyBrowser. By combining proxies and accounts, Profiles can achieve a variety of business functions. Read more: <a href='www.baidu.com' target='_blank'>Profile documentation</a>.">
+      <CustomEmpty icon="empty/rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" label="Create Profile" />
-            <RxButton text severity="secondary" size="xs" label="Profile document" />
+            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="router.push({ name: 'browser-create' })" />
+            <RxButton text severity="secondary" size="xs" :label="$t('窗口文档')" />
           </div>
         </template>
       </CustomEmpty>
+      <!-- <CustomEmpty icon="empty/rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" /> -->
     </template>
 
     <template #profile="{ data }">

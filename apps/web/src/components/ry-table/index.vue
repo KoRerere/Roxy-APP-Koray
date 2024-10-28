@@ -89,6 +89,7 @@ defineEmits(['update:columns'])
 
 const [show] = useContextMenu()
 
+const _loading = ref(false)
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref()
 const _dataList = ref()
@@ -192,10 +193,12 @@ function _getParams(outerParams?: any) {
 
 async function _request(outerParams?: any) {
   const requestParams = _getParams(outerParams)
+  _loading.value = true
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
   _dataList.value = data?.rows || []
   _clearSelection()
+  _loading.value = false
 }
 
 function _getOperation(data: any) {
@@ -303,6 +306,9 @@ defineExpose({
         </template>
       </Paginator>
     </div>
+    <div v-if="_loading" class="flex items-center justify-center loading-overlay">
+      <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
+    </div>
   </div>
   <Transition>
     <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
@@ -315,6 +321,16 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--Colors-Alpha-alpha-white-90, rgba(255, 255, 255, 0.9));
+  z-index: 10;
+}
+
 .rx-header {
   display: flex;
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);

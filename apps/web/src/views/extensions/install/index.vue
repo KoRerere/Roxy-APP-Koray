@@ -14,6 +14,7 @@ import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
 
+defineEmits(['search'])
 const confirm = useConfirm()
 const dialog = useDialog()
 const toast = useToast()
@@ -24,7 +25,6 @@ const [showToast] = useResponseToast()
 const [show] = useContextMenu()
 
 const needsync = defineModel('needsync')
-
 const tableRef = useTemplateRef('extable')
 
 const columns = ref([
@@ -333,11 +333,11 @@ defineExpose({
     </template>
 
     <template #table-empty>
-      <CustomEmpty title="No extensions available"
-        desc="Extensions in workspace can be installed into your profiles, and all team members will be able to use all the plugins in the current workspace.">
+      <CustomEmpty icon="empty/rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" label="Search extensions" />
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
+            <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" />
           </div>
         </template>
       </CustomEmpty>

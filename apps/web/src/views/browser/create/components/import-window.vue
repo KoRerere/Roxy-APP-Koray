@@ -22,7 +22,6 @@ const nameMap = {
   '刷新URL': 'refreshUrl',
   '窗口备注': 'windowRemark',
   'User Agent': 'userAgent',
-  '窗口尺寸': 'windowSize',
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024

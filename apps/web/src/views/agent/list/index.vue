@@ -145,18 +145,16 @@ function onRefreshTable() {
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
-               :show-gridlines="false" :show-actions="false"
-      >
+        :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
         <template #table-empty>
-          <CustomEmpty title="No proxies available"
-            desc="Create proxies to make it more convenient to reference in the profiles list. For more information about proxy, please visit <a href='www.baidu.com' target='_blank'>proxy documentation</a>.">
+          <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" label="Create proxy" />
-                <RxButton text severity="secondary" size="xs" label="Proxy document" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click="createProxy" />
+                <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" />
               </div>
             </template>
           </CustomEmpty>

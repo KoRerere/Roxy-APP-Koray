@@ -27,14 +27,17 @@ function onChange(value: any) {
     syncHub.value = false
   }
 }
+function onSearch() {
+  tabsValue.value = tabs.value[1].value
+}
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="extensions-header">
-      <i18n-t :keypath="$route.meta.title" scope="global" />
+      <i18n-t :keypath="($route.meta.title as string)" scope="global" />
     </div>
-    <Tabs class="flex-1 overflow-hidden" :value="tabsValue" @update:value="onChange">
+    <Tabs v-model:value="tabsValue" class="flex-1 overflow-hidden" @update:value="onChange">
       <TabList>
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
           {{ tab.title }}
@@ -43,7 +46,7 @@ function onChange(value: any) {
       <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
         <TabPanel class="flex-1" value="Installed">
           <!-- eslint-disable-next-line vue/no-unused-refs -->
-          <list ref="listref" v-model:needsync="syncHub" />
+          <list ref="listref" v-model:needsync="syncHub" @search="onSearch" />
         </TabPanel>
         <TabPanel class="flex flex-1" value="hub">
           <!-- eslint-disable-next-line vue/no-unused-refs -->

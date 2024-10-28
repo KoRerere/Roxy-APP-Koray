@@ -1,13 +1,15 @@
 <script setup lang="ts">
-defineProps({
+const props = defineProps({
+  icon: String,
   title: String,
   desc: String,
 })
+const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.meta.url).href)
 </script>
 
 <template>
   <div class="empty-content">
-    <div class="empty-icon" />
+    <img class="empty-icon" :src="imgSrc">
     <div class="empty-info">
       <div class="empty-info-title">
         {{ title }}
@@ -30,8 +32,6 @@ defineProps({
 .empty-icon {
   width: 90px;
   height: 90px;
-  padding: 13px;
-  background-color: orange;
 }
 
 .empty-info {

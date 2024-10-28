@@ -132,7 +132,7 @@ function onCopy(dirId: string) {
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
       <RxButton v-if="openBrowser" outlined severity="secondary" :label="$t('创建 & 打开')" :loading="loading" @click.stop="getFormData(true)" />
-      <RxButton severity="primary" :label="`${isEdit ? $t('编辑窗口') : $t('创建窗口')}`" :loading="loading" @click.stop="getFormData(false)" />
+      <RxButton severity="primary" :label="`${isEdit ? $t('保存') : $t('创建窗口')}`" :loading="loading" @click.stop="getFormData(false)" />
     </div>
   </div>
 </template>

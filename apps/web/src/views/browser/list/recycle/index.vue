@@ -29,7 +29,7 @@ async function tableRequest(params: any) {
 }
 
 function operationHandler(operate: any, data: any) {
-  const datas = [].concat(data)
+  const datas = [].concat(data).map((item: any) => toRaw(item))
   switch (operate.name) {
     case 'restore':
       recoverHandler(datas)
@@ -80,7 +80,7 @@ async function deleteHandler(datas: any) {
       showToast(code, msg)
       tableRef.value?.refresh()
       if (code === 0) {
-        electronAPI.send('browser:batchRemove', toRaw(datas))
+        electronAPI.send('browser:batchRemove', datas)
       }
     },
   })
@@ -92,7 +92,7 @@ async function deleteHandler(datas: any) {
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :sorts="sorts"
     :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #table-empty>
-      <CustomEmpty title="Your trash bin is empty" desc="Profiles removed from the profiles list will appear here. Profiles deleted from the trash bin cannot be recovered." />
+      <CustomEmpty icon="empty/rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>
     <template #profile="{ data }">
       <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
