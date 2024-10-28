@@ -29,7 +29,7 @@ export const appUpdater = new class AppUpdater {
   }
 
   constructor() {
-    this.init()
+    queueMicrotask(this.init)
 
     setTimeout(() => {
       this.init()
