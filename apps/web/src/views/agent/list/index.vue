@@ -141,7 +141,7 @@ function onRefreshTable() {
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :columns="columns" :operation-handler="operationHandler"
+      <RyTable ref="proxyTable" v-model:columns="columns" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />

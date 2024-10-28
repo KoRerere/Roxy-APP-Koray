@@ -8,38 +8,40 @@ import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { settingAppearance } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import type { Items, SettingsModule } from './type'
 import FolderDirectory from './folder-directory.vue'
 import UploadAvatar from './upload-avatar.vue'
 
-const { setUserInfo } = useUserStore()
+const { getUserInfo } = useUserStore()
 
 const toast = ref()
 
 async function updateAvatar(item: Items) {
-  await API.base.userUploadAvatarCreate({ avatar: item.value })
-  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
-  updateUserInfo()
+  const { code, msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
+  toast.value?.(code, msg)
+  if (code === 0) {
+    getUserInfo()
+  }
 }
 
 async function updateUserName(item: Items) {
-  await API.base.userChangeUsernameCreate({ userName: item.value })
-  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
-  updateUserInfo()
-}
-
-async function updateUserInfo() {
-  const { data } = await API.base.userGetUserInfoList()
-  setUserInfo(data)
+  const { code, msg } = await API.base.userChangeUsernameCreate({ userName: item.value })
+  toast.value?.(code, msg)
+  if (code === 0) {
+    getUserInfo()
+  }
 }
 
 async function saveUserConfig(item: Items) {
   const value = item.formatValue?.(item) ?? item.value
-  await API.base.userSetUserConfigCreate({ [item.name as any]: value })
-  toast.value?.add({ severity: 'success', summary: $t('Success'), detail: $t('Modification successful'), life: 5000 })
-  electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
+  const { code, msg } = await API.base.userSetUserConfigCreate({ [item.name as any]: value })
+  toast.value?.(code, msg)
+  if (code === 0) {
+    electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
+  }
 }
 
 async function detectLocalNetwork(item: Items) {
@@ -66,7 +68,8 @@ async function detectSystemNetwork(item: Items) {
 // }
 
 export function getSettings() {
-  toast.value = useToast()
+  const [showToast] = useResponseToast()
+  toast.value = showToast
   return [
     {
       label: $t('个人信息'),

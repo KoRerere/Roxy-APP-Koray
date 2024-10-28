@@ -38,56 +38,41 @@ function openBrowser() {
 
 <template>
   <div class="cursor-pointer open" @click="openBrowser">
-    <RxSvgIcon class="open-icon" name="base/rx_ic_chrome" />
-    <span class="open-text">Open</span>
+    <RxSvgIcon name="base/rx_ic_chrome" color="#12A3FC" />
+    <span>Open</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
     <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
-    <RxSvgIcon v-if="index === quickGroup.length - 1" class="group-item" name="base/rx_ic_more-v" @click.stop="$emit('more', { event: $event, operation: multiplePperation })" />
+    <RxSvgIcon v-if="index === quickGroup.length - 1" name="base/rx_ic_more-v" class="cursor-pointer group-item" @click.stop="$emit('more', { event: $event, operation: multiplePperation })" />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.group,
-.open {
+.open,
+.group {
   display: flex;
-  padding: var(--spacing-md, 6px) 8px;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   border-radius: 5px;
   border: 0.5px solid var(--Color-neutrals-600, #575d61);
   background: var(--Color-neutrals-800, #252a2e);
-  line-height: 1;
-
-  &-item {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    cursor: pointer;
-
-    &:active {
-      color: orange;
-    }
-  }
 }
 
 .open {
   gap: var(--spacing-sm, 4px);
+  color: #fff;
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
 
-  &-icon {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-  }
+.group {
+  gap: var(--spacing-xl, 12px);
+  color: #ffffff;
 
-  &-text {
-    color: #fff;
-    text-align: center;
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: var(--Line-Height-text-xs, 16px);
+  &-item:active {
+    color: orange;
   }
 }
 </style>

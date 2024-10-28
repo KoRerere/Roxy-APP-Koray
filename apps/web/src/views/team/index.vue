@@ -6,7 +6,7 @@ import { API } from '/@/api'
 import relatedInfo from '/@/components/related-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
-import { setColumns } from '/@/hooks/useColumns'
+import useColumns from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -23,34 +23,35 @@ const tableRef = useTemplateRef('team')
 
 type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
-const columns = ref(setColumns([
-  {
-    title: $t('成员信息'),
-    key: 'member',
-    slot: 'member',
-  },
-  {
-    title: $t('成员状态'),
-    key: 'status',
-    getText: (row: TableRow) => row.status === Membership.joinIn ? '已加入' : '等待确认',
-  },
-  {
-    title: $t('身份'),
-    key: 'source',
-    getText: (row: TableRow) => roleLabelMap[row.role as Role],
-  },
-  {
-    title: $t('已关联项目'),
-    key: 'relatedProjects',
-    slot: 'related',
-  },
-  {
-    title: $t('操作'),
-    slot: 'actions',
-  },
-], {
-  filters: (role.isOwner || role.isManager) ? [] : ['relatedProjects'],
-}))
+const [columns] = useColumns({
+  key: 'team.list',
+  data: [
+    {
+      title: $t('成员信息'),
+      key: 'member',
+      slot: 'member',
+    },
+    {
+      title: $t('成员状态'),
+      key: 'status',
+      getText: (row: TableRow) => row.status === Membership.joinIn ? '已加入' : '等待确认',
+    },
+    {
+      title: $t('身份'),
+      key: 'source',
+      getText: (row: TableRow) => roleLabelMap[row.role as Role],
+    },
+    {
+      title: $t('已关联项目'),
+      key: 'relatedProjects',
+      slot: 'related',
+    },
+    {
+      title: $t('操作'),
+      slot: 'actions',
+    },
+  ],
+}, (role.isOwner || role.isManager) ? undefined : ['relatedProjects'])
 
 const filters = reactive({
   value: null,
@@ -195,7 +196,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </ViewsHeader>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
+  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :sorts="sorts" :show-gridlines="false"
     :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">

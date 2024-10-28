@@ -62,7 +62,7 @@ async function openBrowser() {
 <template>
   <div class="flex items-center gap-2">
     <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
-      <circle-progress v-if="browser.percent && !browser.complted" size="16" :value="browser.percent" />
+      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
       <RxSvgIcon v-if="!browser.percent && !browser.pending" color="#12A3FC" name="base/rx_ic_chrome" />
       <span>{{ browser.complted ? $t('查看') : browser?.msg }}</span>
     </div>

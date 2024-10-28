@@ -38,20 +38,23 @@ function batchOperation(item: any) {
 
 <template>
   <div class="multiple">
-    <div class="multiple-group">
-      <span class="multiple-group-text"><span class=" text-white">{{ selection.length }}</span> of <span
-        class=" text-white"
-      >{{ total }}</span>
-        selected</span>
+    <div class="multiple-selected">
+      <div>
+        <i18n-t :keypath="$t('{selected} / {total} 已选中', { selected: '{selected}', total: '{total}' })" scope="global">
+          <template #selected>
+            <span class="text-white font-semibold">{{ selection.length }}</span>
+          </template>
+          <template #total>
+            <span class="text-white font-semibold">{{ total }}</span>
+          </template>
+        </i18n-t>
+      </div>
       <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <RxSvgIcon v-for="item in list" :key="item.name"
-                   v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }"
-                   class="multiple-group-icon" :name="item.icon" :size="16" :class="{ disabled: item.disabled }" color="white"
-                   @click="batchOperation(item)"
-        />
+        <RxSvgIcon v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }" :class="{ disabled: item.disabled }"
+          :name="item.icon" class="cursor-pointer" color="#ffffff" @click="batchOperation(item)" />
       </div>
     </slot>
   </div>
@@ -61,13 +64,11 @@ function batchOperation(item: any) {
 .multiple {
   position: absolute;
   left: 50%;
-  bottom: 20%;
+  bottom: 15%;
   transform: translateX(-50%);
   z-index: 99;
 
-  color: white;
-
-  display: flex;
+  display: inline-flex;
   padding: var(--spacing-sm, 4px);
   align-items: center;
   gap: var(--spacing-sm, 4px);
@@ -78,36 +79,27 @@ function batchOperation(item: any) {
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
 
+  &-selected,
   &-group {
     display: flex;
     align-items: center;
-    padding: var(--spacing-md, 6px) 8px;
-    gap: var(--spacing-md, 6px);
+    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
     border-radius: 5px;
-    border: 0.5px solid var(--Color-neutrals-600, #575e61);
+    border: 0.5px solid var(--Color-neutrals-600, #575d61);
     background: var(--Color-neutrals-800, #252a2e);
-    font-size: 16px;
-    line-height: 1;
+  }
 
-    &-text {
-      color: rgba(255, 255, 255, 0.6);
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: var(--Line-Height-text-xs, 16px);
-    }
+  &-selected {
+    gap: var(--spacing-md, 6px);
+    color: rgba(255, 255, 255, 0.6);
+    font-family: Inter;
+    font-size: 13px;
+    line-height: var(--Line-Height-text-xs, 16px);
+  }
 
-    &-icon {
-      font-size: 16px;
-      gap: 8px;
-      cursor: pointer;
-
-      &.disabled {
-        color: #cccccc;
-        cursor: not-allowed;
-      }
-    }
+  &-group {
+    gap: var(--spacing-xl, 12px);
+    color: #ffffff;
   }
 }
 </style>

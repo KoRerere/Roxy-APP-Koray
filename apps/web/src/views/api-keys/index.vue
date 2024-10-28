@@ -119,52 +119,54 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col w-full h-full api">
     <ViewsHeader class="api-header" :title="($route.meta.title as string)" />
-    <div class="flex-1 w-1/2 mx-auto">
-      <div class="api-usage">
-        <div>{{ $t('API 启用状态') }}</div>
-        <rxToggleSwitch v-model="open" :label="open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
-      </div>
-      <template v-if="open">
-        <div class="api-content">
-          <div class="api-content-reset">
-            <div>{{ $t('API 秘钥') }}</div>
-            <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
-          </div>
-          <div class="api-content-desc">
-            <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
-            <div class="flex-1">
-              {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
-            </div>
-          </div>
-          <div class="api-content-key">
-            <div class="flex items-center justify-between">
-              <div class="api-content-key-value">
-                {{ apiKey }}
-              </div>
-              <RxButton severity="secondary" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
-            </div>
-            <div class="api-content-key-desc">
-              * {{ $t('请确保您的 API 秘钥安全保存') }}
-            </div>
-          </div>
-          <div class="api-content-proxy">
-            <div>
-              <div>
-                {{ $t('端口设置') }}
-              </div>
-            </div>
-            <inputNumberGroup :inputs="inputs" />
-          </div>
+    <div class="flex-1 w-full overflow-auto api-body">
+      <div class="w-1/2 mx-auto">
+        <div class="api-usage">
+          <div>{{ $t('API 启用状态') }}</div>
+          <rxToggleSwitch v-model="open" :label="open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
-      </template>
-
-      <div class="api-illustrate">
-        <div v-for="item in illustrate" :key="item.title">
-          <div class="api-illustrate-title">
-            {{ item.title }}
+        <template v-if="open">
+          <div class="api-content">
+            <div class="api-content-reset">
+              <div>{{ $t('API 秘钥') }}</div>
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
+            </div>
+            <div class="api-content-desc">
+              <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
+              <div class="flex-1">
+                {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
+              </div>
+            </div>
+            <div class="api-content-key">
+              <div class="flex items-center justify-between">
+                <div class="api-content-key-value">
+                  {{ apiKey }}
+                </div>
+                <RxButton severity="secondary" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
+              </div>
+              <div class="api-content-key-desc">
+                * {{ $t('请确保您的 API 秘钥安全保存') }}
+              </div>
+            </div>
+            <div class="api-content-proxy">
+              <div>
+                <div>
+                  {{ $t('端口设置') }}
+                </div>
+              </div>
+              <inputNumberGroup :inputs="inputs" />
+            </div>
           </div>
-          <div class="api-illustrate-content">
-            <component :is="item.content" />
+        </template>
+
+        <div class="api-illustrate">
+          <div v-for="item in illustrate" :key="item.title">
+            <div class="api-illustrate-title">
+              {{ item.title }}
+            </div>
+            <div class="api-illustrate-content">
+              <component :is="item.content" />
+            </div>
           </div>
         </div>
       </div>
@@ -176,6 +178,10 @@ onBeforeMount(() => {
 .api {
   &-header {
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  }
+
+  &-body::-webkit-scrollbar {
+    display: none;
   }
 
   &-usage {

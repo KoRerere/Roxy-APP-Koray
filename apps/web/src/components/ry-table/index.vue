@@ -316,15 +316,15 @@ defineExpose({
     <div v-if="_loading" class="flex items-center justify-center loading-overlay">
       <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
     </div>
+    <Transition>
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
+        <template #custom-operation>
+          <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
+        </template>
+      </SelectionOperation>
+    </Transition>
   </div>
-  <Transition>
-    <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-      :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
-      <template #custom-operation>
-        <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
-      </template>
-    </SelectionOperation>
-  </Transition>
 </template>
 
 <style lang="scss" scoped>

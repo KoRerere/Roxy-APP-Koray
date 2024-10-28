@@ -157,7 +157,7 @@ function deletePopup(data: any) {
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+      <RyTable ref="accountTable" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="empty/rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
