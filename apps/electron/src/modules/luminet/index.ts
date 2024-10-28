@@ -48,7 +48,7 @@ export async function startLuminet() {
   if (isMac) {
     await execFilePromise('chmod', ['+x', appConfig.luminetBinPath])
   }
-
+  console.log('luminetBinPath encText:', encText)
   luminetProcess = execFile(appConfig.luminetBinPath, ['--arg', encText])
 
   console.log(`Child process ID: ${luminetProcess.pid}`)

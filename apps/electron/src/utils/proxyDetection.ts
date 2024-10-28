@@ -65,6 +65,14 @@ export function tryRefreshUrl(refreshUrl: string) {
   })
 }
 
+// export async function handleProxyDetectionParams(proxyDetectionParams: ProxyDetectionParams) {
+//   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
+
+//   const { systemProxySwitch } = store
+//   const systemProxyAddress = await getSystemProxy()
+//   const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
+// }
+
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
@@ -74,14 +82,21 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     throw new Error(`dirId is required`)
   }
   console.log(`systemProxySwitch`, systemProxySwitch)
-  console.log(`dirId && proxyUserName`, dirId && proxyUserName)
+  console.log(`dirId && proxyUserName`, dirId, proxyUserName)
+  const systemProxyAddress = await getSystemProxy()
+  const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
+  let __protocol = systemProxySwitch && proxyCategory === 'HTTPS' ? 'HTTP' : proxyCategory
+  const isUseSystemProxy = __protocol === 'noproxy' && systemProxyAddress
+  __protocol = outerParamFirst ? proxyCategory : isUseSystemProxy ? 'HTTP' : __protocol
+
   if (systemProxySwitch) {
     await startLuminet()
+    const addr = host && port ? `${host}:${port}` : isUseSystemProxy ? systemProxyAddress : ''
     const luminetParams = {
-      addr: host && port ? `${host}:${port}` : '',
+      addr,
       user_name: proxyUserName || '',
       password: proxyPassword || '',
-      protocal: proxyCategory.toLocaleLowerCase(),
+      protocal: proxyCategory === 'noproxy' ? 'http' : proxyCategory.toLocaleLowerCase(),
     }
     console.log('luminetParams', luminetParams)
 
@@ -93,16 +108,16 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   }
 
   const params: ProxyDetectionParams = {
-    proxyCategory,
-    host: systemProxySwitch ? '127.0.0.1' : host,
-    port: systemProxySwitch ? (outerParamFirst ? port : store.luminetProxyPort) : port,
+    proxyCategory: __protocol,
+    host: systemProxySwitch ? '127.0.0.1' : isUseSystemProxy ? systemProxyHost : host,
+    port: systemProxySwitch ? store.luminetProxyPort : isUseSystemProxy ? systemProxyPort : port,
     proxyUserName: systemProxySwitch ? dirId : proxyUserName,
     proxyPassword: systemProxySwitch ? dirId : proxyPassword,
     checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
   }
 
   // console.log('proxyDetectionParams', proxyDetectionParams)
-  const checkMode = getCheckFunction(proxyCategory as ProtocolMapType)
+  const checkMode = getCheckFunction(__protocol as ProtocolMapType)
   console.log('proxyDetection params', params)
   const result = await checkMode(params)
 
@@ -162,7 +177,7 @@ function checkHttpsProxy(winInfo: ProxyDetectionParams) {
       'user-agent': 'electron ',
     },
     timeout: TIMEOUT,
-    agent: new HttpsProxyAgent(httpUrl, { timeout: TIMEOUT }),
+    agent: new HttpsProxyAgent(httpUrl, { timeout: TIMEOUT, rejectUnauthorized: false }),
   }, (res) => {
     // res.pipe(process.stdout);
     let data = ``
@@ -268,7 +283,7 @@ export async function detectNetwork(type?: 'local' | 'system') {
     const systemProxy = await getSystemProxy()
     console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
-    return proxyDetection({ dirId, host, port, protocol: 'HTTP' }).catch(() => {
+    return proxyDetection({ dirId, host, port, protocol: 'HTTP', outerParamFirst: true }).catch(() => {
       // 如果系统代理检测失败，则走本地网络检测
       return proxyDetection({ dirId }).finally(() => {
         delLuminetProxy(dirId)

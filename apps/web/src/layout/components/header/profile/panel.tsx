@@ -44,7 +44,7 @@ async function saveUserConfig(item: Items) {
 
 async function detectLocalNetwork(item: Items) {
   const dirId = Math.random().toString(36).slice(2)
-  const data = await electronAPI.send('proxy:detect', { dirId }).finally(() => {
+  const data = await electronAPI.send('proxy:detect', { dirId, outerParamFirst: true }).finally(() => {
     window.electronAPI.send('proxy:delLuminetProxy', dirId)
   })
   item.value = data

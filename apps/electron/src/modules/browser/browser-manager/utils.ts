@@ -5,6 +5,7 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
 import language from '/@/constants/language.json'
 import { store } from '/@/modules/store'
+import { getSystemProxyAddress } from '/@/utils'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
@@ -383,18 +384,20 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
       const { host, port, proxyUserName, proxyPassword } = winInfo
       const { systemProxySwitch } = store
-
+      const [systemProxyHost = '', systemProxyPort = ''] = getSystemProxyAddress().split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
-      const type = systemProxySwitch ? (protocol === 'https' ? 'http' : protocol) : protocol
+      let type = systemProxySwitch && protocol === 'https' ? 'http' : protocol
+      const isUseSystemProxy = type === 'noproxy' && systemProxyHost && systemProxyPort
+      type = isUseSystemProxy ? 'HTTP' : type
 
       return {
         // 代理类型 http https,socks5
         // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
-        type,
+        type: type.toLocaleLowerCase(),
         // 代理主机
-        host: systemProxySwitch ? '127.0.0.1' : host,
+        host: systemProxySwitch ? '127.0.0.1' : isUseSystemProxy ? systemProxyHost : host,
         // 代理端口
-        port: Number(systemProxySwitch ? store.luminetProxyPort : port),
+        port: Number(systemProxySwitch ? store.luminetProxyPort : isUseSystemProxy ? systemProxyPort : port),
         // 用户名 ，选填
         username: systemProxySwitch ? winInfo.dirId : proxyUserName,
         // 密码，选填
