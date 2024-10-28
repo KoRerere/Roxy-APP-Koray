@@ -15,7 +15,7 @@ import { extensionManager } from '/@/modules/extension'
 import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/luminet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { aliOSS, decryptAESGCM, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
+import { aliOSS, decryptAESGCM, detectNetwork, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
@@ -51,27 +51,7 @@ ipcMain.on('proxy:delLuminetProxy', (dirId) => {
 
 /** 根据用户设置，检测本地网络/系统代理 */
 ipcMain.on('proxy:detectNetwork', async (type?: 'local' | 'system') => {
-  const { systemProxySwitch } = store
-  const dirId = Math.random().toString(36).slice(2)
-
-  if (systemProxySwitch || type === 'system') {
-    const systemProxy = await getSystemProxy()
-    console.log('systemProxy', systemProxy)
-    const [host, port] = systemProxy.split(':')
-    return proxyDetection({ dirId, host, port, protocol: 'HTTP' }).catch(() => {
-      // 如果系统代理检测失败，则走本地网络检测
-      return proxyDetection({ dirId }).finally(() => {
-        delLuminetProxy(dirId)
-      })
-    }).finally(() => {
-      delLuminetProxy(dirId)
-    })
-  }
-  else {
-    return proxyDetection({ dirId }).finally(() => {
-      delLuminetProxy(dirId)
-    })
-  }
+  return detectNetwork(type)
 })
 
 /** 获取系统代理 */

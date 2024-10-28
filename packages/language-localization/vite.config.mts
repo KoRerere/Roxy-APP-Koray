@@ -9,6 +9,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   base: '__language-localization__',
   build: {
+    target: 'es2020',
     outDir: 'dist/page',
   },
   css: {

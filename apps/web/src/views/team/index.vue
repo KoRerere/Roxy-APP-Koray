@@ -187,7 +187,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 <template>
   <div class="header">
     <div class="flex-1">
-      {{ $route.meta.title }}
+      <i18n-t :keypath="$route.meta.title" scope="global" />
     </div>
     <div class="header-guide">
       <RxSvgIcon name="base/rx_ic_books" />
@@ -197,7 +197,8 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="team" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts" :show-gridlines="false"
-    :paginator="false" :show-actions-menu="false" :show-actions="false">
+           :paginator="false" :show-actions-menu="false" :show-actions="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />

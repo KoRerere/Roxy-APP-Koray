@@ -154,7 +154,7 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="profile-header">
-      <div>{{ $route.meta.title }}</div>
+      <i18n-t :keypath="$route.meta.title" scope="global" />
       <div v-if="!role.isViewer" v-ripple class="cursor-pointer profile-header-manage" @click="openManageCategory">
         <RxSvgIcon name="base/rx_ic_group" />
         <div> {{ $t('标签管理') }}</div>

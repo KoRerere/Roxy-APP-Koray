@@ -5,8 +5,9 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { setLuminetProxy, startLuminet } from '/@/modules/luminet'
+import { delLuminetProxy, setLuminetProxy, startLuminet } from '/@/modules/luminet'
 import { store } from '/@/modules/store'
+import { getSystemProxy } from '/@/utils/getSystemProxy'
 
 export interface ProxyDetectionResult {
   ip: string
@@ -257,4 +258,28 @@ async function checkSocks5Proxy(parmes: any) {
   })
 
   return response.data
+}
+
+export async function detectNetwork(type?: 'local' | 'system') {
+  const { systemProxySwitch } = store
+  const dirId = Math.random().toString(36).slice(2)
+
+  if (systemProxySwitch || type === 'system') {
+    const systemProxy = await getSystemProxy()
+    console.log('systemProxy', systemProxy)
+    const [host, port] = systemProxy.split(':')
+    return proxyDetection({ dirId, host, port, protocol: 'HTTP' }).catch(() => {
+      // 如果系统代理检测失败，则走本地网络检测
+      return proxyDetection({ dirId }).finally(() => {
+        delLuminetProxy(dirId)
+      })
+    }).finally(() => {
+      delLuminetProxy(dirId)
+    })
+  }
+  else {
+    return proxyDetection({ dirId }).finally(() => {
+      delLuminetProxy(dirId)
+    })
+  }
 }

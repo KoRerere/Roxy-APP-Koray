@@ -137,11 +137,11 @@ const paginatorConfig = reactive({
   first: 0,
   totalRecords: 0,
   rowsPerPageOptions: [
-    { label: '5 条/页', value: 5 },
-    { label: '10 条/页', value: 10 },
-    { label: '20 条/页', value: 20 },
-    { label: '50 条/页', value: 50 },
-    { label: '100 条/页', value: 100 },
+    { label: $t('5 条/页'), value: 5 },
+    { label: $t('10 条/页'), value: 10 },
+    { label: $t('20 条/页'), value: 20 },
+    { label: $t('50 条/页'), value: 50 },
+    { label: $t('100 条/页'), value: 100 },
   ],
   onResetPage(page: number = 1, rows: number = 10) {
     paginatorConfig.page = page

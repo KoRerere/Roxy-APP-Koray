@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
-import { baseUrl } from '../constants'
 
 const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo', { default: {} })
 
@@ -38,7 +37,7 @@ async function getTwoFactorCode(item) {
   }
   item.loading = true
   try {
-    const response = await fetch(`${baseUrl}/api/browser/two_factor_token?code=${item.platformEfa}`)
+    const response = await fetch(`/api/browser/two_factor_token?code=${item.platformEfa}`)
     const { data } = await response.json()
     console.log('data', data)
     item.efaToken = data
@@ -104,7 +103,7 @@ initTwoFactorCodeList()
       </div>
     </template>
 
-    <template v-for="url in winInfo.defaultOpenUrl" :key="url">
+    <template v-for="url in winInfo.defaultOpenUrl?.filter(Boolean)" :key="url">
       <div class="link">
         <RxSvgIcon name="base/rx_ic_link" />
         <a :href="url" target="_blank">

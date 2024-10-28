@@ -6,7 +6,7 @@ import { onBeforeMount, ref, useTemplateRef } from 'vue'
 import dashboardBgSvg from '/@/assets/images/dashboard-bg.svg?raw'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import { baseUrl, fingerprintInfoList, profileInfoList } from '../constants'
+import { fingerprintInfoList, profileInfoList } from '../constants'
 import { getTimeOffset } from '../utils'
 import IpChangeWarnMessage from './ip-change-warn-message.vue'
 import TwoFactorAuth from './two-factor-auth.vue'
@@ -34,7 +34,7 @@ const isMobile = useMediaQuery('(max-width: 428px)')
 /** 获取当前窗口信息 */
 function getWindowInfo() {
   fetchWindowInfoLoading.value = true
-  fetch(`${baseUrl}/api/browser/list?dirId=${dirId}`)
+  fetch(`/api/browser/list?dirId=${dirId}`)
     .then(response => response.json())
     .then((result) => {
       console.log(result)
@@ -57,7 +57,7 @@ function getWindowInfo() {
 async function proxyDetection(event?: MouseEvent) {
   testProxyLoading.value = true
   try {
-    const response = await fetch(`${baseUrl}/api/proxy/detection?dirId=${dirId}`)
+    const response = await fetch(`/api/proxy/detection?dirId=${dirId}`)
     const result = await response.json()
     console.log(result)
     if (result.code === 0) {
@@ -88,7 +88,7 @@ async function proxyDetection(event?: MouseEvent) {
 async function refreshURL() {
   refreshUrlLoading.value = true
   try {
-    const response = await fetch(`${baseUrl}/api/proxy/refresh-url`, {
+    const response = await fetch(`/api/proxy/refresh-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ onBeforeMount(() => {
       </div>
     </div>
 
-    <IpChangeWarnMessage v-if="!testProxyLoading && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
+    <IpChangeWarnMessage v-if="!testProxyLoading && windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
 
     <div class="card base-info">
       <div class="card-header">
@@ -146,9 +146,11 @@ onBeforeMount(() => {
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
             <rx-button v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
-              :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL" />
+                       :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL"
+            />
             <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')" outlined :disabled="refreshUrlLoading || testProxyLoading"
-              @click="proxyDetection" />
+                       @click="proxyDetection"
+            />
           </div>
         </Teleport>
       </div>
@@ -179,7 +181,7 @@ onBeforeMount(() => {
           <template v-for="item in profileInfoList" :key="item.label">
             <div class="item">
               <div class="label">
-                {{ item.label }}:
+                <component :is="item.label" />:
               </div>
               <div class="value">
                 <component :is="item.customRender(windowInfo)" />
@@ -195,7 +197,7 @@ onBeforeMount(() => {
           <template v-for="item in fingerprintInfoList" :key="item.label">
             <div class="item">
               <div class="label">
-                {{ item.label }}:
+                <component :is="item.label" />:
               </div>
               <div class="value">
                 <template v-if="fetchWindowInfoLoading">
@@ -469,7 +471,7 @@ onBeforeMount(() => {
     }
   }
 
-  >* {
+  > * {
     z-index: 1;
   }
 

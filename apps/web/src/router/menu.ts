@@ -12,7 +12,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'list',
         name: 'browser-list',
-        meta: { title: '全部窗口', hideInMenu: true },
+        meta: { title: $t('全部窗口'), hideInMenu: true },
         component: () => import('/@/views/browser/list'),
       },
       {
@@ -52,7 +52,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: '资源', type: 'group' },
+    meta: { title: $t('资源'), type: 'group' },
     children: [
       {
         path: 'account',
@@ -69,7 +69,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'create',
         name: 'agent-create',
-        meta: { title: '新建代理', hideInMenu: true },
+        meta: { title: $t('新建代理'), hideInMenu: true },
         component: () => import('/@/views/agent/create'),
       },
       {
@@ -95,7 +95,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'workspace',
     name: 'workspace',
-    meta: { title: '工作空间', type: 'group' },
+    meta: { title: $t('工作空间'), type: 'group' },
     redirect: { name: 'teams' },
     children: [
       {
@@ -121,7 +121,7 @@ export const menuRoutes: RouteRecordRaw[] = [
   {
     path: 'api-keys',
     name: 'api-keys',
-    meta: { title: '自动化', type: 'group' },
+    meta: { title: $t('自动化'), type: 'group' },
     children: [
       {
         path: '',

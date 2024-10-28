@@ -98,7 +98,7 @@
     "incrementbuttonicon",
     "roxybrowser"
   ],
-  "i18n-ally.keystyle": "nested",
+  "i18n-ally.keystyle": "flat",
   "i18n-ally.localesPaths": [
     "packages/locales/src/langs",
     "playground/src/locales/langs",
@@ -111,7 +111,7 @@
     "js",
     "yaml"
   ],
-  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.sourceLanguage": "zh-CN",
   "i18n-ally.displayLanguage": "zh-CN",
   "i18n-ally.enabledFrameworks": [
     "vue",

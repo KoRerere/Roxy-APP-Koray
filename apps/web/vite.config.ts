@@ -100,6 +100,7 @@ const config: UserConfig = {
       targetDir: join(PACKAGE_ROOT, 'src/locales/langs'),
       langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'],
       immediate: false,
+      sourceLang: 'zh-CN',
     }),
     genFigmaVariables({ targetDir: join(PACKAGE_ROOT, 'src/styles/primevuePresets') }),
     uploadIcons({ extractDir: join(PACKAGE_ROOT, 'src/assets/images') }),

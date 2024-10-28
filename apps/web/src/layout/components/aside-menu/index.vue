@@ -113,6 +113,8 @@ function toCreateBrowser() {
 
   .new-profile-btn {
     flex-shrink: 0;
+    white-space: nowrap;
+    word-break: keep-all;
   }
 
   .menu {

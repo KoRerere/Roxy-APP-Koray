@@ -90,7 +90,7 @@ async function tableFilters() {
 <template>
   <div class="flex flex-col w-full h-full logs">
     <div class="logs-header">
-      {{ $route.meta?.title }}
+      <i18n-t :keypath="$route.meta.title" scope="global" />
     </div>
     <div class="flex flex-1 overflow-hidden">
       <RyTable :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false"

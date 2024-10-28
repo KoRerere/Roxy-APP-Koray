@@ -67,9 +67,8 @@ const saveConfig = debounce(async () => {
 
 export const store = new Proxy(_store, {
   set(target, prop: keyof StoreType, value) {
-    Reflect.set(_store, prop, value, target)
     saveConfig()
-    return true
+    return Reflect.set(_store, prop, value, target)
   },
 })
 
@@ -79,6 +78,7 @@ export async function fetchUserConfig() {
     // 启动时，获取用户配置
     const { code, data } = await API.base.userGetUserConfigList()
     if (code === 0) {
+      console.log('setupStore userGetUserConfigList', data)
       Object.keys(data).forEach((key) => {
         if (Reflect.has(store, key)) {
           Reflect.set(store, key, Reflect.get(data, key))

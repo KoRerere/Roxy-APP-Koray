@@ -16,6 +16,11 @@ export function setupMiddlewares(app: express.Application) {
     res.header('Access-Control-Allow-Headers', '*')
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH, PUT, DELETE')
     res.header('Allow', 'GET, POST, PATCH, OPTIONS, PUT, DELETE')
+    // 设置禁止缓存的响应头
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    res.setHeader('Pragma', 'no-cache')
+    res.setHeader('Expires', '0')
+    res.setHeader('Surrogate-Control', 'no-store')
 
     // if (this.intercept(req)) {
     //   return res.json({

@@ -1,4 +1,4 @@
-export const sourceLangKey = 'en'
+export const sourceLangKey = 'zh-CN'
 
 // https://cloud.google.com/translate/docs/languages?hl=zh-cn#try-it-for-yourself
 export const ISO639 = [

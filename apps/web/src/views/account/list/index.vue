@@ -153,19 +153,21 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <div class="flex justify-between account-header">
-      <div>{{ $route.meta.title }}</div>
+      <i18n-t :keypath="$route.meta.title" scope="global" />
       <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />
     </div>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-        :show-actions="false">
+               :show-actions="false"
+      >
         <template #table-empty>
           <CustomEmpty title="No accounts available"
-            desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>.">
+                       desc="Inviting members to join the workspace allows for collaborative management and use of the Profiles.<br>We offer a comprehensive set of permission controls to meet a variety of scenarios and needs. Read <a href='www.baidu.com' target='_blank'>access control guide</a>."
+          >
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" label="New account" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('新建账号')" />
               </div>
             </template>
           </CustomEmpty>

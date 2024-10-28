@@ -1,3 +1,4 @@
+import { store } from '/@/modules/store'
 import { isDev } from '/@/utils'
 
 // if (import.meta.hot) {
@@ -7,21 +8,21 @@ import { isDev } from '/@/utils'
 //   })
 // }
 
-if (isDev) {
-  globalThis.$t = (key: string) => {
-    return key
-  }
-}
-else {
-  // const modules = import.meta.glob('../../../web/src/locales/langs/*.json', { eager: true })
+// if (isDev) {
+//   globalThis.$t = (key: string) => {
+//     return key
+//   }
+// }
+// else {
+const modules = import.meta.glob('../../../web/src/locales/langs/*.json', { eager: true, import: 'default' })
 
-  // const langs = Object.keys(modules).reduce((acc, key) => {
-  //   const lang = key.replace('../../../web/src/locales/langs/', '').replace('.json', '')
-  //   acc[lang] = modules[key]
-  //   return acc
-  // }, {})
+const langs = Object.keys(modules).reduce((acc, key) => {
+  const lang = key.replace('../../../web/src/locales/langs/', '').replace('.json', '')
+  acc[lang] = modules[key]
+  return acc
+}, {})
 
-  // globalThis.$t = (key: string) => {
-  //   return langs[key] || key
-  // }
+globalThis.$t = (key: string) => {
+  return langs[store.language]?.[key] || key
 }
+// }

@@ -68,7 +68,7 @@ function handleDeleteConfirm() {
         </div>
         <div class={styles['delete-confirm-content']}>
           <I18nT keypath={$t('This action can’t be undo, To confirm, type {workspaceName} in the box below.', { workspaceName: '{workspaceName}' })}>
-            {{ workspaceName: <b class="mx-1">{currentWorkspace.value?.workspaceName}</b> }}
+            {{ workspaceName: () => <b class="mx-1">{currentWorkspace.value?.workspaceName}</b> }}
           </I18nT>
         </div>
         <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />

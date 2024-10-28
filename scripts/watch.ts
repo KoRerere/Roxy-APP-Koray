@@ -48,23 +48,24 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           console.log('Reloading electron app...', String(electronPath))
           /** 启动新的electron进程 */
           electronApp = spawn(String(electronPath), ['--inspect', '.'], {
-            // stdio: 'inherit',
+            stdio: 'inherit', // 继承父进程的 stdio
+            shell: true, // 使用 shell 以支持复杂命令
             // 设置工作目录
             cwd: path.resolve(__dirname, '../apps/electron'),
           })
 
-          electronApp.stdout.on('data', (data) => {
-            console.log(data.toString())
-          })
+          // electronApp.stdout.on('data', (data) => {
+          //   console.log(data.toString())
+          // })
 
-          electronApp.stderr.on('data', (data) => {
-            const str = data.toString()
-            const ignoreErrors = ['Secure coding is not enabled for restorable state', 'CoreText note: Client requested name']
-            if (ignoreErrors.some(err => str.includes(err))) {
-              return
-            }
-            console.log('\x1B[31m%s\x1B[0m', str)
-          })
+          // electronApp.stderr.on('data', (data) => {
+          //   const str = data.toString()
+          //   const ignoreErrors = ['Secure coding is not enabled for restorable state', 'CoreText note: Client requested name']
+          //   if (ignoreErrors.some(err => str.includes(err))) {
+          //     return
+          //   }
+          //   console.log('\x1B[31m%s\x1B[0m', str)
+          // })
 
           /** 当应用程序退出时停止监听脚本 */
           electronApp.addListener('exit', process.exit)

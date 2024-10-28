@@ -101,6 +101,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   .menu-icon {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
   }
 
   .menu-title {
@@ -110,7 +111,8 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
     font-style: normal;
     font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);
-    /* 153.846% */
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 }
 </style>

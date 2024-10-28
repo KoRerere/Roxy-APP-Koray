@@ -3,25 +3,25 @@ import { $t } from '/@/locales'
 
 type WinInfo = UnwrapRowType<UserGetWindowInfoV2ListData>
 
-export const baseUrl = `http://${location.hostname}:${globalThis.serverPort || new URLSearchParams(window.location.search).get('port')}`
+// export const baseUrl = `http://${location.hostname}:${globalThis.serverPort || new URLSearchParams(window.location.search).get('port')}`
 
 export const fingerprintInfoList = [
   {
-    label: $t('系统/内核'),
+    label: () => $t('系统/内核'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
       return `${winInfo.os || '--'} / ${winInfo.coreVersion || '--'}`
     },
   },
   {
-    label: $t('语言'),
+    label: () => $t('语言'),
     width: '15rem',
     format: (winInfo: WinInfo) => {
       return winInfo.language || '--'
     },
   },
   {
-    label: 'User Agent',
+    label: () => 'User Agent',
     format: (winInfo: WinInfo) => {
       return winInfo.userAgent || '--'
     },
@@ -30,21 +30,21 @@ export const fingerprintInfoList = [
 
 export const profileInfoList = [
   {
-    label: $t('备注'),
+    label: () => $t('备注'),
     width: '15rem',
     customRender: (winInfo: WinInfo) => {
       return <>{winInfo.windowRemark || '--'}</>
     },
   },
   {
-    label: $t('项目'),
+    label: () => $t('项目'),
     width: '15rem',
     customRender: (winInfo: WinInfo) => {
       return <>{winInfo.projectName || '--'}</>
     },
   },
   {
-    label: $t('标签'),
+    label: () => $t('标签'),
     customRender: (winInfo: WinInfo) => {
       const { labelInfo } = winInfo
       return (

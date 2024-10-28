@@ -32,7 +32,7 @@ function onChange(value: any) {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="extensions-header">
-      {{ $route.meta.title }}
+      <i18n-t :keypath="$route.meta.title" scope="global" />
     </div>
     <Tabs class="flex-1 overflow-hidden" :value="tabsValue" @update:value="onChange">
       <TabList>

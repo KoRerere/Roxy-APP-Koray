@@ -13,6 +13,8 @@ interface OptionsType {
   targetDir: string
   /** 语言文件名 */
   langFileNames: string[]
+  /** 源语言 */
+  sourceLang: string
   /** 是否立即生成语言文件 */
   immediate?: boolean
 }
@@ -21,7 +23,7 @@ const baseUrl = '/__language-localization__'
 let googleTranslator: GoogleTranslator
 
 export default (options: OptionsType): PluginOption => {
-  const { targetDir, langFileNames, immediate = false } = options
+  const { targetDir, langFileNames, sourceLang = 'zh-CN', immediate = false } = options
 
   let timer: NodeJS.Timeout
   const debounceGenLangFiles = () => {
@@ -31,7 +33,7 @@ export default (options: OptionsType): PluginOption => {
     }, 5000)
   }
 
-  immediate && genLangFiles(langFileNames, targetDir)
+  immediate && genLangFiles(langFileNames, targetDir, sourceLang)
 
   return {
     name: 'roxy:language-localization',
@@ -43,8 +45,13 @@ export default (options: OptionsType): PluginOption => {
 
       server.middlewares.use(`${baseUrl}/api`, async (req, res, next) => {
         const url = req.url
+
+        // 获取源语言
+        if (url === '/getSourceLang') {
+          res.end(sourceLang)
+        }
         // 获取语言列表
-        if (url === '/getLangs') {
+        else if (url === '/getLangs') {
           const files = await readdir(targetDir, { withFileTypes: true })
           const promiseArr = files.map(async (file) => {
             if (file.isFile() && file.name.endsWith('.json')) {
@@ -77,8 +84,8 @@ export default (options: OptionsType): PluginOption => {
             const data = await readFile(filePath, 'utf-8')
             const jsonData = JSON.parse(data)
             jsonData[key] = value
-            // 如果更新的是英文文件，需要更新其他文件中的对应键
-            if (fileName === 'en') {
+            // 如果更新的是源语言文件，需要更新其他文件中的对应键
+            if (fileName === sourceLang) {
               jsonData[value] = value
               delete jsonData[key]
               // 更新使用到该键的文件

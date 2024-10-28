@@ -1,4 +1,5 @@
 import type express from 'express'
+import { createProxyMiddleware } from 'http-proxy-middleware'
 import twoFactor from 'node-2fa'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -10,31 +11,39 @@ import { isPackaged, tryRefreshUrl } from '/@/utils'
 export async function setupDashboardServer(app: express.Application) {
   // 工作台
   // 设置静态资源目录
-  app.use('/dashboard', async (req, res, next) => {
-    const { id = '' } = req.query
-    if (isPackaged) {
-      const filePath = join(__dirname, './web', 'dashboard.html')
+  // app.use('/dashboard', async (req, res, next) => {
+  //   const { id = '' } = req.query
+  //   if (isPackaged) {
+  //     const filePath = join(__dirname, './web', 'dashboard.html')
 
-      // 读取 HTML 文件
-      try {
-        const data = await readFile(filePath, 'utf8')
-        // 注入 <script> 标签到 HTML 内容
-        const scriptTag = `<script> globalThis.serverPort =  ${store.appPort} </script>`
-        /**
-         * 在关闭 body 标签之前插入 script 标签
-         */
-        const modifiedHtml = data.replace('<head>', `<head>${scriptTag}`)
+  //     // 读取 HTML 文件
+  //     try {
+  //       const data = await readFile(filePath, 'utf8')
+  //       // 注入 <script> 标签到 HTML 内容
+  //       const scriptTag = `<script> globalThis.serverPort =  ${store.appPort} </script>`
+  //       /**
+  //        * 在关闭 body 标签之前插入 script 标签
+  //        */
+  //       const modifiedHtml = data.replace('<head>', `<head>${scriptTag}`)
 
-        // 返回修改后的 HTML 文件
-        res.send(modifiedHtml)
-      }
-      catch (error) {
-        res.status(500).send('Error reading file')
-      }
-    }
-    else {
-      res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}&port=${store.appPort}`)
-    }
+  //       // 返回修改后的 HTML 文件
+  //       res.send(modifiedHtml)
+  //     }
+  //     catch (error) {
+  //       res.status(500).send('Error reading file')
+  //     }
+  //   }
+  //   else {
+  //     res.redirect(`${import.meta.env.VITE_DEV_SERVER_URL}dashboard?id=${id}&port=${store.appPort}`)
+  //   }
+  // })
+
+  /* 获取 app 设置 */
+  app.get('/api/app/config', async (req, res) => {
+    res.success({
+      appPort: store.appPort,
+      language: store.language,
+    })
   })
 
   /* 代理检测 */
@@ -103,4 +112,45 @@ export async function setupDashboardServer(app: express.Application) {
       res.error(error)
     }
   })
+
+  if (isPackaged) {
+    app.use('/dashboard', async (req, res, next) => {
+      const { id = '' } = req.query
+      const filePath = join(__dirname, './web', 'dashboard.html')
+
+      try {
+        const data = await readFile(filePath, 'utf8')
+        const modifiedHtml = data.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
+        res.send(modifiedHtml)
+      }
+      catch (error) {
+        res.status(500).send('Error reading file')
+      }
+    })
+  }
+  else {
+    app.use(createProxyMiddleware({
+      target: import.meta.env.VITE_DEV_SERVER_URL,
+      changeOrigin: true,
+      selfHandleResponse: true, // 让代理处理响应
+      on: {
+        proxyRes(proxyRes, req, res) {
+          let body = ''
+          proxyRes.on('data', (chunk) => {
+            body += chunk
+          })
+
+          proxyRes.on('end', () => {
+            if (proxyRes.headers['content-type']?.includes('text/html')) {
+              // 修改 HTML 响应体中的 <title> 标签
+              body = body.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
+            }
+
+            res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
+            res.end(body)
+          })
+        },
+      },
+    }))
+  }
 }

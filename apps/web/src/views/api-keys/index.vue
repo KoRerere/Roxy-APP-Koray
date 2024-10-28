@@ -1,7 +1,8 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
+import { I18nT } from 'vue-i18n'
 import { z } from 'zod'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -16,15 +17,23 @@ const confirm = useConfirm()
 const illustrate = [
   {
     title: $t('功能概述'),
-    content: $t('用户可以通过 API 的方式来读写账号配置信息、创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等自动化框架实现浏览器操作的自动化'),
+    content: () => $t('用户可以通过 API 的方式来读写账号配置信息、创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等自动化框架实现浏览器操作的自动化'),
   },
   {
     title: $t('API 接口限制'),
-    content: $t('API 请求频率限制：100 次 / 分钟'),
+    content: () => $t('API 请求频率限制：100 次 / 分钟'),
   },
   {
     title: $t('API 使用说明'),
-    content: $t('更多 API 功能和使用方法, 请参考<a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2"> API 文档</a>'),
+    content: () => (
+      <I18nT keypath={$t('更多 API 功能和使用方法, 请参考 {link}', { link: '{link}' })}>
+        {{ link: () => (
+          <a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2">
+            {$t('API 文档')}
+          </a>
+        ) }}
+      </I18nT>
+    ),
   },
 ]
 
@@ -109,7 +118,7 @@ onBeforeMount(() => {
   <div class="flex flex-col w-full h-full api">
     <div class="api-header">
       <RxSvgIcon name="base/rx_ic_doc_code" />
-      <span>{{ $route.meta.title }}</span>
+      <I18nT :keypath="$route.meta.title" scope="global" />
     </div>
     <div class="flex-1 w-1/2 mx-auto">
       <div class="api-usage">
@@ -155,7 +164,9 @@ onBeforeMount(() => {
           <div class="api-illustrate-title">
             {{ item.title }}
           </div>
-          <div class="api-illustrate-content" v-html="item.content" />
+          <div class="api-illustrate-content">
+            <component :is="item.content" />
+          </div>
         </div>
       </div>
     </div>

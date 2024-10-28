@@ -17,6 +17,7 @@ export function getLuminetProcess() {
 }
 
 export async function startLuminet() {
+  console.log('startLuminet')
   if (!store.systemProxySwitch) {
     console.log('systemProxySwitch is off')
     return
