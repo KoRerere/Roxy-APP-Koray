@@ -43,7 +43,7 @@ async function checkForUpdates() {
 }
 
 function toggle(event: Event) {
-  popoverRef.value?.toggle(event)
+  popoverRef.value?.getRef().toggle(event)
   checkForUpdates()
 }
 
@@ -77,7 +77,7 @@ window.electronAPI.on('app:resource-update', (data) => {
   }
   // 客户端升级(app、web、patch)
   else {
-    const index = clientUpdates.value.findIndex(item => data.type === item.type && item.title === data.title)
+    const index = clientUpdates.value.findIndex(item => data.type === item.type)
     if (index === -1) {
       clientUpdates.value.push(data)
     }
@@ -91,11 +91,16 @@ window.electronAPI.on('app:resource-update', (data) => {
 
 <template>
   <div class="flex justify-center">
-    <OverlayBadge :value="noticeNum" severity="danger" size="small">
+    <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
-    <Popover ref="popover" :class="classes.popover">
+    <RyPopover ref="popover" :class="classes.popover">
+      <div class="header">
+        <div class="title">
+          {{ $t('更新') }}
+        </div>
+      </div>
       <Tabs :value="tabs[0].value">
         <TabList :class="classes.tablist">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -108,13 +113,36 @@ window.electronAPI.on('app:resource-update', (data) => {
           </TabPanel>
         </TabPanels>
       </Tabs>
-    </Popover>
+    </RyPopover>
   </div>
 </template>
 
 <style lang="scss" module="classes">
 .popover {
   width: var(--width-xs, 384px);
+
+  :global(.header) {
+    display: flex;
+    padding: var(--spacing-sm, 4px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    align-self: stretch;
+  }
+
+  :global(.title) {
+    display: flex;
+    padding: var(--spacing-sm, 4px) var(--spacing-xl, 12px);
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 24px; /* 171.429% */
+  }
 
   :global(.p-popover-content) {
     padding: 0;
@@ -146,4 +174,10 @@ window.electronAPI.on('app:resource-update', (data) => {
 }
 </style>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.no-message {
+  :deep(.p-badge) {
+    display: none;
+  }
+}
+</style>

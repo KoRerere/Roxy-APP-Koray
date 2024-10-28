@@ -54,7 +54,7 @@ async function detectSystemNetwork(item: Items) {
   const systemProxy = await electronAPI.send('proxy:getSystemProxy')
   const [host, port] = systemProxy.split(':')
   const dirId = Math.random().toString(36).slice(2)
-  const data = await electronAPI.send('proxy:detect', { dirId, proxyCategory: 'HTTP', host, port, outerParamFirst: true }).finally(() => {
+  const data = await electronAPI.send('proxy:detect', { dirId, proxyCategory: host ? 'HTTP' : 'noproxy', host, port, outerParamFirst: true }).finally(() => {
     window.electronAPI.send('proxy:delLuminetProxy', dirId)
   })
   item.value = data

@@ -84,7 +84,7 @@ onMounted(() => {
 
 <template>
   <div class="flex justify-center">
-    <OverlayBadge :value="noRead" severity="danger" size="small">
+    <OverlayBadge :value="noRead" severity="danger" size="small" :class="message['no-message']">
       <RxButton severity="secondary" icon="base/rx_ic_mail" outlined size="xs" @click="toggle" />
     </OverlayBadge>
     <RyPopover ref="pop">
@@ -170,7 +170,11 @@ onMounted(() => {
     border-bottom: none;
   }
 }
-
+.no-message {
+  :global(.p-badge) {
+    display: none;
+  }
+}
 .avatar {
   position: relative;
   aspect-ratio: 1;

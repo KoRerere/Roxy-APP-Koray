@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import './rich-text/'
+import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 
@@ -9,6 +10,7 @@ defineProps<{
   featureTitleList: any[]
 }>()
 
+const confirm = useConfirm()
 const appVersion = ref('')
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
@@ -33,7 +35,21 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     return $t('正在下载')
   }
   else if (info.status === 'downloaded') {
-    window.electronAPI.send('app:quitAndInstall', info)
+    confirm.require({
+      message: $t('所有窗口将被关闭，您的工作将被保存。'),
+      header: $t('你确认要重启并安装新版本吗？'),
+      rejectProps: {
+        label: $t('取消'),
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptProps: {
+        label: $t('重启'),
+      },
+      accept: () => {
+        window.electronAPI.send('app:quitAndInstall', info)
+      },
+    })
   }
   else if (info.status === 'failed') {
     window.electronAPI.send('app:checkForUpdates')
@@ -64,7 +80,8 @@ electronAPI.send('app:getAppVersion').then((version) => {
             <div class="pl-[56px]">
               <rich-text :html="item.upgradeContent" />
               <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
-                @click="handleClientItemClick(item)" />
+                        @click="handleClientItemClick(item)"
+              />
             </div>
           </div>
         </div>

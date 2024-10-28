@@ -13,10 +13,10 @@ export async function setupAppServer() {
 
   setupMiddlewares(app)
 
-  // 注册工作台路由
-  setupDashboardServer(app)
   // 注册 luminet 接收器
   setupLuminetReceiver(app)
+  // 注册工作台路由
+  setupDashboardServer(app)
 
   app.use(express.static(join(__dirname, './web')))
 

@@ -101,7 +101,11 @@ function toCreateBrowser() {
     overflow: unset;
 
     .new-profile-btn {
-      margin-left: -3px;
+      margin-left: -3.52px;
+
+      &.p-button-icon-only {
+        width: var(--p-button-icon-only-width);
+      }
     }
   }
 
@@ -115,6 +119,7 @@ function toCreateBrowser() {
     flex-shrink: 0;
     white-space: nowrap;
     word-break: keep-all;
+    transition: width 0.3s;
   }
 
   .menu {

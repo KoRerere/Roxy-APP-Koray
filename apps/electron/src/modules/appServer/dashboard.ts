@@ -1,6 +1,7 @@
 import type express from 'express'
 import { createProxyMiddleware } from 'http-proxy-middleware'
 import twoFactor from 'node-2fa'
+import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { API } from '/@/api'
@@ -135,19 +136,27 @@ export async function setupDashboardServer(app: express.Application) {
       selfHandleResponse: true, // 让代理处理响应
       on: {
         proxyRes(proxyRes, req, res) {
-          let body = ''
+          const chunks: Buffer[] = []
           proxyRes.on('data', (chunk) => {
-            body += chunk
+            chunks.push(chunk)
           })
 
           proxyRes.on('end', () => {
-            if (proxyRes.headers['content-type']?.includes('text/html')) {
-              // 修改 HTML 响应体中的 <title> 标签
-              body = body.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
-            }
+            const body = Buffer.concat(chunks)
+            const contentType = proxyRes.headers['content-type']
 
-            res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
-            res.end(body)
+            if (contentType?.includes('text/html')) {
+              // 修改 HTML 响应体中的 <title> 标签
+              let bodyString = body.toString()
+              bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
+              res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
+              res.end(bodyString)
+            }
+            else {
+              // 处理其他类型的响应
+              res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
+              res.end(body)
+            }
           })
         },
       },
