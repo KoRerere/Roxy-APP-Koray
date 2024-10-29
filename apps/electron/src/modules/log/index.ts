@@ -2,11 +2,14 @@ import log from 'electron-log/main'
 import { readdir, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
+import { isPackaged } from '/@/utils'
 
 export function setupLog() {
   log.transports.console.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
   log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
   log.transports.console.useStyles = true
+  // 禁用生产环境的控制台输出
+  log.transports.console.level = isPackaged ? false : 'silly'
   /**
    * 设置日志文件路径和文件名
    */

@@ -102,12 +102,12 @@ window.electronAPI.on('app:resource-update', (data) => {
         </div>
       </div>
       <Tabs :value="tabs[0].value">
-        <TabList :class="classes.tablist">
-          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
+        <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
+          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}
           </Tab>
         </TabList>
-        <TabPanels>
+        <TabPanels class="!pa-0">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
             <component :is="tab.component" :upgrade-list="tab.list" :feature-title-list="featureTitleList" />
           </TabPanel>
@@ -144,27 +144,8 @@ window.electronAPI.on('app:resource-update', (data) => {
     line-height: 24px; /* 171.429% */
   }
 
-  :global(.p-popover-content) {
-    padding: 0;
-  }
-
-  :global(.p-tabpanels) {
-    padding: 0;
-  }
-
   :global(.p-tabpanels:has(.p-tabpanel:first-of-type.p-tabpanel-active)) {
     background: var(--Color-blue-100, #e8f5fc);
-  }
-
-  :global(.p-tablist-active-bar) {
-    height: 2px;
-    border-radius: 1px;
-  }
-}
-
-.tablist {
-  :global(.p-tablist-tab-list) {
-    justify-content: space-around;
   }
 }
 

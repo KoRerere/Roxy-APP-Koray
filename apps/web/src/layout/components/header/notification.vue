@@ -96,7 +96,7 @@ onMounted(() => {
           <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
-          <TabList :pt="{ tablist: 'px-4 gap-4' }">
+          <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
             <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
@@ -139,7 +139,7 @@ onMounted(() => {
 
 .header {
   display: flex;
-  padding: var(--spacing-md, 8px) 16px;
+  padding: var(--spacing-md, 3px) 16px;
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
