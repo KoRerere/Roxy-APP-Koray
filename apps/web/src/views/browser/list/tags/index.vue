@@ -90,7 +90,7 @@ async function deleteTag(data: any) {
       const ids = data.map((item: any) => item.id)
       await API.window.userDelLabelInfoCreate({ ids })
       tableRef.value?.refresh()
-      toast.add({ severity: 'success', summary: '成功', detail: '标签修改成功', life: 5000 })
+      toast.add({ severity: 'success', summary: '成功', detail: '标签修改成功', life: 2500 })
     },
   })
 }

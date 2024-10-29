@@ -186,14 +186,14 @@ function installViaUrl() {
         await uploadRecordCheck()
         const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
         const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Installation successful')] : ['error', $t('Installation failed')]
-        toast.add({ severity, summary, detail: msg, life: 5000, group: 'tc' })
+        toast.add({ severity, summary, detail: msg, life: 2500, group: 'tc' })
 
         if (code === 0) {
           filters.resetFilters()
         }
       }
       catch (error) {
-        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 5000, group: 'tc' })
+        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 2500, group: 'tc' })
       }
     },
   })
@@ -248,7 +248,7 @@ async function onInstall(data: any) {
 
 async function checkUpdate(data: any) {
   await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
-  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Check completed'), life: 5000 })
+  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Check completed'), life: 2500 })
   filters.onChange()
 }
 
@@ -275,7 +275,7 @@ async function deleteExtension(datas: any) {
         const ids = datas.map((item: any) => item.id)
         const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
-        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
+        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
         filters.resetFilters()
       }
       catch (error) {

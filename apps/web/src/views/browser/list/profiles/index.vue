@@ -280,7 +280,7 @@ function onRemark(datas: any) {
 
 async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 5000 })
+    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 2500 })
   }
   else {
     confirm.require({

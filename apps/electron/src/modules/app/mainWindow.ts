@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, screen } from 'electron'
 import { join } from 'node:path'
 import { mediaProtocolName } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
@@ -64,12 +64,19 @@ async function createWindow() {
 
 /** 进入主页面 */
 export async function intoMainPage() {
+  const defaultWidth = 1280
+  const defaultHeight = 832
+  const minWidth = 960
+  const minHeight = 640
+
   const win = getMainWindow()!
+  // 获取屏幕大小
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
   win.hide()
   win.setResizable(true)
-  win.setBounds({ width: 1280, height: 832 }, false)
-  // win.setMinimumSize(minWidth, minHeight)
+  win.setBounds({ width: Math.min(defaultWidth, width), height: Math.min(defaultHeight, height) }, false)
+  win.setMinimumSize(Math.min(minWidth, width), Math.min(minHeight, height))
   win.center()
   await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
   win.setTitle(`${win.getTitle()} | ${app.getVersion()}`)

@@ -49,7 +49,7 @@ const updateApiKeys = useDebounceFn(() => {
     open: open.value,
     port: port.value,
   }).then(({ msg }) => {
-    toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
+    toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
   })
 }, 300)
 
@@ -108,7 +108,7 @@ async function resetApiKey() {
 
 async function onCopy() {
   copyText(apiKey.value)
-  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Copied successfully'), life: 5000 })
+  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Copied successfully'), life: 2500 })
 }
 
 onBeforeMount(() => {

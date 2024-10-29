@@ -126,7 +126,9 @@ onBeforeMount(() => {
     <div class="header">
       <div class="left">
         <div class="sort-number">
-          {{ windowInfo.windowSortNum }}
+          <template v-if="windowInfo.workspaceName">
+            {{ windowInfo.workspaceName }}-
+          </template>{{ windowInfo.windowSortNum }}
         </div>
         <div class="window-name">
           {{ windowInfo.windowName }}

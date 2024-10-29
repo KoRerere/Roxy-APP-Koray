@@ -127,7 +127,7 @@ export function getInputs(data: any = {}) {
         const input = findInputByName(inputs, 'refreshUrl')
         if (input.value) {
           const isOK = await window.electronAPI.send('proxy:refreshUrl', input.value)
-          toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: input.value, life: 5000 })
+          toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: input.value, life: 2500 })
         }
       },
     },

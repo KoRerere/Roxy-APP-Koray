@@ -33,7 +33,7 @@ function onConfirm() {
     emit('confirm', JSON.parse(cookies.value))
   }
   else {
-    toast.add({ severity: 'error', summary: $t('Errors occur'), detail: $t('cookie format error'), life: 5000 })
+    toast.add({ severity: 'error', summary: $t('Errors occur'), detail: $t('cookie format error'), life: 2500 })
   }
 }
 </script>

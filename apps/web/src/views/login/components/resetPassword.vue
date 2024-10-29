@@ -25,11 +25,11 @@ async function handleSubmit() {
     })
 
     if (code === 0) {
-      // toast.add({ severity: 'success', summary: $t('Verification code sent!'), detail: $t('Please checkout your email.'), life: 5000 })
+      // toast.add({ severity: 'success', summary: $t('Verification code sent!'), detail: $t('Please checkout your email.'), life: 2500 })
       currentStep.value = 'step2'
     }
     else {
-      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     }
   }
   else if (currentStep.value === 'step3') {
@@ -40,12 +40,12 @@ async function handleSubmit() {
       ver_code: emailCode.value,
     })
     if (code === 0) {
-      toast.add({ severity: 'success', summary: 'Success', detail: $t('Password reset successfully'), life: 5000 })
+      toast.add({ severity: 'success', summary: 'Success', detail: $t('Password reset successfully'), life: 2500 })
       setSignFormData({ user_name: email.value, password: '' })
       setCurrentComponent('signForm')
     }
     else {
-      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     }
   }
 }

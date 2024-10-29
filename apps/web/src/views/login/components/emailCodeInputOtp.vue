@@ -40,7 +40,7 @@ async function handleSubmit() {
   })
 
   if (!verifyCodeRes.data) {
-    toast.add({ severity: 'error', summary: 'Error', detail: $t('无效的验证码'), life: 5000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: $t('无效的验证码'), life: 2500 })
     return
   }
 
@@ -62,7 +62,7 @@ async function handleSubmit() {
     emit('ok', emailCode.value)
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
   }
 }
 </script>

@@ -12,10 +12,7 @@ export const appConfig = {
   chromeBinDir: join(sessionDir, 'chrome-bin'),
   /** 浏览器缓存根目录 */
   get browserCacheRootDir() {
-    return store.browserCacheRootDir
-  },
-  set browserCacheRootDir(dir: string) {
-    store.browserCacheRootDir = dir
+    return store.cacheDir
   },
   /** 浏览器扩展目录 */
   get browserExtensionsDir() {

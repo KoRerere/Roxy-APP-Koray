@@ -39,7 +39,7 @@ async function handleSubmit() {
         setCurrentComponent('emailCodeInputOtp')
       }
       else {
-        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 5000 })
+        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 2500 })
       }
     }
     else {

@@ -81,7 +81,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
   if (!list.length) {
-    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('The parsing content cannot be empty'), life: 5000, group: 'tc' })
+    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('The parsing content cannot be empty'), life: 2500, group: 'tc' })
     return
   }
 

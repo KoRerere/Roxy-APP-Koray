@@ -7,7 +7,7 @@ import { fileExists } from '/@/utils/file'
 interface StoreType {
   language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
   /** 浏览器文件缓存根目录 */
-  browserCacheRootDir: string
+  cacheDir: string
   /**
    * 软件关闭时
    * - pop: 弹出提示
@@ -43,7 +43,7 @@ const defaultValues: StoreType = {
   language: 'en',
   closeSoft: 'pop',
   memoryLimit: 95,
-  browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
+  cacheDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
   appPort: 45535,
   ipBlackList: [],
@@ -57,6 +57,10 @@ const _store: StoreType = {
 console.log('_store', JSON.stringify(_store, null, 2))
 
 const saveConfig = debounce(async () => {
+  const isExists = await fileExists(_store.cacheDir)
+  if (!isExists) {
+    _store.cacheDir = defaultValues.cacheDir
+  }
   try {
     await writeFile(appConfig.configFile, JSON.stringify(_store, null, 2), 'utf-8')
   }
@@ -89,17 +93,12 @@ export async function fetchUserConfig() {
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
   }
-
-  const isExists = await fileExists(store.browserCacheRootDir)
-  if (!isExists) {
-    store.browserCacheRootDir = defaultValues.browserCacheRootDir
-  }
 }
 
 export async function setupStore() {
   try {
     const config = await readFile(appConfig.configFile, 'utf-8')
-    Object.assign(_store, JSON.parse(config))
+    Object.assign(store, JSON.parse(config))
   }
   catch (error) {
     console.error('setupStore', error)

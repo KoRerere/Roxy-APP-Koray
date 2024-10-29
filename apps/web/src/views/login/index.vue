@@ -26,7 +26,7 @@ async function handleSubmit() {
   const { code, data, msg = $t('Logon failed') } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     return
   }
 
@@ -47,7 +47,7 @@ async function googleAuth2Login(googleToken: string) {
     afterLogin(data.token)
   }
   else {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     return Promise.reject(msg)
   }
 }

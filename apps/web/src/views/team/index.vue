@@ -167,7 +167,7 @@ async function deleteMember(data: TableRow) {
       try {
         const projectIds = data.project_info.map(item => item.project_id)
         const { msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
-        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 5000 })
+        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
         filters.onChange()
       }
       catch (error) {
