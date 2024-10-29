@@ -144,7 +144,7 @@ function leaveWorkspace() {
         <div class="emoji-picker-box">
           <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
           <div class="choose-icon-desc">
-            {{ $t('选泽图标') }}
+            {{ $t('选择图标') }}
           </div>
         </div>
       </div>

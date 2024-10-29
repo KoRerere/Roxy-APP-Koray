@@ -24,7 +24,7 @@ import editCookies from './components/edit-cookies.vue'
 import MultipleOperation from './components/multiple-operation.vue'
 import profileInfo from './components/profile-info.vue'
 import projectIcon from './components/project-icon.vue'
-import tagsIcon from './components/tags-icon.vue'
+import TagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
 
 const props = defineProps({
@@ -498,7 +498,7 @@ defineExpose({
       <projectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
-      <tagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />
+      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">

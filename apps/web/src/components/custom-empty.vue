@@ -9,7 +9,7 @@ const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.m
 
 <template>
   <div class="empty-content">
-    <img class="empty-icon" :src="imgSrc">
+    <img class="empty-img" :src="imgSrc">
     <div class="empty-info">
       <div class="empty-info-title">
         {{ title }}
@@ -29,9 +29,11 @@ const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.m
   width: var(--width-xs, 384px);
 }
 
-.empty-icon {
+.empty-img {
   width: 90px;
   height: 90px;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .empty-info {
