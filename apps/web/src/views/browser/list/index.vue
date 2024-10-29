@@ -166,9 +166,11 @@ onBeforeMount(() => {
           </Tab>
         </TabList>
       </Tabs>
-      <div class="cursor-pointer filter-tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
-        <RxSvgIcon name="base/rx_ic_bin_2" />
-        <span>{{ $t('回收站') }}</span>
+      <div class="inline-flex justify-start flex-1">
+        <div class="flex items-center cursor-pointer filter-tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
+          <RxSvgIcon name="base/rx_ic_bin_2" />
+          <span>{{ $t('回收站') }}</span>
+        </div>
       </div>
       <div class="cursor-pointer filter-tabs-settings" @click="showPopover">
         <RxSvgIcon name="base/rx_ic_gear" />
@@ -243,9 +245,6 @@ onBeforeMount(() => {
   }
 
   &-trash {
-    display: flex;
-    align-items: center;
-    flex: 1;
     margin: 0 var(--spacing-2xl, 16px);
     padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
     gap: var(--spacing-md, 6px);
@@ -256,7 +255,20 @@ onBeforeMount(() => {
     line-height: var(--Line-Height-text-xs, 16px);
 
     &.active {
+      position: relative;
       color: var(--p-tabs-tab-active-color);
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: var(--p-tabs-active-bar-bottom);
+        width: 100%;
+        height: var(--p-tabs-active-bar-height);
+        background: var(--p-tabs-active-bar-background);
+        transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
+        z-index: 1;
+      }
     }
   }
 

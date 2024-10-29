@@ -18,7 +18,7 @@ function toggle(event: Event) {
 }
 
 function onReset() {
-  _sorts.value.forEach(item => item.value = null)
+  _sorts.value.forEach(item => item.value = item.defaultValue)
   onUpdate()
 }
 
@@ -30,7 +30,7 @@ function onUpdate() {
 
 <template>
   <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" :label="$t('排序')" @click="toggle" />
-  <ryPopover ref="popRef">
+  <RyPopover ref="popRef">
     <div :class="classes.content">
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">
         <RxSvgIcon :name="item.icon" :size="16" />
@@ -44,7 +44,7 @@ function onUpdate() {
         <RxButton size="sm" severity="info" :label="$t('保存')" @click="onUpdate" />
       </div>
     </template>
-  </ryPopover>
+  </RyPopover>
 </template>
 
 <style lang="scss" module="classes">

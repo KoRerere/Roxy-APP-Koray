@@ -118,11 +118,23 @@ export async function getCustomFilters(params: any = {}) {
       separator: true,
     },
     {
+      type: 'switch',
+      name: 'isOften',
+      label: $t('收藏'),
+      icon: 'base/rx_ic_bookmark',
+    },
+    {
       type: 'textarea',
       label: $t('备注'),
       placeholder: $t('请输入备注'),
       name: 'windowRemark',
       icon: 'base/rx_ic_doc_article',
+    },
+    {
+      type: 'switch',
+      name: 'openStatus',
+      label: $t('打开中'),
+      icon: 'base/rx_ic_browsers_line',
     },
     {
       separator: true,
@@ -191,8 +203,10 @@ export function getSorts(params: any = {}) {
       label: $t('排序标准'),
       placeholder: $t('please select sorting rules'),
       name: 'orderName',
-      value: params.orderName ?? 'createTime',
+      value: params.orderName ?? 'windowSortNum',
+      defaultValue: 'windowSortNum',
       options: [
+        { label: $t('序号'), value: 'windowSortNum' },
         { label: $t('创建时间'), value: 'createTime' },
         { label: $t('修改时间'), value: 'updateTime' },
         { label: $t('最后打开时间'), value: 'openTime' },
@@ -205,6 +219,7 @@ export function getSorts(params: any = {}) {
       placeholder: $t('please select sort type'),
       name: 'orderType',
       value: params.orderType ?? 'desc',
+      defaultValue: 'desc',
       options: [
         { label: $t('倒序'), value: 'desc' },
         { label: $t('正序'), value: 'asc' },

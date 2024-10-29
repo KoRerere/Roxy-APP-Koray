@@ -123,21 +123,22 @@ async function handleBeforeUpload(rawFile: any) {
 <template>
   <div>
     <div class="upload-title">
-      <i18n-t :keypath="$t('请点击下载 {templateFile}.', { templateFile: '{templateFile}' })" scope="global">
+      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入500个窗口。', { templateFile: '{templateFile}' })" scope="global">
         <template #templateFile>
           <a href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank"
             class="upload-title-link">{{ $t('窗口导入模板') }}</a>
         </template>
       </i18n-t>
     </div>
-    <div class="upload-notice">
-      * {{ $t('一次性最多导入500个窗口') }}
-    </div>
     <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
       <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="#E4E8EB" />
       <div class="text-center">
-        <div>{{ fileData.name || $t('请将编辑好的文件拖拽到此处或点击上传') }}</div>
-        <div>{{ fileData.size || $t('仅支持 .xlsx 类型文件, 最大不超过 5MB.') }}</div>
+        <div class="upload-area-title">
+          {{ fileData.name || $t('请拖拽到此处或点击上传') }}
+        </div>
+        <div class="w-60 ma-auto">
+          {{ fileData.size || $t('请将编辑好的文件在此处上传，仅支持 .xlsx 类型文件, 最大不超过 5MB.') }}
+        </div>
       </div>
       <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
     </div>
@@ -180,11 +181,24 @@ async function handleBeforeUpload(rawFile: any) {
   align-items: center;
   align-self: stretch;
   margin-top: var(--spacing-lg, 8px);
-  padding: var(--oversize-spacing-4rem, 64px) var(--spacing-none, 0px);
+  padding: var(--oversize-spacing-2rem, 32px) var(--spacing-none, 0px);
   gap: var(--spacing-2xl, 16px);
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
   border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
   background: var(--Color-neutrals-50, #fafbfc);
+
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
+
+  &-title {
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-weight: 500;
+  }
 }
 
 .upload-message {
