@@ -42,8 +42,8 @@ const bindData = computed(() => {
 
 <template>
   <div v-if="hasBindCount" class="flex gap-2">
-    <RyTag v-for="item in bindData.list" :key="item" class="!text-3" :icon="icon" :value="`${workspaceName}-${item}`" />
-    <RyTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" class="!text-3" :value="`+${bindData.count}`" />
+    <RxTag v-for="item in bindData.list" :key="item" :icon="icon" :label="`${workspaceName}-${item}`" disabled />
+    <RxTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" :label="`+${bindData.count}`" disabled />
   </div>
   <div v-else>
     --

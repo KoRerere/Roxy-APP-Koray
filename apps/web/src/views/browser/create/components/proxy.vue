@@ -158,10 +158,7 @@ function replaceData(data: any) {
             <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
             <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
           </div>
-          <RyTag severity="secondary" class="cursor-pointer" @click.stop="modifyProxyCount(item)">
-            <RxSvgIcon name="base/rx_ic_browser" :size="16" />
-            <span>{{ item._proxyCount }}</span>
-          </RyTag>
+          <RxTag class="cursor-pointer" icon="base/rx_ic_browser" :label="item._proxyCount" @click.stop="modifyProxyCount(item)" />
           <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex === index && checkResult.loading }"
             :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" @click.stop="testProxy(item, index)" />
         </RxCard>

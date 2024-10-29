@@ -3,15 +3,16 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 interface TagProps {
   icon?: SvgNames
-  label?: string
+  label?: string | number
+  disabled?: boolean
 }
 
 defineProps<TagProps>()
 </script>
 
 <template>
-  <div class="flex items-center cursor-default rx-tag" :class="{ 'icon-only': !label }">
-    <RxSvgIcon :name="(icon as SvgNames)" :size="14" />
+  <div class="flex items-center cursor-default rx-tag" :class="{ 'icon-only': !label, 'disabled': disabled }">
+    <RxSvgIcon v-if="icon" :name="(icon as SvgNames)" :size="14" />
     <div v-if="label" class="rx-tag-label">
       {{ label }}
     </div>
@@ -35,7 +36,7 @@ defineProps<TagProps>()
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 
-  &:not(:disabled):hover {
+  &:not(.disabled):hover {
     .rx-tag-label {
       color: var(--Component-Colors-Tag-text-hover, #343a3d);
     }

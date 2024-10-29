@@ -1,6 +1,5 @@
 import RelatedInfo from '/@/components/related-info.vue'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import RyTag from '/@/components/ry-tag'
+import RxTag from '/@/components/rx-tag.vue'
 import { $t } from '/@/locales'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
@@ -26,10 +25,7 @@ const columnsConfig = {
       key: 'ipChecker',
       render: ({ data }: any) => {
         return (
-          <RyTag severity="info">
-            <RxSvgIcon name="base/rx_ic_network" />
-            <span class="text-3">{data.checkChannelValue}</span>
-          </RyTag>
+          <RxTag icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>
         )
       },
     },
