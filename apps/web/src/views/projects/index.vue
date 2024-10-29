@@ -103,11 +103,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       severity: 'danger',
     },
     accept: async () => {
+      // 先删除本地项目
+      await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()
         toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Delete successfully'), life: 3000 })
-        electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       }
       else {
         toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Delete failed'), life: 3000 })
@@ -125,7 +126,8 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="accountTable" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false" :show-actions-menu="false"
-        :show-actions="false" data-key="project_id">
+               :show-actions="false" data-key="project_id"
+      >
         <template #table-empty>
           <CustomEmpty icon="empty/rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>

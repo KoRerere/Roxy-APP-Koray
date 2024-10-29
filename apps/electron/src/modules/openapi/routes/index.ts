@@ -13,6 +13,7 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/connection_info',
   '/browser/close',
   '/browser/workspace',
+  '/browser/clear_local_cache',
 ]
 
 export function setupRoutes(app: Application) {

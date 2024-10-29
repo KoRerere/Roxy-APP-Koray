@@ -46,6 +46,8 @@ function handleDeleteConfirm() {
 
     async function confirmDelete() {
       const workspaceId = currentWorkspace.value!.id!
+      // 先删除本地空间的浏览器数据
+      await electronAPI.send('util:removeWorkspace', workspaceId)
       const { code, msg } = await API.limit.userDelWorkspaceInfoCreate({
         workspaceName: workspaceName.value,
         workspaceId,
@@ -54,7 +56,6 @@ function handleDeleteConfirm() {
         workspaceStore.getWorkspaceList()
         dialogRef.value.close()
         toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Workspace deleted successfully'), life: 3000 })
-        electronAPI.send('util:removeWorkspace', workspaceId)
       }
       else {
         toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })

@@ -113,14 +113,13 @@ export class BrowserManager {
   /** 批量删除窗口 */
   async batchDelete(winItems: WindowItemType[]) {
     for (const winItem of winItems) {
-      this.removeLocalData(winItem)
+      this.removeLocalData(winItem.dirId!)
     }
   }
 
   /** 删除本地浏览器数据 */
-  async removeLocalData(winItem: WindowItemType, workspaceId?: number) {
-    const { dirId } = winItem
-    const browserItem = this.openedBrowserMap.get(winItem.dirId!)
+  async removeLocalData(dirId: string) {
+    const browserItem = this.openedBrowserMap.get(dirId)
 
     if (browserItem) {
       await this.close(dirId)
@@ -128,7 +127,7 @@ export class BrowserManager {
 
     try {
       // 删除本地浏览器数据目录
-      await rm(getUserDataDirPath(winItem, workspaceId), { recursive: true })
+      await rm(getUserDataDirPath(dirId), { recursive: true, force: true })
       return { dirId, success: true }
     }
     catch (error) {

@@ -16,7 +16,7 @@ export async function checkResource() {
   const { promise, resolve } = Promise.withResolvers()
   const startCheckTime = Date.now()
   console.log('checkResource start')
-  sendLaunchMessage('Check if the resource needs updating')
+  sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
     const { code, data } = await API.base.userGetAppUpgradeCreate(osConfig)
 
@@ -32,12 +32,12 @@ export async function checkResource() {
   console.log('checkResource end')
   if (Date.now() - startCheckTime < 1500) {
     setTimeout(() => {
-      sendLaunchMessage('Check complete')
+      sendLaunchMessage($t('检查完成'))
       resolve(true)
     }, 1800)
   }
   else {
-    sendLaunchMessage('Check complete')
+    sendLaunchMessage($t('检查完成'))
     resolve(true)
   }
   return promise
@@ -106,7 +106,7 @@ async function checkLuminetBin(webDomain: string) {
 
     writer.on('finish', () => {
       writer.close()
-      sendLaunchMessage('Download luminet complete')
+      sendLaunchMessage($t('luminet 下载完成'))
       resolve(true)
     })
   }

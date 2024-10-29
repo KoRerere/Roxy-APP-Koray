@@ -64,7 +64,7 @@ export class BrowserItem {
       /** 用于自动化工具的ws接口 */
       ws: this.#browser?.wsEndpoint(),
       /** 用于自动化工具的http接口 */
-      // http: '127.0.0.1:52314',
+      http: new URL(this.#browser!.wsEndpoint()).host,
       /** 内核版本 */
       coreVersion: this.winInfo.coreVersion,
       /** 用于自动化工具的 webdriver */
@@ -83,7 +83,7 @@ export class BrowserItem {
   constructor(winItem: WindowItemType) {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
-    this.userDataDir = getUserDataDirPath(winItem)
+    this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
 
   /** 获取浏览器实例 */
