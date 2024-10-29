@@ -305,6 +305,9 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
           return winInfo.platformVersion
         }
       },
+      get model() {
+        return winInfo.os === 'Android' ? winInfo.model : ''
+      },
       /** 芯片架构, 可以不填 */
       // architecture: 'arm',
       /** 系统位数，可以填 */

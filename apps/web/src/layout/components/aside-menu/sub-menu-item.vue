@@ -18,7 +18,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
 
 <template>
-  <div v-if="items.length" class="sub-menu">
+  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]">
     <template v-for="item in items" :key="item.name">
       <!-- 分组 -->
       <template v-if="isGroup(item)">
@@ -45,6 +45,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
 <style lang="scss" scoped>
 .sub-menu {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -52,11 +53,26 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   align-self: stretch;
   transition: height 0.3s;
   padding-left: calc(26px * v-bind(level));
+  margin-bottom: var(--spacing-xl, 12px);
+
+  &:last-of-type,
+  &.collapsed {
+    margin-bottom: 0;
+  }
 
   &.collapsedChildren {
     height: calc-size(auto);
     height: 0;
     overflow: hidden;
+  }
+
+  &.level-1::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    width: 0.5px;
+    height: 100%;
+    background: var(--Colors-Border-border-container, #c7cdd1);
   }
 }
 
