@@ -1,6 +1,6 @@
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
-import { findInputByName, isEmptyValue, parseProxyUrl, setInputValueByFormData } from '/@/utils'
+import { findInputByName, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
   const toast = useToast()
@@ -24,11 +24,12 @@ export function getInputs(data: any = {}) {
       invalid: false,
       onBlur: () => {
         const input = inputs.find((item: any) => item.name === 'proxyRules')
+        const value = input?.value?.trim()
 
-        if (input?.value?.trim()) {
-          input.invalid = false
-          const ipType = input.value?.startsWith('*') ? 'IPV6' : 'IPV4'
-          const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(input.value)
+        if (value) {
+          input!.invalid = false
+          const ipType = value.startsWith('*') ? 'IPV6' : 'IPV4'
+          const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(value)
           const formData = {
             proxyCategory: protocol?.toLocaleUpperCase(),
             host,
@@ -39,7 +40,7 @@ export function getInputs(data: any = {}) {
           }
 
           if (isEmptyValue(Object.values(formData).filter(Boolean))) {
-            input.invalid = true
+            input!.invalid = true
           }
           else {
             setInputValueByFormData(inputs, { ipType, ...formData })
@@ -77,6 +78,11 @@ export function getInputs(data: any = {}) {
           value: data.host ?? '',
           placeholder: $t('主机'),
           required: true,
+          onBlur(event: any) {
+            if (event.target.value.trim()) {
+              setInputValue(inputs, 'host', event.target.value.trim())
+            }
+          },
         },
         { separator: true },
         {
@@ -107,6 +113,11 @@ export function getInputs(data: any = {}) {
       name: 'proxyUserName',
       value: data.proxyUserName ?? '',
       placeholder: $t('请输入用户名'),
+      onBlur(event: any) {
+        if (event.target.value.trim()) {
+          setInputValue(inputs, 'proxyUserName', event.target.value.trim())
+        }
+      },
     },
     {
       type: 'text',
@@ -114,6 +125,11 @@ export function getInputs(data: any = {}) {
       name: 'proxyPassword',
       value: data.proxyPassword ?? '',
       placeholder: $t('请输入密码'),
+      onBlur(event: any) {
+        if (event.target.value.trim()) {
+          setInputValue(inputs, 'proxyPassword', event.target.value.trim())
+        }
+      },
     },
     {
       type: 'text',

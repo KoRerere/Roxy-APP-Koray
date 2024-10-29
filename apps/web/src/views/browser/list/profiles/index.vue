@@ -2,7 +2,6 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
-import { useToast } from 'primevue/usetoast'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
@@ -17,13 +16,13 @@ import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import columnsRow from './columns'
-import browserControl from './components/browser-control.vue'
+import BrowserControl from './components/browser-control.vue'
 import CustomFilters from './components/custom-filters.vue'
-import drawersitems from './components/drawers-item.vue'
-import editCookies from './components/edit-cookies.vue'
+import DrawersTtems from './components/drawers-item.vue'
+import EditCookies from './components/edit-cookies.vue'
 import MultipleOperation from './components/multiple-operation.vue'
-import profileInfo from './components/profile-info.vue'
-import projectIcon from './components/project-icon.vue'
+import ProfileInfo from './components/profile-info.vue'
+import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
 
@@ -44,7 +43,6 @@ const route = useRoute()
 const router = useRouter()
 
 const confirm = useConfirm()
-const toast = useToast()
 const dialog = useDialog()
 const role = useRoleStore()
 
@@ -206,6 +204,7 @@ async function operationHandler(operate: any, data: any) {
       drawer.visible = true
       drawer.data = data
       drawer.type = 'editCookies'
+      drawer.title = $t('为[{workspaceName}-{uid}]编辑 Cookies', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
     case 'delete':
       await deleteProfile(datas, ids)
@@ -280,7 +279,7 @@ function onRemark(datas: any) {
 
 async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    toast.add({ severity: 'error', summary: $t('warn'), detail: $t('Please close the profile first'), life: 2500 })
+    onlyErrorToast(-1, $t('Please close the profile first'))
   }
   else {
     confirm.require({
@@ -485,17 +484,17 @@ defineExpose({
     </template>
 
     <template #profile="{ data }">
-      <profile-info :workspace-name="workspaceName" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
+      <ProfileInfo :workspace-name="workspaceName" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
-      <browser-control :data="data" :open-message="openMessage" @open="openBrowser" />
+      <BrowserControl :data="data" :open-message="openMessage" @open="openBrowser" />
     </template>
     <template #note="{ data }">
       <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
         class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
     </template>
     <template #project="{ data }">
-      <projectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
+      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
     </template>
     <template #tags="{ data }">
       <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />
@@ -514,8 +513,8 @@ defineExpose({
   </RyTable>
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
     <template #default="{ closeCallback }">
-      <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
-      <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
+      <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
+      <DrawersTtems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
   </RxDrawer>
 </template>

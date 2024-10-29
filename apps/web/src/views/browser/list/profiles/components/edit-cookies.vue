@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast'
-import drawerContent from '/@/components/drawer-content.vue'
+import RxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, isEmptyValue } from '/@/utils'
 
@@ -19,8 +19,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['confirm'])
-
-const toast = useToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie, null, 4)
 
@@ -33,26 +32,37 @@ function onConfirm() {
     emit('confirm', JSON.parse(cookies.value))
   }
   else {
-    toast.add({ severity: 'error', summary: $t('Errors occur'), detail: $t('cookie format error'), life: 2500 })
+    onlyErrorToast(-1, $t('cookie format error'))
   }
 }
 </script>
 
 <template>
-  <drawerContent :title="$t('为[{workspaceName}-{uid}]编辑 Cookies', { workspaceName, uid: data.windowSortNum })" v-bind="$attrs">
-    <Textarea v-model="cookies" class="cookies-textarea" :placeholder="$t('请以 JSON 格式输入 Cookies')" cols="40" :auto-resize="false" />
-    <template #footer>
-      <div class="flex justify-end w-full">
-        <RxButton :label="$t('保存')" :loading="loading" severity="info" @click="onConfirm" />
-      </div>
-    </template>
-  </drawerContent>
+  <div class="flex flex-col h-full proxy-content">
+    <div class="flex-1">
+      <RxInputTextarea v-model="cookies" :placeholder="$t('请以 JSON 格式输入 Cookies')" cols="40" :auto-resize="false" />
+    </div>
+    <div class="flex justify-end button-group">
+      <RxButton :label="$t('保存')" :loading="loading" severity="info" @click="onConfirm" />
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.cookies-textarea {
-  margin-top: var(--spacing-2xl, 16px);
-  resize: none;
-  height: calc(100% - var(--spacing-2xl, 16px));
+.proxy-content {
+  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
+  width: var(--width-xs, 384px);
+}
+
+:deep(.p-iconfield) {
+  height: 100%;
+
+  .p-textarea {
+    height: 100%;
+  }
+}
+
+.button-group {
+  padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
 }
 </style>

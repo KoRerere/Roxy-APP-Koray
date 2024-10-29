@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import { API } from '/@/api'
-import DrawerContent from '/@/components/drawer-content.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
@@ -158,8 +157,8 @@ function saveSelected() {
 </script>
 
 <template>
-  <DrawerContent :title="$t('代理列表')" v-bind="$attrs">
-    <div class="h-full">
+  <div class="flex flex-col h-full proxy-content">
+    <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
         <template #header-extra>
@@ -201,13 +200,24 @@ function saveSelected() {
         </template>
       </RyTable>
     </div>
-    <template #footer>
+    <div class="w-full flex justify-end gap-3 button-group">
       <RxButton :label="$t('保存')" @click="saveSelected" />
-    </template>
-  </DrawerContent>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.proxy-content {
+  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
+  width: var(--width-xl, 768px);
+}
+
+:deep(.rx-header) {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .proxy-host {
   color: var(--Color-neutrals-950, #0e1214);
   font-family: 'JetBrains Mono';
@@ -224,5 +234,9 @@ function saveSelected() {
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.button-group {
+  padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
 }
 </style>

@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import { count } from 'node:console'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
