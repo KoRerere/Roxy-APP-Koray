@@ -164,8 +164,8 @@ function saveSelected() {
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
         <template #header-extra>
           <div class="flex flex-auto items-center justify-between">
-            <SelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
-            <RxButton outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
+            <RxSelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
+            <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
           </div>
         </template>
         <template #proxy="{ data: row }">

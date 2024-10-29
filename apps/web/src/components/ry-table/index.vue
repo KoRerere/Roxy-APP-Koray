@@ -263,7 +263,7 @@ defineExpose({
         <TableSort v-if="sorts.length > 0" :sorts="sorts" @sort="onChangeParams('sort', $event)" />
       </div>
     </div>
-    <div class="flex-1 overflow-hidden">
+    <div class="position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
         :pt="{ table: !tableList?.length ? 'flex-1' : '', emptymessagecell: '!whitespace-normal', bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
@@ -295,6 +295,9 @@ defineExpose({
           </template>
         </Column>
       </DataTable>
+      <div v-if="_loading" class="absolute inset-0 flex items-center justify-center z-10 bg-white/90">
+        <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
+      </div>
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
@@ -313,9 +316,7 @@ defineExpose({
         </template>
       </Paginator>
     </div>
-    <div v-if="_loading" class="flex items-center justify-center loading-overlay">
-      <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
-    </div>
+
     <Transition>
       <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
         :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
@@ -328,16 +329,6 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--Colors-Alpha-alpha-white-90, rgba(255, 255, 255, 0.9));
-  z-index: 10;
-}
-
 .rx-header {
   display: flex;
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
@@ -453,7 +444,6 @@ defineExpose({
   color: #000;
   font-family: Inter;
   font-size: 12px;
-  font-weight: 600;
   line-height: 16px;
 }
 

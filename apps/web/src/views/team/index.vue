@@ -200,7 +200,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
-        <SelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>
