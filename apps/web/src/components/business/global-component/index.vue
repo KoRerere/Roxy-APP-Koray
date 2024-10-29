@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import InviteIntoWorkspace from './invite-into-workspace.vue'
+import RxToastHeadless from './rx-toast-headless.vue'
 
 onMounted(() => {
   electronAPI.send('web:ready')
@@ -8,8 +9,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <Toast position="top-center" />
   <Toast group="tr" />
+  <RxToastHeadless />
   <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
   <!-- 删除确认弹窗 -->
   <ConfirmDialog group="deleteConfirmDialog">
