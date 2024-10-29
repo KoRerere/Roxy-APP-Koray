@@ -5,24 +5,15 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
 import language from '/@/constants/language.json'
 import { store } from '/@/modules/store'
+import { getSystemProxyAddress } from '/@/utils'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
 }
 
 /** 获取浏览器用户数据目录路径 */
-export function getUserDataDirPath(winItem: WindowItemType, workspaceId = store.workspaceId) {
-  return join(getProjectPath(winItem, workspaceId), winItem.dirId!)
-}
-
-/** 获取项目所在路径 */
-export function getProjectPath(winItem: Partial<WindowItemType>, workspaceId = store.workspaceId) {
-  return join(getWorkspacePath(workspaceId), `project_${winItem.projectId || 'default'}`)
-}
-
-/** 获取空间所在路径 */
-export function getWorkspacePath(workspaceId = store.workspaceId) {
-  return join(appConfig.browserCacheRootDir, `workspace_${workspaceId}`)
+export function getUserDataDirPath(dirId: string) {
+  return join(appConfig.browserCacheRootDir, dirId)
 }
 
 /** 转换数字, 如果转换后为 NaN, 则返回 null */
@@ -383,18 +374,20 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
       const { host, port, proxyUserName, proxyPassword } = winInfo
       const { systemProxySwitch } = store
-
+      const [systemProxyHost = '', systemProxyPort = ''] = getSystemProxyAddress().split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
-      const type = systemProxySwitch ? (protocol === 'https' ? 'http' : protocol) : protocol
+      let type = systemProxySwitch && protocol === 'https' ? 'http' : protocol
+      const isUseSystemProxy = type === 'noproxy' && systemProxyHost && systemProxyPort
+      type = isUseSystemProxy ? 'HTTP' : type
 
       return {
         // 代理类型 http https,socks5
         // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
-        type,
+        type: type.toLocaleLowerCase(),
         // 代理主机
-        host: systemProxySwitch ? '127.0.0.1' : host,
+        host: systemProxySwitch ? '127.0.0.1' : isUseSystemProxy ? systemProxyHost : host,
         // 代理端口
-        port: Number(systemProxySwitch ? store.luminetProxyPort : port),
+        port: Number(systemProxySwitch ? store.luminetProxyPort : isUseSystemProxy ? systemProxyPort : port),
         // 用户名 ，选填
         username: systemProxySwitch ? winInfo.dirId : proxyUserName,
         // 密码，选填

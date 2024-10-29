@@ -55,6 +55,7 @@ async function openBrowser() {
     return
   }
   const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  //  @TODO
   emits('open', data)
 }
 </script>

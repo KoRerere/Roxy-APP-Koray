@@ -103,11 +103,12 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       severity: 'danger',
     },
     accept: async () => {
+      // 先删除本地项目
+      await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()
         toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Delete successfully'), life: 3000 })
-        electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
       }
       else {
         toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Delete failed'), life: 3000 })

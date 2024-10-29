@@ -1,7 +1,9 @@
 import express from 'express'
 import twoFactor from 'node-2fa'
+import { rm } from 'node:fs/promises'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
+import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { accountMapping, browserListMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
@@ -79,7 +81,7 @@ router.post('/mdf', async (req, res) => {
     ...fingerInfo,
   }
 
-  const result = await API.window.userMdfWindowInfoSingleCreate(params, {
+  const result = await API.window.userMdfWindowInfoSingleV2Create(params, {
     headers: {
       workspaceId,
     },
@@ -130,7 +132,7 @@ router.post('/delete', async (req, res) => {
 
 /** 打开浏览器窗口 */
 router.post('/open', async (req, res) => {
-  const { dirId, args = [] } = req.body
+  const { dirId, workspaceId, args = [] } = req.body
 
   if (!dirId) {
     return res.error('dirId is required')
@@ -145,7 +147,7 @@ router.post('/open', async (req, res) => {
   }
 
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId })
+    const result = await API.window.userGetWindowInfoV2List({ dirId }, { headers: { workspaceId } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]
       if (!winInfo) {
@@ -182,7 +184,7 @@ router.post('/close', async (req, res) => {
 
   try {
     await browserManager.close(dirId)
-    res.success(null)
+    res.success()
   }
   catch (error) {
     res.error(error)
@@ -199,20 +201,21 @@ router.post('/random_env', async (req, res) => {
 
 /** 清空窗口本地缓存 */
 router.post('/clear_local_cache', async (req, res) => {
-  const { dirIds, workspaceId } = req.body
+  const { dirIds } = req.body
 
   if (!Array.isArray(dirIds)) {
     return res.error('dirIds is required')
   }
 
-  const result = await API.window.userGetWindowInfoV2List({ dirIds: dirIds.join(',') }, { headers: { workspaceId } })
-
-  if (result.code === 0) {
-    const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo, winInfo.workspaceId || workspaceId))
-    res.success(await Promise.all(promiseArr))
+  const promiseArr = dirIds.map(dirId => browserManager.removeLocalData(dirId))
+  try {
+    await Promise.all(promiseArr)
   }
-  else {
-    res.error(result.msg)
+  catch (error) {
+    console.error('clear_local_cache error', error)
+  }
+  finally {
+    res.success()
   }
 })
 
@@ -227,7 +230,7 @@ router.post('/clear_server_cache', async (req, res) => {
   const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId } })
 
   if (result.code === 0) {
-    res.success(result)
+    res.success()
   }
   else {
     res.error(result.msg)

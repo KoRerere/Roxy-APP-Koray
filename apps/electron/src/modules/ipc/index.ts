@@ -3,14 +3,13 @@ import type { Config } from 'electron'
 import { IPCMain } from '@roxy/electron-preload/main'
 import { app, dialog, shell } from 'electron'
 import crypto from 'node:crypto'
-import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import url from 'node:url'
+import { API } from '/@/api'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
-import { getProjectPath, getUserDataDirPath, getWorkspacePath } from '/@/modules/browser/browser-manager/utils'
 import { extensionManager } from '/@/modules/extension'
 import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/luminet'
 import { fetchUserConfig, store } from '/@/modules/store'
@@ -266,13 +265,31 @@ ipcMain.on('util:toMediaPath', (pathname) => {
 })
 
 /** 删除工作空间 */
-ipcMain.on('util:removeWorkspace', (workspaceId) => {
-  return rm(getWorkspacePath(workspaceId), { recursive: true, force: true })
+ipcMain.on('util:removeWorkspace', async (workspaceId) => {
+  const result = await API.window.userGetWindowInfoV2List({ page_index: 1, page_size: 1000 }, { headers: { workspaceId } })
+
+  if (result.code === 0) {
+    const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo.dirId!))
+    Promise.all(promiseArr).then((data) => {
+      console.log('删除工作空间成功', data)
+    }).catch((error) => {
+      console.error('删除工作空间失败', error)
+    })
+  }
 })
 
 /** 删除项目 */
-ipcMain.on('util:removeProject', ({ workspaceId, projectId }) => {
-  return rm(getProjectPath({ workspaceId, projectId }), { recursive: true, force: true })
+ipcMain.on('util:removeProject', async ({ workspaceId, projectId }) => {
+  const result = await API.window.userGetWindowInfoV2List({ projectIds: projectId }, { headers: { workspaceId } })
+
+  if (result.code === 0) {
+    const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo.dirId!))
+    Promise.all(promiseArr).then((data) => {
+      console.log('删除项目成功', data)
+    }).catch((error) => {
+      console.error('删除项目失败', error)
+    })
+  }
 })
 
 /** 随机生成字体 */

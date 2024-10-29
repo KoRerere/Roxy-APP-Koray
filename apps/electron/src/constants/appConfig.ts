@@ -19,7 +19,7 @@ export const appConfig = {
   },
   /** 浏览器扩展目录 */
   get browserExtensionsDir() {
-    return join(this.browserCacheRootDir, `workspace_${store.workspaceId}`, 'RoxyExtensions')
+    return join(this.browserCacheRootDir, 'RoxyExtensions')
   },
   /** 临时文件目录 */
   tempDir: join(sessionDir, 'temp'),
