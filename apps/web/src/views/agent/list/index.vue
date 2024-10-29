@@ -9,7 +9,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
-import editProxy from '/@/views/agent/create/quick.vue'
+import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import columnsConfig from './columns'
@@ -177,11 +177,11 @@ function onRefreshTable() {
       </RyTable>
     </div>
   </div>
-  <Drawer v-model:visible="drawer.visible" position="right" class="!w-[auto]">
-    <template #container="{ closeCallback }">
-      <editProxy :data="drawer.data" :title="$t('Edit proxy')" @close="closeCallback" @confirm="onEditConfirm" />
+  <RxDrawer v-model:visible="drawer.visible" :title="$t('Edit proxy')">
+    <template #default="{ closeCallback }">
+      <EditProxy :data="drawer.data" @close="closeCallback" @confirm="onEditConfirm" />
     </template>
-  </Drawer>
+  </RxDrawer>
 </template>
 
 <style lang="scss" scoped>

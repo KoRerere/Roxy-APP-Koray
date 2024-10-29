@@ -8,13 +8,15 @@ interface Props extends /* @vue-ignore */ TextareaProps {
   size?: Size
   leftIcon?: SvgNames | undefined
   icon?: SvgNames | undefined
+  rows?: string | number
+  cols?: string | number
 }
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'sm', leftIcon, icon, ...props } = defineProps<Props>()
+const { size = 'sm', rows = 3, cols = 30, leftIcon, icon, ...props } = defineProps<Props>()
 
 defineEmits(['iconClick', 'change'])
 </script>
@@ -24,7 +26,7 @@ defineEmits(['iconClick', 'change'])
     <InputIcon v-if="leftIcon">
       <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>
-    <Textarea v-bind="{ ...$attrs, ...props }" fluid rows="3" cols="30" @input="$emit('change')" />
+    <Textarea v-bind="{ ...$attrs, ...props }" fluid :rows="rows" :cols="cols" @input="$emit('change')" />
     <InputIcon v-if="icon">
       <RxSvgIcon :name="(icon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>

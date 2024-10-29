@@ -512,12 +512,12 @@ defineExpose({
         @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
-  <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" :class="classes['browser-drawer-content']" class="!w-[auto]" :pt="{ mask: classes['browser-drawer'] }">
-    <template #container="{ closeCallback }">
+  <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
+    <template #default="{ closeCallback }">
       <editCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
       <drawersitems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
-  </Drawer>
+  </RxDrawer>
 </template>
 
 <style lang="scss" module="classes">

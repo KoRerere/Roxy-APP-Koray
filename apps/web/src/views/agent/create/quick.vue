@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import drawerContent from '/@/components/drawer-content.vue'
 import { getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getInputs } from './components/form-inputs'
@@ -9,10 +8,6 @@ const props = defineProps({
   data: {
     type: Object,
     default: () => ({}),
-  },
-  title: {
-    type: String,
-    default: '',
   },
 })
 const emits = defineEmits(['confirm'])
@@ -38,17 +33,24 @@ function onConfirm() {
 </script>
 
 <template>
-  <drawer-content :title="title" v-bind="$attrs">
-    <div class="h-full flex flex-col">
-      <proxiesForm :inputs="formInputs" />
-    </div>
-    <template #footer>
-      <div class="flex items-center w-full gap-3">
+  <div class="flex flex-col h-full account-content">
+    <proxiesForm :inputs="formInputs" />
+    <div class="flex flex-1 items-end">
+      <div class="w-full flex justify-end gap-3 button-group">
         <RxButton size="sm" icon="base/rx_ic_internet" :label="$t('测试代理')" severity="secondary" outlined @click="testProxy" />
         <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="onConfirm" />
       </div>
-    </template>
-  </drawer-content>
+    </div>
+  </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.account-content {
+  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
+  width: var(--width-xs, 384px);
+}
+
+.button-group {
+  padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
+}
+</style>

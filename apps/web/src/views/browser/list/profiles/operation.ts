@@ -104,7 +104,6 @@ export async function getCustomFilters(params: any = {}) {
           avatar: item.avatar,
           avatarColor: item.avatarColor,
         }))
-        console.log('🚀 ~ menbers ~ menbers:', menbers)
 
         const labels = labelList.rows.map((item: any) => ({
           parentName: 'labelIds',

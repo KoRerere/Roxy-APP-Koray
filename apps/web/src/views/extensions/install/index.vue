@@ -186,14 +186,14 @@ function installViaUrl() {
         await uploadRecordCheck()
         const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
         const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Installation successful')] : ['error', $t('Installation failed')]
-        toast.add({ severity, summary, detail: msg, life: 2500, group: 'tc' })
+        toast.add({ severity, summary, detail: msg, life: 2500 })
 
         if (code === 0) {
           filters.resetFilters()
         }
       }
       catch (error) {
-        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 2500, group: 'tc' })
+        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 2500 })
       }
     },
   })

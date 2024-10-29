@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
-import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -10,10 +9,6 @@ const props = defineProps({
   data: {
     type: Object,
     default: () => ({}),
-  },
-  title: {
-    type: String,
-    default: '',
   },
   showRemark: {
     type: Boolean,
@@ -142,16 +137,25 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <drawer-content :title="title" v-bind="$attrs" @close="$emit('close')">
+  <div class="flex flex-col h-full account-content">
     <RyForm :inputs="formInputs" />
-    <template #footer>
-      <div class="flex flex-1 justify-end gap-3">
+    <div class="flex flex-1 items-end">
+      <div class="w-full flex justify-end gap-3 button-group">
         <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
         <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm(false)" />
       </div>
-    </template>
-  </drawer-content>
+    </div>
+  </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.account-content {
+  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
+  width: var(--width-xs, 384px);
+}
+
+.button-group {
+  padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
+}
+</style>

@@ -8,8 +8,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <Toast />
-  <Toast position="top-center" group="tc" />
+  <Toast position="top-center" />
+  <Toast group="tr" />
   <ConfirmDialog :pt="{ root: 'rx-dialog' }" />
   <!-- 删除确认弹窗 -->
   <ConfirmDialog group="deleteConfirmDialog">

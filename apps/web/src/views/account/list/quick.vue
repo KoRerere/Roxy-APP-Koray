@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import drawerContent from '/@/components/drawer-content.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { setColumns } from '/@/hooks/useColumns'
@@ -50,11 +49,11 @@ function handleSave() {
 </script>
 
 <template>
-  <drawerContent :title="$t('平台账号列表')" v-bind="$attrs">
-    <div class="h-full">
-      <!-- eslint-disable-next-line vue/no-unused-refs -->
+  <div class="flex flex-col h-full account-content">
+    <!-- eslint-disable-next-line vue/no-unused-refs -->
+    <div class="flex-ovh-1">
       <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"
-        :show-display="false" :context-menu="false" :show-actions="false">
+        :show-table-header="false" :show-display="false" :context-menu="false" :show-actions="false">
         <!-- <template #header-extra>
           <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template> -->
@@ -78,13 +77,18 @@ function handleSave() {
         </template>
       </RyTable>
     </div>
-    <template #footer>
+    <div class="w-full flex justify-end gap-3 button-group">
       <RxButton severity="info" size="sm" :label="$t('保存')" @click="handleSave" />
-    </template>
-  </drawerContent>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.account-content {
+  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
+  width: var(--width-xl, 768px);
+}
+
 .platform {
   display: grid;
   grid-template-columns: 16px 1fr;
@@ -112,5 +116,9 @@ function handleSave() {
     gap: var(--spacing-sm, 4px);
     color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
+}
+
+.button-group {
+  padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
 }
 </style>

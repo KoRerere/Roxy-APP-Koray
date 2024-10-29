@@ -193,11 +193,11 @@ function deletePopup(data: any) {
       </RyTable>
     </div>
   </div>
-  <Drawer v-model:visible="drawer.visible" position="right" class="!w-[500px]">
-    <template #container="{ closeCallback }">
-      <accountCreate :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm" />
+  <RxDrawer v-model:visible="drawer.visible" :title="drawer.title">
+    <template #default="{ closeCallback }">
+      <accountCreate :data="drawer.data" @close="closeCallback" @confirm="drawer.confirm" />
     </template>
-  </Drawer>
+  </RxDrawer>
 </template>
 
 <style lang="scss" scoped>

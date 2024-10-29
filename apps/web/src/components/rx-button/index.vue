@@ -2,6 +2,11 @@
 import type { ButtonProps } from 'primevue/button'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
+defineOptions({
+  inheritAttrs: false,
+})
+const { size = 'sm', ...props } = defineProps<Props>()
+
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
@@ -10,9 +15,6 @@ interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   rotate?: boolean
   onClick?: (e: any) => Promise<void> | void
 }
-
-const { size = 'sm', ...props } = defineProps<Props>()
-
 const outerLoading = defineModel('loading', { default: false })
 
 const _loading = ref(false)

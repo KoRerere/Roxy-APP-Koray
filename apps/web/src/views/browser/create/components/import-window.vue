@@ -34,7 +34,7 @@ function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
-    onlyErrorToast(-1, $t('Only supports Excel type files'), { group: 'tc' })
+    onlyErrorToast(-1, $t('Only supports Excel type files'))
     return
   }
   handleBeforeUpload(file)
@@ -65,7 +65,7 @@ const fileData = reactive({
 
 async function handleBeforeUpload(rawFile: any) {
   if (rawFile.size > MAX_FILE_SIZE) {
-    onlyErrorToast(-1, $t('The file size cannot exceed 5MB'), { group: 'tc' })
+    onlyErrorToast(-1, $t('The file size cannot exceed 5MB'))
     return
   }
 
@@ -106,7 +106,7 @@ async function handleBeforeUpload(rawFile: any) {
   }
 
   if (excelData.length === 0) {
-    onlyErrorToast(-1, $t('The imported content cannot be 0'), { group: 'tc' })
+    onlyErrorToast(-1, $t('The imported content cannot be 0'))
     return
   }
 
@@ -115,7 +115,7 @@ async function handleBeforeUpload(rawFile: any) {
   fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
   fileData.successCount = excelData.length
   emit('importSuccess', fileAnalyzeData)
-  showToast(0, `${fileData.successCount} ${$t('profiles imported')}`, { group: 'tc' })
+  showToast(0, `${fileData.successCount} ${$t('profiles imported')}`)
   return false
 }
 </script>

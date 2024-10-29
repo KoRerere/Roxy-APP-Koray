@@ -3,10 +3,11 @@
 import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
+import { $t } from '/@/locales'
 import { isEmptyValue, strConcat } from '/@/utils'
-import proxyCreate from '/@/views/agent/create/quick.vue'
+import ProxyCreate from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import proxyTable from '/@/views/agent/list/quick.vue'
+import ProxyTable from '/@/views/agent/list/quick.vue'
 import { useTableContext } from '../hooks/useContext'
 
 const dialog = useDialog()
@@ -19,6 +20,7 @@ const proxyList = defineModel<any>('modelValue')
 const checkIndex = ref()
 
 const drawer = reactive({
+  title: '',
   dismissable: false,
   visible: false,
   type: 'create',
@@ -38,6 +40,7 @@ function toggleDrawer(type: 'create' | 'list', data?: any) {
   drawer.visible = true
   drawer.type = type
   drawer.dismissable = type === 'list'
+  drawer.title = type === 'list' ? $t('代理列表') : $t('添加代理')
   drawer.data = data
 }
 
@@ -181,12 +184,12 @@ function replaceData(data: any) {
       </template>
     </div>
 
-    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" class="browser-drawer-content !w-[auto]" :pt="{ mask: 'browser-drawer' }">
-      <template #container="{ closeCallback }">
-        <proxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback" @confirm="(data: any) => { onChoose(data); closeCallback() }" />
-        <proxyCreate v-if="drawer.type === 'create'" :title="$t('添加代理')" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
+    <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
+      <template #default="{ closeCallback }">
+        <ProxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback" @confirm="(data: any) => { onChoose(data); closeCallback() }" />
+        <ProxyCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
       </template>
-    </Drawer>
+    </RxDrawer>
   </div>
 </template>
 

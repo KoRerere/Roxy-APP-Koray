@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import rxCard from '/@/components/rx-card'
+import { $t } from '/@/locales'
 import { deepClone } from '/@/utils'
-import accountCreate from '/@/views/account/create'
-import accountList from '/@/views/account/list/quick.vue'
+import AccountCreate from '/@/views/account/create'
+import AccountList from '/@/views/account/list/quick.vue'
 
 const windowPlatformList: any = defineModel('modelValue')
 
 const selectedAccount = computed(() => windowPlatformList.value.filter((item: any) => item.id))
 
 const drawer = reactive({
+  title: '',
   dismissable: false,
   visible: false,
   type: 'list',
@@ -19,6 +21,7 @@ function toggleDrawer(type: 'create' | 'list', data?: any) {
   drawer.visible = true
   drawer.type = type
   drawer.dismissable = type === 'list'
+  drawer.title = type === 'list' ? $t('平台账号列表') : $t('添加平台账号')
   drawer.data = deepClone(data)
 }
 
@@ -42,10 +45,14 @@ function onConfirm(data: any) {
     return
   }
 
-  if (!data.id) {
+  if (!Array.isArray(data) && !data.id) {
     data._tempId = (new Date().getTime()).toString(32)
+    windowPlatformList.value.push(data)
   }
-  windowPlatformList.value.push(...([].concat(data)))
+  else {
+    const list = windowPlatformList.value.filter((item: any) => !item.id)
+    windowPlatformList.value = list.concat(data)
+  }
 }
 
 function replaceData(data: any) {
@@ -75,12 +82,12 @@ function replaceData(data: any) {
       </rx-card>
     </div>
 
-    <Drawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" position="right" class="browser-drawer-content !w-[50%]" :pt="{ mask: 'browser-drawer' }">
-      <template #container="{ closeCallback }">
-        <accountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }" @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
-        <accountCreate v-if="drawer.type === 'create'" :title="$t('添加平台账号')" :data="drawer.data" @close="closeCallback" @confirm="onConfirm" />
+    <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
+      <template #default="{ closeCallback }">
+        <AccountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }" @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <AccountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback" @confirm="onConfirm" />
       </template>
-    </Drawer>
+    </RxDrawer>
   </div>
 </template>
 
