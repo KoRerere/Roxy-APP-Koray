@@ -37,6 +37,8 @@ type ProtocolMapType = keyof typeof protocolCheckMap
 export type ProxyDetectionParams = Pick<WindowItemType, 'dirId' | 'checkChannel' | 'ipType' | 'protocol' | 'proxyCategory' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'> & {
   /** 是否优先使用外部的参数 */
   outerParamFirst: boolean
+  /** 是否走龙哥 luminet */
+  systemProxySwitch: boolean
 }
 
 // 检测超时时间
@@ -76,14 +78,14 @@ export function tryRefreshUrl(refreshUrl: string) {
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
-  const { systemProxySwitch } = store
+  const systemProxySwitch = Reflect.has(proxyDetectionParams, 'systemProxySwitch') ? proxyDetectionParams.systemProxySwitch : store.systemProxySwitch
 
-  if (!dirId) {
+  if (systemProxySwitch && !dirId) {
     throw new Error(`dirId is required`)
   }
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
-  const systemProxyAddress = await getSystemProxy()
+  const systemProxyAddress = systemProxySwitch ? await getSystemProxy() : ''
   const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
   let __protocol = systemProxySwitch && proxyCategory === 'HTTPS' ? 'HTTP' : proxyCategory
   const isUseSystemProxy = __protocol === 'noproxy' && systemProxyAddress
@@ -276,25 +278,16 @@ async function checkSocks5Proxy(parmes: any) {
 }
 
 export async function detectNetwork(type?: 'local' | 'system') {
-  const { systemProxySwitch } = store
-  const dirId = Math.random().toString(36).slice(2)
-
-  if (systemProxySwitch || type === 'system') {
+  if (type === 'system') {
     const systemProxy = await getSystemProxy()
     console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
-    return proxyDetection({ dirId, host, port, protocol: 'HTTP', outerParamFirst: true }).catch(() => {
+    return proxyDetection({ host, port, proxyCategory: 'HTTP', systemProxySwitch: false }).catch(() => {
       // 如果系统代理检测失败，则走本地网络检测
-      return proxyDetection({ dirId }).finally(() => {
-        delLuminetProxy(dirId)
-      })
-    }).finally(() => {
-      delLuminetProxy(dirId)
+      return proxyDetection({ systemProxySwitch: false, proxyCategory: 'noproxy' })
     })
   }
   else {
-    return proxyDetection({ dirId }).finally(() => {
-      delLuminetProxy(dirId)
-    })
+    return proxyDetection({ systemProxySwitch: false, proxyCategory: 'noproxy' })
   }
 }
