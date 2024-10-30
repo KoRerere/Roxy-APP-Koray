@@ -33,7 +33,7 @@ function onSearch() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full">
+  <div class="flex flex-col h-full w-full extensions">
     <ViewsHeader :title="($route.meta.title as string)" />
     <Tabs v-model:value="tabsValue" class="flex-1 overflow-hidden" @update:value="onChange">
       <TabList>
@@ -55,4 +55,34 @@ function onSearch() {
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.extensions {
+  :deep(.p-tablist-tab-list) {
+    gap: var(--spacing-2xl, 16px);
+    padding: 0px var(--spacing-4xl, 24px);
+    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+    .p-tab {
+      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      color: var(--Colors-Text-text-secondary, #575d61);
+      font-family: Inter;
+      font-size: var(--Font-Size-text-sm, 12px);
+      font-weight: 500;
+      line-height: var(--Line-Height-text-xs, 16px);
+      border-color: transparent;
+
+      &:not(.p-tab-active):not(.p-disabled):hover {
+        border-color: transparent;
+      }
+    }
+
+    .p-tab-active {
+      color: var(--Colors-Text-text-brand, #12a3fc);
+    }
+
+    .p-tablist-active-bar {
+      height: 2px;
+    }
+  }
+}
+</style>

@@ -71,6 +71,10 @@ async function saveProxies(proxies: any) {
     .p-tab-active {
       color: var(--Colors-Text-text-brand, #12a3fc);
     }
+
+    .p-tablist-active-bar {
+      height: 2px;
+    }
   }
 }
 </style>

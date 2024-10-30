@@ -243,6 +243,10 @@ onBeforeMount(() => {
     .p-tab-active {
       color: var(--Colors-Text-text-brand, #12a3fc);
     }
+
+    .p-tablist-active-bar {
+      height: 2px;
+    }
   }
 
   &-trash {
@@ -265,7 +269,7 @@ onBeforeMount(() => {
         left: 0;
         bottom: var(--p-tabs-active-bar-bottom);
         width: 100%;
-        height: var(--p-tabs-active-bar-height);
+        height: 2px;
         background: var(--p-tabs-active-bar-background);
         transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
         z-index: 1;
