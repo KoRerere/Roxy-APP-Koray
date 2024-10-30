@@ -1,9 +1,9 @@
-import { useToast } from 'primevue/usetoast'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { findInputByName, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
 
 export function getInputs(data: any = {}) {
-  const toast = useToast()
+  const [showToast] = useResponseToast()
 
   const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
     get(target, key) {
@@ -143,7 +143,7 @@ export function getInputs(data: any = {}) {
         const input = findInputByName(inputs, 'refreshUrl')
         if (input.value) {
           const isOK = await window.electronAPI.send('proxy:refreshUrl', input.value)
-          toast.add({ severity: isOK ? 'success' : 'error', summary: isOK ? 'Success' : 'Failure', detail: input.value, life: 2500 })
+          showToast(isOK ? 0 : -1, input.value)
         }
       },
     },

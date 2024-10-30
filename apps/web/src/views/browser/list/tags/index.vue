@@ -108,6 +108,9 @@ async function deleteTag(data: any) {
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
         selection-mode="multiple" :show-actions="false">
+        <template #table-empty>
+          <CustomEmpty :title="$t('暂无标签')" />
+        </template>
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">

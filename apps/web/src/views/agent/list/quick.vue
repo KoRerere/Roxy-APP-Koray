@@ -33,7 +33,7 @@ const props = defineProps({
 const emit = defineEmits(['confirm'])
 
 const [checkProxy] = useCheckProxy()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('agent')
 
@@ -144,6 +144,10 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
 }
 
 function testAllProxy() {
+  if (!dataList.value?.length) {
+    onlyErrorToast(-1, $t('暂无代理'))
+    return
+  }
   testProxy(dataList.value, 'test')
 }
 

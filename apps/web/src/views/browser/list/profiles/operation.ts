@@ -133,7 +133,7 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'switch',
       name: 'openStatus',
-      label: $t('打开中'),
+      label: $t('已打开'),
       icon: 'base/rx_ic_browsers_line',
     },
     {

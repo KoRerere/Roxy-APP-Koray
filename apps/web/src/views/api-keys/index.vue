@@ -8,9 +8,11 @@ import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { $t } from '/@/locales'
+import { useRoleStore } from '/@/stores/role'
 import { getFormData, setInputFieldByInputKey, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
 
+const role = useRoleStore()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -131,7 +133,7 @@ onBeforeMount(() => {
               <div>{{ $t('API 秘钥') }}</div>
               <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
             </div>
-            <div class="api-content-desc">
+            <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
               <div class="flex-1">
                 {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}

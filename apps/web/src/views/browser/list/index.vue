@@ -131,6 +131,7 @@ async function openManageCategory() {
       header: $t('标签管理'),
       modal: true,
       style: { width: '70vw', height: '50vh' },
+      pt: { content: 'flex-1' },
     },
   })
 }

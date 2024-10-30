@@ -13,7 +13,7 @@ function parseInput(input: any) {
   const { onblur, oninput } = input
 
   function _oninput() {
-    input.errorMsg = ''
+    input.invalid = false
     oninput?.()
   }
 
@@ -30,7 +30,7 @@ function parseInput(input: any) {
     <template v-for="(item, index) in _inputs" :key="index">
       <div v-if="!item.separator" class="number-group-item">
         <input v-model="item.value" class="number-group-item-input" type="number" v-bind="parseInput(item)">
-        <div class="number-group-item-error">
+        <div v-if="item.invalid" class="number-group-item-error">
           {{ item.errorMsg }}
         </div>
       </div>
@@ -75,10 +75,10 @@ function parseInput(input: any) {
 
     &-error {
       position: absolute;
-      left: 0;
-      bottom: -140%;
-      width: 1000%;
+      left: -8px;
+      top: 170%;
       color: var(--Component-Colors-TextInput-error-error, #ff4d4f);
+      z-index: 1;
     }
   }
 }

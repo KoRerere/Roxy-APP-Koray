@@ -145,6 +145,7 @@ const paginatorConfig = reactive({
     { label: $t('100 条/页'), value: 100 },
   ],
   onResetPage(page: number = 1, rows: number = 10) {
+    paginatorConfig.first = 0
     paginatorConfig.page = page
     paginatorConfig.rows = rows
   },
@@ -159,8 +160,6 @@ const paginatorConfig = reactive({
 })
 
 const paginatorInfo = computed(() => $t('总计 {total} 个', {
-  start: paginatorConfig.first + 1,
-  end: Math.min(paginatorConfig.first + paginatorConfig.rows, paginatorConfig.totalRecords),
   total: paginatorConfig.totalRecords,
 }))
 
@@ -265,7 +264,7 @@ defineExpose({
     </div>
     <div class="position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
-        :pt="{ table: !tableList?.length ? 'flex-1' : '', emptymessagecell: '!whitespace-normal', bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
+        :pt="{ table: !tableList?.length ? 'flex-1' : '', emptymessagecell: '!whitespace-normal !text-center', bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -309,8 +308,6 @@ defineExpose({
               @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
-              <!-- <InputNumber placeholder="Page" class="rx-paginator-jump-input" />
-              <div>|</div> -->
             </div>
           </div>
         </template>

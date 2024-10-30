@@ -21,7 +21,7 @@ const tableRef = useTemplateRef('proxyTable')
 const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
 
 const filtersMenu = ref(getCustomFilters())
@@ -76,6 +76,10 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
 }
 
 function testAllProxy() {
+  if (!dataList.value?.length) {
+    onlyErrorToast(-1, $t('暂无代理'))
+    return
+  }
   testProxy(dataList.value, 'test')
 }
 

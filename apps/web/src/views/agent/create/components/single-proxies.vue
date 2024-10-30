@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import RemarkIcon from '/@/components/remark-icon'
+// import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { getInputs } from './form-inputs'
@@ -8,14 +9,20 @@ import ProxiesForm from './proxies-form.vue'
 const emit = defineEmits(['cancel', 'save'])
 
 const [checkProxy, checkeResult] = useCheckProxy()
+// const [_, onlyErrorToast] = useResponseToast()
 
 const formInputs: any = ref(getInputs())
 
 const remark = ref()
 
 async function testProxy() {
-  const data = getFormData(formInputs.value)
-  await checkProxy(toRaw(data))
+  try {
+    const data = getFormData(formInputs.value)
+    await checkProxy(toRaw(data))
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
 
 function addRemark(platformRemarks: string) {

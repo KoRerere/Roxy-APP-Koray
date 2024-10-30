@@ -165,7 +165,11 @@ function deleteProxy(data: any) {
   console.log('🚀 ~ deleteProxy ~ data:', data)
 }
 
-function testAll() {
+function testAllProxy() {
+  if (!dataList.value?.length) {
+    onlyErrorToast(-1, $t('暂无代理'))
+    return
+  }
   testProxy(dataList.value, 'test')
 }
 
@@ -248,7 +252,7 @@ function onSave() {
         </div>
         <div class="flex gap-2">
           <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试所有')" icon="base/rx_ic_speed_test" @click="testAll" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" @click="testAllProxy" />
         </div>
       </div>
       <Message v-if="showMessage" class="mb-3" severity="success" icon="pi pi-check-circle" closable @close="messageClose">

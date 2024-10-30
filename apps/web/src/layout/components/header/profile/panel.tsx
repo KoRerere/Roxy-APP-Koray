@@ -2,7 +2,6 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
@@ -45,11 +44,23 @@ async function saveUserConfig(item: Items) {
 }
 
 async function detectLocalNetwork(item: Items) {
-  item.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
+  try {
+    item.value = await window.electronAPI.send('proxy:detectNetwork', 'local')
+  }
+  catch (error) {
+    item.value = null
+    toast.value?.(-1, error)
+  }
 }
 
 async function detectSystemNetwork(item: Items) {
-  item.value = await window.electronAPI.send('proxy:detectNetwork', 'system')
+  try {
+    item.value = await window.electronAPI.send('proxy:detectNetwork', 'system')
+  }
+  catch (error) {
+    item.value = null
+    toast.value?.(-1, error)
+  }
 }
 
 // async function selectDir(item: Items) {
@@ -261,7 +272,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             afterComponent: ({ item }: any) => {
               return (
                 item.value && (
-                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
+                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => { item.value = null }}>
                     <div class="text-3 color-[#171C1F]">
                       {$t('检测成功')}
                     </div>
@@ -291,7 +302,7 @@ export function getNetworkPanel(data?: any): SettingsModule {
             afterComponent: ({ item }: any) => {
               return (
                 item.value && (
-                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => item.value = ''}>
+                  <Message icon="pi pi-check-circle" severity="success" closable={true} pt={{ content: '!items-start' }} onClose={() => { item.value = null }}>
                     <div class="text-3 color-[#171C1F]">
                       {$t('检测成功')}
                     </div>

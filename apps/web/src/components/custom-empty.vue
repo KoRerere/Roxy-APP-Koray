@@ -9,7 +9,7 @@ const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.m
 
 <template>
   <div class="empty-content">
-    <img class="empty-img" :src="imgSrc">
+    <img v-if="icon" class="empty-img" :src="imgSrc">
     <div class="empty-info">
       <div class="empty-info-title">
         {{ title }}
@@ -22,11 +22,12 @@ const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.m
 
 <style lang="scss" scoped>
 .empty-content {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  margin: 0 auto;
   gap: var(--spacing-xl, 12px);
-  width: var(--width-xs, 384px);
+  max-width: var(--width-xs, 384px);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .empty-img {
@@ -43,6 +44,7 @@ const imgSrc = computed(() => new URL(`../assets/images/${props.icon}`, import.m
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
+  text-align: left;
 
   &-title {
     color: var(--Colors-Text-text-secondary, #575d61);

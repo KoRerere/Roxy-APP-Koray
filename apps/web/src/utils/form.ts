@@ -1,3 +1,4 @@
+import { $t } from '/@/locales'
 import { isFunction, isInvalid } from './basic'
 
 interface FormDataOptions {
@@ -74,7 +75,8 @@ function formValidator(hadKey: Set<string>, input: any) {
   }
   else if (input.required && isInvalid(input.value)) {
     input.invalid = true
-    throw new Error(`Input '${input.name}' is required`)
+    input.errorMsg = $t('"{name}" 是必填项', { name: input.label || input.placeholder })
+    throw new Error(input.errorMsg)
   }
 
   if (input.invalid || (isFunction(input.validator) && !input.validator(input))) {
