@@ -8,27 +8,46 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['change'])
+const emit = defineEmits(['change'])
 
-function handleFilterChange() {
-  emits('change', getFormData(props.filters))
+const multiChanged = ref(false)
+
+function onMultiChange() {
+  multiChanged.value = true
+}
+
+function onMultiHide() {
+  if (!multiChanged.value)
+    return
+
+  multiChanged.value = false
+  onFilterChange()
+}
+
+function onDateClear() {
+  onFilterChange()
+}
+
+function onDateHide() {
+  const formData = getFormData(props.filters)
+  if (formData.startDate && formData.endDate) {
+    emit('change', formData)
+  }
+}
+
+function onFilterChange() {
+  emit('change', getFormData(props.filters))
 }
 </script>
 
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-center">
-    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label"
-                 option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item" @hide="handleFilterChange"
-    />
-    <Select v-else-if="item.type === 'select'" v-model="item.value" class="mw-150" show-clear checkmark
-            :highlight-on-select="false" option-label="label" option-value="value" v-bind="item"
-            @change="handleFilterChange"
-    />
-
-    <DatePicker v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse"
-                selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
-                :placeholder="item.placeholder" @hide="handleFilterChange"
-    />
+    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item"
+      @change="onMultiChange" @hide="onMultiHide" />
+    <Select v-else-if="item.type === 'select'" v-model="item.value" class="mw-150" show-clear checkmark :highlight-on-select="false" option-label="label" option-value="value" v-bind="item"
+      @change="onFilterChange" />
+    <DatePicker v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+      :placeholder="item.placeholder" @hide="onDateHide" @clear-click="onDateClear" />
   </div>
 </template>
 

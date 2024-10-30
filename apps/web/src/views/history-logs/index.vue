@@ -79,7 +79,7 @@ async function tableFilters() {
       name: 'date',
       placeholder: $t('全部时间'),
       formatValue: (input: any, _: any, formData: any) => {
-        const [startDate, endDate] = (input.value || []).map((date: Date) => format(date || input.value[0], 'yyyy-MM-dd'))
+        const [startDate, endDate] = (input.value || []).map((date: Date) => format(date, 'yyyy-MM-dd'))
         Object.assign(formData, { startDate, endDate })
       },
     },
