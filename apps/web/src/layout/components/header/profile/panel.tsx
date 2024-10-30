@@ -168,7 +168,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //     },
       //     {
       //       label: $t('时区'),
-      //       text: $t('Some hints for you'),
+      //       text: $t('#Some hints for you'),
       //       name: 'timeZone',
       //       value: data?.timeZone ?? '',
       //       props: {
@@ -181,15 +181,15 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       },
       //     },
       //     {
-      //       label: $t('Appearance'),
-      //       text: $t('Themes for different mode'),
+      //       label: $t('#Appearance'),
+      //       text: $t('#Themes for different mode'),
       //       name: 'appearance',
       //       value: data?.appearance?.toString() ?? '',
       //       props: {
       //         options: [
       //           { label: $t('系统'), value: `${settingAppearance.system}` },
-      //           { label: $t('Light'), value: `${settingAppearance.light}` },
-      //           { label: $t('Dark'), value: `${settingAppearance.dark}` },
+      //           { label: $t('#Light'), value: `${settingAppearance.light}` },
+      //           { label: $t('#Dark'), value: `${settingAppearance.dark}` },
       //         ],
       //       },
       //       formatValue: (item: Items) => Number(item.value),

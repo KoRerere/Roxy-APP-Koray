@@ -86,6 +86,10 @@ onMounted(() => {
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
         <span class="upload-tip">{{ $t('支持Zip, CRX 格式的扩展，最大不超过 50MB') }}</span>
       </div>
+      <div class="flex items-center gap-1 mt-1">
+        <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
+        <span class="upload-tip">{{ $t('每日总扩展添加数量限制为 5 个。') }}</span>
+      </div>
     </div>
 
     <div v-if="extension?.isSuccess" class="extension">
@@ -111,7 +115,7 @@ onMounted(() => {
       <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
           <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
-            class="text-blue decoration-underline cursor-pointer">{{ $t('Google扩展协议') }}</a>
+            class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>

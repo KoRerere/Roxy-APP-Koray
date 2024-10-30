@@ -5,8 +5,8 @@ import { $t } from '/@/locales'
 export function useResponseToast() {
   const toast = useToast()
   const summary = {
-    success: $t('success'),
-    error: $t('error'),
+    success: $t('操作成功'),
+    error: $t('操作失败'),
   }
 
   function showToast(code: number, message: string, options?: ToastMessageOptions) {

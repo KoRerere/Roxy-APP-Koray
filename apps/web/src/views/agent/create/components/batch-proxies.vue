@@ -1,6 +1,5 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -11,7 +10,6 @@ import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
 
 const emit = defineEmits(['cancel', 'save'])
-const toast = useToast()
 const confirm = useConfirm()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -80,7 +78,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
   if (!list.length) {
-    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('请先输入代理信息'), life: 2500 })
+    onlyErrorToast(-1, $t('请先输入代理信息'))
     return
   }
 
@@ -197,7 +195,9 @@ function onSave() {
 
   if (index > -1) {
     const { _validator } = dataList.value[index]
-    onlyErrorToast(-1, $t('proxies[{index}] {key} missing', { index: index + 1, key: _validator[0][0] }))
+    const key = columns.value.find(item => item.key === _validator[0][0])?.title
+
+    onlyErrorToast(-1, $t('代理[{index}] {key} 缺失', { index: index + 1, key }))
     return
   }
 

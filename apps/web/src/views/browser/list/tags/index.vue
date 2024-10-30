@@ -120,7 +120,7 @@ async function deleteTag(data: any) {
           </div>
         </template>
         <template #related="{ data }">
-          <relatedInfo :list="data.bindWindowIds" />
+          <RelatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
           <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />

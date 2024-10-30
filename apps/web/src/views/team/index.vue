@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import relatedInfo from '/@/components/related-info.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
@@ -232,7 +231,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       </div>
     </template>
     <template #related="{ data }">
-      <relatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
+      <RelatedInfo :list="data.project_info" :show-max="1" icon="base/rx_ic_stack" field="projectName" />
     </template>
     <template #actions="{ data }">
       <Actions :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />

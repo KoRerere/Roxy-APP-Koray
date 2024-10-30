@@ -82,7 +82,7 @@ function skipInvitation() {
             {{ inviteInfo?.workspaceName }}
           </div>
           <div class="detail-content">
-            {{ $t('You’re invited to {workspaceName}, please click the button below to join the workspace and start collaborating!', { workspaceName: inviteInfo?.workspaceName }) }}
+            {{ $t('您被邀请至工作空间 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
           </div>
         </div>
         <RxButton class="w-full" @click="acceptInvitation">

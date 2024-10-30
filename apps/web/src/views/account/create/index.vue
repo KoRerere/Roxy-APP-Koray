@@ -40,8 +40,8 @@ async function getInputs(data: any = {}) {
   const inputs = reactive([
     // {
     //   type: 'text',
-    //   label: $t('alias'),
-    //   placeholder: $t('Better name to identify'),
+    //   label: $t('#alias'),
+    //   placeholder: $t('#Better name to identify'),
     //   name: 'platformName',
     // },
     {

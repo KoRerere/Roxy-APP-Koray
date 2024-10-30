@@ -33,6 +33,8 @@ const columnsConfig = {
       title: $t('已关联窗口'),
       key: 'relatedProfiles',
       render: ({ data }: any) => {
+        console.log('🚀 ~ data.bindList:', data.bindList)
+
         return (
           <RelatedInfo list={data.bindList}></RelatedInfo>
         )

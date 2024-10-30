@@ -115,7 +115,7 @@ async function handleBeforeUpload(rawFile: any) {
   fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
   fileData.successCount = excelData.length
   emit('importSuccess', fileAnalyzeData)
-  showToast(0, `${fileData.successCount} ${$t('profiles imported')}`)
+  showToast(0, `${fileData.successCount} ${$t('个窗口已成功导入')}`)
   return false
 }
 </script>

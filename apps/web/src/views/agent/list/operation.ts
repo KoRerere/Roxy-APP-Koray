@@ -90,11 +90,11 @@ export function getCustomFilters() {
     // },
     // {
     //   type: 'date',
-    //   label: $t('Create time'),
+    //   label: $t('#Create time'),
     //   name: 'createTime',
     //   items: [
     //     {
-    //       placeholder: `${$t('Please Enter The')} ${$t('start time')}`,
+    //       placeholder: `${$t('#Please Enter The')} ${$t('#start time')}`,
     //       name: 'startDate',
     //       maxDate: new Date(),
     //       formatValue: (self: any) => {
@@ -102,7 +102,7 @@ export function getCustomFilters() {
     //       },
     //     },
     //     {
-    //       placeholder: `${$t('Please Enter The')} ${$t('end time')}`,
+    //       placeholder: `${$t('#Please Enter The')} ${$t('#end time')}`,
     //       name: 'endDate',
     //       maxDate: new Date(),
     //       formatValue: (self: any) => {

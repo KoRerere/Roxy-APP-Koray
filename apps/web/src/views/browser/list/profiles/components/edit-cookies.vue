@@ -32,7 +32,7 @@ function onConfirm() {
     emit('confirm', JSON.parse(cookies.value))
   }
   else {
-    onlyErrorToast(-1, $t('cookie format error'))
+    onlyErrorToast(-1, $t('Cookie 格式错误，请检查格式'))
   }
 }
 </script>

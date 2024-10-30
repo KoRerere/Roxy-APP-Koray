@@ -22,7 +22,7 @@ const toast = useToast()
 const role = useRoleStore()
 
 const [dialogOpen] = useSimpleDialog()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const [show] = useContextMenu()
 
 const needsync = defineModel('needsync')
@@ -164,7 +164,7 @@ async function uploadRecordCheck() {
     return Promise.resolve()
   }
   else {
-    throw new Error($t('Your upload limit has been exhausted'))
+    throw new Error($t('您当日的扩展上传数量已达上限'))
   }
 }
 
@@ -172,6 +172,7 @@ function installViaUrl() {
   dialogOpen({
     props: {
       title: $t('添加 Google 扩展'),
+      content: $t('每日总扩展添加数量限制为 5 个。'),
       inputs: [
         {
           type: 'text',
@@ -185,15 +186,13 @@ function installViaUrl() {
       try {
         await uploadRecordCheck()
         const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
-        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('安装成功')] : ['error', $t('安装失败')]
-        toast.add({ severity, summary, detail: msg, life: 2500 })
-
+        showToast(code, msg)
         if (code === 0) {
           filters.resetFilters()
         }
       }
       catch (error) {
-        toast.add({ severity: 'warn', summary: $t('Warn'), detail: error, life: 2500 })
+        onlyErrorToast(-1, error as string)
       }
     },
   })
@@ -338,7 +337,7 @@ defineExpose({
     </template>
 
     <template #related="{ data }">
-      <RxTag class="cursor-pointer" icon="base/rx_ic_stack" @click="operationHandler({ name: 'install' }, data)" />
+      <RxTag class="cursor-pointer" icon="base/rx_ic_stack" :label="data.bindPlugin?.[0] || ''" @click="operationHandler({ name: 'install' }, data)" />
     </template>
 
     <template #update="{ data }">

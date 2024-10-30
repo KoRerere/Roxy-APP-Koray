@@ -176,7 +176,7 @@ async function operationHandler(operate: any, data: any) {
       break
     case 'copyId':
       copyText(data.dirId)
-      showToast(0, $t('success'))
+      showToast(0, $t('复制成功'))
       break
     case 'view':
       openBrowser(data)
@@ -228,7 +228,7 @@ function openBrowser(data: any) {
     openMessage[item.dirId] = {
       pending: true,
       data: {
-        message: `${index === 0 ? $t('start') : $t('padding')}...`,
+        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
       },
     }
     return toRaw(item)

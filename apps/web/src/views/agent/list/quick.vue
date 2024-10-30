@@ -185,7 +185,7 @@ function saveSelected() {
           <OutboundIp :image="row.region" :country="row.lastCountry" :city="row.lastCity" :time="row.checkTime" />
         </template>
         <template #related="{ data: row }">
-          <relatedInfo :list="row.bindList" />
+          <RelatedInfo :list="row.bindList" />
         </template>
         <template #bounded="{ data: row }">
           <div class="w-30">

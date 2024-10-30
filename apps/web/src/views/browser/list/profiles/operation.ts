@@ -201,7 +201,6 @@ export function getSorts(params: any = {}) {
   return [
     {
       label: $t('排序标准'),
-      placeholder: $t('please select sorting rules'),
       name: 'orderName',
       value: params.orderName ?? 'windowSortNum',
       defaultValue: 'windowSortNum',
@@ -216,7 +215,6 @@ export function getSorts(params: any = {}) {
     },
     {
       label: $t('排序方式'),
-      placeholder: $t('please select sort type'),
       name: 'orderType',
       value: params.orderType ?? 'desc',
       defaultValue: 'desc',
