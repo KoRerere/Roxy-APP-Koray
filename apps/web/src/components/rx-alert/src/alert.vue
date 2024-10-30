@@ -5,7 +5,7 @@ import { hexToRgba } from '/@/utils'
 
 const props = defineProps({
   type: {
-    type: String as PropType<'success' | 'info' | 'warning' | 'error'>,
+    type: String as PropType<'success' | 'info' | 'warn' | 'error'>,
     default: 'success',
   },
   title: {
@@ -27,21 +27,21 @@ const emit = defineEmits(['close'])
 const visibleModel = defineModel('visible', { default: true })
 
 const iconMap: Record<string, [string, SvgNames]> = {
-  success: ['#52c41a', 'status/rx_ic_check_fill'],
-  info: ['#7C8387', 'base/rx_ic_info_fill'],
-  warning: ['#faad14', 'base/rx_ic_info_fill'],
-  error: ['#ff4d4f', 'base/rx_ic_delete_fill'],
+  success: ['#1CC94D', 'status/rx_ic_check_fill'],
+  info: ['#12A3FC', 'base/rx_ic_info_fill'],
+  warn: ['#FC9D12', 'base/rx_ic_warn_fill'],
+  error: ['#F53838', 'base/rx_ic_delete_fill'],
 }
 
 const styles = computed<CSSProperties>(() => {
   return {
     backgroundColor: {
-      success: '#ebfcf0',
-      info: '#f0f5ff',
-      warning: '#fffbe6',
-      error: '#fff1f0',
+      success: '#EBFCF0',
+      info: '#E8F5FC',
+      warn: '#FFF5E6',
+      error: '#FCEDED',
     }[props.type],
-    border: `1px solid ${hexToRgba(iconMap[props.type][0], 0.3)}`,
+    // border: `1px solid ${hexToRgba(iconMap[props.type][0], 0.3)}`,
   }
 })
 
@@ -60,7 +60,7 @@ function handleClose() {
 </script>
 
 <template>
-  <div class="rx-alert" :class="{ hide: !visibleModel }">
+  <div class="rx-alert" :class="{ hide: !visibleModel }" :style="styles">
     <slot name="tips-icon">
       <RxSvgIcon v-bind="iconProps" />
     </slot>
@@ -97,9 +97,9 @@ function handleClose() {
   transition: height 0.2s;
 
   &.hide {
-    height: 0;
-    padding: 0;
-    border: none;
+    height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
   .rx-alert-body {

@@ -73,9 +73,9 @@ export const menuRoutes: RouteRecordRaw[] = [
         component: () => import('/@/views/agent/create'),
       },
       {
-        path: 'shop',
-        name: 'account-shop',
-        meta: { title: '代理商店(dome test)x', icon: 'base/rx_ic_keys', hideInMenu: import.meta.env.PROD },
+        path: 'cattle-slaughter',
+        name: 'cattle-slaughter',
+        meta: { title: '牛马屠宰场', icon: 'base/rx_ic_keys', hideInMenu: true },
         component: () => import('/@/views/agent/shop'),
       },
       {
