@@ -14,7 +14,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'md', icon, name, ...props } = defineProps<Props>()
+const { size = 'sm', icon, name, ...props } = defineProps<Props>()
 
 defineEmits(['change'])
 
@@ -30,7 +30,7 @@ const defaultProps: SelectProps = {
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
-    <template v-if="!$attrs.optionValue || !props.optionValue" #value="{ value: option, placeholder }">
+    <template v-if="!$attrs.optionValue && !defaultProps.optionValue" #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
@@ -63,14 +63,17 @@ const defaultProps: SelectProps = {
   }
 }
 
+:deep(.p-select-label) {
+  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  font-family: Inter;
+}
+
 .lg {
   border-radius: var(--radius-lg, 8px);
   border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
 
   :deep(.p-select-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 14px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
@@ -86,8 +89,6 @@ const defaultProps: SelectProps = {
 
   :deep(.p-select-label) {
     padding: 8px 8px 8px 10px;
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
@@ -99,8 +100,6 @@ const defaultProps: SelectProps = {
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
@@ -112,8 +111,6 @@ const defaultProps: SelectProps = {
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px);
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
   }
@@ -125,8 +122,6 @@ const defaultProps: SelectProps = {
 
   :deep(.p-select-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
   }

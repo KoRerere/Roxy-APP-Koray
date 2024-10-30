@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { getFormData } from '/@/utils'
 
 const props = defineProps({
@@ -35,7 +36,10 @@ function onUpdate() {
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">
         <RxSvgIcon :name="item.icon" :size="16" />
         <span class="flex-1">{{ item.label }}</span>
-        <Select v-model="item.value" :options="item.options" :placeholder="item.placeholder" option-label="label" option-value="value" checkmark :highlight-on-select="false" />
+        <div class="flex-1">
+          <RxInputSelect v-model="item.value" v-bind="{ optionValue: 'value', filter: false, name: item.label, options: item.options, placeholder: item.placeholder }" checkmark
+            :highlight-on-select="false" />
+        </div>
       </div>
     </div>
     <template #footer>
@@ -59,6 +63,11 @@ function onUpdate() {
   gap: var(--spacing-sm, 4px);
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
   min-width: 300px;
+  color: var(--Color-neutrals-700, #343a3d);
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>
 

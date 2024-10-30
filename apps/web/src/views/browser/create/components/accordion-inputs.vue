@@ -159,6 +159,14 @@ $spacing-x: 66px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
+:deep(.p-inputgroup) {
+
+  .p-select+.p-select,
+  .p-inputtext+.p-inputtext {
+    border-left: none;
+  }
+}
+
 .footer {
   display: flex;
   align-items: center;

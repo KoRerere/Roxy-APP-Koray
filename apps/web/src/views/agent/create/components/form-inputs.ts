@@ -67,6 +67,9 @@ export function getInputs(data: any = {}) {
           name: 'proxyCategory',
           value: !proxyCategory || proxyCategory === 'noproxy' ? $dict_map.protocol[0]?.value : proxyCategory,
           options: $dict_map.protocol,
+          optionValue: 'value',
+          filter: false,
+          size: 'md',
           formatValue: (input: any, _inputs: any, formData: any) => {
             Object.assign(formData, { protocol: input.value })
             return input.value

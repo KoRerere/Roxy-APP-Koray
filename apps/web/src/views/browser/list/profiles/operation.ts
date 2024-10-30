@@ -9,13 +9,14 @@ const role = useRoleStore()
 export function tableFilters(_params: any = {}) {
   return [
     {
-      type: 'multiple',
+      type: 'select',
       name: 'operateModule',
-      value: ['Profiles'],
-      placeholder: $t('全部操作'),
+      value: 'all',
+      size: 'xxs',
       disabled: true,
       options: [
-        { label: $t('匹配所有'), value: 'Profiles' },
+        { label: $t('匹配所有'), value: 'all' },
+        { label: $t('匹配部分'), value: 'part' },
       ],
     },
   ]

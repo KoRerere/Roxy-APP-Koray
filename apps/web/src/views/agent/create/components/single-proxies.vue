@@ -41,7 +41,7 @@ function save() {
 </script>
 
 <template>
-  <div class="flex items-center flex-col w-50% mt-5 mx-auto">
+  <div class="flex items-center flex-col max-w-50% mt-5 mx-auto">
     <div class="flex-1 overflow-y-auto">
       <ProxiesForm :inputs="formInputs" />
     </div>

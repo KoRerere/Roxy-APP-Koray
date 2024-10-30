@@ -798,6 +798,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'hardwareConcurrent',
       value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '4')),
       options: $dict_map.hardwareConcurrent,
+      filter: false,
       preview: {
         label: $t('硬件并发数'),
       },
@@ -808,6 +809,7 @@ export function getInputsGroup(data: any = {}) {
       name: 'deviceMemory',
       value: $dict_map.deviceMemory.find((item: any) => item.value === (data.deviceMemory ?? '8')),
       options: $dict_map.deviceMemory,
+      filter: false,
       preview: {
         label: $t('设备内存'),
       },

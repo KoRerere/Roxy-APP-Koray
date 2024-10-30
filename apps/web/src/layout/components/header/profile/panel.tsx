@@ -156,6 +156,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       name: 'language',
       //       value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
       //       props: {
+      //         filter: false,
+      //         optionValue: 'value',
       //         options: $dict_map.language,
       //         virtualScrollerOptions: { itemSize: 38 },
       //       },
@@ -172,11 +174,13 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       name: 'timeZone',
       //       value: data?.timeZone ?? '',
       //       props: {
+      //         filter: false,
+      //         optionValue: 'value',
       //         options: $dict_map.timeZone,
       //       },
       //       component: ({ item, ...props }: { item: Items, props: any }) => {
       //         return (
-      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
       //         )
       //       },
       //     },
@@ -186,6 +190,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       name: 'appearance',
       //       value: data?.appearance?.toString() ?? '',
       //       props: {
+      //         filter: false,
+      //         optionValue: 'value',
       //         options: [
       //           { label: $t('系统'), value: `${settingAppearance.system}` },
       //           { label: $t('#Light'), value: `${settingAppearance.light}` },
@@ -195,7 +201,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       formatValue: (item: Items) => Number(item.value),
       //       component: ({ item, ...props }: { item: Items, props: any }) => {
       //         return (
-      //           <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+      //           <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
       //         )
       //       },
       //     },
@@ -224,6 +230,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             name: 'closeSoft',
             value: data?.closeSoft ?? '',
             props: {
+              filter: false,
+              optionValue: 'value',
               options: [
                 { label: $t('弹出提示'), value: 'pop' },
                 { label: $t('最小化到托盘'), value: 'min' },
@@ -232,7 +240,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+                <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
               )
             },
           },
@@ -333,11 +341,13 @@ export function getNetworkPanel(data?: any): SettingsModule {
             name: 'ipChecker',
             value: data?.ipChecker ?? '',
             props: {
+              filter: false,
+              optionValue: 'value',
               options: $dict_map.checkChannel,
             },
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
-                <Select {...item.props} {...props} option-label="label" option-value="value" onChange={() => saveUserConfig(item)} />
+                <RxInputSelect {...item.props} {...props} name={item.name} onChange={() => saveUserConfig(item)} />
               )
             },
           },

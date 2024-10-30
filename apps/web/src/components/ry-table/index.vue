@@ -2,6 +2,7 @@
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
 import { isEmptyValue, isFunction, operationPower } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
@@ -304,8 +305,8 @@ defineExpose({
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <Select v-model="paginatorConfig.rows" style="width: fit-content;" option-label="label" option-value="value" :options="paginatorConfig.rowsPerPageOptions"
-              @change="paginatorConfig.onRowsChange" />
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+              :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
             </div>
@@ -412,16 +413,6 @@ defineExpose({
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
-
-    &-input {
-      :deep(.p-inputnumber-input) {
-        width: 60px;
-        color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-        font-family: Inter;
-        font-size: 12px;
-        line-height: var(--Line-Height-text-xs, 16px);
-      }
-    }
   }
 }
 
