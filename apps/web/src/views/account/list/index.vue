@@ -37,6 +37,9 @@ const operation = ref([
     power: !role.isViewer,
   },
   {
+    separator: true,
+  },
+  {
     name: 'delete',
     label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
@@ -100,13 +103,12 @@ function onRemark(data: any) {
     },
     data: {
       props: {
-        title: $t('Add notes to profile'),
-        content: $t('Please add notes down below.'),
+        title: $t('为所选账号添加备注'),
         inputs: [
           {
             type: 'textarea',
             name: 'platformRemarks',
-            placeholder: $t('Your notes here...'),
+            placeholder: $t('请输入备注'),
             value: data.platformRemarks,
           },
         ],
@@ -169,6 +171,10 @@ function deletePopup(data: any) {
             </template>
           </CustomEmpty>
         </template>
+        <template #remark="{ data }">
+          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+        </template>
         <template #platform="{ data }">
           <div class="platform">
             <img class="platform-img" :src="data.platformIcon">
@@ -186,7 +192,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">
-            <RemarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" />
+            <!-- <RemarkIcon :value="data.platformRemarks" :on-confirm="(params: any) => addRemark(params, data)" /> -->
             <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>

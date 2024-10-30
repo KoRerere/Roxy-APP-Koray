@@ -1,7 +1,4 @@
-import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
 import { $t } from '/@/locales'
-
-type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const columnsConfig = {
   key: 'account.list',
@@ -14,11 +11,12 @@ const columnsConfig = {
     },
     {
       title: $t('备注'),
-      key: 'link',
-      getText: (data: Data) => data.platformName || '--',
+      key: 'remark',
+      slot: 'remark',
     },
     {
       title: $t('已关联窗口'),
+      key: 'related',
       slot: 'related',
     },
     {

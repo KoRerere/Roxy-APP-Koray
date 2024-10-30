@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
 import { type Operation, operationPower } from '/@/utils'
 
 const props = defineProps({
@@ -39,7 +40,7 @@ function openBrowser() {
 <template>
   <div class="cursor-pointer open" @click="openBrowser">
     <RxSvgIcon name="base/rx_ic_chrome" color="#12A3FC" />
-    <span>Open</span>
+    <span>{{ $t('打开') }}</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
     <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />

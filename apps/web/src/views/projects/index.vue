@@ -81,18 +81,9 @@ function tableRequest() {
 }
 
 function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>) {
-  let message = ''
-
-  if (Array.isArray(item)) {
-    message = $t(`Are you sure you want to delete the {count} selected items?`, { count: item.length })
-  }
-  else {
-    message = $t('您确认要删除 {projectName} 项目吗？该操作会移除所有项目成员，且所有窗口将回归默认项目。', { projectName: item.projectName })
-  }
-
   confirm.require({
     header: $t('删除项目'),
-    message,
+    message: $t('您确认要删除 {projectName} 项目吗？该操作会移除所有项目成员，且所有窗口将回归默认项目。', { projectName: item.projectName }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',

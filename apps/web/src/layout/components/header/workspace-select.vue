@@ -19,30 +19,30 @@ const formSchemas = defineFormSchema([
   {
     field: 'workspaceName',
     component: 'InputText',
-    label: 'Name',
+    label: $t('空间名称'),
     componentProps: {
-      placeholder: $t('Please enter your workspace name'),
+      placeholder: $t('请输入空间名称'),
     },
     rule: {
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, $t('Workspace name is required'))
-          .min(2, $t('Workspace name must be at least 2 characters long'))
-          .max(30, $t('Workspace name must be less than 30 characters'))
+          .min(1, $t('请输入空间名称'))
+          .min(2, $t('空间名称最少 2 个字符'))
+          .max(30, $t('空间名称最多 30 个字符'))
       },
     },
   },
   {
     field: 'workspacePicture',
     component: ({ formModel }) => <RxEmojiPicker v-model={formModel.workspacePicture} class="!w-[fit-content]" />,
-    label: 'Icon',
+    label: $t('空间图标'),
   },
 ])
 
 function showCreateWorkspaceDialog() {
   dialog.showModal({
-    header: $t('Create new workspace'),
+    header: $t('创建新的工作空间'),
     class: 'w-[500px]',
     schemas: formSchemas,
     async handleOk(formModel) {

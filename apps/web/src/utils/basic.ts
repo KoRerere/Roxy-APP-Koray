@@ -113,7 +113,7 @@ export async function readCookiesFile(): Promise<any> {
         resolve({
           code: isOk ? 0 : -1,
           data: isOk ? reader.result : null,
-          message: isOk ? $t('Read successfully') : $t('Cookie format error, please check the format'),
+          message: isOk ? $t('导入成功') : $t('导入 Cookie 格式错误，请检查格式'),
         })
       }
     })

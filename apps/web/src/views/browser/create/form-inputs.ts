@@ -264,9 +264,15 @@ export function getInputsGroup(data: any = {}) {
       },
       iconClick: async (input: any) => {
         const res = await readCookiesFile()
-        if (res?.data) {
-          input.value = res.data
-          input.invalid = false
+        if (res) {
+          if (res.data) {
+            input.value = res.data
+            input.invalid = false
+          }
+          else {
+            input.invalid = true
+            input.errorMsg = res.message
+          }
         }
       },
       onBlur(event: any) {

@@ -65,17 +65,19 @@ function handleDeleteConfirm() {
     return (
       <div class={styles['delete-confirm']}>
         <div class={styles['delete-confirm-title']}>
-          {$t('Are you sure to delete the Workspace?')}
-        </div>
-        <div class={styles['delete-confirm-content']}>
-          <I18nT keypath={$t('This action can’t be undo, To confirm, type {workspaceName} in the box below.', { workspaceName: '{workspaceName}' })}>
+          <I18nT keypath={$t('您确认要删除 {workspaceName} 工作空间吗？', { workspaceName: '{workspaceName}' })}>
             {{ workspaceName: () => <b class="mx-1">{currentWorkspace.value?.workspaceName}</b> }}
           </I18nT>
         </div>
-        <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('Workspace name')} />
+        <div class={styles['delete-confirm-content']}>
+          <I18nT keypath={$t('该操作不可逆，删除后将会清空所有该空间的相关内容（窗口/项目/平台账号/代理/团队成员/ API 等）{br}要确认删除，请在下方输入空间名称', { br: '{br}' })}>
+            {{ br: () => <br /> }}
+          </I18nT>
+        </div>
+        <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('请确认要删除的空间名称')} />
         <div class="w-full flex justify-end gap-2">
-          <RxButton outlined label={$t('Cancel')} onClick={() => dialogRef.value.close()} />
-          <RxButton severity="danger" label={$t('Delete Workspace')} disabled={workspaceName.value !== currentWorkspace.value?.workspaceName} onClick={confirmDelete} />
+          <RxButton outlined label={$t('取消')} onClick={() => dialogRef.value.close()} />
+          <RxButton severity="danger" label={$t('删除空间')} disabled={workspaceName.value !== currentWorkspace.value?.workspaceName} onClick={confirmDelete} />
         </div>
       </div>
     )
