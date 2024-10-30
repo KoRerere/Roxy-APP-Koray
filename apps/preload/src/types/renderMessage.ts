@@ -95,6 +95,8 @@ export interface RenderMessage {
   'util:encryptAESGCM': (payload: string) => string
   /** AES-GCM 解密 */
   'util:decryptAESGCM': (payload: string) => string
+  /** 检查端口是否被占用, true 则为被占用 */
+  'util:checkPort': (port: number) => Promise<boolean>
   /** 获取网关配置 */
   'util:getGatewayConfig': () => Promise<string>
 

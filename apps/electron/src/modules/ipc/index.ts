@@ -5,6 +5,7 @@ import { app, dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import path from 'node:path'
 import url from 'node:url'
+import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName } from '/@/constants'
@@ -316,6 +317,18 @@ ipcMain.on('util:decryptAESGCM', (msg) => {
 /** 获取网关配置 */
 ipcMain.on('util:getGatewayConfig', () => {
   return getGatewayConfig()
+})
+
+/** 检查端口是否被占用 */
+ipcMain.on('util:checkPort', async (port: number) => {
+  try {
+    const availablePort = await getPortPromise({ port })
+    return availablePort !== port
+  }
+  catch (error) {
+    console.error('Error checking port:', error)
+    return false
+  }
 })
 
 /** 前端已准备就绪 */
