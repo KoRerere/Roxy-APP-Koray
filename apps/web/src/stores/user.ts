@@ -8,6 +8,7 @@ type UserInfo = Partial<UserGetUserInfoListData['data']>
 export const useUserStore = defineStore('user', () => {
   const userInfo = ref<UserInfo>({})
   const tokenRef = ref('')
+  const appVersion = ref('')
   const rememberMe = ref(false)
   /** rememberMe 为 true 的时候有值 */
   const password = ref('')
@@ -53,7 +54,11 @@ export const useUserStore = defineStore('user', () => {
     }
   }, { priority: 'background' })
 
-  return { token: tokenRef, rememberMe, userInfo, password, setPassword, clearUserInfo, setToken, getUserInfo }
+  electronAPI.send('app:getAppVersion').then((version) => {
+    appVersion.value = version
+  })
+
+  return { token: tokenRef, rememberMe, userInfo, password, appVersion, setPassword, clearUserInfo, setToken, getUserInfo }
 }, {
   persist: true,
 })

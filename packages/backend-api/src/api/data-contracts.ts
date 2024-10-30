@@ -1186,6 +1186,7 @@ export interface LoginCreateData {
     user_name: string;
     user_id: number;
     role: string;
+    is_migrate: boolean;
   };
   msg: string;
 }
@@ -1697,6 +1698,8 @@ export interface LoginGoogleCreateData {
     user_id: number;
     /** 账号类型 */
     role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
   };
   msg: string;
 }
@@ -1719,6 +1722,8 @@ export interface LoginGoogleV2CreateData {
     user_id: number;
     /** 账号类型 */
     role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
   };
   msg: string;
 }
@@ -1755,17 +1760,22 @@ export interface UserChangeUsernameCreateData {
   msg: string;
 }
 
-export interface UseCheckBindEmailVerCodeListParams {
+export interface UserCheckBindEmailVerCodeListParams {
   /** 邮箱 */
   email: string;
   /** 验证码 */
   ver_code: string;
 }
 
-export interface UseCheckBindEmailVerCodeListData {
+export interface UserCheckBindEmailVerCodeListData {
   code: number;
   /** 验证码是成功 */
   data: boolean;
+  msg: string;
+}
+
+export interface UserMigrateDataListData {
+  code: number;
   msg: string;
 }
 

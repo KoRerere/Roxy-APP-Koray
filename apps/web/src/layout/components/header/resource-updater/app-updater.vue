@@ -4,13 +4,14 @@ import './rich-text/'
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
 }>()
 
 const confirm = useConfirm()
-const appVersion = ref('')
+const userStore = useUserStore()
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -57,10 +58,6 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
     // window.electronAPI.send('app:download-update', info)
   }
 }
-
-electronAPI.send('app:getAppVersion').then((version) => {
-  appVersion.value = version
-})
 </script>
 
 <template>
@@ -90,7 +87,7 @@ electronAPI.send('app:getAppVersion').then((version) => {
           <RxSvgIcon name="base/logo" class="w-[48px] h-[48px]" />
           <div class="content">
             <div class="version">
-              v{{ appVersion }}
+              v{{ userStore.appVersion }}
             </div>
             <div class="tips">
               {{ $t('您的客户端已是最新版本') }}

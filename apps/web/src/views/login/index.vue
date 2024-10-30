@@ -1,11 +1,13 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
+import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
+import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
 const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
@@ -19,14 +21,25 @@ const signFormData = ref<LoginCreatePayload>({
 
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
+const [dialog] = useDialog()
 
 async function handleSubmit() {
   console.log(signFormData)
   signFormData.value.user_name = signFormData.value.user_name.trim()
-  const { code, data, msg = $t('Logon failed') } = await API.base.loginCreate(signFormData.value)
+  const { code, data, msg } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+    return
+  }
+  if (data.is_migrate) {
+    dialog.showModal({
+      slots: {
+        container: ({ closeCallback }) => (
+          <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data.token)} />
+        ),
+      },
+    })
     return
   }
 
@@ -113,7 +126,7 @@ provideLoginContext({
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 9999;
+  z-index: 10;
   display: flex;
   width: 330px;
   flex-direction: column;

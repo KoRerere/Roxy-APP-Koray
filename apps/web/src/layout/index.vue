@@ -10,6 +10,7 @@ import RxLayoutHeader from './components/header/index.vue'
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
+const loading = ref<boolean>(false)
 
 type DictMap = UserGetDictVersionListData['data']
 type DictItem = UserGetSystemDictV2CreateData['data'][number]
@@ -47,6 +48,13 @@ onMounted(() => {
   getDictVersion()
 })
 
+watch(() => currentWorkspace.value?.id, () => {
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+  }, 2200)
+}, { immediate: true })
+
 function handleSideTransitionend() {
   transitionend.value = true
 }
@@ -57,7 +65,11 @@ function handleSideTransitionstart() {
 </script>
 
 <template>
-  <div class="rx-layout">
+  <div v-show="loading" class="absolute inset-0 flex flex-col items-center justify-center gap-[16px] z-10 bg-white/90">
+    <SvgIcon name="base/logo" size="64" />
+    <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
+  </div>
+  <div v-show="!loading" class="rx-layout">
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
          @transitionend="handleSideTransitionend"
     >

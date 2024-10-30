@@ -49,9 +49,7 @@ export function useInviteUserFormDialog() {
                   <div class="flex items-center">
                     <Checkbox v-model={isInviteMore.value} input-id="ingredient1" binary />
                     <label for="ingredient1" class="ml-2">
-                      {' '}
                       {$t('发送 & 邀请更多')}
-                      {' '}
                     </label>
                   </div>
                 )

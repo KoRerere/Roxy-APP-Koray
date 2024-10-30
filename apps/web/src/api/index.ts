@@ -33,12 +33,12 @@ httpClient.instance.interceptors.request.use(async (config) => {
   }
   config.baseURL = baseURL
 
-  const { token } = useUserStore()
+  const { token, appVersion } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
   const { currentLocale } = useSimpleLocale()
-  config.headers.token = token
+  config.headers.token ||= token
   config.headers.language = currentLocale
-  config.headers.appVersion = '3.0.0'
+  config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
 
   await handleRequest(config)

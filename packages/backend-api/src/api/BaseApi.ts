@@ -24,8 +24,6 @@ import {
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
   SendEmailRegisterVerifyCodeListParams,
-  UseCheckBindEmailVerCodeListData,
-  UseCheckBindEmailVerCodeListParams,
   UserChangeAccountCreateData,
   UserChangeAccountCreatePayload,
   UserChangeEmailCreateData,
@@ -34,6 +32,8 @@ import {
   UserChangePwdCreatePayload,
   UserChangeUsernameCreateData,
   UserChangeUsernameCreatePayload,
+  UserCheckBindEmailVerCodeListData,
+  UserCheckBindEmailVerCodeListParams,
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
@@ -51,6 +51,7 @@ import {
   UserGetUserInfoListData,
   UserMdfTeamInfoCreateData,
   UserMdfTeamInfoCreatePayload,
+  UserMigrateDataListData,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
   UserSendEmailVerifyCodeListData,
@@ -576,16 +577,32 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UseCheckBindEmailVerCodeList
+   * @name UserCheckBindEmailVerCodeList
    * @summary 比对验证码
-   * @request GET:/use_check_bind_email_ver_code
-   * @response `200` `UseCheckBindEmailVerCodeListData`
+   * @request GET:/user_check_bind_email_ver_code
+   * @response `200` `UserCheckBindEmailVerCodeListData`
    */
-  useCheckBindEmailVerCodeList = (query: UseCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
-    this.http.request<UseCheckBindEmailVerCodeListData, any>({
-      path: `/use_check_bind_email_ver_code`,
+  userCheckBindEmailVerCodeList = (query: UserCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
+    this.http.request<UserCheckBindEmailVerCodeListData, any>({
+      path: `/user_check_bind_email_ver_code`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserMigrateDataList
+   * @summary 用户迁移数据
+   * @request GET:/user_migrate_data
+   * @response `200` `UserMigrateDataListData`
+   */
+  userMigrateDataList = (params: RequestParams = {}) =>
+    this.http.request<UserMigrateDataListData, any>({
+      path: `/user_migrate_data`,
+      method: "GET",
       format: "json",
       ...params,
     });
