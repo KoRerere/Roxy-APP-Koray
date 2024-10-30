@@ -94,16 +94,11 @@ export function getInputs(data: any = {}) {
           value: data.port ?? '',
           placeholder: $t('端口'),
           required: true,
-          onblur: () => {
-            // const formData = getFormData(inputs.value)
-            // const result = z.number().min(0).max(65535).safeParse(formData.port)
-            // if (result.error) {
-            //   setInputFieldByInputKey(inputs.value, 'port', 'errorMsg', 'between 0~65535')
-            // }
-            // else {
-            //   port.value = formData.port
-            //   updateApiKeys()
-            // }
+          onBlur: async (event: any) => {
+            if (event.target.value) {
+              const res = await electronAPI.send('util:checkPort', event.target.value)
+              console.log('🚀 ~ onBlur: ~ res:', res)
+            }
           },
         },
       ],
