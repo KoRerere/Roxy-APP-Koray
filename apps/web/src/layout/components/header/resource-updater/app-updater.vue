@@ -4,6 +4,7 @@ import './rich-text/'
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 
 defineProps<{
@@ -12,6 +13,7 @@ defineProps<{
 
 const confirm = useConfirm()
 const userStore = useUserStore()
+const { currentLocale } = useSimpleLocale()
 
 function formatClientBtnLabel(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
@@ -73,7 +75,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
           </div>
           <div class="pl-[56px]">
-            <rich-text :html="item.upgradeContent" />
+            <rich-text :html="item.originUpgradeData?.[ currentLocale === 'zh-CN' ? 'upgradeContent' : 'upgradeContentEn']" />
             <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
                       @click="handleClientItemClick(item)"
             />

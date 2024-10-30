@@ -6,6 +6,7 @@ import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
+import mixpanel from 'mixpanel-browser'
 import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import DialogService from 'primevue/dialogservice'
@@ -19,6 +20,12 @@ import { useSimpleLocale } from '/@/stores/locale'
 import myPreset from '/@/styles/primevuePresets'
 import App from './App.vue'
 import router from './router'
+
+mixpanel.init('96de69873066ada837f8722625e0b764', {
+  debug: true,
+  track_pageview: true,
+  persistence: 'localStorage',
+})
 
 console.log('myPreset', myPreset)
 const app = createApp(App)

@@ -49,9 +49,6 @@ onMounted(() => {
 async function getKernelList() {
   const list = await window.electronAPI.send('app:getCoreList')
   console.log('getKernelList', list)
-  list.forEach((item) => {
-    item.upgradeContent = `<p><strong>Improvements</strong></p><ul><li style=\"line-height: 1;\">We’ve improved the performance of the profiles list rendering</li></ul><p style=\"line-height: 1;\"><strong>Bug fixes</strong></p><ul><li style=\"line-height: 1;\">We’ve fixed a couple of bugs and RoxyBrowser is now compatible with macOS</li><li style=\"line-height: 1;\">Various memory leaks were fixed in RoxyBrowser and certain profiles will now render correctly</li></ul>`
-  })
   kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
 }
 
@@ -60,7 +57,6 @@ window.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
     const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
-    data.upgradeContent = `<p><strong>Improvements</strong></p><ul><li style=\"line-height: 1;\">We’ve improved the performance of the profiles list rendering</li></ul><p style=\"line-height: 1;\"><strong>Bug fixes</strong></p><ul><li style=\"line-height: 1;\">We’ve fixed a couple of bugs and RoxyBrowser is now compatible with macOS</li><li style=\"line-height: 1;\">Various memory leaks were fixed in RoxyBrowser and certain profiles will now render correctly</li></ul>`
     if (index === -1) {
       kernelUpdates.value.push(data)
     }

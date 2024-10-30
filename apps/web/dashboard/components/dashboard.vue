@@ -126,7 +126,7 @@ onBeforeMount(() => {
     <div class="header">
       <div class="left">
         <div class="sort-number">
-          {{ windowInfo.workspaceName?.slice(0, 3) }}-{{ windowInfo.windowSortNum }}
+          {{ windowInfo.workspaceName?.slice(0, 3).toLocaleUpperCase() }}-{{ windowInfo.windowSortNum }}
         </div>
         <div class="window-name">
           {{ windowInfo.windowName }}

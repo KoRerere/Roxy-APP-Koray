@@ -38,9 +38,10 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
   /** 获取内核列表（供前端展示用） */
   async getCoreList(): Promise<ResourceUpdateMessage[]> {
-    await this.fetchAvailableCoreList()
-    const arr = this.availableCoreList.map(async (core) => {
+    const availableCoreList = await this.fetchAvailableCoreList()
+    const arr = availableCoreList.map(async (core) => {
       return {
+        ...core,
         type: 'kernel',
         version: core.version,
         coreVersion: core.coreVersion,
@@ -75,7 +76,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
     const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
-    console.log(result)
+    console.log('user_get_core_upgrade', result.data)
     this.availableCoreList = result.data?.rows || []
     return this.availableCoreList
   }
