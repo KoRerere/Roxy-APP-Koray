@@ -34,7 +34,7 @@ function fileDrop(event: Event) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
-    onlyErrorToast(-1, $t('Only supports Excel type files'))
+    onlyErrorToast(-1, $t('仅支持Excel类型文件'))
     return
   }
   handleBeforeUpload(file)
@@ -65,7 +65,7 @@ const fileData = reactive({
 
 async function handleBeforeUpload(rawFile: any) {
   if (rawFile.size > MAX_FILE_SIZE) {
-    onlyErrorToast(-1, $t('The file size cannot exceed 5MB'))
+    onlyErrorToast(-1, $t('文件大小不能超过 5MB'))
     return
   }
 
@@ -106,7 +106,7 @@ async function handleBeforeUpload(rawFile: any) {
   }
 
   if (excelData.length === 0) {
-    onlyErrorToast(-1, $t('The imported content cannot be 0'))
+    onlyErrorToast(-1, $t('导入的内容不能为空'))
     return
   }
 

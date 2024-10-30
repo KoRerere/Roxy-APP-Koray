@@ -51,7 +51,7 @@ const updateApiKeys = useDebounceFn(() => {
     open: open.value,
     port: port.value,
   }).then(({ msg }) => {
-    toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
   })
 }, 300)
 
@@ -110,7 +110,7 @@ async function resetApiKey() {
 
 async function onCopy() {
   copyText(apiKey.value)
-  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Copied successfully'), life: 2500 })
+  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
 }
 
 onBeforeMount(() => {
@@ -130,7 +130,7 @@ onBeforeMount(() => {
         <template v-if="open">
           <div class="api-content">
             <div class="api-content-reset">
-              <div>{{ $t('API 秘钥') }}</div>
+              <div>{{ $t('API 密钥') }}</div>
               <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">

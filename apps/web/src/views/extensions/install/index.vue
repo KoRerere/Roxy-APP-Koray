@@ -185,7 +185,7 @@ function installViaUrl() {
       try {
         await uploadRecordCheck()
         const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
-        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('Installation successful')] : ['error', $t('Installation failed')]
+        const [severity, summary]: [ToastMessageOptions['severity'], string] = code === 0 ? ['success', $t('安装成功')] : ['error', $t('安装失败')]
         toast.add({ severity, summary, detail: msg, life: 2500 })
 
         if (code === 0) {
@@ -248,7 +248,7 @@ async function onInstall(data: any) {
 
 async function checkUpdate(data: any) {
   await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
-  toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Check completed'), life: 2500 })
+  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成'), life: 2500 })
   filters.onChange()
 }
 
@@ -275,7 +275,7 @@ async function deleteExtension(datas: any) {
         const ids = datas.map((item: any) => item.id)
         const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
-        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
         filters.resetFilters()
       }
       catch (error) {
@@ -343,7 +343,7 @@ defineExpose({
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton :label="$t('Update')" size="sm" @click="updateExtension(data)" />
+        <RxButton :label="$t('更新')" size="sm" @click="updateExtension(data)" />
         <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" />
       </div>
       <div v-else>

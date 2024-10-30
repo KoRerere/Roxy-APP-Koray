@@ -32,8 +32,8 @@ export const inviteUsersFormSchemas = defineFormSchema([
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(1, $t('Email is required'))
-          .email($t('Invalid email address'))
+          .min(1, $t('请输入邮箱'))
+          .email($t('请输入正确的邮箱'))
       },
     },
   },

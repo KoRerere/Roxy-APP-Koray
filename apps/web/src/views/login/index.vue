@@ -26,7 +26,7 @@ const [dialog] = useDialog()
 async function handleSubmit() {
   console.log(signFormData)
   signFormData.value.user_name = signFormData.value.user_name.trim()
-  const { code, data, msg } = await API.base.loginCreate(signFormData.value)
+  const { code, data, msg = $t('登录失败') } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
@@ -55,7 +55,7 @@ async function afterLogin(token: string) {
 }
 
 async function googleAuth2Login(googleToken: string) {
-  const { code, data, msg = $t('Logon failed') } = await API.base.loginGoogleV2Create({ googleToken })
+  const { code, data, msg = $t('登录失败') } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
     afterLogin(data.token)
   }

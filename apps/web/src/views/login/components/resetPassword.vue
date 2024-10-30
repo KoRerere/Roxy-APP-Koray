@@ -40,7 +40,7 @@ async function handleSubmit() {
       ver_code: emailCode.value,
     })
     if (code === 0) {
-      toast.add({ severity: 'success', summary: 'Success', detail: $t('Password reset successfully'), life: 2500 })
+      toast.add({ severity: 'success', summary: 'Success', detail: $t('密码重置成功'), life: 2500 })
       setSignFormData({ user_name: email.value, password: '' })
       setCurrentComponent('signForm')
     }
@@ -66,7 +66,7 @@ function receiveEmailCode(code: string) {
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
       <div class="box">
-        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('Your email haven’t been signed up.')" :content="$t('Please checkout your email and try again.')" />
+        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')" />
         <div class="title">
           {{ $t('重置密码') }}
         </div>

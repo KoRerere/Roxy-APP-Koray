@@ -65,10 +65,10 @@ export function useInviteUserFormDialog() {
           : await API.limit.userInviteCreate(formModel)
         tableRef?.value?.refresh()
         if (code === 0) {
-          toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 3000 })
+          toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 3000 })
         }
         else {
-          toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Failed to send invitation'), life: 3000 })
+          toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg || $t('发送邀请失败'), life: 3000 })
         }
         if (isInviteMore.value) {
           dialog.formRef.value?.resetFields()

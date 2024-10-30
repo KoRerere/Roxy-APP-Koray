@@ -50,7 +50,7 @@ async function confirm() {
     close()
   }
   catch (error) {
-    toast.add({ severity: 'error', summary: $t('Error'), detail: error, life: 2500 })
+    toast.add({ severity: 'error', summary: $t('发生错误'), detail: error, life: 2500 })
   }
 }
 

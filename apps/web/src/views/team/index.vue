@@ -120,7 +120,7 @@ function tableOperation(data: TableRow) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       disabled,
-      disabledTips: $t('Insufficient permissions'),
+      disabledTips: $t('权限不足'),
       power: !role.isViewer,
       quick: true,
     },
@@ -132,7 +132,7 @@ function tableOperation(data: TableRow) {
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       disabled,
-      disabledTips: $t('Insufficient permissions'),
+      disabledTips: $t('权限不足'),
       power: !role.isViewer,
       quick: true,
     },
@@ -167,7 +167,7 @@ async function deleteMember(data: TableRow) {
       try {
         const projectIds = data.project_info.map(item => item.project_id)
         const { msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
-        toast.add({ severity: 'success', summary: $t('Success'), detail: msg, life: 2500 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
         filters.onChange()
       }
       catch (error) {

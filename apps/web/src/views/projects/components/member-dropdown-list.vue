@@ -59,7 +59,7 @@ getMembers()
     </div>
     <div class="manage-users">
       <RouterLink :to="{ name: 'teams' }">
-        {{ $t('Manage Users') }}
+        {{ $t('管理成员') }}
       </RouterLink>
     </div>
   </Popover>

@@ -55,10 +55,10 @@ function handleDeleteConfirm() {
       if (code === 0) {
         workspaceStore.getWorkspaceList()
         dialogRef.value.close()
-        toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Workspace deleted successfully'), life: 3000 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('Workspace deleted successfully'), life: 3000 })
       }
       else {
-        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
+        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
       }
     }
 
@@ -94,10 +94,10 @@ async function handleSaveChange() {
   const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
   if (code === 0) {
     workspaceStore.getWorkspaceList()
-    toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Workspace updated successfully'), life: 3000 })
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('Workspace updated successfully'), life: 3000 })
   }
   else {
-    toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
+    toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
   }
 }
 
@@ -119,12 +119,12 @@ function leaveWorkspace() {
     accept: async () => {
       const { code, msg } = await API.limit.userLeaveWorkspaceList()
       if (code === 0) {
-        toast.add({ severity: 'success', summary: $t('Success'), detail: $t('You have left the workspace'), life: 3000 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('You have left the workspace'), life: 3000 })
         await workspaceStore.getWorkspaceList()
         router.push({ name: 'browser' })
       }
       else {
-        toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
+        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
       }
     },
   })

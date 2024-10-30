@@ -121,7 +121,7 @@ onMounted(() => {
               </template>
               <template v-else>
                 <div class="flex justify-center items-center min-h-40 text-6">
-                  {{ $t('No Message') }}
+                  {{ $t('暂无消息') }}
                 </div>
               </template>
             </TabPanel>

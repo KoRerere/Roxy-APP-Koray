@@ -68,7 +68,7 @@ function getFormData(isOpen: boolean) {
 
 function onCopy(dirId: string) {
   copyText(dirId)
-  showToast(0, $t('Copy success'))
+  showToast(0, $t('复制成功'))
 }
 </script>
 

@@ -80,7 +80,7 @@ function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
   if (!list.length) {
-    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('The parsing content cannot be empty'), life: 2500 })
+    toast.add({ severity: 'warn', summary: $t('warn'), detail: $t('请先输入代理信息'), life: 2500 })
     return
   }
 
@@ -117,15 +117,15 @@ function tableOperation(data: any) {
   return [
     {
       name: 'refresh',
-      label: $t('Refresh'),
+      label: $t('刷新代理'),
       icon: 'base/rx_ic_refresh',
       quick: true,
       disabled: !data.refreshUrl,
-      disabledTips: $t('Missing refresh url'),
+      disabledTips: $t('未配置刷新URL'),
     },
     {
       name: 'test',
-      label: $t('Test'),
+      label: $t('测试代理'),
       icon: 'base/rx_ic_speed_test',
       quick: true,
     },

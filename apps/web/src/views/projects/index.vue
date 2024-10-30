@@ -28,21 +28,21 @@ const role = useRoleStore()
 const operation = ref([
   {
     name: 'edit',
-    label: $t('Edit'),
+    label: $t('编辑'),
     icon: 'base/rx_ic_edit',
     power: role.isOwner,
     quick: true,
   },
   {
     name: 'invite',
-    label: $t('Invite'),
+    label: $t('邀请'),
     icon: 'base/rx_ic_user_add',
     power: role.isOwner,
     quick: true,
   },
   {
     name: 'delete',
-    label: $t('Delete'),
+    label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
     power: role.isOwner,
     quick: true,
@@ -99,10 +99,10 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()
-        toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Delete successfully'), life: 3000 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除成功'), life: 3000 })
       }
       else {
-        toast.add({ severity: 'error', summary: $t('Error'), detail: msg || $t('Delete failed'), life: 3000 })
+        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg || $t('删除失败'), life: 3000 })
       }
     },
   })

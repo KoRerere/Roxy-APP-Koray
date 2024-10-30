@@ -138,7 +138,7 @@ async function batchCreateProfile(params: any) {
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
   const diffCount = params.createCount - params.proxyInfoList.length
   if (diffCount < 0) {
-    onlyErrorToast(-1, $t('The number of agents is greater than the number of profile'))
+    onlyErrorToast(-1, $t('代理数量不能大于窗口'))
     return
   }
 
@@ -153,7 +153,7 @@ async function batchCreateProfile(params: any) {
 
 async function importProfile(params: any) {
   if (!fileAnalyzeData.value) {
-    onlyErrorToast(-1, $t('Please select a file to import.'))
+    onlyErrorToast(-1, $t('请选择要导入的文件。'))
     return
   }
   loading.value = true

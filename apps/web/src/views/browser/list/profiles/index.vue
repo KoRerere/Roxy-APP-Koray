@@ -279,7 +279,7 @@ function onRemark(datas: any) {
 
 async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    onlyErrorToast(-1, $t('Please close the profile first'))
+    onlyErrorToast(-1, $t('请先关闭窗口'))
   }
   else {
     confirm.require({

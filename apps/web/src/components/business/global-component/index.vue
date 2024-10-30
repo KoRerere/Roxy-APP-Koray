@@ -23,7 +23,7 @@ onMounted(() => {
           <span class="p-confirmdialog-message"> {{ message.message }}</span>
         </div>
         <div class="p-dialog-footer">
-          <RxButton outlined :label="$t('Cancel')" v-bind="message.rejectProps" @click="rejectCallback" />
+          <RxButton outlined :label="$t('取消')" v-bind="message.rejectProps" @click="rejectCallback" />
           <RxButton severity="danger" v-bind="message.acceptProps" @click="acceptCallback" />
         </div>
       </div>

@@ -181,7 +181,7 @@ function onRefreshTable() {
       </RyTable>
     </div>
   </div>
-  <RxDrawer v-model:visible="drawer.visible" :title="$t('Edit proxy')">
+  <RxDrawer v-model:visible="drawer.visible" :title="$t('编辑代理')">
     <template #default="{ closeCallback }">
       <EditProxy :data="drawer.data" @close="closeCallback" @confirm="onEditConfirm" />
     </template>

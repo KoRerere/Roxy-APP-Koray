@@ -47,7 +47,7 @@ async function openMenu(event: any) {
     //   return (
     //     <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={addProject}>
     //       <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
-    //       <div>{$t('Add Project')}</div>
+    //       <div>{$t('创建项目')}</div>
     //     </div>
     //   )
     // },

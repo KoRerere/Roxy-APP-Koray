@@ -43,13 +43,13 @@ window.electronAPI.on('invite:to-project', async (searchStr) => {
 /** 接受邀请 */
 async function acceptInvitation() {
   if (!inviteInfo.value?.data) {
-    toast.add({ severity: 'error', summary: $t('Error'), detail: $t('Invite code is null'), life: 3000 })
+    toast.add({ severity: 'error', summary: $t('发生错误'), detail: $t('接受邀请失败'), life: 3000 })
     return
   }
   const { code, msg, data } = await API.limit.userAddUserByProjectInfoCreate(inviteInfo.value.data)
 
   if (code === 0) {
-    toast.add({ severity: 'success', summary: $t('Success'), detail: $t('Join Success'), life: 3000 })
+    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('加入成功'), life: 3000 })
     await workspaceStore.getWorkspaceList()
     const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === Number(data))
     if (targetWorkspace) {
@@ -59,7 +59,7 @@ async function acceptInvitation() {
     router.push({ name: 'browser' })
   }
   else {
-    toast.add({ severity: 'error', summary: $t('Error'), detail: msg, life: 3000 })
+    toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
   }
 }
 
@@ -86,11 +86,11 @@ function skipInvitation() {
           </div>
         </div>
         <RxButton class="w-full" @click="acceptInvitation">
-          {{ $t('Join Workspace') }}
+          {{ $t('加入工作空间') }}
         </RxButton>
         <rx-divider />
         <RxButton class="w-full" outlined @click="skipInvitation">
-          {{ $t('Skip') }}
+          {{ $t('忽略') }}
         </RxButton>
       </div>
     </div>

@@ -148,11 +148,11 @@ export function getPreferencesPanel(data?: any): SettingsModule {
     list: [
       // !todo: 后台暂时没做，一期暂时隐藏
       // {
-      //   subtitle: $t('Interface'),
+      //   subtitle: $t('界面'),
       //   items: [
       //     {
-      //       label: $t('Language'),
-      //       text: $t('Not your language include? <span class="text-blue">Contact us</span>'),
+      //       label: $t('语言'),
+      //       text: $t('没有您需要的语言? <span class="text-blue">联系我们</span>'),
       //       name: 'language',
       //       value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
       //       props: {
@@ -167,7 +167,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       },
       //     },
       //     {
-      //       label: $t('Timezone'),
+      //       label: $t('时区'),
       //       text: $t('Some hints for you'),
       //       name: 'timeZone',
       //       value: data?.timeZone ?? '',
@@ -187,7 +187,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
       //       value: data?.appearance?.toString() ?? '',
       //       props: {
       //         options: [
-      //           { label: $t('System'), value: `${settingAppearance.system}` },
+      //           { label: $t('系统'), value: `${settingAppearance.system}` },
       //           { label: $t('Light'), value: `${settingAppearance.light}` },
       //           { label: $t('Dark'), value: `${settingAppearance.dark}` },
       //         ],
