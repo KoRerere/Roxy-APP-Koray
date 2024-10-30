@@ -50,7 +50,7 @@
     "compressing": "^1.10.1",
     "core-js": "^3.38.1",
     "crypto-js": "^4.2.0",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "electron": "22.3.27",
     "electron-builder": "25.1.8",
     "electron-log": "^5.2.0",

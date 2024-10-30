@@ -51,6 +51,30 @@ export async function startLuminet() {
   console.log('luminetBinPath encText:', encText)
   luminetProcess = execFile(appConfig.luminetBinPath, ['--arg', encText])
 
+  // 忽略的错误信息
+  const ignoreList = ['check addr  error:dial tcp: missing address']
+  // 监听 stdout 数据事件
+  luminetProcess.stdout?.on('data', (data) => {
+    if (!ignoreList.some(item => data.includes(item))) {
+      console.log(`luminetProcess stdout: ${data}`)
+    }
+  })
+
+  // 监听 stderr 数据事件
+  luminetProcess.stderr?.on('data', (data) => {
+    console.error(`luminetProcess stderr: ${data}`)
+  })
+
+  // 监听子进程关闭事件
+  luminetProcess.on('close', (code) => {
+    console.log(`luminetProcess exited with code ${code}`)
+  })
+
+  // 监听子进程错误事件
+  luminetProcess.on('error', (error) => {
+    console.error('luminetProcess Error executing file:', error)
+  })
+
   console.log(`Child process ID: ${luminetProcess.pid}`)
   await setTimeout(100)
 }
