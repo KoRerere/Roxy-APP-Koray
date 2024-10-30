@@ -5,12 +5,6 @@ import { $t } from '/@/locales'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
 
-const featureTitleList = ref([
-  { title: $t('Feature'), key: 'new_function' },
-  { title: $t('Improvements'), key: 'optimize' },
-  { title: $t('Bug fixes'), key: 'resolve_bug' },
-])
-
 const popoverRef = useTemplateRef('popover')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
@@ -109,7 +103,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </TabList>
         <TabPanels class="!pa-0">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
-            <component :is="tab.component" :upgrade-list="tab.list" :feature-title-list="featureTitleList" />
+            <component :is="tab.component" :upgrade-list="tab.list" />
           </TabPanel>
         </TabPanels>
       </Tabs>

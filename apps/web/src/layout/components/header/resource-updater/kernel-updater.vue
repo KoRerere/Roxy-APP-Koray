@@ -2,11 +2,9 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
-import FeatureContent from './feature-content.vue'
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
-  featureTitleList: any[]
 }>()
 
 const collapsedMap = ref<Recordable<boolean>>({})
@@ -54,7 +52,8 @@ function handleCollapsed(item: ResourceUpdateMessage) {
             </div>
           </div>
           <RxButton severity="contrast" outlined size="sm" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-            :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
+                    :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)"
+          />
         </div>
         <rich-text :html="item.upgradeContent" class="updater-content" />
       </div>

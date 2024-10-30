@@ -32,7 +32,7 @@ function handleCurrentChange(val) {
 }
 
 function getLangs() {
-  const chineseRegex = /[\u4E00-\u9FA5]/g
+  // const chineseRegex = /[\u4E00-\u9FA5]/g
   fetch('./api/getLangs').then(res => res.json()).then((data) => {
     console.log('/api/getLangs', data)
     const result = data
@@ -41,7 +41,7 @@ function getLangs() {
     // })
       .reduce((acc, item) => {
         const { translated = [], untranslated = [] } = Object.groupBy(Object.entries<string>(item.body), ([key, value]) => {
-          return !chineseRegex.test(key) && value ? 'translated' : 'untranslated'
+          return value ? 'translated' : 'untranslated'
         })
 
         const { fileName } = item
@@ -77,7 +77,7 @@ function getLangs() {
               return 100
             }
             const { translated = [], untranslated = [] } = langList.value.find(n => n.fileName === fileName)!
-            return Math.ceil(translated?.length / untranslated.length * 100)
+            return Math.ceil(translated?.length / (untranslated.length + translated?.length) * 100)
           }),
         })
         return acc

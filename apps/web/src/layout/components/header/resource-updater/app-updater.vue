@@ -7,7 +7,6 @@ import { $t } from '/@/locales'
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
-  featureTitleList: any[]
 }>()
 
 const confirm = useConfirm()
