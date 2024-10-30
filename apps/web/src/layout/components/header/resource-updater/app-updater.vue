@@ -68,21 +68,19 @@ electronAPI.send('app:getAppVersion').then((version) => {
   <div class="app-updater">
     <template v-if="upgradeList.length">
       <template v-for="item in upgradeList" :key="item.releaseTime">
-        <div class="flex items-start">
-          <div class="upgrade-container">
-            <div class="upgrade-header">
-              <div class="upgrade-title">
-                <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
-                <span>{{ item.version }} {{ item.upgradeTitle }} </span>
-              </div>
-              <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
+        <div class="upgrade-container">
+          <div class="upgrade-header">
+            <div class="upgrade-title">
+              <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
+              <span>{{ item.version }} {{ item.upgradeTitle }} </span>
             </div>
-            <div class="pl-[56px]">
-              <rich-text :html="item.upgradeContent" />
-              <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
-                        @click="handleClientItemClick(item)"
-              />
-            </div>
+            <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
+          </div>
+          <div class="pl-[56px]">
+            <rich-text :html="item.upgradeContent" />
+            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
+                      @click="handleClientItemClick(item)"
+            />
           </div>
         </div>
       </template>
@@ -115,6 +113,7 @@ electronAPI.send('app:getAppVersion').then((version) => {
 }
 
 .upgrade-container {
+  width: 100%;
   display: flex;
   padding: var(--spacing-xl, 12px) 0px var(--spacing-4xl, 24px) 0px;
   flex-direction: column;

@@ -1,5 +1,7 @@
-<script setup>
-const iconMap = {
+<script setup lang="ts">
+import type { SvgNames } from '../../rx-icon'
+
+const iconMap: Record<string, SvgNames> = {
   success: 'base/rx_ic_check_fill',
   warn: 'base/rx_ic_delete_fill',
   error: 'base/rx_ic_info_fill',

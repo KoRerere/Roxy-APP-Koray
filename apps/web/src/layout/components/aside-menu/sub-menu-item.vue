@@ -18,7 +18,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
 
 <template>
-  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]">
+  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }">
     <template v-for="item in items" :key="item.name">
       <!-- 分组 -->
       <template v-if="isGroup(item)">
@@ -51,9 +51,14 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   align-items: flex-start;
   gap: var(--spacing-md, 6px);
   align-self: stretch;
-  transition: height 0.3s;
   padding-left: calc(26px * v-bind(level));
   margin-bottom: var(--spacing-xl, 12px);
+
+  &.level-1 {
+    max-height: calc(var(--child-count) * 34px);
+    transition: max-height calc(max(calc(var(--child-count) / 3), 1) * 100ms) ease-in-out;
+    overflow: hidden;
+  }
 
   &:last-of-type,
   &.collapsed {
@@ -62,7 +67,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
   &.collapsedChildren {
     height: calc-size(auto);
-    height: 0;
+    max-height: 0;
     overflow: hidden;
   }
 

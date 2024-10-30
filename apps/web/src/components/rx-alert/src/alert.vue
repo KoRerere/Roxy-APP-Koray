@@ -87,23 +87,23 @@ function handleClose() {
 <style lang="scss" scoped>
 :where(.rx-alert) {
   display: flex;
+  width: 360px;
   padding: var(--spacing-xl, 12px);
   align-items: flex-start;
   gap: 10px;
-  align-self: stretch;
   border-radius: var(--radius-md, 6px);
-  background: v-bind('styles.backgroundColor');
-  border: v-bind('styles.border');
-  transition: all 0.2s;
+  background: var(--Color-green-100, #ebfcf0);
+  overflow: hidden;
+  transition: height 0.2s;
 
   &.hide {
     height: 0;
     padding: 0;
     border: none;
-    overflow: hidden;
   }
 
   .rx-alert-body {
+    flex: auto;
     display: flex;
     flex-direction: column;
     align-items: flex-start;

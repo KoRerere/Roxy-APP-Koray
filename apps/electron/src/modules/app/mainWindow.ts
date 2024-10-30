@@ -79,7 +79,7 @@ export async function intoMainPage() {
   win.setMinimumSize(Math.min(minWidth, width), Math.min(minHeight, height))
   win.center()
   await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
-  win.setTitle(`${win.getTitle()} | ${app.getVersion()}`)
+  win.setTitle(`${win.getTitle()} | ${app.getVersion()}${isDev ? ' [dev]' : ''}`)
   console.log('进入主应用')
   setTimeout(() => {
     win.show()
