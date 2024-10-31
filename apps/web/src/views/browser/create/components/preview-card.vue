@@ -135,8 +135,8 @@ $spacing-x: var(--spacing-xl, 12px);
       gap: var(--spacing-sm, 4px);
 
       color: var(--Color-neutrals-800, #252a2e);
-      font-family: 'DM Mono';
-      font-size: 13px;
+      font-family: 'JetBrains Mono';
+      font-size: 12px;
       font-weight: 500;
       line-height: normal;
 

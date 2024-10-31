@@ -154,6 +154,25 @@ export function getInputs(data: any = {}) {
         }
       },
     },
+    {
+      separator: true,
+    },
+    {
+      label: $t('IP 检测'),
+      type: 'select',
+      name: 'checkChannel',
+      value: data.checkChannel || $dict_map.checkChannel[0]?.value,
+      props: {
+        options: $dict_map.checkChannel,
+        optionValue: 'value',
+        filter: false,
+        size: 'lg',
+      },
+      slot: 'ipchecker',
+    },
+    {
+      slot: 'checkermessage',
+    },
   ])
   return inputs
 }

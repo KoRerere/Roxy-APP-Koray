@@ -42,7 +42,7 @@ function save() {
 
 <template>
   <div class="flex items-center flex-col max-w-50% mt-5 mx-auto">
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto proxies">
       <ProxiesForm :inputs="formInputs" />
     </div>
     <div class="flex justify-between w-full">
@@ -57,4 +57,10 @@ function save() {
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.proxies {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+</style>

@@ -191,6 +191,7 @@ export function getInputsGroup(data: any = {}) {
       options: $dict_map.coreVersion,
       icon: 'base/rx_ic_chrome',
       required: true,
+      filter: false,
       change: async (item: any) => {
         if (item.value) {
           const fingerData = await ceateRandomFinger(inputsGroup)
@@ -205,6 +206,7 @@ export function getInputsGroup(data: any = {}) {
       value: data.userAgent,
       icon: 'base/rx_ic_shuffle',
       disabled: true,
+      rows: 4,
       iconClick: () => {
         setUaWebgl(inputsGroup)
       },
@@ -259,7 +261,7 @@ export function getInputsGroup(data: any = {}) {
       icon: 'base/rx_ic_attachment',
       errorMsg: 'Invalid cookie format',
       autoResize: false,
-      rows: 5,
+      rows: 4,
       formatValue: (input: any) => {
         return input.value ? JSON.parse(input.value) : []
       },

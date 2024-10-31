@@ -125,7 +125,8 @@ function handleClose() {
       font-size: 12px;
       font-style: normal;
       font-weight: 400;
-      line-height: 18px; /* 150% */
+      line-height: 18px;
+      /* 150% */
     }
   }
 

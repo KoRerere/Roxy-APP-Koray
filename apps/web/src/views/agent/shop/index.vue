@@ -64,5 +64,8 @@ function getInputs(data: any = {}) {
         </div>
       </template>
     </RyForm>
+
+    <RxAlert type="success" title="标题" content="内容" />
+    <RxAlert type="error" title="标题" content="内容" />
   </div>
 </template>

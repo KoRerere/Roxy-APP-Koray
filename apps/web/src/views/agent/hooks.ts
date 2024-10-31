@@ -24,7 +24,11 @@ interface ProxyCheckParams {
   proxyNetwork?: string | undefined
 }
 
-export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResult] {
+interface Options {
+  silence?: boolean
+}
+
+export function useCheckProxy(options: Options = { silence: false }): [(data: any) => Promise<CheckResult>, CheckResult] {
   const [showToast, onlyErrorToast] = useResponseToast()
   const checkeResult: CheckResult = reactive({
     loading: false,
@@ -41,7 +45,11 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
       const [code, msg] = !checkRes.ip
         ? [-1, $t('测试代理失败')]
         : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.country)}`, ip: checkRes.ip })]
-      showToast(code, msg)
+
+      if (!options.silence) {
+        showToast(code, msg)
+      }
+
       checkeResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkeResult.lastIp = checkRes.ip ?? ''
       checkeResult.lastCity = checkRes.city ?? ''

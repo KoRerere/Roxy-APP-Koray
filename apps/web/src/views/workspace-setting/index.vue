@@ -5,6 +5,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
+import { z } from 'zod'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
@@ -23,6 +24,8 @@ const workspaceStore = useWorkspaceStore()
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
+
+const errorMessage = ref('')
 const workspaceInfo = ref({
   id: currentWorkspace.value?.id,
   workspacePicture: currentWorkspace.value?.workspacePicture,
@@ -91,6 +94,9 @@ function handleDeleteConfirm() {
 }
 
 async function handleSaveChange() {
+  if (errorMessage.value)
+    return
+
   const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
   if (code === 0) {
     workspaceStore.getWorkspaceList()
@@ -129,6 +135,21 @@ function leaveWorkspace() {
     },
   })
 }
+
+function onInput() {
+  const result = z.string()
+    .min(1, $t('请输入空间名称'))
+    .min(2, $t('空间名称最少 2 个字符'))
+    .max(30, $t('空间名称最多 30 个字符'))
+    .safeParse(workspaceInfo.value.workspaceName)
+
+  if (result.error) {
+    errorMessage.value = result.error.errors[0].message
+  }
+  else {
+    errorMessage.value = ''
+  }
+}
 </script>
 
 <template>
@@ -162,11 +183,14 @@ function leaveWorkspace() {
         </div>
         <div class="w-full">
           <IconField>
-            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!workspaceInfo.workspaceName?.length" maxlength="30" class="w-full" />
+            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!!errorMessage" maxlength="30" class="w-full" @input="onInput" />
             <InputIcon class="input-limit-text">
               {{ workspaceInfo.workspaceName?.length }}/30
             </InputIcon>
           </IconField>
+          <div v-if="errorMessage" class="description !text-red">
+            {{ errorMessage }}
+          </div>
           <div class="description">
             窗口信息示例：IAM-001, IAM-002
           </div>

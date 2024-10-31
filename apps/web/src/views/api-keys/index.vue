@@ -3,10 +3,10 @@ import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
-import { z } from 'zod'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { findInputByName, setInputValue } from '/@/utils'
@@ -15,6 +15,7 @@ import { copyText } from '/@/utils/'
 const role = useRoleStore()
 const toast = useToast()
 const confirm = useConfirm()
+const [showToast] = useResponseToast()
 
 const illustrate = [
   {
@@ -41,18 +42,22 @@ const illustrate = [
   },
 ]
 
-const apiKey = ref()
-const open = ref()
-const port = ref()
+const original = ref()
+const apiConfig = ref({
+  apiKey: '',
+  port: '',
+  open: false,
+})
 
-const updateApiKeys = useDebounceFn(() => {
-  API.base.userSetUserApiCreate({
-    apiKey: apiKey.value,
-    open: open.value,
-    port: port.value,
-  }).then(({ msg }) => {
-    toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
-  })
+const updateApiKeys = useDebounceFn(async () => {
+  const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
+  if (hasChange) {
+    const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
+    showToast(code, msg)
+    if (code === 0) {
+      original.value = { ...apiConfig.value }
+    }
+  }
 }, 300)
 
 const inputs = ref([
@@ -82,7 +87,7 @@ const inputs = ref([
         return
       }
 
-      port.value = input.value
+      apiConfig.value.port = input.value
       updateApiKeys()
     },
   },
@@ -90,10 +95,9 @@ const inputs = ref([
 
 async function getApiKeys() {
   const { data } = await API.base.userGetUserApiList()
-  apiKey.value = data.apiKey
-  open.value = data.open
-  port.value = data.port
-  setInputValue(inputs.value, 'port', port.value)
+  original.value = { ...data }
+  apiConfig.value = { ...data }
+  setInputValue(inputs.value, 'port', apiConfig.value.port)
 }
 
 async function resetApiKey() {
@@ -110,14 +114,14 @@ async function resetApiKey() {
       severity: 'danger',
     },
     accept: async () => {
-      apiKey.value = await window.electronAPI.send('util:genApiKey')
+      apiConfig.value.apiKey = await window.electronAPI.send('util:genApiKey')
       updateApiKeys()
     },
   })
 }
 
 async function onCopy() {
-  copyText(apiKey.value)
+  copyText(apiConfig.value.apiKey)
   toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
 }
 
@@ -133,9 +137,9 @@ onBeforeMount(() => {
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="open" :label="open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
-        <template v-if="open">
+        <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
@@ -150,7 +154,7 @@ onBeforeMount(() => {
             <div class="api-content-key">
               <div class="flex items-center justify-between">
                 <div class="api-content-key-value">
-                  {{ apiKey }}
+                  {{ apiConfig.apiKey }}
                 </div>
                 <RxButton severity="secondary" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
               </div>
@@ -258,9 +262,9 @@ onBeforeMount(() => {
       }
 
       &-desc {
-        color: var(--Color-neutrals-500, #7c8387);
+        color: var(--Color-neutrals-300, #c7cdd1);
         font-family: Inter;
-        font-size: 10px;
+        font-size: 12px;
         line-height: 16px;
       }
     }
