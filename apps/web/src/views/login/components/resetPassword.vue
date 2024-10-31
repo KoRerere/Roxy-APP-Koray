@@ -29,6 +29,7 @@ async function handleSubmit() {
       currentStep.value = 'step2'
     }
     else {
+      mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
       toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     }
   }
@@ -40,11 +41,13 @@ async function handleSubmit() {
       ver_code: emailCode.value,
     })
     if (code === 0) {
+      mixpanel.track('resetPassword', { method: 'email', success: true })
       toast.add({ severity: 'success', summary: 'Success', detail: $t('密码重置成功'), life: 2500 })
       setSignFormData({ user_name: email.value, password: '' })
       setCurrentComponent('signForm')
     }
     else {
+      mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
       toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     }
   }

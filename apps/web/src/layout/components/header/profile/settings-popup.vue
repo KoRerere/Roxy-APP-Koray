@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
@@ -34,6 +35,8 @@ const menuList = ref(
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
+  const { luminetV2rayCompatible = false } = await electronAPI.send('app:getSoftConfig')
+  data.luminetV2rayCompatible = luminetV2rayCompatible
   settingsPanel.profiles = getProfilePanel(toRaw(userStore.userInfo))
   settingsPanel.preferences = getPreferencesPanel(data)
   settingsPanel.network = getNetworkPanel(data)
@@ -79,20 +82,22 @@ onMounted(() => {
             <div v-if="item.subtitle" class="mb-3">
               {{ item.subtitle }}
             </div>
-            <div v-for="subItem in item.items" :key="subItem.label" class="panel-item">
-              <div class="flex flex-1 items-center" :class="subItem.classes">
-                <div class="flex-1">
-                  <div class="panel-item-label">
-                    {{ subItem.label }}
+            <template v-for="subItem in item.items" :key="subItem.label">
+              <div v-if="!subItem.hide" class="panel-item">
+                <div class="flex flex-1 items-center" :class="subItem.classes">
+                  <div class="flex-1">
+                    <div class="panel-item-label">
+                      {{ subItem.label }}
+                    </div>
+                    <div class="panel-item-text" v-html="subItem.text" />
                   </div>
-                  <div class="panel-item-text" v-html="subItem.text" />
+                  <div class="flex-1 flex justify-end w-full">
+                    <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
+                  </div>
                 </div>
-                <div class="flex-1 flex justify-end w-full">
-                  <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
-                </div>
+                <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
               </div>
-              <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
-            </div>
+            </template>
           </div>
         </div>
       </div>

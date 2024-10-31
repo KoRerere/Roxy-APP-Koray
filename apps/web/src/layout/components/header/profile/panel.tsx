@@ -34,12 +34,17 @@ async function updateUserName(item: Items) {
   }
 }
 
-async function saveUserConfig(item: Items) {
+async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPanel> | null = null) {
   const value = item.formatValue?.(item) ?? item.value
   const { code, msg } = await API.base.userSetUserConfigCreate({ [item.name as any]: value })
   toast.value?.(code, msg)
   if (code === 0) {
     electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
+  }
+
+  if (items && item.name === 'systemProxySwitch') {
+    const v2 = items.list[0].items.find((i: any) => i.name === 'luminetV2rayCompatible')
+    v2.hide = !value
   }
 }
 
@@ -252,7 +257,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
 
 export function getNetworkPanel(data?: any): SettingsModule {
   const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
-  return {
+  const items = reactive({
     title: $t('网络设置'),
     description: $t('设置您的客户端网络连接，包括白名单和默认 IP 查询渠道'),
     list: [
@@ -264,6 +269,17 @@ export function getNetworkPanel(data?: any): SettingsModule {
             text: $t('关闭后使用本地网络连接'),
             name: 'systemProxySwitch',
             value: data?.systemProxySwitch ?? false,
+            component: ({ item, ...props }: { item: Items, props: any }) => {
+              return (
+                <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item, items)}></RxToggleSwitch>
+              )
+            },
+          },
+          {
+            label: $t('v2ray 兼容模式'),
+            name: 'luminetV2rayCompatible',
+            hide: !data?.systemProxySwitch,
+            value: data?.luminetV2rayCompatible ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item)}></RxToggleSwitch>
@@ -373,5 +389,6 @@ export function getNetworkPanel(data?: any): SettingsModule {
         ],
       },
     ],
-  }
+  })
+  return items
 }

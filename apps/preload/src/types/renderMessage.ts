@@ -4,6 +4,7 @@ import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manage
 import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
+import type { StoreType } from '#roxybrowser/modules/store'
 import type { UpdateInfo } from '#roxybrowser/modules/updater'
 import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { RandomFingerprint } from '#roxybrowser/utils/randomFingerprint'
@@ -49,6 +50,8 @@ export interface RenderMessage {
 
   /** 保存软件设置 */
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
+  /** 获取软件设置 */
+  'app:getSoftConfig': () => StoreType
   /** 检测更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
   /** 检测是否有更新 */

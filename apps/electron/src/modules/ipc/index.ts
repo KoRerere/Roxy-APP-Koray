@@ -145,6 +145,11 @@ ipcMain.on('app:saveSoftConfig', (config) => {
   }
 })
 
+/** 获取软件设置 */
+ipcMain.on('app:getSoftConfig', () => {
+  return { ...store }
+})
+
 /** 选择文件夹 */
 ipcMain.on('dialog:selectDir', async () => {
   try {

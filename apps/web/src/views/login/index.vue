@@ -26,10 +26,11 @@ const [dialog] = useDialog()
 async function handleSubmit() {
   console.log(signFormData)
   signFormData.value.user_name = signFormData.value.user_name.trim()
-  const { code, data, msg = $t('登录失败') } = await API.base.loginCreate(signFormData.value)
+  const { code, data, msg } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+    mixpanel.track('login', { method: 'password', success: false, error: msg })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
     return
   }
   if (data.is_migrate) {
@@ -46,20 +47,22 @@ async function handleSubmit() {
   await afterLogin(data.token)
 }
 
-async function afterLogin(token: string) {
+async function afterLogin(token: string, method: 'password' | 'google' = 'password') {
   setToken(token)
   console.log('rememberMe', rememberMe.value)
   await getUserInfo()
   setPassword(rememberMe.value ? signFormData.value.password : '')
   router.push({ name: 'home' })
+  mixpanel.track('login', { method })
 }
 
 async function googleAuth2Login(googleToken: string) {
   const { code, data, msg = $t('登录失败') } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
-    afterLogin(data.token)
+    afterLogin(data.token, 'google')
   }
   else {
+    mixpanel.track('login', { method: 'google', success: false, error: msg })
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
     return Promise.reject(msg)
   }

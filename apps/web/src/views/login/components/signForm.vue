@@ -39,6 +39,7 @@ async function handleSubmit() {
         setCurrentComponent('emailCodeInputOtp')
       }
       else {
+        mixpanel.track('signUp', { method: 'email', success: false, error: msg })
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 2500 })
       }
     }

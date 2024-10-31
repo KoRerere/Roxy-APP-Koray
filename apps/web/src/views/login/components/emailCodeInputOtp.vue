@@ -40,6 +40,7 @@ async function handleSubmit() {
   })
 
   if (!verifyCodeRes.data) {
+    mixpanel.track(props.type, { method: 'email', success: false, error: 'invalid verify code' })
     toast.add({ severity: 'error', summary: 'Error', detail: $t('无效的验证码'), life: 2500 })
     return
   }
@@ -59,9 +60,11 @@ async function handleSubmit() {
   })
   if (code === 0) {
     await toSignIn()
+    mixpanel.track('signUp', { method: 'email', success: true })
     emit('ok', emailCode.value)
   }
   else {
+    mixpanel.track(props.type, { method: 'email', success: false, error: msg })
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
   }
 }

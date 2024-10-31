@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { mediaProtocolName } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
-import { isDev, isPackaged } from '/@/utils/'
+import { isDev, isPackaged, isProd } from '/@/utils/'
 
 /** 获取 web 入口地址 */
 export function getWebEntryUrl(path: string) {
@@ -27,7 +27,7 @@ async function createWindow() {
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
       preload: isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
-      devTools: isDev,
+      devTools: !isProd,
     },
   })
 
@@ -51,8 +51,8 @@ async function createWindow() {
     handleCloseWindow(event)
   })
 
-  if (isPackaged) {
-    // 禁用菜单栏
+  if (isProd) {
+    // 生产禁用菜单栏
     browserWindow.setMenu(null)
   }
 

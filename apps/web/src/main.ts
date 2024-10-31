@@ -22,11 +22,13 @@ import App from './App.vue'
 import router from './router'
 
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
-  debug: true,
-  track_pageview: true,
+  debug: import.meta.env.DEV,
+  track_pageview: 'full-url',
   persistence: 'localStorage',
+  // https://documentation.freshpaint.io/integrations/destinations/apps/mixpanel
+  // autotrack: true,
 })
-
+globalThis.mixpanel = mixpanel
 console.log('myPreset', myPreset)
 const app = createApp(App)
 

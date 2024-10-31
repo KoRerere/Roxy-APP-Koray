@@ -4,7 +4,7 @@ import { API } from '/@/api'
 import { appConfig } from '/@/constants'
 import { fileExists } from '/@/utils/file'
 
-interface StoreType {
+export interface StoreType {
   language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
   /** 浏览器文件缓存根目录 */
   cacheDir: string
@@ -29,6 +29,8 @@ interface StoreType {
   luminetLocalHttpPort?: number
   /** luminet 代理端口 */
   luminetProxyPort?: number
+  /** luminet v2ray 兼容模式 */
+  luminetV2rayCompatible?: boolean
   /** APP 本地服务端口 */
   appPort: number
   /** openapi key */
@@ -45,6 +47,7 @@ const defaultValues: StoreType = {
   memoryLimit: 95,
   cacheDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
+  luminetV2rayCompatible: false,
   appPort: 45535,
   ipBlackList: [],
   ipChecker: 'http://iprust.io/ip.json',
