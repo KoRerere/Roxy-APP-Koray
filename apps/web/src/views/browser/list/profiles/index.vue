@@ -98,12 +98,12 @@ const drawer = reactive({
   },
 })
 
-watch(() => props.currentFilter, (params: any) => {
-  if (params) {
-    getCustomFilters(params.filter_condition || {})
+watch(() => props.currentFilter, (value: any) => {
+  if (value) {
+    getCustomFilters(value.filter_condition || {})
       .then((data) => {
         filtersMenu.value = data
-        onRefreshTable()
+        onRefreshTable(value._params)
       })
   }
 })
@@ -119,9 +119,11 @@ watch(
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
-function onRefreshTable() {
-  const params = filterFieldByValue(getFormData(filtersMenu.value))
-  tableRef.value!.refresh(params)
+function onRefreshTable(params?: any) {
+  tableRef.value!.refresh({
+    ...params,
+    ...filterFieldByValue(getFormData(filtersMenu.value)),
+  })
 }
 
 async function saveFilters(formData: any) {

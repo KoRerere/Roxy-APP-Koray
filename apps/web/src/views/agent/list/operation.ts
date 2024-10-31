@@ -28,6 +28,15 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
       multiple: true,
     },
     {
+      name: 'remark',
+      label: $t('添加备注'),
+      icon: 'base/rx_ic_doc_add',
+      power: !role.isViewer,
+    },
+    {
+      separator: true,
+    },
+    {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',

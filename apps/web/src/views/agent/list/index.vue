@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import RemarkIcon from '/@/components/remark-icon'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -17,6 +19,7 @@ import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from '
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
+const dialog = useDialog()
 
 const [columns] = useColumns(columnsConfig)
 const role = useRoleStore()
@@ -52,6 +55,9 @@ async function operationHandler(operate: any, data: ProxyItem) {
     case 'test':
       testProxy(datas, operate.name)
       break
+    case 'remark':
+      onRemark(data)
+      break
     case 'delete':
       await deleteProxy(datas)
       break
@@ -81,6 +87,32 @@ function testAllProxy() {
     return
   }
   testProxy(dataList.value, 'test')
+}
+
+function onRemark(data: any) {
+  dialog.open(popup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        title: $t('为所选代理添加备注'),
+        inputs: [
+          {
+            type: 'textarea',
+            name: 'remark',
+            placeholder: $t('请输入备注'),
+            value: data.remark,
+          },
+        ],
+      },
+      onConfirm: async (formData: any) => {
+        addRemark(formData.remark, data)
+      },
+    },
+  })
 }
 
 async function addRemark(remark: string, data: any) {
@@ -172,9 +204,12 @@ function onRefreshTable() {
             {{ data.proxyUserName }}
           </div>
         </template>
+        <template #remark="{ data }">
+          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }" :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.remark }"
+            class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+        </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <RemarkIcon :value="data.remark" :on-confirm="(params: any) => addRemark(params, data)" />
             <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </div>
         </template>

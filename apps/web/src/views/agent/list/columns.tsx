@@ -21,6 +21,11 @@ const columnsConfig = {
       },
     },
     {
+      title: $t('备注'),
+      key: 'remark',
+      slot: 'remark',
+    },
+    {
       title: $t('IP 查询渠道'),
       key: 'ipChecker',
       render: ({ data }: any) => {

@@ -17,17 +17,21 @@ const dialog = useDialog()
 const role = useRoleStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
-const allProfiles = { label: $t('全部窗口'), id: '1000', name: 'profiles' }
+const rawTabs = [
+  { label: $t('全部窗口'), id: '1000', name: 'profiles' },
+  { label: $t('收藏'), id: '1002', name: 'favorite', _params: { isOften: true }, disabledFilter: true },
+  { label: $t('已打开'), id: '1003', name: 'opened', _params: { openStatus: true }, disabledFilter: true },
+]
 const trash = { label: $t('回收站'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'trash' }
 
-const tabs = ref([allProfiles])
+const tabs = ref(rawTabs)
 
 const sortTabs = computed({
   get() {
-    return tabs.value.length > 1 ? tabs.value.slice(1) : []
+    return tabs.value.length > rawTabs.length ? tabs.value.slice(rawTabs.length) : []
   },
   set(value: any) {
-    tabs.value.splice(1, tabs.value.length - 1, ...value)
+    tabs.value.splice(rawTabs.length, tabs.value.length - rawTabs.length, ...value)
   },
 })
 
@@ -44,7 +48,7 @@ async function getFilterList() {
       name: item.filter_name,
       label: item.filter_name,
     }))
-    tabs.value = [allProfiles, ...list]
+    tabs.value = [...rawTabs, ...list]
   }
   onlyErrorToast(code, msg)
 }
@@ -142,7 +146,7 @@ function showPopover(event: Event) {
 }
 
 async function hidePopover() {
-  const sort_data = tabs.value.slice(1).map((item: any, index) => ({ name: item.label, sort: index }))
+  const sort_data = tabs.value.slice(rawTabs.length).map((item: any, index) => ({ name: item.label, sort: index }))
   const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
   onlyErrorToast(code, msg)
 }
@@ -186,9 +190,9 @@ onBeforeMount(() => {
   </div>
 
   <RyPopover ref="popRef" @hide="hidePopover">
-    <div class="sort-item">
+    <div v-for="item in rawTabs" :key="item.name" class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>{{ allProfiles.label }}</span>
+      <span>{{ item.label }}</span>
     </div>
     <VueDraggable v-model="sortTabs" :animation="150">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">

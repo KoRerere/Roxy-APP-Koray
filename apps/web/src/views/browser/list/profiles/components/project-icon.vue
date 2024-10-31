@@ -1,11 +1,10 @@
 <script setup lang="tsx">
 // import { RxSvgIcon } from '/@/components/rx-icon/'
-import { Role } from '/@/enums'
 // import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
+// import { useProjectActions } from '/@/views/projects/hooks/useProject'
+import { useRoleStore } from '/@/stores/role'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-// import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import { usePopoverMenu } from './popover-menu'
 
 const props = defineProps({
@@ -23,14 +22,15 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['update'])
-const workspaceStore = useWorkspaceStore()
 // const [projectDialog] = useProjectActions({ toast: false })
 const [showMenu] = usePopoverMenu()
 const { getProjects } = useMateGroup()
-
-const isViewer = workspaceStore.currentWorkspace?.role === Role.VIEWER
+const role = useRoleStore()
 
 async function openMenu(event: any) {
+  if (!(role.isOwner || role.isManager))
+    return
+
   const operation = await getProjects()
   const value = props.projectId?.toString()
 
@@ -71,7 +71,7 @@ function deleteMembers() {
 </script>
 
 <template>
-  <RxButton :disabled="isViewer" text severity="secondary" size="xxs" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
+  <RxTag class="cursor-pointer" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
 </template>
 
 <style scoped></style>

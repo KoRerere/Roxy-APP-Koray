@@ -78,7 +78,7 @@ function onAddTag() {
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
       <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">
-        <div class="label">
+        <div class="label pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />
           </svg>
@@ -91,11 +91,7 @@ function onAddTag() {
   </div>
 </template>
 
-<style scoped>
-svg {
-  pointer-events: none;
-}
-
+<style lang="scss" scoped>
 .label {
   display: flex;
   justify-content: center;

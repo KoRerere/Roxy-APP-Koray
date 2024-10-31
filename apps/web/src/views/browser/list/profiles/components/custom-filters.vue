@@ -170,7 +170,7 @@ function deleteFilterItem(item: any) {
 }
 
 function resetFilters() {
-  const condition = _props.currentFilter.filter_condition || {}
+  const condition = _props.currentFilter?.filter_condition || {}
   const params = {
     ...condition,
     createTime: condition.startDate && condition.endDate ? [condition.startDate, condition.endDate].join('~') : undefined,
@@ -237,7 +237,7 @@ async function modifyFilter() {
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
-      <RxButton severity="secondary" size="xxs" text @click="showMenu">
+      <RxButton severity="secondary" size="xxs" :disabled="currentFilter?.disabledFilter" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
         <span v-if="!filterTagList.length">{{ $t('筛选条件') }}</span>
       </RxButton>
