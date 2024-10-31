@@ -3,10 +3,13 @@ import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
+import { useSimpleLocale } from '/@/stores/locale'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 
 export const useUserStore = defineStore('user', () => {
+  const locale = useSimpleLocale()
+
   const userInfo = ref<UserInfo>({})
   const tokenRef = ref('')
   const appVersion = ref('')
@@ -23,7 +26,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  function setUserInfo(info: UserInfo) {
+  async function setUserInfo(info: UserInfo) {
     userInfo.value = info
     window.electronAPI.send('user:setUserInfo', {
       token: tokenRef.value,
@@ -31,7 +34,17 @@ export const useUserStore = defineStore('user', () => {
     })
 
     mixpanel.identify(String(userInfo.value.id))
-    mixpanel.people.set({ $name: userInfo.value.userName, $email: userInfo.value.email })
+
+    const localNetwork = await window.electronAPI.send('proxy:detectNetwork', 'local')
+
+    mixpanel.people.set({
+      $name: userInfo.value.userName,
+      $email: userInfo.value.email,
+      $language: locale.currentLocale,
+      $region: localNetwork.region,
+      $city: localNetwork.city,
+      $localNetwork: localNetwork,
+    })
   }
 
   function clearUserInfo() {

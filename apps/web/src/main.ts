@@ -21,7 +21,7 @@ import myPreset from '/@/styles/primevuePresets'
 import App from './App.vue'
 import router from './router'
 
-mixpanel.init('96de69873066ada837f8722625e0b764', {
+mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: true,
   track_pageview: true,
   persistence: 'localStorage',

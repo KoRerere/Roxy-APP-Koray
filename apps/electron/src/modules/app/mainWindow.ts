@@ -51,6 +51,11 @@ async function createWindow() {
     handleCloseWindow(event)
   })
 
+  if (isPackaged) {
+    // 禁用菜单栏
+    browserWindow.setMenu(null)
+  }
+
   await browserWindow.loadURL(getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`))
 
   console.log('createWindow', getWebEntryUrl('launch'))

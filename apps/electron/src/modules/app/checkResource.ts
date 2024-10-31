@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { createWriteStream } from 'node:fs'
-import { access, readFile, writeFile } from 'node:fs/promises'
+import { access, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
 import { appConfig, osConfig } from '/@/constants'
@@ -43,6 +43,8 @@ export async function checkResource() {
   return promise
 }
 
+// luminet 下载重试次数
+let luminetDownloadRetry = 0
 /** 检查 luminet 是否存在 */
 async function checkLuminetBin(webDomain: string) {
   const { promise, resolve } = Promise.withResolvers()
@@ -103,6 +105,27 @@ async function checkLuminetBin(webDomain: string) {
     const writer = createWriteStream(appConfig.luminetBinPath)
 
     response.data.pipe(writer)
+
+    // 下载失败需要重新下载
+    writer.on('error', async (error) => {
+      console.error('Download luminet error', error)
+      try {
+        await rm(localVersionFilePath)
+        await rm(appConfig.luminetBinPath)
+      }
+      catch (error) {
+
+      }
+      finally {
+        if (luminetDownloadRetry < 3) {
+          luminetDownloadRetry++
+          await checkLuminetBin(webDomain)
+        }
+        else {
+          resolve(true)
+        }
+      }
+    })
 
     writer.on('finish', () => {
       writer.close()
