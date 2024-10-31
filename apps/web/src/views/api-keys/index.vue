@@ -131,7 +131,7 @@ onBeforeMount(() => {
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 秘钥')" @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
@@ -147,7 +147,7 @@ onBeforeMount(() => {
                 <RxButton severity="secondary" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
               </div>
               <div class="api-content-key-desc">
-                * {{ $t('请确保您的 API 秘钥安全保存') }}
+                * {{ $t('请确保您的 API 密钥安全保存') }}
               </div>
             </div>
             <div class="api-content-proxy">

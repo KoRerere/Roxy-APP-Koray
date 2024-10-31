@@ -80,6 +80,10 @@ export async function intoMainPage() {
   win.center()
   await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
   win.setTitle(`${win.getTitle()} | ${app.getVersion()}${isDev ? ' [dev]' : ''}`)
+  // 禁用 document.title 的影响
+  win.on('page-title-updated', (event) => {
+    event.preventDefault()
+  })
   console.log('进入主应用')
   setTimeout(() => {
     win.show()

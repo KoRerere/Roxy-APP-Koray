@@ -24,6 +24,10 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
+  if (to.meta?.title) {
+    document.title = to.meta.title as string
+  }
+
   if (to.name !== 'login' && !userStore.token) {
     return next({ name: 'login' })
   }

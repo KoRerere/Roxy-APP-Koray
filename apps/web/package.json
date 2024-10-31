@@ -41,6 +41,7 @@
     "@roxy/electron-preload": "workspace:*",
     "@roxy/language-localization": "workspace:*",
     "@roxy/vite-plugins": "workspace:*",
+    "@types/mixpanel-browser": "^2.50.2",
     "@types/node": "^22.5.2",
     "@types/qs": "^6.9.16",
     "@unocss/reset": "^0.63.5",

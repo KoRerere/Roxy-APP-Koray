@@ -1,10 +1,8 @@
 import express from 'express'
 import twoFactor from 'node-2fa'
-import { rm } from 'node:fs/promises'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
-import { accountMapping, browserListMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
+import { accountMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { defaultBrowserCreateParams } from './constants/'
@@ -121,8 +119,14 @@ router.get('/two_factor_token', async (req, res) => {
 router.post('/delete', async (req, res) => {
   const { dirIds, workspaceId } = req.body
 
+  if (!Array.isArray(dirIds)) {
+    return res.error('dirIds is required')
+  }
+
   try {
     const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId } })
+    dirIds.forEach(dirId => browserManager.removeLocalData(dirId))
+
     res.json(result)
   }
   catch (error) {

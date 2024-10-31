@@ -588,7 +588,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'text',
-      label: $t('WebGL厂商'),
+      label: $t('WebGL 厂商'),
       name: 'webGLManufacturer',
       value: data.webGLManufacturer,
       icon: 'base/rx_ic_shuffle',
@@ -600,7 +600,7 @@ export function getInputsGroup(data: any = {}) {
     },
     {
       type: 'textarea',
-      label: $t('WebGL渲染'),
+      label: $t('WebGL 渲染'),
       name: 'webGLRender',
       value: data.webGLRender,
       rows: 3,

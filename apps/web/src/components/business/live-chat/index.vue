@@ -7,16 +7,16 @@ const userStore = useUserStore()
 const visibility = ref<'maximized' | 'minimized' | 'hidden'>('hidden')
 
 const sessionVariables = computed(() => {
-  const { userName, totalAmount, leftAmount, maxWindowCount, useWindowCount } = userStore.userInfo
+  const { userName, maxWindowCount, useWindowCount } = userStore.userInfo
   return {
-    username: `[Lumi]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
+    username: `[Roxy]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
     Account_ID: userStore.token,
     // Total_order_value: `$${totalAmount / 100}`
   }
 })
 const customerName = computed(() => {
   const { userName } = userStore.userInfo
-  return `[Lumi]-${userName || '游客'}`
+  return `[Roxy]-${userName || '游客'}`
 })
 
 function toggleChatVisible() {

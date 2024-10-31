@@ -1,4 +1,5 @@
 import type { UserGetUserInfoListData } from '@roxy/backend-api'
+import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
@@ -28,6 +29,9 @@ export const useUserStore = defineStore('user', () => {
       token: tokenRef.value,
       userId: userInfo.value.id!,
     })
+
+    mixpanel.identify(String(userInfo.value.id))
+    mixpanel.people.set({ $name: userInfo.value.userName, $email: userInfo.value.email })
   }
 
   function clearUserInfo() {
@@ -37,6 +41,7 @@ export const useUserStore = defineStore('user', () => {
     // password.value = ''
     tokenRef.value = ''
     electronAPI.send('user:logout')
+    mixpanel.reset()
   }
 
   function setToken(token: string) {

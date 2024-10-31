@@ -44,7 +44,7 @@ export async function getPluginManifestInfo(pluginDir: string) {
     const targetPluginDir = await getPluginDir(pluginDir)
 
     if (!targetPluginDir) {
-      throw new Error($t('插件目录下不存在 manifest.json 文件'))
+      throw new Error($t('扩展目录下不存在 manifest.json 文件'))
     }
 
     // https://developer.chrome.com/docs/extensions/reference/api/i18n?hl=zh-cn

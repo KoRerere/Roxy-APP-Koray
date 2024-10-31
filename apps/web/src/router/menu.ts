@@ -44,7 +44,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: ':id',
         name: 'project-item',
-        meta: { title: '浏览器窗口', hideInMenu: true },
+        meta: { title: '项目', hideInMenu: true },
         component: () => import('/@/views/projects/project-item.vue'),
       },
     ],
