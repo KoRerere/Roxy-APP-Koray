@@ -41,10 +41,15 @@ function cacheToast(slotData) {
   })
 
   if (duplicateItem) {
-    duplicateItem.message.count = 1
     message.hide = true
     message.life = 1
     setTimeout(closeCallback)
+    duplicateItem.message.count = ~~duplicateItem.message.count + 1
+    clearTimeout(duplicateItem.closeTimeout)
+    duplicateItem.closeTimeout = setTimeout(() => {
+      duplicateItem.closeCallback()
+      Reflect.deleteProperty(messageMap, duplicateItem.message.id)
+    }, duplicateItem.message.originLife)
     return
   }
 
