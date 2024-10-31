@@ -140,7 +140,7 @@ function leaveWorkspace() {
             {{ $t('空间图标') }}
           </div>
           <div class="description">
-            {{ $t('默认图标展示所有者名称的前两个字符') }}
+            {{ $t('默认图标展示工作空间名称的前两个字符') }}
           </div>
         </div>
         <div class="emoji-picker-box">
@@ -263,20 +263,18 @@ function leaveWorkspace() {
       align-self: stretch;
       color: #000;
       font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
+      font-size: 14px;
       font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
+      line-height: var(--Line-Height-text-lg, 20px);
       /* 133.333% */
     }
 
     .description {
+      margin-top: var(--spacing-xs, 4px);
       align-self: stretch;
       color: var(--Colors-Text-text-tertiary, #7c8387);
       font-family: Inter;
-      font-size: 10px;
-      font-style: normal;
-      font-weight: 400;
+      font-size: 12px;
       line-height: var(--Line-Height-text-xs, 16px);
       /* 160% */
     }

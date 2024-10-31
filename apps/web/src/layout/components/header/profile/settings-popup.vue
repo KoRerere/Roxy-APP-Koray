@@ -188,15 +188,14 @@ onMounted(() => {
 
     &-label {
       color: #000;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 500;
       line-height: normal;
     }
 
     &-text {
       color: var(--Colors-Text-text-tertiary, #7c8387);
-      font-size: 10px;
-      line-height: var(--Line-Height-text-xs, 16px);
+      font-size: 12px;
     }
 
     &-value {

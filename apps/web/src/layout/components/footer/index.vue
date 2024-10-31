@@ -31,7 +31,7 @@ const list = ref([
   <div class="rx-layout-footer" :class="{ collapsed }">
     <template v-for="item in list" :key="item.text">
       <component :is="item.component || 'div'" class="item" :class="item.itemClass" @click="item.handler">
-        <SvgIcon v-bind="item.iconAttr" :name="(item.icon as SvgNames)" />
+        <SvgIcon class="item-icon" v-bind="item.iconAttr" :name="(item.icon as SvgNames)" />
         <span v-if="!collapsed">{{ item.text }}</span>
       </component>
     </template>
@@ -60,7 +60,7 @@ const list = ref([
     padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
     gap: var(--spacing-xl, 12px);
     flex: 1 0 0;
-    color: var(--Component-Colors-SideNav-link-text, #575d61);
+    color: var(--Component-Colors-SideNav-link-text, #252a2e);
     font-family: Inter;
     font-size: var(--Font-Size-text-md, 13px);
     font-style: normal;
@@ -69,6 +69,10 @@ const list = ref([
     line-height: var(--Line-Height-text-lg, 20px);
     /* 153.846% */
     cursor: pointer;
+
+    &-icon {
+      color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
+    }
   }
 }
 </style>

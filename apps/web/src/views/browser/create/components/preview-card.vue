@@ -58,10 +58,11 @@ const visible = ref(true)
             {{ item.value }}
           </div>
         </div>
+        <div class="h-6 w-full invisible" />
       </div>
     </div>
     <div v-if="visible" class="preview-footer">
-      <RxButton size="sm" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined severity="secondary" @click="$emit('shuffle')" />
+      <RxButton :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="$emit('shuffle')" />
     </div>
   </div>
 </template>
@@ -128,20 +129,19 @@ $spacing-x: var(--spacing-xl, 12px);
 
     &-item {
       display: flex;
-      padding: var(--spacing-sm, 4px) 10px;
+      padding: var(--spacing-md, 6px) 10px;
       align-items: flex-start;
       align-self: stretch;
       gap: var(--spacing-sm, 4px);
 
       color: var(--Color-neutrals-800, #252a2e);
       font-family: 'DM Mono';
-      font-size: 10px;
-      font-style: normal;
+      font-size: 13px;
       font-weight: 500;
       line-height: normal;
 
       &-label {
-        width: 90px;
+        width: 120px;
         word-wrap: break-word;
       }
 

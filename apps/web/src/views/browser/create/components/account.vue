@@ -94,10 +94,10 @@ function replaceData(data: any) {
 <style lang="scss" scoped>
 .button-group {
   display: flex;
-  padding: var(--spacing-sm, 4px) var(--spacing-none, 0px);
   align-items: center;
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
+  height: var(--Line-Height-display-xs, 32px);
 }
 
 .card-list {

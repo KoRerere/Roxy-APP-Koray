@@ -33,11 +33,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
       </template>
       <!-- 递归生成子菜单 -->
       <template v-if="item.children?.length">
-        <SubMenuItem
-          :items="item.children"
-          :level="isGroup(item) ? level : level + 1" :collapsed
-          :class="{ collapsedChildren: collapsedMap[item.name!] }"
-        />
+        <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed :class="{ collapsedChildren: collapsedMap[item.name!] }" />
       </template>
     </template>
   </div>
