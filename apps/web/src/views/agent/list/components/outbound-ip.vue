@@ -15,23 +15,53 @@ defineProps({
     type: String,
     default: '',
   },
+  lastIp: {
+    type: String,
+    default: '',
+  },
   time: {
     type: String,
     default: '',
   },
 })
+
+function formatTime(time: string) {
+  const now = new Date()
+  const timestamp = new Date(time).getTime()
+  const diff = (now.getTime() - timestamp) / 1000
+  const day = Math.floor(diff / 86400)
+  const hour = Math.floor(diff / 3600)
+  const minute = Math.floor(diff / 60)
+
+  if (day > 7) {
+    return time.split(' ')[0].replace(/-/g, '/')
+  }
+  else if (day > 0) {
+    return `${day}天前`
+  }
+  else if (hour > 0) {
+    return `${hour}小时前`
+  }
+  else if (minute > 0) {
+    return `${minute}分钟前`
+  }
+  else {
+    return '刚刚'
+  }
+}
 </script>
 
 <template>
   <div class="outbound">
     <img v-if="image" class="outbound-img" :src="image">
-    <RxSvgIcon v-else class="outbound-img" :name="(`country-code/${country}` as SvgNames)"
-      fallback="base/rx_ic_earth" />
+    <RxSvgIcon v-else class="outbound-img" :name="(`country-code/${country}` as SvgNames)" fallback="base/rx_ic_earth" />
     <div class="flex justify-between outbound-region">
       <span>{{ country || '--' }}{{ strConcat('/', city) }}</span>
     </div>
-    <div class="flex items-center outbound-email">
-      <span>{{ time }}</span>
+    <div v-if="lastIp" class="flex items-center outbound-info">
+      <span>{{ lastIp }}</span>
+      <Divider class="!ma-0" layout="vertical" />
+      <span>{{ formatTime(time) }}</span>
     </div>
   </div>
 </template>
@@ -60,8 +90,8 @@ defineProps({
     font-weight: 500;
   }
 
-  &-email {
-    gap: var(--spacing-sm, 4px);
+  &-info {
+    gap: var(--spacing-sm, 8px);
     color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }

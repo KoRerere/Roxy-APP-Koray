@@ -9,7 +9,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { getFormData, setInputFieldByInputKey, setInputValue } from '/@/utils'
+import { findInputByName, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
 
 const role = useRoleStore()
@@ -66,16 +66,24 @@ const inputs = ref([
     type: 'number',
     name: 'port',
     placeholder: '0~65535',
-    onblur: () => {
-      const formData = getFormData(inputs.value)
-      const result = z.number().min(0).max(65535).safeParse(formData.port)
-      if (result.error) {
-        setInputFieldByInputKey(inputs.value, 'port', 'errorMsg', $t('端口应设置在 0~65535 之间'))
+    onblur: async () => {
+      const input = findInputByName(inputs.value, 'port')
+
+      if (input.value < 1 || input.value > 65535) {
+        input.invalid = true
+        input.errorMsg = $t('端口范围 1~65535')
+        return
       }
-      else {
-        port.value = formData.port
-        updateApiKeys()
+
+      const occupied = await electronAPI.send('util:checkPort', input.value)
+      if (occupied) {
+        input.invalid = true
+        input.errorMsg = $t('端口已被占用')
+        return
       }
+
+      port.value = input.value
+      updateApiKeys()
     },
   },
 ])

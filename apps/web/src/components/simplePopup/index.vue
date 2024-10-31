@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ryForm from '/@/components/ry-form'
 import { getFormData } from '/@/utils/index'
 
 const dialogRef = inject<any>('dialogRef')
@@ -40,7 +39,7 @@ onMounted(() => {
     <div v-if="_props.content" class="popup-content">
       {{ _props.content }}
     </div>
-    <ryForm class="form" :inputs="_props.inputs" />
+    <RyForm class="form" :inputs="_props.inputs" />
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
       <RxButton size="sm" :label="$t('保存')" severity="info" @click="confirm" />

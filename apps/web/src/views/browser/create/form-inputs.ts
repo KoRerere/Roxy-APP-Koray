@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
@@ -255,10 +255,11 @@ export function getInputsGroup(data: any = {}) {
       label: 'Cookies',
       placeholder: $t('请以 JSON 格式输入 Cookies'),
       name: 'cookie',
-      value: data.cookies,
+      value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
       icon: 'base/rx_ic_attachment',
       errorMsg: 'Invalid cookie format',
       autoResize: false,
+      rows: 5,
       formatValue: (input: any) => {
         return input.value ? JSON.parse(input.value) : []
       },

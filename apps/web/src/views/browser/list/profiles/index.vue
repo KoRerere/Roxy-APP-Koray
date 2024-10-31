@@ -14,6 +14,7 @@ import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import columnsRow from './columns'
 import BrowserControl from './components/browser-control.vue'
@@ -45,7 +46,7 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
-
+const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -180,6 +181,9 @@ async function operationHandler(operate: any, data: any) {
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
       break
+    case 'moveToProject':
+      await onMoveToProject(datas)
+      break
     case 'view':
       openBrowser(data)
       break
@@ -200,7 +204,7 @@ async function operationHandler(operate: any, data: any) {
       singleModifyWindow({ id: data.id, isOften: !data.isOften })
       break
     case 'addNotes':
-      onRemark(datas)
+      await onRemark(datas)
       break
     case 'editCookies':
       drawer.visible = true
@@ -242,8 +246,13 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   show(event, {
     operation,
     operationHandler: async (operate: any) => {
-      await operationHandler(operate, data)
-      extra?.clearSelection()
+      try {
+        await operationHandler(operate, data)
+        extra?.clearSelection()
+      }
+      catch (error) {
+        console.log(error)
+      }
     },
   })
 }
@@ -252,38 +261,86 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, d
   await singleModifyWindow({ ...params, id: data.id })
 }
 
-function onRemark(datas: any) {
-  dialog.open(popup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
+async function onMoveToProject(datas: any) {
+  const options = await getProjects()
+
+  return new Promise((resolve, reject) => {
+    dialog.open(popup, {
       props: {
-        title: $t('为所选窗口添加备注'),
-        inputs: [
-          {
-            type: 'text',
-            name: 'windowRemark',
-            placeholder: $t('请输入备注'),
-            value: datas[0].windowRemark,
-          },
-        ],
+        showHeader: false,
+        modal: true,
+        blockScroll: true,
       },
-      onConfirm: async (formData: any) => {
-        const ids = datas.map((item: any) => item.id)
-        await batchModifyWindow({ ids, windowRemark: formData.windowRemark })
+      data: {
+        props: {
+          title: $t('移动项目'),
+          content: $t('将移动 {names} 到所选项目', { names: datas.map((item: any) => `${workspaceName.value}-${item.windowSortNum}`) }),
+          inputs: [
+            {
+              type: 'select',
+              name: 'projectId',
+              placeholder: $t('请选择项目'),
+              options,
+              filter: false,
+              optionsValue: 'value',
+            },
+          ],
+        },
+        onConfirm: async (formData: any) => {
+          if (formData.projectId) {
+            const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+            await batchModifyWindow({ ids, projectId: formData.projectId })
+          }
+          resolve(true)
+        },
+        onCancel: () => {
+          reject($t('取消'))
+        },
       },
-    },
+    })
+  })
+}
+
+async function onRemark(datas: any) {
+  return new Promise((resolve, reject) => {
+    dialog.open(popup, {
+      props: {
+        showHeader: false,
+        modal: true,
+        blockScroll: true,
+      },
+      data: {
+        props: {
+          title: $t('为所选窗口添加备注'),
+          inputs: [
+            {
+              type: 'text',
+              name: 'windowRemark',
+              placeholder: $t('请输入备注'),
+              value: datas[0].windowRemark,
+            },
+          ],
+        },
+        onConfirm: async (formData: any) => {
+          const ids = datas.map((item: any) => item.id)
+          await batchModifyWindow({ ids, windowRemark: formData.windowRemark })
+          resolve(true)
+        },
+        onCancel: () => {
+          reject($t('取消'))
+        },
+      },
+    })
   })
 }
 
 async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
     onlyErrorToast(-1, $t('请先关闭窗口'))
+    return
   }
-  else {
+
+  return new Promise((resolve, reject) => {
     confirm.require({
       header: $t('删除窗口'),
       message: $t('您确认要删除所选窗口吗？'),
@@ -299,9 +356,13 @@ async function deleteProfile(datas: any, ids: number[]) {
       accept: async () => {
         await batchModifyWindow({ ids, isDelete: true })
         window.electronAPI.send('browser:batchRemove', datas)
+        resolve(true)
+      },
+      reject: () => {
+        reject($t('取消'))
       },
     })
-  }
+  })
 }
 
 async function singleModifyWindow(params: any) {

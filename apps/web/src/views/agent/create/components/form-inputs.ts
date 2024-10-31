@@ -78,7 +78,7 @@ export function getInputs(data: any = {}) {
         {
           type: 'text',
           name: 'host',
-          value: data.host ?? '',
+          value: data.host ?? null,
           placeholder: $t('主机'),
           required: true,
           onBlur(event: any) {
@@ -91,18 +91,27 @@ export function getInputs(data: any = {}) {
         {
           type: 'number',
           name: 'port',
-          value: data.port ?? '',
+          value: data.port ?? null,
           placeholder: $t('端口'),
           required: true,
-          onBlur: async (event: any) => {
-            if (event.target.value) {
-              const res = await electronAPI.send('util:checkPort', event.target.value)
-              console.log('🚀 ~ onBlur: ~ res:', res)
+          onBlur: async () => {
+            const input = findInputByName(inputs, 'port')
+            if (input.value !== null) {
+              if (input.value < 1 || input.value > 65535) {
+                input.invalid = true
+                input.errorMsg = $t('端口范围 1~65535')
+                return
+              }
+
+              const occupied = await electronAPI.send('util:checkPort', input.value)
+              if (occupied) {
+                input.invalid = true
+                input.errorMsg = $t('端口已被占用')
+              }
             }
           },
         },
       ],
-      tooltip: 'what can i say',
       slot: 'server',
     },
     {

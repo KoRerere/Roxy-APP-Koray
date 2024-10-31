@@ -21,7 +21,7 @@ const props = defineProps({
 const emit = defineEmits(['confirm'])
 const [_, onlyErrorToast] = useResponseToast()
 
-const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie, null, 4)
+const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie, null, 2)
 
 const cookies = ref(cookie)
 const loading = ref(false)

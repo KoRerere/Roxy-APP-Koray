@@ -237,6 +237,13 @@ export function getOperation(_params: any = {}) {
       power: !role.isViewer,
     },
     {
+      name: 'moveToProject',
+      label: $t('移动到项目'),
+      icon: 'base/rx_ic_stack',
+      multiple: true,
+      power: role.isOwner || role.isManager,
+    },
+    {
       power: !role.isViewer,
       separator: true,
     },

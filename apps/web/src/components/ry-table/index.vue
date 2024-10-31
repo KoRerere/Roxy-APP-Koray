@@ -53,7 +53,7 @@ const props = defineProps({
     default: () => [],
   },
   operationHandler: {
-    type: Function as PropType<(event: any, data: any) => void>,
+    type: Function as PropType<(event: any, data: any) => any | Promise<any>>,
     default: () => () => { },
   },
   multipleOperation: {
@@ -165,8 +165,13 @@ const paginatorInfo = computed(() => $t('总计 {total} 个', {
 }))
 
 async function batchOperation(item: any) {
-  await props.operationHandler(item, selectionData.value)
-  _clearSelection()
+  try {
+    await props.operationHandler(item, selectionData.value)
+    _clearSelection()
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
 
 function onChangeParams(key: string, data: any) {
@@ -224,14 +229,28 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
 
   show(event.originalEvent, {
     operation,
-    operationHandler: (operate: any) => props.operationHandler(operate, event.data),
+    operationHandler: async (operate: any) => {
+      try {
+        await props.operationHandler(operate, event.data)
+      }
+      catch (error) {
+        console.log(error)
+      }
+    },
   })
 }
 
 function showOperationMenu({ event }: { event: Event }, data: any) {
   show(event, {
     operation: _getOperation(data),
-    operationHandler: (operate: any) => props.operationHandler(operate, data),
+    operationHandler: async (operate: any) => {
+      try {
+        await props.operationHandler(operate, data)
+      }
+      catch (error) {
+        console.log(error)
+      }
+    },
   })
 }
 
