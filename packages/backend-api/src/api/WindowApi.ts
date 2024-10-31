@@ -73,6 +73,8 @@ import {
   UserMdfLabelInfoCreatePayload,
   UserMdfWindowInfoBatchCreateData,
   UserMdfWindowInfoBatchCreatePayload,
+  UserMdfWindowInfoBatchV2CreateData,
+  UserMdfWindowInfoBatchV2CreatePayload,
   UserMdfWindowInfoRandomCreateData,
   UserMdfWindowInfoRandomCreatePayload,
   UserMdfWindowInfoSingleCreateData,
@@ -858,6 +860,24 @@ export class WindowApi<SecurityDataType = unknown> {
   userUpdateWindowFilterSortCreate = (data: UserUpdateWindowFilterSortCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserUpdateWindowFilterSortCreateData, any>({
       path: `/user_update_window_filter_sort`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowInfoBatchV2Create
+   * @summary 批量修改窗口 (新版本浏览器使用)
+   * @request POST:/user_mdf_window_info_batch_v2
+   * @response `200` `UserMdfWindowInfoBatchV2CreateData`
+   */
+  userMdfWindowInfoBatchV2Create = (data: UserMdfWindowInfoBatchV2CreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfWindowInfoBatchV2CreateData, any>({
+      path: `/user_mdf_window_info_batch_v2`,
       method: "POST",
       body: data,
       type: ContentType.Json,

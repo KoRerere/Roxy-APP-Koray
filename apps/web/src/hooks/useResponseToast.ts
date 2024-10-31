@@ -20,7 +20,7 @@ export function useResponseToast() {
 
   function onlyErrorToast(code: number, message: string, options?: ToastMessageOptions) {
     if (code !== 0) {
-      toast.add({ severity: 'error', summary: summary.error, detail: message, ...Object.assign(({ life: 2500 } as ToastMessageOptions), options) })
+      toast.add({ severity: 'error', summary: summary.error, detail: message, ...Object.assign(({ life: 5000 } as ToastMessageOptions), options) })
     }
   }
 

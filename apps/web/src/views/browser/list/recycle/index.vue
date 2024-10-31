@@ -55,7 +55,7 @@ async function recoverHandler(datas: any) {
     },
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
-      await API.window.userMdfWindowInfoBatchCreate({ ids, isDelete: false } as any)
+      await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
       tableRef.value?.refresh()
     },
   })

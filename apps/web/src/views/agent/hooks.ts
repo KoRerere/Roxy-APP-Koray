@@ -1,6 +1,8 @@
 import { format } from 'date-fns'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { $t } from '/@/locales'
+import { strConcat } from '/@/utils'
 
 export interface CheckResult {
   loading: boolean
@@ -37,9 +39,8 @@ export function useCheckProxy(): [(data: any) => Promise<CheckResult>, CheckResu
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
       const [code, msg] = !checkRes.ip
-        ? [-1, 'Please checkout your IP configuration and local network then try again.']
-        : [0, `Location: ${checkRes.country_code}/${checkRes.country}\nIP: ${checkRes.ip}`]
-
+        ? [-1, $t('测试代理失败')]
+        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.country)}`, ip: checkRes.ip })]
       showToast(code, msg)
       checkeResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkeResult.lastIp = checkRes.ip ?? ''

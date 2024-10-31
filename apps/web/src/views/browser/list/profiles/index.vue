@@ -380,7 +380,7 @@ async function singleModifyWindow(params: any) {
 
 async function batchModifyWindow(params: any) {
   try {
-    const { code, msg } = await API.window.userMdfWindowInfoBatchCreate(params)
+    const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
     showToast(code, msg)
     if (code === 0) {
       onRefreshTable()

@@ -4140,6 +4140,139 @@ export interface UserUpdateWindowFilterSortCreateData {
   msg: string;
 }
 
+export interface UserMdfWindowInfoBatchV2CreatePayload {
+  ids: number[];
+  windowName: string;
+  groupId: number;
+  platformUrl: string;
+  defaultOpenUrl: string[];
+  coreVersion: string;
+  os: string;
+  osVersion: string;
+  efa: string;
+  windowRemark: string;
+  labelIds: number[];
+  isOften: boolean;
+  isDelete: boolean;
+  moduleIds: {
+    moduleId: number;
+    count: number;
+  }[];
+  proxyMethod: string;
+  proxyCategory: string;
+  ipType: string;
+  proxyProvider: string;
+  protocol: string;
+  country: string;
+  state: string;
+  city: string;
+  host: string;
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  proxyTime: string;
+  refreshUrl: string;
+  accessServer: string;
+  checkChannel: string;
+  extraChannel: string;
+  isExtraNewIp: boolean;
+  isRepectCheck: boolean;
+  extraUrl: string;
+  lastIp: string;
+  lastCountry: string;
+  fingerDetail: {
+    userAgent?: string;
+    font?: string;
+    canvasValue?: string;
+    canvasValueV2?: string;
+    webGLValue?: string;
+    webGLManufacturer?: string;
+    webGLRender?: string;
+    audioContextValue?: string;
+    speechVoicesValue?: object;
+    clientRectsValue?: object;
+    mediaDevice?: boolean;
+    mediaDeviceList?: string[];
+    deviceName?: string;
+    macAddr?: string;
+  }[];
+  isLanguageBaseIp: boolean;
+  language: string;
+  isDisplayLanguageBaseIp: boolean;
+  displayLanguage: string;
+  isTimeZone: boolean;
+  timeZone: string;
+  position: number;
+  isPositionBaseIp: boolean;
+  longitude: string;
+  latitude: string;
+  precisionPos: string;
+  forbidAudio: boolean;
+  forbidImage: number;
+  forbiddenPictureSize: string;
+  forbidMedia: boolean;
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  syncValue: object;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  isDisplayName: boolean;
+  webRTC: number;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+}
+
+export interface UserMdfWindowInfoBatchV2CreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
