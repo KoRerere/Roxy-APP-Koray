@@ -179,14 +179,18 @@ function formatRelated(list: any) {
             :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #platform="{ data }">
-          <div class="platform">
-            <img class="platform-img" :src="data.platformIcon">
-            <div class="flex justify-between platform-region">
-              <span>{{ data.platformUrl }}</span>
+          <div class="flex gap-2 account">
+            <div>
+              <img v-if="data.platformIcon" class="w-4 h-4" :src="data.platformIcon">
+              <RxSvgIcon v-else name="base/rx_ic_user_key" />
             </div>
-            <div class="flex items-center platform-email">
-              <span>{{ data.platformUserName }}</span>
-              <RxSvgIcon v-if="data.platformEfa" class="text-blue platform-img" name="base/rx_ic_2fa" :size="16" />
+            <div class="flex flex-col flex-1 gap-1">
+              <div class="flex items-center account-title">
+                {{ data.platformUrl }}
+              </div>
+              <div class="flex items-center gap-1.5 account-subtitle">
+                {{ data.platformUserName }}
+              </div>
             </div>
           </div>
         </template>
@@ -213,31 +217,17 @@ function formatRelated(list: any) {
   border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 }
 
-.platform {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-md, 8px);
-  grid-row-gap: var(--spacing-sm, 4px);
-
+.account {
   font-family: Inter;
   font-size: 12px;
-  font-style: normal;
   line-height: var(--Line-Height-text-xs, 16px);
-  font-weight: 400;
 
-  &-img {
-    width: 16px;
-    height: 16px;
-    grid-row-start: span 2;
-  }
-
-  &-region {
+  &-title {
     color: var(--Colors-Text-text-primary, #171c1f);
     font-weight: 500;
   }
 
-  &-email {
-    gap: var(--spacing-sm, 4px);
+  &-subtitle {
     color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }

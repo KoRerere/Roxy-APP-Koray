@@ -38,6 +38,7 @@ const os_image: any = {
 
 const data = computed(() => props.data)
 const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
+const windowPlatformList = computed(() => data.value.windowPlatformList || [])
 
 const list = computed(() => [
   {
@@ -60,9 +61,9 @@ const list = computed(() => [
   },
   {
     key: 'account',
-    image: data.value.windowPlatformList?.[0]?.platformIcon,
-    svg: 'base/rx_ic_plus',
-    classes: data.value.windowPlatformList?.length > 1 ? 'stack' : '',
+    image: windowPlatformList.value[0]?.platformIcon,
+    svg: windowPlatformList.value[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
+    classes: windowPlatformList.value.length > 1 ? 'stack' : '',
   },
 ])
 

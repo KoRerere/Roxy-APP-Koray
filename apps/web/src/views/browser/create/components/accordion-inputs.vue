@@ -102,7 +102,7 @@ function onCopy(dirId: string) {
               <template #proxy="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <proxyItem v-model="input.value" class="flex-1" />
+                  <proxyItem v-model:proxy-switch="input.switch" v-model="input.value" class="flex-1" />
                 </div>
               </template>
               <template #accounts="{ input }">

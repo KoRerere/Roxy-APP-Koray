@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useNetworkStore } from '/@/stores/network'
+
+const { setNetworkInfo } = useNetworkStore()
+
 const loading = ref(false)
 const proxyInfo = ref({
   city: '',
@@ -12,6 +16,7 @@ async function detectNetwork() {
   })
   proxyInfo.value.city = `${result.country_code}/${result.city}`
   proxyInfo.value.ip = result.ip
+  setNetworkInfo(result)
   console.log('result', result)
 }
 

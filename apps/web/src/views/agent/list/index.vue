@@ -200,9 +200,10 @@ function onRefreshTable() {
               <span>{{ data.host }}</span>
               <span>{{ strConcat(':', data.port) }}</span>
             </div>
-            <div class="ip-type">
-              {{ data.ipType }}
-              {{ data.proxyUserName }}
+            <div class="flex items-center gap-1.5 ip-type">
+              <span>{{ data.ipType }}</span>
+              <Divider class="!ma-0" layout="vertical" />
+              <span>{{ data.proxyUserName }}</span>
             </div>
           </div>
         </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import rxCard from '/@/components/rx-card'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { deepClone } from '/@/utils'
 import AccountCreate from '/@/views/account/create'
@@ -70,16 +70,21 @@ function replaceData(data: any) {
       <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
 
-    <div v-for="(item, index) in windowPlatformList" :key="index" class="card-list">
-      <rx-card class="card-list-item" @click="onEdit(item)" @close="deleteAccount(item)">
-        <img class="card-list-item-img" :src="item.platformIcon">
-        <div class="card-list-item-nation">
-          {{ item.platformUrl }}
+    <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
+      <RxCard class="flex gap-2" @click="onEdit(item)" @close="deleteAccount(item)">
+        <div>
+          <img v-if="item.platformIcon" class="w-4 h-4" :src="item.platformIcon">
+          <RxSvgIcon v-else name="base/rx_ic_user_key" />
         </div>
-        <div class="card-list-item-time">
-          {{ item.platformName }} {{ item.platformUserName }}
+        <div class="flex flex-col flex-1 gap-1">
+          <div class="flex items-center account-title">
+            {{ item.platformUrl }}
+          </div>
+          <div class="flex items-center gap-1.5 account-subtitle">
+            {{ item.platformUserName }}
+          </div>
         </div>
-      </rx-card>
+      </RxCard>
     </div>
 
     <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
@@ -100,40 +105,19 @@ function replaceData(data: any) {
   height: var(--Line-Height-display-xs, 32px);
 }
 
-.card-list {
-  display: flex;
-  flex-direction: column;
+.account {
   margin-top: 10px;
+  font-family: Inter;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
 
-  &-item {
-    display: grid;
-    grid-template-columns: 16px 1fr;
-    grid-column-gap: var(--spacing-lg, 8px);
-    grid-row-gap: var(--spacing-xs, 4px);
+  &-title {
+    color: var(--Colors-Text-text-primary, #171c1f);
+    font-weight: 500;
+  }
 
-    &-img {
-      width: 16px;
-      height: 16px;
-      grid-row-start: span 2;
-    }
-
-    &-nation {
-      color: var(--Colors-Text-text-primary, #171c1f);
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-    }
-
-    &-time {
-      color: var(--Colors-Text-text-inactive, #a3a9ad);
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: var(--Line-Height-text-xs, 16px);
-    }
+  &-subtitle {
+    color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }
 </style>

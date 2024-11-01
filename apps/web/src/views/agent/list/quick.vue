@@ -165,9 +165,10 @@ function saveSelected() {
               <span>{{ row.host }}</span>
               <span>{{ strConcat(':', row.port) }}</span>
             </div>
-            <div class="ip-type">
-              {{ row.ipType }}
-              {{ row.proxyUserName }}
+            <div class="flex items-center gap-1.5 ip-type">
+              <span>{{ row.ipType }}</span>
+              <Divider class="!ma-0" layout="vertical" />
+              <span>{{ row.proxyUserName }}</span>
             </div>
           </div>
         </template>

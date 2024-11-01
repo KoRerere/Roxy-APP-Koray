@@ -48,7 +48,7 @@ function formatTime(time: string) {
 </script>
 
 <template>
-  <div class="proxycard flex gap-2">
+  <div class="flex gap-2 proxycard">
     <div>
       <RxSvgIcon :name="(`country-code/${country}` as SvgNames)" fallback="base/rx_ic_earth" />
     </div>

@@ -5,7 +5,7 @@ type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends RadioButtonProps {
   size?: Size
-  options: Array<{ value: string | number, label: string }>
+  options: Array<{ value: string | number | boolean, label: string }>
 }
 
 defineOptions({
@@ -18,7 +18,7 @@ defineEmits(['change'])
 
 <template>
   <div class="radio-group">
-    <label v-for="option in options" :key="option.value" :for="`${props.name}_${option.value}`" class="cursor-pointer radio-group-item" :class="styles[size]">
+    <label v-for="option in options" :key="option.label" :for="`${props.name}_${option.value}`" class="cursor-pointer radio-group-item" :class="styles[size]">
       <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value" @change="$emit('change')" />
       <div class="select-none radio-group-item__text">{{ option.label }}</div>
     </label>

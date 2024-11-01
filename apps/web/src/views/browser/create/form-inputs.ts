@@ -218,17 +218,20 @@ export function getInputsGroup(data: any = {}) {
       separator: true,
     },
     {
-      label: $t('代理 (默认直连)'),
+      label: $t('代理'),
       name: 'proxyInfoList',
       value: proxyInfoList,
+      switch: !!proxyInfoList.length,
       formatValue: (input: any, _inputs: any, formData: any) => {
-        const { id, ...value } = input.value[0] || {
+        const { id, ...value } = (input.switch && input.value[0]) || {
           ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
         Object.assign(formData, { ...value, moduleId: id, proxyMethod: id ? 'choose' : 'custom' })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
-        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
+        return input.switch
+          ? input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
+          : []
       },
       slot: 'proxy',
     },
