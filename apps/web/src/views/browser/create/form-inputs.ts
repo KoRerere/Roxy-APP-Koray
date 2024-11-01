@@ -190,6 +190,7 @@ export function getInputsGroup(data: any = {}) {
       value: $dict_map.coreVersion.find((item: any) => item.value === data.coreVersion) ?? $dict_map.coreVersion[0],
       options: $dict_map.coreVersion,
       icon: 'base/rx_ic_chrome',
+      iconColor: 'var(--p-primary-color, #12a3fc)',
       required: true,
       filter: false,
       change: async (item: any) => {

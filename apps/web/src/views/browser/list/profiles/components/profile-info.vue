@@ -63,6 +63,7 @@ const list = computed(() => [
     key: 'account',
     image: windowPlatformList.value[0]?.platformIcon,
     svg: windowPlatformList.value[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
+    svgColor: windowPlatformList.value[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
     classes: windowPlatformList.value.length > 1 ? 'stack' : '',
   },
 ])
@@ -176,7 +177,7 @@ function getAccountOperation() {
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
           <img v-if="item.image" :src="item.image" class="state-icons-img">
-          <RxSvgIcon v-else :name="item.svg" fallback="base/rx_ic_earth" />
+          <RxSvgIcon v-else :name="item.svg" :color="item.svgColor" fallback="base/rx_ic_earth" />
         </div>
       </div>
       <div class="state-line">

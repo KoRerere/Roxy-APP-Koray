@@ -36,6 +36,12 @@ defineEmits(['iconClick', 'change'])
 <style lang="scss" scoped>
 :deep(.p-textarea) {
   resize: none;
+  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  font-family: Inter;
+
+  &:disabled {
+    color: var(--Component-Colors-TextInput-text-text-inactive, #a3a9ad);
+  }
 }
 
 @mixin input-styles($pt, $pr, $pb, $pl, $gap, $borderWidth, $radius, $fontSize, $lineHeight) {
@@ -55,8 +61,6 @@ defineEmits(['iconClick', 'change'])
     padding: $pt $pr $pb $pl;
     border-width: $borderWidth;
     border-radius: $radius;
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
-    font-family: Inter;
     font-size: $fontSize;
     line-height: $lineHeight;
 

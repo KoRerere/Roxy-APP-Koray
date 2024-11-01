@@ -7,6 +7,7 @@ type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 interface Props extends /* @vue-ignore */ SelectProps {
   size?: Size
   icon?: SvgNames
+  iconColor?: string
   name: string
 }
 
@@ -14,7 +15,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'sm', icon, name, ...props } = defineProps<Props>()
+const { size = 'sm', icon, iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)', name, ...props } = defineProps<Props>()
 
 defineEmits(['change'])
 
@@ -32,7 +33,7 @@ const defaultProps: SelectProps = {
     </template>
     <template v-if="!$attrs.optionValue && !defaultProps.optionValue" #value="{ value: option, placeholder }">
       <div v-if="option" class="select-item">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>
@@ -42,7 +43,7 @@ const defaultProps: SelectProps = {
     </template>
     <template #option="{ option }">
       <div class="select-item">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
       </div>

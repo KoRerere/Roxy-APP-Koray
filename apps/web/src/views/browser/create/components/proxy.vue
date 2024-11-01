@@ -215,6 +215,7 @@ function replaceData(data: any) {
       padding-left: 0;
       border: none;
       min-width: auto;
+      box-shadow: none;
     }
   }
 }
