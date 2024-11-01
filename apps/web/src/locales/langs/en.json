@@ -562,6 +562,7 @@
   "项目管理": "Project",
   "高级指纹设置": "Advanced Fingerprint Settings",
   "默认 IP 查询渠道": "Default IP Query Channel",
+  "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the Workspace",
   "默认图标展示所有者名称的前两个字符": "Default icon shows the first two characters of the owner name",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default Profile info combines the first three characters of the Workspace name and serial number."
 }
