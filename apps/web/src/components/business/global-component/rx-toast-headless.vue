@@ -8,20 +8,16 @@ const iconMap: Record<string, SvgNames> = {
   info: 'base/rx_ic_warn_fill',
 }
 
-const toastRef = useTemplateRef('toast')
-
 const messageMap: Recordable = {}
 
-console.log('totoastRefast', toastRef)
-
-function handleMouseenter(slotData) {
+function handleMouseenter(slotData: Recordable) {
   const { message } = slotData
   if (messageMap[message.id]) {
     clearTimeout(messageMap[message.id].closeTimeout)
   }
 }
 
-function handleMouseleave(slotData) {
+function handleMouseleave(slotData: Recordable) {
   const { message, closeCallback } = slotData
   console.log('handleMouseleave', slotData, messageMap)
   if (messageMap[message.id]) {
@@ -32,7 +28,7 @@ function handleMouseleave(slotData) {
   }
 }
 
-function cacheToast(slotData) {
+function cacheToast(slotData: Recordable) {
   const { message, closeCallback } = slotData
 
   const duplicateItem = Object.values(messageMap).find((item) => {
@@ -68,16 +64,16 @@ function cacheToast(slotData) {
 </script>
 
 <template>
-  <Toast ref="toast" position="top-center" unstyled :pt="{ root: 'translate-x-[-50%]' }">
+  <Toast position="top-center" unstyled :pt="{ root: 'translate-x-[-50%]' }">
     <template #container="{ message, closeCallback }">
-      <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]">
+      <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
         <section
           class="alert"
           :data-life="cacheToast({ message, closeCallback })"
           @mouseenter="handleMouseenter({ message, closeCallback })"
           @mouseleave="handleMouseleave({ message, closeCallback })"
         >
-          <div class="alert-icon" :class="[message.severity]">
+          <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
           </div>
           <div class="alert-content">
@@ -114,37 +110,44 @@ function cacheToast(slotData) {
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
 }
 
-.alert-icon {
-  &.success {
+.badge.success {
+  :deep(.p-badge) {
+    background-color: var(--Colors-Text-text-success, #1cc94d);
+  }
+  .alert-icon {
     color: var(--Colors-Text-text-success, #1cc94d);
   }
-  &.warn {
+}
+
+.badge.warn {
+  :deep(.p-badge) {
+    background-color: var(--Colors-Text-text-warning, #fc9d12);
+  }
+  .alert-icon {
     color: var(--Colors-Text-text-warning, #fc9d12);
   }
-  &.error {
+}
+
+.badge.error {
+  :deep(.p-badge) {
+    background-color: var(--Colors-Text-text-error, #f53838);
+  }
+  .alert-icon {
     color: var(--Colors-Text-text-error, #f53838);
   }
-  &.info {
+}
+
+.badge.info {
+  :deep(.p-badge) {
+    background-color: var(--Colors-Text-text-info, #12a3fc);
+  }
+  .alert-icon {
     color: var(--Colors-Text-text-info, #12a3fc);
   }
 }
-.badge {
-  &.success :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-success, #1cc94d);
-  }
-  &.warn :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-warning, #fc9d12);
-  }
-  &.error :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-error, #f53838);
-  }
-  &.info :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-info, #12a3fc);
-  }
 
-  :deep(.p-badge-dot) {
-    display: none;
-  }
+.badge :deep(.p-badge-dot) {
+  display: none;
 }
 
 .alert-content {
