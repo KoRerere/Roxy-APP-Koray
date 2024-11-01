@@ -297,6 +297,7 @@ async function modifyFilter() {
   &-list {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     margin-right: var(--spacing-lg, 8px);
     gap: var(--spacing-lg, 8px);
 
@@ -319,7 +320,7 @@ async function modifyFilter() {
   &-actions {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: start;
     margin-right: var(--spacing-md, 6px);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Border-border-container, #c7cdd1);

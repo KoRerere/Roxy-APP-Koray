@@ -42,7 +42,7 @@ function onFilterChange() {
 </script>
 
 <template>
-  <div v-for="item in filters" :key="item.key" class="flex items-center">
+  <div v-for="item in filters" :key="item.key" class="flex items-start">
     <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item"
       @change="onMultiChange" @hide="onMultiHide" />
     <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />

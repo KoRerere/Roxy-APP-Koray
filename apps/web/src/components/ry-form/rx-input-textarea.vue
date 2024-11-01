@@ -55,7 +55,7 @@ defineEmits(['iconClick', 'change'])
     padding: $pt $pr $pb $pl;
     border-width: $borderWidth;
     border-radius: $radius;
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    color: var(--Component-Colors-TextInput-text-text, #171c1f);
     font-family: Inter;
     font-size: $fontSize;
     line-height: $lineHeight;

@@ -194,14 +194,16 @@ function onRefreshTable() {
         </template>
 
         <template #proxy="{ data }">
-          <div class="proxy-host">
-            <span>{{ strConcat(data.protocol?.toLocaleLowerCase(), '://') }}</span>
-            <span>{{ data.host }}</span>
-            <span>{{ strConcat(':', data.port) }}</span>
-          </div>
-          <div class="ip-type">
-            {{ data.ipType }}
-            {{ data.proxyUserName }}
+          <div class="flex flex-col gap-1">
+            <div class="proxy-host">
+              <span>{{ strConcat(data.protocol?.toLocaleLowerCase(), '://') }}</span>
+              <span>{{ data.host }}</span>
+              <span>{{ strConcat(':', data.port) }}</span>
+            </div>
+            <div class="ip-type">
+              {{ data.ipType }}
+              {{ data.proxyUserName }}
+            </div>
           </div>
         </template>
         <template #remark="{ data }">
@@ -229,19 +231,17 @@ function onRefreshTable() {
 }
 
 .proxy-host {
-  color: var(--Color-neutrals-950, #0e1214);
+  color: var(--Colors-Text-text-primary, #171c1f);
   font-family: 'JetBrains Mono';
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .ip-type {
-  color: var(--Colors-Text-text-subtle, #c7cdd1);
+  color: var(--Colors-Text-text-inactive, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
-  font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
 }

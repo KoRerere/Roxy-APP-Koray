@@ -34,7 +34,7 @@ function onConfirm() {
 
 <template>
   <div class="flex flex-col h-full account-content">
-    <div class="flex-1 overflow-y-auto account-body">
+    <div class="flex-1 overflow-hidden">
       <proxiesForm :inputs="formInputs" />
     </div>
     <div class="flex items-end">
@@ -50,12 +50,6 @@ function onConfirm() {
 .account-content {
   padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
   width: var(--width-xs, 384px);
-}
-
-.account-body {
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .button-group {

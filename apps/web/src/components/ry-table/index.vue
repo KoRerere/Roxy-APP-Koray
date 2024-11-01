@@ -268,8 +268,8 @@ defineExpose({
 
 <template>
   <div class="position-relative w-full h-full flex flex-col">
-    <div v-if="showTableHeader" class="flex items-center rx-header">
-      <div class="flex flex-auto gap-2">
+    <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
+      <div class="flex flex-1 gap-2">
         <TableFilter :filters="_filters" @change="onChangeParams('filters', $event)" />
         <slot name="header-extra" />
       </div>
@@ -347,11 +347,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .rx-header {
-  display: flex;
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
   border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
 }
 

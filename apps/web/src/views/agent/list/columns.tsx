@@ -16,7 +16,7 @@ const columnsConfig = {
       key: 'outbound',
       render: ({ data }: any) => {
         return (
-          <OutboundIp image={data.region} country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
+          <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
         )
       },
     },

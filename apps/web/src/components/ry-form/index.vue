@@ -24,10 +24,14 @@ function onChange(input: any, inputs: any) {
     input.invalid = false
   input.change?.(input, inputs)
 }
+
+function onSubmit(event: any) {
+  event.preventDefault()
+}
 </script>
 
 <template>
-  <form class="ry-form" action="">
+  <form class="ry-form" @submit.prevent="onSubmit">
     <template v-for="input in _inputs" :key="input.name">
       <slot :name="input.slot" :input="input" :label-position="labelPosition">
         <div v-if="input.separator" class="ry-form-line" />

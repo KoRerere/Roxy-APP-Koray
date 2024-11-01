@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon'
-import rxCard from '/@/components/rx-card'
 import FormItem from '/@/components/ry-form/form-item.vue'
 import { $t } from '/@/locales'
 import { parseUrl } from '/@/utils'
@@ -57,28 +56,14 @@ function onBlur(input: any) {
   <div class="flex flex-row">
     <input-label v-bind="$attrs" />
     <div class="flex-1">
-      <div class="flex items-center add">
-        <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')" @click="addInputs" />
-      </div>
-      <div class="inputs">
-        <rxCard v-for="(input, index) in urlInputs" :key="input.name" class="inputs-item" @close="deleteInput(index)">
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')" @click="addInputs" />
+      <div>
+        <RxCard v-for="(input, index) in urlInputs" :key="input.name" class="!border-none !pa-0 mt-2.5" @close="deleteInput(index)">
           <FormItem v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />
-        </rxCard>
+        </RxCard>
       </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-.add {
-  height: var(--Line-Height-display-xs, 32px);
-}
-
-.inputs {
-  &-item {
-    padding: 0;
-    border: none;
-    margin-top: 10px;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

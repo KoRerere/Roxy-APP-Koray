@@ -6,14 +6,17 @@ import { strConcat } from '/@/utils'
 
 export interface CheckResult {
   loading: boolean
+  error?: any
   checkStatus: ProxyCheckStatus
   lastIp?: string
   lastCity?: string
   lastCountry?: string
   checkTime?: string
+  timezone?: string
 }
 
 interface ProxyCheckParams {
+  dirId?: string | undefined
   checkChannel?: string | undefined
   ipType?: string | undefined
   proxyCategory?: string | undefined
@@ -37,6 +40,7 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
 
   async function testProxy(data: ProxyCheckParams) {
     checkeResult.loading = true
+    checkeResult.error = null
     const dirId = data.dirId || Math.random().toString(36).slice(2)
     data.dirId = dirId
 
@@ -54,9 +58,11 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
       checkeResult.lastIp = checkRes.ip ?? ''
       checkeResult.lastCity = checkRes.city ?? ''
       checkeResult.lastCountry = checkRes.country_code ?? ''
+      checkeResult.timezone = checkRes.timezone ?? ''
       checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }
     catch (error: any) {
+      checkeResult.error = error
       onlyErrorToast(-1, error)
     }
     finally {

@@ -63,7 +63,7 @@ const columns = ref([
     render: ({ data }: any) => {
       return (
         data.checkTime
-          ? <OutboundIp image={data.region} country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
+          ? <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
           : <div>未检测</div>
       )
     },
