@@ -33,6 +33,11 @@ export async function startLuminet() {
   const systemProxy = await getSystemProxy()
   console.log('systemProxy', systemProxy)
 
+  if (!systemProxy) {
+    console.log('没有获取到系统代理，停止拉起 luminet')
+    return
+  }
+
   const launchParams = {
     system_proxy: {
       addr: systemProxy,

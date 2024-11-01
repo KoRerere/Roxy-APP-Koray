@@ -377,24 +377,28 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       // {label: "SOCKS5", value: "SOCKS5"}{label: "HTTP", value: "HTTP"}{label: "HTTPS", value: "HTTPS"}
       const { host, port, proxyUserName, proxyPassword } = winInfo
       const { systemProxySwitch } = store
-      const [systemProxyHost = '', systemProxyPort = ''] = getSystemProxyAddress().split(':')
+      const systemProxyAddress = getSystemProxyAddress()
+      const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress.split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
-      let type = systemProxySwitch && protocol === 'https' ? 'http' : protocol
-      const isUseSystemProxy = type === 'noproxy' && systemProxyHost && systemProxyPort
-      type = isUseSystemProxy ? 'HTTP' : type
+      // 是否开启系统代理
+      const isUseSystemProxy = systemProxySwitch && systemProxyHost && systemProxyPort
+      // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
+      const type = isUseSystemProxy && protocol === 'https' ? 'http' : protocol
+      // 是否为直连
+      const isNoProxy = type.toLocaleLowerCase() === 'noproxy'
 
       return {
         // 代理类型 http https,socks5
         // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
-        type: type.toLocaleLowerCase(),
+        type: (isUseSystemProxy || systemProxyAddress) && isNoProxy ? 'http' : type.toLocaleLowerCase(),
         // 代理主机
-        host: systemProxySwitch ? '127.0.0.1' : isUseSystemProxy ? systemProxyHost : host,
+        host: isUseSystemProxy ? '127.0.0.1' : isNoProxy ? systemProxyHost : host,
         // 代理端口
-        port: Number(systemProxySwitch ? store.luminetProxyPort : isUseSystemProxy ? systemProxyPort : port),
+        port: Number(isUseSystemProxy ? store.luminetProxyPort : isNoProxy ? systemProxyPort : port),
         // 用户名 ，选填
-        username: systemProxySwitch ? winInfo.dirId : proxyUserName,
+        username: isUseSystemProxy ? winInfo.dirId : proxyUserName,
         // 密码，选填
-        password: systemProxySwitch ? winInfo.dirId : proxyPassword,
+        password: isUseSystemProxy ? winInfo.dirId : proxyPassword,
         // 不走代理的地址 - google会导致代理被墙，开发环境默认加上
         proxyByPassList: store.ipBlackList?.join?.(';'),
       }

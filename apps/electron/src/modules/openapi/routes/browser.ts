@@ -9,11 +9,15 @@ import { defaultBrowserCreateParams } from './constants/'
 
 const router = express.Router()
 
+const commonHeaders = {
+  source: 'api',
+}
+
 /** 获取账号列表 */
 router.get('/account', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId } })
+    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = mappingKeys(accountMapping, result.data.rows)
     }
@@ -28,7 +32,7 @@ router.get('/account', async (req, res) => {
 router.get('/workspace', async (req, res) => {
   const { ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.api.userGetWorkspaceListApiList({ ...rest })
+    const result = await API.api.userGetWorkspaceListApiList({ ...rest }, { headers: { ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = result.data.rows.map((item) => {
         Reflect.deleteProperty(item, 'userId')
@@ -61,6 +65,7 @@ router.post('/create', async (req, res) => {
     }, {
       headers: {
         workspaceId,
+        ...commonHeaders,
       },
     })
     res.json(result)
@@ -82,6 +87,7 @@ router.post('/mdf', async (req, res) => {
   const result = await API.window.userMdfWindowInfoSingleV2Create(params, {
     headers: {
       workspaceId,
+      ...commonHeaders,
     },
   })
   res.json(result)
@@ -91,7 +97,7 @@ router.post('/mdf', async (req, res) => {
 router.get('/list', async (req, res) => {
   const { dirId, workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       console.log('browserListMapping', result.data.rows)
       result.data.rows = result.data.rows.map(item => listTrans(item))
@@ -124,7 +130,7 @@ router.post('/delete', async (req, res) => {
   }
 
   try {
-    const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId } })
+    const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...commonHeaders } })
     dirIds.forEach(dirId => browserManager.removeLocalData(dirId))
 
     res.json(result)
@@ -151,7 +157,7 @@ router.post('/open', async (req, res) => {
   }
 
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId }, { headers: { workspaceId } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]
       if (!winInfo) {
@@ -198,7 +204,7 @@ router.post('/close', async (req, res) => {
 /* 窗口随机指纹 */
 router.post('/random_env', async (req, res) => {
   const { dirId, workspaceId } = req.body
-  const result = await API.api.userMdfWindowInfoRandomV2Create({ dirId }, { headers: { workspaceId } })
+  const result = await API.api.userMdfWindowInfoRandomV2Create({ dirId }, { headers: { workspaceId, ...commonHeaders } })
 
   return res.json(result)
 })
@@ -231,7 +237,7 @@ router.post('/clear_server_cache', async (req, res) => {
     return res.error('dirIds is required')
   }
 
-  const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId } })
+  const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId, ...commonHeaders } })
 
   if (result.code === 0) {
     res.success()

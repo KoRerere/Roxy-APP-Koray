@@ -85,20 +85,19 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   }
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
-  const systemProxyAddress = systemProxySwitch ? await getSystemProxy() : ''
+  const systemProxyAddress = await getSystemProxy()
   const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
-  let __protocol = systemProxySwitch && proxyCategory === 'HTTPS' ? 'HTTP' : proxyCategory
-  const isUseSystemProxy = __protocol === 'noproxy' && systemProxyAddress
-  __protocol = outerParamFirst ? proxyCategory : isUseSystemProxy ? 'HTTP' : __protocol
+  const isUseSystemProxy = systemProxySwitch && systemProxyAddress
 
-  if (systemProxySwitch) {
+  if (isUseSystemProxy) {
     await startLuminet()
-    const addr = host && port ? `${host}:${port}` : isUseSystemProxy ? systemProxyAddress : ''
+    const protocal = proxyCategory.toLocaleLowerCase()
+    const addr = host && port ? `${host}:${port}` : ''
     const luminetParams = {
-      addr,
+      addr: protocal === 'noproxy' ? '' : addr,
       user_name: proxyUserName || '',
       password: proxyPassword || '',
-      protocal: proxyCategory === 'noproxy' ? 'http' : proxyCategory.toLocaleLowerCase(),
+      protocal,
     }
     console.log('luminetParams', luminetParams)
 
@@ -107,19 +106,26 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
         [dirId]: luminetParams,
       })
     }
+    console.log('本次代理检测经过 luminet')
   }
+  else {
+    console.log('本次代理检测不经过 luminet')
+  }
+  // 是否为直连
+  const isNoProxy = proxyCategory.toLocaleLowerCase() === 'noproxy'
+  const __protocol = outerParamFirst ? proxyCategory : isUseSystemProxy || (isNoProxy && systemProxyAddress) ? 'HTTP' : proxyCategory
 
   const params: ProxyDetectionParams = {
     proxyCategory: __protocol,
-    host: systemProxySwitch ? '127.0.0.1' : isUseSystemProxy ? systemProxyHost : host,
-    port: systemProxySwitch ? store.luminetProxyPort : isUseSystemProxy ? systemProxyPort : port,
-    proxyUserName: systemProxySwitch ? dirId : proxyUserName,
-    proxyPassword: systemProxySwitch ? dirId : proxyPassword,
+    host: isUseSystemProxy ? '127.0.0.1' : isNoProxy ? systemProxyHost : host,
+    port: isUseSystemProxy ? store.luminetProxyPort : isNoProxy ? systemProxyPort : port,
+    proxyUserName: isUseSystemProxy ? dirId : proxyUserName,
+    proxyPassword: isUseSystemProxy ? dirId : proxyPassword,
     checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
   }
 
   // console.log('proxyDetectionParams', proxyDetectionParams)
-  const checkMode = getCheckFunction(__protocol as ProtocolMapType)
+  const checkMode = getCheckFunction(params.proxyCategory)
   console.log('proxyDetection params', params)
   const result = await checkMode(params)
 
@@ -171,15 +177,14 @@ function checkHttpsProxy(winInfo: ProxyDetectionParams) {
   const auth = proxyPassword && proxyUserName ? `${proxyUserName}:${proxyPassword}@` : ``
 
   // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
-  const protocol = store.systemProxySwitch ? `http` : `https`
-  const httpUrl = `${protocol}://${auth}${host}:${port}`
-  console.log(`httpUrl`, httpUrl)
+  const httpsUrl = `https://${auth}${host}:${port}`
+  console.log(`httpsUrl`, httpsUrl)
   http.get(checkChannel, {
     headers: {
       'user-agent': 'electron ',
     },
     timeout: TIMEOUT,
-    agent: new HttpsProxyAgent(httpUrl, { timeout: TIMEOUT, rejectUnauthorized: false }),
+    agent: new HttpsProxyAgent(httpsUrl, { timeout: TIMEOUT, rejectUnauthorized: false }),
   }, (res) => {
     // res.pipe(process.stdout);
     let data = ``
@@ -288,6 +293,6 @@ export async function detectNetwork(type?: 'local' | 'system') {
     })
   }
   else {
-    return proxyDetection({ systemProxySwitch: false, proxyCategory: 'noproxy' })
+    return proxyDetection({ systemProxySwitch: false, outerParamFirst: true, proxyCategory: 'noproxy' })
   }
 }

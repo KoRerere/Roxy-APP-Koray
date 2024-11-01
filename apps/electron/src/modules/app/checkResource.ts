@@ -19,7 +19,7 @@ export async function checkResource() {
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
     const { code, data } = await API.base.userGetAppUpgradeCreate(osConfig)
-
+    console.log('checkResource', code, data)
     if (code === 0) {
       const webDomain = data.webDomain
       // 检测更新 luminet
