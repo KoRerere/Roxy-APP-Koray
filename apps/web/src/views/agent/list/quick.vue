@@ -7,10 +7,12 @@ import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { setRowsLoading, strConcat } from '/@/utils'
+import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import proxyColumns from './columns'
-import { type ProxyItem, tableOperation, tableRequest } from './operation'
+import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 
 interface Boundeds {
   [id: number]: {
@@ -42,36 +44,12 @@ const columns = setColumns(proxyColumns.data, {
   filters: ['ipChecker'],
 })
 
+const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const selection = ref(props.data)
-
+const filtersMenu = ref(getCustomFilters())
 const dataList = ref()
 
 const boundeds = ref<Boundeds>({})
-
-const filterButtons = reactive({
-  value: null,
-  options: [
-    {
-      label: 'All',
-      value: null,
-    },
-    {
-      label: 'SOCKS 5',
-      value: ProxyProtocol.SOCKS5,
-    },
-    {
-      label: 'HTTP',
-      value: ProxyProtocol.HTTP,
-    },
-    {
-      label: 'HTTPS',
-      value: ProxyProtocol.HTTPS,
-    },
-  ],
-  onChange({ value }: SelectButtonChangeEvent) {
-    tableRef.value?.refresh({ protocol: value })
-  },
-})
 
 const tableProps = {
   columns,
@@ -97,6 +75,11 @@ const tableProps = {
         boundeds.value = Object.fromEntries(Object.entries(boundeds.value).map(([id, item]) => [id, { ...item, disabled: true }]))
       },
     }),
+}
+
+function onRefreshTable() {
+  const params = filterFieldByValue(getFormData(filtersMenu.value))
+  tableRef.value!.refresh(params)
 }
 
 async function getTableList(params: any) {
@@ -166,23 +149,33 @@ function saveSelected() {
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
         <template #header-extra>
-          <div class="flex flex-auto items-center justify-between">
-            <RxSelectButton v-model="filterButtons.value" :options="filterButtons.options" option-label="label" option-value="value" data-key="value" @change="filterButtons.onChange" />
+          <div class="flex flex-auto items-start justify-between">
+            <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
             <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
           </div>
         </template>
+        <template #table-empty>
+          <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂无代理')" />
+        </template>
+
         <template #proxy="{ data: row }">
-          <div class="proxy-host">
-            <span>{{ strConcat(row.protocol?.toLocaleLowerCase(), '://') }}</span>
-            <span>{{ row.host }}</span>
-            <span>{{ strConcat(':', row.port) }}</span>
-          </div>
-          <div class="ip-type">
-            {{ row.ipType }}
+          <div class="flex flex-col gap-1">
+            <div class="proxy-host">
+              <span>{{ strConcat(row.protocol?.toLocaleLowerCase(), '://') }}</span>
+              <span>{{ row.host }}</span>
+              <span>{{ strConcat(':', row.port) }}</span>
+            </div>
+            <div class="ip-type">
+              {{ row.ipType }}
+              {{ row.proxyUserName }}
+            </div>
           </div>
         </template>
         <template #outbound="{ data: row }">
           <OutboundIp :country="row.lastCountry" :city="row.lastCity" :last-ip="data.lastIp" :time="row.checkTime" />
+        </template>
+        <template #remark="{ data: row }">
+          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #related="{ data: row }">
           <RelatedInfo :list="row.bindList" />
@@ -200,7 +193,7 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <Actions :operation="tableOperation(row)" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
+          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>
@@ -223,19 +216,17 @@ function saveSelected() {
 }
 
 .proxy-host {
-  color: var(--Color-neutrals-950, #0e1214);
+  color: var(--Colors-Text-text-primary, #171c1f);
   font-family: 'JetBrains Mono';
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .ip-type {
-  color: var(--Colors-Text-text-subtle, #c7cdd1);
+  color: var(--Colors-Text-text-inactive, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
-  font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
 }

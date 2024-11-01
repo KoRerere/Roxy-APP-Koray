@@ -11,6 +11,7 @@ import WorkspaceSelect from './workspace-select.vue'
     <WorkspaceSelect />
     <div class="top-bar-items">
       <Network />
+      <Divider class="!ma-0" layout="vertical" />
       <ResourceUpdater />
       <Notification />
       <Profile />

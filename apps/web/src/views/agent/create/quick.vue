@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { getFormData } from '/@/utils'
-import { useCheckProxy } from '/@/views/agent/hooks'
 import { getInputs } from './components/form-inputs'
-import proxiesForm from './components/proxies-form.vue'
+import ProxiesForm from './components/proxies-form.vue'
 
 const props = defineProps({
   data: {
@@ -14,17 +13,11 @@ const emits = defineEmits(['confirm'])
 
 const formInputs = ref(getInputs(props.data || {}))
 const original = ref(props.data)
-const [checkProxy, checkResult] = useCheckProxy()
-
-async function testProxy() {
-  const data = getFormData(formInputs.value)
-  await checkProxy(data)
-}
 
 function onConfirm() {
   try {
     const formData = getFormData(formInputs.value, original.value)
-    emits('confirm', { ...formData, ...checkResult })
+    emits('confirm', { ...formData })
   }
   catch (error) {
     console.log(error)
@@ -35,11 +28,10 @@ function onConfirm() {
 <template>
   <div class="flex flex-col h-full account-content">
     <div class="flex-1 overflow-hidden">
-      <proxiesForm :inputs="formInputs" />
+      <ProxiesForm v-model:original="original" :inputs="formInputs" />
     </div>
     <div class="flex items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RxButton size="sm" icon="base/rx_ic_internet" :label="$t('测试代理')" severity="secondary" outlined @click="testProxy" />
         <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="onConfirm" />
       </div>
     </div>

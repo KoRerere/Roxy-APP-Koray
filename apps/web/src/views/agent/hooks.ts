@@ -59,13 +59,17 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
       checkeResult.lastCity = checkRes.city ?? ''
       checkeResult.lastCountry = checkRes.country_code ?? ''
       checkeResult.timezone = checkRes.timezone ?? ''
-      checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }
     catch (error: any) {
       checkeResult.error = error
+      checkeResult.checkStatus = ProxyCheckStatus.failure;
+      ['lastIp', 'lastCity', 'lastCountry', 'timezone'].forEach((key) => {
+        checkeResult[key as keyof CheckResult] = ''
+      })
       onlyErrorToast(-1, error)
     }
     finally {
+      checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       checkeResult.loading = false
       dirId && window.electronAPI.send('proxy:delLuminetProxy', dirId)
     }

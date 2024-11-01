@@ -1,6 +1,8 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxTag from '/@/components/rx-tag.vue'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -13,6 +15,12 @@ const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
+
+const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
+  get(target, key) {
+    return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
+  },
+})
 
 const proxiesText = ref('')
 const dataList: any = ref([])
@@ -59,6 +67,15 @@ const columns = ref([
     getText: (data: any) => data.remark || '--',
   },
   {
+    title: $t('IP 查询渠道'),
+    key: 'ipChecker',
+    render: ({ data }: any) => {
+      return (
+        <RxTag icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>
+      )
+    },
+  },
+  {
     title: $t('出口 IP'),
     render: ({ data }: any) => {
       return (
@@ -74,6 +91,23 @@ const columns = ref([
   },
 ])
 
+const ipCheckerConfig = reactive({
+  value: $dict_map.checkChannel[0],
+  props: {
+    name: 'checkChannel',
+    options: $dict_map.checkChannel,
+    filter: false,
+    size: 'xxs' as any,
+    icon: 'base/rx_ic_network' as any,
+  },
+  onChange() {
+    dataList.value.forEach((item: any) => {
+      item.checkChannel = ipCheckerConfig.value.value
+      item.checkChannelValue = ipCheckerConfig.value.label
+    })
+  },
+})
+
 function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
@@ -88,6 +122,8 @@ function parseValue() {
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
       return {
+        checkChannel: ipCheckerConfig.value.value,
+        checkChannelValue: ipCheckerConfig.value.label,
         checkStatus: ProxyCheckStatus.failure,
         ipType,
         protocol: protocol?.toLocaleUpperCase(),
@@ -215,10 +251,15 @@ function onSave() {
         <div class="information">
           <ParseTextarea v-model="proxiesText" />
           <div class="flex justify-between information-actions">
-            <div class="flex items-center">
-              <Checkbox v-model="isDuplicate" :pt="{ box: '!w-4 !h-4' }" input-id="wrap" binary />
-              <label for="wrap" class="text-3 select-none mx-1.5 cursor-pointer">{{ $t('自动去重') }}</label>
-              <RxSvgIcon v-tooltip="$t('当输入重复代理信息时不做添加')" name="base/rx_ic_info" :size="12" />
+            <div class="flex items-center gap-2.5">
+              <div>
+                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+              </div>
+              <div class="flex items-center">
+                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
+                <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer">{{ $t('自动去重') }}</label>
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
+              </div>
             </div>
             <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click="parseValue" />
           </div>
@@ -260,6 +301,9 @@ function onSave() {
       </Message>
       <div class="flex-ovh-1 items-center justify-center">
         <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+          <template #table-empty>
+            <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂未添加代理')" />
+          </template>
           <template #actions="{ data }">
             <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </template>

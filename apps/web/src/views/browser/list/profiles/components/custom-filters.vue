@@ -174,6 +174,7 @@ function resetFilters() {
   const params = {
     ...condition,
     createTime: condition.startDate && condition.endDate ? [condition.startDate, condition.endDate].join('~') : undefined,
+    updateDate: condition.startUpdateDate && condition.endUpdateDate ? [condition.startUpdateDate, condition.endUpdateDate].join('~') : undefined,
   }
 
   _props.filtersMenu.forEach((item) => {

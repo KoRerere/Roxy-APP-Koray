@@ -166,13 +166,13 @@ export async function getCustomFilters(params: any = {}) {
     },
     {
       type: 'date',
-      name: '#createTime',
+      name: 'updateDate',
       label: $t('修改时间'),
       icon: 'base/rx_ic_calendar',
       items: [
         {
           placeholder: $t('开始时间'),
-          name: 'startDate',
+          name: 'startUpdateDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
             return self.value && format(self.value, 'yyyy-MM-dd')
@@ -180,7 +180,7 @@ export async function getCustomFilters(params: any = {}) {
         },
         {
           placeholder: $t('结束时间'),
-          name: 'endDate',
+          name: 'endUpdateDate',
           maxDate: new Date(),
           formatValue: (self: any) => {
             return self.value && format(self.value, 'yyyy-MM-dd')
@@ -193,6 +193,7 @@ export async function getCustomFilters(params: any = {}) {
   setInputValueByFormData(inputs, {
     ...params,
     createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
+    updateDate: params.startUpdateDate && params.endUpdateDate ? [params.startUpdateDate, params.endUpdateDate].join('~') : undefined,
   })
 
   return inputs

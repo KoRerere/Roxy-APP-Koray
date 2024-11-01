@@ -13,7 +13,7 @@ defineProps<TagProps>()
 <template>
   <div class="flex items-center cursor-default rx-tag" :class="{ 'icon-only': !label, 'disabled': disabled }">
     <RxSvgIcon v-if="icon" class="pointer-events-none" :name="(icon as SvgNames)" :size="14" />
-    <div v-if="label" class="pointer-events-none rx-tag-label">
+    <div v-if="label" class="select-none pointer-events-none rx-tag-label">
       {{ label }}
     </div>
   </div>

@@ -127,6 +127,7 @@ export function setInputValueByFormData(inputs: any[], formData: any) {
 
     if (item.name && formData[item.name]) {
       item.value = formData[item.name]
+      item.invalid = false
     }
     if (item.items && Array.isArray(item.items)) {
       setInputValueByFormData(item.items, formData)

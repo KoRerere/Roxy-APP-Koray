@@ -21,52 +21,37 @@ detectNetwork()
 </script>
 
 <template>
-  <div class="network">
+  <div class="flex items-center gap-1">
     <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="xs" @click="detectNetwork" />
-    <div class="info">
-      <template v-if="loading">
-        <Skeleton width="4rem" height="12px" />
-        <Skeleton width="3rem" height="10px" />
-      </template>
-      <template v-else>
-        <span class="city">{{ proxyInfo.city }}</span>
-        <span class="ip">{{ proxyInfo.ip }}</span>
-      </template>
-    </div>
+    <template v-if="loading">
+      <Skeleton width="4rem" height="12px" />
+      <Skeleton width="3rem" height="10px" />
+    </template>
+    <template v-else>
+      <div class="city">
+        {{ proxyInfo.city }}
+      </div>
+      <div class="ip">
+        ({{ proxyInfo.ip }})
+      </div>
+    </template>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.network {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm, 4px);
+.city {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
+}
 
-  .info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm, 4px);
-
-    .city {
-      color: #000;
-      font-family: Inter;
-      font-size: 10px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: 12px;
-      /* 120% */
-    }
-
-    .ip {
-      color: rgba(0, 0, 0, 0.4);
-      font-family: Inter;
-      font-size: 8px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: 10px;
-      /* 125% */
-    }
-  }
+.ip {
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
 }
 </style>
