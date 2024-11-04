@@ -45,7 +45,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-md, 6px);
+  gap: var(--spacing-xs, 2px);
   align-self: stretch;
   padding-left: calc(26px * v-bind(level));
   margin-bottom: var(--spacing-xl, 12px);

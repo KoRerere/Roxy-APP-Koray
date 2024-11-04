@@ -39,7 +39,7 @@ const bindData = computed(() => {
   return {
     list,
     count: surplus?.length,
-    tooltip: `other profiles: ${surplus?.join(', ')}`,
+    tooltip: surplus?.join(', '),
   }
 })
 </script>

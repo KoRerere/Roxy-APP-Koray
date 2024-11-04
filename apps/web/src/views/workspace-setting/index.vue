@@ -139,7 +139,7 @@ function leaveWorkspace() {
 function onInput() {
   const result = z.string()
     .min(1, $t('请输入空间名称'))
-    .min(2, $t('空间名称最少 2 个字符'))
+    .min(4, $t('空间名称最少 4 个字符'))
     .max(30, $t('空间名称最多 30 个字符'))
     .safeParse(workspaceInfo.value.workspaceName)
 

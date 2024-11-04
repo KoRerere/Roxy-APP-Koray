@@ -68,9 +68,9 @@ function onConfirm(windowRemark: string) {
   <div class="flex items-center gap-2">
     <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_stack" :label="metaData.projectName" @click="selectProject" />
     <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" label="标签" @click="selectTags" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
     </div>
-    <RemarkIcon :title="$t('请为窗口添加备注')" label="备注" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
+    <RemarkIcon :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 

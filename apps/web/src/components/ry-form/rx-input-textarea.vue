@@ -40,7 +40,7 @@ defineEmits(['iconClick', 'change'])
   font-family: Inter;
 
   &:disabled {
-    color: var(--Component-Colors-TextInput-text-text-inactive, #a3a9ad);
+    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
   }
 }
 
