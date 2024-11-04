@@ -120,9 +120,6 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   else {
     console.log('本次代理检测不经过 luminet')
   }
-  // 是否为直连
-  const isNoProxy = proxyCategory.toLocaleLowerCase() === 'noproxy'
-  const __protocol = outerParamFirst ? proxyCategory : isUseSystemProxy || (isNoProxy && systemProxyAddress) ? 'HTTP' : proxyCategory
 
   const params: ProxyDetectionParams = {
     proxyCategory: __protocol,

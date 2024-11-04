@@ -18,7 +18,7 @@ export async function checkResource() {
   console.log('checkResource start')
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
-    const { code, data } = await API.base.userGetAppUpgradeCreate(osConfig)
+    const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
     console.log('checkResource', code, data)
     if (code === 0) {
       const webDomain = data.webDomain

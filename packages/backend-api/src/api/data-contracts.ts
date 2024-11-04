@@ -1779,6 +1779,53 @@ export interface UserMigrateDataListData {
   msg: string;
 }
 
+export interface GetAppUpgradeCreatePayload {
+  /**
+   * 操作系统
+   * 如 "win32", "darwin"，str，必传
+   */
+  os: string;
+  /**
+   * cpu架构
+   * mac专用：interl/apple，str，非必传
+   */
+  cpu?: string;
+  /**
+   *  操作系统位数
+   * 32或64，str，非必传
+   */
+  osBit?: string;
+}
+
+export interface GetAppUpgradeCreateData {
+  code: number;
+  data: {
+    /** 下载地址 */
+    downloadUrl: string;
+    /** 版本号，我们自己定义的版本号，用来和客户端的比对 */
+    version: string;
+    /** 升级标题 */
+    upgradeTitle: string;
+    /** 升级描述 */
+    upgradeDesc: string;
+    upgradeContent: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    /** 发布时间 */
+    releaseTime: string;
+    upgradeContentEn: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
+    webDomain: string;
+  };
+  msg: string;
+}
+
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -3645,23 +3692,23 @@ export interface UserUpdateWindowFilterNameCreatePayload {
   sort: number;
   filter_condition: {
     /** 操作系统 */
-    osList: string;
+    osList?: string;
     /** 窗口名 */
-    windowName: string;
+    windowName?: string;
     /** 备注内容 */
-    windowRemark: string;
+    windowRemark?: string;
     /** 序号 */
-    sortNum: string;
+    sortNum?: string;
     /** 平台 */
-    platformIds: string;
+    platformIds?: string;
     /** 窗口状态 "true"：打开,"false":关闭 */
-    openStatus: string;
+    openStatus?: string;
     /** 开始时间 */
-    startDate: string;
+    startDate?: string;
     /** 结束时间 */
-    endDate: string;
+    endDate?: string;
   };
-  filter_rule: {
+  filter_rule?: {
     /**
      * 名称
      * 名称
@@ -3700,21 +3747,21 @@ export interface UserAddWindowFilterNameCreatePayload {
   filter_name: string;
   filter_condition: {
     /** 操作系统 */
-    osList: string;
+    osList?: string;
     /** 窗口名 */
-    windowName: string;
+    windowName?: string;
     /** 备注内容 */
-    windowRemark: string;
+    windowRemark?: string;
     /** 序号 */
-    sortNum: string;
+    sortNum?: string;
     /** 平台 */
-    platformIds: string;
+    platformIds?: string;
     /** 窗口状态 "true"：打开,"false":关闭 */
-    openStatus: string;
+    openStatus?: string;
     /** 开始时间 */
-    startDate: string;
+    startDate?: string;
     /** 结束时间 */
-    endDate: string;
+    endDate?: string;
   };
   filter_rule: {
     /** 名称 */

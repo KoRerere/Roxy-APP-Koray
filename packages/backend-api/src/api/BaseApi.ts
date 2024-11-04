@@ -12,6 +12,8 @@
 import {
   ForgetPasswordCreateData,
   ForgetPasswordCreatePayload,
+  GetAppUpgradeCreateData,
+  GetAppUpgradeCreatePayload,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
   LoginCreateData,
@@ -603,6 +605,24 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserMigrateDataListData, any>({
       path: `/user_migrate_data`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetAppUpgradeCreate
+   * @summary app升级->获取版本信息--无权限认证
+   * @request POST:/get_app_upgrade
+   * @response `200` `GetAppUpgradeCreateData`
+   */
+  getAppUpgradeCreate = (data: GetAppUpgradeCreatePayload, params: RequestParams = {}) =>
+    this.http.request<GetAppUpgradeCreateData, any>({
+      path: `/get_app_upgrade`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
