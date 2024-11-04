@@ -58,7 +58,7 @@ export async function setupDashboardServer(app: express.Application) {
 
     const browserItem = await browserManager.getOpenedBrowser(dirId as string)
 
-    console.log('browserItem', browserItem)
+    // console.log('browserItem', browserItem)
 
     if (!browserItem) {
       res.error('browser not found')

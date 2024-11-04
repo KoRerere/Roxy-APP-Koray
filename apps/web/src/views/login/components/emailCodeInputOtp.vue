@@ -34,7 +34,7 @@ async function handleSubmit() {
     return
   }
 
-  const verifyCodeRes = await API.base.userCheckBindEmailVerCodeList({
+  const verifyCodeRes = await API.base.getCheckBindEmailVerCodeList({
     email: getEmail.value,
     ver_code: emailCode.value,
   })

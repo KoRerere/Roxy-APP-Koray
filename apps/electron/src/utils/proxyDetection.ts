@@ -67,21 +67,13 @@ export function tryRefreshUrl(refreshUrl: string) {
   })
 }
 
-// export async function handleProxyDetectionParams(proxyDetectionParams: ProxyDetectionParams) {
-//   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
-
-//   const { systemProxySwitch } = store
-//   const systemProxyAddress = await getSystemProxy()
-//   const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
-// }
-
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
   const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
   const systemProxySwitch = Reflect.has(proxyDetectionParams, 'systemProxySwitch') ? proxyDetectionParams.systemProxySwitch : store.systemProxySwitch
 
   if (systemProxySwitch && !dirId) {
-    throw new Error(`dirId is required`)
+    throw new Error(`dirId is required when systemProxySwitch is true`)
   }
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
@@ -107,6 +99,23 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
       })
     }
     console.log('本次代理检测经过 luminet')
+  }
+  else {
+    console.log('本次代理检测不经过 luminet')
+  }
+  // 是否为直连
+  const isNoProxy = proxyCategory.toLocaleLowerCase() === 'noproxy'
+  let __protocol = proxyCategory
+  if (outerParamFirst) {
+    __protocol = proxyCategory
+  }
+  else if (isUseSystemProxy) {
+    if (proxyCategory !== 'SOCKS5') {
+      __protocol = 'HTTP'
+    }
+  }
+  else if (isNoProxy && systemProxyAddress) {
+    __protocol = 'HTTP'
   }
   else {
     console.log('本次代理检测不经过 luminet')

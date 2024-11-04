@@ -15,7 +15,7 @@ router.get('/detection', async (req, res) => {
 
   const browserItem = await browserManager.getOpenedBrowser(dirId as string)
 
-  console.log('browserItem', browserItem)
+  // console.log('browserItem', browserItem)
 
   if (!browserItem) {
     res.error('browser not found')

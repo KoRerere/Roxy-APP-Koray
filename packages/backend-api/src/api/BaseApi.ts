@@ -12,6 +12,8 @@
 import {
   ForgetPasswordCreateData,
   ForgetPasswordCreatePayload,
+  GetCheckBindEmailVerCodeListData,
+  GetCheckBindEmailVerCodeListParams,
   LoginCreateData,
   LoginCreatePayload,
   LoginGoogleCreateData,
@@ -32,8 +34,6 @@ import {
   UserChangePwdCreatePayload,
   UserChangeUsernameCreateData,
   UserChangeUsernameCreatePayload,
-  UserCheckBindEmailVerCodeListData,
-  UserCheckBindEmailVerCodeListParams,
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
@@ -577,14 +577,14 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserCheckBindEmailVerCodeList
+   * @name GetCheckBindEmailVerCodeList
    * @summary 比对验证码
-   * @request GET:/user_check_bind_email_ver_code
-   * @response `200` `UserCheckBindEmailVerCodeListData`
+   * @request GET:/get_check_bind_email_ver_code
+   * @response `200` `GetCheckBindEmailVerCodeListData`
    */
-  userCheckBindEmailVerCodeList = (query: UserCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
-    this.http.request<UserCheckBindEmailVerCodeListData, any>({
-      path: `/user_check_bind_email_ver_code`,
+  getCheckBindEmailVerCodeList = (query: GetCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
+    this.http.request<GetCheckBindEmailVerCodeListData, any>({
+      path: `/get_check_bind_email_ver_code`,
       method: "GET",
       query: query,
       format: "json",

@@ -1760,14 +1760,14 @@ export interface UserChangeUsernameCreateData {
   msg: string;
 }
 
-export interface UserCheckBindEmailVerCodeListParams {
+export interface GetCheckBindEmailVerCodeListParams {
   /** 邮箱 */
   email: string;
   /** 验证码 */
   ver_code: string;
 }
 
-export interface UserCheckBindEmailVerCodeListData {
+export interface GetCheckBindEmailVerCodeListData {
   code: number;
   /** 验证码是成功 */
   data: boolean;
