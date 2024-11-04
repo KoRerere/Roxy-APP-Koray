@@ -1,7 +1,10 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
 import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+
+const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
 
 const columnsConfig = {
   key: 'agent.list',
@@ -38,11 +41,9 @@ const columnsConfig = {
       title: $t('已关联窗口'),
       key: 'relatedProfiles',
       render: ({ data }: any) => {
-        console.log('🚀 ~ data.bindList:', data.bindList)
+        const list = data.bindList.map((id: number) => `${workspaceName}-${id}`)
 
-        return (
-          <RelatedInfo list={data.bindList}></RelatedInfo>
-        )
+        return <RelatedInfo list={list}></RelatedInfo>
       },
     },
     {

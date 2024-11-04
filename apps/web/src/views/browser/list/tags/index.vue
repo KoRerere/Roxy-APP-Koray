@@ -1,9 +1,13 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import RelatedInfo from '/@/components/related-info.vue'
 import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { useTagsActions } from './hook'
+
+const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
 
 const confirm = useConfirm()
 const toast = useToast()
@@ -21,7 +25,11 @@ const columns = ref([
   {
     title: $t('已关联窗口'),
     key: 'relatedProfiles',
-    slot: 'related',
+    render: ({ data }: any) => {
+      const list = data.bindWindowIds.map((id: number) => `${workspaceName}-${id}`)
+
+      return <RelatedInfo list={list}></RelatedInfo>
+    },
   },
   {
     title: $t('操作'),
@@ -118,9 +126,6 @@ async function deleteTag(data: any) {
             </svg>
             <span>{{ data.name }}</span>
           </div>
-        </template>
-        <template #related="{ data }">
-          <RelatedInfo :list="data.bindWindowIds" />
         </template>
         <template #actions="{ data }">
           <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />

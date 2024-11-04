@@ -149,10 +149,6 @@ function deletePopup(data: any) {
     },
   })
 }
-
-function formatRelated(list: any) {
-  return list
-}
 </script>
 
 <template>
@@ -194,9 +190,6 @@ function formatRelated(list: any) {
               </div>
             </div>
           </div>
-        </template>
-        <template #related="{ data }">
-          <RelatedInfo :list="formatRelated(data.window_info)" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">

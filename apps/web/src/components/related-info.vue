@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon/'
-import { useWorkspaceStore } from '/@/stores/workspace'
 
 const props = defineProps({
   field: {
@@ -24,8 +23,6 @@ const props = defineProps({
   },
 })
 
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
-
 const hasBindCount = computed(() => {
   return (props.list?.length ?? 0) > 0
 })
@@ -46,7 +43,7 @@ const bindData = computed(() => {
 
 <template>
   <div v-if="hasBindCount" class="flex gap-2">
-    <RxTag v-for="item in bindData.list" :key="item" :icon="icon" :label="`${workspaceName}-${item}`" :disabled="disabled" />
+    <RxTag v-for="item in bindData.list" :key="item" :icon="icon" :label="item" :disabled="disabled" />
     <RxTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" :label="`+${bindData.count}`" disabled />
   </div>
   <div v-else>

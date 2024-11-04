@@ -75,12 +75,16 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
   const tasks = datas.map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
-      await checkProxy(toRaw(item))
+      const checkResult = await checkProxy(toRaw(item))
+      const _checkResult = toRaw(checkResult)
       setOperationLoading(item, operateName, false)
+      Object.assign(item, _checkResult)
+      return { ..._checkResult, id: item.id }
     }
   })
 
-  await concurrentControl(tasks, 5)
+  const results = await concurrentControl(tasks, 5)
+  await onEdit(results)
 }
 
 async function testAllProxy() {
@@ -118,20 +122,20 @@ function onRemark(data: any) {
 }
 
 async function addRemark(remark: string, data: any) {
-  const { code, msg } = await onEdit({ ...data, remark })
+  const { code, msg } = await onEdit([{ ...data, remark }])
   showToast(code, msg)
   tableRef.value?.refresh()
 }
 
 async function onEditConfirm(data: any) {
-  const { code, msg } = await onEdit(data)
+  const { code, msg } = await onEdit([data])
   showToast(code, msg)
   tableRef.value?.refresh()
   drawer.visible = false
 }
 
 async function onEdit(data: any) {
-  return API.proxy.userMdfProxyModuleCreate([data])
+  return API.proxy.userMdfProxyModuleCreate(data)
 }
 
 function createProxy() {

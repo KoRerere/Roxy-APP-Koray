@@ -189,7 +189,8 @@ async function testProxy(data: any, operateName: string) {
   const tasks = ([].concat(data)).map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
-      await checkProxy(toRaw(item))
+      const checkResult = await checkProxy(toRaw(item))
+      Object.assign(item, toRaw(checkResult))
       setOperationLoading(item, operateName, false)
     }
   })

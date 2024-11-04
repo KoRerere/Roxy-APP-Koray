@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import type { SelectButtonChangeEvent } from 'primevue/selectbutton'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import proxyColumns from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
@@ -120,12 +117,16 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
   const tasks = datas.map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
-      await checkProxy(toRaw(item))
+      const checkResult = await checkProxy(toRaw(item))
+      const _checkResult = toRaw(checkResult)
       setOperationLoading(item, operateName, false)
+      Object.assign(item, _checkResult)
+      return { ..._checkResult, id: item.id }
     }
   })
 
-  await concurrentControl(tasks, 5)
+  const results = await concurrentControl(tasks, 5)
+  API.proxy.userMdfProxyModuleCreate(results)
 }
 
 async function testAllProxy() {
@@ -174,14 +175,8 @@ function saveSelected() {
             </div>
           </div>
         </template>
-        <template #outbound="{ data: row }">
-          <OutboundIp :country="row.lastCountry" :city="row.lastCity" :last-ip="data.lastIp" :time="row.checkTime" />
-        </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
-        </template>
-        <template #related="{ data: row }">
-          <RelatedInfo :list="row.bindList" />
         </template>
         <template #bounded="{ data: row }">
           <div class="w-30">

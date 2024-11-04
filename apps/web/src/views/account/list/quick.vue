@@ -74,9 +74,6 @@ function handleSave() {
             </div>
           </div>
         </template>
-        <template #related="{ data: row }">
-          <RelatedInfo :list="row.window_info" />
-        </template>
         <template #actions="{ data: row }">
           <RemarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />
         </template>
