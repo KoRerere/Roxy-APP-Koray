@@ -30,15 +30,15 @@ if (import.meta.hot) {
     // console.log('type', payload.type)
     payload.path = '(WORKAROUND).html'
 
-    // fetch(`/src/locales/langs/zh-CN.json?_t=${Date.now()}`)
-    //   .then(response => response.json())
-    //   .then((data) => {
-    //     // console.log('JSON loaded:', data)
-    //     i18n.global.setLocaleMessage(i18n.global.locale.value, data)
-    //   })
-    //   .catch((error) => {
-    //     console.error('JSON加载失败:', error)
-    //   })
+    fetch(`/src/locales/langs/${document.documentElement.lang}.json?_t=${Date.now()}`)
+      .then(response => response.json())
+      .then((data) => {
+        // console.log('JSON loaded:', data)
+        i18n.global.setLocaleMessage(i18n.global.locale.value, data)
+      })
+      .catch((error) => {
+        console.error('JSON加载失败:', error)
+      })
   })
 }
 

@@ -3,9 +3,10 @@ import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
 import { createTray } from '/@/modules/app/tray'
+import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isWebReady, killProcessByName } from '/@/utils'
+import { isWebReady } from '/@/utils'
 import { intoMainPage, restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
@@ -52,8 +53,8 @@ app.on('before-quit', async (event) => {
     }
     finally {
       console.log('Application is quitting finally.')
-      // 退出所有浏览器进程, 避免有漏网之鱼
-      killProcessByName('lumibrowser')
+      // 退出所有浏览器进程, 防止有漏网之鱼
+      killAllBrowserProcess()
       // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
       app.exit()
     }
@@ -137,6 +138,9 @@ export async function setupApp() {
     await checkResource()
     // 进入主页
     await intoMainPage()
+    setTimeout(() => {
+      killAllBrowserProcess()
+    })
   }
   catch (error) {
     console.error('Failed create window:', error)

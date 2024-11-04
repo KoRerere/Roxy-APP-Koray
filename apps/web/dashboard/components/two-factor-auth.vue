@@ -37,7 +37,7 @@ async function getTwoFactorCode(item) {
   }
   item.loading = true
   try {
-    const response = await fetch(`/api/browser/two_factor_token?code=${item.platformEfa}`)
+    const response = await fetch(`/api/browser/two-factor-token?code=${item.platformEfa}`)
     const { data } = await response.json()
     console.log('data', data)
     item.efaToken = data

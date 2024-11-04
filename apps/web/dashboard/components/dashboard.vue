@@ -15,6 +15,7 @@ const dirId = new URLSearchParams(window.location.search).get('id')
 
 const toast = useToast()
 
+const coreVersion = ref('')
 const windowInfo = ref<UnwrapRowType<UserGetWindowInfoV2ListData>>({})
 /** 获取窗口详情 loading */
 const fetchWindowInfoLoading = ref(false)
@@ -115,9 +116,21 @@ async function refreshURL() {
   }
 }
 
+function getCoreInfo() {
+  fetch(`/api/browser/core-info?dirId=${dirId}`)
+    .then(response => response.json())
+    .then((result) => {
+      if (result.code === 0) {
+        coreVersion.value = result.data.version
+      }
+    })
+    .catch(error => console.error(error))
+}
+
 onBeforeMount(() => {
   getWindowInfo()
   proxyDetection()
+  getCoreInfo()
 })
 </script>
 
@@ -158,7 +171,7 @@ onBeforeMount(() => {
         <div class="location">
           <Skeleton v-if="testProxyLoading" height="1.7rem" />
           <template v-else>
-            {{ proxyInfo.continent || '--' }} / {{ proxyInfo.region || '--' }} / {{ proxyInfo.city || '--' }}
+            {{ proxyInfo.country || '--' }} / {{ proxyInfo.region || '--' }} / {{ proxyInfo.city || '--' }}
           </template>
         </div>
         <div class="ip">
@@ -231,7 +244,7 @@ onBeforeMount(() => {
         </i18n-t>
       </div>
       <div class="version">
-        version 1.0.0
+        version {{ coreVersion }}
       </div>
     </div>
 

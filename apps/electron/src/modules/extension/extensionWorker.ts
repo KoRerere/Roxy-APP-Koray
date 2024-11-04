@@ -30,14 +30,14 @@ function extractPlugin(pluginDir, destDir) {
   const zip = new AdmZip(pluginDir)
   const zipEntries = zip.getEntries()
 
-  const hasManifest = zipEntries.some(entry => entry.entryName === 'manifest.json')
+  const extractDir = path.join(destDir, path.parse(pluginDir).name)
+  console.log('extractDir', extractDir)
 
   zipEntries.forEach((entry) => {
     entry.entryName = iconv.decode(entry.rawEntryName, 'gbk')
   })
-  const targetDir = hasManifest ? `${destDir}/${path.parse(pluginDir).name}` : destDir
-  zip.extractAllTo(targetDir, true)
-  return targetDir
+  zip.extractAllTo(extractDir, true)
+  return extractDir
 }
 
 /** 获取插件压缩后的大小 */

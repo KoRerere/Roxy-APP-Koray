@@ -80,6 +80,16 @@ export class BrowserItem {
     }
   }
 
+  /** 当前内核信息 */
+  get coreVersion() {
+    const { version, coreVersion, releaseTime } = chromeCoreManager.getAvailableCore(this.winInfo.coreVersion)
+    return {
+      version,
+      coreVersion,
+      releaseTime,
+    }
+  }
+
   constructor(winItem: WindowItemType) {
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响

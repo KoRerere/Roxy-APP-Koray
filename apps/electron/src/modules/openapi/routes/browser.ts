@@ -1,5 +1,4 @@
 import express from 'express'
-import twoFactor from 'node-2fa'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
 import { accountMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
@@ -103,18 +102,6 @@ router.get('/list', async (req, res) => {
       result.data.rows = result.data.rows.map(item => listTrans(item))
     }
     res.json(result)
-  }
-  catch (error) {
-    res.error(error)
-  }
-})
-
-/* 获取 2fa */
-router.get('/two_factor_token', async (req, res) => {
-  const { code } = req.query as Record<string, any>
-  try {
-    const { token } = twoFactor.generateToken(code)
-    res.success(token)
   }
   catch (error) {
     res.error(error)

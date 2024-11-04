@@ -102,8 +102,8 @@ export async function setupDashboardServer(app: express.Application) {
     }
   })
 
-  /* 获取浏览器窗口列表 */
-  app.get('/api/browser/two_factor_token', async (req, res) => {
+  /* 获取 2fa */
+  app.get('/api/browser/two-factor-token', async (req, res) => {
     const { code } = req.query as Record<string, any>
     try {
       const { token } = twoFactor.generateToken(code)
@@ -112,6 +112,14 @@ export async function setupDashboardServer(app: express.Application) {
     catch (error) {
       res.error(error)
     }
+  })
+
+  /** 获取当前内核信息 */
+  app.get('/api/browser/core-info', async (req, res) => {
+    console.log('/api/browser/core-info', req.query)
+    const { dirId } = req.query
+    const browserItem = await browserManager.getOpenedBrowser(dirId as string)
+    return res.success(browserItem?.coreVersion)
   })
 
   if (isPackaged) {

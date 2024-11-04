@@ -3,6 +3,7 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
+import { killProcessByName } from '/@/utils'
 
 /** 处理关闭窗口事件, 根据用户设置决定关闭窗口的行为 */
 export function handleCloseWindow(event: Electron.Event) {
@@ -49,4 +50,11 @@ export function handleCloseWindow(event: Electron.Event) {
     win.minimize()
     win.setSkipTaskbar(true)
   }
+}
+
+/** 退出所有浏览器进程, 防止有漏网之鱼 */
+export function killAllBrowserProcess() {
+  killProcessByName('lumibrowser')
+  killProcessByName('chromedriver')
+  killProcessByName('chrome_proxy')
 }

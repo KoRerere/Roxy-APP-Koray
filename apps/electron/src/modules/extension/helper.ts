@@ -48,7 +48,12 @@ export async function getPluginManifestInfo(pluginDir: string) {
     }
 
     // https://developer.chrome.com/docs/extensions/reference/api/i18n?hl=zh-cn
-    const manifestFile = await readFile(path.join(targetPluginDir, 'manifest.json'), 'utf-8')
+    let manifestFile = await readFile(path.join(targetPluginDir, 'manifest.json'), 'utf-8')
+    // 移除 UTF-8 BOM
+    if (manifestFile.charCodeAt(0) === 0xFEFF) {
+      manifestFile = manifestFile.slice(1)
+      console.log('manifestFile 移除 UTF-8 BOM')
+    }
     const manifestInfo = JSON.parse(manifestFile)
     return {
       targetPluginDir,

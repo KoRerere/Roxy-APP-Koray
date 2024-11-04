@@ -9,7 +9,7 @@ const notNeedTokenRoutes = [
 
 const notNeedWorkspaceIdRoutes = [
   '/proxy',
-  '/browser/two_factor_token',
+  '/browser/two-factor-token',
   '/browser/connection_info',
   '/browser/close',
   '/browser/workspace',
