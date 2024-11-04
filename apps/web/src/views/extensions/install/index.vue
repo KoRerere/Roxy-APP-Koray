@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { ToastMessageOptions } from 'primevue/toast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -236,6 +235,7 @@ async function onInstall(data: any) {
             window.electronAPI.send('extension:download', [toRaw(data)])
           }
           showToast(code, msg)
+          tableRef.value?.refresh({ status: filters.value })
         }
         catch (error) {
           console.log('🚀 ~ onConfirm: ~ error:', error)
@@ -337,7 +337,11 @@ defineExpose({
     </template>
 
     <template #related="{ data }">
-      <RxTag class="cursor-pointer" icon="base/rx_ic_stack" :label="data.bindPlugin?.[0] || ''" @click="operationHandler({ name: 'install' }, data)" />
+      <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin" @click="operationHandler({ name: 'install' }, data)">
+        <template #empty>
+          <RxTag class="cursor-pointer" icon="base/rx_ic_stack" />
+        </template>
+      </RelatedInfo>
     </template>
 
     <template #update="{ data }">

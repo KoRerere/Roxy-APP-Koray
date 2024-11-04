@@ -249,3 +249,28 @@ export function concurrentControl(tasks: (() => Promise<any>)[], limit: number, 
     runNext()
   })
 }
+
+export function formatProxyTime(time: string) {
+  const now = new Date()
+  const timestamp = new Date(time).getTime()
+  const diff = (now.getTime() - timestamp) / 1000
+  const day = Math.floor(diff / 86400)
+  const hour = Math.floor(diff / 3600)
+  const minute = Math.floor(diff / 60)
+
+  if (day > 7) {
+    return time.split(' ')[0].replace(/-/g, '/')
+  }
+  else if (day > 0) {
+    return $t('{day}天前', { day })
+  }
+  else if (hour > 0) {
+    return $t('{hour}小时前', { hour })
+  }
+  else if (minute > 0) {
+    return $t('{minute}分钟前', { minute })
+  }
+  else {
+    return $t('刚刚')
+  }
+}

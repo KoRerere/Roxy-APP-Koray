@@ -47,7 +47,9 @@ const bindData = computed(() => {
     <RxTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" :label="`+${bindData.count}`" disabled />
   </div>
   <div v-else>
-    --
+    <slot name="empty">
+      --
+    </slot>
   </div>
 </template>
 

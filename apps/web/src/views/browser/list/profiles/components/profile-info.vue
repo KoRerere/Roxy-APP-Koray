@@ -3,7 +3,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { strConcat } from '/@/utils'
+import { formatProxyTime, strConcat } from '/@/utils'
 
 const props = defineProps({
   workspaceName: {
@@ -55,7 +55,7 @@ const list = computed(() => [
         lastCountry: data.value.lastCountry || '--',
         lastCity: strConcat('/', data.value.lastCity) || '',
         lastIp: data.value.lastIp || '--',
-        checkTime: data.value.checkTime || '--',
+        checkTime: data.value.checkTime ? formatProxyTime(data.value.checkTime) : '--',
       })
       : undefined,
   },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { strConcat } from '/@/utils'
+import { formatProxyTime, strConcat } from '/@/utils'
 
 defineProps({
   country: {
@@ -20,31 +20,6 @@ defineProps({
     default: '',
   },
 })
-
-function formatTime(time: string) {
-  const now = new Date()
-  const timestamp = new Date(time).getTime()
-  const diff = (now.getTime() - timestamp) / 1000
-  const day = Math.floor(diff / 86400)
-  const hour = Math.floor(diff / 3600)
-  const minute = Math.floor(diff / 60)
-
-  if (day > 7) {
-    return time.split(' ')[0].replace(/-/g, '/')
-  }
-  else if (day > 0) {
-    return `${day}天前`
-  }
-  else if (hour > 0) {
-    return `${hour}小时前`
-  }
-  else if (minute > 0) {
-    return `${minute}分钟前`
-  }
-  else {
-    return '刚刚'
-  }
-}
 </script>
 
 <template>
@@ -59,7 +34,7 @@ function formatTime(time: string) {
       <div class="flex items-center gap-1.5 proxycard-subtitle">
         <span>{{ lastIp }}</span>
         <Divider class="!ma-0" layout="vertical" />
-        <span>{{ formatTime(time) }}</span>
+        <span>{{ formatProxyTime(time) }}</span>
       </div>
     </div>
   </div>
