@@ -81,7 +81,7 @@ const columns = ref([
       return (
         data.checkTime
           ? <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
-          : <div>未检测</div>
+          : <div class="text-3">{$t('未检测')}</div>
       )
     },
   },

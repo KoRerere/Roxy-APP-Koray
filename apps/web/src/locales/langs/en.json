@@ -597,5 +597,6 @@
   "高级指纹设置": "Advanced Fingerprint Settings",
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
+  "未检测": "Not Detected"
 }
