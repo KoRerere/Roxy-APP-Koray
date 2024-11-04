@@ -117,9 +117,6 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   else if (isNoProxy && systemProxyAddress) {
     __protocol = 'HTTP'
   }
-  else {
-    console.log('本次代理检测不经过 luminet')
-  }
 
   const params: ProxyDetectionParams = {
     proxyCategory: __protocol,
