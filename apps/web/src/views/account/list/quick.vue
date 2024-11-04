@@ -58,14 +58,19 @@ function handleSave() {
           <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
         </template> -->
         <template #platform="{ data: row }">
-          <div class="platform">
-            <img class="platform-img" :src="row.platformIcon">
-            <div class="flex justify-between platform-region">
-              <span>{{ row.platformUrl }}</span>
+          <div class="flex gap-2 account">
+            <div>
+              <img v-if="row.platformIcon" class="w-4 h-4" :src="row.platformIcon">
+              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
             </div>
-            <div class="flex items-center platform-email">
-              <span>{{ row.platformUserName }}</span>
-              <RxSvgIcon v-if="row.platformEfa" class="text-blue platform-img" name="base/rx_ic_2fa" :size="16" />
+            <div class="flex flex-col flex-1 gap-1">
+              <div class="flex items-center account-title">
+                {{ row.platformUrl }}
+              </div>
+              <div class="flex items-center gap-1.5 account-subtitle">
+                <span>{{ row.platformUserName }}</span>
+                <RxSvgIcon v-if="row.platformEfa" class="text-blue" name="base/rx_ic_2fa" :size="16" />
+              </div>
             </div>
           </div>
         </template>
@@ -89,31 +94,17 @@ function handleSave() {
   width: var(--width-xl, 768px);
 }
 
-.platform {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-md, 8px);
-  grid-row-gap: var(--spacing-sm, 4px);
-
+.account {
   font-family: Inter;
   font-size: 12px;
-  font-style: normal;
   line-height: var(--Line-Height-text-xs, 16px);
-  font-weight: 400;
 
-  &-img {
-    width: 16px;
-    height: 16px;
-    grid-row-start: span 2;
-  }
-
-  &-region {
+  &-title {
     color: var(--Colors-Text-text-primary, #171c1f);
     font-weight: 500;
   }
 
-  &-email {
-    gap: var(--spacing-sm, 4px);
+  &-subtitle {
     color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }

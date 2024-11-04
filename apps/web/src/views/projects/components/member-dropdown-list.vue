@@ -15,11 +15,11 @@ const roleLabelMap = getRoleLabelMap()
 const op = ref()
 const members = ref([])
 
-function toggle(event) {
+function toggle (event) {
   op.value.toggle(event)
 }
 
-async function getMembers() {
+async function getMembers () {
   const { data } = await API.limit.userGetMemberInfoByProjectIdList({
     projectId: props.projectId,
   })
@@ -31,7 +31,8 @@ getMembers()
 
 <template>
   <div class="drop-btn" @click="toggle">
-    <span class="text">{{ $t('成员') }}({{ members.length }}) </span> <RxSvgIcon name="base/rx_ic_chevron_down" />
+    <span class="text">{{ $t('成员') }}({{ members.length }}) </span>
+    <RxSvgIcon name="base/rx_ic_chevron_down" />
   </div>
 
   <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">
@@ -39,11 +40,7 @@ getMembers()
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
-            <Avatar
-              v-bind="{ [member.avatar ? 'image' : 'label']: member.avatar || member.userName.slice(0, 2) }"
-              :style="{ backgroundColor: member.avatarColor }"
-              style="width: 32px; color: white" shape="circle"
-            />
+            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor" :size="32" :font-size="16" />
             <div>
               <span class="font-medium">{{ member.userName }}</span>
               <div class="text-sm text-surface-500 dark:text-surface-400">
@@ -88,7 +85,8 @@ getMembers()
     font-size: var(--Font-Size-text-sm, 12px);
     font-style: normal;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+    line-height: var(--Line-Height-text-xs, 16px);
+    /* 133.333% */
   }
 }
 
@@ -107,7 +105,8 @@ getMembers()
   font-size: 13px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px); /* 123.077% */
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 123.077% */
 }
 
 .member-list {

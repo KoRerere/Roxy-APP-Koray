@@ -128,19 +128,10 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
             </template>
           </CustomEmpty>
         </template>
-
         <template #open="{ data }">
           <router-link :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }" class="text-black">
             <span class="text-[blue]">{{ data.projectName }}</span>
           </router-link>
-        </template>
-        <template #members="{ data }">
-          <AvatarGroup>
-            <template v-for="person in data.user_info" :key="person.userId">
-              <Avatar v-if="person.avatar" v-tooltip.top="person.userName" :image="person.avatar" shape="circle" />
-              <Avatar v-else v-tooltip.top="person.userName" :label="person.userName?.at(0)" shape="circle" />
-            </template>
-          </AvatarGroup>
         </template>
         <template #actions="{ data }">
           <Actions :operation="operation" :show-menu="false" @quick-click="operationHandler($event, data)" />
@@ -158,35 +149,6 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
 
   &-content {
     height: calc(100% - 48px);
-  }
-}
-
-.platform {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  grid-column-gap: var(--spacing-md, 8px);
-  grid-row-gap: var(--spacing-sm, 4px);
-
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  line-height: var(--Line-Height-text-xs, 16px);
-  font-weight: 400;
-
-  &-img {
-    width: 16px;
-    height: 16px;
-    grid-row-start: span 2;
-  }
-
-  &-region {
-    color: var(--Colors-Text-text-primary, #171c1f);
-    font-weight: 500;
-  }
-
-  &-email {
-    gap: var(--spacing-sm, 4px);
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
   }
 }
 </style>

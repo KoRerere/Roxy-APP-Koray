@@ -189,7 +189,8 @@ function formatRelated(list: any) {
                 {{ data.platformUrl }}
               </div>
               <div class="flex items-center gap-1.5 account-subtitle">
-                {{ data.platformUserName }}
+                <span>{{ data.platformUserName }}</span>
+                <RxSvgIcon v-if="data.platformEfa" class="text-blue" name="base/rx_ic_2fa" :size="16" />
               </div>
             </div>
           </div>
