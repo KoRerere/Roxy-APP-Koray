@@ -165,7 +165,7 @@ function deletePopup(data: any) {
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />
-                <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" />
+                <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
           </CustomEmpty>

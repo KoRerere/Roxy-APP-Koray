@@ -123,7 +123,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
-                <RxButton text severity="secondary" size="xs" :label="$t('项目文档')" />
+                <!-- <RxButton text severity="secondary" size="xs" :label="$t('项目文档')" /> -->
               </div>
             </template>
           </CustomEmpty>

@@ -207,7 +207,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
-            <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" />
+            <!-- <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" /> -->
           </div>
         </template>
       </CustomEmpty>

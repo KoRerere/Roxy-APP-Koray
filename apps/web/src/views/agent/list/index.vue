@@ -193,7 +193,7 @@ function onRefreshTable() {
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click="createProxy" />
-                <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" />
+                <!-- <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" /> -->
               </div>
             </template>
           </CustomEmpty>

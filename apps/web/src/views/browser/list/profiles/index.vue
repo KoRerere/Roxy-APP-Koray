@@ -546,7 +546,7 @@ defineExpose({
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="router.push({ name: 'browser-create' })" />
-            <RxButton text severity="secondary" size="xs" :label="$t('窗口文档')" />
+            <!-- <RxButton text severity="secondary" size="xs" :label="$t('窗口文档')" /> -->
           </div>
         </template>
       </CustomEmpty>

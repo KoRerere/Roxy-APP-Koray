@@ -317,7 +317,7 @@ defineExpose({
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
-            <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" />
+            <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
       </CustomEmpty>
