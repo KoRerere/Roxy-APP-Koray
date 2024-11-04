@@ -6,7 +6,7 @@ import { ProxyProtocol } from '/@/enums/proxy'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { setRowsLoading, strConcat } from '/@/utils'
+import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -117,21 +117,23 @@ function refreshUrl(datas: ProxyItem[]) {
 }
 
 async function testProxy(datas: ProxyItem[], operateName: string) {
-  for (const item of datas) {
-    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
-      .then(async (checkResult) => {
-        await API.proxy.userMdfProxyModuleCreate([{ ...toRaw(checkResult), id: item.id } as any])
-        Object.assign(item, toRaw(checkResult))
-      })
-  }
+  const tasks = datas.map((item) => {
+    setOperationLoading(item, operateName, true)
+    return async () => {
+      await checkProxy(toRaw(item))
+      setOperationLoading(item, operateName, false)
+    }
+  })
+
+  await concurrentControl(tasks, 5)
 }
 
-function testAllProxy() {
+async function testAllProxy() {
   if (!dataList.value?.length) {
     onlyErrorToast(-1, $t('暂无代理'))
     return
   }
-  testProxy(dataList.value, 'test')
+  await testProxy(dataList.value, 'test')
 }
 
 function saveSelected() {
@@ -151,7 +153,7 @@ function saveSelected() {
         <template #header-extra>
           <div class="flex flex-auto items-start justify-between">
             <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-            <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部代理')" @click="testAllProxy" />
+            <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
           </div>
         </template>
         <template #table-empty>

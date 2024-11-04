@@ -132,7 +132,14 @@ async function saveFilters(formData: any) {
     return
   }
   const { filter_name, filter_rule, sort } = formData
-  const filter_condition = getFormData(filtersMenu.value)
+
+  const filter_condition = filtersMenu.value.reduce((acc: any, cur: any) => {
+    if (cur.value) {
+      acc[cur.name] = toRaw(cur.value)
+    }
+    return acc
+  }, {})
+
   const isEdit = !!sort
 
   const { code, msg } = isEdit

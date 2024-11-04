@@ -55,6 +55,9 @@ export async function getCustomFilters(params: any = {}) {
           label: item.label,
         }))
       },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
+      },
     },
     {
       type: 'Checkbox',
@@ -68,6 +71,9 @@ export async function getCustomFilters(params: any = {}) {
           value: `${item.id}`,
           label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
         }))
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
       },
     },
     {
@@ -85,6 +91,9 @@ export async function getCustomFilters(params: any = {}) {
           value: `${item.project_id}`,
           label: item.projectName,
         }))
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
       },
     },
     {
@@ -113,6 +122,9 @@ export async function getCustomFilters(params: any = {}) {
         }))
 
         return menbers.concat(labels as any)
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
       },
     },
     {

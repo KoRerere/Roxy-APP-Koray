@@ -66,6 +66,9 @@ export function getCustomFilters() {
           label: item.label,
         }))
       },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
+      },
     },
     {
       type: 'text',
@@ -82,6 +85,9 @@ export function getCustomFilters() {
           value: item.value,
           label: item.label,
         }))
+      },
+      formatValue: (input: any) => {
+        return input.value?.map((item: any) => item.value)
       },
     },
     {

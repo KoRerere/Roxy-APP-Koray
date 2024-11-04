@@ -48,12 +48,12 @@ const rawOptions = computed(() => {
     .flat()
 })
 
-const filterTagList = computed(() => {
+const labels = computed(() => {
   return _props.filtersMenu.reduce((acc, item) => {
     if (!isEmptyValue(item.value)) {
       const value = !Array.isArray(item.value)
         ? item.value
-        : item._options?.filter((option: any) => item.value.includes(option.value)).map((option: any) => option.label).join(', ')
+        : item.value.map((it: any) => it.label).join(', ')
       acc.push({ ...toRaw(item), value })
     }
     return acc
@@ -72,7 +72,7 @@ const menuRef = useTemplateRef('tmenu')
 const isChildren = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
-const selectedCategories = ref([])
+const selectedCategories = ref()
 
 function showMenu(event: any) {
   menuRef.value?.show(event)
@@ -149,6 +149,11 @@ async function openCheckbox(item: any) {
   menuRef.value?.hide()
 }
 
+function onCheckboxChange(item: any) {
+  const list = menuOptions.value.filter((item: any) => selectedCategories.value.includes(item.value)).map((item: any) => toRaw(item))
+  _props.filtersMenu.find(input => input.name === item.parentName).value = list
+}
+
 function onHide() {
   if (isChildren.value) { // 二级 checkbox 菜单隐藏触发
     selectedCategories.value = []
@@ -157,10 +162,6 @@ function onHide() {
       onFilterChange()
     })
   }
-}
-
-function onChange(item: any) {
-  _props.filtersMenu.find(input => input.name === item.parentName).value = toRaw(selectedCategories.value)
 }
 
 function deleteFilterItem(item: any) {
@@ -189,7 +190,7 @@ function resetFilters() {
 
 function onFilterChange() {
   if (isAllProfiles.value) {
-    isChanged.value = filterTagList.value.length > 0
+    isChanged.value = labels.value.length > 0
   }
   else {
     isChanged.value = true
@@ -231,23 +232,23 @@ async function modifyFilter() {
 </script>
 
 <template>
-  <div class="flex flex-1 justify-between filter">
-    <div class="flex flex-1 filter-list">
-      <div v-for="(item, index) in filterTagList" :key="index" class="filter-list-item">
+  <div class="flex flex-1 justify-between">
+    <div class="flex flex-1 items-center flex-wrap mr-2 gap-2">
+      <div v-for="(item, index) in labels" :key="index" class="labels-item">
         <RxSvgIcon class="cursor-pointer" :size="14" name="base/rx_ic_delete" @click.stop="deleteFilterItem(item)" />
         <span class="select-none">{{ item.label }}:</span>
         <span class="cursor-pointer">{{ item.value }}</span>
       </div>
       <RxButton severity="secondary" size="xxs" :disabled="currentFilter?.disabledFilter" text @click="showMenu">
         <RxSvgIcon name="base/rx_ic_filter" />
-        <span v-if="!filterTagList.length">{{ $t('筛选条件') }}</span>
+        <span v-if="!labels.length">{{ $t('筛选条件') }}</span>
       </RxButton>
     </div>
-    <div v-show="enabledFilterSave && isChanged" class="filter-actions">
+    <div v-show="enabledFilterSave && isChanged" class="labels-actions">
       <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
-      <template v-if="filterTagList.length">
+      <template v-if="labels.length">
         <RxButton v-if="isAllProfiles" severity="info" size="xxs" :label="$t('保存')" @click="saveFilters" />
-        <SplitButton v-else severity="info" size="small" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
+        <SplitButton v-else severity="info" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
       </template>
       <div>|</div>
     </div>
@@ -257,7 +258,7 @@ async function modifyFilter() {
     <template #item="{ item, props }">
       <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
-          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onChange(item)" />
+          <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
           <RxAvatar v-if="item.value.startsWith('u_')" :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
           <span v-else>{{ item.label }}</span>
         </label>
@@ -294,28 +295,20 @@ async function modifyFilter() {
 </style>
 
 <style lang="scss" scoped>
-.filter {
-  &-list {
+.labels {
+  &-item {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    margin-right: var(--spacing-lg, 8px);
-    gap: var(--spacing-lg, 8px);
-
-    &-item {
-      display: flex;
-      align-items: center;
-      padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
-      gap: var(--spacing-sm, 4px);
-      height: 24px;
-      color: var(--Colors-Text-text-action-secondary, #171c1f);
-      font-family: Inter;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-      border-radius: var(--radius-full, 9999px);
-      border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-    }
+    padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
+    gap: var(--spacing-sm, 4px);
+    height: 24px;
+    color: var(--Colors-Text-text-action-secondary, #171c1f);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-xs, 16px);
+    border-radius: var(--radius-full, 9999px);
+    border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
   }
 
   &-actions {
@@ -325,6 +318,29 @@ async function modifyFilter() {
     margin-right: var(--spacing-md, 6px);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Border-border-container, #c7cdd1);
+  }
+}
+
+:deep(.p-splitbutton) {
+  .p-button {
+    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+    font-size: var(--Font-Size-text-sm, 12px);
+    line-height: var(--Line-Height-text-xs, 16px);
+    border-width: 0.5px;
+
+    &:not(:disabled):hover {
+      border-width: 0.5px;
+    }
+  }
+
+  .p-splitbutton-button {
+    border-top-left-radius: var(--radius-sm, 4px);
+    border-bottom-left-radius: var(--radius-sm, 4px);
+  }
+
+  .p-splitbutton-dropdown {
+    border-top-right-radius: var(--radius-sm, 4px);
+    border-bottom-right-radius: var(--radius-sm, 4px);
   }
 }
 </style>

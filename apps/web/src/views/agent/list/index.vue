@@ -9,7 +9,7 @@ import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { setRowsLoading, strConcat } from '/@/utils'
+import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -72,21 +72,23 @@ function refreshUrl(datas: ProxyItem[]) {
 }
 
 async function testProxy(datas: ProxyItem[], operateName: string) {
-  for (const item of datas) {
-    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
-      .then(async (checkResult) => {
-        await onEdit({ ...toRaw(checkResult), id: item.id })
-        Object.assign(item, toRaw(checkResult))
-      })
-  }
+  const tasks = datas.map((item) => {
+    setOperationLoading(item, operateName, true)
+    return async () => {
+      await checkProxy(toRaw(item))
+      setOperationLoading(item, operateName, false)
+    }
+  })
+
+  await concurrentControl(tasks, 5)
 }
 
-function testAllProxy() {
+async function testAllProxy() {
   if (!dataList.value?.length) {
     onlyErrorToast(-1, $t('暂无代理'))
     return
   }
-  testProxy(dataList.value, 'test')
+  await testProxy(dataList.value, 'test')
 }
 
 function onRemark(data: any) {

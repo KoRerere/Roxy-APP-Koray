@@ -6,7 +6,7 @@ import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { parseProxyUrl, setRowsLoading, sleep } from '/@/utils'
+import { concurrentControl, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
@@ -185,26 +185,28 @@ async function refreshUrl(data: any, operateName: string) {
   showToast(isOK ? 0 : -1, data.refreshUrl as string)
 }
 
-function testProxy(data: any, operateName: string) {
-  const datas = [].concat(data)
-  for (const item of datas) {
-    setRowsLoading(item, operateName, () => checkProxy(toRaw(item)))
-      .then((checkResult) => {
-        Object.assign(item, toRaw(checkResult))
-      })
-  }
+async function testProxy(data: any, operateName: string) {
+  const tasks = ([].concat(data)).map((item) => {
+    setOperationLoading(item, operateName, true)
+    return async () => {
+      await checkProxy(toRaw(item))
+      setOperationLoading(item, operateName, false)
+    }
+  })
+
+  await concurrentControl(tasks, 5)
 }
 
-function deleteProxy(data: any) {
-  console.log('🚀 ~ deleteProxy ~ data:', data)
-}
-
-function testAllProxy() {
+async function testAllProxy() {
   if (!dataList.value?.length) {
     onlyErrorToast(-1, $t('暂无代理'))
     return
   }
-  testProxy(dataList.value, 'test')
+  await testProxy(dataList.value, 'test')
+}
+
+function deleteProxy(data: any) {
+  console.log('🚀 ~ deleteProxy ~ data:', data)
 }
 
 function deleteFailProxy() {

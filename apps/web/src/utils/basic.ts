@@ -68,14 +68,6 @@ export function deepClone<T>(source: T, hash = new WeakMap()): T {
   return target
 }
 
-export function setRowsLoading(row: any, operateName: string, fn: (row: any) => Promise<any>) {
-  (row.loadingOperationMap || (row.loadingOperationMap = {}))[operateName] = true
-  return fn(row).then((data: any) => {
-    row.loadingOperationMap[operateName] = false
-    return data
-  })
-}
-
 export function checkCookieFormat(cookie: string): boolean {
   try {
     if (cookie && typeof cookie === 'string') {
@@ -172,13 +164,19 @@ export function strConcat(str1: string, str2: string) {
   return `${str1}${str2}`
 }
 
-export function isValidUrl(string: string) {
-  try {
-    // eslint-disable-next-line no-new
-    new URL(string)
-    return true
+export function validateURL(url: string): boolean {
+  const regex = /^(https?:\/\/)/
+  if (regex.test(url)) {
+    try {
+      // eslint-disable-next-line no-new
+      new URL(url)
+      return true
+    }
+    catch (error) {
+      return false
+    }
   }
-  catch (err) {
+  else {
     return false
   }
 }
@@ -211,4 +209,43 @@ export function parseProxyUrl(url: string): ProxyObject {
 export function parseUrl(url: string) {
   const match = url?.match(/^(https?):\/\/([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+)\/?/)
   return match && { protocol: match[1], domain: match[2] }
+}
+
+export function concurrentControl(tasks: (() => Promise<any>)[], limit: number, notify?: (result: any) => void): Promise<any[]> {
+  let activeCount = 0
+  let taskIndex = 0
+  const results: any[] = []
+
+  return new Promise((resolve) => {
+    async function runTask(task: () => Promise<any>, index: number) {
+      try {
+        const result = await task()
+        results[index] = result
+      }
+      catch (error) {
+        results[index] = error
+      }
+      finally {
+        activeCount--
+        notify?.(results[index])
+        runNext()
+      }
+    }
+
+    function runNext() {
+      while (activeCount < limit && taskIndex < tasks.length) {
+        const currentTask = tasks[taskIndex]
+        const currentIndex = taskIndex
+        taskIndex++
+        activeCount++
+        runTask(currentTask, currentIndex)
+      }
+
+      if (taskIndex === tasks.length && activeCount === 0) {
+        resolve(results)
+      }
+    }
+
+    runNext()
+  })
 }

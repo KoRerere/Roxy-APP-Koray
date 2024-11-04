@@ -3,7 +3,7 @@ import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { checkCookieFormat, clearInputsValue, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData } from '/@/utils'
+import { checkCookieFormat, clearInputsValue, findInputByName, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, validateURL } from '/@/utils'
 
 const props = defineProps({
   data: {
@@ -38,12 +38,6 @@ async function getInputs(data: any = {}) {
   }))
 
   const inputs = reactive([
-    // {
-    //   type: 'text',
-    //   label: $t('#alias'),
-    //   placeholder: $t('#Better name to identify'),
-    //   name: 'platformName',
-    // },
     {
       type: 'select',
       label: $t('平台'),
@@ -54,8 +48,14 @@ async function getInputs(data: any = {}) {
       required: true,
       editable: true,
       change(input: any) {
-        input.invalid = false
         Reflect.set(original.value, 'platformIcon', input.value?.image || '')
+      },
+      onBlur(event: any) {
+        if (event.target.value && !validateURL(event.target.value)) {
+          const input = findInputByName(inputs, 'platformUrl')
+          input.invalid = true
+          input.errorMsg = $t('请输入正确的平台网址')
+        }
       },
     },
     {
