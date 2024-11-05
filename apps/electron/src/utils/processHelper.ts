@@ -16,17 +16,22 @@ export function killProcessByName(processName: string) {
     command = `pkill -f ${processName}`
   }
 
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error killing process ${processName}:`, error)
-      return
-    }
-    if (stderr) {
-      console.error(`Error output:`, stderr)
-      return
-    }
-    console.log(`Process ${processName} killed successfully.`)
-  })
+  try {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error killing process ${processName}:`, error)
+        return
+      }
+      if (stderr) {
+        console.error(`Error output:`, stderr)
+        return
+      }
+      console.log(`Process ${processName} killed successfully.`)
+    })
+  }
+  catch (error) {
+    console.error(`Error killing process ${processName}:`, error)
+  }
 }
 /** 根据执行路径获取进程 IDs */
 export function getProcessIdsByExePath(processPath: string) {
