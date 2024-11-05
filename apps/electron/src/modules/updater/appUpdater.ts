@@ -14,6 +14,7 @@ export type { UpdateInfo } from 'electron-updater'
 const isDevelopment = !app.isPackaged
 
 export const appUpdater = new class AppUpdater {
+  timer: NodeJS.Timeout | null = null
   /** 是否在下载中 */
   isInProgress = false
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
@@ -33,7 +34,8 @@ export const appUpdater = new class AppUpdater {
   }
 
   private async init() {
-    setTimeout(() => {
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => {
       this.init()
     }, this.timeout)
 
@@ -148,9 +150,7 @@ export const appUpdater = new class AppUpdater {
       return
     }
 
-    if (!this.#autoUpdater) {
-      await this.init()
-    }
+    await this.init()
 
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {

@@ -76,8 +76,12 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           </div>
           <div class="pl-[56px]">
             <rich-text :html="item.originUpgradeData?.[ currentLocale === 'zh-CN' ? 'upgradeContent' : 'upgradeContentEn']" />
-            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" icon="base/rx_ic_download" :loading="item.status === 'downloading'" class="mt-[6px]"
-                      @click="handleClientItemClick(item)"
+            <RxButton
+              type="button" size="sm" :label="formatClientBtnLabel(item)"
+              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'"
+              class="mt-[6px]"
+              @click="handleClientItemClick(item)"
             />
           </div>
         </div>

@@ -76,8 +76,8 @@ const options: Configuration = {
       : {}),
   },
   nsis: {
-    installerSidebar: './buildResources/a1.bmp',
-    uninstallerSidebar: './buildResources/a2.bmp',
+    installerSidebar: './buildResources/installerSidebar.bmp',
+    uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',
     oneClick: false,
     allowElevation: true,
     allowToChangeInstallationDirectory: true,

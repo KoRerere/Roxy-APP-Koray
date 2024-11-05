@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [bqy-dev]
+    branches: [test]
     tags:
       - 'v*.*.*'
 jobs:
