@@ -22,8 +22,8 @@ export const appConfig = {
   tempDir: join(sessionDir, 'temp'),
   /** 应用日志目录 */
   logsDir: app.getPath('logs'),
-  /** luminet 执行文件路径 */
-  luminetBinPath: join(sessionDir, 'luminet-bin', isMac ? 'luminet' : 'luminet.exe'),
+  /** roxynet 执行文件路径 */
+  roxynetBinPath: join(sessionDir, 'roxynet-bin', isMac ? 'roxynet' : 'roxynet.exe'),
   /** 配置文件 */
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */

@@ -22,7 +22,7 @@ export async function checkResource() {
     console.log('checkResource', code, data)
     if (code === 0) {
       const webDomain = data.webDomain
-      // 检测更新 luminet
+      // 检测更新 roxynet
       await checkLuminetBin(webDomain)
     }
   }
@@ -43,15 +43,15 @@ export async function checkResource() {
   return promise
 }
 
-// luminet 下载重试次数
-let luminetDownloadRetry = 0
-/** 检查 luminet 是否存在 */
+// roxynet 下载重试次数
+let roxynetDownloadRetry = 0
+/** 检查 roxynet 是否存在 */
 async function checkLuminetBin(webDomain: string) {
   const { promise, resolve } = Promise.withResolvers()
   // 获取文件所在的目录路径
-  const luminetBinDir = dirname(appConfig.luminetBinPath)
-  await fileExists(luminetBinDir, true)
-  const luminetBinExist = await fileExists(appConfig.luminetBinPath)
+  const roxynetBinDir = dirname(appConfig.roxynetBinPath)
+  await fileExists(roxynetBinDir, true)
+  const roxynetBinExist = await fileExists(appConfig.roxynetBinPath)
 
   const platform = isMac ? 'macos' : 'windows'
   let arch = ''
@@ -61,20 +61,20 @@ async function checkLuminetBin(webDomain: string) {
   else {
     arch = process.arch === 'x64' ? 'x64' : 'x86'
   }
-  const binFile = `luminet${isMac ? '' : '.exe'}`
+  const binFile = `roxynet${isMac ? '' : '.exe'}`
 
-  // luminet 执行文件下载地址
-  const downloadUrl = `${webDomain}/public/static/luminet/${platform}/${arch}/${binFile}`
-  // luminet 版本文件下载地址
-  const versionUrl = `${webDomain}/public/static/luminet/version`
-  // luminet 版本文件本地路径
-  const localVersionFilePath = join(luminetBinDir, 'version')
-  // luminet 版本文件本地版本
+  // roxynet 执行文件下载地址
+  const downloadUrl = `${webDomain}/public/static/roxynet/${platform}/${arch}/${binFile}`
+  // roxynet 版本文件下载地址
+  const versionUrl = `${webDomain}/public/static/roxynet/version`
+  // roxynet 版本文件本地路径
+  const localVersionFilePath = join(roxynetBinDir, 'version')
+  // roxynet 版本文件本地版本
   const localVersion = await access(localVersionFilePath)
     .then(async () => (await readFile(localVersionFilePath)).toString())
     .catch(() => '')
 
-  // 下载 luminet 版本文件
+  // 下载 roxynet 版本文件
   const remoteVersion = await axios({
     url: versionUrl,
     method: 'get',
@@ -83,13 +83,13 @@ async function checkLuminetBin(webDomain: string) {
     const version = response.data.toString()
 
     writeFile(localVersionFilePath, version)
-    console.log('luminet version', version)
+    console.log('roxynet version', version)
     return version
   })
 
-  if (!luminetBinExist || remoteVersion !== localVersion) {
-    console.log('正在下载 luminet')
-    // 下载 luminet
+  if (!roxynetBinExist || remoteVersion !== localVersion) {
+    console.log('正在下载 roxynet')
+    // 下载 roxynet
     const response = await axios({
       url: downloadUrl,
       method: 'get',
@@ -99,26 +99,26 @@ async function checkLuminetBin(webDomain: string) {
         const current = progressEvent.loaded
         const percentage = Math.round((current / total) * 100)
         console.log(`Download progress: ${percentage}%`)
-        sendLaunchMessage(`Downloading luminet ${percentage}%`)
+        sendLaunchMessage(`Downloading roxynet ${percentage}%`)
       },
     })
-    const writer = createWriteStream(appConfig.luminetBinPath)
+    const writer = createWriteStream(appConfig.roxynetBinPath)
 
     response.data.pipe(writer)
 
     // 下载失败需要重新下载
     writer.on('error', async (error) => {
-      console.error('Download luminet error', error)
+      console.error('Download roxynet error', error)
       try {
         await rm(localVersionFilePath)
-        await rm(appConfig.luminetBinPath)
+        await rm(appConfig.roxynetBinPath)
       }
       catch (error) {
 
       }
       finally {
-        if (luminetDownloadRetry < 3) {
-          luminetDownloadRetry++
+        if (roxynetDownloadRetry < 3) {
+          roxynetDownloadRetry++
           await checkLuminetBin(webDomain)
         }
         else {
@@ -129,7 +129,7 @@ async function checkLuminetBin(webDomain: string) {
 
     writer.on('finish', () => {
       writer.close()
-      sendLaunchMessage($t('luminet 下载完成'))
+      sendLaunchMessage($t('roxynet 下载完成'))
       resolve(true)
     })
   }

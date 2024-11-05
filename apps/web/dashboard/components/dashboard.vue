@@ -66,7 +66,7 @@ async function proxyDetection(event?: MouseEvent) {
       proxyInfo.value = result.data
       // 通过点击事件触发的检查，显示成功提示
       if (event) {
-        toast.add({ severity: 'success', summary: 'Test proxy success', life: 3000 })
+        toast.add({ severity: 'success', summary: $t('操作成功'), life: 3000 })
       }
     }
     else {

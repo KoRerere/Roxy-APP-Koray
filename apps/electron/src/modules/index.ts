@@ -1,7 +1,7 @@
 import './ipc'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
-import { startLuminet } from '/@/modules/luminet'
+import { startLuminet } from '/@/modules/roxynet'
 import { setupOpenAPIServer } from '/@/modules/openapi'
 import { setupStore } from '/@/modules/store'
 import { isPackaged } from '/@/utils'

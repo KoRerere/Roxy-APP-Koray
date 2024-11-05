@@ -22,7 +22,9 @@ electronAPI.send('app:getAppVersion').then((version) => {
         <div class="product-name">
           RoxyBrowser
         </div>
-        <span class="version">v{{ appVersion }}</span>
+        <span class="version">
+          <span class="beta">Beta</span> v{{ appVersion }}
+        </span>
       </div>
     </div>
     <div class="message">
@@ -71,11 +73,15 @@ electronAPI.send('app:getAppVersion').then((version) => {
 
   .version {
     color: var(--Color-neutrals-800, #252a2e);
-    font-family: Archivo;
+    font-family: 'JetBrains Mono';
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+
+    .beta {
+      font-family: Archivo;
+    }
   }
 }
 

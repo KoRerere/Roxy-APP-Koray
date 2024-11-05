@@ -12,7 +12,7 @@ import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
-  private chromeBinName = isMac ? 'lumibrowser.app/Contents/MacOS/lumibrowser' : 'lumibrowser.exe'
+  private chromeBinName = isMac ? 'roxychrome.app/Contents/MacOS/roxychrome' : 'roxychrome.exe'
 
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>()
@@ -157,7 +157,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       type: 'kernel',
       status: 'downloading',
       percent: 0,
-      description: `正在下载内核 ${coreVersion}`,
+      description: `downloading ${coreVersion}`,
       version: availableCore.version,
       coreVersion,
     }
@@ -174,7 +174,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
         return Promise.reject(error)
       })
       payload.status = 'downloaded'
-      payload.description = `内核 ${coreVersion} 下载完成`
+      payload.description = `Kernel ${coreVersion} download completed`
       ipcMain.send('app:resource-update', payload)
       // 删除本地内核
       await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })

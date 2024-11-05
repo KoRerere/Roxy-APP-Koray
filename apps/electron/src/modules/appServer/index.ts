@@ -1,7 +1,7 @@
 import express from 'express'
 import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
-import { setupLuminetReceiver } from '/@/modules/appServer/luminet-receiver'
+import { setupLuminetReceiver } from '/@/modules/appServer/roxynet-receiver'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { setupDashboardServer } from './dashboard'

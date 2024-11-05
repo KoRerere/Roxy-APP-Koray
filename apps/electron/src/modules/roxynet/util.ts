@@ -1,8 +1,9 @@
 import axios from 'axios'
 import CryptoJS from 'crypto-js'
 import { browserManager } from '/@/modules/browser'
-import { getLuminetProcess } from '/@/modules/luminet'
+import { getLuminetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
+import { getSystemProxy } from '/@/utils'
 
 const key = '098otIp!'
 
@@ -72,4 +73,22 @@ export async function delLuminetProxy(dirId: string) {
       console.error('delLuminetProxy error:', e)
     })
   }
+}
+
+/**
+ * 6.  动态配置系统代理在luminet进程已经启动的情况下，
+ * 可以调用该接口来修改系统代理。一般在什么情况下调用？
+ * 1. 调整v2兼容开关。
+ * 2. 检测到新的系统代理
+ */
+export async function setSystemProxy() {
+  const params = {
+    addr: await getSystemProxy(true),
+    protocal: 'http',
+    v2: store.roxynetV2rayCompatible,
+  }
+  console.log('roxynet set_sysproxy 修改系统代理', params)
+  return axios.post(`http://127.0.0.1:${store.luminetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
+    console.error('setSystemProxy error:', e)
+  })
 }

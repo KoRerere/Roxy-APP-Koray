@@ -35,8 +35,8 @@ const menuList = ref(
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  const { luminetV2rayCompatible = false } = await electronAPI.send('app:getSoftConfig')
-  data.luminetV2rayCompatible = luminetV2rayCompatible
+  const { roxynetV2rayCompatible = false } = await electronAPI.send('app:getSoftConfig')
+  data.roxynetV2rayCompatible = roxynetV2rayCompatible
   settingsPanel.profiles = getProfilePanel(toRaw(userStore.userInfo))
   settingsPanel.preferences = getPreferencesPanel(data)
   settingsPanel.network = getNetworkPanel(data)

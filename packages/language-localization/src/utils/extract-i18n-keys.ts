@@ -4,7 +4,7 @@ import path from 'node:path'
 import pLimit from 'p-limit' // 控制并发
 
 // 正则匹配 $t('key')，避免多余匹配问题
-export const translationRegex = /\$t\s*\(\s*(['"`])((?:\\\1|[^\\])*?)\1\s*(,.*?\))?/g
+export const translationRegex = /\$t\s*\(\s*(['"`])([\s\S]*?)\1\s*(?:,.*?\))?/g
 /**
  * 限制并发数
  */
@@ -105,7 +105,9 @@ async function writeKeysToFile(fileContent: string, outputFile: string) {
   catch (error) {
     await logError(`创建目录失败: ${outputDir} - ${error}`)
   }
-  await writeFile(outputFile, fileContent, 'utf-8')
+  // 替换 JSON.stringify 结果中的 `\\n` 为真正的 `\n`
+  const formattedContent = fileContent.replace(/\\\\n/g, '\\n')
+  await writeFile(outputFile, formattedContent, 'utf-8')
 }
 
 /**
@@ -137,6 +139,8 @@ export async function genLangFiles(langFiles: string[] = [], outputDir: string, 
     }
 
     const newLangFileObj = keys.reduce<Record<string, string>>((acc, key) => {
+      // 替换 JSON.stringify 结果中的 `\\n` 为真正的 `\n`
+      key = key.replaceAll('\\n', '\n')
       acc[key] = defaultLang === lang ? key : langFileObj[key] || ''
       return acc
     }, {})

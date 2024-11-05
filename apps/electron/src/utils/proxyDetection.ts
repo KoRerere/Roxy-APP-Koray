@@ -5,7 +5,7 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { delLuminetProxy, setLuminetProxy, startLuminet } from '/@/modules/luminet'
+import { delLuminetProxy, setLuminetProxy, startLuminet } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 

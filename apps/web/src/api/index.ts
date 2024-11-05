@@ -41,7 +41,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
 
-  await handleRequest(config)
+  // await handleRequest(config)
 
   return config
 })
@@ -53,7 +53,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     router.push({ name: 'login' })
     return response
   }
-  await handleResponse(response)
+  // await handleResponse(response)
   return response
 })
 

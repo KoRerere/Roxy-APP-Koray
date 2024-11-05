@@ -30,13 +30,13 @@ export const appUpdater = new class AppUpdater {
 
   constructor() {
     queueMicrotask(this.init)
-
-    setTimeout(() => {
-      this.init()
-    }, this.timeout)
   }
 
   private async init() {
+    setTimeout(() => {
+      this.init()
+    }, this.timeout)
+
     console.log(`user_get_app_upgrade request`, osConfig)
     const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
 
@@ -154,8 +154,9 @@ export const appUpdater = new class AppUpdater {
 
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {
-      this.isInProgress = false
       console.log(`checkForUpdates error`, error)
+    }).finally(() => {
+      this.isInProgress = false
     })
 
     console.log(`checkResult`, checkResult)

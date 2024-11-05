@@ -54,7 +54,7 @@ export function handleCloseWindow(event: Electron.Event) {
 
 /** 退出所有浏览器进程, 防止有漏网之鱼 */
 export function killAllBrowserProcess() {
-  killProcessByName('lumibrowser')
+  killProcessByName('roxychrome')
   killProcessByName('chromedriver')
   killProcessByName('chrome_proxy')
 }

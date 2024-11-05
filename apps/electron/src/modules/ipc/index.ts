@@ -12,7 +12,7 @@ import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
-import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/luminet'
+import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/roxynet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, decryptAESGCM, detectNetwork, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
@@ -128,6 +128,7 @@ ipcMain.on('app:getAppVersion', () => {
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
   const originSystemProxySwitch = store.systemProxySwitch
+  const originRoxynetV2rayCompatible = store.roxynetV2rayCompatible
   Object.keys(config).forEach((key) => {
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(config, key))
@@ -136,12 +137,17 @@ ipcMain.on('app:saveSoftConfig', (config) => {
 
   if (store.systemProxySwitch !== originSystemProxySwitch) {
     if (store.systemProxySwitch) {
+      // 重新设置系统代理
       startLuminet()
     }
     else {
       // 这里不需要关闭 luminet，因为关闭 luminet 会导致已打开的窗口的系统代理失效
       // stopLuminet()
     }
+  }
+  else if (store.roxynetV2rayCompatible !== originRoxynetV2rayCompatible) {
+    // 重新设置系统代理
+    startLuminet()
   }
 })
 

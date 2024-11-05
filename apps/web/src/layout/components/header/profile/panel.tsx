@@ -43,7 +43,7 @@ async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPa
   }
 
   if (items && item.name === 'systemProxySwitch') {
-    const v2 = items.list[0].items.find((i: any) => i.name === 'luminetV2rayCompatible')
+    const v2 = items.list[0].items.find((i: any) => i.name === 'roxynetV2rayCompatible')
     v2.hide = !value
   }
 }
@@ -277,9 +277,9 @@ export function getNetworkPanel(data?: any): SettingsModule {
           },
           {
             label: $t('v2ray 兼容模式'),
-            name: 'luminetV2rayCompatible',
+            name: 'roxynetV2rayCompatible',
             hide: !data?.systemProxySwitch,
-            value: data?.luminetV2rayCompatible ?? false,
+            value: data?.roxynetV2rayCompatible ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item)}></RxToggleSwitch>

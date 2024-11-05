@@ -30,7 +30,7 @@ export interface StoreType {
   /** luminet 代理端口 */
   luminetProxyPort?: number
   /** luminet v2ray 兼容模式 */
-  luminetV2rayCompatible?: boolean
+  roxynetV2rayCompatible?: boolean
   /** APP 本地服务端口 */
   appPort: number
   /** openapi key */
@@ -47,7 +47,7 @@ const defaultValues: StoreType = {
   memoryLimit: 95,
   cacheDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
-  luminetV2rayCompatible: false,
+  roxynetV2rayCompatible: false,
   appPort: 45535,
   ipBlackList: [],
   ipChecker: 'http://iprust.io/ip.json',

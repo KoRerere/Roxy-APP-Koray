@@ -40,7 +40,7 @@ function cacheToast(slotData: Recordable) {
     message.hide = true
     message.life = 1
     setTimeout(closeCallback)
-    duplicateItem.message.count = ~~duplicateItem.message.count + 1
+    duplicateItem.message.count = (duplicateItem.message.count || 1) + 1
     clearTimeout(duplicateItem.closeTimeout)
     duplicateItem.closeTimeout = setTimeout(() => {
       duplicateItem.closeCallback()

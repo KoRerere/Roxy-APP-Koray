@@ -3,29 +3,31 @@ import { execFile } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
 import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
-import { encryptByDESModeCBC } from '/@/modules/luminet/util'
+import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { getSystemProxy, isMac } from '/@/utils'
 
 export * from './util'
 
 const execFilePromise = promisify(execFile)
-let luminetProcess: ChildProcess | null = null
+let roxynetProcess: ChildProcess | null = null
 
 export function getLuminetProcess() {
-  return luminetProcess
+  return roxynetProcess
 }
 
 export async function startLuminet() {
   console.log('startLuminet systemProxySwitch:', store.systemProxySwitch)
-  console.log('startLuminet luminetV2rayCompatible:', store.luminetV2rayCompatible)
+  console.log('startLuminet roxynetV2rayCompatible:', store.roxynetV2rayCompatible)
 
   if (!store.systemProxySwitch) {
     console.log('systemProxySwitch is off')
     return
   }
 
-  if (luminetProcess) {
+  if (roxynetProcess) {
+    // 重新设置系统代理
+    setSystemProxy()
     console.log('Luminet has been started')
     return
   }
@@ -34,7 +36,7 @@ export async function startLuminet() {
   console.log('systemProxy', systemProxy)
 
   if (!systemProxy) {
-    console.log('没有获取到系统代理，停止拉起 luminet')
+    console.log('没有获取到系统代理，停止拉起 roxynet')
     return
   }
 
@@ -42,7 +44,7 @@ export async function startLuminet() {
     system_proxy: {
       addr: systemProxy,
       protocal: 'http',
-      v2: store.luminetV2rayCompatible, // 是否走v2兼任模式，代理为http的情况下需要设置为true
+      v2: store.roxynetV2rayCompatible, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,
     api_token: store.apiKey,
@@ -53,42 +55,42 @@ export async function startLuminet() {
   const encText = encryptByDESModeCBC(originText)
 
   if (isMac) {
-    await execFilePromise('chmod', ['+x', appConfig.luminetBinPath])
+    await execFilePromise('chmod', ['+x', appConfig.roxynetBinPath])
   }
-  console.log('luminetBinPath encText:', encText)
-  luminetProcess = execFile(appConfig.luminetBinPath, ['--arg', encText])
+  console.log('roxynetBinPath encText:', encText)
+  roxynetProcess = execFile(appConfig.roxynetBinPath, ['--arg', encText])
 
   // 忽略的错误信息
   const ignoreList = ['check addr  error:dial tcp: missing address']
   // 监听 stdout 数据事件
-  luminetProcess.stdout?.on('data', (data) => {
+  roxynetProcess.stdout?.on('data', (data) => {
     if (!ignoreList.some(item => data.includes(item))) {
-      console.log(`luminetProcess stdout: ${data}`)
+      console.log(`roxynetProcess stdout: ${data}`)
     }
   })
 
   // 监听 stderr 数据事件
-  luminetProcess.stderr?.on('data', (data) => {
-    console.error(`luminetProcess stderr: ${data}`)
+  roxynetProcess.stderr?.on('data', (data) => {
+    console.error(`roxynetProcess stderr: ${data}`)
   })
 
   // 监听子进程关闭事件
-  luminetProcess.on('close', (code) => {
-    console.log(`luminetProcess exited with code ${code}`)
+  roxynetProcess.on('close', (code) => {
+    console.log(`roxynetProcess exited with code ${code}`)
   })
 
   // 监听子进程错误事件
-  luminetProcess.on('error', (error) => {
-    console.error('luminetProcess Error executing file:', error)
+  roxynetProcess.on('error', (error) => {
+    console.error('roxynetProcess Error executing file:', error)
   })
 
-  console.log(`Child process ID: ${luminetProcess.pid}`)
+  console.log(`Child process ID: ${roxynetProcess.pid}`)
   await setTimeout(100)
 }
 
 export function stopLuminet() {
-  if (luminetProcess) {
-    luminetProcess.kill()
-    luminetProcess = null
+  if (roxynetProcess) {
+    roxynetProcess.kill()
+    roxynetProcess = null
   }
 }

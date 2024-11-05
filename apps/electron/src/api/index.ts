@@ -36,7 +36,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
     console.log('store.workspaceId', store.workspaceId)
     console.log('config.headers.workspaceId', config.headers.workspaceId)
   }
-  handleRequest(config)
+  // handleRequest(config)
   config.headers.token = store.token
   Object.assign(config.headers, {
     ...commonRequestHeaders,
@@ -47,7 +47,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
 })
 
 httpClient.instance.interceptors.response.use((response) => {
-  handleResponse(response)
+  // handleResponse(response)
   return response
 })
 
