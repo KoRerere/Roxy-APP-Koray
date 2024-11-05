@@ -40,22 +40,39 @@ async function handleMigration() {
 
 <template>
   <div class="migration-tips">
-    <div class="title">
-      {{ $t('关于从 Lumibrowser 中迁移数据的公告') }}
-    </div>
     <div class="content">
-      <span>{{ $t('你好，我们发现你的账号在 Lumibrowser 中已存在数据，为了更好地使用我们的产品，请点击下方的按钮进行数据迁移。') }}</span>
-      <span>{{ $t('该次数据迁移仅会执行一次，当你执行完数据迁移后才能继续使用 RoxyBrowser。') }}</span>
       <span>
-        <i18n-t :keypath="$t('关于更多数据迁移的细节，包括窗口的转换和权限的变更，请访问：{link}', { link: '{link}' })" scope="global">
+        <i18n-t :keypath="$t('为了提供更好的体验，我们已推出全新版本的客户端，并正式更名为 RoxyBrowser。点击 {link} 了解详情。', { link: '{link}' })" scope="global">
           <template #link>
-            <a href="https://roxybrowser.com" target="_blank" class="upload-title-link">{{ $t('roxybrowser.com') }}</a>
+            <a href="https://roxybrowser.com/" target="_blank">roxybrowser.com</a>
           </template>
         </i18n-t>
       </span>
     </div>
+
+    <div class="title">
+      {{ $t('数据迁移说明：') }}
+    </div>
+    <div class="content">
+      <span>{{ $t('1. Lumibrowser 中的所有窗口、代理、扩展等数据将自动同步至 RoxyBrowser 默认工作空间（每位用户将拥有专属工作空间）') }}</span>
+      <span>
+        <i18n-t :keypath="$t('2. {desc}：团队中的窗口将归属主账号的工作空间，并由主账号统一管理（窗口数据归于主账号，代理及扩展数据仍为个人所有），主账号可以通过邀请，使成员加入工作空间并分配相应权限。', { desc: '{desc}' })" scope="global">
+          <template #desc>
+            <b>团队迁移说明</b>
+          </template>
+        </i18n-t>
+      </span>
+      <span>
+        <i18n-t :keypath="$t('3. 所有原分组信息将转变为{tag}，并自动与相关窗口绑定以区分。', { tag: '{tag}' })" scope="global">
+          <template #tag>
+            <b>标签</b>
+          </template>
+        </i18n-t>
+      </span>
+      <span>{{ $t('4. 该次数据迁移仅会执行一次，当你执行完数据迁移后才能继续使用 RoxyBrowser。') }}</span>
+    </div>
     <div class="footer">
-      <RxButton :disabled="loading" @click="closeCallback">
+      <RxButton :disabled="loading" outlined severity="secondary" @click="closeCallback">
         {{ $t('暂不迁移') }}
       </RxButton>
       <RxButton @click="handleMigration">
@@ -82,7 +99,6 @@ async function handleMigration() {
   font-style: normal;
   font-weight: 600;
   line-height: var(--Line-Height-text-lg, 20px);
-  margin-bottom: 12px;
 }
 
 .content {

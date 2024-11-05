@@ -7,7 +7,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 
 const simpleLocale = useSimpleLocale()
 
-const ISO639 = ref(ISO639List)
+const ISO639 = ref(ISO639List.slice(0, 2))
 
 const currentLocale = ref(ISO639.value.find(item => item.locale === simpleLocale.currentLocale) || ISO639.value[0])
 

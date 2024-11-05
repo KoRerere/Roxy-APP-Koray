@@ -12,7 +12,7 @@ import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
-import { getPluginManifestInfo, getPluginMeta } from './helper'
+import { getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 
 export interface UserSelectedExtensionInfo {
   type: 'warn' | 'success' | 'error'
@@ -57,7 +57,10 @@ export const extensionManager = new class ExtensionManager {
       }
     }
 
-    return exists.map(name => path.join(this.extensionDir, name)).concat(downloadedArr)
+    const promiseArr = exists.map(name => path.join(this.extensionDir, name)).concat(downloadedArr).map((extDir) => {
+      return getPluginDir(extDir, 10)
+    })
+    return Promise.all(promiseArr)
   }
 
   /** 从用户插件列表下载所需的插件 */

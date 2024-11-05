@@ -6,6 +6,7 @@ import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
 
 const popoverRef = useTemplateRef('popover')
+const btnRef = useTemplateRef('btn')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
 const kernelUpdates = ref<ResourceUpdateMessage[]>([])
 const tabs = ref([
@@ -22,6 +23,8 @@ const tabs = ref([
     component: markRaw(KernelUpdater),
   },
 ])
+const tabModel = ref(tabs.value[0].value)
+const isDownloadingKernel = ref(false)
 
 const noticeNum = computed(() => {
   return clientUpdates.value.length + kernelUpdates.value.filter(item => item.status === 'downloading').length
@@ -52,6 +55,20 @@ async function getKernelList() {
   kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
 }
 
+watch(isDownloadingKernel, () => {
+  console.log('isDownloadingKernel', popoverRef.value?.getRef())
+  if (isDownloadingKernel.value && !popoverRef.value?.getRef().visible) {
+    btnRef.value?.btnEl.click()
+    nextTick(() => {
+      tabModel.value = tabs.value[1].value
+      // 5 分钟内不重复提示
+      setTimeout(() => {
+        isDownloadingKernel.value = false
+      }, 60000 * 5)
+    })
+  }
+})
+
 window.electronAPI.on('app:resource-update', (data) => {
   console.log('app:resource-update', data)
   // 内核升级
@@ -63,6 +80,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
+    isDownloadingKernel.value = data.status === 'downloading'
     kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
   // 客户端升级(app、web、patch)
@@ -82,7 +100,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 <template>
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
-      <RxButton icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
+      <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <RyPopover ref="popover" :class="classes.popover">
@@ -91,7 +109,7 @@ window.electronAPI.on('app:resource-update', (data) => {
           {{ $t('更新') }}
         </div>
       </div>
-      <Tabs :value="tabs[0].value">
+      <Tabs v-model:value="tabModel">
         <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}

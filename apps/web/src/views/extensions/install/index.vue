@@ -301,7 +301,8 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-    :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
+           :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false"
+  >
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <!-- <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" /> -->

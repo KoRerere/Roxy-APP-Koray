@@ -19,13 +19,13 @@ cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
-  appId: isDev ? 'com.roxybrowser.app' : 'com.lumi.app',
-  productName: 'Roxybrowser',
-  copyright: 'Roxybrowser',
+  appId: 'com.roxybrowser.app',
+  productName: 'RoxyBrowser',
+  copyright: 'RoxyBrowser',
   asar: true,
   extraMetadata: {
     version,
-    name: 'Roxybrowser',
+    name: 'RoxyBrowser',
     main: 'dist/main.cjs',
   },
   directories: {

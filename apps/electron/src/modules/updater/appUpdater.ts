@@ -95,8 +95,10 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.on(`error`, (error) => {
       this.isInProgress = false
-      console.log(`autoUpdater 出现错误`, error)
-      this.sendErrorMessage()
+      if (!error.message.includes('com.github.Electron')) {
+        this.sendErrorMessage()
+      }
+      console.error(`autoUpdater 出现错误`, error)
     })
 
     this.#autoUpdater.on(`checking-for-update`, () => {
@@ -144,13 +146,15 @@ export const appUpdater = new class AppUpdater {
   }
 
   async checkForUpdates() {
-    console.info(`检查更新 checkUpdate`)
+    console.info(`检查更新 checkUpdate`, this.isInProgress)
 
     if (this.isInProgress) {
       return
     }
 
-    await this.init()
+    if (!this.#autoUpdater) {
+      await this.init()
+    }
 
     this.isInProgress = true
     const checkResult = await this.#autoUpdater.checkForUpdates().catch((error) => {

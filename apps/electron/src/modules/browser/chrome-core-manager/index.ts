@@ -12,7 +12,7 @@ import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new class ChromeCoreManager {
   /** 内核执行程序文件名称 */
-  private chromeBinName = isMac ? 'roxychrome.app/Contents/MacOS/roxychrome' : 'roxychrome.exe'
+  private chromeBinName = isMac ? 'RoxyChrome.app/Contents/MacOS/RoxyChrome' : 'RoxyChrome.exe'
 
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>()

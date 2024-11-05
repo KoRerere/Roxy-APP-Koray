@@ -33,7 +33,7 @@ async function handleSubmit() {
     toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
     return
   }
-  if (data.is_migrate) {
+  if (!data.is_migrate) {
     dialog.showModal({
       slots: {
         container: ({ closeCallback }) => (

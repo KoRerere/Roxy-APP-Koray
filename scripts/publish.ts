@@ -37,7 +37,7 @@ function genUploadPath(osBit: string, fileName: string) {
 
 /** 生成 YAML 文件内容 */
 function genYamlContent(osBit: string, extName: string) {
-  const targetFile = { ...fileContentObj.files.find(file => file.url === `Roxybrowser_${osBit}_${appVersion}.${extName}`) }
+  const targetFile = { ...fileContentObj.files.find(file => file.url === `RoxyBrowser_${osBit}_${appVersion}.${extName}`) }
 
   if (osBit === 'ia32') {
     targetFile.url = targetFile.url.replace('ia32', 'x86')

@@ -17,6 +17,7 @@ interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
 }
 const outerLoading = defineModel('loading', { default: false })
 
+const btnElRef = useTemplateRef('btnEl')
 const _loading = ref(false)
 
 async function handleClick(e: MouseEvent) {
@@ -30,10 +31,16 @@ async function handleClick(e: MouseEvent) {
     }
   }
 }
+
+defineExpose({
+  get btnEl() {
+    return btnElRef.value?.$el
+  },
+})
 </script>
 
 <template>
-  <Button v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />

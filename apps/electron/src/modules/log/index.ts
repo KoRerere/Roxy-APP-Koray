@@ -9,7 +9,9 @@ export function setupLog() {
   log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
   log.transports.console.useStyles = true
   // 禁用生产环境的控制台输出
-  log.transports.console.level = isPackaged ? false : 'silly'
+  if (isPackaged) {
+    log.transports.console.level = false
+  }
   /**
    * 设置日志文件路径和文件名
    */

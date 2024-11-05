@@ -7,7 +7,7 @@ import { fileExists } from '/@/utils'
 export type PluginMeta = Awaited<ReturnType<typeof getPluginMeta>>
 
 /** 递归获取 manifest.json 所在目录 */
-async function getPluginDir(dir: string, level = 3): Promise<string> {
+export async function getPluginDir(dir: string, level = 3): Promise<string> {
   if (level === 0) {
     return ''
   }
