@@ -125,8 +125,8 @@ async function handleBeforeUpload(rawFile: any) {
     <div class="upload-title">
       <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入500个窗口。', { templateFile: '{templateFile}' })" scope="global">
         <template #templateFile>
-          <a href="https://lumibrowser-hk.oss-cn-hongkong.aliyuncs.com/public/static/template/Lumi%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank"
-            class="upload-title-link">{{ $t('窗口导入模板') }}</a>
+          <a href="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/template/Roxy%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank" class="upload-title-link">{{
+            $t('窗口导入模板') }}</a>
         </template>
       </i18n-t>
     </div>
