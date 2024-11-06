@@ -44,9 +44,15 @@ function getMacAddr(params: any) {
     : window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
 }
 
-export async function ceateRandomFinger(inupts: any, count: number = 1) {
+const defaultFingerOptions = {
+  count: 1,
+  preview: true,
+}
+
+export async function ceateRandomFinger(inupts: any, options?: { count?: number, preview?: boolean }) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
 
+  const { count, preview } = { ...defaultFingerOptions, ...options }
   const fingerDetail = await Promise.all(Array.from({ length: count }, async () => {
     return filterFieldByValue({
       mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
@@ -74,7 +80,10 @@ export async function ceateRandomFinger(inupts: any, count: number = 1) {
     getMacAddr({ macInfo, count }),
   ])
 
-  setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
+  if (preview) {
+    setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
+  }
+
   uaWebgl.forEach(async (item, index) => {
     const formData = { ...item, ...deviceName[index], ...macAddr[index] }
     Object.assign(fingerDetail[index], formData)

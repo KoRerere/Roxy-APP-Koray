@@ -7,11 +7,13 @@ export interface Items {
   text?: string
   name?: string
   value?: any
+  oldValue?: any
   classes?: string
   props?: any
   component?: any
   afterComponent?: any
   formatValue?: (item: Items) => any
+  vaildator?: (item: Items) => boolean
 }
 export interface List {
   subtitle?: string

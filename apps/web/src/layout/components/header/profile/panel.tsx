@@ -27,24 +27,30 @@ async function updateAvatar(item: Items) {
 }
 
 async function updateUserName(item: Items) {
+  if (item.oldValue === item.value)
+    return
+
   const { code, msg } = await API.base.userChangeUsernameCreate({ userName: item.value })
   toast.value?.(code, msg)
   if (code === 0) {
     getUserInfo()
+    item.oldValue = item.value
   }
 }
 
 async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPanel> | null = null) {
-  const value = item.formatValue?.(item) ?? item.value
-  const { code, msg } = await API.base.userSetUserConfigCreate({ [item.name as any]: value })
-  toast.value?.(code, msg)
-  if (code === 0) {
-    electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
-  }
+  if (!item.vaildator || item.vaildator(item)) {
+    const value = item.formatValue?.(item) ?? item.value
+    const { code, msg } = await API.base.userSetUserConfigCreate({ [item.name as any]: value })
+    toast.value?.(code, msg)
+    if (code === 0) {
+      electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
+    }
 
-  if (items && item.name === 'systemProxySwitch') {
-    const v2 = items.list[0].items.find((i: any) => i.name === 'roxynetV2rayCompatible')
-    v2.hide = !value
+    if (items && item.name === 'systemProxySwitch') {
+      const v2 = items.list[0].items.find((i: any) => i.name === 'roxynetV2rayCompatible')
+      v2.hide = !value
+    }
   }
 }
 
@@ -133,6 +139,7 @@ export function getProfilePanel(data?: any): SettingsModule {
             label: $t('用户名'),
             name: 'userName',
             value: data?.userName ?? '',
+            oldValue: data?.userName,
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" onBlur={() => updateUserName(item)} />
@@ -373,9 +380,9 @@ export function getNetworkPanel(data?: any): SettingsModule {
             name: 'ipBlackList',
             classes: 'flex-col !items-start gap-4',
             value: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
-            formatValue: (item: Items) => {
-              return item.value.split('\n')
-            },
+            oldValue: Array.isArray(data?.ipBlackList) ? data.ipBlackList.join('\n') : (data.ipBlackList ?? ''),
+            formatValue: (item: Items) => item.value.split('\n'),
+            vaildator: (item: Items) => item.oldValue !== item.value,
             props: {
               class: 'resize-none w-full',
               placeholder: `${$t('请直接输入 *域名 用回车键分割')}\n${$t('示例')}:\n* google.com\n* facebook.com`,

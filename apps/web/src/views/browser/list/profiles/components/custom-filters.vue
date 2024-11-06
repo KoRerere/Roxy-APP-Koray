@@ -116,6 +116,9 @@ function inputPopup(data: any) {
       },
       onConfirm: async (formData: any) => {
         Object.entries(formData).forEach(([name, value]) => {
+          if (Array.isArray(value) && value.some(v => !v)) {
+            value = [value[0], new Date()]
+          }
           setInputFieldByInputKey(_props.filtersMenu, name, 'value', value)
         })
         onFilterChange()

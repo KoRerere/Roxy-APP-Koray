@@ -141,14 +141,22 @@ async function openManageCategory() {
 }
 
 const popRef = ref()
+const hasSort = ref(false)
 function showPopover(event: Event) {
   popRef.value.getRef().show(event)
 }
 
+function sortChange() {
+  hasSort.value = true
+}
+
 async function hidePopover() {
-  const sort_data = tabs.value.slice(rawTabs.length).map((item: any, index) => ({ name: item.label, sort: index }))
-  const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
-  onlyErrorToast(code, msg)
+  if (hasSort.value) {
+    hasSort.value = false
+    const sort_data = tabs.value.slice(rawTabs.length).map((item: any, index) => ({ name: item.label, sort: index }))
+    const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
+    onlyErrorToast(code, msg)
+  }
 }
 
 onBeforeMount(() => {
@@ -194,7 +202,7 @@ onBeforeMount(() => {
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>{{ item.label }}</span>
     </div>
-    <VueDraggable v-model="sortTabs" :animation="150">
+    <VueDraggable v-model="sortTabs" :animation="150" @change="sortChange">
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
         <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>

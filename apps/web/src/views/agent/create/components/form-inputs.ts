@@ -100,13 +100,6 @@ export function getInputs(data: any = {}) {
               if (input.value < 1 || input.value > 65535) {
                 input.invalid = true
                 input.errorMsg = $t('端口范围 1~65535')
-                return
-              }
-
-              const occupied = await electronAPI.send('util:checkPort', input.value)
-              if (occupied) {
-                input.invalid = true
-                input.errorMsg = $t('端口已被占用')
               }
             }
           },
