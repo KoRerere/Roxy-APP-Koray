@@ -38,9 +38,24 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (!currentWorkspace.value) {
       currentWorkspace.value = data.rows.find(item => item.workspaceDefault)
     }
+
+    return data.rows
   }
 
-  return { workspaceList, currentWorkspace, getWorkspaceList }
+  function resetWorkspace() {
+    currentWorkspace.value = undefined
+    workspaceList.value = []
+  }
+
+  /** 登录成功后，设置当前工作区 */
+  function setCurrentWorkspace(workspaceId: number) {
+    const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
+    if (targetWorkspace) {
+      currentWorkspace.value = targetWorkspace
+    }
+  }
+
+  return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace }
 }, {
-  persist: true,
+  persist: false,
 })

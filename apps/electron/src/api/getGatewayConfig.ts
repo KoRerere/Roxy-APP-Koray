@@ -22,7 +22,7 @@ export async function getGatewayConfig(): Promise<string> {
         return Promise.reject(error)
       })
       console.log(`getGatewayConfig response`, response.data)
-      return isDev ? response.data.test : response.data.prod
+      return response.data.prod
     }
     catch (error) {
       console.log(`gatewayConfig error`, error)

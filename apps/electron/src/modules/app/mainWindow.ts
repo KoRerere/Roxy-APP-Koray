@@ -27,7 +27,7 @@ async function createWindow() {
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
       preload: isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
-      devTools: !isProd,
+      // devTools: !isProd,
     },
   })
 
@@ -53,7 +53,7 @@ async function createWindow() {
 
   if (isProd) {
     // 生产禁用菜单栏
-    browserWindow.setMenu(null)
+    // browserWindow.setMenu(null)
   }
 
   await browserWindow.loadURL(getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`))

@@ -16,6 +16,8 @@ import {
   GetAppUpgradeCreatePayload,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
+  GetRegCheckBindEmailVerCodeListData,
+  GetRegCheckBindEmailVerCodeListParams,
   LoginCreateData,
   LoginCreatePayload,
   LoginGoogleCreateData,
@@ -254,7 +256,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserGetAppUpgradeCreate
-   * @summary app升版
+   * @summary app升版-->获取版本信息--有权限认证
    * @request POST:/user_get_app_upgrade
    * @response `200` `UserGetAppUpgradeCreateData`
    */
@@ -580,7 +582,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name GetCheckBindEmailVerCodeList
-   * @summary 比对验证码
+   * @summary 找回验证码
    * @request GET:/get_check_bind_email_ver_code
    * @response `200` `GetCheckBindEmailVerCodeListData`
    */
@@ -623,6 +625,23 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetRegCheckBindEmailVerCodeList
+   * @summary 注册验证码
+   * @request GET:/get_reg_check_bind_email_ver_code
+   * @response `200` `GetRegCheckBindEmailVerCodeListData`
+   */
+  getRegCheckBindEmailVerCodeList = (query: GetRegCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
+    this.http.request<GetRegCheckBindEmailVerCodeListData, any>({
+      path: `/get_reg_check_bind_email_ver_code`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

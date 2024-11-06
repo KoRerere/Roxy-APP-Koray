@@ -1,15 +1,17 @@
 <script setup lang="tsx">
-import type { LoginCreatePayload } from '@roxy/backend-api'
+import type { LoginCreateData, LoginCreatePayload } from '@roxy/backend-api'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 
+const { getWorkspaceList, setCurrentWorkspace } = useWorkspaceStore()
 const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
 const { rememberMe, password } = storeToRefs(useUserStore())
 const router = useRouter()
@@ -33,25 +35,27 @@ async function handleSubmit() {
     toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
     return
   }
-  if (!data.is_migrate) {
+  if (data.workspaceId === 0) {
     dialog.showModal({
       slots: {
         container: ({ closeCallback }) => (
-          <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data.token)} />
+          <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data)} />
         ),
       },
     })
     return
   }
 
-  await afterLogin(data.token)
+  await afterLogin(data)
 }
 
-async function afterLogin(token: string, method: 'password' | 'google' = 'password') {
-  setToken(token)
+async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | 'google' = 'password') {
+  setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
   await getUserInfo()
   setPassword(rememberMe.value ? signFormData.value.password : '')
+  await getWorkspaceList()
+  setCurrentWorkspace(loginData.workspaceId)
   router.push({ name: 'home' })
   mixpanel.track('login', { method })
 }
@@ -59,7 +63,17 @@ async function afterLogin(token: string, method: 'password' | 'google' = 'passwo
 async function googleAuth2Login(googleToken: string) {
   const { code, data, msg = $t('登录失败') } = await API.base.loginGoogleV2Create({ googleToken })
   if (code === 0) {
-    afterLogin(data.token, 'google')
+    if (data.workspaceId === 0) {
+      dialog.showModal({
+        slots: {
+          container: ({ closeCallback }) => (
+            <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data)} />
+          ),
+        },
+      })
+      return
+    }
+    afterLogin(data, 'google')
   }
   else {
     mixpanel.track('login', { method: 'google', success: false, error: msg })

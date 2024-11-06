@@ -1826,6 +1826,20 @@ export interface GetAppUpgradeCreateData {
   msg: string;
 }
 
+export interface GetRegCheckBindEmailVerCodeListParams {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface GetRegCheckBindEmailVerCodeListData {
+  code: number;
+  /** 验证码是成功 */
+  data: boolean;
+  msg: string;
+}
+
 export interface UserGetWindowInfoListParams {
   /**
    * 分页索引, int, 非必传, 默认1

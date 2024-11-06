@@ -4,11 +4,13 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 
 export const useUserStore = defineStore('user', () => {
   const locale = useSimpleLocale()
+  const workspaceStore = useWorkspaceStore()
 
   const userInfo = ref<UserInfo>({})
   const tokenRef = ref('')
@@ -55,6 +57,7 @@ export const useUserStore = defineStore('user', () => {
     tokenRef.value = ''
     electronAPI.send('user:logout')
     mixpanel.reset()
+    workspaceStore.resetWorkspace()
   }
 
   function setToken(token: string) {
