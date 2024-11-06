@@ -4,6 +4,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
+import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -48,6 +49,7 @@ const apiConfig = ref({
   port: '',
   open: false,
 })
+const hasOccupy = ref(false)
 
 const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
@@ -86,12 +88,13 @@ const inputs = ref([
       }
 
       const port = await electronAPI.send('util:checkPort', input.value)
-      if (port !== Number(apiConfig.value.port)) {
+      if (port !== Number(input.value)) {
         input.invalid = true
         input.errorMsg = $t('端口已被占用')
         return
       }
 
+      hasOccupy.value = false
       apiConfig.value.port = input.value
       updateApiKeys()
     },
@@ -102,7 +105,10 @@ async function getApiKeys() {
   const { data } = await API.base.userGetUserApiList()
   original.value = { ...data }
   apiConfig.value = { ...data }
-  setInputValue(inputs.value, 'port', apiConfig.value.port)
+  const _port = Number(apiConfig.value.port)
+  setInputValue(inputs.value, 'port', _port)
+  const port = await electronAPI.send('util:checkPort', _port)
+  hasOccupy.value = port !== _port
 }
 
 async function resetApiKey() {
@@ -175,6 +181,8 @@ onBeforeMount(() => {
               </div>
               <inputNumberGroup :inputs="inputs" />
             </div>
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
+              :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
 
