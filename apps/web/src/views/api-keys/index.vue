@@ -33,7 +33,7 @@ const illustrate = [
       <I18nT keypath={$t('更多 API 功能和使用方法, 请参考 {link}', { link: '{link}' })}>
         {{
           link: () => (
-            <a class="decoration-underline" target="__blank" href="https://lumibrowser.com/api/v2">
+            <a class="decoration-underline" target="__blank" href="https://www.roxybrowser.com/api/v2">
               {$t('API 文档')}
             </a>
           ),
@@ -184,8 +184,7 @@ onBeforeMount(() => {
               <inputNumberGroup :inputs="inputs" />
             </div>
             <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
-                     :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })"
-            />
+              :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
 
