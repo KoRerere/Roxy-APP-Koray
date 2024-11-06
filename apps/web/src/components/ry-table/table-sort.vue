@@ -19,13 +19,13 @@ function toggle(event: Event) {
 }
 
 function onReset() {
-  _sorts.value.forEach(item => item.value = item.defaultValue)
+  _sorts.value?.forEach(item => item.value = item.defaultValue)
   onUpdate()
 }
 
 function onUpdate() {
   popRef.value.getRef().hide()
-  emits('sort', getFormData(_sorts.value))
+  emits('sort')
 }
 </script>
 

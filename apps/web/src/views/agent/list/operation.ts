@@ -100,32 +100,6 @@ export function getCustomFilters() {
       label: $t('备注'),
       name: 'remark',
     },
-    // {
-    //   separator: true,
-    // },
-    // {
-    //   type: 'date',
-    //   label: $t('#Create time'),
-    //   name: 'createTime',
-    //   items: [
-    //     {
-    //       placeholder: `${$t('#Please Enter The')} ${$t('#start time')}`,
-    //       name: 'startDate',
-    //       maxDate: new Date(),
-    //       formatValue: (self: any) => {
-    //         return self.value && format(self.value, 'yyyy-MM-dd')
-    //       },
-    //     },
-    //     {
-    //       placeholder: `${$t('#Please Enter The')} ${$t('#end time')}`,
-    //       name: 'endDate',
-    //       maxDate: new Date(),
-    //       formatValue: (self: any) => {
-    //         return self.value && format(self.value, 'yyyy-MM-dd')
-    //       },
-    //     },
-    //   ],
-    // },
   ]
 
   return inputs

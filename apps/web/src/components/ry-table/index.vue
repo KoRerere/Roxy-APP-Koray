@@ -4,7 +4,7 @@ import type { PageState } from 'primevue/paginator'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
-import { isEmptyValue, isFunction, operationPower } from '/@/utils'
+import { getFormData, isEmptyValue, isFunction, operationPower } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
@@ -40,8 +40,8 @@ const props = defineProps({
     type: Function as PropType<() => any>,
     default: () => [],
   },
-  sorts: {
-    type: Array as PropType<any[]>,
+  tableSort: {
+    type: Function as PropType<() => any>,
     default: () => [],
   },
   operation: {
@@ -94,6 +94,14 @@ const _loading = ref(false)
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
 const _filters = ref()
 const _dataList = ref()
+
+const _sorts = reactive<{
+  value: any[] | undefined
+  onChange: (() => void) | undefined
+}>({
+  value: undefined,
+  onChange: undefined,
+})
 const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
 
 const { selection: outerSelection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
@@ -125,12 +133,6 @@ const selectionData = computed({
       innerSelection.value = value
     }
   },
-})
-
-const params = reactive<any>({
-  sort: {},
-  filters: {},
-  default: {},
 })
 
 const paginatorConfig = reactive({
@@ -174,23 +176,33 @@ async function batchOperation(item: any) {
   }
 }
 
-function onChangeParams(key: string, data: any) {
-  Object.assign(params[key], data)
+function onFilterChange() {
   paginatorConfig.onResetPage()
   _request()
 }
 
-async function _getFilters() {
-  _filters.value = await props.tableFilters()
+function _onSortChange() {
+  paginatorConfig.onResetPage()
+  _request()
+  _sorts.onChange?.()
+}
+
+async function _getCondition() {
+  const [filterList, { data, onChange }] = await Promise.all([
+    props.tableFilters(),
+    props.tableSort(),
+  ])
+  _filters.value = filterList
+  _sorts.value = data
+  _sorts.onChange = onChange
 }
 
 function _getParams(outerParams?: any) {
   return {
     page_index: paginatorConfig.page,
     page_size: paginatorConfig.rows,
-    ...params.sort,
-    ...params.filters,
-    ...params.default,
+    ...getFormData(_filters.value as any),
+    ...getFormData(_sorts.value as any),
     ...props.tableParams,
     ...outerParams,
   }
@@ -254,8 +266,8 @@ function showOperationMenu({ event }: { event: Event }, data: any) {
   })
 }
 
-onBeforeMount(() => {
-  _getFilters()
+onBeforeMount(async () => {
+  await _getCondition()
   _request()
 })
 
@@ -270,7 +282,7 @@ defineExpose({
   <div class="position-relative w-full h-full flex flex-col">
     <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
       <div class="flex flex-1 gap-2">
-        <TableFilter :filters="_filters" @change="onChangeParams('filters', $event)" />
+        <TableFilter :filters="_filters" @change="onFilterChange" />
         <slot name="header-extra" />
       </div>
       <div class="flex gap-2">
@@ -279,7 +291,7 @@ defineExpose({
             <slot name="config-footer" />
           </template>
         </TableDisplay>
-        <TableSort v-if="sorts.length > 0" :sorts="sorts" @sort="onChangeParams('sort', $event)" />
+        <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
       </div>
     </div>
     <div class="position-relative flex-1 overflow-hidden">

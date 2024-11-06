@@ -1,9 +1,5 @@
 import { $t } from '/@/locales'
 
-export function getSorts(_params: any = {}) {
-  return []
-}
-
 export function getOperation() {
   return [
     {
@@ -26,6 +22,5 @@ export function getOperation() {
 }
 
 export default {
-  getSorts,
   getOperation,
 }

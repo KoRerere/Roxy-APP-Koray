@@ -32,12 +32,12 @@ function onDateClear() {
 function onDateHide() {
   const formData = getFormData(props.filters)
   if (formData.startDate && formData.endDate) {
-    emit('change', formData)
+    emit('change')
   }
 }
 
 function onFilterChange() {
-  emit('change', getFormData(props.filters))
+  emit('change')
 }
 </script>
 

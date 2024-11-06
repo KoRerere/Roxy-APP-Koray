@@ -88,29 +88,6 @@ const filters = reactive({
   },
 })
 
-const sorts = ref([
-  {
-    label: $t('排序标准'),
-    name: 'orderName',
-    value: 'createTime',
-    options: [
-      { label: $t('添加时间'), value: 'createTime' },
-      { label: $t('更新时间'), value: 'lateUpdateTime' },
-    ],
-    icon: 'base/rx_ic_sort_ascending',
-  },
-  {
-    label: $t('排序方式'),
-    name: 'orderType',
-    value: 'desc',
-    options: [
-      { label: $t('倒序'), value: 'desc' },
-      { label: $t('正序'), value: 'asc' },
-    ],
-    icon: 'base/rx_ic_sort_ascending',
-  },
-])
-
 async function tableRequest(params: any) {
   return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })// 不分页
 }
@@ -300,9 +277,8 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns" :sorts="sorts"
-           :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false"
-  >
+  <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns"
+    :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
         <!-- <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" /> -->

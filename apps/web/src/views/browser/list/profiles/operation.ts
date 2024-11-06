@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { setInputValueByFormData } from '/@/utils'
+import { getFormData, setInputValueByFormData } from '/@/utils'
 
 const role = useRoleStore()
 
@@ -66,7 +66,7 @@ export async function getCustomFilters(params: any = {}) {
       icon: 'base/rx_ic_keys',
       getOptions: async () => {
         const { data } = await API.platform.userGetPlatformInfoV2List({ page_index: 1, page_size: 999 })
-        return data.rows.map((item: any) => ({
+        return (data.rows || []).map((item: any) => ({
           parentName: 'platformUrlIds',
           value: `${item.id}`,
           label: new URL(item.platformUrl).hostname.replace(/.*\.(.*?)\..*/, '$1'),
@@ -86,7 +86,7 @@ export async function getCustomFilters(params: any = {}) {
       icon: 'base/rx_ic_stack',
       getOptions: async () => {
         const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-        return data.rows.map((item: any) => ({
+        return (data.rows || []).map((item: any) => ({
           parentName: 'projectIds',
           value: `${item.project_id}`,
           label: item.projectName,
@@ -107,7 +107,7 @@ export async function getCustomFilters(params: any = {}) {
           await API.team.userGetMemberInfoByWorkspaceList({}),
         ])
 
-        const menbers = memberList.rows.map((item: any) => ({
+        const menbers = (memberList.rows || []).map((item: any) => ({
           parentName: 'labelIds',
           value: `u_${item.user_id}`,
           label: item.userName,
@@ -115,7 +115,7 @@ export async function getCustomFilters(params: any = {}) {
           avatarColor: item.avatarColor,
         }))
 
-        const labels = labelList.rows.map((item: any) => ({
+        const labels = (labelList.rows || []).map((item: any) => ({
           parentName: 'labelIds',
           value: `${item.id}`,
           label: item.name,
@@ -155,68 +155,59 @@ export async function getCustomFilters(params: any = {}) {
     {
       type: 'date',
       name: 'createTime',
-      label: $t('创建时间'),
       icon: 'base/rx_ic_calendar',
-      items: [
-        {
-          placeholder: $t('开始时间'),
-          name: 'startDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-        {
-          placeholder: $t('结束时间'),
-          name: 'endDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-      ],
+      label: $t('创建时间'),
+      placeholder: $t('请选择创建时间'),
+      maxDate: new Date(),
+      selectionMode: 'range',
+      manualInput: false,
+      showButtonBar: false,
+      dateFormat: 'yy/mm/dd',
+      formatValue: (input: any, _: any, formData: any) => {
+        if (input.value) {
+          const [startDate, endDate] = input.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
+          Object.assign(formData, { startDate, endDate })
+        }
+        return input.value
+      },
     },
     {
       type: 'date',
-      name: 'updateDate',
-      label: $t('修改时间'),
+      name: 'modfiyTime',
       icon: 'base/rx_ic_calendar',
-      items: [
-        {
-          placeholder: $t('开始时间'),
-          name: 'startUpdateDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-        {
-          placeholder: $t('结束时间'),
-          name: 'endUpdateDate',
-          maxDate: new Date(),
-          formatValue: (self: any) => {
-            return self.value && format(self.value, 'yyyy-MM-dd')
-          },
-        },
-      ],
+      label: $t('修改时间'),
+      placeholder: $t('请选择修改时间'),
+      maxDate: new Date(),
+      selectionMode: 'range',
+      manualInput: false,
+      showButtonBar: false,
+      dateFormat: 'yy/mm/dd',
+      formatValue: (input: any, _: any, formData: any) => {
+        if (input.value) {
+          const [startUpdateDate, endUpdateDate] = input.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
+          Object.assign(formData, { startUpdateDate, endUpdateDate })
+        }
+        return input.value
+      },
     },
   ]
-
   setInputValueByFormData(inputs, {
     ...params,
-    createTime: params.startDate && params.endDate ? [params.startDate, params.endDate].join('~') : undefined,
-    updateDate: params.startUpdateDate && params.endUpdateDate ? [params.startUpdateDate, params.endUpdateDate].join('~') : undefined,
+    createTime: Array.isArray(params.createTime) ? [new Date(params.createTime[0]), new Date(params.createTime[1])] : undefined,
+    modfiyTime: Array.isArray(params.modfiyTime) ? [new Date(params.modfiyTime[0]), new Date(params.modfiyTime[1])] : undefined,
   })
 
   return inputs
 }
 
-export function getSorts(params: any = {}) {
-  return [
+export async function getSorts() {
+  const { data } = await API.window.userGetWindowTableSortOrderList()
+
+  const list = [
     {
       label: $t('排序标准'),
       name: 'orderName',
-      value: params.orderName ?? 'windowSortNum',
+      value: data.orderName ?? 'windowSortNum',
       defaultValue: 'windowSortNum',
       options: [
         { label: $t('序号'), value: 'windowSortNum' },
@@ -230,7 +221,7 @@ export function getSorts(params: any = {}) {
     {
       label: $t('排序方式'),
       name: 'orderType',
-      value: params.orderType ?? 'desc',
+      value: data.orderType ?? 'desc',
       defaultValue: 'desc',
       options: [
         { label: $t('倒序'), value: 'desc' },
@@ -239,6 +230,15 @@ export function getSorts(params: any = {}) {
       icon: 'base/rx_ic_sort_ascending',
     },
   ]
+
+  const onChange = () => {
+    API.window.userSaveWindowTableSortOrderCreate(getFormData(list))
+  }
+
+  return {
+    data: list,
+    onChange,
+  }
 }
 
 export function getOperation(_params: any = {}) {

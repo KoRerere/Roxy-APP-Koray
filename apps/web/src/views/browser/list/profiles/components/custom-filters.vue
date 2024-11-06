@@ -1,5 +1,6 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
+import { format } from 'date-fns'
 import { useDialog } from 'primevue/usedialog'
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
@@ -53,7 +54,9 @@ const labels = computed(() => {
     if (!isEmptyValue(item.value)) {
       const value = !Array.isArray(item.value)
         ? item.value
-        : item.value.map((it: any) => it.label).join(', ')
+        : item.type === 'date'
+          ? item.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd')).join(' ~ ')
+          : item.value.map((it: any) => it.label).join(', ')
       acc.push({ ...toRaw(item), value })
     }
     return acc
@@ -70,6 +73,7 @@ const splitButtonItems = [
 ]
 const menuRef = useTemplateRef('tmenu')
 const isChildren = ref(false)
+const childrenChanged = ref(false)
 const subMenuOptions = ref()
 const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const selectedCategories = ref()
@@ -111,10 +115,6 @@ function inputPopup(data: any) {
         inputs: [deepClone({ ...data, icon: undefined })],
       },
       onConfirm: async (formData: any) => {
-        if (data.type === 'date') {
-          const value = Object.values(formData).join('~')
-          setInputFieldByInputKey(_props.filtersMenu, data.name, 'value', value)// 用于筛选标签展示
-        }
         Object.entries(formData).forEach(([name, value]) => {
           setInputFieldByInputKey(_props.filtersMenu, name, 'value', value)
         })
@@ -143,13 +143,14 @@ async function openCheckbox(item: any) {
     item._options = options
     isChildren.value = true
     subMenuOptions.value = item._options
-    selectedCategories.value = item.value
+    selectedCategories.value = item.value.map((it: any) => it.value)
     return
   }
   menuRef.value?.hide()
 }
 
 function onCheckboxChange(item: any) {
+  childrenChanged.value = true
   const list = menuOptions.value.filter((item: any) => selectedCategories.value.includes(item.value)).map((item: any) => toRaw(item))
   _props.filtersMenu.find(input => input.name === item.parentName).value = list
 }
@@ -159,14 +160,16 @@ function onHide() {
     selectedCategories.value = []
     sleep(20).then(() => {
       isChildren.value = false
-      onFilterChange()
+      if (childrenChanged.value) {
+        onFilterChange()
+        childrenChanged.value = false
+      }
     })
   }
 }
 
 function deleteFilterItem(item: any) {
-  const names = item.type !== 'date' ? item.name : [item.name, item.items.map((it: any) => it.name)].flat()
-  setInputFieldByInputKey(_props.filtersMenu, names, 'value', null)
+  setInputFieldByInputKey(_props.filtersMenu, item.name, 'value', null)
   onFilterChange()
 }
 

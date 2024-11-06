@@ -150,6 +150,11 @@ function onInput() {
     errorMessage.value = ''
   }
 }
+
+const exampleName = computed(() => {
+  const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
+  return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
+})
 </script>
 
 <template>
@@ -192,7 +197,7 @@ function onInput() {
             {{ errorMessage }}
           </div>
           <div class="description">
-            窗口信息示例：IAM-001, IAM-002
+            {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
           </div>
         </div>
       </div>
@@ -282,6 +287,10 @@ function onInput() {
     gap: var(--spacing-2xl, 16px);
     align-self: stretch;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
 
     .title {
       align-self: stretch;

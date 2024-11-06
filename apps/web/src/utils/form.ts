@@ -26,7 +26,7 @@ export function getFormData(
 ): any {
   const hadKey: Set<string> = new Set()
 
-  const formData = inputs.reduce(
+  const formData = (inputs || []).reduce(
     (formData, input) => {
       if (input.visible === false) {
         return formData

@@ -8,13 +8,14 @@ const inputs: any = ref(getInputs())
 function getInputs() {
   const inputs = reactive([
     {
-      type: 'textarea',
-      label: $t('User-Agent'),
-      name: 'userAgent',
-      value: '安大略可是杜拉斯的马拉松吗大阿松大',
-      icon: 'base/rx_ic_shuffle',
-      disabled: true,
-      rows: 4,
+      type: 'date',
+      name: 'modfiyTime',
+      label: $t('修改时间'),
+      placeholder: $t('请选择修改时间'),
+      selectionMode: 'range',
+      manualInput: false,
+      showButtonBar: false,
+      dateFormat: 'yy/mm/dd',
     },
   ])
   return inputs

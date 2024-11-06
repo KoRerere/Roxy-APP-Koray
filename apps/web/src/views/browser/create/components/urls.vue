@@ -23,7 +23,7 @@ function createInput(value?: string) {
     name: (new Date().getTime()).toString(32),
     value,
     errorMsg: $t('请输入正确的 URL'),
-    placeholder: $t('请输入 URL'),
+    placeholder: $t('网址前请加 http:// 或 https://'),
     leftIcon: 'base/rx_ic_link' as SvgNames,
   }
 }

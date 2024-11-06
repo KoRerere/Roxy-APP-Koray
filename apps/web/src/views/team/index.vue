@@ -33,7 +33,7 @@ const [columns] = useColumns({
     {
       title: $t('成员状态'),
       key: 'status',
-      getText: (row: TableRow) => row.status === Membership.joinIn ? '已加入' : '等待确认',
+      getText: (row: TableRow) => row.status === Membership.joinIn ? $t('已加入') : $t('等待确认'),
     },
     {
       title: $t('身份'),
@@ -80,29 +80,6 @@ const filters = reactive({
     filters.onChange()
   },
 })
-
-const sorts = ref([
-  {
-    label: $t('排序标准'),
-    name: 'orderName',
-    value: 'createTime',
-    options: [
-      { label: $t('邀请时间'), value: 'createTime' },
-      { label: $t('修改时间'), value: 'lateUpdateTime' },
-    ],
-    icon: 'base/rx_ic_sort_ascending',
-  },
-  {
-    label: $t('排序方式'),
-    name: 'orderType',
-    value: 'desc',
-    options: [
-      { label: $t('倒序'), value: 'desc' },
-      { label: $t('正序'), value: 'asc' },
-    ],
-    icon: 'base/rx_ic_sort_ascending',
-  },
-])
 
 async function tableRequest(params: any) {
   return API.team.userGetMemberInfoByWorkspaceList(params)
@@ -187,15 +164,15 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
 <template>
   <div class="header">
     <ViewsHeader :title="($route.meta.title as string)">
-      <div class="flex items-center header-guide">
+      <!-- <div class="flex items-center header-guide">
         <RxSvgIcon name="base/rx_ic_books" />
         <span>{{ $t('团队指南') }}</span>
-      </div>
+      </div> -->
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
     </ViewsHeader>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :sorts="sorts" :show-gridlines="false"
+  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
     :paginator="false" :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
