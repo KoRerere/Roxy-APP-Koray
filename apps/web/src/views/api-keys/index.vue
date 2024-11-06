@@ -88,6 +88,7 @@ const inputs = ref([
       }
 
       const port = await electronAPI.send('util:checkPort', input.value)
+      console.log(port, input.value)
       if (port !== Number(input.value)) {
         input.invalid = true
         input.errorMsg = $t('端口已被占用')
@@ -108,6 +109,7 @@ async function getApiKeys() {
   const _port = Number(apiConfig.value.port)
   setInputValue(inputs.value, 'port', _port)
   const port = await electronAPI.send('util:checkPort', _port)
+  console.log(port, _port)
   hasOccupy.value = port !== _port
 }
 
@@ -182,7 +184,8 @@ onBeforeMount(() => {
               <inputNumberGroup :inputs="inputs" />
             </div>
             <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
-              :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
+                     :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })"
+            />
           </div>
         </template>
 

@@ -340,6 +340,12 @@ ipcMain.on('util:getGatewayConfig', () => {
 
 /** 检查端口是否被占用 */
 ipcMain.on('util:checkPort', async (port: number) => {
+  console.log('util:checkPort', port)
+  console.log('store.apiPort', store.apiPort)
+  if (port === store.apiPort) {
+    return port
+  }
+
   try {
     const availablePort = await getPortPromise({ port })
     return availablePort

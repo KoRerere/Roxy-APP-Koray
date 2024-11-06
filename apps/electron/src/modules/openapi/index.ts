@@ -25,9 +25,17 @@ export const openAPIServer = new class OpenAPIServer {
     if (code === 0) {
       if (data.open) {
         this.#server = this.app.listen(data.port, () => {
-          console.log(`OpenAPI server is running on ${this.app.get('port')}`)
+          const port = this.app.get('port') || this.#server?.address()?.port
+          if (port) {
+            store.apiPort = port
+          }
+          console.log(`OpenAPI server is running on ${port}`)
         })
         store.apiKey = data.apiKey
+      }
+      else {
+        store.apiPort = -1
+        console.log('OpenAPI server is not open')
       }
     }
     else {
