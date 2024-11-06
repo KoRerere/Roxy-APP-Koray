@@ -55,6 +55,11 @@ const updateApiKeys = useDebounceFn(async () => {
     const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
     showToast(code, msg)
     if (code === 0) {
+      // 开关或端口改变时 重启 API 服务
+      if (original.value.open !== apiConfig.value.open || original.value.port !== apiConfig.value.port) {
+        electronAPI.send('app:restartAPIServer')
+      }
+
       original.value = { ...apiConfig.value }
     }
   }
@@ -80,8 +85,8 @@ const inputs = ref([
         return
       }
 
-      const occupied = await electronAPI.send('util:checkPort', input.value)
-      if (occupied) {
+      const port = await electronAPI.send('util:checkPort', input.value)
+      if (port !== Number(apiConfig.value.port)) {
         input.invalid = true
         input.errorMsg = $t('端口已被占用')
         return

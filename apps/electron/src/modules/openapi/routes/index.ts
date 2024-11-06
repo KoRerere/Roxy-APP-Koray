@@ -12,6 +12,7 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/two-factor-token',
   '/browser/connection_info',
   '/browser/close',
+  '/browser/open',
   '/browser/workspace',
   '/browser/clear_local_cache',
 ]

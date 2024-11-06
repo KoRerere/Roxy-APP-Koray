@@ -49,4 +49,4 @@ export const ISO639List = [
     locale: 'ko',
     icon: 'country-code/KR',
   },
-]
+].slice(0, 2)

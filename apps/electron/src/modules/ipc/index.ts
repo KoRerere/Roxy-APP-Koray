@@ -12,6 +12,7 @@ import { appConfig, mediaProtocolName } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
+import { openAPIServer } from '/@/modules/openapi'
 import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/roxynet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
@@ -95,6 +96,7 @@ ipcMain.on('user:setUserInfo', (userInfo) => {
   store.userId = userInfo.userId
   // 重新获取用户配置
   fetchUserConfig()
+  openAPIServer.start()
   // aliOSS.init()
 })
 
@@ -123,6 +125,12 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
 /** 获取应用版本号 */
 ipcMain.on('app:getAppVersion', () => {
   return app.getVersion()
+})
+
+/** openapi 端口或开关变的时候，需要重启服务 */
+ipcMain.on('app:restartAPIServer', () => {
+  console.log('app:restartAPIServer', 'openapi 端口或开关发生变化，正在重启服务...')
+  openAPIServer.start()
 })
 
 /** 保存软件设置 */
@@ -334,11 +342,11 @@ ipcMain.on('util:getGatewayConfig', () => {
 ipcMain.on('util:checkPort', async (port: number) => {
   try {
     const availablePort = await getPortPromise({ port })
-    return availablePort !== port
+    return availablePort
   }
   catch (error) {
     console.error('Error checking port:', error)
-    return false
+    return port
   }
 })
 

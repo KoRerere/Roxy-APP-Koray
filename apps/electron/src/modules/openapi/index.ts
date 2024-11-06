@@ -5,7 +5,7 @@ import { store } from '/@/modules/store'
 import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
 
-class OpenAPIServer {
+export const openAPIServer = new class OpenAPIServer {
   #server?: Server
 
   constructor(private app = express()) {
@@ -22,11 +22,13 @@ class OpenAPIServer {
     this.stop()
     const { code, data, msg } = await API.base.userGetUserApiList()
     console.log('userGetUserApiList:', code, data, msg)
-    if (code === 0 && data.open) {
-      this.#server = this.app.listen(data.port, () => {
-        console.log(`OpenAPI server is running on ${this.app.get('port')}`)
-      })
-      store.apiKey = data.apiKey
+    if (code === 0) {
+      if (data.open) {
+        this.#server = this.app.listen(data.port, () => {
+          console.log(`OpenAPI server is running on ${this.app.get('port')}`)
+        })
+        store.apiKey = data.apiKey
+      }
     }
     else {
       console.log('OpenAPI server failed to start:', msg)
@@ -62,12 +64,4 @@ class OpenAPIServer {
 
     console.log('Registered routes:', routes)
   }
-}
-
-let openAPIServer: OpenAPIServer
-
-export function setupOpenAPIServer() {
-  openAPIServer ||= new OpenAPIServer()
-  openAPIServer.start()
-  return openAPIServer
-}
+}()

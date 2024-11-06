@@ -48,7 +48,6 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   gap: var(--spacing-xs, 2px);
   align-self: stretch;
   padding-left: calc(26px * v-bind(level));
-  margin-bottom: var(--spacing-xl, 12px);
 
   &.level-1 {
     max-height: calc(var(--child-count) * 34px);
@@ -88,6 +87,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   font-style: normal;
   font-weight: 600;
   line-height: normal;
+  margin-top: var(--spacing-xl, 12px);
 }
 
 .line {

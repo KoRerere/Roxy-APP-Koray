@@ -23,8 +23,8 @@ export class AfterLaunchTask {
   /** 获取需要同步的数据 */
   async getUploadData() {
     // 同步 浏览器已经打开tabs标签
-    const defaultOpenUrl = Object.values(this.openedTabs)
-    console.log('同步标签页', defaultOpenUrl)
+    const defaultOpenUrl = Object.values(this.openedTabs).filter(url => this.browserItem.isValidURL(url))
+    console.log('同步标签页', defaultOpenUrl, '新')
     // 同步插件密码
     let lumiLogin = ''
     try {
@@ -41,12 +41,12 @@ export class AfterLaunchTask {
       console.log('lumiLogin', lumiLogin)
     }
     catch (error) {
-      console.log(`lumiLogin 文件不存在`, error)
+      console.log(`lumiLogin 文件不存在 跳过`, error)
     }
 
     return {
       id: this.browserItem.winInfo.id,
-      defaultOpenUrl: defaultOpenUrl.filter(url => this.browserItem.isValidURL(url)),
+      defaultOpenUrl,
       cookie: this.cookies || [],
       lumiLogin,
     }
@@ -142,18 +142,20 @@ export class AfterLaunchTask {
       let deleted_target_id = ''
       let should_delete = false
       try {
-        if (target.type() === 'page') {
+        const targetType = target.type()
+        if (targetType === 'page') {
           deleted_target_id = target._targetId
         }
-        console.log('目标被销毁', target.url(), target._targetId, target.type())
+        console.log('目标被销毁', target.url(), target._targetId, targetType)
         if (syncCookie) {
           const { cookies } = await cdpSession.send('Network.getAllCookies')
           this.cookies = JSON.stringify(cookies)
         }
 
         // 如果走到这里来说明是手动关闭tab页
-        if (target.type() === 'page') {
+        if (targetType === 'page') {
           should_delete = true
+          console.log('手动关闭tab页', target.url(), target._targetId)
         }
       }
       catch (error) {

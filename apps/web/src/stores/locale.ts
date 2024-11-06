@@ -11,9 +11,7 @@ export const useSimpleLocale = defineStore('locale', () => {
     loadLocaleMessages(locale)
     primevue.config.locale = locale
     currentLocale.value = locale
-    setTimeout(() => {
-      location.reload()
-    })
+    location.reload()
   }
 
   return {

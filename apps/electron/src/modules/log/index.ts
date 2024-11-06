@@ -5,6 +5,8 @@ import { appConfig } from '/@/constants'
 import { isPackaged } from '/@/utils'
 
 export function setupLog() {
+  // 记录渲染进程的日志
+  // log.initialize()
   log.transports.console.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
   log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
   log.transports.console.useStyles = true

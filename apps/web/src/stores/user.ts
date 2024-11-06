@@ -28,24 +28,29 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function setUserInfo(info: UserInfo) {
+  function setUserInfo(info: UserInfo) {
     userInfo.value = info
-    window.electronAPI.send('user:setUserInfo', {
-      token: tokenRef.value,
-      userId: userInfo.value.id!,
+    // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
+    setTimeout(() => {
+      window.electronAPI.send('user:setUserInfo', {
+        token: tokenRef.value,
+        userId: userInfo.value.id!,
+      })
     })
 
-    mixpanel.identify(String(userInfo.value.id))
+    requestIdleCallback(async () => {
+      mixpanel.identify(String(userInfo.value.id))
 
-    const localNetwork = await window.electronAPI.send('proxy:detectNetwork', 'local')
+      const localNetwork = await window.electronAPI.send('proxy:detectNetwork', 'local')
 
-    mixpanel.people.set({
-      $name: userInfo.value.userName,
-      $email: userInfo.value.email,
-      $language: locale.currentLocale,
-      $region: localNetwork.region,
-      $city: localNetwork.city,
-      $localNetwork: localNetwork,
+      mixpanel.people.set({
+        $name: userInfo.value.userName,
+        $email: userInfo.value.email,
+        $language: locale.currentLocale,
+        $region: localNetwork.region,
+        $city: localNetwork.city,
+        $localNetwork: localNetwork,
+      })
     })
   }
 

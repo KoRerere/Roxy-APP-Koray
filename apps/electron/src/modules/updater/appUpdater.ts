@@ -14,13 +14,13 @@ export type { UpdateInfo } from 'electron-updater'
 const isDevelopment = !app.isPackaged
 
 export const appUpdater = new class AppUpdater {
-  timer: NodeJS.Timeout | null = null
+  timer: NodeJS.Timeout | undefined = undefined
   /** 是否在下载中 */
   isInProgress = false
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   isQuittingForUpdate = false
-  /** 轮询更新时间 */
-  timeout = 1000 * (isDevelopment ? 30 : 60)
+  /** 轮询更新时间 5 分钟 */
+  timeout = 5 * 1000 * (isDevelopment ? 30 : 60)
   #autoUpdater!: MacUpdater | NsisUpdater
   /** 更新信息消息体 */
   #updateMessageData: ResourceUpdateMessage = {
@@ -30,7 +30,9 @@ export const appUpdater = new class AppUpdater {
   }
 
   constructor() {
-    queueMicrotask(this.init)
+    queueMicrotask(() => {
+      this.init()
+    })
   }
 
   private async init() {
@@ -146,7 +148,7 @@ export const appUpdater = new class AppUpdater {
   }
 
   async checkForUpdates() {
-    console.info(`检查更新 checkUpdate`, this.isInProgress)
+    console.info(`检查更新 checkAppUpdate`, this.isInProgress)
 
     if (this.isInProgress) {
       return

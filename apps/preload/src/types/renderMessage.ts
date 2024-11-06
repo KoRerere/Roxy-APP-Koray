@@ -57,7 +57,9 @@ export interface RenderMessage {
   /** 检测是否有更新 */
   'app:hasUpdate': () => Promise<boolean>
   /** 获取应用版本号 */
-  'app:getAppVersion': () => Promise<string>
+  'app:getAppVersion': () => string
+  /** openapi 端口或开关变的时候，需要重启服务 */
+  'app:restartAPIServer': () => void
   /** 安装并更新 */
   'app:quitAndInstall': (info: ResourceUpdateMessage) => any
   /** 获取所有可用的内核列表 */
@@ -98,8 +100,8 @@ export interface RenderMessage {
   'util:encryptAESGCM': (payload: string) => string
   /** AES-GCM 解密 */
   'util:decryptAESGCM': (payload: string) => string
-  /** 检查端口是否被占用, true 则为被占用 */
-  'util:checkPort': (port: number) => Promise<boolean>
+  /** 检查端口是否被占用, 返回值为可用的端口，返回的端口号与传入的端口号不一致的话，则可认为端口号被占用 */
+  'util:checkPort': (port: number) => Promise<number>
   /** 获取网关配置 */
   'util:getGatewayConfig': () => Promise<string>
 
