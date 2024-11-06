@@ -11,7 +11,6 @@ function getInputs() {
       type: 'date',
       name: 'modfiyTime',
       label: $t('修改时间'),
-      placeholder: $t('请选择修改时间'),
       selectionMode: 'range',
       manualInput: false,
       showButtonBar: false,
