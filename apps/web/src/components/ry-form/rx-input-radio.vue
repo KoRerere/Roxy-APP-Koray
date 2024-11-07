@@ -5,7 +5,11 @@ type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends RadioButtonProps {
   size?: Size
-  options: Array<{ value: string | number | boolean, label: string }>
+  options: Array<{
+    value: string | number | boolean
+    label: string
+    afterRender?: any
+  }>
 }
 
 defineOptions({
@@ -17,11 +21,14 @@ defineEmits(['change'])
 </script>
 
 <template>
-  <div class="radio-group">
-    <label v-for="option in options" :key="option.label" :for="`${props.name}_${option.value}`" class="cursor-pointer radio-group-item" :class="styles[size]">
-      <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value" @change="$emit('change')" />
-      <div class="select-none radio-group-item__text">{{ option.label }}</div>
-    </label>
+  <div class="rx-radio-group">
+    <template v-for="option in options" :key="option.label">
+      <label :for="`${props.name}_${option.value}`" class="cursor-pointer rx-radio-group-item" :class="styles[size]">
+        <RadioButton v-bind="{ ...$attrs, ...props }" :input-id="`${props.name}_${option.value}`" :value="option.value" @change="$emit('change')" />
+        <div class="select-none rx-radio-group-item__text">{{ option.label }}</div>
+      </label>
+      <component :is="option.afterRender" v-if="option.afterRender" />
+    </template>
   </div>
 </template>
 
@@ -75,7 +82,7 @@ defineEmits(['change'])
 <style lang="scss" scoped>
 $size: 16px;
 
-.radio-group {
+.rx-radio-group {
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -94,10 +101,10 @@ $size: 16px;
   }
 }
 
-.radio-group-item:has(.p-radiobutton-checked) {
+.rx-radio-group-item:has(.p-radiobutton-checked) {
   border-color: var(--p-primary-color, #12a3fc);
 
-  .radio-group-item__text {
+  .rx-radio-group-item__text {
     color: var(--p-primary-color, #12a3fc);
   }
 }

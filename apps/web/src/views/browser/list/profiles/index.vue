@@ -6,7 +6,7 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import popup from '/@/components/simplePopup'
+import Popup from '/@/components/simplePopup'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -18,6 +18,7 @@ import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import columnsRow from './columns'
 import BrowserControl from './components/browser-control.vue'
+import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
 import DrawersTtems from './components/drawers-item.vue'
 import EditCookies from './components/edit-cookies.vue'
@@ -218,6 +219,9 @@ async function operationHandler(operate: any, data: any) {
       drawer.type = 'editCookies'
       drawer.title = $t('为[{workspaceName}-{uid}]编辑 Cookies', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
+    case 'clearCache':
+      onClearCache(data)
+      break
     case 'delete':
       await deleteProfile(datas, ids)
       break
@@ -271,7 +275,7 @@ async function onMoveToProject(datas: any) {
   const options = await getProjects()
 
   return new Promise((resolve, reject) => {
-    dialog.open(popup, {
+    dialog.open(Popup, {
       props: {
         showHeader: false,
         modal: true,
@@ -309,7 +313,7 @@ async function onMoveToProject(datas: any) {
 
 async function onRemark(datas: any) {
   return new Promise((resolve, reject) => {
-    dialog.open(popup, {
+    dialog.open(Popup, {
       props: {
         showHeader: false,
         modal: true,
@@ -324,6 +328,7 @@ async function onRemark(datas: any) {
               name: 'windowRemark',
               placeholder: $t('请输入备注'),
               value: datas[0].windowRemark,
+              validator: (input: any) => !!(input.value?.trim()),
             },
           ],
         },
@@ -337,6 +342,25 @@ async function onRemark(datas: any) {
         },
       },
     })
+  })
+}
+
+async function onClearCache(data: any) {
+  dialog.open(ClearCache, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        title: $t('清空窗口 [{name}] 缓存', { name: `${workspaceName.value}-${data.windowSortNum}` }),
+        content: $t('清除时系统会自动关闭窗口，且可能导致登录状态失效'),
+      },
+      onConfirm: async (result: any) => {
+
+      },
+    },
   })
 }
 

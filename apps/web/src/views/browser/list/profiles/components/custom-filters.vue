@@ -146,7 +146,7 @@ async function openCheckbox(item: any) {
     item._options = options
     isChildren.value = true
     subMenuOptions.value = item._options
-    selectedCategories.value = item.value.map((it: any) => it.value)
+    selectedCategories.value = item.value?.map((it: any) => it.value)
     return
   }
   menuRef.value?.hide()
@@ -180,8 +180,8 @@ function resetFilters() {
   const condition = _props.currentFilter?.filter_condition || {}
   const params = {
     ...condition,
-    createTime: condition.startDate && condition.endDate ? [condition.startDate, condition.endDate].join('~') : undefined,
-    updateDate: condition.startUpdateDate && condition.endUpdateDate ? [condition.startUpdateDate, condition.endUpdateDate].join('~') : undefined,
+    createTime: Array.isArray(condition.createTime) ? [new Date(condition.createTime[0]), new Date(condition.createTime[1])] : undefined,
+    modfiyTime: Array.isArray(condition.modfiyTime) ? [new Date(condition.modfiyTime[0]), new Date(condition.modfiyTime[1])] : undefined,
   }
 
   _props.filtersMenu.forEach((item) => {

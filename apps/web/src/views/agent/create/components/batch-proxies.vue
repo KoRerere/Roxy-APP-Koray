@@ -16,6 +16,22 @@ const confirm = useConfirm()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 
+interface ProxyItem {
+  checkChannel?: string
+  checkChannelValue?: string
+  checkStatus?: ProxyCheckStatus
+  ipType?: string
+  protocol?: string
+  host?: string
+  port?: string
+  proxyUserName?: string
+  proxyPassword?: string
+  refreshUrl?: string
+  remark?: string
+  _validator?: any[]
+  [key: string]: any
+}
+
 const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
   get(target, key) {
     return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
@@ -23,7 +39,7 @@ const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'
 })
 
 const proxiesText = ref('')
-const dataList: any = ref([])
+const dataList = ref<ProxyItem[]>([])
 const isDuplicate = ref(true)
 const showMessage = ref(false)
 const filterCount = ref(0)
@@ -108,6 +124,8 @@ const ipCheckerConfig = reactive({
   },
 })
 
+const deleteStatus = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
+
 function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
 
@@ -124,7 +142,6 @@ function parseValue() {
       return {
         checkChannel: ipCheckerConfig.value.value,
         checkChannelValue: ipCheckerConfig.value.label,
-        checkStatus: ProxyCheckStatus.failure,
         ipType,
         protocol: protocol?.toLocaleUpperCase(),
         host,
@@ -185,8 +202,8 @@ async function refreshUrl(data: any, operateName: string) {
   showToast(isOK ? 0 : -1, data.refreshUrl as string)
 }
 
-async function testProxy(data: any, operateName: string) {
-  const tasks = ([].concat(data)).map((item) => {
+async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
+  const tasks = (([] as ProxyItem[]).concat(data)).map((item) => {
     setOperationLoading(item, operateName, true)
     return async () => {
       const checkResult = await checkProxy(toRaw(item))
@@ -234,13 +251,18 @@ function onSave() {
 
   if (index > -1) {
     const { _validator } = dataList.value[index]
-    const key = columns.value.find(item => item.key === _validator[0][0])?.title
+    const key = columns.value.find(item => item.key === _validator![0][0])?.title
 
     onlyErrorToast(-1, $t('代理[{index}] {key} 缺失', { index: index + 1, key }))
     return
   }
 
-  emit('save', dataList.value)
+  const list = dataList.value.map(item => ({
+    ...item,
+    checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
+  }))
+
+  emit('save', list)
 }
 </script>
 
@@ -295,8 +317,8 @@ function onSave() {
           {{ $t('已解析代理') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="!dataList?.length" @click="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" @click="testAllProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteStatus" @click="deleteFailProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click="testAllProxy" />
         </div>
       </div>
       <Message v-if="showMessage" class="mb-3" severity="success" icon="pi pi-check-circle" closable @close="messageClose">

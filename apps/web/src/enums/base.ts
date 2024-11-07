@@ -13,3 +13,9 @@ export enum settingAppearance {
   light = 1, // 亮色
   dark = 2, // 暗色
 }
+
+export enum ClearType {
+  partial = 0, // 清除本地缓存，保留插件
+  all = 1, // 清除本地缓存
+  cloud = 2, // 清除云端缓存
+}

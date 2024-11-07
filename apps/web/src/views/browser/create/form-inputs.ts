@@ -1095,7 +1095,7 @@ export function getInputsGroup(data: any = {}) {
 }
 
 export function getDefaultValue() {
-  // 界面上未显示的数据，跟随旧版本
+  // 界面上未显示的数据，以及一些选项关闭后的默认值，跟随旧版本
   return {
     openMult: true,
     clearHistory: false,
@@ -1106,5 +1106,6 @@ export function getDefaultValue() {
     enablePluginList: [],
     mediaDevice: false,
     disableSslList: [],
+    isPositionBaseIp: true,
   }
 }

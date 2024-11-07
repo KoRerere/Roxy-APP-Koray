@@ -306,6 +306,16 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_copy',
     },
     {
+      separator: true,
+    },
+    {
+      name: 'clearCache',
+      label: $t('清除缓存'),
+      icon: 'base/rx_ic_brush',
+      power: !role.isViewer,
+      multiple: true,
+    },
+    {
       power: !role.isViewer,
       separator: true,
     },

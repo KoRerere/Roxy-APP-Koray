@@ -101,7 +101,7 @@ export const menuRoutes: RouteRecordRaw[] = [
       {
         path: 'teams',
         name: 'teams',
-        meta: { title: $t('团队成员'), icon: 'base/rx_ic_user', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        meta: { title: $t('团队成员'), icon: 'base/rx_ic_user' },
         component: () => import('/@/views/team'),
       },
       {

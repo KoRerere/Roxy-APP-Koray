@@ -208,10 +208,10 @@ function replaceData(data: any) {
 
 <style lang="scss" scoped>
 .proxy-switch {
-  :deep(.radio-group) {
+  :deep(.rx-radio-group) {
     gap: var(--spacing-4xl, 24px);
 
-    .radio-group-item {
+    .rx-radio-group-item {
       padding-left: 0;
       border: none;
       min-width: auto;

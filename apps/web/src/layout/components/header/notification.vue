@@ -120,7 +120,7 @@ onMounted(() => {
                 </div>
               </template>
               <template v-else>
-                <div class="flex justify-center items-center min-h-40 text-6">
+                <div class="flex justify-center items-center min-h-50 text-6">
                   {{ $t('暂无消息') }}
                 </div>
               </template>
@@ -170,11 +170,13 @@ onMounted(() => {
     border-bottom: none;
   }
 }
+
 .no-message {
   :global(.p-badge) {
     display: none;
   }
 }
+
 .avatar {
   position: relative;
   aspect-ratio: 1;
