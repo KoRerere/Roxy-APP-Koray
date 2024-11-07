@@ -179,16 +179,21 @@ export class BrowserItem {
     }))
 
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
+    let newVersion = syncValue?.version || 1
     try {
       await filesToZip(needSyncFiles, outputZipPath)
       console.log('filesToZip success')
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)
-      const newVersion = syncValue?.version ? syncValue.version + 1 : 1
+      newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
       console.log(`oss 上传`, data)
-
+    }
+    catch (error) {
+      console.log('uploadData error: ', error)
+    }
+    finally {
       const uploadParams = {
         id,
         cookie: Array.isArray(params.cookie) ? JSON.stringify(params.cookie) : params.cookie,
@@ -201,13 +206,10 @@ export class BrowserItem {
       }
       // 同步窗口状态
       await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
-        console.log('user_mdf_window_sync_v2', res)
+        console.log('user_mdf_window_sync_v2 uploadData', res)
       }).catch((error) => {
         console.error('user_mdf_window_sync_v2 error: ', error)
       })
-    }
-    catch (error) {
-      console.log('uploadData error: ', error)
     }
   }
 

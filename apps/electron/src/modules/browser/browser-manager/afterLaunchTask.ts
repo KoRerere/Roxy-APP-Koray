@@ -173,7 +173,9 @@ export class AfterLaunchTask {
         // 这里，说明关闭的那个tab页引用了cdpsession, 但是不确定是关闭浏览器还是tab页
         console.log(`targetdestroyed=>${error}`)
         try {
-          if (error.toString().includes('TargetCloseError')) {
+          const errMsg = error.toString()
+          const errKeyword = ['TargetCloseError', 'Target closed', 'Session closed', 'No target with id']
+          if (errKeyword.some(keyword => errMsg.includes(keyword))) {
             console.log('重新创建cdpsession')
             cdpSession = await createCDPSession()
             if (syncCookie) {
