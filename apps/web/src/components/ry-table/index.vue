@@ -114,7 +114,6 @@ const tableAttrs = reactive({
   'show-gridlines': false,
   'resizable-columns': true,
   'column-resize-mode': 'expand',
-  'scroll': { x: 500, y: 400 },
   ...attrs,
 })
 

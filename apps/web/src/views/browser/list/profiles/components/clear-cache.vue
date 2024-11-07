@@ -3,10 +3,10 @@ import { RxAlert } from '/@/components/rx-alert'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import { ClearType } from '/@/enums'
 import { $t } from '/@/locales'
-import { getFormData } from '/@/utils/index'
+import { useRoleStore } from '/@/stores/role'
 
+const role = useRoleStore()
 const dialogRef = inject<any>('dialogRef')
-
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
@@ -18,7 +18,7 @@ const options = [
     value: ClearType.partial,
     afterRender: () => (
       value.value === ClearType.partial && (
-        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')} content="内容">
+        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')}>
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
@@ -39,7 +39,7 @@ const options = [
     value: ClearType.all,
     afterRender: () => (
       value.value === ClearType.all && (
-        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')} content="内容">
+        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')}>
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
@@ -58,9 +58,10 @@ const options = [
   {
     label: '清除云端缓存',
     value: ClearType.cloud,
+    visible: role.isOwner || role.isManager,
     afterRender: () => (
       value.value === ClearType.cloud && (
-        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')} content="内容">
+        <RxAlert closable={false} class="!w-full" type="warn" title={$t('说明')}>
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
@@ -76,7 +77,7 @@ const options = [
       )
     ),
   },
-]
+].filter(item => item.visible !== false)
 
 function close() {
   dialogRef.value.close()
@@ -85,7 +86,6 @@ function close() {
 
 async function confirm() {
   try {
-    // const formData = getFormData(_props.value.inputs)
     await _onConfirm.value?.(value.value)
     close()
   }

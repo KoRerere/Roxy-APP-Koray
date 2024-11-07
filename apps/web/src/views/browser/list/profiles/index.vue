@@ -276,6 +276,8 @@ async function onMoveToProject(datas: any) {
   const options = await getProjects()
 
   return new Promise((resolve, reject) => {
+    const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
+
     dialog.open(Popup, {
       props: {
         showHeader: false,
@@ -285,7 +287,7 @@ async function onMoveToProject(datas: any) {
       data: {
         props: {
           title: $t('移动项目'),
-          content: $t('将移动 {names} 到所选项目', { names: datas.map((item: any) => `${workspaceName.value}-${item.windowSortNum}`) }),
+          content: $t('将移动 {names} 到所选项目', { names: `[${names}${datas.length > 10 ? '...' : ''}]` }),
           inputs: [
             {
               type: 'select',
@@ -361,10 +363,10 @@ async function onClearCache(data: any) {
       onConfirm: async (result: ClearType) => {
         console.log('result', result)
         if (result === ClearType.cloud) {
-          API.window.userClearWindowCacheCreate({ ids: [data.id] })
+          await API.window.userClearWindowCacheCreate({ ids: [data.id] })
         }
         else {
-          electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
+          await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
         }
       },
     },
@@ -561,8 +563,7 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-           selection-mode="multiple" :show-actions="false"
-  >
+    selection-mode="multiple" :show-actions="false">
     <template #header-extra>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
@@ -591,8 +592,7 @@ defineExpose({
     </template>
     <template #note="{ data }">
       <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
-                 class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)"
-      />
+        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
     </template>
     <template #project="{ data }">
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
@@ -603,15 +603,13 @@ defineExpose({
     <template #actions="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }"
-                   class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)"
-        />
+          class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <MultipleOperation :selection="selection" :clear-selection="clearSelection" :operation="operation" @more="showOperationMenu($event, selection, { clearSelection })"
-                         @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)"
-      />
+        @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
