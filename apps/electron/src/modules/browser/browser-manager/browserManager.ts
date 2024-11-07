@@ -1,8 +1,10 @@
-import { rm } from 'node:fs/promises'
+import { readdir, rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
+import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
@@ -134,6 +136,38 @@ export class BrowserManager {
       console.error(`BrowserManager ${dirId} === 删除失败`, error)
       return { dirId, success: false }
     }
+  }
+
+  /** 清除本地缓存（扩展数据除外） */
+  async removeLocalDataExcludeExtension(dirId: string) {
+    const browserItem = this.openedBrowserMap.get(dirId)
+
+    if (browserItem) {
+      await this.close(dirId)
+    }
+
+    const userDataDir = getUserDataDirPath(dirId)
+
+    const files = await readdir(userDataDir)
+
+    const outPromises = files.map(async (file) => {
+      if (file === 'Default') {
+        const defaultDir = join(userDataDir, file)
+        const defaultFiles = await readdir(defaultDir)
+        const innerPromises = defaultFiles.map(async (defaultFile) => {
+          if (!cacheToClear.includes(defaultFile)) {
+            const filterDirPath = join(defaultDir, defaultFile)
+            await rm(filterDirPath, { recursive: true })
+          }
+        })
+        await Promise.all(innerPromises)
+      }
+      else {
+        await rm(join(userDataDir, file), { recursive: true })
+      }
+    })
+
+    await Promise.all(outPromises)
   }
 
   /** 每隔 5分钟 定时同步窗口状态 */

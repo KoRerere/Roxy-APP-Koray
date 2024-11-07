@@ -22,6 +22,8 @@ export interface RenderMessage {
   'browser:batchRemove': (winItems: WindowItemType[]) => void
   /** 批量删除窗口 */
   'browser:getOpenedBrowser': () => LastMessage[]
+  /** 清除浏览器缓存， */
+  'browser:clearCache': (payload: { clearType: 'partial' | 'all', dirId: string }) => void
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult

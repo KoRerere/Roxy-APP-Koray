@@ -5,7 +5,7 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { delLuminetProxy, setLuminetProxy, startLuminet } from '/@/modules/roxynet'
+import { delLuminetProxy, getLuminetProcess, setLuminetProxy, startLuminet } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 
@@ -79,7 +79,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
   const systemProxyAddress = await getSystemProxy()
   const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
-  const isUseSystemProxy = systemProxySwitch && systemProxyAddress
+  const isUseSystemProxy = getLuminetProcess() && systemProxySwitch && systemProxyAddress
 
   if (isUseSystemProxy) {
     await startLuminet()

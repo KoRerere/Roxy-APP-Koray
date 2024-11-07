@@ -32,7 +32,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
        * 设置为{}以启用rollup监听器
        * @see https://vitejs.dev/config/build-options.html#build-watch
        */
-      // watch: {},
+      watch: {},
     },
     plugins: [
       {

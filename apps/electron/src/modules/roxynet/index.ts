@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { getSystemProxy, isMac } from '/@/utils'
+import { fileExists, getSystemProxy, isMac } from '/@/utils'
 
 export * from './util'
 
@@ -22,6 +22,12 @@ export async function startLuminet() {
 
   if (!store.systemProxySwitch) {
     console.log('systemProxySwitch is off')
+    return
+  }
+
+  const isExist = await fileExists(appConfig.roxynetBinPath)
+  if (!isExist) {
+    console.log('roxynetBinPath is not exist')
     return
   }
 

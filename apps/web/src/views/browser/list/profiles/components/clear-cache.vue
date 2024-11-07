@@ -85,8 +85,8 @@ function close() {
 
 async function confirm() {
   try {
-    const formData = getFormData(_props.value.inputs)
-    await _onConfirm.value?.(formData)
+    // const formData = getFormData(_props.value.inputs)
+    await _onConfirm.value?.(value.value)
     close()
   }
   catch (error) {

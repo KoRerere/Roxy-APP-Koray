@@ -14,6 +14,7 @@ export class AfterLaunchTask {
   }
 
   constructor(private browserItem: BrowserItem, public browser: Browser) {
+
   }
 
   async run() {
@@ -24,7 +25,7 @@ export class AfterLaunchTask {
   async getUploadData() {
     // 同步 浏览器已经打开tabs标签
     const defaultOpenUrl = Object.values(this.openedTabs).filter(url => this.browserItem.isValidURL(url))
-    console.log('同步标签页', defaultOpenUrl, '新')
+    console.log('同步标签页 新', defaultOpenUrl)
     // 同步插件密码
     let lumiLogin = ''
     try {
@@ -72,6 +73,17 @@ export class AfterLaunchTask {
     })
     console.log('get pages success')
 
+    pages.forEach(async (page, index) => {
+      const targetInfo = page.target()?._getTargetInfo()
+      this.openedTabs
+      globalThis[`page-${index + 1}`] = page
+      if (targetInfo && targetInfo.targetId && targetInfo.url && targetInfo.type === 'page') {
+        // 刚拉起浏览器时，保存所有打开的tab页，避免页面未加载完成时，关闭浏览器导致的tab页丢失
+        this.openedTabs[targetInfo.targetId] = targetInfo.url
+      }
+      console.log(`Page ${index + 1}: ${targetInfo.url}`)
+    })
+
     let cdpSession = await createCDPSession().catch((err) => {
       console.log('创建cdpSession失败', err)
       return Promise.reject(err)
@@ -118,18 +130,22 @@ export class AfterLaunchTask {
     // })
 
     this.browser.on('targetchanged', async (target) => {
-      console.log(' url 改变', target.url(), target._targetId)
+      globalThis[`page-${target._targetId}`] = target
+
       // type为page的时候，保存
       if (target.type() === 'page') {
         this.openedTabs[target._targetId] = target.url()
+        console.log(' url 改变', target.url(), target._targetId)
       }
       const { cookies } = await cdpSession.send('Network.getAllCookies')
       this.cookies = JSON.stringify(cookies)
       // console.log(this.cookies)
     })
     this.browser.on('targetcreated', async (target) => {
-      console.log('目标被创建', target.type(), target._targetId, target.url())
+      globalThis[`page-${target._targetId}`] = target
+
       if (target.type() === 'page' && !['about:blank', 'chrome://newtab/'].includes(target.url())) {
+        console.log('目标被创建', target.type(), target._targetId, target.url())
         this.openedTabs[target._targetId] = target.url()
       }
       if (syncCookie) {
@@ -139,14 +155,16 @@ export class AfterLaunchTask {
       // console.log(this.cookies)
     })
     this.browser.on('targetdestroyed', async (target) => {
+      console.log('targetdestroyed', target.url(), target._targetId)
+      globalThis[`page-${target._targetId}`] = target
       let deleted_target_id = ''
       let should_delete = false
       try {
         const targetType = target.type()
         if (targetType === 'page') {
           deleted_target_id = target._targetId
+          console.log('目标被销毁', target.url(), target._targetId, targetType)
         }
-        console.log('目标被销毁', target.url(), target._targetId, targetType)
         if (syncCookie) {
           const { cookies } = await cdpSession.send('Network.getAllCookies')
           this.cookies = JSON.stringify(cookies)
@@ -177,8 +195,10 @@ export class AfterLaunchTask {
           console.log('重新创建 cdpSession 失败: ', error)
         }
       }
+      console.log('should_delete: ', should_delete)
       // 删除tab页
       if (should_delete) {
+        console.log('删除tab页', deleted_target_id)
         delete this.openedTabs[deleted_target_id]
       }
     })

@@ -1,9 +1,9 @@
 import { createReadStream } from 'node:fs'
-import { readdir, rm, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
-import { cacheToClear, getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
+import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { delLuminetProxy } from '/@/modules/roxynet'
@@ -211,32 +211,6 @@ export class BrowserItem {
     }
   }
 
-  /** 清除本地缓存（扩展数据除外） */
-  async removeLocalDataExcludeExtension() {
-    await this.close()
-
-    const files = await readdir(this.userDataDir)
-
-    const outPromises = files.map(async (file) => {
-      if (file === 'Default') {
-        const defaultDir = join(this.userDataDir, file)
-        const defaultFiles = await readdir(defaultDir)
-        const innerPromises = defaultFiles.map(async (defaultFile) => {
-          if (!cacheToClear.includes(defaultFile)) {
-            const filterDirPath = join(defaultDir, defaultFile)
-            await rm(filterDirPath, { recursive: true })
-          }
-        })
-        await Promise.all(innerPromises)
-      }
-      else {
-        await rm(join(this.userDataDir, file), { recursive: true })
-      }
-    })
-
-    await Promise.all(outPromises)
-  }
-
   /** 代理检测 */
   async proxyDetection() {
     return proxyDetection(this.winInfo)
@@ -246,25 +220,4 @@ export class BrowserItem {
   isValidURL(url: string) {
     return !getInvalidUrls().some(n => url.startsWith(n!))
   }
-
-  // async syncWindowOpenStatus(openStatus: boolean) {
-  //   const { id } = this.winInfo
-
-  //   const uploadParams = {
-  //     id,
-  //     cookie: Array.isArray(parmes.cookie) ? JSON.stringify(parmes.cookie) : parmes.cookie,
-  //     defaultOpenUrl: parmes.defaultOpenUrl,
-  //     lumiLogin: parmes.lumiLogin,
-  //     syncValue: {
-  //       version: newVersion,
-  //     },
-  //     openStatus: false
-  //   }
-  //   // 同步窗口状态
-  //   await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
-  //     console.log('user_mdf_window_sync_v2', res)
-  //   }).catch((error) => {
-  //     console.error('user_mdf_window_sync_v2 error: ', error)
-  //   })
-  // }
 }

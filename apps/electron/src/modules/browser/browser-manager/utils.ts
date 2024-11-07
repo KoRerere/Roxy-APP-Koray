@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
 import language from '/@/constants/language.json'
+import { getLuminetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress } from '/@/utils'
 
@@ -383,7 +384,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress.split(':')
       const protocol = winInfo.protocol.toLocaleLowerCase()
       // 是否开启系统代理
-      const isUseSystemProxy = systemProxySwitch && systemProxyHost && systemProxyPort
+      const isUseSystemProxy = getLuminetProcess() && systemProxySwitch && systemProxyHost && systemProxyPort
       // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
       const type = isUseSystemProxy && protocol === 'https' ? 'http' : protocol
       // 是否为直连

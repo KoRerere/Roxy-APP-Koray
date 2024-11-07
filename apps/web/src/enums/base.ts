@@ -15,7 +15,7 @@ export enum settingAppearance {
 }
 
 export enum ClearType {
-  partial = 0, // 清除本地缓存，保留插件
-  all = 1, // 清除本地缓存
-  cloud = 2, // 清除云端缓存
+  partial = 'partial', // 清除本地缓存，保留插件
+  all = 'all', // 清除本地缓存
+  cloud = 'cloud', // 清除云端缓存
 }

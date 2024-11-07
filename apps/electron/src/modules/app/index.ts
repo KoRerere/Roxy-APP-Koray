@@ -85,22 +85,32 @@ export async function setupApp() {
     console.log('commandLine', commandLine)
     await restoreOrCreateWindow()
     await isWebReady()
+    const searchParams = commandLine.at(-1)?.split('?')[1]
     // Windows 系统需要通过这种方式获取参数
     if (commandLine.at(-1)?.includes(`${appProtocolName}://oauth2callback`)) {
       console.log('oauth2callback: ', commandLine)
-      ipcMain.send('oauth2:google-callback', `?${commandLine.at(-1)?.split('?')[1]}`)
+      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
     }
     // Windows 系统需要通过这种方式获取参数
     if (commandLine.at(-1)?.includes(`${appProtocolName}://inviteUser2project`)) {
       console.log('inviteUser2project: ', commandLine)
-      ipcMain.send('invite:to-project', `?${commandLine.at(-1)?.split('?')[1]}`)
+      ipcMain.send('invite:to-project', `?${searchParams}`)
     }
   })
 
   // macOS 系统通过 open-url 事件获取参数
   app.on('open-url', async (event, url) => {
+    console.log('open-url: ', url)
+    const searchParams = url.split('?')[1]
     await isWebReady()
-    ipcMain.send('oauth2:google-callback', `?${url.split('?')[1]}`)
+    if (url?.includes(`${appProtocolName}://oauth2callback`)) {
+      ipcMain.send('oauth2:google-callback', `?${searchParams}`)
+      console.log('oauth2callback: ', url)
+    }
+    if (url?.includes(`${appProtocolName}://inviteUser2project`)) {
+      console.log('inviteUser2project: ', url)
+      ipcMain.send('invite:to-project', `?${searchParams}`)
+    }
   })
 
   //  系统自带浏览器打开

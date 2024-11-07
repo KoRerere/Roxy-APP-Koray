@@ -90,6 +90,26 @@ ipcMain.on('browser:getOpenedBrowser', () => {
   return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => browserItem.lastMessage!)
 })
 
+/**
+ * 清除浏览器缓存
+ * @param type 清除类型
+ * excludeExtension 清除本地缓存，保留插件
+ * all 清除本地缓存
+ */
+ipcMain.on('browser:clearCache', async (payload) => {
+  const { clearType, dirId } = payload
+  if (clearType === 'all') {
+    // 清除本地缓存
+    console.log('清除本地缓存', dirId)
+    await browserManager.removeLocalData(dirId)
+  }
+  else if (clearType === 'partial') {
+    // 清除本地缓存，保留插件
+    console.log('清除本地缓存，保留插件', dirId)
+    await browserManager.removeLocalDataExcludeExtension(dirId)
+  }
+})
+
 /** 登录成功后，保存用户信息 */
 ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
