@@ -196,15 +196,16 @@ onMounted(() => {
 }
 
 .value {
+  word-break: break-all;
   color: var(--Colors-Text-text-secondary, #575d61);
-  font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
+  font-size: 14px;
+  line-height: var(--Line-Height-text-md, 20px);
 }
 
 .time {
   margin-top: 4px;
   color: var(--Colors-Text-text-inactive, #a3a9ad);
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

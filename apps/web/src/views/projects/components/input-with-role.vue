@@ -89,20 +89,15 @@ const selectedRoleLabel = computed(() => {
     color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
-    /* 133.333% */
+    font-weight: 600;
+    line-height: var(--Line-Height-text-md, 20px);
   }
 
   .description {
     color: var(--Colors-Text-text-tertiary, #7c8387);
     font-family: Inter;
-    font-size: 10px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 14px;
-    /* 140% */
+    font-size: 12px;
+    line-height: 16px;
   }
 }
 </style>

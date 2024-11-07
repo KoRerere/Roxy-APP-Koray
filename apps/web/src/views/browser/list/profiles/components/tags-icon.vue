@@ -64,9 +64,10 @@ function isEq(oldIds: any, newIds: any) {
 }
 
 function onAddTag() {
+  const oldIds = labels.map((item: any) => item.labelId)
   addTag({
     confirmNext: ({ res }: any) => {
-      emit('update', { labelIds: [res.data.id] })
+      emit('update', { labelIds: [...oldIds, res.data.id] })
     },
   })
 }

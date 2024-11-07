@@ -10,7 +10,7 @@ watch(who, () => {
 </script>
 
 <template>
-  <Tabs v-model:value="who">
+  <Tabs v-model:value="who" class="h-full w-full">
     <TabList>
       <Tab value="0">
         原神
@@ -29,3 +29,13 @@ watch(who, () => {
     </TabPanels>
   </Tabs>
 </template>
+
+<style lang="scss" scoped>
+:deep(.p-tabpanels) {
+  flex: 1;
+
+  .p-tabpanel {
+    height: 100%;
+  }
+}
+</style>

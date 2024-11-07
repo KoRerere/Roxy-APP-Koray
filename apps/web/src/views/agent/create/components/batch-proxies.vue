@@ -124,7 +124,7 @@ const ipCheckerConfig = reactive({
   },
 })
 
-const deleteStatus = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
+const deleteFailDisabled = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
 
 function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
@@ -228,9 +228,10 @@ function deleteProxy(data: any) {
 }
 
 function deleteFailProxy() {
+  const list = dataList.value.filter((item: any) => item.checkStatus !== ProxyCheckStatus.failure)
   confirm.require({
     header: $t('删除失败代理'),
-    message: $t('您确认删除所有测速失败的代理吗?共 {count} 个', { count: -1 }),
+    message: $t('您确认删除所有测速失败的代理吗?共 {count} 个', { count: dataList.value.length - list.length }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -241,7 +242,7 @@ function deleteFailProxy() {
       severity: 'danger',
     },
     accept: () => {
-      dataList.value = dataList.value.filter((item: any) => item.checkStatus !== ProxyCheckStatus.failure)
+      dataList.value = list
     },
   })
 }
@@ -317,7 +318,7 @@ function onSave() {
           {{ $t('已解析代理') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteStatus" @click="deleteFailProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteFailDisabled" @click="deleteFailProxy" />
           <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click="testAllProxy" />
         </div>
       </div>

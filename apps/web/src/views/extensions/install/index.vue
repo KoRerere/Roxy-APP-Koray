@@ -6,7 +6,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ExtensionsStatus } from '/@/enums'
+import { extensionsSourceFormat, ExtensionsStatus } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -36,7 +36,7 @@ const columns = setColumns([
   {
     title: $t('来源'),
     key: 'source',
-    getText: (row: any) => row.uploader || row.source || $t('未知'),
+    getText: (row: any) => extensionsSourceFormat(row.source) || $t('未知'),
   },
   {
     title: $t('扩展归属'),

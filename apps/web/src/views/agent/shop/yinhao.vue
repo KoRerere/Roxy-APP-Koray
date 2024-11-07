@@ -1,27 +1,50 @@
-<script lang="ts" setup>
-import { format } from 'date-fns'
-import { RxAlert } from '/@/components/rx-alert'
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { $t } from '/@/locales'
+<script setup>
+import useColumns from '/@/hooks/useColumns'
+import { sleep } from '/@/utils'
 
-const input = ref(
-  {
-    type: 'date',
-    name: 'modfiyTime',
-    label: $t('修改时间'),
-    selectionMode: 'range',
-    manualInput: false,
-    showButtonBar: false,
-    dateFormat: 'yy/mm/dd',
-  },
-)
+const [columns] = useColumns({
+  key: 'scvr.man',
+  data: [
+    {
+      title: 'Id',
+      key: 'id',
+    },
+    {
+      title: 'Vin',
+      key: 'vin',
+    },
+    {
+      title: 'Brand',
+      key: 'brand',
+    },
+    {
+      title: 'Color',
+      key: 'color',
+    },
+    {
+      title: 'Year',
+      key: 'year',
+    },
+  ],
+})
+
+function tableRequest () {
+  return sleep(1000).then(() => {
+    return {
+      data: {
+        rows: Array.from({ length: 100000 }).map((_, i) => ({
+          id: i + 1,
+          vin: 'tvACo',
+          brand: 'Norma',
+          color: 'Black',
+          year: 2002,
+        })),
+      },
+    }
+  })
+}
 </script>
 
 <template>
-  <div class="flex gap-6 p-10 flex-col">
-    <RyForm :inputs="[input] as any" />
-
-    <RxAlert type="success" title="标题" content="内容" />
-    <RxAlert type="error" title="标题" content="内容" />
-  </div>
+  <RyTable :columns="columns" :table-request="tableRequest" :virtual-scroller-options="{ itemSize: 60 }" :show-actions="false" />
 </template>
