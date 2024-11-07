@@ -7,7 +7,9 @@ import { notarizeMac } from './notarize-mac'
 
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV === 'development'
-console.log('是否是测试环境：', isDev)
+const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
+
+console.log('是否是测试环境：', isDev, appName)
 console.log('APP 版本号：', version)
 
 const workDir = path.join(__dirname, '../')
@@ -19,13 +21,13 @@ cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
-  appId: 'com.roxybrowser.app',
-  productName: 'RoxyBrowser',
-  copyright: 'RoxyBrowser',
+  appId: isDev ? 'com.roxybrowser.dev.app' : 'com.roxybrowser.app',
+  productName: appName,
+  copyright: appName,
   asar: true,
   extraMetadata: {
     version,
-    name: 'RoxyBrowser',
+    name: appName,
     main: 'dist/main.cjs',
   },
   directories: {

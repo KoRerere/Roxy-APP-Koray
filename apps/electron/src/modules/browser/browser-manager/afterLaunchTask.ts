@@ -6,6 +6,7 @@ import type { BrowserItem } from './browserItem'
 export class AfterLaunchTask {
   /** 已打开的tab页 */
   private openedTabs: Record<string, string> = {}
+
   /** 最新的 cookies */
   private cookies = ''
   /** 判断是否手机端 */
@@ -75,13 +76,11 @@ export class AfterLaunchTask {
 
     pages.forEach(async (page, index) => {
       const targetInfo = page.target()?._getTargetInfo()
-      this.openedTabs
-      globalThis[`page-${index + 1}`] = page
       if (targetInfo && targetInfo.targetId && targetInfo.url && targetInfo.type === 'page') {
         // 刚拉起浏览器时，保存所有打开的tab页，避免页面未加载完成时，关闭浏览器导致的tab页丢失
         this.openedTabs[targetInfo.targetId] = targetInfo.url
       }
-      console.log(`Page ${index + 1}: ${targetInfo.url}`)
+      console.log(`Page ${index + 1}: ${targetInfo.url}`, targetInfo.targetId)
     })
 
     let cdpSession = await createCDPSession().catch((err) => {
@@ -113,7 +112,6 @@ export class AfterLaunchTask {
         await e.goto(url).catch((err) => {
           console.log(`goto ${url} 失败`, err)
         })
-        this.openedTabs[target._targetId] ||= url
         if (!this.isPhone) {
           e.evaluate(() => {
             window.console.debug = function (_) { }
@@ -130,8 +128,6 @@ export class AfterLaunchTask {
     // })
 
     this.browser.on('targetchanged', async (target) => {
-      globalThis[`page-${target._targetId}`] = target
-
       // type为page的时候，保存
       if (target.type() === 'page') {
         this.openedTabs[target._targetId] = target.url()
@@ -142,8 +138,6 @@ export class AfterLaunchTask {
       // console.log(this.cookies)
     })
     this.browser.on('targetcreated', async (target) => {
-      globalThis[`page-${target._targetId}`] = target
-
       if (target.type() === 'page' && !['about:blank', 'chrome://newtab/'].includes(target.url())) {
         console.log('目标被创建', target.type(), target._targetId, target.url())
         this.openedTabs[target._targetId] = target.url()
@@ -156,7 +150,6 @@ export class AfterLaunchTask {
     })
     this.browser.on('targetdestroyed', async (target) => {
       console.log('targetdestroyed', target.url(), target._targetId)
-      globalThis[`page-${target._targetId}`] = target
       let deleted_target_id = ''
       let should_delete = false
       try {
@@ -195,10 +188,9 @@ export class AfterLaunchTask {
           console.log('重新创建 cdpSession 失败: ', error)
         }
       }
-      console.log('should_delete: ', should_delete)
       // 删除tab页
       if (should_delete) {
-        console.log('删除tab页', deleted_target_id)
+        console.log('删除的tab页', deleted_target_id, this.openedTabs[deleted_target_id])
         delete this.openedTabs[deleted_target_id]
       }
     })
