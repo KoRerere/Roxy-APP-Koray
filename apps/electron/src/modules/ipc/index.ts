@@ -165,9 +165,12 @@ ipcMain.on('app:getSoftConfig', () => {
 })
 
 /** 选择文件夹 */
-ipcMain.on('dialog:selectDir', async () => {
+ipcMain.on('dialog:selectDir', async (defaultPath?: string) => {
   try {
-    const { filePaths } = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    const { filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      defaultPath,
+    })
     return filePaths[0]
   }
   catch (error) {

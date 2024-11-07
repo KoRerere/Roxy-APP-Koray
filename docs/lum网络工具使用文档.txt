@@ -21,18 +21,18 @@ lumibrowser的api服务用于接luminetKit上报的代理端口和本地服务�
 2. luminet 启动成功过后会上报两个端口
 	2.1 上报代理端口（同时http和socks5协议）,  HTTP GET /tunnel/report_proxy_server?port=xxxxxxxx
 	2.2 上报本地http服务端口, HTTP GET /tunnel/report_local_http?port=xxxxxxxx
-	
+
 3. 配置代理IP
 浏览器和luminet都要配置代理IP，配置方法如下：
 浏览器的代理IP为：
 	账号：dirID
-	密码: dirID 
+	密码: dirID
 	服务器地址:127.0.0.1
 	端口：luminet 上报的代理端口
 
 luminet 的代理通过luminet本地HTTP服务的接口设置:
-POST /set_proxy 
-body为JSON格式数据 
+POST /set_proxy
+body为JSON格式数据
 {
 	"dirId":{
 		"addr":"gate.rola-ip.co:1000",
@@ -67,8 +67,8 @@ GET /del_proxy?id=dirId
 
 7.关闭窗口和检测完成时要删除代理，退出app时kill掉luminet.exe
 
-curl -x 127.0.0.1:59527 "http://ip123.in/ip.json" -vv
-curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619e11@127.0.0.1:51572 "http://ip123.in/ip.json" -vv
+curl -x 127.0.0.1:59527 "http://iprust.io/ip.json" -vv
+curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619e11@127.0.0.1:51572 "http://iprust.io/ip.json" -vv
 
 ---lumi.conf
 "fproxy": {
@@ -79,11 +79,11 @@ curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619
 		"password": "88be7373b8c6cb7b22308c83ce619e11"
 	}
 ---代理检测：
-curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619e11@127.0.0.1:51572 "http://ip123.in/ip.json" -vv
+curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619e11@127.0.0.1:51572 "http://iprust.io/ip.json" -vv
 
 
 --检测本地网络：
-curl  "http://ip123.in/ip.json" -vv
+curl  "http://iprust.io/ip.json" -vv
 
 --检测系统网络：
-curl -x 127.0.0.1:59527 "http://ip123.in/ip.json" -vv
+curl -x 127.0.0.1:59527 "http://iprust.io/ip.json" -vv

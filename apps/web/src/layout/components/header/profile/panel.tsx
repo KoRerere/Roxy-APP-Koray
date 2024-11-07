@@ -225,8 +225,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
           {
             label: $t('缓存目录'),
             text: $t('设置 RoxyBrowser 缓存路径'),
-            name: 'cacheDir',
-            value: data?.cacheDir ?? '',
+            name: 'browserCacheRootDir',
+            value: data?.browserCacheRootDir ?? '',
             props: {
               disabled: true,
             },
@@ -283,7 +283,8 @@ export function getNetworkPanel(data?: any): SettingsModule {
             },
           },
           {
-            label: $t('v2ray 兼容模式'),
+            label: $t('网络兼容模式'),
+            text: $t('当系统代理识别失败时尝试启用'),
             name: 'roxynetV2rayCompatible',
             hide: !data?.systemProxySwitch,
             value: data?.roxynetV2rayCompatible ?? false,

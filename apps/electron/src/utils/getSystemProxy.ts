@@ -16,7 +16,7 @@ export async function getSystemProxy(force = false) {
   }
   regetTime = Date.now()
 
-  const proxy = await getMainWindow()?.webContents.session.resolveProxy('http://ip123.in/ip.json')
+  const proxy = await getMainWindow()?.webContents.session.resolveProxy('http://iprust.io/ip.json')
   console.log('getSystemProxy', proxy)
   systemProxyAddr = proxy === 'DIRECT' ? '' : proxy?.split(' ').at(-1) || ''
   return systemProxyAddr

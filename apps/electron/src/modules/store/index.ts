@@ -7,7 +7,7 @@ import { fileExists } from '/@/utils/file'
 export interface StoreType {
   language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
   /** 浏览器文件缓存根目录 */
-  cacheDir: string
+  browserCacheRootDir: string
   /**
    * 软件关闭时
    * - pop: 弹出提示
@@ -47,9 +47,9 @@ const defaultValues: StoreType = {
   language: 'en',
   closeSoft: 'pop',
   memoryLimit: 95,
-  cacheDir: appConfig.defaultBrowserCacheRootDir,
+  browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
   systemProxySwitch: true,
-  roxynetV2rayCompatible: false,
+  roxynetV2rayCompatible: true,
   appPort: 45535,
   ipBlackList: [],
   ipChecker: 'http://iprust.io/ip.json',
@@ -62,9 +62,9 @@ const _store: StoreType = {
 console.log('_store', JSON.stringify(_store, null, 2))
 
 const saveConfig = debounce(async () => {
-  const isExists = await fileExists(_store.cacheDir)
+  const isExists = await fileExists(_store.browserCacheRootDir)
   if (!isExists) {
-    _store.cacheDir = defaultValues.cacheDir
+    _store.browserCacheRootDir = defaultValues.browserCacheRootDir
   }
   try {
     await writeFile(appConfig.configFile, JSON.stringify(_store, null, 2), 'utf-8')

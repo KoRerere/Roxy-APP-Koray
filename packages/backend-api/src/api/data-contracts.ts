@@ -3437,7 +3437,7 @@ export interface UserMdfWindowSyncStatusCreateData {
 
 export type UserMdfWindowSyncV2CreatePayload = {
   id?: number;
-  /** www.baidu.com','http:ip123.in/ip.json'], */
+  /** www.baidu.com','http:iprust.io/ip.json'], */
   defaultOpenUrl?: string[];
   loginData?: string[];
   syncValue?: object;
@@ -4570,7 +4570,7 @@ export interface UserGetProxyModuleListData {
       proxyPassword?: string;
       /** 刷新URL, str */
       refreshUrl?: string;
-      /** 查询渠道，默认:http: //ip123.in/ip.json， str */
+      /** 查询渠道，默认:http: //iprust.io/ip.json， str */
       checkChannel?: string;
       /** 出口IP */
       lastIp?: string;
@@ -4650,7 +4650,7 @@ export type UserMdfProxyModuleCreatePayload = {
   proxyPassword?: string;
   /** 刷新URL str, 非必传 */
   refreshUrl?: string;
-  /** 查询渠道，默认:http://ip123.in/ip.json, str, 非必传 */
+  /** 查询渠道，默认:http://iprust.io/ip.json, str, 非必传 */
   checkChannel?: string;
   /** 出口IP，给用户显示用, 非必传 */
   lastIp?: string;

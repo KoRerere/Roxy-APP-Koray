@@ -177,7 +177,7 @@ onBeforeMount(() => {
         <div class="ip">
           <Skeleton v-if="testProxyLoading" class="mt-2" height="2rem" />
           <template v-else>
-            <span :class="{ 'is-ip-changed': proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP: {{ proxyInfo.ip || '--' }}</span>
+            <span :class="{ 'is-ip-changed': windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP: {{ proxyInfo.ip || '--' }}</span>
           </template>
         </div>
       </div>
@@ -239,7 +239,7 @@ onBeforeMount(() => {
       <div class="info">
         <i18n-t :keypath="$t('IP 查询数据来源于 {link}', { link: '{link}' })" scope="global">
           <template #link>
-            <a href="https://ip123.in/" target="_blank">ip123.in</a>
+            <a href="https://iprust.io/" target="_blank">iprust.io</a>
           </template>
         </i18n-t>
       </div>

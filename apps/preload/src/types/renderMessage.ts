@@ -44,7 +44,7 @@ export interface RenderMessage {
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
 
   /** 选择文件夹 */
-  'dialog:selectDir': () => Promise<string>
+  'dialog:selectDir': (defaultPath?: string) => Promise<string>
   /** 选择文件 */
   'dialog:selectFile': (filters?: FileFilter[]) => Promise<string>
 

@@ -35,8 +35,9 @@ const menuList = ref(
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  const { roxynetV2rayCompatible = false } = await electronAPI.send('app:getSoftConfig')
+  const { roxynetV2rayCompatible = false, browserCacheRootDir } = await electronAPI.send('app:getSoftConfig')
   data.roxynetV2rayCompatible = roxynetV2rayCompatible
+  data.browserCacheRootDir = browserCacheRootDir
   settingsPanel.profiles = getProfilePanel(toRaw(userStore.userInfo))
   settingsPanel.preferences = getPreferencesPanel(data)
   settingsPanel.network = getNetworkPanel(data)

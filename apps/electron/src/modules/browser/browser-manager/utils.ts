@@ -329,6 +329,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         height: toNumber(winInfo.resolutionY) || 0,
         availWidth: toNumber(winInfo.resolutionX) || 0,
         availHeight: availHeight < 0 ? 0 : availHeight,
+        /** 设备像素比 */
+        devicePixelRatio: winInfo.devicePixelRatio,
       }
     },
 
