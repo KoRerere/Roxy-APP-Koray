@@ -70,7 +70,7 @@ function switchFormMode(val: boolean) {
   <!-- <ry-form class="w-full" :inputs="inputs" /> -->
   <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
-    <div class="flex items-center">
+    <div class="flex items-center text-[12px]">
       <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />
       <label for="remember-me" class="ml-2"> {{ $t('记住登录状态') }} </label>
     </div>
@@ -85,7 +85,7 @@ function switchFormMode(val: boolean) {
     <div class="divider">
       <span class="mx-2">{{ $t('或通过以下方式继续') }}</span>
     </div>
-    <RxButton class="w-full" outlined @click="openGoogleAuth2Login">
+    <RxButton class="w-full" outlined severity="secondary" @click="openGoogleAuth2Login">
       <img src="/google.svg"> {{ $t('Google') }}
     </RxButton>
     <div v-if="isRegister" class="signup-tips">
@@ -120,6 +120,15 @@ function switchFormMode(val: boolean) {
     line-height: var(--Line-Height-text-xs, 16px);
     /* 133.333% */
   }
+
+  :deep(.p-checkbox) {
+    width: 16px;
+    height: 16px;
+  }
+  :deep(.p-checkbox-box) {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .divider {
@@ -129,7 +138,7 @@ function switchFormMode(val: boolean) {
   color: #000;
   text-align: center;
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: normal;

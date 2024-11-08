@@ -179,7 +179,7 @@ function showLiveChat() {
   align-self: stretch;
   color: var(--Colors-Text-text-tertiary, #7c8387);
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -189,7 +189,7 @@ function showLiveChat() {
 .re-enter-text {
   color: var(--Colors-Text-text-brand, #12a3fc);
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
