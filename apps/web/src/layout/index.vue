@@ -70,9 +70,7 @@ function handleSideTransitionstart() {
     <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
   </div>
   <div v-show="!loading" class="rx-layout">
-    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
-         @transitionend="handleSideTransitionend"
-    >
+    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart" @transitionend="handleSideTransitionend">
       <div class="logo">
         <SvgIcon name="base/logo" size="32" />
         <template v-if="!collapsed">
@@ -90,7 +88,7 @@ function handleSideTransitionstart() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-content">
-        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id " />
+        <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
       </div>
     </main>
   </div>

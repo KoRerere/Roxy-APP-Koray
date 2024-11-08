@@ -79,13 +79,13 @@ function switchFormMode(val: boolean) {
     </div>
   </div>
   <div class="login-ways">
-    <RxButton :loading="submitLoading" type="button" class="w-full" @click="handleSubmit">
+    <RxButton :loading="submitLoading" type="button" size="md" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('注册') : $t('登录') }}
     </RxButton>
     <div class="divider">
       <span class="mx-2">{{ $t('或通过以下方式继续') }}</span>
     </div>
-    <RxButton class="w-full" outlined severity="secondary" @click="openGoogleAuth2Login">
+    <RxButton class="w-full" outlined severity="secondary" size="md" @click="openGoogleAuth2Login">
       <img src="/google.svg"> {{ $t('Google') }}
     </RxButton>
     <div v-if="isRegister" class="signup-tips">
@@ -125,6 +125,7 @@ function switchFormMode(val: boolean) {
     width: 16px;
     height: 16px;
   }
+
   :deep(.p-checkbox-box) {
     width: 16px;
     height: 16px;

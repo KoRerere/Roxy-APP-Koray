@@ -50,7 +50,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   padding-left: calc(26px * v-bind(level));
 
   &.level-1 {
-    max-height: calc(var(--child-count) * 34px);
+    max-height: calc(var(--child-count) * 38px);
     transition: max-height calc(max(calc(var(--child-count) / 3), 1) * 100ms) ease-in-out;
     overflow: hidden;
   }
@@ -78,12 +78,12 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
 .group-title {
   display: flex;
-  height: 12px;
+  height: 16px;
   align-items: center;
   align-self: stretch;
   color: rgba(4, 33, 68, 0.3);
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 600;
   line-height: normal;

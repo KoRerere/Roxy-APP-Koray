@@ -121,14 +121,15 @@ async function deleteHandler(datas: any) {
 .delete-name {
   color: #000;
   font-family: Inter;
-  font-size: 12px;
+  font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .delete-time {
+  margin-top: 4px;
   color: var(--Colors-Text-text-tertiary, #7c8387);
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

@@ -164,9 +164,10 @@ onMounted(() => {
   }
 
   &-tip {
+    margin-top: 4px;
     color: var(--Colors-Text-text-tertiary, #7c8387);
     font-family: Inter;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
   }

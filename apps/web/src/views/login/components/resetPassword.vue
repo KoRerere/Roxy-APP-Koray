@@ -82,7 +82,7 @@ function receiveEmailCode(code: string) {
           </template>
         </div>
       </div>
-      <RxButton class="w-full" @click="handleSubmit">
+      <RxButton class="w-full" size="md" @click="handleSubmit">
         {{ currentStep === 'step1' ? $t('前往验证') : $t('确认') }}
       </RxButton>
       <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('返回登录') }}</a>

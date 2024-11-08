@@ -81,7 +81,7 @@ onBeforeMount(() => {
 
         <div>{{ slotProps.option.workspaceName }}</div>
         <span v-if="slotProps.option.role !== Role.OWNER" class="role-tag">
-          <RxSvgIcon name="base/rx_ic_internet" size="10" />
+          <RxSvgIcon name="base/rx_ic_internet" :size="12" />
           {{ roleLabelMap[slotProps.option.role] }}
         </span>
       </template>
@@ -194,10 +194,9 @@ onBeforeMount(() => {
   align-items: center;
   gap: var(--spacing-xs, 2px);
   border-radius: 25px;
-  background: #ffeacc;
   color: var(--Color-yellow-400, #db8d1a);
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: 14px;

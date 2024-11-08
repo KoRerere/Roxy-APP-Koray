@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import LiveChat from '/@/components/business/live-chat/index.vue'
-import { RxSvgIcon } from '/@/components/rx-icon'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ISO639List } from '/@/constants/iso-639'
 import { useSimpleLocale } from '/@/stores/locale'
 
@@ -27,20 +27,7 @@ watch(() => currentLocale.value, (val) => {
       </LiveChat>
     </RxButton>
 
-    <Select v-model="currentLocale" :options="ISO639" class="w-full md:w-56">
-      <template #value="slotProps">
-        <div class="flex items-center">
-          <RxSvgIcon :name="slotProps.value?.icon" class="mr-2" />
-          <div>{{ slotProps.value.label }}</div>
-        </div>
-      </template>
-      <template #option="slotProps">
-        <div class="flex items-center">
-          <RxSvgIcon :name="slotProps.option?.icon" class="mr-2" />
-          <div>{{ slotProps.option.label }}</div>
-        </div>
-      </template>
-    </Select>
+    <RxInputSelect v-model="currentLocale" name="language" :options="ISO639" :filter="false" class="md:w-36" />
 
     <component is="style">
       #chat-widget-container {

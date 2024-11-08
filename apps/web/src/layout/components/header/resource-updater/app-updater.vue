@@ -75,14 +75,9 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
           </div>
           <div class="pl-[56px]">
-            <rich-text :html="item.originUpgradeData?.[ currentLocale === 'zh-CN' ? 'upgradeContent' : 'upgradeContentEn']" />
-            <RxButton
-              type="button" size="sm" :label="formatClientBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'"
-              class="mt-[6px]"
-              @click="handleClientItemClick(item)"
-            />
+            <rich-text :html="item.originUpgradeData?.[currentLocale === 'zh-CN' ? 'upgradeContent' : 'upgradeContentEn']" />
+            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
           </div>
         </div>
       </template>
@@ -196,10 +191,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
         color: var(--Colors-Text-text-tertiary, #7c8387);
         text-align: center;
         font-family: Inter;
-        font-size: 10px;
+        font-size: 12px;
         font-style: normal;
         font-weight: 500;
-        line-height: normal;
+        line-height: 16px;
       }
     }
   }

@@ -16,7 +16,7 @@
   color: #000;
   text-align: center;
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: normal;

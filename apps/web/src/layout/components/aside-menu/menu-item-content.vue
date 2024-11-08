@@ -41,7 +41,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
     <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
       <a v-ripple v-tooltip="{ value: $t(item.meta?.title), disabled: !collapsed }" class="menu-item" :href="canOpen ? undefined : href" :class="{ active: isActive }"
         @click="handleClickItem(navigate)">
-        <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" />
+        <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
           {{ $t(item.meta?.title) }}
@@ -78,9 +78,8 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
 .menu-item {
   display: flex;
   gap: var(--spacing-xl, 12px);
-  height: 28px;
   color: var(--Component-Colors-SideNav-link-text, #252a2e);
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   align-items: center;
   align-self: stretch;
   border-radius: 4px;
@@ -96,11 +95,15 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   }
 
   &.active {
-    color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
-    background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
+    color: #0091eb;
+    background: #d1eafa;
 
     .menu-icon {
-      color: var(--Component-Colors-SideNav-link-icon-active, #252a2e);
+      color: #0091eb;
+    }
+
+    .menu-title {
+      font-weight: 600;
     }
   }
 
@@ -111,7 +114,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   .menu-title {
     flex: auto;
     font-family: Inter;
-    font-size: var(--Font-Size-text-md, 13px);
+    font-size: 14px;
     font-style: normal;
     font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);

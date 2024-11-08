@@ -295,7 +295,7 @@ onBeforeMount(() => {
     margin-top: var(--spacing-xs, 4px);
     color: var(--Colors-Text-text-tertiary, #7c8387);
     text-align: right;
-    font-size: 10px;
+    font-size: 12px;
 
     &-jump {
       color: var(--Colors-Text-text-brand, #12a3fc);

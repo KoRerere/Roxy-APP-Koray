@@ -89,13 +89,11 @@ function showLiveChat() {
       {{ $t('请检查邮件以获取验证码') }}
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
-    <RxButton class="w-full" :disabled="emailCode.length !== 6" @click="handleSubmit">
+    <RxButton size="md" class="w-full" :disabled="emailCode.length !== 6" @click="handleSubmit">
       {{ type === 'signUp' ? $t('完成注册') : $t('下一步') }}
     </RxButton>
     <div class="tips">
-      <i18n-t
-        :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global"
-      >
+      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global">
         <template #tryAgain>
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>

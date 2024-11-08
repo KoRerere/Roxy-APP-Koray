@@ -57,7 +57,7 @@ onMounted(() => {
   <div class="flex h-full">
     <div class="settings-menu">
       <div class="settings-menu-title">
-        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" @click="closePopup" />
+        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="20" @click="closePopup" />
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
@@ -122,25 +122,25 @@ onMounted(() => {
       align-items: center;
       gap: var(--spacing-xl, 12px);
       color: #000;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
-      line-height: 16px;
+      line-height: 24px;
     }
 
     &-list {
       display: flex;
       flex-direction: column;
       padding: 0px var(--spacing-3xl, 20px);
-      gap: var(--spacing-xs, 2px);
+      gap: var(--spacing-sm, 4px);
       width: 100%;
 
       &-item {
         display: flex;
         align-items: center;
-        padding: 4px 6px;
+        padding: 6px 8px;
         gap: var(--spacing-xl, 12px);
         color: var(--Component-Colors-SideNav-link-text, #575d61);
-        font-size: var(--Font-Size-text-md, 13px);
+        font-size: var(--Font-Size-text-md, 14px);
         font-weight: 500;
         line-height: var(--Line-Height-text-lg, 20px);
         border-radius: 4px;

@@ -63,7 +63,7 @@ defineEmits(['change'])
     margin-top: var(--spacing-sm, 4px);
     color: var(--p-red-400, #f87171);
     font-family: Inter;
-    font-size: 10px;
+    font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
   }
 }
