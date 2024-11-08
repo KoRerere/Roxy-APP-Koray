@@ -61,6 +61,7 @@ export class BrowserItem {
   /** 启动成功后的信息 */
   get launchInfo() {
     return {
+      dirId: this.winInfo.dirId,
       /** 用于自动化工具的ws接口 */
       ws: this.#browser?.wsEndpoint(),
       /** 用于自动化工具的http接口 */

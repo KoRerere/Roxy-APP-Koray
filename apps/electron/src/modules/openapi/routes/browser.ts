@@ -140,7 +140,8 @@ router.post('/open', async (req, res) => {
   }
 
   if (browserManager.openedBrowserMap.has(dirId)) {
-    return res.error('browser is already opened')
+    res.success(browserManager.openedBrowserMap.get(dirId)?.launchInfo, 'browser is already opened')
+    return
   }
 
   try {
