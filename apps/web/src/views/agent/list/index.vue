@@ -5,7 +5,6 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import popup from '/@/components/simplePopup'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -14,14 +13,14 @@ import { filterFieldByValue, getFormData } from '/@/utils/index'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
-import columnsConfig from './columns'
+import { getColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
 const dialog = useDialog()
 
-const [columns] = useColumns(columnsConfig)
+const columns = getColumns()
 const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()

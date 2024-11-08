@@ -14,7 +14,7 @@ interface Options {
   filters?: string[]
 }
 
-function useColumns(columns: Columns, filterColumnKeys?: string[]) {
+export function useColumns(columns: Columns, filterColumnKeys?: string[]) {
   const { key, data } = columns
 
   const cache = (localStorage.getItem(key)?.split(',') || []).reduce(

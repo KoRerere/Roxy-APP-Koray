@@ -3,9 +3,8 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import columnsRow from './columns'
+import { getRawColumns } from './columns'
 
 const props = defineProps({
   data: {
@@ -17,7 +16,7 @@ const emit = defineEmits(['confirm'])
 
 const [showToast] = useResponseToast()
 
-const columns = setColumns(columnsRow.data, {
+const columns = getRawColumns({
   filters: ['actions'],
 })
 

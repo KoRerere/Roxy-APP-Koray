@@ -1,14 +1,13 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
+import { setColumns, useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
-
-const columnsConfig = {
-  key: 'agent.list',
-  data: [
+export function getRawColumns(options?: any) {
+  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
+  return setColumns([
     {
       title: $t('代理信息'),
       key: 'proxy',
@@ -51,7 +50,14 @@ const columnsConfig = {
       style: 'width: 9rem',
       slot: 'actions',
     },
-  ],
+  ], options)
 }
 
-export default columnsConfig
+export function getColumns(options?: any) {
+  const rawColumns = getRawColumns(options)
+  const [columns] = useColumns({
+    key: 'agent.list',
+    data: rawColumns,
+  })
+  return columns
+}

@@ -1,14 +1,13 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
-import proxyColumns from './columns'
+import { getRawColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 
 interface Boundeds {
@@ -36,7 +35,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('agent')
 
-const columns = setColumns(proxyColumns.data, {
+const columns = getRawColumns({
   inserts: props.isBatch ? [[4, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })

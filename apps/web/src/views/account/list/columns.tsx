@@ -1,12 +1,11 @@
 import RelatedInfo from '/@/components/related-info.vue'
+import { setColumns, useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
-
-const columnsConfig = {
-  key: 'account.list',
-  data: [
+export function getRawColumns(options?: any) {
+  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
+  return setColumns([
     {
       title: $t('账号信息'),
       key: 'status',
@@ -29,10 +28,18 @@ const columnsConfig = {
     },
     {
       title: $t('操作'),
+      key: 'actions',
       style: 'width: 9rem',
       slot: 'actions',
     },
-  ],
+  ], options)
 }
 
-export default columnsConfig
+export function getColumns(options?: any) {
+  const rawColumns = getRawColumns(options)
+  const [columns] = useColumns({
+    key: 'account.list',
+    data: rawColumns,
+  })
+  return columns
+}

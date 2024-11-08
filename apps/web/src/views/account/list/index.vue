@@ -6,18 +6,17 @@ import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import popup from '/@/components/simplePopup'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import accountCreate from '/@/views/account/create'
-import columnsRow from './columns'
+import { getColumns } from './columns'
 
 const tableRef = useTemplateRef('accountTable')
 
 const confirm = useConfirm()
 const [showToast] = useResponseToast()
-const [columns] = useColumns(columnsRow)
+const columns = getColumns()
 const role = useRoleStore()
 const dialog = useDialog()
 
