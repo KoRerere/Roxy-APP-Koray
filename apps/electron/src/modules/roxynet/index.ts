@@ -18,7 +18,7 @@ export function getLuminetProcess() {
 
 export async function startLuminet() {
   console.log('startLuminet systemProxySwitch:', store.systemProxySwitch)
-  console.log('startLuminet roxynetV2rayCompatible:', store.roxynetV2rayCompatible)
+  console.log('startLuminet v2raySwitch:', store.v2raySwitch)
 
   if (!store.systemProxySwitch) {
     console.log('systemProxySwitch is off')
@@ -50,7 +50,7 @@ export async function startLuminet() {
     system_proxy: {
       addr: systemProxy,
       protocal: 'http',
-      v2: store.roxynetV2rayCompatible, // 是否走v2兼任模式，代理为http的情况下需要设置为true
+      v2: store.v2raySwitch, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,
     api_token: store.apiKey,

@@ -85,7 +85,7 @@ export async function setSystemProxy() {
   const params = {
     addr: await getSystemProxy(true),
     protocal: 'http',
-    v2: store.roxynetV2rayCompatible,
+    v2: store.v2raySwitch,
   }
   console.log('roxynet set_sysproxy 修改系统代理', params)
   return axios.post(`http://127.0.0.1:${store.luminetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {

@@ -115,6 +115,7 @@ provideLoginContext({
 </script>
 
 <template>
+  {{ currentComp }}
   <div class="flex justify-end p-5">
     <LanguageSelect />
   </div>

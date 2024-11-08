@@ -89,7 +89,7 @@ function receiveEmailCode(code: string) {
     </div>
   </template>
   <template v-else>
-    <EmailCodeInputOtp type="resetPassword" :email @ok="receiveEmailCode" />
+    <EmailCodeInputOtp type="resetPassword" :email @ok="receiveEmailCode" @back="currentStep = 'step1'" />
   </template>
 </template>
 

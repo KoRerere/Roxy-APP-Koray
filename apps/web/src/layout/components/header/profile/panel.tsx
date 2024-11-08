@@ -48,7 +48,7 @@ async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPa
     }
 
     if (items && item.name === 'systemProxySwitch') {
-      const v2 = items.list[0].items.find((i: any) => i.name === 'roxynetV2rayCompatible')
+      const v2 = items.list[0].items.find((i: any) => i.name === 'v2raySwitch')
       v2.hide = !value
     }
   }
@@ -285,9 +285,9 @@ export function getNetworkPanel(data?: any): SettingsModule {
           {
             label: $t('网络兼容模式'),
             text: $t('当系统代理识别失败时尝试启用'),
-            name: 'roxynetV2rayCompatible',
+            name: 'v2raySwitch',
             hide: !data?.systemProxySwitch,
-            value: data?.roxynetV2rayCompatible ?? false,
+            value: data?.v2raySwitch ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item)}></RxToggleSwitch>

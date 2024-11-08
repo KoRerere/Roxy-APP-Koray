@@ -14,7 +14,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['ok'])
+const emit = defineEmits(['ok', 'back'])
 
 const emailCode = defineModel('emailCode', { default: '' })
 
@@ -26,7 +26,12 @@ const getEmail = computed(() => {
 })
 
 function toReEnter() {
-  setCurrentComponent('signForm', { type: 'signUp' })
+  if (props.type === 'resetPassword') {
+    emit('back')
+  }
+  else {
+    setCurrentComponent('signForm', { type: 'signUp' })
+  }
 }
 
 async function handleSubmit() {
@@ -68,6 +73,10 @@ async function handleSubmit() {
     toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
   }
 }
+
+function showLiveChat() {
+  LiveChatWidget.call('maximize')
+}
 </script>
 
 <template>
@@ -80,7 +89,7 @@ async function handleSubmit() {
       {{ $t('请检查邮件以获取验证码') }}
     </div>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
-    <RxButton class="w-full" @click="handleSubmit">
+    <RxButton class="w-full" :disabled="emailCode.length !== 6" @click="handleSubmit">
       {{ type === 'signUp' ? $t('完成注册') : $t('下一步') }}
     </RxButton>
     <div class="tips">
@@ -91,7 +100,7 @@ async function handleSubmit() {
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>
         <template #contact>
-          <a class="re-enter-text" @click="toReEnter">{{ $t('联系支持人员') }}</a>
+          <a class="re-enter-text" @click="showLiveChat">{{ $t('联系支持人员') }}</a>
         </template>
       </i18n-t>
     </div>

@@ -156,7 +156,7 @@ ipcMain.on('app:restartAPIServer', () => {
 /** 保存软件设置 */
 ipcMain.on('app:saveSoftConfig', (config) => {
   const originSystemProxySwitch = store.systemProxySwitch
-  const originRoxynetV2rayCompatible = store.roxynetV2rayCompatible
+  const originV2raySwitch = store.v2raySwitch
   Object.keys(config).forEach((key) => {
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(config, key))
@@ -173,7 +173,7 @@ ipcMain.on('app:saveSoftConfig', (config) => {
       // stopLuminet()
     }
   }
-  else if (store.roxynetV2rayCompatible !== originRoxynetV2rayCompatible) {
+  else if (store.v2raySwitch !== originV2raySwitch) {
     // 重新设置系统代理
     startLuminet()
   }
