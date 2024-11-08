@@ -313,7 +313,6 @@ export function getOperation(_params: any = {}) {
       label: $t('清除缓存'),
       icon: 'base/rx_ic_brush',
       power: !role.isViewer,
-      multiple: true,
     },
     {
       power: !role.isViewer,

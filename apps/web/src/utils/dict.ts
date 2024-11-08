@@ -5,21 +5,43 @@ import { isEmptyValue } from '/@/utils/basic'
 type DictMap = UserGetDictVersionListData['data']
 type DictItem = UserGetSystemDictV2CreateData['data'][number]
 
-export function getDictMap() {
+const EXPIRY_CONFIG = {
+  _EXPIRY_TIME: 1000 * 60 * 60 * 4,
+  _EXPIRED_VALUE: 0,
+  isExpired() {
+    const _isExpired = new Date().getTime() > (EXPIRY_CONFIG._EXPIRED_VALUE ?? 0)
+    if (_isExpired) {
+      EXPIRY_CONFIG._EXPIRED_VALUE = new Date().getTime() + EXPIRY_CONFIG._EXPIRY_TIME
+    }
+    return _isExpired
+  },
+}
 
+export async function getDictMap() {
+  if (EXPIRY_CONFIG.isExpired()) {
+    await getDictVersion()
+  }
+
+  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
+    get(target, key) {
+      return target[key] || []
+    },
+  })
+  return $dict_map
 }
 
 export async function getDictVersion() {
   const { data: newVersion } = await API.base.userGetDictVersionList()
   const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
+  const oldDict = JSON.parse(localStorage.getItem('$dict_map') || 'null')
 
-  const needUpdateDict = isEmptyValue(oldVersion)
+  const needUpdateDict = isEmptyValue(oldVersion) || isEmptyValue(oldDict)
     ? newVersion
     : Object.fromEntries(Object.entries(newVersion).filter(([key, value]) => oldVersion[key as keyof DictMap] !== value))
 
   if (!isEmptyValue(needUpdateDict)) {
     localStorage.setItem('$dict_version', JSON.stringify(newVersion))
-    fetchDictData(Object.keys(needUpdateDict))
+    await fetchDictData(Object.keys(needUpdateDict))
   }
 }
 

@@ -14,7 +14,7 @@ const value = ref(ClearType.partial)
 
 const options = [
   {
-    label: '清除本地缓存（保留插件）',
+    label: $t('清除本地缓存（保留插件）'),
     value: ClearType.partial,
     afterRender: () => (
       value.value === ClearType.partial && (
@@ -24,7 +24,7 @@ const options = [
               <div class="whitespace-pre-wrap">
                 <i18n-t keypath={$t('1.清除本电脑上除了窗口扩展及扩展数据外的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
-                    light: () => <span class="text-orange-500">{$t('登录状态不会失效')}</span>,
+                    light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
                 </i18n-t>
               </div>
@@ -35,7 +35,7 @@ const options = [
     ),
   },
   {
-    label: '清除本地缓存',
+    label: $t('清除本地缓存'),
     value: ClearType.all,
     afterRender: () => (
       value.value === ClearType.all && (
@@ -45,7 +45,7 @@ const options = [
               <div class="whitespace-pre-wrap">
                 <i18n-t keypath={$t('1.清除本电脑上的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
-                    light: () => <span class="text-orange-500">{$t('登录状态不会失效')}</span>,
+                    light: () => <span class="text-orange-400">{$t('登录状态不会失效')}</span>,
                   }}
                 </i18n-t>
               </div>
@@ -56,7 +56,7 @@ const options = [
     ),
   },
   {
-    label: '清除云端缓存',
+    label: $t('清除云端缓存'),
     value: ClearType.cloud,
     visible: role.isOwner || role.isManager,
     afterRender: () => (
@@ -67,7 +67,7 @@ const options = [
               <div class="whitespace-pre-wrap">
                 <i18n-t keypath={$t('1.清除本电脑及云端的Cookie和全部缓存。{light} 。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
-                    light: () => <span class="text-orange-500">{$t('同步的标签页和浏览器相关登录状态会全部失效')}</span>,
+                    light: () => <span class="text-orange-400">{$t('同步的标签页和浏览器相关登录状态会全部失效')}</span>,
                   }}
                 </i18n-t>
               </div>
@@ -150,6 +150,10 @@ onMounted(() => {
       border: none;
       min-width: auto;
       box-shadow: none;
+    }
+
+    .p-radiobutton-checked+.rx-radio-group-item__text {
+      font-weight: 600;
     }
   }
 }

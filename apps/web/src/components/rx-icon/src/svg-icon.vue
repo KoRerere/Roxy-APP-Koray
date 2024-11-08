@@ -39,5 +39,6 @@ const SvgComponent = computed(() => {
 :where(.svg) {
   font-size: v-bind(fontSize);
   color: v-bind(color);
+  flex-shrink: 0;
 }
 </style>

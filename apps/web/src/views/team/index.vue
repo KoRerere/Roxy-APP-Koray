@@ -191,7 +191,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <RxAvatar :avatar="data.avatar" :name="(data.email as string)?.slice(0, 2)" :color="data.avatarColor" :size="28" :font-size="14" />
+        <RxAvatar :avatar="data.avatar" :name="(data.userName as string)?.slice(0, 2)" :color="data.avatarColor" :size="28" :font-size="14" />
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}
