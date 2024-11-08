@@ -34,9 +34,9 @@ export async function getCustomFilters(params: any = {}) {
       icon: 'base/rx_ic_browser',
     },
     {
-      type: 'number',
+      type: 'text',
       label: $t('序号'),
-      placeholder: $t('请输入序号'),
+      placeholder: $t('请输入序号(多个用英文逗号分隔)'),
       name: 'sortNums',
       icon: 'base/rx_ic_id',
     },
