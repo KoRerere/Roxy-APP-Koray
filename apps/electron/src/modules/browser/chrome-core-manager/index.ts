@@ -115,7 +115,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
     const availableCore = this.getAvailableCore(coreVersion)
 
     if (!availableCore) {
-      throw new Error('当前系统不支持使用该内核')
+      throw new Error($t('当前系统不支持使用该内核'))
     }
 
     try {

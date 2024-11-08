@@ -89,7 +89,7 @@ const options: Configuration = {
     installerHeader: './logo.ico',
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: 'roxybrowser',
+    shortcutName: appName,
   },
   dmg: {
     sign: true,

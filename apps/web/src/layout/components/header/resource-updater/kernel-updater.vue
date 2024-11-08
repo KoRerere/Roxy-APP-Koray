@@ -48,10 +48,10 @@ function handleCollapsed(item: ResourceUpdateMessage) {
             <RxSvgIcon :name="collapsedMap[item.coreVersion] ? 'base/rx_ic_chevron_down' : 'base/rx_ic_chevron_right'" class="cursor-pointer" @click="handleCollapsed(item)" />
             <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
             <div class="updater-title">
-              {{ item.title }} {{ item.coreVersion }}
+              RoxyChrome {{ item.coreVersion }}
             </div>
           </div>
-          <RxButton severity="contrast" outlined size="sm" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
+          <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
                     :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)"
           />
         </div>

@@ -237,6 +237,16 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             },
           },
           {
+            label: $t('系统日志'),
+            name: 'systemLogDir',
+            value: '',
+            component: ({ item, ...props }: { item: Items, props: any }) => {
+              return (
+                <RxButton severity="secondary" outlined onClick={() => electronAPI.send('app:showLogDir')}>{$t('查看详情')}</RxButton>
+              )
+            },
+          },
+          {
             label: $t('关闭客户端'),
             text: $t('当点击关闭客户端时'),
             name: 'closeSoft',
