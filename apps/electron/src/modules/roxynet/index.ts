@@ -64,7 +64,9 @@ export async function startLuminet() {
     await execFilePromise('chmod', ['+x', appConfig.roxynetBinPath])
   }
   console.log('roxynetBinPath encText:', encText)
-  roxynetProcess = execFile(appConfig.roxynetBinPath, ['--arg', encText])
+  const startAppCmdArgs = process.argv.slice(1)
+  console.log('startAppCmdArgs:', startAppCmdArgs)
+  roxynetProcess = execFile(appConfig.roxynetBinPath, startAppCmdArgs.concat(['--arg', encText]))
 
   // 忽略的错误信息
   const ignoreList = ['check addr  error:dial tcp: missing address']
