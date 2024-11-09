@@ -63,10 +63,15 @@ export async function startLuminet() {
   if (isMac) {
     await execFilePromise('chmod', ['+x', appConfig.roxynetBinPath])
   }
-  console.log('roxynetBinPath encText:', encText)
   const startAppCmdArgs = process.argv.slice(1)
+  const startRoxynetArgs = ['--arg', encText]
+  const loglevelIndex = startAppCmdArgs.findIndex(item => item === '--loglevel')
+  if (loglevelIndex !== -1) {
+    startRoxynetArgs.push(...startAppCmdArgs.splice(loglevelIndex, 2))
+  }
   console.log('startAppCmdArgs:', startAppCmdArgs)
-  roxynetProcess = execFile(appConfig.roxynetBinPath, startAppCmdArgs.concat(['--arg', encText]))
+  console.log('startRoxynetArgs:', startRoxynetArgs)
+  roxynetProcess = execFile(appConfig.roxynetBinPath, startRoxynetArgs)
 
   // 忽略的错误信息
   const ignoreList = ['check addr  error:dial tcp: missing address']

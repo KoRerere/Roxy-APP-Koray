@@ -172,8 +172,6 @@ export class BrowserItem {
     const params = await this.afterLaunchTask.getUploadData()
     const { id, syncValue, ossDirPath } = this.winInfo
 
-    console.log('uploadData:', params)
-
     const needSyncFiles = this.needSyncFiles.map(url => ({
       path: join(this.userDataDir, url),
       destPath: url,
@@ -205,11 +203,14 @@ export class BrowserItem {
         },
         openStatus: false,
       }
+
+      console.log('uploadData:', uploadParams)
+
       // 同步窗口状态
       await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
         console.log('user_mdf_window_sync_v2 uploadData', res)
       }).catch((error) => {
-        console.error('user_mdf_window_sync_v2 error: ', error)
+        console.error('user_mdf_window_sync_v2 uploadData error: ', error)
       })
     }
   }

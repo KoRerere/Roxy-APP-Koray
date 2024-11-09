@@ -26,7 +26,7 @@ if (!isMainThread && parentPort) {
 }
 
 /** 解压文件 */
-function extractPlugin(pluginDir, destDir) {
+function extractPlugin(pluginDir: string, destDir: string) {
   const zip = new AdmZip(pluginDir)
   const zipEntries = zip.getEntries()
 
@@ -41,7 +41,7 @@ function extractPlugin(pluginDir, destDir) {
 }
 
 /** 获取插件压缩后的大小 */
-function calculatePluginSize(pluginDir) {
+function calculatePluginSize(pluginDir: string) {
   const zip = new AdmZip()
   zip.addLocalFolder(pluginDir)
   return zip.toBuffer().length

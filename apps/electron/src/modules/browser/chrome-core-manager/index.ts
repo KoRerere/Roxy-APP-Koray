@@ -39,7 +39,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   /** 获取内核列表（供前端展示用） */
   async getCoreList(): Promise<ResourceUpdateMessage[]> {
     const availableCoreList = await this.fetchAvailableCoreList()
-    const arr = availableCoreList.map(async (core) => {
+    const arr = availableCoreList.map(async (core): Promise<ResourceUpdateMessage> => {
       return {
         ...core,
         type: 'kernel',
