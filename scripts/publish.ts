@@ -29,7 +29,7 @@ const fileContentObj = yaml.load(fileContents)
 /** 获取版本号 */
 const appVersion = fileContentObj.version
 /** APP 名称 */
-const appName = fileContentObj.path.split('_').at()
+const appName = fileContentObj.path.split('_').at(0)
 const osBitMap = {
   x64: 'intel',
   ia32: 'x86',
@@ -109,8 +109,8 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
     version: appVersion,
     upgradeTitle: '',
     upgradeDesc: '',
-    upgradeContent: '<p style="line-height: 1;"><strong>修复若干BUG</strong></p>',
-    upgradeContentEn: '<p style="line-height: 1;"><strong>Bug fixes</strong></p>',
+    upgradeContent: '<p style="line-height: 2;"><strong>修复若干BUG</strong></p>',
+    upgradeContentEn: '<p style="line-height: 2;"><strong>Bug fixes</strong></p>',
     downloadUrl,
     forceUpgrade: true,
     ipLimit: isProd,
