@@ -1,12 +1,13 @@
 import OSS from 'ali-oss'
 import yaml from 'js-yaml'
-import Buffer from 'node:buffer'
-import fs from 'node:fs'
-import { join } from 'node:path'
+import { Buffer } from 'node:buffer'
+import fs, { renameSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 
 const isProd = process.env.NODE_ENV === 'production'
 const isMac = process.platform === 'darwin'
-
+console.log('isMac:', isMac)
+console.log('isProd:', isProd)
 const ossConfig = {
   region: 'oss-cn-shenzhen',
   accessKeyId: '',
@@ -14,41 +15,51 @@ const ossConfig = {
   bucket: isProd ? 'lumibrowser' : 'lumibrowser-test',
 }
 
-const file = join(__dirname, `../apps/electron/out/latest${isMac ? '-mac' : ''}.yml`)
+const apiBaseUrl = `${isProd ? 'https://admin.lumibrowser.com' : 'https://admintest.lumibrowser.com'}/fb-admin-api`
+// 懒得模拟登录获取 token 了，反正 token 是永久的
+const token = 'nfnlQ4tl2UVcKKUh1710868857530'
+/** 安装包输出路径 */
+const outDir = join(__dirname, '../out')
+/** YAML 文件路径 */
+const ymlFilePath = join(outDir, `latest${isMac ? '-mac' : ''}.yml`)
 // 读取 YAML 文件
-const fileContents = fs.readFileSync(file, 'utf8')
-
+const fileContents = fs.readFileSync(ymlFilePath, 'utf8')
 // 解析 YAML 文件
 const fileContentObj = yaml.load(fileContents)
-// 获取版本号
+/** 获取版本号 */
 const appVersion = fileContentObj.version
-
-console.log(fileContentObj)
+/** APP 名称 */
+const appName = fileContentObj.path.split('_').at()
+const osBitMap = {
+  x64: 'intel',
+  ia32: 'x86',
+  arm64: 'apple',
+} as const
+// console.log(fileContentObj)
 
 /** 获取上传的路径 */
 function genUploadPath(osBit: string, fileName: string) {
   if (process.platform === 'win32') {
-    return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`
+    return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`.replaceAll('ia32', 'x86')
   }
   else if (isMac) {
-    return `/public/package/app/macOS/${osBit}/${appVersion}/${fileName}`
+    return `/public/package/app/macOS/${osBitMap[osBit]}/${appVersion}/${fileName}`
   }
 }
 
 /** 生成 YAML 文件内容 */
 function genYamlContent(osBit: string, extName: string) {
-  const targetFile = { ...fileContentObj.files.find(file => file.url === `RoxyBrowser_${osBit}_${appVersion}.${extName}`) }
+  const targetFile = { ...fileContentObj.files.find(file => file.url === `${appName}_${osBit}_${appVersion}.${extName}`) }
 
-  if (osBit === 'ia32') {
-    targetFile.url = targetFile.url.replace('ia32', 'x86')
-  }
-  else if (isMac) {
-    if (osBit === 'x64') {
-      targetFile.url = targetFile.url.replace('x64', 'intel')
+  if (osBit === 'ia32' || isMac) {
+    const newFileName = targetFile.url.replace(osBit, osBitMap[osBit])
+    try {
+      renameSync(join(outDir, targetFile.url), join(outDir, newFileName))
     }
-    else if (osBit === 'arm64') {
-      targetFile.url = targetFile.url.replace('arm64', 'apple')
+    catch (error) {
+
     }
+    targetFile.url = newFileName
   }
 
   return {
@@ -61,15 +72,67 @@ function genYamlContent(osBit: string, extName: string) {
 
 /** 获取上传凭证 */
 async function getOssCredentials() {
-  const data = await fetch('http://47.239.9.178:8080/fb-admin-api/admin_get_oss_credential', {
+  const data = await fetch(`${apiBaseUrl}/admin_get_oss_credential`, {
     headers: {
-      token: 'nfnlQ4tl2UVcKKUh1710868857530',
+      token,
     },
   }).then(res => res.json()).then(res => res.data)
 
-  console.log(data)
+  // console.log(data)
 
   return data
+}
+
+/** 获取后台目标版本，有则为更新，无则为新增 */
+async function getTargetVersion(params: { osBit: string, cpu: string }) {
+  const { osBit, cpu } = params
+  const os = isMac ? 'macOS' : 'Windows'
+  return fetch(`${apiBaseUrl}/admin_version_list?page_index=1&page_size=15&versionType=app&os=${os}&dataType=new`, {
+    headers: {
+      token,
+    },
+  }).then(res => res.json()).then(res => res.data.rows.find((row) => {
+    return row.version === appVersion && row.osBit === osBit && row.cpu === cpu
+  }))
+}
+
+/** 发布版本 */
+async function publishVersion({ osBit, cpu, downloadUrl }) {
+  const defaultParams = {
+    os: isMac ? 'macOS' : 'Windows',
+    osVersion: '',
+    osBit: isMac ? '64' : osBit,
+    cpu: isMac ? cpu : '',
+    versionType: 'app',
+    coreVersion: '',
+    coreRealVersion: '',
+    version: appVersion,
+    upgradeTitle: '',
+    upgradeDesc: '',
+    upgradeContent: '<p style="line-height: 1;"><strong>修复若干BUG</strong></p>',
+    upgradeContentEn: '<p style="line-height: 1;"><strong>Bug fixes</strong></p>',
+    downloadUrl,
+    forceUpgrade: true,
+    ipLimit: isProd,
+    dataType: 'new',
+    status: true,
+  }
+  const targetVersion = await getTargetVersion({
+    osBit: defaultParams.osBit,
+    cpu: defaultParams.cpu,
+  })
+  Object.assign(defaultParams, { ...targetVersion })
+
+  fetch(`${apiBaseUrl}/${defaultParams.id ? `/admin_mdf_version` : `/admin_add_version`}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      token,
+    },
+    body: JSON.stringify(defaultParams),
+  }).then(res => res.json()).then((res) => {
+    console.log(res)
+  })
 }
 
 /** 上传文件 */
@@ -79,6 +142,8 @@ async function uploadFile() {
   const client = new OSS({
     ...ossConfig,
     ...ossCredential,
+    stsToken: ossCredential.securityToken,
+    timeout: '120s',
   })
 
   const extNames = isMac ? ['dmg', 'zip'] : ['exe']
@@ -88,11 +153,35 @@ async function uploadFile() {
     for (const extName of extNames) {
       const yamlContent = genYamlContent(osBit, extName)
       const fileName = yamlContent.path
-      const filePath = join(__dirname, `../apps/electron/out/${fileName}`)
+      const filePath = join(outDir, fileName)
       const uploadPath = genUploadPath(osBit, fileName)
+      console.log('上传路径：', uploadPath)
+      if (fileName.endsWith('.exe') || fileName.endsWith('.zip')) {
+        const { url: ymlUrl } = await client.put(`${dirname(uploadPath)}/${basename(ymlFilePath)}`, Buffer.from(yaml.dump(yamlContent, { lineWidth: 1000 })))
+        console.log(`${basename(ymlFilePath)} 上传成功：`, ymlUrl)
+      }
+      await client.multipartUpload(uploadPath, filePath, {
+        progress: (p) => {
+          const progress = `${fileName} 上传中：${((p) * 100).toFixed(2)}%`
+          process.stdout.write(`\x1B[34m${progress}\x1B[0m \r`)
 
-      await client.put(uploadPath, filePath)
-      await client.put(uploadPath.replace(extName, 'yml'), new Buffer.from(JSON.stringify(yamlContent, null, 2)))
+          if (p === 1) {
+            process.stdout.write('\n')
+          }
+        },
+      }).then(({ res }) => {
+        const url = res.requestUrls[0]?.split('?')[0]
+        console.log(`${fileName} 上传成功: `, url)
+        if (url.endsWith('.exe') || url.endsWith('.dmg')) {
+          publishVersion({
+            osBit: osBit === 'ia32' ? '32' : '64',
+            cpu: osBit === 'arm64' ? 'apple' : 'intel',
+            downloadUrl: url,
+          })
+        }
+      })
     }
   }
 }
+
+uploadFile()

@@ -31,7 +31,7 @@ const options: Configuration = {
     main: 'dist/main.cjs',
   },
   directories: {
-    output: 'out',
+    output: '../../out',
     buildResources: 'buildResources',
   },
   files: [
