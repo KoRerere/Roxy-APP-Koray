@@ -47,7 +47,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   align-items: flex-start;
   gap: var(--spacing-xs, 2px);
   align-self: stretch;
-  padding-left: calc(26px * v-bind(level));
+  padding-left: calc(32px * v-bind(level));
 
   &.level-1 {
     max-height: calc(var(--child-count) * 38px);
@@ -69,7 +69,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   &.level-1::before {
     content: '';
     position: absolute;
-    left: 14px;
+    left: 20px;
     width: 0.5px;
     height: 100%;
     background: var(--Colors-Border-border-container, #c7cdd1);

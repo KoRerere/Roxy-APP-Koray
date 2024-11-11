@@ -42,7 +42,7 @@ const columns = getRawColumns({
 
 const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const selection = ref(props.data)
-const filtersMenu = ref(getCustomFilters())
+const filtersMenu = ref()
 const dataList = ref()
 
 const boundeds = ref<Boundeds>({})
@@ -72,6 +72,10 @@ const tableProps = {
       },
     }),
 }
+
+onBeforeMount(async () => {
+  filtersMenu.value = await getCustomFilters()
+})
 
 function onRefreshTable() {
   const params = filterFieldByValue(getFormData(filtersMenu.value))

@@ -6,7 +6,7 @@ defineProps<Props>()
 const router = useRouter()
 
 interface Props {
-  title: string
+  title?: string
   showBack?: boolean
 }
 
@@ -19,7 +19,9 @@ function onBack() {
   <div class="flex views-header">
     <div class="flex items-center flex-1 gap-2.5">
       <RxSvgIcon v-if="showBack" class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
-      <i18n-t :keypath="title" scope="global" />
+      <slot name="title">
+        <i18n-t :keypath="title" scope="global" />
+      </slot>
       <slot name="title-after" />
     </div>
     <slot />

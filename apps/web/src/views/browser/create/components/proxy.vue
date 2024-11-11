@@ -165,7 +165,7 @@ function replaceData(data: any) {
       <div>
         <template v-if="isBatch">
           <Message v-if="isOverload" severity="warn" class="multiple">
-            Bound profiles must not exceed {{ createCount }}
+            {{ $t('代理数量不能大于窗口') }}
           </Message>
           <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)" @close="deleteProxy(index)">
             <div class="multiple-region">

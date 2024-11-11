@@ -19,7 +19,6 @@ const list = ref([
         class: { 'rotate-180': collapsed.value },
       }
     }),
-    itemClass: 'mt-[16px]',
     handler() {
       collapsed.value = !collapsed.value
     },
@@ -57,7 +56,7 @@ const list = ref([
   .item {
     display: flex;
     align-items: center;
-    padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
+    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
     gap: var(--spacing-xl, 12px);
     flex: 1 0 0;
     color: var(--Component-Colors-SideNav-link-text, #252a2e);
@@ -65,9 +64,7 @@ const list = ref([
     font-size: var(--Font-Size-text-md, 13px);
     font-style: normal;
     font-weight: 500;
-    min-height: var(--Line-Height-text-lg, 20px);
     line-height: var(--Line-Height-text-lg, 20px);
-    /* 153.846% */
     cursor: pointer;
 
     &-icon {

@@ -63,7 +63,7 @@ async function testProxy() {
             <div class="flex-1">
               <RxInputSelect v-bind="input.props" v-model="input.value" :name="input.name" />
             </div>
-            <RxButton size="lg" outlined severity="secondary" :label="$t('测试代理')" icon="base/rx_ic_speed_test" @click="testProxy" />
+            <RxButton :size="input.props.size" outlined severity="secondary" :label="$t('测试代理')" icon="base/rx_ic_speed_test" @click="testProxy" />
           </div>
         </div>
       </template>
@@ -94,6 +94,12 @@ async function testProxy() {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  :deep(.number-group-item) {
+    &:first-of-type {
+      flex: 2;
+    }
   }
 }
 </style>

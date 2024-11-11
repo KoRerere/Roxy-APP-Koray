@@ -26,10 +26,10 @@ const original = ref()
 const metaData = ref<MetaData>()
 const loading = ref(false)
 
-function onShuffle() {
-  ceateRandomFinger(inputsGroup.value).then((data) => {
-    Object.assign(original.value, data[0])
-  })
+async function onShuffle() {
+  const data = await ceateRandomFinger(inputsGroup.value)
+  Object.assign(original.value, data[0])
+  showToast(0, $t('指纹刷新成功'))
 }
 
 async function createProfile(formData: any) {
@@ -57,7 +57,7 @@ function oldFieldsFormat() {
 
 onBeforeMount(async () => {
   const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
-  const [_inputsGroup, _original] = await getInputsGroup(data)
+  const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
   inputsGroup.value = _inputsGroup
   original.value = _original
   oldFieldsFormat()
@@ -84,7 +84,7 @@ onBeforeMount(async () => {
         </div>
       </div>
     </div>
-    <previewCard :inputs-group="inputsGroup" @shuffle="onShuffle" />
+    <previewCard :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
   </div>
 </template>
 

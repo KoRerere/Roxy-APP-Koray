@@ -33,7 +33,7 @@ const menuList = ref(
 )
 
 async function getUserConfig() {
-  const { data } = await API.base.userGetUserConfigList()
+  const data = toRaw(await userStore.getUserConfig())
   settingsPanel.profiles = await getProfilePanel(toRaw(userStore.userInfo))
   settingsPanel.preferences = await getPreferencesPanel(data)
   settingsPanel.network = await getNetworkPanel(data)

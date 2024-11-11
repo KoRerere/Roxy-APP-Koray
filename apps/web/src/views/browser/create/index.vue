@@ -77,8 +77,18 @@ watch(() => tabsValue.value, (value: any) => {
   onUpdateFinger()
 })
 
+onBeforeMount(() => {
+  initFormInputs()
+  if (!isOwner.value) {
+    getProjects().then((operation) => {
+      metaData.value.projectId = Number(operation[0].value)
+      metaData.value.projectName = operation[0].label
+    })
+  }
+})
+
 async function initFormInputs() {
-  const [inputsGroup, _original] = await getInputsGroup()
+  const [inputsGroup, _original] = await getInputsGroup({}, showToast)
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
   mainSetting.value = [windowInputs]
@@ -87,10 +97,14 @@ async function initFormInputs() {
   onUpdateFinger()
 }
 
-function onUpdateFinger() {
-  ceateRandomFinger(previewInputs.value).then((data) => {
-    Object.assign(original.value, data[0])
-  })
+async function onShuffle() {
+  await onUpdateFinger()
+  showToast(0, $t('指纹刷新成功'))
+}
+
+async function onUpdateFinger() {
+  const data = await ceateRandomFinger(previewInputs.value)
+  Object.assign(original.value, data[0])
 }
 
 async function getUserMaxCount() {
@@ -163,16 +177,6 @@ async function importProfile(params: any) {
   router.replace({ name: 'browser-list' })
   loading.value = false
 }
-
-onBeforeMount(() => {
-  initFormInputs()
-  if (!isOwner.value) {
-    getProjects().then((operation) => {
-      metaData.value.projectId = Number(operation[0].value)
-      metaData.value.projectName = operation[0].label
-    })
-  }
-})
 </script>
 
 <template>
@@ -205,11 +209,6 @@ onBeforeMount(() => {
             </div>
             <div class="multi-block-info">
               {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
-              <!-- <i18n-t :keypath="$t('最多一次可批量创建: {maxWindowCount}. 更多窗口请使用 {importProfiles}.', { maxWindowCount, importProfiles: '{importProfiles}' })" scope="global">
-                <template #importProfiles>
-                  <span class="multi-block-info-jump" @click="tabsValue = 'import'">{{ $t('窗口导入') }}</span>
-                </template>
-              </i18n-t> -->
             </div>
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
@@ -218,7 +217,7 @@ onBeforeMount(() => {
           @create-open="createProfile($event, true)" @create="createProfile($event, false)" />
       </div>
     </div>
-    <previewCard :inputs-group="previewInputs" @shuffle="onUpdateFinger" />
+    <previewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
   </div>
 </template>
 

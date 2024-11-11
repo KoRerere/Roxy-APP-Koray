@@ -4,8 +4,11 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  onShuffle: {
+    type: Function as PropType<() => void>,
+    default: () => () => { },
+  },
 })
-defineEmits(['shuffle'])
 
 const previewData = computed(() => {
   return getPreview(props.inputsGroup.flat())
@@ -62,7 +65,7 @@ const visible = ref(true)
       </div>
     </div>
     <div v-if="visible" class="preview-footer">
-      <RxButton :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="$emit('shuffle')" />
+      <RxButton :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle" />
     </div>
   </div>
 </template>

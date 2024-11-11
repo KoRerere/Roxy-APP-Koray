@@ -91,7 +91,7 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
   return fingerDetail
 }
 
-export async function getInputsGroup(data: any = {}) {
+export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
   const os_map = {
     windows: 'platforms/rx_os_windows',
     linux: 'base/logo',
@@ -213,8 +213,9 @@ export async function getInputsGroup(data: any = {}) {
       icon: 'base/rx_ic_shuffle',
       disabled: true,
       rows: 4,
-      iconClick: () => {
-        setUaWebgl(inputsGroup)
+      iconClick: async () => {
+        await setUaWebgl(inputsGroup)
+        showToast(0, $t('UA刷新成功'))
       },
       preview: {
         label: 'User Agent',
@@ -510,9 +511,10 @@ export async function getInputsGroup(data: any = {}) {
       label: $t('分辨率值'),
       placeholder: $t('请选择分辨率'),
       name: 'resolution',
-      value: data.resolutionX && $dict_map.resolution.find((item: any) => item.value.includes(data.resolutionX) && item.value.includes(data.resolutionY)),
+      value: $dict_map.resolution.find((item: any) => item.value === `${data.resolutionX || 1280} x ${data.resolutionY || 720}`),
       options: $dict_map.resolution,
       virtualScrollerOptions: { itemSize: 38 },
+      filter: false,
       formatValue: (input: any, _inputs: any, formData: any) => {
         const [resolutionX, resolutionY] = input.value.value.split('x')
         Object.assign(formData, {
@@ -606,8 +608,8 @@ export async function getInputsGroup(data: any = {}) {
       icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: initInputVisible(data.webGLInfo, true, true),
-      iconClick: () => {
-        setUaWebgl(inputsGroup)
+      iconClick: async () => {
+        await setUaWebgl(inputsGroup)
       },
     },
     {
@@ -619,8 +621,8 @@ export async function getInputsGroup(data: any = {}) {
       icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: initInputVisible(data.webGLInfo, true, true),
-      iconClick: () => {
-        setUaWebgl(inputsGroup)
+      iconClick: async () => {
+        await setUaWebgl(inputsGroup)
       },
     },
     {

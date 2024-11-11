@@ -6,6 +6,7 @@ import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
@@ -15,6 +16,7 @@ const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
+const userStore = useUserStore()
 
 interface ProxyItem {
   checkChannel?: string
@@ -129,6 +131,13 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
 })
 
 const deleteFailDisabled = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
+
+onBeforeMount(async () => {
+  const $dict_map = await getDictMap()
+  const userConfig = await userStore.getUserConfig()
+  ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
+  ipCheckerConfig.props.options = $dict_map.checkChannel
+})
 
 function parseValue() {
   const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
@@ -269,13 +278,6 @@ function onSave() {
 
   emit('save', list)
 }
-
-onBeforeMount(() => {
-  getDictMap().then((dictMap) => {
-    ipCheckerConfig.value = dictMap.checkChannel[0]
-    ipCheckerConfig.props.options = dictMap.checkChannel
-  })
-})
 </script>
 
 <template>

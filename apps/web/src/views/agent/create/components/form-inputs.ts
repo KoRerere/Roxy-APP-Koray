@@ -1,10 +1,14 @@
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { findInputByName, getDictMap, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
+
+const userStore = useUserStore()
 
 export async function getInputs(data: any = {}) {
   const [showToast] = useResponseToast()
 
+  const userConfig = await userStore.getUserConfig()
   const $dict_map = await getDictMap()
 
   const proxyCategory: string = data.proxyCategory || data.protocol
@@ -13,11 +17,13 @@ export async function getInputs(data: any = {}) {
     {
       type: 'textarea',
       label: $t('智能识别'),
-      placeholder: `${$t('请按以下格式输入代理信息')}:\n${$t('代理主机:端口:用户名:密码[刷新URL]')}\n192.168.0.1:8000:username:password[http://www.example.com]`,
+      // placeholder: `${$t('请按以下格式输入代理信息')}:\n${$t('代理主机:端口:用户名:密码[刷新URL]')}\n192.168.0.1:8000:username:password[http://www.example.com]`,
+      placeholder: $t('代理主机:端口:用户名:密码[刷新URL]'),
       name: 'proxyRules',
-      rows: 4,
+      rows: 2,
       errorMsg: $t('解析错误，请检查格式'),
       invalid: false,
+      size: 'md',
       onBlur: () => {
         const input = inputs.find((item: any) => item.name === 'proxyRules')
         const value = input?.value?.trim()
@@ -53,7 +59,7 @@ export async function getInputs(data: any = {}) {
       name: 'ipType',
       value: data.ipType || $dict_map.ipType[0]?.value,
       options: $dict_map.ipType,
-      size: 'lg',
+      size: 'md',
     },
     {
       label: $t('代理信息'),
@@ -109,6 +115,7 @@ export async function getInputs(data: any = {}) {
       name: 'proxyUserName',
       value: data.proxyUserName ?? '',
       placeholder: $t('请输入用户名'),
+      size: 'md',
       onBlur(event: any) {
         if (event.target.value.trim()) {
           setInputValue(inputs, 'proxyUserName', event.target.value.trim())
@@ -121,6 +128,7 @@ export async function getInputs(data: any = {}) {
       name: 'proxyPassword',
       value: data.proxyPassword ?? '',
       placeholder: $t('请输入密码'),
+      size: 'md',
       onBlur(event: any) {
         if (event.target.value.trim()) {
           setInputValue(inputs, 'proxyPassword', event.target.value.trim())
@@ -135,6 +143,7 @@ export async function getInputs(data: any = {}) {
       placeholder: $t('请输入刷新URL'),
       tooltip: $t('请在填写后点击下方刷新按钮测试'),
       icon: 'base/rx_ic_refresh',
+      size: 'md',
       iconClick: async () => {
         const input = findInputByName(inputs, 'refreshUrl')
         if (input.value) {
@@ -150,12 +159,12 @@ export async function getInputs(data: any = {}) {
       label: $t('IP 检测'),
       type: 'select',
       name: 'checkChannel',
-      value: data.checkChannel || $dict_map.checkChannel[0]?.value,
+      value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel[0]?.value,
       props: {
         options: $dict_map.checkChannel,
         optionValue: 'value',
         filter: false,
-        size: 'lg',
+        size: 'md',
       },
       slot: 'ipchecker',
     },

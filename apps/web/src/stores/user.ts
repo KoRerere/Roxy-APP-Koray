@@ -1,4 +1,4 @@
-import type { UserGetUserInfoListData } from '@roxy/backend-api'
+import type { UserGetUserConfigListData, UserGetUserInfoListData } from '@roxy/backend-api'
 import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -7,12 +7,14 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
+type UserConfig = Partial<UserGetUserConfigListData['data']>
 
 export const useUserStore = defineStore('user', () => {
   const locale = useSimpleLocale()
   const workspaceStore = useWorkspaceStore()
 
   const userInfo = ref<UserInfo>({})
+  const userConfig = ref<UserConfig>()
   const tokenRef = ref('')
   const appVersion = ref('')
   const rememberMe = ref(false)
@@ -65,6 +67,21 @@ export const useUserStore = defineStore('user', () => {
     workspaceStore.resetWorkspace()
   }
 
+  async function getUserConfig() {
+    if (userConfig.value) {
+      return userConfig.value
+    }
+    return updateUserConfig()
+  }
+
+  async function updateUserConfig() {
+    const { code, data } = await API.base.userGetUserConfigList()
+    if (code === 0) {
+      userConfig.value = data
+    }
+    return userConfig.value
+  }
+
   function setToken(token: string) {
     tokenRef.value = token
   }
@@ -84,7 +101,7 @@ export const useUserStore = defineStore('user', () => {
     appVersion.value = version
   })
 
-  return { token: tokenRef, rememberMe, userInfo, password, appVersion, setPassword, clearUserInfo, setToken, getUserInfo }
+  return { token: tokenRef, rememberMe, userInfo, password, appVersion, setPassword, clearUserInfo, setToken, getUserInfo, getUserConfig, updateUserConfig }
 }, {
   persist: true,
 })

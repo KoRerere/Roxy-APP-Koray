@@ -14,7 +14,7 @@ import type { Items, SettingsModule } from './type'
 import FolderDirectory from './folder-directory.vue'
 import UploadAvatar from './upload-avatar.vue'
 
-const { getUserInfo } = useUserStore()
+const { getUserInfo, updateUserConfig } = useUserStore()
 
 const toast = ref()
 
@@ -45,6 +45,7 @@ async function saveUserConfig(item: Items, items: SettingsModule | null = null) 
     toast.value?.(code, msg)
     if (code === 0) {
       electronAPI.send('app:saveSoftConfig', { [item.name as any]: value })
+      updateUserConfig()
     }
 
     if (items && item.name === 'systemProxySwitch') {
@@ -153,7 +154,6 @@ export async function getProfilePanel(data?: any): Promise<SettingsModule> {
 export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
   // const $dict_map = await getDictMap()
   const softConfig = await electronAPI.send('app:getSoftConfig')
-  console.log('🚀 ~ getPreferencesPanel ~ softConfig:', softConfig)
   return {
     title: $t('软件设置'),
     description: $t('设置您的客户端使用偏好'),
