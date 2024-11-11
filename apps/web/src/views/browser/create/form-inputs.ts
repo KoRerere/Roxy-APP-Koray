@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, getDictMap, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
@@ -91,7 +91,7 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
   return fingerDetail
 }
 
-export function getInputsGroup(data: any = {}) {
+export async function getInputsGroup(data: any = {}) {
   const os_map = {
     windows: 'platforms/rx_os_windows',
     linux: 'base/logo',
@@ -102,11 +102,7 @@ export function getInputsGroup(data: any = {}) {
 
   const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
 
-  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
-    get(target, key) {
-      return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
-    },
-  })
+  const $dict_map = await getDictMap()
 
   const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, label, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
 

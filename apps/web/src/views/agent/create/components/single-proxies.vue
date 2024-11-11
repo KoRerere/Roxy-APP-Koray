@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import RemarkIcon from '/@/components/remark-icon'
 import { getFormData } from '/@/utils'
-import { getInputs } from './form-inputs'
-import ProxiesForm from './proxies-form.vue'
+import { getInputs } from '/@/views/agent/create/components/form-inputs'
+import ProxiesForm from '/@/views/agent/create/components/proxies-form.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 
-const formInputs: any = ref(getInputs())
+const formInputs = ref()
 const original = ref()
 const remark = ref()
 
@@ -22,6 +22,10 @@ function save() {
     protocol: formData.proxyCategory, // 兼容新版接口字段名 protocol
   }])
 }
+
+onBeforeMount(async () => {
+  formInputs.value = await getInputs()
+})
 </script>
 
 <template>

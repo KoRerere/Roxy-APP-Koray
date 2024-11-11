@@ -55,21 +55,19 @@ function oldFieldsFormat() {
   })
 }
 
-onBeforeMount(() => {
-  API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
-    .then(({ data: { rows: [data] } }) => {
-      const [_inputsGroup, _original] = getInputsGroup(data)
-      inputsGroup.value = _inputsGroup
-      original.value = _original
-      oldFieldsFormat()
-      windowName.value = data.windowName as string
-      metaData.value = {
-        projectName: data.projectName,
-        projectId: data.projectId as number | undefined,
-        labelIds: data.labelIds,
-        windowRemark: data.windowRemark,
-      }
-    })
+onBeforeMount(async () => {
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  const [_inputsGroup, _original] = await getInputsGroup(data)
+  inputsGroup.value = _inputsGroup
+  original.value = _original
+  oldFieldsFormat()
+  windowName.value = data.windowName as string
+  metaData.value = {
+    projectName: data.projectName,
+    projectId: data.projectId as number | undefined,
+    labelIds: data.labelIds,
+    windowRemark: data.windowRemark,
+  }
 })
 </script>
 

@@ -6,7 +6,7 @@ import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { concurrentControl, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
+import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
@@ -32,11 +32,15 @@ interface ProxyItem {
   [key: string]: any
 }
 
-const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
-  get(target, key) {
-    return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
-  },
-})
+interface IpCheckerConfig {
+  value: {
+    value: string
+    label: string
+    [key: string]: any
+  } | undefined
+  props: any
+  onChange: () => void
+}
 
 const proxiesText = ref('')
 const dataList = ref<ProxyItem[]>([])
@@ -107,19 +111,19 @@ const columns = ref([
   },
 ])
 
-const ipCheckerConfig = reactive({
-  value: $dict_map.checkChannel[0],
+const ipCheckerConfig = reactive<IpCheckerConfig>({
+  value: undefined,
   props: {
     name: 'checkChannel',
-    options: $dict_map.checkChannel,
+    options: undefined,
     filter: false,
     size: 'xxs' as any,
     icon: 'base/rx_ic_network' as any,
   },
   onChange() {
     dataList.value.forEach((item: any) => {
-      item.checkChannel = ipCheckerConfig.value.value
-      item.checkChannelValue = ipCheckerConfig.value.label
+      item.checkChannel = ipCheckerConfig.value?.value
+      item.checkChannelValue = ipCheckerConfig.value?.label
     })
   },
 })
@@ -140,8 +144,8 @@ function parseValue() {
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
       return {
-        checkChannel: ipCheckerConfig.value.value,
-        checkChannelValue: ipCheckerConfig.value.label,
+        checkChannel: ipCheckerConfig.value?.value,
+        checkChannelValue: ipCheckerConfig.value?.label,
         ipType,
         protocol: protocol?.toLocaleUpperCase(),
         host,
@@ -265,6 +269,13 @@ function onSave() {
 
   emit('save', list)
 }
+
+onBeforeMount(() => {
+  getDictMap().then((dictMap) => {
+    ipCheckerConfig.value = dictMap.checkChannel[0]
+    ipCheckerConfig.props.options = dictMap.checkChannel
+  })
+})
 </script>
 
 <template>

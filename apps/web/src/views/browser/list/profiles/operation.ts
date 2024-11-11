@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { getFormData, setInputValueByFormData } from '/@/utils'
+import { getDictMap, getFormData, setInputValueByFormData } from '/@/utils'
 
 const role = useRoleStore()
 
@@ -23,7 +23,7 @@ export function tableFilters(_params: any = {}) {
 }
 
 export async function getCustomFilters(params: any = {}) {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+  const $dict_map = await getDictMap()
 
   const inputs = [
     {

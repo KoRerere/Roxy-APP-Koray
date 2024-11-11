@@ -137,7 +137,7 @@ defineExpose({
         </InputGroupAddon>
         <InputText v-model="search" :placeholder="$t('搜索您的常用扩展')" @input="searchPlugins" />
       </InputGroup>
-      <div class="flex-1 overflow-y-auto dynamic-padding">
+      <div class="flex-1 overflow-y-auto list-container dynamic-padding">
         <div v-for="item in extensionList" :key="item.categoryId" class="list-group">
           <div :id="`category_${item.categoryId}`" class="list-group-title">
             {{ item.categoryName }}
@@ -230,6 +230,12 @@ defineExpose({
 
 .list {
   gap: 40px;
+
+  &-container {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 
   &-group {
     margin-top: 40px;

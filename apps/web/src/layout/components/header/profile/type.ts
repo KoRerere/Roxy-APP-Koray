@@ -12,6 +12,7 @@ export interface Items {
   props?: any
   component?: any
   afterComponent?: any
+  hide?: boolean
   formatValue?: (item: Items) => any
   vaildator?: (item: Items) => boolean
 }

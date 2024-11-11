@@ -26,12 +26,16 @@ const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
 
-const filtersMenu = ref(getCustomFilters())
+const filtersMenu = ref()
 const dataList = ref()
 
 const drawer: any = reactive({
   data: null,
   visible: false,
+})
+
+onBeforeMount(async () => {
+  filtersMenu.value = await getCustomFilters()
 })
 
 async function getTableList(params: any) {

@@ -1,6 +1,5 @@
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
-import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
@@ -10,6 +9,7 @@ import { settingAppearance } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
+import { getDictMap } from '/@/utils'
 import type { Items, SettingsModule } from './type'
 import FolderDirectory from './folder-directory.vue'
 import UploadAvatar from './upload-avatar.vue'
@@ -38,7 +38,7 @@ async function updateUserName(item: Items) {
   }
 }
 
-async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPanel> | null = null) {
+async function saveUserConfig(item: Items, items: SettingsModule | null = null) {
   if (!item.vaildator || item.vaildator(item)) {
     const value = item.formatValue?.(item) ?? item.value
     const { code, msg } = await API.base.userSetUserConfigCreate({ [item.name as any]: value })
@@ -49,7 +49,10 @@ async function saveUserConfig(item: Items, items: ReturnType<typeof getNetworkPa
 
     if (items && item.name === 'systemProxySwitch') {
       const v2 = items.list[0].items.find((i: any) => i.name === 'v2raySwitch')
-      v2.hide = !value
+
+      if (v2) {
+        v2.hide = !value
+      }
     }
   }
 }
@@ -74,11 +77,6 @@ async function detectSystemNetwork(item: Items) {
   }
 }
 
-// async function selectDir(item: Items) {
-//   const dirPath = await window.electronAPI.send('dialog:selectDir')
-//   item.value = dirPath
-// }
-
 export function getSettings() {
   const [showToast] = useResponseToast()
   toast.value = showToast
@@ -101,7 +99,7 @@ export function getSettings() {
   ] as const
 }
 
-export function getProfilePanel(data?: any): SettingsModule {
+export async function getProfilePanel(data?: any): Promise<SettingsModule> {
   return {
     title: $t('个人信息'),
     description: $t('设置您的账号信息和邮箱'),
@@ -152,8 +150,10 @@ export function getProfilePanel(data?: any): SettingsModule {
   }
 }
 
-export function getPreferencesPanel(data?: any): SettingsModule {
-  // const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
+  // const $dict_map = await getDictMap()
+  const softConfig = await electronAPI.send('app:getSoftConfig')
+  console.log('🚀 ~ getPreferencesPanel ~ softConfig:', softConfig)
   return {
     title: $t('软件设置'),
     description: $t('设置您的客户端使用偏好'),
@@ -226,7 +226,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: $t('缓存目录'),
             text: $t('设置 RoxyBrowser 缓存路径'),
             name: 'browserCacheRootDir',
-            value: data?.browserCacheRootDir ?? '',
+            value: softConfig.browserCacheRootDir ?? '',
             props: {
               disabled: true,
             },
@@ -240,7 +240,7 @@ export function getPreferencesPanel(data?: any): SettingsModule {
             label: $t('系统日志'),
             name: 'systemLogDir',
             value: '',
-            component: ({ item, ...props }: { item: Items, props: any }) => {
+            component: () => {
               return (
                 <RxButton severity="secondary" outlined onClick={() => electronAPI.send('app:showLogDir')}>{$t('查看详情')}</RxButton>
               )
@@ -272,8 +272,8 @@ export function getPreferencesPanel(data?: any): SettingsModule {
   }
 }
 
-export function getNetworkPanel(data?: any): SettingsModule {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+export async function getNetworkPanel(data?: any): Promise<SettingsModule> {
+  const $dict_map = await getDictMap()
   const items = reactive({
     title: $t('网络设置'),
     description: $t('设置您的客户端网络连接，包括白名单和默认 IP 查询渠道'),

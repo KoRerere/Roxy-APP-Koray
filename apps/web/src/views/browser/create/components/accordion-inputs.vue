@@ -112,7 +112,10 @@ function onCopy(dirId: string) {
                 </div>
               </template>
               <template #urls="{ input }">
-                <urlsItem v-model="input.value" v-bind="input" />
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+                </div>
               </template>
               <template #windowSize="{ input }">
                 <div class="flex">

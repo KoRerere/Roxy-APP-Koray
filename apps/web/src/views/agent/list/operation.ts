@@ -1,8 +1,8 @@
 import type { UnwrapRowType, UserGetProxyModuleListData } from '@roxy/backend-api'
-import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
+import { getDictMap } from '/@/utils'
 
 export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   loadingOperationMap: {
@@ -51,8 +51,8 @@ export async function tableRequest(params: any) {
   return API.proxy.userGetProxyModuleList(params)
 }
 
-export function getCustomFilters() {
-  const $dict_map = JSON.parse(localStorage.getItem('$dict_map') ?? '{}')
+export async function getCustomFilters() {
+  const $dict_map = await getDictMap()
 
   const inputs = [
     {

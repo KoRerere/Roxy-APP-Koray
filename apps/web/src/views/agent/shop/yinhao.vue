@@ -1,8 +1,8 @@
 <script setup>
-import { getDictMap } from '/@/utils'
+import { getDictMap as scvrrrrrrr } from '/@/utils'
 
 async function testDict () {
-  const dictMap = await getDictMap()
+  const dictMap = await scvrrrrrrr()
   console.log('🚀 ~ testDict ~ dictMap:', dictMap)
 }
 </script>

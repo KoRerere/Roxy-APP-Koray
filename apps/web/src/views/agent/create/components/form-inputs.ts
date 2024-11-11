@@ -1,15 +1,11 @@
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { findInputByName, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
+import { findInputByName, getDictMap, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
 
-export function getInputs(data: any = {}) {
+export async function getInputs(data: any = {}) {
   const [showToast] = useResponseToast()
 
-  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
-    get(target, key) {
-      return target[key] || [] // 简易兜底处理，后续优化获取字典逻辑
-    },
-  })
+  const $dict_map = await getDictMap()
 
   const proxyCategory: string = data.proxyCategory || data.protocol
 

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { getFormData } from '/@/utils'
-import { getInputs } from './components/form-inputs'
-import ProxiesForm from './components/proxies-form.vue'
+import { getInputs } from '/@/views/agent/create/components/form-inputs'
+import ProxiesForm from '/@/views/agent/create/components/proxies-form.vue'
 
 const props = defineProps({
   data: {
@@ -11,7 +11,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['confirm'])
 
-const formInputs = ref(getInputs(props.data || {}))
+const formInputs = ref()
 const original = ref(props.data)
 
 function onConfirm() {
@@ -23,6 +23,9 @@ function onConfirm() {
     console.log(error)
   }
 }
+onBeforeMount(async () => {
+  formInputs.value = await getInputs(props.data || {})
+})
 </script>
 
 <template>

@@ -5,7 +5,7 @@ type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends RadioButtonProps {
   size?: Size
-  options: Array<{
+  options?: Array<{
     value: string | number | boolean
     label: string
     afterRender?: any

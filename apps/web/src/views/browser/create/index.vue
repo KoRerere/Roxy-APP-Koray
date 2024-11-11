@@ -77,8 +77,8 @@ watch(() => tabsValue.value, (value: any) => {
   onUpdateFinger()
 })
 
-function initFormInputs() {
-  const [inputsGroup, _original] = getInputsGroup()
+async function initFormInputs() {
+  const [inputsGroup, _original] = await getInputsGroup()
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
   mainSetting.value = [windowInputs]

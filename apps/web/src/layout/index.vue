@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import type { UserGetDictVersionListData, UserGetSystemDictV2CreateData } from '@roxy/backend-api'
-import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { isEmptyValue } from '/@/utils'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
@@ -11,42 +8,6 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
 const loading = ref<boolean>(false)
-
-type DictMap = UserGetDictVersionListData['data']
-type DictItem = UserGetSystemDictV2CreateData['data'][number]
-
-async function getDictVersion() {
-  const { data: newVersion } = await API.base.userGetDictVersionList()
-  const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
-
-  const needUpdateDict = isEmptyValue(oldVersion)
-    ? newVersion
-    : Object.fromEntries(Object.entries(newVersion).filter(([key, value]) => oldVersion[key as keyof DictMap] !== value))
-
-  if (!isEmptyValue(needUpdateDict)) {
-    localStorage.setItem('$dict_version', JSON.stringify(newVersion))
-    getDictData(Object.keys(needUpdateDict))
-  }
-}
-
-async function getDictData(type: any) {
-  const { data } = await API.base.userGetSystemDictV2Create({ type })
-  const dictMap = data.reduce((map, item) => {
-    const type = item.type.includes('osVersion')
-      ? item.type.toLocaleLowerCase().replace('-', '_')
-      : item.type;
-
-    (map[type] || (map[type] = [])).push(item)
-    return map
-  }, {} as Record<string, DictItem[]>)
-
-  const oldDict = JSON.parse(localStorage.getItem('$dict_map') || '{}')
-  localStorage.setItem('$dict_map', JSON.stringify(Object.assign(oldDict, dictMap)))
-}
-
-onMounted(() => {
-  getDictVersion()
-})
 
 watch(() => currentWorkspace.value?.id, () => {
   loading.value = true

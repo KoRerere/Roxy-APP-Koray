@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import InputDate from './input-date.vue'
 import InputLabel from './input-label.vue'
 import RxInputNumber from './rx-input-number.vue'
@@ -7,23 +7,18 @@ import RxInputSelect from './rx-input-select.vue'
 import RxInputText from './rx-input-text.vue'
 import RxInputTextarea from './rx-input-textarea.vue'
 
+interface Props {
+  name: string
+  type?: string
+  label?: string
+  tooltip?: string
+  labelPosition?: 'top' | 'left'
+}
+
 defineOptions({
   inheritAttrs: false,
 })
-
-defineProps({
-  name: String,
-  label: String,
-  tooltip: String,
-  type: {
-    type: String,
-    default: 'text',
-  },
-  labelPosition: {
-    type: String,
-    default: 'top',
-  },
-})
+const { name, label, tooltip, type = 'text', labelPosition = 'top' } = defineProps<Props>()
 
 defineEmits(['change'])
 </script>

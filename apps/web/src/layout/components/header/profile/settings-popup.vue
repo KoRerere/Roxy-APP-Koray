@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
@@ -35,11 +34,9 @@ const menuList = ref(
 
 async function getUserConfig() {
   const { data } = await API.base.userGetUserConfigList()
-  const { browserCacheRootDir } = await electronAPI.send('app:getSoftConfig')
-  data.browserCacheRootDir = browserCacheRootDir
-  settingsPanel.profiles = getProfilePanel(toRaw(userStore.userInfo))
-  settingsPanel.preferences = getPreferencesPanel(data)
-  settingsPanel.network = getNetworkPanel(data)
+  settingsPanel.profiles = await getProfilePanel(toRaw(userStore.userInfo))
+  settingsPanel.preferences = await getPreferencesPanel(data)
+  settingsPanel.network = await getNetworkPanel(data)
   active.panel = settingsPanel[active.key]
 }
 
@@ -47,7 +44,7 @@ function closePopup() {
   dialogRef.value.close()
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   active.key = dialogRef.value.data.props.activeKey
   getUserConfig()
 })
