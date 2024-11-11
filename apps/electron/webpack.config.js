@@ -7,7 +7,7 @@ module.exports = {
   target: 'electron-main', // 目标环境设置为 Node.js
   entry: {
     main: './dist-vite/index.cjs',
-    extensionWorker: './dist-vite/extensionWorker.cjs',
+    fileWorker: './dist-vite/fileWorker.cjs',
   },
   output: {
     path: path.resolve(__dirname, 'dist'), // 输出目录

@@ -1,9 +1,9 @@
 import archiver from 'archiver'
 import axios from 'axios'
-import compressing from 'compressing'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { access, mkdir, rm, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { fileOperations } from '/@/modules/fileOperations'
 
 /**
  * 文件或目录是否存在
@@ -78,7 +78,7 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
  */
 export async function unzipFile(zipFilePath: string, outputDir?: string) {
   outputDir ||= zipFilePath.replace(/\.zip$/, '')
-  await compressing.zip.uncompress(zipFilePath, outputDir)
+  await fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
 }
 
 /** 压缩给定的文件或目录 */

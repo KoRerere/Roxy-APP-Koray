@@ -6,11 +6,11 @@ import { dialog } from 'electron'
 import crypto from 'node:crypto'
 import { readdir, readFile, rm, stat } from 'node:fs/promises'
 import path from 'node:path'
-import { Worker } from 'node:worker_threads'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '/@/modules/extension/types'
 import { API } from '/@/api'
 import { appConfig, mediaProtocolName, ossObject } from '/@/constants/'
 import { getMainWindow } from '/@/modules/app/mainWindow'
+import { fileOperations } from '/@/modules/fileOperations'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 
@@ -178,7 +178,7 @@ export const extensionManager = new class ExtensionManager {
       const pluginStat = await stat(pluginDir)
 
       if (pluginStat.size > 1024 * 1024 * 100) {
-        resolve({ type: 'warn', message: $t('扩展大小不能超过100MB') })
+        resolve({ type: 'warn', message: $t('扩展大小不能超过 100MB') })
         return promise
       }
 
@@ -205,10 +205,6 @@ export const extensionManager = new class ExtensionManager {
         return promise
       }
 
-      // 这里使用动态 import 模块，是为了利用 vite 打包时的代码分割特性
-      await import('./extensionWorker')
-      const worker = new Worker(path.join(__dirname, 'extensionWorker.cjs'))
-
       if (fileExtname === '.zip') {
         const tempDir = path.join(appConfig.tempDir, 'zip')
         const { name } = path.parse(pluginDir)
@@ -216,75 +212,40 @@ export const extensionManager = new class ExtensionManager {
 
         await fileExists(tempDir, true)
 
-        worker.on('message', async (result) => {
-          const { type, data } = result
+        try {
+          const extractDir = await fileOperations.executeTask('decompress', { src: pluginDir, dest: destDir })
+          console.log('extractPlugin dir', extractDir)
 
-          if (type === 'extractPlugin') {
-            console.log('extractPlugin', data)
-            try {
-              const pluginMeta = await getPluginMeta(destDir)
-              resolve({ type: 'success', data: pluginMeta })
-            }
-            catch (error) {
-              resolve({ type: 'error', data: error })
-            }
-            finally {
-              worker.terminate()
-            }
-          }
-          else if (type === 'error') {
-            resolve({ type: 'error', data })
-            worker.terminate()
-          }
-        })
-
-        worker.on('error', (error) => {
-          console.error('Worker error:', error)
+          const pluginMeta = await getPluginMeta(destDir)
+          resolve({ type: 'success', data: pluginMeta })
+        }
+        catch (error) {
           resolve({ type: 'error', data: error })
-          worker.terminate()
-        })
-
-        worker.postMessage({ type: 'extractPlugin', data: { pluginDir, destDir: tempDir } })
+        }
 
         return promise
       }
 
       console.log('pluginDir', pluginDir)
 
-      worker.on('message', async (result) => {
-        const { type, data } = result
-
-        if (type === 'calculatePluginSize') {
-          console.log('calculatePluginSize', data)
-          if (data > 1024 * 1024 * 100) {
-            resolve({ type: 'warn', message: '插件大小不能超过100MB' })
-          }
-          else {
-            try {
-              const pluginMeta = await getPluginMeta(pluginDir)
-              resolve({ type: 'success', data: pluginMeta })
-            }
-            catch (error) {
-              resolve({ type: 'error', data: error })
-            }
-            finally {
-              worker.terminate()
-            }
-          }
+      // 计算插件大小
+      const pluginSize = await fileOperations.executeTask('getCompressedSize', pluginDir)
+      console.log('calculatePluginSize', pluginSize)
+      if (pluginSize > 1024 * 1024 * 100) {
+        resolve({ type: 'warn', message: $t('扩展大小不能超过 100MB') })
+      }
+      else {
+        try {
+          const pluginMeta = await getPluginMeta(pluginDir)
+          resolve({ type: 'success', data: pluginMeta })
         }
-      })
-
-      worker.on('error', (error) => {
-        console.error('Worker error:', error)
-        resolve({ type: 'error', data: error })
-        worker.terminate()
-      })
-
-      // 传递插件目录给子线程, 让子线程计算插件大小
-      worker.postMessage({ type: 'calculatePluginSize', data: pluginDir })
+        catch (error) {
+          resolve({ type: 'error', data: error })
+        }
+      }
     }
     else {
-      resolve({ type: 'warn', message: '未选择插件目录' })
+      resolve({ type: 'warn', message: $t('未选择插件目录') })
     }
 
     return promise
