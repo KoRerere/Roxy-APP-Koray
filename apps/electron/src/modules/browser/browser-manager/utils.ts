@@ -390,14 +390,18 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       // 是否为直连
       const isNoProxy = type.toLocaleLowerCase() === 'noproxy'
 
+      if (isNoProxy && !isUseSystemProxy) {
+        return
+      }
+
       return {
         // 代理类型 http https,socks5
         // 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
-        type: (isUseSystemProxy || systemProxyAddress) && isNoProxy ? 'http' : type.toLocaleLowerCase(),
+        type: isUseSystemProxy && isNoProxy ? 'http' : type.toLocaleLowerCase(),
         // 代理主机
-        host: isUseSystemProxy ? '127.0.0.1' : isNoProxy ? systemProxyHost : host,
+        host: isUseSystemProxy ? '127.0.0.1' : host,
         // 代理端口
-        port: Number(isUseSystemProxy ? store.luminetProxyPort : isNoProxy ? systemProxyPort : port),
+        port: isUseSystemProxy ? store.roxynetProxyPort : port,
         // 用户名 ，选填
         username: isUseSystemProxy ? winInfo.dirId : proxyUserName,
         // 密码，选填

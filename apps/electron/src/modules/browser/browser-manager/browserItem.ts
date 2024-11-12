@@ -6,8 +6,9 @@ import { API } from '/@/api'
 import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
+import { fileOperations } from '/@/modules/fileOperations'
 import { delLuminetProxy } from '/@/modules/roxynet'
-import { aliOSS, filesToZip, proxyDetection } from '/@/utils'
+import { aliOSS, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
@@ -173,15 +174,15 @@ export class BrowserItem {
     const { id, syncValue, ossDirPath } = this.winInfo
 
     const needSyncFiles = this.needSyncFiles.map(url => ({
-      path: join(this.userDataDir, url),
-      destPath: url,
+      src: join(this.userDataDir, url),
+      dest: url,
     }))
 
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     let newVersion = syncValue?.version || 1
     try {
-      await filesToZip(needSyncFiles, outputZipPath)
-      console.log('filesToZip success')
+      const outputDist = await fileOperations.executeTask('compressFiles', { files: needSyncFiles, dest: outputZipPath })
+      console.log('compressFiles success', outputDist)
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)

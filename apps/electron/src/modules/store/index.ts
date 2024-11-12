@@ -28,7 +28,7 @@ export interface StoreType {
   /** luminet 本地 http 服务端口 */
   luminetLocalHttpPort?: number
   /** luminet 代理端口 */
-  luminetProxyPort?: number
+  roxynetProxyPort?: number
   /** luminet v2ray 兼容模式 */
   v2raySwitch?: boolean
   /** APP 本地服务端口 */

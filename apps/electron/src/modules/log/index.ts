@@ -26,8 +26,8 @@ export function setupLog() {
     const formattedDate = format(Date.now(), 'yyyy-MM-dd')
     return join(appConfig.logsDir, `${formattedDate}.log`)
   }
-  // 限制文件大小，2 mb 之后会自动切割日志
-  log.transports.file.maxSize = 2 * 1024 * 1024
+  // 限制文件大小，1 mb 之后会自动切割日志
+  log.transports.file.maxSize = 1 * 1024 * 1024
   log.transports.file.archiveLogFn = (oldLogFile) => {
     const oldLogFilePath = oldLogFile.toString()
     const info = parse(oldLogFilePath)

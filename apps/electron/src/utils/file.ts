@@ -1,4 +1,3 @@
-import archiver from 'archiver'
 import axios from 'axios'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { access, mkdir, rm, stat } from 'node:fs/promises'
@@ -79,68 +78,4 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
 export async function unzipFile(zipFilePath: string, outputDir?: string) {
   outputDir ||= zipFilePath.replace(/\.zip$/, '')
   await fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
-}
-
-/** 压缩给定的文件或目录 */
-export async function filesToZip(files: { path: string, destPath: string }[], outputPath: string) {
-  console.log('files', files)
-  console.log('outputPath', outputPath)
-  const { promise, resolve, reject } = Promise.withResolvers()
-  // create a file to stream archive data to.
-  await fileExists(dirname(outputPath), true)
-  const output = createWriteStream(outputPath)
-  const archive = archiver('zip', {
-    zlib: { level: 9 }, // Sets the compression level.
-  })
-
-  // listen for all archive data to be written
-  // 'close' event is fired only when a file descriptor is involved
-  output.on('close', () => {
-    console.log(`${archive.pointer()} total bytes`)
-    console.log('archiver has been finalized and the output file descriptor has closed.')
-    resolve(archive.pointer())
-  })
-
-  // This event is fired when the data source is drained no matter what was the data source.
-  // It is not part of this library but rather from the NodeJS Stream API.
-  // @see: https://nodejs.org/api/stream.html#stream_event_end
-  output.on('end', () => {
-    resolve(true)
-  })
-
-  // good practice to catch warnings (ie stat failures and other non-blocking errors)
-  archive.on('warning', (err) => {
-    if (err.code === 'ENOENT') {
-      // log warning
-    }
-    else {
-      // throw error
-      reject(err)
-    }
-  })
-
-  // good practice to catch this error explicitly
-  archive.on('error', (err) => {
-    // console.log('archive error', err)
-    reject(err)
-  })
-
-  // pipe archive data to the file
-  archive.pipe(output)
-
-  const promiseArr = files.map(async (item) => {
-    const fileInfo = await stat(item.path)
-    if (fileInfo.isDirectory()) {
-      archive.directory(item.path, item.destPath || false)
-    }
-    else if (fileInfo.isFile()) {
-      archive.append(createReadStream(item.path), { name: item.destPath })
-    }
-  })
-
-  const res = await Promise.allSettled(promiseArr)
-  console.log('结果', res)
-  archive.finalize()
-
-  return promise
 }

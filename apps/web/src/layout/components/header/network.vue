@@ -11,7 +11,7 @@ const proxyInfo = ref({
 
 async function detectNetwork() {
   loading.value = true
-  const result = await electronAPI.send('proxy:detectNetwork', 'system').finally(() => {
+  const result = await electronAPI.send('proxy:detectNetwork').finally(() => {
     loading.value = false
   })
   proxyInfo.value.city = `${result.country_code}/${result.city}`

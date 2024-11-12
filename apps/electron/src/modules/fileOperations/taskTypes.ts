@@ -1,15 +1,17 @@
 /** 定义任务类型与返回值类型的映射 */
 export interface TaskMap {
-  /**  压缩任务，传入 TaskOptions，返回文件路径 */
-  compress: (payload: TaskOptions) => string
-  /**  解压任务，传入 TaskOptions，返回文件路径  */
-  decompress: (payload: TaskOptions) => string
+  /**  压缩任务，返回压缩后的文件路径 */
+  compress: (payload: ZipPayload) => string
+  /**  压缩指定的文件集合，返回压缩后的文件路径 */
+  compressFiles: (payload: { files: ZipPayload[], dest: string }) => string
+  /**  解压任务，返回解压后文件路径  */
+  decompress: (payload: ZipPayload) => string
   /**  获取压缩文件大小，传入目标文件路径，返回文件大小  */
   getCompressedSize: (dest: string) => number
 }
 
 /** 任务选项，定义压缩和解压任务所需的参数 */
-export interface TaskOptions {
+export interface ZipPayload {
   src: string
   dest: string
 }

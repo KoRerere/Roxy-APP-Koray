@@ -170,7 +170,7 @@ ipcMain.on('app:saveSoftConfig', (config) => {
     }
     else {
       // 这里不需要关闭 luminet，因为关闭 luminet 会导致已打开的窗口的系统代理失效
-      // stopLuminet()
+      stopLuminet()
     }
   }
   else if (store.v2raySwitch !== originV2raySwitch) {

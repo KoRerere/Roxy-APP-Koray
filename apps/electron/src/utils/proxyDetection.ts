@@ -69,7 +69,7 @@ export function tryRefreshUrl(refreshUrl: string) {
 
 /** 代理检测 */
 export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams): Promise<ProxyDetectionResult> {
-  const { dirId, checkChannel, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
+  const { dirId, outerParamFirst, protocol, proxyCategory = protocol || 'noproxy', ipType, host, port, proxyUserName, proxyPassword } = proxyDetectionParams
   const systemProxySwitch = Reflect.has(proxyDetectionParams, 'systemProxySwitch') ? proxyDetectionParams.systemProxySwitch : store.systemProxySwitch
 
   if (systemProxySwitch && !dirId) {
@@ -78,7 +78,6 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
   const systemProxyAddress = await getSystemProxy()
-  const [systemProxyHost = '', systemProxyPort = ''] = systemProxyAddress?.split(':') || []
   const isUseSystemProxy = getLuminetProcess() && systemProxySwitch && systemProxyAddress
 
   if (isUseSystemProxy) {
@@ -118,10 +117,11 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     __protocol = 'HTTP'
   }
 
+  const checkChannel = isNoProxy ? store.ipChecker : proxyDetectionParams.checkChannel
   const params: ProxyDetectionParams = {
     proxyCategory: __protocol,
-    host: isUseSystemProxy ? '127.0.0.1' : isNoProxy ? systemProxyHost : host,
-    port: isUseSystemProxy ? store.luminetProxyPort : isNoProxy ? systemProxyPort : port,
+    host: isUseSystemProxy ? '127.0.0.1' : host,
+    port: isUseSystemProxy ? store.roxynetProxyPort : port,
     proxyUserName: isUseSystemProxy ? dirId : proxyUserName,
     proxyPassword: isUseSystemProxy ? dirId : proxyPassword,
     checkChannel: getCheckUrl(checkChannel, ipType) || getDefaultCheckChannel(),
@@ -238,11 +238,13 @@ async function checkHttpProxy(winInfo: ProxyDetectionParams) {
 
   const api = axios.create({
     timeout: TIMEOUT,
-    proxy: {
-      host,
-      port: Number(port),
-      auth,
-    },
+    proxy: host
+      ? {
+        host,
+        port: Number(port),
+        auth,
+      }
+      : undefined,
   })
   api.interceptors.request.use((config) => {
     config.maxRedirects = 0
@@ -286,14 +288,12 @@ async function checkSocks5Proxy(parmes: any) {
 }
 
 export async function detectNetwork(type?: 'local' | 'system') {
+  type ||= store.systemProxySwitch ? 'system' : 'local'
   if (type === 'system') {
     const systemProxy = await getSystemProxy()
     console.log('systemProxy', systemProxy)
     const [host, port] = systemProxy.split(':')
-    return proxyDetection({ host, port, proxyCategory: 'HTTP', systemProxySwitch: false }).catch(() => {
-      // 如果系统代理检测失败，则走本地网络检测
-      return proxyDetection({ systemProxySwitch: false, proxyCategory: 'noproxy' })
-    })
+    return proxyDetection({ host, port, proxyCategory: 'HTTP', systemProxySwitch: false })
   }
   else {
     return proxyDetection({ systemProxySwitch: false, outerParamFirst: true, proxyCategory: 'noproxy' })

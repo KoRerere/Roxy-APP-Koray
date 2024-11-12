@@ -5,7 +5,7 @@ export function setupLuminetReceiver(app: express.Express) {
   // 上报代理端口（同时http和socks5协议）
   app.get('/tunnel/report_proxy_server', (req, res) => {
     console.log('report_proxy_server', req.query.port)
-    store.luminetProxyPort = Number(req.query.port)
+    store.roxynetProxyPort = Number(req.query.port)
     res.json(req.query)
   })
 
