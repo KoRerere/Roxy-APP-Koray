@@ -42,7 +42,7 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
     onDownloadProgress: (progressEvent) => {
       const totalLength = progressEvent.total
       const progress = Math.round((progressEvent.loaded * 100) / totalLength!)
-      console.log(`Download progress: ${progress}%`)
+      // console.log(`Download progress: ${progress}%`)
       downloadProgress?.(progress)
     },
   })

@@ -11,6 +11,7 @@ const proxyInfo = ref({
 
 async function detectNetwork() {
   loading.value = true
+  await electronAPI.send('proxy:getSystemProxy')
   const result = await electronAPI.send('proxy:detectNetwork').finally(() => {
     loading.value = false
   })
@@ -21,7 +22,7 @@ async function detectNetwork() {
 }
 
 window.addEventListener('online', detectNetwork)
-window.addEventListener('offline', detectNetwork)
+// window.addEventListener('offline', detectNetwork)
 detectNetwork()
 </script>
 

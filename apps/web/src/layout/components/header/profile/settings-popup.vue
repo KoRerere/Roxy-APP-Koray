@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
@@ -86,7 +87,9 @@ onBeforeMount(() => {
                     <div class="panel-item-label">
                       {{ subItem.label }}
                     </div>
-                    <div class="panel-item-text" v-html="subItem.text" />
+                    <div class="panel-item-text">
+                      <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
+                    </div>
                   </div>
                   <div class="flex-1 flex justify-end w-full">
                     <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />

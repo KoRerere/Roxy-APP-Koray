@@ -27,21 +27,21 @@ export function setupLog() {
     return join(appConfig.logsDir, `${formattedDate}.log`)
   }
   // 限制文件大小，1 mb 之后会自动切割日志
-  log.transports.file.maxSize = 1 * 1024 * 1024
-  log.transports.file.archiveLogFn = (oldLogFile) => {
-    const oldLogFilePath = oldLogFile.toString()
-    const info = parse(oldLogFilePath)
+  // log.transports.file.maxSize = 1 * 1024 * 1024
+  // log.transports.file.archiveLogFn = (oldLogFile) => {
+  //   const oldLogFilePath = oldLogFile.toString()
+  //   const info = parse(oldLogFilePath)
 
-    try {
-      const maxCount = getMaxLogCount(info.dir, info.name)
-      // 重命名日志文件
-      renameSync(oldLogFilePath, join(info.dir, `${info.name}.old.${maxCount + 1}${info.ext}`))
-    }
-    catch (e) {
-      console.warn('Could not rotate log', e)
-      log.error('Could not rotate log', e)
-    }
-  }
+  //   try {
+  //     const maxCount = getMaxLogCount(info.dir, info.name)
+  //     // 重命名日志文件
+  //     renameSync(oldLogFilePath, join(info.dir, `${info.name}.old.${maxCount + 1}${info.ext}`))
+  //   }
+  //   catch (e) {
+  //     console.warn('Could not rotate log', e)
+  //     log.error('Could not rotate log', e)
+  //   }
+  // }
 
   // 收集渲染进程中 console.log 写入的日志
   // log.initialize({ spyRendererConsole: true })

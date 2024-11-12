@@ -35,8 +35,8 @@ const isDownloading = computed(() => {
 })
 
 async function checkForUpdates() {
-  const result = await electronAPI.send('app:checkForUpdates')
-  console.log('checkForUpdates', result)
+  // const result = await electronAPI.send('app:checkForUpdates')
+  // console.log('checkForUpdates', result)
 }
 
 function toggle(event: Event) {
@@ -150,10 +150,6 @@ window.electronAPI.on('app:resource-update', (data) => {
     font-style: normal;
     font-weight: 600;
     line-height: 24px; /* 171.429% */
-  }
-
-  :global(.p-tabpanels:has(.p-tabpanel:first-of-type.p-tabpanel-active)) {
-    background: var(--Color-blue-100, #e8f5fc);
   }
 }
 

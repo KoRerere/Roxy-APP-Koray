@@ -57,7 +57,7 @@ ipcMain.on('proxy:detectNetwork', async (type?: 'local' | 'system') => {
 
 /** 获取系统代理 */
 ipcMain.on('proxy:getSystemProxy', () => {
-  return getSystemProxy()
+  return getSystemProxy(true)
 })
 
 /** 代理 => 刷新 URL */

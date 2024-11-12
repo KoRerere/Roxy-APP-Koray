@@ -1,6 +1,7 @@
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
+import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
@@ -283,7 +284,12 @@ export async function getNetworkPanel(data?: any): Promise<SettingsModule> {
         items: [
           {
             label: $t('使用系统代理'),
-            text: $t('关闭后使用本地网络连接'),
+            text: () => (
+              <div>
+                <div>{$t('关闭后使用本地网络连接')}</div>
+                <div class="w-[370px] text-red line-height-normal">{$t('改变此开关状态后，请重启窗口以确保生效')}</div>
+              </div>
+            ),
             name: 'systemProxySwitch',
             value: data?.systemProxySwitch ?? false,
             component: ({ item, ...props }: { item: Items, props: any }) => {

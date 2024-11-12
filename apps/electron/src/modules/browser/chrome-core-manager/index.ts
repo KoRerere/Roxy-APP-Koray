@@ -90,6 +90,12 @@ export const chromeCoreManager = new class ChromeCoreManager {
       })
     }
 
+    const availableCore = this.getAvailableCore(coreVersion)
+
+    if (!availableCore) {
+      throw new Error($t('当前系统不支持使用该内核'))
+    }
+
     const exePath = this.genCoreExePath(coreVersion)
 
     // 如果该内核已经在使用中，则直接返回
@@ -103,19 +109,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
     // 如果本地不存在该内核或版本文件不存在，则下载
     if (!isExeExists || !isVersionFileExists) {
-      // 如果是第一次下载该内核，则将该内核加入下载队列
-      if (!this.downloadingMap.has(coreVersion)) {
-        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion, msgCallback))
-      }
       msgCallback?.($t('正在下载内核'))
       // 等待下载完成
-      await this.downloadingMap.get(coreVersion)
-    }
-
-    const availableCore = this.getAvailableCore(coreVersion)
-
-    if (!availableCore) {
-      throw new Error($t('当前系统不支持使用该内核'))
+      await this.downloadCore(coreVersion, msgCallback)
     }
 
     try {
@@ -123,10 +119,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
       const localCoreVersion = await readFile(join(coreDir, 'version'), 'utf-8')
       // 如果本地内核版本小于远程内核版本
       if (compare(localCoreVersion.trim(), availableCore.version, '<')) {
-        // 重新下载
-        this.downloadingMap.set(coreVersion, this.downloadCore(coreVersion, msgCallback))
         msgCallback?.($t('正在下载内核'))
-        await this.downloadingMap.get(coreVersion)
+        // 重新下载
+        await this.downloadCore(coreVersion, msgCallback)
       }
     }
     catch (error) {
@@ -162,36 +157,42 @@ export const chromeCoreManager = new class ChromeCoreManager {
       coreVersion,
     }
 
-    try {
-      // 下载内核
-      await downloadZipFile(availableCore.downloadUrl, outputZipPath, (progress) => {
-        console.log(`Download progress: ${progress}%`)
-        payload.percent = progress
+    const downloadTask = async () => {
+      try {
+        console.log('downloadCore start', coreVersion)
+        // 下载内核
+        await downloadZipFile(availableCore.downloadUrl, outputZipPath, (progress) => {
+          // console.log(`Download progress: ${progress}%`)
+          payload.percent = progress
+          ipcMain.send('app:resource-update', payload)
+        }).catch((error) => {
+          payload.status = 'failed'
+          ipcMain.send('app:resource-update', payload)
+          return Promise.reject(error)
+        })
+        payload.status = 'downloaded'
+        payload.description = `Kernel ${coreVersion} download completed`
         ipcMain.send('app:resource-update', payload)
-      }).catch((error) => {
-        payload.status = 'failed'
-        ipcMain.send('app:resource-update', payload)
+        // 删除本地内核
+        await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })
+        msgCallback?.($t('正在解压内核'))
+        // 解压缩内核
+        await unzipFile(outputZipPath, appConfig.chromeBinDir)
+        msgCallback?.($t('内核解压完成'))
+        // 异步删除下载的 zip 文件，不需要等待
+        rm(outputZipPath)
+      }
+      catch (error) {
+        console.error('downloadCore error', error)
         return Promise.reject(error)
-      })
-      payload.status = 'downloaded'
-      payload.description = `Kernel ${coreVersion} download completed`
-      ipcMain.send('app:resource-update', payload)
-      // 删除本地内核
-      await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })
-      msgCallback?.($t('正在解压内核'))
-      // 解压缩内核
-      await unzipFile(outputZipPath, appConfig.chromeBinDir)
-      msgCallback?.($t('内核解压完成'))
-      // 异步删除下载的 zip 文件，不需要等待
-      rm(outputZipPath)
+      }
+      finally {
+        // 无论成功与否，记得将其从下载队列中移除
+        this.downloadingMap.delete(coreVersion)
+      }
     }
-    catch (error) {
-      console.error('downloadCore error', error)
-      return Promise.reject(error)
-    }
-    finally {
-      // 无论成功与否，记得将其从下载队列中移除
-      this.downloadingMap.delete(coreVersion)
-    }
+
+    this.downloadingMap.set(coreVersion, downloadTask())
+    return this.downloadingMap.get(coreVersion)
   }
 }()

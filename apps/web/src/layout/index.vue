@@ -15,7 +15,7 @@ watch(() => currentWorkspace.value?.id, () => {
   loading.value = true
   setTimeout(() => {
     loading.value = false
-  }, 2200)
+  }, 1200)
 }, { immediate: true })
 
 function handleSideTransitionend() {
