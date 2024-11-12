@@ -91,7 +91,8 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 }
 
 .line {
-  width: 100%;
+  margin: 16px auto;
+  width: 20px;
   height: 1px;
   background: var(--Colors-Border-border-container, #c7cdd1);
 }

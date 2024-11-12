@@ -105,11 +105,11 @@ $delay: 0.2s;
   }
 
   &.active {
-    color: #0091eb;
-    background: #d1eafa;
+    color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
+    background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
 
     .menu-icon {
-      color: #0091eb;
+      color: currentColor;
     }
   }
 

@@ -99,14 +99,6 @@ function toCreateBrowser() {
 
   &.collapsed {
     overflow: unset;
-
-    .new-profile-btn {
-      margin-left: -3.52px;
-
-      &.p-button-icon-only {
-        width: var(--p-button-icon-only-width);
-      }
-    }
   }
 
   &.transitionend {
@@ -120,6 +112,7 @@ function toCreateBrowser() {
     white-space: nowrap;
     word-break: keep-all;
     transition: width 0.3s;
+    height: 34px;
   }
 
   .menu {

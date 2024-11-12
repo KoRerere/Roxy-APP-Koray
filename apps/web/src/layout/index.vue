@@ -100,7 +100,7 @@ onBeforeMount(() => {
   user-select: none;
 
   &.collapsed {
-    width: 64px;
+    width: 66px;
   }
 
   .logo {
