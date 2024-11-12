@@ -40,6 +40,7 @@ onMounted(() => {
       {{ _props.content }}
     </div>
     <RyForm class="form" :inputs="_props.inputs" />
+    <component :is="_props.render" v-if="_props.render" />
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
       <RxButton size="sm" :label="$t('保存')" severity="info" @click="confirm" />

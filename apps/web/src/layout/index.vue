@@ -32,7 +32,7 @@ async function getAnnt() {
 }
 
 onBeforeMount(() => {
-  getAnnt()
+  // getAnnt()
 })
 </script>
 

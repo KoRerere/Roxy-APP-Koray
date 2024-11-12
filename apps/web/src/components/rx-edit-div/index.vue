@@ -38,12 +38,11 @@ function divInput(ev: any) {
 </script>
 
 <template>
-  <div class="flex editdiv">
-    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder"
-      @input="divInput" @blur="contenteditable = false">
+  <div class="flex cursor-pointer editdiv" @click="focusEditableDiv">
+    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder" @input="divInput" @blur="contenteditable = false">
       {{ myTitle }}
     </div>
-    <RxSvgIcon class="cursor-pointer" name="base/rx_ic_edit" color="#A3A9AD" :size="16" @click="focusEditableDiv" />
+    <RxSvgIcon class="editdiv-icon" name="base/rx_ic_edit" color="#A3A9AD" />
   </div>
 </template>
 
@@ -52,6 +51,19 @@ function divInput(ev: any) {
   display: flex;
   gap: 10px;
   padding: var(--spacing-md, 6px) 8px;
+  transition: background 0.3s ease-in-out;
+
+  &:hover {
+    background: var(--Color-neutrals-100, #f0f3f5);
+  }
+
+  &:has([contenteditable='true']) {
+    background: var(--Color-neutrals-100, #f0f3f5);
+
+    .editdiv-icon {
+      display: none;
+    }
+  }
 
   &-text {
     position: relative;

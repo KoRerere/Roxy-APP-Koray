@@ -65,12 +65,12 @@ function handleClose() {
       <RxSvgIcon v-bind="iconProps" />
     </slot>
     <div class="rx-alert-body">
-      <div class="rx-alert__title">
+      <div v-if="title || $slots.title" class="rx-alert__title">
         <slot name="title">
           {{ title }}
         </slot>
       </div>
-      <div class="rx-alert__content">
+      <div v-if="content || $slots.content" class="rx-alert__content">
         <slot name="content">
           {{ content }}
         </slot>

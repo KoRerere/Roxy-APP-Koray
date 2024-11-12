@@ -19,6 +19,22 @@ export function findInputByName(inputs: any[], name: string): any {
   }
 }
 
+export function filterInputsByNames(inputs: any[], names: string[]) {
+  const list: any[] = []
+  inputs.forEach((input: any) => {
+    if (Array.isArray(input)) {
+      list.push(...filterInputsByNames(input, names))
+    }
+    else if (Array.isArray(input.items)) {
+      list.push(...filterInputsByNames(input.items, names))
+    }
+    else if (names.includes(input.name)) {
+      list.push(input)
+    }
+  })
+  return list
+}
+
 export function getFormData(
   inputs: any[],
   original: object = {},
@@ -126,8 +142,13 @@ export function setInputValueByFormData(inputs: any[], formData: any) {
     }
 
     if (item.name && formData[item.name]) {
-      item.value = formData[item.name]
-      item.invalid = false
+      if (item.type === 'select' && !item.optionValue) {
+        item.value = item.options.find((option: any) => option.value === formData[item.name])
+      }
+      else {
+        item.value = formData[item.name]
+        item.invalid = false
+      }
     }
     if (item.items && Array.isArray(item.items)) {
       setInputValueByFormData(item.items, formData)

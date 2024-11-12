@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, getDictMap, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterFieldByValue, findInputByName, getDictMap, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
 
 async function setUaWebgl(inputsGroup: any) {
@@ -147,8 +147,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           name: 'os',
           value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
-          change: async (item: any, items: any) => {
-            const osVersionInput = items.find((item: any) => item.name === 'osVersion')
+          change: async (item: any) => {
+            const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
               const osVersionOptions = osVersion[item.value.value.toLocaleLowerCase()]
               osVersionInput.options = osVersionOptions
@@ -306,8 +306,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'language', input.value === false)
+      change(input: any) {
+        setInputVisible(basicInputs, 'language', input.value === false)
       },
       preview: {
         label: $t('语言'),
@@ -331,8 +331,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'displayLanguage', input.value === false)
+      change(input: any) {
+        setInputVisible(basicInputs, 'displayLanguage', input.value === false)
       },
     },
     {
@@ -353,8 +353,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'timeZone', input.value === false)
+      change(input: any) {
+        setInputVisible(basicInputs, 'timeZone', input.value === false)
       },
       preview: {
         label: $t('时区'),
@@ -379,14 +379,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('允许'), value: 1 },
         { label: $t('禁止'), value: 2 },
       ],
-      change(input: any, inputs: any) {
-        const ipt = inputs.find((ipt: any) => ipt.name === 'isPositionBaseIp')
+      change(input: any) {
+        const ipt = findInputByName(basicInputs, 'isPositionBaseIp')
         if (ipt) {
           const visible = input.value !== 2
           ipt.visible = visible
           if (!visible) {
             ipt.value = true
-            ipt.change(ipt, inputs)
+            ipt.change(ipt)
           }
         }
       },
@@ -404,12 +404,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('自定义'), value: false },
       ],
       visible: true,
-      change(input: any, inputs: any) {
-        setInputVisible(
-          inputs,
-          ['longitude', 'latitude', 'precisionPos'],
-          input.value === false,
-        )
+      change(input: any) {
+        setInputVisible(basicInputs, ['longitude', 'latitude', 'precisionPos'], input.value === false)
       },
       preview: {
         label: $t('地理位置'),
@@ -499,8 +495,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('跟随系统'), value: false },
         { label: $t('自定义'), value: true },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'resolution', input.value === true)
+      change(input: any) {
+        setInputVisible(highLevelInputs, 'resolution', input.value === true)
       },
       preview: {
         label: $t('分辨率'),
@@ -589,12 +585,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('真实'), value: false },
         { label: $t('自定义'), value: true },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(
-          inputs,
-          ['webGLManufacturer', 'webGLRender'],
-          input.value === true,
-        )
+      change(input: any) {
+        setInputVisible(highLevelInputs, ['webGLManufacturer', 'webGLRender'], input.value === true)
       },
       preview: {
         label: $t('WebGL Info'),
@@ -755,8 +747,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('随机'), value: true },
         { label: $t('真实'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'deviceName', input.value === true)
+      change(input: any) {
+        setInputVisible(highLevelInputs, 'deviceName', input.value === true)
       },
       preview: {
         label: $t('设备名称'),
@@ -783,9 +775,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('真实'), value: false },
         { label: $t('自定义'), value: true },
       ],
-      change(input: any, inputs: any) {
+      change(input: any) {
         const showMacAddr = input.value === true
-        setInputVisible(inputs, 'macAddr', showMacAddr)
+        setInputVisible(highLevelInputs, 'macAddr', showMacAddr)
         if (showMacAddr) {
           setMacAddr(inputsGroup)
         }
@@ -837,8 +829,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('开启'), value: true },
         { label: $t('关闭'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'disableSslList', input.value === true)
+      change(input: any) {
+        setInputVisible(highLevelInputs, 'disableSslList', input.value === true)
       },
       preview: {
         label: $t('SSL指纹设置'),
@@ -867,8 +859,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('开启'), value: true },
         { label: $t('关闭'), value: false },
       ],
-      change(input: any, inputs: any) {
-        setInputVisible(inputs, 'portScanList', input.value === true)
+      change(input: any) {
+        setInputVisible(highLevelInputs, 'portScanList', input.value === true)
       },
       preview: {
         label: $t('端口扫描保护'),

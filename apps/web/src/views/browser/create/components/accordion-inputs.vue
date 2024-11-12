@@ -12,10 +12,6 @@ import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
 
 const props = defineProps({
-  openBrowser: {
-    type: Boolean,
-    default: true,
-  },
   isEdit: {
     type: Boolean,
     default: false,
@@ -134,8 +130,8 @@ function onCopy(dirId: string) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <RxButton v-if="openBrowser" outlined severity="secondary" :label="$t('创建 & 打开')" :loading="loading" @click.stop="getFormData(true)" />
-      <RxButton severity="primary" :label="`${isEdit ? $t('保存') : $t('创建窗口')}`" :loading="loading" @click.stop="getFormData(false)" />
+      <RxButton v-if="isEdit" severity="primary" :label="$t('保存')" :loading="loading" @click.stop="getFormData(false)" />
+      <slot name="footer" />
     </div>
   </div>
 </template>

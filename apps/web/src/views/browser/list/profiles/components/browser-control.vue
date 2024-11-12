@@ -37,25 +37,26 @@ const browser = computed(() => {
   }
 
   const { pending, code, data, error } = message
+  const complted = data?.percent === 100
+  const opening = !(error || complted)
 
   return {
     code,
     pending,
     msg: error ? $t('打开') : data?.message,
-    error: error?.message,
     percent: data?.percent || 0,
-    complted: data?.percent === 100,
-    tooltip: '',
-    classes: (error || data?.percent === 100) ? 'cursor-pointer' : 'cursor-not-allowed',
+    error: error?.message,
+    opening,
+    complted,
+    classes: opening ? 'cursor-not-allowed' : 'cursor-pointer',
   }
 })
 
 async function openBrowser() {
-  if (browser.value.pending) {
+  if (browser.value.pending || browser.value.opening) {
     return
   }
   const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
-  //  @TODO
   emits('open', data)
 }
 </script>
@@ -65,7 +66,7 @@ async function openBrowser() {
     <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
       <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
       <RxSvgIcon v-if="!browser.percent && !browser.pending" color="#12A3FC" name="base/rx_ic_chrome" />
-      <span>{{ browser.complted ? $t('查看') : browser?.msg }}</span>
+      <span class="select-none">{{ browser.complted ? $t('查看') : browser?.msg }}</span>
     </div>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />

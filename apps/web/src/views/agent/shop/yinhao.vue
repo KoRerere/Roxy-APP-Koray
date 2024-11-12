@@ -1,12 +1,32 @@
 <script setup>
-import { getDictMap as scvrrrrrrr } from '/@/utils'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 
-async function testDict () {
-  const dictMap = await scvrrrrrrr()
-  console.log('🚀 ~ testDict ~ dictMap:', dictMap)
-}
+const profileTemplate = reactive({
+  list: [],
+  value: '1',
+  props: {
+    options: [
+      { label: 'template1', value: '1' },
+      { label: 'template2', value: '2' },
+      { label: 'template3', value: '3' },
+      { label: 'template4', value: '4' },
+    ],
+    optionValue: 'value',
+    filter: false,
+  },
+})
 </script>
 
 <template>
-  <RxButton label="测试字典" @click="testDict" />
+  <div class="w-50">
+    <RxInputSelect v-model="profileTemplate.value" v-bind="profileTemplate.props" name="template">
+      <template #option-extra>
+        <div class="flex flex-1 justify-end gap-2">
+          <RxSvgIcon name="base/rx_ic_edit" @click.stop />
+          <RxSvgIcon name="base/rx_ic_bin_1" @click.stop />
+        </div>
+      </template>
+    </RxInputSelect>
+  </div>
 </template>

@@ -27,7 +27,7 @@ const defaultProps: SelectProps = {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size }" @change="$emit('change')">
+  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.mannnnnnn }" @change="$emit('change')">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -46,16 +46,29 @@ const defaultProps: SelectProps = {
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
+        <slot name="option-extra" :option="option" />
       </div>
     </template>
   </Select>
 </template>
+
+<style lang="scss" module="classes">
+.mannnnnnn {
+  font-size: 13px;
+
+  &[data-p-selected='true']:not([data-p-focused='true']) {
+    color: var(--Colors-Text-text-brand, #12a3fc) !important;
+    background: #e8f5fc !important;
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 .select-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-md, 6px);
+  flex: 1;
 
   &__image {
     width: 16px;

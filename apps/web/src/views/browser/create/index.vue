@@ -1,19 +1,25 @@
-<script lang="ts" setup>
+<script lang="tsx" setup>
+import { useConfirm } from 'primevue/useconfirm'
+import { useDialog } from 'primevue/usedialog'
 import type { MetaData } from '/@/views/browser/create/components/type'
 import { API } from '/@/api'
+import { RxAlert } from '/@/components/rx-alert'
 import rxEditDiv from '/@/components/rx-edit-div'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import simplePopup from '/@/components/simplePopup'
 import { Role } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { deepClone, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { deepClone, filterFieldByValue, filterInputsByNames, getFormDataByList, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
+import { getDefaultTemplate } from './utils'
 
 const router = useRouter()
 const { currentWorkspace } = useWorkspaceStore()
@@ -63,6 +69,33 @@ const accordions = computed(() => {
     value: tabsValue.value === 'import' ? [] : ['0'],
     panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
   }
+})
+
+const templateMap: { [key: string]: any } = {
+  default: getDefaultTemplate(),
+}
+
+const profileTemplate = reactive({
+  list: [],
+  value: 'default',
+  oldValue: 'default',
+  props: {
+    options: [
+      { label: 'No Template', value: 'default', action: false },
+      { label: '测试模板', value: '111', action: true },
+    ],
+    optionValue: 'value',
+    filter: false,
+    onChange: () => {
+      if (profileTemplate.value === profileTemplate.oldValue)
+        return
+      const template = templateMap[profileTemplate.value] || templateMap.default
+      setInputValueByFormData(inputsGroup.value, template)
+      const inputs = filterInputsByNames(inputsGroup.value, ['os', 'isLanguageBaseIp', 'isDisplayLanguageBaseIp', 'isTimeZone', 'position', 'resolutionType', 'fontType', 'webGL', 'webGLInfo', 'canvas', 'audioContext', 'speechVoices', 'clientRects', 'deviceNameSwitch', 'macInfo', 'disableSsl', 'portScanProtect'])
+      inputs.forEach(input => input.change?.(input))
+      profileTemplate.oldValue = profileTemplate.value
+    },
+  },
 })
 
 const isOwner = computed(() => currentWorkspace?.role === Role.OWNER)
@@ -121,7 +154,9 @@ function importSuccess(data: any) {
   fileAnalyzeData.value = data
 }
 
-async function createProfile(formData: any, openBrowser: boolean) {
+async function createProfile(openBrowser: boolean) {
+  const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
+  const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
     windowName: windowName.value,
     createCount: createCount.value,
@@ -177,6 +212,73 @@ async function importProfile(params: any) {
   router.replace({ name: 'browser-list' })
   loading.value = false
 }
+// ===========================================
+const confirm = useConfirm()
+const dialog = useDialog()
+
+const items = computed(() => [
+  {
+    label: $t('保存模板'),
+    command: () => {
+      console.log('🚀 ~ 保存模板:')
+    },
+    visible: !!profileTemplate.value && profileTemplate.value !== 'default',
+  },
+  {
+    label: $t('保存为新模板'),
+    command: () => {
+      saveTemplate()
+    },
+  },
+])
+
+async function saveTemplate(data?: any) {
+  dialog.open(simplePopup, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        title: $t('Edit template name'),
+        content: $t('Please enter the template name down below:'),
+        inputs: [
+          {
+            type: 'text',
+            name: 'templateName',
+            placeholder: 'template name',
+            value: data?.value,
+            required: true,
+          },
+        ],
+        render: () => <RxAlert class="!w-full" closable={false} type="info" title={$t('Templates won\'t save your proxy, accounts and cookies.')} />,
+      },
+      onConfirm: async (data: any) => {
+        // TODO: save template
+      },
+    },
+  })
+}
+
+async function deleteTemplate(data: any) {
+  confirm.require({
+    header: $t('删除模板'),
+    message: $t('您确认要删除模板吗？'),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: () => {
+      // TODO: delete template
+    },
+  })
+}
 </script>
 
 <template>
@@ -194,8 +296,18 @@ async function importProfile(params: any) {
       </div>
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
-          <rxEditDiv v-show="tabsValue === 'single'" v-model="windowName" />
-          <div v-show="tabsValue === 'multi'" class="multi-block">
+          <div v-show="tabsValue !== 'import'" class="flex ">
+            <rxEditDiv v-model="windowName" class="flex-1 " />
+            <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
+              <template #option-extra="{ option }">
+                <div v-if="option.action" class="flex flex-1 justify-end gap-2">
+                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplate(option)" />
+                  <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
+                </div>
+              </template>
+            </RxInputSelect>
+          </div>
+          <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
             <div class="flex items-center justify-between">
               <div>{{ $t('窗口数量') }}</div>
               <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
@@ -213,8 +325,12 @@ async function importProfile(params: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" v-model:loading="loading" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="tabsValue === 'single'"
-          @create-open="createProfile($event, true)" @create="createProfile($event, false)" />
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+          <template #footer>
+            <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" />
+            <SplitButton severity="primary" :label="$t('创建窗口')" :model="items" @click.stop="createProfile(false)" />
+          </template>
+        </accordionInputs>
       </div>
     </div>
     <previewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
@@ -255,11 +371,13 @@ async function importProfile(params: any) {
 }
 
 .profile-basic {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 16px);
   padding: var(--spacing-md, 16px) 66px;
 }
 
 .multi-block {
-  padding: 0 var(--spacing-lg, 8px);
   color: var(--Color-neutrals-900, #171c1f);
   font-family: Inter;
   font-size: 14px;
@@ -301,6 +419,32 @@ async function importProfile(params: any) {
       cursor: pointer;
       user-select: none;
     }
+  }
+}
+
+:deep(.p-splitbutton) {
+  .p-button {
+    padding: var(--spacing-md, 6px) 10px;
+    font-size: var(--Font-Size-text-sm, 12px);
+    line-height: var(--Line-Height-text-lg, 20px);
+    border-width: 1px;
+    border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
+
+    &:not(:disabled):hover {
+      border-width: 1px;
+    }
+  }
+
+  .p-splitbutton-button {
+    border-top-left-radius: var(--radius-md, 6px);
+    border-bottom-left-radius: var(--radius-md, 6px);
+    border-right-width: 0;
+  }
+
+  .p-splitbutton-dropdown {
+    border-top-right-radius: var(--radius-md, 6px);
+    border-bottom-right-radius: var(--radius-md, 6px);
+    border-left-width: 0;
   }
 }
 </style>

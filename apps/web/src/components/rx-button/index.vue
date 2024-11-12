@@ -103,7 +103,7 @@ defineExpose({
 .sm {
   padding: var(--spacing-md, 6px) 10px;
   gap: var(--spacing-md, 6px);
-  font-size: 12px;
+  font-size: var(--Font-Size-text-sm, 12px);
   line-height: var(--Line-Height-text-lg, 20px);
   border-radius: var(--radius-md, 6px);
   border-width: 1px;
