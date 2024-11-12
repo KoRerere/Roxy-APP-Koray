@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
@@ -8,6 +9,7 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
 const transitionend = ref<boolean>(true)
 const loading = ref<boolean>(false)
+const anntList = ref()
 
 watch(() => currentWorkspace.value?.id, () => {
   loading.value = true
@@ -23,6 +25,15 @@ function handleSideTransitionend() {
 function handleSideTransitionstart() {
   transitionend.value = false
 }
+
+async function getAnnt() {
+  const { data } = await API.base.userGetAnntListList()
+  anntList.value = data.rows
+}
+
+onBeforeMount(() => {
+  getAnnt()
+})
 </script>
 
 <template>
@@ -48,6 +59,16 @@ function handleSideTransitionstart() {
     </div>
     <main class="rx-main">
       <RxLayoutHeader />
+      <div class="rx-main-announcement">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable>
+          <template #default>
+            {{ annt.announcement }}
+          </template>
+          <template #closeicon>
+            <SvgIcon name="base/rx_ic_delete" />
+          </template>
+        </Message>
+      </div>
       <div class="rx-main-content">
         <RouterView v-if="currentWorkspace?.id" :key="currentWorkspace?.id" />
       </div>
@@ -121,6 +142,41 @@ function handleSideTransitionstart() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  &-announcement {
+    margin-right: var(--spacing-2xl, 16px);
+
+    &__content {
+      margin-top: var(--spacing-lg, 8px);
+      border-radius: 4px;
+      border: 1px solid var(--Color-green-200, #70e090);
+      background: var(--Color-green-100, #ebfcf0);
+      outline-style: none;
+      outline-width: 0;
+
+      &:last-of-type {
+        margin-bottom: var(--spacing-xl, 12px);
+      }
+    }
+
+    :deep(.p-message-content) {
+      padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+    }
+
+    :deep(.p-message-text) {
+      color: var(--Color-green-400, #2e994c);
+      font-family: Inter;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 16px;
+    }
+
+    :deep(.p-message-close-button) {
+      width: auto;
+      height: auto;
+    }
+  }
 
   &-content {
     flex: 1;

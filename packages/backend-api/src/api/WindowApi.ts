@@ -40,6 +40,7 @@ import {
   UserDelWindowInfoApiCreatePayload,
   UserDelWindowInfoCreateData,
   UserDelWindowInfoCreatePayload,
+  UserGetDefaultWindowTableRowsListData,
   UserGetDeviceNameListData,
   UserGetDeviceNameListParams,
   UserGetDeviceNameV2ListData,
@@ -779,7 +780,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowTableSortOrderList
-   * @summary 获取默认表格排序列
+   * @summary 获取窗口表格排序规则
    * @request GET:/user_get_window_table_sort_order
    * @response `200` `UserGetWindowTableSortOrderListData`
    */
@@ -827,6 +828,22 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetDefaultWindowTableRowsList
+   * @summary 获取默认表格排序列
+   * @request GET:/user_get_default_window_table_rows
+   * @response `200` `UserGetDefaultWindowTableRowsListData`
+   */
+  userGetDefaultWindowTableRowsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetDefaultWindowTableRowsListData, any>({
+      path: `/user_get_default_window_table_rows`,
+      method: "GET",
       format: "json",
       ...params,
     });

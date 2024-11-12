@@ -10,7 +10,6 @@ const [showToast, onlyErrorToast] = useResponseToast()
 
 const nameMap = {
   '窗口名称': 'windowName',
-  '分组': 'groupName',
   '账号平台': 'platformUrl',
   '用户名': 'platformUserName',
   '密码': 'platformPassword',

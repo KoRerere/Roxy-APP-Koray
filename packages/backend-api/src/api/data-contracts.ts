@@ -1443,8 +1443,10 @@ export interface UserGetUserConfigListData {
     memoryLimit: string;
     /** app 风格 0:系统 ,1:亮色,2:暗色 */
     appearance: number;
-    /** 系统代理开关，true,false,默认false */
+    /** 系统代理开关，true,false,默认true */
     systemProxySwitch: boolean;
+    /** v2ray开关，true,false,默认true */
+    v2raySwitch: boolean;
     /** ip检测 */
     ipChecker: string;
     ipBlackList: string[];
@@ -1487,50 +1489,37 @@ export interface UserGetDefConfigListData {
 }
 
 export interface UserSetUserConfigCreatePayload {
-  /** 语言 */
-  language?: string;
-  /** 时区 */
-  timezone?: string;
-  /**
-   * 软件关闭时
-   * 枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
-   */
-  closeSoft?: string;
-  /** 件下载目录 */
-  uploadDir?: string;
-  /** 文件缓存目录 */
-  cacheDir?: string;
-  /**
-   * 缓存删除条件
-   * 5天前的
-   */
-  autoDelDays?: string;
-  /**
-   * 缓存删除条件
-   * 2GB以上的
-   */
-  autoDelSize?: string;
-  /**
-   * 性能监控
-   * 内存使用率%95以上时停止打开窗口
-   */
-  memoryLimit?: string;
-  /** 通过本地网络打开的网站列表 */
-  ipBlackList?: string[];
-  /** api token */
-  apiToken?: string;
-  /**
-   * 系统代理开关
-   * 枚举：flase:关闭,true:打开
-   */
-  systemProxySwitch?: string;
-  /** ip检测地址 */
-  ipChecker?: string;
-  /**
-   * app 风格
-   * 0:系统 ,1:亮色,2:暗色
-   */
-  appearance?: string;
+  code: number;
+  data: {
+    /** 语言 */
+    language: string;
+    /** 时区 */
+    timeZone: string;
+    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
+    closeSoft: string;
+    /** 文件下载目录 */
+    uploadDir: string;
+    /** 文件缓存目录 */
+    cacheDir: string;
+    /** 缓存删除条件，5天前的 */
+    autoDelDays: string;
+    /** 缓存删除条件，2GB以上的 */
+    autoDelSize: string;
+    /** 性能监控，内存使用率%95以上时停止打开窗口 */
+    memoryLimit: string;
+    /** app 风格 0:系统 ,1:亮色,2:暗色 */
+    appearance: number;
+    /** 系统代理开关，true,false,默认true */
+    systemProxySwitch: boolean;
+    /** v2ray开关，true,false,默认true */
+    v2raySwitch: boolean;
+    /** ip检测 */
+    ipChecker: string;
+    ipBlackList: string[];
+    /** api token */
+    apiToken: string;
+  };
+  msg: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -1624,11 +1613,20 @@ export interface UserGetAnntListListData {
   code: number;
   data: {
     rows: {
+      /** 公告ID */
       id?: number;
+      /** 原公告内容 */
       announcement?: string;
+      /** 公告链接 */
       href?: string;
+      /** 公告发布时间 */
       createTime?: string;
+      /** 550秒前发布的公告 */
       diff?: number;
+      /** 公告翻译为英文内容 */
+      announcement_en?: string;
+      /** 公告数据类型 */
+      dataType?: string;
     }[];
   };
   msg: string;
@@ -1700,6 +1698,8 @@ export interface LoginGoogleCreateData {
     role: string;
     /** 是否迁移 */
     is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
   };
   msg: string;
 }
@@ -1724,6 +1724,8 @@ export interface LoginGoogleV2CreateData {
     role: string;
     /** 是否迁移 */
     is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
   };
   msg: string;
 }
@@ -3437,7 +3439,7 @@ export interface UserMdfWindowSyncStatusCreateData {
 
 export type UserMdfWindowSyncV2CreatePayload = {
   id?: number;
-  /** www.baidu.com','http:iprust.io/ip.json'], */
+  /** www.baidu.com','http:ip123.in/ip.json'], */
   defaultOpenUrl?: string[];
   loginData?: string[];
   syncValue?: object;
@@ -3840,12 +3842,10 @@ export interface UserUpdateWindowTableRowsCreateData {
 }
 
 export interface UserSaveWindowTableSortOrderCreatePayload {
-  table_sort: {
-    /** 名称 */
-    name?: string;
-    /** 判断降序还是升序 */
-    order?: string;
-  }[];
+  /** 名称 */
+  orderName: string;
+  /** 判断降序还是升序 */
+  orderType: string;
 }
 
 export interface UserSaveWindowTableSortOrderCreateData {
@@ -3869,9 +3869,8 @@ export interface UserGetWindowTableRowsListData {
 export interface UserGetWindowTableSortOrderListData {
   code: number;
   data: {
-    name: string;
-    sort: string;
-    status: number;
+    orderName?: string;
+    orderType?: string;
   }[];
   msg: string;
 }
@@ -4023,6 +4022,16 @@ export interface UserBatchUpdateWindowTableRowsCreatePayload {
 
 export interface UserBatchUpdateWindowTableRowsCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetDefaultWindowTableRowsListData {
+  code: number;
+  data: {
+    name: string;
+    sort: string;
+    status: number;
+  }[];
   msg: string;
 }
 
@@ -4570,7 +4579,7 @@ export interface UserGetProxyModuleListData {
       proxyPassword?: string;
       /** 刷新URL, str */
       refreshUrl?: string;
-      /** 查询渠道，默认:http: //iprust.io/ip.json， str */
+      /** 查询渠道，默认:http: //ip123.in/ip.json， str */
       checkChannel?: string;
       /** 出口IP */
       lastIp?: string;
@@ -4650,7 +4659,7 @@ export type UserMdfProxyModuleCreatePayload = {
   proxyPassword?: string;
   /** 刷新URL str, 非必传 */
   refreshUrl?: string;
-  /** 查询渠道，默认:http://iprust.io/ip.json, str, 非必传 */
+  /** 查询渠道，默认:http://ip123.in/ip.json, str, 非必传 */
   checkChannel?: string;
   /** 出口IP，给用户显示用, 非必传 */
   lastIp?: string;
