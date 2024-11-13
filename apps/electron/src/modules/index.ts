@@ -1,10 +1,14 @@
 import './ipc'
+import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
 import { startLuminet } from '/@/modules/roxynet'
 import { setupStore } from '/@/modules/store'
-import { isPackaged } from '/@/utils'
 import { setupApp } from './app/'
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+})
 
 /**
  * Setup the modules.

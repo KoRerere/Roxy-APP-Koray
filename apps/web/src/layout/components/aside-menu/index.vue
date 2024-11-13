@@ -24,7 +24,7 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 
 const projectList = computed(() => {
-  return projectStore.projects.map((item) => {
+  return projectStore.projects.filter(n => n.topStatus).map((item) => {
     return {
       path: ':id',
       name: 'project-item',

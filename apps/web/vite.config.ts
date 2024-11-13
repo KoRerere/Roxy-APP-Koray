@@ -1,9 +1,9 @@
 /* eslint-env node */
-
 import type { UserConfig } from 'vite'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import LanguageLocalization from '@roxy/language-localization/vite'
 import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
@@ -41,16 +41,20 @@ const primevueComponents = primevueFiles.reduce<string[]>((acc, dir) => {
   return acc
 }, [])
 
+console.log('web is build with', process.env.NODE_ENV)
 const config: UserConfig = {
   mode: process.env.MODE,
   root: PACKAGE_ROOT,
   envDir: PACKAGE_ROOT,
+
   resolve: {
     alias: {
       '/@/': `${join(PACKAGE_ROOT, 'src')}/`,
     },
   },
+
   base: '',
+
   server: {
     host: '0.0.0.0',
     fs: {
@@ -60,9 +64,11 @@ const config: UserConfig = {
       clientFiles: ['./index.html', './src/{views,components}/*'],
     },
   },
+
   optimizeDeps: {
     include: [...primevueComponents],
   },
+
   css: {
     preprocessorOptions: {
       scss: {
@@ -70,8 +76,9 @@ const config: UserConfig = {
       },
     },
   },
+
   build: {
-    sourcemap: false,
+    sourcemap: true,
     target: `chrome${chrome}`,
     outDir: 'dist',
     assetsDir: '.',
@@ -86,6 +93,7 @@ const config: UserConfig = {
     emptyOutDir: true,
     reportCompressedSize: false,
   },
+
   plugins: [
     vue({
       template: {
@@ -94,8 +102,7 @@ const config: UserConfig = {
         },
       },
     }),
-    vueJsx(),
-    // extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
+    vueJsx(), // extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
     LanguageLocalization({
       targetDir: join(PACKAGE_ROOT, 'src/locales/langs'),
       langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'],
@@ -114,7 +121,7 @@ const config: UserConfig = {
 
               const genSvgTypes = debounce(() => {
                 const typeDefine = [...nameSet].map(n => `'${n}'`).join(`
-  | `)
+| `)
                 const code = `
 /** 此文件自动生成，请勿修改！所有可用的 svg name */
 export type SvgNames = ${typeDefine}`
@@ -161,6 +168,10 @@ export type SvgNames = ${typeDefine}`
           importStyle: false, // css in js
         }),
       ],
+    }),
+    sentryVitePlugin({
+      org: 'huoshan-9f',
+      project: process.env.NODE_ENV === 'development' ? 'roxybrowser-development' : 'roxybrowser-production',
     }),
   ],
 }

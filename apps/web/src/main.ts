@@ -6,6 +6,8 @@ import 'primeicons/primeicons.css'
 import 'virtual:uno.css'
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
+import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
+import { init as initSentryVue } from '@sentry/vue'
 import mixpanel from 'mixpanel-browser'
 import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
@@ -21,6 +23,27 @@ import myPreset from '/@/styles/primevuePresets'
 import App from './App.vue'
 import router from './router'
 
+const app = createApp(App)
+
+// https://docs.sentry.io/platforms/javascript/guides/electron/#configure
+initSentryElectron({
+  app,
+  integrations: [
+    browserTracingIntegration(),
+    replayIntegration(),
+  ],
+
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0,
+
+  // Capture Replay for 10% of all sessions,
+  // plus for 100% of sessions with an error
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+}, initSentryVue)
+
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,
   track_pageview: 'full-url',
@@ -30,7 +53,6 @@ mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
 })
 globalThis.mixpanel = mixpanel
 console.log('myPreset', myPreset)
-const app = createApp(App)
 
 app.use(store)
 app.use(router)

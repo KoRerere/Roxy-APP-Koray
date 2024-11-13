@@ -1,4 +1,5 @@
 import type { Configuration } from 'electron-builder'
+import type { CopySyncOptions } from 'node:fs'
 import { build, Platform } from 'electron-builder'
 import { cpSync, rmSync } from 'node:fs'
 import path from 'node:path'
@@ -14,10 +15,16 @@ console.log('APP 版本号：', version)
 
 const workDir = path.join(__dirname, '../')
 
-cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), {
+const copySyncOptions: CopySyncOptions = {
   recursive: true,
-})
-cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), { recursive: true })
+  /**
+   * 过滤 source map 文件
+   */
+  filter: src => !src.endsWith('.map'),
+}
+
+cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
+cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',

@@ -56,7 +56,7 @@ const list = ref([
   .item {
     display: flex;
     align-items: center;
-    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+    padding: var(--spacing-md, 6px) 8px;
     gap: var(--spacing-xl, 12px);
     flex: 1 0 0;
     color: var(--Component-Colors-SideNav-link-text, #252a2e);

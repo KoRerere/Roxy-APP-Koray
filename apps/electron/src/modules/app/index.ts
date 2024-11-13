@@ -1,4 +1,4 @@
-import { app, autoUpdater, shell } from 'electron'
+import { app, autoUpdater, crashReporter, shell } from 'electron'
 import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
