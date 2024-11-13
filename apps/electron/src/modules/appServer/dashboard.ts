@@ -67,7 +67,7 @@ export async function setupDashboardServer(app: express.Application) {
 
     try {
       const proxyInfo = await browserItem.proxyDetection()
-
+      proxyInfo.detectionChannel = store.ipChecker
       res.success(proxyInfo)
     }
     catch (error) {

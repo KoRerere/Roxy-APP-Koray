@@ -32,6 +32,18 @@ const offsetHours = getTimeOffset()
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
+const ipchecker = computed(() => {
+  const channel = proxyInfo.value?.detectionChannel
+
+  if (channel) {
+    return {
+      host: new URL(channel).host,
+      fullUrl: channel,
+    }
+  }
+  return {}
+})
+
 /** 获取当前窗口信息 */
 function getWindowInfo() {
   fetchWindowInfoLoading.value = true
@@ -239,7 +251,7 @@ onBeforeMount(() => {
       <div class="info">
         <i18n-t :keypath="$t('IP 查询数据来源于 {link}', { link: '{link}' })" scope="global">
           <template #link>
-            <a href="https://iprust.io/" target="_blank">iprust.io</a>
+            <a :href="ipchecker.fullUrl" target="_blank">{{ ipchecker.host }}</a>
           </template>
         </i18n-t>
       </div>

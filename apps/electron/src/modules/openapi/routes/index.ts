@@ -1,7 +1,6 @@
 import type { Application } from 'express'
 import { store } from '/@/modules/store'
 import browserRouter from './browser'
-import proxyRouter from './proxy'
 
 const notNeedTokenRoutes = [
   '/health',
@@ -48,7 +47,6 @@ export function setupRoutes(app: Application) {
     res.success('ok')
   })
 
-  app.use('/proxy', proxyRouter)
   app.use('/browser', browserRouter)
 
   app.use((req, res) => {
