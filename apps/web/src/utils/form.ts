@@ -141,7 +141,7 @@ export function setInputValueByFormData(inputs: any[], formData: any) {
       return
     }
 
-    if (item.name && formData[item.name]) {
+    if (item.name && !isInvalid(formData[item.name])) {
       if (item.type === 'select' && !item.optionValue) {
         item.value = item.options.find((option: any) => option.value === formData[item.name])
       }

@@ -14,8 +14,13 @@ const { getProjects } = useProjectStore()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const [projectModfiyDialog] = useProjectActions()
 const profilesRef = useTemplateRef('profiles')
-const projectId = Number(route.params.id)
+const projectId: any = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
+
+watch(() => route.params.id, (value) => {
+  projectId.value = Number(value)
+  projectName.value = route.query.title
+})
 
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({
