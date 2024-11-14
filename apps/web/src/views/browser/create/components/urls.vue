@@ -44,6 +44,7 @@ function addInputs() {
 
 function deleteInput(index: number) {
   urls.value.splice(index, 1)
+  updateUrls()
 }
 
 function onChange(input: any) {
@@ -52,11 +53,15 @@ function onChange(input: any) {
 
 function onBlur(input: any) {
   if (validateURL(input.value)) {
-    modelValue.value = urls.value.filter((item: any) => !item.invalid).map((item: any) => item.value)
+    updateUrls()
   }
   else {
     input.invalid = true
   }
+}
+
+function updateUrls() {
+  modelValue.value = urls.value.filter((item: any) => !item.invalid).map((item: any) => item.value)
 }
 </script>
 
