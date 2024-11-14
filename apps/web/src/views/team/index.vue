@@ -53,11 +53,11 @@ const [columns] = useColumns({
 }, (role.isOwner || role.isManager) ? undefined : ['relatedProjects'])
 
 const filters = reactive({
-  value: null,
+  value: -1,
   options: [
     {
       name: $t('全部'),
-      value: null,
+      value: -1,
     },
     {
       name: $t('管理者'),
@@ -76,7 +76,7 @@ const filters = reactive({
     tableRef.value?.refresh({ role: filters.value })
   },
   resetFilters() {
-    filters.value = null
+    filters.value = -1
     filters.onChange()
   },
 })
@@ -84,8 +84,6 @@ const filters = reactive({
 async function tableRequest(params: any) {
   return API.team.userGetMemberInfoByWorkspaceList(params)
 }
-
-console.log(toRaw(workspaceStore.currentWorkspace))
 
 function tableOperation(data: TableRow) {
   // 只能修改比自己权限低的成员
@@ -147,7 +145,7 @@ async function deleteMember(data: TableRow) {
         filters.onChange()
       }
       catch (error) {
-        console.log('🚀 ~ accept: ~ error:', error)
+        console.log(error)
       }
     },
   })

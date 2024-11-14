@@ -40,7 +40,7 @@ function getOperation(data: Project) {
     {
       name: 'pin',
       label: $t('置顶'),
-      icon: data.time ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
+      icon: data.topTime ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
       power: role.isOwner || role.isManager,
       quick: true,
     },

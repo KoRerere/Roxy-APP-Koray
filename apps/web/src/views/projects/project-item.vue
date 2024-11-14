@@ -1,22 +1,38 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import Profiles from '/@/views/browser/list/profiles/index.vue'
 import MemberDropdownList from '/@/views/projects/components/member-dropdown-list.vue'
+import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 
 const role = useRoleStore()
 const route = useRoute()
 const router = useRouter()
+const { getProjects } = useProjectStore()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
+const [projectModfiyDialog] = useProjectActions()
 const profilesRef = useTemplateRef('profiles')
 const projectId = Number(route.params.id)
-console.log('route', route)
+const projectName = ref(route.query.title)
+
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({
     tableRef: profilesRef.value?.tableRef,
     projectIds: [projectId],
     disableds: ['projectIds'],
+  })
+}
+
+function editProject() {
+  projectModfiyDialog({
+    projectName: projectName.value,
+    project_id: projectId,
+    confirmNext: async ({ params }: any) => {
+      await getProjects()
+      projectName.value = params.projectName
+    },
   })
 }
 </script>
@@ -32,8 +48,9 @@ function handleShowInviteUserFormDialog() {
       <template #title-after>
         <RxSvgIcon name="base/rx_ic_play" :size="8" />
         <div class="project-header-subproject">
-          {{ route.query.title }}
+          {{ projectName }}
         </div>
+        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer" @click="editProject" />
       </template>
       <MemberDropdownList :project-id="projectId" />
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />

@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon'
@@ -13,13 +13,13 @@ const props = defineProps({
 
 const roleLabelMap = getRoleLabelMap()
 const op = ref()
-const members = ref([])
+const members = ref()
 
-function toggle (event) {
+function toggle(event: Event) {
   op.value.toggle(event)
 }
 
-async function getMembers () {
+async function getMembers() {
   const { data } = await API.limit.userGetMemberInfoByProjectIdList({
     projectId: props.projectId,
   })
@@ -31,7 +31,7 @@ getMembers()
 
 <template>
   <div class="drop-btn" @click="toggle">
-    <span class="text">{{ $t('成员') }}({{ members.length }}) </span>
+    <span class="text">{{ $t('成员') }}({{ members?.length || 0 }}) </span>
     <RxSvgIcon name="base/rx_ic_chevron_down" />
   </div>
 

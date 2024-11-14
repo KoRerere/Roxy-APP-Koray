@@ -45,7 +45,7 @@ const columns = setColumns([
   },
   {
     title: $t('已关联项目'),
-    key: 'installType',
+    key: 'related',
     slot: 'related',
   },
   {
@@ -59,7 +59,7 @@ const columns = setColumns([
     slot: 'actions',
   },
 ], {
-  filters: role.isOwner ? [] : ['installType'], // 非所有者过滤关联信息
+  filters: role.isOwner ? [] : ['related'], // 非所有者过滤关联信息
 })
 
 const filters = reactive({
@@ -89,7 +89,9 @@ const filters = reactive({
 })
 
 async function tableRequest(params: any) {
-  return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })// 不分页
+  const data = await API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })
+  data.data.rows = data.data.rows.map(item => ({ ...item, bindPlugin: item.bindPlugin.map((projectName: string) => projectName === '无项目' ? $t('无项目') : projectName) }))
+  return data
 }
 
 function tableOperation(data: any) {
@@ -300,10 +302,10 @@ defineExpose({
       </CustomEmpty>
     </template>
     <template #extension="{ data }">
-      <div class="extension">
+      <div class="flex items-center gap-3 w-75">
         <img class="extension-image" :src="data.pluginIcon">
-        <div class="extension-info">
-          <div class="extension-info-name w-full ellipsis-1">
+        <div class="flex flex-col justify-center items-start w-full extension-info">
+          <div class="w-full ellipsis-1 extension-info-name">
             {{ data.pluginName }}
           </div>
           <div class="extension-info-version">
@@ -345,10 +347,6 @@ defineExpose({
 }
 
 .extension {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xl, 12px);
-
   &-image {
     padding: var(--spacing-md, 6px);
     width: 36px;
@@ -359,12 +357,7 @@ defineExpose({
   }
 
   &-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
     gap: var(--spacing-sm, 4px);
-    font-style: normal;
     line-height: var(--Line-Height-text-xs, 16px);
     font-weight: 500;
 
