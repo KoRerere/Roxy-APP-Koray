@@ -78,12 +78,13 @@ function onAddTag() {
     <RxTag v-if="!labels?.length" class="cursor-pointer !rounded-full" :disabled="_disabled" icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
-      <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']" @click.stop="openMenu">
+      <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :title="label.labelName" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']"
+        @click.stop="openMenu">
         <div class="label pointer-events-none">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="label.labelColor" />
           </svg>
-          <div>
+          <div class="ellipsis-1">
             {{ label.labelName }}
           </div>
         </div>
@@ -95,9 +96,10 @@ function onAddTag() {
 <style lang="scss" scoped>
 .label {
   display: flex;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) var(--spacing-sm, 4px);
+  max-width: 100px;
   min-width: 24px;
   border-radius: 40px;
   border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);

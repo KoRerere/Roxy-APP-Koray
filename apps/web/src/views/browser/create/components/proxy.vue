@@ -152,7 +152,7 @@ function replaceData(data: any) {
 <template>
   <div class="w-full">
     <div class="proxy-switch">
-      <RxInputRadio v-model="proxySwitch" name="proxySwitch" :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
+      <RxInputRadio v-model="proxySwitch" size="xs" name="proxySwitch" :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
     </div>
     <div v-if="!proxySwitch" class="direct">
       {{ $t('* 不使用代理则默认通过本地直连 ({value})', { value: `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}` }) }}
@@ -209,19 +209,20 @@ function replaceData(data: any) {
 <style lang="scss" scoped>
 .proxy-switch {
   :deep(.rx-radio-group) {
-    gap: var(--spacing-4xl, 24px);
+    // gap: var(--spacing-4xl, 24px);
 
     .rx-radio-group-item {
-      padding-left: 0;
-      border: none;
-      min-width: auto;
-      box-shadow: none;
+      // padding-left: 0;
+      // border: none;
+      // min-width: auto;
+      // box-shadow: none;
+      min-width: 90px;
     }
   }
 }
 
 .direct {
-  margin-top: var(--spacing-md, 6px);
+  margin-top: var(--spacing-xl, 12px);
   color: var(--Colors-Text-text-tertiary, #7c8387);
   font-family: Inter;
   font-size: 12px;
@@ -231,11 +232,11 @@ function replaceData(data: any) {
 }
 
 .button-group {
+  margin-top: var(--spacing-xl, 12px);
   display: flex;
   align-items: center;
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
-  height: var(--Line-Height-display-xs, 32px);
 }
 
 .single {

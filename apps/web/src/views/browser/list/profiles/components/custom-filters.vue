@@ -262,11 +262,14 @@ async function modifyFilter() {
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <TieredMenu ref="tmenu" :model="menuOptions" popup :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
-      <a v-ripple class="cursor-pointer !p-0" v-bind="props.action">
+      <a v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>
           <Checkbox v-model="selectedCategories" :name="item.parentName" :input-id="item.value" :value="item.value" @change="onCheckboxChange(item)" />
-          <RxAvatar v-if="item.value.startsWith('u_')" :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
-          <span v-else>{{ item.label }}</span>
+          <div v-if="item.value.startsWith('u_')" class="flex items-center gap-2">
+            <RxAvatar :avatar="item.avatar" :name="(item.label as string)?.slice(0, 2)" :color="item.avatarColor" :size="24" :font-size="12" />
+            <span>{{ item.label }}</span>
+          </div>
+          <span v-else class="ellipsis-1" :title="(item.label as string)">{{ item.label }}</span>
         </label>
         <div v-else :class="classes.item" @click.stop="operationHandler(item)">
           <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" />

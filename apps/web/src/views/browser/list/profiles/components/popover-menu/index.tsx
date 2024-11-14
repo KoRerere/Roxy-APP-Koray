@@ -27,7 +27,7 @@ export function usePopoverMenu() {
               model={operation}
               v-slots={{
                 item: ({ item, props }: any) => (
-                  <a v-ripple class="flex items-center !py-2 !px-2.5" {...props.action}>
+                  <a v-ripple class="flex items-center !py-2 !px-2.5 max-w-60" {...props.action}>
                     <label class="flex items-center gap-1 cursor-pointer w-full" for={item.value}>
                       {
                         type === 'radio'
@@ -38,7 +38,7 @@ export function usePopoverMenu() {
                         && <Checkbox v-model={selected.value} name="checkbox" input-id={item.value} value={item.value} />
                       }
                       {
-                        item.render ? item.render() : <span>{item.label}</span>
+                        item.render ? item.render() : <span class="ellipsis-1" title={item.label}>{item.label}</span>
                       }
                     </label>
                   </a>

@@ -122,6 +122,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       refreshUrl: data.refreshUrl, // 刷新URL
       lastCountry: data.lastCountry, // 出口国家
       lastCity: data.lastCity, // 出口城市
+      checkChannel: data.checkChannel, // 查询渠道
     }]
     : []
 
