@@ -62,7 +62,7 @@ onBeforeMount(() => {
       <div class="rx-main-announcement">
         <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable>
           <template #default>
-            {{ annt.announcement }}
+            <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
           <template #closeicon>
             <SvgIcon name="base/rx_ic_delete" />
@@ -149,8 +149,7 @@ onBeforeMount(() => {
     &__content {
       margin-top: var(--spacing-lg, 8px);
       border-radius: 4px;
-      border: 1px solid var(--Color-green-200, #70e090);
-      background: var(--Color-green-100, #ebfcf0);
+      background: #303256;
       outline-style: none;
       outline-width: 0;
 
@@ -163,22 +162,31 @@ onBeforeMount(() => {
       }
     }
 
+    :deep(a) {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
     :deep(.p-message-content) {
       padding: var(--spacing-lg, 10px) var(--spacing-xl, 12px);
     }
 
     :deep(.p-message-text) {
-      color: var(--Color-green-400, #2e994c);
+      width: 95%;
+      color: #ffffff;
       font-family: Inter;
       font-size: 13px;
-      font-style: normal;
-      font-weight: 600;
       line-height: 16px;
     }
 
     :deep(.p-message-close-button) {
+      color: #ffffff;
       width: auto;
       height: auto;
+
+      &:hover {
+        background-color: transparent;
+      }
     }
   }
 

@@ -167,7 +167,7 @@ onBeforeMount(() => {
 <template>
   <div class="flex flex-col h-full w-full">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" text severity="secondary" icon="base/rx_ic_group" :label="$t('标签管理')" @click="openManageCategory" />
+      <RxButton v-if="!role.isViewer" size="xxs" text severity="secondary" icon="base/rx_ic_tag" :label="$t('标签管理')" @click="openManageCategory" />
     </ViewsHeader>
     <div class="flex items-center justify-between filter-tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
