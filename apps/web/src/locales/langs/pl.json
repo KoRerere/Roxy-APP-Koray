@@ -203,6 +203,7 @@
   "团队成员": "członek zespołu",
   "团队指南": "Przewodnik zespołu",
   "团队通知": "Powiadomienie zespołu",
+  "固定到侧边栏": "",
   "国家 / 地区": "Kraj/region",
   "图片": "zdjęcie",
   "在此添加代理信息以管理，并更方便地与窗口进行绑定。": "",
@@ -287,6 +288,7 @@
   "您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作": "Czy na pewno chcesz zresetować klucz API? \nTa akcja spowoduje, że wszyscy klienci korzystający z oryginalnego klucza API przestaną działać poprawnie",
   "您被邀请至工作空间 {workspaceName}": "",
   "成功": "sukces",
+  "成功固定到侧边栏": "",
   "成员": "członek",
   "成员信息": "Informacje o członku",
   "成员状态": "status członka",
@@ -339,7 +341,6 @@
   "无效的 token": "Nieprawidłowy token",
   "无效的验证码": "Nieprawidłowy kod weryfikacyjny",
   "无法收到验证码？请{tryAgain}或{contact}。": "Nie możesz otrzymać kodu weryfikacyjnego? \nProszę {spróbuj ponownie} lub {kontakt}.",
-  "无项目": "",
   "时区": "Strefa czasowa",
   "时区: {timezone}": "",
   "时间": "czas",
@@ -444,8 +445,8 @@
   "移动项目": "",
   "移除": "Usunąć",
   "空间名称": "Nazwa kosmiczna",
+  "空间名称不能包含中文": "",
   "空间名称最多 30 个字符": "",
-  "空间名称最少 2 个字符": "",
   "空间名称最少 4 个字符": "",
   "空间图标": "ikona przestrzeni",
   "空间设置": "ustawienie przestrzeni",
@@ -624,5 +625,6 @@
   "高级指纹设置": "Zaawansowane ustawienia odcisków palców",
   "默认 IP 查询渠道": "Domyślny kanał zapytań IP",
   "默认图标展示工作空间名称的前两个字符": "",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Domyślne informacje o oknie będą wyświetlane jako kombinacja pierwszych trzech znaków nazwy przestrzeni i numeru kolejnego."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Domyślne informacje o oknie będą wyświetlane jako kombinacja pierwszych trzech znaków nazwy przestrzeni i numeru kolejnego.",
+  "默认项目": ""
 }

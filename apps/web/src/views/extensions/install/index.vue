@@ -90,7 +90,7 @@ const filters = reactive({
 
 async function tableRequest(params: any) {
   const data = await API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })
-  data.data.rows = data.data.rows.map(item => ({ ...item, bindPlugin: item.bindPlugin.map((projectName: string) => projectName === '无项目' ? $t('无项目') : projectName) }))
+  data.data.rows = data.data.rows.map(item => ({ ...item, bindPlugin: item.bindPlugin.map((projectName: string) => projectName === '无项目' ? $t('默认项目') : projectName) }))
   return data
 }
 

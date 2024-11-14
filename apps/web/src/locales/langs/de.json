@@ -203,6 +203,7 @@
   "团队成员": "Teammitglied",
   "团队指南": "Teamführer",
   "团队通知": "Teambenachrichtigung",
+  "固定到侧边栏": "",
   "国家 / 地区": "Land/Region",
   "图片": "Bild",
   "在此添加代理信息以管理，并更方便地与窗口进行绑定。": "Fügen Sie hier Proxy-Informationen hinzu, um das Fenster einfacher zu verwalten und daran zu binden.",
@@ -287,6 +288,7 @@
   "您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作": "Sind Sie sicher, dass Sie Ihren API-Schlüssel zurücksetzen möchten? \nDiese Aktion führt dazu, dass alle Clients, die den ursprünglichen API-Schlüssel verwenden, nicht mehr ordnungsgemäß funktionieren",
   "您被邀请至工作空间 {workspaceName}": "",
   "成功": "Erfolg",
+  "成功固定到侧边栏": "",
   "成员": "Mitglied",
   "成员信息": "Mitgliederinformationen",
   "成员状态": "Mitgliedsstatus",
@@ -339,7 +341,6 @@
   "无效的 token": "Ungültiges Token",
   "无效的验证码": "Ungültiger Bestätigungscode",
   "无法收到验证码？请{tryAgain}或{contact}。": "Sie können den Bestätigungscode nicht erhalten? \nBitte {tryAgain} oder {contact}.",
-  "无项目": "",
   "时区": "Zeitzone",
   "时区: {timezone}": "",
   "时间": "Zeit",
@@ -444,8 +445,8 @@
   "移动项目": "",
   "移除": "Entfernen",
   "空间名称": "Raumname",
+  "空间名称不能包含中文": "",
   "空间名称最多 30 个字符": "",
-  "空间名称最少 2 个字符": "",
   "空间名称最少 4 个字符": "",
   "空间图标": "Leerzeichen-Symbol",
   "空间设置": "Raumeinstellung",
@@ -624,5 +625,6 @@
   "高级指纹设置": "Erweiterte Fingerabdruckeinstellungen",
   "默认 IP 查询渠道": "Standard-IP-Abfragekanal",
   "默认图标展示工作空间名称的前两个字符": "",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Die Standardfensterinformationen werden als Kombination aus den ersten drei Zeichen des Raumnamens und der Sequenznummer angezeigt."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Die Standardfensterinformationen werden als Kombination aus den ersten drei Zeichen des Raumnamens und der Sequenznummer angezeigt.",
+  "默认项目": ""
 }

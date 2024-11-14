@@ -24,7 +24,7 @@ const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 
 const projectList = computed(() => {
-  return projectStore.projects.slice(0, 5).map((item) => {
+  return projectStore.projects.filter(item => !!item.topTime).slice(0, 5).map((item) => {
     return {
       path: ':id',
       name: 'project-item',

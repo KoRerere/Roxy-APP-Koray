@@ -172,7 +172,7 @@ async function tableRequest(params: any) {
   const data = await API.window.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
   const rows = (data.data.rows || []).map(item => ({
     ...item,
-    projectName: item.projectName === '无项目' ? $t('无项目') : item.projectName,
+    projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
   }))
   autoOpenBrowser(rows)
   data.data.rows = rows

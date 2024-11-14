@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { ProjectPin } from '/@/enums/project'
 import useColumns from '/@/hooks/useColumns'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
@@ -24,6 +25,7 @@ const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
+const [showToast] = useResponseToast()
 
 const [columns] = useColumns(columnsRow)
 
@@ -39,8 +41,9 @@ function getOperation(data: Project) {
     },
     {
       name: 'pin',
-      label: $t('置顶'),
+      label: $t('固定到侧边栏'),
       icon: data.topTime ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
+      classes: data.topTime ? 'text-orange' : '',
       power: role.isOwner || role.isManager,
       quick: true,
     },
@@ -99,6 +102,7 @@ function tableRequest() {
 async function pinProject(data: Project) {
   const topStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
   const { code } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, topStatus })
+  showToast(code, $t('成功固定到侧边栏'))
   if (code === 0) {
     tableRef.value?.refresh()
   }

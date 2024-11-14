@@ -203,6 +203,7 @@
   "团队成员": "membre de l'équipe",
   "团队指南": "Guide de l'équipe",
   "团队通知": "Notification de l'équipe",
+  "固定到侧边栏": "",
   "国家 / 地区": "Pays/Région",
   "图片": "image",
   "在此添加代理信息以管理，并更方便地与窗口进行绑定。": "",
@@ -287,6 +288,7 @@
   "您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作": "Êtes-vous sûr de vouloir réinitialiser votre clé API ? \nCette action empêchera tous les clients utilisant la clé API d'origine de fonctionner correctement.",
   "您被邀请至工作空间 {workspaceName}": "",
   "成功": "succès",
+  "成功固定到侧边栏": "",
   "成员": "membre",
   "成员信息": "Informations sur les membres",
   "成员状态": "statut de membre",
@@ -339,7 +341,6 @@
   "无效的 token": "Jeton invalide",
   "无效的验证码": "Code de vérification invalide",
   "无法收到验证码？请{tryAgain}或{contact}。": "Vous ne pouvez pas recevoir le code de vérification ? \nVeuillez {tryAgain} ou {contact}.",
-  "无项目": "",
   "时区": "Fuseau horaire",
   "时区: {timezone}": "",
   "时间": "temps",
@@ -444,8 +445,8 @@
   "移动项目": "",
   "移除": "Retirer",
   "空间名称": "Nom de l'espace",
+  "空间名称不能包含中文": "",
   "空间名称最多 30 个字符": "",
-  "空间名称最少 2 个字符": "",
   "空间名称最少 4 个字符": "",
   "空间图标": "icône de l'espace",
   "空间设置": "réglage de l'espace",
@@ -624,5 +625,6 @@
   "高级指纹设置": "Paramètres avancés d'empreintes digitales",
   "默认 IP 查询渠道": "Canal de requête IP par défaut",
   "默认图标展示工作空间名称的前两个字符": "",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Les informations de la fenêtre par défaut seront affichées sous la forme d'une combinaison des trois premiers caractères du nom de l'espace et du numéro de séquence."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Les informations de la fenêtre par défaut seront affichées sous la forme d'une combinaison des trois premiers caractères du nom de l'espace et du numéro de séquence.",
+  "默认项目": ""
 }

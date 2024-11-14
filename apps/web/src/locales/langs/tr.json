@@ -203,6 +203,7 @@
   "团队成员": "ekip üyesi",
   "团队指南": "Takım Rehberi",
   "团队通知": "Takım bildirimi",
+  "固定到侧边栏": "",
   "国家 / 地区": "Ülke/Bölge",
   "图片": "resim",
   "在此添加代理信息以管理，并更方便地与窗口进行绑定。": "",
@@ -287,6 +288,7 @@
   "您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作": "API anahtarınızı sıfırlamak istediğinizden emin misiniz? \nBu eylem, orijinal API anahtarını kullanan tüm istemcilerin düzgün çalışmayı durdurmasına neden olacaktır",
   "您被邀请至工作空间 {workspaceName}": "",
   "成功": "başarı",
+  "成功固定到侧边栏": "",
   "成员": "üye",
   "成员信息": "Üye bilgileri",
   "成员状态": "üye durumu",
@@ -339,7 +341,6 @@
   "无效的 token": "Geçersiz jeton",
   "无效的验证码": "Geçersiz doğrulama kodu",
   "无法收到验证码？请{tryAgain}或{contact}。": "Doğrulama kodunu alamıyor musunuz? \nLütfen {tryAgain} veya {contact}.",
-  "无项目": "",
   "时区": "Saat dilimi",
   "时区: {timezone}": "",
   "时间": "zaman",
@@ -444,8 +445,8 @@
   "移动项目": "",
   "移除": "Kaldırmak",
   "空间名称": "Alan adı",
+  "空间名称不能包含中文": "",
   "空间名称最多 30 个字符": "",
-  "空间名称最少 2 个字符": "",
   "空间名称最少 4 个字符": "",
   "空间图标": "uzay simgesi",
   "空间设置": "alan ayarı",
@@ -624,5 +625,6 @@
   "高级指纹设置": "Gelişmiş parmak izi ayarları",
   "默认 IP 查询渠道": "Varsayılan IP sorgu kanalı",
   "默认图标展示工作空间名称的前两个字符": "",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Varsayılan pencere bilgisi, alan adının ilk üç karakteri ve sıra numarasının birleşimi olarak görüntülenecektir."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Varsayılan pencere bilgisi, alan adının ilk üç karakteri ve sıra numarasının birleşimi olarak görüntülenecektir.",
+  "默认项目": ""
 }

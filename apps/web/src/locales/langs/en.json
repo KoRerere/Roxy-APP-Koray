@@ -203,6 +203,7 @@
   "团队成员": "Teams",
   "团队指南": "Team Guide",
   "团队通知": "Team",
+  "固定到侧边栏": "Pin to sidebar",
   "国家 / 地区": "Country/Region",
   "图片": "Image",
   "在此添加代理信息以管理，并更方便地与窗口进行绑定。": "Add proxy information here for easier management and binding with Profiles.",
@@ -287,6 +288,7 @@
   "您确认要重置 API 密钥吗？此操作会导致所有使用原 API 密钥的客户端无法正常工作": "Are you sure to reset the API key? This will disable all clients using the old key.",
   "您被邀请至工作空间 {workspaceName}": "You are invited to the workspace {workspaceName}",
   "成功": "Success",
+  "成功固定到侧边栏": "Pin to sidebar successful",
   "成员": "Member",
   "成员信息": "Member Info",
   "成员状态": "Member Status",
@@ -339,7 +341,6 @@
   "无效的 token": "Invalid token",
   "无效的验证码": "Invalid verification code",
   "无法收到验证码？请{tryAgain}或{contact}。": "Unable to receive verification code? Please {tryAgain} or {contact}.",
-  "无项目": "No project",
   "时区": "Time Zone",
   "时区: {timezone}": "Timezone: {timezone}",
   "时间": "Time",
@@ -444,8 +445,8 @@
   "移动项目": "Move project",
   "移除": "Remove",
   "空间名称": "Name",
+  "空间名称不能包含中文": "",
   "空间名称最多 30 个字符": "Workspace name up to 30 characters",
-  "空间名称最少 2 个字符": "Workspace name at least 2 characters",
   "空间名称最少 4 个字符": "Workspace name should not less thant 4 characters.",
   "空间图标": "Icon",
   "空间设置": "Settings",
@@ -624,5 +625,6 @@
   "高级指纹设置": "Advanced Fingerprint Settings",
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
-  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number."
+  "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
+  "默认项目": "Default project"
 }

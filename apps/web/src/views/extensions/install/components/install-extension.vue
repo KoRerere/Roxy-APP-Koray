@@ -41,7 +41,7 @@ async function getProfileList() {
     return
   }
   const { data } = await API.plugins.userGetPluginWindowList({ pluginId: _props.value.id })
-  dataList.value = data.rows.map(item => ({ ...item, projectName: item.projectName === '无项目' ? $t('无项目') : item.projectName }))
+  dataList.value = data.rows.map(item => ({ ...item, projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName }))
   selection.value = data.rows.filter((item: any) => item.plugin_install_status === ExtensionsInstallStatus.installed)
 }
 
