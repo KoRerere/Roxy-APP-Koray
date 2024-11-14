@@ -136,12 +136,11 @@ $spacing-x: var(--spacing-xl, 12px);
       align-items: flex-start;
       align-self: stretch;
       gap: var(--spacing-sm, 4px);
-
       color: var(--Color-neutrals-800, #252a2e);
-      font-family: 'JetBrains Mono';
+      font-family: 'DM Mono';
       font-size: 12px;
       font-weight: 500;
-      line-height: normal;
+      line-height: 1.3;
 
       &-label {
         width: 120px;

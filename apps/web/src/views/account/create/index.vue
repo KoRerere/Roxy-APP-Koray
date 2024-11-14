@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
-import { useResponseToast } from '/@/hooks/useResponseToast'
+// import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, clearInputsValue, findInputByName, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, validateURL } from '/@/utils'
 
@@ -21,7 +21,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['confirm', 'close'])
 
-const [_, onlyErrorToast] = useResponseToast()
+// const [_, onlyErrorToast] = useResponseToast()
 
 const isEdit = computed(() => !!props.data.id)
 
@@ -76,34 +76,35 @@ async function getInputs(data: any = {}) {
       placeholder: $t('请输入 2FA 密钥'),
       name: 'platformEfa',
     },
-    {
-      type: 'textarea',
-      label: 'Cookies',
-      name: 'platformCookies',
-      placeholder: $t('请以 JSON 格式输入 Cookies'),
-      errorMsg: 'Invalid cookie format',
-      icon: 'base/rx_ic_attachment',
-      autoResize: false,
-      formatValue: (input: any) => {
-        return input.value ? JSON.parse(input.value) : []
-      },
-      onBlur(event: any) {
-        if (!checkCookieFormat(event.target.value)) {
-          setInputFieldByInputKey(inputs, 'platformCookies', 'invalid', true)
-        }
-      },
-      iconClick: async (input: any) => {
-        const res = await readCookiesFile()
-        if (res) {
-          const { code, data, message } = res
-          onlyErrorToast(code, message)
-          if (data) {
-            input.value = res.data
-            input.invalid = false
-          }
-        }
-      },
-    },
+    // TODO: 后续完成cookie导出功能后放开
+    // {
+    //   type: 'textarea',
+    //   label: 'Cookies',
+    //   name: 'platformCookies',
+    //   placeholder: $t('请以 JSON 格式输入 Cookies'),
+    //   errorMsg: 'Invalid cookie format',
+    //   icon: 'base/rx_ic_attachment',
+    //   autoResize: false,
+    //   formatValue: (input: any) => {
+    //     return input.value ? JSON.parse(input.value) : []
+    //   },
+    //   onBlur(event: any) {
+    //     if (!checkCookieFormat(event.target.value)) {
+    //       setInputFieldByInputKey(inputs, 'platformCookies', 'invalid', true)
+    //     }
+    //   },
+    //   iconClick: async (input: any) => {
+    //     const res = await readCookiesFile()
+    //     if (res) {
+    //       const { code, data, message } = res
+    //       onlyErrorToast(code, message)
+    //       if (data) {
+    //         input.value = res.data
+    //         input.invalid = false
+    //       }
+    //     }
+    //   },
+    // },
   ])
   setInputValueByFormData(inputs, { ...data, platformCookies: JSON.stringify(data.platformCookies) })
   return inputs

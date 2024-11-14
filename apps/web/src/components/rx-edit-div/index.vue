@@ -49,9 +49,11 @@ function divInput(ev: any) {
 <style lang="scss" scoped>
 .editdiv {
   display: flex;
+  align-items: center;
   gap: 10px;
   padding: var(--spacing-md, 6px) 8px;
   transition: background 0.3s ease-in-out;
+  border-radius: var(--radius-md, 6px);
 
   &:hover {
     background: var(--Color-neutrals-100, #f0f3f5);
@@ -75,16 +77,6 @@ function divInput(ev: any) {
 
     &:empty::before {
       content: attr(data-placeholder);
-    }
-
-    &:focus::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: -5px;
-      width: 100%;
-      height: 1px;
-      background-color: var(--Color-neutrals-600, #575d61);
     }
   }
 }

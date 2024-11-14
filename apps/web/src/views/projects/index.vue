@@ -3,6 +3,8 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
+import { useContextMenu } from '/@/components/rx-ctxmenu'
+import { ProjectPin } from '/@/enums/project'
 import useColumns from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
@@ -12,42 +14,54 @@ import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 
+type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
+
 const tableRef = useTemplateRef('accountTable')
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
-
+const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
 
 const [columns] = useColumns(columnsRow)
 
 const role = useRoleStore()
 
-const operation = ref([
-  {
-    name: 'edit',
-    label: $t('编辑'),
-    icon: 'base/rx_ic_edit',
-    power: role.isOwner || role.isManager,
-    quick: true,
-  },
-  {
-    name: 'invite',
-    label: $t('邀请'),
-    icon: 'base/rx_ic_user_add',
-    power: role.isOwner || role.isManager,
-    quick: true,
-  },
-  {
-    name: 'delete',
-    label: $t('删除'),
-    icon: 'base/rx_ic_bin_1',
-    power: role.isOwner || role.isManager,
-    quick: true,
-  },
-])
+function getOperation(data: Project) {
+  return [
+    {
+      name: 'edit',
+      label: $t('编辑'),
+      icon: 'base/rx_ic_edit',
+      power: role.isOwner || role.isManager,
+    },
+    {
+      name: 'pin',
+      label: $t('置顶'),
+      icon: data.time ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
+      power: role.isOwner || role.isManager,
+      quick: true,
+    },
+    {
+      name: 'invite',
+      label: $t('邀请'),
+      icon: 'base/rx_ic_user_add',
+      power: role.isOwner || role.isManager,
+      quick: true,
+    },
+    {
+      separator: true,
+    },
+    {
+      name: 'delete',
+      label: $t('删除'),
+      icon: 'base/rx_ic_bin_1',
+      power: role.isOwner || role.isManager,
+    },
+  ]
+}
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
@@ -58,9 +72,11 @@ function operationHandler(operate: any, data?: any) {
         },
       })
       break
+    case 'pin':
+      pinProject(data)
+      break
     case 'invite':
       showInviteUserFormDialog({ projectIds: [data.project_id], tableRef })
-
       break
     case 'edit':
       projectModfiyDialog({
@@ -80,7 +96,15 @@ function tableRequest() {
   return getProjects()
 }
 
-function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>) {
+async function pinProject(data: Project) {
+  const topStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
+  const { code } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, topStatus })
+  if (code === 0) {
+    tableRef.value?.refresh()
+  }
+}
+
+function deletePopup(item: Project) {
   confirm.require({
     header: $t('删除项目'),
     message: $t('您确认要删除 {projectName} 项目吗？该操作会移除所有项目成员，且所有窗口将回归默认项目。', { projectName: item.projectName }),
@@ -107,6 +131,13 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     },
   })
 }
+
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
+  show(event, {
+    operation,
+    operationHandler: (operate: any) => operationHandler(operate, data),
+  })
+}
 </script>
 
 <template>
@@ -116,7 +147,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
     </ViewsHeader>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" v-model:columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+      <RyTable ref="accountTable" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions-menu="false" :show-actions="false" data-key="project_id">
         <template #table-empty>
           <CustomEmpty icon="empty/rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
@@ -134,7 +165,7 @@ function deletePopup(item: UnwrapRowType<UserGetProjectInfoByWorkspaceListData>)
           </router-link>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="operation" :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>
       </RyTable>
     </div>

@@ -1,4 +1,5 @@
 export * from './base'
 export * from './extensions'
+export * from './project'
 export * from './proxy'
 export * from './role'

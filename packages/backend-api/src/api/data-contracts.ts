@@ -1627,6 +1627,8 @@ export interface UserGetAnntListListData {
       announcement_en?: string;
       /** 公告数据类型 */
       dataType?: string;
+      /** 颜色提示 */
+      colorTips?: string;
     }[];
   };
   msg: string;
@@ -3869,9 +3871,9 @@ export interface UserGetWindowTableRowsListData {
 export interface UserGetWindowTableSortOrderListData {
   code: number;
   data: {
-    orderName?: string;
-    orderType?: string;
-  }[];
+    orderName: string;
+    orderType: string;
+  };
   msg: string;
 }
 
@@ -4339,6 +4341,57 @@ export interface UserMdfWindowInfoBatchV2CreatePayload {
 }
 
 export interface UserMdfWindowInfoBatchV2CreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetWindowTemplateListListData {
+  code: number;
+  data: {
+    /** 模板ID */
+    id?: number;
+    /** 模板名称 */
+    templateName?: string;
+    /** 模板内容 */
+    content?: string;
+    /** 用户ID */
+    userId?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserAddWindowTemplateInfoCreatePayload {
+  /** 模板名称 */
+  templateName: string;
+  /** 模板内容 */
+  content?: string;
+}
+
+export interface UserAddWindowTemplateInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWindowTemplateInfoCreatePayload {
+  /** 模板ID */
+  id: number;
+  /** 模板名称 */
+  templateName: string;
+  /** 模板内容 */
+  content?: string;
+}
+
+export interface UserMdfWindowTemplateInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDeleteWindowTemplateInfoCreatePayload {
+  /** 要删除的模板id列表 */
+  id: number;
+}
+
+export interface UserDeleteWindowTemplateInfoCreateData {
   code: number;
   msg: string;
 }

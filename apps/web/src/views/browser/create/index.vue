@@ -21,6 +21,29 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 
+interface TemplateMap {
+  default: { [key: string]: any }
+  [key: string]: { [key: string]: any }
+}
+interface TemplateOption {
+  label: string
+  value: string
+  action: boolean
+}
+
+interface ProfileTemplate {
+  value: string
+  oldValue: string
+  props: {
+    options: TemplateOption[]
+    optionValue: string
+    filter: boolean
+    onChange: () => void
+  }
+}
+
+const confirm = useConfirm()
+const dialog = useDialog()
 const router = useRouter()
 const { currentWorkspace } = useWorkspaceStore()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -71,25 +94,21 @@ const accordions = computed(() => {
   }
 })
 
-const templateMap: { [key: string]: any } = {
-  default: getDefaultTemplate(),
-}
+const templateMap = ref<TemplateMap>()
 
-const profileTemplate = reactive({
-  list: [],
+const profileTemplate = reactive<ProfileTemplate>({
   value: 'default',
   oldValue: 'default',
   props: {
     options: [
       { label: 'No Template', value: 'default', action: false },
-      { label: '测试模板', value: '111', action: true },
     ],
     optionValue: 'value',
     filter: false,
     onChange: () => {
       if (profileTemplate.value === profileTemplate.oldValue)
         return
-      const template = templateMap[profileTemplate.value] || templateMap.default
+      const template = templateMap.value![profileTemplate.value] || templateMap.value!.default
       setInputValueByFormData(inputsGroup.value, template)
       const inputs = filterInputsByNames(inputsGroup.value, ['os', 'isLanguageBaseIp', 'isDisplayLanguageBaseIp', 'isTimeZone', 'position', 'resolutionType', 'fontType', 'webGL', 'webGLInfo', 'canvas', 'audioContext', 'speechVoices', 'clientRects', 'deviceNameSwitch', 'macInfo', 'disableSsl', 'portScanProtect'])
       inputs.forEach(input => input.change?.(input))
@@ -128,6 +147,32 @@ async function initFormInputs() {
   extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
+  getTemplateList()
+}
+
+async function getTemplateList() {
+  const { data } = await API.window.userGetWindowTemplateListList()
+
+  const defaultValue = {
+    map: {
+      default: getDefaultTemplate(),
+    },
+    options: [
+      { label: $t('不使用模板'), value: 'default', action: false },
+    ],
+  }
+
+  const { map, options } = data.reduce((acc, cur) => {
+    if (cur.id) {
+      const key = cur.id.toString()
+      acc.map[key] = JSON.parse(cur.content)
+      acc.options.push({ label: cur.templateName, value: key, action: true })
+    }
+    return acc
+  }, defaultValue)
+
+  templateMap.value = map
+  profileTemplate.props.options = options
 }
 
 async function onShuffle() {
@@ -159,6 +204,7 @@ async function createProfile(openBrowser: boolean) {
   const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
     windowName: windowName.value,
+    windowNamePrefix: windowName.value,
     createCount: createCount.value,
     ...original.value,
     ...formData,
@@ -213,26 +259,25 @@ async function importProfile(params: any) {
   loading.value = false
 }
 // ===========================================
-const confirm = useConfirm()
-const dialog = useDialog()
 
 const items = computed(() => [
   {
     label: $t('保存模板'),
-    command: () => {
-      console.log('🚀 ~ 保存模板:')
-    },
     visible: !!profileTemplate.value && profileTemplate.value !== 'default',
+    command: () => {
+      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
+      onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
+    },
   },
   {
     label: $t('保存为新模板'),
     command: () => {
-      saveTemplate()
+      saveTemplatePopup()
     },
   },
 ])
 
-async function saveTemplate(data?: any) {
+async function saveTemplatePopup(option?: TemplateOption) {
   dialog.open(simplePopup, {
     props: {
       showHeader: false,
@@ -241,30 +286,47 @@ async function saveTemplate(data?: any) {
     },
     data: {
       props: {
-        title: $t('Edit template name'),
-        content: $t('Please enter the template name down below:'),
+        title: option?.value ? $t('编辑模板') : $t('保存模板'),
+        content: $t('请在以下文本框输入模板名称:'),
         inputs: [
           {
             type: 'text',
             name: 'templateName',
-            placeholder: 'template name',
-            value: data?.value,
+            placeholder: $t('模板名称'),
+            value: option?.label,
             required: true,
           },
         ],
-        render: () => <RxAlert class="!w-full" closable={false} type="info" title={$t('Templates won\'t save your proxy, accounts and cookies.')} />,
+        render: () => <RxAlert class="!w-full" closable={false} type="info" title={$t('模板将不会保存代理，平台账号以及 cookies 信息')} />,
       },
       onConfirm: async (data: any) => {
-        // TODO: save template
+        onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
       },
     },
   })
 }
 
+async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
+  const formData = getFormDataByList(inputsGroup.value)
+  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
+    acc[cur] = formData[cur]
+    return acc
+  }, {} as any)
+
+  const { code, msg } = id
+    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
+    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
+
+  showToast(code, msg)
+  if (code === 0) {
+    getTemplateList()
+  }
+}
+
 async function deleteTemplate(data: any) {
   confirm.require({
     header: $t('删除模板'),
-    message: $t('您确认要删除模板吗？'),
+    message: $t('您确认要删除 ({name}) 模板吗？', { name: data.label }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -274,8 +336,12 @@ async function deleteTemplate(data: any) {
       label: $t('确认'),
       severity: 'danger',
     },
-    accept: () => {
-      // TODO: delete template
+    accept: async () => {
+      const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
+      showToast(code, msg)
+      if (code === 0) {
+        getTemplateList()
+      }
     },
   })
 }
@@ -296,12 +362,12 @@ async function deleteTemplate(data: any) {
       </div>
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
-          <div v-show="tabsValue !== 'import'" class="flex ">
-            <rxEditDiv v-model="windowName" class="flex-1 " />
+          <div v-show="tabsValue !== 'import'" class="flex gap-2">
+            <rxEditDiv v-model="windowName" class="flex-1" />
             <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
               <template #option-extra="{ option }">
                 <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplate(option)" />
+                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup(option)" />
                   <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
                 </div>
               </template>
@@ -378,11 +444,10 @@ async function deleteTemplate(data: any) {
 }
 
 .multi-block {
-  color: var(--Color-neutrals-900, #171c1f);
+  color: var(--Component-Colors-TextInput-label-label, #171c1f);
   font-family: Inter;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: normal;
+  font-size: 13px;
+  font-weight: 500;
 
   :deep(.p-inputnumber) {
     width: 120px;

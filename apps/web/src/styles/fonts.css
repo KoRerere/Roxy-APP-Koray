@@ -60,7 +60,21 @@
   font-style: normal;
 }
 
+/** Archivo */
 @font-face {
   font-family: 'Archivo';
   src: url('/fonts/Archivo/Archivo-Bold.ttf');
+}
+
+/** DM Mono */
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/DM Mono/ServerMono-Regular.otf');
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/DM Mono/ServerMono-Regular-Italic.otf');
+  font-style: italic;
 }

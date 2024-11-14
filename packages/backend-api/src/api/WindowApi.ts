@@ -20,6 +20,8 @@ import {
   UserAddWindowInfoCreatePayload,
   UserAddWindowInfoV2CreateData,
   UserAddWindowInfoV2CreatePayload,
+  UserAddWindowTemplateInfoCreateData,
+  UserAddWindowTemplateInfoCreatePayload,
   UserBatchUpdateWindowTableRowsCreateData,
   UserBatchUpdateWindowTableRowsCreatePayload,
   UserBatchWindowInfoCreateData,
@@ -32,6 +34,8 @@ import {
   UserClearWindowCacheCreatePayload,
   UserDeleteWindowFilterNameCreateData,
   UserDeleteWindowFilterNameCreatePayload,
+  UserDeleteWindowTemplateInfoCreateData,
+  UserDeleteWindowTemplateInfoCreatePayload,
   UserDelGroupInfoCreateData,
   UserDelGroupInfoCreatePayload,
   UserDelLabelInfoCreateData,
@@ -64,6 +68,7 @@ import {
   UserGetWindowInfoV2ListParams,
   UserGetWindowTableRowsListData,
   UserGetWindowTableSortOrderListData,
+  UserGetWindowTemplateListListData,
   UserImportWindowInfoCreateData,
   UserImportWindowInfoCreatePayload,
   UserImportWindowInfoV2CreateData,
@@ -86,6 +91,8 @@ import {
   UserMdfWindowSyncStatusCreatePayload,
   UserMdfWindowSyncV2CreateData,
   UserMdfWindowSyncV2CreatePayload,
+  UserMdfWindowTemplateInfoCreateData,
+  UserMdfWindowTemplateInfoCreatePayload,
   UserModifyWindowReportTimeCreateData,
   UserModifyWindowReportTimeCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
@@ -898,6 +905,75 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowTemplateListList
+   * @summary 获取窗口模板列表
+   * @request GET:/user_get_window_template_list
+   * @response `200` `UserGetWindowTemplateListListData`
+   */
+  userGetWindowTemplateListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowTemplateListListData, any>({
+      path: `/user_get_window_template_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAddWindowTemplateInfoCreate
+   * @summary 新增窗口模板
+   * @request POST:/user_add_window_template_info
+   * @response `200` `UserAddWindowTemplateInfoCreateData`
+   */
+  userAddWindowTemplateInfoCreate = (data: UserAddWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAddWindowTemplateInfoCreateData, any>({
+      path: `/user_add_window_template_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowTemplateInfoCreate
+   * @summary 修改窗口模板
+   * @request POST:/user_mdf_window_template_info
+   * @response `200` `UserMdfWindowTemplateInfoCreateData`
+   */
+  userMdfWindowTemplateInfoCreate = (data: UserMdfWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserMdfWindowTemplateInfoCreateData, any>({
+      path: `/user_mdf_window_template_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserDeleteWindowTemplateInfoCreate
+   * @summary 删除窗口模板
+   * @request POST:/user_delete_window_template_info
+   * @response `200` `UserDeleteWindowTemplateInfoCreateData`
+   */
+  userDeleteWindowTemplateInfoCreate = (data: UserDeleteWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDeleteWindowTemplateInfoCreateData, any>({
+      path: `/user_delete_window_template_info`,
+      method: "POST",
+      body: data,
       format: "json",
       ...params,
     });

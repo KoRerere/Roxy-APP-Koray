@@ -45,7 +45,7 @@ function onMore(event: Event) {
           :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
       </div>
     </div>
-    <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="onMore">
+    <div v-if="showMenu" class="cursor-pointer line-height-none more" @click.stop="onMore">
       <slot name="more-icon">
         <RxSvgIcon name="base/rx_ic_more-v" />
       </slot>
@@ -57,7 +57,7 @@ function onMore(event: Event) {
 .quick {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg, 8px);
+  gap: var(--spacing-xl, 12px);
 
   &-item {
     font-size: 16px;
@@ -72,5 +72,9 @@ function onMore(event: Event) {
       cursor: not-allowed;
     }
   }
+}
+
+.more {
+  margin-left: var(--spacing-xl, 12px);
 }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -72,6 +73,13 @@ function onCopy(dirId: string) {
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto content">
       <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
+        <template #collapseicon>
+          <RxSvgIcon name="base/rx_ic_chevron_down" />
+        </template>
+        <template #expandicon>
+          <RxSvgIcon name="base/rx_ic_chevron_up" />
+        </template>
+
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
