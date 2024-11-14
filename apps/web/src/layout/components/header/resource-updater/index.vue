@@ -35,8 +35,8 @@ const isDownloading = computed(() => {
 })
 
 async function checkForUpdates() {
-  // const result = await electronAPI.send('app:checkForUpdates')
-  // console.log('checkForUpdates', result)
+  const result = await electronAPI.send('app:checkForUpdates')
+  console.log('checkForUpdates', result)
 }
 
 function toggle(event: Event) {

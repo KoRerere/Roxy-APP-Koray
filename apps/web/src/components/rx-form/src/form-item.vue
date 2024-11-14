@@ -159,6 +159,10 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .form-item-control {
   flex: auto;
+
+  .p-inputtext::placeholder {
+    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+  }
 }
 
 label {

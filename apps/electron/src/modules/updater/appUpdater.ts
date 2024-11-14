@@ -97,7 +97,8 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.on(`error`, (error) => {
       this.isInProgress = false
-      if (!error.message.includes('com.github.Electron')) {
+      const ignoreList = ['.blockmap', 'com.github.Electron', 'disableWebInstaller is set to false']
+      if (ignoreList.every(n => !error.message.includes(n))) {
         this.sendErrorMessage()
       }
       console.error(`autoUpdater 出现错误`, error)

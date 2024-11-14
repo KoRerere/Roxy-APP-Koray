@@ -40,7 +40,8 @@ const osBitMap = {
 /** 获取上传的路径 */
 function genUploadPath(osBit: string, fileName: string) {
   if (process.platform === 'win32') {
-    return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`.replaceAll('ia32', 'x86')
+    osBit = osBit.replaceAll('x64', '64').replaceAll('ia32', '32')
+    return `/public/package/app/Windows/${osBit}/${appVersion}/${fileName}`
   }
   else if (isMac) {
     return `/public/package/app/macOS/${osBitMap[osBit]}/${appVersion}/${fileName}`
