@@ -19,6 +19,7 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: !role.isViewer,
+      quick: true,
     },
     {
       name: 'test',
