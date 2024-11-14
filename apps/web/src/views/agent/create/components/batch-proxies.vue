@@ -140,7 +140,7 @@ onBeforeMount(async () => {
 })
 
 function parseValue() {
-  const list = proxiesText.value.split('\n').map(n => n.trim()).filter(Boolean)
+  const list = proxiesText.value.split('\n').map(n => n.replace(/\s/g, '').replace(/：/g, ':')).filter(Boolean)
 
   if (!list.length) {
     onlyErrorToast(-1, $t('请先输入代理信息'))

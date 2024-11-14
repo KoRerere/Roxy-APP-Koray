@@ -69,12 +69,21 @@
 /** DM Mono */
 @font-face {
   font-family: 'DM Mono';
-  src: url('/fonts/DM Mono/ServerMono-Regular.otf');
+  src: url('/fonts/DM Mono/DMMono-Light.ttf');
   font-style: normal;
+  font-weight: 300;
 }
 
 @font-face {
   font-family: 'DM Mono';
-  src: url('/fonts/DM Mono/ServerMono-Regular-Italic.otf');
-  font-style: italic;
+  src: url('/fonts/DM Mono/DMMono-Regular.ttf');
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/DM Mono/DMMono-Medium.ttf');
+  font-style: normal;
+  font-weight: 500;
 }
