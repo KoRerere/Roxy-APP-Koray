@@ -108,8 +108,11 @@ const profileTemplate = reactive<ProfileTemplate>({
     onChange: () => {
       if (profileTemplate.value === profileTemplate.oldValue)
         return
-      const template = templateMap.value![profileTemplate.value] || templateMap.value!.default
-      setInputValueByFormData(inputsGroup.value, toRaw(template))
+      const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
+      setInputValueByFormData(inputsGroup.value, {
+        ...template,
+        resolution: `${template.resolutionX} x ${template.resolutionY}`,
+      })
       const inputs = filterInputsByNames(inputsGroup.value, ['os', 'isLanguageBaseIp', 'isDisplayLanguageBaseIp', 'isTimeZone', 'position', 'resolutionType', 'fontType', 'webGL', 'webGLInfo', 'canvas', 'audioContext', 'speechVoices', 'clientRects', 'deviceNameSwitch', 'macInfo', 'disableSsl', 'portScanProtect'])
       inputs.forEach(input => input.change?.(input))
       profileTemplate.oldValue = profileTemplate.value

@@ -383,12 +383,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       change(input: any) {
         const ipt = findInputByName(basicInputs, 'isPositionBaseIp')
         if (ipt) {
-          const visible = input.value !== 2
-          ipt.visible = visible
-          if (!visible) {
-            ipt.value = true
-            ipt.change(ipt)
-          }
+          ipt.visible = input.value !== 2
+          ipt.change(ipt)
         }
       },
       preview: {
@@ -406,7 +402,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
       visible: true,
       change(input: any) {
-        setInputVisible(basicInputs, ['longitude', 'latitude', 'precisionPos'], input.value === false)
+        setInputVisible(basicInputs, ['longitude', 'latitude', 'precisionPos'], input.visible && input.value === false)
       },
       preview: {
         label: $t('地理位置'),
