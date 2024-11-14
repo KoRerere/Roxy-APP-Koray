@@ -5,14 +5,13 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
-import { z } from 'zod'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
-import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import WorkspaceForm from './workspace-form.vue'
 
 const router = useRouter()
 const styles = useCssModule()
@@ -135,73 +134,11 @@ function leaveWorkspace() {
     },
   })
 }
-
-function onInput() {
-  const result = z.string()
-    .min(1, $t('请输入空间名称'))
-    .min(4, $t('空间名称最少 4 个字符'))
-    .max(30, $t('空间名称最多 30 个字符'))
-    .safeParse(workspaceInfo.value.workspaceName)
-
-  if (result.error) {
-    errorMessage.value = result.error.errors[0].message
-  }
-  else {
-    errorMessage.value = ''
-  }
-}
-
-const exampleName = computed(() => {
-  const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
-  return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
-})
 </script>
 
 <template>
   <div class="workspace-settings">
-    <div class="content">
-      <div class="row">
-        <div>
-          <div class="title">
-            {{ $t('空间图标') }}
-          </div>
-          <div class="description">
-            {{ $t('默认图标展示工作空间名称的前两个字符') }}
-          </div>
-        </div>
-        <div class="emoji-picker-box">
-          <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
-          <div class="choose-icon-desc">
-            {{ $t('选择图标') }}
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <div class="title">
-            {{ $t('空间名称') }}
-          </div>
-          <div class="description">
-            {{ $t('默认窗口信息会展示为空间名称的前三个字符与序号的组合') }}
-          </div>
-        </div>
-        <div class="w-full">
-          <IconField>
-            <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!!errorMessage" maxlength="30" class="w-full" @input="onInput" />
-            <InputIcon class="input-limit-text">
-              {{ workspaceInfo.workspaceName?.length }}/30
-            </InputIcon>
-          </IconField>
-          <div v-if="errorMessage" class="description !text-red">
-            {{ errorMessage }}
-          </div>
-          <div class="description">
-            {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
-          </div>
-        </div>
-      </div>
-    </div>
+    <WorkspaceForm v-model:workspace-info="workspaceInfo" v-model:error-message="errorMessage" />
 
     <div class="footer">
       <template v-if="isOwner && !currentWorkspace?.workspaceDefault">
@@ -270,59 +207,6 @@ const exampleName = computed(() => {
   width: 452px;
   margin: 0 auto;
   height: 100%;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-none, 0px);
-  align-self: stretch;
-
-  .row {
-    display: flex;
-    padding: var(--spacing-2xl, 16px) 0px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-2xl, 16px);
-    align-self: stretch;
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-
-    &:last-of-type {
-      border-bottom: none;
-    }
-
-    .title {
-      align-self: stretch;
-      color: #000;
-      font-family: Inter;
-      font-size: 14px;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-lg, 20px);
-      /* 133.333% */
-    }
-
-    .description {
-      margin-top: var(--spacing-xs, 4px);
-      align-self: stretch;
-      color: var(--Colors-Text-text-tertiary, #7c8387);
-      font-family: Inter;
-      font-size: 12px;
-      line-height: var(--Line-Height-text-xs, 16px);
-      /* 160% */
-    }
-
-    .choose-icon-desc {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
-      text-align: center;
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-      /* 133.333% */
-    }
-  }
 }
 
 .input-limit-text {

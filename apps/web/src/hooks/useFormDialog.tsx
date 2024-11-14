@@ -5,8 +5,8 @@ import { RxForm } from '/@/components/rx-form'
 import { useDialog } from '/@/hooks/useDialog'
 
 interface FormDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
-  handleCancel?: () => void
-  handleOk?: (formModel: Recordable) => void
+  handleCancel?: () => any
+  handleOk?: (formModel: Recordable) => any
   schemas?: FormSchema[]
   formProps?: Partial<RxFormProps>
   dialogSlots?: Partial<FormDialogSlots>

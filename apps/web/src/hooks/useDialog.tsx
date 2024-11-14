@@ -1,11 +1,12 @@
+import type { DefineComponent, FunctionalComponent, HTMLAttributes, VNode } from 'vue'
 import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
-import { createVNode, type DefineComponent, type FunctionalComponent, type HTMLAttributes, render, type VNode } from 'vue'
+import { createVNode, render } from 'vue'
 import RxButton from '/@/components/rx-button/'
 import { $t } from '/@/locales'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
-  handleCancel?: () => void
-  handleOk?: () => void
+  handleCancel?: () => any
+  handleOk?: () => any
   slots?: Partial<DialogSlots>
 }
 

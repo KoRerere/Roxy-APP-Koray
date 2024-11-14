@@ -5,15 +5,24 @@ import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap, Role } from '/@/enums/'
+import { useDialog } from '/@/hooks/useDialog'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
 const [dialog] = useFormDialog()
+const [workspaceFormDialog] = useDialog()
 const toast = useToast()
+
+const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
+const workspaceForm = ref({
+  workspaceName: '',
+  workspacePicture: '',
+})
 
 const formSchemas = defineFormSchema([
   {
@@ -41,6 +50,34 @@ const formSchemas = defineFormSchema([
 ])
 
 function showCreateWorkspaceDialog() {
+  return workspaceFormDialog.showModal({
+    header: $t('创建新的工作空间'),
+    class: 'w-[500px]',
+    slots: {
+      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} />,
+    },
+    async handleOk() {
+      console.log('workspaceForm.value', workspaceForm.value, workspaceFormRef)
+      workspaceFormRef.value?.onInput()
+      if (workspaceFormRef.value?.errorMessage) {
+        return Promise.reject(new Error('表单校验失败'))
+      }
+
+      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(workspaceForm.value)
+      if (code === 0) {
+        console.log(data)
+        workspaceStore.getWorkspaceList()
+        workspaceForm.value.workspaceName = ''
+        workspaceForm.value.workspacePicture = ''
+      }
+      else {
+        console.log(msg)
+        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
+        return Promise.reject(new Error(msg))
+      }
+    },
+  })
+
   dialog.showModal({
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
