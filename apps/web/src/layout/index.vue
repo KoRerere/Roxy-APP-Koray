@@ -32,7 +32,7 @@ async function getAnnt() {
 }
 
 onBeforeMount(() => {
-  // getAnnt()
+  getAnnt()
 })
 </script>
 
@@ -154,13 +154,17 @@ onBeforeMount(() => {
       outline-style: none;
       outline-width: 0;
 
+      &:first-of-type {
+        margin-top: 0;
+      }
+
       &:last-of-type {
         margin-bottom: var(--spacing-xl, 12px);
       }
     }
 
     :deep(.p-message-content) {
-      padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+      padding: var(--spacing-lg, 10px) var(--spacing-xl, 12px);
     }
 
     :deep(.p-message-text) {
