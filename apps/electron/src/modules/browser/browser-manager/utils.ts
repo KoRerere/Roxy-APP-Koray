@@ -401,7 +401,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         // 代理主机
         host: isUseSystemProxy ? '127.0.0.1' : host,
         // 代理端口
-        port: isUseSystemProxy ? store.roxynetProxyPort : port,
+        port: Number(isUseSystemProxy ? store.roxynetProxyPort : port),
         // 用户名 ，选填
         username: isUseSystemProxy ? winInfo.dirId : proxyUserName,
         // 密码，选填

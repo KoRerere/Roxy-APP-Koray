@@ -102,7 +102,7 @@ onMounted(() => {
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
           </TabList>
-          <TabPanels class="!pa-0 h-[280px] overflow-auto">
+          <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
@@ -120,7 +120,7 @@ onMounted(() => {
                 </div>
               </template>
               <template v-else>
-                <div class="flex justify-center items-center h-[280px] text-6">
+                <div class="flex justify-center items-center min-h-[150px] max-h-[280px] text-4">
                   {{ $t('暂无消息') }}
                 </div>
               </template>

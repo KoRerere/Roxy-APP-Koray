@@ -115,7 +115,7 @@ window.electronAPI.on('app:resource-update', (data) => {
             {{ tab.title }}
           </Tab>
         </TabList>
-        <TabPanels class="!pa-0 h-[280px] overflow-auto">
+        <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
             <component :is="tab.component" :upgrade-list="tab.list" />
           </TabPanel>

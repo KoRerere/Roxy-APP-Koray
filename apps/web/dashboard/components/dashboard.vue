@@ -448,6 +448,8 @@ onBeforeMount(() => {
         font-style: normal;
         font-weight: 400;
         line-height: var(--Line-Height-text-xs, 16px);
+        word-break: break-all;
+        white-space: wrap;
         /* 133.333% */
 
         .tag-wrap {
