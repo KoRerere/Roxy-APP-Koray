@@ -178,6 +178,7 @@
   "发送邀请": "Invite",
   "发送邀请失败": "Invite Fail",
   "取消": "Cancel",
+  "取消固定到侧边栏": "Remove from sidebar",
   "只能打开或查看权限内的窗口信息。": "Can only open or view Profiles within permissions.",
   "可以管理所有窗口，包括所有查看者和编辑者权限。": "Can manage all Profiles, including viewer and editor permissions.",
   "可以管理所有窗口，并管理所有查看者权限。": "Can manage all Profiles and viewer permissions.",
