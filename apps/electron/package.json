@@ -64,6 +64,8 @@
     "portfinder": "^1.0.32",
     "puppeteer-core": "21.3.8",
     "socks-proxy-agent": "^8.0.4",
+    "socksv5": "^0.0.6",
+    "ssh2": "^1.16.0",
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
     "tsconfig-paths-webpack-plugin": "^4.1.0",

@@ -310,7 +310,7 @@ ipcMain.on('util:toMediaPath', (pathname) => {
 
 /** 删除工作空间 */
 ipcMain.on('util:removeWorkspace', async (workspaceId) => {
-  const result = await API.window.userGetWindowInfoV2List({ page_index: 1, page_size: 1000 }, { headers: { workspaceId } })
+  const result = await API.window.userGetWindowInfoV2List({ page_index: 1, page_size: 2000 }, { headers: { workspaceId } })
 
   if (result.code === 0) {
     const promiseArr = result.data.rows.map(winInfo => browserManager.removeLocalData(winInfo.dirId!))

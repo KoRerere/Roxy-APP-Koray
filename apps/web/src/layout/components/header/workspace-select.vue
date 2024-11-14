@@ -1,12 +1,9 @@
 <script setup lang="tsx">
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api/'
-import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
-import { defineFormSchema } from '/@/components/rx-form'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap, Role } from '/@/enums/'
 import { useDialog } from '/@/hooks/useDialog'
-import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
@@ -14,7 +11,6 @@ import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
-const [dialog] = useFormDialog()
 const [workspaceFormDialog] = useDialog()
 const toast = useToast()
 
@@ -24,31 +20,6 @@ const workspaceForm = ref({
   workspacePicture: '',
 })
 
-const formSchemas = defineFormSchema([
-  {
-    field: 'workspaceName',
-    component: 'InputText',
-    label: $t('空间名称'),
-    componentProps: {
-      placeholder: $t('请输入空间名称'),
-    },
-    rule: {
-      trigger: 'blur',
-      validator(zod) {
-        return zod.string()
-          .min(1, $t('请输入空间名称'))
-          .min(2, $t('空间名称最少 2 个字符'))
-          .max(30, $t('空间名称最多 30 个字符'))
-      },
-    },
-  },
-  {
-    field: 'workspacePicture',
-    component: ({ formModel }) => <RxEmojiPicker v-model={formModel.workspacePicture} class="!w-[fit-content]" />,
-    label: $t('空间图标'),
-  },
-])
-
 function showCreateWorkspaceDialog() {
   return workspaceFormDialog.showModal({
     header: $t('创建新的工作空间'),
@@ -57,7 +28,6 @@ function showCreateWorkspaceDialog() {
       default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} />,
     },
     async handleOk() {
-      console.log('workspaceForm.value', workspaceForm.value, workspaceFormRef)
       workspaceFormRef.value?.onInput()
       if (workspaceFormRef.value?.errorMessage) {
         return Promise.reject(new Error('表单校验失败'))
@@ -74,24 +44,6 @@ function showCreateWorkspaceDialog() {
         console.log(msg)
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
         return Promise.reject(new Error(msg))
-      }
-    },
-  })
-
-  dialog.showModal({
-    header: $t('创建新的工作空间'),
-    class: 'w-[500px]',
-    schemas: formSchemas,
-    async handleOk(formModel) {
-      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(formModel)
-      if (code === 0) {
-        console.log(data)
-        workspaceStore.getWorkspaceList()
-      }
-      else {
-        console.log(msg)
-        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
-        return Promise.reject()
       }
     },
   })
