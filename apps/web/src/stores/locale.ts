@@ -2,6 +2,7 @@ import mixpanel from 'mixpanel-browser'
 import { usePrimeVue } from 'primevue/config'
 import { ref } from 'vue'
 import { loadLocaleMessages } from '/@/locales'
+import { clearDictCache } from '/@/utils'
 
 export const useSimpleLocale = defineStore('locale', () => {
   const primevue = usePrimeVue()
@@ -11,6 +12,7 @@ export const useSimpleLocale = defineStore('locale', () => {
     loadLocaleMessages(locale)
     primevue.config.locale = locale
     currentLocale.value = locale
+    clearDictCache()
     location.reload()
   }
 

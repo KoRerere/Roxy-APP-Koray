@@ -9,7 +9,7 @@ const DICT_CONFIG = {
   EXPIRY_TIME: 1000 * 60 * 60 * 4,
   EXPIRED_VALUE: 0,
   isExpired() {
-    const _isExpired = new Date().getTime() > (DICT_CONFIG.EXPIRED_VALUE ?? 0)
+    const _isExpired = new Date().getTime() > DICT_CONFIG.EXPIRED_VALUE
     if (_isExpired) {
       DICT_CONFIG.EXPIRED_VALUE = new Date().getTime() + DICT_CONFIG.EXPIRY_TIME
     }
@@ -20,6 +20,12 @@ const DICT_CONFIG = {
     const dict = JSON.parse(localStorage.getItem('$dict_map') || 'null')
     return isEmptyValue(version) || isEmptyValue(dict)
   },
+}
+
+export function clearDictCache() {
+  DICT_CONFIG.EXPIRED_VALUE = 0
+  localStorage.removeItem('$dict_version')
+  localStorage.removeItem('$dict_map')
 }
 
 export async function getDictMap() {
