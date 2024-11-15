@@ -4349,13 +4349,13 @@ export interface UserGetWindowTemplateListListData {
   code: number;
   data: {
     /** 模板ID */
-    id?: number;
+    id: number;
     /** 模板名称 */
-    templateName?: string;
+    templateName: string;
     /** 模板内容 */
-    content?: string;
+    content: string;
     /** 用户ID */
-    userId?: number;
+    userId: number;
   }[];
   msg: string;
 }
@@ -4393,6 +4393,155 @@ export interface UserDeleteWindowTemplateInfoCreatePayload {
 
 export interface UserDeleteWindowTemplateInfoCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetWindowInfoListListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /**
+   * 窗口名称, str, 非必传
+   * @example "窗口1"
+   */
+  windowName?: string;
+  /**
+   * 指定序号串, 多个序号使用英文逗号分隔, str,非必传
+   * @example "1,4,5,8"
+   */
+  sortNums?: string;
+  /**
+   * 窗口备注, str, 非必传
+   * @example "窗口1"
+   */
+  windowRemark?: string;
+  /**
+   * 窗口状态, str, 非必传,ture:打开,false:关闭
+   * @example "true"
+   */
+  openStatus?: string;
+  /**
+   * 窗口收藏, str, 非必传
+   * @example "true"
+   */
+  isOften?: string;
+  /**
+   * 创建时间开始, str, 非必传
+   * @example "2024-05-22"
+   */
+  startDate?: string;
+  /**
+   * 创建时间结束, str, 非必传
+   * @example "2024-05-24"
+   */
+  endDate?: string;
+  /**
+   * 标签id列表, 多个使用英文逗号分隔, str, 非必传 (多选)
+   * @example "10,20,33"
+   */
+  labelIds?: string;
+  /**
+   * 账号平台（多选）,传数字ID
+   * @example "1,2,3"
+   */
+  platformUrlIds?: string;
+  /**
+   * 操作系统（多选）,传字符串
+   * @example "Windows,macOS"
+   */
+  osList?: string;
+  /**
+   * 排序字段
+   * @example "name"
+   */
+  orderName?: string;
+  /**
+   * 排序类型  desc:降序   asc:升序
+   * @example "desc"
+   */
+  orderType?: string;
+  /**
+   * 是否删除，绑定回收站功能，1.删除，0.不删除
+   * @example 0
+   */
+  isDelete: number;
+  /** 项目ID，默认不传查询所有 */
+  "projectIds "?: string[];
+  /**
+   * 修改时间开始, str, 非必传
+   * @example "2024-05-24"
+   */
+  startUpdateDate?: string;
+  /**
+   * 修改结束开始, str, 非必传
+   * @example "2024-05-24"
+   */
+  endUpdateDate?: string;
+}
+
+export interface UserGetWindowInfoListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      dirId?: string;
+      windowSortNum?: number;
+      windowName?: string;
+      platformUrl?: string;
+      platformIds?: string[];
+      collectUserList?: string;
+      windowPlatformList?: string[];
+      platformUserName?: string;
+      platformPassword?: string;
+      projectName?: string;
+      projectId?: number;
+      coreVersion?: string;
+      os?: string;
+      osVersion?: string;
+      windowRemark?: string;
+      isOften?: boolean;
+      openStatus?: boolean;
+      statusInfo?: string[];
+      labelId?: number;
+      labelColor?: string;
+      labelName?: string;
+      labelIds?: string[];
+      moduleId?: number;
+      proxyMethod?: string;
+      moduleName?: string;
+      proxyNetwork?: string;
+      proxyCategory?: string;
+      ipType?: string;
+      proxyProvider?: string;
+      protocol?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyTime?: string;
+      refreshUrl?: string;
+      checkChannel?: string;
+      extraChannel?: string;
+      lastIp?: string;
+      lastCountry?: string;
+      lastCity?: string;
+      checkTime?: string;
+      checkStatus?: number;
+      labelInfo?: string[];
+      platformUrlList?: string[];
+    }[];
+  };
   msg: string;
 }
 

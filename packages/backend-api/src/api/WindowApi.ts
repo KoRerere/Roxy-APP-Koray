@@ -61,6 +61,8 @@ import {
   UserGetUaWebglV2ListParams,
   UserGetWindowFilterNameListListData,
   UserGetWindowInfoListData,
+  UserGetWindowInfoListListData,
+  UserGetWindowInfoListListParams,
   UserGetWindowInfoListParams,
   UserGetWindowInfoRecycleListData,
   UserGetWindowInfoRecycleListParams,
@@ -118,7 +120,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowInfoV2List
-   * @summary 窗口列表 (新版本接口)
+   * @summary 窗口列表 (新版本浏览器使用,根据ID查询窗口详细信息)
    * @request GET:/user_get_window_info_v2
    * @response `200` `UserGetWindowInfoV2ListData`
    */
@@ -974,6 +976,23 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_delete_window_template_info`,
       method: "POST",
       body: data,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 新版本回收站列表也用此接口，is_delete传1即可
+   *
+   * @tags Window
+   * @name UserGetWindowInfoListList
+   * @summary 窗口列表（新版本浏览器使用，返回基本信息）
+   * @request GET:/user_get_window_info_list
+   * @response `200` `UserGetWindowInfoListListData`
+   */
+  userGetWindowInfoListList = (query: UserGetWindowInfoListListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetWindowInfoListListData, any>({
+      path: `/user_get_window_info_list`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

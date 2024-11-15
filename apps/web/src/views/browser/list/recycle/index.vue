@@ -24,7 +24,7 @@ const tableRef = useTemplateRef('recycleTable')
 
 async function tableRequest(params: any) {
   // 1: 已删除
-  return API.window.userGetWindowInfoV2List({ ...params, isDelete: 1 })
+  return API.window.userGetWindowInfoListList({ ...params, isDelete: 1 })
 }
 
 function operationHandler(operate: any, data: any) {

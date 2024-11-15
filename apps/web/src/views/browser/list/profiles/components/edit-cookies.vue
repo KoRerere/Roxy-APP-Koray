@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { API } from '/@/api'
 import RxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -21,10 +22,17 @@ const props = defineProps({
 const emit = defineEmits(['confirm'])
 const [_, onlyErrorToast] = useResponseToast()
 
-const cookie = isEmptyValue(props.data?.cookie) ? '' : JSON.stringify(props.data.cookie, null, 2)
-
-const cookies = ref(cookie)
+const cookies = ref()
 const loading = ref(false)
+
+onBeforeMount(() => {
+  getCookie()
+})
+
+async function getCookie() {
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  cookies.value = isEmptyValue(data.cookie) ? '' : JSON.stringify(data.cookie, null, 2)
+}
 
 function onConfirm() {
   if (cookies.value && checkCookieFormat(cookies.value)) {

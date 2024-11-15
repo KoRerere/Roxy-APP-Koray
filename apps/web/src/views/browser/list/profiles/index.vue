@@ -169,7 +169,7 @@ async function saveFilters(formData: any) {
 
 async function tableRequest(params: any) {
   // 0: 未删除
-  const data = await API.window.userGetWindowInfoV2List({ projectIds: route.params.id, ...params, isDelete: 0 })
+  const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 })
   const rows = (data.data.rows || []).map(item => ({
     ...item,
     projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
@@ -213,9 +213,9 @@ async function operationHandler(operate: any, data: any) {
         },
       })
       break
-    case 'fav':
-      singleModifyWindow({ id: data.id, isOften: !data.isOften })
-      break
+    // case 'fav':
+    //   singleModifyWindow({ id: data.id, isOften: !data.isOften })
+    //   break
     case 'addNotes':
       await onRemark(datas)
       break
