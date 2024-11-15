@@ -147,7 +147,7 @@ export class BeforeLaunchTask {
     const {
       dirId,
       sandboxPermission,
-      usePluginDir,
+      usePluginDirVersion,
       startupParam,
       systemInfo = {},
       openWidth,
@@ -168,9 +168,9 @@ export class BeforeLaunchTask {
     ]
 
     // 如果用户开启了插件
-    if (usePluginDir.length) {
+    if (usePluginDirVersion.length) {
       let acc = 1
-      const plugins = await extensionManager.getExtensionByIds(usePluginDir, (msg: string) => {
+      const plugins = await extensionManager.getTargetExtensions(usePluginDirVersion, (msg: string) => {
         this.sendSuccessMessage(msg, this.progress + acc++)
       })
       args.push(`--load-extension=${plugins.join(',')}`)
@@ -327,6 +327,7 @@ export class BeforeLaunchTask {
       await fileExists(dirname(localCacheFilePath), true)
       // 下载远程缓存文件
       await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
+      // TODO
       const zip = new AdmZip(localCacheFilePath)
 
       const filters = this.browserItem.needSyncFiles

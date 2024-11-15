@@ -127,6 +127,3 @@ export type RandomFingerprintFuncParameters = {
 export type RandomFingerprintFuncReturnTypes = {
   [K in RandomFingerprintFuncMap]: ReturnType<typeof randomFingerprintFuncMap[K]>
 }
-
-// export type RandomFingerprintFunc = keyof typeof randomFingerprintFuncMap
-// export type RandomFingerprintFuncPayload = Parameters<typeof randomFingerprintFuncMap[RandomFingerprintFunc]>[0]
