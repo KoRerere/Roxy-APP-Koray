@@ -93,9 +93,31 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       audioContextValue: audioContext ? getCanvasContextNoiseValue() : undefined,
       speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : undefined,
       clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : undefined,
-    } // 跟随老版本逻辑过滤没有值的属性
+    }
   })
 
   // 将 undefined 的属性过滤掉
   return JSON.parse(JSON.stringify(fingerDetail))
 }
+
+/** 随机生成指纹函数 map */
+export const randomFingerprintFuncMap = {
+  genRandomFonts,
+  getCanvasContextNoiseValue,
+  getRandomInt,
+  getSpeechSynthesis,
+  getClientRectsValue,
+}
+
+export type RandomFingerprintFuncMap = keyof typeof randomFingerprintFuncMap
+
+export type RandomFingerprintFuncParameters = {
+  [K in RandomFingerprintFuncMap]: Parameters<typeof randomFingerprintFuncMap[K]>
+}
+
+export type RandomFingerprintFuncReturnTypes = {
+  [K in RandomFingerprintFuncMap]: ReturnType<typeof randomFingerprintFuncMap[K]>
+}
+
+// export type RandomFingerprintFunc = keyof typeof randomFingerprintFuncMap
+// export type RandomFingerprintFuncPayload = Parameters<typeof randomFingerprintFuncMap[RandomFingerprintFunc]>[0]

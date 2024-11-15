@@ -110,7 +110,7 @@ fontList.getFonts()
   })
 
 /** 随机生成字体 */
-export function genRandomFonts() {
+export function genRandomFonts(): string[] {
   // 有效的pixelscan字体
   const valid_pixelscan = get_list_union(local_fonts, pixelscanFonts)
   // 排除valid_pixelscan的字体得到有效的本地字体 - 为了过pixelscan，就不用禁用pixelscan的字体，所以要排除掉

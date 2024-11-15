@@ -16,6 +16,18 @@ const profileTemplate = reactive({
     filter: false,
   },
 })
+
+setTimeout(async () => {
+  const dd = await electronAPI.send('util:callRandomFingerprintFunc', {
+    genRandomFonts: [],
+    getCanvasContextNoiseValue: [],
+    getRandomInt: [200, 500],
+    getSpeechSynthesis: [],
+    getClientRectsValue: [],
+  })
+
+  console.log(dd)
+}, 1000)
 </script>
 
 <template>

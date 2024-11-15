@@ -17,7 +17,7 @@ import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/roxynet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, decryptAESGCM, detectNetwork, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
-import { genRandomFingerprint } from '/@/utils/randomFingerprint'
+import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -344,6 +344,17 @@ ipcMain.on('util:genRandomFonts', () => {
 /** 生成随机指纹 */
 ipcMain.on('util:genRandomFingerprint', (payload, count = 1) => {
   return genRandomFingerprint(payload, count)
+})
+
+/** 按需调用生成指纹函数 */
+ipcMain.on('util:callRandomFingerprintFunc', (payload) => {
+  return Object.entries(payload).reduce((acc, [key, value]) => {
+    if (Reflect.has(randomFingerprintFuncMap, key)) {
+      const func = Reflect.get(randomFingerprintFuncMap, key)
+      Reflect.set(acc, key, func(...value))
+    }
+    return acc
+  }, {})
 })
 
 /** AES-GCM 加密 */

@@ -7,7 +7,7 @@ import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } fro
 import type { StoreType } from '#roxybrowser/modules/store'
 import type { UpdateInfo } from '#roxybrowser/modules/updater'
 import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
-import type { RandomFingerprint } from '#roxybrowser/utils/randomFingerprint'
+import type { RandomFingerprint, RandomFingerprintFuncParameters, RandomFingerprintFuncReturnTypes } from '#roxybrowser/utils/randomFingerprint'
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
 
@@ -98,6 +98,8 @@ export interface RenderMessage {
   'util:genRandomFonts': () => string[]
   /** 生成随机指纹 */
   'util:genRandomFingerprint': (payload: UserAddWindowInfoCreatePayload, count?: number) => RandomFingerprint
+  /** 按需调用生成指纹函数 */
+  'util:callRandomFingerprintFunc': (payload: Partial<RandomFingerprintFuncParameters>) => RandomFingerprintFuncReturnTypes
   /** AES-GCM 加密 */
   'util:encryptAESGCM': (payload: string) => string
   /** AES-GCM 解密 */
