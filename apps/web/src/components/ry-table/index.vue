@@ -187,10 +187,12 @@ function _onSortChange() {
 }
 
 async function _getCondition() {
+  _loading.value = true
   const [filterList, { data, onChange }] = await Promise.all([
     props.tableFilters(),
     props.tableSort(),
   ])
+  _loading.value = false
   _filters.value = filterList
   _sorts.value = data
   _sorts.onChange = onChange

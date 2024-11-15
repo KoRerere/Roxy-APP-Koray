@@ -164,11 +164,13 @@ export async function getCustomFilters(params: any = {}) {
       showButtonBar: false,
       dateFormat: 'yy/mm/dd',
       formatValue: (input: any, _: any, formData: any) => {
-        if (input.value) {
-          const [startDate, endDate] = input.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
+        const value = input.value
+        if (value) {
+          value[1] ??= value[0]
+          const [startDate, endDate] = value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
           Object.assign(formData, { startDate, endDate })
         }
-        return input.value
+        return value
       },
     },
     {
@@ -183,11 +185,13 @@ export async function getCustomFilters(params: any = {}) {
       showButtonBar: false,
       dateFormat: 'yy/mm/dd',
       formatValue: (input: any, _: any, formData: any) => {
-        if (input.value) {
-          const [startUpdateDate, endUpdateDate] = input.value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
+        const value = input.value
+        if (value) {
+          value[1] ??= value[0]
+          const [startUpdateDate, endUpdateDate] = value.map((value: Date) => format(new Date(value), 'yyyy-MM-dd'))
           Object.assign(formData, { startUpdateDate, endUpdateDate })
         }
-        return input.value
+        return value
       },
     },
   ]

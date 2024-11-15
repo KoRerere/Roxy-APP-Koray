@@ -14,7 +14,7 @@ const { getProjects } = useProjectStore()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const [projectModfiyDialog] = useProjectActions()
 const profilesRef = useTemplateRef('profiles')
-const projectId: any = ref(Number(route.params.id))
+const projectId = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
 
 watch(() => route.params.id, (value) => {
@@ -25,7 +25,7 @@ watch(() => route.params.id, (value) => {
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({
     tableRef: profilesRef.value?.tableRef,
-    projectIds: [projectId],
+    projectIds: [projectId.value],
     disableds: ['projectIds'],
   })
 }
@@ -33,7 +33,7 @@ function handleShowInviteUserFormDialog() {
 function editProject() {
   projectModfiyDialog({
     projectName: projectName.value,
-    project_id: projectId,
+    project_id: projectId.value,
     confirmNext: async ({ params }: any) => {
       await getProjects()
       projectName.value = params.projectName

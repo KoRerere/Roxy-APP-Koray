@@ -6,7 +6,7 @@ import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'
-import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, sleep } from '/@/utils'
+import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 
 const _props = defineProps({
   currentFilter: {
@@ -115,12 +115,7 @@ function inputPopup(data: any) {
         inputs: [deepClone({ ...data, icon: undefined })],
       },
       onConfirm: async (formData: any) => {
-        Object.entries(formData).forEach(([name, value]) => {
-          if (data.type === 'date' && Array.isArray(value) && !value[1]) {
-            value = [value[0], new Date()]
-          }
-          setInputFieldByInputKey(_props.filtersMenu, name, 'value', value)
-        })
+        setInputValueByFormData(_props.filtersMenu, formData)
         onFilterChange()
       },
     },
