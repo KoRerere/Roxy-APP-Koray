@@ -171,13 +171,13 @@ async function uploadFile() {
           }
         },
       }).then(({ res }) => {
-        const url = res.requestUrls[0]?.split('?')[0]
+        const url = res.requestUrls[0]?.split('?')[0].replace('http://', 'https://')
         console.log(`${fileName} 上传成功: `, url)
         if (url.endsWith('.exe') || url.endsWith('.dmg')) {
           publishVersion({
             osBit: osBit === 'ia32' ? '32' : '64',
             cpu: osBit === 'arm64' ? 'apple' : 'intel',
-            downloadUrl: url.replace('http://', 'https://'),
+            downloadUrl: url,
           })
         }
       })
