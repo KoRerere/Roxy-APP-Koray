@@ -52,6 +52,7 @@ export const useUserStore = defineStore('user', () => {
         $region: localNetwork.region,
         $city: localNetwork.city,
         $localNetwork: localNetwork,
+        $appVersion: appVersion.value,
       })
     })
   }
