@@ -177,7 +177,7 @@ async function uploadFile() {
           publishVersion({
             osBit: osBit === 'ia32' ? '32' : '64',
             cpu: osBit === 'arm64' ? 'apple' : 'intel',
-            downloadUrl: url,
+            downloadUrl: url.replace('http://', 'https://'),
           })
         }
       })
