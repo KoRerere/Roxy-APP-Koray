@@ -4,9 +4,16 @@ import { genRandomFonts, getMacAddress } from '/@/utils'
 import { voices } from './constants/'
 
 /**
- * 获取canvas随机值
+ * 获取canvas随机值,从0123456789ABCDEF里面随机取32位
  */
-function getCanvasContextNoiseValue() {
+export function getCanvasContextNoiseValue() {
+  const randStr = '0123456789ABCDEF'
+  return Array.from({ length: 32 }, () => {
+    return randStr[getRandomInt(0, randStr.length - 1)]
+  }).join('')
+}
+
+export function getwebGLNoiseValue() {
   const randStr = 'ABCDEFGHIJKLMNOPQISTUVWXYZ0123456789'
   // 0-9随机数，原生js
   const n1 = Math.floor(Math.random() * 10)
@@ -21,6 +28,7 @@ function getCanvasContextNoiseValue() {
 
   return `${n1}${n2}${n3}`
 }
+
 function getClientRectsValue() {
   return {
     clientRectsNoiseFactorX: (2 * Math.random() - 1), // x 轴
@@ -89,8 +97,8 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       font: fontType ? genRandomFonts().join(';') : undefined,
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
-      webGLValue: webGL ? getCanvasContextNoiseValue() : undefined,
-      audioContextValue: audioContext ? getCanvasContextNoiseValue() : undefined,
+      webGLValue: webGL ? getwebGLNoiseValue() : undefined,
+      audioContextValue: audioContext ? getwebGLNoiseValue() : undefined,
       speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : undefined,
       clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : undefined,
     }
@@ -107,6 +115,7 @@ export const randomFingerprintFuncMap = {
   getRandomInt,
   getSpeechSynthesis,
   getClientRectsValue,
+  getwebGLNoiseValue,
 }
 
 export type RandomFingerprintFuncMap = keyof typeof randomFingerprintFuncMap

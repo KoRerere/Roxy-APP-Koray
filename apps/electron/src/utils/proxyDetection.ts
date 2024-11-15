@@ -141,6 +141,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     result.city ||= result.city_name
     result.country ||= result.country_name || result.country_long
     result.country_code ||= result.country_short || result.countryCode
+    result.timezone ||= result.time_zone
   }
 
   return result
