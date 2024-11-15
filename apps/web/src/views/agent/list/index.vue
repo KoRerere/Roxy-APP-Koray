@@ -8,7 +8,7 @@ import popup from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
+import { concurrentControl, setOperationLoading, setRowsLoading, strConcat } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -69,7 +69,7 @@ async function operationHandler(operate: any, data: ProxyItem) {
 
 function refreshUrl(datas: ProxyItem[]) {
   datas.forEach(async (item) => {
-    const isOK = await window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!)
+    const isOK = await setRowsLoading(item, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!))
     showToast(isOK ? 0 : -1, item.refreshUrl as string)
   })
 }

@@ -47,21 +47,18 @@ function onChange() {
   <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
-        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
-          @click.stop>
-          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop
-            @change="onChange" />
+        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
+          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop @change="onChange" />
           <span>{{ item.label }}</span>
         </label>
 
-        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
-          @click.stop>
+        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
           <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
 
         <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">
-          <RxSvgIcon v-if="item.icon" :name="(item.icon as SvgNames)" :size="16" />
+          <RxSvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" :size="16" />
           <span>{{ item.label }}</span>
         </div>
       </a>

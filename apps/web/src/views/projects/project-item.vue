@@ -61,7 +61,9 @@ function editProject() {
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
     </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
-    <Profiles ref="profiles" is-project-profile />
+    <div class="flex-1 overflow-hidden">
+      <Profiles ref="profiles" is-project-profile />
+    </div>
   </div>
 </template>
 

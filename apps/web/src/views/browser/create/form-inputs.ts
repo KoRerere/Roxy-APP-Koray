@@ -68,7 +68,6 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
     const { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName } = fingerDetail[0]
     setInputValueByFormData(inupts, { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName })// 批量创建时用于界面显示
   }
-  console.log(fingerDetail[0])
 
   return fingerDetail
 }
@@ -130,6 +129,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           name: 'os',
           value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
           options: os,
+          filter: false,
           change: async (item: any) => {
             const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
@@ -149,6 +149,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           name: 'osVersion',
           value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs]?.[0],
           options: osVersion[userOs],
+          // 特殊处理，会根据所选系统匹配不同的系统版本，此处用于缓存
+          optionGroup: osVersion,
+          filter: false,
           change: async (item: any) => {
             const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')
 

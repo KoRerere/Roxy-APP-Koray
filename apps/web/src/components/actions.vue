@@ -40,9 +40,9 @@ function onMore(event: Event) {
     <div class="quick">
       <div v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
-        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTips : '', showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
+        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
           :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-          :class="[item.classes, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
+          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
       </div>
       <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="onMore">
         <slot name="more-icon">

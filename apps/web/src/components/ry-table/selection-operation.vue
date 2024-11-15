@@ -53,7 +53,7 @@ function batchOperation(item: any) {
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <RxSvgIcon v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTips}` : '', showDelay: 500 }" :class="{ disabled: item.disabled }"
+        <RxSvgIcon v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? `某些选中项${item.disabledTooltip}` : '', showDelay: 500 }" :class="{ disabled: item.disabled }"
           :name="item.icon" class="cursor-pointer" color="#ffffff" @click="batchOperation(item)" />
       </div>
     </slot>

@@ -213,9 +213,9 @@ async function operationHandler(operate: any, data: any) {
         },
       })
       break
-    // case 'fav':
-    //   singleModifyWindow({ id: data.id, isOften: !data.isOften })
-    //   break
+    case 'fav':
+      singleModifyWindow({ id: data.id, isOften: !data.isOften })
+      break
     case 'addNotes':
       await onRemark(datas)
       break

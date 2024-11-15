@@ -185,7 +185,7 @@ function tableOperation(data: any) {
       icon: 'base/rx_ic_refresh',
       quick: true,
       disabled: !data.refreshUrl,
-      disabledTips: $t('未配置刷新URL'),
+      disabledTooltip: $t('未配置刷新URL'),
     },
     {
       name: 'test',

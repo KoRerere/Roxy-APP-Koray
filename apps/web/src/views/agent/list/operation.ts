@@ -10,7 +10,7 @@ export interface ProxyItem extends UnwrapRowType<UserGetProxyModuleListData> {
   }
 }
 
-export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
+export function tableOperation(data?: ProxyItem) {
   const role = useRoleStore()
 
   return [
@@ -27,6 +27,14 @@ export function tableOperation(_data?: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_speed_test',
       quick: true,
       multiple: true,
+    },
+    {
+      name: 'refresh',
+      label: $t('刷新代理'),
+      icon: 'base/rx_ic_refresh',
+      quick: true,
+      disabled: !data?.refreshUrl,
+      disabledTooltip: $t('未配置刷新URL'),
     },
     {
       name: 'remark',

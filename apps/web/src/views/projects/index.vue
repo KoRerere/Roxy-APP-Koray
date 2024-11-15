@@ -42,9 +42,9 @@ function getOperation(data: Project) {
     },
     {
       name: 'pin',
-      label: $t('固定到侧边栏'),
+      label: data.topTime ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       icon: data.topTime ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
-      classes: data.topTime ? 'text-orange' : '',
+      iconClass: data.topTime ? 'text-orange' : '',
       power: role.isOwner || role.isManager,
       quick: true,
     },
@@ -57,6 +57,7 @@ function getOperation(data: Project) {
     },
     {
       separator: true,
+      power: role.isOwner || role.isManager,
     },
     {
       name: 'delete',

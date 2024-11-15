@@ -109,13 +109,7 @@ const profileTemplate = reactive<ProfileTemplate>({
       if (profileTemplate.value === profileTemplate.oldValue)
         return
       const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
-      setInputValueByFormData(inputsGroup.value, {
-        ...template,
-        resolution: `${template.resolutionX} x ${template.resolutionY}`,
-      })
-      const inputs = filterInputsByNames(inputsGroup.value, ['os', 'isLanguageBaseIp', 'isDisplayLanguageBaseIp', 'isTimeZone', 'position', 'resolutionType', 'fontType', 'webGL', 'webGLInfo', 'canvas', 'audioContext', 'speechVoices', 'clientRects', 'deviceNameSwitch', 'macInfo', 'disableSsl', 'portScanProtect'])
-      inputs.forEach(input => input.change?.(input))
-      profileTemplate.oldValue = profileTemplate.value
+      initFormInputs(template)
     },
   },
 })
@@ -133,6 +127,7 @@ watch(() => tabsValue.value, (value: any) => {
 })
 
 onBeforeMount(() => {
+  getTemplateList()
   initFormInputs()
   if (!isOwner.value) {
     getProjects().then((operation) => {
@@ -142,21 +137,10 @@ onBeforeMount(() => {
   }
 })
 
-async function initFormInputs() {
-  const [inputsGroup, _original] = await getInputsGroup({}, showToast)
-  const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
-  rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
-  mainSetting.value = [windowInputs]
-  extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
-  original.value = _original
-  onUpdateFinger()
-  getTemplateList()
-}
-
 async function getTemplateList() {
   const { data } = await API.window.userGetWindowTemplateListList()
 
-  const defaultValue = {
+  const defaultValue: any = {
     map: {
       default: getDefaultTemplate(),
     },
@@ -176,6 +160,16 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
+}
+
+async function initFormInputs(template: any = {}) {
+  const [inputsGroup, _original] = await getInputsGroup(template, showToast)
+  const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
+  rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
+  mainSetting.value = [windowInputs]
+  extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
+  original.value = _original
+  onUpdateFinger()
 }
 
 async function onShuffle() {

@@ -98,7 +98,7 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <InputGroup>
                     <template v-for="item in input.items" :key="item.name">
-                      <RxInputSelect v-bind="item" v-model="item.value" :filter="false" @change="item.change?.(item, input.items)" />
+                      <RxInputSelect v-bind="item" v-model="item.value" @change="item.change?.(item, input.items)" />
                     </template>
                   </InputGroup>
                 </div>
