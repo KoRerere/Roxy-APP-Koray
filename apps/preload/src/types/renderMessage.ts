@@ -97,7 +97,7 @@ export interface RenderMessage {
   /** 随机生成字体 */
   'util:genRandomFonts': () => string[]
   /** 生成随机指纹 */
-  'util:genRandomFingerprint': (payload: UserAddWindowInfoCreatePayload, count?: number) => RandomFingerprint
+  'util:genRandomFingerprint': (payload: Partial<UserAddWindowInfoCreatePayload>, count?: number) => RandomFingerprint
   /** 按需调用生成指纹函数 */
   'util:callRandomFingerprintFunc': (payload: Partial<RandomFingerprintFuncParameters>) => RandomFingerprintFuncReturnTypes
   /** AES-GCM 加密 */

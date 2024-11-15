@@ -17,17 +17,18 @@ const profileTemplate = reactive({
   },
 })
 
-setTimeout(async () => {
+async function test () {
   const dd = await electronAPI.send('util:callRandomFingerprintFunc', {
-    genRandomFonts: [],
-    getCanvasContextNoiseValue: [],
-    getRandomInt: [200, 500],
-    getSpeechSynthesis: [],
-    getClientRectsValue: [],
+    // genRandomFonts: [],
+    // getCanvasContextNoiseValue: [],
+    // getRandomInt: [200, 500],
+    // getSpeechSynthesis: [],
+    // getClientRectsValue: [],
+    getwebGLNoiseValue: [],
   })
 
   console.log(dd)
-}, 1000)
+}
 </script>
 
 <template>
@@ -40,5 +41,6 @@ setTimeout(async () => {
         </div>
       </template>
     </RxInputSelect>
+    <RxButton label="测试" @click="test" />
   </div>
 </template>

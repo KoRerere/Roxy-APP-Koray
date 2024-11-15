@@ -1,7 +1,6 @@
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { checkCookieFormat, createDefaultObject, filterFieldByValue, findInputByName, getDictMap, getFormDataByList, getRandomInt, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
-import { getCanvasContextNoiseValue, getClientRectsValue, getRandomFonts, getSpeechSynthesis, getwebGLNoiseValue } from './utils'
+import { checkCookieFormat, createDefaultObject, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -51,43 +50,26 @@ const defaultFingerOptions = {
 
 export async function ceateRandomFinger(inupts: any, options?: { count?: number, preview?: boolean }) {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = getFormDataByList(inupts)
-
   const { count, preview } = { ...defaultFingerOptions, ...options }
-  const fingerDetail = await Promise.all(Array.from({ length: count }, async () => {
-    return filterFieldByValue({
-      mediaDevice: false, // 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，必传
-      mediaDeviceList: [
-        {
-          deviceType: 'audioinput',
-          deviceId: '',
-          label: '',
-          groupId: '',
-        },
-      ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
-      font: fontType ? await getRandomFonts() : null,
-      canvasValue: canvas ? getCanvasContextNoiseValue() : null,
-      canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
-      webGLValue: webGL ? getwebGLNoiseValue() : null,
-      audioContextValue: audioContext ? getwebGLNoiseValue() : null,
-      speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : null,
-      clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : null,
-    }, value => value !== null) // 跟随老版本逻辑过滤没有值的属性
-  }))
-
-  const [{ data: uaWebgl }, { data: deviceName }, { data: macAddr }] = await Promise.all([
-    getUaWebgl({ os, osVersion, coreVersion, count }),
-    getDeviceName({ os, count }),
-    getMacAddr({ macInfo, count }),
-  ])
+  const fingerDetail = await electronAPI.send('util:genRandomFingerprint', {
+    fontType,
+    canvas,
+    webGL,
+    audioContext,
+    speechVoices,
+    clientRects,
+    macInfo,
+    os,
+    osVersion,
+    coreVersion,
+  }, count)
 
   if (preview) {
-    setInputValueByFormData(inupts, { ...uaWebgl[0], ...deviceName[0], ...macAddr[0] })// 批量创建时用于界面显示
+    const { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName } = fingerDetail[0]
+    setInputValueByFormData(inupts, { userAgent, webGLManufacturer, webGLRender, macAddr, deviceName })// 批量创建时用于界面显示
   }
+  console.log(fingerDetail[0])
 
-  uaWebgl.forEach(async (item, index) => {
-    const formData = { ...item, ...deviceName[index], ...macAddr[index] }
-    Object.assign(fingerDetail[index], formData)
-  })
   return fingerDetail
 }
 
@@ -531,7 +513,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { font: await getRandomFonts() })
+          const { genRandomFonts } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            genRandomFonts: [],
+          })
+
+          Object.assign(original, { font: genRandomFonts.join(';') })
         }
         else {
           Reflect.deleteProperty(original, 'font')
@@ -566,7 +552,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { webGLValue: getwebGLNoiseValue() })
+          const { getwebGLNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            getwebGLNoiseValue: [],
+          })
+          Object.assign(original, { webGLValue: getwebGLNoiseValue })
         }
         else {
           Reflect.deleteProperty(original, 'webGLValue')
@@ -639,7 +628,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { canvasValue: getCanvasContextNoiseValue() })
+          const { getCanvasContextNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            getCanvasContextNoiseValue: [],
+          })
+          Object.assign(original, { canvasValue: getCanvasContextNoiseValue })
         }
         else {
           Reflect.deleteProperty(original, 'canvasValue')
@@ -660,7 +652,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { audioContextValue: getwebGLNoiseValue() })
+          const { getwebGLNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            getwebGLNoiseValue: [],
+          })
+          Object.assign(original, { audioContextValue: getwebGLNoiseValue })
         }
         else {
           Reflect.deleteProperty(original, 'audioContextValue')
@@ -681,7 +676,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis() } })
+          const { getSpeechSynthesis } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            getSpeechSynthesis: [],
+          })
+          Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
         }
         else {
           Reflect.deleteProperty(original, 'speechVoicesValue')
@@ -715,7 +713,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          Object.assign(original, { clientRectsValue: { enable: true, ...getClientRectsValue() } })
+          const { getClientRectsValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
+            getClientRectsValue: [],
+          })
+          Object.assign(original, { clientRectsValue: { enable: true, ...getClientRectsValue } })
         }
         else {
           Reflect.deleteProperty(original, 'clientRectsValue')
