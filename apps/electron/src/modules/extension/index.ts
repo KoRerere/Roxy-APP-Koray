@@ -33,23 +33,35 @@ export const extensionManager = new class ExtensionManager {
     return files.filter(n => n.isDirectory()).map(n => n.name)
   }
 
-  /** 根据插件 ID 获取指定的插件，本地不存在则自动下载 */
-  async getExtensionByIds(extIDs: string[], msgCallback?: (msg: string) => void) {
+  /** 根据插件 ID 和 版本号 获取指定的插件，本地不存在则自动下载 */
+  async getTargetExtensions(pluginList: Record<string, string>[], msgCallback?: (msg: string) => void) {
     const localExtensions = await this.getAllExtensions()
 
-    const { exists = [], noExists = [] } = Object.groupBy(extIDs, (extId) => {
+    const { needDownloads = [], notNeedDownloads = [] } = await pluginList.reduce<Promise<{ needDownloads: string[], notNeedDownloads: string[] }>>(async (acc, item) => {
+      const accObj = await acc
+      const [extId, version] = Object.entries(item)[0]
       if (localExtensions.includes(extId)) {
-        return 'exists'
+        const localVersion = await getPluginManifestInfo(path.join(this.extensionDir, extId))
+          .then(({ manifestInfo }) => manifestInfo.version)
+          .catch(() => '')
+
+        if (!localVersion || compare(localVersion, version, '<')) {
+          accObj.needDownloads.push(extId)
+        }
+        else {
+          accObj.notNeedDownloads.push(extId)
+        }
       }
       else {
-        return 'noExists'
+        accObj.needDownloads.push(extId)
       }
-    })
+      return accObj
+    }, { needDownloads: [], notNeedDownloads: [] })
 
     let downloadedArr: string[] = []
-    if (noExists.length) {
+    if (needDownloads.length) {
       msgCallback?.($t('正在下载扩展'))
-      const promiseArr = await this.downloadUserExtensions(noExists)
+      const promiseArr = await this.downloadUserExtensions(needDownloads)
       downloadedArr = promiseArr.filter(p => p.status === 'fulfilled').map(p => p.value)
       const failedArr = promiseArr.filter(p => p.status === 'rejected').map(p => getErrorMessage(p.reason))
       if (failedArr.length) {
@@ -57,7 +69,7 @@ export const extensionManager = new class ExtensionManager {
       }
     }
 
-    const promiseArr = exists.map(name => path.join(this.extensionDir, name)).concat(downloadedArr).map((extDir) => {
+    const promiseArr = notNeedDownloads.map(name => path.join(this.extensionDir, name)).concat(downloadedArr).map((extDir) => {
       return getPluginDir(extDir, 10)
     })
     return Promise.all(promiseArr)

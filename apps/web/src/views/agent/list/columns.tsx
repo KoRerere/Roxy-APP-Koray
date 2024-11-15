@@ -6,7 +6,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
 export function getRawColumns(options?: any) {
-  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
+  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return setColumns([
     {
       title: $t('代理信息'),

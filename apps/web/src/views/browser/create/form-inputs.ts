@@ -869,7 +869,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('扫描白名单'),
       name: 'portScanList',
       value: data.portScanList,
-      placeholder: '允许被网站扫描的端口，多个用英文逗号隔开',
+      placeholder: $t('允许被网站扫描的端口，多个用英文逗号隔开'),
       visible: initInputVisible(data.portScanProtect, true, true),
     },
     {
@@ -900,7 +900,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('启动参数'),
       name: 'startupParam',
       value: data.startupParam,
-      placeholder: '浏览器启动参数,如 --mute,多个参数以英文逗号分隔',
+      placeholder: $t('浏览器启动参数,如 --mute,多个参数以英文逗号分隔'),
     },
   ])
 

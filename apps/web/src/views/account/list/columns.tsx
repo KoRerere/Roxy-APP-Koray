@@ -4,7 +4,7 @@ import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 export function getRawColumns(options?: any) {
-  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
+  const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return setColumns([
     {
       title: $t('账号信息'),

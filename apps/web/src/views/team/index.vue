@@ -53,11 +53,11 @@ const [columns] = useColumns({
 }, (role.isOwner || role.isManager) ? undefined : ['relatedProjects'])
 
 const filters = reactive({
-  value: -1,
+  value: undefined,
   options: [
     {
       name: $t('全部'),
-      value: -1,
+      value: undefined,
     },
     {
       name: $t('管理者'),

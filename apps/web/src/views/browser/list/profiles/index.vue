@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import Popup from '/@/components/simplePopup'
-import { ClearType } from '/@/enums'
+import { ClearType, ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -489,7 +489,9 @@ async function testProxy(data: any) {
     await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
   }
 
-  singleModifyWindow({ id: data.id, dirId: data.dirId, ...checkRes })
+  if (checkRes.checkStatus === ProxyCheckStatus.success) {
+    singleModifyWindow({ id: data.id, dirId: data.dirId, ...checkRes })
+  }
 }
 
 async function refreshUrl(data: any) {

@@ -77,5 +77,5 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
  */
 export async function unzipFile(zipFilePath: string, outputDir?: string) {
   outputDir ||= zipFilePath.replace(/\.zip$/, '')
-  await fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
+  return fileOperations.executeTask('decompress', { src: zipFilePath, dest: outputDir })
 }

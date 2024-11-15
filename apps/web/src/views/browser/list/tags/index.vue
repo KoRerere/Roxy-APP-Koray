@@ -7,7 +7,7 @@ import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useTagsActions } from './hook'
 
-const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3)
+const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
 
 const confirm = useConfirm()
 const toast = useToast()
