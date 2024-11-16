@@ -71,9 +71,9 @@ export class BrowserManager {
     const isNeedBatchReq = dirIds.length > 8
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
-    const winInfoList = await API.window.userGetWindowInfoV2List({ dirIds: firstBatch.join(',') }).then(res => res.data.rows)
+    const winInfoList = await API.window.userGetWindowInfoV2List({ dirIds: firstBatch.join(','), page_index: 1, page_size: 500 }).then(res => res.data.rows)
 
-    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ dirIds: secondBatch.join(',') }).then(res => res.data.rows) : []
+    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ dirIds: secondBatch.join(','), page_index: 1, page_size: 500 }).then(res => res.data.rows) : []
 
     for (const winInfo of winInfoList) {
       await this.launch(winInfo).catch((error) => {

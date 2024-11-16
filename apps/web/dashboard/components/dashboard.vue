@@ -36,12 +36,9 @@ const ipchecker = computed(() => {
   const channel = proxyInfo.value?.detectionChannel
 
   if (channel) {
-    return {
-      host: new URL(channel).host,
-      fullUrl: channel,
-    }
+    return new URL(channel)
   }
-  return {}
+  return {} as URL
 })
 
 /** 获取当前窗口信息 */
@@ -53,7 +50,7 @@ function getWindowInfo() {
       console.log(result)
       const { code, data, msg } = result
       if (code === 0) {
-        windowInfo.value = data.rows[0]
+        windowInfo.value = data
       }
       else {
         console.error('获取窗口信息失败')
@@ -251,7 +248,7 @@ onBeforeMount(() => {
       <div class="info">
         <i18n-t :keypath="$t('IP 查询数据来源于 {link}', { link: '{link}' })" scope="global">
           <template #link>
-            <a :href="ipchecker.fullUrl" target="_blank">{{ ipchecker.host }}</a>
+            <a :href="ipchecker.origin" target="_blank">{{ ipchecker.host }}</a>
           </template>
         </i18n-t>
       </div>

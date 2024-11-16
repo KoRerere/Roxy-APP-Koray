@@ -92,10 +92,10 @@ export async function setupDashboardServer(app: express.Application) {
 
   /* 获取浏览器窗口列表 */
   app.get('/api/browser/list', async (req, res) => {
-    const { page_index = 1, page_size = 15, dirId } = req.query as Record<string, any>
+    const { dirId } = req.query as Record<string, any>
     try {
-      const result = await API.window.userGetWindowInfoV2List({ page_index, page_size, dirId })
-      res.json(result)
+      const browserItem = await browserManager.getOpenedBrowser(dirId as string)
+      res.success(browserItem?.winInfo)
     }
     catch (error) {
       res.error(error)
