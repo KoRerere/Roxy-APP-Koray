@@ -66,8 +66,8 @@ ipcMain.on('proxy:refreshUrl', (refreshUrl) => {
 })
 
 /** 批量启动浏览器 */
-ipcMain.on('browser:batchLaunch', (winItemList) => {
-  return browserManager.batchLaunch(winItemList)
+ipcMain.on('browser:batchLaunch', (dirIds) => {
+  return browserManager.batchLaunch(dirIds)
 })
 
 /** 批量关闭浏览器 */
@@ -76,13 +76,13 @@ ipcMain.on('browser:batchClose', (dirIds: string[]) => {
 })
 
 /** 批量重启浏览器 */
-ipcMain.on('browser:batchRelaunch', (winItemList) => {
-  return browserManager.batchReLaunch(winItemList)
+ipcMain.on('browser:batchRelaunch', (dirIds) => {
+  return browserManager.batchReLaunch(dirIds)
 })
 
 /** 批量删除本地浏览器 */
-ipcMain.on('browser:batchRemove', (winItems) => {
-  return browserManager.batchDelete(winItems)
+ipcMain.on('browser:batchRemove', (dirIds) => {
+  return browserManager.batchDelete(dirIds)
 })
 
 /** 获取所有已打开的窗口 */

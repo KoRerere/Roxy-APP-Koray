@@ -201,7 +201,7 @@ async function operationHandler(operate: any, data: any) {
       openBrowser(data)
       break
     case 'restart':
-      window.electronAPI.send('browser:batchRelaunch', datas)
+      window.electronAPI.send('browser:batchRelaunch', datas.map((item: any) => item.dirId))
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
@@ -255,7 +255,9 @@ function openBrowser(data: any) {
     }
     return toRaw(item)
   })
-  window.electronAPI.send('browser:batchLaunch', params)
+  const dirIds = params.map((item: any) => item.dirId)
+  console.log('open dirIds', dirIds)
+  window.electronAPI.send('browser:batchLaunch', dirIds)
 }
 
 function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any, extra?: any) {
@@ -571,7 +573,8 @@ defineExpose({
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    selection-mode="multiple" :show-actions="false">
+           selection-mode="multiple" :show-actions="false"
+  >
     <template #header-extra>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
@@ -600,7 +603,8 @@ defineExpose({
     </template>
     <template #note="{ data }">
       <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
-        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+                 class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)"
+      />
     </template>
     <template #project="{ data }">
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
@@ -611,13 +615,15 @@ defineExpose({
     <template #actions="{ data }">
       <div class="flex items-center">
         <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }"
-          class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
+                   class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)"
+        />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <MultipleOperation :selection="selection" :clear-selection="clearSelection" :operation="operation" @more="showOperationMenu($event, selection, { clearSelection })"
-        @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
+                         @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)"
+      />
     </template>
   </RyTable>
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">

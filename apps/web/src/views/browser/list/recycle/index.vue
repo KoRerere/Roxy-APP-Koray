@@ -79,7 +79,7 @@ async function deleteHandler(datas: any) {
       showToast(code, msg)
       tableRef.value?.refresh()
       if (code === 0) {
-        electronAPI.send('browser:batchRemove', datas)
+        electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }
     },
   })
@@ -89,7 +89,8 @@ async function deleteHandler(datas: any) {
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="recycleTable" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-    :show-actions="false" :show-table-header="false">
+           :show-actions="false" :show-table-header="false"
+  >
     <template #table-empty>
       <CustomEmpty icon="empty/rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>

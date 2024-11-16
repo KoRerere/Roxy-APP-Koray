@@ -67,8 +67,21 @@ export class BrowserManager {
   }
 
   /** 批量启动浏览器 */
-  async batchLaunch(winInfoList: WindowItemType[]) {
+  async batchLaunch(dirIds: string[]) {
+    const isNeedBatchReq = dirIds.length > 8
+    const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
+    const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
+    const winInfoList = await API.window.userGetWindowInfoV2List({ dirIds: firstBatch.join(',') }).then(res => res.data.rows)
+
+    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ dirIds: secondBatch.join(',') }).then(res => res.data.rows) : []
+
     for (const winInfo of winInfoList) {
+      await this.launch(winInfo).catch((error) => {
+        console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
+      })
+    }
+
+    for (const winInfo of await secondPromise) {
       await this.launch(winInfo).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
       })
@@ -76,9 +89,9 @@ export class BrowserManager {
   }
 
   /** 批量重启浏览器 */
-  async batchReLaunch(winInfoList: WindowItemType[]) {
-    await this.batchClose(winInfoList.map(winInfo => winInfo.dirId!))
-    await this.batchLaunch(winInfoList)
+  async batchReLaunch(dirIds: string[]) {
+    await this.batchClose(dirIds)
+    await this.batchLaunch(dirIds)
   }
 
   /** 关闭浏览器 */
@@ -113,9 +126,9 @@ export class BrowserManager {
   }
 
   /** 批量删除窗口 */
-  async batchDelete(winItems: WindowItemType[]) {
-    for (const winItem of winItems) {
-      this.removeLocalData(winItem.dirId!)
+  async batchDelete(dirIds: string[]) {
+    for (const dirId of dirIds) {
+      this.removeLocalData(dirId)
     }
   }
 

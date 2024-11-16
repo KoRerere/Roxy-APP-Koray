@@ -13,13 +13,13 @@ import type { ResourceUpdateMessage } from './mainMessage'
 
 export interface RenderMessage {
   /** 批量启动窗口 */
-  'browser:batchLaunch': (winItemList: WindowItemType[]) => void
+  'browser:batchLaunch': (dirIds: string[]) => void
   /** 批量重启窗口 */
-  'browser:batchRelaunch': (winItemList: WindowItemType[]) => void
+  'browser:batchRelaunch': (dirIds: string[]) => void
   /** 批量关闭窗口 */
   'browser:batchClose': (dirIds: string[]) => void
   /** 批量删除窗口 */
-  'browser:batchRemove': (winItems: WindowItemType[]) => void
+  'browser:batchRemove': (dirIds: string[]) => void
   /** 批量删除窗口 */
   'browser:getOpenedBrowser': () => LastMessage[]
   /** 清除浏览器缓存， */
