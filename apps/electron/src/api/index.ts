@@ -29,7 +29,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   if (!baseURL) {
     baseURL = await getGatewayConfig()
   }
-  config.baseURL = config.ossUrl || baseURL
+  config.baseURL = baseURL
 
   if (isDev) {
     console.log('store.token', store.token)

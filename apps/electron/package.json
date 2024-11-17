@@ -60,6 +60,7 @@
     "https-proxy-agent": "^7.0.5",
     "iconv-lite": "^0.6.3",
     "macaddress": "^0.5.3",
+    "mitt": "^3.0.1",
     "node-2fa": "^2.0.3",
     "portfinder": "^1.0.32",
     "puppeteer-core": "21.3.8",

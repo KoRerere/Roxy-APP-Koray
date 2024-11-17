@@ -26,8 +26,8 @@ if (parentPort) {
           }
         case 'decompress':
           {
-            const { src, dest } = payload as TaskQueueItem<typeof task>['payload']
-            sendSuccess(decompressFile(src, dest))
+            const { src, dest, filters } = payload as TaskQueueItem<typeof task>['payload']
+            sendSuccess(decompressFile(src, dest, filters))
             break
           }
         case 'getCompressedSize':
@@ -75,10 +75,15 @@ async function compressFiles(files: ZipPayload[], dest: string) {
 }
 
 /** 解压文件 */
-function decompressFile(src: string, dest: string) {
+function decompressFile(src: string, dest: string, filters?: string[]) {
   const zip = new AdmZip(src)
   const zipEntries = zip.getEntries()
   zipEntries.forEach((entry) => {
+    // 过滤不需要的文件
+    if (filters?.length && !filters.some(filter => entry.entryName.includes(filter))) {
+      zip.deleteFile(entry)
+      return
+    }
     entry.entryName = iconv.decode(entry.rawEntryName, 'gbk')
   })
   zip.extractAllTo(dest, true, true)

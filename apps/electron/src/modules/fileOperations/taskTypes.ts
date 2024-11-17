@@ -14,6 +14,7 @@ export interface TaskMap {
 export interface ZipPayload {
   src: string
   dest: string
+  filters?: string[]
 }
 
 /** 任务队列项的定义 */

@@ -1,5 +1,4 @@
 import type { Browser } from 'puppeteer-core'
-import AdmZip from 'adm-zip'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { freemem, totalmem } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -10,6 +9,7 @@ import { chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { extensionManager } from '/@/modules/extension'
+import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
@@ -26,10 +26,11 @@ export interface LastMessage {
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
   browser: Browser | null = null
+  private wsEndpoint: string | null = null
   /** 代理检测结果 */
   private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
   /** 不影响浏览器打开的警告信息 */
-  private warningMessages: string[] = []
+  warningMessages: string[] = []
   /** 内核执行程序路径 */
   exePath = ''
   /** 最后一次发送的消息 */
@@ -125,14 +126,22 @@ export class BeforeLaunchTask {
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
-    this.makeBrowserActive = () => {
-      return puppeteer.launch({
+    this.makeBrowserActive = async () => {
+      if (this.browser) {
+        await this.reconnectBrowser()
+      }
+
+      this.browser = await puppeteer.launch({
         args: launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
       })
+
+      this.wsEndpoint = this.browser.wsEndpoint()
+      console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
+      return this.browser
     }
 
     // 拉起浏览器
@@ -140,6 +149,21 @@ export class BeforeLaunchTask {
       this.sendErrorMessage('浏览器启动失败', error)
       return Promise.reject(error)
     })
+  }
+
+  /** 重新连接浏览器 */
+  async reconnectBrowser() {
+    if (this.wsEndpoint) {
+      try {
+        this.browser = await puppeteer.connect({ browserWSEndpoint: this.wsEndpoint })
+        console.log('Reconnected to browser successfully')
+        return true
+      }
+      catch (error) {
+        console.error('Failed to reconnect to browser:', error)
+        return false
+      }
+    }
   }
 
   /** 生成内核启动的命令行参数 */
@@ -327,26 +351,11 @@ export class BeforeLaunchTask {
       await fileExists(dirname(localCacheFilePath), true)
       // 下载远程缓存文件
       await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
-      // TODO
-      const zip = new AdmZip(localCacheFilePath)
-
-      const filters = this.browserItem.needSyncFiles
-      console.log('filters', filters)
-      zip.getEntries().forEach((entry) => {
-        const target = filters.some(path => entry.entryName.includes(path.slice(1)))
-        // console.log('entry.entryName', entry.entryName, target)
-        if (!target) {
-          return
-        }
-
-        if (entry.isDirectory) {
-          // console.log('需要解压的文件夹：', entry.entryName);
-          zip.extractEntryTo(entry, join(this.browserItem.userDataDir, entry.entryName), false, true)
-        }
-        else {
-          // console.log('需要解压的文件：', entry.entryName);
-          zip.extractEntryTo(entry, dirname(join(this.browserItem.userDataDir, entry.entryName)), false, true)
-        }
+      // 解压缓存文件
+      await fileOperations.executeTask('decompress', {
+        src: localCacheFilePath,
+        dest: this.browserItem.userDataDir,
+        filters: this.browserItem.needSyncFiles.map(path => path.slice(1)),
       })
 
       console.log('ossCacheVersionPath', this.browserItem.ossCacheVersionPath)
@@ -463,7 +472,7 @@ export class BeforeLaunchTask {
   }
 
   /** 发送成功的消息到渲染进程 */
-  private sendSuccessMessage(message: string, percent = this.progress) {
+  sendSuccessMessage(message: string, percent = this.progress) {
     this.lastMessage = {
       dirId: this.browserItem.winInfo.dirId!,
       percent,

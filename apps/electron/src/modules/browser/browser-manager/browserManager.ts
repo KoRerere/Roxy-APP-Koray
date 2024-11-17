@@ -5,7 +5,6 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
-import { sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
 
@@ -33,34 +32,45 @@ export class BrowserManager {
 
   /** 启动浏览器 */
   async launch(winInfo: WindowItemType) {
-    const openedBrowser = this.openedBrowserMap.get(winInfo.dirId!)
+    const dirId = winInfo.dirId
+    if (!dirId) {
+      throw new Error('dirId 不能为空')
+    }
+
+    const openedBrowser = this.openedBrowserMap.get(dirId)
     // 如果浏览器已经打开, 则直接返回
     if (openedBrowser) {
-      sendSuccessMessage({
-        dirId: openedBrowser.winInfo.dirId!,
-        percent: 100,
-        message: '浏览器已打开',
-      })
+      openedBrowser.beforeLaunchTask.sendSuccessMessage($t('浏览器已打开'), 100)
       await openedBrowser.launch()
       return
     }
 
     const browserItem = new BrowserItem(winInfo)
     // 如果浏览器没有打开
-    if (!this.openingBrowserMap.has(winInfo.dirId!)) {
+    if (!this.openingBrowserMap.has(dirId)) {
       // 则加入打开中的浏览器集合
-      this.openingBrowserMap.set(winInfo.dirId!, browserItem.launch())
+      this.openingBrowserMap.set(dirId, browserItem.launch())
     }
     // 等待浏览器启动完成
-    await this.openingBrowserMap.get(winInfo.dirId!)!.finally(() => {
-      this.openingBrowserMap.delete(winInfo.dirId!)
+    await this.openingBrowserMap.get(dirId)!.finally(() => {
+      this.openingBrowserMap.delete(dirId)
     })
-    this.openedBrowserMap.set(winInfo.dirId!, browserItem)
-    // 监听浏览器关闭事件, 从已打开的浏览器集合中删除
-    browserItem.getBrowser()?.on('disconnected', () => {
-      console.log(`BrowserManager ${winInfo.dirId} === 浏览器已关闭`)
-      this.openedBrowserMap.delete(winInfo.dirId!)
-      ipcMain.send('browser:on-close', winInfo.dirId!)
+    this.openedBrowserMap.set(dirId, browserItem)
+    // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
+    browserItem.on(`close-${dirId}`, async () => {
+      console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
+      this.openedBrowserMap.delete(dirId)
+      ipcMain.send('browser:on-close', dirId)
+      await setTimeout(100)
+      // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
+      const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
+      // 如果可以连接，则重新加入已打开的浏览器集合
+      if (canConnect) {
+        this.openedBrowserMap.set(dirId, browserItem)
+      }
+      else {
+        browserItem.off(dirId)
+      }
     })
 
     return browserItem.launchInfo
@@ -71,9 +81,10 @@ export class BrowserManager {
     const isNeedBatchReq = dirIds.length > 8
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
-    const winInfoList = await API.window.userGetWindowInfoV2List({ dirIds: firstBatch.join(','), page_index: 1, page_size: 500 }).then(res => res.data.rows)
 
-    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ dirIds: secondBatch.join(','), page_index: 1, page_size: 500 }).then(res => res.data.rows) : []
+    const commonParams = { page_index: 1, page_size: 500, isDelete: 0 }
+    const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: firstBatch.join(',') }).then(res => res.data.rows)
+    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: secondBatch.join(',') }).then(res => res.data.rows) : []
 
     for (const winInfo of winInfoList) {
       await this.launch(winInfo).catch((error) => {

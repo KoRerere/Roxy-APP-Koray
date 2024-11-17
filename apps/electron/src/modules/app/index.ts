@@ -14,6 +14,7 @@ if (!app.isPackaged) {
   app.getVersion = () => import.meta.env.VITE_APP_VERSION
 }
 
+app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 app.commandLine.appendSwitch('--no-sandbox')
 
@@ -141,6 +142,9 @@ export async function setupApp() {
    */
   try {
     await app.whenReady()
+
+    // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
+    app.setAccessibilitySupportEnabled(false)
 
     const browserWindow = await restoreOrCreateWindow()
     createTray(browserWindow)

@@ -1,3 +1,4 @@
+import mitt from 'mitt'
 import { createReadStream } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -13,14 +14,14 @@ import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 
-export class BrowserItem {
-  private beforeLaunchTask!: BeforeLaunchTask
-  private afterLaunchTask!: AfterLaunchTask
-  /** 浏览器实例 */
-  get #browser() {
-    return this.beforeLaunchTask?.browser
-  }
+const emitter = mitt()
 
+export class BrowserItem {
+  beforeLaunchTask!: BeforeLaunchTask
+  private afterLaunchTask!: AfterLaunchTask
+
+  on = emitter.on
+  off = emitter.off
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
   /** 浏览器关闭后，上传数据 promise */
@@ -29,6 +30,11 @@ export class BrowserItem {
   userDataDir: string
   /** 用户浏览器数据缓存文件名称 */
   browserCacheFileName = 'browser-cache.zip'
+  /** 浏览器实例 */
+  get #browser() {
+    return this.beforeLaunchTask?.browser
+  }
+
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
     return join(this.userDataDir, 'lumi.conf')
@@ -107,44 +113,51 @@ export class BrowserItem {
   async launch() {
     // 如果浏览器已经存在，直接激活
     if (this.#browser) {
-      this.beforeLaunchTask.makeBrowserActive().catch((error) => {
+      this.#browser.off('disconnected', this.handleOnDisconnected)
+      await this.beforeLaunchTask.makeBrowserActive().catch((error) => {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
-      return
     }
-
-    if (this.winInfo.randomFingerprint) {
-      const [fingerprint] = await genRandomFingerprint(this.winInfo)
-      const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint })
-      if (code === 0) {
-        console.log('修改指纹成功', fingerprint)
-        const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id })
-        if (code === 0 && data.rows[0]) {
-          // console.log('获取窗口信息成功', data.rows[0])
-          this.winInfo = data.rows[0]
+    else {
+      if (this.winInfo.randomFingerprint) {
+        const [fingerprint] = await genRandomFingerprint(this.winInfo)
+        const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint })
+        if (code === 0) {
+          console.log('修改指纹成功', fingerprint)
+          const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id })
+          if (code === 0 && data.rows[0]) {
+            // console.log('获取窗口信息成功', data.rows[0])
+            this.winInfo = data.rows[0]
+          }
         }
       }
+
+      // 创建启动任务
+      this.beforeLaunchTask = new BeforeLaunchTask(this)
+      // 拉起浏览器
+      await this.beforeLaunchTask.run()
+      // 创建启动后任务
+      this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
+      // 异步执行启动后的任务, 不需要等待
+      this.afterLaunchTask.run()
     }
 
-    // 创建启动任务
-    this.beforeLaunchTask = new BeforeLaunchTask(this)
-    // 拉起浏览器
-    await this.beforeLaunchTask.run()
     // 浏览器关闭时，需要上传本地数据和状态
-    this.#browser!.on('disconnected', async () => {
-      try {
-        delLuminetProxy(this.winInfo.dirId!)
-        await this.uploadData()
-        this.uploadDataPromiser.resolve(true)
-      }
-      catch (error) {
-        this.uploadDataPromiser.reject(error)
-      }
-    })
-    // 创建启动后任务
-    this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
-    // 异步执行启动后的任务, 不需要等待
-    this.afterLaunchTask.run()
+    this.#browser?.on('disconnected', this.handleOnDisconnected)
+  }
+
+  /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
+  handleOnDisconnected = async () => {
+    const dirId = this.winInfo.dirId!
+    emitter.emit(`close-${dirId}`)
+    try {
+      delLuminetProxy(dirId)
+      await this.uploadData()
+      this.uploadDataPromiser.resolve(true)
+    }
+    catch (error) {
+      this.uploadDataPromiser.reject(error)
+    }
   }
 
   /** 关闭浏览器 */
@@ -169,7 +182,7 @@ export class BrowserItem {
   }
 
   /** 关闭浏览器后需要同步的数据 */
-  private async uploadData() {
+  async uploadData() {
     const params = await this.afterLaunchTask.getUploadData()
     const { id, syncValue, ossDirPath } = this.winInfo
 

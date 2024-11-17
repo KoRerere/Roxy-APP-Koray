@@ -37,16 +37,19 @@
     "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib",
     "test": "cross-env NODE_ENV=development tsx scripts/test.ts"
   },
+  "optionalDependencies": {
+    "minidump": "^0.26.0"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^3.9.1",
-    "@dotenvx/dotenvx": "^1.23.0",
+    "@dotenvx/dotenvx": "^1.24.0",
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.9.0",
     "@unocss/eslint-plugin": "^0.64.1",
     "ali-oss": "^6.21.0",
     "cross-env": "^7.0.3",
-    "eslint": "9.14.0",
+    "eslint": "9.15.0",
     "eslint-plugin-format": "^0.1.2",
     "js-yaml": "^4.1.0",
     "lint-staged": "^15.2.10",
