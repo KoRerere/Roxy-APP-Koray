@@ -6,7 +6,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { extensionsSourceFormat, ExtensionsStatus } from '/@/enums'
+import { ExtensionsInstallType, extensionsSourceFormat, ExtensionsStatus } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -316,11 +316,17 @@ defineExpose({
     </template>
 
     <template #related="{ data }">
-      <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin" @click="operationHandler({ name: 'install' }, data)">
-        <template #empty>
-          <RxTag class="cursor-pointer" icon="base/rx_ic_stack" />
-        </template>
-      </RelatedInfo>
+      <div @click="operationHandler({ name: 'install' }, data)">
+        <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" label="Full installed" />
+        <RelatedInfo v-else class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
+          <template #empty>
+            <div class="flex items-center gap-1.5">
+              <RxTag class="cursor-pointer" icon="base/rx_ic_stack" />
+              <span class="not-installed">Not installed yet</span>
+            </div>
+          </template>
+        </RelatedInfo>
+      </div>
     </template>
 
     <template #update="{ data }">
@@ -373,5 +379,13 @@ defineExpose({
       font-size: 12px;
     }
   }
+}
+
+.not-installed {
+  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
 }
 </style>

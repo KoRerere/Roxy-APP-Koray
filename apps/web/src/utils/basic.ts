@@ -187,14 +187,36 @@ interface ProxyObject {
   port: string | undefined
   proxyUserName: string | undefined
   proxyPassword: string | undefined
-  refreshUrl: string | undefined
-  remark: string | undefined
+  refreshUrl?: string
+  remark?: string
 }
 
 export function parseProxyUrl(url: string): ProxyObject {
+  return url.startsWith('*')
+    ? parseProxyUrlIPv6(url.slice(1))
+    : parseProxyUrlIPv4(url)
+}
+
+function parseProxyUrlIPv4(url: string): ProxyObject {
   const [_, protocol, host, port, proxyUserName, proxyPassword] = url.match(/^\*?(?:(?<protocol>\w+):\/\/)?(?<host>[^:]+):(?<port>\d+)(?::(?<proxyUserName>[^:]*)(?::(?<proxyPassword>[^[{]*))?)?/) || []
   const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
   const remark = url.match(/\{(.*?)\}/)?.[1]
+  return {
+    protocol,
+    host,
+    port,
+    proxyUserName,
+    proxyPassword,
+    refreshUrl,
+    remark,
+  }
+}
+
+export function parseProxyUrlIPv6(url: string): ProxyObject {
+  const [_, protocol, host, port, __, proxyUserName, ___, proxyPassword] = url.match(/^(https?|socks5):\/\/\((.*?)\):([^:\[\]\{\}]+)(:([^:\[\]\{\}]+))?(:([^:\[\]\{\}]+))?(?:\[[^\]]*\])?(?:\{[^\}]*\})?$/) || []
+  const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
+  const remark = url.match(/\{(.*?)\}/)?.[1]
+
   return {
     protocol,
     host,

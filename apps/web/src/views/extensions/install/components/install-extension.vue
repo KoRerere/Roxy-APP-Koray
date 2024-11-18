@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetPluginWindowListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ExtensionsInstallStatus, ExtensionsInstallType } from '/@/enums'
 import { $t } from '/@/locales'
 import type { InstallType } from './type'

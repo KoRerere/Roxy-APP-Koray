@@ -13,7 +13,10 @@ function toggle(event: Event) {
 </script>
 
 <template>
-  <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')" @click="toggle" />
+  <div class="position-relative flex">
+    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')" @click="toggle" />
+    <!-- <div class="changed" /> -->
+  </div>
   <RyPopover ref="popRef">
     <div :class="display.content">
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
@@ -43,5 +46,15 @@ function toggle(event: Event) {
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.changed {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #12a3fc;
 }
 </style>

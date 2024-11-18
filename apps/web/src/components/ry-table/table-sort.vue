@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { getFormData } from '/@/utils'
 
 const props = defineProps({
   sorts: {
@@ -12,6 +11,7 @@ const props = defineProps({
 
 const emits = defineEmits(['sort'])
 const _sorts = ref(props.sorts)
+const changed = computed(() => props.sorts.some(item => item.value !== item.defaultValue))
 
 const popRef = ref()
 function toggle(event: Event) {
@@ -30,7 +30,10 @@ function onUpdate() {
 </script>
 
 <template>
-  <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" :label="$t('排序')" @click="toggle" />
+  <div class="position-relative flex">
+    <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" :label="$t('排序')" @click="toggle" />
+    <div v-if="changed" class="changed" />
+  </div>
   <RyPopover ref="popRef">
     <div :class="classes.content">
       <div v-for="item in _sorts" :key="item.name" :class="classes.item">
@@ -84,5 +87,15 @@ function onUpdate() {
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+}
+
+.changed {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #12a3fc;
 }
 </style>

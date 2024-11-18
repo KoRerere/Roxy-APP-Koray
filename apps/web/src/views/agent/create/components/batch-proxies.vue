@@ -151,6 +151,7 @@ function parseValue() {
     .map((url) => {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
+      console.log({ protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark })
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
@@ -312,7 +313,7 @@ function onSave() {
         </div>
         <div class="rules">
           <i18n-t
-            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}*http://2001:db8:2de:0:0:0:0:e13:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 *', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}' })"
+            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })"
             scope="global">
             <template #br>
               <br>
@@ -322,6 +323,9 @@ function onSave() {
             </template>
             <template #remark>
               <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+            </template>
+            <template #ipv6>
+              <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
             </template>
           </i18n-t>
         </div>

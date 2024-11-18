@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -19,6 +20,7 @@ const props = defineProps({
 const emits = defineEmits(['open'])
 
 const userStore = useUserStore()
+const confirm = useConfirm()
 
 const usePeoples = computed(() => props.data.statusInfo
   .filter((item: any) => item.openUserId !== userStore.userInfo.id)
@@ -56,8 +58,28 @@ async function openBrowser() {
   if (browser.value.pending || browser.value.opening) {
     return
   }
-  // const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
-  emits('open', props.data)
+
+  if (!usePeoples.value) {
+    emits('open', props.data)
+    return
+  }
+
+  confirm.require({
+    header: $t('警告'),
+    message: $t('({name})正在使用浏览器，是否确认打开？', { name: usePeoples.value }),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'info',
+    },
+    accept: async () => {
+      emits('open', props.data)
+    },
+  })
 }
 </script>
 
