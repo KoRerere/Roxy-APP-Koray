@@ -30,7 +30,7 @@ interface ProxyItem {
   proxyPassword?: string
   refreshUrl?: string
   remark?: string
-  _validator?: any[]
+  _missField?: any[]
   [key: string]: any
 }
 
@@ -152,6 +152,8 @@ function parseValue() {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
+      const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
+
       return {
         checkChannel: ipCheckerConfig.value?.value,
         checkChannelValue: ipCheckerConfig.value?.label,
@@ -163,7 +165,7 @@ function parseValue() {
         proxyPassword,
         refreshUrl,
         remark,
-        _validator: [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1]),
+        _missField,
       }
     })
 
@@ -261,20 +263,20 @@ function deleteFailProxy() {
 }
 
 function onSave() {
-  const index = dataList.value.findIndex((item: any) => item._validator.length)
-
-  if (index > -1) {
-    const { _validator } = dataList.value[index]
-    const key = columns.value.find(item => item.key === _validator![0][0])?.title
-
-    onlyErrorToast(-1, $t('代理[{index}] {key} 缺失', { index: index + 1, key }))
-    return
-  }
-
   const list = dataList.value.map(item => ({
     ...item,
     checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
   }))
+
+  const index = list.findIndex((item: any) => item._missField.length)
+
+  if (index > -1) {
+    const { _missField } = list[index]
+    const key = columns.value.find(item => item.key === _missField![0][0])?.title
+
+    onlyErrorToast(-1, $t('代理[{index}] {key} 缺失', { index: index + 1, key }))
+    return
+  }
 
   emit('save', list)
 }

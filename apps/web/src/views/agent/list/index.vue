@@ -53,7 +53,7 @@ async function operationHandler(operate: any, data: ProxyItem) {
       drawer.data = data
       break
     case 'refresh':
-      refreshUrl(datas)
+      refreshUrl(data)
       break
     case 'test':
       testProxy(datas, operate.name)
@@ -67,10 +67,30 @@ async function operationHandler(operate: any, data: ProxyItem) {
   }
 }
 
-function refreshUrl(datas: ProxyItem[]) {
-  datas.forEach(async (item) => {
-    const isOK = await setRowsLoading(item, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', item.refreshUrl!))
-    showToast(isOK ? 0 : -1, item.refreshUrl as string)
+async function refreshUrl(data: ProxyItem) {
+  const _data = toRaw(data)
+  if (!_data.bindList!.length) {
+    const isOK = await setRowsLoading(_data, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
+    showToast(isOK ? 0 : -1, _data.refreshUrl as string)
+    return
+  }
+
+  confirm.require({
+    header: $t('刷新代理'),
+    message: $t(`此代理已关联 ${_data.bindList!.length} 个窗口，您确认要刷新代理吗？`),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: async () => {
+      const isOK = await setRowsLoading(_data, 'refresh', () => window.electronAPI.send('proxy:refreshUrl', _data.refreshUrl!))
+      showToast(isOK ? 0 : -1, _data.refreshUrl as string)
+    },
   })
 }
 

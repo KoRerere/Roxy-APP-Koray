@@ -42,6 +42,7 @@ const avatars = computed(() => {
   width: v-bind(_size);
   height: v-bind(_size);
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .text-avatar {

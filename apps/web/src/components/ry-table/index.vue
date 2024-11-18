@@ -192,7 +192,6 @@ async function _getCondition() {
     props.tableFilters(),
     props.tableSort(),
   ])
-  _loading.value = false
   _filters.value = filterList
   _sorts.value = data
   _sorts.onChange = onChange

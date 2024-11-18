@@ -76,7 +76,7 @@ export const menuRoutes: RouteRecordRaw[] = [
         path: 'cattle-slaughter',
         name: 'cattle-slaughter',
         meta: { title: '牛马屠宰场', icon: 'base/rx_ic_keys', hideInMenu: true },
-        component: () => import('/@/views/agent/shop'),
+        component: () => import('/@/views/lab'),
       },
       {
         path: 'extensions',
