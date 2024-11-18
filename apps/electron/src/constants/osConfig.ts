@@ -11,3 +11,5 @@ export const osConfig = {
   /** win专用 操作系统位数 32或64 */
   osBit: arch() === 'x64' ? '64' : '32',
 } as const
+
+export type OsConfig = typeof osConfig

@@ -1,6 +1,6 @@
-import path from 'node:path'
-import { Menu, Tray } from 'electron'
 import type { BrowserWindow } from 'electron'
+import { Menu, Tray } from 'electron'
+import path from 'node:path'
 
 let tray: Tray
 /** 创建托盘 */
@@ -17,10 +17,10 @@ export function createTray(win: BrowserWindow) {
   tray.setToolTip('roxybrowser')
   // 托盘菜单
   const contextMenu = Menu.buildFromTemplate([{
-    label: '显示',
+    label: $t('显示'),
     click: () => { win.show() },
   }, {
-    label: '退出',
+    label: $t('退出'),
     click: () => {
       tray.destroy()
       win.destroy()

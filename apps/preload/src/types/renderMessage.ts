@@ -1,4 +1,5 @@
-import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetAppUpgradeCreateData, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { OsConfig } from '#roxybrowser/constants'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
 import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
@@ -54,6 +55,8 @@ export interface RenderMessage {
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 获取软件设置 */
   'app:getSoftConfig': () => StoreType
+  /** 设置更新信息 */
+  'app:setAppUpdateData': (updateData: UserGetAppUpgradeCreateData['data']) => void
   /** 检测更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
   /** 检测是否有更新 */
@@ -111,4 +114,7 @@ export interface RenderMessage {
 
   /** 前端已准备就绪 */
   'web:ready': () => void
+
+  /** 获取 os 配置，用于 APP 升级等接口的参数 */
+  'const:osConfig': () => OsConfig
 }

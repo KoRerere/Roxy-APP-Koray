@@ -14,7 +14,8 @@ import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 
-const emitter = mitt()
+// webpack 5 之后，不再支持直接引入 es6 模块，需要使用 default 属性
+const emitter: ReturnType<typeof mitt> = mitt?.default?.() || mitt()
 
 export class BrowserItem {
   beforeLaunchTask!: BeforeLaunchTask

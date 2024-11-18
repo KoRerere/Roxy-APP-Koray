@@ -67,6 +67,7 @@ export class BrowserManager {
       // 如果可以连接，则重新加入已打开的浏览器集合
       if (canConnect) {
         this.openedBrowserMap.set(dirId, browserItem)
+        this.launch(winInfo)
       }
       else {
         browserItem.off(dirId)
@@ -117,18 +118,14 @@ export class BrowserManager {
 
   /** 批量关闭浏览器 */
   async batchClose(dirIds: string[]) {
-    for (const dirId of dirIds) {
-      await this.close(dirId).catch((error) => {
-        console.error(`BrowserManager ${dirId} === 关闭失败`, error)
-      })
-    }
+    const closePromises = dirIds.map(dirId => this.close(dirId))
+    return Promise.allSettled(closePromises)
   }
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
-    for (const dirId of this.openedBrowserMap.keys()) {
-      await this.close(dirId)
-    }
+    const closePromises = [...this.openedBrowserMap.keys()].map(dirId => this.close(dirId))
+    return Promise.allSettled(closePromises)
   }
 
   /** 停止打开后续窗口 */

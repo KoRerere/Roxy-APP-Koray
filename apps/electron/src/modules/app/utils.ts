@@ -22,9 +22,9 @@ export function handleCloseWindow(event: Electron.Event) {
       win,
       {
         type: 'warning',
-        buttons: ['最小化到托盘', '取消', '退出程序'],
-        title: '提示',
-        message: '您点击了关闭按钮，您确定：',
+        buttons: [$t('最小化到托盘'), $t('取消'), $t('退出程序')],
+        title: $t('提示'),
+        message: $t('您点击了关闭按钮，您确定：'),
         defaultId: 0,
       },
     ).then(async ({ response }) => {

@@ -1,28 +1,22 @@
+import { IntlMessageFormat } from 'intl-messageformat'
 import { store } from '/@/modules/store'
 import { isDev } from '/@/utils'
 
-// if (import.meta.hot) {
-//   // Prevent full reload, see https://github.com/vitejs/vite/issues/5763#issuecomment-1974235806
-//   import.meta.hot.on('vite:beforeFullReload', (payload) => {
-//     payload.path = '(WORKAROUND).html'
-//   })
-// }
-
-// if (isDev) {
-//   globalThis.$t = (key: string) => {
-//     return key
-//   }
-// }
-// else {
 const modules = import.meta.glob('../../../web/src/locales/langs/*.json', { eager: true, import: 'default' })
 
-const langs = Object.keys(modules).reduce((acc, key) => {
+const messages = Object.keys(modules).reduce((acc, key) => {
   const lang = key.replace('../../../web/src/locales/langs/', '').replace('.json', '')
   acc[lang] = modules[key]
   return acc
 }, {})
 
-globalThis.$t = (key: string) => {
-  return langs[store.language]?.[key] || key
+/** 格式化消息函数 */
+function formatMessage(id: string, values: Record<string, any> = {}) {
+  const messageTemplate = messages[store.language][id]
+  const formatter = new IntlMessageFormat(messageTemplate, store.language)
+  const str = formatter.format(values)
+  console.log('formatMessage', id, values, str, store.language)
+  return str
 }
-// }
+
+globalThis.$t = formatMessage

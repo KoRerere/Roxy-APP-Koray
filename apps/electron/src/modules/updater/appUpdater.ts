@@ -1,3 +1,4 @@
+import type { UserGetAppUpgradeCreateData } from '@roxy/backend-api'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { compare } from 'compare-versions'
 import { app } from 'electron'
@@ -14,13 +15,10 @@ export type { UpdateInfo } from 'electron-updater'
 const isDevelopment = !app.isPackaged
 
 export const appUpdater = new class AppUpdater {
-  timer: NodeJS.Timeout | undefined = undefined
   /** 是否在下载中 */
   isInProgress = false
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   isQuittingForUpdate = false
-  /** 轮询更新时间 5 分钟 */
-  timeout = 5 * 1000 * (isDevelopment ? 30 : 60)
   #autoUpdater!: MacUpdater | NsisUpdater
   /** 更新信息消息体 */
   #updateMessageData: ResourceUpdateMessage = {
@@ -29,30 +27,21 @@ export const appUpdater = new class AppUpdater {
     description: '',
   }
 
-  constructor() {
-    queueMicrotask(() => {
-      this.init()
-    })
-  }
+  constructor() { }
 
-  private async init() {
-    clearTimeout(this.timer)
-    this.timer = setTimeout(() => {
-      this.init()
-    }, this.timeout)
+  async init(updateData: UserGetAppUpgradeCreateData['data']) {
+    console.log(`appUpdater updateData`, updateData)
+    // const result = await API.base.userGetAppUpgradeCreate(osConfig)
 
-    console.log(`user_get_app_upgrade request`, osConfig)
-    const { data } = await API.base.userGetAppUpgradeCreate(osConfig)
+    // console.log(`user_get_app_upgrade result`, result)
 
-    console.log(`user_get_app_upgrade result`, data)
-
-    if (!data) {
-      console.log(`没有获取到更新信息`)
+    if (!updateData) {
+      console.log(`更新数据为空 跳出更新`)
       return
     }
 
-    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = data
-    this.#updateMessageData.originUpgradeData = data
+    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = updateData
+    this.#updateMessageData.originUpgradeData = updateData
     this.#updateMessageData.upgradeContent = upgradeContent
     this.#updateMessageData.title = upgradeTitle
     this.#updateMessageData.version = version

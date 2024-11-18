@@ -99,7 +99,7 @@ async function checkLuminetBin(webDomain: string) {
         const current = progressEvent.loaded
         const percentage = Math.round((current / total) * 100)
         console.log(`Download progress: ${percentage}%`)
-        sendLaunchMessage(`Downloading roxynet ${percentage}%`)
+        sendLaunchMessage($t('正在下载 roxynet {percentage}%', { percentage }))
       },
     })
     const writer = createWriteStream(appConfig.roxynetBinPath)

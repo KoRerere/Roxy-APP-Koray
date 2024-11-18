@@ -27,7 +27,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
 
   constructor() {
-    queueMicrotask(() => {
+    setTimeout(() => {
       this.fetchAvailableCoreList()
     })
     // 定时更新可用内核列表
@@ -152,7 +152,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
       type: 'kernel',
       status: 'downloading',
       percent: 0,
-      description: `downloading ${coreVersion}`,
+      description: $t('正在下载 {coreVersion} 内核', { coreVersion }),
       version: availableCore.version,
       coreVersion,
     }
@@ -171,7 +171,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
           return Promise.reject(error)
         })
         payload.status = 'downloaded'
-        payload.description = `Kernel ${coreVersion} download completed`
+        payload.description = $t('内核下载完成')
         ipcMain.send('app:resource-update', payload)
         // 删除本地内核
         await rm(this.genCoreDir(coreVersion), { recursive: true, force: true })

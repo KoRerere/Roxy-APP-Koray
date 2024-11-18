@@ -8,7 +8,7 @@ import url from 'node:url'
 import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
-import { appConfig, mediaProtocolName } from '/@/constants'
+import { appConfig, mediaProtocolName, osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
@@ -211,6 +211,11 @@ ipcMain.on('dialog:selectFile', async (filters) => {
   }
 })
 
+/** 设置更新信息 */
+ipcMain.on('app:setAppUpdateData', (updateData) => {
+  return appUpdater.init(updateData)
+})
+
 /** 检查更新 */
 ipcMain.on('app:checkForUpdates', () => {
   return appUpdater.checkForUpdates()
@@ -394,4 +399,9 @@ ipcMain.on('util:checkPort', async (port: number) => {
 ipcMain.on('web:ready', () => {
   console.log('web:ready')
   setWebReady()
+})
+
+/** 获取 os 配置，用于 APP 升级等接口的参数 */
+ipcMain.on('const:osConfig', () => {
+  return osConfig
 })

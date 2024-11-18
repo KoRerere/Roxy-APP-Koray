@@ -11,6 +11,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
+import { checkAppVersion } from '/@/api/message'
 import { handleRequest, handleResponse } from '/@/api/util'
 import router from '/@/router'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -53,6 +54,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     router.push({ name: 'login' })
     return response
   }
+  // checkAppVersion(response)
   // await handleResponse(response)
   return response
 })

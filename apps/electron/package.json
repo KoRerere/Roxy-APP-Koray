@@ -1,5 +1,6 @@
 {
   "name": "roxybrowser",
+  "type": "commonjs",
   "version": "3.0.0",
   "private": false,
   "author": {
@@ -59,6 +60,7 @@
     "http-proxy-middleware": "^3.0.3",
     "https-proxy-agent": "^7.0.5",
     "iconv-lite": "^0.6.3",
+    "intl-messageformat": "^10.7.7",
     "macaddress": "^0.5.3",
     "mitt": "^3.0.1",
     "node-2fa": "^2.0.3",

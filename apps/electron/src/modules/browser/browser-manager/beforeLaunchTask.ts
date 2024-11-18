@@ -146,7 +146,7 @@ export class BeforeLaunchTask {
 
     // 拉起浏览器
     this.browser = await this.makeBrowserActive().catch((error) => {
-      this.sendErrorMessage('浏览器启动失败', error)
+      this.sendErrorMessage($t('浏览器启动失败'), error)
       return Promise.reject(error)
     })
   }
@@ -286,7 +286,7 @@ export class BeforeLaunchTask {
       console.error('代理检测失败', error)
       //  网络不通停止打开
       if (stopOpenNet) {
-        return Promise.reject(new Error('网络不通停止打开'))
+        return Promise.reject(new Error($t('网络不通停止打开')))
       }
       this.warningMessages.push('代理检测失败')
     }
@@ -294,13 +294,13 @@ export class BeforeLaunchTask {
     // IP发生变化停止打开
     if (stopOpenIP) {
       if (lastIp && this.proxyInfo.ip !== lastIp) {
-        return Promise.reject(new Error('IP发生变化停止打开'))
+        return Promise.reject(new Error($t('IP发生变化停止打开')))
       }
     }
     // IP对应国家 / 地区发生改变停止打开
     if (stopOpenPosition) {
       if (lastCountry && this.proxyInfo.country_code !== lastCountry) {
-        return Promise.reject(new Error('IP对应国家 / 地区发生改变停止打开'))
+        return Promise.reject(new Error($t('IP对应国家 / 地区发生改变停止打开')))
       }
     }
   }
@@ -317,7 +317,7 @@ export class BeforeLaunchTask {
     }
     catch (error) {
       console.error('创建指纹配置文件失败', error)
-      return Promise.reject(new Error('创建指纹配置文件失败'))
+      return Promise.reject(new Error($t('创建指纹配置文件失败')))
     }
   }
 
@@ -363,7 +363,7 @@ export class BeforeLaunchTask {
     }
     catch (error) {
       console.error('拉取远程缓存文件失败', error)
-      this.warningMessages.push('拉取远程缓存文件失败')
+      this.warningMessages.push($t('拉取远程缓存文件失败'))
       // return Promise.reject(error)
     }
   }
@@ -380,7 +380,7 @@ export class BeforeLaunchTask {
         console.log('写入 LumiLogin 成功')
       }
       catch (error) {
-        this.warningMessages.push('登录信息写入失败')
+        this.warningMessages.push($t('登录信息写入失败'))
         console.error('写入 LumiLogin 失败', error)
       }
     }
@@ -418,7 +418,7 @@ export class BeforeLaunchTask {
           console.log('cookieFilePath 删除成功')
         }
         catch (err) {
-          this.warningMessages.push('cookie文件删除失败')
+          this.warningMessages.push($t('cookie文件删除失败'))
           console.log(`cookieFilePath 删除失败`, err)
         }
       }
@@ -439,7 +439,7 @@ export class BeforeLaunchTask {
         }
         catch (err) {
           console.log(`localStorage_fileUrl 删失败`, err)
-          this.warningMessages.push('localStorage文件删除失败')
+          this.warningMessages.push($t('localStorage文件删除失败'))
         }
       }
     }
@@ -464,7 +464,7 @@ export class BeforeLaunchTask {
 
     // 判断内存使用率是否超过用户设置的阈值
     if (memoryUsageRate > memoryLimit) {
-      const tips = `启动失败，内存使用率超出 ${memoryLimit}%`
+      const tips = $t('启动失败，内存使用率超出 {memoryLimit}%', { memoryLimit })
       // 停止打开后续窗口
       return Promise.reject(new Error(tips))
     }
