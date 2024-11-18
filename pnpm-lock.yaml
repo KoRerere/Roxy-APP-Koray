@@ -247,6 +247,9 @@ importers:
       '@vueuse/core':
         specifier: ^11.2.0
         version: 11.2.0(vue@3.5.13(typescript@5.6.3))
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.7
       core-js:
         specifier: ^3.39.0
         version: 3.39.0

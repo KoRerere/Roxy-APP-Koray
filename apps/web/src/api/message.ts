@@ -7,7 +7,7 @@ let lastAppVersion = ''
 let isCheckingAppVersion = false
 
 export async function checkAppVersion(response: AxiosResponse<any, any>) {
-  const [[remoteVersion, isForceUpdate]] = Object.entries(response.data['R-APP_LAST_VERSION'] || {})
+  const [[remoteVersion, isForceUpdate] = []] = Object.entries(response.headers['R-APP_LAST_VERSION'] || {})
 
   if (!remoteVersion || isCheckingAppVersion) {
     return

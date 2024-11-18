@@ -24,7 +24,9 @@ export const httpClient = new HttpClient({
   /**
    * baseURL: import.meta.env.VITE_BASE_URL,
    */
-  paramsSerializer(params) { return qs.stringify(params, { arrayFormat: 'comma' }) },
+  paramsSerializer(params) {
+    return qs.stringify(params, { arrayFormat: 'comma' })
+  },
 })
 
 let baseURL = ''
@@ -41,6 +43,12 @@ httpClient.instance.interceptors.request.use(async (config) => {
   config.headers.language = currentLocale
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
+  // R-OS:mac/win
+  // R-OSBIT:apple/intel/7_64/11_32
+  // R-VERSION:1.0.0
+  config.headers['R-OS'] = 'win'
+  config.headers['R-OSBIT'] = '11_64'
+  config.headers['R-VERSION'] = appVersion
 
   // await handleRequest(config)
 
@@ -54,7 +62,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     router.push({ name: 'login' })
     return response
   }
-  // checkAppVersion(response)
+  checkAppVersion(response)
   // await handleResponse(response)
   return response
 })

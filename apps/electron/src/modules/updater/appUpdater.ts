@@ -145,7 +145,8 @@ export const appUpdater = new class AppUpdater {
     }
 
     if (!this.#autoUpdater) {
-      await this.init()
+      // await this.init()
+      return
     }
 
     this.isInProgress = true
