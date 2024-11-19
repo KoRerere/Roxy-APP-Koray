@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UserMdfPlatformInfoCreatePayload } from '@roxy/backend-api'
+import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
@@ -11,6 +11,8 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import accountCreate from '/@/views/account/create'
 import { getColumns } from './columns'
+
+type Item = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const tableRef = useTemplateRef('accountTable')
 
@@ -33,6 +35,7 @@ const operation = ref([
     label: $t('添加备注'),
     icon: 'base/rx_ic_doc_add',
     power: !role.isViewer,
+    multiple: true,
   },
   {
     separator: true,
@@ -51,9 +54,9 @@ const drawer = reactive({
   visible: false,
   data: {},
   title: '',
-  confirm: async (formData: UserMdfPlatformInfoCreatePayload) => {
+  confirm: async (formData: any) => {
     const _data = formData.id
-      ? await editAccount(formData)
+      ? await editAccount([formData])
       : await createAccount(formData)
     tableRef.value?.refresh()
   },
@@ -84,15 +87,15 @@ function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-function createAccount(formData: UserMdfPlatformInfoCreatePayload) {
+function createAccount(formData: any) {
   return API.platform.userAddPlatformInfoCreate(formData)
 }
 
-function editAccount(formData: UserMdfPlatformInfoCreatePayload) {
+function editAccount(formData: any) {
   return API.platform.userMdfPlatformInfoCreate(formData)
 }
 
-function onRemark(data: any) {
+function onRemark(data: Item) {
   dialog.open(popup, {
     props: {
       showHeader: false,
@@ -107,21 +110,18 @@ function onRemark(data: any) {
             type: 'textarea',
             name: 'platformRemarks',
             placeholder: $t('请输入备注'),
-            value: data.platformRemarks,
+            value: data?.platformRemarks,
           },
         ],
       },
       onConfirm: async (formData: any) => {
-        addRemark(formData.platformRemarks, data)
+        const datas = ([] as Item[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
+        const { code, msg } = await editAccount(datas)
+        showToast(code, msg)
+        tableRef.value?.refresh()
       },
     },
   })
-}
-
-async function addRemark(platformRemarks: string, data: any) {
-  const { code, msg } = await editAccount({ ...data, platformRemarks })
-  showToast(code, msg)
-  tableRef.value?.refresh()
 }
 
 function deletePopup(data: any) {

@@ -444,7 +444,7 @@
   "用户可以通过 API 的方式来读写账号配置信息、创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等自动化框架实现浏览器操作的自动化": "Users can use API to read and write account configuration, create, open, and manage profiles, and automate browser actions with frameworks like Selenium, Puppeteer, and Playwright",
   "用户名": "Username",
   "界面": "Interface",
-  "界面语言": "Language",
+  "界面语言": "Display Language",
   "登录": "Login",
   "登录信息写入失败": "Failed to write login information",
   "登录失败": "Login Failed",

@@ -8,6 +8,7 @@ export enum ExtensionsStatus {
 export enum ExtensionsInstallType {
   all = 0,
   partial = 1,
+  none = 2,
 }
 
 export enum ExtensionsInstallStatus {
@@ -29,4 +30,9 @@ export function extensionsSourceFormat(source: ExtensionsSource): string {
   }) as const
 
   return sourceMap[source]
+}
+
+export enum PluginSwitchType {
+  team = 1,
+  personal = 2,
 }

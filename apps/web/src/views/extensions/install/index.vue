@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
@@ -13,6 +14,8 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
+
+type Data = UnwrapRowType<UserGetPluginListListData>
 
 defineEmits(['search'])
 const confirm = useConfirm()
@@ -58,9 +61,7 @@ const columns = setColumns([
     style: 'width: 9rem',
     slot: 'actions',
   },
-], {
-  filters: role.isOwner ? [] : ['related'], // 非所有者过滤关联信息
-})
+])
 
 const filters = reactive({
   value: null,
@@ -70,11 +71,11 @@ const filters = reactive({
       value: null,
     },
     {
-      name: $t('已启用'),
+      name: $t('团队'),
       value: true,
     },
     {
-      name: $t('未启用'),
+      name: $t('个人'),
       value: false,
     },
   ],
@@ -89,9 +90,7 @@ const filters = reactive({
 })
 
 async function tableRequest(params: any) {
-  const data = await API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })
-  data.data.rows = data.data.rows.map(item => ({ ...item, bindPlugin: item.bindPlugin.map((projectName: string) => projectName === '无项目' ? $t('默认项目') : projectName) }))
-  return data
+  return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })
 }
 
 function tableOperation(data: any) {
@@ -191,14 +190,14 @@ function onUploadExtension() {
           filters.resetFilters()
         }
         catch (error) {
-          console.log('🚀 ~ onConfirm: ~ error:', error)
+          console.log(error)
         }
       },
     },
   })
 }
 
-async function onInstall(data: any) {
+async function onInstall(data: Data) {
   dialog.open(installExtension, {
     props: {
       showHeader: false,
@@ -209,23 +208,23 @@ async function onInstall(data: any) {
       props: data,
       onConfirm: async (params: any) => {
         try {
-          const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
+          const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.id })
           if (code === 0) {
-            window.electronAPI.send('extension:download', [toRaw(data)])
+            window.electronAPI.send('extension:download', [toRaw(data) as any])
           }
           showToast(code, msg)
           tableRef.value?.refresh({ status: filters.value })
         }
         catch (error) {
-          console.log('🚀 ~ onConfirm: ~ error:', error)
+          console.log(error)
         }
       },
     },
   })
 }
 
-async function checkUpdate(data: any) {
-  await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir })
+async function checkUpdate(data: Data) {
+  await API.plugins.userCheckAllPluginsVersionList({ pluginDir: data.pluginDir as string })
   toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('检查更新完成'), life: 2500 })
   filters.onChange()
 }
@@ -235,7 +234,7 @@ async function updateExtension(data: any) {
   filters.resetFilters()
 }
 
-async function deleteExtension(datas: any) {
+async function deleteExtension(datas: Data[]) {
   confirm.require({
     header: $t('删除扩展'),
     message: $t('您确认要删除所选扩展吗？删除后，所有已关联项目中的窗口扩展将被移除。'),
@@ -250,7 +249,7 @@ async function deleteExtension(datas: any) {
     },
     accept: async () => {
       try {
-        const ids = datas.map((item: any) => item.id)
+        const ids = datas.map(item => item.id as number)
         const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
 
         toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
@@ -316,7 +315,7 @@ defineExpose({
     </template>
 
     <template #related="{ data }">
-      <div @click="operationHandler({ name: 'install' }, data)">
+      <div v-if="data.pluginType || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
         <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" label="Full installed" />
         <RelatedInfo v-else class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -326,6 +325,9 @@ defineExpose({
             </div>
           </template>
         </RelatedInfo>
+      </div>
+      <div v-else>
+        --
       </div>
     </template>
 

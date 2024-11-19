@@ -30,7 +30,8 @@ interface ProxyItem {
   proxyPassword?: string
   refreshUrl?: string
   remark?: string
-  _missField?: any[]
+  _missField: any[]
+  _missIndex: number
   [key: string]: any
 }
 
@@ -148,7 +149,7 @@ function parseValue() {
   }
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
-    .map((url) => {
+    .map((url, index) => {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
       console.log({ protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark })
@@ -167,6 +168,7 @@ function parseValue() {
         refreshUrl,
         remark,
         _missField,
+        _missIndex: _missField.length ? index + 1 : 0,
       }
     })
 
@@ -269,17 +271,37 @@ function onSave() {
     checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
   }))
 
-  const index = list.findIndex((item: any) => item._missField.length)
-
-  if (index > -1) {
-    const { _missField } = list[index]
-    const key = columns.value.find(item => item.key === _missField![0][0])?.title
-
-    onlyErrorToast(-1, $t('代理[{index}] {key} 缺失', { index: index + 1, key }))
+  if (!list.some(item => item._missIndex)) {
+    emit('save', list)
     return
   }
 
-  emit('save', list)
+  const { success, miss } = list.reduce((data, item) => {
+    if (item._missIndex) {
+      data.miss.push(item)
+    }
+    else {
+      data.success.push(item)
+    }
+    return data
+  }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
+
+  confirm.require({
+    header: $t('警告'),
+    message: $t('第 [{miss}] 条代理缺少字段，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'info',
+    },
+    accept: () => {
+      emit('save', success)
+    },
+  })
 }
 </script>
 

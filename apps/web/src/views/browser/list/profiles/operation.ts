@@ -85,6 +85,7 @@ export async function getCustomFilters(params: any = {}) {
       label: $t('项目'),
       icon: 'base/rx_ic_stack',
       getOptions: async () => {
+        // default 2: 查全部包含默认项目
         const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
         return (data.rows || []).map((item: any) => ({
           parentName: 'projectIds',

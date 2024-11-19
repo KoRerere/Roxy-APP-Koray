@@ -6,7 +6,6 @@ import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 
 type CategoryItem = UnwrapRowType<UserGetPluginCategoryListData>
@@ -20,7 +19,6 @@ interface PluginMap {
 }
 const [showToast, onlyErrorToast] = useResponseToast()
 const dialog = useDialog()
-const role = useRoleStore()
 
 const needsync = defineModel('needsync')
 
@@ -70,19 +68,7 @@ function jumpToCategory(item: CategoryItem) {
   document.getElementById(`category_${item.id}`)?.scrollIntoView({ behavior: 'smooth' })
 }
 
-async function addSystemPlugin(plugin: PluginItem) {
-  const { code, data, msg } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
-  if (code === 0) {
-    plugin.addStatus = true
-    needsync.value = true
-    if (role.isOwner) {
-      onInstall({ ...plugin, id: data.plugin_id })
-    }
-  }
-  onlyErrorToast(code, msg)
-}
-
-async function onInstall(data: any) {
+async function onInstall(plugin: PluginItem) {
   dialog.open(installExtension, {
     props: {
       showHeader: false,
@@ -90,12 +76,19 @@ async function onInstall(data: any) {
       blockScroll: true,
     },
     data: {
-      props: data,
+      props: {
+        ...plugin,
+        required: true,
+      },
       onConfirm: async (params: any) => {
         try {
-          const { code, msg } = await API.plugins.userAddPluginToWindowCreate(params)
+          const { data } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
+          plugin.addStatus = true
+          needsync.value = true
+
+          const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
           if (code === 0) {
-            window.electronAPI.send('extension:download', [toRaw(data)])
+            window.electronAPI.send('extension:download', [toRaw(plugin)])
           }
           showToast(code, msg)
         }
@@ -144,12 +137,12 @@ defineExpose({
           </div>
           <div class="list-group-content">
             <div v-for="plugin in item.items" :key="plugin.id" class="extension">
-              <div class="extension-head">
-                <img class="extension-head-image" :src="plugin.pluginIcon">
-                <div class="extension-head-name">
+              <div class="flex flex-col">
+                <img class="extension-image" :src="plugin.pluginIcon">
+                <div class="extension-name">
                   {{ plugin.pluginName }}
                 </div>
-                <div class="extension-head-version">
+                <div class="extension-version">
                   v{{ plugin.pluginVersion }}
                 </div>
               </div>
@@ -161,7 +154,7 @@ defineExpose({
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
                 <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="addSystemPlugin(plugin)" />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>
@@ -276,46 +269,35 @@ defineExpose({
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
-  &-head {
-    display: grid;
-    grid-template-areas:
-      'left right-top'
-      'left right-bottom';
-    align-items: center;
-    grid-template-columns: 36px 1fr;
-    gap: var(--spacing-sm, 4px) var(--spacing-lg, 8px);
+  &-image {
+    padding: 8px;
+    width: 56px;
+    aspect-ratio: 1;
+    border-radius: var(--Component-Colors-TextInput-radius-radius-sm, 4px);
+    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    background: var(--Colors-Background-bg-body, #fff);
+  }
+
+  &-name {
+    margin-top: var(--spacing-lg, 8px);
+    color: var(--Colors-Text-text-primary, #171c1f);
     font-family: Inter;
+    font-size: 13px;
+    font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
+  }
 
-    &-image {
-      grid-area: left;
-      padding: var(--spacing-md, 6px);
-      width: 36px;
-      aspect-ratio: 1;
-      border-radius: var(--radius-lg, 8px);
-      border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
-      background: var(--Colors-Background-bg-body, #fff);
-    }
-
-    &-name {
-      grid-area: right-top;
-      overflow: hidden;
-      color: var(--Colors-Text-text-primary, #171c1f);
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    &-version {
-      grid-area: right-bottom;
-      color: var(--Colors-Text-text-tertiary, #7c8387);
-      font-size: 12px;
-    }
+  &-version {
+    margin-top: var(--spacing-sm, 4px);
+    color: var(--Colors-Text-text-tertiary, #7c8387);
+    font-family: Inter;
+    font-size: 12px;
+    line-height: var(--Line-Height-text-xs, 16px);
   }
 
   &-description {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    // -webkit-line-clamp: 6;
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--Colors-Text-text-secondary, #575d61);

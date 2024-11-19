@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import { $t } from '/@/locales'
+import { useRoleStore } from '/@/stores/role'
 import hub from './hub/index.vue'
 import list from './install/index.vue'
 
+const role = useRoleStore()
 const tabs = ref([
   { title: $t('已安装扩展'), value: 'Installed' },
-  { title: $t('扩展推荐'), value: 'hub' },
-])
+  { title: $t('扩展推荐'), value: 'hub', visible: role.isOwner || role.isManager },
+].filter(tab => tab.visible !== false),
+)
 
 const tabsValue = ref('Installed')
 
@@ -28,7 +31,9 @@ function onChange(value: any) {
   }
 }
 function onSearch() {
-  tabsValue.value = tabs.value[1].value
+  if (tabs.value[1]) {
+    tabsValue.value = tabs.value[1].value
+  }
 }
 </script>
 

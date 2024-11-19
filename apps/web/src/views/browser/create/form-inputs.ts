@@ -286,31 +286,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     {
       type: 'radio',
       label: $t('语言'),
-      name: 'isLanguageBaseIp',
-      value: data.isLanguageBaseIp ?? true,
-      options: [
-        { label: $t('基于 IP 匹配'), value: true },
-        { label: $t('自定义'), value: false },
-      ],
-      change(input: any) {
-        setInputVisible(basicInputs, 'language', input.value === false)
-      },
-      preview: {
-        label: $t('语言'),
-      },
-    },
-    {
-      type: 'select',
-      label: ' ',
-      name: 'language',
-      value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
-      options: $dict_map.language,
-      virtualScrollerOptions: { itemSize: 38 },
-      visible: initInputVisible(data.isLanguageBaseIp, false, false),
-    },
-    {
-      type: 'radio',
-      label: $t('界面语言'),
       name: 'isDisplayLanguageBaseIp',
       value: data.isDisplayLanguageBaseIp ?? true,
       options: [
@@ -319,6 +294,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
       change(input: any) {
         setInputVisible(basicInputs, 'displayLanguage', input.value === false)
+      },
+      preview: {
+        label: $t('语言'),
       },
     },
     {
@@ -329,6 +307,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       options: $dict_map.language,
       virtualScrollerOptions: { itemSize: 38 },
       visible: initInputVisible(data.isDisplayLanguageBaseIp, false, false),
+    },
+    {
+      type: 'radio',
+      label: $t('界面语言'),
+      name: 'isLanguageBaseIp',
+      value: data.isLanguageBaseIp ?? true,
+      options: [
+        { label: $t('基于 IP 匹配'), value: true },
+        { label: $t('自定义'), value: false },
+      ],
+      change(input: any) {
+        setInputVisible(basicInputs, 'language', input.value === false)
+      },
+    },
+    {
+      type: 'select',
+      label: ' ',
+      name: 'language',
+      value: $dict_map.language?.find((item: any) => item.value === data.language) ?? $dict_map.language[0],
+      options: $dict_map.language,
+      virtualScrollerOptions: { itemSize: 38 },
+      visible: initInputVisible(data.isLanguageBaseIp, false, false),
     },
     {
       type: 'radio',

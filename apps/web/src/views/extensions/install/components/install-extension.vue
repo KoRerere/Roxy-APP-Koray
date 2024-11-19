@@ -1,70 +1,72 @@
 <script setup lang="ts">
-import type { UnwrapRowType, UserGetPluginWindowListData } from '@roxy/backend-api'
+import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { API } from '/@/api'
-import { ExtensionsInstallStatus, ExtensionsInstallType } from '/@/enums'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { ExtensionsInstallStatus, ExtensionsInstallType, PluginSwitchType } from '/@/enums'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import type { InstallType } from './type'
+import { useRoleStore } from '/@/stores/role'
 
-type DataItem = UnwrapRowType<UserGetPluginWindowListData>
-const allInstall = ExtensionsInstallType.all.toString()
-const partialInstall = ExtensionsInstallType.partial.toString()
+const [_, onlyErrorToast] = useResponseToast()
+
+type DataItem = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
+const switchValuePersonal = PluginSwitchType.personal.toString()
+const switchValueTeam = PluginSwitchType.team.toString()
+const role = useRoleStore()
 
 const dialogRef = inject<any>('dialogRef')
 const _props = ref()
 const _onConfirm = ref()
 const _onCancel = ref()
-
-const installType = ref(allInstall)
-const categories = ref([
-  { label: $t('全部项目'), value: allInstall },
-  { label: $t('部分项目'), value: partialInstall },
-])
+const _enabled = ref(switchValuePersonal)
 
 const columns = [
   {
     title: $t('项目名称'),
-    key: 'projectName',
+    slot: 'project',
   },
 ]
 const dataList = ref()
 const selection = ref()
 
-function onChange() {
-  if (installType.value === partialInstall) {
-    getProfileList()
-  }
-}
-
 async function getProfileList() {
   if (dataList.value) {
     return
   }
-  const { data } = await API.plugins.userGetPluginWindowList({ pluginId: _props.value.id })
-  dataList.value = data.rows.map(item => ({ ...item, projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName }))
-  selection.value = data.rows.filter((item: any) => item.plugin_install_status === ExtensionsInstallStatus.installed)
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+  dataList.value = data.rows
+  selection.value = data.rows.filter(item => _props.value.bindPluginId.includes(item.project_id))
 }
 
 function getInstallStatus() {
-  if (installType.value === allInstall) {
-    return dataList.value?.map(() => ExtensionsInstallStatus.installed)
+  const map = new Map(selection.value?.map((item: DataItem) => [item.project_id, item.project_id]))
+
+  const installStatus = dataList.value.map((item: DataItem) => map.get(item.project_id) === item.project_id ? ExtensionsInstallStatus.installed : ExtensionsInstallStatus.notInstalled)
+  const installType = installStatus.includes(ExtensionsInstallStatus.notInstalled) ? ExtensionsInstallType.partial : ExtensionsInstallType.all
+
+  return {
+    installStatus,
+    installType,
   }
-  const map = new Map(selection.value?.map((item: DataItem) => [item.id, item.id]))
-  return dataList.value?.map((item: DataItem) => map.get(item.id) === item.id ? ExtensionsInstallStatus.installed : ExtensionsInstallStatus.notInstalled)
 }
 
 async function confirm() {
+  if (_props.value.required && !selection.value) {
+    onlyErrorToast(-1, $t('请选择至少一个项目'))
+    return
+  }
+
   try {
-    const params: InstallType = {
-      installType: Number(installType.value),
-      pluginId: _props.value.id,
-      projectId: dataList.value?.map((item: any) => item.id),
-      installStatus: getInstallStatus(), // 跟 projectId 中的顺序对应
+    const params = {
+      pluginSwitchType: Number(_enabled.value),
+      projectId: dataList.value?.map((item: any) => item.project_id),
+      ...getInstallStatus(), // 跟 projectId 中的顺序对应
     }
     await _onConfirm.value?.(params)
     close()
   }
   catch (error) {
-    console.log('🚀 ~ confirm ~ error:', error)
+    console.log(error)
   }
 }
 
@@ -75,7 +77,6 @@ function close() {
 
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
-  installType.value = props.installType || allInstall
   _props.value = props
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
@@ -96,19 +97,36 @@ onMounted(() => {
         v{{ _props.pluginVersion }}
       </div>
     </div>
-
-    <div class="flex flex-col gap-1">
-      <div>{{ $t('安装到') }}:</div>
-      <div v-for="category in categories" :key="category.value" class="flex items-center gap-2">
-        <RadioButton v-model="installType" :input-id="category.value" name="install" :value="category.value" @change="onChange" />
-        <label :for="category.value">{{ category.label }}</label>
+    <div>
+      <div class="title">
+        Install to projects:
+      </div>
+      <div class="description">
+        Extensions will only be installed to profiles inside the selected projects.
+      </div>
+      <div class="mt-2.5 h-60">
+        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
+          :multiple-operation="false" selection-mode="multiple">
+          <template #project="{ data }">
+            <div class="flex items-center gap-2">
+              <RxSvgIcon name="base/rx_ic_stack" color="var(--Colors-Icon-icon-secondary, #575D61)" />
+              <span class="project-name">{{ data.projectName }}</span>
+            </div>
+          </template>
+        </RyTable>
+      </div>
+      <div v-if="role.isOwner || role.isManager">
+        <div class="line" />
+        <div class="flex justify-between items-center">
+          <span class="title">Install to all members inside relevant projects:</span>
+          <rxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
+        </div>
+        <div class="description">
+          You can change this option in extensions list later
+        </div>
       </div>
     </div>
-    <div v-show="installType === partialInstall" class="h-60">
-      <RyTable v-model:selection="selection" :columns="columns" :data-list="dataList" show-gridlines :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
-        selection-mode="multiple" />
-    </div>
-    <div class="footer">
+    <div class="flex justify-end items-center gap-3">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
       <RxButton size="sm" :label="$t('保存')" severity="info" autofocus @click="confirm" />
     </div>
@@ -116,22 +134,10 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-:deep(.p-textarea) {
-  resize: none;
-}
-
 .popup {
   width: 400px;
   padding-top: 1.25rem;
   gap: var(--spacing-2xl, 16px);
-
-  &-title {
-    color: #000;
-    font-family: Inter;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: normal;
-  }
 }
 
 .extension {
@@ -180,7 +186,7 @@ onMounted(() => {
   }
 }
 
-.profile {
+.project-name {
   color: #000;
   font-family: Inter;
   font-size: 12px;
@@ -188,11 +194,27 @@ onMounted(() => {
   line-height: var(--Line-Height-text-lg, 20px);
 }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-xl, 12px);
-  align-self: stretch;
+.line {
+  margin: var(--spacing-4xl, 24px) 0;
+  height: 0.5px;
+  width: 100%;
+  background: var(--Colors-Border-border-container, #c7cdd1);
+}
+
+.title {
+  color: var(--Colors-Text-text-primary, #171c1f);
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.description {
+  margin-top: var(--spacing-sm, 4px);
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

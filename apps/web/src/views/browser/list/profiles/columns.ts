@@ -44,8 +44,8 @@ const columnsConfig = {
     },
     {
       title: $t('最后打开'),
-      key: 'lastOpened',
-      getText: (row: any) => format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss'),
+      key: 'openTime',
+      getText: (row: any) => format(new Date(row.openTime), 'yyyy/MM/dd HH:mm:ss'),
     },
     {
       title: $t('其他'),
