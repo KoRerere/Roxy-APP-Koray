@@ -99,6 +99,12 @@ async function tableFilters() {
             <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" :size="12" />
           </div>
         </template>
+        <template #table-empty>
+          <CustomEmpty icon="empty/rx_illustration_filter.svg"
+                       :title="$t('暂无匹配结果')"
+                       :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')"
+          />
+        </template>
       </RyTable>
     </div>
   </div>

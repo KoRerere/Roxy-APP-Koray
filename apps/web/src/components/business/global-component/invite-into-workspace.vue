@@ -3,6 +3,7 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { emitter } from '/@/utils/eventBus'
 
 type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data', string>
 
@@ -62,6 +63,11 @@ async function acceptInvitation() {
     toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
   }
 }
+
+emitter.on('viewInviteDetail', (data) => {
+  inviteInfo.value = data
+  visible.value = true
+})
 
 /** 跳过邀请 */
 function skipInvitation() {

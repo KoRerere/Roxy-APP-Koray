@@ -84,7 +84,7 @@ export async function intoMainPage() {
   win.setMinimumSize(Math.min(minWidth, width), Math.min(minHeight, height))
   win.center()
   await win.loadURL(getWebEntryUrl(isPackaged ? 'index.html' : ''))
-  win.setTitle(`${win.getTitle()} | ${app.getVersion()}${isDev ? ' [dev]' : ''}`)
+  win.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()}`)
   // 禁用 document.title 的影响
   win.on('page-title-updated', (event) => {
     event.preventDefault()

@@ -15,7 +15,7 @@ function formatMessage(id: string, values: Record<string, any> = {}) {
   const messageTemplate = messages[store.language][id]
   const formatter = new IntlMessageFormat(messageTemplate, store.language)
   const str = formatter.format(values)
-  console.log('formatMessage', id, values, str, store.language)
+  // console.log('formatMessage', id, values, str, store.language)
   return str
 }
 

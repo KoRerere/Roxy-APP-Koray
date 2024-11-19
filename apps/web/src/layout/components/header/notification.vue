@@ -3,8 +3,10 @@ import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { emitter } from '/@/utils/eventBus'
 
-type Message = UserGetNotifyListData['data'][0]
+type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
 interface Tab {
   value: string
@@ -13,6 +15,7 @@ interface Tab {
   noRead: number
 }
 
+const workspaceStore = useWorkspaceStore()
 const pop = ref()
 const tabs = ref<Tab[]>([
   {
@@ -47,6 +50,10 @@ async function getMessageList() {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
       acc.teamsRead += item.status
+      if (item.type === '邀请用户通知') {
+        const { workspaceId } = item.paramData
+        item.isInWorkspace = workspaceStore.workspaceList.some(workspace => workspace.id === workspaceId)
+      }
     }
     else {
       acc.sys.push(item)
@@ -75,6 +82,16 @@ async function onRead(item: Message | Message[]) {
 function markAllAsRead() {
   const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread)
   list?.length && onRead(list)
+}
+
+function checkDetail(item: Message) {
+  if (item.type === '邀请用户通知') {
+    const { workspaceId } = item.paramData
+    const isInWorkspace = workspaceStore.workspaceList.some(workspace => workspace.id === workspaceId)
+    if (!isInWorkspace) {
+      emitter.emit('viewInviteDetail', item.paramData)
+    }
+  }
 }
 
 onMounted(() => {
@@ -113,8 +130,17 @@ onMounted(() => {
                     <div :class="message.value">
                       {{ item.notify }}
                     </div>
-                    <div :class="message.time">
-                      {{ item.createTime }}
+                    <div :class="message.time" class="w-full flex justify-between">
+                      <span>
+                        {{ item.createTime }}
+                      </span>
+                      <span
+                        v-if="item.paramData"
+                        :class="[message['check-detail'], { [message.disabled]: item.isInWorkspace }]"
+                        @click="checkDetail(item)"
+                      >
+                        {{ item.isInWorkspace ? $t('已加入') : $t('查看详情') }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -200,6 +226,21 @@ onMounted(() => {
   color: var(--Colors-Text-text-secondary, #575d61);
   font-size: 14px;
   line-height: var(--Line-Height-text-md, 20px);
+}
+
+.check-detail {
+  color: var(--Colors-Text-text-brand, #12a3fc);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  cursor: pointer;
+}
+
+.check-detail.disabled {
+  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  cursor: not-allowed;
 }
 
 .time {

@@ -265,6 +265,9 @@ importers:
       fuse.js:
         specifier: ^7.0.0
         version: 7.0.0
+      mitt:
+        specifier: ^3.0.1
+        version: 3.0.1
       mixpanel-browser:
         specifier: ^2.56.0
         version: 2.56.0
