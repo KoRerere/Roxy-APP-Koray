@@ -8,7 +8,7 @@ import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
-import { delLuminetProxy } from '/@/modules/roxynet'
+import { delRoxynetProxy } from '/@/modules/roxynet'
 import { aliOSS, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
@@ -152,7 +152,7 @@ export class BrowserItem {
     const dirId = this.winInfo.dirId!
     emitter.emit(`close-${dirId}`)
     try {
-      delLuminetProxy(dirId)
+      delRoxynetProxy(dirId)
       await this.uploadData()
       this.uploadDataPromiser.resolve(true)
     }

@@ -11,7 +11,7 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
-import { checkAppVersion } from '/@/api/message'
+import { checkAppVersion, checkCoreVersion } from '/@/api/message'
 import { handleRequest, handleResponse } from '/@/api/util'
 import router from '/@/router'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -30,10 +30,17 @@ export const httpClient = new HttpClient({
 })
 
 let baseURL = ''
+let osConfig: {
+  os: NodeJS.Platform
+  osVersion: string
+  cpu: 'intel' | 'apple'
+  osBit: '64' | '32'
+}
+
 httpClient.instance.interceptors.request.use(async (config) => {
-  if (!baseURL) {
-    baseURL = await electronAPI.send('util:getGatewayConfig')
-  }
+  baseURL ||= await electronAPI.send('util:getGatewayConfig')
+  osConfig ||= await electronAPI.send('const:osConfig')
+
   config.baseURL = baseURL
 
   const { token, appVersion } = useUserStore()
@@ -44,11 +51,10 @@ httpClient.instance.interceptors.request.use(async (config) => {
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
   // R-OS:mac/win
-  // R-OSBIT:apple/intel/7_64/11_32
+  // R-OSBIT:apple/intel/64/11
   // R-VERSION:1.0.0
-  config.headers['R-OS'] = 'win'
-  config.headers['R-OSBIT'] = '11_64'
-  config.headers['R-VERSION'] = appVersion
+  config.headers['R-OS'] = osConfig.os === 'darwin' ? 'mac' : 'win'
+  config.headers['R-OSBIT'] = osConfig.os === 'darwin' ? osConfig.cpu : osConfig.osBit
 
   // await handleRequest(config)
 
@@ -62,7 +68,11 @@ httpClient.instance.interceptors.response.use(async (response) => {
     router.push({ name: 'login' })
     return response
   }
-  checkAppVersion(response)
+  const { config } = response
+  if (config.headers.token) {
+    checkAppVersion(response)
+    checkCoreVersion(response)
+  }
   // await handleResponse(response)
   return response
 })

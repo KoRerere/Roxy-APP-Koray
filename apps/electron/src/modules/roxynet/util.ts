@@ -1,7 +1,7 @@
 import axios from 'axios'
 import CryptoJS from 'crypto-js'
 import { browserManager } from '/@/modules/browser'
-import { getLuminetProcess } from '/@/modules/roxynet'
+import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils'
 
@@ -31,7 +31,7 @@ export function decryptByDESModeCBC(ciphertext) {
   return decrypted.toString(CryptoJS.enc.Utf8)
 }
 
-export interface SetLuminetProxyPayload {
+export interface SetRoxynetProxyPayload {
   [dirId: string]: {
     addr: string
     user_name: string
@@ -42,7 +42,7 @@ export interface SetLuminetProxyPayload {
 
 /**
  *
- * luminet 的代理通过luminet本地HTTP服务的接口设置:
+ * roxynet 的代理通过roxynet本地HTTP服务的接口设置:
  * POST /set_proxy
  * body为JSON格式数据
  * ```json
@@ -55,28 +55,28 @@ export interface SetLuminetProxyPayload {
  *   }
  * }
  * ```
- * 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
+ * 需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
  */
-export async function setLuminetProxy(payload: SetLuminetProxyPayload) {
-  console.log('setLuminetProxy', payload)
-  return axios.post(`http://127.0.0.1:${store.luminetLocalHttpPort}/set_proxy`, payload)
+export async function setRoxynetProxy(payload: SetRoxynetProxyPayload) {
+  console.log('setRoxynetProxy', payload)
+  return axios.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_proxy`, payload)
 }
 
 /**
- * 5. 窗口关闭后，删除luminet中的ip
+ * 5. 窗口关闭后，删除roxynet中的ip
  * GET /del_proxy?id=dirId
  */
-export async function delLuminetProxy(dirId: string) {
-  // 如果浏览器已经关闭，直接删除luminet中的代理
-  if (getLuminetProcess() && !browserManager.openedBrowserMap.has(dirId)) {
-    return axios.get(`http://127.0.0.1:${store.luminetLocalHttpPort}/del_proxy?id=${dirId}`).then(res => res.data).catch((e) => {
-      console.error('delLuminetProxy error:', e)
+export async function delRoxynetProxy(dirId: string) {
+  // 如果浏览器已经关闭，直接删除roxynet中的代理
+  if (getRoxynetProcess() && !browserManager.openedBrowserMap.has(dirId)) {
+    return axios.get(`http://127.0.0.1:${store.roxynetLocalHttpPort}/del_proxy?id=${dirId}`).then(res => res.data).catch((e) => {
+      console.error('delRoxynetProxy error:', e)
     })
   }
 }
 
 /**
- * 6.  动态配置系统代理在luminet进程已经启动的情况下，
+ * 6.  动态配置系统代理在roxynet进程已经启动的情况下，
  * 可以调用该接口来修改系统代理。一般在什么情况下调用？
  * 1. 调整v2兼容开关。
  * 2. 检测到新的系统代理
@@ -88,7 +88,7 @@ export async function setSystemProxy() {
     v2: store.v2raySwitch,
   }
   console.log('roxynet set_sysproxy 修改系统代理', params)
-  return axios.post(`http://127.0.0.1:${store.luminetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
+  return axios.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
     console.error('setSystemProxy error:', e)
   })
 }

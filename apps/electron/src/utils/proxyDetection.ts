@@ -5,7 +5,7 @@ import http from 'node:http'
 import https from 'node:https'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
-import { delLuminetProxy, getLuminetProcess, setLuminetProxy, startLuminet } from '/@/modules/roxynet'
+import { delRoxynetProxy, getRoxynetProcess, setRoxynetProxy, startRoxynet } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
 
@@ -37,7 +37,7 @@ type ProtocolMapType = keyof typeof protocolCheckMap
 export type ProxyDetectionParams = Pick<WindowItemType, 'dirId' | 'checkChannel' | 'ipType' | 'protocol' | 'proxyCategory' | 'proxyUserName' | 'proxyPassword' | 'host' | 'port' | 'proxyNetwork'> & {
   /** 是否优先使用外部的参数 */
   outerParamFirst: boolean
-  /** 是否走龙哥 luminet */
+  /** 是否走龙哥 roxynet */
   systemProxySwitch: boolean
 }
 
@@ -78,29 +78,29 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
   const systemProxyAddress = await getSystemProxy()
-  const isUseSystemProxy = getLuminetProcess() && systemProxySwitch && systemProxyAddress
+  const isUseSystemProxy = getRoxynetProcess() && systemProxySwitch && systemProxyAddress
 
   if (isUseSystemProxy) {
-    await startLuminet()
+    await startRoxynet()
     const protocal = proxyCategory.toLocaleLowerCase()
     const addr = host && port ? `${host}:${port}` : ''
-    const luminetParams = {
+    const roxynetParams = {
       addr: protocal === 'noproxy' ? '' : addr,
       user_name: proxyUserName || '',
       password: proxyPassword || '',
       protocal,
     }
-    console.log('luminetParams', luminetParams)
+    console.log('roxynetParams', roxynetParams)
 
     if (dirId) {
-      await setLuminetProxy({
-        [dirId]: luminetParams,
+      await setRoxynetProxy({
+        [dirId]: roxynetParams,
       })
     }
-    console.log('本次代理检测经过 luminet')
+    console.log('本次代理检测经过 roxynet')
   }
   else {
-    console.log('本次代理检测不经过 luminet')
+    console.log('本次代理检测不经过 roxynet')
   }
   // 是否为直连
   const isNoProxy = proxyCategory.toLocaleLowerCase() === 'noproxy'

@@ -12,13 +12,13 @@ export * from './util'
 const execFilePromise = promisify(execFile)
 let roxynetProcess: ChildProcess | null = null
 
-export function getLuminetProcess() {
+export function getRoxynetProcess() {
   return roxynetProcess
 }
 
-export async function startLuminet() {
-  console.log('startLuminet systemProxySwitch:', store.systemProxySwitch)
-  console.log('startLuminet v2raySwitch:', store.v2raySwitch)
+export async function startRoxynet() {
+  console.log('startRoxynet systemProxySwitch:', store.systemProxySwitch)
+  console.log('startRoxynet v2raySwitch:', store.v2raySwitch)
 
   if (!store.systemProxySwitch) {
     console.log('systemProxySwitch is off')
@@ -34,7 +34,7 @@ export async function startLuminet() {
   if (roxynetProcess) {
     // 重新设置系统代理
     setSystemProxy()
-    console.log('Luminet has been started')
+    console.log('Roxynet has been started')
     return
   }
 
@@ -101,7 +101,7 @@ export async function startLuminet() {
   await setTimeout(100)
 }
 
-export function stopLuminet() {
+export function stopRoxynet() {
   if (roxynetProcess) {
     roxynetProcess.kill()
     roxynetProcess = null

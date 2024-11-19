@@ -1,7 +1,7 @@
-luminet.exe网络工具用于自动桥接系统的代理，也可以桥接用户手动设置的HTTP或者SOCKS5代理。 注意这些代理不能有账密认证
+roxynet.exe网络工具用于自动桥接系统的代理，也可以桥接用户手动设置的HTTP或者SOCKS5代理。 注意这些代理不能有账密认证
 使用流程如下：
-1. lumibrowser app启动的时候，如果用户设置了走系统代理，就要启动：luminet.exe，启动命令为:
-luminet.exe --arg params
+1. lumibrowser app启动的时候，如果用户设置了走系统代理，就要启动：roxynet.exe，启动命令为:
+roxynet.exe --arg params
 其中： params为启动参数；使用des cbc加密后转base64,密钥为:098otIp!   js加密参考:https://www.liuvv.com/p/8b88eb3d.html
 原始内容为JSON格式如下:
 
@@ -16,21 +16,21 @@ luminet.exe --arg params
 }
 
 
-lumibrowser的api服务用于接luminetKit上报的代理端口和本地服务端口。后续lumibrowser会用到
+lumibrowser的api服务用于接roxynetKit上报的代理端口和本地服务端口。后续lumibrowser会用到
 
-2. luminet 启动成功过后会上报两个端口
+2. roxynet 启动成功过后会上报两个端口
 	2.1 上报代理端口（同时http和socks5协议）,  HTTP GET /tunnel/report_proxy_server?port=xxxxxxxx
 	2.2 上报本地http服务端口, HTTP GET /tunnel/report_local_http?port=xxxxxxxx
 
 3. 配置代理IP
-浏览器和luminet都要配置代理IP，配置方法如下：
+浏览器和roxynet都要配置代理IP，配置方法如下：
 浏览器的代理IP为：
 	账号：dirID
 	密码: dirID
 	服务器地址:127.0.0.1
-	端口：luminet 上报的代理端口
+	端口：roxynet 上报的代理端口
 
-luminet 的代理通过luminet本地HTTP服务的接口设置:
+roxynet 的代理通过roxynet本地HTTP服务的接口设置:
 POST /set_proxy
 body为JSON格式数据
 {
@@ -41,13 +41,13 @@ body为JSON格式数据
 		"protocal:"http"
 	}
 }
-需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给luminet的代理保持为HTTPS
+需要特殊处理的：当用户配置的代理为HTTPS时，传给浏览器的代理类型改成HTTP，传给roxynet的代理保持为HTTPS
 
 
-通过dirId将浏览器代理跟luminet代理关联起来
+通过dirId将浏览器代理跟roxynet代理关联起来
 
 直连的配置方法：
-浏览器配置方法不变，luminet 的代理格式如下：
+浏览器配置方法不变，roxynet 的代理格式如下：
 {
 	"dirId":{
 		"addr":"",
@@ -60,12 +60,12 @@ body为JSON格式数据
 4. lumibrowser 检测IP
 使用方法同内核
 
-5. 窗口关闭后，删除luminet中的ip
+5. 窗口关闭后，删除roxynet中的ip
 GET /del_proxy?id=dirId
 
-6. lumibrowser 关闭后，关闭luminet 进程
+6. lumibrowser 关闭后，关闭roxynet 进程
 
-7.关闭窗口和检测完成时要删除代理，退出app时kill掉luminet.exe
+7.关闭窗口和检测完成时要删除代理，退出app时kill掉roxynet.exe
 
 curl -x 127.0.0.1:59527 "http://iprust.io/ip.json" -vv
 curl -x socks5h://88be7373b8c6cb7b22308c83ce619e11:88be7373b8c6cb7b22308c83ce619e11@127.0.0.1:51572 "http://iprust.io/ip.json" -vv

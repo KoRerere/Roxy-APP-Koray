@@ -2,7 +2,7 @@ import './ipc'
 import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
-import { startLuminet } from '/@/modules/roxynet'
+import { startRoxynet } from '/@/modules/roxynet'
 import { setupStore } from '/@/modules/store'
 import { setupApp } from './app/'
 
@@ -25,8 +25,8 @@ export async function setupModules() {
     await setupAppServer()
     // 启动 app
     await setupApp().finally(async () => {
-      // 启动 luminet 服务
-      startLuminet()
+      // 启动 roxynet 服务
+      startRoxynet()
     })
   }
   catch (error) {

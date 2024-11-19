@@ -1,4 +1,4 @@
-import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetAppUpgradeCreateData, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetAppUpgradeCreateData, UserGetCoreUpgradeCreateData, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { OsConfig } from '#roxybrowser/constants'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
@@ -11,6 +11,11 @@ import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/ut
 import type { RandomFingerprint, RandomFingerprintFuncParameters, RandomFingerprintFuncReturnTypes } from '#roxybrowser/utils/randomFingerprint'
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
+
+interface ReGetUpdateInfoType {
+  app: UserGetAppUpgradeCreateData
+  kernel: UserGetCoreUpgradeCreateData
+}
 
 export interface RenderMessage {
   /** 批量启动窗口 */
@@ -28,8 +33,8 @@ export interface RenderMessage {
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult
-  /** 删除 luminet 代理 */
-  'proxy:delLuminetProxy': (dirId: string) => void
+  /** 删除 roxynet 代理 */
+  'proxy:delRoxynetProxy': (dirId: string) => void
   /** 检测本地网络/系统代理 */
   'proxy:detectNetwork': (type?: 'local' | 'system') => ProxyDetectionResult
   /** 获取系统代理 */
@@ -55,8 +60,8 @@ export interface RenderMessage {
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 获取软件设置 */
   'app:getSoftConfig': () => StoreType
-  /** 设置更新信息 */
-  'app:setAppUpdateData': (updateData: UserGetAppUpgradeCreateData['data']) => void
+  /** 重新获取更新信息，如：APP、内核等版本升级信息 */
+  'app:reGetUpdateInfo': <T extends keyof ReGetUpdateInfoType>(type: T) => ReGetUpdateInfoType[T]
   /** 检测更新 */
   'app:checkForUpdates': () => Promise<UpdateInfo | undefined>
   /** 检测是否有更新 */

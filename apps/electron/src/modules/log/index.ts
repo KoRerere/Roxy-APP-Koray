@@ -68,7 +68,7 @@ async function cleanupOldLogs() {
 
       // 删除超过 14 天的日志
       if (fileAge > 14 * 24 * 60 * 60 * 1000) {
-        rm(filePath)
+        rm(filePath, { recursive: true, force: true })
           .then(() => {
             log.info(`已删除过期日志文件: ${file}`)
           })

@@ -1,7 +1,7 @@
 import express from 'express'
 import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
-import { setupLuminetReceiver } from '/@/modules/appServer/roxynet-receiver'
+import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { setupDashboardServer } from './dashboard'
@@ -14,8 +14,8 @@ export async function setupAppServer() {
   setupMiddlewares(app)
   // 注册日志服务
   setLogsServer(app)
-  // 注册 luminet 接收器
-  setupLuminetReceiver(app)
+  // 注册 roxynet 接收器
+  setupRoxynetReceiver(app)
   // 注册工作台路由
   setupDashboardServer(app)
 

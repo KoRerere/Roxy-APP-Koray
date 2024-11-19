@@ -71,7 +71,7 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
     finally {
       checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       checkeResult.loading = false
-      dirId && window.electronAPI.send('proxy:delLuminetProxy', dirId)
+      dirId && window.electronAPI.send('proxy:delRoxynetProxy', dirId)
     }
     return checkeResult
   }

@@ -13,7 +13,7 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { extensionManager } from '/@/modules/extension'
 import { openAPIServer } from '/@/modules/openapi'
-import { delLuminetProxy, startLuminet, stopLuminet } from '/@/modules/roxynet'
+import { delRoxynetProxy, startRoxynet, stopRoxynet } from '/@/modules/roxynet'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, decryptAESGCM, detectNetwork, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
@@ -45,9 +45,9 @@ ipcMain.on('proxy:detect', (winItemInfo) => {
   return proxyDetection(winItemInfo)
 })
 
-/** 删除 luminet 代理 */
-ipcMain.on('proxy:delLuminetProxy', (dirId) => {
-  return delLuminetProxy(dirId)
+/** 删除 roxynet 代理 */
+ipcMain.on('proxy:delRoxynetProxy', (dirId) => {
+  return delRoxynetProxy(dirId)
 })
 
 /** 根据用户设置，检测本地网络/系统代理 */
@@ -166,16 +166,16 @@ ipcMain.on('app:saveSoftConfig', (config) => {
   if (store.systemProxySwitch !== originSystemProxySwitch) {
     if (store.systemProxySwitch) {
       // 重新设置系统代理
-      startLuminet()
+      startRoxynet()
     }
     else {
-      // 这里不需要关闭 luminet，因为关闭 luminet 会导致已打开的窗口的系统代理失效
-      stopLuminet()
+      // 这里不需要关闭 roxynet，因为关闭 roxynet 会导致已打开的窗口的系统代理失效
+      stopRoxynet()
     }
   }
   else if (store.v2raySwitch !== originV2raySwitch) {
     // 重新设置系统代理
-    startLuminet()
+    startRoxynet()
   }
 })
 
@@ -211,9 +211,14 @@ ipcMain.on('dialog:selectFile', async (filters) => {
   }
 })
 
-/** 设置更新信息 */
-ipcMain.on('app:setAppUpdateData', (updateData) => {
-  return appUpdater.init(updateData)
+/** 重新获取更新信息，如：APP、内核等版本升级信息 */
+ipcMain.on('app:reGetUpdateInfo', (type) => {
+  if (type === 'app') {
+    return appUpdater.init()
+  }
+  else if (type === 'kernel') {
+    return chromeCoreManager.fetchAvailableCoreList()
+  }
 })
 
 /** 检查更新 */

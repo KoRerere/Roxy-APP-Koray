@@ -25,11 +25,11 @@ export interface StoreType {
   workspaceId?: number
   /** 是否使用系统代理 */
   systemProxySwitch?: boolean
-  /** luminet 本地 http 服务端口 */
-  luminetLocalHttpPort?: number
-  /** luminet 代理端口 */
+  /** roxynet 本地 http 服务端口 */
+  roxynetLocalHttpPort?: number
+  /** roxynet 代理端口 */
   roxynetProxyPort?: number
-  /** luminet v2ray 兼容模式 */
+  /** roxynet v2ray 兼容模式 */
   v2raySwitch?: boolean
   /** APP 本地服务端口 */
   appPort: number

@@ -13,7 +13,7 @@ const agent = new https.Agent({
 
 export const httpClient = new HttpClient({
   // baseURL: 'https://lumitest.lumibrowser.com/',
-  timeout: 10000,
+  timeout: 15000,
   httpsAgent: agent,
 })
 

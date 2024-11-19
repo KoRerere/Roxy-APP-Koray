@@ -23,7 +23,7 @@ export async function checkResource() {
     if (code === 0) {
       const webDomain = data.webDomain
       // 检测更新 roxynet
-      await checkLuminetBin(webDomain)
+      await checkRoxynetBin(webDomain)
     }
   }
   catch (error) {
@@ -46,7 +46,7 @@ export async function checkResource() {
 // roxynet 下载重试次数
 let roxynetDownloadRetry = 0
 /** 检查 roxynet 是否存在 */
-async function checkLuminetBin(webDomain: string) {
+async function checkRoxynetBin(webDomain: string) {
   const { promise, resolve } = Promise.withResolvers()
   // 获取文件所在的目录路径
   const roxynetBinDir = dirname(appConfig.roxynetBinPath)
@@ -119,7 +119,7 @@ async function checkLuminetBin(webDomain: string) {
       finally {
         if (roxynetDownloadRetry < 3) {
           roxynetDownloadRetry++
-          await checkLuminetBin(webDomain)
+          await checkRoxynetBin(webDomain)
         }
         else {
           resolve(true)

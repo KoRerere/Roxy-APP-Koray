@@ -27,19 +27,12 @@ export const chromeCoreManager = new class ChromeCoreManager {
   private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = []
 
   constructor() {
-    setTimeout(() => {
-      this.fetchAvailableCoreList()
-    })
-    // 定时更新可用内核列表
-    setInterval(() => {
-      this.fetchAvailableCoreList()
-    }, 1000 * 60 * 5)
   }
 
   /** 获取内核列表（供前端展示用） */
   async getCoreList(): Promise<ResourceUpdateMessage[]> {
-    const availableCoreList = await this.fetchAvailableCoreList()
-    const arr = availableCoreList.map(async (core): Promise<ResourceUpdateMessage> => {
+    await this.fetchAvailableCoreList()
+    const arr = this.availableCoreList.map(async (core): Promise<ResourceUpdateMessage> => {
       return {
         ...core,
         type: 'kernel',
@@ -78,7 +71,7 @@ export const chromeCoreManager = new class ChromeCoreManager {
     const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
     console.log('user_get_core_upgrade', result.data)
     this.availableCoreList = result.data?.rows || []
-    return this.availableCoreList
+    return result
   }
 
   /** 根据内核版本获取对应的内核执行文件 */

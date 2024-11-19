@@ -29,19 +29,18 @@ export const appUpdater = new class AppUpdater {
 
   constructor() { }
 
-  async init(updateData: UserGetAppUpgradeCreateData['data']) {
-    console.log(`appUpdater updateData`, updateData)
-    // const result = await API.base.userGetAppUpgradeCreate(osConfig)
+  async init() {
+    const result = await API.base.userGetAppUpgradeCreate(osConfig)
 
-    // console.log(`user_get_app_upgrade result`, result)
+    console.log(`user_get_app_upgrade result`, result)
 
-    if (!updateData) {
+    if (result.code !== 0 || !result.data) {
       console.log(`更新数据为空 跳出更新`)
-      return
+      return result
     }
 
-    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = updateData
-    this.#updateMessageData.originUpgradeData = updateData
+    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = result.data
+    this.#updateMessageData.originUpgradeData = result.data
     this.#updateMessageData.upgradeContent = upgradeContent
     this.#updateMessageData.title = upgradeTitle
     this.#updateMessageData.version = version
@@ -51,7 +50,7 @@ export const appUpdater = new class AppUpdater {
 
     if (!downloadUrl) {
       console.log(`更新地址为空 跳出更新`)
-      return
+      return result
     }
     const options = {
       requestHeaders: {},
@@ -71,7 +70,7 @@ export const appUpdater = new class AppUpdater {
       if (version && compare(version, app.getVersion(), '>')) {
         await this.checkForUpdates()
       }
-      return
+      return result
     }
 
     this.#autoUpdater = isMac ? new MacUpdater(options) : new NsisUpdater(options)
@@ -135,6 +134,7 @@ export const appUpdater = new class AppUpdater {
     })
 
     this.checkForUpdates()
+    return result
   }
 
   async checkForUpdates() {
