@@ -3,7 +3,6 @@ import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
@@ -15,7 +14,6 @@ interface Tab {
   noRead: number
 }
 
-const workspaceStore = useWorkspaceStore()
 const pop = ref()
 const tabs = ref<Tab[]>([
   {
@@ -50,10 +48,6 @@ async function getMessageList() {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
       acc.teamsRead += item.status
-      if (item.type === '邀请用户通知') {
-        const { workspaceId } = item.paramData
-        item.isInWorkspace = workspaceStore.workspaceList.some(workspace => workspace.id === workspaceId)
-      }
     }
     else {
       acc.sys.push(item)
@@ -86,9 +80,7 @@ function markAllAsRead() {
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    if (!item.isInWorkspace) {
-      emitter.emit('viewInviteDetail', item.paramData)
-    }
+    emitter.emit('viewInviteDetail', item.paramData)
   }
 }
 
@@ -134,10 +126,10 @@ onMounted(() => {
                       </span>
                       <span
                         v-if="item.paramData"
-                        :class="[message['check-detail'], { [message.disabled]: item.isInWorkspace }]"
+                        :class="message['check-detail']"
                         @click="checkDetail(item)"
                       >
-                        {{ item.isInWorkspace ? $t('已加入') : $t('查看详情') }}
+                        {{ $t('查看详情') }}
                       </span>
                     </div>
                   </div>

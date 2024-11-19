@@ -17,6 +17,8 @@ const { getProjects } = useProjectStore()
 const inviteInfo = ref<InviteInfo>()
 const visible = ref(false)
 
+const isInWorkspace = computed(() => workspaceStore.workspaceList.some(item => item.id === inviteInfo.value?.workspaceId))
+
 watchEffect(() => {
   if (route.name !== 'login' && inviteInfo.value?.data) {
     visible.value = true
@@ -95,8 +97,8 @@ function skipInvitation() {
             {{ $t('您被邀请至工作空间 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
           </div>
         </div>
-        <RxButton class="w-full" @click="acceptInvitation">
-          {{ $t('加入工作空间') }}
+        <RxButton class="w-full capitalize" :disabled="isInWorkspace" @click="acceptInvitation">
+          {{ isInWorkspace ? $t('已加入') : $t('加入工作空间') }}
         </RxButton>
         <rx-divider />
         <RxButton class="w-full" outlined @click="skipInvitation">
