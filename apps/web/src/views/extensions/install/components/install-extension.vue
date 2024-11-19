@@ -78,7 +78,7 @@ function close() {
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
   _props.value = props
-  _enabled.value = props.pluginSwitchType?.toString()
+  _enabled.value = props.pluginSwitchType?.toString() || switchValuePersonal
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
   getProfileList()
@@ -107,7 +107,7 @@ onMounted(() => {
       </div>
       <div class="mt-2.5 h-60">
         <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
-          :multiple-operation="false" selection-mode="multiple">
+          :multiple-operation="false" selection-mode="multiple" size="small">
           <template #project="{ data }">
             <div class="flex items-center gap-2">
               <RxSvgIcon name="base/rx_ic_stack" color="var(--Colors-Icon-icon-secondary, #575D61)" />
