@@ -2,6 +2,7 @@
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
+import { useProjectStore } from '/@/stores/project'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 
@@ -11,6 +12,7 @@ const router = useRouter()
 const toast = useToast()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
+const { getProjects } = useProjectStore()
 
 const inviteInfo = ref<InviteInfo>()
 const visible = ref(false)
@@ -55,6 +57,7 @@ async function acceptInvitation() {
     const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === Number(data))
     if (targetWorkspace) {
       workspaceStore.currentWorkspace = targetWorkspace
+      getProjects()
     }
     skipInvitation()
     router.push({ name: 'browser' })
@@ -81,9 +84,10 @@ function skipInvitation() {
     <div class="invite-into-workspace">
       <div class="detail-box">
         <div class="detail-body">
-          <div class="workspace-icon">
-            {{ inviteInfo?.workspacePicture }}
-          </div>
+          <Avatar class="workspace-icon"
+                  :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }"
+                  :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)" size="xlarge"
+          />
           <div class="workspace-name">
             {{ inviteInfo?.workspaceName }}
           </div>
@@ -136,7 +140,7 @@ function skipInvitation() {
       color: var(--Colors-Text-text-subtle, #c7cdd1);
       text-align: center;
       font-family: 'JetBrains Mono';
-      font-size: 40px;
+      font-size: 32px;
       font-style: normal;
       font-weight: 700;
       line-height: 28px;
