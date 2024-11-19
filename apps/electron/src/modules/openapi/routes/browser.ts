@@ -235,8 +235,17 @@ router.post('/clear_server_cache', async (req, res) => {
   }
 })
 
+// 已打开窗口进程信息
 router.get('/connection_info', async (req, res) => {
-  res.success([...browserManager.openedBrowserMap.values()].map(browserItem => browserItem.launchInfo))
+  const { dirIds = '' } = req.query as Record<string, any>
+
+  const dirIdArr = dirIds.split(',')
+
+  const result = [...browserManager.openedBrowserMap.values()]
+    .map(browserItem => browserItem.launchInfo)
+    .filter(item => dirIdArr.length ? dirIdArr.includes(item.dirId) : true)
+
+  res.success(result)
 })
 
 export default router

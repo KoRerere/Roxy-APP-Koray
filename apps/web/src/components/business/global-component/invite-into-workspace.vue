@@ -2,7 +2,6 @@
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { useProjectStore } from '/@/stores/project'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 
@@ -12,7 +11,7 @@ const router = useRouter()
 const toast = useToast()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
-const { getProjects } = useProjectStore()
+const { getWorkspaceList, setCurrentWorkspace } = workspaceStore
 
 const inviteInfo = ref<InviteInfo>()
 const visible = ref(false)
@@ -55,12 +54,8 @@ async function acceptInvitation() {
 
   if (code === 0) {
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('加入成功'), life: 3000 })
-    await workspaceStore.getWorkspaceList()
-    const targetWorkspace = workspaceStore.workspaceList.find(item => item.id === Number(data))
-    if (targetWorkspace) {
-      workspaceStore.currentWorkspace = targetWorkspace
-      getProjects()
-    }
+    await getWorkspaceList()
+    setCurrentWorkspace(Number(data))
     skipInvitation()
     router.push({ name: 'browser' })
   }

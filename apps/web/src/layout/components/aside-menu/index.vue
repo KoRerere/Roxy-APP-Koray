@@ -46,7 +46,9 @@ const menus = computed(() => {
 })
 
 watch(currentWorkspace, () => {
-  projectStore.getProjects()
+  setTimeout(() => {
+    projectStore.getProjects()
+  })
 }, { immediate: true })
 
 /** 过滤菜单 */

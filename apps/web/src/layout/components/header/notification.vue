@@ -112,7 +112,7 @@ onMounted(() => {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex" :class="message.item" @click="onRead(item)">
+                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
                     <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
@@ -185,6 +185,10 @@ onMounted(() => {
   &:last-of-type {
     border-bottom: none;
   }
+}
+
+.noRead {
+  background: var(--Color-blue-100, #e8f5fc);
 }
 
 .no-message {
