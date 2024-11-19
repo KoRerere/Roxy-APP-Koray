@@ -21,6 +21,8 @@ import {
   UserDelPluginInfoCreateData,
   UserDelPluginInfoCreatePayload,
   UserGetPluginCategoryListData,
+  UserGetPluginInfoByIdListData,
+  UserGetPluginInfoByIdListParams,
   UserGetPluginListListData,
   UserGetPluginListListParams,
   UserGetPluginWindowListData,
@@ -324,6 +326,23 @@ export class PluginsApi<SecurityDataType = unknown> {
     this.http.request<UserRecordPluginUploadV2ListData, any>({
       path: `/user_record_plugin_upload_v2`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserGetPluginInfoByIdList
+   * @summary 根据插件ID获取插件详细信息
+   * @request GET:/user_get_plugin_info_by_id
+   * @response `200` `UserGetPluginInfoByIdListData`
+   */
+  userGetPluginInfoByIdList = (query: UserGetPluginInfoByIdListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetPluginInfoByIdListData, any>({
+      path: `/user_get_plugin_info_by_id`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

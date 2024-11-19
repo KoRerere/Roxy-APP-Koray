@@ -35,7 +35,7 @@ async function getProfileList() {
   }
   const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
   dataList.value = data.rows
-  selection.value = data.rows.filter(item => _props.value.bindPluginId.includes(item.project_id))
+  selection.value = data.rows.filter(item => _props.value.bindPluginId?.includes(item.project_id))
 }
 
 function getInstallStatus() {
@@ -78,7 +78,7 @@ function close() {
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
   _props.value = props
-  _enabled.value = props.pluginSwitchType.toString()
+  _enabled.value = props.pluginSwitchType?.toString()
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
   getProfileList()

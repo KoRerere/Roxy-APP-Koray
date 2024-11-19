@@ -5945,6 +5945,40 @@ export interface UserRecordPluginUploadV2ListData {
   msg: string;
 }
 
+export interface UserGetPluginInfoByIdListParams {
+  /**
+   * 分页索引
+   * @example 1
+   */
+  pluginId: number;
+}
+
+export interface UserGetPluginInfoByIdListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      source?: string;
+      pluginDir?: string;
+      pluginName?: string;
+      pluginIcon?: string;
+      pluginRoute?: string;
+      pluginVersion?: string;
+      pluginDesc?: string;
+      provider?: string;
+      userId?: number;
+      pluginSwitchType?: number;
+      installType?: string;
+      pluginUpdateState?: number;
+      pluginNewVersion?: string;
+      useStatus?: boolean;
+      createTime?: string;
+      lateUpdateTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetUserListListParams {
   /**
    * 分页索引
@@ -6451,14 +6485,8 @@ export interface UserInviteCreateData {
 }
 
 export interface UserAddUserByProjectInfoCreatePayload {
-  /** 空间ID */
-  workspaceId: number;
-  /** 项目ID */
-  projectId: number;
-  /** 权限 */
-  role: number;
-  /** 邮箱 */
-  email: string;
+  /** 加密数据 */
+  data: string;
 }
 
 export interface UserAddUserByProjectInfoCreateData {

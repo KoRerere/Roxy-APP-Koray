@@ -32,8 +32,8 @@ export function useColumns(columns: Columns, filterColumnKeys?: string[]) {
   const _list = ref(
     data
       .map((item, index) => {
-        const _visible = cache[item.key]?.visible ?? true
-        const _sort = cache[item.key]?.sort ?? index
+        const _visible = cache[item.key]?.visible ?? item._visible ?? true
+        const _sort = cache[item.key]?.sort ?? item._sort ?? index
         return {
           ...item,
           _visible,
@@ -44,12 +44,12 @@ export function useColumns(columns: Columns, filterColumnKeys?: string[]) {
       .sort((a, b) => a._sort - b._sort),
   )
 
-  // onUnmounted(() => {
-  //   const _cache = _list.value
-  //     .map((item, index) => `${item.key}_${item._visible}_${index}`)
-  //     .join(',')
-  //   localStorage.setItem(key, _cache)
-  // })
+  onUnmounted(() => {
+    const _cache = _list.value
+      .map((item, index) => `${item.key}_${item._visible}_${index}`)
+      .join(',')
+    localStorage.setItem(key, _cache)
+  })
 
   return [_list]
 }

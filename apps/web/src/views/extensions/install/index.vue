@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ExtensionsInstallType, extensionsSourceFormat, ExtensionsStatus } from '/@/enums'
+import { ExtensionsInstallType, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -43,8 +43,8 @@ const columns = setColumns([
   },
   {
     title: $t('扩展归属'),
-    key: 'pluginType',
-    getText: (row: any) => row.pluginType ? $t('个人') : $t('团队'),
+    key: 'pluginSwitchType',
+    getText: (row: any) => row.pluginSwitchType === PluginSwitchType.personal ? $t('个人') : $t('团队'),
   },
   {
     title: $t('已关联项目'),
@@ -94,23 +94,25 @@ async function tableRequest(params: any) {
 }
 
 function tableOperation(data: any) {
+  const isPersonal = data.pluginSwitchType === PluginSwitchType.personal
+
   return [
     {
       name: 'checkUpdate',
       label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
-      power: data.pluginType || role.isOwner,
+      power: isPersonal || role.isOwner || role.isManager,
     },
     {
       separator: true,
-      power: data.pluginType || role.isOwner,
+      power: isPersonal || role.isOwner || role.isManager,
     },
     {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       multiple: true,
-      power: data.pluginType || role.isOwner,
+      power: isPersonal || role.isOwner || role.isManager,
     },
   ]
 }
@@ -162,10 +164,12 @@ function installViaUrl() {
     onConfirm: async (formData: any) => {
       try {
         await uploadRecordCheck()
-        const { code, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
-        showToast(code, msg)
+        const { code, data, msg }: any = await API.plugins.userUploadChromePluginsV2Create(formData)
+        onlyErrorToast(code, msg)
         if (code === 0) {
           filters.resetFilters()
+          const plugin = await getExtensionDetail(data.plugin_id)
+          onInstall(plugin)
         }
       }
       catch (error) {
@@ -186,9 +190,14 @@ function onUploadExtension() {
       onConfirm: async (params: any) => {
         try {
           await uploadRecordCheck()
-          const { data } = await API.plugins.userUploadPluginInfoCreate(params)
-          filters.resetFilters()
-          onInstall({ id: data.plugin_id })
+          const { code, data, msg } = await API.plugins.userUploadPluginInfoCreate(params)
+
+          onlyErrorToast(code, msg)
+          if (code === 0) {
+            filters.resetFilters()
+            const plugin = await getExtensionDetail(data.plugin_id)
+            onInstall(plugin)
+          }
         }
         catch (error) {
           console.log(error)
@@ -222,6 +231,11 @@ async function onInstall(data: Data) {
       },
     },
   })
+}
+
+async function getExtensionDetail(pluginId: number) {
+  const { data: { rows: [plugin] } } = await API.plugins.userGetPluginInfoByIdList({ pluginId })
+  return plugin
 }
 
 async function checkUpdate(data: Data) {
@@ -316,7 +330,7 @@ defineExpose({
     </template>
 
     <template #related="{ data }">
-      <div v-if="data.pluginType || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
         <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" label="Full installed" />
         <RelatedInfo v-else class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -343,7 +357,7 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <Actions v-if="data.pluginType || role.isOwner" :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
+      <Actions v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
     </template>
   </RyTable>
 </template>
