@@ -34,18 +34,18 @@ const columnsConfig = {
     {
       title: $t('创建时间'),
       key: 'createTime',
-      getText: (row: any) => format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss'),
+      getText: (row: any) => row.openTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
     },
     {
       title: $t('更新时间'),
       key: 'updateTime',
-      getText: (row: any) => format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss'),
+      getText: (row: any) => row.openTime ? format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss') : '--',
 
     },
     {
       title: $t('最后打开'),
       key: 'openTime',
-      getText: (row: any) => format(new Date(row.openTime), 'yyyy/MM/dd HH:mm:ss'),
+      getText: (row: any) => row.openTime ? format(new Date(row.openTime), 'yyyy/MM/dd HH:mm:ss') : '--',
     },
     {
       title: $t('其他'),

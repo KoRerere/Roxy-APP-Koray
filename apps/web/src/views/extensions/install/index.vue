@@ -186,8 +186,9 @@ function onUploadExtension() {
       onConfirm: async (params: any) => {
         try {
           await uploadRecordCheck()
-          await API.plugins.userUploadPluginInfoCreate(params)
+          const { data } = await API.plugins.userUploadPluginInfoCreate(params)
           filters.resetFilters()
+          onInstall({ id: data.plugin_id })
         }
         catch (error) {
           console.log(error)

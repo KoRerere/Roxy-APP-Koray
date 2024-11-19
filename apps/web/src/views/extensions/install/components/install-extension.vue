@@ -78,6 +78,7 @@ function close() {
 onMounted(() => {
   const { props, onConfirm, onCancel } = dialogRef.value.data
   _props.value = props
+  _enabled.value = props.pluginSwitchType.toString()
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
   getProfileList()
