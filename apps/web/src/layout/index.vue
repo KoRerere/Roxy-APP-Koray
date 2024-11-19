@@ -14,7 +14,7 @@ const anntList = ref()
 watch(() => currentWorkspace.value?.id, () => {
   loading.value = true
   setTimeout(() => {
-    loading.value = false
+    loading.value = !currentWorkspace.value?.id
   }, 1200)
 }, { immediate: true })
 
@@ -54,7 +54,7 @@ onBeforeMount(() => {
           </div>
         </template>
       </div>
-      <AsideMenu v-if="currentWorkspace?.id" :collapsed :transitionend />
+      <AsideMenu :collapsed :transitionend />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
     <main class="rx-main">
