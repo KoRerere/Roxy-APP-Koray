@@ -86,9 +86,7 @@ function markAllAsRead() {
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    const { workspaceId } = item.paramData
-    const isInWorkspace = workspaceStore.workspaceList.some(workspace => workspace.id === workspaceId)
-    if (!isInWorkspace) {
+    if (!item.isInWorkspace) {
       emitter.emit('viewInviteDetail', item.paramData)
     }
   }
