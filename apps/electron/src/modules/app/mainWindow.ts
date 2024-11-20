@@ -132,7 +132,7 @@ function closeMainWindow() {
   mainWindow = undefined
   setTimeout(() => {
     win?.destroy()
-  }, 1000)
+  }, 2000)
 }
 
 /** 获取主窗口实例 */

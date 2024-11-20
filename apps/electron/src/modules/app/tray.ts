@@ -17,18 +17,21 @@ export async function createTray() {
   // 托盘名称
   tray.setToolTip('roxybrowser')
   // 托盘菜单
-  const contextMenu = Menu.buildFromTemplate([{
-    label: $t('显示'),
-    click: () => {
-      win.show()
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: $t('显示'),
+      click: () => {
+        win.show()
+      },
     },
-  }, {
-    label: $t('退出'),
-    click: () => {
-      tray.destroy()
-      win.destroy()
+    {
+      label: $t('退出'),
+      click: () => {
+        tray.destroy()
+        win.destroy()
+      },
     },
-  }])
+  ])
   // 载入托盘菜单
   tray.setContextMenu(contextMenu)
   // 双击触发

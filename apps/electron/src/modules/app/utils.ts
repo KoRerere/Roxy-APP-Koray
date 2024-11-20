@@ -1,9 +1,16 @@
 import { app, dialog } from 'electron'
+import { API } from '/@/api'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
 import { store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { killProcessByName } from '/@/utils'
+
+const closeSoftMap = {
+  0: 'min',
+  1: 'pop',
+  2: 'exit',
+} as const
 
 /** 处理关闭窗口事件, 根据用户设置决定关闭窗口的行为 */
 export function handleCloseWindow(event: Electron.Event) {
@@ -25,11 +32,22 @@ export function handleCloseWindow(event: Electron.Event) {
         buttons: [$t('最小化到托盘'), $t('取消'), $t('退出程序')],
         title: $t('提示'),
         message: $t('您点击了关闭按钮，您确定：'),
+        checkboxLabel: $t('记住我的选择'),
+        checkboxChecked: false,
         defaultId: 0,
       },
-    ).then(async ({ response }) => {
+    ).then(async ({ response, checkboxChecked }) => {
       win.setEnabled(true)
       win.focus()
+      console.log('handleCloseWindow', response, checkboxChecked, closeSoftMap[response])
+      // 记住用户的选择
+      if (checkboxChecked && closeSoftMap[response]) {
+        await API.base.userSetUserConfigCreate({
+          closeSoft: closeSoftMap[response],
+        }).catch(console.error)
+        store.closeSoft = closeSoftMap[response]
+      }
+
       // 根据用户的选择执行相应的操作
       if (response === 0) {
         // 取消退出
