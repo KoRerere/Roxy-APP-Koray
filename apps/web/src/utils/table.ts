@@ -9,7 +9,7 @@ export interface Operation {
 }
 
 export function operationPower(operation: Operation[]) {
-  return operation.filter(op => op.power !== false)
+  return (operation || []).filter(op => op.power !== false)
 }
 
 export function setRowsLoading(row: any, operateName: string, fn: (row: any) => Promise<any>) {

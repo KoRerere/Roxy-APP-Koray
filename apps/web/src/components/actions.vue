@@ -44,7 +44,7 @@ function onMore(event: Event) {
           :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
           :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
       </div>
-      <div v-if="showMenu" class="cursor-pointer line-height-none" @click.stop="onMore">
+      <div v-if="showMenu && _operation.length" class="cursor-pointer line-height-none" @click.stop="onMore">
         <slot name="more-icon">
           <RxSvgIcon name="base/rx_ic_more-v" />
         </slot>

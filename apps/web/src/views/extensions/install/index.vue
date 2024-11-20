@@ -310,7 +310,7 @@ defineExpose({
       <CustomEmpty icon="empty/rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
+            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
