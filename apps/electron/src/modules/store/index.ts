@@ -2,6 +2,7 @@ import { debounce } from 'es-toolkit'
 import { readFile, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
+import { createTray } from '/@/modules/app/tray'
 import { fileExists } from '/@/utils/file'
 
 export interface StoreType {
@@ -76,6 +77,10 @@ const saveConfig = debounce(async () => {
 
 export const store = new Proxy(_store, {
   set(target, prop: keyof StoreType, value) {
+    // 语言变更时，重新创建托盘
+    if (prop === 'language' && value !== target.language) {
+      createTray()
+    }
     saveConfig()
     return Reflect.set(_store, prop, value, target)
   },

@@ -1,14 +1,15 @@
-import type { BrowserWindow } from 'electron'
 import { Menu, Tray } from 'electron'
 import path from 'node:path'
+import { setTimeout } from 'node:timers/promises'
+import { getMainWindow } from '/@/modules/app/mainWindow'
 
 let tray: Tray
 /** 创建托盘 */
-export function createTray(win: BrowserWindow) {
+export async function createTray() {
+  await setTimeout()
+  const win = getMainWindow()!
   console.log('createTray')
-  if (tray) {
-    return tray
-  }
+  tray?.destroy()
 
   const iconPath = path.join(__dirname, '..', 'resources/roxy-tray.png')
   // 新建托盘
@@ -18,7 +19,9 @@ export function createTray(win: BrowserWindow) {
   // 托盘菜单
   const contextMenu = Menu.buildFromTemplate([{
     label: $t('显示'),
-    click: () => { win.show() },
+    click: () => {
+      win.show()
+    },
   }, {
     label: $t('退出'),
     click: () => {

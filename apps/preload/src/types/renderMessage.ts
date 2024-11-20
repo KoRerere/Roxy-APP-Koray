@@ -80,6 +80,8 @@ export interface RenderMessage {
   'app:showLogDir': () => void
   /** 获取本机 mac address */
   'app:getMacAddress': () => Promise<string>
+  /** 程序化显示和隐藏红绿灯 */
+  'app:showHideTrafficLight': (show: boolean) => void
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void

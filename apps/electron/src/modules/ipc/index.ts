@@ -257,6 +257,10 @@ ipcMain.on('app:getMacAddress', () => {
 ipcMain.on('app:showLogDir', () => {
   shell.openPath(appConfig.logsDir)
 })
+/** 程序化显示和隐藏红绿灯 */
+ipcMain.on('app:showHideTrafficLight', (show) => {
+  getMainWindow()?.setWindowButtonVisibility(show)
+})
 
 /** 开启系统代理 */
 ipcMain.on('app:setProxy', async (payload: Config) => {

@@ -6,8 +6,8 @@ import { createTray } from '/@/modules/app/tray'
 import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isWebReady } from '/@/utils'
-import { intoMainPage, restoreOrCreateWindow } from './mainWindow'
+import { isMac, isWebReady, isWindows } from '/@/utils'
+import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
@@ -30,38 +30,6 @@ process.on('unhandledRejection', (reason, promise) => {
   // 在这里执行一些清理操作或记录错误日志
 })
 
-/** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
-let isQuittingForUpdate = false
-
-autoUpdater.on('before-quit-for-update', () => {
-  isQuittingForUpdate = true
-  console.log('Application is quitting for update.')
-})
-
-app.on('before-quit', async (event) => {
-  if (isQuittingForUpdate) {
-    console.log('Application is quitting for update.')
-  }
-  else {
-    event.preventDefault()
-    try {
-      // 关闭所有浏览器进程，并同步数据
-      await browserManager.closeAll()
-      console.log('Application is quitting normally.')
-    }
-    catch (error) {
-      console.error('browserManager.closeAll error:', error)
-    }
-    finally {
-      console.log('Application is quitting finally.')
-      // 退出所有浏览器进程, 防止有漏网之鱼
-      killAllBrowserProcess()
-      // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
-      app.exit()
-    }
-  }
-})
-
 export async function setupApp() {
   /**
    * 防止多实例
@@ -72,6 +40,38 @@ export async function setupApp() {
     process.exit(0)
   }
 
+  /**
+   * Create app window when background process will be ready
+   */
+  try {
+    await app.whenReady()
+
+    // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
+    app.setAccessibilitySupportEnabled(false)
+
+    // 进入启动页
+    await intoLaunchPage()
+    // 检查资源是否准备完毕
+    await checkResource()
+    // 进入主页
+    await intoMainPage()
+    // 创建托盘
+    createTray()
+    console.log('setupApp done')
+    // 初始化应用程序事件
+    initAppEvent()
+
+    setTimeout(() => {
+      killAllBrowserProcess()
+    })
+  }
+  catch (error) {
+    console.error('Failed create window:', error)
+  }
+}
+
+/** 初始化应用程序事件 */
+function initAppEvent() {
   app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
@@ -137,26 +137,35 @@ export async function setupApp() {
    */
   app.on('activate', restoreOrCreateWindow)
 
-  /**
-   * Create app window when background process will be ready
-   */
-  try {
-    await app.whenReady()
+  /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
+  let isQuittingForUpdate = false
 
-    // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
-    app.setAccessibilitySupportEnabled(false)
+  autoUpdater.on('before-quit-for-update', () => {
+    isQuittingForUpdate = true
+    console.log('Application is quitting for update.')
+  })
 
-    const browserWindow = await restoreOrCreateWindow()
-    createTray(browserWindow)
-    // 检查资源是否准备完毕
-    await checkResource()
-    // 进入主页
-    await intoMainPage()
-    setTimeout(() => {
-      killAllBrowserProcess()
-    })
-  }
-  catch (error) {
-    console.error('Failed create window:', error)
-  }
+  app.on('before-quit', async (event) => {
+    if (isQuittingForUpdate) {
+      console.log('Application is quitting for update.')
+    }
+    else {
+      event.preventDefault()
+      try {
+        // 关闭所有浏览器进程，并同步数据
+        await browserManager.closeAll()
+        console.log('Application is quitting normally.')
+      }
+      catch (error) {
+        console.error('browserManager.closeAll error:', error)
+      }
+      finally {
+        console.log('Application is quitting finally.')
+        // 退出所有浏览器进程, 防止有漏网之鱼
+        killAllBrowserProcess()
+        // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
+        app.exit()
+      }
+    }
+  })
 }
