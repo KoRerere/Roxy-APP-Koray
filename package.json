@@ -19,6 +19,7 @@
   },
   "scripts": {
     "dev": "tsx scripts/watch.ts",
+    "dev:watch": "tsx scripts/watch.ts --watch",
     "dev:pkg": "pnpm -F \"./packages/**\" dev",
     "build:pkg": "pnpm -F \"./packages/**\" build",
     "build": "turbo run build",

@@ -38,5 +38,3 @@ yarn-error.log*
 .turbo
 
 vite.config.ts.*
-
-scripts/watch.ts

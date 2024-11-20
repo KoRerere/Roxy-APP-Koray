@@ -12,6 +12,14 @@ const mode = (process.env.MODE = process.env.MODE || 'development')
 
 const logLevel: LogLevel = 'warn'
 
+const argv = process.argv.slice(2)
+// 解析命令行参数
+const args = argv.reduce((acc, arg) => {
+  const [key, value] = arg.split('=')
+  acc[key] = value
+  return acc
+}, {} as Record<string, string>)
+
 /**
  * 设置`main`包的监听器
  * 当文件发生变化时，完全重新启动electron应用程序。
@@ -32,7 +40,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
        * 设置为{}以启用rollup监听器
        * @see https://vitejs.dev/config/build-options.html#build-watch
        */
-      // watch: {},
+      watch: Reflect.has(args, '--watch') ? {} : null,
     },
     plugins: [
       {
