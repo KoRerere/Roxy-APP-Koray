@@ -40,38 +40,6 @@ export async function setupApp() {
     process.exit(0)
   }
 
-  /**
-   * Create app window when background process will be ready
-   */
-  try {
-    await app.whenReady()
-
-    // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
-    app.setAccessibilitySupportEnabled(false)
-
-    // 进入启动页
-    await intoLaunchPage()
-    // 检查资源是否准备完毕
-    await checkResource()
-    // 进入主页
-    await intoMainPage()
-    // 创建托盘
-    createTray()
-    console.log('setupApp done')
-    // 初始化应用程序事件
-    initAppEvent()
-
-    setTimeout(() => {
-      killAllBrowserProcess()
-    })
-  }
-  catch (error) {
-    console.error('Failed create window:', error)
-  }
-}
-
-/** 初始化应用程序事件 */
-function initAppEvent() {
   app.removeAsDefaultProtocolClient(appProtocolName)
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
@@ -137,6 +105,38 @@ function initAppEvent() {
    */
   app.on('activate', restoreOrCreateWindow)
 
+  /**
+   * Create app window when background process will be ready
+   */
+  try {
+    await app.whenReady()
+
+    // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
+    app.setAccessibilitySupportEnabled(false)
+
+    // 进入启动页
+    await intoLaunchPage()
+    // 检查资源是否准备完毕
+    await checkResource()
+    // 进入主页
+    await intoMainPage()
+    // 创建托盘
+    createTray()
+    console.log('setupApp done')
+    // 初始化应用程序事件
+    initAppEvent()
+
+    setTimeout(() => {
+      killAllBrowserProcess()
+    })
+  }
+  catch (error) {
+    console.error('Failed create window:', error)
+  }
+}
+
+/** 初始化应用程序事件 */
+function initAppEvent() {
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   let isQuittingForUpdate = false
 
