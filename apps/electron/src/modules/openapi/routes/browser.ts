@@ -239,7 +239,8 @@ router.post('/clear_server_cache', async (req, res) => {
 router.get('/connection_info', async (req, res) => {
   const { dirIds = '' } = req.query as Record<string, any>
 
-  const dirIdArr = dirIds.split(',')
+  const dirIdArr = dirIds.split(',').filter(Boolean)
+  console.log('connection_info dirIdArr', dirIdArr)
 
   const result = [...browserManager.openedBrowserMap.values()]
     .map(browserItem => browserItem.launchInfo)

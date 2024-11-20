@@ -97,6 +97,8 @@ function cacheToast(slotData: Recordable) {
 .alert {
   display: flex;
   width: 360px;
+  word-break: break-all;
+  white-space: pre-wrap;
   margin-bottom: 20px;
   padding: var(--spacing-xl, 12px);
   align-items: flex-start;

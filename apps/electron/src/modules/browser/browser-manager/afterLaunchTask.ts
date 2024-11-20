@@ -6,7 +6,6 @@ import type { BrowserItem } from './browserItem'
 export class AfterLaunchTask {
   /** 已打开的tab页 */
   private openedTabs: Record<string, string> = {}
-
   /** 最新的 cookies */
   private cookies = ''
   /** 判断是否手机端 */
@@ -14,9 +13,7 @@ export class AfterLaunchTask {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
 
-  constructor(private browserItem: BrowserItem, public browser: Browser) {
-
-  }
+  constructor(private browserItem: BrowserItem, public browser: Browser) { }
 
   async run() {
     this.handleBrowserEvent()
