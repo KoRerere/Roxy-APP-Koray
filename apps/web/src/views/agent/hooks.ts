@@ -16,15 +16,15 @@ export interface CheckResult {
 }
 
 interface ProxyCheckParams {
-  dirId?: string | undefined
-  checkChannel?: string | undefined
-  ipType?: string | undefined
-  proxyCategory?: string | undefined
-  proxyUserName?: string | undefined
-  proxyPassword?: string | undefined
-  host?: string | undefined
-  port?: string | undefined
-  proxyNetwork?: string | undefined
+  host: string
+  port: string
+  ipType: string
+  proxyCategory: string
+  dirId?: string
+  checkChannel?: string
+  proxyUserName?: string
+  proxyPassword?: string
+  proxyNetwork?: string
 }
 
 interface Options {
