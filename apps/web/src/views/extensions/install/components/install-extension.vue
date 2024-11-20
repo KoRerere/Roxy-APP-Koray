@@ -51,7 +51,7 @@ function getInstallStatus() {
 }
 
 async function confirm() {
-  if (_props.value.required && !selection.value) {
+  if (_props.value.required && !selection.value?.length) {
     onlyErrorToast(-1, $t('请选择至少一个项目'))
     return
   }

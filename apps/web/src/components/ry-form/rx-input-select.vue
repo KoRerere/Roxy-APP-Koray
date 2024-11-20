@@ -4,7 +4,7 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
-interface Props extends /* @vue-ignore */ SelectProps {
+interface Props extends /* @vue-ignore */ Omit<SelectProps, 'size'> {
   size?: Size
   icon?: SvgNames
   iconColor?: string
@@ -27,7 +27,7 @@ const defaultProps: SelectProps = {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.mannnnnnn }" @change="$emit('change')">
+  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.option }" @change="$emit('change')">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -53,7 +53,7 @@ const defaultProps: SelectProps = {
 </template>
 
 <style lang="scss" module="classes">
-.mannnnnnn {
+.option {
   font-size: 13px;
 
   &[data-p-selected='true']:not([data-p-focused='true']) {

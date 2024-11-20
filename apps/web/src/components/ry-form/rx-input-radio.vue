@@ -3,7 +3,7 @@ import type { RadioButtonProps } from 'primevue/radiobutton'
 
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
-interface Props extends RadioButtonProps {
+interface Props extends Omit<RadioButtonProps, 'size'> {
   size?: Size
   options?: Array<{
     value: string | number | boolean

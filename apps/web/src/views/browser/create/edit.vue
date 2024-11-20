@@ -26,6 +26,21 @@ const original = ref()
 const metaData = ref<MetaData>()
 const loading = ref(false)
 
+onBeforeMount(async () => {
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
+  inputsGroup.value = _inputsGroup
+  original.value = _original
+  oldFieldsFormat()
+  windowName.value = data.windowName as string
+  metaData.value = {
+    projectName: data.projectName,
+    projectId: data.projectId as number | undefined,
+    labelIds: data.labelIds,
+    windowRemark: data.windowRemark,
+  }
+})
+
 async function onShuffle() {
   const data = await ceateRandomFinger(inputsGroup.value)
   Object.assign(original.value, data[0])
@@ -54,21 +69,6 @@ function oldFieldsFormat() {
     Reflect.set(original.value, key, '')
   })
 }
-
-onBeforeMount(async () => {
-  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
-  const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
-  inputsGroup.value = _inputsGroup
-  original.value = _original
-  oldFieldsFormat()
-  windowName.value = data.windowName as string
-  metaData.value = {
-    projectName: data.projectName,
-    projectId: data.projectId as number | undefined,
-    labelIds: data.labelIds,
-    windowRemark: data.windowRemark,
-  }
-})
 </script>
 
 <template>

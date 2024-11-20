@@ -152,7 +152,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 <template>
   <div class="flex flex-col h-full account">
     <ViewsHeader class="account-header" :title="$t('项目管理')">
-      <RxButton v-if="role.isOwner" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
+      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->

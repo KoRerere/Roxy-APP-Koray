@@ -4,6 +4,7 @@ import RemarkIcon from '/@/components/remark-icon'
 // import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, clearInputsValue, findInputByName, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, validateURL } from '/@/utils'
+import { SimpleCache } from '/@/utils/cache'
 
 const props = defineProps({
   data: {
@@ -22,14 +23,14 @@ const props = defineProps({
 const emits = defineEmits(['confirm', 'close'])
 
 // const [_, onlyErrorToast] = useResponseToast()
+const cache = SimpleCache.getInstance()
 
 const isEdit = computed(() => !!props.data.id)
-
 const formInputs = ref()
 const original = ref(props.data)
 
 async function getInputs(data: any = {}) {
-  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
+  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
 
   const platformOptions = rows.map((item: any) => ({
     image: item.platformIcon,

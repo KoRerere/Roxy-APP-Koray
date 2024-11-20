@@ -152,7 +152,6 @@ function parseValue() {
     .map((url, index) => {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
       const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
-      console.log({ protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark })
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 

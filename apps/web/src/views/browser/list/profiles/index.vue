@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import Popup from '/@/components/simplePopup'
-import { ClearType, ProxyCheckStatus } from '/@/enums'
+import { ClearType, ProfileOpenStatus, ProxyCheckStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -198,7 +198,7 @@ async function operationHandler(operate: any, data: any) {
       await onMoveToProject(datas)
       break
     case 'view':
-      openBrowser(data)
+      await openBrowserBefore(data)
       break
     case 'restart':
       window.electronAPI.send('browser:batchRelaunch', datas.map((item: any) => item.dirId))
@@ -240,22 +240,53 @@ function autoOpenBrowser(list: any) {
     const data = list.find((item: any) => item.id === query.windowId)
     router.replace({ name: route.name })
     if (data) {
-      openBrowser(data)
+      openBrowserBefore(data)
     }
   }
 }
 
-function openBrowser(data: any) {
-  const params = [].concat(data).map((item: any, index: number) => {
+async function openBrowserBefore(data: any) {
+  const datas = [].concat(data)
+  const result = await checkProfileStatus(datas)
+  if (!result.length) {
+    onOpenBrowser(datas)
+    return
+  }
+
+  confirm.require({
+    header: $t('警告'),
+    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.windowSortNum}`).join(', ') }),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'info',
+    },
+    accept: async () => {
+      onOpenBrowser(datas)
+    },
+  })
+}
+
+async function checkProfileStatus(datas: any) {
+  const ids = datas.map((item: any) => item.id)
+  const { data } = await API.window.userGetWindowStatusInfoCreate({ ids })
+  return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
+}
+
+function onOpenBrowser(datas: any) {
+  const dirIds = datas.map((item: any, index: number) => {
     openMessage[item.dirId] = {
       pending: true,
       data: {
         message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
       },
     }
-    return toRaw(item)
+    return item.dirId
   })
-  const dirIds = params.map((item: any) => item.dirId)
   window.electronAPI.send('browser:batchLaunch', dirIds)
 }
 
@@ -594,7 +625,7 @@ defineExpose({
       <ProfileInfo :workspace-name="workspaceName" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
-      <BrowserControl :data="data" :open-message="openMessage" @open="openBrowser" />
+      <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
     <template #note="{ data }">
       <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
@@ -615,7 +646,7 @@ defineExpose({
     </template>
     <template #multiple-operation="{ selection, clearSelection }">
       <MultipleOperation :selection="selection" :clear-selection="clearSelection" :operation="operation" @more="showOperationMenu($event, selection, { clearSelection })"
-        @open-browser="openBrowser(selection)" @quick-click="operationHandler($event, selection)" />
+        @open-browser="openBrowserBefore(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">

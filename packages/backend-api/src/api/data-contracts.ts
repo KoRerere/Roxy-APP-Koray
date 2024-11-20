@@ -5181,6 +5181,24 @@ export interface UserGetWindowInfoListListData {
   msg: string;
 }
 
+export interface UserGetWindowStatusInfoCreatePayload {
+  /** 窗口ID */
+  ids: number[];
+}
+
+export interface UserGetWindowStatusInfoCreateData {
+  code: number;
+  data: {
+    /** 窗口ID */
+    id: number;
+    /** 窗口状态1：已打开 0：未打开 */
+    openStatus: number;
+    /** 状态信息 */
+    statusInfo: string;
+  }[];
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台

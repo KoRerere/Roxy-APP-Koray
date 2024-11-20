@@ -31,7 +31,7 @@ defineProps({
       <div class="flex items-center proxycard-title">
         <span>{{ country || '--' }}{{ strConcat('/', city) }}</span>
       </div>
-      <div class="flex items-center gap-1.5 proxycard-subtitle">
+      <div v-if="lastIp" class="flex items-center gap-1.5 proxycard-subtitle">
         <span>{{ lastIp }}</span>
         <Divider class="!ma-0" layout="vertical" />
         <span>{{ formatProxyTime(time) }}</span>

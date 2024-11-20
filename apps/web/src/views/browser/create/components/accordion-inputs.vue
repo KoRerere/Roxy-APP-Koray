@@ -57,10 +57,9 @@ const metaData = computed({
   },
 })
 
-function getFormData(isOpen: boolean) {
-  const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
-  const formData = getFormDataByList(props!.inputsGroup, _metaData)
-  emits(isOpen ? 'createOpen' : 'create', formData)
+function getFormData() {
+  const formData = getFormDataByList(props!.inputsGroup, toRaw(metaData.value))
+  emits('create', formData)
 }
 
 function onCopy(dirId: string) {
@@ -138,7 +137,7 @@ function onCopy(dirId: string) {
     </div>
     <div class="footer">
       <mateGroup v-model="metaData" class="flex-1" />
-      <RxButton v-if="isEdit" severity="primary" :label="$t('保存')" :loading="loading" @click.stop="getFormData(false)" />
+      <RxButton v-if="isEdit" severity="primary" :label="$t('保存')" :loading="loading" @click.stop="getFormData" />
       <slot name="footer" />
     </div>
   </div>

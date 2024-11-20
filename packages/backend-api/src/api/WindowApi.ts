@@ -68,6 +68,8 @@ import {
   UserGetWindowInfoRecycleListParams,
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
+  UserGetWindowStatusInfoCreateData,
+  UserGetWindowStatusInfoCreatePayload,
   UserGetWindowTableRowsListData,
   UserGetWindowTableSortOrderListData,
   UserGetWindowTemplateListListData,
@@ -993,6 +995,24 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_window_info_list`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetWindowStatusInfoCreate
+   * @summary 获取窗口状态信息
+   * @request POST:/user_get_window_status_info
+   * @response `200` `UserGetWindowStatusInfoCreateData`
+   */
+  userGetWindowStatusInfoCreate = (data: UserGetWindowStatusInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserGetWindowStatusInfoCreateData, any>({
+      path: `/user_get_window_status_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

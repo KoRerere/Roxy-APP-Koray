@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useConfirm } from 'primevue/useconfirm'
-import { API } from '/@/api'
 import circleProgress from '/@/components/circle-progress.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
@@ -20,7 +18,6 @@ const props = defineProps({
 const emits = defineEmits(['open'])
 
 const userStore = useUserStore()
-const confirm = useConfirm()
 
 const usePeoples = computed(() => props.data.statusInfo
   .filter((item: any) => item.openUserId !== userStore.userInfo.id)
@@ -48,6 +45,7 @@ const browser = computed(() => {
     msg: error ? $t('打开') : data?.message,
     percent: data?.percent || 0,
     error: error?.message,
+    warning: data?.warningMessages?.join('\n'),
     opening,
     complted,
     classes: opening ? 'cursor-not-allowed' : 'cursor-pointer',
@@ -58,31 +56,7 @@ async function openBrowser() {
   if (browser.value.pending || browser.value.opening) {
     return
   }
-
-  if (!usePeoples.value) {
-    emits('open', props.data)
-    return
-  }
-
-  // [profileName1, profileName2] 已被其他成员打开，是否继续打开？
-  // [profileName1, profileName2] is opened by other members, continue opening?
-
-  confirm.require({
-    header: $t('警告'),
-    message: $t('窗口已被其他成员打开，是否继续打开？'),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'info',
-    },
-    accept: async () => {
-      emits('open', props.data)
-    },
-  })
+  emits('open', props.data)
 }
 </script>
 
@@ -94,6 +68,7 @@ async function openBrowser() {
       <span class="select-none">{{ browser.complted ? $t('查看') : browser?.msg }}</span>
     </div>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
+    <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill" class="text-orange" />
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />
   </div>
 </template>

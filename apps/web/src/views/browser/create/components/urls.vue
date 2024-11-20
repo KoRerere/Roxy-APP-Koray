@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { SvgNames } from '/@/components/rx-icon'
+import { API } from '/@/api'
 import FormItem from '/@/components/ry-form/form-item.vue'
 import { $t } from '/@/locales'
 import { validateURL } from '/@/utils'
+import { SimpleCache } from '/@/utils/cache'
 
 defineOptions({
   inheritAttrs: false,
@@ -18,22 +20,43 @@ interface Input {
   invalid?: boolean
 }
 
+const cache = SimpleCache.getInstance()
+
 const modelValue = defineModel({ type: Array as PropType<string[]>, default: [] })
 const invalid = defineModel('invalid', { default: false })
 
-const urls = ref<Input[]>(modelValue.value.map(value => createItem(value)))
+const platformOptions = ref()
+const urls = ref<Input[]>([])
 
 watch(urls.value, (value) => {
   invalid.value = value.some(item => item.invalid)
 })
 
+onBeforeMount(async () => {
+  await getPlatformOptions()
+  urls.value = modelValue.value.map(value => createItem(value))
+})
+
+async function getPlatformOptions() {
+  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
+
+  platformOptions.value = rows.map((item: any) => ({
+    image: item.platformIcon,
+    label: item.platformUrl,
+    value: item.platformUrl,
+  }))
+}
+
 function createItem(value?: string) {
   return {
-    type: 'text',
+    type: 'select',
     name: (new Date().getTime()).toString(32),
     value,
-    errorMsg: $t('请输入正确的 URL'),
+    options: platformOptions.value,
+    optionValue: 'value',
+    editable: true,
     placeholder: $t('网址前请加 http:// 或 https://'),
+    errorMsg: $t('请输入正确的 URL'),
     leftIcon: 'base/rx_ic_link' as SvgNames,
   }
 }
