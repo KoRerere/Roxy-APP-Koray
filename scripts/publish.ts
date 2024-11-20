@@ -4,6 +4,8 @@ import { Buffer } from 'node:buffer'
 import fs, { renameSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 
+// 忽略 SSL/TLS 证书验证
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 const isProd = process.env.NODE_ENV === 'production'
 const isMac = process.platform === 'darwin'
 console.log('isMac:', isMac)
