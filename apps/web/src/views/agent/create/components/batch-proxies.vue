@@ -288,7 +288,7 @@ function onSave() {
 
   confirm.require({
     header: $t('警告'),
-    message: $t('第 [{miss}] 条代理缺少字段，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
+    message: $t('第 [{miss}] 条代理缺少信息，将不会被保存，请确认是否继续', { miss: miss.map(item => item._missIndex).join(', ') }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -335,7 +335,7 @@ function onSave() {
         </div>
         <div class="rules">
           <i18n-t
-            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })"
+            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })"
             scope="global">
             <template #br>
               <br>
@@ -419,7 +419,7 @@ function onSave() {
 
     color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
     font-family: Inter;
-    font-size: 12px;
+    font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
 }

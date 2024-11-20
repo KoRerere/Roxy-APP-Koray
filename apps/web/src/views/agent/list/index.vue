@@ -77,7 +77,7 @@ async function refreshUrl(data: ProxyItem) {
 
   confirm.require({
     header: $t('刷新代理'),
-    message: $t(`此代理已关联 ${_data.bindList!.length} 个窗口，您确认要刷新代理吗？`),
+    message: $t('此代理已关联 {count} 个窗口，您确认要刷新代理吗？', { count: _data.bindList!.length }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',

@@ -7,7 +7,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ExtensionsInstallType, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
+import { ExtensionsInstallType, ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -64,27 +64,27 @@ const columns = setColumns([
 ])
 
 const filters = reactive({
-  value: null,
+  value: undefined,
   options: [
     {
       name: $t('全部'),
-      value: null,
+      value: undefined,
     },
     {
       name: $t('团队'),
-      value: true,
+      value: PluginSwitchType.team,
     },
     {
       name: $t('个人'),
-      value: false,
+      value: PluginSwitchType.personal,
     },
   ],
   onChange() {
-    tableRef.value?.refresh({ status: filters.value })
+    tableRef.value?.refresh({ pluginSwitchType: filters.value })
     needsync.value = true
   },
   resetFilters() {
-    filters.value = null
+    filters.value = undefined
     filters.onChange()
   },
 })
@@ -223,7 +223,7 @@ async function onInstall(data: Data) {
             window.electronAPI.send('extension:download', [toRaw(data) as any])
           }
           showToast(code, msg)
-          tableRef.value?.refresh({ status: filters.value })
+          tableRef.value?.refresh({ pluginSwitchType: filters.value })
         }
         catch (error) {
           console.log(error)
@@ -265,10 +265,11 @@ async function deleteExtension(datas: Data[]) {
     accept: async () => {
       try {
         const ids = datas.map(item => item.id as number)
-        const { msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
-
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
-        filters.resetFilters()
+        const { code, msg } = await API.plugins.userBatchDelPluginInfoCreate({ ids })
+        onlyErrorToast(code, msg)
+        if (code === 0) {
+          filters.resetFilters()
+        }
       }
       catch (error) {
         onlyErrorToast(-1, error as string)
@@ -286,7 +287,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 
 defineExpose({
   refresh: () => {
-    tableRef.value?.refresh({ status: filters.value })
+    tableRef.value?.refresh({ pluginSwitchType: filters.value })
   },
 })
 </script>
@@ -297,7 +298,7 @@ defineExpose({
     :show-display="false" :show-gridlines="false" :paginator="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
-        <!-- <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" /> -->
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
           <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click="installViaUrl" />
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
@@ -329,6 +330,12 @@ defineExpose({
       </div>
     </template>
 
+    <!-- <template #pluginSwitchType="{ data }">
+      <div class="plugin-switch-type" @click="operationHandler({ name: 'install' }, data)">
+        {{ data.pluginSwitchType === PluginSwitchType.personal ? $t('个人') : $t('团队') }}
+      </div>
+    </template> -->
+
     <template #related="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
         <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" label="Full installed" />
@@ -348,10 +355,10 @@ defineExpose({
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton :label="$t('更新')" size="sm" @click="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" />
+        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click="updateExtension(data)" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" />
       </div>
-      <div v-else>
+      <div v-else class="update-info">
         --
       </div>
     </template>
@@ -396,6 +403,18 @@ defineExpose({
       font-size: 12px;
     }
   }
+}
+
+.plugin-switch-type,
+.update-info {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  line-height: 16px;
+
+  // &:hover {
+  //   color: var(--Colors-Text-text-brand, #12a3fc);
+  // }
 }
 
 .not-installed {

@@ -64,9 +64,12 @@ async function openBrowser() {
     return
   }
 
+  // [profileName1, profileName2] 已被其他成员打开，是否继续打开？
+  // [profileName1, profileName2] is opened by other members, continue opening?
+
   confirm.require({
     header: $t('警告'),
-    message: $t('({name})正在使用浏览器，是否确认打开？', { name: usePeoples.value }),
+    message: $t('窗口已被其他成员打开，是否继续打开？'),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',

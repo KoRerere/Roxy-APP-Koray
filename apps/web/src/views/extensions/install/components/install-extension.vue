@@ -100,12 +100,12 @@ onMounted(() => {
     </div>
     <div>
       <div class="title">
-        Install to projects:
+        {{ $t('安装到项目:') }}
       </div>
       <div class="description">
-        Extensions will only be installed to profiles inside the selected projects.
+        {{ $t('扩展将被安装至所选项目中的所有窗口') }}
       </div>
-      <div class="mt-2.5 h-60">
+      <div class="project-table mt-2.5 h-60">
         <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
           :multiple-operation="false" selection-mode="multiple" size="small">
           <template #project="{ data }">
@@ -119,11 +119,14 @@ onMounted(() => {
       <div v-if="role.isOwner || role.isManager">
         <div class="line" />
         <div class="flex justify-between items-center">
-          <span class="title">Install to all members inside relevant projects:</span>
+          <span class="title">
+            {{ $t('为所选项目的所有成员安装') }}
+          </span>
+
           <rxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
         </div>
         <div class="description">
-          You can change this option in extensions list later
+          {{ $t('您可以在扩展列表中更改此选项') }}
         </div>
       </div>
     </div>
@@ -185,6 +188,13 @@ onMounted(() => {
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
   }
+}
+
+.project-table {
+  border-radius: 6px;
+  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--Component-Colors-TextInput-bg-bg, #fff);
+  overflow: hidden;
 }
 
 .project-name {
