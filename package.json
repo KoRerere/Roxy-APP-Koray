@@ -43,8 +43,8 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.9.1",
-    "@dotenvx/dotenvx": "^1.24.0",
+    "@antfu/eslint-config": "^3.9.2",
+    "@dotenvx/dotenvx": "^1.24.2",
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.9.0",
