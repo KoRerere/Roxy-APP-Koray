@@ -9,6 +9,9 @@
       "require": "./dist/vite/index.js"
     }
   },
+  "bin": {
+    "roxy-language-localization": "dist/bin/index.js"
+  },
   "files": [
     "dist"
   ],

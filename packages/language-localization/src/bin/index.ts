@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import path from 'node:path'
+import { genLangFiles } from '../utils/extract-i18n-keys'
+
 // 获取命令行参数
 const args = process.argv.slice(2)
 
@@ -13,19 +16,19 @@ args.forEach((arg, index) => {
 // 示例：解析命令行参数
 const options = args.reduce((acc, arg) => {
   const [key, value] = arg.split('=')
-  acc[key] = value || true // 如果没有指定值，则默认为 true
+  acc[key] = value
   return acc
 }, {} as Record<string, any>)
 
 console.log('解析后的参数:', options)
 
-// 示例：根据参数执行不同操作
-if (options['--help']) {
-  console.log('显示帮助信息')
+const formatOptions = {
+  targetDir: path.resolve(options['--target-dir'] || './'),
+  langFileNames: options['--lang-file-names']?.split(',') || ['en'],
+  sourceLang: options['--source-lang'] || 'zh-CN',
+  workDir: options['--work-dir'] ? path.resolve(process.cwd(), options['--work-dir']) : process.cwd(),
 }
-else if (options['--version']) {
-  console.log('显示版本信息')
-}
-else {
-  console.log('执行其他操作')
-}
+
+console.log('格式化后的参数:', formatOptions)
+
+genLangFiles(formatOptions.langFileNames, formatOptions.targetDir, formatOptions.sourceLang, formatOptions.workDir)

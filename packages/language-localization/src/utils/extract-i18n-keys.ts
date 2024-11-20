@@ -21,8 +21,13 @@ async function logError(error: string) {
 /**
  * 文件匹配，忽略 node_modules 和 dist 目录
  */
-async function matchFiles() {
-  return glob('**/*.{vue,ts,js,tsx}', { ignore: ['**/node_modules/**', '**/dist/**', 'packages/**'] })
+async function matchFiles(cwd?: string) {
+  console.log('matchFiles cwd:', cwd)
+  return glob('**/*.{vue,ts,js,tsx}', {
+    cwd,
+    absolute: true,
+    ignore: ['**/node_modules/**', '**/dist/**', 'packages/**'],
+  })
 }
 
 /**
@@ -42,8 +47,8 @@ const limit = pLimit(CONCURRENCY_LIMIT)
 /**
  * 扫描文件，提取所有翻译键
  */
-export async function scanFiles() {
-  const files = await matchFiles()
+export async function scanFiles(cwd?: string) {
+  const files = await matchFiles(cwd)
   const allKeys = new Set<string>()
 
   const promiseArr = files.map(file => limit(async () => {
@@ -113,11 +118,11 @@ async function writeKeysToFile(fileContent: string, outputFile: string) {
 /**
  * 生成并合并语言文件
  */
-export async function genLangFiles(langFiles: string[] = [], outputDir: string, defaultLang = 'en') {
+export async function genLangFiles(langFiles: string[] = [], outputDir: string, defaultLang = 'en', cwd?: string) {
   /**
    * 扫描提取的键
    */
-  const keys = await scanFiles()
+  const keys = await scanFiles(cwd)
   const replacer = (key, value) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       return Object.keys(value).sort().reduce((sorted, k) => {

@@ -14,6 +14,12 @@ Uses:
 ```bash
 pnpm install
 pnpm run dev
+
+# 生成语言文件
+pnpm genLanguage
+
+# 生成接口请求
+pnpm openapi
 ```
 
 https://vue-i18n.intlify.dev/guide/advanced/component

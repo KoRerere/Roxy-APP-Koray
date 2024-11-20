@@ -10,7 +10,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "format": "prettier --write src/",
-    "uploadSourceMaps": "npx @sentry/wizard@latest -i sourcemaps --saas"
+    "uploadSourceMaps": "npx @sentry/wizard@latest -i sourcemaps --saas",
+    "genLanguage": "roxy-language-localization --work-dir=../ --target-dir=src/locales/langs --source-lang=zh-CN --lang-file-names=zh-CN,en,ru,fr,de,es,ko,tr,ja,pl"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",

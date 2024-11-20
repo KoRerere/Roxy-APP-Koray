@@ -7,10 +7,13 @@ import dts from 'vite-plugin-dts'
 export default defineConfig({
   ssr: {},
   build: {
-    outDir: 'dist/vite',
+    outDir: 'dist',
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      fileName: 'index',
+      // entry: [resolve(__dirname, 'src/index.ts'), resolve(__dirname, 'src/bin/index.ts')],
+      entry: {
+        'vite/index': resolve(__dirname, 'src/index.ts'),
+        'bin/index': resolve(__dirname, 'src/bin/index.ts'),
+      },
       formats: ['es', 'cjs'],
     },
     rollupOptions: {

@@ -30,6 +30,7 @@
     "publish:dev": "pnpm run pack:dev && cross-env NODE_ENV=development tsx scripts/publish.ts",
     "publish:prod": "pnpm run pack:prod && cross-env NODE_ENV=production tsx scripts/publish.ts",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
+    "genLanguage": "pnpm -F web run genLanguage",
     "postinstall": "npm run build:pkg",
     "lint": "turbo run lint",
     "lint:fix": "eslint . --fix",
