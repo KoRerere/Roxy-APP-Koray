@@ -130,7 +130,10 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   // console.log('proxyDetectionParams', proxyDetectionParams)
   const checkMode = getCheckFunction(params.proxyCategory)
   console.log('proxyDetection params', params)
-  const result = await checkMode(params)
+  const result = await checkMode(params).catch((error) => {
+    console.log('proxyDetection error', error)
+    return Promise.reject($t('代理检测失败'))
+  })
 
   console.log('proxyDetection result', result)
 

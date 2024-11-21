@@ -1,6 +1,7 @@
 import AdmZip from 'adm-zip'
 import iconv from 'iconv-lite'
 import { stat } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import { parentPort } from 'node:worker_threads'
 import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
 
@@ -66,7 +67,7 @@ async function compressFiles(files: ZipPayload[], dest: string) {
       zip.addLocalFolder(file.src, file.dest)
     }
     else if (fileInfo.isFile()) {
-      zip.addLocalFile(file.src, file.dest)
+      zip.addLocalFile(file.src, dirname(file.dest))
     }
   })
   await Promise.allSettled(promiseArr)

@@ -113,8 +113,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     },
     /** WebGL 显卡数据，从列表中随机 */
     WebGL: {
-      webglRenderer: winInfo.webGLRender,
-      webglVendor: winInfo.webGLManufacturer,
+      webglRenderer: winInfo.webGLInfo ? winInfo.webGLRender : '',
+      webglVendor: winInfo.webGLInfo ? winInfo.webGLManufacturer : '',
       /** webGL图像是否开启 */
       enableWebGLRendererNoise: winInfo.webGL,
       /** 固定为1 */
@@ -341,7 +341,10 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
      * 其中isLocalService代表是否是local，如果不是就自动设成了 remote 属性 ，
      * 一般isLocalService 会有3个true
      */
-    speechSynthesis: winInfo.speechVoicesValue,
+    speechSynthesis: {
+      ...winInfo.speechVoicesValue,
+      enable: winInfo.speechVoices,
+    },
     /**
      * 开启WebRTC,将公网网络替换为代理网络，并隐藏真实网络
      *

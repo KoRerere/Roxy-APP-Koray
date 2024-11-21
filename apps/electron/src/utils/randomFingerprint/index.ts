@@ -98,9 +98,9 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
       canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : undefined,
-      audioContextValue: audioContext ? getwebGLNoiseValue() : undefined,
-      speechVoicesValue: speechVoices ? { enable: true, voices: getSpeechSynthesis() } : undefined,
-      clientRectsValue: clientRects ? { enable: true, ...getClientRectsValue() } : undefined,
+      audioContextValue: audioContext ? Math.random() : undefined,
+      speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis() },
+      clientRectsValue: { enable: clientRects, ...getClientRectsValue() },
     }
   })
 
