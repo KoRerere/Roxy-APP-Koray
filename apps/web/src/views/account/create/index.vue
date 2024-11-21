@@ -3,7 +3,7 @@ import { API } from '/@/api'
 import RemarkIcon from '/@/components/remark-icon'
 // import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { checkCookieFormat, clearInputsValue, findInputByName, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, validateURL } from '/@/utils'
+import { checkCookieFormat, clearInputsValue, deepClone, findInputByName, getFormData, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, validate2FA, validateURL } from '/@/utils'
 import { SimpleCache } from '/@/utils/cache'
 
 const props = defineProps({
@@ -27,7 +27,7 @@ const cache = SimpleCache.getInstance()
 
 const isEdit = computed(() => !!props.data.id)
 const formInputs = ref()
-const original = ref(props.data)
+const original = ref(deepClone(props.data))
 
 async function getInputs(data: any = {}) {
   const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
@@ -46,10 +46,12 @@ async function getInputs(data: any = {}) {
       name: 'platformUrl',
       value: null,
       options: platformOptions,
+      optionValue: 'value',
       required: true,
       editable: true,
       change(input: any) {
-        Reflect.set(original.value, 'platformIcon', input.value?.image || '')
+        const platformIcon = input.options.find((item: any) => item.value === input.value)?.image ?? ''
+        Reflect.set(original.value, 'platformIcon', platformIcon)
       },
       onBlur(event: any) {
         if (event.target.value && !validateURL(event.target.value)) {
@@ -76,6 +78,13 @@ async function getInputs(data: any = {}) {
       label: '2FA',
       placeholder: $t('请输入 2FA 密钥'),
       name: 'platformEfa',
+      onBlur: (event: any) => {
+        if (event.target.value && !validate2FA(event.target.value)) {
+          const input = findInputByName(inputs, 'platformEfa')
+          input.invalid = true
+          input.errorMsg = $t('请输入有效的 2FA 密钥')
+        }
+      },
     },
     // TODO: 后续完成cookie导出功能后放开
     // {
@@ -126,7 +135,7 @@ function onConfirm(more: boolean) {
     emits('confirm', formData)
   }
   catch (error) {
-    console.log('🚀 ~ confirm ~ error:', error)
+    console.log(error)
   }
 }
 

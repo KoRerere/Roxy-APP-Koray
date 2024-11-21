@@ -17,7 +17,7 @@ type Item = UnwrapRowType<UserGetPlatformInfoV2ListData>
 const tableRef = useTemplateRef('accountTable')
 
 const confirm = useConfirm()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const columns = getColumns()
 const role = useRoleStore()
 const dialog = useDialog()
@@ -55,10 +55,13 @@ const drawer = reactive({
   data: {},
   title: '',
   confirm: async (formData: any) => {
-    const _data = formData.id
+    const { code, msg } = formData.id
       ? await editAccount([formData])
       : await createAccount(formData)
-    tableRef.value?.refresh()
+    onlyErrorToast(code, msg)
+    if (code === 0) {
+      tableRef.value?.refresh()
+    }
   },
 })
 

@@ -44,7 +44,7 @@ const columns = setColumns([
   {
     title: $t('扩展归属'),
     key: 'pluginSwitchType',
-    getText: (row: any) => row.pluginSwitchType === PluginSwitchType.personal ? $t('个人') : $t('团队'),
+    slot: 'pluginSwitchType',
   },
   {
     title: $t('已安装项目'), // Installed Projects
@@ -111,6 +111,7 @@ function tableOperation(data: any) {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
+      disabled: !data.canDelete,
       multiple: true,
       power: isPersonal || role.isOwner || role.isManager,
     },
@@ -330,16 +331,20 @@ defineExpose({
       </div>
     </template>
 
-    <!-- <template #pluginSwitchType="{ data }">
-      <div class="plugin-switch-type" @click="operationHandler({ name: 'install' }, data)">
-        {{ data.pluginSwitchType === PluginSwitchType.personal ? $t('个人') : $t('团队') }}
+    <template #pluginSwitchType="{ data }">
+      <div class="plugin-switch-type">
+        <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
+        <span v-else>
+          <span>{{ $t('团队') }}</span>
+          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+        </span>
       </div>
-    </template> -->
+    </template>
 
     <template #related="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
-        <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" />
-        <RelatedInfo v-else class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
+        <!-- <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" /> -->
+        <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
             <div class="flex items-center gap-1.5">
               <RxTag class="cursor-pointer" icon="base/rx_ic_stack" />

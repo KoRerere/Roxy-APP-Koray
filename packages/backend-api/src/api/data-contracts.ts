@@ -6521,3 +6521,22 @@ export interface UserDelProjectInfoCreateData {
   code: number;
   msg: string;
 }
+
+export interface UserGetTopProjectInfoListData {
+  code: number;
+  data: {
+    rows: {
+      /** 项目ID */
+      project_id?: number;
+      /** 用户信息 */
+      user_info?: string[];
+      /** 项目名字 */
+      projectName?: string;
+      /** 置顶时间 */
+      topTime?: string;
+      /** 置顶状态 */
+      pinStatus?: number;
+    }[];
+  };
+  msg: string;
+}

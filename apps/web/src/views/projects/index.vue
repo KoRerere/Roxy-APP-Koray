@@ -9,7 +9,6 @@ import { ProjectPin } from '/@/enums/project'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
@@ -22,7 +21,6 @@ const tableRef = useTemplateRef('accountTable')
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
-const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
@@ -98,7 +96,7 @@ function operationHandler(operate: any, data?: any) {
 }
 
 function tableRequest() {
-  return getProjects()
+  return API.limit.userGetProjectInfoByWorkspaceList({})
 }
 
 async function pinProject(data: Project) {

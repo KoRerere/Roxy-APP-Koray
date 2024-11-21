@@ -97,7 +97,8 @@ function formValidator(hadKey: Set<string>, input: any) {
 
   if (input.invalid || (isFunction(input.validator) && !input.validator(input))) {
     input.invalid = true
-    throw new Error(`Input '${input.name}' is invalid`)
+    const errorMsg = input.errorMsg || `Input '${input.name}' is invalid`
+    throw new Error(errorMsg)
   }
 }
 

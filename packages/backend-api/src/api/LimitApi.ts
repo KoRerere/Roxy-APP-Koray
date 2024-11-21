@@ -24,6 +24,7 @@ import {
   UserGetMemberInfoByProjectIdListParams,
   UserGetProjectInfoByWorkspaceListData,
   UserGetProjectInfoByWorkspaceListParams,
+  UserGetTopProjectInfoListData,
   UserGetWorkspaceListListData,
   UserInviteCreateData,
   UserInviteCreatePayload,
@@ -249,6 +250,22 @@ export class LimitApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetTopProjectInfoList
+   * @summary 获取当前用户所拥有的置顶项目信息
+   * @request GET:/user_get_top_project_info
+   * @response `200` `UserGetTopProjectInfoListData`
+   */
+  userGetTopProjectInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetTopProjectInfoListData, any>({
+      path: `/user_get_top_project_info`,
+      method: "GET",
       format: "json",
       ...params,
     });

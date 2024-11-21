@@ -181,6 +181,10 @@ export function validateURL(url: string): boolean {
   }
 }
 
+export function validate2FA(code: string): boolean {
+  return /^\[A-Z2-7\]{16,32}$/i.test(code)
+}
+
 interface ProxyObject {
   protocol: string | undefined
   host: string | undefined
