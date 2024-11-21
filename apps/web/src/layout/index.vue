@@ -123,7 +123,7 @@ onBeforeMount(() => {
       justify-content: center;
       align-items: center;
       gap: 10px;
-      color: black;
+      color: var(--Colors-Text-text-brand, #12a3fc);
       text-align: center;
       font-family: Archivo;
       font-size: 10px;
