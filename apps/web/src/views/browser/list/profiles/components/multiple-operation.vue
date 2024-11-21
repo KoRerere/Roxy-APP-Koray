@@ -43,7 +43,7 @@ function openBrowser() {
     <span>{{ $t('打开') }}</span>
   </div>
   <div v-for="(group, index) in quickGroup" :key="index" class="group">
-    <RxSvgIcon v-for="item in group" :key="item.name" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
+    <RxSvgIcon v-for="item in group" :key="item.name" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" :name="item.icon" class="cursor-pointer group-item" @click="$emit('quickClick', item)" />
     <RxSvgIcon v-if="index === quickGroup.length - 1" name="base/rx_ic_more-v" class="cursor-pointer group-item" @click.stop="$emit('more', { event: $event, operation: multiplePperation })" />
   </div>
 </template>
