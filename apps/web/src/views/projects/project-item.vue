@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { ProjectPin } from '/@/enums'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import Profiles from '/@/views/browser/list/profiles/index.vue'
@@ -24,7 +25,7 @@ watch(() => route.params.id, (value) => {
 
 function handleShowInviteUserFormDialog() {
   showInviteUserFormDialog({
-    tableRef: profilesRef.value?.tableRef,
+    tableRef: profilesRef.value?.tableRef as any,
     projectIds: [projectId.value],
     disableds: ['projectIds'],
   })
@@ -32,6 +33,7 @@ function handleShowInviteUserFormDialog() {
 
 function editProject() {
   projectModfiyDialog({
+    pinStatus: ProjectPin.pinned,
     projectName: projectName.value,
     project_id: projectId.value,
     confirmNext: async ({ params }: any) => {

@@ -123,12 +123,12 @@ onMounted(() => {
           <span class="title">
             {{ $t('为所选项目的所有成员安装') }}
           </span>
-          <rxToggleSwitch v-model="_enabled" :disabled="!_props?.canDelete" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
+          <rxToggleSwitch v-model="_enabled" :disabled="_props?.canDelete === false" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
         </div>
         <div class="description">
           {{ $t('您可以在扩展列表中更改此选项') }}
         </div>
-        <RxAlert v-if="!_props?.canDelete" class="!w-full mt-2.5" :closable="false" type="info" :title="$t('该插件属于其他成员，请联系对方进行关闭操作。')" />
+        <RxAlert v-if="_props?.canDelete === false" class="!w-full mt-2.5" :closable="false" type="info" :title="$t('该插件属于其他成员，请联系对方进行关闭操作。')" />
       </div>
     </div>
     <div class="flex justify-end items-center gap-3">

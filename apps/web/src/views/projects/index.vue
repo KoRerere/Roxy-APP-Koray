@@ -4,11 +4,12 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums/project'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
@@ -21,6 +22,7 @@ const tableRef = useTemplateRef('accountTable')
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const toast = useToast()
 const confirm = useConfirm()
+const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
@@ -79,7 +81,7 @@ function operationHandler(operate: any, data?: any) {
       pinProject(data)
       break
     case 'invite':
-      showInviteUserFormDialog({ projectIds: [data.project_id], tableRef })
+      showInviteUserFormDialog({ projectIds: [data.project_id], tableRef: tableRef as any })
       break
     case 'edit':
       projectModfiyDialog({
@@ -96,12 +98,13 @@ function operationHandler(operate: any, data?: any) {
 }
 
 function tableRequest() {
+  getProjects()
   return API.limit.userGetProjectInfoByWorkspaceList({})
 }
 
 async function pinProject(data: Project) {
-  const topStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
-  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id, topStatus })
+  const pinStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
+  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus })
   if (code === 0) {
     tableRef.value?.refresh()
     showToast(code, data.topTime ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
@@ -126,7 +129,7 @@ function deletePopup(item: Project) {
     },
     accept: async () => {
       // 先删除本地项目
-      await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id, projectId: item.project_id })
+      await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id as number, projectId: item.project_id as number })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
       if (code === 0) {
         tableRef.value?.refresh()

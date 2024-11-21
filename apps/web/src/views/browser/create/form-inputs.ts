@@ -1,6 +1,6 @@
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { checkCookieFormat, createDefaultObject, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { checkCookieFormat, createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
 async function setUaWebgl(inputsGroup: any) {
   const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
@@ -388,7 +388,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
       visible: true,
       change(input: any) {
-        setInputVisible(basicInputs, ['longitude', 'latitude', 'precisionPos'], input.visible && input.value === false)
+        filterInputsByNames(basicInputs, ['longitude', 'latitude', 'precisionPos']).forEach((ipt) => {
+          ipt.visible = input.visible && input.value === false
+
+          if (ipt.required && !ipt.value) {
+            ipt.invalid = true
+            ipt.errorMsg = $t('"{name}" 是必填项', { name: ipt.label })
+          }
+        })
       },
       preview: {
         label: $t('地理位置'),
@@ -400,6 +407,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       placeholder: $t('请填写经度，示例: -40.123'),
       name: 'longitude',
       value: data.longitude,
+      required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {
@@ -408,6 +416,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       placeholder: $t('请填写纬度，示例: 30.123'),
       name: 'latitude',
       value: data.latitude,
+      required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
     },
     {

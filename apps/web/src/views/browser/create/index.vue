@@ -238,9 +238,12 @@ async function batchCreateProfile(params: any) {
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: createCount.value, preview: false })
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
-  await API.window.userBatchWindowInfoV2Create(params)
-  router.replace({ name: 'browser-list' })
+  const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
+  showToast(code, msg)
+  if (code === 0) {
+    router.back()
+  }
 }
 
 async function importProfile(params: any) {
@@ -251,9 +254,12 @@ async function importProfile(params: any) {
   loading.value = true
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
-  await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
-  router.replace({ name: 'browser-list' })
+  const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
   loading.value = false
+  showToast(code, msg)
+  if (code === 0) {
+    router.back()
+  }
 }
 // ===========================================
 
