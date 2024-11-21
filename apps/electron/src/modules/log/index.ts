@@ -52,7 +52,7 @@ export function setupLog() {
 }
 
 /**
- * 清理过期日志（保留 14 天）
+ * 清理过期日志（保留 7 天）
  */
 async function cleanupOldLogs() {
   const logDir = appConfig.logsDir
@@ -66,8 +66,8 @@ async function cleanupOldLogs() {
       const stats = await stat(filePath)
       const fileAge = now - stats.mtimeMs
 
-      // 删除超过 14 天的日志
-      if (fileAge > 14 * 24 * 60 * 60 * 1000) {
+      // 删除超过 7 天的日志
+      if (fileAge > 7 * 24 * 60 * 60 * 1000) {
         rm(filePath, { recursive: true, force: true })
           .then(() => {
             log.info(`已删除过期日志文件: ${file}`)
