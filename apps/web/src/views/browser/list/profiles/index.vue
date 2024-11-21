@@ -12,6 +12,7 @@ import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -48,6 +49,7 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
+const userStore = useUserStore()
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
@@ -248,14 +250,18 @@ function autoOpenBrowser(list: any) {
 async function openBrowserBefore(data: any) {
   const datas = [].concat(data)
   const result = await checkProfileStatus(datas)
-  if (!result.length) {
+  /**
+   *过滤自身打开的窗口
+   */
+  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userStore.userInfo.id))
+  if (!list.length) {
     onOpenBrowser(datas)
     return
   }
 
   confirm.require({
     header: $t('警告'),
-    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.windowSortNum}`).join(', ') }),
+    message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',

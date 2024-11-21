@@ -260,16 +260,10 @@ async function importProfile(params: any) {
 const items = computed(() => [
   {
     label: $t('保存模板'),
-    visible: !!profileTemplate.value && profileTemplate.value !== 'default',
+    disabled: !!profileTemplate.value && profileTemplate.value === 'default',
     command: () => {
       const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
       onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
-    },
-  },
-  {
-    label: $t('保存为新模板'),
-    command: () => {
-      saveTemplatePopup()
     },
   },
 ])
@@ -390,8 +384,9 @@ async function deleteTemplate(data: any) {
         </div>
         <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
-            <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" />
-            <SplitButton severity="primary" :label="$t('创建窗口')" :model="items" @click.stop="createProfile(false)" />
+            <SplitButton severity="secondary" :label="$t('保存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
+            <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
+            <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>
         </accordionInputs>
       </div>
@@ -490,7 +485,7 @@ async function deleteTemplate(data: any) {
     font-size: var(--Font-Size-text-sm, 12px);
     line-height: var(--Line-Height-text-lg, 20px);
     border-width: 1px;
-    border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
+    // border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
 
     &:not(:disabled):hover {
       border-width: 1px;

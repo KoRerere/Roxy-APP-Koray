@@ -123,7 +123,7 @@ onBeforeMount(() => {
       justify-content: center;
       align-items: center;
       gap: 10px;
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--Colors-Text-text-brand, #12a3fc);
       text-align: center;
       font-family: Archivo;
       font-size: 10px;
@@ -132,7 +132,7 @@ onBeforeMount(() => {
       line-height: normal;
       letter-spacing: 0.1px;
       border-radius: var(--radius-full, 9999px);
-      background: var(--Color-neutrals-200, #e4e8eb);
+      background: var(--Color-blue-100, #e8f5fc);
     }
   }
 }
