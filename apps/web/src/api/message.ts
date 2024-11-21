@@ -7,6 +7,10 @@ import { API } from '/@/api'
 let lastAppVersion = ''
 let isCheckingAppVersion = false
 
+function version2Number(version: string) {
+  return Number(version.replace(/\./g, ''))
+}
+
 export async function checkAppVersion(response: AxiosResponse<any, any>) {
   const remoteVersion = response.headers['r-app_last_version']
 
@@ -18,7 +22,7 @@ export async function checkAppVersion(response: AxiosResponse<any, any>) {
 
   lastAppVersion ||= await electronAPI.send('app:getAppVersion')
 
-  if (lastAppVersion && remoteVersion !== lastAppVersion) {
+  if (lastAppVersion && version2Number(remoteVersion) > version2Number(lastAppVersion)) {
     console.info('checkAppVersion', remoteVersion, lastAppVersion)
     const result = await electronAPI.send('app:reGetUpdateInfo', 'app').finally(() => {
       isCheckingAppVersion = false
