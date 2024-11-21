@@ -47,7 +47,7 @@ const columns = setColumns([
     slot: 'pluginSwitchType',
   },
   {
-    title: $t('已安装项目'), // Installed Projects
+    title: $t('已安装项目'),
     key: 'related',
     slot: 'related',
   },
@@ -94,7 +94,8 @@ async function tableRequest(params: any) {
 }
 
 function tableOperation(data: any) {
-  const isPersonal = data.pluginSwitchType === PluginSwitchType.personal
+  const datas = [].concat(data)
+  const isPersonal = !datas.some((data: any) => data.pluginSwitchType !== PluginSwitchType.personal)
 
   return [
     {
@@ -111,7 +112,8 @@ function tableOperation(data: any) {
       name: 'delete',
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
-      disabled: !data.canDelete,
+      disabled: datas.some((data: any) => !data.canDelete),
+      disabledTooltip: $t('选项中包含其他人的插件'),
       multiple: true,
       power: isPersonal || role.isOwner || role.isManager,
     },
