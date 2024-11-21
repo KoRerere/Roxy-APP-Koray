@@ -656,10 +656,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
-          const { getwebGLNoiseValue } = await electronAPI.send('util:callRandomFingerprintFunc', {
-            getwebGLNoiseValue: [],
-          })
-          Object.assign(original, { audioContextValue: getwebGLNoiseValue })
+          Object.assign(original, { audioContextValue: Math.random() })
         }
         else {
           Reflect.deleteProperty(original, 'audioContextValue')
