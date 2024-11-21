@@ -186,8 +186,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       filter: false,
       change: async (item: any) => {
         if (item.value) {
-          const fingerData = await ceateRandomFinger(inputsGroup)
-          Object.assign(original, fingerData[0])
+          await setUaWebgl(inputsGroup)
         }
       },
     },
@@ -292,6 +291,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
+      tooltip: $t('打开网站页面优先展示的语言，默认使用 IP 所在地区的语言，也可自定义选择'),
       change(input: any) {
         setInputVisible(basicInputs, 'displayLanguage', input.value === false)
       },
@@ -317,6 +317,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('基于 IP 匹配'), value: true },
         { label: $t('自定义'), value: false },
       ],
+      tooltip: $t('Google 界面框架的语言，默认使用 IP 所在地区的语言，也可自定义选择'),
       change(input: any) {
         setInputVisible(basicInputs, 'language', input.value === false)
       },
@@ -685,7 +686,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
         }
         else {
-          Reflect.deleteProperty(original, 'speechVoicesValue')
+          original.speechVoicesValue.enable = false
         }
       },
     },

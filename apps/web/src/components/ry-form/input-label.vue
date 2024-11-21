@@ -14,8 +14,10 @@ defineProps({
 <template>
   <label v-if="label" class="rx-label" :for="name">
     <div class="rx-label__content">
-      <span>{{ label }}</span>
-      <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+      <div>
+        <span>{{ label }}</span>
+        <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" class="align-middle ml-1" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+      </div>
     </div>
   </label>
 </template>
@@ -24,7 +26,7 @@ defineProps({
 .rx-label {
   margin-right: var(--spacing-lg, 8px);
   width: v-bind(labelWidth);
-  min-width: 120px;
+  min-width: 130px;
   color: var(--Component-Colors-TextInput-label-label, #171c1f);
   font-family: Inter;
   font-size: 13px;

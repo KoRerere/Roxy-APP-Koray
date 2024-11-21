@@ -47,7 +47,7 @@ const columns = setColumns([
     getText: (row: any) => row.pluginSwitchType === PluginSwitchType.personal ? $t('个人') : $t('团队'),
   },
   {
-    title: $t('已关联项目'),
+    title: $t('已安装项目'), // Installed Projects
     key: 'related',
     slot: 'related',
   },
@@ -338,12 +338,12 @@ defineExpose({
 
     <template #related="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
-        <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" label="Full installed" />
+        <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" />
         <RelatedInfo v-else class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
             <div class="flex items-center gap-1.5">
               <RxTag class="cursor-pointer" icon="base/rx_ic_stack" />
-              <span class="not-installed">Not installed yet</span>
+              <span class="not-installed">{{ $t('尚未安装') }}</span>
             </div>
           </template>
         </RelatedInfo>

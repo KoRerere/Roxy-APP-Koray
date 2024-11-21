@@ -52,7 +52,7 @@ function getOperation(data: Project) {
       name: 'invite',
       label: $t('邀请'),
       icon: 'base/rx_ic_user_add',
-      power: role.isOwner || role.isManager,
+      power: role.isOwner || role.isManager || role.isEditor,
       quick: true,
     },
     {
