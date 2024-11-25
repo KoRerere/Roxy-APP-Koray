@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import GlobalComponent from '/@/components/business/global-component/index.vue'
+
+console.log('__WEB_VERSION__', __WEB_VERSION__)
 </script>
 
 <template>

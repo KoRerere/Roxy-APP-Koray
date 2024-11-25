@@ -1,52 +1,16 @@
 import axios from 'axios'
+import { compare } from 'compare-versions'
 import { createWriteStream } from 'node:fs'
 import { access, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { API } from '/@/api'
-import { appConfig, osConfig } from '/@/constants'
-import { ipcMain } from '/@/modules/ipc'
+import { appConfig } from '/@/constants'
+import { sendLaunchMessage } from '/@/modules/app/checkResource/index'
 import { fileExists, isMac } from '/@/utils'
-
-/** 发送启动消息 */
-function sendLaunchMessage(message: string) {
-  ipcMain.send('app:launch-message', message)
-}
-
-export async function checkResource() {
-  const { promise, resolve } = Promise.withResolvers()
-  const startCheckTime = Date.now()
-  console.log('checkResource start')
-  sendLaunchMessage($t('正在检查资源是否需要更新...'))
-  try {
-    const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
-    console.log('checkResource', code, data)
-    if (code === 0) {
-      const webDomain = data.webDomain
-      // 检测更新 roxynet
-      await checkRoxynetBin(webDomain)
-    }
-  }
-  catch (error) {
-    console.error('checkResource error', error)
-  }
-  console.log('checkResource end')
-  if (Date.now() - startCheckTime < 1500) {
-    setTimeout(() => {
-      sendLaunchMessage($t('检查完成'))
-      resolve(true)
-    }, 1800)
-  }
-  else {
-    sendLaunchMessage($t('检查完成'))
-    resolve(true)
-  }
-  return promise
-}
 
 // roxynet 下载重试次数
 let roxynetDownloadRetry = 0
 /** 检查 roxynet 是否存在 */
-async function checkRoxynetBin(webDomain: string) {
+export async function checkRoxynetBin(webDomain: string) {
   const { promise, resolve } = Promise.withResolvers()
   // 获取文件所在的目录路径
   const roxynetBinDir = dirname(appConfig.roxynetBinPath)
@@ -87,7 +51,7 @@ async function checkRoxynetBin(webDomain: string) {
     return version
   })
 
-  if (!roxynetBinExist || remoteVersion !== localVersion) {
+  if (!roxynetBinExist || compare(remoteVersion, localVersion, '>')) {
     console.log('正在下载 roxynet')
     // 下载 roxynet
     const response = await axios({

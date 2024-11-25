@@ -1,6 +1,7 @@
 import express from 'express'
 import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
+import { appConfig } from '/@/constants'
 import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
@@ -18,8 +19,19 @@ export async function setupAppServer() {
   setupRoxynetReceiver(app)
   // 注册工作台路由
   setupDashboardServer(app)
-
-  app.use(express.static(join(__dirname, './web')))
+  // APP 内置 web 服务中间件
+  const buildInWebMid = express.static(join(__dirname, './web'))
+  // APP 外置 web 服务中间件
+  const externalWebMid = express.static(appConfig.webDir)
+  // APP web 服务中间件
+  app.use((req, res, next) => {
+    if (store.isExternalWeb) {
+      externalWebMid(req, res, next)
+    }
+    else {
+      buildInWebMid(req, res, next)
+    }
+  })
 
   try {
     const port = await getPortPromise({ port: store.appPort })

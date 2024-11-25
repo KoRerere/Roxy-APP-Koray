@@ -1,4 +1,6 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { API } from '/@/api'
+import { osConfig } from '/@/constants'
 import { decryptAESGCM, encryptAESGCM, isDev } from '/@/utils'
 
 /** 需要使用 aes-256-gcm 加解密的接口数据 */
@@ -29,4 +31,20 @@ export function handleResponse(response: AxiosResponse<any, any>) {
   if (!isDev && responseHandleUrls.some(url => response.config.url?.includes(url))) {
     response.data.data = decryptAESGCM(response.data.data)
   }
+}
+
+let lastRequestTime = 0
+let lastWebDomain = ''
+/** 获取 webDomain, 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
+export async function getWebDomain() {
+  if (lastWebDomain && Date.now() - lastRequestTime < 1000 * 60 * 5) {
+    return lastWebDomain
+  }
+  const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
+  console.log('getWebDomain', code, data)
+  if (code === 0 && data.webDomain) {
+    lastWebDomain = data.webDomain
+    lastRequestTime = Date.now()
+  }
+  return lastWebDomain
 }

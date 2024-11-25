@@ -1,17 +1,37 @@
 import type { BrowserWindowConstructorOptions } from 'electron'
+import axios from 'axios'
+import { compare } from 'compare-versions'
 import { app, BrowserWindow, screen } from 'electron'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { mediaProtocolName } from '/@/constants'
+import { appConfig, mediaProtocolName } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
 import { isDev, isPackaged, isProd, isWindows } from '/@/utils/'
 
 /** 获取 web 入口地址 */
-export function getWebEntryUrl(path: string) {
+export async function getWebEntryUrl(path: string, skipCompare = false) {
   if (isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
     return `${import.meta.env.VITE_DEV_SERVER_URL}${path}`
   }
+
+  if (isPackaged && !skipCompare) {
+    try {
+      const buildInWebVersion = await readFile(join(__dirname, './web/version'), 'utf-8')
+      const externalWebVersion = await readFile(join(appConfig.webDir, 'version'), 'utf-8')
+      store.isExternalWeb = compare(externalWebVersion, buildInWebVersion, '>')
+    }
+    catch (error) {
+      store.isExternalWeb = false
+    }
+  }
+
   return `http://localhost:${store.appPort}/${path}`
+}
+
+/** 获取本地 web 版本 */
+export async function getLocalWebVersion() {
+  return axios.get<string>(await getWebEntryUrl('version', true)).then(response => response.data).catch(() => '')
 }
 
 /** 创建窗口 */
@@ -63,7 +83,7 @@ export async function intoLaunchPage() {
     frame: isWindows,
   })
 
-  const launchUrl = getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`)
+  const launchUrl = await getWebEntryUrl(`launch${isPackaged ? '.html' : ''}`)
   console.log('intoLaunchPage', launchUrl)
   await launchWin.loadURL(launchUrl)
 }
@@ -85,10 +105,11 @@ export async function intoMainPage() {
     minHeight: Math.min(minHeight, height),
     resizable: true,
   })
-  const webUrl = getWebEntryUrl(isPackaged ? 'index.html' : '')
+  const webUrl = await getWebEntryUrl(isPackaged ? 'index.html' : '')
   console.log('intoMainPage', webUrl)
   await mainWin.loadURL(webUrl)
-  mainWin.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()}`)
+  const webVersion = await getLocalWebVersion()
+  mainWin.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()} | ${webVersion}`)
   // 禁用 document.title 的影响
   mainWin.on('page-title-updated', (event) => {
     event.preventDefault()

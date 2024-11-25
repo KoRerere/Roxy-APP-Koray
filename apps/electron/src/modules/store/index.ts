@@ -42,6 +42,8 @@ export interface StoreType {
   ipBlackList: string[]
   /** Default IP checker */
   ipChecker: string
+  /** 是否使用外置 web 资源 */
+  isExternalWeb: boolean
 }
 
 const defaultValues: StoreType = {
@@ -54,6 +56,7 @@ const defaultValues: StoreType = {
   appPort: 45535,
   ipBlackList: [],
   ipChecker: 'http://iprust.io/ip.json',
+  isExternalWeb: false,
 }
 
 const _store: StoreType = {

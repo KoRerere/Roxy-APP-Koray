@@ -28,6 +28,8 @@ export const appConfig = {
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */
   defaultBrowserCacheRootDir: join(sessionDir, 'browser-cache'),
+  /** web 资源目录 */
+  webDir: join(sessionDir, 'web'),
 } as const
 
 console.log('appConfig', appConfig)

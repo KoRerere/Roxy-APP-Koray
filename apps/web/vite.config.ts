@@ -1,5 +1,3 @@
-/* eslint-env node */
-import type { UserConfig } from 'vite'
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import LanguageLocalization from '@roxy/language-localization/vite'
 import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
@@ -9,11 +7,13 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
 import { accessSync } from 'node:fs'
 import { access, readdir, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
+/* eslint-env node */
+import { loadEnv, type PluginOption, type UserConfig } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 import { chrome } from '../electron/.electron-vendors.cache.json'
@@ -40,6 +40,23 @@ const primevueComponents = primevueFiles.reduce<string[]>((acc, dir) => {
   }
   return acc
 }, [])
+
+function genWebVersionPlugin(): PluginOption {
+  return {
+    name: 'gen-web-version',
+    config(config, { mode }) {
+      // 设置第三个参数为 '' 来加载所有环境变量，而不管是否有 `VITE_` 前缀。
+      const env = loadEnv(mode, __dirname, '')
+      const version = env.VITE_VERSION
+      console.log(`env.VITE_VERSION `, version)
+      writeFile(resolve(__dirname, './public', 'version'), version, 'utf-8')
+      config.define = {
+        ...config.define,
+        __WEB_VERSION__: JSON.stringify(version),
+      }
+    },
+  }
+}
 
 console.log('web is build with', process.env.NODE_ENV)
 const config: UserConfig = {
@@ -95,6 +112,7 @@ const config: UserConfig = {
   },
 
   plugins: [
+    genWebVersionPlugin(),
     vue({
       template: {
         compilerOptions: {
