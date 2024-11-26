@@ -58,7 +58,7 @@ export class BeforeLaunchTask {
     this.taskMap.set(this.memoryDetection, $t('内存检测中'))
     this.taskMap.set(this.handleProxyDetection, $t('代理检测中'))
     this.taskMap.set(this.clearBrowserCache, $t('判断是否需要清理浏览器缓存'))
-    this.taskMap.set(this.pullRemoteCacheFiles, $t('拉取远程缓存文件'))
+    this.taskMap.set(this.pullRemoteCacheFiles, $t('同步远程缓存文件'))
     this.taskMap.set(this.createFingerprintConfigFile, $t('生成指纹配置文件'))
     this.taskMap.set(this.launch, $t('准备启动浏览器'))
 
@@ -349,21 +349,24 @@ export class BeforeLaunchTask {
 
     try {
       await fileExists(dirname(localCacheFilePath), true)
+      console.log('开始拉取远程缓存文件', remoteCacheFilePath)
       // 下载远程缓存文件
       await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
+      console.log('下载远程缓存文件成功', localCacheFilePath)
       // 解压缓存文件
       await fileOperations.executeTask('decompress', {
         src: localCacheFilePath,
         dest: this.browserItem.userDataDir,
         filters: this.browserItem.needSyncFiles.map(path => path.slice(1)),
       })
+      console.log('解压缓存文件成功', localCacheFilePath)
 
       console.log('ossCacheVersionPath', this.browserItem.ossCacheVersionPath)
       writeFile(this.browserItem.ossCacheVersionPath, String(remoteVersion))
     }
     catch (error) {
-      console.error('拉取远程缓存文件失败', error)
-      this.warningMessages.push($t('拉取远程缓存文件失败'))
+      console.error('同步远程缓存文件失败', error)
+      this.warningMessages.push($t('同步远程缓存文件失败'))
       // return Promise.reject(error)
     }
   }

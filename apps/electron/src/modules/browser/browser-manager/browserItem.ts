@@ -194,15 +194,17 @@ export class BrowserItem {
 
     const outputZipPath = join(this.ossCacheDir, this.browserCacheFileName)
     let newVersion = syncValue?.version || 1
+    console.log('需要同步的文件：', needSyncFiles)
     try {
       const outputDist = await fileOperations.executeTask('compressFiles', { files: needSyncFiles, dest: outputZipPath })
-      console.log('compressFiles success', outputDist)
+      console.log('缓存文件压缩成功：', outputDist)
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
+      console.log('开始上传缓存文件', remoteOssPath)
       const data = await aliOSS.putStream(remoteOssPath, readStream)
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
-      console.log(`oss 上传`, data)
+      console.log(`oss 缓存文件上传成功`, data)
     }
     catch (error) {
       console.log('uploadData error: ', error)
