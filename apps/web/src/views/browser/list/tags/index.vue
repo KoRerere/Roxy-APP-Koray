@@ -51,6 +51,9 @@ const operation = ref([
     icon: 'base/rx_ic_bin_1',
     quick: true,
     multiple: true,
+    multipleProps: {
+      name: 'one',
+    },
   },
 ])
 

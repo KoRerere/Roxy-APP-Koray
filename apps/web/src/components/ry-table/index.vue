@@ -92,9 +92,9 @@ const [show] = useContextMenu()
 
 const _loading = ref(false)
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
-const _filters = ref()
 const _dataList = ref()
-
+const _filters = ref()
+const _outerParams = ref()
 const _sorts = reactive<{
   value: any[] | undefined
   onChange: (() => void) | undefined
@@ -102,6 +102,7 @@ const _sorts = reactive<{
   value: undefined,
   onChange: undefined,
 })
+
 const tableList = computed(() => Array.isArray(props.dataList) ? props.dataList : _dataList.value)
 
 const { selection: outerSelection, 'onUpdate:selection': onUpdateSelection, ...attrs } = toRefs(reactive(useAttrs()))
@@ -197,19 +198,19 @@ async function _getCondition() {
   _sorts.onChange = onChange
 }
 
-function _getParams(outerParams?: any) {
+function _getParams() {
   return {
     page_index: paginatorConfig.page,
     page_size: paginatorConfig.rows,
     ...getFormData(_filters.value as any),
     ...getFormData(_sorts.value as any),
     ...props.tableParams,
-    ...outerParams,
+    ..._outerParams.value,
   }
 }
 
-async function _request(outerParams?: any) {
-  const requestParams = _getParams(outerParams)
+async function _request() {
+  const requestParams = _getParams()
   _loading.value = true
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
@@ -252,9 +253,9 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   })
 }
 
-function showOperationMenu({ event }: { event: Event }, data: any) {
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
   show(event, {
-    operation: _getOperation(data),
+    operation,
     operationHandler: async (operate: any) => {
       try {
         await props.operationHandler(operate, data)
@@ -272,7 +273,10 @@ onBeforeMount(async () => {
 })
 
 defineExpose({
-  refresh: _request,
+  refresh: (outerParams: any = {}) => {
+    _outerParams.value = outerParams
+    _request()
+  },
   clearSelection: _clearSelection,
   getParams: () => [_getParams(), (list: any) => { _dataList.value = list || [] }],
 })
@@ -295,8 +299,12 @@ defineExpose({
       </div>
     </div>
     <div class="position-relative flex-1 overflow-hidden">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs"
-        :pt="{ table: !tableList?.length ? 'flex-1' : '', emptymessagecell: '!whitespace-normal !text-center', bodyrow: Css_Module.bodyrow }" @row-contextmenu="onRowContextMenu">
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :pt="{
+        table: !tableList?.length ? 'flex-1' : '',
+        emptymessagecell: '!whitespace-normal !text-center',
+        headerrow: Css_Module.headerrow,
+        bodyrow: Css_Module.bodyrow,
+      }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
@@ -305,7 +313,11 @@ defineExpose({
         </template>
         <Column v-if="selectionMode" header-style="width: 3rem" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title" :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
-          :pt="{ columntitle: Css_Module.columntitle, headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }">
+          :pt="{
+            columntitle: Css_Module.columntitle,
+            headercell: Css_Module.headercell,
+            bodycell: Css_Module.bodycell,
+          }">
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
@@ -348,7 +360,7 @@ defineExpose({
 
     <Transition>
       <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-        :operation="_getOperation(selectionData)" @batch-operation="batchOperation">
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData)">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -462,13 +474,15 @@ defineExpose({
   line-height: 16px;
 }
 
-.headercell {
-  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px) !important;
-  background: var(--Colors-Background-bg-page, #fafbfc) !important;
-  border-color: var(--Colors-Border-border-subtle, #e4e8eb) !important;
+.headerrow {
+  .headercell {
+    padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+    background: var(--Colors-Background-bg-page, #fafbfc);
+    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
 
-  &:first-of-type {
-    padding-left: var(--spacing-4xl, 24px) !important;
+    &:first-of-type {
+      padding-left: var(--spacing-4xl, 24px);
+    }
   }
 }
 
@@ -490,12 +504,12 @@ defineExpose({
   }
 
   .bodycell {
-    padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px) !important;
+    padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px);
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
 
     &:first-of-type {
-      padding-left: var(--spacing-4xl, 24px) !important;
+      padding-left: var(--spacing-4xl, 24px);
     }
   }
 }

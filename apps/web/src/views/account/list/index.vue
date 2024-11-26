@@ -36,6 +36,9 @@ const operation = ref([
     icon: 'base/rx_ic_doc_add',
     power: !role.isViewer,
     multiple: true,
+    multipleProps: {
+      name: 'one',
+    },
   },
   {
     separator: true,
@@ -47,6 +50,9 @@ const operation = ref([
     power: !role.isViewer,
     quick: true,
     multiple: true,
+    multipleProps: {
+      name: 'one',
+    },
   },
 ])
 

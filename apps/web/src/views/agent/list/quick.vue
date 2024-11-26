@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
+import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -26,6 +27,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  createCount: {
+    type: Number,
+    default: 1,
+  },
 })
 
 const emit = defineEmits(['confirm'])
@@ -36,7 +41,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const tableRef = useTemplateRef('agent')
 
 const columns = getRawColumns({
-  inserts: props.isBatch ? [[4, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
+  inserts: props.isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
 
@@ -44,9 +49,7 @@ const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const selection = ref(props.data)
 const filtersMenu = ref()
 const dataList = ref()
-
 const boundeds = ref<Boundeds>({})
-
 const tableProps = {
   columns,
   showDisplay: false,
@@ -72,6 +75,7 @@ const tableProps = {
       },
     }),
 }
+const sumProxyCount = computed(() => Object.values(boundeds.value).reduce((sum: number, item: any) => sum += (!item.disabled ? item.value : 0), 0))
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
@@ -87,10 +91,13 @@ async function getTableList(params: any) {
   dataList.value = data.data.rows
   if (props.isBatch) {
     boundeds.value = Object.fromEntries(
-      data.data.rows.map(item => [item.id, {
-        value: 1,
-        disabled: !props.data.some((it: any) => item.id === it.id),
-      }],
+      data.data.rows.map((item) => {
+        const _data = props.data.find((it: any) => item.id === it.id)
+        return [item.id, {
+          value: _data?._proxyCount ?? 1,
+          disabled: !_data,
+        }]
+      },
       ),
     )
   }
@@ -151,19 +158,19 @@ function saveSelected() {
 
 <template>
   <div class="flex flex-col h-full proxy-content">
+    <div class="flex justify-between proxy-header">
+      <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
+      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
+    </div>
+    <RxAlert v-if="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+      :title="$t('{count} 个窗口将会绑定代理。最多只能绑定 {max} 个窗口。', { count: sumProxyCount, max: createCount })" :closable="false" />
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false">
-        <template #header-extra>
-          <div class="flex flex-auto items-start justify-between">
-            <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-            <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
-          </div>
-        </template>
+      <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"
+        :show-table-header="false">
         <template #table-empty>
           <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
-
         <template #proxy="{ data: row }">
           <div class="flex flex-col gap-1">
             <div class="proxy-host">
@@ -182,8 +189,8 @@ function saveSelected() {
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
-          <div class="w-30">
-            <InputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="0" show-buttons button-layout="horizontal" :step="1" fluid>
+          <div class="bounded">
+            <InputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="1" show-buttons button-layout="horizontal" :step="1" fluid>
               <template #incrementicon>
                 <RxSvgIcon name="base/rx_ic_plus" />
               </template>
@@ -210,6 +217,11 @@ function saveSelected() {
   width: var(--width-xl, 768px);
 }
 
+.proxy-header,
+.proxy-alert {
+  margin-bottom: var(--spacing-xl, 12px);
+}
+
 :deep(.rx-header) {
   padding-top: 0;
   padding-left: 0;
@@ -234,5 +246,42 @@ function saveSelected() {
 
 .button-group {
   padding: var(--spacing-2xl, 16px) 0 var(--spacing-3xl, 20px);
+}
+
+.bounded {
+  width: 100px;
+
+  :deep(.p-inputnumber) {
+    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
+    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+
+    .p-inputnumber-input {
+      padding: 0;
+      border: none;
+      text-align: center;
+      font-family: Inter;
+      font-size: 12px;
+      line-height: var(--Line-Height-text-lg, 20px);
+
+      &:not([disabled]) {
+        color: var(--Component-Colors-TextInput-text-text, #171c1f);
+      }
+    }
+
+    .p-inputnumber-button {
+      padding: var(--spacing-md, 6px);
+      width: auto;
+      border: none;
+      background: var(--Component-Colors-TextInput-bg-bg, #fff);
+
+      &[disabled] {
+        background: var(--p-inputtext-disabled-background);
+      }
+    }
+
+    .p-disabled {
+      opacity: 1;
+    }
+  }
 }
 </style>

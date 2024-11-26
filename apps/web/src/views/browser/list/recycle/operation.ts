@@ -9,6 +9,9 @@ export function getOperation() {
       iconClass: 'text-gray-500',
       quick: true,
       multiple: true,
+      multipleProps: {
+        name: 'one',
+      },
     },
     {
       name: 'delete',
@@ -17,6 +20,9 @@ export function getOperation() {
       iconClass: 'text-red',
       quick: true,
       multiple: true,
+      multipleProps: {
+        name: 'one',
+      },
     },
   ]
 }

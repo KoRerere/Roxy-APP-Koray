@@ -263,7 +263,21 @@ export function getOperation(_params: any = {}) {
     },
     {
       power: !role.isViewer,
+      multiple: true,
       separator: true,
+    },
+    {
+      name: 'open',
+      label: $t('打开'),
+      icon: 'base/rx_ic_chrome',
+      multiple: true,
+      multipleProps: {
+        name: 'one',
+        showLabel: true,
+        iconProps: {
+          color: '#12A3FC',
+        },
+      },
     },
     {
       name: 'view',
@@ -276,7 +290,10 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_refresh',
       tooltip: $t('重启窗口'),
       multiple: true,
-      groupName: 'first',
+      multipleProps: {
+        name: 'two',
+        showLabel: true,
+      },
     },
     {
       name: 'close',
@@ -284,7 +301,10 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_shut_down',
       tooltip: $t('关闭窗口'),
       multiple: true,
-      groupName: 'first',
+      multipleProps: {
+        name: 'three',
+        showLabel: true,
+      },
     },
     {
       separator: true,

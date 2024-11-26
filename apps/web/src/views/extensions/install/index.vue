@@ -114,8 +114,11 @@ function tableOperation(data: any) {
       icon: 'base/rx_ic_bin_1',
       disabled: datas.some((data: any) => !data.canDelete),
       disabledTooltip: $t('选项中包含其他人的插件'),
-      multiple: true,
       power: isPersonal || role.isOwner || role.isManager,
+      multiple: true,
+      multipleProps: {
+        name: 'one',
+      },
     },
   ]
 }

@@ -27,6 +27,9 @@ export function tableOperation(data?: ProxyItem) {
       icon: 'base/rx_ic_speed_test',
       quick: true,
       multiple: true,
+      multipleProps: {
+        name: 'one',
+      },
     },
     {
       name: 'refresh',
@@ -52,6 +55,9 @@ export function tableOperation(data?: ProxyItem) {
       power: !role.isViewer,
       quick: true,
       multiple: true,
+      multipleProps: {
+        name: 'one',
+      },
     },
   ]
 }

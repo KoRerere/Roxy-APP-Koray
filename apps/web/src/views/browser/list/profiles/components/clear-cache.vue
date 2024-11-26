@@ -65,7 +65,7 @@ const options = [
           {{
             content: () => (
               <div class="whitespace-pre-wrap">
-                <i18n-t keypath={$t('1.清除本电脑及云端的Cookie和全部缓存。{light} 。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
+                <i18n-t keypath={$t('1.清除本电脑及云端的Cookie和全部缓存。{light}。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。', { light: '{light}' })} scope="global">
                   {{
                     light: () => <span class="text-orange-400">{$t('同步的标签页和浏览器相关登录状态会全部失效')}</span>,
                   }}

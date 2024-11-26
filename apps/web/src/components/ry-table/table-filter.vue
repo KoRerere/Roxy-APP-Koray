@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import InputDate from '/@/components/ry-form/input-date.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { getFormData } from '/@/utils'
 
@@ -51,7 +52,7 @@ function onFilterChange() {
       </template>
     </MultiSelect>
     <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
-    <DatePicker v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
       :placeholder="item.placeholder" @hide="onDateHide" @clear-click="onDateClear" />
   </div>
 </template>

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
+interface Data {
+  count: number
+  [key: string]: any
+}
+
 const props = defineProps({
   selection: {
     type: Array as PropType<any[]>,
@@ -16,16 +21,23 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:selection', 'batchOperation'])
+const emit = defineEmits(['update:selection', 'batchOperation', 'batchMore'])
 
-const groups: any = computed(() => Object.values(props.operation.reduce((groups, item) => {
-  if (!item.name || !item.multiple) {
-    return groups
+const multipleOperation = props.operation.filter(item => item.multiple).map(item => toRaw(item))
+const { count, ...groupMap } = multipleOperation.reduce((data, item) => {
+  if (item.multipleProps) {
+    (data[item.multipleProps.name] || (data[item.multipleProps.name] = [])).push({
+      _rawItem: item,
+      ...item,
+      ...item.multipleProps,
+    })
+    data.count += 1
   }
-  const groupName = item.groupName || 'Other';
-  (groups[groupName] || (groups[groupName] = [])).push(item)
-  return groups
-}, {})))
+  return data
+}, { count: 0 } as Data)
+
+const groups = ref<any[][]>(Object.values(groupMap))
+const showMore = multipleOperation.length > count
 
 function batchOperation(item: any) {
   if (item.disabled) {
@@ -33,6 +45,10 @@ function batchOperation(item: any) {
   }
 
   emit('batchOperation', item)
+}
+
+function onMore(event: Event) {
+  emit('batchMore', { event, operation: multipleOperation })
 }
 </script>
 
@@ -49,12 +65,18 @@ function batchOperation(item: any) {
           </template>
         </i18n-t>
       </div>
-      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" @click="$emit('update:selection', [])" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <RxSvgIcon v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" :name="item.icon"
-          class="cursor-pointer" color="#ffffff" @click="batchOperation(item)" />
+        <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
+          @click="batchOperation(item._rawItem)">
+          <RxSvgIcon :name="item.icon" v-bind="item.iconProps" />
+          <span v-if="item.showLabel">{{ item.label }}</span>
+        </div>
+      </div>
+      <div v-if="showMore" class="multiple-group cursor-pointer" @click="onMore($event)">
+        <RxSvgIcon name="base/rx_ic_more-v" />
       </div>
     </slot>
   </div>
@@ -100,6 +122,22 @@ function batchOperation(item: any) {
   &-group {
     gap: var(--spacing-xl, 12px);
     color: #ffffff;
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm, 4px);
+
+      color: #fff;
+      text-align: center;
+      font-family: Inter;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: var(--Line-Height-text-xs, 16px);
+      cursor: pointer;
+      user-select: none;
+    }
   }
 }
 

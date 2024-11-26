@@ -33,7 +33,7 @@ defineEmits(['change'])
         <MultiSelect v-if="type === 'multiSelect'" class="flex-1" v-bind="$attrs" @change="$emit('change')" />
         <RxInputSelect v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <InputRadio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <InputDate v-if="type === 'date'" v-bind="$attrs" />
+        <InputDate v-if="type === 'date'" class="w-full" v-bind="$attrs" />
         <RxInputNumber v-if="type === 'number'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <RxInputText v-if="type === 'text'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <RxInputTextarea v-if="type === 'textarea'" v-bind="$attrs" :name="name" @change="$emit('change')" />

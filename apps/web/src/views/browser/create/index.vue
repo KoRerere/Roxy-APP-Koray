@@ -108,6 +108,7 @@ const profileTemplate = reactive<ProfileTemplate>({
     onChange: () => {
       if (profileTemplate.value === profileTemplate.oldValue)
         return
+      profileTemplate.oldValue = profileTemplate.value
       const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
       initFormInputs(template)
     },
@@ -373,7 +374,7 @@ async function deleteTemplate(data: any) {
           <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
             <div class="flex items-center justify-between">
               <div>{{ $t('窗口数量') }}</div>
-              <InputNumber v-model="createCount" class="multi-block-input" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
+              <InputNumber v-model="createCount" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
                 <template #incrementicon>
                   <RxSvgIcon name="base/rx_ic_plus" />
                 </template>
@@ -390,7 +391,7 @@ async function deleteTemplate(data: any) {
         </div>
         <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton severity="secondary" :label="$t('保存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('保存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

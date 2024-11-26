@@ -2,7 +2,13 @@
 </script>
 
 <template>
-  <DatePicker class="w-full" v-bind="$attrs" />
+  <DatePicker v-bind="$attrs" />
 </template>
 
-<style lang="scss" scoped></style>
+<!-- <style lang="scss" module="picker">
+.daycell {}
+
+.daycell.p-datepicker-day-selected-range {
+  color: red !important;
+}
+</style> -->

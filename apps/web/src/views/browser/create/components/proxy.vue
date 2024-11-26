@@ -1,6 +1,7 @@
 <!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
 import { useDialog } from 'primevue/usedialog'
+import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import simplePopup from '/@/components/simplePopup'
@@ -33,12 +34,7 @@ const drawer = reactive({
   type: 'create',
   data: undefined,
 })
-const isOverload = computed(() => {
-  const sum = proxyList.value.reduce((sum: number, item: any) => {
-    return sum + (item?._proxyCount || 0)
-  }, 0)
-  return sum > (createCount?.value || 0)
-})
+const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 
 function toggleDrawer(type: 'create' | 'list', data?: any) {
@@ -107,11 +103,11 @@ function modifyProxyCount(item: any) {
     },
     data: {
       props: {
-        content: 'proxy count',
+        content: $t('设置绑定的窗口数量'),
         inputs: [
           {
             type: 'number',
-            placeholder: 'Please enter proxy count',
+            placeholder: $t('请输入数字'),
             name: 'proxyCount',
             value: item._proxyCount,
             required: true,
@@ -164,9 +160,8 @@ function replaceData(data: any) {
       </div>
       <div>
         <template v-if="isBatch">
-          <Message v-if="isOverload" severity="warn" class="multiple">
-            {{ $t('代理数量不能大于窗口') }}
-          </Message>
+          <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn" :title="$t('{count} 个窗口将会绑定代理。最多只能绑定 {max} 个窗口。', { count: sumProxyCount, max: createCount })"
+            :closable="false" />
           <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)" @close="deleteProxy(index)">
             <div class="multiple-region">
               <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
@@ -199,7 +194,8 @@ function replaceData(data: any) {
 
     <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
       <template #default="{ closeCallback }">
-        <ProxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" @close="closeCallback" @confirm="(data: any) => { onChoose(data); closeCallback() }" />
+        <ProxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" :create-count="createCount" @close="closeCallback"
+          @confirm="(data: any) => { onChoose(data); closeCallback() }" />
         <ProxyCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
       </template>
     </RxDrawer>

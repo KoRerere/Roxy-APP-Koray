@@ -24,7 +24,6 @@ import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
 import DrawersTtems from './components/drawers-item.vue'
 import EditCookies from './components/edit-cookies.vue'
-import MultipleOperation from './components/multiple-operation.vue'
 import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
@@ -199,6 +198,7 @@ async function operationHandler(operate: any, data: any) {
     case 'moveToProject':
       await onMoveToProject(datas)
       break
+    case 'open':
     case 'view':
       await openBrowserBefore(data)
       break
@@ -296,13 +296,12 @@ function onOpenBrowser(datas: any) {
   window.electronAPI.send('browser:batchLaunch', dirIds)
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any, extra?: any) {
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
   show(event, {
     operation,
     operationHandler: async (operate: any) => {
       try {
         await operationHandler(operate, data)
-        extra?.clearSelection()
       }
       catch (error) {
         console.log(error)
@@ -649,10 +648,6 @@ defineExpose({
           class="cursor-pointer mr-2" @click.stop="operationHandler({ name: 'fav' }, data)" />
         <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
-    </template>
-    <template #multiple-operation="{ selection, clearSelection }">
-      <MultipleOperation :selection="selection" :clear-selection="clearSelection" :operation="operation" @more="showOperationMenu($event, selection, { clearSelection })"
-        @open-browser="openBrowserBefore(selection)" @quick-click="operationHandler($event, selection)" />
     </template>
   </RyTable>
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
