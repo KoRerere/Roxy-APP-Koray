@@ -221,7 +221,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
-        Object.assign(formData, { ...value, moduleId: id, proxyMethod: id ? 'choose' : 'custom' })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
+        const proxyData = id ? { moduleId: id, proxyMethod: 'choose' } : { ...value, proxyMethod: 'custom' }
+        Object.assign(formData, proxyData)// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
+
         return input.switch
           ? input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
           : []
