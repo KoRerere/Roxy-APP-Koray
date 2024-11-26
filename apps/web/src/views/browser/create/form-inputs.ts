@@ -94,6 +94,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
+      id: data.moduleId, // 代理 id
       host: data.host, // 代理主机
       ipType: data.ipType, // 网络协议
       port: data.port, // 代理端口

@@ -46,7 +46,7 @@ function onMore(event: Event) {
       </div>
       <div v-if="showMenu && _operation.length" class="cursor-pointer line-height-none" @click.stop="onMore">
         <slot name="more-icon">
-          <RxSvgIcon name="base/rx_ic_more-v" />
+          <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" />
         </slot>
       </div>
     </div>

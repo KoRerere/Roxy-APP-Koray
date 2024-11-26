@@ -19,6 +19,7 @@ const columnsConfig = {
     },
     {
       title: $t('备注'),
+      key: 'note',
       slot: 'note',
     },
     {

@@ -176,8 +176,8 @@ function getAccountOperation() {
     <div class="position-relative flex justify-between state" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
-          <img v-if="item.image" :src="item.image" class="state-icons-img">
-          <RxSvgIcon v-else :name="item.svg" :color="item.svgColor" fallback="base/rx_ic_earth" />
+          <img v-if="item.image" :src="item.image" class="state-icons-img pointer-events-none">
+          <RxSvgIcon v-else :name="item.svg" :color="item.svgColor" fallback="base/rx_ic_earth" class="pointer-events-none" />
         </div>
       </div>
       <div class="state-line">
