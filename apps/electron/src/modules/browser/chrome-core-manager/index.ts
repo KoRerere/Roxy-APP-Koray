@@ -11,6 +11,8 @@ import { ipcMain } from '/@/modules/ipc'
 import { downloadZipFile, fileExists, isMac, unzipFile } from '/@/utils'
 
 export const chromeCoreManager = new class ChromeCoreManager {
+  /** 拉取内核 promise */
+  private fetchAvailableCoreListPromise: Promise<UserGetCoreUpgradeCreateData> | null = null
   /** 内核执行程序文件名称 */
   private chromeBinName = isMac ? 'RoxyChrome.app/Contents/MacOS/RoxyChrome' : 'RoxyChrome.exe'
 
@@ -31,7 +33,9 @@ export const chromeCoreManager = new class ChromeCoreManager {
 
   /** 获取内核列表（供前端展示用） */
   async getCoreList(): Promise<ResourceUpdateMessage[]> {
-    await this.fetchAvailableCoreList()
+    if (!this.availableCoreList.length) {
+      await this.fetchAvailableCoreList()
+    }
     const arr = this.availableCoreList.map(async (core): Promise<ResourceUpdateMessage> => {
       return {
         ...core,
@@ -68,7 +72,10 @@ export const chromeCoreManager = new class ChromeCoreManager {
   /** 拉取当前系统可用的内核列表 */
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
-    const result = await API.base.userGetCoreUpgradeCreate({ ...osConfig })
+    this.fetchAvailableCoreListPromise ||= API.base.userGetCoreUpgradeCreate({ ...osConfig })
+    const result = await this.fetchAvailableCoreListPromise.finally(() => {
+      this.fetchAvailableCoreListPromise = null
+    })
     console.log('user_get_core_upgrade', result.data)
     this.availableCoreList = result.data?.rows || []
     return result

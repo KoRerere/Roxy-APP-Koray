@@ -57,5 +57,5 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace }
 }, {
-  persist: false,
+  persist: true,
 })

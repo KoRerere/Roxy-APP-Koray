@@ -102,7 +102,19 @@ export const useUserStore = defineStore('user', () => {
     appVersion.value = version
   })
 
-  return { token: tokenRef, rememberMe, userInfo, password, appVersion, setPassword, clearUserInfo, setToken, getUserInfo, getUserConfig, updateUserConfig }
+  return {
+    token: tokenRef,
+    rememberMe,
+    userInfo,
+    password,
+    appVersion,
+    setPassword,
+    clearUserInfo,
+    setToken,
+    getUserInfo,
+    getUserConfig,
+    updateUserConfig,
+  }
 }, {
   persist: true,
 })
