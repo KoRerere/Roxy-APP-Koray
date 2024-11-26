@@ -5,6 +5,7 @@ const props = defineProps<{
   isForceUpgrade: boolean
 }>()
 
+let timer: NodeJS.Timeout
 const visible = ref(false)
 
 watchEffect(() => {
@@ -21,6 +22,12 @@ async function upgradeNow() {
 /** 稍后提醒我 */
 function remindMeLater() {
   visible.value = false
+  clearTimeout(timer)
+  if (props.isForceUpgrade) {
+    timer = setTimeout(() => {
+      visible.value = true
+    }, 1000 * 60 * 1)
+  }
 }
 </script>
 
