@@ -72,6 +72,7 @@ export class BeforeLaunchTask {
         this.completedTasks++
       }
       catch (error) {
+        console.error('BeforeLaunchTask run error:', error)
         this.taskMap.clear()
         this.sendErrorMessage(getErrorMessage(error), error)
         return Promise.reject(error)
@@ -196,8 +197,14 @@ export class BeforeLaunchTask {
       let acc = 1
       const plugins = await extensionManager.getTargetExtensions(usePluginDirVersion, (msg: string) => {
         this.sendSuccessMessage(msg, this.progress + acc++)
+      }).catch((error) => {
+        this.warningMessages.push($t('获取扩展失败'))
+        console.log('获取扩展失败', error)
+        return []
       })
-      args.push(`--load-extension=${plugins.join(',')}`)
+      if (plugins.length) {
+        args.push(`--load-extension=${plugins.join(',')}`)
+      }
     }
 
     /** 内置命令行参数 keys */
@@ -288,7 +295,7 @@ export class BeforeLaunchTask {
       if (stopOpenNet) {
         return Promise.reject(new Error($t('网络不通停止打开')))
       }
-      this.warningMessages.push('代理检测失败')
+      this.warningMessages.push($t('代理检测失败'))
     }
 
     // IP发生变化停止打开

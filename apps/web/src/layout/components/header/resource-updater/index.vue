@@ -2,6 +2,7 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { onMounted, ref, useTemplateRef } from 'vue'
 import { $t } from '/@/locales'
+import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
 
@@ -32,6 +33,11 @@ const noticeNum = computed(() => {
 
 const isDownloading = computed(() => {
   return [...clientUpdates.value, ...kernelUpdates.value].some(item => item.status === 'downloading')
+})
+
+// APP 是否强制升级
+const isForceUpgrade = computed(() => {
+  return clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
 })
 
 async function checkForUpdates() {
@@ -98,6 +104,8 @@ window.electronAPI.on('app:resource-update', (data) => {
 </script>
 
 <template>
+  <AppForceUpgradeModal :is-force-upgrade="isForceUpgrade" />
+
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
       <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />

@@ -71,7 +71,7 @@ export interface RenderMessage {
   /** openapi 端口或开关变的时候，需要重启服务 */
   'app:restartAPIServer': () => void
   /** 安装并更新 */
-  'app:quitAndInstall': (info: ResourceUpdateMessage) => any
+  'app:quitAndInstall': (info: Partial<ResourceUpdateMessage>) => any
   /** 获取所有可用的内核列表 */
   'app:getCoreList': () => ResourceUpdateMessage[]
   /** 下载指定内核 */

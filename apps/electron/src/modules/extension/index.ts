@@ -95,7 +95,7 @@ export const extensionManager = new class ExtensionManager {
       }
       catch (error) {
         console.error('downloadExtensions error', error)
-        return Promise.reject(new Error(`${item.pluginName} 插件下载失败`))
+        return Promise.reject(new Error($t('扩展 {pluginName} 下载失败', { pluginName: item.pluginName })))
       }
     })
     return Promise.allSettled(promiseArr)

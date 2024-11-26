@@ -39,7 +39,10 @@ const baseOssConfig = {
   bucket: isProd ? 'lumibrowser' : 'lumibrowser-test',
 }
 
-zip.addLocalFolder(webPath, '')
+// 将 web 资源包添加到 zip 中, 排除 .map 文件
+zip.addLocalFolder(webPath, '', (filename) => {
+  return !filename.endsWith('.map')
+})
 
 async function getOssToken(token = 'nfnlQ4tl2UVcKKUh1710868857530') {
   const response = await fetch(`${baseUrl}/fb-admin-api/admin_get_oss_credential`, {
