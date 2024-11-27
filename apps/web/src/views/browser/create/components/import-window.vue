@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { read, utils } from 'xlsx'
+import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -70,6 +71,7 @@ async function handleBeforeUpload(rawFile: any) {
     onlyErrorToast(-1, $t('文件大小不能超过 5MB'))
     return
   }
+  fileAnalyzeError.value = null
 
   const fileName = rawFile.name
   const rowStartNum = 5
@@ -99,23 +101,35 @@ async function handleBeforeUpload(rawFile: any) {
     return prev
   }, [])
 
-  const fileAnalyzeData = {
-    fileName,
-    excelData,
-  }
-
   if (excelData.length === 0) {
     onlyErrorToast(-1, $t('导入的内容不能为空'))
     return
   }
 
-  fileData.status = true
-  fileData.name = fileName
-  fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
-  fileData.successCount = excelData.length
-  emit('importSuccess', fileAnalyzeData)
-  showToast(0, `${fileData.successCount} ${$t('个窗口已成功导入')}`)
-  return false
+  const fileAnalyzeData = {
+    fileName,
+    excelData,
+  }
+
+  try {
+    const { code, msg } = await API.window.userAnalysisWindowInfoCreate(fileAnalyzeData)
+
+    if (code === 0) {
+      fileData.status = true
+      fileData.name = fileName
+      fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
+      fileData.successCount = excelData.length
+      showToast(0, $t('{count} 个窗口已成功导入', { count: fileData.successCount }))
+      emit('importSuccess', fileAnalyzeData)
+    }
+    else {
+      fileData.status = false
+      fileAnalyzeError.value = msg
+    }
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
 </script>
 
@@ -142,7 +156,7 @@ async function handleBeforeUpload(rawFile: any) {
       <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
     </div>
     <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full mt-2" type="success" :title="$t('上传成功')" :closable="false" />
-    <RxAlert v-if="fileAnalyzeError" class="w-full mt-2" type="error" :closable="false">
+    <RxAlert v-if="fileAnalyzeError" class="w-full mt-2" type="error" @close="fileAnalyzeError = null">
       <template #content>
         <div class="whitespace-pre-wrap">
           {{ fileAnalyzeError.join('\n') }}

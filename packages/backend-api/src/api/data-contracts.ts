@@ -5199,6 +5199,166 @@ export interface UserGetWindowStatusInfoCreateData {
   msg: string;
 }
 
+export interface UserAnalysisWindowInfoCreatePayload {
+  /** 文件名，str，必传 */
+  fileName: string;
+  /** excel数据 */
+  excelData: {
+    /** 行号，int，必传 */
+    rowNum?: number;
+    /** 窗口名称，str，必传 */
+    windowName?: string;
+    /** 分组名称, str，非必传 */
+    groupName?: string;
+    /** 账号平台，str，非必传 */
+    platformUrl?: string;
+    /** 用户名，str，非必传 */
+    platformUserName?: string;
+    /** 密码，str，非必传 */
+    platformPassword?: string;
+    /** 2fa，str，非必传 */
+    efa?: string;
+    cookie?: {
+      name?: string;
+      path?: string;
+      domain?: string;
+    }[];
+    defaultOpenUrl?: string;
+    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
+    proxyMethod?: string;
+    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
+    proxyInfo?: string;
+    /** 刷新URL， str, 非必传 */
+    refreshUrl?: string;
+    /** 窗口备注，str，非必传 */
+    windowRemark?: string;
+    /** User Agent，str, 非必传 */
+    userAgent?: string;
+    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
+    windowSize?: string;
+  }[];
+  fingerDetail: {
+    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
+    font?: string;
+    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    canvasValue?: string;
+    /** 取 1000-99999 之间的随机整数 */
+    canvasValueV2?: string;
+    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    webGLValue?: string;
+    /** webGLMeta自定义时，webGL厂商值, 非必传 */
+    webGLManufacturer?: string;
+    /** webGLMeta自定义时，webGL渲染值, 非必传 */
+    webGLRender?: string;
+    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
+    audioContextValue?: string;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    speechVoicesValue?: object;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    clientRectsValue?: object;
+    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
+    mediaDevice?: boolean;
+    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
+    mediaDeviceList?: string[];
+    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
+    deviceName?: string;
+    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
+    macAddr?: string;
+  }[];
+  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
+  isLanguageBaseIp: boolean;
+  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  language: string;
+  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isDisplayLanguageBaseIp: boolean;
+  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  displayLanguage: string;
+  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isTimeZone: boolean;
+  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
+  timeZone: string;
+  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
+  position: number;
+  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
+  isPositionBaseIp: boolean;
+  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
+  longitude: string;
+  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
+  latitude: string;
+  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
+  precisionPos: string;
+  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
+  forbidAudio: boolean;
+  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
+  forbidImage: number;
+  /** 自定义加载图片尺寸，str, 非必传 */
+  forbiddenPictureSize: string;
+  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
+  forbidMedia: boolean;
+  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  isDisplayName: boolean;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+}
+
+export interface UserAnalysisWindowInfoCreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -6427,19 +6587,38 @@ export interface UserGetProjectInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
-      /** 项目ID */
+      /**
+       * 项目ID
+       * 项目ID
+       */
       project_id?: number;
+      topTime?: string;
       user_info?: {
-        /** 权限 */
+        /**
+         * 权限
+         * role 权限： Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1)  Manager(管理者,枚举：2) Owner(拥有者,枚举：3)
+         */
         role: number;
-        /** 用户ID */
+        /**
+         * 用户ID
+         * 用户ID
+         */
         userId: number;
-        /** 用户名 */
+        /**
+         * 用户名
+         * 用户名
+         */
         userName: string;
-        /** 邮箱 */
+        /**
+         * 邮箱
+         * 邮箱
+         */
         email: string;
       }[];
-      /** 项目名称 */
+      /**
+       * 项目名称
+       * 项目名称
+       */
       projectName?: string;
     }[];
   };

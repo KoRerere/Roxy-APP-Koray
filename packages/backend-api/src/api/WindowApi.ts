@@ -22,6 +22,8 @@ import {
   UserAddWindowInfoV2CreatePayload,
   UserAddWindowTemplateInfoCreateData,
   UserAddWindowTemplateInfoCreatePayload,
+  UserAnalysisWindowInfoCreateData,
+  UserAnalysisWindowInfoCreatePayload,
   UserBatchUpdateWindowTableRowsCreateData,
   UserBatchUpdateWindowTableRowsCreatePayload,
   UserBatchWindowInfoCreateData,
@@ -1010,6 +1012,24 @@ export class WindowApi<SecurityDataType = unknown> {
   userGetWindowStatusInfoCreate = (data: UserGetWindowStatusInfoCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserGetWindowStatusInfoCreateData, any>({
       path: `/user_get_window_status_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAnalysisWindowInfoCreate
+   * @summary 解析窗口 (新版浏览器使用)
+   * @request POST:/user_analysis_window_info
+   * @response `200` `UserAnalysisWindowInfoCreateData`
+   */
+  userAnalysisWindowInfoCreate = (data: UserAnalysisWindowInfoCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAnalysisWindowInfoCreateData, any>({
+      path: `/user_analysis_window_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,
