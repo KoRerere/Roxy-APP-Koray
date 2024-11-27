@@ -80,6 +80,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     android: 'platforms/rx_os_android',
     ios: 'platforms/rx_os_iOS',
   } as const
+  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
 
   const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
 
@@ -94,17 +95,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
-      id: data.moduleId, // 代理 id
-      host: data.host, // 代理主机
-      ipType: data.ipType, // 网络协议
-      port: data.port, // 代理端口
-      proxyCategory: data.proxyCategory, // 代理类型
-      proxyPassword: data.proxyPassword, // 代理密码
-      proxyUserName: data.proxyUserName, // 代理账号
-      refreshUrl: data.refreshUrl, // 刷新URL
-      lastCountry: data.lastCountry, // 出口国家
-      lastCity: data.lastCity, // 出口城市
-      checkChannel: data.checkChannel, // 查询渠道
+      id: data.moduleId,
+      proxyCategory: data.proxyCategory,
+      checkChannel: data.checkChannel,
+      ...Object.fromEntries(proxyInfoKeys.map(key => [key, data[key]])),
     }]
     : []
 
@@ -217,7 +211,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       switch: !!proxyInfoList.length,
       formatValue: (input: any, _inputs: any, formData: any) => {
         const { id, ...value } = (input.switch && input.value[0]) || {
-          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+          ...createDefaultObject(proxyInfoKeys, ''),
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }

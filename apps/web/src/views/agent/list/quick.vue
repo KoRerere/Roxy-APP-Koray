@@ -128,10 +128,9 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
     setOperationLoading(item, operateName, true)
     return async () => {
       const checkResult = await checkProxy(toRaw(item))
-      const _checkResult = toRaw(checkResult)
       setOperationLoading(item, operateName, false)
-      Object.assign(item, _checkResult)
-      return { ..._checkResult, id: item.id }
+      Object.assign(item, checkResult)
+      return { ...checkResult, id: item.id }
     }
   })
 

@@ -73,7 +73,7 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
       checkeResult.loading = false
       dirId && window.electronAPI.send('proxy:delRoxynetProxy', dirId)
     }
-    return checkeResult
+    return toRaw(checkeResult)
   }
 
   return [testProxy, checkeResult]

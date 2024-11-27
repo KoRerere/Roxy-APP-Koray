@@ -3,7 +3,7 @@ import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+// import { RxSvgIcon } from '/@/components/rx-icon/'
 import { getRoleLabelMap, Membership, Role } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
@@ -76,7 +76,7 @@ const filters = reactive({
     tableRef.value?.refresh({ role: filters.value })
   },
   resetFilters() {
-    filters.value = -1
+    filters.value = undefined
     filters.onChange()
   },
 })

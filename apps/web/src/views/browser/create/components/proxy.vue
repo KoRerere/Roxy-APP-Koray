@@ -90,8 +90,8 @@ function onChoose(data: any) {
 
 async function testProxy(data: any, index: number) {
   checkIndex.value = index
-  await checkProxy(toRaw(data))
-  Object.assign(data, checkResult)
+  const result = await checkProxy(toRaw(data))
+  Object.assign(data, result)
 }
 
 function modifyProxyCount(item: any) {

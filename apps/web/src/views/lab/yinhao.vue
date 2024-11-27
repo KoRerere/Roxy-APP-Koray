@@ -1,48 +1,35 @@
 <script lang="ts" setup>
-function parseIPv6(input) {
-  const regex = /^(https?|socks5):\/\/\((.*?)\):([^:\[\]\{\}]+)(:([^:\[\]\{\}]+))?(:([^:\[\]\{\}]+))?(?:\[[^\]]*\])?(?:\{[^\}]*\})?$/
-
-  const match = input.match(regex)
-
-  if (!match) {
-    return {
-      error: 'Invalid format',
-    }
-  }
-
-  const protocol = match[1]
-  const ipv6 = match[2]
-  const port = match[3]
-  const username = match[5] || null
-  const password = match[7] || null
-
-  return {
-    protocol,
-    ipv6,
-    port,
-    username,
-    password,
-  }
-}
-
-function test() {
-  // 测试用例
-  const testCases = [
-    '*http://(2001:db8:2de:0:0:0:0:e13):port:scvr:777[refreshUrl]{备注}',
-    'https://(2001:db8:2de:0:0:0:0:e13):port:mmmm:123',
-    '*http://(2001:db8:2de:0:0:0:0:e13):port:ddd:111[refreshUrl]',
-    'socks5://(2001:db8:2de:0:0:0:0:e13):port:rrr:222{备注}',
-    '*https://(2001:db8:2de:0:0:0:0:e13):port[refreshUrl]{备注}',
-  ]
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}:`, parseIPv6(testCase))
-  })
-}
+const customers = ref(Array.from({ length: 100 }).map((_, i) => ({
+  id: i,
+  name: 'James Butt',
+  country: {
+    name: 'Algeria',
+    code: 'dz',
+  },
+  company: 'Benton, John B Jr',
+  date: '2015-09-13',
+  status: 'unqualified',
+  verified: true,
+  activity: 17,
+  representative: {
+    name: 'Ioni Bowcher',
+    image: 'ionibowcher.png',
+  },
+  balance: 70663,
+})))
 </script>
 
 <template>
-  <div class="w-50">
-    <RxButton label="测试" @click="test" />
+  <div class="h-100">
+    <DataTable :value="customers" resizable-columns column-resize-mode="expand" scrollable scroll-height="flex">
+      <Column field="id" header="Id" />
+      <Column field="name" header="Name" />
+      <Column field="country.name" header="Country" />
+      <Column field="date" header="Date" />
+      <!-- <Column field="company" header="Company" footer="Company" /> -->
+      <!-- <Column field="status" header="Status" footer="Status" /> -->
+      <!-- <Column field="activity" header="Activity" footer="Activity" /> -->
+      <Column field="representative.name" header="Representative" />
+    </DataTable>
   </div>
 </template>

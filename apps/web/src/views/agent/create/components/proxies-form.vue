@@ -18,7 +18,7 @@ const [checkProxy, checkeResult] = useCheckProxy({ silence: true })
 const rxAlertRef = useTemplateRef('rxalert')
 const original = defineModel<any>('original')
 
-original.value = { ...checkeResult, ...original.value }
+original.value = { ...toRaw(checkeResult), ...original.value }
 
 const visible = ref(false)
 
@@ -26,10 +26,10 @@ async function testProxy() {
   try {
     const data = getFormData(props.inputs)
     visible.value = false
-    await checkProxy(toRaw(data))
-    original.value = { ...original.value, ...checkeResult }
+    const result = await checkProxy(toRaw(data))
+    original.value = { ...original.value, ...result }
 
-    if (!checkeResult.error) {
+    if (!result.error) {
       visible.value = true
       nextTick(() => {
         rxAlertRef.value?.$el.scrollIntoView({ behavior: 'smooth' })
