@@ -62,6 +62,7 @@ const tabsValue = ref('single')
 const windowName = ref($t('未命名窗口'))
 const maxWindowCount = ref()
 const fileAnalyzeData = ref()
+const fileAnalyzeError = ref()
 const rawMainSetting: any = ref([])
 const mainSetting: any = ref([])
 const extraSetting: any = ref([])
@@ -257,9 +258,11 @@ async function importProfile(params: any) {
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
   const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
   loading.value = false
-  showToast(code, msg)
   if (code === 0) {
     router.back()
+  }
+  else {
+    fileAnalyzeError.value = msg
   }
 }
 // ===========================================
@@ -387,7 +390,7 @@ async function deleteTemplate(data: any) {
               {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
             </div>
           </div>
-          <import-window v-show="tabsValue === 'import'" @import-success="importSuccess" />
+          <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
         <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>

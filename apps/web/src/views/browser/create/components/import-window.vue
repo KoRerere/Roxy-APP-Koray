@@ -1,12 +1,11 @@
 <script lang="ts" setup>
 import { read, utils } from 'xlsx'
+import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
-
-const [showToast, onlyErrorToast] = useResponseToast()
 
 const nameMap = {
   '窗口名称': 'windowName',
@@ -21,7 +20,12 @@ const nameMap = {
   '刷新URL': 'refreshUrl',
   '窗口备注': 'windowRemark',
   'User Agent': 'userAgent',
-}
+} as const
+
+type Data = Partial<Record<typeof nameMap[keyof typeof nameMap], any>> & { rowNum: number }
+const [showToast, onlyErrorToast] = useResponseToast()
+
+const fileAnalyzeError = defineModel<any>()
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
@@ -29,7 +33,7 @@ function fileDragover(event: Event) {
   event.preventDefault()
 }
 
-function fileDrop(event: Event) {
+function fileDrop(event: any) {
   event.preventDefault()
   const file: File = event.dataTransfer.files[0]
   if (!file || !Object.keys(ExcelAccept).includes(file.type)) {
@@ -40,7 +44,7 @@ function fileDrop(event: Event) {
 }
 
 async function chooseFile() {
-  const file = await window.showOpenFilePicker({
+  const file = await (window as any).showOpenFilePicker({
     types: [
       {
         description: 'Excel Files',
@@ -49,8 +53,7 @@ async function chooseFile() {
     ],
     excludeAcceptAllOption: true,
     multiple: false,
-  })
-    .then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
+  }).then((handleFile: FileSystemFileHandle[]) => handleFile[0].getFile())
 
   handleBeforeUpload(file)
 }
@@ -73,26 +76,23 @@ async function handleBeforeUpload(rawFile: any) {
   const workbook = read(await rawFile.arrayBuffer())
   const result = utils.sheet_to_json<Record<string, any>>(workbook.Sheets[workbook.SheetNames[0]])
   const excelData = result.slice(3).reduce((prev, curr, index) => {
-    const obj = {
+    const obj: Data = {
       rowNum: index + rowStartNum,
     }
     Object.entries(curr).forEach(([key, value]) => {
-      if (nameMap[key] === 'cookie' && value) {
+      const keyName = nameMap[key as keyof typeof nameMap]
+
+      if (keyName === 'cookie' && value) {
         try {
           const res = JSON.parse(value)
-          if (Array.isArray(res)) {
-            obj[nameMap[key]] = res
-          }
-          else {
-            obj[nameMap[key]] = []
-          }
+          obj[keyName] = Array.isArray(res) ? res : []
         }
         catch (error) {
           console.error('cookie parse error', error)
         }
       }
       else {
-        obj[nameMap[key]] = value
+        obj[keyName] = value
       }
     })
     prev.push(obj)
@@ -141,9 +141,14 @@ async function handleBeforeUpload(rawFile: any) {
       </div>
       <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
     </div>
-    <Message v-if="fileData.status" class="upload-message" severity="success" icon="pi pi-check-circle">
-      {{ $t('上传成功') }}
-    </Message>
+    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full mt-2" type="success" :title="$t('上传成功')" :closable="false" />
+    <RxAlert v-if="fileAnalyzeError" class="w-full mt-2" type="error" :closable="false">
+      <template #content>
+        <div class="whitespace-pre-wrap">
+          {{ fileAnalyzeError.join('\n') }}
+        </div>
+      </template>
+    </RxAlert>
   </div>
 </template>
 
@@ -198,9 +203,5 @@ async function handleBeforeUpload(rawFile: any) {
     color: var(--Colors-Text-text-primary, #171c1f);
     font-weight: 500;
   }
-}
-
-.upload-message {
-  margin-top: var(--spacing-lg, 8px);
 }
 </style>
