@@ -87,6 +87,8 @@ const options: Configuration = {
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',
     uninstallerSidebar: './buildResources/uninstallerSidebar.bmp',
+    // 引入自定义 NSIS 脚本
+    // include: './build/installer.nsh',
     oneClick: false,
     allowElevation: true,
     allowToChangeInstallationDirectory: true,

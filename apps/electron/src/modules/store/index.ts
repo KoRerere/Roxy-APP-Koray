@@ -2,6 +2,7 @@ import { debounce } from 'es-toolkit'
 import { readFile, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
+import { messages, systemLanguage } from '/@/locales'
 import { createTray } from '/@/modules/app/tray'
 import { fileExists } from '/@/utils/file'
 
@@ -112,9 +113,14 @@ export async function setupStore() {
   try {
     const config = await readFile(appConfig.configFile, 'utf-8')
     Object.assign(store, JSON.parse(config))
+    await fetchUserConfig()
+
+    // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
+    if (!messages[store.language]) {
+      store.language = messages[systemLanguage] ? systemLanguage : 'en'
+    }
   }
   catch (error) {
     console.error('setupStore', error)
   }
-  await fetchUserConfig()
 }

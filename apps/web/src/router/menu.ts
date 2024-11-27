@@ -125,7 +125,7 @@ export const menuRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'api-keys',
+        name: 'api-keys-page',
         meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/api-keys'),
       },
