@@ -56,7 +56,7 @@ router.post('/create', async (req, res) => {
   }
 
   try {
-    const data = await genRandomFingerprint(params)
+    const [data] = await genRandomFingerprint(params)
 
     const result = await API.window.userAddWindowInfoV2Create({
       ...params,
@@ -67,6 +67,7 @@ router.post('/create', async (req, res) => {
         ...commonHeaders,
       },
     })
+
     res.json(result)
   }
   catch (error) {

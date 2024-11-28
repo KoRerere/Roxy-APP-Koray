@@ -69,16 +69,22 @@ function getSpeechSynthesis() {
 export type RandomFingerprint = ReturnType<typeof genRandomFingerprint>
 
 /** 生成随机指纹 */
-export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePayload, count = 1) {
+export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePayload, count = 1): Promise<any[]> {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = payload
 
-  const [{ data: uaWebgls }, { data: deviceNames }, { data: macAddrs }] = await Promise.all([
+  const result = await Promise.all([
     API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }),
     API.window.userGetDeviceNameV2List({ os, count }),
     macInfo
       ? API.window.userGetMacAddrV2List({ count })
       : { data: [{ macAddr: await getMacAddress() }] },
   ])
+  const unSuccessItem = result.find(n => n.code !== 0)
+  if (unSuccessItem) {
+    return Promise.reject(new Error(unSuccessItem.msg))
+  }
+
+  const [{ data: uaWebgls }, { data: deviceNames }, { data: macAddrs }] = result
 
   const fingerDetail = Array.from({ length: count }).map((_, index) => {
     return {

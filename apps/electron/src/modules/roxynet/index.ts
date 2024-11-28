@@ -20,10 +20,10 @@ export async function startRoxynet() {
   console.log('startRoxynet systemProxySwitch:', store.systemProxySwitch)
   console.log('startRoxynet v2raySwitch:', store.v2raySwitch)
 
-  if (!store.systemProxySwitch) {
-    console.log('systemProxySwitch is off')
-    return
-  }
+  // if (!store.systemProxySwitch) {
+  //   console.log('systemProxySwitch is off')
+  //   return
+  // }
 
   const isExist = await fileExists(appConfig.roxynetBinPath)
   if (!isExist) {
@@ -41,10 +41,10 @@ export async function startRoxynet() {
   const systemProxy = await getSystemProxy()
   console.log('systemProxy', systemProxy)
 
-  if (!systemProxy) {
-    console.log('没有获取到系统代理，停止拉起 roxynet')
-    return
-  }
+  // if (!systemProxy) {
+  //   console.log('没有获取到系统代理，停止拉起 roxynet')
+  //   return
+  // }
 
   const launchParams = {
     system_proxy: {

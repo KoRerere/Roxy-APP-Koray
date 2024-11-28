@@ -170,7 +170,7 @@ ipcMain.on('app:saveSoftConfig', (config) => {
     }
     else {
       // 这里不需要关闭 roxynet，因为关闭 roxynet 会导致已打开的窗口的系统代理失效
-      stopRoxynet()
+      // stopRoxynet()
     }
   }
   else if (store.v2raySwitch !== originV2raySwitch) {

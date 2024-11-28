@@ -28,6 +28,7 @@ const getDefaultCheckChannel = () => store.ipChecker || 'http://iprust.io/ip.jso
 
 const protocolCheckMap = {
   SOCKS5: checkSocks5Proxy,
+  SSH: checkSocks5Proxy,
   HTTP: checkHttpProxy,
   HTTPS: checkHttpsProxy,
   noproxy: noProxy,
@@ -78,7 +79,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   console.log(`systemProxySwitch`, systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
   const systemProxyAddress = await getSystemProxy()
-  const isUseSystemProxy = getRoxynetProcess() && systemProxySwitch && systemProxyAddress
+  const isUseSystemProxy = proxyCategory === 'SSH' || getRoxynetProcess() && systemProxySwitch && systemProxyAddress
 
   if (isUseSystemProxy) {
     await startRoxynet()
@@ -110,7 +111,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   }
   else if (isUseSystemProxy) {
     if (proxyCategory !== 'SOCKS5') {
-      __protocol = 'HTTP'
+      __protocol = proxyCategory === 'SSH' ? 'SOCKS5' : 'HTTP'
     }
   }
   else if (isNoProxy && systemProxyAddress) {
