@@ -172,7 +172,7 @@ export function filterFieldByValue(obj: object, filter: (value: any) => boolean 
   return Object.fromEntries(Object.entries(obj).filter(([_, v]) => filter(v)))
 }
 
-export function initInputVisible(value: any, assert: boolean, def: boolean) {
+export function initInputVisible(value: any, assert: any, def: boolean) {
   return value !== undefined ? value === assert : def
 }
 

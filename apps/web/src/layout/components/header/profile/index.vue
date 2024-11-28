@@ -114,7 +114,7 @@ function toggle(event: Event) {
 
 <template>
   <div class="settings cursor-pointer" @click="toggle">
-    <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="14" />
+    <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12" />
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 

@@ -46,6 +46,8 @@ import {
   UserDelWindowInfoApiCreatePayload,
   UserDelWindowInfoCreateData,
   UserDelWindowInfoCreatePayload,
+  UserGetBrowserVersionInfoListData,
+  UserGetBrowserVersionInfoListParams,
   UserGetDefaultWindowTableRowsListData,
   UserGetDeviceNameListData,
   UserGetDeviceNameListParams,
@@ -1033,6 +1035,23 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetBrowserVersionInfoList
+   * @summary 根据os和osVersion获取浏览器版本
+   * @request GET:/user_get_browserVersion_info
+   * @response `200` `UserGetBrowserVersionInfoListData`
+   */
+  userGetBrowserVersionInfoList = (query: UserGetBrowserVersionInfoListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetBrowserVersionInfoListData, any>({
+      path: `/user_get_browserVersion_info`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

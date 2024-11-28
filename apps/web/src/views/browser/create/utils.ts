@@ -167,6 +167,7 @@ export function getDefaultTemplate() {
     os: 'Windows',
     osVersion: '11',
     coreVersion: '125',
+    browserVersion: null,
     isLanguageBaseIp: true,
     language: 'sq-AL',
     isDisplayLanguageBaseIp: true,

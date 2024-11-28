@@ -230,6 +230,9 @@ async function operationHandler(operate: any, data: any) {
     case 'clearCache':
       onClearCache(data)
       break
+    case 'exportProfile':
+      showToast(0, '开发中...')
+      break
     case 'delete':
       await deleteProfile(datas, ids)
       break

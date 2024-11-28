@@ -1,10 +1,15 @@
+import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
 import { API } from '/@/api'
+import { UaStrictMode } from '/@/enums'
 import { $t } from '/@/locales'
+import { useUserStore } from '/@/stores/user'
 import { checkCookieFormat, createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
 
+const userStore = useUserStore()
+
 async function setUaWebgl(inputsGroup: any) {
-  const { os, osVersion, coreVersion } = getFormDataByList(inputsGroup)
-  const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, count: 1 })
+  const { os, osVersion, coreVersion, browserVersion } = getFormDataByList(inputsGroup)
+  const { code, data } = await getUaWebgl({ os, osVersion, coreVersion, browserVersion, count: 1 })
   if (code === 0) {
     setInputValueByFormData(inputsGroup, data[0])
   }
@@ -43,6 +48,11 @@ function getMacAddr(params: any) {
     : window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
 }
 
+async function getBrowserVersion(params: UserGetBrowserVersionInfoListParams) {
+  const { data } = await API.window.userGetBrowserVersionInfoList(params)
+  return data.map(item => ({ label: `Chrome ${item.browserVersion}`, value: item.browserVersion }))
+}
+
 const defaultFingerOptions = {
   count: 1,
   preview: true,
@@ -73,26 +83,33 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
 }
 
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
-  const os_map = {
+  const [$dict_map, userConfig] = await Promise.all([getDictMap(), userStore.getUserConfig()])
+
+  const osIconMap = {
     windows: 'platforms/rx_os_windows',
     linux: 'base/logo',
     macos: 'platforms/rx_os_macOS',
     android: 'platforms/rx_os_android',
     ios: 'platforms/rx_os_iOS',
   } as const
-  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
 
-  const userOs = (data?.os || getUserAgentOs()).toLocaleLowerCase()
-
-  const $dict_map = await getDictMap()
-
-  const os = $dict_map.os.map(({ label, ...item }: any) => ({ ...item, label, icon: os_map[(label.toLocaleLowerCase()) as keyof typeof os_map] }))
-
-  const osVersion = Object.fromEntries(Object.keys(os_map).map((key: string) => {
-    const version = $dict_map[`osversion_${key}`].map((item: any) => ({ ...item, label: `${key} ${item.label}` }))
-    return [key, version]
+  const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({
+    ...item,
+    label,
+    icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
+    _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`].map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
   }))
 
+  const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
+  const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
+
+  // 非严格模式获取浏览器版本选项
+  const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
+    ? await getBrowserVersion({ os: osValue.value, osVersion: osVersionValue.value })
+    : []
+  const browserVersionValue = data.browserVersion?.split(',') ?? browserVersionOptions.map(item => item.value)
+
+  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
       id: data.moduleId,
@@ -122,15 +139,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         {
           type: 'select',
           name: 'os',
-          value: os.find((item: any) => item.value.toLocaleLowerCase() === userOs),
-          options: os,
+          value: osValue,
+          options: osOptions,
           filter: false,
           change: async (item: any) => {
             const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
-              const osVersionOptions = osVersion[item.value.value.toLocaleLowerCase()]
-              osVersionInput.options = osVersionOptions
-              osVersionInput.value = osVersionOptions[0]
+              osVersionInput.options = item.value._versionOptions
+              osVersionInput.value = item.value._versionOptions[0]
               osVersionInput.change?.(osVersionInput)
             }
           },
@@ -142,23 +158,27 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         {
           type: 'select',
           name: 'osVersion',
-          value: osVersion[userOs]?.find((item: any) => item.value === data.osVersion) ?? osVersion[userOs]?.[0],
-          options: osVersion[userOs],
-          // 特殊处理，会根据所选系统匹配不同的系统版本，此处用于缓存
-          optionGroup: osVersion,
+          value: osVersionValue,
+          options: osValue?._versionOptions,
           filter: false,
           change: async (item: any) => {
             const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')
 
             if (item.value) {
-              const [os, version] = item.value.label.split(' ')
-              const coreVersionOptions = os.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version.at(0))
-                ? $dict_map.coreVersion.filter((item: any) => item.value === '109')
+              const { _osValue, value: version } = item.value
+              const coreVersionOptions = _osValue.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version.at(0))
+                ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
                 : $dict_map.coreVersion
 
               if (coreVersionInput!.options.length !== coreVersionOptions.length) {
                 coreVersionInput!.options = coreVersionOptions
                 coreVersionInput!.value = coreVersionOptions[0]
+              }
+              if (userConfig?.uaModeSwitch === UaStrictMode.close) {
+                const options = await getBrowserVersion({ os: _osValue, osVersion: version })
+                const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
+                browserVersionInput.options = options
+                browserVersionInput.value = options.map(item => item.value)
               }
             }
 
@@ -182,6 +202,26 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       change: async (item: any) => {
         if (item.value) {
           await setUaWebgl(inputsGroup)
+        }
+      },
+    },
+    {
+      type: 'multiSelect',
+      label: $t('浏览器版本'),
+      placeholder: $t('无指定版本，默认使用严格模式'),
+      name: 'browserVersion',
+      value: browserVersionValue,
+      _oldValue: browserVersionValue, // 用于比对数据是否有变化
+      options: browserVersionOptions,
+      maxSelectedLabels: 4,
+      selectedItemsLabel: $t('已选择了 {count} 个浏览器版本', { count: '{()}' }),
+      visible: initInputVisible(userConfig?.uaModeSwitch, UaStrictMode.close, false),
+      formatValue: (input: any) => input.value.join(','),
+      onHide: () => {
+        const input = findInputByName(windowInputs, 'browserVersion')
+        if (input.value.length !== input._oldValue.length) {
+          input._oldValue = input.value.slice()
+          setUaWebgl(inputsGroup)
         }
       },
     },

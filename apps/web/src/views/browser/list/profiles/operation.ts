@@ -319,7 +319,6 @@ export function getOperation(_params: any = {}) {
     {
       power: !role.isViewer,
       separator: true,
-      multiple: true,
     },
     {
       name: 'editCookies',
@@ -342,8 +341,16 @@ export function getOperation(_params: any = {}) {
       power: !role.isViewer,
     },
     {
+      name: 'exportProfile',
+      label: $t('导出窗口'),
+      icon: 'base/rx_ic_export',
+      power: !role.isViewer,
+      multiple: true,
+    },
+    {
       power: !role.isViewer,
       separator: true,
+      multiple: true,
     },
     {
       name: 'delete',

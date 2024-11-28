@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import InputDate from './input-date.vue'
 import InputLabel from './input-label.vue'
+import RxInputMultiselect from './rx-input-multiselect.vue'
 import RxInputNumber from './rx-input-number.vue'
 import InputRadio from './rx-input-radio.vue'
 import RxInputSelect from './rx-input-select.vue'
@@ -30,7 +31,7 @@ defineEmits(['change'])
     </slot>
     <slot name="input">
       <div class="flex-1">
-        <MultiSelect v-if="type === 'multiSelect'" class="flex-1" v-bind="$attrs" @change="$emit('change')" />
+        <RxInputMultiselect v-if="type === 'multiSelect'" class="w-full" v-bind="$attrs" @change="$emit('change')" />
         <RxInputSelect v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <InputRadio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
         <InputDate v-if="type === 'date'" class="w-full" v-bind="$attrs" />

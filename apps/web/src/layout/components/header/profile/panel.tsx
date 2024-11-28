@@ -1,12 +1,12 @@
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
-import { I18nT } from 'vue-i18n'
+// import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { settingAppearance } from '/@/enums'
+import { SettingAppearance, UaStrictMode } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
@@ -206,9 +206,9 @@ export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
       //         filter: false,
       //         optionValue: 'value',
       //         options: [
-      //           { label: $t('系统'), value: `${settingAppearance.system}` },
-      //           { label: $t('#Light'), value: `${settingAppearance.light}` },
-      //           { label: $t('#Dark'), value: `${settingAppearance.dark}` },
+      //           { label: $t('系统'), value: `${SettingAppearance.system}` },
+      //           { label: $t('#Light'), value: `${SettingAppearance.light}` },
+      //           { label: $t('#Dark'), value: `${SettingAppearance.dark}` },
       //         ],
       //       },
       //       formatValue: (item: Items) => Number(item.value),
@@ -220,6 +220,26 @@ export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
       //     },
       //   ],
       // },
+      {
+        subtitle: $t('窗口'),
+        items: [
+          {
+            label: $t('UA 严格模式'),
+            text: $t('关闭此选项后，可以自定义浏览器的版本。一般情况下我们推荐保持该选项开启。'),
+            name: 'uaModeSwitch',
+            value: data?.uaModeSwitch ?? UaStrictMode.open,
+            props: {
+              trueValue: UaStrictMode.open,
+              falseValue: UaStrictMode.close,
+            },
+            component: ({ item, ...props }: { item: Items, props: any }) => {
+              return (
+                <RxToggleSwitch {...item.props} {...props} onChange={() => saveUserConfig(item)}></RxToggleSwitch>
+              )
+            },
+          },
+        ],
+      },
       {
         subtitle: $t('本地设置'),
         items: [
