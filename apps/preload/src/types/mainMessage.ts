@@ -53,4 +53,6 @@ export interface MainMessage {
   'app:resource-update': (payload: ResourceUpdateMessage) => void
   /** APP 启动时的消息 */
   'app:launch-message': (payload: string) => void
+  /** 内核列表有更新时，发出 */
+  'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
 }

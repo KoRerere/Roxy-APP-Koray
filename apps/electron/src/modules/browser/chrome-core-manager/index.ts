@@ -78,6 +78,11 @@ export const chromeCoreManager = new class ChromeCoreManager {
     })
     console.log('user_get_core_upgrade', result.data)
     this.availableCoreList = result.data?.rows || []
+
+    if (this.availableCoreList.length) {
+      ipcMain.send('app:core-list-update', await this.getCoreList())
+    }
+
     return result
   }
 

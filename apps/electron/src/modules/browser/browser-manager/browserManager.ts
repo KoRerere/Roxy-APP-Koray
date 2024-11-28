@@ -7,6 +7,7 @@ import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
+import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 
 export class BrowserManager {
   /** 正在打开中的浏览器集合 */
@@ -26,13 +27,14 @@ export class BrowserManager {
     // 这里需要延迟到下一次事件循环，因为浏览器启动是异步的
     await setTimeout()
     console.log(`BrowserManager ${dirId} === 获取已打开的浏览器`)
-    console.log(this.openedBrowserMap.size)
+    console.log('openedBrowserMap size:', this.openedBrowserMap.size)
     return this.openedBrowserMap.get(dirId)
   }
 
   /** 启动浏览器 */
   async launch(winInfo: WindowItemType) {
     const dirId = winInfo.dirId
+    console.log(`BrowserManager ${dirId} === 启动浏览器`)
     if (!dirId) {
       throw new Error('dirId 不能为空')
     }
@@ -77,16 +79,17 @@ export class BrowserManager {
     return browserItem.launchInfo
   }
 
+
   /** 批量启动浏览器 */
   async batchLaunch(dirIds: string[]) {
+    console.log(`BrowserManager === 批量启动浏览器`, dirIds)
     const isNeedBatchReq = dirIds.length > 8
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
 
-    const commonParams = { page_index: 1, page_size: 500, isDelete: 0 }
-    const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: firstBatch.join(',') }).then(res => res.data.rows)
-    const secondPromise = secondBatch.length ? API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: secondBatch.join(',') }).then(res => res.data.rows) : []
-
+    const winInfoList = await this.getWindowList(firstBatch)
+    const secondPromise = secondBatch.length ? this.getWindowList(secondBatch) : []
+    console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
     for (const winInfo of winInfoList) {
       await this.launch(winInfo).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
@@ -189,6 +192,21 @@ export class BrowserManager {
     })
 
     await Promise.all(outPromises)
+  }
+
+  /** 获取窗口列表 */
+  private async getWindowList(dirIds: string[]) {
+    const commonParams = { page_index: 1, page_size: 500, isDelete: 0 }
+    const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
+      .then(res => res.data.rows)
+      .catch((error) => {
+        console.error(`BrowserManager === 获取窗口信息失败`, error)
+        dirIds.forEach(dirId => {
+          sendErrorMessage($t('获取窗口信息失败'), dirId, error)
+        })
+        return Promise.reject(error)
+      })
+    return winInfoList
   }
 
   /** 每隔 5分钟 定时同步窗口状态 */

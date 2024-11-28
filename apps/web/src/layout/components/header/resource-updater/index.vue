@@ -55,6 +55,8 @@ onMounted(() => {
   checkForUpdates()
 })
 
+electronAPI.on('app:core-list-update', getKernelList)
+
 async function getKernelList() {
   const list = await window.electronAPI.send('app:getCoreList')
   console.log('getKernelList', list)
