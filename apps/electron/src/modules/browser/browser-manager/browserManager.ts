@@ -198,7 +198,12 @@ export class BrowserManager {
   private async getWindowList(dirIds: string[]) {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0 }
     const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
-      .then(res => res.data.rows)
+      .then(res => {
+        if (res.code !== 0) {
+          throw new Error(res.msg)
+        }
+        return res.data.rows
+      })
       .catch((error) => {
         console.error(`BrowserManager === 获取窗口信息失败`, error)
         dirIds.forEach(dirId => {

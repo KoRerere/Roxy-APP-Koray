@@ -42,6 +42,11 @@ export class BrowserItem {
     return join(this.userDataDir, 'lumi.conf')
   }
 
+  /** 浏览器关闭后，标签页保存的文件路径 */
+  get roxyTabsPath() {
+    return join(this.userDataDir, 'roxy_tabs')
+  }
+
   /** lumiLogin 文件路径 */
   get lumiLoginPath() {
     return join(this.userDataDir, 'Default', 'LumiLogin')
