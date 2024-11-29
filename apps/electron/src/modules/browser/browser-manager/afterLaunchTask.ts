@@ -17,8 +17,8 @@ export class AfterLaunchTask {
     this.handleBrowserEvent()
   }
 
-  /** 获取需要同步的数据 */
-  async getUploadData() {
+  /** 获取标签页 */
+  async getDefaultOpenUrl() {
     // 同步 浏览器已经打开tabs标签
     let defaultOpenUrl = []
     try {
@@ -28,8 +28,11 @@ export class AfterLaunchTask {
     } catch (error) {
       console.log(`roxy_tabs 文件不存在 跳过`, error)
     }
+    return defaultOpenUrl
+  }
 
-
+  /** 读取 lumiLogin */
+  async getLumiLogin() {
     // 同步插件密码
     let lumiLogin = ''
     try {
@@ -48,6 +51,13 @@ export class AfterLaunchTask {
     catch (error) {
       console.log(`lumiLogin 文件不存在 跳过`, error)
     }
+    return lumiLogin
+  }
+
+  /** 获取需要同步的数据 */
+  async getUploadData() {
+    const defaultOpenUrl = await this.getDefaultOpenUrl()
+    const lumiLogin = await this.getLumiLogin()
 
     return {
       id: this.browserItem.winInfo.id,
