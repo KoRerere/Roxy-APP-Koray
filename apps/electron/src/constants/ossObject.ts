@@ -16,6 +16,6 @@ export const ossObject = {
   // },
   /** 用户插件目录 */
   get userPluginDataDir() {
-    return `/groupdata/userplugin/${store.userId}`
+    return `/groupdata/workspace/${store.workspaceId}/plugin`
   },
 } as const

@@ -34,7 +34,7 @@ export const extensionManager = new class ExtensionManager {
   }
 
   /** 根据插件 ID 和 版本号 获取指定的插件，本地不存在则自动下载 */
-  async getTargetExtensions(pluginList: Record<string, string>[], msgCallback?: (msg: string) => void) {
+  async getTargetExtensions(pluginList: Record<string, string>[], msgCallback?: (msg: string) => void): Promise<string[]> {
     const localExtensions = await this.getAllExtensions()
 
     const { needDownloads = [], notNeedDownloads = [] } = await pluginList.reduce<Promise<{ needDownloads: string[], notNeedDownloads: string[] }>>(async (acc, item) => {

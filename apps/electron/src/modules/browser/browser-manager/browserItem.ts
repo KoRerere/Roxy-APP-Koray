@@ -32,6 +32,8 @@ export class BrowserItem {
   userDataDir: string
   /** 用户浏览器数据缓存文件名称 */
   browserCacheFileName = 'browser-cache.zip'
+  /** 浏览器进程 ID */
+  private browserPid?: number | null = null
   /** 浏览器实例 */
   get #browser() {
     return this.beforeLaunchTask?.browser
@@ -77,9 +79,9 @@ export class BrowserItem {
     return {
       dirId: this.winInfo.dirId,
       /** 用于自动化工具的ws接口 */
-      ws: this.#browser?.wsEndpoint(),
+      ws: this.beforeLaunchTask.wsEndpoint,
       /** 用于自动化工具的http接口 */
-      http: new URL(this.#browser!.wsEndpoint()).host,
+      http: new URL(this.beforeLaunchTask.wsEndpoint!).host,
       /** 内核版本 */
       coreVersion: this.winInfo.coreVersion,
       /** 用于自动化工具的 webdriver */
@@ -91,7 +93,7 @@ export class BrowserItem {
       /** 窗口备注 */
       windowRemark: this.winInfo.windowRemark,
       /** 进程id */
-      pid: this.#browser?.process()?.pid,
+      pid: this.browserPid,
     }
   }
 
@@ -151,6 +153,8 @@ export class BrowserItem {
       this.beforeLaunchTask = new BeforeLaunchTask(this)
       // 拉起浏览器
       await this.beforeLaunchTask.run()
+      // 记录浏览器进程 ID
+      this.browserPid = this.#browser?.process()?.pid
       // 创建启动后任务
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
       // 异步执行启动后的任务, 不需要等待

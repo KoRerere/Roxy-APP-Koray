@@ -26,7 +26,7 @@ export interface LastMessage {
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
   browser: Browser | null = null
-  private wsEndpoint: string | null = null
+  wsEndpoint: string | null = null
   /** 代理检测结果 */
   private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
   /** 不影响浏览器打开的警告信息 */

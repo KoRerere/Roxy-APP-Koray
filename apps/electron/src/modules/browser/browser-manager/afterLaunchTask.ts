@@ -1,5 +1,5 @@
 import type { Browser } from 'puppeteer-core'
-import { readFile, stat } from 'node:fs/promises'
+import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 
 /** 浏览器启动后要做的事情 */
@@ -25,6 +25,8 @@ export class AfterLaunchTask {
       const roxyTabs = await readFile(this.browserItem.roxyTabsPath, 'utf8')
       defaultOpenUrl = JSON.parse(roxyTabs).filter(url => this.browserItem.isValidURL(url))
       console.log('同步标签页 roxy_tabs', defaultOpenUrl)
+      // 如果浏览器是由于关闭最后一个标签页而导致关闭的，这个时候龙哥会检测不到，所以每次读完 roxy_tabs，都要删除
+      rm(this.browserItem.roxyTabsPath)
     } catch (error) {
       console.log(`roxy_tabs 文件不存在 跳过`, error)
     }
@@ -85,10 +87,8 @@ export class AfterLaunchTask {
     })
 
     const saveCookies = async () => {
-      if (syncCookie) {
-        const { cookies } = await cdpSession.send('Storage.getCookies')
-        this.cookies = JSON.stringify(cookies)
-      }
+      const { cookies } = await cdpSession.send('Storage.getCookies')
+      this.cookies = JSON.stringify(cookies)
     }
 
     console.log('createCDPSession success')
