@@ -169,7 +169,7 @@ function deletePopup(data: any) {
       <RyTable ref="accountTable" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions="false">
         <template #table-empty>
-          <CustomEmpty icon="empty/rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
+          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click="operationHandler({ name: 'create' })" />

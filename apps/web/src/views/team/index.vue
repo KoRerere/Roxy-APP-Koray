@@ -178,7 +178,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       </div>
     </template>
     <template #table-empty>
-      <CustomEmpty icon="empty/rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
+      <CustomEmpty icon="rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />

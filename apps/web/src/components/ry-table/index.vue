@@ -90,6 +90,7 @@ defineEmits(['update:columns'])
 
 const [show] = useContextMenu()
 
+const _firstLoad = ref(false)
 const _loading = ref(false)
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
 const _dataList = ref()
@@ -269,7 +270,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 
 onBeforeMount(async () => {
   await _getCondition()
-  _request()
+  await _request()
+  _firstLoad.value = true
 })
 
 defineExpose({
@@ -308,7 +310,7 @@ defineExpose({
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
-        <template #empty>
+        <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
         <Column v-if="selectionMode" header-style="width: 3rem" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />

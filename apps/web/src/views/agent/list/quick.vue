@@ -168,7 +168,7 @@ function saveSelected() {
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"
         :show-table-header="false">
         <template #table-empty>
-          <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂无代理')" />
+          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
         <template #proxy="{ data: row }">
           <div class="flex flex-col gap-1">

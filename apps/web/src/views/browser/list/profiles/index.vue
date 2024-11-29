@@ -14,7 +14,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, filterFieldByValue, getFormData } from '/@/utils'
+import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
@@ -45,23 +45,23 @@ const emit = defineEmits(['updateFilterTabs'])
 
 const route = useRoute()
 const router = useRouter()
-
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
 const userStore = useUserStore()
+const workspaceStore = useWorkspaceStore()
+
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
-const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
 const [show] = useContextMenu()
-const workspaceStore = useWorkspaceStore()
+const tableRef = useTemplateRef('windownTable')
+const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
 const filtersMenu = ref()
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
-
-const tableRef = useTemplateRef('windownTable')
+const hasFiltered = ref(false)
 
 const drawer = reactive({
   type: 'proxyList',
@@ -123,11 +123,13 @@ watch(
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
-function onRefreshTable(params?: any) {
-  tableRef.value!.refresh({
-    ...params,
+function onRefreshTable(tabParams?: any) {
+  const params = {
+    ...tabParams,
     ...filterFieldByValue(getFormData(filtersMenu.value)),
-  })
+  }
+  hasFiltered.value = !isEmptyValue(params)
+  tableRef.value!.refresh(params)
 }
 
 async function saveFilters(formData: any) {
@@ -644,7 +646,8 @@ defineExpose({
       </div>
     </template> -->
     <template #table-empty>
-      <CustomEmpty icon="empty/rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
+      <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
+      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="router.push({ name: 'browser-create' })" />
@@ -652,7 +655,6 @@ defineExpose({
           </div>
         </template>
       </CustomEmpty>
-      <!-- <CustomEmpty icon="empty/rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" /> -->
     </template>
 
     <template #profile="{ data }">

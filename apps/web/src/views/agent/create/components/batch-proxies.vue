@@ -368,7 +368,7 @@ function onSave() {
       <div class="flex-ovh-1 items-center justify-center">
         <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
           <template #table-empty>
-            <CustomEmpty icon="empty/rx_illustration_star.svg" :title="$t('暂未添加代理')" />
+            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
           </template>
           <template #actions="{ data }">
             <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />

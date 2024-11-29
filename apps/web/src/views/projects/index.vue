@@ -160,7 +160,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
       <RyTable ref="accountTable" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions-menu="false" :show-actions="false" data-key="project_id">
         <template #table-empty>
-          <CustomEmpty icon="empty/rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
+          <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click="operationHandler({ name: 'create' })" />

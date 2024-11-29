@@ -4,16 +4,7 @@ const props = defineProps({
   title: String,
   desc: String,
 })
-
-const modules = import.meta.glob('../assets/images/**/*', {
-  query: '?url',
-  import: 'default',
-  eager: true,
-})
-
-console.log('modules', modules)
-
-const imgSrc = computed(() => modules[`../assets/images/${props.icon}`])
+const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, import.meta.url).href)
 </script>
 
 <template>
