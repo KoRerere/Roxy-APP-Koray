@@ -24,6 +24,7 @@ import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
 import DrawersTtems from './components/drawers-item.vue'
 import EditCookies from './components/edit-cookies.vue'
+import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
@@ -231,7 +232,7 @@ async function operationHandler(operate: any, data: any) {
       onClearCache(data)
       break
     case 'exportProfile':
-      showToast(0, '开发中...')
+      exportProfile(datas)
       break
     case 'delete':
       await deleteProfile(datas, ids)
@@ -412,6 +413,31 @@ async function onClearCache(data: any) {
         else {
           await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
         }
+      },
+    },
+  })
+}
+
+async function exportProfile(data: any) {
+  dialog.open(ExportProfiles, {
+    props: {
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+    },
+    data: {
+      props: {
+        data,
+        workspaceName: workspaceName.value,
+      },
+      onConfirm: async () => {
+        // if (result === ClearType.cloud) {
+        //   await API.window.userClearWindowCacheCreate({ ids: [data.id] })
+        //   await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirId: data.dirId })
+        // }
+        // else {
+        //   await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
+        // }
       },
     },
   })

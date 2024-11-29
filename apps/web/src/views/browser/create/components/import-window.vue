@@ -8,7 +8,7 @@ import { ExcelAccept } from '/@/utils/constants'
 
 const emit = defineEmits(['importSuccess'])
 
-const nameMap = {
+const excelMap = {
   '窗口名称': 'windowName',
   '账号平台': 'platformUrl',
   '用户名': 'platformUserName',
@@ -21,9 +21,10 @@ const nameMap = {
   '刷新URL': 'refreshUrl',
   '窗口备注': 'windowRemark',
   'User Agent': 'userAgent',
+  '窗口尺寸': 'windowSize',
 } as const
 
-type Data = Partial<Record<typeof nameMap[keyof typeof nameMap], any>> & { rowNum: number }
+type Data = Partial<Record<typeof excelMap[keyof typeof excelMap], any>> & { rowNum: number }
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const fileAnalyzeError = defineModel<any>()
@@ -82,7 +83,7 @@ async function handleBeforeUpload(rawFile: any) {
       rowNum: index + rowStartNum,
     }
     Object.entries(curr).forEach(([key, value]) => {
-      const keyName = nameMap[key as keyof typeof nameMap]
+      const keyName = excelMap[key as keyof typeof excelMap]
 
       if (keyName === 'cookie' && value) {
         try {
