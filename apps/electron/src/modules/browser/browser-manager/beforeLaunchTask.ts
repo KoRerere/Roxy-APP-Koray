@@ -8,7 +8,7 @@ import { API } from '/@/api'
 import { chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
-import { extensionManager } from '/@/modules/extension'
+import { ExtensionManager } from '/@/modules/extension'
 import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
@@ -180,6 +180,7 @@ export class BeforeLaunchTask {
       os,
       allOpenUrl,
       useGpu,
+      workspaceId
     } = this.browserItem.winInfo
 
     const args = [
@@ -195,6 +196,7 @@ export class BeforeLaunchTask {
     // 如果用户开启了插件
     if (usePluginDirVersion.length) {
       let acc = 1
+      const extensionManager = new ExtensionManager({ workspaceId })
       const plugins = await extensionManager.getTargetExtensions(usePluginDirVersion, (msg: string) => {
         this.sendSuccessMessage(msg, this.progress + acc++)
       }).catch((error) => {

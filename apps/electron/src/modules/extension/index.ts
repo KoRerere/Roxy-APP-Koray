@@ -13,6 +13,7 @@ import { getMainWindow } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
+import { store } from '/@/modules/store'
 
 export interface UserSelectedExtensionInfo {
   type: 'warn' | 'success' | 'error'
@@ -20,10 +21,20 @@ export interface UserSelectedExtensionInfo {
   data?: Awaited<ReturnType<typeof getPluginMeta>>
 }
 
-export const extensionManager = new class ExtensionManager {
+interface ExtensionManagerOptions {
+  workspaceId?: string
+}
+
+export class ExtensionManager {
+  /** 工作空间 ID */
+  workspaceId: string
   /** 插件目录 */
   get extensionDir() {
-    return appConfig.browserExtensionsDir
+    return `${appConfig.browserExtensionsDir}/w_${this.workspaceId}`
+  }
+
+  constructor({ workspaceId }: ExtensionManagerOptions = {}) {
+    this.workspaceId = workspaceId || String(store.workspaceId)
   }
 
   /** 获取本地所有插件 */
@@ -299,4 +310,4 @@ export const extensionManager = new class ExtensionManager {
 
     return result.filter((id): id is string => Boolean(id))
   }
-}()
+}

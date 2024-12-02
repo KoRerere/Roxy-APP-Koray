@@ -11,7 +11,7 @@ import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { appConfig, mediaProtocolName, osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager, chromeCoreManager } from '/@/modules/browser'
-import { extensionManager } from '/@/modules/extension'
+import { ExtensionManager } from '/@/modules/extension'
 import { openAPIServer } from '/@/modules/openapi'
 import { delRoxynetProxy, startRoxynet, stopRoxynet } from '/@/modules/roxynet'
 import { fetchUserConfig, store } from '/@/modules/store'
@@ -280,31 +280,37 @@ ipcMain.on('app:removeProxy', () => {
 
 /** 下载指定插件 */
 ipcMain.on('extension:download', (extensions) => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.downloadExtensions(extensions)
 })
 
 /** 删除指定插件 */
 ipcMain.on('extension:remove', (extIDs: string[]) => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.removeExtensions(extIDs)
 })
 
 /** 获取并解析用户本地选择的插件信息 */
 ipcMain.on('extension:getSelectedExtensionInfo', (selectType: 'dir' | 'file') => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.getUserSelectedExtensionInfo(selectType)
 })
 
 /** 上传本地插件到 OSS */
 ipcMain.on('extension:uploadExtensionToOSS', (payload) => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.uploadExtensionToOSS(payload)
 })
 
 /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
 ipcMain.on('extension:checkLocalExtensionUpdate', (checkList) => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.checkLocalExtensionUpdate(checkList)
 })
 
 /** 获取本地已安装的插件 */
 ipcMain.on('extension:getInstalledExtensions', () => {
+  const extensionManager = new ExtensionManager()
   return extensionManager.getInstalledExtensions()
 })
 

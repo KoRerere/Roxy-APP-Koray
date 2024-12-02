@@ -15,12 +15,14 @@ const tabs = ref([
     title: $t('客户端升级'),
     list: clientUpdates,
     value: 'client',
+    badge: computed(() => clientUpdates.value.length),
     component: markRaw(AppUpdater),
   },
   {
     title: $t('内核升级'),
     list: kernelUpdates,
     value: 'kernel',
+    badge: computed(() => kernelUpdates.value.filter(item => item.status === 'downloading').length),
     component: markRaw(KernelUpdater),
   },
 ])
@@ -123,6 +125,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
           <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}
+            <Badge v-if="tab.badge" :value="tab.badge" severity="danger" size="small" />
           </Tab>
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
