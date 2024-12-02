@@ -94,16 +94,19 @@ export const webUpdater = new class WebUpdater {
           },
         })
         await fileExists(dirname(this.webZipPath), true)
+
         const writer = createWriteStream(this.webZipPath)
+        const { promise, resolve, reject } = Promise.withResolvers<void>()
+
         response.data.pipe(writer)
-        await new Promise<void>((resolve, reject) => {
-          writer.on('finish', async () => {
-            writer.close()
-            await options?.onDownloadComplete?.()?.catch?.(() => { })
-            resolve()
-          })
-          writer.on('error', reject)
+        writer.on('finish', async () => {
+          writer.close()
+          await options?.onDownloadComplete?.()?.catch?.(() => { })
+          resolve()
         })
+        writer.on('error', reject)
+
+        await promise
         console.log('[WebUpdater] downloaded')
       }
     }

@@ -89,15 +89,12 @@ export class FileOperations {
   }
 
   /**  执行任务 */
-  executeTask<K extends keyof TaskMap>(
-    task: K,
-    payload: Parameters<TaskMap[K]>[0],
-  ): Promise<ReturnType<TaskMap[K]>> {
-    return new Promise((resolve, reject) => {
-      const taskId = this.taskIdCounter++
-      this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject })
-      this.processTaskQueue()
-    })
+  executeTask<K extends keyof TaskMap>(task: K, payload: Parameters<TaskMap[K]>[0]) {
+    const { promise, resolve, reject } = Promise.withResolvers<ReturnType<TaskMap[K]>>()
+    const taskId = this.taskIdCounter++
+    this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject })
+    this.processTaskQueue()
+    return promise
   }
 
   /**  终止所有 worker */

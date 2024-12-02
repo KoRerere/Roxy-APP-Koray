@@ -73,10 +73,15 @@ export const chromeCoreManager = new class ChromeCoreManager {
   async fetchAvailableCoreList() {
     console.log('fetchAvailableCoreList', osConfig)
     this.fetchAvailableCoreListPromise ||= API.base.userGetCoreUpgradeCreate({ ...osConfig })
-    const result = await this.fetchAvailableCoreListPromise.finally(() => {
-      this.fetchAvailableCoreListPromise = null
-    })
-    console.log('user_get_core_upgrade', result.data)
+    const result = await this.fetchAvailableCoreListPromise
+      .catch(err => {
+        console.error('fetchAvailableCoreList error', err)
+        return Promise.reject(err)
+      })
+      .finally(() => {
+        this.fetchAvailableCoreListPromise = null
+      })
+    console.log('user_get_core_upgrade', result)
     this.availableCoreList = result.data?.rows || []
 
     if (this.availableCoreList.length) {
