@@ -14,6 +14,7 @@ import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
 import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
+import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
 
 /** 最后一次发送的消息 */
 export interface LastMessage {
@@ -284,29 +285,31 @@ export class BeforeLaunchTask {
   /** 更新浏览器偏好设置 */
   async updateBrowserPreferences() {
     const { preferencesPath, winInfo } = this.browserItem
-    const { usePluginList } = winInfo
+    const { usePluginList, workspaceId } = winInfo
 
     if (!usePluginList.length) {
       return
     }
 
-    console.log('usePluginList', usePluginList)
+    console.log('usePluginList', usePluginList, workspaceId)
 
     try {
       const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
       const pinnedExtensions = preferences.extensions?.pinned_extensions || []
-      console.log('pinnedExtensions', pinnedExtensions)
-      usePluginList.forEach(extItem => {
+      console.log('old pinnedExtensions', pinnedExtensions)
+      const extensionManager = new ExtensionManager({ workspaceId })
+      for (const extItem of usePluginList) {
+        const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
         if (extItem.fixedPlugin === 'unpin') {
-          const index = pinnedExtensions.findIndex(item => item === extItem.pluginDir)
+          const index = pinnedExtensions.findIndex(item => item === extID)
           if (index !== -1) {
             pinnedExtensions.splice(index, 1)
           }
-        } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extItem.pluginDir)) {
-          pinnedExtensions.push(extItem.pluginDir)
+        } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
+          pinnedExtensions.push(extID)
         }
-      })
-      console.log('pinnedExtensions', pinnedExtensions)
+      }
+      console.log('new pinnedExtensions', pinnedExtensions)
       preferences.extensions.pinned_extensions = pinnedExtensions
       await writeFile(preferencesPath, JSON.stringify(preferences))
     } catch (error) {

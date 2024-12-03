@@ -122,30 +122,41 @@ export async function getPluginMeta(pluginDir: string) {
 
 
 /** 计算插件 ID */
-export async function genExtensionId(options: { type: 'path' | 'key', input: string }) {
+export function genExtensionID(options: { type: 'path' | 'key', input: string }) {
   // First 16 bytes of SHA-256 hashed input.
   const kIdSize = 16;
   let input = ''
-
-  if (options.type === 'path') {
+  const isPath = options.type === 'path'
+  if (isPath) {
     const inputPath = options.input;
-    for (var i = 0; i < inputPath.length; i++) {
-      input = input + inputPath[i] + "\0";
+    for (let i = 0; i < inputPath.length; i++) {
+      input += inputPath[i] + "\0";
     }
   } else {
     input = options.input
   }
 
-
+  const encoding = isPath ? 'utf8' : 'base64'
   // SHA-256 hash.
-  const hash = crypto.createHash('sha256').update(Buffer.from(input, 'base64')).digest();
-  const hashString = hash.slice(0, kIdSize).toString('hex');
+  const hash = crypto.createHash('sha256').update(Buffer.from(input, encoding)).digest();
+  const hashString = hash.subarray(0, kIdSize).toString('hex');
   const IDAlphabet = hashString.replace(/[0-9a-f]/g, (char) => {
     const val = parseInt(char, 16); // Convert hex char to integer.
     return String.fromCharCode('a'.charCodeAt(0) + val); // Convert to 'a'-'p'.
   });
 
-  console.log('Generated ID:', IDAlphabet);
+  console.log('genExtensionID:', IDAlphabet);
 
   return IDAlphabet
+}
+
+/** 根据插件路径获取插件 ID */
+export async function getExtensionIDByPath(pluginDir: string) {
+  const { manifestInfo, targetPluginDir } = await getPluginManifestInfo(pluginDir)
+  console.log('getExtensionIDByPath', targetPluginDir, manifestInfo.key)
+  const extensionID = genExtensionID({
+    type: manifestInfo.key ? 'key' : 'path',
+    input: manifestInfo.key || targetPluginDir
+  })
+  return extensionID
 }
