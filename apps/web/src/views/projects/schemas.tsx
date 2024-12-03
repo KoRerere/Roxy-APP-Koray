@@ -46,8 +46,9 @@ export const inviteUsersFormSchemas = defineFormSchema([
       optionLabel: 'projectName',
       optionValue: 'project_id',
       display: 'chip',
+      emptyMessage:$t('暂无可加入项目，请先创建项目'),
       request: async () => {
-        const { data } = await API.limit.userGetProjectInfoByWorkspaceList()
+        const { data } = await API.limit.userGetProjectInfoByWorkspaceList({})
         return data.rows
       },
     },

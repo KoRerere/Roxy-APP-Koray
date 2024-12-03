@@ -219,7 +219,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       formatValue: (input: any) => input.value.join(','),
       onHide: () => {
         const input = findInputByName(windowInputs, 'browserVersion')
-        if (input.value.length !== input._oldValue.length) {
+        const isEq = input.value.slice().sort().join(',') === input._oldValue.slice().sort().join(',')
+        if (!isEq) {
           input._oldValue = input.value.slice()
           setUaWebgl(inputsGroup)
         }

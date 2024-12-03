@@ -35,7 +35,7 @@ const isChanged = ref(false)
 
 watch(() => _props.currentFilter?.id, (value) => {
   isChanged.value = false
-  isAllProfiles.value = value === '1000'
+  isAllProfiles.value = value === 'rx_1000'
 })
 
 const rawOptions = computed(() => {

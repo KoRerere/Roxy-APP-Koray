@@ -163,5 +163,14 @@ function toggle(event: Event) {
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+
+  &:not(:disabled):hover {
+    color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
+    background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+
+    svg {
+      color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
+    }
+  }
 }
 </style>

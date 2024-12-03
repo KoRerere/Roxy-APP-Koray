@@ -17,4 +17,14 @@ console.log('__WEB_VERSION__', __WEB_VERSION__)
 .p-tooltip-arrow {
   display: none;
 }
+
+.p-tooltip-text {
+  color: var(--Color-neutrals-0, #FFF);
+  text-align: center;
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
 </style>

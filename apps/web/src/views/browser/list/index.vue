@@ -11,27 +11,51 @@ import { useRoleStore } from '/@/stores/role'
 import tags from '/@/views/browser/list/tags'
 import profiles from './profiles'
 import recycle from './recycle'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { sleep } from '/@/utils'
 
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
+const workspaceStore = useWorkspaceStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
-const rawTabs = [
-  { label: $t('全部窗口'), id: '1000', name: 'profiles' },
-  { label: $t('收藏'), id: '1002', name: 'favorite', _params: { isOften: true }, disabledFilter: true },
-  { label: $t('已打开'), id: '1003', name: 'opened', _params: { openStatus: true }, disabledFilter: true },
+type TabType = {
+  id: string
+  label: string
+  name: string
+  isLocal?: boolean
+  [key: string]: any
+}
+
+const trash = { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash' }
+const pinTabs = [
+  { id: 'rx_1000', label: $t('全部窗口'), name: 'profiles' },
 ]
-const trash = { label: $t('回收站'), icon: 'base/rx_ic_bin_2', id: '1001', name: 'trash' }
 
-const tabs = ref(rawTabs)
+const localTabKey = `localTabs_${workspaceStore.currentWorkspace?.id}`
+const localTabs: TabType[] = JSON.parse(localStorage.getItem(localTabKey) || 'null') || [
+  {
+    id: 'rx_1002',
+    label: $t('收藏'),
+    name: 'favorite',
+    _params: { isOften: true },
+  },
+  {
+    id: 'rx_1003',
+    label: $t('已打开'),
+    name: 'opened',
+    _params: { openStatus: true },
+  },
+].map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
 
+const tabs = ref<TabType[]>(pinTabs)
 const sortTabs = computed({
   get() {
-    return tabs.value.length > rawTabs.length ? tabs.value.slice(rawTabs.length) : []
+    return tabs.value.length > pinTabs.length ? tabs.value.slice(pinTabs.length) : []
   },
   set(value: any) {
-    tabs.value.splice(rawTabs.length, tabs.value.length - rawTabs.length, ...value)
+    tabs.value.splice(pinTabs.length, tabs.value.length - pinTabs.length, ...value)
   },
 })
 
@@ -47,8 +71,8 @@ async function getFilterList() {
       id: `${index}`,
       name: item.filter_name,
       label: item.filter_name,
-    }))
-    tabs.value = [...rawTabs, ...list]
+    })).concat(localTabs as any).sort((a, b) => a.sort - b.sort)
+    tabs.value = [...pinTabs, ...list]
   }
   onlyErrorToast(code, msg)
 }
@@ -114,13 +138,12 @@ async function deleteFilterItem(item: any) {
       try {
         const { code, msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name: item.label })
         showToast(code, msg)
-        const isActive = currentFilter.value?.label === item.label
-        if (isActive) {
-          updateFilterTabs()
+
+        if (currentFilter.value?.label === item.label) {
+          active.value = tabs.value[tabs.value.length - 2].id
+          await sleep(300)// 等待 tab 切换动画执行完毕以解决塌陷问题
         }
-        else {
-          tabs.value = tabs.value.filter((tab: any) => tab.label !== item.label)
-        }
+        tabs.value = tabs.value.filter((tab: any) => tab.label !== item.label)
       }
       catch (error) {
         onlyErrorToast(-1, error as string)
@@ -153,7 +176,15 @@ function sortChange() {
 async function hidePopover() {
   if (hasSort.value) {
     hasSort.value = false
-    const sort_data = tabs.value.slice(rawTabs.length).map((item: any, index) => ({ name: item.label, sort: index }))
+    const { locals, sort_data } = tabs.value.slice(pinTabs.length).reduce((acc, item, index) => {
+      if (item.isLocal) {
+        acc.locals.push({ ...item, sort: index })
+      } else {
+        acc.sort_data.push({ name: item.label, sort: index })
+      }
+      return acc
+    }, { locals: [], sort_data: [] } as any)
+    localStorage.setItem(localTabKey, JSON.stringify(locals))
     const { code, msg } = await API.window.userUpdateWindowFilterSortCreate({ sort_data })
     onlyErrorToast(code, msg)
   }
@@ -198,7 +229,7 @@ onBeforeMount(() => {
   </div>
 
   <RyPopover ref="popRef" @hide="hidePopover">
-    <div v-for="item in rawTabs" :key="item.name" class="sort-item">
+    <div v-for="item in pinTabs" :key="item.name" class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>{{ item.label }}</span>
     </div>
@@ -206,8 +237,10 @@ onBeforeMount(() => {
       <div v-for="item in sortTabs" :key="item.id" class="sort-item">
         <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
         <span class="flex-auto">{{ item.label }}</span>
-        <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" @click="onEditFilter(item)" />
-        <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item)" />
+        <template v-if="!item.isLocal">
+          <RxSvgIcon name="base/rx_ic_edit" class="cursor-pointer" @click="onEditFilter(item)" />
+          <RxSvgIcon name="base/rx_ic_bin_1" class="cursor-pointer" @click="deleteFilterItem(item)" />
+        </template>
       </div>
     </VueDraggable>
     <div class="sort-item">

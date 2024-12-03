@@ -1,11 +1,9 @@
 <script setup lang="ts">
-const props = defineProps<{
-  modelValue?: boolean
-}>()
+
 </script>
 
 <template>
   <div>
-    <slot />
+    <RxButton v-tooltip.top="{ value: 'mannnnnnnnnnnnnnnn', hideDelay: 50000000000000000 }" label="Yinhao" />
   </div>
 </template>
