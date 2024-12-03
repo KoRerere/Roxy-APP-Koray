@@ -50,21 +50,22 @@ export class ExtensionManager {
 
     const { needDownloads = [], notNeedDownloads = [] } = await pluginList.reduce<Promise<{ needDownloads: string[], notNeedDownloads: string[] }>>(async (acc, item) => {
       const accObj = await acc
-      const [extId, version] = Object.entries(item)[0]
-      if (localExtensions.includes(extId)) {
-        const localVersion = await getPluginManifestInfo(path.join(this.extensionDir, extId))
+      const { pluginDir, pluginVersion, fixedPlugin } = item
+
+      if (localExtensions.includes(pluginDir)) {
+        const localVersion = await getPluginManifestInfo(path.join(this.extensionDir, pluginDir))
           .then(({ manifestInfo }) => manifestInfo.version)
           .catch(() => '')
 
-        if (!localVersion || compare(localVersion, version, '<')) {
-          accObj.needDownloads.push(extId)
+        if (!localVersion || compare(localVersion, pluginVersion, '<')) {
+          accObj.needDownloads.push(pluginDir)
         }
         else {
-          accObj.notNeedDownloads.push(extId)
+          accObj.notNeedDownloads.push(pluginDir)
         }
       }
       else {
-        accObj.needDownloads.push(extId)
+        accObj.needDownloads.push(pluginDir)
       }
       return accObj
     }, { needDownloads: [], notNeedDownloads: [] })

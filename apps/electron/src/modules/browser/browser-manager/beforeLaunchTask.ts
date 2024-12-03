@@ -172,7 +172,7 @@ export class BeforeLaunchTask {
     const {
       dirId,
       sandboxPermission,
-      usePluginDirVersion,
+      usePluginList,
       startupParam,
       systemInfo = {},
       openWidth,
@@ -194,10 +194,10 @@ export class BeforeLaunchTask {
     ]
 
     // 如果用户开启了插件
-    if (usePluginDirVersion.length) {
+    if (usePluginList.length) {
       let acc = 1
       const extensionManager = new ExtensionManager({ workspaceId })
-      const plugins = await extensionManager.getTargetExtensions(usePluginDirVersion, (msg: string) => {
+      const plugins = await extensionManager.getTargetExtensions(usePluginList, (msg: string) => {
         this.sendSuccessMessage(msg, this.progress + acc++)
       }).catch((error) => {
         this.warningMessages.push($t('获取扩展失败'))
@@ -205,6 +205,7 @@ export class BeforeLaunchTask {
         return []
       })
       if (plugins.length) {
+        await this.updateBrowserPreferences()
         args.push(`--load-extension=${plugins.join(',')}`)
       }
     }
@@ -278,6 +279,39 @@ export class BeforeLaunchTask {
     };
 
     return args
+  }
+
+  /** 更新浏览器偏好设置 */
+  async updateBrowserPreferences() {
+    const { preferencesPath, winInfo } = this.browserItem
+    const { usePluginList } = winInfo
+
+    if (!usePluginList.length) {
+      return
+    }
+
+    console.log('usePluginList', usePluginList)
+
+    try {
+      const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
+      const pinnedExtensions = preferences.extensions?.pinned_extensions || []
+      console.log('pinnedExtensions', pinnedExtensions)
+      usePluginList.forEach(extItem => {
+        if (extItem.fixedPlugin === 'unpin') {
+          const index = pinnedExtensions.findIndex(item => item === extItem.pluginDir)
+          if (index !== -1) {
+            pinnedExtensions.splice(index, 1)
+          }
+        } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extItem.pluginDir)) {
+          pinnedExtensions.push(extItem.pluginDir)
+        }
+      })
+      console.log('pinnedExtensions', pinnedExtensions)
+      preferences.extensions.pinned_extensions = pinnedExtensions
+      await writeFile(preferencesPath, JSON.stringify(preferences))
+    } catch (error) {
+      console.error('更新浏览器偏好设置失败', error)
+    }
   }
 
   /** 根据代理检测结果决定是否要拉起浏览器 */

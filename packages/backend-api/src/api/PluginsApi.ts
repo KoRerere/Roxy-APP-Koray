@@ -20,6 +20,8 @@ import {
   UserCheckAllPluginsVersionListParams,
   UserDelPluginInfoCreateData,
   UserDelPluginInfoCreatePayload,
+  UserFixedPluginToWindowCreateData,
+  UserFixedPluginToWindowCreatePayload,
   UserGetPluginCategoryListData,
   UserGetPluginInfoByIdListData,
   UserGetPluginInfoByIdListParams,
@@ -343,6 +345,24 @@ export class PluginsApi<SecurityDataType = unknown> {
       path: `/user_get_plugin_info_by_id`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserFixedPluginToWindowCreate
+   * @summary 固定插件功能
+   * @request POST:/user_fixed_plugin_to_window
+   * @response `200` `UserFixedPluginToWindowCreateData`
+   */
+  userFixedPluginToWindowCreate = (data: UserFixedPluginToWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserFixedPluginToWindowCreateData, any>({
+      path: `/user_fixed_plugin_to_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

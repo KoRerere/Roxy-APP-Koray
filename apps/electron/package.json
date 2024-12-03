@@ -54,7 +54,7 @@
     "electron-builder": "25.1.8",
     "electron-log": "^5.2.3",
     "electron-updater": "6.3.9",
-    "es-toolkit": "^1.27.0",
+    "es-toolkit": "^1.29.0",
     "express": "^5.0.1",
     "font-list": "^1.5.1",
     "http-proxy-middleware": "^3.0.3",
@@ -71,7 +71,7 @@
     "ts-loader": "^9.5.1",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "5.7.2",
-    "vite": "^6.0.1",
+    "vite": "^6.0.2",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4",
     "ws": "^8.18.0"

@@ -52,7 +52,7 @@
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.9.0",
-    "@unocss/eslint-plugin": "^0.64.1",
+    "@unocss/eslint-plugin": "^0.65.0",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.21.0",
     "cross-env": "^7.0.3",
@@ -64,7 +64,7 @@
     "simple-git-hooks": "^2.11.1",
     "tsx": "^4.19.2",
     "turbo": "^2.3.3",
-    "vite": "^6.0.1"
+    "vite": "^6.0.2"
   },
   "pnpm": {
     "peerDependencyRules": {

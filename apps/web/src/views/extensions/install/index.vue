@@ -1,11 +1,11 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { UnwrapRowType, UserGetPluginListListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon,  } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
@@ -14,6 +14,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
+import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 
 type Data = UnwrapRowType<UserGetPluginListListData>
 
@@ -26,6 +27,8 @@ const role = useRoleStore()
 const [dialogOpen] = useSimpleDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [show] = useContextMenu()
+const [showMenu] = usePopoverMenu()
+
 
 const needsync = defineModel('needsync')
 const tableRef = useTemplateRef('extable')
@@ -89,8 +92,44 @@ const filters = reactive({
   },
 })
 
+
+const pinMenus = [
+{
+      label: $t('自定义'),
+      value: 'customize',
+    },
+{
+      label: $t('始终固定到工具栏'),
+      value: 'pin',
+    },
+{
+      label: $t('始终不固定到工具栏'),
+      value: 'unpin',
+    },
+]
+
 async function tableRequest(params: any) {
   return API.plugins.userGetPluginListList({ ...params, page_index: 1, page_size: 999 })
+}
+
+async function showPinMenu(event: any, data: any) {
+  if (!(role.isOwner || role.isManager))
+    return
+
+  showMenu(event, {
+    type: 'radio',
+    value: data.fixedPlugin,
+    operation: pinMenus,
+    onHide: async (fixedPlugin: string) => {
+      if (fixedPlugin !== data.fixedPlugin) {
+       await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin })
+       data.fixedPlugin = fixedPlugin
+      }
+    },
+    beforeCmp: () => {
+      return <div class="pl-4 pt-2">{$t('固定方式')}</div>
+    },
+  })
 }
 
 function tableOperation(data: any) {
@@ -374,7 +413,12 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <Actions v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
+      <div  v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
+        <div class="cursor-pointer" @click="showPinMenu($event,data)">
+          <RxSvgIcon  :name="data.pluginSwitchType ? 'base/rx_ic_pin_line' : 'base/rx_ic_pin_solid'" class="pointer-events-none"/>
+        </div>
+        <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
+      </div>
     </template>
   </RyTable>
 </template>

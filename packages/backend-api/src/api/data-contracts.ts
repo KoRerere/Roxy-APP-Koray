@@ -6214,6 +6214,21 @@ export interface UserGetPluginInfoByIdListData {
   msg: string;
 }
 
+export interface UserFixedPluginToWindowCreatePayload {
+  /** 插件ID */
+  id: number;
+  /**
+   * 插件是否固定
+   * 固定插件  值：customize  自定义   pin 固定  unpin 不固定
+   */
+  fixedPlugin: string;
+}
+
+export interface UserFixedPluginToWindowCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetUserListListParams {
   /**
    * 分页索引

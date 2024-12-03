@@ -54,6 +54,11 @@ export class BrowserItem {
     return join(this.userDataDir, 'Default', 'LumiLogin')
   }
 
+  /** 浏览器偏好设置文件路径 */
+  get preferencesPath() {
+    return join(this.userDataDir, 'Default', 'Preferences')
+  }
+
   /** 本地 OSS 缓存目录 */
   get ossCacheDir() {
     return join(this.userDataDir, 'oss-session')

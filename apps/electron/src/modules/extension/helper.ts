@@ -1,6 +1,7 @@
 import { access, readdir, readFile } from 'node:fs/promises'
-import path from 'node:path'
+import path, { join } from 'node:path'
 import url from 'node:url'
+import crypto from 'node:crypto'
 import { mediaProtocolName } from '/@/constants'
 import { fileExists } from '/@/utils'
 
@@ -117,4 +118,34 @@ export async function getPluginMeta(pluginDir: string) {
     console.log('manifestInfo error', error)
     throw new Error($t('manifest.json 文件不存在或格式有误'))
   }
+}
+
+
+/** 计算插件 ID */
+export async function genExtensionId(options: { type: 'path' | 'key', input: string }) {
+  // First 16 bytes of SHA-256 hashed input.
+  const kIdSize = 16;
+  let input = ''
+
+  if (options.type === 'path') {
+    const inputPath = options.input;
+    for (var i = 0; i < inputPath.length; i++) {
+      input = input + inputPath[i] + "\0";
+    }
+  } else {
+    input = options.input
+  }
+
+
+  // SHA-256 hash.
+  const hash = crypto.createHash('sha256').update(Buffer.from(input, 'base64')).digest();
+  const hashString = hash.slice(0, kIdSize).toString('hex');
+  const IDAlphabet = hashString.replace(/[0-9a-f]/g, (char) => {
+    const val = parseInt(char, 16); // Convert hex char to integer.
+    return String.fromCharCode('a'.charCodeAt(0) + val); // Convert to 'a'-'p'.
+  });
+
+  console.log('Generated ID:', IDAlphabet);
+
+  return IDAlphabet
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { type Operation, operationPower } from '/@/utils'
 
 const props = defineProps({
@@ -14,6 +14,10 @@ const props = defineProps({
   showMenu: {
     type: Boolean,
     default: true,
+  },
+  actionIcon: {
+    type: String as PropType<SvgNames>,
+    default: 'base/rx_ic_more-v',
   },
 })
 
@@ -46,7 +50,7 @@ function onMore(event: Event) {
       </div>
       <div v-if="showMenu && _operation.length" class="cursor-pointer line-height-none" @click.stop="onMore">
         <slot name="more-icon">
-          <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" />
+          <RxSvgIcon :name="actionIcon" class="pointer-events-none" />
         </slot>
       </div>
     </div>
