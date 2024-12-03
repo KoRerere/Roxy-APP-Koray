@@ -291,13 +291,20 @@ export class BeforeLaunchTask {
       return
     }
 
-    console.log('usePluginList', usePluginList, workspaceId)
+    console.log('usePluginList', usePluginList)
 
     try {
+      const isExist = await fileExists(preferencesPath)
+
+      if (!isExist) {
+        await writeFile(preferencesPath, JSON.stringify({ extensions: { pinned_extensions: [] } }))
+      }
+
       const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
       const pinnedExtensions = preferences.extensions?.pinned_extensions || []
       console.log('old pinnedExtensions', pinnedExtensions)
       const extensionManager = new ExtensionManager({ workspaceId })
+      console.log('extensionManager.extensionDir', workspaceId, extensionManager.extensionDir)
       for (const extItem of usePluginList) {
         const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
         if (extItem.fixedPlugin === 'unpin') {

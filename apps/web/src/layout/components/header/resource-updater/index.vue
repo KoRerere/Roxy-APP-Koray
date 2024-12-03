@@ -48,7 +48,17 @@ async function checkForUpdates() {
 }
 
 function toggle(event: Event) {
-  popoverRef.value?.getRef().toggle(event)
+  const popIns =  popoverRef.value?.getRef()
+  popIns.toggle(event)
+  if (popIns.visible) {
+    tabs.value.some(tab => {
+      if (tab.badge) {
+        tabModel.value = tab.value
+        return true
+      }
+      return tab.badge
+    })
+  }
   checkForUpdates()
 }
 

@@ -36,8 +36,17 @@ const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 
 
 function toggle(event: Event) {
   getMessageList()
-
-  pop.value.getRef().toggle(event)
+  const popIns =  pop.value.getRef()
+  popIns.toggle(event)
+  if (popIns.visible) {
+    tabs.value.some(tab => {
+      if (tab.noRead) {
+        tabsValue.value = tab.value
+        return true
+      }
+      return tab.noRead
+    })
+  }
 }
 
 async function getMessageList() {
