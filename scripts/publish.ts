@@ -121,7 +121,7 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
 <p style="line-height: 2;"><strong>2. Optimized some functions</strong></p>
     `.trim().replace(/\n/g, ''),
     downloadUrl,
-    forceUpgrade: true,
+    forceUpgrade: !isProd,
     ipLimit: isProd,
     dataType: 'new',
     status: true,

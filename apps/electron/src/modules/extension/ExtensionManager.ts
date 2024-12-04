@@ -152,8 +152,8 @@ export class ExtensionManager {
       if (!manifestInfo.key) {
         manifestInfo.key = localKey || genExtensionKey()
         await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
-        localKey = manifestInfo.key
       }
+      localKey = manifestInfo.key
     } catch (error) {
       console.error('parse manifestFile error', error)
     }

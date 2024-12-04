@@ -253,7 +253,7 @@ function onUploadExtension(data = {}) {
           if (code === 0) {
             filters.resetFilters()
             const plugin = await getExtensionDetail(data.plugin_id)
-            onInstall(plugin)
+            pluginDir || onInstall(plugin)
           }
         }
         catch (error) {
