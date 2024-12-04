@@ -125,6 +125,8 @@ export class BeforeLaunchTask {
 
     // 写入登录信息
     await this.writeLoginData()
+    // 修改浏览器 Local State 文件
+    await this.modifyLocalStateFile()
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
@@ -297,6 +299,7 @@ export class BeforeLaunchTask {
       const isExist = await fileExists(preferencesPath)
 
       if (!isExist) {
+        await fileExists(dirname(preferencesPath), true)
         await writeFile(preferencesPath, JSON.stringify({ extensions: { pinned_extensions: [] } }))
       }
 
@@ -439,6 +442,25 @@ export class BeforeLaunchTask {
         this.warningMessages.push($t('登录信息写入失败'))
         console.error('写入 LumiLogin 失败', error)
       }
+    }
+  }
+
+  /** 修改浏览器 Local State 文件 */
+  async modifyLocalStateFile() {
+    const { roxyLocalStatePath } = this.browserItem
+    try {
+      const isExist = await fileExists(roxyLocalStatePath)
+      if (isExist) {
+        const content = await readFile(roxyLocalStatePath, 'utf-8')
+        const localState = JSON.parse(content)
+        localState.background_mode = { enabled: false }
+        await writeFile(roxyLocalStatePath, JSON.stringify(localState))
+      } else {
+        await fileExists(dirname(roxyLocalStatePath), true)
+        await writeFile(roxyLocalStatePath, JSON.stringify({ background_mode: { enabled: false } }))
+      }
+    } catch (error) {
+      console.error('修改 Local State 文件失败', error)
     }
   }
 

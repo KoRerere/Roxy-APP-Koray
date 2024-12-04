@@ -49,6 +49,12 @@ export class BrowserItem {
     return join(this.userDataDir, 'roxy_tabs')
   }
 
+
+  /** 浏览器本地状态设置 */
+  get roxyLocalStatePath() {
+    return join(this.userDataDir, 'Local State')
+  }
+
   /** lumiLogin 文件路径 */
   get lumiLoginPath() {
     return join(this.userDataDir, 'Default', 'LumiLogin')
@@ -58,6 +64,7 @@ export class BrowserItem {
   get preferencesPath() {
     return join(this.userDataDir, 'Default', 'Preferences')
   }
+
 
   /** 本地 OSS 缓存目录 */
   get ossCacheDir() {

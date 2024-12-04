@@ -6,6 +6,7 @@ import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { fileExists, getSystemProxy, isMac } from '/@/utils'
+import { checkResource } from '/@/modules/app/checkResource'
 
 export * from './util'
 
@@ -28,7 +29,10 @@ export async function startRoxynet() {
   const isExist = await fileExists(appConfig.roxynetBinPath)
   if (!isExist) {
     console.log('roxynetBinPath is not exist')
-    return
+    await checkResource().catch((error) => {
+      console.error('checkResource error:', error)
+      return Promise.reject(error)
+    })
   }
 
   if (roxynetProcess) {
