@@ -6,6 +6,7 @@ const props = defineProps<{
 }>()
 
 let timer: NodeJS.Timeout
+const isDev = import.meta.hot
 const visible = ref(false)
 
 watchEffect(() => {
@@ -23,6 +24,12 @@ async function upgradeNow() {
 function remindMeLater() {
   visible.value = false
   clearTimeout(timer)
+
+  if (isDev) {
+    console.log('开发环境下，稍后提醒我无效')
+    return
+  }
+
   if (props.isForceUpgrade) {
     timer = setTimeout(() => {
       visible.value = true

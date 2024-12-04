@@ -98,9 +98,10 @@ app.directive('ripple', Ripple)
 app.directive('tooltip', Tooltip)
 
 queueMicrotask(async () => {
-  const { currentLocale } = useSimpleLocale()
-
-  setupI18n(app, { defaultLocale: currentLocale }).then(() => {
-    app.mount('#app')
+  const simpleLocale = useSimpleLocale()
+  await simpleLocale.initLocale().finally(() => {
+    setupI18n(app, { defaultLocale: simpleLocale.currentLocale }).then(() => {
+      app.mount('#app')
+    })
   })
 })

@@ -10,6 +10,9 @@ export const useSimpleLocale = defineStore('locale', () => {
   const currentLocale = ref(navigator.language || 'en')
 
   const setSimpleLocale = async (locale) => {
+    if (currentLocale.value === locale) {
+      return
+    }
     // loadLocaleMessages(locale)
     // primevue.config.locale = locale
     const { code } = await API.base.userSetUserConfigCreate({ language: locale })
@@ -21,8 +24,16 @@ export const useSimpleLocale = defineStore('locale', () => {
     location.reload()
   }
 
+  const initLocale = async () => {
+    const { data } = await API.base.userGetUserConfigList()
+    if (data) {
+      currentLocale.value = data.language
+    }
+  }
+
   return {
     currentLocale,
+    initLocale,
     setSimpleLocale,
   }
 }, {

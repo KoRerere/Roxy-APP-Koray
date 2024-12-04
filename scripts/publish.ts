@@ -115,11 +115,11 @@ async function publishVersion({ osBit, cpu, downloadUrl }) {
     upgradeContent: `
 <p style="line-height: 2;"><strong>1. 修复了一些已知问题</strong></p>
 <p style="line-height: 2;"><strong>2. 优化了部分功能</strong></p>
-    `,
+    `.trim().replace(/\n/g, ''),
     upgradeContentEn: `
 <p style="line-height: 2;"><strong>1. Fixed some known issues</strong></p>
 <p style="line-height: 2;"><strong>2. Optimized some functions</strong></p>
-    `,
+    `.trim().replace(/\n/g, ''),
     downloadUrl,
     forceUpgrade: true,
     ipLimit: isProd,
