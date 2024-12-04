@@ -39,8 +39,7 @@ function getOperation(data: Project) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: role.isOwner || role.isManager,
-      // disabled: true,
-      // disabledTooltip: $t('默认项目不能编辑'),
+      disabled: !!data.projectDefault,// 1 默认项目 0 非默认项目
     },
     {
       name: 'pin',
