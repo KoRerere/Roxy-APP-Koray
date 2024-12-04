@@ -36,7 +36,8 @@ async function selectExtension(selectType: 'dir' | 'file') {
 
 async function uploadToOSS() {
   const { pluginDir, pluginIcon } = extension.value
-  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon })
+  const { localKey } = dialogRef.value.data
+  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon, localKey })
 }
 
 async function confirm() {

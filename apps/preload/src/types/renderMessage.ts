@@ -90,7 +90,7 @@ export interface RenderMessage {
   /** 获取并解析用户本地选择的插件信息 */
   'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => UserSelectedExtensionInfo
   /** 上传本地插件到 OSS */
-  'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData>) => Promise<UploadExtensionToOSSResult>
+  'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData> & { localKey?: string }) => Promise<UploadExtensionToOSSResult>
   /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
   'extension:checkLocalExtensionUpdate': (payload: CheckLocalExtensionUpdatePayload) => Promise<string[]>
   /** 获取本地已安装的插件 */

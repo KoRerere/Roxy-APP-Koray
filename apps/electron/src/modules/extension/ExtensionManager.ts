@@ -124,8 +124,8 @@ export class ExtensionManager {
   }
 
   /** 上传本地插件到 OSS */
-  async uploadExtensionToOSS(params: UnwrapRowType<UserGetPluginListListData>) {
-    let { pluginDir, pluginIcon } = params
+  async uploadExtensionToOSS(params: UnwrapRowType<UserGetPluginListListData> & { localKey?: string }) {
+    let { pluginDir, pluginIcon, localKey } = params
     const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
 
     if (!pluginDir || !pluginIcon) {
@@ -140,16 +140,17 @@ export class ExtensionManager {
     const manifestFilePath = path.join(pluginDir, 'manifest.json')
     const manifestFile = await readFile(manifestFilePath, 'utf-8')
 
-    let localKey: string
-    try {
-      const manifestInfo = JSON.parse(manifestFile)
-      if (!manifestInfo.key) {
-        manifestInfo.key = genExtensionKey()
-        localKey = manifestInfo.key
-        await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
+    if (!localKey) {
+      try {
+        const manifestInfo = JSON.parse(manifestFile)
+        if (!manifestInfo.key) {
+          manifestInfo.key = genExtensionKey()
+          localKey = manifestInfo.key
+          await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
+        }
+      } catch (error) {
+        console.error('parse manifestFile error', error)
       }
-    } catch (error) {
-      console.error('parse manifestFile error', error)
     }
 
     // 创建一个MD5哈希对象，并使用文件数据更新哈希值

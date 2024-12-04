@@ -181,7 +181,7 @@ async function operationHandler(operate: any, data: any) {
       checkUpdate(data)
       break
     case 'edit':
-      onUploadExtension(data.pluginDir)
+      onUploadExtension(data)
       break
     case 'delete':
       deleteExtension(datas)
@@ -231,7 +231,9 @@ function installViaUrl() {
   })
 }
 
-function onUploadExtension(pluginDir?: string) {
+function onUploadExtension(data = {}) {
+  const {pluginDir,localKey} = data
+
   dialog.open(uploadExtension, {
     props: {
       showHeader: false,
@@ -239,6 +241,7 @@ function onUploadExtension(pluginDir?: string) {
       blockScroll: true,
     },
     data: {
+      localKey,
       onConfirm: async (params: any) => {
         try {
           await uploadRecordCheck()
