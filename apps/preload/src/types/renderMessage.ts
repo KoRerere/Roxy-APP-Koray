@@ -2,7 +2,7 @@ import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, Use
 import type { OsConfig } from '#roxybrowser/constants'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
-import type { UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
+import type { UploadExtensionToOSSPayload, UserSelectedExtensionInfo } from '#roxybrowser/modules/extension'
 import type { PluginMeta } from '#roxybrowser/modules/extension/helper'
 import type { CheckLocalExtensionUpdatePayload, UploadExtensionToOSSResult } from '#roxybrowser/modules/extension/types'
 import type { StoreType } from '#roxybrowser/modules/store'
@@ -90,7 +90,7 @@ export interface RenderMessage {
   /** 获取并解析用户本地选择的插件信息 */
   'extension:getSelectedExtensionInfo': (selectType: 'dir' | 'file') => UserSelectedExtensionInfo
   /** 上传本地插件到 OSS */
-  'extension:uploadExtensionToOSS': (payload: UnwrapRowType<UserGetPluginListListData> & { localKey?: string }) => Promise<UploadExtensionToOSSResult>
+  'extension:uploadExtensionToOSS': (payload: UploadExtensionToOSSPayload) => Promise<UploadExtensionToOSSResult>
   /** 检测本地插件是否有可用的更新，返回结果是插件ID字符串数组，表示本地哪些插件时可以更新的 */
   'extension:checkLocalExtensionUpdate': (payload: CheckLocalExtensionUpdatePayload) => Promise<string[]>
   /** 获取本地已安装的插件 */

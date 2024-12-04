@@ -242,6 +242,7 @@ function onUploadExtension(data = {}) {
     },
     data: {
       localKey,
+      pluginDir,
       onConfirm: async (params: any) => {
         try {
           await uploadRecordCheck()

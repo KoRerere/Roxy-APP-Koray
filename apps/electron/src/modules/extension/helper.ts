@@ -107,8 +107,8 @@ export async function getPluginMeta(pluginDir: string) {
     }
 
     return {
-      pluginIcon,
-      pluginDir: targetPluginDir,
+      pluginIconPath: pluginIcon,
+      pluginPath: targetPluginDir,
       pluginName: manifestInfo.name,
       pluginVersion: manifestInfo.version,
       pluginDesc: manifestInfo.description,

@@ -21,6 +21,13 @@ export interface UserSelectedExtensionInfo {
   data?: Awaited<ReturnType<typeof getPluginMeta>>
 }
 
+export interface UploadExtensionToOSSPayload {
+  pluginPath: string
+  pluginIconPath: string
+  localKey?: string
+  pluginDir?: string
+}
+
 interface ExtensionManagerOptions {
   workspaceId?: string
 }
@@ -124,60 +131,63 @@ export class ExtensionManager {
   }
 
   /** 上传本地插件到 OSS */
-  async uploadExtensionToOSS(params: UnwrapRowType<UserGetPluginListListData> & { localKey?: string }) {
-    let { pluginDir, pluginIcon, localKey } = params
+  async uploadExtensionToOSS(params: UploadExtensionToOSSPayload) {
+    let { pluginPath, pluginIconPath, pluginDir, localKey } = params
     const { promise, resolve, reject } = Promise.withResolvers<UploadExtensionToOSSResult>()
 
-    if (!pluginDir || !pluginIcon) {
+    if (!pluginPath || !pluginIconPath) {
       return Promise.reject(new Error($t('扩展目录或扩展图标不能为空')))
     }
 
-    const manifestExist = await fileExists(path.join(pluginDir, 'manifest.json'))
+    const manifestExist = await fileExists(path.join(pluginPath, 'manifest.json'))
 
     if (!manifestExist) {
       return Promise.reject(new Error($t('扩展目录下不存在 manifest.json 文件')))
     }
-    const manifestFilePath = path.join(pluginDir, 'manifest.json')
+    const manifestFilePath = path.join(pluginPath, 'manifest.json')
     const manifestFile = await readFile(manifestFilePath, 'utf-8')
-
-    if (!localKey) {
-      try {
-        const manifestInfo = JSON.parse(manifestFile)
-        if (!manifestInfo.key) {
-          manifestInfo.key = genExtensionKey()
-          localKey = manifestInfo.key
-          await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
-        }
-      } catch (error) {
-        console.error('parse manifestFile error', error)
+    console.log('upload-plugin localKey', localKey)
+    try {
+      const manifestInfo = JSON.parse(manifestFile)
+      if (!manifestInfo.key) {
+        manifestInfo.key = localKey || genExtensionKey()
+        await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
+        localKey = manifestInfo.key
       }
+    } catch (error) {
+      console.error('parse manifestFile error', error)
     }
 
-    // 创建一个MD5哈希对象，并使用文件数据更新哈希值
-    const hash = crypto.createHash('md5')
-    hash.update(manifestFile)
+    // 如果没有指定插件目录名，则使用插件目录路径的MD5哈希值作为插件目录名
+    let dirName = pluginDir
 
-    // 计算并获取哈希值的十六进制表示插件目录名
-    const dirName = hash.digest('hex')
+    if (!dirName) {
+      // 创建一个MD5哈希对象，并使用文件路径更新哈希值
+      const hash = crypto.createHash('md5')
+      hash.update(pluginPath)
 
-    pluginIcon = pluginIcon.replace(`${mediaProtocolName}:///`, isMac ? '/' : '')
+      // 计算并获取哈希值的十六进制表示插件目录名
+      dirName = hash.digest('hex')
+    }
+
+    pluginIconPath = pluginIconPath.replace(`${mediaProtocolName}:///`, isMac ? '/' : '')
 
     const zip = new AdmZip()
     // 获取目录名
     // const dirName = path.basename(pluginDir);
     // 获取图片后缀名
-    const iconExtName = path.extname(pluginIcon)
+    const iconExtName = path.extname(pluginIconPath)
 
-    console.log('upload-plugin', pluginDir, pluginIcon, dirName)
+    console.log('upload-plugin', pluginPath, pluginIconPath, dirName)
 
-    zip.addLocalFolder(path.normalize(pluginDir))
+    zip.addLocalFolder(path.normalize(pluginPath))
     const zipBuffer = zip.toBuffer()
 
     try {
       const basePath = ossObject.userPluginDataDir
       const promises = [
         aliOSS.put(`${basePath}/${dirName}.zip`, zipBuffer),
-        aliOSS.put(`${basePath}/${dirName}${iconExtName}`, pluginIcon),
+        aliOSS.put(`${basePath}/${dirName}${iconExtName}`, pluginIconPath),
       ]
       console.log('upload-plugin promises', `${basePath}/${dirName}.zip`)
       console.log('upload-plugin promises', `${basePath}/${dirName}${iconExtName}`)

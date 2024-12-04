@@ -35,9 +35,9 @@ async function selectExtension(selectType: 'dir' | 'file') {
 }
 
 async function uploadToOSS() {
-  const { pluginDir, pluginIcon } = extension.value
-  const { localKey } = dialogRef.value.data
-  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginIcon, localKey })
+  const { pluginPath, pluginIconPath } = extension.value
+  const { localKey, pluginDir } = dialogRef.value.data
+  extensionOss.value = await window.electronAPI.send('extension:uploadExtensionToOSS', { pluginDir, pluginPath, pluginIconPath, localKey })
 }
 
 async function confirm() {
@@ -95,7 +95,7 @@ onMounted(() => {
 
     <div v-if="extension?.isSuccess" class="extension">
       <div class="extension-icon">
-        <img class="extension-icon-image" :src="extension.pluginIcon">
+        <img class="extension-icon-image" :src="extension.pluginIconPath">
       </div>
       <div class="flex justify-between items-center extension-name">
         <span>{{ $t('扩展名称') }}</span>
