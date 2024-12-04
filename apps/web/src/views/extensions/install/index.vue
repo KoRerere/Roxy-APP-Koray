@@ -143,6 +143,12 @@ function tableOperation(data: any) {
       icon: 'base/rx_ic_clock_rotate',
       power: isPersonal || role.isOwner || role.isManager,
     },
+    data.source === 'local' && {
+      name: 'edit',
+      label: $t('编辑'),
+      icon: 'base/rx_ic_edit',
+      power: isPersonal || role.isOwner || role.isManager,
+    },
     {
       separator: true,
       power: isPersonal || role.isOwner || role.isManager,
@@ -159,7 +165,7 @@ function tableOperation(data: any) {
         name: 'one',
       },
     },
-  ]
+  ].filter(Boolean)
 }
 
 async function operationHandler(operate: any, data: any) {
@@ -174,7 +180,8 @@ async function operationHandler(operate: any, data: any) {
     case 'checkUpdate':
       checkUpdate(data)
       break
-    case 'setting':
+    case 'edit':
+      onUploadExtension(data.pluginDir)
       break
     case 'delete':
       deleteExtension(datas)
@@ -224,7 +231,7 @@ function installViaUrl() {
   })
 }
 
-function onUploadExtension() {
+function onUploadExtension(pluginDir?: string) {
   dialog.open(uploadExtension, {
     props: {
       showHeader: false,
@@ -235,6 +242,7 @@ function onUploadExtension() {
       onConfirm: async (params: any) => {
         try {
           await uploadRecordCheck()
+          params.pluginDir = pluginDir || params.pluginDir
           const { code, data, msg } = await API.plugins.userUploadPluginInfoCreate(params)
 
           onlyErrorToast(code, msg)
@@ -314,6 +322,7 @@ async function deleteExtension(datas: Data[]) {
         onlyErrorToast(code, msg)
         if (code === 0) {
           filters.resetFilters()
+          electronAPI.send('extension:remove', datas.map(item => item.pluginDir!))
         }
       }
       catch (error) {
@@ -346,7 +355,7 @@ defineExpose({
         <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
           <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click="installViaUrl" />
-          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension" />
+          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension()" />
         </div>
       </div>
     </template>

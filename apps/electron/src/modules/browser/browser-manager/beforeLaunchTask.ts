@@ -29,7 +29,7 @@ export class BeforeLaunchTask {
   browser: Browser | null = null
   wsEndpoint: string | null = null
   /** 代理检测结果 */
-  private proxyInfo!: Awaited<ReturnType<typeof proxyDetection>>
+  private proxyInfo = {} as Awaited<ReturnType<typeof proxyDetection>>
   /** 不影响浏览器打开的警告信息 */
   warningMessages: string[] = []
   /** 内核执行程序路径 */

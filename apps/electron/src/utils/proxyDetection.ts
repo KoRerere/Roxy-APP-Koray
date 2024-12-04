@@ -150,7 +150,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     result.longitude ||= result.lon
   }
 
-  return result
+  return result || {}
 }
 
 function logProxyConfig(params: ProxyDetectionParams, name = ``) {

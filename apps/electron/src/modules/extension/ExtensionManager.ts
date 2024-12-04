@@ -140,10 +140,12 @@ export class ExtensionManager {
     const manifestFilePath = path.join(pluginDir, 'manifest.json')
     const manifestFile = await readFile(manifestFilePath, 'utf-8')
 
+    let localKey: string
     try {
       const manifestInfo = JSON.parse(manifestFile)
       if (!manifestInfo.key) {
         manifestInfo.key = genExtensionKey()
+        localKey = manifestInfo.key
         await writeFile(manifestFilePath, JSON.stringify(manifestInfo, null, 2), 'utf-8')
       }
     } catch (error) {
@@ -183,6 +185,7 @@ export class ExtensionManager {
         pluginRoute: pluginResult.url,
         pluginIcon: iconResult.url,
         pluginDir: dirName,
+        localKey,
       }
       console.log('upload-plugin result', result)
       resolve(result)
