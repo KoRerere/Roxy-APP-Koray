@@ -27,7 +27,7 @@ export function useMateGroup() {
   }
 
   async function getProjects(): Promise<Operation[]> {
-    const { data } = await API.limit.userGetProjectInfoByWorkspaceList({})
+    const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
     return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}` }))
   }
 

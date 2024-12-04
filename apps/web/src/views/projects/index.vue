@@ -39,6 +39,8 @@ function getOperation(data: Project) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: role.isOwner || role.isManager,
+      // disabled: true,
+      // disabledTooltip: $t('默认项目不能编辑'),
     },
     {
       name: 'pin',
@@ -99,7 +101,7 @@ function operationHandler(operate: any, data?: any) {
 
 function tableRequest() {
   getProjects()
-  return API.limit.userGetProjectInfoByWorkspaceList({})
+  return API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
 }
 
 async function pinProject(data: Project) {

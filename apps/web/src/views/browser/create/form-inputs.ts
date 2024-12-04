@@ -107,7 +107,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
     ? await getBrowserVersion({ os: osValue.value, osVersion: osVersionValue.value })
     : []
-  const browserVersionValue = data.browserVersion?.split(',') ?? browserVersionOptions.map(item => item.value)
+  const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
   const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'

@@ -21,26 +21,26 @@ const exportType = ref(true)
 const excelSchema = [
   {
     key: 'windowName',
-    name: '窗口名称',
+    name: $t('窗口名称'),
   },
   {
     key: 'platformUrl',
-    name: '账号平台',
+    name: $t('平台账号'),
     getText: (item: Data) => platformFormat(item, 'platformUrl'),
   },
   {
     key: 'platformUserName',
-    name: '用户名',
+    name: $t('用户名'),
     getText: (item: Data) => platformFormat(item, 'platformUserName'),
   },
   {
     key: 'platformPassword',
-    name: '密码',
+    name: $t('密码'),
     getText: (item: Data) => platformFormat(item, 'platformPassword'),
   },
   {
     key: 'platformEfa',
-    name: '2FA秘钥',
+    name: '2FA',
     getText: (item: Data) => platformFormat(item, 'platformEfa'),
   },
   {
@@ -58,16 +58,16 @@ const excelSchema = [
   },
   {
     key: 'defaultOpenUrl',
-    name: '打开指定网址',
+    name: $t('自定义打开 URL'),
     getText: (item: Data) => item.defaultOpenUrl ? item.defaultOpenUrl.join('; ') : '',
   },
   {
     key: 'proxyCategory',
-    name: '代理类型',
+    name: $t('代理类型'),
   },
   {
     key: 'proxyInfo',
-    name: '代理信息',
+    name: $t('代理信息'),
     getText: (item: Data) => {
       const ipType = item.ipType!.toLocaleLowerCase() === 'ipv4' ? '' : 'ipv6:'
       return `${ipType}${item.host}:${item.port}${strConcat(':', item.proxyUserName as string)}${strConcat(':', item.proxyPassword as string)}`
@@ -75,11 +75,11 @@ const excelSchema = [
   },
   {
     key: 'refreshUrl',
-    name: '刷新URL',
+    name: $t('刷新URL'),
   },
   {
     key: 'windowRemark',
-    name: '窗口备注',
+    name: $t('备注'),
   },
   {
     key: 'userAgent',
@@ -87,7 +87,7 @@ const excelSchema = [
   },
   {
     key: 'windowSize',
-    name: '窗口尺寸',
+    name: $t('窗口大小'),
     getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
   },
 ].map((item, _index) => ({ ...item, _index }))
@@ -164,7 +164,7 @@ onMounted(() => {
     <div class="flex flex-col popup-content">
       <div class="flex flex-col popup-block">
         <div class="popup-block__title">
-          Profiles to export:
+          {{ $t('要导出的窗口:') }}
         </div>
         <div class="popup-block__description">
           {{ description }}
@@ -172,16 +172,16 @@ onMounted(() => {
       </div>
       <div class="flex flex-col popup-block">
         <div class="popup-block__title">
-          Select your file format:
+          {{ $t('请选择您的文件格式:') }}
         </div>
         <RxInputRadio v-model="exportType" size="xs" name="proxySwitch" :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
         <div class="popup-block__tip">
-          * For profiles with large cookies, please choose .txt format.
+          {{ $t('*对于具有大量 cookie 的窗口，请选择 .txt 格式') }}
         </div>
       </div>
       <div class="h-80 flex flex-col popup-block">
         <div class="popup-block__title">
-          Select datas you want to export:
+          {{ $t('请选择您要导出的数据:') }}
         </div>
         <div class="flex-ovh-1 table-container">
           <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]" :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"

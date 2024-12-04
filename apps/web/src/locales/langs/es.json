@@ -9,6 +9,7 @@
   "#Themes for different mode": "",
   "#Verification code sent!": "",
   "* 不使用代理则默认通过本地直连 ({value})": "",
+  "*对于具有大量 cookie 的窗口，请选择 .txt 格式": "",
   "1. Lumibrowser 中的所有窗口、代理、扩展等数据将自动同步至 RoxyBrowser 默认工作空间（每位用户将拥有专属工作空间）": "",
   "1.清除本电脑上的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。": "",
   "1.清除本电脑上除了窗口扩展及扩展数据外的所有缓存文件，{light}！环境的参数、IP不会被清理。\n2.常用于解决未知原因的环境打开异常或缓慢等问题。": "",
@@ -559,6 +560,7 @@
   "获取内核列表失败": "No se pudo obtener la lista de núcleos",
   "获取扩展失败": "",
   "获取窗口信息失败": "",
+  "要导出的窗口:": "",
   "覆盖当前模板": "",
   "视频": "video",
   "解析": "analizar gramaticalmente",
@@ -632,6 +634,8 @@
   "请输入高度": "Por favor ingrese la altura",
   "请选择上传方式": "Por favor seleccione el método de carga",
   "请选择分辨率": "Por favor seleccione la resolución",
+  "请选择您的文件格式:": "",
+  "请选择您要导出的数据:": "",
   "请选择时间": "",
   "请选择正确的扩展文件": "Seleccione el archivo de complemento correcto",
   "请选择至少一个项目": "",
@@ -689,5 +693,6 @@
   "默认 IP 查询渠道": "Canal de consulta de IP predeterminado",
   "默认图标展示工作空间名称的前两个字符": "",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "La información de la ventana predeterminada se mostrará como una combinación de los primeros tres caracteres del nombre del espacio y el número de secuencia.",
-  "默认项目": ""
+  "默认项目": "",
+  "默认项目不能编辑": ""
 }
