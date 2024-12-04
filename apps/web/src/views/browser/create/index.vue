@@ -269,7 +269,7 @@ async function importProfile(params: any) {
 
 const items = computed(() => [
   {
-    label: $t('保存模板'),
+    label: $t('覆盖当前模板'),
     disabled: !!profileTemplate.value && profileTemplate.value === 'default',
     command: () => {
       const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
@@ -394,7 +394,7 @@ async function deleteTemplate(data: any) {
         </div>
         <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('保存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

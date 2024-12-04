@@ -180,6 +180,16 @@ $spacing-x: 66px;
   gap: var(--spacing-lg, 8px);
   max-height: 64px;
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  :deep(.p-button) {
+    max-width: 110px;
+  }
+
+  :deep(.p-button-label) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 :deep(.rx-label) {

@@ -70,7 +70,7 @@ function onRemark() {
 <template>
   <RxButton v-if="mode === 'button'" v-tooltip.top="value" class="mode-button" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
     <RxSvgIcon :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" class="remark-icon" :class="{ 'text-gray-200': disabled, 'light': hasRemark }" />
-    <span v-if="label" class="ml-2 text-3">{{ label }}</span>
+    <span v-if="label" class="ml-2 text-3 ellipsis-1">{{ label }}</span>
     <!-- 占位用span用于保持按钮的高度 -->
     <span class="p-button-label" data-pc-section="label">&nbsp;</span>
   </RxButton>

@@ -3,13 +3,14 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { format } from 'date-fns'
 import { utils, writeFile } from 'xlsx'
 import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
 import { strConcat } from '/@/utils'
+import { $t } from '/@/locales'
+import { useToast } from 'primevue/usetoast'
 
 type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
 const dialogRef = inject<any>('dialogRef')
-const [_, onlyErrorToast] = useResponseToast()
+const toast = useToast()
 
 const _props = ref()
 const _onConfirm = ref()
@@ -48,8 +49,8 @@ const excelSchema = [
     getText: (item: Data) => {
       const value = item.cookie ? JSON.stringify(item.cookie) : ''
       if (exportType.value && value.length >= 32767) {
-        const message = `[${_props.value.workspaceName}-${item.windowSortNum}] 的 Cookie 长度超过 Excel 限制，请缩短 Cookie 长度`
-        onlyErrorToast(-1, message)
+        const message = $t('[{name}] 的 cookies 长度超过 Excel 文档限制，请使用 txt 格式进行导出。', { name: `${_props.value.workspaceName}-${item.windowSortNum}` })
+        toast.add({ severity: 'warn', summary: $t('操作失败'), detail: message, life: 5000 })
         throw new Error(message)
       }
       return value
@@ -182,7 +183,7 @@ onMounted(() => {
         <div class="popup-block__title">
           Select datas you want to export:
         </div>
-        <div class="flex-ovh-1">
+        <div class="flex-ovh-1 table-container">
           <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]" :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"
             :multiple-operation="false" selection-mode="multiple" size="small" />
         </div>
@@ -231,6 +232,12 @@ onMounted(() => {
       line-height: 16px;
     }
   }
+}
+
+.table-container {
+  border-radius: 6px;
+  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
+  background: var(--Component-Colors-TextInput-bg-bg, #FFF);
 }
 
 .footer {
