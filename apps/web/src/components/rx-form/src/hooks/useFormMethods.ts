@@ -126,7 +126,7 @@ export function useFormMethods({ emit }: UseFormMethodsParams) {
   /** 设置字段的值 */
   function setFieldsValue(obj: Recordable) {
     Object.assign(formModel.value, obj)
-    console.log('formModel', formModel.value)
+    // console.log('formModel', formModel.value)
   }
 
   /** 重置表单 */

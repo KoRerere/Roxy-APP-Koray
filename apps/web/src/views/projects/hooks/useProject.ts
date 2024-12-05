@@ -31,7 +31,6 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
         const res = data.project_id
           ? await API.limit.userMdfProjectInfoCreate({ id: data.project_id, ...params })
           : await API.limit.userAddProjectInfoCreate(params)
-        // tableRef.value?.refresh()
 
         if (res.code === 0) {
           isLikeFunction(confirmNext) && await confirmNext({ params, res })

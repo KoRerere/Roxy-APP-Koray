@@ -33,6 +33,8 @@ const [columns] = useColumns(columnsRow)
 const role = useRoleStore()
 
 function getOperation(data: Project) {
+  const isPinned = data.pinStatus === ProjectPin.pinned
+
   return [
     {
       name: 'edit',
@@ -43,9 +45,9 @@ function getOperation(data: Project) {
     },
     {
       name: 'pin',
-      label: data.topTime ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
-      icon: data.topTime ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
-      iconClass: data.topTime ? 'text-orange' : '',
+      label: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
+      icon: isPinned ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
+      iconClass: isPinned ? 'text-orange' : '',
       power: role.isOwner || role.isManager,
       quick: true,
     },
@@ -104,11 +106,13 @@ function tableRequest() {
 }
 
 async function pinProject(data: Project) {
-  const pinStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
+  const isPinned = data.pinStatus === ProjectPin.pinned
+  const pinStatus = isPinned ? ProjectPin.none : ProjectPin.pinned
+
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus: pinStatus as number })
   if (code === 0) {
     tableRef.value?.refresh()
-    showToast(code, data.topTime ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
+    showToast(code, isPinned ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
   }
   else {
     showToast(code, msg)
