@@ -22,7 +22,6 @@ export function getRawColumns(options?: any) {
       key: 'related',
       render: ({ data }: any) => {
         const list = data.window_info.map((id: number) => `${workspaceName}-${id}`)
-
         return <RelatedInfo list={list}></RelatedInfo>
       },
     },

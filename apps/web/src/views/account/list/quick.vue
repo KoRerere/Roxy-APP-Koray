@@ -73,6 +73,10 @@ function handleSave() {
             </div>
           </div>
         </template>
+        <template #remark="{ data }">
+          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
+        </template>
         <template #actions="{ data: row }">
           <RemarkIcon :value="row.platformRemarks" :on-confirm="(params: any) => addRemark(params, row)" />
         </template>
