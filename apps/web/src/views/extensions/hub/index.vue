@@ -82,15 +82,17 @@ async function onInstall(plugin: PluginItem) {
       },
       onConfirm: async (params: any) => {
         try {
-          const { data } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
+          const { code, data, msg } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
           plugin.addStatus = true
           needsync.value = true
-
-          const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
+          onlyErrorToast(code, msg)
           if (code === 0) {
-            window.electronAPI.send('extension:download', [toRaw(plugin)])
+            const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
+            if (code === 0) {
+              window.electronAPI.send('extension:download', [toRaw(plugin)])
+              showToast(code, msg)
+            }
           }
-          showToast(code, msg)
         }
         catch (error) {
           onlyErrorToast(-1, error as string)

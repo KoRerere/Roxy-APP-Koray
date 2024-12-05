@@ -59,7 +59,7 @@
   "localStorage文件删除失败": "localStorage file deletion failed",
   "manifest.json 文件不存在或格式有误": "manifest.json file missing or incorrect",
   "roxynet 下载完成": "roxynet download complete",
-  "{count} 个窗口将会绑定代理。最多只能绑定 {max} 个窗口。": "{count} profiles will bind with proxies. Max profiles: {max}.",
+  "{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}": "{count} profiles will bind with proxies. Profiles you will create: {max}. {message}",
   "{count} 个窗口已成功导入": "{count} profiles import successful",
   "{day}天前": "{day} Days ago",
   "{hour}小时前": "{hour} Hours ago",
@@ -287,6 +287,7 @@
   "弹出提示": "Pop-up Prompt",
   "当前条件下没有匹配的结果，请尝试更换其他筛选条件。": "No matching results under current conditions. Please try other filters.",
   "当前系统不支持使用该内核": "Current system does not support this kernel",
+  "当前选择绑定的代理数量已超过创建窗口数。": "Chosen proxies exceed the number of profiles you create.",
   "当点击关闭客户端时": "When click close client",
   "当系统代理识别失败时尝试启用": "Attempt to enable when system proxy identification fails",
   "当输入重复代理信息时不做添加": "Do not add when enter duplicate proxy info",
@@ -327,6 +328,7 @@
   "成员状态": "Member Status",
   "我们已经向您的邮箱发送了一个6位数字验证码：": "A 6-digit verification code has been sent to your email:",
   "我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务": "We have detected that the current port {port} is already in use. In order to use the API service, please change the port.",
+  "或": "",
   "或通过以下方式继续": "Or continue with:",
   "所有 IP 查询结果都会通过该渠道获取": "All IP query results obtain through this channel",
   "所有窗口将被关闭，您的工作将被保存。": "All Profiles will be closed, and your work will be saved.",
@@ -693,6 +695,5 @@
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
-  "默认项目": "Default project",
-  "默认项目不能编辑": ""
+  "默认项目": "Default project"
 }

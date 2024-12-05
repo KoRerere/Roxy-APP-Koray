@@ -193,14 +193,18 @@ onBeforeMount(() => {
 
     &-label {
       color: #000;
+      font-family: Inter;
       font-size: 14px;
       font-weight: 500;
       line-height: normal;
+      line-height: var(--Line-Height-text-xs, 20px);
     }
 
     &-text {
       color: var(--Colors-Text-text-tertiary, #7c8387);
       font-size: 12px;
+      font-family: Inter;
+      line-height: var(--Line-Height-text-xs, 20px);
     }
 
     &-value {

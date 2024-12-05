@@ -1864,37 +1864,20 @@ export interface UserGetDefConfigListData {
 }
 
 export interface UserSetUserConfigCreatePayload {
-  code: number;
-  data: {
-    /** 语言 */
-    language: string;
-    /** 时区 */
-    timeZone: string;
-    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
-    closeSoft: string;
-    /** 文件下载目录 */
-    uploadDir: string;
-    /** 文件缓存目录 */
-    cacheDir: string;
-    /** 缓存删除条件，5天前的 */
-    autoDelDays: string;
-    /** 缓存删除条件，2GB以上的 */
-    autoDelSize: string;
-    /** 性能监控，内存使用率%95以上时停止打开窗口 */
-    memoryLimit: string;
-    /** app 风格 0:系统 ,1:亮色,2:暗色 */
-    appearance: number;
-    /** 系统代理开关，true,false,默认true */
-    systemProxySwitch: boolean;
-    /** v2ray开关，true,false,默认true */
-    v2raySwitch: boolean;
-    /** ip检测 */
-    ipChecker: string;
-    ipBlackList: string[];
-    /** api token */
-    apiToken: string;
-  };
-  msg: string;
+  language?: string;
+  timeZone?: string;
+  closeSoft?: string;
+  uploadDir?: string;
+  cacheDir?: string;
+  autoDelDays?: string;
+  autoDelSize?: string;
+  memoryLimit?: string;
+  appearance?: number;
+  systemProxySwitch?: boolean;
+  v2raySwitch?: boolean;
+  ipChecker?: string;
+  ipBlackList?: string[];
+  apiToken?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -2216,6 +2199,16 @@ export interface GetRegCheckBindEmailVerCodeListData {
   code: number;
   /** 验证码是成功 */
   data: boolean;
+  msg: string;
+}
+
+export interface SaveChannelSourcesPeopleListParams {
+  /** 渠道来源 */
+  channelSource: string;
+}
+
+export interface SaveChannelSourcesPeopleListData {
+  code: number;
   msg: string;
 }
 
@@ -6698,6 +6691,7 @@ export interface UserGetProjectInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
+      pinStatus?: number;
       /** 1 默认项目 0 非默认项目 */
       projectDefault?: number;
       /**

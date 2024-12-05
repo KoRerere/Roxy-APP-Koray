@@ -26,6 +26,8 @@ import {
   LoginGoogleV2CreatePayload,
   PostBaseData,
   PostBasePayload,
+  SaveChannelSourcesPeopleListData,
+  SaveChannelSourcesPeopleListParams,
   SendEmailForgetVerifyCodeListData,
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
@@ -640,6 +642,23 @@ export class BaseApi<SecurityDataType = unknown> {
   getRegCheckBindEmailVerCodeList = (query: GetRegCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
     this.http.request<GetRegCheckBindEmailVerCodeListData, any>({
       path: `/get_reg_check_bind_email_ver_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name SaveChannelSourcesPeopleList
+   * @summary 存储渠道来源人数
+   * @request GET:/save_channel_sources_people
+   * @response `200` `SaveChannelSourcesPeopleListData`
+   */
+  saveChannelSourcesPeopleList = (query: SaveChannelSourcesPeopleListParams, params: RequestParams = {}) =>
+    this.http.request<SaveChannelSourcesPeopleListData, any>({
+      path: `/save_channel_sources_people`,
       method: "GET",
       query: query,
       format: "json",

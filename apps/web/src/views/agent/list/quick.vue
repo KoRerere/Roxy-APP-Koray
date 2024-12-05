@@ -45,6 +45,8 @@ const columns = getRawColumns({
   filters: ['ipChecker'],
 })
 
+const warnMessage = $t('当前选择绑定的代理数量已超过创建窗口数。')
+
 const operation = ref(tableOperation().filter(item => item.name === 'test'))
 const selection = ref(props.data)
 const filtersMenu = ref()
@@ -162,7 +164,7 @@ function saveSelected() {
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
     </div>
     <RxAlert v-if="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。最多只能绑定 {max} 个窗口。', { count: sumProxyCount, max: createCount })" :closable="false" />
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })" :closable="false" />
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
       <RyTable ref="agent" v-model:selection="selection" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"

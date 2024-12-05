@@ -1,10 +1,11 @@
 import type { UserGetUserConfigListData } from '@roxy/backend-api'
+import type { JSX } from 'vue/jsx-runtime'
 
 export type UserConfig = UserGetUserConfigListData['data']
 
 export interface Items {
   label?: string
-  text?: string
+  text?: string | (() => JSX.Element)
   name?: string
   value?: any
   oldValue?: any

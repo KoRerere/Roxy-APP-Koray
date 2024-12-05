@@ -160,8 +160,8 @@ function replaceData(data: any) {
       </div>
       <div>
         <template v-if="isBatch">
-          <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn" :title="$t('{count} 个窗口将会绑定代理。最多只能绑定 {max} 个窗口。', { count: sumProxyCount, max: createCount })"
-            :closable="false" />
+          <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn"
+            :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false" />
           <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)" @close="deleteProxy(index)">
             <div class="multiple-region">
               <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />

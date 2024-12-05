@@ -225,7 +225,9 @@ export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
         items: [
           {
             label: $t('UA 严格模式'),
-            text: $t('关闭此选项后，可以自定义浏览器的版本。一般情况下我们推荐保持该选项开启。'),
+            text: () => (
+              <div class="w-[370px]">{$t('关闭此选项后，可以自定义浏览器的版本。一般情况下我们推荐保持该选项开启。')}</div>
+            ),
             name: 'uaModeSwitch',
             value: data?.uaModeSwitch ?? UaStrictMode.open,
             props: {
