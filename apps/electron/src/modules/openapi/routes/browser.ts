@@ -1,7 +1,7 @@
 import express from 'express'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { accountMapping, listTrans } from '/@/modules/openapi/routes/mapping/'
+import { accountMapping, browserListMapping, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { defaultBrowserCreateParams } from './constants/'
@@ -99,12 +99,13 @@ router.get('/list', async (req, res) => {
   try {
     const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
-      console.log('browserListMapping', result.data.rows)
-      result.data.rows = result.data.rows.map(item => listTrans(item))
+      // console.log('browserListMapping', result.data.rows)
+      result.data.rows = mapping2List(result.data.rows, browserListMapping)
     }
     res.json(result)
   }
   catch (error) {
+    console.error('list error', error)
     res.error(error)
   }
 })

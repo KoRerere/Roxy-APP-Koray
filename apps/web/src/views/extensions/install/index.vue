@@ -427,8 +427,8 @@ defineExpose({
 
     <template #actions="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
-        <div class="cursor-pointer" @click="showPinMenu($event,data)">
-          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line'" :class="{pinned: data.fixedPlugin === 'pin'}" class="pointer-events-none"/>
+        <div class="cursor-pointer mr-2" @click="showPinMenu($event,data)">
+          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'" :class="{pinned: data.fixedPlugin === 'pin'}" class="block pointer-events-none"/>
         </div>
         <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
       </div>

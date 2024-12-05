@@ -35,7 +35,7 @@ export async function getLocalWebVersion() {
 }
 
 /** 创建窗口 */
-async function createWindow(options?: BrowserWindowConstructorOptions) {
+function createWindow(options?: BrowserWindowConstructorOptions) {
   const browserWindow = new BrowserWindow({
     // Use 'ready-to-show' event to show window
     show: false,
@@ -63,7 +63,7 @@ async function createWindow(options?: BrowserWindowConstructorOptions) {
    * @see https://github.com/electron/electron/issues/25012
    */
   browserWindow.on('ready-to-show', () => {
-    browserWindow?.show()
+    browserWindow?.show?.()
   })
 
   if (isProd) {
@@ -76,7 +76,7 @@ async function createWindow(options?: BrowserWindowConstructorOptions) {
 
 /** 进入启动页 */
 export async function intoLaunchPage() {
-  const launchWin = await restoreOrCreateWindow({
+  const launchWin = restoreOrCreateWindow({
     width: 640,
     height: 384,
     resizable: false,
@@ -90,6 +90,7 @@ export async function intoLaunchPage() {
 
 /** 进入主页面 */
 export async function intoMainPage() {
+  mainWindow?.removeAllListeners()
   closeMainWindow()
   const defaultWidth = 1280
   const defaultHeight = 832
@@ -98,7 +99,7 @@ export async function intoMainPage() {
   // 获取屏幕大小
   const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
-  const mainWin = await restoreOrCreateWindow({
+  const mainWin = restoreOrCreateWindow({
     width: Math.min(defaultWidth, width),
     height: Math.min(defaultHeight, height),
     minWidth: Math.min(minWidth, width),
@@ -131,12 +132,12 @@ let mainWindow: BrowserWindow | undefined
 /**
  * 恢复现有的浏览器窗口或创建新的浏览器窗口
  */
-export async function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions) {
+export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions) {
   // mainWindow = BrowserWindow.getAllWindows().find(w => !w.isDestroyed())
   console.log('restoreOrCreateWindow', mainWindow)
 
   if (!mainWindow) {
-    mainWindow = await createWindow(options)
+    mainWindow = createWindow(options)
   }
 
   if (mainWindow.isMinimized()) {
@@ -153,7 +154,7 @@ function closeMainWindow() {
   mainWindow = undefined
   setTimeout(() => {
     win?.destroy()
-  }, 2000)
+  }, 3000)
 }
 
 /** 获取主窗口实例 */

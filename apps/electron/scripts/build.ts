@@ -20,7 +20,7 @@ const copySyncOptions: CopySyncOptions = {
   /**
    * 过滤 source map 文件
    */
-  filter: src => !src.endsWith('.map'),
+  filter: src => !src.endsWith('.map') || !src.endsWith('.d.ts'),
 }
 
 cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)

@@ -7,7 +7,6 @@ let tray: Tray
 /** 创建托盘 */
 export async function createTray() {
   await setTimeout()
-  const win = getMainWindow()!
   console.log('createTray')
   tray?.destroy()
 
@@ -21,14 +20,14 @@ export async function createTray() {
     {
       label: $t('显示'),
       click: () => {
-        win.show()
+        getMainWindow()?.show()
       },
     },
     {
       label: $t('退出'),
       click: () => {
         tray.destroy()
-        win.destroy()
+        getMainWindow()?.destroy()
       },
     },
   ])
@@ -36,8 +35,8 @@ export async function createTray() {
   tray.setContextMenu(contextMenu)
   // 双击触发
   tray.on('click', () => {
-    win.show()
-    win.setSkipTaskbar(false)
+    getMainWindow()?.show()
+    getMainWindow()?.setSkipTaskbar(false)
   })
   return tray
 }

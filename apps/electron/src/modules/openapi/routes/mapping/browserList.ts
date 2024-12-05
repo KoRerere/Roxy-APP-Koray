@@ -14,16 +14,16 @@ export const browserListMapping = {
     },
   ], // cookie, List类型
   windowPlatformList: [{
-    platformUrl: 'https://www.tiktok.com/', //  业务平台URL，str类型，非必传
-    platformUserName: 'Roxytest', // 平台账号，str类型，非必传
-    platformPassword: 'Roxytest', // 平台密码，str类型，非必传
-    platformEfa: '2F3CD67B6D', // efa，str类型，非必传
-    platformName: 'Roxytest', // 平台名称，str类型，非必传
-    platformRemarks: 'Roxytest', // 平台备注，str类型，非必传
+    platformUrl: 'https://www.tiktok.com/', // 业务平台URL，str类型
+    platformUserName: 'Roxytest', // 平台账号，str类型
+    platformPassword: 'Roxytest', // 平台密码，str类型
+    platformEfa: '2F3CD67B6D', // efa，str类型
+    platformName: 'Roxytest', // 平台名称，str类型
+    platformRemarks: 'Roxytest', // 平台备注，str类型
   }],
-  defaultOpenUrl: ['https://www.facebook.com'], // 存储浏览器标签页，List类型，非必传
+  defaultOpenUrl: ['https://www.facebook.com'], // 存储浏览器标签页，List类型
   windowRemark: '窗口1', // 窗口备注, str类型
-  projectId: 1, // 项目ID 必传
+  projectId: 1, // 项目ID, int类型
   openStatus: false, // 团队内是否已打开, 枚举值：true: 已打开，false: 未打开，布尔类型
   statusInfo: [
     {
@@ -33,14 +33,13 @@ export const browserListMapping = {
     {
       openUserName: 'lumitest',
       openTime: '2024-01-10 12:12:12',
-
     },
   ], // 窗口打开时的详细信息，List类型
   createTime: '2023-12-04 21:55:58', // 窗口创建时间, str类型
   updateTime: '2023-12-04 21:56:01', // 窗口修改时间, str类型
   userName: 'lumitest', // 窗口归属人用户名,即用户账号, str类型
   proxyInfo: {
-    proxyMethod: 'custom', // 代理方式，枚举值：自定义：custom，导入的IP：choose，API接入：api，str类型
+    proxyMethod: 'custom', // 代理方式，枚举值：手动填写：custom，选择代理资源：choose，API接入：api，str类型
     proxyCategory: 'noproxy', // 代理类型，枚举值：noproxy, HTTP, HTTPS, SOCKS5，str类型
     ipType: 'IPV4', // 网络协议, 枚举值：IPV4, IPV6，str类型
     protocol: 'SOCKS5', // 代理协议，枚举值：HTTP, HTTPS, SOCKS5，str类型
@@ -48,7 +47,7 @@ export const browserListMapping = {
     port: '37746', // 代理端口，str类型
     proxyUserName: 'lumitest', // 代理账号，str类型
     proxyPassword: 'lumitest', // 代理密码，str类型
-    refreshUrl: 'http://refresh-hk.lumibrowser.com', // 刷新URL，str类型
+    refreshUrl: 'http://refresh-hk.roxybrowser.com', // 刷新URL，str类型
     lastIp: '119.1.2.3', // 出口IP，str类型
     lastCountry: 'CN', // 出口国家，str类型
   },
@@ -116,56 +115,4 @@ export const browserListMapping = {
     hardwareConcurrent: '4', // 硬件并发数, str类型
     deviceMemory: '8', // 设备内存, str类型
   },
-}
-
-// 旧客户端代码
-
-function transKey(a) {
-  const key1 = Object.keys(a).filter(
-    key => ![`proxyInfo`, `fingerInfo`].includes(key),
-  )
-  const key2 = Object.keys(a.proxyInfo)
-  const key3 = Object.keys(a.fingerInfo)
-  const key4 = Object.keys(a.windowPlatformList[0])
-  return {
-    sum: [...key1, ...key2, ...key3, ...key4],
-    key1,
-    proxyInfo: key2,
-    fingerInfo: key3,
-    windowPlatformList: key4,
-  }
-}
-
-const listMap = transKey(browserListMapping)
-
-export function listTrans(rows) {
-  const obj = {}
-
-  const proxyInfo = {}
-  const fingerInfo = {}
-
-  listMap.key1.forEach((key) => {
-    obj[key] = rows[key]
-  })
-  listMap.proxyInfo.forEach((key) => {
-    proxyInfo[key] = rows[key]
-  })
-  listMap.fingerInfo.forEach((key) => {
-    fingerInfo[key] = rows[key]
-  })
-
-  const windowPlatformList: any[] = []
-  rows.windowPlatformList.forEach((item) => {
-    const windowPlatform = {}
-    listMap.windowPlatformList.forEach((key) => {
-      windowPlatform[key] = item[key]
-    })
-    windowPlatformList.push(windowPlatform)
-  })
-
-  return {
-    ...obj,
-    proxyInfo,
-    fingerInfo,
-  }
 }
