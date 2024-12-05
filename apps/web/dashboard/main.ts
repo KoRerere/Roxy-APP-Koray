@@ -1,6 +1,6 @@
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
-import 'virtual:uno.css'
+import 'uno.css'
 import '/@/styles/index.css'
 import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'

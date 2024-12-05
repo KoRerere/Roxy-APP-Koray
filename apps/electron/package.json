@@ -42,9 +42,9 @@
     "@types/express": "5.0.0",
     "@types/node": "^22.2.0",
     "adm-zip": "^0.5.16",
-    "ali-oss": "^6.21.0",
+    "ali-oss": "^6.22.0",
     "await-to-js": "^3.0.0",
-    "axios": "^1.7.8",
+    "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "compare-versions": "^6.1.1",
     "core-js": "^3.39.0",
@@ -72,7 +72,7 @@
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "5.7.2",
     "vite": "^6.0.2",
-    "webpack": "^5.96.1",
+    "webpack": "^5.97.0",
     "webpack-cli": "^5.1.4",
     "ws": "^8.18.0"
   }

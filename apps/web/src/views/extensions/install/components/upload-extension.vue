@@ -80,7 +80,7 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-4 mt-1">
         <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
-        <span class="upload-or">或</span>
+        <span class="upload-or">{{ $t('或') }}</span>
         <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
