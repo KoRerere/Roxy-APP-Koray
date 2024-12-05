@@ -25,7 +25,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
       store.isExternalWeb = false
     }
   }
-
+  console.log('store.isExternalWeb', store.isExternalWeb)
   return `http://localhost:${store.appPort}/${path}`
 }
 
