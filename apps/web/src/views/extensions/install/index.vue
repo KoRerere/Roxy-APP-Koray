@@ -493,6 +493,6 @@ defineExpose({
 }
 
 .pinned {
-  color: orange;
+  color: var(--Colors-Text-text-brand, #12a3fc);
 }
 </style>
