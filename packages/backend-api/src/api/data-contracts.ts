@@ -674,9 +674,23 @@ export interface UserGetWindowInfoV2ListData {
         platformUserName?: string;
         platformPassword?: string;
         platformEfa?: string;
-        platformCookies?: string;
+        platformcookies?: string;
         platformName?: string;
         platformRemarks?: string;
+      }[];
+      usePluginList?: {
+        pluginDir: string;
+        pluginVersion: string;
+        fixedPlugin: string;
+      }[];
+      usePluginDirVersion?: {
+        gmbmikajjgmnabiglmofipeabaddhgne?: string;
+        fnfdomooadjpfohbepiaonnbdmkdjiog?: string;
+        ndigigcelppbfkojeoejcailklonljah?: string;
+        mopnmbcafieddcagagdcbnhejhlodfdd?: string;
+        "7d790cbed6930120d15e00bcb1284c6a"?: string;
+        ljdobmomdgdljniojadhoplhkpialdid?: string;
+        "7c1590125f8da994f96918b2bcf03d12"?: string;
       }[];
     }[];
   };
@@ -1701,6 +1715,8 @@ export interface UserGetAppUpgradeCreateData {
     };
     /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
     webDomain: string;
+    /** 判断是否强制，true强制，false不强制 */
+    forceUpgrade: boolean;
   };
   msg: string;
 }
@@ -5186,7 +5202,10 @@ export interface UserGetWindowInfoListListData {
       windowRemark?: string;
       isOften?: boolean;
       openStatus?: boolean;
-      statusInfo?: string[];
+      statusInfo?: {
+        openUserId?: number;
+        openUserName?: string;
+      }[];
       labelId?: number;
       labelColor?: string;
       labelName?: string;
@@ -5230,12 +5249,25 @@ export interface UserGetWindowStatusInfoCreatePayload {
 export interface UserGetWindowStatusInfoCreateData {
   code: number;
   data: {
-    /** 窗口ID */
+    sortNum?: number;
+    /**
+     * 窗口ID
+     * 窗口ID
+     */
     id: number;
-    /** 窗口状态1：已打开 0：未打开 */
+    /**
+     * 窗口状态1：已打开 0：未打开
+     * 窗口状态1：已打开 0：未打开
+     */
     openStatus: number;
-    /** 状态信息 */
-    statusInfo: string;
+    /**
+     * 状态信息
+     * 状态信息
+     */
+    statusInfo: {
+      openUserId?: number;
+      openUserName?: string;
+    }[];
   }[];
   msg: string;
 }
@@ -6639,7 +6671,9 @@ export interface UserMdfProjectInfoCreatePayload {
   /** 项目ID */
   id: number;
   /** 项目名称 */
-  projectName: string;
+  projectName?: string;
+  /** pin状态 */
+  pinStatus?: number;
 }
 
 export interface UserMdfProjectInfoCreateData {
@@ -6653,18 +6687,24 @@ export interface UserGetProjectInfoByWorkspaceListParams {
    * @example 1
    */
   default?: number;
+  /**
+   * 项目id
+   * @example 1
+   */
+  projectId?: number;
 }
 
 export interface UserGetProjectInfoByWorkspaceListData {
   code: number;
   data: {
     rows: {
+      /** 1 默认项目 0 非默认项目 */
+      projectDefault?: number;
       /**
        * 项目ID
        * 项目ID
        */
       project_id?: number;
-      topTime?: string;
       user_info?: {
         /**
          * 权限
@@ -6692,6 +6732,7 @@ export interface UserGetProjectInfoByWorkspaceListData {
        * 项目名称
        */
       projectName?: string;
+      topTime?: string;
     }[];
   };
   msg: string;

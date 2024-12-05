@@ -18,7 +18,7 @@ import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmpty
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
-import columnsRow from './columns'
+import { getColumns } from './columns'
 import BrowserControl from './components/browser-control.vue'
 import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
@@ -57,7 +57,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
 const [show] = useContextMenu()
 const tableRef = useTemplateRef('windownTable')
-const [columns] = useColumns(columnsRow, props.isProjectProfile ? ['project'] : undefined)
+const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 const filtersMenu = ref()
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})

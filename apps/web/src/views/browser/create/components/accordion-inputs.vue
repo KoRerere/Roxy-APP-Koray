@@ -182,7 +182,7 @@ $spacing-x: 66px;
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 
   :deep(.p-button) {
-    max-width: 110px;
+    max-width: 150px;
   }
 
   :deep(.p-button-label) {

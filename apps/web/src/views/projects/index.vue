@@ -105,7 +105,7 @@ function tableRequest() {
 
 async function pinProject(data: Project) {
   const pinStatus = data.topTime ? ProjectPin.none : ProjectPin.pinned
-  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus })
+  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus: pinStatus as number })
   if (code === 0) {
     tableRef.value?.refresh()
     showToast(code, data.topTime ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
