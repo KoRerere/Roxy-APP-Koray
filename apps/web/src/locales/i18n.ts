@@ -42,9 +42,9 @@ if (import.meta.hot) {
   })
 }
 
-const modules = import.meta.glob('./langs/*.json')
+const langModules = import.meta.glob('./langs/*.json')
 
-const localesMap = loadLocalesMap(modules)
+export const localesMap = loadLocalesMap(langModules)
 
 let loadMessages: LoadMessageFn
 

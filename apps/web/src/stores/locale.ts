@@ -4,12 +4,14 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { loadLocaleMessages } from '/@/locales'
 import { clearDictCache } from '/@/utils'
+import { localesMap } from '/@/locales/i18n'
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
-  const currentLocale = ref(navigator.language || 'en')
+  const defaultLocale = localesMap[navigator.language] ? navigator.language : 'en'
+  const currentLocale = ref(defaultLocale)
 
-  const setSimpleLocale = async (locale) => {
+  const setSimpleLocale = async (locale: string) => {
     if (currentLocale.value === locale) {
       return
     }

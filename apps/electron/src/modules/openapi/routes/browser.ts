@@ -1,7 +1,7 @@
 import express from 'express'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { accountMapping, browserListMapping, mapping2List } from '/@/modules/openapi/routes/mapping/'
+import { accountMapping, browserListMapping, browserListMappingV2, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { defaultBrowserCreateParams } from './constants/'
@@ -93,7 +93,7 @@ router.post('/mdf', async (req, res) => {
   res.json(result)
 })
 
-/* 获取浏览器窗口列表 */
+/* 获取浏览器窗口列表 已废弃 */
 router.get('/list', async (req, res) => {
   const { dirId, workspaceId, ...rest } = req.query as Record<string, any>
   try {
@@ -109,6 +109,26 @@ router.get('/list', async (req, res) => {
     res.error(error)
   }
 })
+
+
+
+/* 获取浏览器窗口列表 新接口 */
+router.get('/list_v2', async (req, res) => {
+  const { workspaceId, ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...commonHeaders } })
+    if (result.code === 0 && result.data?.rows) {
+      // console.log('browserListV2Mapping', result.data.rows)
+      result.data.rows = mapping2List(result.data.rows, browserListMappingV2)
+    }
+    res.json(result)
+  }
+  catch (error) {
+    console.error('list error', error)
+    res.error(error)
+  }
+})
+
 
 /* 删除窗口 */
 router.post('/delete', async (req, res) => {
