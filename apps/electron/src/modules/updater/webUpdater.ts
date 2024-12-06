@@ -5,9 +5,12 @@ import { createWriteStream } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getWebDomain } from '/@/api/util'
 import { appConfig } from '/@/constants'
-import { getLocalWebVersion, getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { getLocalWebVersion, getMainWindow, getWebEntryUrl, updateMainWindowPageTitle } from '/@/modules/app/mainWindow'
 import { fileOperations } from '/@/modules/fileOperations'
 import { fileExists, isMac } from '/@/utils'
+import { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { ipcMain } from '/@/modules/ipc'
+import { store } from '/@/modules/store'
 
 interface VersionInfo {
   /** 最新版本号 */
@@ -31,6 +34,17 @@ export const webUpdater = new class WebUpdater {
   webZipPath = join(appConfig.tempDir, 'web.zip')
   /** 是否在下载中 */
   isInProgress = false
+  /** 远程 web 资源版本信息 */
+  remoteVersionInfo: VersionInfo | null = null
+  /** 更新信息消息体 */
+  #updateMessageData: ResourceUpdateMessage = {
+    type: 'web',
+    percent: 0,
+    description: '',
+    get title() {
+      return $t('UI 资源更新')
+    },
+  }
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
     return `${this.webDomain}/public/package/web/${isMac ? 'macOS' : 'Windows'}/version.json`
@@ -62,6 +76,11 @@ export const webUpdater = new class WebUpdater {
     if (this.isInProgress) {
       return
     }
+    if (this.remoteVersionInfo) {
+      this.sendSuccessMessage()
+      console.log('[WebUpdater] checkForUpdates already downloaded')
+      return
+    }
     this.isInProgress = true
     console.log('[WebUpdater] checkForUpdates start')
     try {
@@ -69,6 +88,7 @@ export const webUpdater = new class WebUpdater {
       // 获取远程版本信息
       const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl).then(response => response.data)
       console.log('[WebUpdater] remoteVersionInfo', remoteVersionInfo)
+
       // 检查 app 版本是否过低
       if (compare(remoteVersionInfo.minimum_app_version, app.getVersion(), '>')) {
         console.log('[WebUpdater] app version is too old')
@@ -80,6 +100,9 @@ export const webUpdater = new class WebUpdater {
       console.log('[WebUpdater] localVersion', localVersion)
       // 检查是否需要更新
       if (compare(remoteVersionInfo.version, localVersion, '>')) {
+        this.#updateMessageData.originUpgradeData = remoteVersionInfo
+        this.#updateMessageData.version = remoteVersionInfo.version
+        this.#updateMessageData.releaseTime = remoteVersionInfo.releaseTime
         console.log('[WebUpdater] downloading...')
         const response = await axios({
           url: this.downloadUrl,
@@ -91,6 +114,10 @@ export const webUpdater = new class WebUpdater {
             const percentage = Math.round((current / total) * 100)
             console.log(`[WebUpdater] Download progress: ${percentage}%`)
             options?.onDownloadProgress?.(percentage)
+            this.#updateMessageData.percent = percentage
+            this.#updateMessageData.total = total
+            this.#updateMessageData.status = 'downloading'
+            this.sendSuccessMessage()
           },
         })
         await fileExists(dirname(this.webZipPath), true)
@@ -101,6 +128,10 @@ export const webUpdater = new class WebUpdater {
         response.data.pipe(writer)
         writer.on('finish', async () => {
           writer.close()
+          this.remoteVersionInfo = remoteVersionInfo
+          this.#updateMessageData.percent = 100
+          this.#updateMessageData.status = 'downloaded'
+          this.sendSuccessMessage()
           await options?.onDownloadComplete?.()?.catch?.(() => { })
           resolve()
         })
@@ -125,7 +156,27 @@ export const webUpdater = new class WebUpdater {
     const extractDir = await fileOperations.executeTask('decompress', {
       src: this.webZipPath,
       dest: appConfig.webDir,
+    }).finally(() => {
+      this.remoteVersionInfo = null
     })
     console.log('extractPlugin dir', extractDir)
+  }
+
+  async upgradeNow() {
+    if (this.remoteVersionInfo) {
+      await this.extract()
+      store.isExternalWeb = true
+      getMainWindow()?.reload()
+      await updateMainWindowPageTitle()
+    }
+  }
+
+  private sendSuccessMessage() {
+    ipcMain.send('app:resource-update', this.#updateMessageData)
+  }
+
+  private sendErrorMessage() {
+    this.#updateMessageData.status = 'failed'
+    ipcMain.send('app:resource-update', this.#updateMessageData)
   }
 }()

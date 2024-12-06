@@ -109,8 +109,7 @@ export async function intoMainPage() {
   const webUrl = await getWebEntryUrl(isPackaged ? 'index.html' : '')
   console.log('intoMainPage', webUrl)
   await mainWin.loadURL(webUrl)
-  const webVersion = await getLocalWebVersion()
-  mainWin.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()} | ${webVersion}`)
+  await updateMainWindowPageTitle()
   // 禁用 document.title 的影响
   mainWin.on('page-title-updated', (event) => {
     event.preventDefault()
@@ -125,6 +124,12 @@ export async function intoMainPage() {
     mainWin?.webContents.openDevTools({ mode: 'detach' })
   }
   console.log('进入主应用')
+}
+
+/** 更新主窗口页面标题 */
+export async function updateMainWindowPageTitle() {
+  const webVersion = await getLocalWebVersion()
+  getMainWindow()?.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()} | ${webVersion}`)
 }
 
 let mainWindow: BrowserWindow | undefined

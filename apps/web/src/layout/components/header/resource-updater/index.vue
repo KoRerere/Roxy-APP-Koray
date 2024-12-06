@@ -43,8 +43,7 @@ const isForceUpgrade = computed(() => {
 })
 
 async function checkForUpdates() {
-  const result = await electronAPI.send('app:checkForUpdates')
-  console.log('checkForUpdates', result)
+  electronAPI.send('app:checkForUpdates')
 }
 
 function toggle(event: Event) {

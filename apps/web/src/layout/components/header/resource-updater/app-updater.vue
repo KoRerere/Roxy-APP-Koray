@@ -20,7 +20,12 @@ function formatClientBtnLabel(item: ResourceUpdateMessage) {
     return `${$t('正在下载')} ${Math.floor(item.percent)}%`
   }
   else if (item.status === 'downloaded') {
-    return $t('升级并重启')
+    if (item.type === 'app') {
+      return $t('升级并重启')
+    }
+    else if (item.type === 'web') {
+      return $t('立即更新')
+    }
   }
   else if (item.status === 'failed') {
     return $t('重试')
@@ -30,13 +35,11 @@ function formatClientBtnLabel(item: ResourceUpdateMessage) {
   }
 }
 
-function handleClientItemClick(item: ResourceUpdateMessage) {
-  const info = toRaw(item)
-  console.log('handleItemClick', info)
-  if (info.status === 'downloading') {
+function showAppUpdaterDialog(item: ResourceUpdateMessage) {
+  if (item.status === 'downloading') {
     return $t('正在下载')
   }
-  else if (info.status === 'downloaded') {
+  else if (item.status === 'downloaded') {
     confirm.require({
       message: $t('所有窗口将被关闭，您的工作将被保存。'),
       header: $t('你确认要重启并安装新版本吗？'),
@@ -49,15 +52,26 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
         label: $t('重启'),
       },
       accept: () => {
-        window.electronAPI.send('app:quitAndInstall', info)
+        window.electronAPI.send('app:quitAndInstall', item)
       },
     })
   }
-  else if (info.status === 'failed') {
+  else if (item.status === 'failed') {
     window.electronAPI.send('app:checkForUpdates')
   }
   else {
     // window.electronAPI.send('app:download-update', info)
+  }
+}
+
+function handleClientItemClick(item: ResourceUpdateMessage) {
+  const info = toRaw(item)
+  console.log('handleItemClick', info)
+  if (info.type === 'app') {
+    showAppUpdaterDialog(info)
+  }
+  else if (info.type === 'web') {
+    window.electronAPI.send('app:quitAndInstall', info)
   }
 }
 </script>
@@ -70,7 +84,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           <div class="upgrade-header">
             <div class="upgrade-title">
               <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
-              <span>{{ item.version }} {{ item.upgradeTitle }} </span>
+              <span>{{ item.version }} {{ item.title }} </span>
             </div>
             <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
           </div>

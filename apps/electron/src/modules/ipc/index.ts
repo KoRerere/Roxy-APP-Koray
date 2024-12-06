@@ -18,6 +18,7 @@ import { fetchUserConfig, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
 import { aliOSS, decryptAESGCM, detectNetwork, encryptAESGCM, genRandomFonts, getMacAddress, getSystemProxy, proxyDetection, setWebReady, tryRefreshUrl } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
+import { webUpdater } from '/@/modules/updater/webUpdater'
 
 export const ipcMain = new IPCMain<RenderMessage, MainMessage>()
 
@@ -223,7 +224,8 @@ ipcMain.on('app:reGetUpdateInfo', (type) => {
 
 /** 检查更新 */
 ipcMain.on('app:checkForUpdates', () => {
-  return appUpdater.checkForUpdates()
+  appUpdater.checkForUpdates()
+  webUpdater.checkForUpdates()
 })
 
 /** 检查是否有更新 */
@@ -235,6 +237,8 @@ ipcMain.on('app:hasUpdate', () => {
 ipcMain.on('app:quitAndInstall', (info) => {
   if (info.type === 'app') {
     appUpdater.upgradeNow()
+  } else if (info.type === 'web') {
+    webUpdater.upgradeNow()
   }
 })
 
