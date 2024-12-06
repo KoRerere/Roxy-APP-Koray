@@ -8,6 +8,7 @@ import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
 import { isPackaged, tryRefreshUrl } from '/@/utils'
+import { appConfig } from '/@/constants'
 
 export async function setupDashboardServer(app: express.Application) {
   // 工作台
@@ -125,7 +126,7 @@ export async function setupDashboardServer(app: express.Application) {
   if (isPackaged) {
     app.use('/dashboard', async (req, res, next) => {
       const { id = '' } = req.query
-      const filePath = join(__dirname, './web', 'dashboard.html')
+      const filePath = join(store.isExternalWeb ? appConfig.webDir : __dirname, './web', 'dashboard.html')
 
       try {
         const data = await readFile(filePath, 'utf8')
