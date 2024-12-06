@@ -174,11 +174,13 @@ export const chromeCoreManager = new class ChromeCoreManager {
         await downloadZipFile(availableCore.downloadUrl, outputZipPath, (progress) => {
           // console.log(`Download progress: ${progress}%`)
           payload.percent = progress
+          payload.status = 'downloading'
           ipcMain.send('app:resource-update', payload)
         }).catch((error) => {
+          console.error('downloadCore downloadZipFile error', error)
           payload.status = 'failed'
           ipcMain.send('app:resource-update', payload)
-          return Promise.reject(error)
+          return Promise.reject(new Error($t('下载内核失败')))
         })
         payload.status = 'downloaded'
         payload.description = $t('内核下载完成')

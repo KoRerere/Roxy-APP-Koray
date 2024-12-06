@@ -123,7 +123,7 @@ onMounted(() => {
           <span class="title">
             {{ $t('为所选项目的所有成员安装') }}
           </span>
-          <rxToggleSwitch v-model="_enabled" :disabled="_props?.canDelete === false" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
+          <rxToggleSwitch v-model="_enabled" :false-value="switchValuePersonal" :true-value="switchValueTeam" />
         </div>
         <div class="description">
           {{ $t('您可以在扩展列表中更改此选项') }}

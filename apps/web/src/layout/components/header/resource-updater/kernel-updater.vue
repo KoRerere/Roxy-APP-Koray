@@ -27,6 +27,8 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
 function handleKernelItemClick(item: ResourceUpdateMessage) {
   if (item.status === 'downloading') {
     return $t('正在下载')
+  } else if (item.status === 'failed' && item.coreVersion) {
+    window.electronAPI.send('app:download-chrome-core', item.coreVersion)
   }
   else if (item.status === 'uninstalled' && item.coreVersion) {
     window.electronAPI.send('app:download-chrome-core', item.coreVersion)

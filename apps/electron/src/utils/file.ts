@@ -35,15 +35,30 @@ export async function fileExists(filePath: string, create = false) {
  */
 export async function downloadZipFile(url: string, outputZipPath: string, downloadProgress?: (progress: number) => void) {
   const { promise, resolve, reject } = Promise.withResolvers()
+  let timer: NodeJS.Timeout
+
+  const handleError = (error) => {
+    console.error('downloadZipFile writer error', error)
+    reject(error)
+    writer.close()
+    response.data.destroy()
+  }
+
   const response = await axios({
     method: 'get',
     url,
     responseType: 'stream',
     onDownloadProgress: (progressEvent) => {
+      clearTimeout(timer)
       const totalLength = progressEvent.total
       const progress = Math.round((progressEvent.loaded * 100) / totalLength!)
       // console.log(`Download progress: ${progress}%`)
       downloadProgress?.(progress)
+      if (progress < 100) {
+        timer = setTimeout(() => {
+          handleError(new Error('download timeout'))
+        }, 30000)
+      }
     },
   })
 
@@ -63,7 +78,7 @@ export async function downloadZipFile(url: string, outputZipPath: string, downlo
   response.data.pipe(writer)
 
   writer.on('finish', resolve)
-  writer.on('error', reject)
+  writer.on('error', handleError)
 
   return promise
 }
