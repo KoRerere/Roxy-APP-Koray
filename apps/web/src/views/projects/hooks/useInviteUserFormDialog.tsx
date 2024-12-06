@@ -8,7 +8,7 @@ import RxButton from '/@/components/rx-button'
 import { Role } from '/@/enums'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { $t } from '/@/locales'
-import { inviteUsersFormSchemas } from '/@/views/projects/schemas'
+import { getInviteUsersFormSchemas } from '/@/views/projects/schemas'
 
 interface PropsType {
   tableRef?: Ref<InstanceType<typeof RyTable>>
@@ -38,7 +38,7 @@ export function useInviteUserFormDialog() {
           projectIds: data.projectIds || [],
         },
       },
-      schemas: inviteUsersFormSchemas,
+      schemas: getInviteUsersFormSchemas(data.projectIds),
       dialogSlots: {
         footer: () => (
           <div class="w-full flex justify-between gap-2">
