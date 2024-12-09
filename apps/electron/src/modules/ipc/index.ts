@@ -33,6 +33,9 @@ export function successDataWrapper<T>(data: T, message = 'success'): MainMessage
 
 /** 错误的信息体 */
 export function errorDataWrapper(message = 'error', data?: any, error?: any): MainMessageResult {
+  if (error?.message === '') {
+    error.message = message
+  }
   return {
     code: 1,
     data,

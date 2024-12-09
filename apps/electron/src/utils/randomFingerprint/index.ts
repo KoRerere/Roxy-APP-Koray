@@ -77,10 +77,12 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
     API.window.userGetDeviceNameV2List({ os, count }),
     macInfo
       ? API.window.userGetMacAddrV2List({ count })
-      : { data: [{ macAddr: await getMacAddress() }] },
+      : { code: 0, data: [{ macAddr: await getMacAddress() }] },
   ])
+  console.log('result', result)
   const unSuccessItem = result.find(n => n.code !== 0)
   if (unSuccessItem) {
+    console.error('unSuccessItem', unSuccessItem)
     return Promise.reject(new Error(unSuccessItem.msg))
   }
 

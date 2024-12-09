@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useElementSize } from '@vueuse/core';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 defineProps({
@@ -9,10 +10,22 @@ defineProps({
     type: String,
   },
 })
+
+const labelElRef = useTemplateRef('labelEl')
+const { height, stop } = useElementSize(labelElRef)
+const lineHeight = ref('32px')
+
+const stopWatch = watch(height, () => {
+  if (height.value > 50) {
+    lineHeight.value = 'auto'
+    stop()
+    stopWatch()
+  }
+})
 </script>
 
 <template>
-  <label v-if="label" class="rx-label" :for="name">
+  <label v-if="label" ref="labelEl" class="rx-label" :for="name">
     <div class="rx-label__content">
       <div>
         <span>{{ label }}</span>
@@ -31,7 +44,7 @@ defineProps({
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
-  line-height: var(--Line-Height-display-xs, 32px);
+  line-height: var(--Line-Height-display-xs, v-bind(lineHeight));
 
   &__content {
     display: flex;

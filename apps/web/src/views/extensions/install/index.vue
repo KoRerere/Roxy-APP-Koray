@@ -113,9 +113,6 @@ async function tableRequest(params: any) {
 }
 
 async function showPinMenu(event: any, data: any) {
-  if (!(role.isOwner || role.isManager))
-    return
-
   showMenu(event, {
     type: 'radio',
     value: data.fixedPlugin,

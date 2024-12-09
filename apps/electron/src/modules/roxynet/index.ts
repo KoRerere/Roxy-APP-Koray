@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
-import { execFile } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
 import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
@@ -10,7 +10,7 @@ import { checkResource } from '/@/modules/app/checkResource'
 
 export * from './util'
 
-const execFilePromise = promisify(execFile)
+const spawnPromise = promisify(spawn)
 let roxynetProcess: ChildProcess | null = null
 
 export function getRoxynetProcess() {
@@ -65,7 +65,7 @@ export async function startRoxynet() {
   const encText = encryptByDESModeCBC(originText)
 
   if (isMac) {
-    await execFilePromise('chmod', ['+x', appConfig.roxynetBinPath])
+    await spawnPromise('chmod', ['+x', appConfig.roxynetBinPath], { stdio: 'inherit' })
   }
   const startAppCmdArgs = process.argv.slice(1)
   const startRoxynetArgs = ['--arg', encText]
@@ -75,7 +75,9 @@ export async function startRoxynet() {
   }
   console.log('startAppCmdArgs:', startAppCmdArgs)
   console.log('startRoxynetArgs:', startRoxynetArgs)
-  roxynetProcess = execFile(appConfig.roxynetBinPath, startRoxynetArgs)
+  roxynetProcess = spawn(appConfig.roxynetBinPath, startRoxynetArgs, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
 
   // 忽略的错误信息
   const ignoreList = ['check addr  error:dial tcp: missing address']

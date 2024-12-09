@@ -76,7 +76,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
   if (systemProxySwitch && !dirId) {
     throw new Error(`dirId is required when systemProxySwitch is true`)
   }
-  console.log(`systemProxySwitch`, systemProxySwitch)
+  console.log('systemProxySwitch', store.systemProxySwitch)
   console.log(`dirId && proxyUserName`, dirId, proxyUserName)
   const systemProxyAddress = await getSystemProxy()
   const isUseSystemProxy = proxyCategory === 'SSH' || getRoxynetProcess() && systemProxySwitch && systemProxyAddress
