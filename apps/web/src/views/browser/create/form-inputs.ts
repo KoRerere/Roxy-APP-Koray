@@ -23,12 +23,6 @@ async function setDeviceName(inputsGroup: any) {
   }
 }
 
-async function setMacAddr(inputsGroup: any) {
-  const { macInfo } = getFormDataByList(inputsGroup)
-  const { data } = await getMacAddr({ macInfo, count: 1 })
-  setInputValueByFormData(inputsGroup, data[0])
-}
-
 async function getUaWebgl(params: any) {
   const res = await API.window.userGetUaWebglV2List(params)
   if (res.code !== 0) {
@@ -40,12 +34,6 @@ async function getUaWebgl(params: any) {
 async function getDeviceName(params: any) {
   const res = await API.window.userGetDeviceNameV2List(params)
   return res
-}
-
-function getMacAddr(params: any) {
-  return params.macInfo
-    ? API.window.userGetMacAddrV2List(params)
-    : window.electronAPI.send('app:getMacAddress').then(res => ({ data: [{ macAddr: res }] }))
 }
 
 async function getBrowserVersion(params: UserGetBrowserVersionInfoListParams) {
@@ -821,11 +809,15 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('真实'), value: false },
         { label: $t('自定义'), value: true },
       ],
-      change(input: any) {
-        const showMacAddr = input.value === true
-        setInputVisible(highLevelInputs, 'macAddr', showMacAddr)
-        if (showMacAddr) {
-          setMacAddr(inputsGroup)
+      change: async (input: any) => {
+        const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
+        macAddrInput.visible = input.value === true
+
+        if (macAddrInput.visible) {
+          macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data: [{ macAddr }] }) => macAddr)
+        } else {
+          const macAddr = await window.electronAPI.send('app:getMacAddress')
+          Reflect.set(original, 'macAddr', macAddr)
         }
       },
       preview: {
@@ -840,8 +832,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       icon: 'base/rx_ic_shuffle',
       disabled: true,
       visible: initInputVisible(data.macInfo, true, true),
-      iconClick: () => {
-        setMacAddr(inputsGroup)
+      iconClick: async () => {
+        const macAddrInput = findInputByName(highLevelInputs, 'macAddr')
+        macAddrInput.value = await API.window.userGetMacAddrV2List({ count: 1 }).then(({ data: [{ macAddr }] }) => macAddr)
       },
     },
     {
