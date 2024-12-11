@@ -12,7 +12,7 @@ export const useProjectStore = defineStore('project', () => {
     const result = await getProjectPromise.finally(() => {
       getProjectPromise = null
     })
-    projects.value = result.data.rows
+    projects.value = result.data?.rows || []
     return result
   }
 

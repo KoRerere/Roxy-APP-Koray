@@ -36,7 +36,7 @@ export async function setupAppServer() {
   try {
     const port = await getPortPromise({ port: store.appPort })
     app.listen(port, () => {
-      console.log(`App server is running at http://localhost:${port}`)
+      console.log(`App server is running at http://127.0.0.1:${port}`)
       store.appPort = port
       resolve(app)
     })

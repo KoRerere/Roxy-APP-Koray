@@ -160,6 +160,7 @@ onBeforeMount(() => {
     padding-right: 24px;
     width: 100%;
     overflow-y: auto;
+    margin: 8px 0;
 
     &-wrapper {
       margin: 0 auto;
@@ -190,6 +191,10 @@ onBeforeMount(() => {
   &-item {
     padding: var(--spacing-2xl, 16px) 0px;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
 
     &-label {
       color: #000;

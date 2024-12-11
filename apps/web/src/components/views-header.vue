@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getBackRoute } from '/@/router/utils';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
 defineProps<Props>()
@@ -11,7 +12,9 @@ interface Props {
 }
 
 function onBack() {
-  router.back()
+  const {path,query} = getBackRoute()
+  console.log('onBack',path,query)
+  router.replace({ path, query })
 }
 </script>
 

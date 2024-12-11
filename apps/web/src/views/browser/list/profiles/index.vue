@@ -192,7 +192,9 @@ async function operationHandler(operate: any, data: any) {
 
   switch (operate.name) {
     case 'edit':
-      router.push({ name: 'browser-edit', query: { id: data.id } })
+      const [{ page_index }] = tableRef.value?.getParams()
+      globalThis._router = router
+      router.push({ name: 'browser-edit', query: { id: data.id, page_index } })
       break
     case 'copyId':
       copyText(data.dirId)

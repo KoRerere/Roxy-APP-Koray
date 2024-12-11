@@ -78,6 +78,7 @@ export type FormSchema<T extends object = Recordable> = ComponentSchema<T> & {
   /** 字段名 */
   field: string
   label?: string | (() => any)
+  vIf?: (opt: RenderCallbackParams<T>) => boolean
   /** 表单项校验规则 */
   rule?: Rule
   /** 默认值 */

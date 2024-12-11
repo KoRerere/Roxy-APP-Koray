@@ -5,12 +5,13 @@ import { readdir, rm, stat } from 'node:fs/promises'
 import { join, parse } from 'node:path'
 import { appConfig } from '/@/constants'
 import { isPackaged } from '/@/utils'
+import { app } from 'electron'
 
 export function setupLog() {
   // 记录渲染进程的日志
   // log.initialize()
-  log.transports.console.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
-  log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}'
+  log.transports.console.format = `[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}`
+  log.transports.file.format = `[{y}-{m}-{d} {h}:{i}:{s}] [{level}][${app.getVersion()}] {text}`
   log.transports.console.useStyles = true
   // 禁用生产环境的控制台输出
   if (isPackaged) {

@@ -525,7 +525,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('分辨率值'),
       placeholder: $t('请选择分辨率'),
       name: 'resolution',
-      value: $dict_map.resolution.find((item: any) => item.value === `${data.resolutionX || 1280} x ${data.resolutionY || 720}`),
+      value: $dict_map.resolution.find((item: any) => item.value === `${data.resolutionX || 1280} x ${data.resolutionY || 720}`) || $dict_map.resolution[3],
       options: $dict_map.resolution,
       virtualScrollerOptions: { itemSize: 38 },
       filter: false,

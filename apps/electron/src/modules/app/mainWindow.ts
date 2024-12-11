@@ -26,7 +26,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
     }
   }
   console.log('store.isExternalWeb', store.isExternalWeb)
-  return `http://localhost:${store.appPort}/${path}`
+  return `http://127.0.0.1:${store.appPort}/${path}`
 }
 
 /** 获取本地 web 版本 */

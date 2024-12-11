@@ -27,7 +27,7 @@ export const getInviteUsersFormSchemas = (projectIds = []) => {
   return defineFormSchema([
     {
       field: 'email',
-      component: ({ formModel }) => {
+      component: ({ formModel, schema }) => {
         return <InputWithRole v-model:role={formModel.value.role} onUpdate:role={(val) => {
           if (val === 2) {
             formModel.value.projectIds = allProjectIds
@@ -49,6 +49,7 @@ export const getInviteUsersFormSchemas = (projectIds = []) => {
       field: 'projectIds',
       component: 'MultiSelect',
       label: `${$t('邀请至项目')}`,
+      vIf: ({ formModel }) => formModel.value.role !== 2,
       componentProps: {
         filter: true,
         optionLabel: 'projectName',

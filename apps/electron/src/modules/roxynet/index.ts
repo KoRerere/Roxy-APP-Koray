@@ -79,13 +79,9 @@ export async function startRoxynet() {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-  // 忽略的错误信息
-  const ignoreList = ['check addr  error:dial tcp: missing address']
   // 监听 stdout 数据事件
   roxynetProcess.stdout?.on('data', (data) => {
-    if (!ignoreList.some(item => data.includes(item))) {
-      console.log(`roxynetProcess stdout: ${data}`)
-    }
+    console.log(`roxynetProcess stdout: ${data}`)
   })
 
   // 监听 stderr 数据事件

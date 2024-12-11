@@ -88,6 +88,7 @@ const props = defineProps({
 
 defineEmits(['update:columns'])
 
+const route = useRoute()
 const [show] = useContextMenu()
 
 const _firstLoad = ref(false)
@@ -136,10 +137,10 @@ const selectionData = computed({
   },
 })
 
+console.log('route.query.page_index', route.query.page_index)
 const paginatorConfig = reactive({
-  page: 1,
   rows: 10,
-  first: 0,
+  first: 10 * ((Number(route.query.page_index) || 1) - 1),
   totalRecords: 0,
   rowsPerPageOptions: [
     { label: $t('5 条/页'), value: 5 },
@@ -148,17 +149,14 @@ const paginatorConfig = reactive({
     { label: $t('50 条/页'), value: 50 },
     { label: $t('100 条/页'), value: 100 },
   ],
-  onResetPage(page: number = 1, rows: number = 10) {
-    paginatorConfig.first = 0
-    paginatorConfig.page = page
+  onResetPage(first = 0, rows: number = 10) {
+    paginatorConfig.first = first
     paginatorConfig.rows = rows
   },
   onPage(event: PageState) {
-    paginatorConfig.page = event.page + 1
     _request()
   },
   onRowsChange() {
-    paginatorConfig.page = Math.max(Math.ceil(paginatorConfig.first / paginatorConfig.rows), 1)
     _request()
   },
 })
@@ -201,7 +199,7 @@ async function _getCondition() {
 
 function _getParams() {
   return {
-    page_index: paginatorConfig.page,
+    page_index: Math.ceil(paginatorConfig.first / paginatorConfig.rows) + 1,
     page_size: paginatorConfig.rows,
     ...getFormData(_filters.value as any),
     ...getFormData(_sorts.value as any),

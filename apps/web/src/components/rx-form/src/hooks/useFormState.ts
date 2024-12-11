@@ -24,6 +24,7 @@ export function useFormState({ props, emit }: useFormStateParams) {
 
   /** 表单默认数据, 用于 reset 时重置表单数据 */
   const defaultFormValues = computed(() => {
+    // @ts-ignore
     const formItemDefaultValues = innerFormSchemas.value.reduce((acc, item) => {
       if (item.defaultValue) {
         acc[item.field] = item.defaultValue
@@ -63,7 +64,7 @@ export function useFormState({ props, emit }: useFormStateParams) {
     defaultFormValues,
     validationSchema,
     errors,
-    innerFormSchemas,
+    innerFormSchemas: computed(() => innerFormSchemas.value.filter((item) => !item.vIf || item.vIf({ formModel }))),
     originComponentPropsFnMap,
   }
 }

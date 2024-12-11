@@ -2,6 +2,8 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { baseRoutes } from '/@/router/base'
 import { useUserStore } from '/@/stores/user'
 import { menuRoutes } from './menu'
+import { isEqual } from 'es-toolkit'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -23,16 +25,24 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
+  const simpleLocale = useSimpleLocale()
 
   if (to.meta?.title) {
     // document.title = to.meta.title as string
   }
 
+  // 设置全局查询参数，保持语言和标题，客服插件需要用到
+  const query = { ...to.query, language: simpleLocale.currentLocale, _title: 'roxybrowser' };
+
   if (to.name !== 'login' && !userStore.token) {
-    return next({ name: 'login' })
+    return next({ name: 'login', query })
   }
 
-  next()
+  if (isEqual(to.query, query)) {
+    return next()
+  } else {
+    return next({ ...to, query })
+  }
 })
 
 export default router

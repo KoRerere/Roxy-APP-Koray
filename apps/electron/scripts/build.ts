@@ -150,7 +150,7 @@ build({
 })
   .then((result) => {
     console.log(JSON.stringify(result))
-    const outDir = path.join(workDir, 'out')
+    const outDir = path.join(workDir, options.directories!.output!)
     console.log('\x1B[32m', `打包完成🎉🎉🎉你要的都在 ${outDir} 目录里🤪🤪🤪`)
   })
   .catch((error) => {

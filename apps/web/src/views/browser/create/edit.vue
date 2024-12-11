@@ -8,6 +8,7 @@ import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
+import { getBackRoute } from '/@/router/utils'
 
 const router = useRouter()
 const route = useRoute()
@@ -57,7 +58,8 @@ async function createProfile(formData: any) {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
-    router.replace({ name: 'browser-list' })
+    const { query } = getBackRoute()
+    router.replace({ name: 'browser-list', query })
   }
   loading.value = false
 }
