@@ -10,10 +10,6 @@ console.log('__WEB_VERSION__', __WEB_VERSION__)
 </template>
 
 <style lang="scss">
-.rx-dialog {
-  min-width: 350px;
-}
-
 .p-tooltip-arrow {
   display: none;
 }

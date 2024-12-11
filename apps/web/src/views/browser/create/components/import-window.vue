@@ -1,30 +1,31 @@
 <script lang="ts" setup>
-import { read, utils } from 'xlsx'
+// import { read, utils } from 'xlsx'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
+import { downloadTemplate, parseTemplate } from '../utils';
 
 const emit = defineEmits(['importSuccess'])
 
-const excelMap = {
-  '窗口名称': 'windowName',
-  '账号平台': 'platformUrl',
-  '用户名': 'platformUserName',
-  '密码': 'platformPassword',
-  '2FA秘钥': 'efa',
-  'Cookie': 'cookie',
-  '打开指定网址': 'defaultOpenUrl',
-  '代理类型': 'proxyMethod',
-  '代理信息': 'proxyInfo',
-  '刷新URL': 'refreshUrl',
-  '窗口备注': 'windowRemark',
-  'User Agent': 'userAgent',
-  '窗口尺寸': 'windowSize',
-} as const
+// const excelMap = {
+//   '窗口名称': 'windowName',
+//   '账号平台': 'platformUrl',
+//   '用户名': 'platformUserName',
+//   '密码': 'platformPassword',
+//   '2FA秘钥': 'efa',
+//   'Cookie': 'cookie',
+//   '打开指定网址': 'defaultOpenUrl',
+//   '代理类型': 'proxyMethod',
+//   '代理信息': 'proxyInfo',
+//   '刷新URL': 'refreshUrl',
+//   '窗口备注': 'windowRemark',
+//   'User Agent': 'userAgent',
+//   '窗口尺寸': 'windowSize',
+// } as const
 
-type Data = Partial<Record<typeof excelMap[keyof typeof excelMap], any>> & { rowNum: number }
+// type Data = Partial<Record<typeof excelMap[keyof typeof excelMap], any>> & { rowNum: number }
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const fileAnalyzeError = defineModel<any>()
@@ -75,32 +76,34 @@ async function handleBeforeUpload(rawFile: any) {
   fileAnalyzeError.value = null
 
   const fileName = rawFile.name
-  const rowStartNum = 5
-  const workbook = read(await rawFile.arrayBuffer())
-  const result = utils.sheet_to_json<Record<string, any>>(workbook.Sheets[workbook.SheetNames[0]])
-  const excelData = result.slice(3).reduce((prev, curr, index) => {
-    const obj: Data = {
-      rowNum: index + rowStartNum,
-    }
-    Object.entries(curr).forEach(([key, value]) => {
-      const keyName = excelMap[key as keyof typeof excelMap]
+  // const rowStartNum = 5
+  // const workbook = read(await rawFile.arrayBuffer())
+  // const result = utils.sheet_to_json<Record<string, any>>(workbook.Sheets[workbook.SheetNames[0]])
+  // const excelData = result.slice(3).reduce((prev, curr, index) => {
+  //   const obj: Data = {
+  //     rowNum: index + rowStartNum,
+  //   }
+  //   Object.entries(curr).forEach(([key, value]) => {
+  //     const keyName = excelMap[key as keyof typeof excelMap]
 
-      if (keyName === 'cookie' && value) {
-        try {
-          const res = JSON.parse(value)
-          obj[keyName] = Array.isArray(res) ? res : []
-        }
-        catch (error) {
-          console.error('cookie parse error', error)
-        }
-      }
-      else {
-        obj[keyName] = value
-      }
-    })
-    prev.push(obj)
-    return prev
-  }, [])
+  //     if (keyName === 'cookie' && value) {
+  //       try {
+  //         const res = JSON.parse(value)
+  //         obj[keyName] = Array.isArray(res) ? res : []
+  //       }
+  //       catch (error) {
+  //         console.error('cookie parse error', error)
+  //       }
+  //     }
+  //     else {
+  //       obj[keyName] = value
+  //     }
+  //   })
+  //   prev.push(obj)
+  //   return prev
+  // }, [])
+
+  const excelData = await parseTemplate(rawFile)
 
   if (excelData.length === 0) {
     onlyErrorToast(-1, $t('导入的内容不能为空'))
@@ -113,7 +116,7 @@ async function handleBeforeUpload(rawFile: any) {
   }
 
   try {
-    const { code, msg } = await API.window.userAnalysisWindowInfoCreate(fileAnalyzeData)
+    const { code, msg } = await API.window.userAnalysisWindowInfoCreate(fileAnalyzeData as any)
 
     if (code === 0) {
       fileData.status = true
@@ -139,8 +142,7 @@ async function handleBeforeUpload(rawFile: any) {
     <div class="upload-title">
       <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入500个窗口。', { templateFile: '{templateFile}' })" scope="global">
         <template #templateFile>
-          <a href="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/template/Roxy%E7%AA%97%E5%8F%A3%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF.xls" target="_blank" class="upload-title-link">{{
-            $t('窗口导入模板') }}</a>
+          <span class="upload-title-link" @click="downloadTemplate">{{ $t('窗口导入模板') }}</span>
         </template>
       </i18n-t>
     </div>

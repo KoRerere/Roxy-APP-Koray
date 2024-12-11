@@ -109,7 +109,6 @@ async function handleSaveChange() {
 function leaveWorkspace() {
   confirm.require({
     group: 'deleteConfirmDialog',
-    class: 'w-[450px]',
     header: $t('离开空间'),
     message: $t('您确认要离开该空间吗？离开后将无法查看该空间内的任何内容'),
     rejectProps: {
