@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { strConcat } from '/@/utils'
 import { $t } from '/@/locales'
 import { useToast } from 'primevue/usetoast'
+import { downloadTemplate } from '/@/views/browser/create/utils'
 
 type Data = UnwrapRowType<UserGetWindowInfoV2ListData>
 
@@ -24,24 +25,33 @@ const excelSchema = [
     name: $t('窗口名称'),
   },
   {
+    key: 'os',
+    name: '系统',
+  },
+  {
+    key: 'osVersion',
+    name: '系统版本',
+    getText: (item: Data) => item.osVersion?.toUpperCase()
+  },
+  {
     key: 'platformUrl',
     name: $t('平台账号'),
-    getText: (item: Data) => platformFormat(item, 'platformUrl'),
+    mergeKey: 'windowPlatformList',
   },
   {
     key: 'platformUserName',
     name: $t('用户名'),
-    getText: (item: Data) => platformFormat(item, 'platformUserName'),
+    mergeKey: 'windowPlatformList',
   },
   {
     key: 'platformPassword',
     name: $t('密码'),
-    getText: (item: Data) => platformFormat(item, 'platformPassword'),
+    mergeKey: 'windowPlatformList',
   },
   {
     key: 'platformEfa',
     name: '2FA',
-    getText: (item: Data) => platformFormat(item, 'platformEfa'),
+    mergeKey: 'windowPlatformList',
   },
   {
     key: 'cookie',
@@ -59,17 +69,22 @@ const excelSchema = [
   {
     key: 'defaultOpenUrl',
     name: $t('自定义打开 URL'),
-    getText: (item: Data) => item.defaultOpenUrl ? item.defaultOpenUrl.join('; ') : '',
   },
   {
     key: 'proxyCategory',
     name: $t('代理类型'),
+    getText: (item: Data) => item.proxyCategory === 'noproxy' ? '直连' : item.proxyCategory,
   },
   {
     key: 'proxyInfo',
     name: $t('代理信息'),
     getText: (item: Data) => {
       const ipType = item.ipType!.toLocaleLowerCase() === 'ipv4' ? '' : 'ipv6:'
+
+      if (!item.host) {
+        return ''
+      }
+
       return `${ipType}${item.host}:${item.port}${strConcat(':', item.proxyUserName as string)}${strConcat(':', item.proxyPassword as string)}`
     },
   },
@@ -93,32 +108,43 @@ const excelSchema = [
 ].map((item, _index) => ({ ...item, _index }))
 const selection = ref(excelSchema.slice())
 
-function platformFormat(data: Data, key: string) {
-  return data.windowPlatformList!.map((item, index: number) => `(${index + 1})${item[key as keyof typeof item] || '--'}`).join('; ')
-}
-
 async function getExportData() {
   const ids = _props.value.data.map((item: any) => item.id)
   const { data: { rows } } = await API.window.userGetWindowInfoV2List({ windowIds: ids.join(','), isDelete: 0, page_index: 1, page_size: ids.length })
-  return rows.map(data => selection.value.sort((a, b) => a._index - b._index).map(schema => [schema.name, schema.getText?.(data) || data[schema.key as keyof typeof data]]))
+  return rows.map(item => {
+    const sortArr = selection.value.sort((a, b) => a._index - b._index)
+    // const d = sortArr.map(schema => [schema.name, schema.getText?.(item) || item[schema.key as keyof typeof item]])
+    return sortArr.reduce((acc, schema) => {
+
+      if (acc[schema.key] || acc[schema.mergeKey!]) {
+        return acc
+      }
+
+      if (schema.mergeKey) {
+        const mergeKeyItems = sortArr.filter(s => s.mergeKey === schema.mergeKey)
+        acc[schema.mergeKey] = item[schema.mergeKey].map((platform: any) => {
+          return mergeKeyItems.reduce((acc, schema) => {
+            acc[schema.key] = schema.getText?.({ ...item, ...platform }) || platform[schema.key]
+            return acc
+          }, {} as Record<string, any>)
+        })
+      } else {
+        acc[schema.key] = schema.getText?.(item) || item[schema.key as keyof typeof item]
+      }
+      return acc
+    }, {} as Record<string, any>)
+  })
 }
 
 async function exportExcel() {
   const data = await getExportData()
-  const excelData = [
-    selection.value.map(item => item.name),
-    ...data.map(row => row.map(cell => cell[1])),
-  ]
+  // console.log('exportExcel data', data)
 
-  const workbook = utils.book_new()
-  const worksheet = utils.aoa_to_sheet(excelData)
-
-  worksheet['!cols'] = Array.from({ length: excelData[0].length }, () => ({ wch: 30 }))
-  worksheet['!rows'] = Array.from({ length: excelData.length }, () => ({ hpx: 40 }))
-
-  utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-  const filename = `rx_profiles_${format(new Date(), 'yyyy-MM-dd HH_mm_ss')}.xlsx`
-  writeFile(workbook, filename) // 保存文件
+  downloadTemplate({
+    afterAddExplain(worksheet) {
+      worksheet.addRows(data);//批量添加数据行
+    },
+  })
 }
 
 async function exportText() {

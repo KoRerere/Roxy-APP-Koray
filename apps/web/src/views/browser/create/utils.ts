@@ -68,7 +68,7 @@ export function getDefaultTemplate() {
   }
 }
 
-const columns = [
+export const columns = [
   {
     header: '窗口名称',
     key: 'windowName',
@@ -92,7 +92,7 @@ const columns = [
   },
   {
     header: '代理类型',
-    key: 'proxyMethod',
+    key: 'proxyCategory',
     placeholder: '代理类型, 如: SOCKS5, 留空则自动使用 "直连"',
     example: '举例1: 直连\n举例2: SOCKS5\n举例3: HTTP\n举例4: HTTPS\n举例5: SSH'
   },
@@ -111,7 +111,7 @@ const columns = [
   },
   {
     header: '平台账号',
-    key: 'platformUrlList',
+    key: 'windowPlatformList',
     width: 70,
     placeholder: 'richText',
     example: '举例:\n[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]',
@@ -143,7 +143,15 @@ const columns = [
       { 'text': '启动浏览器时同时打开的标签页，需要用 ' },
       { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '需要用 [ ] 包含！' },
       { 'text': '多个标签页请使用英文逗号隔开!\n网址前请加 http:// 或 https:// 否则无效!' },
-    ]
+    ],
+    formatValue(value: string) {
+      try {
+        return JSON.parse(value)
+      }
+      catch (error) {
+        return value
+      }
+    }
   },
   {
     header: 'Cookie',
@@ -165,7 +173,7 @@ const columns = [
   },
   {
     header: '窗口备注',
-    key: 'remark',
+    key: 'windowRemark',
     placeholder: '此处填写该浏览器窗口的备注信息! ',
   },
   {
@@ -176,7 +184,11 @@ const columns = [
   }
 ]
 
-export async function downloadTemplate() {
+interface DownloadTemplateOptions {
+  afterAddExplain?: (worksheet: ExcelJS.Worksheet) => any
+}
+
+export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Sheet1');
   worksheet.properties.defaultRowHeight = 30;
@@ -222,7 +234,7 @@ export async function downloadTemplate() {
   })
 
   await addExplain(worksheet)
-
+  await options.afterAddExplain?.(worksheet)
   // worksheet.addRows(datas);//批量添加数据行
 
   // 将工作簿转换为 Blob 并下载
