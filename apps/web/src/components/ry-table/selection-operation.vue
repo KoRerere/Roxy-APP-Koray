@@ -75,8 +75,8 @@ function onMore(event: Event) {
           <span v-if="item.showLabel">{{ item.label }}</span>
         </div>
       </div>
-      <div v-if="showMore" class="multiple-group cursor-pointer" @click="onMore($event)">
-        <RxSvgIcon name="base/rx_ic_more-v" />
+      <div v-if="showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
+        <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" />
       </div>
     </slot>
   </div>

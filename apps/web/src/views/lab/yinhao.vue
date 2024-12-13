@@ -69,7 +69,7 @@ async function dialog() {
     group: 'deleteConfirmDialog',
     header: $t('离开空间'),
     message: $t('您确认要离开该空间吗？离开后将无法查看该空间内的任何内容'),
-    checkProps: {
+    checkboxProps: {
       label: 'label',
       value: false,
     },
@@ -82,8 +82,8 @@ async function dialog() {
       label: $t('确认'),
       severity: 'danger',
     },
-    accept: async () => {
-
+    accept(){
+      console.log('value', this.checkboxProps.value)
     },
   } as any)
 }

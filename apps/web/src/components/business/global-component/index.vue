@@ -24,10 +24,10 @@ onMounted(() => {
           <span class="p-confirmdialog-message"> {{ message.message }}</span>
         </div>
         <div class="p-dialog-footer">
-          <div class="flex flex-1 items-center" v-if="message.checkProps">
-            <Checkbox v-model="message.checkProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="double" binary />
-            <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">{{ message.checkProps.label }}</label>
-            <RxSvgIcon v-if="message.checkProps.tooltip" v-tooltip="{ value: message.checkProps.tooltip, showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
+          <div class="flex flex-1 items-center" v-if="message.checkboxProps">
+            <Checkbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="double" binary />
+            <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">{{ message.checkboxProps.label }}</label>
+            <RxSvgIcon v-if="message.checkboxProps.tooltip" v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
           </div>
 
           <RxButton outlined :label="$t('取消')" v-bind="message.rejectProps" @click="rejectCallback" />

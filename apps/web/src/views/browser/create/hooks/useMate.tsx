@@ -5,6 +5,7 @@ interface Operation {
   name?: string
   label?: string
   value: string
+  projectDefault?: number
   render?: () => any
 }
 
@@ -28,7 +29,7 @@ export function useMateGroup() {
 
   async function getProjects(): Promise<Operation[]> {
     const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-    return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}` }))
+    return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}`, projectDefault: item.projectDefault }))
   }
 
   async function getProjectMember(projectId: number): Promise<Operation[]> {

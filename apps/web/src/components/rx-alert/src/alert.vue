@@ -60,31 +60,43 @@ function handleClose() {
 </script>
 
 <template>
-  <div class="rx-alert" :class="{ hide: !visibleModel }" :style="styles">
-    <slot name="tips-icon">
-      <RxSvgIcon v-bind="iconProps" />
-    </slot>
-    <div class="rx-alert-body">
-      <div v-if="title || $slots.title" class="rx-alert__title">
-        <slot name="title">
-          {{ title }}
-        </slot>
-      </div>
-      <div v-if="content || $slots.content" class="rx-alert__content">
-        <slot name="content">
-          {{ content }}
-        </slot>
-      </div>
-    </div>
-    <div v-if="closable" class="rx-alert-close" @click="handleClose">
-      <slot name="close-icon">
-        <RxSvgIcon name="base/rx_ic_delete" />
+  <Transition>
+    <div v-if="visibleModel" class="rx-alert" v-bind="$attrs" :style="styles">
+      <slot name="tips-icon">
+        <RxSvgIcon v-bind="iconProps" />
       </slot>
+      <div class="rx-alert-body">
+        <div v-if="title || $slots.title" class="rx-alert__title">
+          <slot name="title">
+            {{ title }}
+          </slot>
+        </div>
+        <div v-if="content || $slots.content" class="rx-alert__content">
+          <slot name="content">
+            {{ content }}
+          </slot>
+        </div>
+      </div>
+      <div v-if="closable" class="rx-alert-close" @click="handleClose">
+        <slot name="close-icon">
+          <RxSvgIcon name="base/rx_ic_delete" />
+        </slot>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style lang="scss" scoped>
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+
 :where(.rx-alert) {
   display: flex;
   width: 360px;

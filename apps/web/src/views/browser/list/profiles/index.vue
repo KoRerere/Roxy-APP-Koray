@@ -57,6 +57,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
 const [show] = useContextMenu()
 const tableRef = useTemplateRef('windownTable')
+const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 const filtersMenu = ref()
 const operation = ref(getOperation())
@@ -216,9 +217,12 @@ async function operationHandler(operate: any, data: any) {
     case 'addTag':
       addTag({
         confirmNext: ({ res }: any) => {
-          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, data)
+          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
         },
       })
+      break
+    case 'linkTags':
+      tagsIconRef.value?.openMenu(operate._event)
       break
     case 'fav':
       singleModifyWindow({ id: data.id, isOften: !data.isOften })
@@ -318,8 +322,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   })
 }
 
-async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  await singleModifyWindow({ ...params, id: data.id })
+async function updateMeta(params: { labelIds?: number[], projectId?: number }, ids: number[]) {
+  await batchModifyWindow({ ...params, ids })
 }
 
 async function onMoveToProject(datas: any) {
@@ -455,6 +459,7 @@ async function deleteProfile(datas: any, ids: number[]) {
 
   return new Promise((resolve, reject) => {
     confirm.require({
+      group: 'deleteConfirmDialog',
       header: $t('删除窗口'),
       message: $t('您确认要删除所选窗口吗？'),
       rejectProps: {
@@ -466,8 +471,18 @@ async function deleteProfile(datas: any, ids: number[]) {
         label: $t('确认'),
         severity: 'danger',
       },
-      accept: async () => {
-        await batchModifyWindow({ ids, isDelete: true })
+      checkboxProps: {
+        label: $t('彻底删除'),
+        value: false,
+      },
+      async accept() {
+        if (this.checkboxProps.value) {
+          await API.window.userDelWindowInfoCreate({ ids })
+          onRefreshTable()
+        } else {
+          await batchModifyWindow({ ids, isDelete: true })
+        }
+
         resolve(true)
       },
       reject: () => {
@@ -670,10 +685,10 @@ defineExpose({
         class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
     </template>
     <template #project="{ data }">
-      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, data)" />
+      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
     </template>
     <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, data)" />
+      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, [data.id])" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
@@ -683,6 +698,7 @@ defineExpose({
       </div>
     </template>
   </RyTable>
+  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateMeta($event, tableRef?.selectionData?.map(n => n.id))" />
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
     <template #default="{ closeCallback }">
       <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />

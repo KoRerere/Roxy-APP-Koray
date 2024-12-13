@@ -317,6 +317,12 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
+      name: 'linkTags',
+      label: $t('关联标签'),
+      icon: 'base/rx_ic_tag',
+      multiple: true,
+    },
+    {
       power: !role.isViewer,
       separator: true,
     },

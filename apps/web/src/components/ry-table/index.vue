@@ -257,6 +257,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     operation,
     operationHandler: async (operate: any) => {
       try {
+        operate._event = event
         await props.operationHandler(operate, data)
       }
       catch (error) {
@@ -273,6 +274,7 @@ onBeforeMount(async () => {
 })
 
 defineExpose({
+  selectionData,
   refresh: (outerParams: any = {}) => {
     _outerParams.value = outerParams
     _request()
@@ -298,7 +300,7 @@ defineExpose({
         <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
       </div>
     </div>
-    <div class="position-relative flex-1 overflow-hidden">
+    <div class="table-wrapper position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :pt="{
         table: !tableList?.length ? 'flex-1' : '',
         emptymessagecell: '!whitespace-normal !text-center',

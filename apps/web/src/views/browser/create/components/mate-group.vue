@@ -19,6 +19,17 @@ const metaData = defineModel<MetaData>('modelValue', {
   },
 })
 
+onMounted(async () => {
+  if (isEmptyValue(metaData.value.projectId)) {
+   const projects = await getProjects()
+   const defaultProject = projects.find(item => item.projectDefault)
+    if (defaultProject) {
+      metaData.value.projectId = Number(defaultProject.value)
+      metaData.value.projectName = defaultProject.label
+    }
+  }
+})
+
 async function selectProject(event: Event) {
   const operation = await getProjects()
   const value = metaData.value.projectId?.toString()

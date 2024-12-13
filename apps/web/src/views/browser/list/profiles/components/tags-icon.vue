@@ -6,14 +6,16 @@ import { useRoleStore } from '/@/stores/role'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopoverMenu } from './popover-menu'
+import type { Operation } from '/@/utils'
 
 interface Props {
   labels: any[]
-  projectId: number
-  disabled?: boolean
+  projectId?: number
+  disabled?: boolean,
+  showCreateTag?: boolean
 }
 
-const { labels, projectId, disabled = false } = defineProps<Props>()
+const { labels, projectId, disabled = false, showCreateTag = true } = defineProps<Props>()
 
 const emit = defineEmits(['update'])
 
@@ -36,7 +38,7 @@ async function openMenu(event: any) {
   if (_disabled.value)
     return
 
-  const [tagList, memberList] = await Promise.all([getTags(), getProjectMember(projectId)])
+  const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
   const value = labels?.map((item: any) => `${item.labelId}`)
 
   showMenu(event, {
@@ -48,14 +50,14 @@ async function openMenu(event: any) {
         emit('update', { labelIds: (labelIds || []).map(value => value.startsWith('u_') ? value : Number(value)) })
       }
     },
-    afterCmp: () => {
+    afterCmp: showCreateTag ? () => {
       return (
         <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
           <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
           <div>{$t('新增标签')}</div>
         </div>
       )
-    },
+    } : undefined,
   })
 }
 
@@ -71,6 +73,8 @@ function onAddTag() {
     },
   })
 }
+
+defineExpose({ openMenu })
 </script>
 
 <template>

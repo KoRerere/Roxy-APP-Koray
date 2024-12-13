@@ -2,6 +2,7 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxTag from '/@/components/rx-tag.vue'
+import {RxAlert} from '/@/components/rx-alert/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -305,7 +306,7 @@ function onSave() {
 </script>
 
 <template>
-  <div class="flex-ovh-1 flex-col proxies-content">
+  <div class="flex-1 overflow-auto flex-col proxies-content">
     <div class="parse-input">
       <div class="flex flex-1 flex-col gap-1">
         <div class="panel-title">
@@ -352,8 +353,8 @@ function onSave() {
         </div>
       </div>
     </div>
-    <div class="flex flex-col flex-1 overflow-hidden mt-6">
-      <div class="flex items-center justify-between mb-3">
+    <div class="flex flex-col flex-1">
+      <div class="flex items-center justify-between pt-6 pb-3 table-toolbar">
         <div class="panel-title">
           {{ $t('已解析代理') }}
         </div>
@@ -362,11 +363,19 @@ function onSave() {
           <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click="testAllProxy" />
         </div>
       </div>
-      <Message v-if="showMessage" class="mb-3 mx-1" severity="success" icon="pi pi-check-circle" closable @close="messageClose">
-        {{ $t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤', { count: dataList.length, filterCount }) }}
-      </Message>
-      <div class="flex-ovh-1 items-center justify-center">
-        <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+        <div class="parse-result-message">
+          <RxAlert v-model:visible="showMessage" type="success"  class="w-full"
+            :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤', { count: dataList.length, filterCount })"
+            closable
+            @close="messageClose">
+          </RxAlert>
+          <div v-if="showMessage" class="h-[10px] w-full bg-white"></div>
+        </div>
+        <RyTable
+        :style="{ '--message-h': showMessage ? '52px' : '0px' }"
+        :columns="columns" :data-list="dataList"
+        :table-operation="tableOperation" :paginator="false" :show-table-header="false"
+        :show-actions="false" >
           <template #table-empty>
             <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
           </template>
@@ -374,9 +383,8 @@ function onSave() {
             <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
           </template>
         </RyTable>
-      </div>
     </div>
-    <div class="flex justify-end">
+    <div class="flex justify-end footer">
       <RxButton severity="info" :label="$t('保存')" :disabled="!dataList?.length" @click="onSave" />
     </div>
   </div>
@@ -384,7 +392,36 @@ function onSave() {
 
 <style lang="scss" scoped>
 .proxies-content {
-  padding: 20px 24px 16px;
+  padding: 20px 24px 0;
+
+  .table-toolbar {
+    position: sticky;
+    top: -30px;
+    z-index: 100;
+    background-color: white;
+  }
+
+  .parse-result-message {
+    position: sticky;
+    top: calc(-30px + 61px);
+    z-index: 100;
+    background-color: white;
+  }
+
+  :deep(.table-wrapper) {
+    overflow: initial;
+
+    .p-datatable-table-container {
+      overflow: initial !important;
+    }
+
+    .p-datatable-thead {
+      position: sticky;
+      top: calc(-30px + 61px + var(--message-h));
+      z-index: 100;
+      background-color: white;
+    }
+  }
 }
 
 .parse-input {
@@ -432,5 +469,15 @@ function onSave() {
     font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);
   }
+}
+
+.footer {
+  position: sticky;
+    bottom: 0;
+    right: 0;
+    background-color: white;
+    width: 100%;
+    padding: 12px 0;
+    z-index: 200;
 }
 </style>
