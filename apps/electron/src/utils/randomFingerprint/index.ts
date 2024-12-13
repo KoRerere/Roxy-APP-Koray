@@ -104,7 +104,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       ], // 【页面不显示】，媒体设备列表，指纹会用到，需要前端生成，List格式，必传
       font: fontType ? genRandomFonts().join(';') : undefined,
       canvasValue: canvas ? getCanvasContextNoiseValue() : undefined,
-      canvasContextNoiseValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
+      canvasValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : undefined,
       audioContextValue: audioContext ? Math.random() : undefined,
       speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis() },

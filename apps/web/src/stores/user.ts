@@ -15,7 +15,7 @@ export const useUserStore = defineStore('user', () => {
 
   const userInfo = ref<UserInfo>({})
   const userConfig = ref<UserConfig>()
-  const tokenRef = ref('')
+  const token = ref(localStorage.getItem('__token') || '')
   const appVersion = ref('')
   const rememberMe = ref(false)
   /** rememberMe 为 true 的时候有值 */
@@ -35,7 +35,7 @@ export const useUserStore = defineStore('user', () => {
     // 这里是为了避免频繁切换语言的时候，频繁的进程通信导致页面卡顿
     setTimeout(() => {
       window.electronAPI.send('user:setUserInfo', {
-        token: tokenRef.value,
+        token: token.value,
         userId: userInfo.value.id!,
       })
     })
@@ -62,7 +62,8 @@ export const useUserStore = defineStore('user', () => {
       userName: userInfo.value.userName,
     }
     // password.value = ''
-    tokenRef.value = ''
+    token.value = ''
+    localStorage.setItem('__token', '')
     electronAPI.send('user:logout')
     mixpanel.reset()
     workspaceStore.resetWorkspace()
@@ -83,8 +84,8 @@ export const useUserStore = defineStore('user', () => {
     return userConfig.value
   }
 
-  function setToken(token: string) {
-    tokenRef.value = token
+  function setToken(_token: string) {
+    token.value = _token
   }
 
   /** 记住我的时候需要保存密码 */
@@ -93,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   scheduler.postTask(() => {
-    if (tokenRef.value) {
+    if (token.value) {
       getUserInfo()
     }
   }, { priority: 'background' })
@@ -103,7 +104,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   return {
-    token: tokenRef,
+    token,
     rememberMe,
     userInfo,
     password,

@@ -17,7 +17,7 @@ import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
 import { createApp } from 'vue'
 import { setupI18n } from '/@/locales'
-import { store } from '/@/stores'
+import { setupStore } from '/@/stores'
 import { useSimpleLocale } from '/@/stores/locale'
 import myPreset from '/@/styles/primevuePresets'
 import App from './App.vue'
@@ -54,7 +54,7 @@ mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
 globalThis.mixpanel = mixpanel
 console.log('myPreset', myPreset)
 
-app.use(store)
+setupStore(app)
 app.use(router)
 app.use(ToastService)
 app.use(DialogService)
@@ -97,8 +97,9 @@ app.use(PrimeVue, {
 app.directive('ripple', Ripple)
 app.directive('tooltip', Tooltip)
 
-queueMicrotask(async () => {
+setTimeout(async () => {
   const simpleLocale = useSimpleLocale()
+
   await simpleLocale.initLocale().finally(() => {
     setupI18n(app, { defaultLocale: simpleLocale.currentLocale }).then(() => {
       app.mount('#app')

@@ -5,6 +5,12 @@ const message = ref('')
 const appVersion = ref('')
 const isShowTrafficLight = ref(false)
 
+queueMicrotask(async () => {
+  const { token = '' } = await electronAPI.send('app:getSoftConfig')
+  // TODO 临时解决登录态丢失问题，后续需要优化
+  localStorage.setItem('__token', token)
+})
+
 electronAPI.on('app:launch-message', (msg) => {
   console.log('app:launch-message: ', msg)
   message.value = msg

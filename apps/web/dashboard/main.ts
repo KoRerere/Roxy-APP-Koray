@@ -7,7 +7,7 @@ import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import { createApp } from 'vue'
 import { $t, setupI18n } from '/@/locales'
-import { store } from '/@/stores'
+import { setupStore } from '/@/stores'
 import App from './App.vue'
 
 const app = createApp(App)
@@ -19,7 +19,7 @@ app.use(PrimeVue, {
 })
 
 app.use(ToastService)
-app.use(store)
+setupStore(app)
 
 // app.mount('#app')
 
