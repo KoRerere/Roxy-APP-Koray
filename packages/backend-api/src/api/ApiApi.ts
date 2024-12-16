@@ -14,6 +14,8 @@ import {
   UserClearWindowCacheApiV2CreatePayload,
   UserDelWindowInfoApiV2CreateData,
   UserDelWindowInfoApiV2CreatePayload,
+  UserGetLabelInfoApiListData,
+  UserGetLabelInfoApiListParams,
   UserGetWorkspaceListApiListData,
   UserGetWorkspaceListApiListParams,
   UserMdfWindowInfoRandomV2CreateData,
@@ -95,6 +97,23 @@ export class ApiApi<SecurityDataType = unknown> {
       path: `/user_clear_window_cache_api_v2`,
       method: "POST",
       body: data,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Api
+   * @name UserGetLabelInfoApiList
+   * @summary 获得标签列表api
+   * @request GET:/user_get_label_info_api
+   * @response `200` `UserGetLabelInfoApiListData`
+   */
+  userGetLabelInfoApiList = (query: UserGetLabelInfoApiListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetLabelInfoApiListData, any>({
+      path: `/user_get_label_info_api`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

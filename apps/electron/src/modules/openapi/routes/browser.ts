@@ -27,6 +27,18 @@ router.get('/account', async (req, res) => {
   }
 })
 
+/** 获得标签列表 */
+router.get('/label', async (req, res) => {
+  const { workspaceId, ...rest } = req.query as Record<string, any>
+  try {
+    const result = await API.api.userGetLabelInfoApiList({ ...rest }, { headers: { workspaceId, ...commonHeaders } })
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
 /** 获取空间项目列表 */
 router.get('/workspace', async (req, res) => {
   const { ...rest } = req.query as Record<string, any>

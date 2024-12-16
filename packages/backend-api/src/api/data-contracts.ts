@@ -1503,6 +1503,27 @@ export interface UserMdfWindowInfoSingleV2CreateData {
   msg: string;
 }
 
+export interface UserGetLabelInfoApiListParams {
+  /**
+   * 空间ID必填
+   * @example 1
+   */
+  workspaceId: number;
+}
+
+export interface UserGetLabelInfoApiListData {
+  code: number;
+  data: {
+    /** 标签ID */
+    id?: number;
+    /** 标签颜色 */
+    color?: string;
+    /** 标签名称 */
+    name?: string;
+  }[];
+  msg: string;
+}
+
 export interface LoginCreatePayload {
   /** 用户名 */
   user_name: string;
