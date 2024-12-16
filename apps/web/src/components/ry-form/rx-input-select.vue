@@ -27,7 +27,7 @@ const defaultProps: SelectProps = {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.option }" @change="$emit('change')">
+  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>

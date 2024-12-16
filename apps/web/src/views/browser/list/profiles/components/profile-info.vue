@@ -40,7 +40,9 @@ const data = computed(() => props.data)
 const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
 const windowPlatformList = computed(() => data.value.windowPlatformList || [])
 
-const list = computed(() => [
+const list = computed(() => {
+  const proxyClass = data.value.lastIp ? '' : isProxy.value ? '' : 'direct'
+  return [
   {
     key: 'os',
     svg: os_image[(data.value.os as string).toLocaleLowerCase()],
@@ -48,16 +50,14 @@ const list = computed(() => [
   },
   {
     key: 'proxy',
-    classes: isProxy.value ? '' : 'direct',
-    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : 'base/rx_ic_plus',
-    tooltip: isProxy.value
-      ? $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
+    classes: proxyClass,
+    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : data.value.lastIp ? 'base/rx_ic_route' : 'base/rx_ic_plus',
+    tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
         lastCountry: data.value.lastCountry || '--',
         lastCity: strConcat('/', data.value.lastCity) || '',
         lastIp: data.value.lastIp || '--',
         checkTime: data.value.checkTime ? formatProxyTime(data.value.checkTime) : '--',
-      })
-      : undefined,
+      }) ,
   },
   {
     key: 'account',
@@ -66,7 +66,8 @@ const list = computed(() => [
     svgColor: windowPlatformList.value[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
     classes: windowPlatformList.value.length > 1 ? 'stack' : '',
   },
-])
+]
+})
 
 const [show] = useContextMenu()
 

@@ -9,6 +9,7 @@ import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableSort from './table-sort.vue'
+import type { SelectChangeEvent } from 'primevue/select'
 
 defineOptions({
   inheritAttrs: false,
@@ -18,6 +19,10 @@ const props = defineProps({
   dataKey: {
     type: String,
     default: 'id',
+  },
+  cacheKey: {
+    type: String,
+    default: '',
   },
   dataList: {
     type: Array as PropType<any[]>,
@@ -30,6 +35,10 @@ const props = defineProps({
   tableRequest: {
     type: Function as PropType<(data: any) => Promise<any>>,
     default: () => () => Promise.resolve({}),
+  },
+  immediate: {
+    type: Boolean,
+    default: true,
   },
   columns: {
     type: Array as PropType<any[]>,
@@ -137,10 +146,11 @@ const selectionData = computed({
   },
 })
 
-console.log('route.query.page_index', route.query.page_index)
+const cachedRows = Number(localStorage.getItem(props.cacheKey)) || 10
+
 const paginatorConfig = reactive({
-  rows: 10,
-  first: 10 * ((Number(route.query.page_index) || 1) - 1),
+  rows: cachedRows,
+  first: cachedRows * ((Number(route.query.page_index) || 1) - 1),
   totalRecords: 0,
   rowsPerPageOptions: [
     { label: $t('5 条/页'), value: 5 },
@@ -156,7 +166,10 @@ const paginatorConfig = reactive({
   onPage(event: PageState) {
     _request()
   },
-  onRowsChange() {
+  onRowsChange(selectEvent: SelectChangeEvent) {
+    if (props.cacheKey && selectEvent.value) {
+      localStorage.setItem(props.cacheKey, selectEvent.value)
+    }
     _request()
   },
 })
@@ -269,7 +282,9 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 
 onBeforeMount(async () => {
   await _getCondition()
-  await _request()
+  if (props.immediate) {
+    await _request()
+  }
   _firstLoad.value = true
 })
 

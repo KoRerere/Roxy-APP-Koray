@@ -194,8 +194,13 @@ async function operationHandler(operate: any, data: any) {
   switch (operate.name) {
     case 'edit':
       const [{ page_index }] = tableRef.value?.getParams()
-      globalThis._router = router
-      router.push({ name: 'browser-edit', query: { id: data.id, page_index } })
+      const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
+        if (cur.value) {
+          acc[cur.name] = toRaw(cur.value)
+        }
+        return acc
+      }, {})
+      router.push({ name: 'browser-edit', query: { id: data.id, page_index, customFilterParams: JSON.stringify(customFilterParams) } })
       break
     case 'copyId':
       copyText(data.dirId)
@@ -635,8 +640,17 @@ onBeforeMount(() => {
       })
     })
 
-  getCustomFilters().then((data) => {
+    let customFilterParams = {}
+    try {
+      customFilterParams = JSON.parse(route.query.customFilterParams as string)
+    } catch (error) {
+      // console.log('parse customFilterParams error',error)
+    }
+
+  getCustomFilters(customFilterParams).then((data) => {
     filtersMenu.value ??= data
+  }).finally(() => {
+    onRefreshTable(customFilterParams)
   })
 })
 
@@ -652,7 +666,7 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="windownTable" v-model:columns="columns" :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+  <RyTable ref="windownTable" cacheKey="browser-list" v-model:columns="columns" :immediate="false" :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
     selection-mode="multiple" :show-actions="false">
     <template #header-extra>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
