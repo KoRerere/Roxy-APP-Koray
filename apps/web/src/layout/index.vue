@@ -4,6 +4,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
+import { emitter } from '../utils/eventBus'
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
@@ -30,6 +31,10 @@ async function getAnnt() {
   const { data } = await API.base.userGetAnntListList()
   anntList.value = data.rows
 }
+
+emitter.on('anntListUpdateData', (data) => {
+  anntList.value = data
+})
 
 onBeforeMount(() => {
   getAnnt()

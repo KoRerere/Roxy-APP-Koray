@@ -47,6 +47,7 @@ async function openMenu(event: any) {
     operation: memberList.concat(tagList),
     onHide: (labelIds: string[]) => {
       if (!isEq(value, toRaw(labelIds))) {
+        // u_ 开头的表示人员 id
         emit('update', { labelIds: (labelIds || []).map(value => value.startsWith('u_') ? value : Number(value)) })
       }
     },

@@ -41,7 +41,7 @@ const isProxy = computed(() => data.value.proxyCategory !== 'noproxy')
 const windowPlatformList = computed(() => data.value.windowPlatformList || [])
 
 const list = computed(() => {
-  const proxyClass = data.value.lastIp ? '' : isProxy.value ? '' : 'direct'
+  const proxyClass = isProxy.value ? '' : data.value.lastIp ? 'direct-info' : 'direct'
   return [
   {
     key: 'os',
@@ -51,7 +51,7 @@ const list = computed(() => {
   {
     key: 'proxy',
     classes: proxyClass,
-    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : data.value.lastIp ? 'base/rx_ic_route' : 'base/rx_ic_plus',
+    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : data.value.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
     tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
         lastCountry: data.value.lastCountry || '--',
         lastCity: strConcat('/', data.value.lastCity) || '',
@@ -292,5 +292,8 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .direct {
   transform: scale(0);
+}
+.direct-info {
+  border: none;
 }
 </style>

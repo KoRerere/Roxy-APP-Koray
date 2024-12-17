@@ -37,13 +37,13 @@ export function getColumns() {
         title: $t('创建时间'),
         key: 'createTime',
         _visible: false,
-        getText: (row: any) => row.openTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
+        getText: (row: any) => row.createTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
       },
       {
         title: $t('更新时间'),
         key: 'updateTime',
         _visible: false,
-        getText: (row: any) => row.openTime ? format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss') : '--',
+        getText: (row: any) => row.updateTime ? format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss') : '--',
       },
       {
         title: $t('最后打开'),
@@ -53,6 +53,7 @@ export function getColumns() {
       {
         title: $t('其他'),
         key: 'actions',
+        alignFrozen: 'right',
         slot: 'actions',
       },
     ],

@@ -329,6 +329,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 }
 
 async function updateMeta(params: { labelIds?: number[], projectId?: number }, ids: number[], type?: 'single' | 'batch') {
+  // why? 当标签关联人员的时候，需要调单个修改窗口的接口
   if (type === 'single') {
     await singleModifyWindow({ ...params, id: ids[0] })
   } else {

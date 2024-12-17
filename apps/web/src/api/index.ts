@@ -11,12 +11,12 @@ import {
   WindowApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
-import { checkAppVersion, checkCoreVersion } from '/@/api/message'
 import { handleRequest, handleResponse } from '/@/api/util'
 import router from '/@/router'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { handleResponseHeaders } from '/@/api/message/'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -70,8 +70,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
   }
   const { config } = response
   if (config.headers.token) {
-    checkAppVersion(response)
-    checkCoreVersion(response)
+    handleResponseHeaders(response)
   }
   // await handleResponse(response)
   return response

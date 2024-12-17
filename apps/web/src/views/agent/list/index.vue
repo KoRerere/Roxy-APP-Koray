@@ -40,7 +40,7 @@ onBeforeMount(async () => {
 
 async function getTableList(params: any) {
   const data = await tableRequest(params)
-  dataList.value = data.data.rows
+  dataList.value = data.data?.rows || []
   return data
 }
 
@@ -205,7 +205,7 @@ function onRefreshTable() {
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" v-model:columns="columns" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
+      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
