@@ -32,10 +32,6 @@ async function getAnnt() {
   anntList.value = data.rows
 }
 
-emitter.on('anntListUpdateData', (data) => {
-  anntList.value = data
-})
-
 onBeforeMount(() => {
   getAnnt()
 })

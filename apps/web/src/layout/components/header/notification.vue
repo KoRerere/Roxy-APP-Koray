@@ -49,8 +49,8 @@ function toggle(event: Event) {
   }
 }
 
-async function getMessageList() {
-  const { data } = await API.base.userGetNotifyList()
+async function getMessageList(result?: UserGetNotifyListData) {
+  const { data } = result || await API.base.userGetNotifyList()
   const [teamsTab, sysTab] = tabs.value
 
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
@@ -93,8 +93,10 @@ function checkDetail(item: Message) {
   }
 }
 
-onMounted(() => {
-  getMessageList()
+onMounted( () => {
+   getMessageList().finally(() => {
+    emitter.on('notifyUpdateData', getMessageList)
+   })
 })
 </script>
 
