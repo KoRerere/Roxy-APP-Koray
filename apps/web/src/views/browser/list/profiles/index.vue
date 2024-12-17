@@ -223,7 +223,7 @@ async function operationHandler(operate: any, data: any) {
     case 'addTag':
       addTag({
         confirmNext: ({ res }: any) => {
-          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, data)
+          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
         },
       })
       break
@@ -328,8 +328,12 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   })
 }
 
-async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
-  await singleModifyWindow({ ...params, id: data.id })
+async function updateMeta(params: { labelIds?: number[], projectId?: number }, ids: number[], type?: 'single' | 'batch') {
+  if (type === 'single') {
+    await singleModifyWindow({ ...params, id: ids[0] })
+  } else {
+    await batchModifyWindow({ ...params, ids })
+  }
 }
 
 async function onMoveToProject(datas: any) {
@@ -703,7 +707,7 @@ defineExpose({
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
     </template>
     <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, [data.id])" />
+      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, [data.id], 'single')" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center">
