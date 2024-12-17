@@ -27,6 +27,8 @@ export const useUserStore = defineStore('user', () => {
 
     if (code === 0) {
       setUserInfo(data)
+      await workspaceStore.getWorkspaceList()
+      workspaceStore.setCurrentWorkspace(data.workspaceId)
     }
   }
 

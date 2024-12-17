@@ -159,6 +159,7 @@ export async function getInputs(data: any = {}) {
       label: $t('IP 检测'),
       type: 'select',
       name: 'checkChannel',
+      tooltip: $t('若 IP 检测结果有误，请尝试切换下方检测渠道并重试'),
       value: data.checkChannel || userConfig?.ipChecker || $dict_map.checkChannel[0]?.value,
       props: {
         options: $dict_map.checkChannel,

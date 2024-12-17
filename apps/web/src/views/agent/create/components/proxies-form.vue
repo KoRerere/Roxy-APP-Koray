@@ -58,7 +58,7 @@ async function testProxy() {
       </template>
       <template #ipchecker="{ input }">
         <div class="flex flex-col">
-          <inputLabel :label="input.label" />
+          <inputLabel v-bind="input" />
           <div class="flex gap-1.5">
             <div class="flex-1">
               <RxInputSelect v-bind="input.props" v-model="input.value" :name="input.name" />

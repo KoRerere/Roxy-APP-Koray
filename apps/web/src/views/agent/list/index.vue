@@ -193,7 +193,7 @@ async function deleteProxy(datas: ProxyItem[]) {
 
 function onRefreshTable() {
   const params = filterFieldByValue(getFormData(filtersMenu.value))
-  tableRef.value!.refresh(params)
+  tableRef.value?.refresh(params)
 }
 </script>
 

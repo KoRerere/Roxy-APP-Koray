@@ -292,6 +292,7 @@ defineExpose({
   selectionData,
   refresh: (outerParams: any = {}) => {
     _outerParams.value = outerParams
+    paginatorConfig.first = 0
     _request()
   },
   clearSelection: _clearSelection,

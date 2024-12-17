@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import ExcelJS from 'exceljs';
+import { $t } from '/@/locales';
 
 export function getDefaultTemplate() {
   return {
@@ -68,61 +69,64 @@ export function getDefaultTemplate() {
   }
 }
 
+
+const exampleText = $t('举例')
+
 export const columns = [
   {
-    header: '窗口名称',
+    header: $t('窗口名称'),
     key: 'windowName',
     required: true,
-    placeholder: '为浏览器窗口命名（必填项）',
-    example: '举例:\nRoxytest'
+    placeholder: $t('为浏览器窗口命名（必填项）'),
+    example: `${exampleText}:\nRoxytest`
   },
   {
-    header: '系统',
+    header: $t('系统'),
     key: 'os',
     required: true,
-    placeholder: '操作系统（必填项）\n如: Windows',
-    example: '举例1: Windows\n举例2: macOS\n举例3: Android\n举例4: IOS'
+    placeholder: $t('操作系统（必填项）\n如: Windows'),
+    example: `${exampleText}1: Windows\n${exampleText}2: macOS\n${exampleText}3: Android\n${exampleText}4: IOS`
   },
   {
-    header: '系统版本',
+    header: $t('系统版本'),
     key: 'osVersion',
     width: 50,
-    placeholder: '操作系统版本, 如: 11\n每行只能填写一个, 留空则自动使用对应操作系统最新版本',
-    example: '举例1: Windows: 11、10、8、7\n举例2: macOS: ALL\n举例3: Android: 13、12、11、10、9\n举例4: IOS: 17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0'
+    placeholder: $t('操作系统版本, 如: 11\n每行只能填写一个, 留空则自动使用对应操作系统最新版本'),
+    example: `${exampleText}1: Windows: 11、10、8、7\n${exampleText}2: macOS: ALL\n${exampleText}3: Android: 13、12、11、10、9\n${exampleText}4: IOS: 17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0`
   },
   {
-    header: '代理类型',
+    header: $t('代理类型'),
     key: 'proxyCategory',
-    placeholder: '代理类型, 如: SOCKS5, 留空则自动使用 "直连"',
-    example: '举例1: 直连\n举例2: SOCKS5\n举例3: HTTP\n举例4: HTTPS\n举例5: SSH'
+    placeholder: $t('代理类型, 如: SOCKS5, 留空则自动使用 "直连"'),
+    example: `${exampleText}1: 直连\n${exampleText}2: SOCKS5\n${exampleText}3: HTTP\n${exampleText}4: HTTPS\n${exampleText}5: SSH`
   },
   {
-    header: '代理信息',
+    header: $t('代理信息'),
     key: 'proxyInfo',
     width: 70,
     placeholder: 'richText',
-    example: '举例1: 192.168.0.1:8800\n举例2: 192.168.0.1:8800:roxytest:roxypass\n举例3: 192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]\n举例4: ipv6:192.168.0.1:8800:roxytest:roxypass',
+    example: `${exampleText}1: 192.168.0.1:8800\n${exampleText}2: 192.168.0.1:8800:roxytest:roxypass\n${exampleText}3: 192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]\n${exampleText}4: ipv6:192.168.0.1:8800:roxytest:roxypass`,
     richText: [
-      { 'text': '请务必按照此顺序格式填写:\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '【代理主机:代理端口:代理用户名:代理密码[刷新URL]】\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '其中 代理用户名、代理密码、[刷新URL] 为选填\n' },
-      { 'text': '若网络协议为ipv6, 请在代理信息最前端添加 ipv6:' },
+      { 'text': `${$t('请务必按照此顺序格式填写:')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('【代理主机:代理端口:代理用户名:代理密码[刷新URL]】')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('其中 代理用户名、代理密码、[刷新URL] 为选填')}\n` },
+      { 'text': $t('若网络协议为ipv6, 请在代理信息最前端添加 ipv6:') },
     ]
   },
   {
-    header: '平台账号',
+    header: $t('平台账号'),
     key: 'windowPlatformList',
     width: 70,
     placeholder: 'richText',
-    example: '举例:\n[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]',
+    example: `${exampleText}:\n[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]`,
     richText: [
-      { 'text': '仅支持JSON格式的数组, ' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '需要用 [ ] 包含！' },
-      { 'text': '请务必按照示例填写, 其中\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': 'platformUrl: 平台网址\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': 'platformUserName: 平台账号\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': 'platformPassword: 平台密码\n' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': 'platformEfa: 平台2FA' },
+      { 'text': $t('仅支持JSON格式的数组, ') },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
+      { 'text': `${$t('请务必按照示例填写, 其中')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformUrl: 平台网址')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformUserName: 平台账号')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformPassword: 平台密码')}\n` },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformEfa: 平台2FA')}` },
     ],
     formatValue(value: string) {
       try {
@@ -134,15 +138,15 @@ export const columns = [
     }
   },
   {
-    header: '自定义打开 URL',
+    header: $t('自定义打开 URL'),
     key: 'defaultOpenUrl',
     width: 60,
     placeholder: 'richText',
-    example: '举例:\n["https://www.facebook.com", "https://www.tiktok.com"]',
+    example: `${exampleText}:\n["https://www.facebook.com", "https://www.tiktok.com"]`,
     richText: [
-      { 'text': '启动浏览器时同时打开的标签页，需要用 ' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '需要用 [ ] 包含！' },
-      { 'text': '多个标签页请使用英文逗号隔开!\n网址前请加 http:// 或 https:// 否则无效!' },
+      { 'text': $t('启动浏览器时同时打开的标签页，需要用 ') },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
+      { 'text': $t('多个标签页请使用英文逗号隔开!\n网址前请加 http:// 或 https:// 否则无效!') },
     ],
     formatValue(value: string) {
       try {
@@ -157,10 +161,10 @@ export const columns = [
     header: 'Cookie',
     key: 'cookie',
     placeholder: 'richText',
-    example: '例子:\n[{"name":"fb","path":"/","domain":".facebook.com"},{"name":"ma","path":"/","domain":".amazon.com"}]',
+    example: `${exampleText}:\n[{"name":"fb","path":"/","domain":".facebook.com"},{"name":"ma","path":"/","domain":".amazon.com"}]`,
     richText: [
-      { 'text': '仅支持JSON格式的Cookie! ' },
-      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': '需要用 [ ] 包含！' },
+      { 'text': $t('仅支持JSON格式的Cookie! ') },
+      { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
     ],
     formatValue(value: string) {
       try {
@@ -172,15 +176,15 @@ export const columns = [
     }
   },
   {
-    header: '窗口备注',
+    header: $t('窗口备注'),
     key: 'windowRemark',
-    placeholder: '此处填写该浏览器窗口的备注信息! ',
+    placeholder: $t('此处填写该浏览器窗口的备注信息! '),
   },
   {
-    header: '窗口尺寸',
+    header: $t('窗口尺寸'),
     key: 'windowSize',
-    placeholder: '浏览器窗口打开时的默认窗口大小, 留空则按默认1280*720打开。\n格式为: 长度*高度',
-    example: '举例:\n1280*720'
+    placeholder: $t('浏览器窗口打开时的默认窗口大小, 留空则按默认1280*720打开。\n格式为: 长度*高度'),
+    example: `${exampleText}:\n1280*720`
   }
 ]
 

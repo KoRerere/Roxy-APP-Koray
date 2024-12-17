@@ -2,6 +2,7 @@ import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
+import { debounce } from 'es-toolkit'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
@@ -22,8 +23,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     if (val?.id) {
       window.electronAPI.send('user:setWorkspaceId', val.id)
+      rememberLastWorkspace()
     }
-  }, { immediate: true })
+  })
+
+  /** 记住用户最后一次使用的工作空间 */
+  const rememberLastWorkspace = debounce(() => {
+    API.base.userSetUserConfigCreate({})
+  }, 1000)
 
   async function getWorkspaceList() {
     const { data } = await API.limit.userGetWorkspaceListList()
@@ -57,5 +64,5 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace }
 }, {
-  persist: true,
+  persist: false,
 })

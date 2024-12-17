@@ -126,6 +126,7 @@ const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceN
 
 function onRefreshTable(tabParams?: any) {
   const params = {
+    ...props.currentFilter?._params,
     ...tabParams,
     ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
@@ -222,7 +223,7 @@ async function operationHandler(operate: any, data: any) {
     case 'addTag':
       addTag({
         confirmNext: ({ res }: any) => {
-          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
+          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, data)
         },
       })
       break
@@ -327,8 +328,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   })
 }
 
-async function updateMeta(params: { labelIds?: number[], projectId?: number }, ids: number[]) {
-  await batchModifyWindow({ ...params, ids })
+async function updateMeta(params: { labelIds?: number[], projectId?: number }, data: any) {
+  await singleModifyWindow({ ...params, id: data.id })
 }
 
 async function onMoveToProject(datas: any) {

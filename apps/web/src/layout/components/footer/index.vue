@@ -4,8 +4,16 @@ import LiveChat from '/@/components/business/live-chat/index.vue'
 import { $t } from '/@/locales'
 
 const collapsed = defineModel('collapsed', { default: false })
+const router = useRouter()
 
 const list = ref([
+{
+    text: $t('推广计划'),
+    icon: 'base/rc_ic_user_referral',
+    handler() {
+      router.push({ name: 'referral-program' })
+    },
+  },
   {
     text: $t('联系支持人员'),
     icon: 'base/rx_ic_headphone_2',

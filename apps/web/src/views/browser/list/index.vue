@@ -17,6 +17,7 @@ import { sleep } from '/@/utils'
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
+const tabListRef = useTemplateRef('tabList')
 const workspaceStore = useWorkspaceStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -56,6 +57,9 @@ const sortTabs = computed({
   },
   set(value: any) {
     tabs.value.splice(pinTabs.length, tabs.value.length - pinTabs.length, ...value)
+    requestAnimationFrame(() => {
+      tabListRef.value?.updateInkBar()
+    })
   },
 })
 
@@ -73,6 +77,10 @@ async function getFilterList() {
       label: item.filter_name,
     })).concat(localTabs as any).sort((a, b) => a.sort - b.sort)
     tabs.value = [...pinTabs, ...list]
+    setTimeout(() => {
+      // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310
+      tabListRef.value?.updateInkBar()
+    }, 1000)
   }
   onlyErrorToast(code, msg)
 }
@@ -202,8 +210,8 @@ onBeforeMount(() => {
     </ViewsHeader>
     <div class="flex items-center justify-between filter-tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
-        <TabList>
-          <Tab v-for="item in tabs" :key="item.label" :value="item.id">
+        <TabList ref="tabList">
+          <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
             <div class="flex items-center text-inherit">
               {{ item.label }}
             </div>

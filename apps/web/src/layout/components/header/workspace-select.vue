@@ -52,10 +52,6 @@ function showCreateWorkspaceDialog() {
 function getAvatarStyle(workspacePicture: string) {
   return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 }
-
-onBeforeMount(() => {
-  workspaceStore.getWorkspaceList()
-})
 </script>
 
 <template>
