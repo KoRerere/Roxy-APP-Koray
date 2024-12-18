@@ -14,6 +14,10 @@ if (!app.isPackaged) {
   app.getVersion = () => import.meta.env.VITE_APP_VERSION
 }
 
+// 设置主进程调试端口
+// app.commandLine.appendSwitch('inspect', '9229');
+// 设置渲染进程远程调试端口
+// app.commandLine.appendSwitch('remote-debugging-port', '8315');
 app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 app.commandLine.appendSwitch('--no-sandbox')

@@ -162,7 +162,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     </ViewsHeader>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler" :show-gridlines="false"
+      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler" :show-gridlines="false"
         :show-actions-menu="false" :show-actions="false" data-key="project_id">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">

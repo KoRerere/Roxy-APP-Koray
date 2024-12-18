@@ -222,7 +222,14 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
-    router.replace({ name: 'browser-list', query: { browser: JSON.stringify({ windowId: data.windowId, openBrowser }) } })
+    router.replace({
+      name: 'project-item',
+      params: { id: params.projectId } ,
+      query: {
+        title: metaData.value.projectName,
+        browser: JSON.stringify({ windowId: data.windowId, openBrowser })
+      }
+    })
   }
   showToast(code, msg)
   loading.value = false

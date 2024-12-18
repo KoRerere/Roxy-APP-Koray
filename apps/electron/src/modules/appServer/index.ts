@@ -6,7 +6,7 @@ import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
 import { setupMiddlewares } from '/@/modules/openapi/middlewares'
 import { store } from '/@/modules/store'
 import { setupDashboardServer } from './dashboard'
-import { setLogsServer } from './logs/index'
+// import { setLogsServer } from './logs/index'
 
 export async function setupAppServer() {
   const { promise, resolve, reject } = Promise.withResolvers()
@@ -14,7 +14,7 @@ export async function setupAppServer() {
 
   setupMiddlewares(app)
   // 注册日志服务
-  setLogsServer(app)
+  // setLogsServer(app)
   // 注册 roxynet 接收器
   setupRoxynetReceiver(app)
   // 注册工作台路由

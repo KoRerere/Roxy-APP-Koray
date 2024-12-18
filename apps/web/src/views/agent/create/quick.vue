@@ -13,9 +13,13 @@ const emits = defineEmits(['confirm'])
 
 const formInputs = ref()
 const original = ref(props.data)
+const proxiesFormRef = useTemplateRef('proxiesForm')
 
-function onConfirm() {
+async function onConfirm() {
   try {
+    if (!proxiesFormRef.value?.visible) {
+      await proxiesFormRef.value?.testProxy()
+    }
     const formData = getFormData(formInputs.value, original.value)
     emits('confirm', { ...formData })
   }
@@ -31,7 +35,7 @@ onBeforeMount(async () => {
 <template>
   <div class="flex flex-col h-full account-content">
     <div class="flex-1 overflow-hidden">
-      <ProxiesForm v-model:original="original" :inputs="formInputs" />
+      <ProxiesForm ref="proxiesForm" v-model:original="original" :inputs="formInputs" />
     </div>
     <div class="flex items-end">
       <div class="w-full flex justify-end gap-3 button-group">

@@ -146,7 +146,7 @@ const selectionData = computed({
   },
 })
 
-const cachedRows = Number(localStorage.getItem(props.cacheKey)) || 10
+const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || 10
 
 const paginatorConfig = reactive({
   rows: cachedRows,
@@ -168,7 +168,7 @@ const paginatorConfig = reactive({
   },
   onRowsChange(selectEvent: SelectChangeEvent) {
     if (props.cacheKey && selectEvent.value) {
-      localStorage.setItem(props.cacheKey, selectEvent.value)
+      localStorage.setItem(`table:${props.cacheKey}`, selectEvent.value)
     }
     _request()
   },

@@ -10,6 +10,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
+import BlobBg from '/@/components/blob-bg.vue'
 
 const { getWorkspaceList, setCurrentWorkspace } = useWorkspaceStore()
 const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
@@ -131,10 +132,7 @@ provideLoginContext({
     <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
     <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
   </div>
-  <div class="sign-bg">
-    <div class="blue" />
-    <div class="purple" />
-  </div>
+  <BlobBg />
 </template>
 
 <style lang="scss" scoped>
@@ -177,43 +175,4 @@ provideLoginContext({
   }
 }
 
-.sign-bg {
-  display: flex;
-  position: fixed;
-  top: 104%;
-  left: -100px;
-  right: -30px;
-  height: 656.408px;
-  flex-shrink: 0;
-  opacity: 0.6;
-  filter: blur(150px);
-  transform: rotate(10deg);
-
-  .blue {
-    width: 866.302px;
-    height: 648.468px;
-    flex-shrink: 0;
-    border-radius: var(--radius-none, 866.302px);
-    background: var(--Color-blue-300, #12a3fc);
-    animation: ripple 15s linear infinite;
-  }
-
-  .purple {
-    width: 617.019px;
-    height: 461.868px;
-    flex-shrink: 0;
-    border-radius: var(--radius-none, 617.019px);
-    background: #ca59ff;
-    animation: ripple 15s linear infinite;
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: rotate(0);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
 </style>

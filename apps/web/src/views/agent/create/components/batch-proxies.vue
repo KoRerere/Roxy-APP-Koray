@@ -134,6 +134,29 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
 
 const deleteFailDisabled = computed(() => !(dataList.value.length && dataList.value.some(item => item.checkStatus === ProxyCheckStatus.failure)))
 
+const missMessage = computed(() => {
+  const list = dataList.value.map(item => ({
+    ...item,
+    checkStatus: item.checkStatus ?? ProxyCheckStatus.failure,
+  }))
+
+  if (!list.some(item => item._missIndex)) {
+    return ''
+  }
+
+  const { miss } = list.reduce((data, item) => {
+    if (item._missIndex) {
+      data.miss.push(item)
+    }
+    else {
+      data.success.push(item)
+    }
+    return data
+  }, { success: [] as ProxyItem[], miss: [] as ProxyItem[] })
+
+  return $t('第 [{miss}] 条代理缺少信息，将不会被保存。', { miss: miss.map(item => item._missIndex).join(', ') })
+})
+
 onBeforeMount(async () => {
   const $dict_map = await getDictMap()
   const userConfig = await userStore.getUserConfig()
@@ -365,7 +388,7 @@ function onSave() {
       </div>
         <div class="parse-result-message">
           <RxAlert v-model:visible="showMessage" type="success"  class="w-full"
-            :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤', { count: dataList.length, filterCount })"
+            :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
             closable
             @close="messageClose">
           </RxAlert>

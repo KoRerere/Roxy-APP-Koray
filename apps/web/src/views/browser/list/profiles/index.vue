@@ -201,7 +201,7 @@ async function operationHandler(operate: any, data: any) {
         }
         return acc
       }, {})
-      router.push({ name: 'browser-edit', query: { id: data.id, page_index, customFilterParams: JSON.stringify(customFilterParams) } })
+      router.push({ name: 'browser-edit', query: { ...route.query, id: data.id, page_index, customFilterParams: JSON.stringify(customFilterParams) } })
       break
     case 'copyId':
       copyText(data.dirId)
@@ -672,8 +672,16 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="windownTable" cacheKey="browser-list" v-model:columns="columns" :immediate="false" :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    selection-mode="multiple" :show-actions="false">
+  <RyTable ref="windownTable"
+    v-model:columns="columns"
+    cacheKey="browser-list"
+    :immediate="false"
+    :table-filters="tableFilters"
+    :table-sort="getSorts" :table-request="tableRequest"
+    :operation="operation" :operation-handler="operationHandler"
+      selection-mode="multiple" :show-actions="false"
+      class="window-table"
+      >
     <template #header-extra>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
@@ -745,6 +753,13 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
+:deep(.window-table) {
+  tr:not([data-p-selected=true]):hover .direct-info {
+    background-color: var(--Colors-Background-bg-body-hover, #f0f3f5);
+  }
+}
+
+
 .table-filter {
   height: 54px;
   background-color: #fff;

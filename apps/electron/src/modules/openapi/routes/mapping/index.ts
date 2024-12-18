@@ -4,8 +4,13 @@ export * from './account'
 export * from './browserList'
 
 
-export function mapping2Object(row: Record<string, any>, mapping: Record<string, any>) {
+export function mapping2Object(row: Record<string, any>, mapping: Record<string, any>, keepOriginals?: string[]) {
   return Object.entries(mapping).reduce((acc, [key, value]) => {
+    if (keepOriginals && keepOriginals.includes(key)) {
+      acc[key] = row[key]
+      return acc
+    }
+
     if (isPlainObject(value)) {
       const obj = row[key] && isPlainObject(row[key]) ? row[key] : row
       acc[key] = mapping2Object(obj, value)
@@ -18,6 +23,6 @@ export function mapping2Object(row: Record<string, any>, mapping: Record<string,
   }, {})
 }
 
-export function mapping2List(rows: Record<string, any>[], mapping: Record<string, any>) {
-  return rows.map((row) => mapping2Object(row, mapping))
+export function mapping2List(rows: Record<string, any>[], mapping: Record<string, any>, keepOriginals?: string[]) {
+  return rows.map((row) => mapping2Object(row, mapping, keepOriginals))
 }

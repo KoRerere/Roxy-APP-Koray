@@ -40,6 +40,8 @@ async function testProxy() {
     console.log(error)
   }
 }
+
+defineExpose({ testProxy, visible })
 </script>
 
 <template>

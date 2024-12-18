@@ -295,5 +295,11 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 }
 .direct-info {
   border: none;
+  box-shadow: none;
+  color: #A3A9AD;
+
+  &:hover {
+    color: #7C8387;
+  }
 }
 </style>

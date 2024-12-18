@@ -95,7 +95,7 @@ async function tableFilters() {
       </div>
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+      <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无匹配结果')" :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')" />
         </template>

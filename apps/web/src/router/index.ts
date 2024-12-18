@@ -30,7 +30,7 @@ const router = createRouter({
     },
   ],
 })
-
+window.router = router
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const simpleLocale = useSimpleLocale()

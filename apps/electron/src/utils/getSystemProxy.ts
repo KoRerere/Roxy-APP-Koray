@@ -1,4 +1,4 @@
-import { getMainWindow } from '/@/modules/app/mainWindow'
+import { session } from 'electron'
 
 let systemProxyAddr = ''
 
@@ -16,8 +16,8 @@ export async function getSystemProxy(force = false) {
   }
   regetTime = Date.now()
 
-  const proxy = await getMainWindow()?.webContents.session.resolveProxy('http://iprust.io/ip.json')
-  console.log('getSystemProxy', proxy)
+  const proxy = await session.defaultSession.resolveProxy('http://iprust.io/ip.json')
+  console.log('getSystemProxy resolveProxy', proxy)
   systemProxyAddr = proxy === 'DIRECT' ? '' : proxy?.split(' ').at(-1) || ''
   return systemProxyAddr
 }

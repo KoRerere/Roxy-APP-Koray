@@ -59,7 +59,14 @@ async function createProfile(formData: any) {
   showToast(code, msg)
   if (code === 0) {
     const { query } = getBackRoute()
-    router.replace({ name: 'browser-list', query })
+    router.replace({
+      name: 'project-item',
+      params: { id: params.projectId } ,
+      query: {
+          ...query,
+          title: metaData.value?.projectName,
+        }
+      })
   }
   loading.value = false
 }

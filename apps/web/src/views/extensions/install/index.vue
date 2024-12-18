@@ -349,7 +349,7 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns"
+  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns"
     :show-display="false" :show-gridlines="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">

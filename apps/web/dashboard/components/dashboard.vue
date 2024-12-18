@@ -257,55 +257,10 @@ onBeforeMount(() => {
       </div>
     </div>
 
-    <div class="ellipse-bg">
-      <div class="blue" />
-      <div class="purple" />
-    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.ellipse-bg {
-  display: flex;
-  position: fixed;
-  top: 104%;
-  left: -200px;
-  right: -30px;
-  height: 656.408px;
-  flex-shrink: 0;
-  opacity: 0.6;
-  filter: blur(150px);
-  transform: rotate(10deg);
-
-  .blue {
-    width: 866.302px;
-    height: 648.468px;
-    flex-shrink: 0;
-    border-radius: var(--radius-none, 866.302px);
-    background: var(--Color-blue-300, #12a3fc);
-    animation: ripple 15s linear infinite;
-  }
-
-  .purple {
-    width: 617.019px;
-    height: 461.868px;
-    flex-shrink: 0;
-    border-radius: var(--radius-none, 617.019px);
-    background: #ca59ff;
-    animation: ripple 15s linear infinite;
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: rotate(0);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .layout {
   display: flex;
   max-width: 1000px;

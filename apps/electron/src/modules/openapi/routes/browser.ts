@@ -112,7 +112,7 @@ router.get('/list', async (req, res) => {
     const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       // console.log('browserListMapping', result.data.rows)
-      result.data.rows = mapping2List(result.data.rows, browserListMapping)
+      result.data.rows = mapping2List(result.data.rows, browserListMapping, ['cookie'])
     }
     res.json(result)
   }
@@ -131,7 +131,7 @@ router.get('/list_v2', async (req, res) => {
     const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       // console.log('browserListV2Mapping', result.data.rows)
-      result.data.rows = mapping2List(result.data.rows, browserListMappingV2)
+      result.data.rows = mapping2List(result.data.rows, browserListMappingV2, ['cookie'])
     }
     res.json(result)
   }

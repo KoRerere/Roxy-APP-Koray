@@ -53,7 +53,7 @@ export function getColumns() {
       {
         title: $t('其他'),
         key: 'actions',
-        alignFrozen: 'right',
+        // alignFrozen: 'right',
         slot: 'actions',
       },
     ],
