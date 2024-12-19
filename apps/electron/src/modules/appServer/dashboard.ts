@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
-import { isPackaged, tryRefreshUrl } from '/@/utils'
+import { calculateRemainingTime, isPackaged, tryRefreshUrl } from '/@/utils'
 import { appConfig } from '/@/constants'
 
 export async function setupDashboardServer(app: express.Application) {
@@ -108,7 +108,11 @@ export async function setupDashboardServer(app: express.Application) {
     const { code } = req.query as Record<string, any>
     try {
       const { token } = twoFactor.generateToken(code)
-      res.success(token)
+      const remainingTime = calculateRemainingTime()
+      res.success({
+        token,
+        remainingTime,
+      })
     }
     catch (error) {
       res.error(error)

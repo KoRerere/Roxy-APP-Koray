@@ -100,7 +100,7 @@ function operationHandler(operate: any, data?: any) {
   }
 }
 
-function tableRequest(params) {
+function tableRequest(params: any) {
   getProjects()
   return API.limit.userGetProjectInfoByWorkspaceList({ ...params,default: 2 })
 }

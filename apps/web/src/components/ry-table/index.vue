@@ -100,6 +100,7 @@ defineEmits(['update:columns'])
 const route = useRoute()
 const [show] = useContextMenu()
 
+let _getConditionPromise: Promise<any> | undefined
 const _firstLoad = ref(false)
 const _loading = ref(false)
 const _columns = computed(() => props.columns.filter((item: any) => item._visible ?? true))
@@ -159,9 +160,11 @@ const paginatorConfig = reactive({
     { label: $t('50 条/页'), value: 50 },
     { label: $t('100 条/页'), value: 100 },
   ],
-  onResetPage(first = 0, rows: number = 10) {
+  onResetPage(first = 0, rows?: number) {
     paginatorConfig.first = first
-    paginatorConfig.rows = rows
+    if (rows) {
+      paginatorConfig.rows = rows
+    }
   },
   onPage(event: PageState) {
     _request()
@@ -193,10 +196,10 @@ function onFilterChange() {
   _request()
 }
 
-function _onSortChange() {
+async function _onSortChange() {
   paginatorConfig.onResetPage()
+  await _sorts.onChange?.()
   _request()
-  _sorts.onChange?.()
 }
 
 async function _getCondition() {
@@ -222,6 +225,7 @@ function _getParams() {
 }
 
 async function _request() {
+  await _getConditionPromise
   const requestParams = _getParams()
   _loading.value = true
   const { data } = await props.tableRequest(requestParams)
@@ -281,7 +285,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 }
 
 onBeforeMount(async () => {
-  await _getCondition()
+  _getConditionPromise = _getCondition()
   if (props.immediate) {
     await _request()
   }
@@ -291,7 +295,6 @@ onBeforeMount(async () => {
 defineExpose({
   selectionData,
   refresh: async (outerParams: any = {}, force = true) => {
-    await _getCondition()
     _outerParams.value = outerParams
     if (force) {
       paginatorConfig.first = 0

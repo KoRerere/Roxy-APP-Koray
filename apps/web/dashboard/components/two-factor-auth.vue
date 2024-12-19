@@ -8,10 +8,10 @@ const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo
 
 const toast = useToast()
 
-function startCountdown(item) {
+function startCountdown(item, remainingTime = 0) {
   const duration = 30
   const interval = 10
-  let elapsed = 0
+  let elapsed = duration - remainingTime
 
   const timer = setInterval(() => {
     elapsed += interval / 1000
@@ -40,8 +40,8 @@ async function getTwoFactorCode(item) {
     const response = await fetch(`/api/browser/two-factor-token?code=${item.platformEfa}`)
     const { data } = await response.json()
     console.log('data', data)
-    item.efaToken = data
-    startCountdown(item)
+    item.efaToken = data.token
+    startCountdown(item, data.remainingTime)
   }
   catch (error) {
 

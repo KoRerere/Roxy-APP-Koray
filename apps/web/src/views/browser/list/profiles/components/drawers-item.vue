@@ -15,7 +15,7 @@ const props = defineProps({
   },
 })
 
-const proxykey = ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl']
+const proxykey = ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
 const proxyData = reactive({
   id: props.data.moduleId,
   ...Object.fromEntries(proxykey.map(key => [key, props.data[key]])),

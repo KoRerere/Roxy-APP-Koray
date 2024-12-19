@@ -10,12 +10,15 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { getSettings } from './panel'
 import SettingsPopup from './settings-popup.vue'
+import { copyText } from '/@/utils'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const dialog = useDialog()
 const userStore = useUserStore()
 const simpleLocale = useSimpleLocale()
 const styles = useCssModule()
+const toast = useToast()
 
 const menuRef = useTemplateRef('menu')
 
@@ -23,7 +26,7 @@ const items = ref([
   {
     render: () => {
       return (
-        <div>
+        <div onClick={copyUserInfo}>
           <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
           <div class={styles['user-email']}>{userStore.userInfo.email}</div>
         </div>
@@ -85,6 +88,11 @@ const items = ref([
     },
   },
 ])
+
+function copyUserInfo() {
+  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
+  toast.add({ severity: 'success', summary: $t('提示'), detail: $t('用户名与邮箱已复制到剪贴板'), life: 2500 })
+}
 
 function openSettings(activeKey: string) {
   dialog.open(SettingsPopup, {

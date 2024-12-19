@@ -35,21 +35,24 @@ const pinTabs = [
   { id: 'rx_1000', label: $t('全部窗口'), name: 'profiles' },
 ]
 
+const tabIdLangMap = {
+  rx_1002: $t('收藏'),
+  rx_1003: $t('已打开'),
+} as Record<string, string>
+
+const rawTabs = [
+  { id: 'rx_1002', label: $t('收藏'), name: 'favorite', _params: { isOften: true } },
+  { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
+]
+
 const localTabKey = `localTabs_${workspaceStore.currentWorkspace?.id}`
-const localTabs: TabType[] = JSON.parse(localStorage.getItem(localTabKey) || 'null') || [
-  {
-    id: 'rx_1002',
-    label: $t('收藏'),
-    name: 'favorite',
-    _params: { isOften: true },
-  },
-  {
-    id: 'rx_1003',
-    label: $t('已打开'),
-    name: 'opened',
-    _params: { openStatus: true },
-  },
-].map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
+const localTabs: TabType[] = JSON.parse(localStorage.getItem(localTabKey) || 'null') || rawTabs.map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
+
+localTabs.forEach(item => {
+  if (tabIdLangMap[item.id]) {
+    item.label = tabIdLangMap[item.id]
+  }
+})
 
 const tabs = ref<TabType[]>(pinTabs)
 const sortTabs = computed({

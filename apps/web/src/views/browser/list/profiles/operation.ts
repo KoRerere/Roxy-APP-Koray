@@ -319,7 +319,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'addTag',
-      label: $t('关联标签'),
+      label: $t('添加标签'),
       icon: 'base/rx_ic_tag',
       multiple: true,
     },

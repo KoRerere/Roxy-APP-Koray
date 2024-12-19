@@ -544,6 +544,7 @@ async function batchModifyWindow(params: any) {
  */
 function profileOperate(key: string, data: any) {
   const _data = toRaw(data)
+  console.log('profileOperate', key, _data)
   drawer.data = _data
   switch (key) {
     case 'addProxy':

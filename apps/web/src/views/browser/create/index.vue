@@ -20,6 +20,7 @@ import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
+import { getBackRoute } from '/@/router/utils'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -222,10 +223,12 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
+    const {path,query} = getBackRoute()
+    console.log('onBack',path,query)
     router.replace({
-      name: 'project-item',
-      params: { id: params.projectId } ,
+      path,
       query: {
+        ...query,
         title: metaData.value.projectName,
         browser: JSON.stringify({ windowId: data.windowId, openBrowser })
       }

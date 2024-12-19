@@ -31,3 +31,11 @@ export function safeStringify(obj) {
     return value
   })
 }
+
+
+/** 2fa 剩余有效时间 */
+export const calculateRemainingTime = (timeStep = 30) => {
+  const currentTime = Math.floor(Date.now() / 1000);
+  const remainingTime = timeStep - (currentTime % timeStep);
+  return remainingTime;
+};
