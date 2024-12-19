@@ -87,7 +87,7 @@ function editTag(data?: any) {
 async function deleteTag(data: any) {
   confirm.require({
     header: $t('删除标签'),
-    message: '您确认要删除所选标签吗？删除后，关联窗口的标签将被清除。',
+    message: $t('您确认要删除所选标签吗？删除后，关联窗口的标签将被清除。'),
     rejectProps: {
       label: $t('取消'),
       severity: 'secondary',
@@ -101,7 +101,7 @@ async function deleteTag(data: any) {
       const ids = data.map((item: any) => item.id)
       await API.window.userDelLabelInfoCreate({ ids })
       tableRef.value?.refresh()
-      toast.add({ severity: 'success', summary: '成功', detail: '标签修改成功', life: 2500 })
+      toast.add({ severity: 'success', summary: '成功', detail: $t('标签修改成功'), life: 2500 })
     },
   })
 }

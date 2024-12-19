@@ -4,7 +4,7 @@ import { ExcelAccept } from '/@/utils/constants';
 import { useConfirm } from 'primevue/useconfirm'
 import { $t } from '/@/locales';
 import { format } from 'date-fns'
-import { columns, downloadTemplate } from '../browser/create/utils';
+import { getColumns, downloadTemplate } from '../browser/create/utils';
 
 const confirm = useConfirm()
 
@@ -53,7 +53,7 @@ async function parse() {
       worksheet.eachRow((row, rowIndex) => {
         console.log("🚀 ~ worksheet.eachRow ~ rowIndex:", rowIndex)
         if (rowIndex >= 5) {
-          const data = Object.fromEntries(columns.map((column, index) => [column.key, (row.values as ExcelJS.CellValue[])[index + 1]]))//excel 索引从1开始
+          const data = Object.fromEntries(getColumns().map((column, index) => [column.key, (row.values as ExcelJS.CellValue[])[index + 1]]))//excel 索引从1开始
           result.push(data)
         }
       });

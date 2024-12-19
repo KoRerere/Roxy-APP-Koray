@@ -17,6 +17,13 @@ defineOptions({
   inheritAttrs: false,
 })
 
+const props = defineProps({
+  windowInfo: {
+    type: Object,
+    default: () => ({}),
+  },
+})
+
 const dialog = useDialog()
 const network = useNetworkStore()
 
@@ -155,8 +162,8 @@ function replaceData(data: any) {
     </div>
     <template v-else>
       <div class="button-group">
-        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list', windowInfo)" />
+        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create', windowInfo)" />
       </div>
       <div>
         <template v-if="isBatch">

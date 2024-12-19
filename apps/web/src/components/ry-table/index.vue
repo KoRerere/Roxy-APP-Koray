@@ -62,7 +62,7 @@ const props = defineProps({
     default: () => [],
   },
   operationHandler: {
-    type: Function as PropType<(event: any, data: any) => any | Promise<any>>,
+    type: Function as PropType<(event: any, data: any, operationType: 'single' | 'batch') => any | Promise<any>>,
     default: () => () => { },
   },
   multipleOperation: {
@@ -147,7 +147,7 @@ const selectionData = computed({
 })
 
 const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || 10
-
+console.log('route.query.page_index', route.query.page_index)
 const paginatorConfig = reactive({
   rows: cachedRows,
   first: cachedRows * ((Number(route.query.page_index) || 1) - 1),
@@ -173,14 +173,14 @@ const paginatorConfig = reactive({
     _request()
   },
 })
-
+console.log('paginatorConfig', paginatorConfig)
 const paginatorInfo = computed(() => $t('总计 {total} 个', {
   total: paginatorConfig.totalRecords,
 }))
 
 async function batchOperation(item: any) {
   try {
-    await props.operationHandler(item, selectionData.value)
+    await props.operationHandler(item, selectionData.value, 'batch')
     _clearSelection()
   }
   catch (error) {
@@ -256,7 +256,7 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
     operation,
     operationHandler: async (operate: any) => {
       try {
-        await props.operationHandler(operate, event.data)
+        await props.operationHandler(operate, event.data, 'single')
       }
       catch (error) {
         console.log(error)
@@ -265,13 +265,13 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
   })
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
+function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any, operationType: 'batch' | 'single') {
   show(event, {
     operation,
     operationHandler: async (operate: any) => {
       try {
         operate._event = event
-        await props.operationHandler(operate, data)
+        await props.operationHandler(operate, data, operationType)
       }
       catch (error) {
         console.log(error)
@@ -290,9 +290,12 @@ onBeforeMount(async () => {
 
 defineExpose({
   selectionData,
-  refresh: (outerParams: any = {}) => {
+  refresh: async (outerParams: any = {}, force = true) => {
+    await _getCondition()
     _outerParams.value = outerParams
-    paginatorConfig.first = 0
+    if (force) {
+      paginatorConfig.first = 0
+    }
     _request()
   },
   clearSelection: _clearSelection,
@@ -350,7 +353,7 @@ defineExpose({
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -378,7 +381,7 @@ defineExpose({
 
     <Transition>
       <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData)">
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>

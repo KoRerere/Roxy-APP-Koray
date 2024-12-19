@@ -126,7 +126,7 @@ export async function setupDashboardServer(app: express.Application) {
   if (isPackaged) {
     app.use('/dashboard', async (req, res, next) => {
       const { id = '' } = req.query
-      const filePath = join(store.isExternalWeb ? appConfig.webDir : __dirname, './web', 'dashboard.html')
+      const filePath = join(store.isExternalWeb ? appConfig.webDir : join(__dirname, './web'), 'dashboard.html')
 
       try {
         const data = await readFile(filePath, 'utf8')
@@ -134,7 +134,9 @@ export async function setupDashboardServer(app: express.Application) {
         res.send(modifiedHtml)
       }
       catch (error) {
-        res.status(500).send('Error reading file')
+        console.log('store.isExternalWeb', store.isExternalWeb, filePath)
+        console.log('/dashboard error', error)
+        res.status(500).send(`Error reading file: ${error}`)
       }
     })
   }

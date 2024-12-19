@@ -74,6 +74,7 @@ function divInput(ev: any) {
     font-size: 14px;
     font-weight: 600;
     line-height: normal;
+    min-width: 10px;
 
     &:empty::before {
       content: attr(data-placeholder);

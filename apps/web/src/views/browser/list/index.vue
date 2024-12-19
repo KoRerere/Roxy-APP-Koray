@@ -16,6 +16,7 @@ import { sleep } from '/@/utils'
 
 const confirm = useConfirm()
 const dialog = useDialog()
+const route = useRoute()
 const role = useRoleStore()
 const tabListRef = useTemplateRef('tabList')
 const workspaceStore = useWorkspaceStore()
@@ -77,6 +78,12 @@ async function getFilterList() {
       label: item.filter_name,
     })).concat(localTabs as any).sort((a, b) => a.sort - b.sort)
     tabs.value = [...pinTabs, ...list]
+    const routeActiveTab = tabs.value.find(tab => tab.id === route.query.activeTabId)
+
+    if (routeActiveTab) {
+      active.value = routeActiveTab.id
+    }
+
     setTimeout(() => {
       // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310
       tabListRef.value?.updateInkBar()

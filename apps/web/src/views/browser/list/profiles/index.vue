@@ -124,14 +124,14 @@ watch(
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
-function onRefreshTable(tabParams?: any) {
+function onRefreshTable(tabParams?: any, force = true) {
   const params = {
     ...props.currentFilter?._params,
     ...tabParams,
     ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   hasFiltered.value = !isEmptyValue(params)
-  tableRef.value!.refresh(params)
+  tableRef.value!.refresh(params, force)
 }
 
 async function saveFilters(formData: any) {
@@ -185,7 +185,7 @@ async function tableRequest(params: any) {
   return data
 }
 
-async function operationHandler(operate: any, data: any) {
+async function operationHandler(operate: any, data: any, operationType: 'single' | 'batch' = 'single') {
   /**
    * 兼容批量操作
    */
@@ -201,7 +201,14 @@ async function operationHandler(operate: any, data: any) {
         }
         return acc
       }, {})
-      router.push({ name: 'browser-edit', query: { ...route.query, id: data.id, page_index, customFilterParams: JSON.stringify(customFilterParams) } })
+      router.push({ name: 'browser-edit', query: {
+          ...route.query,
+          id: data.id,
+          page_index,
+          activeTabId: props.currentFilter?.id,
+          customFilterParams: JSON.stringify(customFilterParams)
+        }
+      })
       break
     case 'copyId':
       copyText(data.dirId)
@@ -221,14 +228,15 @@ async function operationHandler(operate: any, data: any) {
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
       break
     case 'addTag':
-      addTag({
-        confirmNext: ({ res }: any) => {
-          updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
-        },
-      })
-      break
-    case 'linkTags':
-      tagsIconRef.value?.openMenu(operate._event)
+      if (operationType === 'batch') {
+        tagsIconRef.value?.openMenu(operate._event)
+      } else {
+        addTag({
+          confirmNext: ({ res }: any) => {
+            updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
+          },
+        })
+      }
       break
     case 'fav':
       singleModifyWindow({ id: data.id, isOften: !data.isOften })
@@ -656,7 +664,7 @@ onBeforeMount(() => {
   getCustomFilters(customFilterParams).then((data) => {
     filtersMenu.value ??= data
   }).finally(() => {
-    onRefreshTable(customFilterParams)
+    onRefreshTable(customFilterParams, false)
   })
 })
 

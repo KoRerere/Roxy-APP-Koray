@@ -128,7 +128,7 @@ onMounted(() => {
         <div class="description">
           {{ $t('您可以在扩展列表中更改此选项') }}
         </div>
-        <RxAlert v-if="_props?.canDelete === false" class="!w-full mt-2.5" :closable="false" type="info" :title="$t('该插件属于其他成员，请联系对方进行关闭操作。')" />
+        <!-- <RxAlert v-if="_props?.canDelete === false" class="!w-full mt-2.5" :closable="false" type="info" :title="$t('该插件属于其他成员，请联系对方进行关闭操作。')" /> -->
       </div>
     </div>
     <div class="flex justify-end items-center gap-3">

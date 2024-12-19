@@ -3,6 +3,7 @@ export interface MetaData {
   projectId: number | undefined
   labelIds: (number | string)[] | undefined
   windowRemark: string | undefined
+  projectDefault: number
 }
 
 export interface Accordions {

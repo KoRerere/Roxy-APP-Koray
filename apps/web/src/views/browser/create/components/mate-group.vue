@@ -6,6 +6,7 @@ import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 import type { MetaData } from './type.ts'
 
+const route = useRoute()
 const [showMenu] = usePopoverMenu()
 
 const { getTags, getProjects, getProjectMember } = useMateGroup()
@@ -16,16 +17,19 @@ const metaData = defineModel<MetaData>('modelValue', {
     projectId: undefined,
     labelIds: [],
     windowRemark: '',
+    projectDefault: 0,
   },
 })
 
 onMounted(async () => {
   if (isEmptyValue(metaData.value.projectId)) {
    const projects = await getProjects()
-   const defaultProject = projects.find(item => item.projectDefault)
+   const routeProject = projects.find(item => item.value === route.query.projectId)
+   const defaultProject = routeProject || projects.find(item => item.projectDefault)
     if (defaultProject) {
       metaData.value.projectId = Number(defaultProject.value)
       metaData.value.projectName = defaultProject.label
+      metaData.value.projectDefault = 1
     }
   }
 })
@@ -40,8 +44,10 @@ async function selectProject(event: Event) {
     operation,
     onHide: (projectId: string) => {
       if (!isEmptyValue(projectId) && projectId !== value) {
+        const project = operation.find((item: any) => item.value === projectId)
         metaData.value.projectId = Number(projectId)
-        metaData.value.projectName = operation.find((item: any) => item.value === projectId)?.label || $t('未指定项目')
+        metaData.value.projectName = project?.label || $t('未指定项目')
+        metaData.value.projectDefault = project?.projectDefault || 0
       }
     },
   })

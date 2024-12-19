@@ -216,6 +216,7 @@ export async function getSorts() {
       defaultValue: 'windowSortNum',
       options: [
         { label: $t('序号'), value: 'windowSortNum' },
+        { label: $t('名称'), value: 'name' },
         { label: $t('创建时间'), value: 'createTime' },
         { label: $t('修改时间'), value: 'updateTime' },
         { label: $t('最后打开时间'), value: 'openTime' },
@@ -317,7 +318,7 @@ export function getOperation(_params: any = {}) {
       multiple: true,
     },
     {
-      name: 'linkTags',
+      name: 'addTag',
       label: $t('关联标签'),
       icon: 'base/rx_ic_tag',
       multiple: true,

@@ -42,6 +42,10 @@ function editProject() {
     },
   })
 }
+
+function toCreateBrowser() {
+  router.push({ name: 'browser-create', query: { projectId: projectId.value } })
+}
 </script>
 
 <template>
@@ -61,6 +65,7 @@ function editProject() {
       </template>
       <MemberDropdownList :project-id="projectId" />
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="toCreateBrowser" />
     </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-1 overflow-hidden">

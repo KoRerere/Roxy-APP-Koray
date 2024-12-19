@@ -30,7 +30,7 @@ const router = createRouter({
     },
   ],
 })
-window.router = router
+
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const simpleLocale = useSimpleLocale()
@@ -52,5 +52,9 @@ router.beforeEach((to, from, next) => {
     return next({ ...to, query })
   }
 })
+
+if (import.meta.hot) {
+  window.router = router
+}
 
 export default router

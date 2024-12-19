@@ -26,9 +26,11 @@ const inputsGroup = ref()
 const original = ref()
 const metaData = ref<MetaData>()
 const loading = ref(false)
+const windowInfo = ref({})
 
 onBeforeMount(async () => {
   const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  windowInfo.value = data
   const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
   inputsGroup.value = _inputsGroup
   original.value = _original
@@ -58,15 +60,9 @@ async function createProfile(formData: any) {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
-    const { query } = getBackRoute()
-    router.replace({
-      name: 'project-item',
-      params: { id: params.projectId } ,
-      query: {
-          ...query,
-          title: metaData.value?.projectName,
-        }
-      })
+    const {path,query} = getBackRoute()
+    console.log('onBack',path,query)
+    router.replace({ path, query })
   }
   loading.value = false
 }
@@ -89,7 +85,7 @@ function oldFieldsFormat() {
           <rxEditDiv v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
         </div>
       </div>
     </div>

@@ -100,9 +100,9 @@ function operationHandler(operate: any, data?: any) {
   }
 }
 
-function tableRequest() {
+function tableRequest(params) {
   getProjects()
-  return API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+  return API.limit.userGetProjectInfoByWorkspaceList({ ...params,default: 2 })
 }
 
 async function pinProject(data: Project) {
