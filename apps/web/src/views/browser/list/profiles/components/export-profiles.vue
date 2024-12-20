@@ -96,10 +96,10 @@ const excelSchema = [
     key: 'windowRemark',
     name: $t('备注'),
   },
-  {
-    key: 'userAgent',
-    name: 'User Agent',
-  },
+  // {
+  //   key: 'userAgent',
+  //   name: 'User Agent',
+  // },
   {
     key: 'windowSize',
     name: $t('窗口大小'),

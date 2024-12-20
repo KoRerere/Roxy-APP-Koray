@@ -165,7 +165,7 @@ export const webUpdater = new class WebUpdater {
   async upgradeNow() {
     if (this.remoteVersionInfo) {
       await this.extract()
-      store.isExternalWeb = true
+      store.isExternalWeb = await fileExists(join(appConfig.webDir, 'dashboard.html'))
       getMainWindow()?.reload()
       await updateMainWindowPageTitle()
     }

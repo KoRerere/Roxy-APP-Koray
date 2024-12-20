@@ -43,6 +43,14 @@ const drawer = reactive({
 })
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
+const proxyInfo = computed(() => {
+  const filterKeys = ['ipType','proxyCategory','host','port','proxyUserName','proxyPassword','refreshUrl','checkChannel']
+
+  return filterKeys.reduce((acc, key) => {
+    acc[key] = props.windowInfo[key]
+    return acc
+  }, {} as Record<string, any>)
+})
 
 function toggleDrawer(type: 'create' | 'list', data?: any) {
   drawer.visible = true
@@ -162,8 +170,8 @@ function replaceData(data: any) {
     </div>
     <template v-else>
       <div class="button-group">
-        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list', windowInfo)" />
-        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create', windowInfo)" />
+        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list', proxyInfo)" />
+        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create', proxyInfo)" />
       </div>
       <div>
         <template v-if="isBatch">
