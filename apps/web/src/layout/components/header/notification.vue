@@ -56,6 +56,7 @@ async function getMessageList(result?: UserGetNotifyListData) {
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
+      // TODO 待优化
       acc.teamsRead += item.status
     }
     else {

@@ -1,4 +1,4 @@
-import { Menu, Tray } from 'electron'
+import { app, Menu, Tray } from 'electron'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { getMainWindow } from '/@/modules/app/mainWindow'
@@ -7,16 +7,31 @@ let tray: Tray
 /** 创建托盘 */
 export async function createTray() {
   await setTimeout()
-  console.log('createTray')
-  tray?.destroy()
+  // 如果已经创建过托盘，直接返回, 因为
+  if (tray) {
+    tray.setContextMenu(createContextMenu())
+    return tray
+  }
 
   const iconPath = path.join(__dirname, '..', 'resources/roxy-tray.png')
   // 新建托盘
   tray = new Tray(iconPath)
   // 托盘名称
-  tray.setToolTip('roxybrowser')
-  // 托盘菜单
-  const contextMenu = Menu.buildFromTemplate([
+  tray.setToolTip(app.getName())
+
+  // 载入托盘菜单
+  tray.setContextMenu(createContextMenu())
+  // 双击触发
+  tray.on('click', () => {
+    getMainWindow()?.show()
+    getMainWindow()?.setSkipTaskbar(false)
+  })
+  return tray
+}
+
+/** 创建托盘菜单 */
+function createContextMenu() {
+  return Menu.buildFromTemplate([
     {
       label: $t('显示'),
       click: () => {
@@ -31,14 +46,6 @@ export async function createTray() {
       },
     },
   ])
-  // 载入托盘菜单
-  tray.setContextMenu(contextMenu)
-  // 双击触发
-  tray.on('click', () => {
-    getMainWindow()?.show()
-    getMainWindow()?.setSkipTaskbar(false)
-  })
-  return tray
 }
 
 export function getTray() {
