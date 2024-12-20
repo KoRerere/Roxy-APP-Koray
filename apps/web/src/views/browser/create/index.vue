@@ -263,7 +263,6 @@ async function importProfile(params: any) {
     onlyErrorToast(-1, $t('请选择要导入的文件。'))
     return
   }
-  console.log('params', params)
   loading.value = true
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })

@@ -9,20 +9,27 @@ const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo
 const toast = useToast()
 
 function startCountdown(item, remainingTime = 0) {
+  const worker = new Worker(new URL('./countdown-worker.ts', import.meta.url), {
+  type: 'module',
+});
   const duration = 30
   const interval = 10
-  let elapsed = duration - remainingTime
 
-  const timer = setInterval(() => {
-    elapsed += interval / 1000
-    item.progress = ((elapsed / duration)).toFixed(10)
+  worker.postMessage({ duration, remainingTime, interval });
 
-    if (elapsed >= duration) {
-      clearInterval(timer)
-      item.progress = 0
-      getTwoFactorCode(item)
+  worker.onmessage = (event) => {
+    const { progress, completed } = event.data;
+
+    if (progress !== undefined) {
+      item.progress = progress;
     }
-  }, interval)
+
+    if (completed) {
+      item.progress = 0;
+      worker.terminate(); // 终止 Worker
+      getTwoFactorCode(item);
+    }
+  };
 }
 
 function initTwoFactorCodeList() {

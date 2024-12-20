@@ -498,6 +498,7 @@ async function deleteProfile(datas: any, ids: number[]) {
         if (this.checkboxProps.value) {
           await API.window.userDelWindowInfoCreate({ ids })
           onRefreshTable()
+          electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
         } else {
           await batchModifyWindow({ ids, isDelete: true })
         }
