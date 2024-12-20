@@ -263,6 +263,7 @@ async function importProfile(params: any) {
     onlyErrorToast(-1, $t('请选择要导入的文件。'))
     return
   }
+  console.log('params', params)
   loading.value = true
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
@@ -402,7 +403,7 @@ async function deleteTemplate(data: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
             <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->

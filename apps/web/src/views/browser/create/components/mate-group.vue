@@ -6,6 +6,13 @@ import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 import type { MetaData } from './type.ts'
 
+defineProps({
+  showRemark: {
+    type: Boolean,
+    default: true,
+  },
+})
+
 const route = useRoute()
 const [showMenu] = usePopoverMenu()
 
@@ -24,6 +31,7 @@ const metaData = defineModel<MetaData>('modelValue', {
 onMounted(async () => {
   if (isEmptyValue(metaData.value.projectId)) {
    const projects = await getProjects()
+  //  优先使用路由传递的 projectId
    const routeProject = projects.find(item => item.value === route.query.projectId)
    const defaultProject = routeProject || projects.find(item => item.projectDefault)
     if (defaultProject) {
@@ -87,7 +95,7 @@ function onConfirm(windowRemark: string) {
     <div class="position-relative" :class="{ selected: metaData?.labelIds?.length }">
       <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_tag" :label="$t('标签')" @click="selectTags" />
     </div>
-    <RemarkIcon :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
+    <RemarkIcon v-if="showRemark" :title="$t('请为窗口添加备注')" :label="$t('备注')" mode="button" :value="metaData.windowRemark" :on-confirm="onConfirm" />
   </div>
 </template>
 

@@ -29,6 +29,7 @@ const props = defineProps({
     type: Object as PropType<any>,
     default: () => ({}),
   },
+  createWay: String,
 })
 
 const emits = defineEmits(['createOpen', 'create'])
@@ -140,7 +141,7 @@ function onCopy(dirId: string) {
       </Accordion>
     </div>
     <div class="footer">
-      <mateGroup v-model="metaData" class="flex-1" />
+      <mateGroup v-model="metaData" class="flex-1" :showRemark="createWay !== 'import'" />
       <RxButton v-if="isEdit" severity="primary" :label="$t('保存')" :loading="loading" @click.stop="getFormData" />
       <slot name="footer" />
     </div>
