@@ -132,10 +132,12 @@ export async function setupDashboardServer(app: express.Application) {
       const { id = '' } = req.query
       const isUseExternal = store.isExternalWeb && await fileExists(join(appConfig.webDir, 'dashboard.html'))
       const filePath = join(isUseExternal ? appConfig.webDir : join(__dirname, './web'), 'dashboard.html')
+      const browserItem = await browserManager.getOpenedBrowser(id as string)
 
       try {
         const data = await readFile(filePath, 'utf8')
-        const modifiedHtml = data.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
+        const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
+        const modifiedHtml = data.replace(/<title>(.*?)<\/title>/, `<title>${docTitle}</title>`)
         res.send(modifiedHtml)
       }
       catch (error) {
@@ -160,13 +162,18 @@ export async function setupDashboardServer(app: express.Application) {
           proxyRes.on('end', () => {
             const body = Buffer.concat(chunks)
             const contentType = proxyRes.headers['content-type']
-
             if (contentType?.includes('text/html')) {
-              // 修改 HTML 响应体中的 <title> 标签
+              const { id = '' } = req.query
               let bodyString = body.toString()
-              bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
-              res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
-              res.end(bodyString)
+              browserManager.getOpenedBrowser(id as string).then(browserItem => {
+                const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
+                // 修改 HTML 响应体中的 <title> 标签
+                bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${docTitle}</title>`)
+                // 确保响应内容完整
+                proxyRes.headers['content-length'] = String(Buffer.byteLength(bodyString));
+                res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
+                res.end(bodyString)
+              })
             }
             else {
               // 处理其他类型的响应

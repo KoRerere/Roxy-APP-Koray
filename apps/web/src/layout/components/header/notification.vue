@@ -4,6 +4,7 @@ import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
+import { isDev } from '/@/utils'
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -70,6 +71,10 @@ async function getMessageList(result?: UserGetNotifyListData) {
   sysTab.noRead = sys.length - sysRead
   teamsTab.list = teams
   sysTab.list = sys
+  // TODO 待复现 bug 时调试
+  if (isDev && teamsTab.noRead < 0 || sysTab.noRead < 0) {
+    debugger
+  }
 }
 
 async function onRead(item: Message | Message[]) {

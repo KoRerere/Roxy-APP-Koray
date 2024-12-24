@@ -21,7 +21,6 @@ app.use(PrimeVue, {
 app.use(ToastService)
 setupStore(app)
 
-// app.mount('#app')
 
 fetch(`/api/app/config`)
   .then(res => res.json())
@@ -29,10 +28,12 @@ fetch(`/api/app/config`)
     console.log('app config', data)
     setupI18n(app, { defaultLocale: data.language }).then(() => {
       document.querySelector('html')?.setAttribute('lang', data.language)
-      document.title = $t('工作台')
-      app.mount('#app')
     })
   })
   .catch((err) => {
     console.error(err)
+  }).finally(() => {
+    app.mount('#app')
   })
+
+

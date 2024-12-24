@@ -32,6 +32,10 @@ watch(urls.value, (value) => {
   invalid.value = value.some(item => item.invalid)
 })
 
+watch(modelValue, (value) => {
+  urls.value = value.map(value => createItem(value))
+})
+
 onBeforeMount(async () => {
   await getPlatformOptions()
   urls.value = modelValue.value.map(value => createItem(value))

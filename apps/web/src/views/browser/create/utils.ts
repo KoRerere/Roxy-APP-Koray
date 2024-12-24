@@ -12,6 +12,7 @@ export function getDefaultTemplate() {
     language: 'sq-AL',
     isDisplayLanguageBaseIp: true,
     displayLanguage: 'sq-AL',
+    defaultOpenUrl: [],
     isTimeZone: true,
     timeZone: 'GMT-01:00 America/Scoresbysund',
     position: 1,
@@ -294,7 +295,7 @@ export async function parseTemplate(file: File) {
             rowNum: rowIndex,
             ...Object.fromEntries(columns.map((column, index) => {
               const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]//excel 索引从1开始
-              const value = column.formatValue?.(cellValue as string) || cellValue
+              const value = column.formatValue?.(cellValue?.text || cellValue) || cellValue
               return [column.key, value]
             }))
           }

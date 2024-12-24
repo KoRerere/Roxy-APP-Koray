@@ -51,6 +51,7 @@ function getWindowInfo() {
       const { code, data, msg } = result
       if (code === 0) {
         windowInfo.value = data
+        // document.title = `${data.windowSortNum}-${data.windowName}-${$t('工作台')}`
       }
       else {
         console.error('获取窗口信息失败')

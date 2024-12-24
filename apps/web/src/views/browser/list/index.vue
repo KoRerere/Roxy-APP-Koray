@@ -13,6 +13,7 @@ import profiles from './profiles'
 import recycle from './recycle'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { sleep } from '/@/utils'
+import { debounce } from 'es-toolkit'
 
 const confirm = useConfirm()
 const dialog = useDialog()
@@ -61,15 +62,18 @@ const sortTabs = computed({
   },
   set(value: any) {
     tabs.value.splice(pinTabs.length, tabs.value.length - pinTabs.length, ...value)
-    requestAnimationFrame(() => {
-      tabListRef.value?.updateInkBar()
-    })
   },
 })
 
 const active = ref(tabs.value[0].id)
 const isRecycle = computed(() => active.value === trash.id)
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
+
+const updateInkBar = debounce(() => {
+  tabListRef.value?.updateInkBar()
+}, 100)
+
+watch(tabs, updateInkBar)
 
 async function getFilterList() {
   const { code, data, msg } = await API.window.userGetWindowFilterNameListList()

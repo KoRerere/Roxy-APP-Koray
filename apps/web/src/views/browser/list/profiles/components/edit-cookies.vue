@@ -35,12 +35,17 @@ async function getCookie() {
 }
 
 function onConfirm() {
-  if (cookies.value && checkCookieFormat(cookies.value)) {
+  const cookieStr = cookies.value?.trim?.() || ''
+  if (cookieStr && checkCookieFormat(cookieStr)) {
     loading.value = true
-    emit('confirm', JSON.parse(cookies.value))
+    emit('confirm', JSON.parse(cookieStr))
   }
   else {
-    onlyErrorToast(-1, $t('Cookie 格式错误，请检查格式'))
+    if (cookieStr === '') {
+      emit('confirm', [])
+    } else {
+      onlyErrorToast(-1, $t('Cookie 格式错误，请检查格式'))
+    }
   }
 }
 </script>
