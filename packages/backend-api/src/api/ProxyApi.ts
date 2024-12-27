@@ -12,10 +12,6 @@
 import {
   UserAddProxyModuleCreateData,
   UserAddProxyModuleCreatePayload,
-  UserCheckIpCreateData,
-  UserCheckIpCreatePayload,
-  UserDelProxyModuleCreateData,
-  UserDelProxyModuleCreatePayload,
   UserDelProxyModuleV2CreateData,
   UserDelProxyModuleV2CreatePayload,
   UserGetProxyModuleListData,
@@ -27,8 +23,6 @@ import {
   UserMdfProxyModuleCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
   UserSaveProxyTableSortOrderCreatePayload,
-  UserUnbindProxyModuleCreateData,
-  UserUnbindProxyModuleCreatePayload,
   UserUpdateProxyTableRowsCreateData,
   UserUpdateProxyTableRowsCreatePayload,
 } from "./data-contracts";
@@ -88,60 +82,6 @@ export class ProxyApi<SecurityDataType = unknown> {
   userMdfProxyModuleCreate = (data: UserMdfProxyModuleCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfProxyModuleCreateData, any>({
       path: `/user_mdf_proxy_module`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
-   * @name UserDelProxyModuleCreate
-   * @summary 批量删除代理 (旧版本浏览器使用)
-   * @request POST:/user_del_proxy_module
-   * @response `200` `UserDelProxyModuleCreateData`
-   */
-  userDelProxyModuleCreate = (data: UserDelProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserDelProxyModuleCreateData, any>({
-      path: `/user_del_proxy_module`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
-   * @name UserUnbindProxyModuleCreate
-   * @summary  批量解绑代理
-   * @request POST:/user_unbind_proxy_module
-   * @response `200` `UserUnbindProxyModuleCreateData`
-   */
-  userUnbindProxyModuleCreate = (data: UserUnbindProxyModuleCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserUnbindProxyModuleCreateData, any>({
-      path: `/user_unbind_proxy_module`,
-      method: "POST",
-      body: data,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Proxy
-   * @name UserCheckIpCreate
-   * @summary 检测单个静态IP
-   * @request POST:/user_check_ip
-   * @deprecated
-   * @response `200` `UserCheckIpCreateData`
-   */
-  userCheckIpCreate = (data: UserCheckIpCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserCheckIpCreateData, any>({
-      path: `/user_check_ip`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -237,7 +177,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserDelProxyModuleV2Create
-   * @summary 批量删除代理 (新版本浏览器使用)
+   * @summary 批量删除代理
    * @request POST:/user_del_proxy_module_v2
    * @response `200` `UserDelProxyModuleV2CreateData`
    */

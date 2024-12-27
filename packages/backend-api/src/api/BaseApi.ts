@@ -16,12 +16,8 @@ import {
   GetAppUpgradeCreatePayload,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
-  GetRegCheckBindEmailVerCodeListData,
-  GetRegCheckBindEmailVerCodeListParams,
   LoginCreateData,
   LoginCreatePayload,
-  LoginGoogleCreateData,
-  LoginGoogleCreatePayload,
   LoginGoogleV2CreateData,
   LoginGoogleV2CreatePayload,
   PostBaseData,
@@ -47,16 +43,16 @@ import {
   UserGetCoreUpgradeCreatePayload,
   UserGetDefConfigListData,
   UserGetDictVersionListData,
+  UserGetInviteCodeListData,
+  UserGetInviteLinkListData,
+  UserGetInviteUserListListData,
   UserGetNotifyListData,
-  UserGetOssCredentialListData,
   UserGetOssCredentialV2ListData,
   UserGetSystemDictV2CreateData,
   UserGetSystemDictV2CreatePayload,
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
-  UserMdfTeamInfoCreateData,
-  UserMdfTeamInfoCreatePayload,
   UserMigrateDataListData,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
@@ -68,6 +64,8 @@ import {
   UserSetUserConfigCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
+  UserWriteInviteCodeListData,
+  UserWriteInviteCodeListParams,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -119,7 +117,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name SendEmailForgetVerifyCodeList
-   * @summary 找回密码->验证码
+   * @summary 找回密码发送验证码
    * @request GET:/send_email_forget_verify_code
    * @response `200` `SendEmailForgetVerifyCodeListData`
    */
@@ -411,24 +409,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserMdfTeamInfoCreate
-   * @summary 修改团队
-   * @request POST:/user_mdf_team_info
-   * @response `200` `UserMdfTeamInfoCreateData`
-   */
-  userMdfTeamInfoCreate = (data: UserMdfTeamInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfTeamInfoCreateData, any>({
-      path: `/user_mdf_team_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserGetAnntListList
    * @summary 用户获取公告【返回最近的2条】
    * @request GET:/user_get_annt_list
@@ -479,42 +459,8 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserGetOssCredentialList
-   * @summary oss窗口数据同步上传和下载权限获取
-   * @request GET:/user_get_oss_credential
-   * @response `200` `UserGetOssCredentialListData`
-   */
-  userGetOssCredentialList = (params: RequestParams = {}) =>
-    this.http.request<UserGetOssCredentialListData, any>({
-      path: `/user_get_oss_credential`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name LoginGoogleCreate
-   * @summary 谷歌登录
-   * @request POST:/login_google
-   * @response `200` `LoginGoogleCreateData`
-   */
-  loginGoogleCreate = (data: LoginGoogleCreatePayload, params: RequestParams = {}) =>
-    this.http.request<LoginGoogleCreateData, any>({
-      path: `/login_google`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name LoginGoogleV2Create
-   * @summary 谷歌登录 (新版浏览器使用)
+   * @summary 谷歌登录
    * @request POST:/login_google_v2
    * @response `200` `LoginGoogleV2CreateData`
    */
@@ -532,7 +478,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserGetOssCredentialV2List
-   * @summary oss窗口数据同步上传和下载权限获取 (新版本使用)
+   * @summary oss窗口数据同步上传和下载权限获取
    * @request GET:/user_get_oss_credential_v2
    * @response `200` `UserGetOssCredentialV2ListData`
    */
@@ -566,7 +512,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserChangeUsernameCreate
-   * @summary 修改用户名（新版本用）
+   * @summary 修改用户名
    * @request POST:/user_change_username
    * @response `200` `UserChangeUsernameCreateData`
    */
@@ -584,7 +530,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name GetCheckBindEmailVerCodeList
-   * @summary 找回验证码
+   * @summary 比对验证码
    * @request GET:/get_check_bind_email_ver_code
    * @response `200` `GetCheckBindEmailVerCodeListData`
    */
@@ -634,14 +580,14 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name GetRegCheckBindEmailVerCodeList
-   * @summary 注册验证码
-   * @request GET:/get_reg_check_bind_email_ver_code
-   * @response `200` `GetRegCheckBindEmailVerCodeListData`
+   * @name SaveChannelSourcesPeopleList
+   * @summary 存储渠道来源人数
+   * @request GET:/save_channel_sources_people
+   * @response `200` `SaveChannelSourcesPeopleListData`
    */
-  getRegCheckBindEmailVerCodeList = (query: GetRegCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
-    this.http.request<GetRegCheckBindEmailVerCodeListData, any>({
-      path: `/get_reg_check_bind_email_ver_code`,
+  saveChannelSourcesPeopleList = (query: SaveChannelSourcesPeopleListParams, params: RequestParams = {}) =>
+    this.http.request<SaveChannelSourcesPeopleListData, any>({
+      path: `/save_channel_sources_people`,
       method: "GET",
       query: query,
       format: "json",
@@ -651,14 +597,62 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name SaveChannelSourcesPeopleList
-   * @summary 存储渠道来源人数
-   * @request GET:/save_channel_sources_people
-   * @response `200` `SaveChannelSourcesPeopleListData`
+   * @name UserGetInviteUserListList
+   * @summary 获取邀请的用户列表
+   * @request GET:/user_get_invite_user_list
+   * @response `200` `UserGetInviteUserListListData`
    */
-  saveChannelSourcesPeopleList = (query: SaveChannelSourcesPeopleListParams, params: RequestParams = {}) =>
-    this.http.request<SaveChannelSourcesPeopleListData, any>({
-      path: `/save_channel_sources_people`,
+  userGetInviteUserListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetInviteUserListListData, any>({
+      path: `/user_get_invite_user_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetInviteCodeList
+   * @summary 生成邀请码(老用户才有)
+   * @request GET:/user_get_invite_code
+   * @response `200` `UserGetInviteCodeListData`
+   */
+  userGetInviteCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserGetInviteCodeListData, any>({
+      path: `/user_get_invite_code`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetInviteLinkList
+   * @summary 生成邀请链接
+   * @request GET:/user_get_invite_link
+   * @response `200` `UserGetInviteLinkListData`
+   */
+  userGetInviteLinkList = (params: RequestParams = {}) =>
+    this.http.request<UserGetInviteLinkListData, any>({
+      path: `/user_get_invite_link`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserWriteInviteCodeList
+   * @summary 填写邀请码
+   * @request GET:/user_write_invite_code
+   * @response `200` `UserWriteInviteCodeListData`
+   */
+  userWriteInviteCodeList = (query: UserWriteInviteCodeListParams, params: RequestParams = {}) =>
+    this.http.request<UserWriteInviteCodeListData, any>({
+      path: `/user_write_invite_code`,
       method: "GET",
       query: query,
       format: "json",

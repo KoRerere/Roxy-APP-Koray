@@ -54,7 +54,7 @@ async function handleSubmit() {
 }
 
 function openGoogleAuth2Login() {
-  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev_' : ''}auth`
+  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth`
   const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.email&response_type=code&redirect_uri=${redirect_url}&client_id=663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com`
   window.open(url)
 }

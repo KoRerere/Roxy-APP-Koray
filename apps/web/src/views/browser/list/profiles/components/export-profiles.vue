@@ -149,7 +149,10 @@ async function exportExcel() {
 
 async function exportText() {
   const data = await getExportData()
-  const textData = data.map(row => row.map(cell => cell.join('=')).join('\n')).join('\n\n\n\n')
+  console.log('exportText data', data)
+  const textData = data.map(cell => {
+    return Object.entries(cell).map(([key, value]) => `${key}=${value}`).join('\n')
+  }).join('\n\n\n\n')
   const blob = new Blob([textData], { type: 'text/plain' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)

@@ -10,24 +10,16 @@
  */
 
 import {
-  UserAddGroupInfoCreateData,
-  UserAddGroupInfoCreatePayload,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
   UserAddWindowFilterNameCreateData,
   UserAddWindowFilterNameCreatePayload,
-  UserAddWindowInfoCreateData,
-  UserAddWindowInfoCreatePayload,
   UserAddWindowInfoV2CreateData,
   UserAddWindowInfoV2CreatePayload,
   UserAddWindowTemplateInfoCreateData,
   UserAddWindowTemplateInfoCreatePayload,
   UserAnalysisWindowInfoCreateData,
   UserAnalysisWindowInfoCreatePayload,
-  UserBatchUpdateWindowTableRowsCreateData,
-  UserBatchUpdateWindowTableRowsCreatePayload,
-  UserBatchWindowInfoCreateData,
-  UserBatchWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
   UserBatchWindowInfoV2CreatePayload,
   UserClearWindowCacheApiCreateData,
@@ -38,61 +30,36 @@ import {
   UserDeleteWindowFilterNameCreatePayload,
   UserDeleteWindowTemplateInfoCreateData,
   UserDeleteWindowTemplateInfoCreatePayload,
-  UserDelGroupInfoCreateData,
-  UserDelGroupInfoCreatePayload,
   UserDelLabelInfoCreateData,
   UserDelLabelInfoCreatePayload,
-  UserDelWindowInfoApiCreateData,
-  UserDelWindowInfoApiCreatePayload,
   UserDelWindowInfoCreateData,
   UserDelWindowInfoCreatePayload,
   UserGetBrowserVersionInfoListData,
   UserGetBrowserVersionInfoListParams,
-  UserGetDefaultWindowTableRowsListData,
-  UserGetDeviceNameListData,
-  UserGetDeviceNameListParams,
   UserGetDeviceNameV2ListData,
   UserGetDeviceNameV2ListParams,
-  UserGetGroupInfoListData,
-  UserGetGroupInfoListParams,
   UserGetLabelInfoListData,
   UserGetLabelInfoListParams,
   UserGetMacAddrV2ListData,
   UserGetMacAddrV2ListParams,
-  UserGetUaWebglListData,
-  UserGetUaWebglListParams,
   UserGetUaWebglV2ListData,
   UserGetUaWebglV2ListParams,
   UserGetWindowFilterNameListListData,
-  UserGetWindowInfoListData,
   UserGetWindowInfoListListData,
   UserGetWindowInfoListListParams,
-  UserGetWindowInfoListParams,
-  UserGetWindowInfoRecycleListData,
-  UserGetWindowInfoRecycleListParams,
   UserGetWindowInfoV2ListData,
   UserGetWindowInfoV2ListParams,
+  UserGetWindowRowsSortListData,
   UserGetWindowStatusInfoCreateData,
   UserGetWindowStatusInfoCreatePayload,
-  UserGetWindowTableRowsListData,
   UserGetWindowTableSortOrderListData,
   UserGetWindowTemplateListListData,
-  UserImportWindowInfoCreateData,
-  UserImportWindowInfoCreatePayload,
   UserImportWindowInfoV2CreateData,
   UserImportWindowInfoV2CreatePayload,
-  UserMdfGroupInfoCreateData,
-  UserMdfGroupInfoCreatePayload,
   UserMdfLabelInfoCreateData,
   UserMdfLabelInfoCreatePayload,
-  UserMdfWindowInfoBatchCreateData,
-  UserMdfWindowInfoBatchCreatePayload,
   UserMdfWindowInfoBatchV2CreateData,
   UserMdfWindowInfoBatchV2CreatePayload,
-  UserMdfWindowInfoRandomCreateData,
-  UserMdfWindowInfoRandomCreatePayload,
-  UserMdfWindowInfoSingleCreateData,
-  UserMdfWindowInfoSingleCreatePayload,
   UserMdfWindowInfoSingleV2CreateData,
   UserMdfWindowInfoSingleV2CreatePayload,
   UserMdfWindowSyncStatusCreateData,
@@ -103,14 +70,14 @@ import {
   UserMdfWindowTemplateInfoCreatePayload,
   UserModifyWindowReportTimeCreateData,
   UserModifyWindowReportTimeCreatePayload,
+  UserSaveWindowRowsSortCreateData,
+  UserSaveWindowRowsSortCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
   UserSaveWindowTableSortOrderCreatePayload,
   UserUpdateWindowFilterNameCreateData,
   UserUpdateWindowFilterNameCreatePayload,
   UserUpdateWindowFilterSortCreateData,
   UserUpdateWindowFilterSortCreatePayload,
-  UserUpdateWindowTableRowsCreateData,
-  UserUpdateWindowTableRowsCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -126,7 +93,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowInfoV2List
-   * @summary 窗口列表 (新版本浏览器使用,根据ID查询窗口详细信息)
+   * @summary 根据ID查询窗口详细信息
    * @request GET:/user_get_window_info_v2
    * @response `200` `UserGetWindowInfoV2ListData`
    */
@@ -143,7 +110,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserAddWindowInfoV2Create
-   * @summary 单个创建窗口 (新版本浏览器使用)
+   * @summary 单个创建窗口
    * @request POST:/user_add_window_info_v2
    * @response `200` `UserAddWindowInfoV2CreateData`
    */
@@ -161,137 +128,13 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserMdfWindowInfoSingleV2Create
-   * @summary 单个修改窗口 (新版本浏览器使用)
+   * @summary 单个修改窗口
    * @request POST:/user_mdf_window_info_single_v2
    * @response `200` `UserMdfWindowInfoSingleV2CreateData`
    */
   userMdfWindowInfoSingleV2Create = (data: UserMdfWindowInfoSingleV2CreatePayload, params: RequestParams = {}) =>
     this.http.request<UserMdfWindowInfoSingleV2CreateData, any>({
       path: `/user_mdf_window_info_single_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetWindowInfoList
-   * @summary 窗口列表 (旧版本接口)
-   * @request GET:/user_get_window_info
-   * @response `200` `UserGetWindowInfoListData`
-   */
-  userGetWindowInfoList = (query: UserGetWindowInfoListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetWindowInfoListData, any>({
-      path: `/user_get_window_info`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetWindowInfoRecycleList
-   * @summary 回收站列表
-   * @request GET:/user_get_window_info_recycle
-   * @response `200` `UserGetWindowInfoRecycleListData`
-   */
-  userGetWindowInfoRecycleList = (query: UserGetWindowInfoRecycleListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetWindowInfoRecycleListData, any>({
-      path: `/user_get_window_info_recycle`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserAddWindowInfoCreate
-   * @summary 单个创建窗口
-   * @request POST:/user_add_window_info
-   * @response `200` `UserAddWindowInfoCreateData`
-   */
-  userAddWindowInfoCreate = (data: UserAddWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserAddWindowInfoCreateData, any>({
-      path: `/user_add_window_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserBatchWindowInfoCreate
-   * @summary 批量创建窗口
-   * @request POST:/user_batch_window_info
-   * @response `200` `UserBatchWindowInfoCreateData`
-   */
-  userBatchWindowInfoCreate = (data: UserBatchWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserBatchWindowInfoCreateData, any>({
-      path: `/user_batch_window_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserImportWindowInfoCreate
-   * @summary 批量导入窗口
-   * @request POST:/user_import_window_info
-   * @response `200` `UserImportWindowInfoCreateData`
-   */
-  userImportWindowInfoCreate = (data: UserImportWindowInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserImportWindowInfoCreateData, any>({
-      path: `/user_import_window_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowInfoSingleCreate
-   * @summary 单个修改窗口
-   * @request POST:/user_mdf_window_info_single
-   * @response `200` `UserMdfWindowInfoSingleCreateData`
-   */
-  userMdfWindowInfoSingleCreate = (data: UserMdfWindowInfoSingleCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfWindowInfoSingleCreateData, any>({
-      path: `/user_mdf_window_info_single`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowInfoBatchCreate
-   * @summary 批量修改窗口
-   * @request POST:/user_mdf_window_info_batch
-   * @response `200` `UserMdfWindowInfoBatchCreateData`
-   */
-  userMdfWindowInfoBatchCreate = (data: UserMdfWindowInfoBatchCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfWindowInfoBatchCreateData, any>({
-      path: `/user_mdf_window_info_batch`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -310,24 +153,6 @@ export class WindowApi<SecurityDataType = unknown> {
   userModifyWindowReportTimeCreate = (data: UserModifyWindowReportTimeCreatePayload, params: RequestParams = {}) =>
     this.http.request<UserModifyWindowReportTimeCreateData, any>({
       path: `/user_modify_window_report_time`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowInfoRandomCreate
-   * @summary 浏览器窗口->窗口随机指纹api（旧版本使用）
-   * @request POST:/user_mdf_window_info_random
-   * @response `200` `UserMdfWindowInfoRandomCreateData`
-   */
-  userMdfWindowInfoRandomCreate = (data: UserMdfWindowInfoRandomCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfWindowInfoRandomCreateData, any>({
-      path: `/user_mdf_window_info_random`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -389,24 +214,6 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserDelWindowInfoApiCreate
-   * @summary 批量删除窗口api (旧版本使用)
-   * @request POST:/user_del_window_info_api
-   * @response `200` `UserDelWindowInfoApiCreateData`
-   */
-  userDelWindowInfoApiCreate = (data: UserDelWindowInfoApiCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserDelWindowInfoApiCreateData, any>({
-      path: `/user_del_window_info_api`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
    * @name UserMdfWindowSyncStatusCreate
    * @summary 打开和关闭窗口时同步窗口状态
    * @request POST:/user_mdf_window_sync_status
@@ -443,23 +250,6 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserGetUaWebglList
-   * @summary 获取UA
-   * @request GET:/user_get_ua_webgl
-   * @response `200` `UserGetUaWebglListData`
-   */
-  userGetUaWebglList = (query: UserGetUaWebglListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetUaWebglListData, any>({
-      path: `/user_get_ua_webgl`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
    * @name UserGetUaWebglV2List
    * @summary 批量获取UA
    * @request GET:/user_get_ua_webgl_v2
@@ -468,23 +258,6 @@ export class WindowApi<SecurityDataType = unknown> {
   userGetUaWebglV2List = (query: UserGetUaWebglV2ListParams, params: RequestParams = {}) =>
     this.http.request<UserGetUaWebglV2ListData, any>({
       path: `/user_get_ua_webgl_v2`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetDeviceNameList
-   * @summary 获取设备名称
-   * @request GET:/user_get_device_name
-   * @response `200` `UserGetDeviceNameListData`
-   */
-  userGetDeviceNameList = (query: UserGetDeviceNameListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetDeviceNameListData, any>({
-      path: `/user_get_device_name`,
       method: "GET",
       query: query,
       format: "json",
@@ -521,77 +294,6 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_mac_addr_v2`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetGroupInfoList
-   * @summary 分组查询
-   * @request GET:/user_get_group_info
-   * @response `200` `UserGetGroupInfoListData`
-   */
-  userGetGroupInfoList = (query: UserGetGroupInfoListParams, params: RequestParams = {}) =>
-    this.http.request<UserGetGroupInfoListData, any>({
-      path: `/user_get_group_info`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserAddGroupInfoCreate
-   * @summary 分组新增
-   * @request POST:/user_add_group_info
-   * @response `200` `UserAddGroupInfoCreateData`
-   */
-  userAddGroupInfoCreate = (data: UserAddGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserAddGroupInfoCreateData, any>({
-      path: `/user_add_group_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfGroupInfoCreate
-   * @summary 分组修改
-   * @request POST:/user_mdf_group_info
-   * @response `200` `UserMdfGroupInfoCreateData`
-   */
-  userMdfGroupInfoCreate = (data: UserMdfGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfGroupInfoCreateData, any>({
-      path: `/user_mdf_group_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserDelGroupInfoCreate
-   * @summary 分组删除
-   * @request POST:/user_del_group_info
-   * @response `200` `UserDelGroupInfoCreateData`
-   */
-  userDelGroupInfoCreate = (data: UserDelGroupInfoCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserDelGroupInfoCreateData, any>({
-      path: `/user_del_group_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -740,25 +442,6 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserUpdateWindowTableRowsCreate
-   * @summary 修改窗口表格列顺序
-   * @request POST:/user_update_window_table_rows
-   * @deprecated
-   * @response `200` `UserUpdateWindowTableRowsCreateData`
-   */
-  userUpdateWindowTableRowsCreate = (data: UserUpdateWindowTableRowsCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserUpdateWindowTableRowsCreateData, any>({
-      path: `/user_update_window_table_rows`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
    * @name UserSaveWindowTableSortOrderCreate
    * @summary 保存窗口表格排序规则
    * @request POST:/user_save_window_table_sort_order
@@ -770,23 +453,6 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetWindowTableRowsList
-   * @summary 获取窗口表格列顺序
-   * @request GET:/user_get_window_table_rows
-   * @deprecated
-   * @response `200` `UserGetWindowTableRowsListData`
-   */
-  userGetWindowTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<UserGetWindowTableRowsListData, any>({
-      path: `/user_get_window_table_rows`,
-      method: "GET",
       format: "json",
       ...params,
     });
@@ -811,7 +477,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserBatchWindowInfoV2Create
-   * @summary 批量创建窗口 (新版本浏览器使用)
+   * @summary 批量创建窗口
    * @request POST:/user_batch_window_info_v2
    * @response `200` `UserBatchWindowInfoV2CreateData`
    */
@@ -828,36 +494,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserBatchUpdateWindowTableRowsCreate
-   * @summary 批量修改每个标签页表格列的顺序
-   * @request POST:/user_batch_update_window_table_rows
-   * @deprecated
-   * @response `200` `UserBatchUpdateWindowTableRowsCreateData`
+   * @name UserGetWindowRowsSortList
+   * @summary 获取窗口过滤器表格列排序
+   * @request GET:/user_get_window_rows_sort
+   * @response `200` `UserGetWindowRowsSortListData`
    */
-  userBatchUpdateWindowTableRowsCreate = (
-    data: UserBatchUpdateWindowTableRowsCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserBatchUpdateWindowTableRowsCreateData, any>({
-      path: `/user_batch_update_window_table_rows`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserGetDefaultWindowTableRowsList
-   * @summary 获取默认表格排序列
-   * @request GET:/user_get_default_window_table_rows
-   * @response `200` `UserGetDefaultWindowTableRowsListData`
-   */
-  userGetDefaultWindowTableRowsList = (params: RequestParams = {}) =>
-    this.http.request<UserGetDefaultWindowTableRowsListData, any>({
-      path: `/user_get_default_window_table_rows`,
+  userGetWindowRowsSortList = (params: RequestParams = {}) =>
+    this.http.request<UserGetWindowRowsSortListData, any>({
+      path: `/user_get_window_rows_sort`,
       method: "GET",
       format: "json",
       ...params,
@@ -867,7 +511,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserImportWindowInfoV2Create
-   * @summary 批量导入窗口 (新版本浏览器使用)
+   * @summary 批量导入窗口
    * @request POST:/user_import_window_info_v2
    * @response `200` `UserImportWindowInfoV2CreateData`
    */
@@ -903,7 +547,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserMdfWindowInfoBatchV2Create
-   * @summary 批量修改窗口 (新版本浏览器使用)
+   * @summary 批量修改窗口
    * @request POST:/user_mdf_window_info_batch_v2
    * @response `200` `UserMdfWindowInfoBatchV2CreateData`
    */
@@ -990,7 +634,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserGetWindowInfoListList
-   * @summary 窗口列表（新版本浏览器使用，返回基本信息）
+   * @summary 窗口列表
    * @request GET:/user_get_window_info_list
    * @response `200` `UserGetWindowInfoListListData`
    */
@@ -1025,7 +669,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserAnalysisWindowInfoCreate
-   * @summary 解析窗口 (新版浏览器使用)
+   * @summary 解析窗口
    * @request POST:/user_analysis_window_info
    * @response `200` `UserAnalysisWindowInfoCreateData`
    */
@@ -1052,6 +696,24 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_browserVersion_info`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserSaveWindowRowsSortCreate
+   * @summary 保存窗口过滤器表格列排序
+   * @request POST:/user_save_window_rows_sort
+   * @response `200` `UserSaveWindowRowsSortCreateData`
+   */
+  userSaveWindowRowsSortCreate = (data: UserSaveWindowRowsSortCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserSaveWindowRowsSortCreateData, any>({
+      path: `/user_save_window_rows_sort`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

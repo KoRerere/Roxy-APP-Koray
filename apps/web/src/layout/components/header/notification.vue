@@ -72,7 +72,7 @@ async function getMessageList(result?: UserGetNotifyListData) {
   teamsTab.list = teams
   sysTab.list = sys
   // TODO 待复现 bug 时调试
-  if (isDev && teamsTab.noRead < 0 || sysTab.noRead < 0) {
+  if (isDev && (teamsTab.noRead < 0 || sysTab.noRead < 0)) {
     debugger
   }
 }

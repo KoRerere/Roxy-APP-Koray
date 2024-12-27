@@ -33,6 +33,8 @@ import {
   UserMdfProjectInfoCreatePayload,
   UserMdfWorkspaceInfoCreateData,
   UserMdfWorkspaceInfoCreatePayload,
+  UserShowInvitationLinkStatusCreateData,
+  UserShowInvitationLinkStatusCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -266,6 +268,24 @@ export class LimitApi<SecurityDataType = unknown> {
     this.http.request<UserGetTopProjectInfoListData, any>({
       path: `/user_get_top_project_info`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserShowInvitationLinkStatusCreate
+   * @summary 获取邀请链接状态
+   * @request POST:/user_show_invitation_link_status
+   * @response `200` `UserShowInvitationLinkStatusCreateData`
+   */
+  userShowInvitationLinkStatusCreate = (data: UserShowInvitationLinkStatusCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserShowInvitationLinkStatusCreateData, any>({
+      path: `/user_show_invitation_link_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
