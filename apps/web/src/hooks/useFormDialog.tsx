@@ -2,9 +2,9 @@ import type { DialogProps, DialogSlots } from 'primevue/dialog'
 import type { HTMLAttributes } from 'vue'
 import type { FormSchema, RxFormProps } from '/@/components/rx-form/'
 import { RxForm } from '/@/components/rx-form'
-import { useDialog } from '/@/hooks/useDialog'
+import { useDialog, type UseDialogProps } from '/@/hooks/useDialog'
 
-interface FormDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
+type FormDialogProps = UseDialogProps & {
   handleCancel?: () => any
   handleOk?: (formModel: Recordable) => any
   schemas?: FormSchema[]

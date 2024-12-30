@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
@@ -50,7 +51,8 @@ defineExpose({
         </div>
       </div>
       <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner"
+          :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
         </div>
@@ -68,7 +70,8 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!!errorMessage" maxlength="30" class="w-full" @input="onInput" />
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!!errorMessage" maxlength="30"
+            class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/30
           </InputIcon>
@@ -78,6 +81,23 @@ defineExpose({
         </div>
         <div class="description">
           {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
+        </div>
+      </div>
+      <div class="w-full flex justify-between">
+        <div>
+          <div class="title">{{ $t('窗口创建限制') }}</div>
+          <div class="description">{{ $t('当前空间能创建窗口数的最大值') }}</div>
+        </div>
+        <div>
+          <InputNumber v-model="workspaceInfo.maxWindowCount" showButtons buttonLayout="horizontal" :min="0"
+            :disabled="!isOwner" inputClass="w-100px">
+            <template #decrementicon>
+              <RxSvgIcon name="base/rx_ic_minus" />
+            </template>
+            <template #incrementicon>
+              <RxSvgIcon name="base/rx_ic_plus" />
+            </template>
+          </InputNumber>
         </div>
       </div>
     </div>

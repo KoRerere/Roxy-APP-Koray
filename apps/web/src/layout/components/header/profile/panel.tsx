@@ -12,8 +12,8 @@ import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { getDictMap } from '/@/utils'
 import type { Items, SettingsModule } from './type'
-import FolderDirectory from './folder-directory.vue'
-import UploadAvatar from './upload-avatar.vue'
+import FolderDirectory from './components/folder-directory.vue'
+import UploadAvatar from './components/upload-avatar.vue'
 
 const { getUserInfo, updateUserConfig } = useUserStore()
 

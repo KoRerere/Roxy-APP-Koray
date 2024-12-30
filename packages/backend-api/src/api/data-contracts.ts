@@ -1650,46 +1650,39 @@ export interface UserChangeEmailCreateData {
 export interface UserGetUserInfoListData {
   code: number;
   data: {
+    /** 用户ID */
     id: number;
+    /** 用户名 */
     userName: string;
-    role: string;
-    mainId: number;
+    /** 真实姓名 */
     realName: string;
+    /** 手机号 */
     phone: string;
+    /** 邮箱 */
     email: string;
+    /** 头像 */
     avatar: string;
+    /** 头像颜色 */
     avatarColor: string;
-    maxWindowCount: number;
-    useWindowCount: number;
-    maxUserCount: number;
-    useUserCount: number;
+    /** 最大打开数量 */
     maxOpenCount: number;
+    /** 创建时间 */
     createTime: string;
+    /** 修改时间 */
     updateTime: string;
-    teamId: number;
-    teamName: string;
-    assignCnt: number;
-    remainCnt: number;
+    /** 已打开次数 */
     useOpenCount: number;
-    totalAmount: number;
-    leftAmount: number;
-    host: string;
-    sgHost: string;
-    usHost: string;
-    proxyHttpPort: number;
-    proxyHttpsPort: number;
-    proxySocks5Port: number;
-    proxyUserName: string;
-    proxyPassword: string;
-    proxyTime: number;
-    refreshUrl: string;
-    sgRefreshUrl: string;
-    usRefreshUrl: string;
-    price: number;
-    cityPrice: number;
-    mobilePrice: number;
-    dcPrice: number;
+    /** 工作空间ID */
     workspaceId: number;
+    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
+    identity: string;
+    /** 最大窗口数量 */
+    maxWindowCount: number;
+    /** 已使用窗口数量 */
+    useWindowCount: number;
+    /** 邀请链接 */
+    inviteLink: string;
+    clientId: string;
   };
   msg: string;
 }
@@ -1849,6 +1842,8 @@ export interface UserGetUserConfigListData {
     apiToken: string;
     /** ua严格模式开关, 0:关闭, 1:打开, 默认1 */
     uaModeSwitch: number;
+    /** 推广代码 */
+    promotionCode: string;
   };
   msg: string;
 }
@@ -1881,6 +1876,8 @@ export interface UserGetDefConfigListData {
     ipBlackList: string[];
     /** api token */
     apiToken: string;
+    /** 推广代码 */
+    promotionCode: string;
   };
   msg: string;
 }
@@ -1900,6 +1897,7 @@ export interface UserSetUserConfigCreatePayload {
   ipChecker?: string;
   ipBlackList?: string[];
   apiToken?: string;
+  promotionCode?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -2174,13 +2172,14 @@ export interface SaveChannelSourcesPeopleListData {
 export interface UserGetInviteUserListListData {
   code: number;
   data: {
-    /** 总条数 */
     total: number;
     rows: {
       /** 邮箱 */
       email?: string;
-      /** 注册时间 */
+      /** 创建时间 */
       createTime?: string;
+      /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
+      source?: string;
     }[];
   };
   msg: string;
@@ -2191,6 +2190,8 @@ export interface UserGetInviteCodeListData {
   data: {
     /** 邀请码 */
     invite_code: string;
+    /** 截止时间 */
+    expire_time: number;
   };
   msg: string;
 }
@@ -2204,13 +2205,25 @@ export interface UserGetInviteLinkListData {
   msg: string;
 }
 
-export interface UserWriteInviteCodeListParams {
+export interface UserWriteInviteCodeCreatePayload {
   /** 邀请码 */
   inviteCode: string;
 }
 
-export interface UserWriteInviteCodeListData {
+export interface UserWriteInviteCodeCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetBannerPictureListListData {
+  code: number;
+  data: {
+    language: string;
+    images: {
+      size: string;
+      image: string;
+    }[];
+  }[];
   msg: string;
 }
 
@@ -3457,6 +3470,12 @@ export interface UserSaveWindowRowsSortCreateData {
   msg: string;
 }
 
+export interface UserCreateWindowInspectListData {
+  /** 407:超出总额度,408:超出空间最大额度 */
+  code: number;
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -4388,6 +4407,10 @@ export interface UserGetWorkspaceListListData {
       updateTime?: string;
       /** 权限 */
       role?: number;
+      /** 总窗口数量 */
+      maxWindowCount?: number;
+      /** 窗口使用数量 */
+      useWindowCount?: number;
     }[];
   };
   msg: string;
@@ -4397,7 +4420,9 @@ export interface UserAddWorkspaceInfoCreatePayload {
   /** 工作空间名称 */
   workspaceName: string;
   /** 工作空间图片 */
-  workspacePicture?: string;
+  workspacePicture: string;
+  /** 可创建最大窗口数量 */
+  maxWindowCount: number;
 }
 
 export interface UserAddWorkspaceInfoCreateData {
@@ -4412,7 +4437,9 @@ export interface UserMdfWorkspaceInfoCreatePayload {
   /** 工作空间名称 */
   workspaceName: string;
   /** 工作空间图片 */
-  workspacePicture?: string;
+  workspacePicture: string;
+  /** 可创建最大的窗口数量 */
+  maxWindowCount: number;
 }
 
 export interface UserMdfWorkspaceInfoCreateData {

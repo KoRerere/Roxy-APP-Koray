@@ -26,6 +26,7 @@ import {
   UserClearWindowCacheApiCreatePayload,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
+  UserCreateWindowInspectListData,
   UserDeleteWindowFilterNameCreateData,
   UserDeleteWindowFilterNameCreatePayload,
   UserDeleteWindowTemplateInfoCreateData,
@@ -714,6 +715,22 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserCreateWindowInspectList
+   * @summary 窗口创建个数检验
+   * @request GET:/user_create_window_inspect
+   * @response `200` `UserCreateWindowInspectListData`
+   */
+  userCreateWindowInspectList = (params: RequestParams = {}) =>
+    this.http.request<UserCreateWindowInspectListData, any>({
+      path: `/user_create_window_inspect`,
+      method: "GET",
       format: "json",
       ...params,
     });

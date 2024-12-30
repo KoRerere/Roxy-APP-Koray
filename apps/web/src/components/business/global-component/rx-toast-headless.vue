@@ -31,6 +31,11 @@ function handleMouseleave(slotData: Recordable) {
 function cacheToast(slotData: Recordable) {
   const { message, closeCallback } = slotData
 
+  // default life
+  if (!Reflect.has(message, 'life')) {
+    message.life = 2500
+  }
+
   const duplicateItem = Object.values(messageMap).find((item) => {
     const { message: { id, summary, detail, severity } } = item
     return id !== message.id && summary === message.summary && detail === message.detail && severity === message.severity
@@ -67,12 +72,9 @@ function cacheToast(slotData: Recordable) {
   <Toast position="top-center" unstyled :pt="{ root: 'translate-x-[-50%]' }">
     <template #container="{ message, closeCallback }">
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
-        <section
-          class="alert"
-          :data-life="cacheToast({ message, closeCallback })"
+        <section class="alert" :data-life="cacheToast({ message, closeCallback })"
           @mouseenter="handleMouseenter({ message, closeCallback })"
-          @mouseleave="handleMouseleave({ message, closeCallback })"
-        >
+          @mouseleave="handleMouseleave({ message, closeCallback })">
           <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
           </div>
@@ -116,6 +118,7 @@ function cacheToast(slotData: Recordable) {
   :deep(.p-badge) {
     background-color: var(--Colors-Text-text-success, #1cc94d);
   }
+
   .alert-icon {
     color: var(--Colors-Text-text-success, #1cc94d);
   }
@@ -125,6 +128,7 @@ function cacheToast(slotData: Recordable) {
   :deep(.p-badge) {
     background-color: var(--Colors-Text-text-warning, #fc9d12);
   }
+
   .alert-icon {
     color: var(--Colors-Text-text-warning, #fc9d12);
   }
@@ -134,6 +138,7 @@ function cacheToast(slotData: Recordable) {
   :deep(.p-badge) {
     background-color: var(--Colors-Text-text-error, #f53838);
   }
+
   .alert-icon {
     color: var(--Colors-Text-text-error, #f53838);
   }
@@ -143,6 +148,7 @@ function cacheToast(slotData: Recordable) {
   :deep(.p-badge) {
     background-color: var(--Colors-Text-text-info, #12a3fc);
   }
+
   .alert-icon {
     color: var(--Colors-Text-text-info, #12a3fc);
   }
@@ -177,7 +183,8 @@ function cacheToast(slotData: Recordable) {
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: 18px; /* 150% */
+    line-height: 18px;
+    /* 150% */
   }
 }
 </style>

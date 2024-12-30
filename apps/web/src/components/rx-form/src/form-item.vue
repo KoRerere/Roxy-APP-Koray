@@ -148,6 +148,7 @@ onMounted(async () => {
                    :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
                    @[triggerEventName]="validateField"
         />
+        <component v-if="schema.description" :is="schema.description" />
         <small class="p-error">
           {{ errors[schema.field] }}
         </small>

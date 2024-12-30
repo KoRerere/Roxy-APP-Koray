@@ -6,18 +6,18 @@ import { $t } from '/@/locales'
 const collapsed = defineModel('collapsed', { default: false })
 const router = useRouter()
 
-const list = ref([
-  // {
-  //   text: $t('推广计划'),
-  //   icon: 'base/rc_ic_user_referral',
-  //   handler() {
-  //     router.push({ name: 'referral-program' })
-  //   },
-  // },
+const list = [
+  {
+    text: $t('推广计划'),
+    icon: 'base/rc_ic_user_referral',
+    handler() {
+      router.push({ name: 'referral-program' })
+    },
+  },
   {
     text: $t('联系支持人员'),
     icon: 'base/rx_ic_headphone_2',
-    component: markRaw(LiveChat),
+    component: LiveChat,
   },
   {
     text: $t('收起'),
@@ -31,13 +31,13 @@ const list = ref([
       collapsed.value = !collapsed.value
     },
   },
-])
+]
 </script>
 
 <template>
   <div class="rx-layout-footer" :class="{ collapsed }">
     <template v-for="item in list" :key="item.text">
-      <component :is="item.component || 'div'" class="item" :class="item.itemClass" @click="item.handler">
+      <component :is="item.component || 'div'" class="item" @click="item.handler">
         <SvgIcon class="item-icon" v-bind="item.iconAttr" :name="(item.icon as SvgNames)" />
         <span v-if="!collapsed">{{ item.text }}</span>
       </component>

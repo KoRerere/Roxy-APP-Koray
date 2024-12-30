@@ -3,8 +3,8 @@ import { isFunction } from 'es-toolkit'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
-import type { SettingsModule } from './type'
-import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getSettings } from './panel'
+import type { SettingsModule } from '../type'
+import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getSettings } from '../panel'
 
 type PanelKeyType = ReturnType<typeof getSettings>[number]['name']
 
@@ -59,7 +59,8 @@ onBeforeMount(() => {
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in menuList" :key="item.name" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.name === active.key }" @click="item.command">
+        <div v-for="item in menuList" :key="item.name" class="settings-menu-list-item select-none cursor-pointer"
+          :class="{ active: item.name === active.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -92,7 +93,8 @@ onBeforeMount(() => {
                     </div>
                   </div>
                   <div class="flex-1 flex justify-end w-full">
-                    <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
+                    <component :is="subItem.component" v-model="subItem.value" :item="subItem"
+                      class="panel-item-value" />
                   </div>
                 </div>
                 <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />

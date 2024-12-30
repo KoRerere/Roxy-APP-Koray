@@ -307,7 +307,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="position-relative w-full h-full flex flex-col">
+  <div class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
     <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
       <div class="flex flex-1 gap-2">
         <TableFilter :filters="_filters" @change="onFilterChange" />

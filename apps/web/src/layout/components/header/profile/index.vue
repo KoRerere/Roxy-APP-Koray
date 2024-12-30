@@ -9,28 +9,107 @@ import { $t } from '/@/locales'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { getSettings } from './panel'
-import SettingsPopup from './settings-popup.vue'
+import SettingsPopup from './components/settings-popup.vue'
 import { copyText } from '/@/utils'
 import { useToast } from 'primevue/usetoast'
+import Usage from './components/usage.vue'
+import { useFormDialog } from '/@/hooks/useFormDialog'
+import { redeemFormSchemas } from './components/schemas'
+import { useDialog as useCustomDialog } from "/@/hooks/useDialog"
+import RedeemSuccessfully from './components/redeemSuccessfully.vue'
 
 const router = useRouter()
 const dialog = useDialog()
+const [dialogInstance] = useCustomDialog()
 const userStore = useUserStore()
 const simpleLocale = useSimpleLocale()
 const styles = useCssModule()
 const toast = useToast()
+const [formDialog] = useFormDialog()
 
 const menuRef = useTemplateRef('menu')
 
-const items = ref([
+const badgeIcon = computed(() => {
+  const { identity } = userStore.userInfo
+  if (identity === 'old') {
+    return 'referral-program/golden'
+  } else if (identity === 'invited') {
+    return 'referral-program/diamond'
+  }
+  return ''
+})
+
+const Identity = () => {
+  if (!badgeIcon.value) return null
+
+  const { identity } = userStore.userInfo
+  if (identity === 'old') {
+    return <div class={styles.identity}>
+      <RxSvgIcon name={badgeIcon.value} />
+      <span class={styles.golden}>{$t('黄金')}</span>
+    </div>
+  } else if (identity === 'new') {
+    return <div class={styles.identity}>
+      <RxSvgIcon name={badgeIcon.value} />
+      <span class={styles.diamond}>{$t('钻石')}</span>
+    </div>
+  }
+  return null
+}
+
+const items = [
   {
     render: () => {
       return (
         <div onClick={copyUserInfo}>
-          <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
+          <div class={styles['user-info']}>
+            <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
+            <Identity />
+          </div>
           <div class={styles['user-email']}>{userStore.userInfo.email}</div>
         </div>
       )
+    },
+  },
+  {
+    separator: true,
+  },
+  {
+    render: Usage,
+  },
+  {
+    separator: true,
+  },
+  {
+    label: $t('兑换特权码'),
+    icon: 'referral-program/rx_ic_award',
+    command: async () => {
+      await formDialog.showModal({
+        header: $t('兑换特权码'),
+        class: 'w-[450px]',
+        schemas: redeemFormSchemas,
+        formProps: {
+          layout: 'vertical',
+        },
+        okText: $t('兑换'),
+        handleOk: async (params: any) => {
+          const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
+          if (code === 0) {
+            dialogInstance.showModal({
+              header: $t('兑换成功'),
+              class: 'w-[380px]',
+              slots: {
+                footer: null,
+                default: () => {
+                  return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
+                },
+              },
+            })
+          } else {
+            toast.add({ severity: 'error', summary: $t('Error'), detail: msg })
+          }
+        },
+      })
     },
   },
   {
@@ -87,7 +166,7 @@ const items = ref([
       router.push({ name: 'login' })
     },
   },
-])
+]
 
 function copyUserInfo() {
   copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
@@ -117,17 +196,23 @@ function openSettings(activeKey: string) {
 
 function toggle(event: Event) {
   menuRef.value?.toggle(event)
+  userStore.getUserInfo()
 }
 </script>
 
 <template>
   <div class="settings cursor-pointer" @click="toggle">
-    <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12" />
+    <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
+      :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
+      :font-size="12">
+      <RxSvgIcon v-if="badgeIcon" :name="badgeIcon" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+    </RxAvatar>
+    <span :class="userStore.userInfo.identity">{{ userStore.userInfo.userName }}</span>
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="menu" :model="items" popup>
+  <TieredMenu ref="menu" :model="items" popup :pt="{ root: 'w-[240px]' }">
     <template #item="{ item, props, hasSubmenu }">
       <a v-ripple class="flex items-center" v-bind="props.action">
         <component :is="item.render" v-if="item.render" />
@@ -143,6 +228,12 @@ function toggle(event: Event) {
 </template>
 
 <style lang="scss" module>
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .user-name {
   color: var(--Colors-Text-text-primary, #171c1f);
   font-family: Inter;
@@ -156,6 +247,32 @@ function toggle(event: Event) {
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.golden {
+  color: #F56200;
+  font-family: "DingTalk JinBuTi";
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 133.333% */
+}
+
+.diamond {
+  color: var(--Color-blue-300, #12A3FC);
+  font-family: "DingTalk JinBuTi";
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 133.333% */
 }
 </style>
 
@@ -180,5 +297,13 @@ function toggle(event: Event) {
       color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
     }
   }
+}
+
+.old {
+  color: #F56200;
+}
+
+.invited {
+  color: var(--Colors-Text-text-brand, #12A3FC);
 }
 </style>

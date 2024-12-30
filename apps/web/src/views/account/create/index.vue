@@ -30,7 +30,7 @@ const formInputs = ref()
 const original = ref(deepClone(props.data))
 
 async function getInputs(data: any = {}) {
-  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
   const platformOptions = rows.map((item: any) => ({
     image: item.platformIcon,
@@ -145,8 +145,10 @@ onBeforeMount(() => {
     <RyForm :inputs="formInputs" />
     <div class="flex flex-1 items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
-        <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
+        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')"
+          :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RxButton v-if="!isEdit && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined
+          @click="onConfirm(true)" />
         <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm(false)" />
       </div>
     </div>

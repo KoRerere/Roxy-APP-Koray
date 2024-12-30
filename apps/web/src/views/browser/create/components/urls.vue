@@ -42,7 +42,7 @@ onBeforeMount(async () => {
 })
 
 async function getPlatformOptions() {
-  const { data: { rows } } = await cache.fetch(API.platform.userGetPlatformInfoList, {})
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
 
   platformOptions.value = rows.map((item: any) => ({
     image: item.platformIcon,
@@ -94,8 +94,10 @@ function updateUrls() {
 
 <template>
   <div class="flex-1">
-    <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')" @click="addInputs" />
-    <RxCard v-for="(input, index) in urls" :key="input.name" class="!border-none !pa-0 mt-2.5" @close="deleteInput(index)">
+    <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')"
+      @click="addInputs" />
+    <RxCard v-for="(input, index) in urls" :key="input.name" class="!border-none !pa-0 mt-2.5"
+      @close="deleteInput(index)">
       <FormItem v-model="input.value" v-bind="input" @blur="onBlur(input)" @change="onChange(input)" />
     </RxCard>
   </div>

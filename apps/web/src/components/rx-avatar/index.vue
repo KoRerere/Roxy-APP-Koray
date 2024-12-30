@@ -27,13 +27,14 @@ const avatars = computed(() => {
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center relative">
     <template v-for="(item, index) in avatars" :key="index">
       <img v-if="item.avatar" class="avatar" :src="item.avatar">
       <div v-else class="avatar text-avatar" :style="{ backgroundColor: item.color }">
         {{ item.name?.toLocaleUpperCase() }}
       </div>
     </template>
+    <slot />
   </div>
 </template>
 

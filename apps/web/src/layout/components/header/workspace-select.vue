@@ -18,6 +18,7 @@ const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 const workspaceForm = ref({
   workspaceName: '',
   workspacePicture: '',
+  maxWindowCount: 0,
 })
 
 function showCreateWorkspaceDialog() {
@@ -39,6 +40,7 @@ function showCreateWorkspaceDialog() {
         workspaceStore.getWorkspaceList()
         workspaceForm.value.workspaceName = ''
         workspaceForm.value.workspacePicture = ''
+        workspaceForm.value.maxWindowCount = 0
       }
       else {
         console.log(msg)
@@ -56,13 +58,16 @@ function getAvatarStyle(workspacePicture: string) {
 
 <template>
   <div v-if="currentWorkspace" class="workspace">
-    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select" :overlay-class="$style['workspace-select-overlay']">
+    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select"
+      :overlay-class="$style['workspace-select-overlay']">
       <template #value="slotProps">
-        <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)" class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.value.workspacePicture)" />
+        <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)"
+          class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.value.workspacePicture)" />
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
       </template>
       <template #option="slotProps">
-        <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.slice(0, 2)" class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
+        <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.slice(0, 2)"
+          class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
 
         <div>{{ slotProps.option.workspaceName }}</div>
         <span v-if="slotProps.option.role !== Role.OWNER" class="role-tag">

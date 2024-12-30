@@ -87,3 +87,8 @@
   font-style: normal;
   font-weight: 500;
 }
+
+@font-face {
+  font-family: 'DingTalk JinBuTi';
+  src: url('/fonts/DingTalk JinBuTi/DingTalk JinBuTi.ttf');
+}

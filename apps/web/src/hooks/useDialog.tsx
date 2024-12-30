@@ -7,6 +7,7 @@ import { $t } from '/@/locales'
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
   handleCancel?: () => any
   handleOk?: () => any
+  okText?: string
   slots?: Partial<DialogSlots>
 }
 
@@ -18,13 +19,13 @@ export function useDialog(comp?: VNode | DefineComponent) {
   const innerProps = ref<UseDialogProps>({})
 
   const FormDialogComponent: FunctionalComponent<UseDialogProps> = () => {
-    const { handleCancel, handleOk, slots, ...dialogProps } = innerProps.value
+    const { handleCancel, handleOk, okText, slots, ...dialogProps } = innerProps.value
 
     const __dialogSlots = {
       footer: () => (
         <div class="flex justify-end gap-2">
           <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>
-          <RxButton type="button" label={$t('保存')} onClick={handleOk}></RxButton>
+          <RxButton type="button" label={okText || $t('保存')} onClick={handleOk}></RxButton>
         </div>
       ),
       default: slots?.default || comp,

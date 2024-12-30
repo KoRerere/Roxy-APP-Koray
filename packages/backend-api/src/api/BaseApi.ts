@@ -39,6 +39,7 @@ import {
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
+  UserGetBannerPictureListListData,
   UserGetCoreUpgradeCreateData,
   UserGetCoreUpgradeCreatePayload,
   UserGetDefConfigListData,
@@ -64,8 +65,8 @@ import {
   UserSetUserConfigCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
-  UserWriteInviteCodeListData,
-  UserWriteInviteCodeListParams,
+  UserWriteInviteCodeCreateData,
+  UserWriteInviteCodeCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -645,16 +646,33 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserWriteInviteCodeList
+   * @name UserWriteInviteCodeCreate
    * @summary 填写邀请码
-   * @request GET:/user_write_invite_code
-   * @response `200` `UserWriteInviteCodeListData`
+   * @request POST:/user_write_invite_code
+   * @response `200` `UserWriteInviteCodeCreateData`
    */
-  userWriteInviteCodeList = (query: UserWriteInviteCodeListParams, params: RequestParams = {}) =>
-    this.http.request<UserWriteInviteCodeListData, any>({
+  userWriteInviteCodeCreate = (data: UserWriteInviteCodeCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserWriteInviteCodeCreateData, any>({
       path: `/user_write_invite_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetBannerPictureListList
+   * @summary 获取banner图片数据
+   * @request GET:/user_get_banner_picture_list
+   * @response `200` `UserGetBannerPictureListListData`
+   */
+  userGetBannerPictureListList = (params: RequestParams = {}) =>
+    this.http.request<UserGetBannerPictureListListData, any>({
+      path: `/user_get_banner_picture_list`,
       method: "GET",
-      query: query,
       format: "json",
       ...params,
     });

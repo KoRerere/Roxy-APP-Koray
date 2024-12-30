@@ -29,6 +29,7 @@ const workspaceInfo = ref({
   id: currentWorkspace.value?.id,
   workspacePicture: currentWorkspace.value?.workspacePicture,
   workspaceName: currentWorkspace.value?.workspaceName,
+  maxWindowCount: currentWorkspace.value?.maxWindowCount,
 })
 
 watch(currentWorkspace, () => {
