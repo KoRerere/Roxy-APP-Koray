@@ -136,8 +136,8 @@ export async function setupDashboardServer(app: express.Application) {
 
       try {
         const data = await readFile(filePath, 'utf8')
-        const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
-        const modifiedHtml = data.replace(/<title>(.*?)<\/title>/, `<title>${docTitle}</title>`)
+        // const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
+        const modifiedHtml = data.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
         res.send(modifiedHtml)
       }
       catch (error) {
@@ -166,9 +166,9 @@ export async function setupDashboardServer(app: express.Application) {
               const { id = '' } = req.query
               let bodyString = body.toString()
               browserManager.getOpenedBrowser(id as string).then(browserItem => {
-                const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
+                // const docTitle = `${browserItem?.winInfo.windowSortNum}-${browserItem?.winInfo.windowName}-${$t('工作台')}`
                 // 修改 HTML 响应体中的 <title> 标签
-                bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${docTitle}</title>`)
+                bodyString = bodyString.replace(/<title>(.*?)<\/title>/, `<title>${$t('工作台')}</title>`)
                 // 确保响应内容完整
                 proxyRes.headers['content-length'] = String(Buffer.byteLength(bodyString));
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)

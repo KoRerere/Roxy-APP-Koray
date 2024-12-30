@@ -22,7 +22,7 @@ export const useUserStore = defineStore('user', () => {
   const password = ref('')
 
   async function getUserInfo() {
-    const { code, data } = await API.base.userGetUserInfoList()
+    const { code, data } = await fetchUserInfo()
     console.log(data)
 
     if (code === 0) {
@@ -30,6 +30,14 @@ export const useUserStore = defineStore('user', () => {
       await workspaceStore.getWorkspaceList()
       workspaceStore.setCurrentWorkspace(data.workspaceId)
     }
+  }
+
+  async function fetchUserInfo() {
+    const result = await API.base.userGetUserInfoList()
+    if (result.code === 0) {
+      userInfo.value = result.data
+    }
+    return result
   }
 
   function setUserInfo(info: UserInfo) {
@@ -117,6 +125,7 @@ export const useUserStore = defineStore('user', () => {
     getUserInfo,
     getUserConfig,
     updateUserConfig,
+    fetchUserInfo
   }
 }, {
   persist: true,

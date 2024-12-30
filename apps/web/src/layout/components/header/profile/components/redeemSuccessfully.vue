@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import confetti from 'canvas-confetti'
 import { useUserStore } from '/@/stores/user';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
@@ -12,7 +13,50 @@ function hide() {
   props.hideFn?.()
 }
 
-userStore.getUserInfo()
+let rafId = 0
+const duration = 15 * 1000;
+const animationEnd = Date.now() + duration;
+let skew = 1;
+const defaultColors = ['#a864fd', '#29cdff', '#78ff44', '#ff718d', '#fdff6a'];
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function makeConfetti() {
+  const timeLeft = animationEnd - Date.now();
+  const ticks = Math.max(200, 500 * (timeLeft / duration));
+  skew = Math.max(0.8, skew - 0.001);
+
+  confetti({
+    particleCount: 1,
+    startVelocity: 0,
+    zIndex: 100000,
+    ticks: ticks,
+    colors: [defaultColors[Math.floor(Math.random() * defaultColors.length)]],
+    origin: {
+      x: Math.random(),
+      // since particles fall down, skew start toward the top
+      y: (Math.random() * skew) - 0.2
+    },
+    gravity: randomInRange(0.4, 0.6),
+    scalar: randomInRange(0.7, 1.8),
+    drift: randomInRange(-0.4, 0.4)
+  });
+
+  if (timeLeft > 0) {
+    rafId = requestAnimationFrame(makeConfetti);
+  }
+}
+
+onBeforeMount(() => {
+  userStore.fetchUserInfo()
+  makeConfetti()
+})
+
+onBeforeUnmount(() => {
+  cancelAnimationFrame(rafId)
+})
 </script>
 
 <template>

@@ -10,6 +10,11 @@ export const ISO639List = [
     icon: 'country-code/US',
   },
   {
+    label: 'Русский',
+    locale: 'ru',
+    icon: 'country-code/RU',
+  },
+  {
     label: 'Français',
     locale: 'fr',
     icon: 'country-code/FR',
@@ -30,11 +35,6 @@ export const ISO639List = [
     icon: 'country-code/JP',
   },
   {
-    label: 'Русский',
-    locale: 'ru',
-    icon: 'country-code/RU',
-  },
-  {
     label: 'итальянский',
     locale: 'it',
     icon: 'country-code/IT',
@@ -49,4 +49,4 @@ export const ISO639List = [
     locale: 'ko',
     icon: 'country-code/KR',
   },
-].slice(0, 2)
+].slice(0, 3)

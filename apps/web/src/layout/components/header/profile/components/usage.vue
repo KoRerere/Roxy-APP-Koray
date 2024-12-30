@@ -10,6 +10,11 @@ const percent = computed(() => {
   return Math.ceil((useWindowCount / maxWindowCount) * 10)
 })
 
+const alpha = computed(() => {
+  const { useWindowCount, maxWindowCount } = userInfo.value
+  return Math.abs((useWindowCount / maxWindowCount) * 10 % 1)
+})
+
 const colorLevel = computed(() => {
   // 用量少于 50%，绿色
   if (percent.value <= 5) {
@@ -36,7 +41,8 @@ const colorLevel = computed(() => {
       <span>{{ userInfo.useWindowCount }}/{{ userInfo.maxWindowCount }}</span>
     </div>
     <div class="usage-body">
-      <div v-for="item in 10" class="color-block" :class="{ 'color-level': item <= percent }"></div>
+      <div v-for="num in 10" class="color-block"
+        :class="{ 'color-level': num <= percent, 'last-item': num === percent }"></div>
     </div>
     <div class="need-more" v-if="percent > 8">
       <span>{{ $t('需要更多窗口？') }}</span>
@@ -89,16 +95,20 @@ const colorLevel = computed(() => {
     flex: 1 0 0;
     background: var(--Color-neutrals-200, #E4E8EB);
 
-    &:nth-of-type(1) {
+    &:first-of-type {
       border-radius: 6px 0px 0px 6px;
     }
 
-    &:nth-last-of-type(1) {
+    &:last-of-type {
       border-radius: 0px 6px 6px 0px;
     }
 
     &.color-level {
       background-color: v-bind(colorLevel);
+
+      &.last-item {
+        opacity: v-bind(alpha);
+      }
     }
   }
 }

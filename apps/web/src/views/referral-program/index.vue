@@ -23,8 +23,8 @@ const selectBannerSize = ref('')
 
 const columns = useColumns()
 
-const isFirstShare = computed(() => {
-  return !userInfo.value.inviteLink
+const isNewUser = computed(() => {
+  return userInfo.value.identity === 'new' && userInfo.value.inviteLink === ''
 })
 
 const bannerImagePreviewUrl = computed(() => {
@@ -77,19 +77,20 @@ async function getBannerPictureList() {
 }
 
 async function showMyLink() {
-  const { getUserInfo } = userStore
+  const { fetchUserInfo } = userStore
   await getInviteLink()
   getBannerPictureList()
   // 如果是第一次推广的话，重新获取用户信息更新推广状态
-  if (isFirstShare.value) {
-    getUserInfo()
+  if (isNewUser.value) {
+    // 如果是新用户，弹出提示
     toast.add({ severity: 'success', summary: $t('感谢您参与推广计划'), detail: $t('您当前的窗口创建额度已提升至 30.'), life: 2500 })
+    fetchUserInfo()
   }
 }
 
 onBeforeMount(() => {
   // 尚未加入推广计划的用户
-  if (!isFirstShare.value) {
+  if (!isNewUser.value) {
     showMyLink()
   }
   if (userInfo.value.identity === 'old') {
@@ -130,7 +131,7 @@ onBeforeMount(() => {
         </div>
         <div class="row overflow-hidden">
           <div class="title">
-            <i18n-t :keypath="$t('你邀请的用户：({inviteUserCount} 人)', { inviteUserCount: '{inviteUserCount}' })"
+            <i18n-t tag="div" :keypath="$t('你邀请的用户：({inviteUserCount} 人)', { inviteUserCount: '{inviteUserCount}' })"
               scope="global">
               <template #inviteUserCount>
                 <span>{{ inviteUserCount }}</span>
@@ -150,20 +151,20 @@ onBeforeMount(() => {
       <!-- 右侧 -->
       <div class="right-content">
         <div class="row">
-          <div class="title">{{ $t('你的邀请链接：') }}</div>
+          <div class="title">{{ $t('推广链接：') }}</div>
           <div class="referral-link">
-            <div v-if="isFirstShare" class="mask">
+            <div v-if="isNewUser" class="mask">
               <div class="show-link" @click="showMyLink">
                 <RxSvgIcon name="base/rx_ic_link"></RxSvgIcon> {{ $t('获取链接') }}
               </div>
             </div>
             <div class="referral-link-value">
               {{ referralLink }}
-              <template v-if="isFirstShare">
+              <template v-if="isNewUser">
                 https://roxybrowser.com/invite?code=13122341233
               </template>
             </div>
-            <RxButton v-if="!isFirstShare" class="flex-shrink-0" severity="secondary" text size="xxs"
+            <RxButton v-if="!isNewUser" class="flex-shrink-0" severity="secondary" text size="xxs"
               icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(referralLink)" />
           </div>
         </div>
@@ -205,13 +206,13 @@ onBeforeMount(() => {
         </div>
         <div class="row">
           <div class="referral-link">
-            <div v-if="isFirstShare" class="mask">
+            <div v-if="isNewUser" class="mask">
               <div class="show-link" @click="showMyLink">
                 <RxSvgIcon name="base/rx_ic_link"></RxSvgIcon> {{ $t('获取链接') }}
               </div>
             </div>
             <div class="referral-link-value">{{ bannerImagePreviewHtmlCode }}</div>
-            <RxButton v-if="!isFirstShare" class="flex-shrink-0 self-start" severity="secondary" text size="xxs"
+            <RxButton v-if="!isNewUser" class="flex-shrink-0 self-start" severity="secondary" text size="xxs"
               icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(bannerImagePreviewHtmlCode)" />
           </div>
         </div>

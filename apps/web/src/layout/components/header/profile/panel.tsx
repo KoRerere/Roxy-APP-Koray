@@ -15,7 +15,7 @@ import type { Items, SettingsModule } from './type'
 import FolderDirectory from './components/folder-directory.vue'
 import UploadAvatar from './components/upload-avatar.vue'
 
-const { getUserInfo, updateUserConfig } = useUserStore()
+const { fetchUserInfo, updateUserConfig } = useUserStore()
 
 const toast = ref()
 
@@ -23,7 +23,7 @@ async function updateAvatar(item: Items) {
   const { code, msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
   toast.value?.(code, msg)
   if (code === 0) {
-    getUserInfo()
+    fetchUserInfo()
   }
 }
 
@@ -34,7 +34,7 @@ async function updateUserName(item: Items) {
   const { code, msg } = await API.base.userChangeUsernameCreate({ userName: item.value })
   toast.value?.(code, msg)
   if (code === 0) {
-    getUserInfo()
+    fetchUserInfo()
     item.oldValue = item.value
   }
 }

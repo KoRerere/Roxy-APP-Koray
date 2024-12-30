@@ -196,7 +196,7 @@ function openSettings(activeKey: string) {
 
 function toggle(event: Event) {
   menuRef.value?.toggle(event)
-  userStore.getUserInfo()
+  userStore.fetchUserInfo()
 }
 </script>
 
@@ -218,7 +218,7 @@ function toggle(event: Event) {
         <component :is="item.render" v-if="item.render" />
         <template v-else>
           <RxSvgIcon :name="(item.icon as SvgNames)" />
-          <span class="ml-2">{{ item.label }}</span>
+          <span class="menu-label">{{ item.label }}</span>
           <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
           <RxSvgIcon v-if="simpleLocale.currentLocale === item.locale" class="ml-auto" name="base/rx_ic_check" />
         </template>
@@ -305,5 +305,14 @@ function toggle(event: Event) {
 
 .invited {
   color: var(--Colors-Text-text-brand, #12A3FC);
+}
+
+.menu-label {
+  color: var(--Colors-Text-text-primary, #171C1F);
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

@@ -38,7 +38,7 @@ function translate() {
       to: currentRow.value.targetLang,
     }),
   }).then(res => res.text()).then((text) => {
-  // googleTranslator.translateText('A bird in hand is worth two in the bush.', 'auto', 'zh-CN')
+    // googleTranslator.translateText('A bird in hand is worth two in the bush.', 'auto', 'zh-CN')
     console.log('翻译结果: ', text)
     translateSuggestionText.value = text
     translateLoading.value = false
@@ -60,6 +60,11 @@ async function saveTranslateResult() {
     body: JSON.stringify(currentRow.value),
   }).then(res => res.text()).then((data) => {
     console.log('/api/saveTranslate', data)
+    if (data === 'ok') {
+      ElMessage.success('保存成功')
+    } else {
+      ElMessage.error('保存失败')
+    }
     emit('save', currentRow.value)
   }).finally(() => {
     saveLoading.value = false
@@ -88,13 +93,9 @@ function handleCopy() {
       <CopyDocument v-if="currentRow.key" class="w-[14px] h-[14px] cursor-pointer align-middle" @click="handleCopy" />
     </el-card>
     <el-card header="译文" shadow="never">
-      <el-input
-        v-model="translateResult"
-        show-word-limit
-        type="textarea"
-        placeholder="Enter translation here"
-      />
-      <el-button type="primary" class="mt-[12px] ml-[86%]" :loading="saveLoading" :disabled="disabledSaveBtn" @click="saveTranslateResult">
+      <el-input v-model="translateResult" show-word-limit type="textarea" placeholder="Enter translation here" />
+      <el-button type="primary" class="mt-[12px] ml-[86%]" :loading="saveLoading" :disabled="disabledSaveBtn"
+        @click="saveTranslateResult">
         保存
       </el-button>
     </el-card>
