@@ -15,18 +15,14 @@ export function getFormSchemas(isRegister = false) {
     {
       field: 'user_name',
       component: 'InputText',
-      label: () => isRegister ? $t('邮箱') : $t('邮箱 / 用户名'),
+      label: $t('邮箱'),
       componentProps: {
-        placeholder: () => isRegister ? $t('请输入您的邮箱') : $t('请输入您的邮箱或用户名'),
+        placeholder: $t('请输入您的邮箱'),
       },
       rule: {
         trigger: 'change',
         validator(zod) {
-          const z = zod.string()
-          if (isRegister) {
-            return z.min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
-          }
-          return z.min(1, $t('请输入您的邮箱或用户名'))
+          return zod.string().min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
         },
       },
     },

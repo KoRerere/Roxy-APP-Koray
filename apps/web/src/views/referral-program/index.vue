@@ -20,6 +20,11 @@ const inviteUserCount = ref(0)
 const remainTime = ref('')
 const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
 const selectBannerSize = ref('')
+const steps = [
+  { icon: 'referral-program/copy-link', text: $t('复制链接') },
+  { icon: 'referral-program/invite-user', text: $t('邀请用户') },
+  { icon: 'referral-program/invite-user', text: $t('获取激励'), desc: $t('即将推出') },
+]
 
 const columns = useColumns()
 
@@ -112,21 +117,16 @@ onBeforeMount(() => {
         </div>
         <div class="row">
           <div class="steps">
-            <div class="step-item">
-              <RxSvgIcon name="referral-program/copy-link" class="step-icon" />
-              <div class="step-text">{{ $t('复制链接') }}</div>
-            </div>
-            <div class="step-item">
-              <RxSvgIcon name="referral-program/invite-user" class="step-icon" />
-              <div class="step-text">{{ $t('邀请用户') }}</div>
-            </div>
-            <div class="step-item">
-              <RxSvgIcon name="referral-program/invite-user" class="step-icon" />
-              <div>
-                <div class="step-text">{{ $t('获取激励') }}</div>
-                <div class="step-desc">{{ $t('即将推出') }}</div>
+            <template v-for="(step, index) in steps" :key="step.text">
+              <div v-if="index > 0" class="divide"></div>
+              <div class="step-item" >
+                <RxSvgIcon :name="step.icon" class="step-icon" />
+                <div>
+                  <div class="step-text">{{ step.text }}</div>
+                  <div v-if="step.desc" class="step-desc">{{ step.desc }}</div>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
         <div class="row overflow-hidden">
@@ -380,7 +380,13 @@ onBeforeMount(() => {
   .steps {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+
+    .divide {
+      flex: 1;
+      border-bottom: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
+    }
 
     .step-item {
       display: flex;

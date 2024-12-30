@@ -69,7 +69,7 @@ export const useUserStore = defineStore('user', () => {
 
   function clearUserInfo() {
     userInfo.value = {
-      userName: userInfo.value.userName,
+      email: userInfo.value.email,
     }
     // password.value = ''
     token.value = ''

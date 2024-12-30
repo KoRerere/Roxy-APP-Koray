@@ -18,7 +18,7 @@ const { rememberMe, password } = storeToRefs(useUserStore())
 const router = useRouter()
 const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
-  user_name: userInfo.userName || '',
+  user_name: userInfo.email || '',
   password: password.value ? atob(password.value) : '',
 })
 
