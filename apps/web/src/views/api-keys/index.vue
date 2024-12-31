@@ -150,13 +150,15 @@ onBeforeMount(() => {
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')"
+            @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')"
+                @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
@@ -169,7 +171,7 @@ onBeforeMount(() => {
                 <div class="api-content-key-value">
                   {{ apiConfig.apiKey }}
                 </div>
-                <RxButton severity="secondary" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
+                <RxButton class="copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy" />
               </div>
               <div class="api-content-key-desc">
                 * {{ $t('请确保您的 API 密钥安全保存') }}
@@ -183,7 +185,8 @@ onBeforeMount(() => {
               </div>
               <inputNumberGroup :inputs="inputs" />
             </div>
-            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false"
+              :title="$t('端口已被占用')"
               :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
@@ -259,6 +262,7 @@ onBeforeMount(() => {
     }
 
     &-key {
+      position: relative;
       display: flex;
       flex-direction: column;
       margin-top: var(--spacing-md, 6px);
@@ -281,6 +285,20 @@ onBeforeMount(() => {
         font-family: Inter;
         font-size: 12px;
         line-height: 16px;
+      }
+
+      &:hover .copy-btn {
+        display: flex;
+      }
+
+      .copy-btn {
+        display: none;
+        position: absolute !important;
+        right: 6px;
+        top: 6px;
+        border-color: transparent;
+        background: #575D61 !important;
+        color: white;
       }
     }
 

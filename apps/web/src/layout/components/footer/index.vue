@@ -1,7 +1,8 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { SvgNames } from '/@/components/rx-icon'
 import LiveChat from '/@/components/business/live-chat/index.vue'
 import { $t } from '/@/locales'
+import { RouterLink } from 'vue-router'
 
 const collapsed = defineModel('collapsed', { default: false })
 const router = useRouter()
@@ -10,9 +11,9 @@ const list = [
   {
     text: $t('推广计划'),
     icon: 'base/rc_ic_user_referral',
-    handler() {
-      router.push({ name: 'referral-program' })
-    },
+    component: (props, { slots }) => <RouterLink to={{ name: 'referral-program' }} custom>
+      {{ default: ({ navigate, isActive }) => <div class={{ active: isActive }} onClick={navigate}>{slots.default?.()}</div> }}
+    </RouterLink>,
   },
   {
     text: $t('联系支持人员'),
@@ -22,11 +23,11 @@ const list = [
   {
     text: $t('收起'),
     icon: 'base/rx_ic_fold_right',
-    iconAttr: computed(() => {
+    get iconAttr() {
       return {
         class: { 'rotate-180': collapsed.value },
       }
-    }),
+    },
     handler() {
       collapsed.value = !collapsed.value
     },
@@ -47,6 +48,7 @@ const list = [
 
 <style lang="scss" scoped>
 .rx-layout-footer {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -62,6 +64,7 @@ const list = [
   }
 
   .item {
+    width: 100%;
     display: flex;
     align-items: center;
     padding: var(--spacing-md, 6px) 8px;
@@ -74,9 +77,19 @@ const list = [
     font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);
     cursor: pointer;
+    border-radius: 4px;
 
     &-icon {
       color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
+    }
+
+    &.active {
+      color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
+      background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
+
+      .menu-icon {
+        color: currentColor;
+      }
     }
   }
 }

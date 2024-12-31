@@ -341,6 +341,7 @@ onBeforeMount(() => {
       right: 6px;
       top: 6px;
       background: #575D61;
+      border-color: transparent;
       color: white;
     }
 
