@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
     <div class="description">
       <i18n-t :keypath="$t('您当前已经是特邀用户。您的窗口创建额度已经提升至 {number}. ', { number: '{number}' })">
         <template #number>
-          <span class="number">{{ userStore.maxWindowCount }}</span>
+          <span class="number">{{ userStore.userInfo.maxWindowCount }}</span>
         </template>
       </i18n-t>
     </div>

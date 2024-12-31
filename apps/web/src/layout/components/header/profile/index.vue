@@ -48,7 +48,7 @@ const Identity = () => {
       <RxSvgIcon name={badgeIcon.value} />
       <span class={styles.golden}>{$t('黄金')}</span>
     </div>
-  } else if (identity === 'new') {
+  } else if (identity === 'invited') {
     return <div class={styles.identity}>
       <RxSvgIcon name={badgeIcon.value} />
       <span class={styles.diamond}>{$t('钻石')}</span>
