@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { $t } from '/@/locales'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -20,6 +21,14 @@ export const useUserStore = defineStore('user', () => {
   const rememberMe = ref(false)
   /** rememberMe 为 true 的时候有值 */
   const password = ref('')
+
+  /** 用户身份 */
+  const identityText = computed(() => {
+    return {
+      old: $t('原始用户'),
+      invited: $t('特邀用户'),
+    }[userInfo.value.identity]
+  })
 
   async function getUserInfo() {
     const { code, data } = await fetchUserInfo()
@@ -119,6 +128,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     password,
     appVersion,
+    identityText,
     setPassword,
     clearUserInfo,
     setToken,

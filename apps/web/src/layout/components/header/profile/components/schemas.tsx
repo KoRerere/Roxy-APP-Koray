@@ -10,7 +10,7 @@ export const redeemFormSchemas = defineFormSchema([
       {$t('特权码能提高您的创建额度。获取特权码的途径请关注我们的社群动态，或者联系我们。')}
     </div>,
     componentProps: {
-      placeholder: $t('Code'),
+      placeholder: 'Code',
     },
     rule: {
       trigger: 'blur',

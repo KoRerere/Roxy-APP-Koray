@@ -46,12 +46,12 @@ const Identity = () => {
   if (identity === 'old') {
     return <div class={styles.identity}>
       <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.golden}>{$t('创始')}</span>
+      <span class={styles.golden}>{userStore.identityText}</span>
     </div>
   } else if (identity === 'invited') {
     return <div class={styles.identity}>
       <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.diamond}>{$t('特邀')}</span>
+      <span class={styles.diamond}>{userStore.identityText}</span>
     </div>
   }
   return null
@@ -61,7 +61,7 @@ const items = [
   {
     render: () => {
       return (
-        <div onClick={copyUserInfo}>
+        <div class="w-full" onClick={() => openSettings('profiles')}>
           <div class={styles['user-info']}>
             <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
             <Identity />
@@ -106,7 +106,7 @@ const items = [
               },
             })
           } else {
-            toast.add({ severity: 'error', summary: $t('Error'), detail: msg })
+            toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg })
           }
         },
       })
