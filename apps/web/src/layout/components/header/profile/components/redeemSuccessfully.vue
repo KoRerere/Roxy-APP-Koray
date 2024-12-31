@@ -61,14 +61,14 @@ onBeforeMount(() => {
       :color="userStore.userInfo.avatarColor" :size="48" :font-size="12" />
     <div class="username">{{ userStore.userInfo.userName }}</div>
     <div class="user-level">
-      <RxSvgIcon name="referral-program/diamond" size="16px" />
-      <span class="text">{{ userStore.identityText }}</span>
+      <RxSvgIcon :name="userStore.identityInfo.icon" size="16px" />
+      <span class="text" :style="{ color: userStore.identityInfo.color }">{{ userStore.identityInfo.text }}</span>
     </div>
     <div class="description">
       <i18n-t
         :keypath="$t('您当前已经是{identity}。您的窗口创建额度已经提升至 {number}. ', { number: '{number}', identity: '{identity}' })">
         <template #identity>
-          <span class="number">{{ userStore.identityText }}</span>
+          <span class="number">{{ userStore.identityInfo.text }}</span>
         </template>
         <template #number>
           <span class="number">{{ userStore.userInfo.maxWindowCount }}</span>

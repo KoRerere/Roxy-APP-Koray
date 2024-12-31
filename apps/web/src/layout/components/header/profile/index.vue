@@ -29,32 +29,14 @@ const [formDialog] = useFormDialog()
 
 const menuRef = useTemplateRef('menu')
 
-const badgeIcon = computed(() => {
-  const { identity } = userStore.userInfo
-  if (identity === 'old') {
-    return 'referral-program/golden'
-  } else if (identity === 'invited') {
-    return 'referral-program/diamond'
-  }
-  return ''
-})
-
 const Identity = () => {
-  if (!badgeIcon.value) return null
+  const { identityInfo } = userStore
+  if (!identityInfo.icon) return null
 
-  const { identity } = userStore.userInfo
-  if (identity === 'old') {
-    return <div class={styles.identity}>
-      <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.golden}>{userStore.identityText}</span>
-    </div>
-  } else if (identity === 'invited') {
-    return <div class={styles.identity}>
-      <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.diamond}>{userStore.identityText}</span>
-    </div>
-  }
-  return null
+  return <div class={styles.identity}>
+    <RxSvgIcon name={identityInfo.icon} />
+    <span class={styles.golden}>{identityInfo.text}</span>
+  </div>
 }
 
 const items = [

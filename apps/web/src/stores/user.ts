@@ -23,11 +23,22 @@ export const useUserStore = defineStore('user', () => {
   const password = ref('')
 
   /** 用户身份 */
-  const identityText = computed(() => {
-    return {
-      old: $t('原始用户'),
-      invited: $t('特邀用户'),
-    }[userInfo.value.identity]
+  const identityInfo = computed(() => {
+    const { identity } = userInfo.value
+    if (identity === 'old') {
+      return {
+        text: $t('原始用户'),
+        icon: 'referral-program/golden',
+        color: '#F56200'
+      }
+    } else if (identity === 'invited') {
+      return {
+        text: $t('特邀用户'),
+        icon: 'referral-program/diamond',
+        color: '#12A3FC'
+      }
+    }
+    return {}
   })
 
   async function getUserInfo() {
@@ -128,7 +139,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     password,
     appVersion,
-    identityText,
+    identityInfo,
     setPassword,
     clearUserInfo,
     setToken,
