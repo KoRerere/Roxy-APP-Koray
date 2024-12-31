@@ -18,6 +18,7 @@ const referralLink = ref('')
 const premiumCode = ref('')
 const inviteUserCount = ref(0)
 const remainTime = ref('')
+const inviteUserResult = ref()
 const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
 const selectBannerSize = ref('')
 const steps = [
@@ -46,12 +47,11 @@ async function onCopy(text: string) {
 }
 
 async function tableRequest() {
-  const result = await API.base.userGetInviteUserListList()
-  if (result.code === 0) {
-    inviteUserCount.value = result.data.total
+  inviteUserResult.value ||= await API.base.userGetInviteUserListList()
+  if (inviteUserResult.value.code === 0) {
+    inviteUserCount.value = inviteUserResult.value.data.total
   }
-  // result.data.rows = []
-  return result
+  return inviteUserResult.value
 }
 
 async function getInviteLink() {
@@ -102,6 +102,7 @@ onBeforeMount(() => {
   if (userInfo.value.identity === 'old') {
     getInviteCode()
   }
+  tableRequest()
 })
 </script>
 
@@ -139,13 +140,19 @@ onBeforeMount(() => {
               </template>
             </i18n-t>
           </div>
-          <RyTable v-model:columns="columns" scrollable :table-request="tableRequest" :showTableHeader="false"
-            :paginator="false" :show-actions-menu="false" :show-actions="false" class="invite-user-table">
-            <template #table-empty>
-              <CustomEmpty icon="rc_ic_user_referral.svg" :title="$t('暂无已邀请的用户')">
-              </CustomEmpty>
-            </template>
-          </RyTable>
+          <template v-if="inviteUserCount">
+            <RyTable v-model:columns="columns" scrollable :table-request="tableRequest" :showTableHeader="false"
+              :paginator="false" :show-actions-menu="false" :show-actions="false" class="invite-user-table">
+            </RyTable>
+          </template>
+          <template v-else>
+            <div class="no-users-invited">
+              <div class="empty">
+                <RxSvgIcon name="empty/rc_ic_user_referral" size="24px" />
+                <div class="empty-text">{{ $t('暂无已邀请的用户') }}</div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       <Divider layout="vertical" />
@@ -165,8 +172,8 @@ onBeforeMount(() => {
                 https://roxybrowser.com/invite?code=13122341233
               </template>
             </div>
-            <RxButton v-if="!isNewUser" class="flex-shrink-0" severity="secondary" text size="xxs"
-              icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(referralLink)" />
+            <RxButton v-if="!isNewUser" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy"
+              :label="$t('复制')" @click="onCopy(referralLink)" />
           </div>
         </div>
         <div v-if="userInfo.identity === 'old'" class="row">
@@ -184,8 +191,8 @@ onBeforeMount(() => {
             <div class="referral-link-value">
               {{ premiumCode }}
             </div>
-            <RxButton class="flex-shrink-0" severity="secondary" text size="xxs" icon="base/rx_ic_copy"
-              :label="$t('复制')" @click="onCopy(premiumCode)" />
+            <RxButton class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')"
+              @click="onCopy(premiumCode)" />
           </div>
           <div class="description">
             {{ $t('使用当前特权码的用户可以获得最多创建60个窗口的额度。特权码将会每24小时刷新一次。每个码只能使用一次。') }}
@@ -213,8 +220,8 @@ onBeforeMount(() => {
               </div>
             </div>
             <div class="referral-link-value">{{ bannerImagePreviewHtmlCode }}</div>
-            <RxButton v-if="!isNewUser" class="flex-shrink-0 self-start" severity="secondary" text size="xxs"
-              icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(bannerImagePreviewHtmlCode)" />
+            <RxButton v-if="!isNewUser" class="flex-shrink-0 self-start copy-btn" text size="xxs" icon="base/rx_ic_copy"
+              :label="$t('复制')" @click="onCopy(bannerImagePreviewHtmlCode)" />
           </div>
         </div>
       </div>
@@ -261,6 +268,35 @@ onBeforeMount(() => {
     }
   }
 
+  .no-users-invited {
+    display: flex;
+    padding: 64px 0px;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    border-radius: 8px;
+    border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
+    background: var(--Colors-Background-bg-page, #FAFBFC);
+
+    .empty {
+      display: flex;
+      padding: var(--spacing-xl, 12px) 12px;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-xl, 12px);
+      align-self: stretch;
+
+      .empty-text {
+        color: var(--Colors-Text-text-tertiary, #7C8387);
+        font-family: Inter;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 16px;
+      }
+    }
+  }
+
 
   .row {
     display: flex;
@@ -280,9 +316,9 @@ onBeforeMount(() => {
     padding: var(--spacing-xl, 12px);
     gap: var(--spacing-xl, 12px);
     border-radius: var(--radius-md, 6px);
-    border: 1px solid var(--Color-neutrals-900, #171c1f);
-    background: var(--Color-neutrals-800, #252a2e);
-    min-height: 50px;
+    border: 1px solid var(--Color-neutrals-900, #171C1F);
+    background: var(--Color-neutrals-800, #252A2E);
+    min-height: 30px;
 
     &-value {
       color: #fff;
@@ -291,6 +327,21 @@ onBeforeMount(() => {
       font-weight: 500;
       line-height: 16px;
       word-break: break-word;
+    }
+
+    &:hover {
+      .copy-btn {
+        display: flex;
+      }
+    }
+
+    .copy-btn {
+      display: none;
+      position: absolute !important;
+      right: 6px;
+      top: 6px;
+      background: #575D61;
+      color: white;
     }
 
     .mask {

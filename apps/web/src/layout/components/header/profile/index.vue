@@ -94,7 +94,7 @@ const items = [
         okText: $t('兑换'),
         handleOk: async (params: any) => {
           const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
-          if (code !== 0) {
+          if (code === 0) {
             dialogInstance.showModal({
               header: $t('兑换成功'),
               class: 'w-[380px]',

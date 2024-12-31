@@ -89,6 +89,30 @@ app.use(PrimeVue, {
             },
           },
         },
+        dialog: {
+          root: {
+            background: '{overlay.modal.background}',
+            borderColor: '#A3A9AD',
+            color: '{overlay.modal.color}',
+            borderRadius: '6px',
+            shadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12)'
+          },
+          header: {
+            padding: '12px 18px 6px 24px',
+            gap: '0.5rem'
+          },
+          title: {
+            fontSize: '14px',
+            fontWeight: '600'
+          },
+          content: {
+            padding: '0 {overlay.modal.padding} {overlay.modal.padding} {overlay.modal.padding}'
+          },
+          footer: {
+            padding: '0 {overlay.modal.padding} {overlay.modal.padding} {overlay.modal.padding}',
+            gap: '0.5rem'
+          }
+        },
       },
     }),
   },

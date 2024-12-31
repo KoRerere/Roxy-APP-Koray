@@ -10,23 +10,27 @@ const percent = computed(() => {
   return Math.ceil((useWindowCount / maxWindowCount) * 10)
 })
 
-const alpha = computed(() => {
-  const { useWindowCount, maxWindowCount } = userInfo.value
-  return Math.abs((useWindowCount / maxWindowCount) * 10 % 1)
-})
-
 const colorLevel = computed(() => {
   // 用量少于 50%，绿色
   if (percent.value <= 5) {
-    return '#1CC94D'
+    return {
+      normal: '#1CC94D',
+      weak: '#70E090'
+    }
   }
   // 用量多于50%，少于 80%，橙色
   else if (percent.value <= 8) {
-    return '#FC9D12'
+    return {
+      normal: '#FC9D12',
+      weak: '#FFCB80'
+    }
   }
   // 用量多于 80%，红色，提醒用户如果需要提高额度 则联系客服
   else {
-    return '#F53838'
+    return {
+      normal: '#F53838',
+      weak: '#FF9191'
+    }
   }
 })
 </script>
@@ -104,10 +108,10 @@ const colorLevel = computed(() => {
     }
 
     &.color-level {
-      background-color: v-bind(colorLevel);
+      background-color: v-bind('colorLevel.normal');
 
       &.last-item {
-        opacity: v-bind(alpha);
+        background-color: v-bind('colorLevel.weak');
       }
     }
   }

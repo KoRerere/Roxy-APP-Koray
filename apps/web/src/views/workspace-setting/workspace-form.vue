@@ -5,15 +5,21 @@ import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { useUserStore } from '/@/stores/user'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
+const { userInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
 
 const exampleName = computed(() => {
   const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
+})
+
+const maxCreateWindowCount = computed(() => {
+  return Math.max(userInfo.value.maxWindowCount! - userInfo.value.useWindowCount!, 0)
 })
 
 function onInput() {
@@ -90,7 +96,7 @@ defineExpose({
         </div>
         <div>
           <InputNumber v-model="workspaceInfo.maxWindowCount" showButtons buttonLayout="horizontal" :min="0"
-            :disabled="!isOwner" inputClass="w-100px">
+            :max="maxCreateWindowCount" :disabled="!isOwner" inputClass="w-100px">
             <template #decrementicon>
               <RxSvgIcon name="base/rx_ic_minus" />
             </template>
