@@ -46,12 +46,12 @@ const Identity = () => {
   if (identity === 'old') {
     return <div class={styles.identity}>
       <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.golden}>{$t('黄金')}</span>
+      <span class={styles.golden}>{$t('创始')}</span>
     </div>
   } else if (identity === 'invited') {
     return <div class={styles.identity}>
       <RxSvgIcon name={badgeIcon.value} />
-      <span class={styles.diamond}>{$t('钻石')}</span>
+      <span class={styles.diamond}>{$t('特邀')}</span>
     </div>
   }
   return null
@@ -94,7 +94,7 @@ const items = [
         okText: $t('兑换'),
         handleOk: async (params: any) => {
           const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
-          if (code === 0) {
+          if (code !== 0) {
             dialogInstance.showModal({
               header: $t('兑换成功'),
               class: 'w-[380px]',
@@ -207,7 +207,7 @@ function toggle(event: Event) {
       :font-size="12">
       <RxSvgIcon v-if="badgeIcon" :name="badgeIcon" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
     </RxAvatar>
-    <span :class="userStore.userInfo.identity">{{ userStore.userInfo.userName }}</span>
+    <span class="username" :class="userStore.userInfo.identity">{{ userStore.userInfo.userName }}</span>
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 
@@ -277,6 +277,14 @@ function toggle(event: Event) {
 </style>
 
 <style lang="scss" scoped>
+.username {
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
 .settings {
   display: flex;
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);

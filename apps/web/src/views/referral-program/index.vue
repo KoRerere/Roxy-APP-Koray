@@ -21,9 +21,9 @@ const remainTime = ref('')
 const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
 const selectBannerSize = ref('')
 const steps = [
-  { icon: 'referral-program/copy-link', text: $t('复制链接') },
-  { icon: 'referral-program/invite-user', text: $t('邀请用户') },
-  { icon: 'referral-program/invite-user', text: $t('获取激励'), desc: $t('即将推出') },
+  { icon: 'referral-program/referral_1', text: $t('复制链接') },
+  { icon: 'referral-program/referral_2', text: $t('邀请用户') },
+  { icon: 'referral-program/referral_3', text: $t('获取激励'), desc: $t('即将推出') },
 ]
 
 const columns = useColumns()
@@ -50,6 +50,7 @@ async function tableRequest() {
   if (result.code === 0) {
     inviteUserCount.value = result.data.total
   }
+  // result.data.rows = []
   return result
 }
 
@@ -119,7 +120,7 @@ onBeforeMount(() => {
           <div class="steps">
             <template v-for="(step, index) in steps" :key="step.text">
               <div v-if="index > 0" class="divide"></div>
-              <div class="step-item" >
+              <div class="step-item">
                 <RxSvgIcon :name="step.icon" class="step-icon" />
                 <div>
                   <div class="step-text">{{ step.text }}</div>
@@ -195,9 +196,9 @@ onBeforeMount(() => {
             {{ $t('推广宣传图（建站用户专用）') }}
           </div>
           <div class="banner-sizes">
-            <div v-for="item in bannerList" :key="item.size" class="flex items-center gap-2">
+            <div v-for="item in bannerList" :key="item.size" class="banner-size-item">
               <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
-              <label :for="item.size">{{ item.size }}</label>
+              <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
             </div>
             <div class="banner-preview">
               <Image :src="bannerImagePreviewUrl" alt="Image" preview :pt="{ toolbar: { class: '!hidden' } }" />
@@ -230,6 +231,7 @@ onBeforeMount(() => {
   }
 
   &-body {
+    max-width: 1140px;
     height: calc(100% - 52px);
     margin: 0 auto;
     display: flex;
@@ -374,11 +376,12 @@ onBeforeMount(() => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-3xl, 20px);
+  gap: var(--spacing-3xl, 32px);
   align-self: stretch;
 
   .steps {
-    width: 100%;
+    margin: 0 auto;
+    width: 480px;
     display: flex;
     gap: 12px;
     align-items: center;
@@ -439,6 +442,22 @@ onBeforeMount(() => {
     align-items: flex-start;
     gap: var(--spacing-md, 6px);
     align-self: stretch;
+
+    .banner-size-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 2px 4px 2px 6px;
+    }
+
+    .banner-size-label {
+      color: var(--Component-Colors-TextInput-text-text, #171C1F);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: var(--Line-Height-text-xs, 16px);
+    }
   }
 
   .banner-preview {

@@ -45,7 +45,7 @@ const colorLevel = computed(() => {
         :class="{ 'color-level': num <= percent, 'last-item': num === percent }"></div>
     </div>
     <div class="need-more" v-if="percent > 8">
-      <span>{{ $t('需要更多窗口？') }}</span>
+      <span>{{ $t('窗口不够？') }}</span>
       <LiveChat class="contact-us">
         {{ $t('联系我们') }}
         <RxSvgIcon name="base/rx_ic_arrow_right_2" size="12px" />

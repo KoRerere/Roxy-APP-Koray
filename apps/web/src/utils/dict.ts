@@ -13,7 +13,8 @@ const DICT_CONFIG = {
     if (_isExpired) {
       DICT_CONFIG.EXPIRED_VALUE = new Date().getTime() + DICT_CONFIG.EXPIRY_TIME
     }
-    return _isExpired || DICT_CONFIG.isDictLose()
+    // return _isExpired || DICT_CONFIG.isDictLose()
+    return DICT_CONFIG.isDictLose()
   },
   isDictLose() {
     const version = JSON.parse(localStorage.getItem('$dict_version') || 'null')

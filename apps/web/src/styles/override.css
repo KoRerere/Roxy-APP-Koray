@@ -13,3 +13,6 @@
 .p-toast-detail:empty {
   display: none;
 }
+
+.p-dialog-header {
+}
