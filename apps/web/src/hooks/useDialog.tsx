@@ -33,7 +33,7 @@ export function useDialog(comp?: VNode | DefineComponent) {
     }
 
     return (
-      <Dialog v-slots={__dialogSlots} contentClass="!pb-2" modal {...dialogProps} v-model:visible={visible.value}>
+      <Dialog v-slots={__dialogSlots}  modal {...dialogProps} v-model:visible={visible.value}>
       </Dialog>
     )
   }

@@ -58,24 +58,26 @@ onBeforeMount(() => {
 <template>
   <div class="redeem-successfully">
     <RxAvatar class="avatar" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)"
-      :color="userStore.userInfo.avatarColor" :size="48" :font-size="12" />
+      :color="userStore.userInfo.avatarColor" :size="48" :font-size="24" />
     <div class="username">{{ userStore.userInfo.userName }}</div>
     <div class="user-level">
       <RxSvgIcon :name="userStore.identityInfo.icon" size="16px" />
       <span class="text" :style="{ color: userStore.identityInfo.color }">{{ userStore.identityInfo.text }}</span>
     </div>
-    <div class="description">
-      <i18n-t
-        :keypath="$t('您当前已经是{identity}。您的窗口创建额度已经提升至 {number}. ', { number: '{number}', identity: '{identity}' })">
-        <template #identity>
-          <span class="number">{{ userStore.identityInfo.text }}</span>
-        </template>
-        <template #number>
-          <span class="number">{{ userStore.userInfo.maxWindowCount }}</span>
-        </template>
-      </i18n-t>
+    <div class="w-full flex flex-col gap-[16px]">
+      <div class="description">
+        <i18n-t
+          :keypath="$t('您当前已经是{identity}。您的窗口创建额度已经提升至 {number}. ', { number: '{number}', identity: '{identity}' })">
+          <template #identity>
+            <span class="number">{{ userStore.identityInfo.text }}</span>
+          </template>
+          <template #number>
+            <span class="number">{{ userStore.userInfo.maxWindowCount }}</span>
+          </template>
+        </i18n-t>
+      </div>
+      <RxButton class="w-full" :label="$t('返回工作空间')" @click="hide" />
     </div>
-    <RxButton class="w-full" :label="$t('返回工作空间')" @click="hide" />
   </div>
 </template>
 
@@ -128,7 +130,6 @@ onBeforeMount(() => {
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-sm, 18px);
-  /* 150% */
 
   .number {
     color: var(--Colors-Text-text-primary, #171C1F);

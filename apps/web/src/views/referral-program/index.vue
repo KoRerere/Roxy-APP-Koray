@@ -65,7 +65,7 @@ async function getInviteCode() {
   const { code, data } = await API.base.userGetInviteCodeList()
   if (code === 0) {
     premiumCode.value = data.invite_code
-    remainTime.value = format(data.expire_time * 1000, 'yyyy-MM-dd HH:mm')
+    remainTime.value = format(data.expire_time * 1000, 'yyyy/MM/dd HH:mm')
 
     if (data.expire_time * 1000 < Date.now()) {
       getInviteCode()
@@ -476,6 +476,9 @@ onBeforeMount(() => {
 
   .invite-user-table {
     height: calc(100% - 30px);
+    border-radius: 6px;
+    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    overflow: hidden;
   }
 }
 

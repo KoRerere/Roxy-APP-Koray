@@ -21,6 +21,7 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { getBackRoute } from '/@/router/utils'
+import { RxInputNumber } from '/@/components/rx-input-number'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -223,8 +224,8 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
-    const {path,query} = getBackRoute()
-    console.log('onBack',path,query)
+    const { path, query } = getBackRoute()
+    console.log('onBack', path, query)
     router.replace({
       path,
       query: {
@@ -387,14 +388,8 @@ async function deleteTemplate(data: any) {
           <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
             <div class="flex items-center justify-between">
               <div>{{ $t('窗口数量') }}</div>
-              <InputNumber v-model="createCount" button-layout="horizontal" :min="1" :step="1" :max="maxWindowCount" show-buttons fluid>
-                <template #incrementicon>
-                  <RxSvgIcon name="base/rx_ic_plus" />
-                </template>
-                <template #decrementicon>
-                  <RxSvgIcon name="base/rx_ic_minus" />
-                </template>
-              </InputNumber>
+              <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
+              </RxInputNumber>
             </div>
             <div class="multi-block-info">
               {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
@@ -402,9 +397,11 @@ async function deleteTemplate(data: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
+          :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
+              @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>
@@ -460,30 +457,6 @@ async function deleteTemplate(data: any) {
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
-
-  :deep(.p-inputnumber) {
-    width: 120px;
-
-    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
-
-    .p-inputnumber-input {
-      padding: 0;
-      border: none;
-      color: var(--Component-Colors-TextInput-text-text, #171c1f);
-      text-align: center;
-      font-family: Inter;
-      font-size: 12px;
-      line-height: var(--Line-Height-text-lg, 20px);
-    }
-
-    .p-inputnumber-button {
-      padding: var(--spacing-md, 6px);
-      width: auto;
-      border: none;
-    }
-  }
 
   &-info {
     margin-top: var(--spacing-xs, 4px);

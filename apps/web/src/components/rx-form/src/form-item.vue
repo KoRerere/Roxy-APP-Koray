@@ -145,11 +145,10 @@ onMounted(async () => {
       </label>
       <div class="form-item-control">
         <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue"
-                   :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
-                   @[triggerEventName]="validateField"
-        />
+          :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
+          @[triggerEventName]="validateField" />
         <component v-if="schema.description" :is="schema.description" />
-        <small class="p-error">
+        <small v-if="errors[schema.field]" class="p-error">
           {{ errors[schema.field] }}
         </small>
       </div>

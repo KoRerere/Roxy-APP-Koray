@@ -6,6 +6,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
+import { RxInputNumber } from '/@/components/rx-input-number'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
@@ -89,22 +90,14 @@ defineExpose({
           {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
         </div>
       </div>
-      <div class="w-full flex justify-between">
+    </div>
+    <div class="row">
+      <div class="w-full flex justify-between items-center">
         <div>
           <div class="title">{{ $t('窗口创建限制') }}</div>
           <div class="description">{{ $t('当前空间能创建窗口数的最大值') }}</div>
         </div>
-        <div>
-          <InputNumber v-model="workspaceInfo.maxWindowCount" showButtons buttonLayout="horizontal" :min="0"
-            :max="maxCreateWindowCount" :disabled="!isOwner" inputClass="w-100px">
-            <template #decrementicon>
-              <RxSvgIcon name="base/rx_ic_minus" />
-            </template>
-            <template #incrementicon>
-              <RxSvgIcon name="base/rx_ic_plus" />
-            </template>
-          </InputNumber>
-        </div>
+        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :disabled="!isOwner" class="!w-120px" />
       </div>
     </div>
   </div>
@@ -126,10 +119,6 @@ defineExpose({
     gap: var(--spacing-2xl, 16px);
     align-self: stretch;
     border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-
-    &:last-of-type {
-      border-bottom: none;
-    }
 
     .title {
       align-self: stretch;

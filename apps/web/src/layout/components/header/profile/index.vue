@@ -68,7 +68,7 @@ const items = [
     command: async () => {
       await formDialog.showModal({
         header: $t('兑换特权码'),
-        class: 'w-[450px]',
+        class: 'w-[384px]',
         schemas: redeemFormSchemas,
         formProps: {
           layout: 'vertical',
@@ -187,7 +187,8 @@ function toggle(event: Event) {
     <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
       :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
       :font-size="12">
-      <RxSvgIcon v-if="badgeIcon" :name="badgeIcon" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.icon"
+        class="absolute right-[-4px] bottom-[-2px]" size="12px" />
     </RxAvatar>
     <span class="username" :class="userStore.userInfo.identity">{{ userStore.userInfo.userName }}</span>
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
