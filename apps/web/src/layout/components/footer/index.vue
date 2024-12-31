@@ -3,6 +3,7 @@ import type { SvgNames } from '/@/components/rx-icon'
 import LiveChat from '/@/components/business/live-chat/index.vue'
 import { $t } from '/@/locales'
 import { RouterLink } from 'vue-router'
+import Help from './components/help.vue'
 
 const collapsed = defineModel('collapsed', { default: false })
 const router = useRouter()
@@ -11,14 +12,14 @@ const list = [
   {
     text: $t('推广计划'),
     icon: 'base/rc_ic_user_referral',
-    component: (props, { slots }) => <RouterLink to={{ name: 'referral-program' }} custom>
+    component: (props, { slots }) => <RouterLink {...props} to={{ name: 'referral-program' }} custom>
       {{ default: ({ navigate, isActive }) => <div class={{ active: isActive }} onClick={navigate}>{slots.default?.()}</div> }}
     </RouterLink>,
   },
   {
     text: $t('联系支持人员'),
     icon: 'base/rx_ic_headphone_2',
-    component: LiveChat,
+    component: Help,
   },
   {
     text: $t('收起'),
@@ -46,7 +47,7 @@ const list = [
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .rx-layout-footer {
   width: 100%;
   display: flex;
