@@ -54,7 +54,8 @@ const searchPlugins = useDebounceFn(() => {
 
 function formatPluginList(list: PluginItem[]) {
   return Object.values(list.reduce((map: PluginMap, item) => {
-    (map[item.categoryName] || (map[item.categoryName] = {
+    item.categoryName = categories.value.find(n => n.id === item.category)?.categoryName || item.categoryName;
+    ; (map[item.categoryName] || (map[item.categoryName] = {
       categoryId: item.category,
       categoryName: item.categoryName,
       items: [],
@@ -102,8 +103,8 @@ async function onInstall(plugin: PluginItem) {
   })
 }
 
-onBeforeMount(() => {
-  getCategoryList()
+onBeforeMount(async () => {
+  await getCategoryList()
   getPluginList()
 })
 
@@ -120,7 +121,8 @@ defineExpose({
   <div class="flex flex-1 justify-between flex-row-reverse hub">
     <div>
       <div class="hub-categories">
-        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item" :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
+          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
           {{ item.categoryName }}
         </div>
       </div>
@@ -155,8 +157,10 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line"
+                  :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud"
+                  :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>

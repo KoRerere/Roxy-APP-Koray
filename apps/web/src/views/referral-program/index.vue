@@ -199,7 +199,7 @@ onBeforeMount(() => {
             <div>
               <i18n-t :keypath="$t('使用特权码的用户将成为您的名下用户，并获得【特邀用户】{tips}身份及权益。', { tips: '{tips}' })" scope="global">
                 <template #tips>
-                  <RxSvgIcon name="base/rx_ic_info" class="align-middle" size="12px"
+                  <RxSvgIcon name="base/rx_ic_info" class="align-middle cursor-pointer" size="12px"
                     v-tooltip.left="$t(`特邀用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
                 </template>
               </i18n-t>

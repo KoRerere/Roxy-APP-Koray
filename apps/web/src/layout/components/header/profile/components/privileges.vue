@@ -28,7 +28,7 @@ const privileges = computed(() => {
     ]
   }
   return [
-    $t('{count}个窗口用量', { count: '20/30' }),
+    $t('{count}个窗口用量', { count: userStore.userInfo.maxWindowCount }),
     $t('{count}个额外工作空间用量', { count: 1 }),
   ]
 })

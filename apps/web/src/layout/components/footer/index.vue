@@ -16,7 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import { $t } from "/@/locales";
 import { RxSvgIcon } from "/@/components/rx-icon";
 import { useSimpleLocale } from "/@/stores/locale";
@@ -93,7 +92,7 @@ const items = [
     display: flex;
     gap: var(--spacing-xl, 12px);
     color: var(--Component-Colors-SideNav-link-text, #252a2e);
-    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+    padding: var(--spacing-lg, 9px) var(--spacing-xl, 12px);
     align-items: center;
     align-self: stretch;
     border-radius: 4px;
