@@ -218,7 +218,7 @@ onBeforeMount(() => {
             </div>
             <div class="banner-preview">
               <Image :src="bannerImagePreviewUrl" alt="Image" preview
-                :pt="{ toolbar: { class: '!hidden rounded-[4px]' } }" />
+                :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }" />
             </div>
           </div>
         </div>
@@ -525,7 +525,7 @@ onBeforeMount(() => {
   }
 
   .banner-preview {
-    width: 400px;
+    width: 100%;
     height: 192px;
     flex-shrink: 0;
     border-radius: 4px;
