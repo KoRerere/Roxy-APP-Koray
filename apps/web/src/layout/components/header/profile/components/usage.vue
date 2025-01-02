@@ -6,10 +6,6 @@ import { $t } from '/@/locales';
 
 const { userInfo } = storeToRefs(useUserStore())
 
-const usageTooltip = `${$t('用量为各空间的窗口数量总和，包含回收站的窗口数量。')}
-
-${$t('当前创建额度仅在产品beta期间有效。')}`
-
 const percent = computed(() => {
   const { useWindowCount, maxWindowCount } = userInfo.value
   return Math.ceil((useWindowCount / maxWindowCount) * 10)
@@ -45,7 +41,7 @@ const colorLevel = computed(() => {
     <div class="usage-header">
       <div class="flex items-center gap-[2px]">
         <span>{{ $t('窗口用量') }}</span>
-        <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip.top="usageTooltip" />
+        <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip.top="$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')" />
       </div>
       <span>{{ userInfo.useWindowCount }}/{{ userInfo.maxWindowCount }}</span>
     </div>

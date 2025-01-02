@@ -64,7 +64,7 @@ const items = [
   },
   {
     label: $t('我的权益'),
-    icon: 'referral-program/rx_ic_award',
+    icon: 'base/rx_ic_priviledge',
     command: () => {
       dialogInstance.showModal({
         header: $t('我的权益'),

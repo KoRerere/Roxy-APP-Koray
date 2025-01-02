@@ -38,7 +38,10 @@ export const useUserStore = defineStore('user', () => {
         color: '#12A3FC'
       }
     }
-    return {}
+    return {
+      text: $t('普通用户'),
+      color: '#A3A9AD'
+    }
   })
 
   async function getUserInfo() {

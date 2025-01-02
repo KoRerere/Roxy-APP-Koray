@@ -3,12 +3,23 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
+import { useUserStore } from '/@/stores/user'
+import { Role } from '/@/enums'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
+  const userStore = useUserStore()
 
   const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
+  const maxCreateWindowCount = computed(() => {
+    return workspaceList.value.reduce((acc, cur) => {
+      if (currentWorkspace.value?.id !== cur.id && cur.role === Role.OWNER) {
+        acc -= cur.maxWindowCount
+      }
+      return acc
+    }, userStore.userInfo.maxWindowCount)
+  })
 
   watch(currentWorkspace, (val) => {
     const currentRoute = router.currentRoute.value
@@ -67,7 +78,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace, fetchWorkspaceList }
+  return {
+    workspaceList,
+    maxCreateWindowCount,
+    currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace, fetchWorkspaceList
+  }
 }, {
   persist: false,
 })

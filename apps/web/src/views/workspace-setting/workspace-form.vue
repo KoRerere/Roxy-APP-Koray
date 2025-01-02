@@ -7,20 +7,18 @@ import { useRoleStore } from '/@/stores/role'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useUserStore } from '/@/stores/user'
 import { RxInputNumber } from '/@/components/rx-input-number'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
+const workspaceStore = useWorkspaceStore()
 const { userInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
 
 const exampleName = computed(() => {
   const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
-})
-
-const maxCreateWindowCount = computed(() => {
-  return Math.max(userInfo.value.maxWindowCount! - userInfo.value.useWindowCount!, 0)
 })
 
 function onInput() {
@@ -95,9 +93,16 @@ defineExpose({
       <div class="w-full flex justify-between items-center">
         <div>
           <div class="title">{{ $t('窗口创建限制') }}</div>
-          <div class="description">{{ $t('当前空间能创建窗口数的最大值') }}</div>
+          <div class="description">
+            <i18n-t :keypath="$t('当前空间可以创建窗口的数量（剩余可分配用量：{count}个）', { count: '{count}' })" scope="global">
+              <template #count>
+                {{ workspaceStore.maxCreateWindowCount }}
+              </template>
+            </i18n-t>
+          </div>
         </div>
-        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :disabled="!isOwner" class="!w-120px" />
+        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :max="workspaceStore.maxCreateWindowCount"
+          :disabled="!isOwner" class="!w-120px" />
       </div>
     </div>
   </div>

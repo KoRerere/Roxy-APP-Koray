@@ -22,7 +22,11 @@ export function getFormSchemas(isRegister = false) {
       rule: {
         trigger: 'change',
         validator(zod) {
-          return zod.string().min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
+          const z = zod.string()
+          if (isRegister) {
+            return z.min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
+          }
+          return z.min(1, $t('请输入您的邮箱'))
         },
       },
     },

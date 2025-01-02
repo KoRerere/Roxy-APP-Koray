@@ -38,7 +38,7 @@ const bannerImagePreviewUrl = computed(() => {
 })
 
 const bannerImagePreviewHtmlCode = computed(() => {
-  return `<a href="https://iproyal.com/?r=584937" target="_blank"> <img src="https://dashboard.iproyal.com/img/b/728_1.jpg" alt="https://iproyal.com/"> </a>`
+  return `<a href="${referralLink.value}" target="_blank"> <img src="${bannerImagePreviewUrl.value}" alt="${referralLink.value}"> </a>`
 })
 
 async function onCopy(text: string) {
@@ -89,7 +89,7 @@ async function showMyLink() {
   // 如果是第一次推广的话，重新获取用户信息更新推广状态
   if (isNewUser.value) {
     // 如果是新用户，弹出提示
-    toast.add({ severity: 'success', summary: $t('感谢您参与推广计划'), detail: $t('您当前的窗口创建额度已提升至 30.'), life: 2500 })
+    toast.add({ severity: 'success', summary: $t('感谢您参与推广计划'), detail: $t('您当前的窗口创建额度已提升至 20.'), life: 2500 })
     fetchUserInfo()
   }
 }
@@ -114,7 +114,8 @@ onBeforeMount(() => {
       <div class="left-content">
         <div class="row">
           <div class="title">{{ $t('推广计划介绍：') }}</div>
-          <div class="referral-program-illustrate-content">{{ $t('通过邀请用户注册我们产品，您将在产品内获得权益与激励。激励的详情将和付费计划一起推出，敬请期待。') }}
+          <div class="referral-program-illustrate-content">
+            {{ $t('邀请新用户加入Roxy，您将于正式版发布后获得更多权益。具体方案将随付费计划推出，敬请期待。') }}
           </div>
         </div>
         <div class="row">
@@ -195,7 +196,15 @@ onBeforeMount(() => {
               @click="onCopy(premiumCode)" />
           </div>
           <div class="description">
-            {{ $t('使用当前特权码的用户可以获得最多创建60个窗口的额度。特权码将会每24小时刷新一次。每个码只能使用一次。') }}
+            <div>
+              <i18n-t :keypath="$t('使用特权码的用户将成为您的名下用户，并获得【特邀用户】{tips}身份及权益。', { tips: '{tips}' })" scope="global">
+                <template #tips>
+                  <RxSvgIcon name="base/rx_ic_info" class="align-middle" size="12px"
+                    v-tooltip.left="$t(`特邀用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
+                </template>
+              </i18n-t>
+            </div>
+            <div> {{ $t('特权码仅能被使用一次，每日0点自动更新。') }}</div>
           </div>
         </div>
         <div class="row">
@@ -208,7 +217,8 @@ onBeforeMount(() => {
               <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
             </div>
             <div class="banner-preview">
-              <Image :src="bannerImagePreviewUrl" alt="Image" preview :pt="{ toolbar: { class: '!hidden' } }" />
+              <Image :src="bannerImagePreviewUrl" alt="Image" preview
+                :pt="{ toolbar: { class: '!hidden rounded-[4px]' } }" />
             </div>
           </div>
         </div>
@@ -349,7 +359,6 @@ onBeforeMount(() => {
       position: absolute;
       inset: 0;
       color: #FFF;
-      font-family: "JetBrains Mono";
       font-size: 14px;
       font-style: normal;
       font-weight: 500;
@@ -516,8 +525,8 @@ onBeforeMount(() => {
   }
 
   .banner-preview {
-    width: 369px;
-    height: 162px;
+    width: 400px;
+    height: 192px;
     flex-shrink: 0;
     border-radius: 4px;
     background: var(--Color-neutrals-100, #F0F3F5);

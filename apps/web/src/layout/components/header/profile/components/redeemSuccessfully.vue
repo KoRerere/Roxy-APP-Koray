@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti'
 import { useUserStore } from '/@/stores/user';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales';
+import Privileges from './privileges.vue';
 
 const props = defineProps({
   hideFn: Function,
@@ -21,28 +22,7 @@ const welcomeText = computed(() => {
   return $t('欢迎加入Roxy，您享有权益如下：')
 })
 
-const privileges = computed(() => {
-  const { identity } = userStore.userInfo
-  if (identity === 'old') {
-    return [
-      $t('专属【创始】身份+徽章'),
-      $t('100个窗口用量'),
-      $t('3个额外工作空间用量'),
-      $t('特权码生成权限（推广计划）'),
-    ]
-  } else if (identity === 'invited') {
-    return [
-      $t('专属【特邀】身份+徽章'),
-      $t('60个窗口用量'),
-      $t('2个额外工作空间用量'),
-    ]
-  }
-  return [
-    $t('20/30个窗口用量'),
-    $t('2. 专属礼品'),
-    $t('1个额外工作空间用量'),
-  ]
-})
+
 
 function hide() {
   props.hideFn?.()
@@ -108,15 +88,8 @@ onBeforeMount(() => {
       <span class="text" :style="{ color: userStore.identityInfo.color }">{{ userStore.identityInfo.text }}</span>
     </div>
     <div class="description">
-      <span class="description">{{ welcomeText }}</span>
-      <div class="privileges">
-        <template v-for="privilege in privileges" :key="privilege">
-          <div class="privilege-item">
-            <RxSvgIcon name="base/rx_ic_check_fill" color="#1CC94D" size="14px" />
-            <span>{{ privilege }}</span>
-          </div>
-        </template>
-      </div>
+      <span class="welcome-text">{{ welcomeText }}</span>
+      <Privileges />
     </div>
     <RxButton class="w-full mt-[16px]" :label="$t('了解')" @click="hide" />
   </div>
@@ -167,7 +140,6 @@ onBeforeMount(() => {
 .description {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 10px;
   align-self: stretch;
   color: var(--Color-neutrals-600, #575D61);
@@ -177,20 +149,6 @@ onBeforeMount(() => {
   font-weight: 400;
   line-height: var(--Line-Height-text-sm, 18px);
 
-  .privileges {
-    display: flex;
-    padding: 0px 12px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    align-self: stretch;
 
-    .privilege-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-lg, 8px);
-      align-self: stretch;
-    }
-  }
 }
 </style>
