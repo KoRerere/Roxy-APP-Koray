@@ -35,7 +35,7 @@ const Identity = () => {
 
   return <div class={styles.identity}>
     <RxSvgIcon name={identityInfo.icon} />
-    <span class={styles.golden}>{identityInfo.text}</span>
+    <span class={styles['identity-name']} style={{ color: identityInfo.color }}>{identityInfo.text}</span>
   </div>
 }
 
@@ -238,24 +238,12 @@ function toggle(event: Event) {
   gap: 2px;
 }
 
-.golden {
-  color: #F56200;
+.identity-name {
   font-family: "DingTalk JinBuTi";
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
-  /* 133.333% */
-}
-
-.diamond {
-  color: var(--Color-blue-300, #12A3FC);
-  font-family: "DingTalk JinBuTi";
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
-  /* 133.333% */
 }
 </style>
 

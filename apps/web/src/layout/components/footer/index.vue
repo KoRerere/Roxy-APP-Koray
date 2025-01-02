@@ -1,87 +1,114 @@
-<script setup lang="tsx">
-import type { SvgNames } from '/@/components/rx-icon'
+<template>
+  <div class="rx-layout-footer" :class="{ collapsed }">
+    <TieredMenu :model="items" appendTo="body">
+      <template #item="{ item, props, hasSubmenu }">
+        <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
+          v-bind="props.action">
+          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" />
+          <span v-if="!collapsed || !item.rootMenu" class="menu-title">{{ item.label }}</span>
+        </a>
+      </template>
+    </TieredMenu>
+  </div>
+  <LiveChat v-show="false">
+
+  </LiveChat>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import { $t } from "/@/locales";
+import { RxSvgIcon } from "/@/components/rx-icon";
+import { useSimpleLocale } from "/@/stores/locale";
 import LiveChat from '/@/components/business/live-chat/index.vue'
-import { $t } from '/@/locales'
-import { RouterLink } from 'vue-router'
-import Help from './components/help.vue'
 
 const collapsed = defineModel('collapsed', { default: false })
+
+const { currentLocale } = useSimpleLocale()
 const router = useRouter()
 
-const list = [
+const items = [
   {
-    text: $t('推广计划'),
+    label: $t('推广计划'),
     icon: 'base/rc_ic_user_referral',
-    component: (props, { slots }) => <RouterLink {...props} to={{ name: 'referral-program' }} custom>
-      {{ default: ({ navigate, isActive }) => <div class={{ active: isActive }} onClick={navigate}>{slots.default?.()}</div> }}
-    </RouterLink>,
+    rootMenu: true,
+    routeName: 'referral-program',
+    command: () => router.push({ name: 'referral-program' })
   },
   {
-    text: $t('联系支持人员'),
-    icon: 'base/rx_ic_headphone_2',
-    component: Help,
+    label: $t('帮助'),
+    icon: 'base/rx_ic_chat_question',
+    rootMenu: true,
+    items: [
+      {
+        label: $t('帮助与说明文档'),
+        icon: 'base/rx_ic_books',
+        command: () => window.open(`https://faq.roxybrowser.org/${currentLocale}`, '_blank')
+      },
+      {
+        label: $t('获取技术支持'),
+        icon: 'base/rx_ic_headphone_2',
+        command: () => LiveChatWidget.call('maximize')
+      }
+    ]
   },
   {
-    text: $t('收起'),
+    label: $t('收起'),
     icon: 'base/rx_ic_fold_right',
+    rootMenu: true,
     get iconAttr() {
       return {
         class: { 'rotate-180': collapsed.value },
       }
     },
-    handler() {
+    command() {
       collapsed.value = !collapsed.value
+      console.trace('collapsed', collapsed.value)
     },
   },
 ]
 </script>
 
-<template>
-  <div class="rx-layout-footer" :class="{ collapsed }">
-    <template v-for="item in list" :key="item.text">
-      <component :is="item.component || 'div'" class="item" @click="item.handler">
-        <SvgIcon class="item-icon" v-bind="item.iconAttr" :name="(item.icon as SvgNames)" />
-        <span v-if="!collapsed">{{ item.text }}</span>
-      </component>
-    </template>
-  </div>
-</template>
-
-<style lang="scss">
+<style lang="scss" scoped>
 .rx-layout-footer {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-none, 0px);
-  white-space: nowrap;
-  word-break: keep-all;
-  overflow: hidden;
 
   &.collapsed {
-    .item {
-      justify-items: center;
+    .menu-item.root-menu {
+      justify-content: center;
     }
   }
 
-  .item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: var(--spacing-md, 6px) 8px;
-    gap: var(--spacing-xl, 12px);
-    flex: 1 0 0;
-    color: var(--Component-Colors-SideNav-link-text, #252a2e);
-    font-family: Inter;
-    font-size: var(--Font-Size-text-md, 13px);
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-lg, 20px);
-    cursor: pointer;
-    border-radius: 4px;
+  :deep(.p-tieredmenu) {
+    border: none;
+    min-width: 100%;
+    background-color: transparent;
 
-    &-icon {
-      color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
+    .p-tieredmenu-root-list {
+      padding: 0;
+    }
+  }
+
+  .menu-item {
+    display: flex;
+    gap: var(--spacing-xl, 12px);
+    color: var(--Component-Colors-SideNav-link-text, #252a2e);
+    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+    align-items: center;
+    align-self: stretch;
+    border-radius: 4px;
+    word-break: keep-all;
+    white-space: nowrap;
+
+
+
+    &:hover {
+      color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
+      background: var(--Component-Colors-SideNav-link-bg-hover, #f0f3f5);
+
+      .menu-icon {
+        color: var(--Component-Colors-SideNav-link-icon-hover, #7c8387);
+      }
     }
 
     &.active {
@@ -91,6 +118,19 @@ const list = [
       .menu-icon {
         color: currentColor;
       }
+    }
+
+    .menu-icon {
+      color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
+      transition: color .2s ease-in-out;
+    }
+
+    .menu-title {
+      font-family: Inter;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: var(--Line-Height-text-md, 16px);
     }
   }
 }
