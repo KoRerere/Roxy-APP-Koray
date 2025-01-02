@@ -43,7 +43,7 @@ const items = [
   {
     render: () => {
       return (
-        <div class="w-full" onClick={() => openSettings('profiles')}>
+        <div class="w-full" onClick={copyUserInfo}>
           <div class={styles['user-info']}>
             <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
             <Identity />
@@ -238,6 +238,8 @@ function toggle(event: Event) {
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-email {
@@ -252,6 +254,7 @@ function toggle(event: Event) {
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .identity-name {
