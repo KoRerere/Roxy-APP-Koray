@@ -1680,6 +1680,10 @@ export interface UserGetUserInfoListData {
     maxWindowCount: number;
     /** 已使用窗口数量 */
     useWindowCount: number;
+    /** 已使用空间数量 */
+    useWorkspaceCount: string;
+    /** 获取用户总空间数量 */
+    maxWorkspaceCount: string;
     /** 邀请链接 */
     inviteLink: string;
     clientId: string;
@@ -1983,19 +1987,15 @@ export interface UserGetAnntListListData {
     rows: {
       /** 公告ID */
       id?: number;
+      /** 语言 */
+      language?: string;
       /** 原公告内容 */
       announcement?: string;
       /** 公告链接 */
       href?: string;
       /** 公告发布时间 */
       createTime?: string;
-      /** 550秒前发布的公告 */
-      diff?: number;
-      /** 公告翻译为英文内容 */
-      announcement_en?: string;
-      /** 公告数据类型 */
-      dataType?: string;
-      /** 颜色提示 */
+      /** 颜色提示：success(绿色), warning（警告）, error（错误）, info（信息） */
       colorTips?: string;
     }[];
   };

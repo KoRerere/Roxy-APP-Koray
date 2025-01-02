@@ -411,7 +411,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserGetAnntListList
-   * @summary 用户获取公告【返回最近的2条】
+   * @summary 用户获取公告
    * @request GET:/user_get_annt_list
    * @response `200` `UserGetAnntListListData`
    */

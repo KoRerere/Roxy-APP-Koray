@@ -12,13 +12,17 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from './workspace-form.vue'
+import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
+import { useUserStore } from '/@/stores/user'
 
 const router = useRouter()
 const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
 const confirm = useConfirm()
+const [dialogInstance] = useCustomDialog()
 
+const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { isOwner } = storeToRefs(useRoleStore())
 const { currentWorkspace } = storeToRefs(workspaceStore)
@@ -57,6 +61,7 @@ function handleDeleteConfirm() {
       })
       if (code === 0) {
         workspaceStore.getWorkspaceList()
+        userStore.fetchUserInfo()
         dialogRef.value.close()
         toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
       }
@@ -101,6 +106,18 @@ async function handleSaveChange() {
   if (code === 0) {
     workspaceStore.getWorkspaceList()
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })
+  } else if (code === 409) {
+    dialogInstance.showModal({
+      header: $t('各空间可创建总量大于账号本身的限额'),
+      class: 'w-[380px]',
+      okText: $t('好的'),
+      slots: {
+        default: () => <div class={styles.description}>
+          <div>{$t('您在其他工作空间的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
+          <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
+        </div>,
+      },
+    })
   }
   else {
     toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })

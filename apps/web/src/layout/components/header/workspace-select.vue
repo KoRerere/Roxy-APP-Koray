@@ -7,11 +7,15 @@ import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
+import { useUserStore } from '/@/stores/user'
+import { I18nT } from 'vue-i18n'
 
+const userStore = useUserStore()
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
 const [workspaceFormDialog] = useDialog()
+const [dialogInstance] = useDialog()
 const toast = useToast()
 
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
@@ -21,7 +25,28 @@ const workspaceForm = ref({
   maxWindowCount: 0,
 })
 
+function showOutOfCreateWorkspaceErrorDialog() {
+   // 超出总额度
+   dialogInstance.showModal({
+      header: $t('可创建的工作空间数量不足'),
+      class: 'w-[380px]',
+      okText: $t('好的'),
+      slots: {
+        default: () =>
+          <I18nT tag="div" keypath={$t('您当前最多只能创建最多{count}个工作空间，请删除不常用的工作空间后再新建。', { count: '{count}' })}>
+            {{ count: userStore.userInfo.maxWorkspaceCount }}
+          </I18nT>
+      },
+    })
+}
+
 function showCreateWorkspaceDialog() {
+  if (userStore.userInfo.maxWorkspaceCount - userStore.userInfo.useWorkspaceCount <= 0) {
+    showOutOfCreateWorkspaceErrorDialog()
+    return
+  }
+
+
   return workspaceFormDialog.showModal({
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
@@ -38,10 +63,27 @@ function showCreateWorkspaceDialog() {
       if (code === 0) {
         console.log(data)
         workspaceStore.getWorkspaceList()
+        userStore.fetchUserInfo()
         workspaceForm.value.workspaceName = ''
         workspaceForm.value.workspacePicture = ''
         workspaceForm.value.maxWindowCount = 0
-      }
+      } else if(code === 407) {
+        showOutOfCreateWorkspaceErrorDialog()
+        return Promise.reject(new Error(msg))
+      } else if (code === 409) {
+        dialogInstance.showModal({
+          header: $t('各空间可创建总量大于账号本身的限额'),
+          class: 'w-[380px]',
+          okText: $t('好的'),
+          slots: {
+            default: () => <div>
+              <div>{$t('您在其他工作空间的可创建窗口数加上当前设置的窗口数，已超过账号本身的可创建窗口的最大值。')}</div>
+              <div>{$t('当前操作无法继续，请调整后再保存。')}</div>
+            </div>,
+          },
+        })
+        return Promise.reject(new Error(msg))
+    }
       else {
         console.log(msg)
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
@@ -67,13 +109,23 @@ function getAvatarStyle(workspacePicture: string) {
       </template>
       <template #option="slotProps">
         <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.slice(0, 2)"
-          class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
+          class="!w-[32px] !h-[32px]" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
 
-        <div>{{ slotProps.option.workspaceName }}</div>
+        <div>
+          <span class="workspace-name">{{ slotProps.option.workspaceName }}</span>
+          <div class="workspace-usage">
+            <RxSvgIcon name="base/rx_ic_profile_sm" size="14px" />
+            <span class="usage">
+              {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ slotProps.option.maxWindowCount }}
+            </span>
+          </div>
+        </div>
         <span v-if="slotProps.option.role !== Role.OWNER" class="role-tag">
           <RxSvgIcon name="base/rx_ic_internet" :size="12" />
           {{ roleLabelMap[slotProps.option.role] }}
         </span>
+        <RxSvgIcon v-if="currentWorkspace.id === slotProps.option.id" class="check-icon" name="base/rx_ic_check"
+          :size="16" />
       </template>
       <template #footer>
         <div class="select-footer" @click="showCreateWorkspaceDialog">
@@ -87,9 +139,10 @@ function getAvatarStyle(workspacePicture: string) {
 
 <style lang="scss" module>
 .workspace-select-overlay {
-  :global(.p-select-list) {
-    border-bottom: 1px solid var(--Colors-Border-border-container, #c7cdd1);
+  :global(.p-select-list-container) {
+    min-width: 270px;
   }
+
 
   :global(.p-select-option) {
     display: flex;
@@ -163,7 +216,7 @@ function getAvatarStyle(workspacePicture: string) {
   align-items: center;
   gap: var(--spacing-md, 6px);
   align-self: stretch;
-  border-radius: var(--radius-sm, 4px);
+  border-top: 1px solid var(--Colors-Border-border-container, #C7CDD1);
   background: var(--Colors-Background-bg-body, #fff);
 
   span {
@@ -191,5 +244,28 @@ function getAvatarStyle(workspacePicture: string) {
   font-weight: 500;
   line-height: 14px;
   /* 140% */
+}
+
+.workspace-usage {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--Colors-Text-text-secondary, #575D61);
+
+}
+
+.usage {
+  color: var(--Colors-Text-text-secondary, #575D61);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 133.333% */
+}
+
+.check-icon {
+  margin-left: auto;
+  color: #12A3FC
 }
 </style>

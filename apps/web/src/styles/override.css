@@ -14,5 +14,11 @@
   display: none;
 }
 
-.p-dialog-header {
+.p-dialog-content {
+  color: var(--Color-neutrals-600, #575d61);
+  font-family: 'PingFang SC';
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--Line-Height-text-sm, 18px); /* 150% */
 }
