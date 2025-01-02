@@ -53,9 +53,11 @@ const menus = computed(() => {
 })
 
 watch(currentWorkspace, () => {
-  setTimeout(() => {
-    projectStore.getProjects()
-  })
+  if (currentWorkspace.value?.id) {
+    setTimeout(() => {
+      projectStore.getProjects()
+    })
+  }
 }, { immediate: true })
 
 /** 过滤菜单 */
@@ -90,7 +92,7 @@ async function toCreateBrowser() {
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
-          <div>{$t('您当前创建窗口的数量已经到达上限。您可以删除不使用的窗口从而恢复创建的额度。')}</div>
+          <div>{$t('您当前创建窗口的数量已经到达上限。您可以删除不使用的窗口从而恢复创建的额度。（包含在回收站的窗口）')}</div>
           <I18nT tag="div" keypath={$t('如果您需要更多的创建额度，请{contactUs}。', { contactUs: '{contactUs}' })}>
             {{ contactUs: <LiveChat class={cssModule['contact-us']}>{$t('联系我们')}</LiveChat> }}
           </I18nT>
@@ -105,8 +107,8 @@ async function toCreateBrowser() {
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
-          <div>{$t('您当前创建窗口的数量已经到达上限。')}</div>
-          <div>{$t('您可以删除不使用的窗口从而恢复创建的额度。或者调整当前工作空间的最大可创建数。')}</div>
+          <div>{$t('您在当前工作空间中可创建窗口的数量已经到达上限。')}</div>
+          <div>{$t('您可以删除不使用的窗口从而恢复创建的额度（包含在回收站的窗口）。或者调整当前工作空间的最大可创建数。')}</div>
         </div>,
       },
     })

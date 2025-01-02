@@ -63,6 +63,22 @@ const items = [
     separator: true,
   },
   {
+    label: $t('我的权益'),
+    icon: 'referral-program/rx_ic_award',
+    command: () => {
+      dialogInstance.showModal({
+        header: $t('我的权益'),
+        class: 'w-[380px]',
+        slots: {
+          footer: null,
+          default: () => {
+            return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
+          },
+        },
+      })
+    },
+  },
+  {
     label: $t('兑换特权码'),
     icon: 'referral-program/rx_ic_award',
     command: async () => {
@@ -83,7 +99,7 @@ const items = [
               slots: {
                 footer: null,
                 default: () => {
-                  return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
+                  return <RedeemSuccessfully showConfetti hide-fn={dialogInstance.handleCancel} />
                 },
               },
             })

@@ -27,7 +27,7 @@ export const useUserStore = defineStore('user', () => {
     const { identity } = userInfo.value
     if (identity === 'old') {
       return {
-        text: $t('原始用户'),
+        text: $t('创始用户'),
         icon: 'referral-program/golden',
         color: '#F56200'
       }

@@ -32,9 +32,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     API.base.userSetUserConfigCreate({})
   }, 1000)
 
+  async function fetchWorkspaceList() {
+    const result = await API.limit.userGetWorkspaceListList()
+    workspaceList.value = result.data.rows
+    return result
+  }
+
   async function getWorkspaceList() {
-    const { data } = await API.limit.userGetWorkspaceListList()
-    workspaceList.value = data.rows
+    const { data } = await fetchWorkspaceList()
     currentWorkspace.value = data.rows.find((item) => {
       if (currentWorkspace.value) {
         return item.id === currentWorkspace.value?.id
@@ -62,7 +67,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace }
+  return { workspaceList, currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace, fetchWorkspaceList }
 }, {
   persist: false,
 })

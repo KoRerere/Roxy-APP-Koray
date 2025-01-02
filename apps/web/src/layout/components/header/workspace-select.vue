@@ -101,15 +101,15 @@ function getAvatarStyle(workspacePicture: string) {
 <template>
   <div v-if="currentWorkspace" class="workspace">
     <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select"
-      :overlay-class="$style['workspace-select-overlay']">
+      :overlay-class="$style['workspace-select-overlay']" @show="workspaceStore.fetchWorkspaceList">
       <template #value="slotProps">
         <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)"
-          class="!w-[26px] !h-[26px]" :style="getAvatarStyle(slotProps.value.workspacePicture)" />
+          class="workspace-icon-small" :style="getAvatarStyle(slotProps.value.workspacePicture)" />
         <span class="workspace-name">{{ slotProps.value.workspaceName }}</span>
       </template>
       <template #option="slotProps">
         <Avatar :label="slotProps.option.workspacePicture || slotProps.option.workspaceName.slice(0, 2)"
-          class="!w-[32px] !h-[32px]" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
+          class="workspace-icon" :style="getAvatarStyle(slotProps.option.workspacePicture)" />
 
         <div>
           <span class="workspace-name">{{ slotProps.option.workspaceName }}</span>
@@ -195,15 +195,7 @@ function getAvatarStyle(workspacePicture: string) {
         flex-shrink: 0;
       }
 
-      .workspace-name {
-        color: var(--Colors-Text-text-primary, #171c1f);
-        font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: var(--Line-Height-text-xs, 16px);
-        /* 133.333% */
-      }
+
     }
   }
 }
@@ -244,6 +236,47 @@ function getAvatarStyle(workspacePicture: string) {
   font-weight: 500;
   line-height: 14px;
   /* 140% */
+}
+
+.workspace-icon {
+  width: 32px;
+  height: 32px;
+  color: #FFF;
+  text-align: center;
+  font-family: "JetBrains Mono";
+  font-size: 20px !important;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 20px;
+  /* 160% */
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+}
+
+.workspace-icon-small {
+  display: flex;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  text-transform: uppercase;
+  color: #FFF;
+  text-align: center;
+  font-family: "JetBrains Mono";
+  font-size: 13px !important;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 13px;
+  /* 153.846% */
+  letter-spacing: -0.26px;
+}
+
+.workspace-name {
+  color: var(--Colors-Text-text-primary, #171C1F);
+  font-family: Inter;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .workspace-usage {
