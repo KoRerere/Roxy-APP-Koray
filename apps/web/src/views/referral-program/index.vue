@@ -541,6 +541,10 @@ onBeforeMount(() => {
         height: 100%;
         object-fit: contain;
         object-position: 50% 50%;
+
+        &:not([src]) {
+          visibility: hidden;
+        }
       }
     }
   }

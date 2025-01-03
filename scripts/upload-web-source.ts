@@ -87,13 +87,19 @@ function getCurrentFormattedTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-rl.question('最低支持的 APP 版本： ', (version) => {
-  if (version) {
-    console.log(`最低支持的 APP 版本：${version}`)
-  }
-  else {
-    console.log('未输入最低支持的 APP 版本，将默认为 0.0.0')
-  }
-  startUpload(version || '0.0.0')
-  rl.close()
-})
+if (isProd) {
+  rl.question('最低支持的 APP 版本： ', (version) => {
+    if (version) {
+      console.log(`最低支持的 APP 版本：${version}`)
+    }
+    else {
+      console.log('未输入最低支持的 APP 版本，将默认为 0.0.0')
+    }
+    startUpload(version || '0.0.0')
+    rl.close()
+  })
+} else {
+  startUpload('0.0.0').finally(() => {
+    process.exit(0)
+  })
+}
