@@ -197,14 +197,16 @@ onBeforeMount(() => {
           </div>
           <div class="description">
             <div>
-              <i18n-t :keypath="$t('使用特权码的用户将成为您的名下用户，并获得【特邀用户】{tips}身份及权益。', { tips: '{tips}' })" scope="global">
+              {{ $t('使用特权码的用户将成为【特邀用户】（说明特邀用户权益）') }}
+              {{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}
+              <!-- <i18n-t :keypath="$t('使用特权码的用户将成为您的名下用户，并获得【特邀用户】{tips}身份及权益。', { tips: '{tips}' })" scope="global">
                 <template #tips>
                   <RxSvgIcon name="base/rx_ic_info" class="align-middle cursor-pointer" size="12px"
                     v-tooltip.left="$t(`特邀用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
                 </template>
-              </i18n-t>
+              </i18n-t> -->
             </div>
-            <div> {{ $t('特权码仅能被使用一次，每日0点自动更新。') }}</div>
+            <div> {{ $t('特权码仅能被使用一次，每日08:00自动更新。') }}</div>
           </div>
         </div>
         <div class="row">

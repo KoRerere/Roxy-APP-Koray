@@ -12,14 +12,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
-  const maxCreateWindowCount = computed(() => {
+  const getMaxCreateWindowCount = (workspaceID?: number) => {
     return workspaceList.value.reduce((acc, cur) => {
-      if (currentWorkspace.value?.id !== cur.id && cur.role === Role.OWNER) {
+      if (workspaceID !== cur.id && cur.role === Role.OWNER) {
         acc -= cur.maxWindowCount
       }
       return acc
     }, userStore.userInfo.maxWindowCount)
-  })
+  }
 
   watch(currentWorkspace, (val) => {
     const currentRoute = router.currentRoute.value
@@ -80,7 +80,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   return {
     workspaceList,
-    maxCreateWindowCount,
+    getMaxCreateWindowCount,
     currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace, fetchWorkspaceList
   }
 }, {

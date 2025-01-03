@@ -40,7 +40,7 @@ const colorLevel = computed(() => {
 </script>
 
 <template>
-  <div class="usage">
+  <div class="usage" @click.stop>
     <div class="usage-header">
       <div class="flex items-center gap-[2px]">
         <span>{{ $t('窗口用量') }}</span>

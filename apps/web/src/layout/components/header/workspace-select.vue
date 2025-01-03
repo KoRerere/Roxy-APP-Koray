@@ -51,7 +51,7 @@ function showCreateWorkspaceDialog() {
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
     slots: {
-      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} />,
+      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} operationType='create'/>,
     },
     async handleOk() {
       workspaceFormRef.value?.onInput()

@@ -106,6 +106,7 @@ const items = [
             })
           } else {
             toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg })
+            return Promise.reject(msg)
           }
         },
       })
