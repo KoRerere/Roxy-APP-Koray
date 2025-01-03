@@ -147,10 +147,10 @@ onMounted(async () => {
         <component :is="getComponent" v-bind="getComponentProps" :id="compId" v-model="modelValue"
           :placeholder="getPlaceholder" class="w-full" :class="{ 'p-invalid': errors[schema.field] }"
           @[triggerEventName]="validateField" />
-        <component v-if="schema.description" :is="schema.description" />
-        <small v-if="errors[schema.field]" class="p-error">
+        <Message v-if="errors[schema.field]" severity="error" size="small" variant="simple">
           {{ errors[schema.field] }}
-        </small>
+        </Message>
+        <component v-if="schema.description" :is="schema.description" />
       </div>
     </div>
   </div>
@@ -159,6 +159,9 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .form-item-control {
   flex: auto;
+  gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
 
   .p-inputtext::placeholder {
     color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);

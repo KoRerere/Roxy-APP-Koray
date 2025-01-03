@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef } from 'vue'
+import { useTemplateRef, withModifiers } from 'vue'
 import { API } from '/@/api'
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
@@ -43,7 +43,7 @@ const items = [
   {
     render: () => {
       return (
-        <div class="w-full">
+        <div class="w-full" onClick={withModifiers(() => { }, ['stop'])}>
           <div class={styles['user-info']}>
             <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
             <Identity />

@@ -94,7 +94,7 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div class="row">
+    <div v-if="isOwner" class="row">
       <div class="w-full flex justify-between items-center">
         <div>
           <div class="title">{{ $t('窗口创建限制') }}</div>

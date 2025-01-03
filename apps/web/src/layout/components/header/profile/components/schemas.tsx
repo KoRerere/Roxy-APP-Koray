@@ -10,7 +10,7 @@ export const redeemFormSchemas = defineFormSchema([
       {$t('特权码可以提升相应的账号权益，您可以关注Roxy相关社群动态以获取。')}
     </div>,
     componentProps: {
-      placeholder: 'Code',
+      placeholder: $t('邀请码'),
     },
     rule: {
       trigger: 'blur',
