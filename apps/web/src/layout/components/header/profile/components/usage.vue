@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { useUserStore } from '/@/stores/user';
-import LiveChat from '/@/components/business/live-chat/index.vue'
 import { $t } from '/@/locales';
 
 const { userInfo } = storeToRefs(useUserStore())
 
 const percent = computed(() => {
+  return Math.ceil(decimal.value)
+})
+
+const decimal = computed(() => {
   const { useWindowCount, maxWindowCount } = userInfo.value
-  return Math.ceil((useWindowCount / maxWindowCount) * 10)
+  return (useWindowCount / maxWindowCount) * 10
 })
 
 const colorLevel = computed(() => {
@@ -47,14 +50,7 @@ const colorLevel = computed(() => {
     </div>
     <div class="usage-body">
       <div v-for="num in 10" class="color-block"
-        :class="{ 'color-level': num <= percent, 'last-item': num === percent }"></div>
-    </div>
-    <div class="need-more" v-if="percent > 8">
-      <span>{{ $t('窗口不够？') }}</span>
-      <LiveChat class="contact-us">
-        {{ $t('联系我们') }}
-        <RxSvgIcon name="base/rx_ic_arrow_right_2" size="12px" />
-      </LiveChat>
+        :class="{ 'color-level': num <= percent, 'last-item': num === percent && decimal % 1 }"></div>
     </div>
   </div>
 </template>
@@ -115,33 +111,6 @@ const colorLevel = computed(() => {
         background-color: v-bind('colorLevel.weak');
       }
     }
-  }
-}
-
-.need-more {
-  display: flex;
-  padding: 4px 8px;
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
-  border-radius: 4px;
-  background: var(--Color-neutrals-100, #F0F3F5);
-  color: var(--Colors-Text-text-secondary, #575D61);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 16px;
-  /* 133.333% */
-
-  .contact-us {
-    color: var(--Colors-Text-text-brand, #12A3FC);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 16px;
-    /* 133.333% */
   }
 }
 </style>

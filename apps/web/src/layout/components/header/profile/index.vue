@@ -43,7 +43,7 @@ const items = [
   {
     render: () => {
       return (
-        <div class="w-full" onClick={copyUserInfo}>
+        <div class="w-full">
           <div class={styles['user-info']}>
             <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
             <Identity />
@@ -52,6 +52,7 @@ const items = [
         </div>
       )
     },
+    command: copyUserInfo,
   },
   {
     separator: true,

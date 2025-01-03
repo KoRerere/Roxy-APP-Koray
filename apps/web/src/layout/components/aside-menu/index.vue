@@ -9,8 +9,7 @@ import SubMenuItem from './sub-menu-item.vue'
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
-import LiveChat from '/@/components/business/live-chat/index.vue'
-import { I18nT } from 'vue-i18n'
+import { useUserStore } from '/@/stores/user'
 
 defineProps({
   collapsed: {
@@ -29,6 +28,7 @@ const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
+const { userInfo } = storeToRefs(useUserStore())
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => !!item.topTime).slice(0, 5).map((item) => {
@@ -81,34 +81,33 @@ function filterMenus(menus: RouteRecordRaw[]) {
 }
 
 async function toCreateBrowser() {
+  const { useWindowCount, maxWindowCount, useWorkspaceCount, maxWorkspaceCount } = userInfo.value
   const { code } = await API.window.userCreateWindowInspectList()
   if (code === 0) {
     router.push({ name: 'browser-create' })
   } else if (code === 407) {
     // 超出总额度
     dialogInstance.showModal({
-      header: $t('创建窗口的额度不足'),
+      header: $t('窗口额度不足（{percent}）', { percent: `${useWindowCount}/${maxWindowCount}` }),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
-          <div>{$t('您当前创建窗口的数量已经到达上限。您可以删除不使用的窗口从而恢复创建的额度。（包含在回收站的窗口）')}</div>
-          <I18nT tag="div" keypath={$t('如果您需要更多的创建额度，请{contactUs}。', { contactUs: '{contactUs}' })}>
-            {{ contactUs: <LiveChat class={cssModule['contact-us']}>{$t('联系我们')}</LiveChat> }}
-          </I18nT>
+          <div>{$t('您的窗口用量已达账号上限。')}</div>
+          <div>{$t('您可以通过彻底删除（提示：回收站中的窗口也会计算用量）不常用的窗口来恢复相应额度，或关注Roxy相关社群动态以获取更多。')}</div>
         </div>,
       },
     })
   } else if (code === 408) {
     // 超出空间最大额度
     dialogInstance.showModal({
-      header: $t('创建窗口的额度不足'),
+      header: $t('该工作空间的窗口额度不足（{percent}）', { percent: `${useWorkspaceCount}/${maxWorkspaceCount}` }),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
           <div>{$t('您在当前工作空间中可创建窗口的数量已经到达上限。')}</div>
-          <div>{$t('您可以删除不使用的窗口从而恢复创建的额度（包含在回收站的窗口）。或者调整当前工作空间的最大可创建数。')}</div>
+          <div>{$t('您可以通过彻底删除（提示：回收站中的窗口也会计算用量）不常用的窗口来恢复相应额度，或增加为当前工作空间分配的总窗口数量。')}</div>
         </div>,
       },
     })
