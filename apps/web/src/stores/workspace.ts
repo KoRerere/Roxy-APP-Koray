@@ -3,12 +3,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
-import { useUserStore } from '/@/stores/user'
 import { Role } from '/@/enums'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
-  const userStore = useUserStore()
 
   const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
@@ -43,11 +41,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   async function fetchWorkspaceList() {
     const result = await API.limit.userGetWorkspaceListList()
     workspaceList.value = result.data.rows
+    updateCurrentWorkspace(result.data)
     return result
   }
 
-  async function getWorkspaceList() {
-    const { data } = await fetchWorkspaceList()
+  function updateCurrentWorkspace(data: UserGetWorkspaceListListData['data']) {
     currentWorkspace.value = data.rows.find((item) => {
       if (currentWorkspace.value) {
         return item.id === currentWorkspace.value?.id
@@ -58,7 +56,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (!currentWorkspace.value) {
       currentWorkspace.value = data.rows.find(item => item.workspaceDefault)
     }
+  }
 
+  async function getWorkspaceList() {
+    const { data } = await fetchWorkspaceList()
+    updateCurrentWorkspace(data)
     return data.rows
   }
 

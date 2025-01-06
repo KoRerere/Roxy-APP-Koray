@@ -47,7 +47,8 @@ interface ProfileTemplate {
 const confirm = useConfirm()
 const dialog = useDialog()
 const router = useRouter()
-const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const workspaceStore = useWorkspaceStore()
+const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 
@@ -225,6 +226,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
         browser: JSON.stringify({ windowId: data.windowId, openBrowser })
       }
     })
+    workspaceStore.fetchWorkspaceList()
   }
   showToast(code, msg)
   loading.value = false
@@ -247,6 +249,7 @@ async function batchCreateProfile(params: any) {
   showToast(code, msg)
   if (code === 0) {
     router.back()
+    workspaceStore.fetchWorkspaceList()
   }
 }
 
@@ -262,6 +265,7 @@ async function importProfile(params: any) {
   loading.value = false
   if (code === 0) {
     router.back()
+    workspaceStore.fetchWorkspaceList()
   }
   else {
     fileAnalyzeError.value = msg
