@@ -52,7 +52,27 @@ function showOutOfCreateWorkspaceErrorDialog() {
     })
 }
 
+function showFirstCreateTipsDialog() {
+  dialogInstance.showModal({
+    header: $t('Roxy工作空间说明'),
+    class: 'w-[380px]',
+    okText: $t('好的'),
+    slots: {
+      default: () => <div>
+        <div>{$t('欢迎体验新一代指纹浏览器协作模式！')}</div>
+        <div>{$t('在1个Roxy的工作空间中，您即可完成传统指纹浏览器中所有团队协作需求。')}</div>
+        <div>{$t('通过构建新的工作空间，您可以与更多互联网上的用户进行协作并灵活切换。')}</div>
+        <div>{$t('在新的空间中，一切都是独立的，您可以重新分配并配置该空间的专用资源、团队结构等。')}</div>
+        <div>{$t('在不久的将来，Roxy将为跨空间转移资源提供多种支持，以更好地帮助您进行业务流转。')}</div>
+      </div>,
+    },
+  })
+}
+
 function showCreateWorkspaceDialog() {
+  // if (workspaceList.length === 0) {
+   return showFirstCreateTipsDialog()
+  // }
   if (userStore.userInfo.maxWorkspaceCount - userStore.userInfo.useWorkspaceCount <= 0) {
     showOutOfCreateWorkspaceErrorDialog()
     return

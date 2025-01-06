@@ -712,8 +712,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
       change: async (input: any) => {
         if (input.value) {
+          const osInput = findInputByName(windowInputs, 'os')
           const { getSpeechSynthesis } = await electronAPI.send('util:callRandomFingerprintFunc', {
-            getSpeechSynthesis: [],
+            getSpeechSynthesis: [original.os || osInput?.value?.value],
           })
           Object.assign(original, { speechVoicesValue: { enable: true, voices: getSpeechSynthesis } })
         }

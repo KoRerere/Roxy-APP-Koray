@@ -1,4 +1,4 @@
-import type { UserAddWindowInfoCreatePayload } from '@roxy/backend-api'
+import type { UserAddWindowInfoV2CreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api/'
 import { genRandomFonts, getMacAddress } from '/@/utils'
 import { voices } from './constants/'
@@ -47,7 +47,7 @@ export function getRandomInt(min: number, max: number) {
 /**
  * 一般isLocalService 会有3个true
  */
-function getSpeechSynthesis() {
+function getSpeechSynthesis(os) {
   const newVoices = [...voices]
   for (let i = 0; i < Math.floor(Math.random() * 2); i++) {
     newVoices.splice(Math.floor(Math.random() * (newVoices.length - 1)), 1)
@@ -63,13 +63,36 @@ function getSpeechSynthesis() {
       isLocalService: true,
     })
   }
-  return [...newArray, ...newVoices]
+
+  let windowsVoices: any[] = []
+  if (os === 'Windows') {
+    windowsVoices = [
+      {
+        "name": "Microsoft David - English (United States)",
+        "isLocalService": true,
+        "lang": "en-US"
+      },
+      {
+        "name": "Microsoft Mark - English (United States)",
+        "isLocalService": true,
+        "lang": "en-US"
+      },
+      {
+        "name": "Microsoft Zira - English (United States)",
+        "isLocalService": true,
+        "lang": "en-US"
+      },
+    ]
+  }
+
+
+  return [...windowsVoices, ...newArray, ...newVoices]
 }
 
 export type RandomFingerprint = ReturnType<typeof genRandomFingerprint>
 
 /** 生成随机指纹 */
-export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePayload, count = 1): Promise<any[]> {
+export async function genRandomFingerprint(payload: UserAddWindowInfoV2CreatePayload, count = 1): Promise<any[]> {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = payload
 
   const result = await Promise.all([
@@ -107,7 +130,7 @@ export async function genRandomFingerprint(payload: UserAddWindowInfoCreatePaylo
       canvasValueV2: getRandomInt(1000, 99999), // 1000-99999 之间的随机整数
       webGLValue: webGL ? getwebGLNoiseValue() : undefined,
       audioContextValue: audioContext ? Math.random() : undefined,
-      speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis() },
+      speechVoicesValue: { enable: speechVoices, voices: getSpeechSynthesis(os) },
       clientRectsValue: { enable: clientRects, ...getClientRectsValue() },
     }
   })
