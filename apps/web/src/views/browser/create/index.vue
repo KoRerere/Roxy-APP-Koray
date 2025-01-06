@@ -62,7 +62,7 @@ const tabs = ref([
 ])
 const tabsValue = ref('single')
 const windowName = ref($t('未命名窗口'))
-const maxWindowCount = ref()
+const maxWindowCount = ref(currentWorkspace.maxWindowCount - currentWorkspace.useWindowCount)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
 const rawMainSetting: any = ref([])
@@ -124,9 +124,6 @@ watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
-  if (isBatch.value) {
-    getUserMaxCount()
-  }
   onUpdateFinger()
 })
 
@@ -186,15 +183,6 @@ async function onUpdateFinger() {
   Object.assign(original.value, data[0])
 }
 
-async function getUserMaxCount() {
-  try {
-    const { data } = await API.base.userGetUserInfoList()
-    maxWindowCount.value = Math.min(data.maxWindowCount, 100)
-  }
-  catch (error) {
-    onlyErrorToast(-1, error as string)
-  }
-}
 
 function importSuccess(data: any) {
   fileAnalyzeData.value = data

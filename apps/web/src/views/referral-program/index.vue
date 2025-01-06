@@ -33,12 +33,14 @@ const isNewUser = computed(() => {
   return userInfo.value.identity === 'new' && userInfo.value.inviteLink === ''
 })
 
-const bannerImagePreviewUrl = computed(() => {
-  return bannerList.value.find(item => item.size === selectBannerSize.value)?.image
+const currentBannerImage = computed(() => {
+  return bannerList.value.find(item => item.size === selectBannerSize.value) || {}
 })
 
 const bannerImagePreviewHtmlCode = computed(() => {
-  return `<a href="${referralLink.value}" target="_blank"> <img src="${bannerImagePreviewUrl.value}" alt="${referralLink.value}"> </a>`
+  const { image_1x, image_2x } = currentBannerImage.value
+  const srcset = `${image_1x} 1x, ${image_2x} 2x`
+  return `<a href="${referralLink.value}" target="_blank"> <img src="${image_1x}" alt="${referralLink.value}" srcset="${srcset}"> </a>`
 })
 
 async function onCopy(text: string) {
@@ -77,7 +79,7 @@ async function getInviteCode() {
 async function getBannerPictureList() {
   const { code, data } = await API.base.userGetBannerPictureListList()
   if (code === 0) {
-    bannerList.value = data.find(item => item.language === currentLocale)?.images || data[0].images
+    bannerList.value = data
     selectBannerSize.value = bannerList.value[0].size
   }
 }
@@ -197,15 +199,14 @@ onBeforeMount(() => {
           </div>
           <div class="description">
             <div>
-              {{ $t('使用特权码的用户将成为【特邀用户】（说明特邀用户权益）') }}
-              {{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}
-              <!-- <i18n-t :keypath="$t('使用特权码的用户将成为您的名下用户，并获得【特邀用户】{tips}身份及权益。', { tips: '{tips}' })" scope="global">
+              <i18n-t :keypath="$t('使用特权码的用户将成为【特邀用户】{tips}', { tips: '{tips}' })" scope="global">
                 <template #tips>
                   <RxSvgIcon name="base/rx_ic_info" class="align-middle cursor-pointer" size="12px"
                     v-tooltip.left="$t(`特邀用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
                 </template>
-              </i18n-t> -->
+              </i18n-t>
             </div>
+            <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
             <div> {{ $t('特权码仅能被使用一次，每日08:00自动更新。') }}</div>
           </div>
         </div>
@@ -219,8 +220,14 @@ onBeforeMount(() => {
               <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
             </div>
             <div class="banner-preview">
-              <Image :src="bannerImagePreviewUrl" alt="Image" preview
-                :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }" />
+              <Image :src="currentBannerImage.image_1x" alt="Image" preview
+                :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
+                <template #preview="slotProps">
+                  <img :src="currentBannerImage.image_1x"
+                    :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
+                    :style="slotProps.style" @click="slotProps.onClick" />
+                </template>
+              </Image>
             </div>
           </div>
         </div>
@@ -510,6 +517,7 @@ onBeforeMount(() => {
     align-self: stretch;
 
     .banner-size-item {
+      width: 45%;
       display: flex;
       align-items: center;
       gap: 0.5rem;

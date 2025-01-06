@@ -10,6 +10,9 @@ import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
+import { RxSvgIcon } from "/@/components/rx-icon";
+import Tooltip from 'primevue/tooltip'
+import { Role } from '/@/enums'
 
 defineProps({
   collapsed: {
@@ -29,6 +32,13 @@ const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 const { userInfo } = storeToRefs(useUserStore())
+
+const Tips = {
+  directives: { tooltip: Tooltip },
+  setup() {
+    return () => <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip:top={$t('回收站中的窗口也会计算用量')} />
+  },
+};
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => !!item.topTime).slice(0, 5).map((item) => {
@@ -81,33 +91,41 @@ function filterMenus(menus: RouteRecordRaw[]) {
 }
 
 async function toCreateBrowser() {
-  const { useWindowCount, maxWindowCount, useWorkspaceCount, maxWorkspaceCount } = userInfo.value
   const { code } = await API.window.userCreateWindowInspectList()
   if (code === 0) {
     router.push({ name: 'browser-create' })
   } else if (code === 407) {
     // 超出总额度
+  const { useWindowCount, maxWindowCount } = userInfo.value
+  const percent = `${useWindowCount}/${maxWindowCount}`
     dialogInstance.showModal({
-      header: $t('窗口额度不足（{percent}）', { percent: `${useWindowCount}/${maxWindowCount}` }),
+      header: $t('窗口额度不足（{percent}）', { percent }),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
           <div>{$t('您的窗口用量已达账号上限。')}</div>
-          <div>{$t('您可以通过彻底删除（提示：回收站中的窗口也会计算用量）不常用的窗口来恢复相应额度，或关注Roxy相关社群动态以获取更多。')}</div>
+          <I18nT tag="div" keypath={$t('您可以通过彻底删除不常用的窗口来恢复相应额度。{tips}', { tips: '{tips}' })}>
+            {{ tips: () => <Tips />}}
+          </I18nT>
+          <div>{$t('或关注Roxy相关社群动态以获取更多。')}</div>
         </div>,
       },
     })
   } else if (code === 408) {
     // 超出空间最大额度
+    const { useWindowCount, maxWindowCount } = currentWorkspace.value
     dialogInstance.showModal({
-      header: $t('该工作空间的窗口额度不足（{percent}）', { percent: `${useWorkspaceCount}/${maxWorkspaceCount}` }),
+      header: $t('该工作空间的窗口额度不足（{percent}）', { percent: `${useWindowCount}/${maxWindowCount}` }),
       class: 'w-[380px]',
       okText: $t('好的'),
       slots: {
         default: () => <div class={cssModule.description}>
           <div>{$t('您在当前工作空间中可创建窗口的数量已经到达上限。')}</div>
-          <div>{$t('您可以通过彻底删除（提示：回收站中的窗口也会计算用量）不常用的窗口来恢复相应额度，或增加为当前工作空间分配的总窗口数量。')}</div>
+          <I18nT tag="div" keypath={$t('您可以通过彻底删除不常用的窗口来恢复相应额度。{tips}', { tips: '{tips}' })}>
+            {{ tips: () => <Tips />}}
+          </I18nT>
+          <div>{$t('或增加为当前工作空间分配的总窗口数量。')}</div>
         </div>,
       },
     })

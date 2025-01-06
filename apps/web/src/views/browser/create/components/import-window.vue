@@ -6,6 +6,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 import { downloadTemplate, parseTemplate } from '../utils';
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const emit = defineEmits(['importSuccess'])
 
@@ -27,10 +28,13 @@ const emit = defineEmits(['importSuccess'])
 
 // type Data = Partial<Record<typeof excelMap[keyof typeof excelMap], any>> & { rowNum: number }
 const [showToast, onlyErrorToast] = useResponseToast()
+const { currentWorkspace } = useWorkspaceStore()
 
 const fileAnalyzeError = defineModel<any>()
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+const maxCreateWindowCount = currentWorkspace.maxWindowCount - currentWorkspace.useWindowCount
 
 function fileDragover(event: Event) {
   event.preventDefault()
@@ -141,9 +145,12 @@ async function handleBeforeUpload(rawFile: any) {
 <template>
   <div>
     <div class="upload-title">
-      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入500个窗口。', { templateFile: '{templateFile}' })" scope="global">
+      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入{maxCreateWindowCount}个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })" scope="global">
         <template #templateFile>
           <span class="upload-title-link" @click="downloadTemplate">{{ $t('窗口导入模板') }}</span>
+        </template>
+        <template #maxCreateWindowCount>
+          {{ maxCreateWindowCount }}
         </template>
       </i18n-t>
     </div>

@@ -9,14 +9,18 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 import { useUserStore } from '/@/stores/user'
 import { I18nT } from 'vue-i18n'
+import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import { emitter } from '/@/utils/eventBus'
 
 const userStore = useUserStore()
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
-const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
+const { currentWorkspace, workspaceList, defaultWorkspace } = storeToRefs(workspaceStore)
 const [workspaceFormDialog] = useDialog()
 const [dialogInstance] = useDialog()
 const toast = useToast()
+/** 实时剩余的窗口额度 */
+const maxCreateWindowCount = ref(0)
 
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 const workspaceForm = ref({
@@ -96,6 +100,21 @@ function showCreateWorkspaceDialog() {
 function getAvatarStyle(workspacePicture: string) {
   return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 }
+
+function getMaxWindowCount(workspaceItem: UnwrapRowType<UserGetWorkspaceListListData>) {
+  if (workspaceItem.role === Role.OWNER && workspaceItem.workspaceDefault) {
+    return workspaceItem.maxWindowCount - maxCreateWindowCount.value
+  }
+  return workspaceItem.maxWindowCount
+}
+
+emitter.on('maxWindowCountChange', (val) => {
+  maxCreateWindowCount.value = val
+})
+
+watch(defaultWorkspace, (val) => {
+  maxCreateWindowCount.value = val.maxWindowCount - val.useWindowCount
+},{ once: true })
 </script>
 
 <template>
@@ -116,7 +135,16 @@ function getAvatarStyle(workspacePicture: string) {
           <div class="workspace-usage">
             <RxSvgIcon name="base/rx_ic_profile_sm" size="14px" />
             <span class="usage">
-              {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ slotProps.option.maxWindowCount }}
+              <template v-if="slotProps.option.role === Role.OWNER && slotProps.option.workspaceDefault">
+                <i18n-t :keypath="$t('剩余可分配用量：{count}个', { count: '{count}' })" scope="global">
+                  <template #count>
+                    {{ maxCreateWindowCount }}
+                  </template>
+                </i18n-t>
+              </template>
+              <template v-else>
+                {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ getMaxWindowCount(slotProps.option) }}
+              </template>
             </span>
           </div>
         </div>

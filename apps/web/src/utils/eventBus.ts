@@ -5,6 +5,7 @@ import mitt from 'mitt'
 type Events = {
   viewInviteDetail: UserAddUserByProjectInfoCreatePayload,
   notifyUpdateData: UserGetNotifyListData,
+  maxWindowCountChange: number
 }
 
 export const emitter = mitt<Events>()

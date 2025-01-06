@@ -4,17 +4,15 @@ import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { RxSvgIcon } from '/@/components/rx-icon'
-import { useUserStore } from '/@/stores/user'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { emitter } from '/@/utils/eventBus'
 
 const { operationType = 'edit' } = defineProps<{ operationType?: 'create' | 'edit' }>()
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
 const workspaceStore = useWorkspaceStore()
-const { userInfo } = storeToRefs(useUserStore())
 const { isOwner } = storeToRefs(useRoleStore())
 
 const exampleName = computed(() => {
@@ -41,6 +39,14 @@ function onInput() {
     errorMessage.value = ''
   }
 }
+
+watch(() => workspaceInfo.value.maxWindowCount, (val) => {
+  emitter.emit('maxWindowCountChange', maxCreateWindowCount.value - val)
+})
+
+onBeforeUnmount(() => {
+  emitter.emit('maxWindowCountChange', workspaceStore.defaultWorkspace?.maxWindowCount - workspaceStore.defaultWorkspace?.useWindowCount)
+})
 
 defineExpose({
   workspaceInfo,

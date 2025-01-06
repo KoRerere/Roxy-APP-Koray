@@ -15,7 +15,7 @@ const userStore = useUserStore()
 const welcomeText = computed(() => {
   const { identity } = userStore.userInfo
   if (identity === 'old') {
-    return $t('感谢您的长期支持，作为 Roxy 最早期的用户，您享有的权益如下：')
+    return $t('感谢您的长期支持，作为 Roxy 最早期用户，您享有权益如下：')
   } else if (identity === 'invited') {
     return $t('感谢您的支持，您享有权益如下：')
   }
