@@ -795,6 +795,7 @@
   "高级指纹设置": "Paramètres avancés d'empreintes digitales",
   "默认 IP 查询渠道": "Canal de requête IP par défaut",
   "默认图标展示工作空间名称的前两个字符": "",
+  "默认空间": "",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Les informations de la fenêtre par défaut seront affichées sous la forme d'une combinaison des trois premiers caractères du nom de l'espace et du numéro de séquence.",
   "默认项目": ""
 }

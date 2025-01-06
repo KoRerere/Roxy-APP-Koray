@@ -1686,6 +1686,8 @@ export interface UserGetUserInfoListData {
     maxWorkspaceCount: string;
     /** 邀请链接 */
     inviteLink: string;
+    /** 首次创建空间提示 */
+    firstCreateTip: boolean;
     clientId: string;
   };
   msg: string;
@@ -4458,6 +4460,11 @@ export interface UserDelWorkspaceInfoCreateData {
 }
 
 export interface UserLeaveWorkspaceListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWorkspaceTipInfoListData {
   code: number;
   msg: string;
 }

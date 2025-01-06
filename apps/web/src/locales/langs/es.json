@@ -795,6 +795,7 @@
   "高级指纹设置": "Configuración avanzada de huellas dactilares",
   "默认 IP 查询渠道": "Canal de consulta de IP predeterminado",
   "默认图标展示工作空间名称的前两个字符": "",
+  "默认空间": "",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "La información de la ventana predeterminada se mostrará como una combinación de los primeros tres caracteres del nombre del espacio y el número de secuencia.",
   "默认项目": ""
 }

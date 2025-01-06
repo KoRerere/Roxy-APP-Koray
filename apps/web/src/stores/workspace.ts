@@ -14,18 +14,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
-  const getMaxCreateWindowCount = (workspaceID?: number) => {
-    return workspaceList.value.reduce((acc, cur) => {
-      if (workspaceID !== cur.id && cur.role === Role.OWNER) {
-        acc -= cur.maxWindowCount
-        // 默认空间的窗口数不计入
-        if (cur.workspaceDefault) {
-          acc += cur.maxWindowCount - cur.useWindowCount
-        }
-      }
-      return acc
-    }, userStore.userInfo.maxWindowCount)
-  }
+  const maxCreateWindowCount = computed(() => {
+    return defaultWorkspace.value.maxWindowCount - defaultWorkspace.value.useWindowCount
+  })
 
   watch(currentWorkspace, (val) => {
     const currentRoute = router.currentRoute.value
@@ -87,8 +78,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   return {
     defaultWorkspace,
     workspaceList,
-    getMaxCreateWindowCount,
-    currentWorkspace, resetWorkspace, getWorkspaceList, setCurrentWorkspace, fetchWorkspaceList
+    currentWorkspace,
+    maxCreateWindowCount,
+    resetWorkspace,
+    getWorkspaceList,
+    setCurrentWorkspace,
+    fetchWorkspaceList
   }
 }, {
   persist: false,

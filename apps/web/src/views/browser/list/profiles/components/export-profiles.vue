@@ -203,7 +203,8 @@ onMounted(() => {
         <div class="popup-block__title">
           {{ $t('请选择您的文件格式:') }}
         </div>
-        <RxInputRadio v-model="exportType" size="xs" name="proxySwitch" :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
+        <RxInputRadio v-model="exportType" size="xs" name="proxySwitch"
+          :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
         <div class="popup-block__tip">
           {{ $t('*对于具有大量 cookie 的窗口，请选择 .txt 格式') }}
         </div>
@@ -213,7 +214,8 @@ onMounted(() => {
           {{ $t('请选择您要导出的数据:') }}
         </div>
         <div class="flex-ovh-1 table-container">
-          <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]" :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"
+          <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]"
+            :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"
             :multiple-operation="false" selection-mode="multiple" size="small" />
         </div>
       </div>

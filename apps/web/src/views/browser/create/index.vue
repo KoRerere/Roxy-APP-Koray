@@ -47,7 +47,7 @@ interface ProfileTemplate {
 const confirm = useConfirm()
 const dialog = useDialog()
 const router = useRouter()
-const { currentWorkspace } = useWorkspaceStore()
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 
@@ -62,7 +62,6 @@ const tabs = ref([
 ])
 const tabsValue = ref('single')
 const windowName = ref($t('未命名窗口'))
-const maxWindowCount = ref(currentWorkspace.maxWindowCount - currentWorkspace.useWindowCount)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
 const rawMainSetting: any = ref([])
@@ -76,6 +75,10 @@ const metaData = ref<MetaData>({
   windowRemark: '',
 })
 const loading = ref(false)
+
+const maxWindowCount = computed(() => {
+  return currentWorkspace.value.maxWindowCount - currentWorkspace.value.useWindowCount
+})
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -118,7 +121,7 @@ const profileTemplate = reactive<ProfileTemplate>({
   },
 })
 
-const isOwner = computed(() => currentWorkspace?.role === Role.OWNER)
+const isOwner = computed(() => currentWorkspace.value?.role === Role.OWNER)
 
 watch(() => tabsValue.value, (value: any) => {
   setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
@@ -255,7 +258,7 @@ async function importProfile(params: any) {
   loading.value = true
   const fingerCount = fileAnalyzeData.value.excelData.length
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: fingerCount })
-  const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace?.id })
+  const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
   loading.value = false
   if (code === 0) {
     router.back()

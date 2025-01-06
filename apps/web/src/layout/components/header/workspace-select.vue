@@ -9,13 +9,13 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from '/@/views/workspace-setting/workspace-form.vue'
 import { useUserStore } from '/@/stores/user'
 import { I18nT } from 'vue-i18n'
-import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { emitter } from '/@/utils/eventBus'
+import WorkspaceGuide from './components/workspace-guide.vue'
 
 const userStore = useUserStore()
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
-const { currentWorkspace, workspaceList, defaultWorkspace } = storeToRefs(workspaceStore)
+const { currentWorkspace, workspaceList,   } = storeToRefs(workspaceStore)
 const [workspaceFormDialog] = useDialog()
 const [dialogInstance] = useDialog()
 const toast = useToast()
@@ -23,11 +23,6 @@ const outerMaxCreateWindowCount = ref<undefined | number>(undefined)
 
 emitter.on('maxWindowCountChange', (val) => {
   outerMaxCreateWindowCount.value = val
-})
-
-/** 实时剩余的窗口额度 */
-const maxCreateWindowCount = computed(() => {
-  return outerMaxCreateWindowCount.value === undefined ? workspaceStore.getMaxCreateWindowCount(0) : outerMaxCreateWindowCount.value
 })
 
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
@@ -53,26 +48,27 @@ function showOutOfCreateWorkspaceErrorDialog() {
 }
 
 function showFirstCreateTipsDialog() {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
+  const hideFn = () => {
+    dialogInstance.handleCancel()
+    API.limit.userMdfWorkspaceTipInfoList()
+    userStore.userInfo.firstCreateTip = false
+    resolve()
+  }
   dialogInstance.showModal({
-    header: $t('Roxy工作空间说明'),
-    class: 'w-[380px]',
-    okText: $t('好的'),
+    class: 'w-[480px]',
     slots: {
-      default: () => <div>
-        <div>{$t('欢迎体验新一代指纹浏览器协作模式！')}</div>
-        <div>{$t('在1个Roxy的工作空间中，您即可完成传统指纹浏览器中所有团队协作需求。')}</div>
-        <div>{$t('通过构建新的工作空间，您可以与更多互联网上的用户进行协作并灵活切换。')}</div>
-        <div>{$t('在新的空间中，一切都是独立的，您可以重新分配并配置该空间的专用资源、团队结构等。')}</div>
-        <div>{$t('在不久的将来，Roxy将为跨空间转移资源提供多种支持，以更好地帮助您进行业务流转。')}</div>
-      </div>,
+      container: () => <WorkspaceGuide hide-fn={hideFn} />,
     },
   })
+  return promise
 }
 
-function showCreateWorkspaceDialog() {
-  // if (workspaceList.length === 0) {
-   return showFirstCreateTipsDialog()
-  // }
+async function showCreateWorkspaceDialog() {
+  if (userStore.userInfo.firstCreateTip) {
+   await showFirstCreateTipsDialog()
+  }
   if (userStore.userInfo.maxWorkspaceCount - userStore.userInfo.useWorkspaceCount <= 0) {
     showOutOfCreateWorkspaceErrorDialog()
     return
@@ -83,7 +79,7 @@ function showCreateWorkspaceDialog() {
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
     slots: {
-      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value} operationType='create'/>,
+      default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value}  />,
     },
     async handleOk() {
       workspaceFormRef.value?.onInput()
@@ -129,12 +125,6 @@ function getAvatarStyle(workspacePicture: string) {
   return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 }
 
-function getMaxWindowCount(workspaceItem: UnwrapRowType<UserGetWorkspaceListListData>) {
-  if (workspaceItem.role === Role.OWNER && workspaceItem.workspaceDefault) {
-    return workspaceItem.maxWindowCount - maxCreateWindowCount.value
-  }
-  return workspaceItem.maxWindowCount
-}
 </script>
 
 <template>
@@ -153,17 +143,24 @@ function getMaxWindowCount(workspaceItem: UnwrapRowType<UserGetWorkspaceListList
         <div>
           <span class="workspace-name">{{ slotProps.option.workspaceName }}</span>
           <div class="workspace-usage">
-            <RxSvgIcon name="base/rx_ic_profile_sm" size="14px" />
+            <RxSvgIcon v-if="!(slotProps.option.role === Role.OWNER && slotProps.option.workspaceDefault)"
+              name="base/rx_ic_profile_sm" size="14px" />
             <span class="usage">
-              <template v-if="slotProps.option.role === Role.OWNER && slotProps.option.workspaceDefault">
+              <div v-if="slotProps.option.role === Role.OWNER && slotProps.option.workspaceDefault"
+                class="default-workspace">
+                <span>{{ $t('默认空间') }}</span><span class="divider">|</span>
                 <i18n-t :keypath="$t('剩余可分配用量：{count}个', { count: '{count}' })" scope="global">
                   <template #count>
-                    {{ maxCreateWindowCount }}
+                    {{
+                      Number.isInteger(outerMaxCreateWindowCount)
+                        ? outerMaxCreateWindowCount
+                        : slotProps.option.maxWindowCount - slotProps.option.useWindowCount
+                    }}
                   </template>
                 </i18n-t>
-              </template>
+              </div>
               <template v-else>
-                {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ getMaxWindowCount(slotProps.option) }}
+                {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ slotProps.option.maxWindowCount }}
               </template>
             </span>
           </div>
@@ -343,6 +340,17 @@ function getMaxWindowCount(workspaceItem: UnwrapRowType<UserGetWorkspaceListList
   font-weight: 400;
   line-height: var(--Line-Height-text-xs, 16px);
   /* 133.333% */
+
+  .default-workspace {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-lg, 8px);
+
+    .divider {
+      font-size: 10px;
+    }
+  }
 }
 
 .check-icon {

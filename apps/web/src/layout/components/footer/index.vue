@@ -62,7 +62,6 @@ const items = [
     },
     command() {
       collapsed.value = !collapsed.value
-      console.trace('collapsed', collapsed.value)
     },
   },
 ]

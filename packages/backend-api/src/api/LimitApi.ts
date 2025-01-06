@@ -33,6 +33,7 @@ import {
   UserMdfProjectInfoCreatePayload,
   UserMdfWorkspaceInfoCreateData,
   UserMdfWorkspaceInfoCreatePayload,
+  UserMdfWorkspaceTipInfoListData,
   UserShowInvitationLinkStatusCreateData,
   UserShowInvitationLinkStatusCreatePayload,
 } from "./data-contracts";
@@ -127,6 +128,22 @@ export class LimitApi<SecurityDataType = unknown> {
   userLeaveWorkspaceList = (params: RequestParams = {}) =>
     this.http.request<UserLeaveWorkspaceListData, any>({
       path: `/user_leave_workspace`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserMdfWorkspaceTipInfoList
+   * @summary 修改首次工作空间点击提示
+   * @request GET:/user_mdf_workspace_tip_info
+   * @response `200` `UserMdfWorkspaceTipInfoListData`
+   */
+  userMdfWorkspaceTipInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserMdfWorkspaceTipInfoListData, any>({
+      path: `/user_mdf_workspace_tip_info`,
       method: "GET",
       format: "json",
       ...params,

@@ -8,7 +8,6 @@ import { RxInputNumber } from '/@/components/rx-input-number'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 
-const { operationType = 'edit' } = defineProps<{ operationType?: 'create' | 'edit' }>()
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
@@ -20,8 +19,19 @@ const exampleName = computed(() => {
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
 })
 
+/** 剩余可创建窗口数量 */
+const remainWorkspaceCount = computed(() => {
+  if (workspaceInfo.value?.id) {
+    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount - workspaceInfo.value.maxWindowCount
+  }
+  return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount
+})
+
 const maxCreateWindowCount = computed(() => {
-  return workspaceStore.getMaxCreateWindowCount(operationType === 'create' ? 0 : workspaceInfo.value.id)
+  if (workspaceInfo.value?.id) {
+    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount
+  }
+  return workspaceStore.maxCreateWindowCount
 })
 
 function onInput() {
@@ -42,7 +52,7 @@ function onInput() {
 
 watch(() => workspaceInfo.value.maxWindowCount, (val) => {
   if (workspaceInfo.value?.id) {
-    emitter.emit('maxWindowCountChange', maxCreateWindowCount.value - val)
+    emitter.emit('maxWindowCountChange', remainWorkspaceCount.value)
   }
 })
 
@@ -111,7 +121,7 @@ defineExpose({
           <div class="description">
             <i18n-t :keypath="$t('当前空间可以创建窗口的数量（剩余可分配用量：{count}个）', { count: '{count}' })" scope="global">
               <template #count>
-                {{ maxCreateWindowCount - workspaceInfo.maxWindowCount }}
+                {{ remainWorkspaceCount }}
               </template>
             </i18n-t>
           </div>
