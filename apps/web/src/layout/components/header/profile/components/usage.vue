@@ -3,6 +3,12 @@ import { RxSvgIcon } from '/@/components/rx-icon';
 import { useUserStore } from '/@/stores/user';
 import { $t } from '/@/locales';
 
+interface Props {
+  usageType: 'window' | 'workspace';
+}
+
+const { usageType } = defineProps<Props>()
+
 const { userInfo } = storeToRefs(useUserStore())
 
 const percent = computed(() => {

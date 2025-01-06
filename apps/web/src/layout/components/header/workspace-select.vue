@@ -19,8 +19,16 @@ const { currentWorkspace, workspaceList, defaultWorkspace } = storeToRefs(worksp
 const [workspaceFormDialog] = useDialog()
 const [dialogInstance] = useDialog()
 const toast = useToast()
+const outerMaxCreateWindowCount = ref<undefined | number>(undefined)
+
+emitter.on('maxWindowCountChange', (val) => {
+  outerMaxCreateWindowCount.value = val
+})
+
 /** 实时剩余的窗口额度 */
-const maxCreateWindowCount = ref(0)
+const maxCreateWindowCount = computed(() => {
+  return outerMaxCreateWindowCount.value === undefined ? workspaceStore.getMaxCreateWindowCount(0) : outerMaxCreateWindowCount.value
+})
 
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 const workspaceForm = ref({
@@ -107,14 +115,6 @@ function getMaxWindowCount(workspaceItem: UnwrapRowType<UserGetWorkspaceListList
   }
   return workspaceItem.maxWindowCount
 }
-
-emitter.on('maxWindowCountChange', (val) => {
-  maxCreateWindowCount.value = val
-})
-
-watch(defaultWorkspace, (val) => {
-  maxCreateWindowCount.value = val.maxWindowCount - val.useWindowCount
-},{ once: true })
 </script>
 
 <template>

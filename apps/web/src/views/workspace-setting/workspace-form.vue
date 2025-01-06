@@ -41,11 +41,15 @@ function onInput() {
 }
 
 watch(() => workspaceInfo.value.maxWindowCount, (val) => {
-  emitter.emit('maxWindowCountChange', maxCreateWindowCount.value - val)
+  if (workspaceInfo.value?.id) {
+    emitter.emit('maxWindowCountChange', maxCreateWindowCount.value - val)
+  }
 })
 
 onBeforeUnmount(() => {
-  emitter.emit('maxWindowCountChange', workspaceStore.defaultWorkspace?.maxWindowCount - workspaceStore.defaultWorkspace?.useWindowCount)
+  if (workspaceInfo.value?.id) {
+    emitter.emit('maxWindowCountChange', undefined)
+  }
 })
 
 defineExpose({
@@ -100,7 +104,7 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div v-if="isOwner" class="row">
+    <div v-if="isOwner && workspaceInfo.workspaceDefault !== 1" class="row">
       <div class="w-full flex justify-between items-center">
         <div>
           <div class="title">{{ $t('窗口创建限制') }}</div>

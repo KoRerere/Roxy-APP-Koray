@@ -40,12 +40,12 @@ const items = [
     rootMenu: true,
     items: [
       {
-        label: $t('帮助与说明文档'),
+        label: $t('说明文档'),
         icon: 'base/rx_ic_books',
         command: () => window.open(`https://faq.roxybrowser.org/${currentLocale}`, '_blank')
       },
       {
-        label: $t('获取技术支持'),
+        label: $t('联系支持'),
         icon: 'base/rx_ic_headphone_2',
         command: () => LiveChatWidget.call('maximize')
       }

@@ -18,6 +18,7 @@ const referralLink = ref('')
 const premiumCode = ref('')
 const inviteUserCount = ref(0)
 const remainTime = ref('')
+const refreshTime = ref('')
 const inviteUserResult = ref()
 const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
 const selectBannerSize = ref('')
@@ -68,6 +69,7 @@ async function getInviteCode() {
   if (code === 0) {
     premiumCode.value = data.invite_code
     remainTime.value = format(data.expire_time * 1000, 'yyyy/MM/dd HH:mm')
+    refreshTime.value = format(data.expire_time * 1000, 'HH:mm')
 
     if (data.expire_time * 1000 < Date.now()) {
       getInviteCode()
@@ -207,7 +209,7 @@ onBeforeMount(() => {
               </i18n-t>
             </div>
             <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
-            <div> {{ $t('特权码仅能被使用一次，每日08:00自动更新。') }}</div>
+            <div> {{ $t('特权码仅能被使用一次，每日{time}自动更新。', { time: refreshTime }) }}</div>
           </div>
         </div>
         <div class="row">
@@ -219,16 +221,17 @@ onBeforeMount(() => {
               <RadioButton v-model="selectBannerSize" :inputId="item.size" name="dynamic" :value="item.size" />
               <label :for="item.size" class="banner-size-label">{{ item.size }}</label>
             </div>
-            <div class="banner-preview">
-              <Image :src="currentBannerImage.image_1x" alt="Image" preview
-                :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
-                <template #preview="slotProps">
-                  <img :src="currentBannerImage.image_1x"
-                    :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
-                    :style="slotProps.style" @click="slotProps.onClick" />
-                </template>
-              </Image>
-            </div>
+
+          </div>
+          <div class="banner-preview">
+            <Image :src="currentBannerImage.image_1x" alt="Image" preview
+              :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
+              <template #preview="slotProps">
+                <img :src="currentBannerImage.image_1x"
+                  :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
+                  :style="slotProps.style" @click="slotProps.onClick" />
+              </template>
+            </Image>
           </div>
         </div>
         <div class="row">
@@ -510,11 +513,14 @@ onBeforeMount(() => {
   overflow: hidden auto;
 
   .banner-sizes {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    width: 100%;
+    display: grid;
     gap: var(--spacing-md, 6px);
-    align-self: stretch;
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (max-width: 1090px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
 
     .banner-size-item {
       width: 45%;
@@ -527,10 +533,11 @@ onBeforeMount(() => {
     .banner-size-label {
       color: var(--Component-Colors-TextInput-text-text, #171C1F);
       font-family: Inter;
-      font-size: 12px;
+      font-size: 13px;
       font-style: normal;
       font-weight: 400;
       line-height: var(--Line-Height-text-xs, 16px);
+      cursor: pointer;
     }
   }
 
