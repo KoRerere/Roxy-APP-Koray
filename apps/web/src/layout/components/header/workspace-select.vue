@@ -74,6 +74,11 @@ async function showCreateWorkspaceDialog() {
     return
   }
 
+  const resetWorkspaceForm = () => {
+    workspaceForm.value.workspaceName = ''
+    workspaceForm.value.workspacePicture = ''
+    workspaceForm.value.maxWindowCount = 0
+  }
 
   return workspaceFormDialog.showModal({
     header: $t('创建新的工作空间'),
@@ -81,6 +86,7 @@ async function showCreateWorkspaceDialog() {
     slots: {
       default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value}  />,
     },
+    handleCancel: resetWorkspaceForm,
     async handleOk() {
       workspaceFormRef.value?.onInput()
       if (workspaceFormRef.value?.errorMessage) {
@@ -92,9 +98,7 @@ async function showCreateWorkspaceDialog() {
         console.log(data)
         workspaceStore.getWorkspaceList()
         userStore.fetchUserInfo()
-        workspaceForm.value.workspaceName = ''
-        workspaceForm.value.workspacePicture = ''
-        workspaceForm.value.maxWindowCount = 0
+        resetWorkspaceForm()
       } else if(code === 407) {
         showOutOfCreateWorkspaceErrorDialog()
         return Promise.reject(new Error(msg))
