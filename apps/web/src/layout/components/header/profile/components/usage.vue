@@ -5,6 +5,8 @@ import { $t } from '/@/locales';
 
 interface Props {
   usageType: 'window' | 'workspace';
+  label?: string;
+  tooltip?: string;
 }
 
 const { usageType } = defineProps<Props>()
@@ -18,6 +20,14 @@ const percent = computed(() => {
 const decimal = computed(() => {
   const { useWindowCount, maxWindowCount } = userInfo.value
   return (useWindowCount / maxWindowCount) * 10
+})
+
+const usage = computed(() => {
+  if (usageType === 'window') {
+    return `${userInfo.value.useWindowCount}/${userInfo.value.maxWindowCount}`
+  } else if (usageType === 'workspace') {
+    return `${userInfo.value.useWorkspaceCount}/${userInfo.value.maxWorkspaceCount}`
+  }
 })
 
 const colorLevel = computed(() => {
@@ -49,12 +59,12 @@ const colorLevel = computed(() => {
   <div class="usage" @click.stop>
     <div class="usage-header">
       <div class="flex items-center gap-[2px]">
-        <span>{{ $t('窗口用量') }}</span>
-        <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip.top="$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')" />
+        <span>{{ label }}</span>
+        <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip.top="tooltip" />
       </div>
-      <span>{{ userInfo.useWindowCount }}/{{ userInfo.maxWindowCount }}</span>
+      <span>{{ usage }}</span>
     </div>
-    <div class="usage-body">
+    <div v-if="usageType === 'window'" class="usage-body">
       <div v-for="num in 10" class="color-block"
         :class="{ 'color-level': num <= percent, 'last-item': num === percent && decimal % 1 }"></div>
     </div>

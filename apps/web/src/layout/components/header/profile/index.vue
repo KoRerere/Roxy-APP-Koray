@@ -58,11 +58,14 @@ const items = [
     separator: true,
   },
   {
-    render: Usage,
+    render: () => <Usage usageType="window" label={$t('窗口用量')} tooltip={$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')} />,
   },
-  // {
-  //   render: Usage,
-  // },
+  {
+    separator: true,
+  },
+  {
+    render: () => <Usage usageType="workspace" label={$t('工作空间用量')} tooltip={$t('不包括默认工作空间。')} />,
+  },
   {
     separator: true,
   },

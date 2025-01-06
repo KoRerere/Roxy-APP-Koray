@@ -42,7 +42,7 @@ const items = [
       {
         label: $t('说明文档'),
         icon: 'base/rx_ic_books',
-        command: () => window.open(`https://faq.roxybrowser.org/${currentLocale}`, '_blank')
+        command: () => window.open(`https://faq.roxybrowser.org/${currentLocale.split('-')[0]}`, '_blank')
       },
       {
         label: $t('联系支持'),
