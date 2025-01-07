@@ -241,7 +241,7 @@ export class ExtensionManager {
         const { name } = path.parse(pluginDir)
         const destDir = path.join(tempDir, name)
 
-        await fileExists(tempDir, true)
+        await fileExists(tempDir, true, true)
         await unzip(pluginDir, destDir)
         try {
           const pluginMeta = await getPluginMeta(destDir)
@@ -259,7 +259,7 @@ export class ExtensionManager {
         const { name } = path.parse(pluginDir)
         const destDir = path.join(tempDir, name)
 
-        await fileExists(tempDir, true)
+        await fileExists(tempDir, true, true)
 
         try {
           const extractDir = await fileOperations.executeTask('decompress', { src: pluginDir, dest: destDir })

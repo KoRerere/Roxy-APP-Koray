@@ -9,10 +9,15 @@ import { fileOperations } from '/@/modules/fileOperations'
  *
  * @param filePath 文件或目录路径
  * @param create 目录不存在时是否创建
+ * @param rebuild 目录存在时是否重新创建
  */
-export async function fileExists(filePath: string, create = false) {
+export async function fileExists(filePath: string, create = false, rebuild = false) {
   try {
     await access(filePath)
+    if (rebuild) {
+      await rm(filePath, { recursive: true })
+      await mkdir(filePath, { recursive: true })
+    }
     return true
   }
   catch {

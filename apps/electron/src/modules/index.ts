@@ -5,6 +5,8 @@ import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
 import { setupStore } from '/@/modules/store'
 import { setupApp } from './app/'
+import { fileExists } from '/@/utils'
+import { appConfig } from '/@/constants'
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -14,6 +16,8 @@ Sentry.init({
  * Setup the modules.
  */
 export async function setupModules() {
+  // 启动时清理临时目录
+  fileExists(appConfig.tempDir, true, true)
   // if (isPackaged) {
   // 设置日志
   setupLog()
