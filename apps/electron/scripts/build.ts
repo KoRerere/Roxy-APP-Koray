@@ -9,6 +9,7 @@ import { notarizeMac } from './notarize-mac'
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV === 'development'
 const appName = isDev ? 'RoxyBrowserDev' : 'RoxyBrowser'
+const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
 
 console.log('是否是测试环境：', isDev, appName)
 console.log('APP 版本号：', version)
@@ -98,7 +99,7 @@ const options: Configuration = {
     installerHeader: './logo.ico',
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: appName,
+    shortcutName,
   },
   dmg: {
     sign: true,

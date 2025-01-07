@@ -8,11 +8,9 @@ import { useColumns } from './columns'
 import { API } from '/@/api'
 import { format } from 'date-fns'
 import type { UserGetBannerPictureListListData } from '@roxy/backend-api'
-import { useSimpleLocale } from '/@/stores/locale'
 
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
-const { currentLocale } = useSimpleLocale()
 const toast = useToast()
 const referralLink = ref('')
 const premiumCode = ref('')
