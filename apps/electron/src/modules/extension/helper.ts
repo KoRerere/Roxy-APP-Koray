@@ -111,7 +111,7 @@ export async function getPluginMeta(pluginDir: string) {
       pluginPath: targetPluginDir,
       pluginName: manifestInfo.name,
       pluginVersion: manifestInfo.version,
-      pluginDesc: manifestInfo.description,
+      pluginDesc: manifestInfo.description || '',
       provider: 'Chrome Store',
     }
   }

@@ -5,7 +5,7 @@ import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
-import { RxSvgIcon,  } from '/@/components/rx-icon/'
+import { RxSvgIcon, } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { ExtensionsInstallType, ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
@@ -94,18 +94,18 @@ const filters = reactive({
 
 
 const pinMenus = [
-{
-      label: $t('自定义'),
-      value: 'customize',
-    },
-{
-      label: $t('始终固定到工具栏'),
-      value: 'pin',
-    },
-{
-      label: $t('始终不固定到工具栏'),
-      value: 'unpin',
-    },
+  {
+    label: $t('自定义'),
+    value: 'customize',
+  },
+  {
+    label: $t('始终固定到工具栏'),
+    value: 'pin',
+  },
+  {
+    label: $t('始终不固定到工具栏'),
+    value: 'unpin',
+  },
 ]
 
 async function tableRequest(params: any) {
@@ -119,8 +119,8 @@ async function showPinMenu(event: any, data: any) {
     operation: pinMenus,
     onHide: async (fixedPlugin: string) => {
       if (fixedPlugin !== data.fixedPlugin) {
-       await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin })
-       data.fixedPlugin = fixedPlugin
+        await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin })
+        data.fixedPlugin = fixedPlugin
       }
     },
     beforeCmp: () => {
@@ -229,7 +229,7 @@ function installViaUrl() {
 }
 
 function onUploadExtension(data = {}) {
-  const {pluginDir,localKey} = data
+  const { pluginDir, localKey } = data
 
   dialog.open(uploadExtension, {
     props: {
@@ -262,6 +262,9 @@ function onUploadExtension(data = {}) {
 }
 
 async function onInstall(data: Data) {
+  if (!data) {
+    return
+  }
   dialog.open(installExtension, {
     props: {
       showHeader: false,
@@ -349,14 +352,18 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :columns="columns"
-    :show-display="false" :show-gridlines="false" :show-actions="false">
+  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple"
+    :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest"
+    :columns="columns" :show-display="false" :show-gridlines="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
+          data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click="installViaUrl" />
-          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click="onUploadExtension()" />
+          <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')"
+            @click="installViaUrl" />
+          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')"
+            @click="onUploadExtension()" />
         </div>
       </div>
     </template>
@@ -365,7 +372,8 @@ defineExpose({
       <CustomEmpty icon="rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
+            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs"
+              icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
@@ -390,13 +398,15 @@ defineExpose({
         <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
         <span v-else>
           <span>{{ $t('团队') }}</span>
-          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1"
+            name="base/rx_ic_info" :size="12" color="#C7CDD1" />
         </span>
       </div>
     </template>
 
     <template #related="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click="operationHandler({ name: 'install' }, data)">
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
+        @click="operationHandler({ name: 'install' }, data)">
         <!-- <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" /> -->
         <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -414,8 +424,10 @@ defineExpose({
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" />
+        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs"
+          @click="updateExtension(data)" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info"
+          color="#C7CDD1" />
       </div>
       <div v-else class="update-info">
         --
@@ -423,9 +435,11 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
-        <div class="cursor-pointer mr-2" @click="showPinMenu($event,data)">
-          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'" :class="{pinned: data.fixedPlugin === 'pin'}" class="block pointer-events-none"/>
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
+        class="flex items-center">
+        <div class="cursor-pointer mr-2" @click="showPinMenu($event, data)">
+          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
+            :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
         </div>
         <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
       </div>
