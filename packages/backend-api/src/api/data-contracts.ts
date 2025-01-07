@@ -1769,9 +1769,16 @@ export interface UserGetCoreUpgradeCreateData {
   code: number;
   data: {
     rows: {
-      coreVersion: string;
-      version: string;
-      downloadUrl: string;
+      coreVersion?: string;
+      version?: string;
+      downloadUrl?: string;
+      upgradeTitle?: string;
+      upgradeDesc?: string;
+      releaseTime?: string;
+      upgradeContent?: string;
+      upgradeContentEn?: string;
+      upgradeContentRu?: string;
+      blockDomainList?: string[];
     }[];
   };
   msg: string;

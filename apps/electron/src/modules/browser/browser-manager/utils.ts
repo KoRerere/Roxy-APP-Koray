@@ -7,6 +7,7 @@ import language from '/@/constants/language.json'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress } from '/@/utils'
+import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
@@ -434,5 +435,6 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       /** 圆点里面的内容，这个内容同时也会显示到左边工具栏 */
       text: String(winInfo.windowSortNum),
     },
+    blockDomainList: chromeCoreManager.getAvailableCore(winInfo.coreVersion)?.blockDomainList || [],
   }
 }
