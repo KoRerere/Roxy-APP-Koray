@@ -248,7 +248,7 @@ export class ExtensionManager {
           resolve({ type: 'success', data: pluginMeta })
         }
         catch (error) {
-          resolve({ type: 'error', data: error })
+          resolve({ type: 'error', message: getErrorMessage(error) })
         }
 
         return promise
@@ -269,7 +269,7 @@ export class ExtensionManager {
           resolve({ type: 'success', data: pluginMeta })
         }
         catch (error) {
-          resolve({ type: 'error', data: error })
+          resolve({ type: 'error', message: getErrorMessage(error) })
         }
 
         return promise
@@ -289,7 +289,7 @@ export class ExtensionManager {
           resolve({ type: 'success', data: pluginMeta })
         }
         catch (error) {
-          resolve({ type: 'error', data: error })
+          resolve({ type: 'error', message: getErrorMessage(error) })
         }
       }
     }

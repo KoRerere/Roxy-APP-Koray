@@ -166,22 +166,26 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <RxSvgIcon name="base/rx_ic_books" />
         <span>{{ $t('团队指南') }}</span>
       </div> -->
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
+        :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
     </ViewsHeader>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation" :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false"
-    :paginator="false" :show-actions-menu="false" :show-actions="false">
+  <RyTable ref="team" v-model:columns="columns" scrollable :table-operation="tableOperation"
+    :operation-handler="operationHandler" :table-request="tableRequest" :show-gridlines="false" :paginator="false"
+    :show-actions-menu="false" :show-actions="false">
     <template #header-extra>
       <div class="flex items-center justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
+          data-key="value" @change="filters.onChange" />
       </div>
     </template>
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_user.svg" :title="$t('暂无团队成员')" :desc="$t('邀请团队成员加入空间以管理，并高效地分配窗口或项目的权限。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+            <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')"
+              @click="handleShowInviteUserFormDialog" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" /> -->
           </div>
         </template>
@@ -189,7 +193,8 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <RxAvatar :avatar="data.avatar" :name="(data.userName as string)?.slice(0, 2)" :color="data.avatarColor" :class="{ 'no-avatar': !data.avatarColor }" :size="28" :font-size="14" />
+        <RxAvatar :avatar="data.avatar" :name="data.user_id ? (data.userName as string)?.slice(0, 2) : ''"
+          :color="data.avatarColor" :class="{ 'no-avatar': !data.avatarColor }" :size="28" :font-size="14" />
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}

@@ -26,7 +26,7 @@ async function selectExtension(selectType: 'dir' | 'file') {
       }
     }
     else {
-      toast.add({ severity: type, summary: msg, life: 2500 })
+      toast.add({ severity: type, summary: msg || data, life: 2500 })
     }
   }
   catch (error) {

@@ -1778,7 +1778,6 @@ export interface UserGetCoreUpgradeCreateData {
       upgradeContent?: string;
       upgradeContentEn?: string;
       upgradeContentRu?: string;
-      blockDomainList?: string[];
     }[];
   };
   msg: string;
@@ -1787,76 +1786,34 @@ export interface UserGetCoreUpgradeCreateData {
 export interface UserGetUserConfigListData {
   code: number;
   data: {
-    /**
-     * 语言
-     * 语言
-     */
+    /** 语言 */
     language: string;
-    /**
-     * 时区
-     * 时区
-     */
+    /** 时区 */
     timeZone: string;
-    /**
-     * 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
-     * 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件
-     */
+    /** 软件关闭时，枚举：pop: 弹出提示，min: 最小化至托盘，exit: 退出软件 */
     closeSoft: string;
-    /**
-     * 文件下载目录
-     * 文件下载目录
-     */
+    /** 文件下载目录 */
     uploadDir: string;
-    /**
-     * 文件缓存目录
-     * 文件缓存目录
-     */
+    /** 文件缓存目录 */
     cacheDir: string;
-    /**
-     * 缓存删除条件，5天前的
-     * 缓存删除条件，5天前的
-     */
+    /** 缓存删除条件，5天前的 */
     autoDelDays: string;
-    /**
-     * 缓存删除条件，2GB以上的
-     * 缓存删除条件，2GB以上的
-     */
+    /** 缓存删除条件，2GB以上的 */
     autoDelSize: string;
-    /**
-     * 性能监控，内存使用率%95以上时停止打开窗口
-     * 性能监控，内存使用率%95以上时停止打开窗口
-     */
+    /** 性能监控，内存使用率%95以上时停止打开窗口 */
     memoryLimit: string;
-    /**
-     * app 风格 0:系统 ,1:亮色,2:暗色
-     * app 风格 0:系统 ,1:亮色,2:暗色
-     */
+    /** app 风格 0:系统 ,1:亮色,2:暗色 */
     appearance: number;
-    /**
-     * 系统代理开关，true,false,默认true
-     * 系统代理开关，true,false,默认true
-     */
+    /** 系统代理开关，true,false,默认true */
     systemProxySwitch: boolean;
-    /**
-     * v2ray开关，true,false,默认true
-     * v2ray开关，true,false,默认true
-     */
+    /** v2ray开关，true,false,默认true */
     v2raySwitch: boolean;
-    /**
-     * ip检测
-     * ip检测
-     */
+    /** ip检测 */
     ipChecker: string;
     ipBlackList: string[];
-    /**
-     * api token
-     * api token
-     */
+    blockDomainList: string[];
+    /** api token */
     apiToken: string;
-    /** ua严格模式开关, 0:关闭, 1:打开, 默认1 */
-    uaModeSwitch: number;
-    /** 推广代码 */
-    promotionCode: string;
   };
   msg: string;
 }

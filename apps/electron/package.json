@@ -60,7 +60,7 @@
     "http-proxy-middleware": "^3.0.3",
     "https-proxy-agent": "^7.0.6",
     "iconv-lite": "^0.6.3",
-    "intl-messageformat": "^10.7.10",
+    "intl-messageformat": "^10.7.11",
     "macaddress": "^0.5.3",
     "mitt": "^3.0.1",
     "node-2fa": "^2.0.3",
@@ -71,7 +71,7 @@
     "ts-loader": "^9.5.1",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "5.7.2",
-    "vite": "^6.0.6",
+    "vite": "^6.0.7",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",
     "ws": "^8.18.0"

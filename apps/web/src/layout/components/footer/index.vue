@@ -7,7 +7,7 @@
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" />
           <span v-if="!collapsed || !item.rootMenu" class="menu-title">
             {{ item.label }}
-            <RxSvgIcon v-if="item.newBadge" :name="item.newBadge" size="24px" class="new-badge" />
+            <RxSvgIcon v-if="item.newBadge && isShowNewBadge" :name="item.newBadge" size="24px" class="new-badge" />
           </span>
         </a>
       </template>
@@ -26,6 +26,9 @@ import LiveChat from '/@/components/business/live-chat/index.vue'
 
 const collapsed = defineModel('collapsed', { default: false })
 
+const cacheKey = 'isShowReferralNewBadge'
+
+const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
 const { currentLocale } = useSimpleLocale()
 const router = useRouter()
 
@@ -36,7 +39,11 @@ const items = [
     rootMenu: true,
     routeName: 'referral-program',
     newBadge: 'base/new_badge',
-    command: () => router.push({ name: 'referral-program' })
+    command: () => {
+      router.push({ name: 'referral-program' })
+      localStorage.setItem(cacheKey, 'true')
+      isShowNewBadge.value = false
+    }
   },
   {
     label: $t('帮助'),

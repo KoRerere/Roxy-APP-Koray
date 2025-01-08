@@ -6,6 +6,7 @@ type Events = {
   viewInviteDetail: UserAddUserByProjectInfoCreatePayload,
   notifyUpdateData: UserGetNotifyListData,
   maxWindowCountChange?: number
+  showRoxyOperationNotice?: void
 }
 
 export const emitter = mitt<Events>()

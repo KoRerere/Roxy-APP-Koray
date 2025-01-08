@@ -119,7 +119,11 @@ ipcMain.on('user:setUserInfo', (userInfo) => {
   store.token = userInfo.token
   store.userId = userInfo.userId
   // 重新获取用户配置
-  fetchUserConfig()
+  fetchUserConfig().then(() => {
+    if (store.isShowBusinessDialog) {
+      ipcMain.send('app:show-business-popup')
+    }
+  })
   openAPIServer.start()
   // aliOSS.init()
 })
@@ -144,6 +148,11 @@ ipcMain.on('user:uploadAvatar', async (avatarPath) => {
   console.log('上传头像', userId, avatarPath, extname)
   const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
   return url
+})
+
+/** 隐藏商业化弹窗 */
+ipcMain.on('app:hideBusinessPopup', () => {
+  store.isShowBusinessDialog = false
 })
 
 /** 获取应用版本号 */

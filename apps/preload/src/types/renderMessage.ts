@@ -82,6 +82,8 @@ export interface RenderMessage {
   'app:getMacAddress': () => Promise<string>
   /** 程序化显示和隐藏红绿灯 */
   'app:showHideTrafficLight': (show: boolean) => void
+  /** 隐藏商业化弹窗 */
+  'app:hideBusinessPopup': () => void
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void

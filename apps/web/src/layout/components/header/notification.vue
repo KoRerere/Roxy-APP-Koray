@@ -15,29 +15,45 @@ interface Tab {
   noRead: number
 }
 
+// TODO 临时加上的，后面去掉
+const defaultSysMessage = {
+  "avatar": "https://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/static/admin_avatar/2.png",
+  "avatarColor": "#7ECCFC",
+  "createTime": "2025-01-09:00:00",
+  "id": 88888888,
+  "messageModule": "sys",
+  "notify": $t('Roxy 运营通知'),
+  "senderUserId": 2,
+  "status": 1,
+  "type": "Roxy 运营通知",
+  "userName": "fb2024",
+  paramData: {
+  }
+}
+
 const pop = ref()
 const tabs = ref<Tab[]>([
-  {
-    value: 'teams',
-    title: $t('团队通知'),
-    list: [],
-    noRead: 0,
-  },
   {
     value: 'sys',
     title: $t('系统通知'),
     list: [],
     noRead: 0,
   },
+  {
+    value: 'teams',
+    title: $t('团队通知'),
+    list: [],
+    noRead: 0,
+  },
 ])
 
-const tabsValue = ref('teams')
+const tabsValue = ref('sys')
 
 const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 0))
 
 function toggle(event: Event) {
   getMessageList()
-  const popIns =  pop.value.getRef()
+  const popIns = pop.value.getRef()
   popIns.toggle(event)
   if (popIns.visible) {
     tabs.value.some(tab => {
@@ -52,7 +68,7 @@ function toggle(event: Event) {
 
 async function getMessageList(result?: UserGetNotifyListData) {
   const { data } = result || await API.base.userGetNotifyList()
-  const [teamsTab, sysTab] = tabs.value
+  const [sysTab, teamsTab] = tabs.value
 
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
     if (item.messageModule === NotifyModule.teams) {
@@ -65,7 +81,7 @@ async function getMessageList(result?: UserGetNotifyListData) {
       acc.sysRead += item.status
     }
     return acc
-  }, { teams: [], sys: [], teamsRead: 0, sysRead: 0 } as any)
+  }, { teams: [], sys: [defaultSysMessage], teamsRead: 0, sysRead: 1 } as any)
 
   teamsTab.noRead = teams.length - teamsRead
   sysTab.noRead = sys.length - sysRead
@@ -96,13 +112,16 @@ function markAllAsRead() {
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
     emitter.emit('viewInviteDetail', item.paramData)
+  } else if (item.type === 'Roxy 运营通知') {
+    console.log('Roxy 运营通知')
+    emitter.emit('showRoxyOperationNotice')
   }
 }
 
-onMounted( () => {
-   getMessageList().finally(() => {
+onMounted(() => {
+  getMessageList().finally(() => {
     emitter.on('notifyUpdateData', getMessageList)
-   })
+  })
 })
 </script>
 
@@ -117,11 +136,13 @@ onMounted( () => {
           <div :class="message.title">
             {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
+          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')"
+            @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
+              class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
@@ -129,11 +150,13 @@ onMounted( () => {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
+                <div v-for="item in tab.list" :key="item.id" class="flex"
+                  :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar" :name="item.userName?.slice(0, 2)"
+                      :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
-                  <div>
+                  <div class="w-full">
                     <div :class="message.value">
                       {{ item.notify }}
                     </div>
@@ -141,11 +164,7 @@ onMounted( () => {
                       <span>
                         {{ item.createTime }}
                       </span>
-                      <span
-                        v-if="item.paramData"
-                        :class="message['check-detail']"
-                        @click="checkDetail(item)"
-                      >
+                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">
                         {{ $t('查看详情') }}
                       </span>
                     </div>
@@ -245,7 +264,8 @@ onMounted( () => {
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px); /* 133.333% */
+  line-height: var(--Line-Height-text-xs, 16px);
+  /* 133.333% */
   cursor: pointer;
 }
 

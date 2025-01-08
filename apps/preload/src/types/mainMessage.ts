@@ -55,4 +55,6 @@ export interface MainMessage {
   'app:launch-message': (payload: string) => void
   /** 内核列表有更新时，发出 */
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
+  /** 用户升级到 3.1.4 之后，需要弹窗商业化弹窗 */
+  'app:show-business-popup': () => void
 }

@@ -41,10 +41,14 @@ export interface StoreType {
   apiPort?: number
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
   ipBlackList: string[]
+  /** 域名禁止访问 */
+  blockDomainList: string[]
   /** Default IP checker */
   ipChecker: string
   /** 是否使用外置 web 资源 */
   isExternalWeb: boolean
+  /** 是否提示商业化弹窗 */
+  isShowBusinessDialog?: boolean
 }
 
 const defaultValues: StoreType = {
@@ -56,6 +60,7 @@ const defaultValues: StoreType = {
   v2raySwitch: true,
   appPort: 45535,
   ipBlackList: [],
+  blockDomainList: [],
   ipChecker: 'http://iprust.io/ip.json',
   isExternalWeb: false,
 }
@@ -111,8 +116,16 @@ export async function fetchUserConfig() {
 
 export async function setupStore() {
   try {
-    const config = await readFile(appConfig.configFile, 'utf-8')
-    Object.assign(store, JSON.parse(config))
+    const config = await readFile(appConfig.configFile, 'utf-8').catch(err => {
+      store.isShowBusinessDialog = false
+      return Promise.reject(err)
+    })
+    const lastStore = JSON.parse(config)
+    // 如果没有商业化弹窗配置，则默认显示
+    if (!Reflect.has(lastStore, 'isShowBusinessDialog')) {
+      store.isShowBusinessDialog = true
+    }
+    Object.assign(store, lastStore)
     await fetchUserConfig()
 
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
