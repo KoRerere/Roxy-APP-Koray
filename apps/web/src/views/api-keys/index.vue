@@ -12,11 +12,17 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { findInputByName, setInputValue } from '/@/utils'
 import { copyText } from '/@/utils/'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const role = useRoleStore()
 const toast = useToast()
 const confirm = useConfirm()
 const [showToast] = useResponseToast()
+const locale = useSimpleLocale()
+
+const apiDocUrl = computed(() => {
+  return `https://faq.roxybrowser.org/${locale.currentLocale.split('-')[0]}/guide/9-API`
+})
 
 const illustrate = [
   {
@@ -33,7 +39,7 @@ const illustrate = [
       <I18nT keypath={$t('更多 API 功能和使用方法, 请参考 {link}', { link: '{link}' })}>
         {{
           link: () => (
-            <a class="decoration-underline" target="__blank" href="https://www.roxybrowser.com/api/v2">
+            <a class="decoration-underline" target="__blank" href={apiDocUrl.value}>
               {$t('API 文档')}
             </a>
           ),

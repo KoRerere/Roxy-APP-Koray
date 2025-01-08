@@ -39,140 +39,149 @@ const Identity = () => {
   </div>
 }
 
-const items = [
-  {
-    render: () => {
-      return (
-        <div class="w-full" onClick={withModifiers(() => { }, ['stop'])}>
-          <div class={styles['user-info']}>
-            <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
-            <Identity />
+const items = computed(() => {
+  return [
+    {
+      render: () => {
+        return (
+          <div class="w-full" onClick={withModifiers(() => { }, ['stop'])}>
+            <div class={styles['user-info']}>
+              <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
+              <Identity />
+            </div>
+            <div class={styles['user-email']}>{userStore.userInfo.email}</div>
           </div>
-          <div class={styles['user-email']}>{userStore.userInfo.email}</div>
-        </div>
-      )
+        )
+      },
+      command: copyUserInfo,
     },
-    command: copyUserInfo,
-  },
-  {
-    separator: true,
-  },
-  {
-    render: () => <Usage usageType="window" label={$t('窗口用量')} tooltip={$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')} />,
-  },
-  {
-    separator: true,
-  },
-  {
-    render: () => <Usage usageType="workspace" label={$t('工作空间用量')} tooltip={$t('不包括默认工作空间。')} />,
-  },
-  {
-    separator: true,
-  },
-  {
-    label: $t('我的权益'),
-    icon: 'base/rx_ic_priviledge',
-    command: () => {
-      dialogInstance.showModal({
-        header: $t('我的权益'),
-        class: 'w-[380px]',
-        slots: {
-          footer: null,
-          default: () => {
-            return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
+    {
+      separator: true,
+      vIf: () => userStore.userInfo.identity !== 'agent',
+    },
+    {
+      vIf: () => userStore.userInfo.identity !== 'agent',
+      render: () => <Usage usageType="window" label={$t('窗口用量')} tooltip={$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')} />,
+    },
+    {
+      separator: true,
+      vIf: () => userStore.userInfo.identity !== 'agent',
+    },
+    {
+      vIf: () => userStore.userInfo.identity !== 'agent',
+      render: () => <Usage usageType="workspace" label={$t('工作空间用量')} tooltip={$t('不包括默认工作空间。')} />,
+    },
+    {
+      separator: true,
+      vIf: () => userStore.userInfo.identity !== 'agent',
+    },
+    {
+      label: $t('我的权益'),
+      icon: 'base/rx_ic_priviledge',
+      vIf: () => userStore.userInfo.identity !== 'agent',
+      command: () => {
+        dialogInstance.showModal({
+          header: $t('我的权益'),
+          class: 'w-[380px]',
+          slots: {
+            footer: null,
+            default: () => {
+              return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
+            },
+          },
+        })
+      },
+    },
+    {
+      label: $t('兑换特权码'),
+      icon: 'referral-program/rx_ic_award',
+      vIf: () => userStore.userInfo.identity !== 'agent',
+      command: async () => {
+        await formDialog.showModal({
+          header: $t('兑换特权码'),
+          class: 'w-[384px]',
+          schemas: redeemFormSchemas,
+          formProps: {
+            layout: 'vertical',
+          },
+          okText: $t('兑换'),
+          handleOk: async (params: any) => {
+            const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
+            if (code === 0) {
+              dialogInstance.showModal({
+                header: $t('兑换成功'),
+                class: 'w-[380px]',
+                slots: {
+                  footer: null,
+                  default: () => {
+                    return <RedeemSuccessfully showConfetti hide-fn={dialogInstance.handleCancel} />
+                  },
+                },
+              })
+            } else {
+              toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg })
+              return Promise.reject(msg)
+            }
+          },
+        })
+      },
+    },
+    {
+      separator: true,
+    },
+    ...getSettings().map(item => ({ ...item, command: () => openSettings(item.name) })),
+    {
+      label: $t('语言'),
+      icon: 'base/rx_ic_language',
+      items: ISO639List.map((item) => {
+        return {
+          ...item,
+          command: async () => {
+            await API.base.userSetUserConfigCreate({ language: item.locale })
+            simpleLocale.setSimpleLocale(item.locale)
+            electronAPI.send('app:saveSoftConfig', { language: item.locale })
+          },
+        }
+      }),
+    },
+    {
+      separator: true,
+    },
+    ...(import.meta.env.DEV
+      ? [
+        {
+          label: '图标(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/figma-icons')
           },
         },
-      })
-    },
-  },
-  {
-    label: $t('兑换特权码'),
-    icon: 'referral-program/rx_ic_award',
-    command: async () => {
-      await formDialog.showModal({
-        header: $t('兑换特权码'),
-        class: 'w-[384px]',
-        schemas: redeemFormSchemas,
-        formProps: {
-          layout: 'vertical',
+        {
+          label: '多语言(仅开发)',
+          icon: 'base/rx_ic_outlink',
+          command: () => {
+            window.open('/__language-localization__')
+          },
         },
-        okText: $t('兑换'),
-        handleOk: async (params: any) => {
-          const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
-          if (code === 0) {
-            dialogInstance.showModal({
-              header: $t('兑换成功'),
-              class: 'w-[380px]',
-              slots: {
-                footer: null,
-                default: () => {
-                  return <RedeemSuccessfully showConfetti hide-fn={dialogInstance.handleCancel} />
-                },
-              },
-            })
-          } else {
-            toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg })
-            return Promise.reject(msg)
-          }
+        {
+          label: '实验室(仅开发)',
+          icon: 'base/rx_ic_doc_api',
+          command: () => {
+            router.push({ name: 'cattle-slaughter' })
+          },
         },
-      })
-    },
-  },
-  {
-    separator: true,
-  },
-  ...getSettings().map(item => ({ ...item, command: () => openSettings(item.name) })),
-  {
-    label: $t('语言'),
-    icon: 'base/rx_ic_language',
-    items: ISO639List.map((item) => {
-      return {
-        ...item,
-        command: async () => {
-          await API.base.userSetUserConfigCreate({ language: item.locale })
-          simpleLocale.setSimpleLocale(item.locale)
-          electronAPI.send('app:saveSoftConfig', { language: item.locale })
-        },
-      }
-    }),
-  },
-  {
-    separator: true,
-  },
-  ...(import.meta.env.DEV
-    ? [
-      {
-        label: '图标(仅开发)',
-        icon: 'base/rx_ic_outlink',
-        command: () => {
-          window.open('/figma-icons')
-        },
+      ]
+      : []),
+    {
+      label: $t('退出登录'),
+      icon: 'base/rx_ic_logout',
+      command: () => {
+        userStore.clearUserInfo()
+        router.push({ name: 'login' })
       },
-      {
-        label: '多语言(仅开发)',
-        icon: 'base/rx_ic_outlink',
-        command: () => {
-          window.open('/__language-localization__')
-        },
-      },
-      {
-        label: '实验室(仅开发)',
-        icon: 'base/rx_ic_doc_api',
-        command: () => {
-          router.push({ name: 'cattle-slaughter' })
-        },
-      },
-    ]
-    : []),
-  {
-    label: $t('退出登录'),
-    icon: 'base/rx_ic_logout',
-    command: () => {
-      userStore.clearUserInfo()
-      router.push({ name: 'login' })
     },
-  },
-]
+  ].filter(item => !item.vIf || item.vIf())
+})
 
 function copyUserInfo() {
   copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
@@ -214,7 +223,7 @@ function toggle(event: Event) {
       <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.icon"
         class="absolute right-[-4px] bottom-[-2px]" size="12px" />
     </RxAvatar>
-    <span class="username" :class="userStore.userInfo.identity">{{ userStore.userInfo.userName }}</span>
+    <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 
@@ -303,14 +312,6 @@ function toggle(event: Event) {
       color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
     }
   }
-}
-
-.old {
-  color: #F56200;
-}
-
-.invited {
-  color: var(--Colors-Text-text-brand, #12A3FC);
 }
 
 .menu-label {

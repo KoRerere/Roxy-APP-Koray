@@ -101,7 +101,7 @@ onBeforeMount(() => {
   if (!isNewUser.value) {
     showMyLink()
   }
-  if (userInfo.value.identity === 'old') {
+  if (['old', 'agent'].includes(userInfo.value.identity)) {
     getInviteCode()
   }
   tableRequest()
@@ -179,7 +179,7 @@ onBeforeMount(() => {
               :label="$t('复制')" @click="onCopy(referralLink)" />
           </div>
         </div>
-        <div v-if="userInfo.identity === 'old'" class="row">
+        <div v-if="['old', 'agent'].includes(userInfo.identity)" class="row">
           <div class="title">
             <span>{{ $t('特权码：') }}</span>
             <span class="remain-time">

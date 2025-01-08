@@ -15,20 +15,19 @@ interface Tab {
   noRead: number
 }
 
-// TODO 临时加上的，后面去掉
+// TODO 临时加上的，后面还要去掉
 const defaultSysMessage = {
   "avatar": "https://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/public/static/admin_avatar/2.png",
   "avatarColor": "#7ECCFC",
-  "createTime": "2025-01-09:00:00",
+  "createTime": "2025-01-09",
   "id": 88888888,
   "messageModule": "sys",
   "notify": $t('Roxy 运营通知'),
   "senderUserId": 2,
-  "status": 1,
+  "status": ~~localStorage.getItem('defaultSysMessageStatus'),
   "type": "Roxy 运营通知",
   "userName": "fb2024",
-  paramData: {
-  }
+  paramData: {}
 }
 
 const pop = ref()
@@ -81,7 +80,7 @@ async function getMessageList(result?: UserGetNotifyListData) {
       acc.sysRead += item.status
     }
     return acc
-  }, { teams: [], sys: [defaultSysMessage], teamsRead: 0, sysRead: 1 } as any)
+  }, { teams: [], sys: [defaultSysMessage], teamsRead: 0, sysRead: defaultSysMessage.status } as any)
 
   teamsTab.noRead = teams.length - teamsRead
   sysTab.noRead = sys.length - sysRead
@@ -99,6 +98,11 @@ async function onRead(item: Message | Message[]) {
 
   const items = ([] as Message[]).concat(item)
   const ids = items.map(item => item.id)
+
+  if (ids.some(id => defaultSysMessage.id === id)) {
+    localStorage.setItem('defaultSysMessageStatus', "1")
+  }
+
   await API.base.userReadNotifyCreate({ ids: ids as number[] })
   tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
   items.forEach(item => item.status = NotifyStatus.read)
