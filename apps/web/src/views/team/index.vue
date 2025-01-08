@@ -189,7 +189,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
     </template>
     <template #member="{ data }">
       <div class="member">
-        <RxAvatar :avatar="data.avatar" :name="(data.userName as string)?.slice(0, 2)" :color="data.avatarColor" :size="28" :font-size="14" />
+        <RxAvatar :avatar="data.avatar" :name="(data.userName as string)?.slice(0, 2)" :color="data.avatarColor" :class="{ 'no-avatar': !data.avatarColor }" :size="28" :font-size="14" />
         <div class="member-info">
           <div class="member-info-email w-full ellipsis-1">
             {{ data.email }}
@@ -226,6 +226,11 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
   align-items: center;
   gap: var(--spacing-xl, 12px);
 
+  .no-avatar {
+    border: 1px dashed var(--Component-Colors-Tag-border-hover, #C7CDD1);
+    border-radius: 50%;
+  }
+
   &-info {
     display: flex;
     flex-direction: column;
@@ -248,6 +253,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
       font-family: 'JetBrains Mono';
       font-size: 12px;
     }
+
   }
 }
 </style>

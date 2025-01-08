@@ -5,7 +5,10 @@
         <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
           v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" />
-          <span v-if="!collapsed || !item.rootMenu" class="menu-title">{{ item.label }}</span>
+          <span v-if="!collapsed || !item.rootMenu" class="menu-title">
+            {{ item.label }}
+            <RxSvgIcon v-if="item.newBadge" :name="item.newBadge" size="24px" class="new-badge" />
+          </span>
         </a>
       </template>
     </TieredMenu>
@@ -32,6 +35,7 @@ const items = [
     icon: 'base/rc_ic_user_referral',
     rootMenu: true,
     routeName: 'referral-program',
+    newBadge: 'base/new_badge',
     command: () => router.push({ name: 'referral-program' })
   },
   {
@@ -124,11 +128,18 @@ const items = [
     }
 
     .menu-title {
+      position: relative;
       font-family: Inter;
       font-size: 13px;
       font-style: normal;
       font-weight: 500;
       line-height: var(--Line-Height-text-md, 16px);
+    }
+
+    .new-badge {
+      position: absolute;
+      right: -28px;
+      top: -8px;
     }
   }
 }

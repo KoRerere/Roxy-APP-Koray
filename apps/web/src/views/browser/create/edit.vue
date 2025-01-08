@@ -8,11 +8,12 @@ import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { getBackRoute } from '/@/router/utils'
+import { useBackRoute } from '/@/router/utils'
 
 const router = useRouter()
 const route = useRoute()
 const [showToast] = useResponseToast()
+const { path, query } = useBackRoute()
 
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
 
@@ -60,8 +61,7 @@ async function createProfile(formData: any) {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
-    const {path,query} = getBackRoute()
-    console.log('onBack',path,query)
+    console.log('onBack', path, query)
     router.replace({ path, query })
   }
   loading.value = false
@@ -85,7 +85,9 @@ function oldFieldsFormat() {
           <rxEditDiv v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit @create="createProfile" />
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo"
+            :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
+            @create="createProfile" />
         </div>
       </div>
     </div>

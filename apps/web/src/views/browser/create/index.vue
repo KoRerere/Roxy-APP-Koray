@@ -20,7 +20,7 @@ import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
-import { getBackRoute } from '/@/router/utils'
+import { useBackRoute } from '/@/router/utils'
 import { RxInputNumber } from '/@/components/rx-input-number'
 
 interface TemplateMap {
@@ -51,6 +51,7 @@ const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
+const backRoute = useBackRoute()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -216,10 +217,13 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
   if (code === 0) {
-    const { path, query } = getBackRoute()
+    const { path, query } = backRoute
     console.log('onBack', path, query)
+    const backRoutes = ['/browser', '/projects']
+    const toPath = !backRoutes.some(n => path.startsWith(n)) ? '/browser' : path
+    console.log('toPath', toPath)
     router.replace({
-      path,
+      path: toPath,
       query: {
         ...query,
         title: metaData.value.projectName,
