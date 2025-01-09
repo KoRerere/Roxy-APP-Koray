@@ -18,6 +18,8 @@ const welcomeText = computed(() => {
     return $t('感谢您的长期支持，作为 Roxy 最早期用户，您享有权益如下：')
   } else if (identity === 'invited') {
     return $t('感谢您的支持，您享有权益如下：')
+  } else if (identity === 'agent') {
+    return $t('作为 Roxy 的合作伙伴，您享有权益如下：')
   }
   return $t('欢迎加入Roxy，您享有权益如下：')
 })

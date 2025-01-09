@@ -57,28 +57,28 @@ const items = computed(() => {
     },
     {
       separator: true,
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
     },
     {
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
       render: () => <Usage usageType="window" label={$t('窗口用量')} tooltip={$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')} />,
     },
     {
       separator: true,
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
     },
     {
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
       render: () => <Usage usageType="workspace" label={$t('工作空间用量')} tooltip={$t('不包括默认工作空间。')} />,
     },
     {
       separator: true,
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
     },
     {
       label: $t('我的权益'),
       icon: 'base/rx_ic_priviledge',
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
       command: () => {
         dialogInstance.showModal({
           header: $t('我的权益'),
@@ -95,7 +95,7 @@ const items = computed(() => {
     {
       label: $t('兑换特权码'),
       icon: 'referral-program/rx_ic_award',
-      vIf: () => userStore.userInfo.identity !== 'agent',
+      // vIf: () => userStore.userInfo.identity !== 'agent',
       command: async () => {
         await formDialog.showModal({
           header: $t('兑换特权码'),

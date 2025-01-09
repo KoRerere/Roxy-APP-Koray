@@ -32,6 +32,14 @@ const isNewUser = computed(() => {
   return userInfo.value.identity === 'new' && userInfo.value.inviteLink === ''
 })
 
+const useTime = computed(() => {
+  if (userStore.userInfo.identity === 'agent') {
+    return $t('可被使用十次')
+  } else {
+    return $t('仅能被使用一次')
+  }
+})
+
 const currentBannerImage = computed(() => {
   return bannerList.value.find(item => item.size === selectBannerSize.value) || {}
 })
@@ -162,7 +170,14 @@ onBeforeMount(() => {
       <!-- 右侧 -->
       <div class="right-content">
         <div class="row">
-          <div class="title">{{ $t('推广链接：') }}</div>
+          <div class="title">
+            <div>
+              {{ $t('推广链接') }}
+              <RxSvgIcon v-if="userStore.userInfo.identity === 'agent'" name="base/rx_ic_info"
+                class="align-middle cursor-pointer" size="12px"
+                v-tooltip.left="$t(`通过链接注册的用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
+            </div>
+          </div>
           <div class="referral-link">
             <div v-if="isNewUser" class="mask">
               <div class="show-link" @click="showMyLink">
@@ -207,7 +222,7 @@ onBeforeMount(() => {
               </i18n-t>
             </div>
             <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
-            <div> {{ $t('特权码仅能被使用一次，每日{time}自动更新。', { time: refreshTime }) }}</div>
+            <div> {{ $t('每个特权码{useTime}，每日{time}自动更新。', { time: refreshTime, useTime }) }}</div>
           </div>
         </div>
         <div class="row">

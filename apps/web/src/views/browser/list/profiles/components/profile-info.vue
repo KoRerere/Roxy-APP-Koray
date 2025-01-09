@@ -209,7 +209,6 @@ function saveWindowName(closeCallback: () => void) {
         </svg>
       </div>
     </div>
-    <!-- <div>{{ data.windowName }}</div> -->
     <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }">
       <template #display>
         <div>

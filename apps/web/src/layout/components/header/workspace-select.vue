@@ -316,7 +316,7 @@ function getAvatarStyle(workspacePicture: string) {
   color: #FFF;
   text-align: center;
   font-family: "JetBrains Mono";
-  font-size: 14px !important;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 14px;

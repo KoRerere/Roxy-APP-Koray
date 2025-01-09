@@ -26,6 +26,13 @@ const privileges = computed(() => {
       $t('{count}个窗口用量', { count: 60 }),
       $t('{count}个额外工作空间用量', { count: 2 }),
     ]
+  } else if (identity === 'agent') {
+    return [
+      $t('专属【合作】身份+徽章'),
+      $t('{count}个窗口用量', { count: 1000 }),
+      $t('{count}个额外工作空间用量', { count: 10 }),
+      $t('特权码生成权限（推广计划）'),
+    ]
   }
   return [
     $t('{count}个窗口用量', { count: userStore.userInfo.maxWindowCount }),
