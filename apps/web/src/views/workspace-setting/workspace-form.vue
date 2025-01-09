@@ -19,6 +19,8 @@ const exampleName = computed(() => {
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
 })
 
+const disabled = computed(() => !isOwner.value && workspaceInfo.value.id)
+
 /** 剩余可创建窗口数量 */
 const remainWorkspaceCount = computed(() => {
   if (workspaceInfo.value?.id) {
@@ -81,7 +83,7 @@ defineExpose({
         </div>
       </div>
       <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="!isOwner"
+        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
           :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
@@ -100,7 +102,7 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="!isOwner" :invalid="!!errorMessage" maxlength="30"
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage" maxlength="30"
             class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/30
@@ -114,7 +116,7 @@ defineExpose({
         </div>
       </div>
     </div>
-    <div v-if="isOwner && workspaceInfo.workspaceDefault !== 1" class="row">
+    <div v-if="!disabled && workspaceInfo.workspaceDefault !== 1" class="row">
       <div class="w-full flex justify-between items-center">
         <div>
           <div class="title">{{ $t('窗口创建限制') }}</div>
@@ -126,7 +128,7 @@ defineExpose({
             </i18n-t>
           </div>
         </div>
-        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :max="maxCreateWindowCount" :disabled="!isOwner"
+        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :max="maxCreateWindowCount" :disabled="disabled"
           class="!w-120px" />
       </div>
     </div>

@@ -129,6 +129,20 @@ async function toCreateBrowser() {
         </div>,
       },
     })
+  } else if (code === 410) {
+    // 默认空间额度不足
+    dialogInstance.showModal({
+      header: $t('默认空间剩余用量不足'),
+      class: 'w-[380px]',
+      okText: $t('好的'),
+      slots: {
+        default: () => <div class={cssModule.description}>
+          <div>{$t('您的默认工作空间可剩余的窗口用量已达上限。')}</div>
+          <div>{$t('您可以通过彻底删除不常用的窗口或调整其他空间的窗口限制数来恢复默认空间的相应额度。')}</div>
+          <div>{$t('如您需要更多窗口，请关注Roxy相关社群动态以获取更多。')}</div>
+        </div>,
+      },
+    })
   }
 }
 </script>

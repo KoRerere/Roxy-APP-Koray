@@ -188,10 +188,10 @@ export type SvgNames = ${typeDefine}`
         }),
       ],
     }),
-    sentryVitePlugin({
-      org: 'huoshan-9f',
-      project: process.env.NODE_ENV === 'development' ? 'roxybrowser-development' : 'roxybrowser-production',
-    }),
+    // sentryVitePlugin({
+    //   org: 'huoshan-9f',
+    //   project: process.env.NODE_ENV === 'development' ? 'roxybrowser-development' : 'roxybrowser-production',
+    // }),
   ],
 }
 

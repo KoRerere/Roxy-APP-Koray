@@ -24,6 +24,8 @@ const props = defineProps({
 })
 const emits = defineEmits(['profileOperate'])
 
+const windowName = ref(props.data.windowName)
+
 const isOpenBrowser = computed(() => {
   return props.openMessage[props.data.dirId]?.data?.percent === 100
 })
@@ -43,30 +45,30 @@ const windowPlatformList = computed(() => data.value.windowPlatformList || [])
 const list = computed(() => {
   const proxyClass = isProxy.value ? '' : data.value.lastIp ? 'direct-info' : 'direct'
   return [
-  {
-    key: 'os',
-    svg: os_image[(data.value.os as string).toLocaleLowerCase()],
-    tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', { os: data.value.os, osVersion: data.value.osVersion, coreVersion: data.value.coreVersion }),
-  },
-  {
-    key: 'proxy',
-    classes: proxyClass,
-    svg: isProxy.value ? `country-code/${data.value.lastCountry}` : data.value.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
-    tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
+    {
+      key: 'os',
+      svg: os_image[(data.value.os as string).toLocaleLowerCase()],
+      tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', { os: data.value.os, osVersion: data.value.osVersion, coreVersion: data.value.coreVersion }),
+    },
+    {
+      key: 'proxy',
+      classes: proxyClass,
+      svg: isProxy.value ? `country-code/${data.value.lastCountry}` : data.value.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
+      tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
         lastCountry: data.value.lastCountry || '--',
         lastCity: strConcat('/', data.value.lastCity) || '',
         lastIp: data.value.lastIp || '--',
         checkTime: data.value.checkTime ? formatProxyTime(data.value.checkTime) : '--',
-      }) ,
-  },
-  {
-    key: 'account',
-    image: windowPlatformList.value[0]?.platformIcon,
-    svg: windowPlatformList.value[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
-    svgColor: windowPlatformList.value[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
-    classes: windowPlatformList.value.length > 1 ? 'stack' : '',
-  },
-]
+      }),
+    },
+    {
+      key: 'account',
+      image: windowPlatformList.value[0]?.platformIcon,
+      svg: windowPlatformList.value[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
+      svgColor: windowPlatformList.value[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
+      classes: windowPlatformList.value.length > 1 ? 'stack' : '',
+    },
+  ]
 })
 
 const [show] = useContextMenu()
@@ -166,6 +168,16 @@ function getAccountOperation() {
     },
   ]
 }
+
+function saveWindowName(closeCallback: () => void) {
+  if (windowName.value.trim() && windowName.value !== props.data.windowName) {
+    props.data.windowName = windowName.value
+    emits('profileOperate', 'saveWindowName')
+  } else {
+    windowName.value = props.data.windowName
+  }
+  closeCallback()
+}
 </script>
 
 <template>
@@ -175,14 +187,17 @@ function getAccountOperation() {
       <span class="profile-num">{{ data.windowSortNum }}</span>
     </div>
     <div class="position-relative flex justify-between state" @click.stop>
-      <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" class="state-item">
+      <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
+        class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
           <img v-if="item.image" :src="item.image" class="state-icons-img pointer-events-none">
-          <RxSvgIcon v-else :name="item.svg" :color="item.svgColor" fallback="base/rx_ic_earth" class="pointer-events-none" />
+          <RxSvgIcon v-else :name="item.svg" :color="item.svgColor" fallback="base/rx_ic_earth"
+            class="pointer-events-none" />
         </div>
       </div>
       <div class="state-line">
-        <svg v-if="isOpenBrowser" xmlns="http://www.w3.org/2000/svg" width="60" height="5" viewBox="0 0 60 5" fill="none">
+        <svg v-if="isOpenBrowser" xmlns="http://www.w3.org/2000/svg" width="60" height="5" viewBox="0 0 60 5"
+          fill="none">
           <g>
             <path
               d="M0 2.5C1 0.5 2 0.5 3 2.5C4 4.5 5 4.5 6 2.5C7 0.5 8 0.5 9 2.5C10 4.5 11 4.5 12 2.5C13 0.5 14 0.5 15 2.5C16 4.5 17 4.5 18 2.5C19 0.5 20 0.5 21 2.5C22 4.5 23 4.5 24 2.5C25 0.5 26 0.5 27 2.5C28 4.5 29 4.5 30 2.5C31 0.5 32 0.5 33 2.5C34 4.5 35 4.5 36 2.5C37 0.5 38 0.5 39 2.5C40 4.5 41 4.5 42 2.5C43 0.5 44 0.5 45 2.5C46 4.5 47 4.5 48 2.5C49 0.5 50 0.5 51 2.5C52 4.5 53 4.5 54 2.5C55 0.5 56 0.5 57 2.5C58 4.5 59 4.5 60 2.5"
@@ -194,7 +209,16 @@ function getAccountOperation() {
         </svg>
       </div>
     </div>
-    <div>{{ data.windowName }}</div>
+    <!-- <div>{{ data.windowName }}</div> -->
+    <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }">
+      <template #display>
+        {{ windowName }}
+      </template>
+      <template #content="{ closeCallback }">
+        <InputText v-model="windowName" autofocus size="small" @blur="saveWindowName(closeCallback)"
+          @keydown.enter="saveWindowName(closeCallback)" />
+      </template>
+    </Inplace>
   </div>
 </template>
 
@@ -293,6 +317,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 .direct {
   transform: scale(0);
 }
+
 .direct-info {
   border: none;
   box-shadow: none;

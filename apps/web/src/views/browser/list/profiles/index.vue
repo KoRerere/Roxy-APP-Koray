@@ -583,6 +583,9 @@ function profileOperate(key: string, data: any) {
       drawer.type = 'accountList'
       drawer.title = $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
+    case 'saveWindowName':
+      singleModifyWindow(_data)
+      break
   }
 }
 

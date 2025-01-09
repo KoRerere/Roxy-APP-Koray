@@ -29,24 +29,27 @@ export const useUserStore = defineStore('user', () => {
       return {
         text: $t('创始用户'),
         icon: 'referral-program/golden',
+        iconSmall: 'referral-program/golden-small',
         color: '#DFAB65'
       }
     } else if (identity === 'invited') {
       return {
         text: $t('特邀用户'),
         icon: 'referral-program/diamond',
+        iconSmall: 'referral-program/diamond-small',
         color: '#9EA7CC'
       }
     } else if (identity === 'agent') {
       return {
         text: $t('合作用户'),
         icon: 'referral-program/agent',
+        iconSmall: 'referral-program/agent-small',
         color: '#12A3FC'
       }
     }
     return {
       text: $t('普通用户'),
-      color: '#A3A9AD'
+      color: '#171C1F'
     }
   })
 
