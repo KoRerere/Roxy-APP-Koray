@@ -65,12 +65,14 @@ function onMore(event: Event) {
           </template>
         </i18n-t>
       </div>
-      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('update:selection', [])" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff"
+        @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
-          @click="batchOperation(item._rawItem)">
+        <div v-for="item in list" :key="item.name"
+          v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }"
+          :class="{ disabled: item.disabled }" class="multiple-group-item" @click="batchOperation(item._rawItem)">
           <RxSvgIcon :name="item.icon" v-bind="item.iconProps" />
           <span v-if="item.showLabel">{{ item.label }}</span>
         </div>
@@ -109,6 +111,7 @@ function onMore(event: Event) {
     border-radius: 5px;
     border: 0.5px solid var(--Color-neutrals-600, #575d61);
     background: var(--Color-neutrals-800, #252a2e);
+    white-space: nowrap;
   }
 
   &-selected {

@@ -97,7 +97,7 @@ async function toCreateBrowser() {
   } else if (code === 407) {
     // 超出总额度
   const { useWindowCount, maxWindowCount } = userInfo.value
-  const percent = `${useWindowCount}/${maxWindowCount}`
+  const percent = `${maxWindowCount}/${maxWindowCount}`
     dialogInstance.showModal({
       header: $t('窗口额度不足（{percent}）', { percent }),
       class: 'w-[380px]',

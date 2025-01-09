@@ -8,8 +8,10 @@ import { useColumns } from './columns'
 import { API } from '/@/api'
 import { format } from 'date-fns'
 import type { UserGetBannerPictureListListData } from '@roxy/backend-api'
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const userStore = useUserStore()
+const { fetchWorkspaceList } = useWorkspaceStore()
 const { userInfo } = storeToRefs(userStore)
 const toast = useToast()
 const referralLink = ref('')
@@ -101,6 +103,7 @@ async function showMyLink() {
     // 如果是新用户，弹出提示
     toast.add({ severity: 'success', summary: $t('感谢您参与推广计划'), detail: $t('您当前的窗口创建额度已提升至 20.'), life: 2500 })
     fetchUserInfo()
+    fetchWorkspaceList()
   }
 }
 
@@ -175,7 +178,7 @@ onBeforeMount(() => {
               {{ $t('推广链接') }}
               <RxSvgIcon v-if="userStore.userInfo.identity === 'agent'" name="base/rx_ic_info"
                 class="align-middle cursor-pointer" size="12px"
-                v-tooltip.left="$t(`通过链接注册的用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
+                v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: $t('通过链接注册的用户权益') })" />
             </div>
           </div>
           <div class="referral-link">
@@ -217,7 +220,7 @@ onBeforeMount(() => {
               <i18n-t :keypath="$t('使用特权码的用户将成为【特邀用户】{tips}', { tips: '{tips}' })" scope="global">
                 <template #tips>
                   <RxSvgIcon name="base/rx_ic_info" class="align-middle cursor-pointer" size="12px"
-                    v-tooltip.left="$t(`特邀用户权益：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`)" />
+                    v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: $t('特邀用户权益') })" />
                 </template>
               </i18n-t>
             </div>
