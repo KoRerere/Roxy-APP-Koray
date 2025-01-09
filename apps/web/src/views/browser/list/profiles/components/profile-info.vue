@@ -184,7 +184,7 @@ function saveWindowName(closeCallback: () => void) {
   <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
     <div>
       <span class="profile-name">{{ workspaceName }}-</span>
-      <span class="profile-num">{{ data.windowSortNum }}</span>
+      <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
@@ -212,11 +212,14 @@ function saveWindowName(closeCallback: () => void) {
     <!-- <div>{{ data.windowName }}</div> -->
     <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }">
       <template #display>
-        {{ windowName }}
+        <div>
+          {{ windowName }}
+          <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub" />
+        </div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" @blur="saveWindowName(closeCallback)"
-          @keydown.enter="saveWindowName(closeCallback)" />
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
+          @blur="saveWindowName(closeCallback)" @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
   </div>
@@ -327,5 +330,15 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   &:hover {
     color: #7C8387;
   }
+}
+
+.window-name-input {
+  font-size: 12px;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  height: 16px;
+  padding: 8px 12px;
+  box-sizing: content-box;
 }
 </style>

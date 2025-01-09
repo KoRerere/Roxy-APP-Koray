@@ -1,6 +1,6 @@
 import { $t } from '/@/locales'
 
-const columnsConfig = {
+export const getColumnsConfig = () => ({
   key: 'browser.recycl',
   data: [
     {
@@ -22,6 +22,5 @@ const columnsConfig = {
       slot: 'actions',
     },
   ],
-}
+})
 
-export default columnsConfig

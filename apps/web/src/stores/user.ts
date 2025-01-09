@@ -37,7 +37,7 @@ export const useUserStore = defineStore('user', () => {
         text: $t('特邀用户'),
         icon: 'referral-program/diamond',
         iconSmall: 'referral-program/diamond-small',
-        color: '#9EA7CC'
+        color: '#7B88C2'
       }
     } else if (identity === 'agent') {
       return {
