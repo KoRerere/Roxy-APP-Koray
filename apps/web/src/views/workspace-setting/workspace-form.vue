@@ -36,6 +36,14 @@ const maxCreateWindowCount = computed(() => {
   return workspaceStore.maxCreateWindowCount
 })
 
+const minCreateWindowCount = computed(() => {
+  if (workspaceInfo.value?.id) {
+    return workspaceStore.currentWorkspace?.useWindowCount
+  }
+  return 0
+})
+
+
 function onInput() {
   const result = z.string()
     .min(1, $t('请输入空间名称'))
@@ -128,8 +136,8 @@ defineExpose({
             </i18n-t>
           </div>
         </div>
-        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="0" :max="maxCreateWindowCount" :disabled="disabled"
-          class="!w-120px" />
+        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="minCreateWindowCount" :max="maxCreateWindowCount"
+          :disabled="disabled" class="!w-120px" />
       </div>
     </div>
   </div>
