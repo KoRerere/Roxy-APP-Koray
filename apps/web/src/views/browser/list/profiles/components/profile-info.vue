@@ -214,7 +214,7 @@ function saveWindowName(closeCallback: () => void) {
       <template #display>
         <div>
           {{ windowName }}
-          <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub" />
+          <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub edit-window-name-icon" />
         </div>
       </template>
       <template #content="{ closeCallback }">
@@ -332,12 +332,18 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   }
 }
 
+.edit-window-name-icon {
+  visibility: hidden;
+}
+
 .window-name-input {
   font-size: 12px;
-  border: none !important;
+  border: 1px solid transparent !important;
   box-shadow: none !important;
   background-color: transparent !important;
   height: 16px;
+  line-height: 16px;
+  color: #171C1F;
   padding: 8px 12px;
   box-sizing: content-box;
 }

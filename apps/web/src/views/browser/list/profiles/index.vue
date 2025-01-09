@@ -131,7 +131,7 @@ function onRefreshTable(tabParams?: any, force = true) {
     ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   hasFiltered.value = !isEmptyValue(params)
-  tableRef.value!.refresh(params, force)
+  tableRef.value!.refresh(params, false)
 }
 
 async function saveFilters(formData: any) {
@@ -779,6 +779,10 @@ defineExpose({
 :deep(.window-table) {
   tr:not([data-p-selected=true]):hover .direct-info {
     background-color: var(--Colors-Background-bg-body-hover, #f0f3f5);
+  }
+
+  tr:not([data-p-selected=true]):hover .edit-window-name-icon {
+    visibility: visible;
   }
 }
 

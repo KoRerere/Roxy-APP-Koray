@@ -211,6 +211,11 @@ function getAvatarStyle(workspacePicture: string) {
   align-items: center;
   gap: var(--spacing-md, 6px);
 
+  :deep(.p-select-dropdown-icon) {
+    width: 14px;
+    height: 14px;
+  }
+
   .workspace-select {
     width: unset;
     border: none;
@@ -305,16 +310,16 @@ function getAvatarStyle(workspacePicture: string) {
 .workspace-icon-small {
   display: flex;
   align-items: center;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   text-transform: uppercase;
   color: #FFF;
   text-align: center;
   font-family: "JetBrains Mono";
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-style: normal;
   font-weight: 700;
-  line-height: 13px;
+  line-height: 14px;
   /* 153.846% */
   letter-spacing: -0.26px;
 }

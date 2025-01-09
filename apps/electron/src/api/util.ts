@@ -46,5 +46,10 @@ export async function getWebDomain() {
     lastWebDomain = data.webDomain
     lastRequestTime = Date.now()
   }
+  if (code !== 0) {
+    console.error('getWebDomain error', osConfig)
+  }
   return lastWebDomain
 }
+
+getWebDomain()
