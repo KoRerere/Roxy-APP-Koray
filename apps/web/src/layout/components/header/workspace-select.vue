@@ -95,10 +95,11 @@ async function showCreateWorkspaceDialog() {
 
       const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(workspaceForm.value)
       if (code === 0) {
-        console.log(data)
-        workspaceStore.getWorkspaceList()
+        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('创建成功') })
         userStore.fetchUserInfo()
         resetWorkspaceForm()
+        await workspaceStore.getWorkspaceList()
+        workspaceStore.setCurrentWorkspace(data?.workspaceId)
       } else if(code === 407) {
         showOutOfCreateWorkspaceErrorDialog()
         return Promise.reject(new Error(msg))

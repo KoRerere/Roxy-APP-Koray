@@ -46,7 +46,7 @@ onBeforeMount(() => {
     <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
       @transitionend="handleSideTransitionend">
       <div class="logo">
-        <SvgIcon name="base/logo" size="32" />
+        <SvgIcon name="base/logo" size="34" />
         <template v-if="!collapsed">
           <span>
             RoxyBrowser
@@ -107,6 +107,7 @@ onBeforeMount(() => {
   }
 
   .logo {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: var(--spacing-md, 6px);
@@ -119,6 +120,7 @@ onBeforeMount(() => {
     font-weight: 700;
     line-height: normal;
     user-select: none;
+    overflow: hidden;
 
     .env {
       display: flex;
