@@ -124,14 +124,14 @@ watch(
 
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
-function onRefreshTable(tabParams?: any, force = true) {
+function onRefreshTable(tabParams = {}, force = false) {
   const params = {
     ...props.currentFilter?._params,
     ...tabParams,
     ...filterFieldByValue(getFormData(filtersMenu.value)),
   }
   hasFiltered.value = !isEmptyValue(params)
-  tableRef.value!.refresh(params, false)
+  tableRef.value?.refresh(params, force)
 }
 
 async function saveFilters(formData: any) {

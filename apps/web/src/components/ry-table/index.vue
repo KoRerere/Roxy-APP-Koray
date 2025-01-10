@@ -173,6 +173,7 @@ const paginatorConfig = reactive({
     if (props.cacheKey && selectEvent.value) {
       localStorage.setItem(`table:${props.cacheKey}`, selectEvent.value)
     }
+    paginatorConfig.first = 0
     _request()
   },
 })
@@ -335,9 +336,10 @@ defineExpose({
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width: 3rem" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
-        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title" :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen"
-          :pt="{
+        <Column v-if="selectionMode" header-style="width: 3rem"
+          :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
+        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
+          :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen" :pt="{
             columntitle: Css_Module.columntitle,
             headercell: Css_Module.headercell,
             bodycell: Css_Module.bodycell,
@@ -345,18 +347,22 @@ defineExpose({
           <template #body="{ data }">
             <slot :name="column.slot" :data="data">
               <component :is="column.render" v-if="column.render" :data="data" />
-              <div v-else :style="{ width: `${column.width}px` || 'auto' }" :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
+              <div v-else :style="{ width: `${column.width}px` || 'auto' }"
+                :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen header-style="width: 9rem">
+        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen
+          header-style="width: 9rem">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
+                  @quick-click="operationHandler($event, data, 'single')"
+                  @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -367,12 +373,14 @@ defineExpose({
       </div>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
-        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
+        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
+        @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
+              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -383,8 +391,9 @@ defineExpose({
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
-        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
+        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
+        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
