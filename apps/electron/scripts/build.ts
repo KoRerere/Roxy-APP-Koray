@@ -114,8 +114,8 @@ const options: Configuration = {
     icon: 'logo.icns',
     hardenedRuntime: true,
     gatekeeperAssess: false,
-    entitlements: 'buildResources/entitlements.mac.plist',
-    entitlementsInherit: 'buildResources/entitlements.mac.plist',
+    entitlements: 'buildResources/entitlements.plist', // 沙盒权限
+    entitlementsInherit: 'buildResources/entitlements.plist', // 继承的沙盒权限
     identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
     notarize: false,
   },
