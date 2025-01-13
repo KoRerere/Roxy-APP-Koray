@@ -31,7 +31,7 @@ export function clearDictCache() {
 
 export async function getDictMap() {
   // if (DICT_CONFIG.isExpired()) {
-  await getDictVersion()
+  // await getDictVersion()
   // }
 
   const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
