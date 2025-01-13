@@ -17,10 +17,12 @@ declare module 'vue-router' {
     /** 不需要在菜单中显示的路由 */
     hideInMenu?: boolean
     /** 菜单类型 */
-    type?: 'group'
+    type?: 'group' | 'menu' | 'button'
     /** 路由参数 */
     params?: Record<string, any>
     /** 哪些角色可以查看此页面，不传则所有人可以查看，传则只有传入的角色才能查看 */
     roles?: Role[]
+    /** 当 type 为 button 时的点击事件函数 */
+    onClick?: () => void
   }
 }

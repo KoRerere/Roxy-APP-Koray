@@ -6,19 +6,21 @@ import { copyText } from '/@/utils/'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useColumns } from './columns'
 import { API } from '/@/api'
-import { format } from 'date-fns'
 import type { UserGetBannerPictureListListData } from '@roxy/backend-api'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
+let premiumCodeCountDownTimer: NodeJS.Timeout | null = null
 const userStore = useUserStore()
 const { fetchWorkspaceList } = useWorkspaceStore()
 const { userInfo } = storeToRefs(userStore)
 const toast = useToast()
 const referralLink = ref('')
 const premiumCode = ref('')
+// 0 代表未激活了，1 代表被激活
+const premiumCodeBeUsed = ref(0)
 const inviteUserCount = ref(0)
 const remainTime = ref('')
-const refreshTime = ref('')
+const premiumCodeExpireTime = ref(0)
 const inviteUserResult = ref()
 const bannerList = ref<UserGetBannerPictureListListData['data'][number]['images']>([])
 const selectBannerSize = ref('')
@@ -76,9 +78,9 @@ async function getInviteCode() {
   const { code, data } = await API.base.userGetInviteCodeList()
   if (code === 0) {
     premiumCode.value = data.invite_code
-    remainTime.value = format(data.expire_time * 1000, 'yyyy/MM/dd HH:mm')
-    refreshTime.value = format(data.expire_time * 1000, 'HH:mm')
-
+    premiumCodeExpireTime.value = data.expire_time * 1000
+    premiumCodeBeUsed.value = data.status
+    countDownTime()
     if (data.expire_time * 1000 < Date.now()) {
       getInviteCode()
     }
@@ -105,6 +107,27 @@ async function showMyLink() {
     fetchUserInfo()
     fetchWorkspaceList()
   }
+}
+
+/** 以倒计时的方式计算剩余时间 */
+function countDownTime() {
+  if (premiumCodeCountDownTimer) {
+    clearTimeout(premiumCodeCountDownTimer)
+  }
+  const time = premiumCodeExpireTime.value - Date.now()
+  if (time <= 0) {
+    getInviteCode()
+    return
+  }
+  // 如果大于一小时，显示小时
+  if (time > 60 * 60 * 1000) {
+    remainTime.value = Math.ceil(time / (60 * 60 * 1000)) + $t('小时')
+  } else {
+    remainTime.value = Math.ceil(time / (60 * 1000)) + $t('分钟')
+  }
+  premiumCodeCountDownTimer = setTimeout(() => {
+    countDownTime()
+  }, 1000)
 }
 
 onBeforeMount(() => {
@@ -210,7 +233,10 @@ onBeforeMount(() => {
           </div>
           <div class="referral-link">
             <div class="referral-link-value">
-              {{ premiumCode }}
+              <span :class="{ 'line-through': premiumCodeBeUsed }">{{ premiumCode }}</span>
+              <span v-if="premiumCodeBeUsed" class="ml-2 text-[12px] text-gray-400">
+                {{ $t('已被使用') }}
+              </span>
             </div>
             <RxButton class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')"
               @click="onCopy(premiumCode)" />
@@ -225,7 +251,7 @@ onBeforeMount(() => {
               </i18n-t>
             </div>
             <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
-            <div> {{ $t('每个特权码{useTime}，每日{time}自动更新。', { time: refreshTime, useTime }) }}</div>
+            <div> {{ $t('每个特权码{useTime}，每日 UTC+8 自动更新。', { useTime }) }}</div>
           </div>
         </div>
         <div class="row">

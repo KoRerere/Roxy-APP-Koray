@@ -36,18 +36,19 @@ getMembers()
   </div>
 
   <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">
-    <div class="flex flex-col gap-4 w-[20rem]">
+    <div class="flex flex-col gap-4">
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
-            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor" :size="32" :font-size="16" />
+            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor"
+              :size="32" :font-size="16" />
             <div>
               <span class="font-medium">{{ member.userName }}</span>
               <div class="text-sm text-surface-500 dark:text-surface-400">
                 {{ member.email }}
               </div>
             </div>
-            <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm">
+            <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm flex-shrink-0">
               <span>{{ roleLabelMap[member.role] }}</span>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { baseRoutes } from '/@/router/base'
 import { useUserStore } from '/@/stores/user'
-import { menuRoutes } from './menu'
+import { getMenuRoutes } from './menu'
 import { isEqual } from 'es-toolkit'
 import { useSimpleLocale } from '/@/stores/locale'
 
@@ -15,7 +15,7 @@ const router = createRouter({
       component: () => import('/@/layout/index.vue'),
       redirect: { name: 'browser-list' },
       children: [
-        ...menuRoutes,
+        ...getMenuRoutes(),
         {
           name: 'referral-program',
           path: 'referral-program',

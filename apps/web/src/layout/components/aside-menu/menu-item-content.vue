@@ -30,7 +30,10 @@ watchEffect(() => {
 })
 
 function handleClickItem(navigate: UseLinkReturn['navigate']) {
-  if (!canOpen.value || props.item.redirect) {
+  if (props.item.meta?.type === 'button') {
+    props.item.meta?.onClick?.()
+  }
+  else if (!canOpen.value || props.item.redirect) {
     navigate()
   }
 }
@@ -40,12 +43,13 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   <div class="menu-item-content" :class="{ collapsed }">
     <RouterLink v-slot="{ navigate, href, isActive }"
       :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: $t(item.meta?.title), disabled: !collapsed }" class="menu-item"
-        :href="canOpen ? undefined : href" :class="{ active: isActive }" @click="handleClickItem(navigate)">
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
+        :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+        @click="handleClickItem(navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
-          {{ $t(item.meta?.title) }}
+          {{ item.meta?.title }}
         </div>
         <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
           @click.stop="toggle" />

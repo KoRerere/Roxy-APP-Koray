@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { Role } from '/@/enums'
 import { $t } from '/@/locales'
 
-export const menuRoutes: RouteRecordRaw[] = [
+export const getMenuRoutes = (): RouteRecordRaw[] => [
   {
     path: 'browser',
     name: 'browser',
@@ -119,14 +119,28 @@ export const menuRoutes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: 'api-keys',
-    name: 'api-keys',
+    path: 'automation',
+    name: 'automation',
     meta: { title: $t('自动化'), type: 'group' },
     children: [
       {
-        path: '',
-        name: 'api-keys-page',
+        path: 'api-keys',
+        name: 'api-keys',
         meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        component: () => import('/@/views/api-keys'),
+      },
+      {
+        path: 'sync-control',
+        name: 'sync-control',
+        meta: {
+          title: $t('窗口同步'),
+          type: 'button',
+          icon: 'base/rx_ic_doc_code',
+          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
+          onClick: () => {
+            console.log('sync-control')
+          }
+        },
         component: () => import('/@/views/api-keys'),
       },
     ],

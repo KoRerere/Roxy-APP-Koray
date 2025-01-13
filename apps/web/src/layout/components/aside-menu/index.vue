@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import type { RouteRecordRaw } from 'vue-router'
 import { cloneDeep } from 'es-toolkit'
-import { menuRoutes } from '/@/router/menu'
+import { getMenuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -32,6 +32,7 @@ const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
 const { userInfo } = storeToRefs(useUserStore())
+const menuRoutes = getMenuRoutes()
 
 const Tips = {
   directives: { tooltip: Tooltip },
