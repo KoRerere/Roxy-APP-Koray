@@ -435,5 +435,6 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       text: String(winInfo.windowSortNum),
     },
     blockDomainList: store.blockDomainList,
+    blockDomainPageFile: join(__dirname, './web/blockDomain.html'),
   }
 }

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>访问受限</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      width: var(--width-xs, 384px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    img {
+      width: 90px;
+      height: 90px;
+    }
+
+    div:nth-child(2) {
+      color: var(--Colors-Text-text-secondary, #575d61);
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
+    }
+
+    div:nth-child(3) {
+      color: var(--Colors-Text-text-tertiary, #7c8387);
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 20px;
+      /* 166.667% */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <img src="/blockdomain.svg" alt="" srcset="" />
+    <div>无法访问该网址</div>
+    <div>访问受限。若您位于中国大陆地区，根据相关法律法规，当前网站无法 访问。如需帮助，请联系客服。</div>
+  </div>
+</body>
+
+</html>
