@@ -19,6 +19,8 @@ import {
   UserGetProxyRecommendInfoListData,
   UserGetProxyTableRowsListData,
   UserGetProxyTableSortOrderListData,
+  UserGetTimezoneByCoordinatesInfoListData,
+  UserGetTimezoneByCoordinatesInfoListParams,
   UserMdfProxyModuleCreateData,
   UserMdfProxyModuleCreatePayload,
   UserSaveProxyTableSortOrderCreateData,
@@ -187,6 +189,26 @@ export class ProxyApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetTimezoneByCoordinatesInfoList
+   * @summary 根据经纬度获取时区
+   * @request GET:/user_get_timezone_by_coordinates_info
+   * @response `200` `UserGetTimezoneByCoordinatesInfoListData`
+   */
+  userGetTimezoneByCoordinatesInfoList = (
+    query: UserGetTimezoneByCoordinatesInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTimezoneByCoordinatesInfoListData, any>({
+      path: `/user_get_timezone_by_coordinates_info`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

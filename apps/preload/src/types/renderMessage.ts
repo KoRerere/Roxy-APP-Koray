@@ -60,6 +60,8 @@ export interface RenderMessage {
   'app:saveSoftConfig': (config: Partial<UserGetUserConfigListData['data']>) => void
   /** 获取软件设置 */
   'app:getSoftConfig': () => StoreType
+  /** 重新拉起远程软件设置 */
+  'app:fetchSoftConfig': () => void
   /** 重新获取更新信息，如：APP、内核等版本升级信息 */
   'app:reGetUpdateInfo': <T extends keyof ReGetUpdateInfoType>(type: T) => ReGetUpdateInfoType[T]
   /** 检测更新 */

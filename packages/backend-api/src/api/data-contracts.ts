@@ -692,6 +692,8 @@ export interface UserGetWindowInfoV2ListData {
         ljdobmomdgdljniojadhoplhkpialdid?: string;
         "7c1590125f8da994f96918b2bcf03d12"?: string;
       }[];
+      /** 今日打开窗口次数 */
+      todayOpenCount?: number;
     }[];
   };
   msg: string;
@@ -1810,6 +1812,12 @@ export interface UserGetUserConfigListData {
     v2raySwitch: boolean;
     /** ip检测 */
     ipChecker: string;
+    /** 偏好设置 */
+    preferenceSettings: string[];
+    /** 快捷键设置 */
+    keySettings: string[];
+    /** 同步设置 */
+    syncSettings: string[];
     ipBlackList: string[];
     blockDomainList: string[];
     /** api token */
@@ -1839,15 +1847,22 @@ export interface UserGetDefConfigListData {
     memoryLimit: string;
     /** app 风格 0:系统 ,1:亮色,2:暗色 */
     appearance: number;
-    /** 系统代理开关，true,false,默认false */
+    /** 系统代理开关，true,false,默认true */
     systemProxySwitch: boolean;
+    /** v2ray开关，true,false,默认true */
+    v2raySwitch: boolean;
     /** ip检测 */
     ipChecker: string;
+    /** 偏好设置 */
+    preferenceSettings: string[];
+    /** 快捷键设置 */
+    keySettings: string[];
+    /** 同步设置 */
+    syncSettings: string[];
     ipBlackList: string[];
+    blockDomainList: string[];
     /** api token */
     apiToken: string;
-    /** 推广代码 */
-    promotionCode: string;
   };
   msg: string;
 }
@@ -1865,9 +1880,14 @@ export interface UserSetUserConfigCreatePayload {
   systemProxySwitch?: boolean;
   v2raySwitch?: boolean;
   ipChecker?: string;
+  /** 偏好设置 */
+  preferenceSettings?: string[];
+  /** 快捷键设置 */
+  keySettings?: string[];
+  /** 同步设置 */
+  syncSettings?: string[];
   ipBlackList?: string[];
   apiToken?: string;
-  promotionCode?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -3174,10 +3194,7 @@ export interface UserGetWindowInfoListListData {
       windowRemark?: string;
       isOften?: boolean;
       openStatus?: boolean;
-      statusInfo?: {
-        openUserId?: number;
-        openUserName?: string;
-      }[];
+      statusInfo?: string[];
       labelId?: number;
       labelColor?: string;
       labelName?: string;
@@ -3208,6 +3225,7 @@ export interface UserGetWindowInfoListListData {
       checkStatus?: number;
       labelInfo?: string[];
       platformUrlList?: string[];
+      maxWindowSort?: number;
     }[];
   };
   msg: string;
@@ -3884,6 +3902,28 @@ export interface UserDelProxyModuleV2CreateData {
   /** 状态码, int */
   code: number;
   /** 返回结果, str */
+  msg: string;
+}
+
+export interface UserGetTimezoneByCoordinatesInfoListParams {
+  /**
+   * 纬度
+   * @example "40.7128"
+   */
+  latitude?: string;
+  /**
+   * 经度
+   * @example "-74.0060"
+   */
+  longitude?: string;
+}
+
+export interface UserGetTimezoneByCoordinatesInfoListData {
+  code: number;
+  data: {
+    /** 时区 */
+    timezone: string;
+  };
   msg: string;
 }
 

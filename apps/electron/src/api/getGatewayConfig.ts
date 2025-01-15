@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { isDev, isPackaged } from '/@/utils'
 
-const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.lumi-browser.com/get_gate_conf']
+const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']
 /**
  * 读取网关配置
  */

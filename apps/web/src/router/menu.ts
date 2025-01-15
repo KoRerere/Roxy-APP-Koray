@@ -129,20 +129,6 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
         component: () => import('/@/views/api-keys'),
       },
-      {
-        path: 'sync-control',
-        name: 'sync-control',
-        meta: {
-          title: $t('窗口同步'),
-          type: 'button',
-          icon: 'base/rx_ic_doc_code',
-          roles: [Role.EDITOR, Role.MANAGER, Role.OWNER],
-          onClick: () => {
-            console.log('sync-control')
-          }
-        },
-        component: () => import('/@/views/api-keys'),
-      },
     ],
   },
 

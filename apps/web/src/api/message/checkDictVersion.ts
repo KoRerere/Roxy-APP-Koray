@@ -15,7 +15,7 @@ export async function checkDictVersion(response: AxiosResponse<any, any>) {
   isCheckingVersion = true
 
   if (remoteVersion > lastVersion) {
-    console.info('checkAppVersion', remoteVersion, lastVersion)
+    console.info('checkDictVersion', remoteVersion, lastVersion)
     await getDictVersion().finally(() => {
       isCheckingVersion = false
     })

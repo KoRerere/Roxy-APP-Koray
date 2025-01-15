@@ -32,6 +32,9 @@ const steps = [
 
 const columns = useColumns()
 
+const userIdentityText = $t('特邀用户权益')
+const registerUserIdentityText = $t('通过链接注册的用户权益')
+
 const isNewUser = computed(() => {
   return userInfo.value.identity === 'new' && userInfo.value.inviteLink === ''
 })
@@ -121,9 +124,9 @@ function countDownTime() {
   }
   // 如果大于一小时，显示小时
   if (time > 60 * 60 * 1000) {
-    remainTime.value = Math.ceil(time / (60 * 60 * 1000)) + $t('小时')
+    remainTime.value = `${Math.ceil(time / (60 * 60 * 1000))} ${$t('小时')}`
   } else {
-    remainTime.value = Math.ceil(time / (60 * 1000)) + $t('分钟')
+    remainTime.value = `${Math.ceil(time / (60 * 1000))} ${$t('分钟')}`
   }
   premiumCodeCountDownTimer = setTimeout(() => {
     countDownTime()
@@ -201,7 +204,7 @@ onBeforeMount(() => {
               {{ $t('推广链接') }}
               <RxSvgIcon v-if="userStore.userInfo.identity === 'agent'" name="base/rx_ic_info"
                 class="align-middle cursor-pointer" size="12px"
-                v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: $t('通过链接注册的用户权益') })" />
+                v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: registerUserIdentityText })" />
             </div>
           </div>
           <div class="referral-link">
@@ -224,11 +227,7 @@ onBeforeMount(() => {
           <div class="title">
             <span>{{ $t('特权码：') }}</span>
             <span class="remain-time">
-              <i18n-t :keypath="$t('下次更新时间：{remainTime}', { remainTime: '{remainTime}' })" scope="global">
-                <template #remainTime>
-                  <span>{{ remainTime }}</span>
-                </template>
-              </i18n-t>
+              {{ $t('下次更新时间：{remainTime}后', { remainTime }) }}
             </span>
           </div>
           <div class="referral-link">
@@ -246,12 +245,22 @@ onBeforeMount(() => {
               <i18n-t :keypath="$t('使用特权码的用户将成为【特邀用户】{tips}', { tips: '{tips}' })" scope="global">
                 <template #tips>
                   <RxSvgIcon name="base/rx_ic_info" class="align-middle cursor-pointer" size="12px"
-                    v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: $t('特邀用户权益') })" />
+                    v-tooltip.left="$t(`{userIdentity}：\n1、【特邀】身份+徽章\n2、60个窗口用量\n3、2个额外工作空间用量`, { userIdentity: userIdentityText })" />
                 </template>
               </i18n-t>
             </div>
             <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
-            <div> {{ $t('每个特权码{useTime}，每日 UTC+8 自动更新。', { useTime }) }}</div>
+            <div>
+              <i18n-t :keypath="$t('每个特权码{useTime}，每日 {utcTime} 自动更新。', { useTime: '{useTime}', utcTime: '{utcTime}' })"
+                scope="global">
+                <template #useTime>
+                  {{ useTime }}
+                </template>
+                <template #utcTime>
+                  <span class="font-bold">UTC+8</span>
+                </template>
+              </i18n-t>
+            </div>
           </div>
         </div>
         <div class="row">

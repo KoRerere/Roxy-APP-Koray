@@ -197,6 +197,12 @@ ipcMain.on('app:getSoftConfig', () => {
   return { ...store }
 })
 
+/** 重新拉起远程软件设置 */
+ipcMain.on('app:fetchSoftConfig', () => {
+  console.log('远程系统配置发生变化，重新拉取远程配置')
+  fetchUserConfig()
+})
+
 /** 选择文件夹 */
 ipcMain.on('dialog:selectDir', async (defaultPath?: string) => {
   try {

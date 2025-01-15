@@ -8,6 +8,7 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { delRoxynetProxy, getRoxynetProcess, setRoxynetProxy, startRoxynet } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils/getSystemProxy'
+import { API } from '/@/api'
 
 export interface ProxyDetectionResult {
   ip: string
@@ -148,6 +149,16 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
     result.timezone ||= result.time_zone
     result.latitude ||= result.lat
     result.longitude ||= result.lon
+
+    if (ipType === `IPV6`) {
+      const { code, data } = await API.proxy.userGetTimezoneByCoordinatesInfoList({ latitude: result.latitude, longitude: result.longitude }).catch((error) => {
+        console.log(`获取时区失败 === user_get_timezone_by_coordinates_info`, error)
+        return { code: 1, data: { timezone: '' } }
+      })
+      if (code === 0) {
+        result.timezone = data.timezone
+      }
+    }
   }
 
   return result || {}
