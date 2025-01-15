@@ -5,6 +5,8 @@ import { appConfig } from '/@/constants'
 import { messages, systemLanguage } from '/@/locales'
 import { createTray } from '/@/modules/app/tray'
 import { fileExists } from '/@/utils/file'
+import ejs from "ejs";
+import { join } from 'node:path'
 
 export interface StoreType {
   language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
@@ -90,6 +92,10 @@ export const store = new Proxy(_store, {
     if (prop === 'language' && value !== target.language) {
       createTray()
     }
+    // appPort 变化的时候重新生成 blockDomainPageFile
+    if (prop === 'appPort' && value !== target.appPort) {
+      renderEjsFile()
+    }
     saveConfig()
     return Reflect.set(_store, prop, value, target)
   },
@@ -135,5 +141,19 @@ export async function setupStore() {
   }
   catch (error) {
     console.error('setupStore', error)
+  } finally {
+    renderEjsFile()
   }
+}
+
+
+/** appPort 变化的时候重新生成 */
+async function renderEjsFile() {
+  const baseUrl = `http://127.0.0.1:${store.appPort}`
+  const basePath = store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
+
+  // 生成 blockDomain.html 给内核 blockDomainPageFile 使用
+  ejs.renderFile(join(basePath, 'blockDomain.ejs'), { baseUrl }, (err, str) => {
+    writeFile(join(basePath, 'blockDomain.html'), str)
+  })
 }

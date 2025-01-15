@@ -1,5 +1,4 @@
 import express from 'express'
-import { join } from 'node:path'
 import { getPortPromise } from 'portfinder'
 import { appConfig } from '/@/constants'
 import { setupRoxynetReceiver } from '/@/modules/appServer/roxynet-receiver'
@@ -47,3 +46,4 @@ export async function setupAppServer() {
   }
   return promise
 }
+

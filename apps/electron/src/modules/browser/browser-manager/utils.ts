@@ -6,7 +6,7 @@ import { appConfig } from '/@/constants'
 import language from '/@/constants/language.json'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
-import { getSystemProxyAddress } from '/@/utils'
+import { getSystemProxyAddress, isPackaged } from '/@/utils'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
