@@ -600,6 +600,7 @@
   "确认": "confirmar",
   "示例": "Ejemplo",
   "禁止": "prohibir",
+  "禁止加载大于以下的图片（0为不加载任何图片，为防止无法显示任何图形验证，建议填写10KB ）": "",
   "禁用沙盒": "Deshabilitar la zona de pruebas",
   "离开空间": "dejar espacio",
   "移动到项目": "",

@@ -84,7 +84,8 @@ function onCopy(dirId: string) {
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
 
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
@@ -133,6 +134,22 @@ function onCopy(dirId: string) {
                       <InputText v-bind="item" v-model="item.value" type="text" />
                     </template>
                   </InputGroup>
+                </div>
+              </template>
+              <template #forbiddenPictureSize="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <div>
+                    <div class="tip-text">
+                      {{ $t('禁止加载大于以下的图片（0为不加载任何图片，为防止无法显示任何图形验证，建议填写10KB ）') }}
+                    </div>
+                    <div class="w-[105px] mt-2">
+                      <IconField>
+                        <InputNumber v-model="input.value" inputClass="w-full !pr-[28px]" size="small" />
+                        <InputIcon class="tip-text">KB</InputIcon>
+                      </IconField>
+                    </div>
+                  </div>
                 </div>
               </template>
             </RyForm>
@@ -199,5 +216,14 @@ $spacing-x: 66px;
 
 :deep(.rx-label) {
   max-width: 120px;
+}
+
+.tip-text {
+  color: var(--Colors-Text-text-tertiary, #7c8387);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16px;
 }
 </style>

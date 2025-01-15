@@ -27,6 +27,7 @@ export function clearDictCache() {
   DICT_CONFIG.EXPIRED_VALUE = 0
   localStorage.removeItem('$dict_version')
   localStorage.removeItem('$dict_map')
+  localStorage.removeItem('lastDictVersion')
 }
 
 export async function getDictMap() {

@@ -472,6 +472,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('开启'), value: true },
         { label: $t('关闭'), value: false },
       ],
+      change(input: any) {
+        setInputVisible(basicInputs, 'forbiddenPictureSize', input.value === false)
+      },
+    },
+    {
+      label: ' ',
+      name: 'forbiddenPictureSize',
+      value: data.forbiddenPictureSize ?? 0,
+      visible: initInputVisible(data.forbidImage, false, false),
+      slot: 'forbiddenPictureSize',
     },
     {
       type: 'radio',
