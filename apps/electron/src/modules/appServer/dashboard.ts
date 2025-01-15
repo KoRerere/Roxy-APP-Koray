@@ -130,8 +130,8 @@ export async function setupDashboardServer(app: express.Application) {
   if (isPackaged) {
     app.use('/dashboard', async (req, res, next) => {
       const { id = '' } = req.query
-      const isUseExternal = store.isExternalWeb && await fileExists(join(appConfig.webDir, 'dashboard.html'))
-      const filePath = join(isUseExternal ? appConfig.webDir : join(__dirname, './web'), 'dashboard.html')
+      const isUseExternal = store.isExternalWeb && await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
+      const filePath = join(isUseExternal ? appConfig.externalWebDir : appConfig.buildInWebDir, 'dashboard.html')
       const browserItem = await browserManager.getOpenedBrowser(id as string)
 
       try {

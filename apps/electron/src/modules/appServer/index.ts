@@ -20,9 +20,9 @@ export async function setupAppServer() {
   // 注册工作台路由
   setupDashboardServer(app)
   // APP 内置 web 服务中间件
-  const buildInWebMid = express.static(join(__dirname, './web'))
+  const buildInWebMid = express.static(appConfig.buildInWebDir)
   // APP 外置 web 服务中间件
-  const externalWebMid = express.static(appConfig.webDir)
+  const externalWebMid = express.static(appConfig.externalWebDir)
   // APP web 服务中间件
   app.use((req, res, next) => {
     if (store.isExternalWeb) {

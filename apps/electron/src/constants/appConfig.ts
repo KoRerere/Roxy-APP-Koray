@@ -28,8 +28,15 @@ export const appConfig = {
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */
   defaultBrowserCacheRootDir: join(sessionDir, 'browser-cache'),
-  /** web 资源目录 */
-  webDir: join(sessionDir, 'web'),
+  /** asar 解压后的文件路径 */
+  unpackedFilePath: join(process.resourcesPath, 'app.asar.unpacked'),
+  /** 外部 web 资源目录 */
+  externalWebDir: join(sessionDir, 'web'),
+  /** APP 内置的 web 资源目录 */
+  get buildInWebDir() {
+    return join(appConfig.unpackedFilePath, 'dist', 'web')
+  },
+
 } as const
 
 console.log('appConfig', appConfig)

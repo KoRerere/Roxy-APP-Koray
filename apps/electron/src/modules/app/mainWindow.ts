@@ -17,8 +17,8 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
 
   if (isPackaged && !skipCompare) {
     try {
-      const buildInWebVersion = await readFile(join(__dirname, './web/version'), 'utf-8')
-      const externalWebVersion = await readFile(join(appConfig.webDir, 'version'), 'utf-8')
+      const buildInWebVersion = await readFile(join(appConfig.buildInWebDir, 'version'), 'utf-8')
+      const externalWebVersion = await readFile(join(appConfig.externalWebDir, 'version'), 'utf-8')
       store.isExternalWeb = compare(externalWebVersion, buildInWebVersion, '>')
     }
     catch (error) {

@@ -155,7 +155,7 @@ export const webUpdater = new class WebUpdater {
     console.log('[WebUpdater] extract start')
     const extractDir = await fileOperations.executeTask('decompress', {
       src: this.webZipPath,
-      dest: appConfig.webDir,
+      dest: appConfig.externalWebDir,
     }).finally(() => {
       this.remoteVersionInfo = null
     })
@@ -165,7 +165,7 @@ export const webUpdater = new class WebUpdater {
   async upgradeNow() {
     if (this.remoteVersionInfo) {
       await this.extract()
-      store.isExternalWeb = await fileExists(join(appConfig.webDir, 'dashboard.html'))
+      store.isExternalWeb = await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
       getMainWindow()?.reload()
       await updateMainWindowPageTitle()
     }

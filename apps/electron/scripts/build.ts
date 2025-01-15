@@ -33,6 +33,9 @@ const options: Configuration = {
   productName: appName,
   copyright: appName,
   asar: true,
+  asarUnpack: [
+    "dist/web"
+  ],
   extraMetadata: {
     version,
     name: appName,
