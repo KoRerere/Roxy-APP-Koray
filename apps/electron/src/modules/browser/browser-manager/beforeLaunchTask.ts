@@ -281,7 +281,7 @@ export class BeforeLaunchTask {
       args.push('--disable-gpu')
     };
 
-    return args
+    return args.filter(item => item.trim() !== '')
   }
 
   /** 更新浏览器偏好设置 */
