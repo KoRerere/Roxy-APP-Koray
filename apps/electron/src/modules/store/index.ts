@@ -142,7 +142,7 @@ export async function setupStore() {
   catch (error) {
     console.error('setupStore', error)
   } finally {
-    renderEjsFile()
+    setTimeout(renderEjsFile, 2000)
   }
 }
 
