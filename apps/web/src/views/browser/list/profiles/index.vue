@@ -401,10 +401,11 @@ async function onRemark(datas: any) {
           title: $t('为所选窗口添加备注'),
           inputs: [
             {
-              type: 'text',
+              type: 'textarea',
               name: 'windowRemark',
               placeholder: $t('请输入备注'),
               value: datas[0].windowRemark,
+              rows: 5
             },
           ],
         },

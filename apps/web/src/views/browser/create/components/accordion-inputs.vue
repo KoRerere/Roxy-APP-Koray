@@ -141,7 +141,7 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <div>
                     <div class="tip-text">
-                      {{ $t('禁止加载大于以下的图片（0为不加载任何图片，为防止无法显示任何图形验证，建议填写10KB ）') }}
+                      {{ $t('禁止加载超过以下大小的图片（如果设置为0则不加载任何图片，为避免无法显示验证码，建议填写10KB）') }}
                     </div>
                     <div class="w-[105px] mt-2">
                       <IconField>

@@ -8,6 +8,7 @@ import { useColumns } from './columns'
 import { API } from '/@/api'
 import type { UserGetBannerPictureListListData } from '@roxy/backend-api'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { format } from 'date-fns'
 
 let premiumCodeCountDownTimer: NodeJS.Timeout | null = null
 const userStore = useUserStore()
@@ -83,7 +84,7 @@ async function getInviteCode() {
     premiumCode.value = data.invite_code
     premiumCodeExpireTime.value = data.expire_time * 1000
     premiumCodeBeUsed.value = data.status
-    countDownTime()
+    calculateCountdown()
     if (data.expire_time * 1000 < Date.now()) {
       getInviteCode()
     }
@@ -112,26 +113,21 @@ async function showMyLink() {
   }
 }
 
-/** 以倒计时的方式计算剩余时间 */
-function countDownTime() {
-  if (premiumCodeCountDownTimer) {
-    clearTimeout(premiumCodeCountDownTimer)
-  }
-  const time = premiumCodeExpireTime.value - Date.now()
-  if (time <= 0) {
-    getInviteCode()
-    return
-  }
-  // 如果大于一小时，显示小时
-  if (time > 60 * 60 * 1000) {
-    remainTime.value = `${Math.ceil(time / (60 * 60 * 1000))} ${$t('小时')}`
+function calculateCountdown() {
+  const currentTime = Date.now(); // 当前时间的时间戳（毫秒）
+  const remainingTime = premiumCodeExpireTime.value - currentTime;
+
+  if (remainingTime > 0) {
+    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+    remainTime.value = `${hours} ${$t('小时')} ${minutes} ${$t('分钟')}`;
+    setTimeout(calculateCountdown, 1000)
   } else {
-    remainTime.value = `${Math.ceil(time / (60 * 1000))} ${$t('分钟')}`
+    getInviteCode()
   }
-  premiumCodeCountDownTimer = setTimeout(() => {
-    countDownTime()
-  }, 1000)
 }
+
+
 
 onBeforeMount(() => {
   // 尚未加入推广计划的用户
@@ -251,8 +247,7 @@ onBeforeMount(() => {
             </div>
             <div>{{ $t('若使用者的账户无邀请人，则会成为您的名下用户。') }}</div>
             <div>
-              <i18n-t :keypath="$t('每个特权码{useTime}，每日 {utcTime} 自动更新。', { useTime: '{useTime}', utcTime: '{utcTime}' })"
-                scope="global">
+              <i18n-t :keypath="$t('每个特权码{useTime}。', { useTime: '{useTime}' })" scope="global">
                 <template #useTime>
                   {{ useTime }}
                 </template>

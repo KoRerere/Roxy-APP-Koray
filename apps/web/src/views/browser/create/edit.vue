@@ -30,7 +30,13 @@ const loading = ref(false)
 const windowInfo = ref({})
 
 onBeforeMount(async () => {
-  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  const { code, data: { rows: [data] }, msg } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+
+  if (code !== 0) {
+    showToast(code, msg)
+    return
+  }
+
   windowInfo.value = data
   const [_inputsGroup, _original] = await getInputsGroup(data, showToast)
   inputsGroup.value = _inputsGroup
