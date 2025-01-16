@@ -150,7 +150,7 @@ export class BrowserItem {
           const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint })
           if (code === 0) {
             console.log('修改指纹成功', fingerprint)
-            const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id })
+            const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' })
             if (code === 0 && data.rows[0]) {
               // console.log('获取窗口信息成功', data.rows[0])
               this.winInfo = data.rows[0]

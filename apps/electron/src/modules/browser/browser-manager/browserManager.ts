@@ -204,7 +204,7 @@ export class BrowserManager {
 
   /** 获取窗口列表 */
   private async getWindowList(dirIds: string[]) {
-    const commonParams = { page_index: 1, page_size: 500, isDelete: 0 }
+    const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
     const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
       .then(res => {
         if (res.code !== 0) {
