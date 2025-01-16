@@ -34,7 +34,7 @@ function decryptFingerprintConfig(enData) {
   return str;
 }
 
-content = fs.readFileSync("C:\\Users\\Administrator\\AppData\\Roaming\\RoxyBrowserDev\\browser-cache\\b1631c3596e1ad226ece1360f8c46b4d\\lumi.conf")
+content = fs.readFileSync("C:\\Users\\Administrator\\AppData\\Roaming\\RoxyBrowserDev\\browser-cache\\659716109cbd47c968fff99bb40540c8\\lumi.conf")
 const rst = decryptFingerprintConfig(content.toString())
 console.log(rst)
 const { spawn } = require('child_process');

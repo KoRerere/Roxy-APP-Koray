@@ -439,8 +439,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     blockDomainPageFile: join(appConfig.buildInWebDir, 'blockDomain.html'),
     /** 禁止加载图片的大小，单位:KB, 0 表示为禁止加载所有图片，如果要禁止，建议设置为10 */
     get imageSizeLimit() {
-      if (winInfo.forbidImage) {
-        return winInfo.forbiddenPictureSize
+      if (!winInfo.forbidImage) {
+        return Number(winInfo.forbiddenPictureSize)
       }
     }
   }
