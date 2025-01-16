@@ -654,7 +654,7 @@ onBeforeMount(() => {
   canceCloselListener = listenCloseMessage()
 
   window.electronAPI
-    .send('browser:getOpenedBrowser')
+    .send('browser:getOpenedBrowserMessage')
     .then((state) => {
       state.forEach((item: any) => {
         Reflect.set(openMessage, item.dirId, { data: item })

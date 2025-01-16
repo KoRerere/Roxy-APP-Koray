@@ -4,7 +4,7 @@ import { compare } from 'compare-versions'
 import { app, BrowserWindow, screen } from 'electron'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { appConfig, mediaProtocolName } from '/@/constants'
+import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
 import { isDev, isPackaged, isProd, isWindows } from '/@/utils/'
@@ -45,11 +45,13 @@ function createWindow(options?: BrowserWindowConstructorOptions) {
       spellcheck: false,
       // https://www.electronjs.org/docs/latest/api/webview-tag#warning
       webviewTag: false,
-      preload: isPackaged ? join(__dirname, './preload/index.cjs') : join(__dirname, '../../preload/dist/index.cjs'),
+      preload: appConfig.preloadFilePath
       // devTools: !isProd,
     },
     ...options,
   })
+
+  browserWindow[ROXY_WINDOW_ID_KEY] = ROXY_MAIN_WINDOW_ID
 
   browserWindow.webContents.session.protocol.registerFileProtocol(
     mediaProtocolName,

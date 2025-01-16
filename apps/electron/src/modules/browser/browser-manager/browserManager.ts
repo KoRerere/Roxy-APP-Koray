@@ -91,20 +91,12 @@ export class BrowserManager {
     const secondPromise = secondBatch.length ? this.getWindowList(secondBatch) : []
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
     for (const winInfo of winInfoList) {
-      if (winInfo.todayOpenCount >= 10000) {
-        sendErrorMessage($t('今日打开次数已达上限'), winInfo.dirId!)
-        continue
-      }
       await this.launch(winInfo).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
       })
     }
 
     for (const winInfo of await secondPromise) {
-      if (winInfo.todayOpenCount >= 10000) {
-        sendErrorMessage($t('今日打开次数已达上限'), winInfo.dirId!)
-        continue
-      }
       await this.launch(winInfo).catch((error) => {
         console.error(`BrowserManager ${winInfo.dirId} === 启动失败`, error)
       })

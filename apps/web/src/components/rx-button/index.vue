@@ -40,7 +40,8 @@ defineExpose({
 </script>
 
 <template>
-  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading"
+    :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />
@@ -221,6 +222,7 @@ defineExpose({
 
 .p-button-text {
   border-color: transparent;
+  background: transparent;
   box-shadow: none;
 
   &:not(:disabled):hover {

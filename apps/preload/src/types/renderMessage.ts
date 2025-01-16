@@ -1,4 +1,4 @@
-import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoCreatePayload, UserGetAppUpgradeCreateData, UserGetCoreUpgradeCreateData, UserGetPluginListListData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserAddWindowInfoV2CreatePayload, UserGetAppUpgradeCreateData, UserGetCoreUpgradeCreateData, UserGetSystemPluginListData, UserGetUserConfigListData } from '@roxy/backend-api'
 import type { OsConfig } from '#roxybrowser/constants'
 import type { LastMessage } from '#roxybrowser/modules/browser/browser-manager/beforeLaunchTask'
 import type { WindowItemType } from '#roxybrowser/modules/browser/browser-manager/types'
@@ -11,6 +11,7 @@ import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/ut
 import type { RandomFingerprint, RandomFingerprintFuncParameters, RandomFingerprintFuncReturnTypes } from '#roxybrowser/utils/randomFingerprint'
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
+import { SyncControlAPIResponse, SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from '#roxybrowser/modules/sync-control/model'
 
 interface ReGetUpdateInfoType {
   app: UserGetAppUpgradeCreateData
@@ -26,8 +27,10 @@ export interface RenderMessage {
   'browser:batchClose': (dirIds: string[]) => void
   /** 批量删除窗口 */
   'browser:batchRemove': (dirIds: string[]) => void
-  /** 批量删除窗口 */
-  'browser:getOpenedBrowser': () => LastMessage[]
+  /** 获取已打开的窗口 */
+  'browser:getOpenedBrowser': () => WindowItemType[]
+  /** 获取已打开创建信息 */
+  'browser:getOpenedBrowserMessage': () => LastMessage[]
   /** 清除浏览器缓存， */
   'browser:clearCache': (payload: { clearType: 'partial' | 'all', dirId: string }) => void
 
@@ -86,6 +89,8 @@ export interface RenderMessage {
   'app:showHideTrafficLight': (show: boolean) => void
   /** 隐藏商业化弹窗 */
   'app:hideBusinessPopup': () => void
+  /** 设置窗口是否忽略鼠标事件 */
+  'app:set-ignore-mouse-events': (ignore: boolean, options?: { forward: boolean }) => void
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void
@@ -111,7 +116,7 @@ export interface RenderMessage {
   /** 随机生成字体 */
   'util:genRandomFonts': () => string[]
   /** 生成随机指纹 */
-  'util:genRandomFingerprint': (payload: Partial<UserAddWindowInfoCreatePayload>, count?: number) => RandomFingerprint
+  'util:genRandomFingerprint': (payload: Partial<UserAddWindowInfoV2CreatePayload>, count?: number) => RandomFingerprint
   /** 按需调用生成指纹函数 */
   'util:callRandomFingerprintFunc': (payload: Partial<RandomFingerprintFuncParameters>) => RandomFingerprintFuncReturnTypes
   /** AES-GCM 加密 */
@@ -128,4 +133,48 @@ export interface RenderMessage {
 
   /** 获取 os 配置，用于 APP 升级等接口的参数 */
   'const:osConfig': () => OsConfig
+
+  /** 窗口同步器相关 */
+  /** 打开窗口同步器 */
+  'syncControl:open': () => void
+  /** 关闭窗口同步器 */
+  'syncControl:close': () => void
+  /** 开始同步窗口 */
+  'syncControl:start': (dirIds: string[]) => void
+  /** 停止同步窗口 */
+  'syncControl:stop': () => void
+  /** 销毁顶部操作栏 */
+  'syncControl:destroyActionBar': () => void
+  /** 宫格布局、堆叠布局、自定义布局 */
+  'syncControl:doLayout': (payload: SyncControlDoLayoutPayload) => Promise<SyncControlAPIResponse>
+  /**
+   * 批量输入文本
+   *
+   * body参数格式
+    {
+      "mode":xx(string),
+      "data":xxx(string)
+    }
+
+    当mode为same的时候，表示所有窗口使用相同文本，data为文本内容
+    当mode为diff的时候，表示每个窗口使用不同的内容，data为每个窗口的内容,用dict表示,可以为pid,value为文本内容，例如：
+    {
+      "10000":"aaaa",
+      "10002":"bbbb"
+    }
+
+    当mode为random的时候,表示随机生成，data为随机策略，格式为dict,
+    {
+      // 随机范围 -- 注意传入的是string类型
+      "min":"111",
+      "max":"2222",
+    }
+   * */
+  'syncControl:batchInputText': (payload: SyncControlSendTextPayload) => Promise<SyncControlAPIResponse>
+  /** 显示所有窗口 */
+  'syncControl:showAll': () => Promise<SyncControlAPIResponse>
+  /** 动态修改同步设置 */
+  'syncControl:changeSyncSettings': (settings: SyncControlSettings) => Promise<SyncControlAPIResponse>
+  /** 打开偏好设置弹窗 */
+  'syncControl:openPreferencesDialog': () => void
 }

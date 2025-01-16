@@ -21,6 +21,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  readonly: {
+    type: Boolean,
+    default: false,
+  },
+  filterKeys: {
+    type: Array as PropType<string[]>,
+    default: ['os', 'proxy', 'account'],
+  },
 })
 const emits = defineEmits(['profileOperate'])
 
@@ -68,13 +76,13 @@ const list = computed(() => {
       svgColor: windowPlatformList.value[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
       classes: windowPlatformList.value.length > 1 ? 'stack' : '',
     },
-  ]
+  ].filter(item => props.filterKeys.includes(item.key))
 })
 
 const [show] = useContextMenu()
 
 function onClick(event: Event, key: string) {
-  if (props.disabled) {
+  if (props.disabled || props.readonly) {
     return
   }
 
@@ -186,7 +194,7 @@ function saveWindowName(closeCallback: () => void) {
       <span class="profile-name">{{ workspaceName }}-</span>
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort}`.length, '0') }}</span>
     </div>
-    <div class="position-relative flex justify-between state" @click.stop>
+    <div class="position-relative flex justify-between state" :class="{ 'w-[104px]': list.length > 1 }" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
         class="state-item">
         <div class="flex-cc cursor-pointer state-icons" :class="item.classes" @click.stop="onClick($event, item.key)">
@@ -195,7 +203,7 @@ function saveWindowName(closeCallback: () => void) {
             class="pointer-events-none" />
         </div>
       </div>
-      <div class="state-line">
+      <div v-if="list.length > 1" class="state-line">
         <svg v-if="isOpenBrowser" xmlns="http://www.w3.org/2000/svg" width="60" height="5" viewBox="0 0 60 5"
           fill="none">
           <g>
@@ -209,10 +217,10 @@ function saveWindowName(closeCallback: () => void) {
         </svg>
       </div>
     </div>
-    <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }">
+    <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }" :disabled="disabled || readonly">
       <template #display>
         <div>
-          {{ windowName }}
+          <span style="color: #171C1F;">{{ windowName }}</span>
           <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub edit-window-name-icon" />
         </div>
       </template>
@@ -252,7 +260,6 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 }
 
 .state {
-  width: 104px;
   z-index: 0;
 
   &-line {

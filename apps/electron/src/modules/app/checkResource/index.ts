@@ -1,5 +1,6 @@
 import { getWebDomain } from '/@/api/util'
 import { checkRoxynetBin } from '/@/modules/app/checkResource/checkRoxynetBin'
+import { checkRoxySyncBin } from '/@/modules/app/checkResource/checkRoxySyncBin'
 import { ipcMain } from '/@/modules/ipc'
 import { webUpdater } from '/@/modules/updater/webUpdater'
 
@@ -17,6 +18,8 @@ export async function checkResource() {
     const webDomain = await getWebDomain()
     // 检测更新 roxynet
     await checkRoxynetBin(webDomain)
+    // 检测更新 roxySync
+    await checkRoxySyncBin(webDomain)
     // 检测更新 web
     await webUpdater.checkForUpdates({
       onDownloadProgress: (percentage) => {

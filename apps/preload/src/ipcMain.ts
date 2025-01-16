@@ -17,7 +17,7 @@ export class IPCMain<
 
   on<T extends keyof MessageType>(
     name: T,
-    fn: (...args: Parameters<MessageType[T]>) => ReturnType<MessageType[T]>,
+    fn: (event: IpcMainInvokeEvent, ...args: Parameters<MessageType[T]>) => ReturnType<MessageType[T]>,
   ): void {
     if (this.listeners[name])
       throw new Error(`消息处理器 ${String(name)} 已存在`)
@@ -57,7 +57,7 @@ export class IPCMain<
     try {
       // console.log("handleReceivingMessage", payload);
       if (this.listeners[payload.name]) {
-        const res = await this.listeners[payload.name](...payload.payload)
+        const res = await this.listeners[payload.name](event, ...payload.payload)
         return {
           type: 'success',
           result: res,

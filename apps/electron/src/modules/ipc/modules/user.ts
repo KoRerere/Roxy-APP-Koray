@@ -1,0 +1,47 @@
+
+
+import path from "path"
+import { browserManager } from "/@/modules/browser"
+import { IPCMainInstance } from "/@/modules/ipc/types"
+import { openAPIServer } from "/@/modules/openapi"
+import { fetchUserConfig, store } from "/@/modules/store"
+import { aliOSS } from "/@/utils"
+
+export function setupUserIpc(ipcMain: IPCMainInstance) {
+
+  /** 登录成功后，保存用户信息 */
+  ipcMain.on('user:setUserInfo', (event, userInfo) => {
+    store.token = userInfo.token
+    store.userId = userInfo.userId
+    // 重新获取用户配置
+    fetchUserConfig().then(() => {
+      if (store.isShowBusinessDialog) {
+        ipcMain.send('app:show-business-popup')
+      }
+    })
+    openAPIServer.start()
+    // aliOSS.init()
+  })
+
+  /** 登录成功后，保存用户信息 */
+  ipcMain.on('user:logout', (event,) => {
+    browserManager.closeAll().finally(() => {
+      store.token = ''
+      Reflect.deleteProperty(store, 'userId')
+    })
+  })
+
+  /** 切换空间时设置当前空间 ID  */
+  ipcMain.on('user:setWorkspaceId', (event, workspaceId) => {
+    store.workspaceId = workspaceId
+  })
+
+  /** 用户上传头像 */
+  ipcMain.on('user:uploadAvatar', async (event, avatarPath) => {
+    const userId = store.userId
+    const extname = path.extname(avatarPath)
+    console.log('上传头像', userId, avatarPath, extname)
+    const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}${extname}`, avatarPath)
+    return url
+  })
+}

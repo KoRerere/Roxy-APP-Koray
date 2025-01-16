@@ -7,6 +7,7 @@ import { createTray } from '/@/modules/app/tray'
 import { fileExists } from '/@/utils/file'
 import ejs from "ejs";
 import { join } from 'node:path'
+import { isPackaged } from '/@/utils'
 
 export interface StoreType {
   language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
@@ -149,6 +150,8 @@ export async function setupStore() {
 
 /** appPort 变化的时候重新生成 */
 async function renderEjsFile() {
+  if (!isPackaged) return
+
   const baseUrl = `http://127.0.0.1:${store.appPort}`
   const basePath = store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
 
