@@ -90,11 +90,11 @@ export const store = new Proxy(_store, {
   set(target, prop: keyof StoreType, value) {
     // 语言变更时，重新创建托盘
     if (prop === 'language' && value !== target.language) {
-      createTray()
+      setTimeout(createTray)
     }
     // appPort 变化的时候重新生成 blockDomainPageFile
     if (prop === 'appPort' && value !== target.appPort) {
-      renderEjsFile()
+      setTimeout(renderEjsFile)
     }
     saveConfig()
     return Reflect.set(_store, prop, value, target)
