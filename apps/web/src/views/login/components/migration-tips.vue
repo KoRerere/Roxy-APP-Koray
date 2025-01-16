@@ -42,7 +42,8 @@ async function handleMigration() {
   <div class="migration-tips">
     <div class="content">
       <span>
-        <i18n-t :keypath="$t('为了提供更好的体验，我们已推出全新版本的客户端，并正式更名为 RoxyBrowser。点击 {link} 了解详情。', { link: '{link}' })" scope="global">
+        <i18n-t :keypath="$t('为了提供更好的体验，我们已推出全新版本的客户端，并正式更名为 RoxyBrowser。点击 {link} 了解详情。', { link: '{link}' })"
+          scope="global">
           <template #link>
             <a href="https://roxybrowser.com/" target="_blank">roxybrowser.com</a>
           </template>
@@ -56,7 +57,9 @@ async function handleMigration() {
     <div class="content">
       <span>{{ $t('1. Lumibrowser 中的所有窗口、代理、扩展等数据将自动同步至 RoxyBrowser 默认工作空间（每位用户将拥有专属工作空间）') }}</span>
       <span>
-        <i18n-t :keypath="$t('2. {desc}：团队中的窗口将归属主账号的工作空间，并由主账号统一管理（窗口数据归于主账号，代理及扩展数据仍为个人所有），主账号可以通过邀请，使成员加入工作空间并分配相应权限。', { desc: '{desc}' })" scope="global">
+        <i18n-t
+          :keypath="$t('2. {desc}：团队中的窗口将归属主账号的工作空间，并由主账号统一管理（窗口数据归于主账号，代理及扩展数据仍为个人所有），主账号可以通过邀请，使成员加入工作空间并分配相应权限。', { desc: '{desc}' })"
+          scope="global">
           <template #desc>
             <b>团队迁移说明</b>
           </template>
@@ -108,11 +111,11 @@ async function handleMigration() {
   gap: var(--spacing-md, 12px);
   align-self: stretch;
   color: var(--Colors-Text-text-secondary, #575d61);
-  font-family: 'PingFang SC';
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: var(--Line-Height-text-sm, 18px); /* 150% */
+  line-height: var(--Line-Height-text-sm, 18px);
+  /* 150% */
 }
 
 .footer {
