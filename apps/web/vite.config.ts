@@ -67,6 +67,7 @@ const config: UserConfig = {
   resolve: {
     alias: {
       '/@/': `${join(PACKAGE_ROOT, 'src')}/`,
+      '#roxybrowser/': `${join(PROJECT_ROOT, 'apps/electron/src')}/`,
     },
   },
 

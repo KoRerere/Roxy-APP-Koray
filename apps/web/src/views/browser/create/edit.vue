@@ -91,8 +91,7 @@ function oldFieldsFormat() {
           <rxEditDiv v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo"
-            :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
             @create="createProfile" />
         </div>
       </div>

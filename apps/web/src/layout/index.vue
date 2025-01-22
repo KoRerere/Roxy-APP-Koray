@@ -8,7 +8,6 @@ import { emitter } from '../utils/eventBus'
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
-const transitionend = ref<boolean>(true)
 const loading = ref<boolean>(false)
 const anntList = ref()
 
@@ -18,14 +17,6 @@ watch(() => currentWorkspace.value?.id, () => {
     loading.value = !currentWorkspace.value?.id
   }, 1200)
 }, { immediate: true })
-
-function handleSideTransitionend() {
-  transitionend.value = true
-}
-
-function handleSideTransitionstart() {
-  transitionend.value = false
-}
 
 async function getAnnt() {
   const { data } = await API.base.userGetAnntListList()
@@ -43,20 +34,14 @@ onBeforeMount(() => {
     <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
   </div>
   <div v-show="!loading" class="rx-layout">
-    <div class="rx-side" :class="{ collapsed, transitionend }" @transitionstart="handleSideTransitionstart"
-      @transitionend="handleSideTransitionend">
+    <div class="rx-side" :class="{ collapsed }">
       <div class="logo">
-        <SvgIcon name="base/logo" size="34" />
+        <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
-          <span>
-            RoxyBrowser
-          </span>
-          <div class="env">
-            BETA
-          </div>
+          RoxyBrowser
         </template>
       </div>
-      <AsideMenu :collapsed :transitionend />
+      <AsideMenu :collapsed />
       <RxLayoutFooter v-model:collapsed="collapsed" />
     </div>
     <main class="rx-main">
@@ -85,7 +70,7 @@ onBeforeMount(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: var(--Colors-Background-bg-page, #fafbfc);
+  background: #F7FBFD;
 }
 
 .rx-side {
@@ -93,6 +78,7 @@ onBeforeMount(() => {
   display: flex;
   width: 220px;
   padding: var(--spacing-2xl, 16px);
+  padding-top: 11px;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
@@ -115,9 +101,8 @@ onBeforeMount(() => {
     color: var(--Color-neutrals-950, #0e1214);
     text-align: center;
     font-family: Archivo;
-    font-size: 14px;
+    font-size: 18px;
     font-style: normal;
-    font-weight: 700;
     line-height: normal;
     user-select: none;
     overflow: hidden;

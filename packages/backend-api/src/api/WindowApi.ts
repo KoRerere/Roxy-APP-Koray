@@ -22,8 +22,6 @@ import {
   UserAnalysisWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
   UserBatchWindowInfoV2CreatePayload,
-  UserClearWindowCacheApiCreateData,
-  UserClearWindowCacheApiCreatePayload,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
   UserCreateWindowInspectListData,
@@ -63,8 +61,6 @@ import {
   UserMdfWindowInfoBatchV2CreatePayload,
   UserMdfWindowInfoSingleV2CreateData,
   UserMdfWindowInfoSingleV2CreatePayload,
-  UserMdfWindowSyncStatusCreateData,
-  UserMdfWindowSyncStatusCreatePayload,
   UserMdfWindowSyncV2CreateData,
   UserMdfWindowSyncV2CreatePayload,
   UserMdfWindowTemplateInfoCreateData,
@@ -181,23 +177,6 @@ export class WindowApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Window
-   * @name UserClearWindowCacheApiCreate
-   * @summary 清空所有缓存api(旧版本使用)
-   * @request POST:/user_clear_window_cache_api
-   * @response `200` `UserClearWindowCacheApiCreateData`
-   */
-  userClearWindowCacheApiCreate = (data: UserClearWindowCacheApiCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserClearWindowCacheApiCreateData, any>({
-      path: `/user_clear_window_cache_api`,
-      method: "POST",
-      body: data,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
    * @name UserDelWindowInfoCreate
    * @summary 批量删除窗口
    * @request POST:/user_del_window_info
@@ -208,24 +187,6 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_del_window_info`,
       method: "POST",
       body: data,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Window
-   * @name UserMdfWindowSyncStatusCreate
-   * @summary 打开和关闭窗口时同步窗口状态
-   * @request POST:/user_mdf_window_sync_status
-   * @response `200` `UserMdfWindowSyncStatusCreateData`
-   */
-  userMdfWindowSyncStatusCreate = (data: UserMdfWindowSyncStatusCreatePayload, params: RequestParams = {}) =>
-    this.http.request<UserMdfWindowSyncStatusCreateData, any>({
-      path: `/user_mdf_window_sync_status`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });

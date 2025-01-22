@@ -9,6 +9,9 @@ import { ipcMain } from '/@/modules/ipc'
 import { isMac, isWebReady, isWindows } from '/@/utils'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 
+// 获取 GPU 信息
+// app.getGPUFeatureStatus()
+
 // 开发环境下，使用开发环境变量中的版本号
 if (!app.isPackaged) {
   app.getVersion = () => import.meta.env.VITE_APP_VERSION
@@ -152,6 +155,8 @@ function initAppEvent() {
   app.on('before-quit', async (event) => {
     if (isQuittingForUpdate) {
       console.log('Application is quitting for update.')
+      // 退出所有浏览器进程, 防止有漏网之鱼
+      killAllBrowserProcess()
     }
     else {
       event.preventDefault()

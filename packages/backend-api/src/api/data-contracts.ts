@@ -1813,11 +1813,11 @@ export interface UserGetUserConfigListData {
     /** ip检测 */
     ipChecker: string;
     /** 偏好设置 */
-    preferenceSettings: string[];
+    preferenceSettings: object;
     /** 快捷键设置 */
-    keySettings: string[];
+    keySettings: object;
     /** 同步设置 */
-    syncSettings: string[];
+    syncSettings: object;
     ipBlackList: string[];
     blockDomainList: string[];
     /** api token */
@@ -1854,11 +1854,11 @@ export interface UserGetDefConfigListData {
     /** ip检测 */
     ipChecker: string;
     /** 偏好设置 */
-    preferenceSettings: string[];
+    preferenceSettings: object;
     /** 快捷键设置 */
-    keySettings: string[];
+    keySettings: object;
     /** 同步设置 */
-    syncSettings: string[];
+    syncSettings: object;
     ipBlackList: string[];
     blockDomainList: string[];
     /** api token */
@@ -1881,11 +1881,11 @@ export interface UserSetUserConfigCreatePayload {
   v2raySwitch?: boolean;
   ipChecker?: string;
   /** 偏好设置 */
-  preferenceSettings?: string[];
+  preferenceSettings?: object;
   /** 快捷键设置 */
-  keySettings?: string[];
+  keySettings?: object;
   /** 同步设置 */
-  syncSettings?: string[];
+  syncSettings?: object;
   ipBlackList?: string[];
   apiToken?: string;
 }
@@ -2213,6 +2213,47 @@ export interface UserGetBannerPictureListListData {
   msg: string;
 }
 
+export interface GetCoreUpgradeCreatePayload {
+  /**
+   * 操作系统
+   * 如 "win32", "darwin"，str，必传
+   */
+  os: string;
+  /**
+   * 操作系统版本
+   * 11，10，8，7
+   */
+  osVersion: string;
+  /**
+   * 操作系统位数
+   * 32或64，str，非必传
+   */
+  osBit?: string;
+  /**
+   * cpu架构
+   * mac专用：intel/apple，str，非必传
+   */
+  cpu?: string;
+}
+
+export interface GetCoreUpgradeCreateData {
+  code: number;
+  data: {
+    rows: {
+      coreVersion?: string;
+      version?: string;
+      downloadUrl?: string;
+      upgradeTitle?: string;
+      upgradeDesc?: string;
+      releaseTime?: string;
+      upgradeContent?: string;
+      upgradeContentEn?: string;
+      upgradeContentRu?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
@@ -2233,41 +2274,12 @@ export interface UserClearWindowCacheCreateData {
   msg: string;
 }
 
-export interface UserClearWindowCacheApiCreatePayload {
-  /** 要清空的窗口dirId列表 */
-  dirIds: number[];
-}
-
-export interface UserClearWindowCacheApiCreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserDelWindowInfoCreatePayload {
   /** 要删除的窗口id列表 */
   ids: number[];
 }
 
 export interface UserDelWindowInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserMdfWindowSyncStatusCreatePayload {
-  statusReport: {
-    /** 窗口ID */
-    id?: number;
-    /** 窗口打开状态 */
-    openStatus?: boolean;
-    /** 状态详细信息 */
-    statusInfo?: {
-      /** 打开时间 */
-      openTime: string;
-    };
-  }[];
-}
-
-export interface UserMdfWindowSyncStatusCreateData {
   code: number;
   msg: string;
 }
@@ -3440,11 +3452,8 @@ export interface UserGetBrowserVersionInfoListData {
 
 export interface UserSaveWindowRowsSortCreatePayload {
   window_rows: {
-    /** 列名称 */
     name: string;
-    /** 排序 */
     sort: string;
-    /** 状态 */
     status: number;
   }[];
 }

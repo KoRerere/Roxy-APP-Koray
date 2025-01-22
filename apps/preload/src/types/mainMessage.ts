@@ -57,4 +57,6 @@ export interface MainMessage {
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
   /** 用户升级到 3.1.4 之后，需要弹窗商业化弹窗 */
   'app:show-business-popup': () => void
+  /** 同步窗口个数发生变化 */
+  'syncControl:syncWindowCountChange': (count: number) => void
 }

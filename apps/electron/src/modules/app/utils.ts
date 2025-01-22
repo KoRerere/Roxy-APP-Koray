@@ -1,4 +1,4 @@
-import { app, dialog } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import { API } from '/@/api'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { getTray } from '/@/modules/app/tray'
@@ -59,7 +59,7 @@ export function handleCloseWindow(event: Electron.Event) {
       }
       else {
         tray.destroy()
-        win.destroy()
+        BrowserWindow.getAllWindows().forEach((win) => win.destroy())
       }
     })
   }

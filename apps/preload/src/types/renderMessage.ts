@@ -12,6 +12,8 @@ import type { RandomFingerprint, RandomFingerprintFuncParameters, RandomFingerpr
 import type { FileFilter } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
 import { SyncControlAPIResponse, SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from '#roxybrowser/modules/sync-control/model'
+import { RoxySyncStartResult } from '#roxybrowser/modules/sync-control/bin'
+import { OpenPreferencesDialogPayload } from '#roxybrowser/modules/sync-control/dialog/preferences'
 
 interface ReGetUpdateInfoType {
   app: UserGetAppUpgradeCreateData
@@ -91,6 +93,14 @@ export interface RenderMessage {
   'app:hideBusinessPopup': () => void
   /** 设置窗口是否忽略鼠标事件 */
   'app:set-ignore-mouse-events': (ignore: boolean, options?: { forward: boolean }) => void
+  /** 当前 APP 窗口是否是主窗口 */
+  'app:isMainWindow': () => boolean
+  /** 显示当前网页所在的窗口 */
+  'app:showCurrentWebviewWindow': () => void
+  /** 开始移动窗口 */
+  'app:startMoveWindow': () => void
+  /** 停止移动窗口 */
+  'app:stopMoveWindow': () => void
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void
@@ -176,5 +186,47 @@ export interface RenderMessage {
   /** 动态修改同步设置 */
   'syncControl:changeSyncSettings': (settings: SyncControlSettings) => Promise<SyncControlAPIResponse>
   /** 打开偏好设置弹窗 */
-  'syncControl:openPreferencesDialog': () => void
+  'syncControl:openPreferencesDialog': (payload?: OpenPreferencesDialogPayload) => void
+  /** 关闭偏好设置弹窗 */
+  'syncControl:closePreferencesDialog': () => void
+  /** 动态改变偏好设置弹窗大小 */
+  'syncControl:resizePreferencesDialog': (payload: { width?: number, height: number }) => void
+  /** 获取当前同步窗口的个数 */
+  'syncControl:getSyncWindowCount': () => number
+  /** 打开自定义布局弹窗 */
+  'syncControl:openCustomLayoutDialog': () => void
+  /** 关闭自定义布局弹窗 */
+  'syncControl:closeCustomLayoutDialog': () => void
+  /** 获取同步器启动返回的结果 */
+  'syncControl:getSyncStartResult': () => RoxySyncStartResult
+  /** 打开批量输入文本弹窗 */
+  'syncControl:openBatchInputsDialog': () => void
+  /** 关闭批量输入文本弹窗 */
+  'syncControl:closeBatchInputsDialog': () => void
+  /** 动态改变匹配输入文本弹窗大小 */
+  'syncControl:resizeBatchInputsDialog': (payload: { width: number, height: number }) => void
+  /** 获取主控浏览器大小 */
+  'syncControl:getMainControlBrowserSize': () => Promise<{ width: number, height: number } | undefined>
+  /** 统一标签页 */
+  'syncControl:unifyTabs': () => void
+  /** 关闭其他标签页 */
+  'syncControl:closeOtherTabs': () => void
+  /** 关闭当前标签页 */
+  'syncControl:closeCurrentTab': () => void
+  /** 关闭空白标签页 */
+  'syncControl:closeBlankTabs': () => void
+  /** 打开网址 */
+  'syncControl:openSites': (payload: { urls: string[], replaceCurrentTab: boolean }) => void
+  /** 关闭打开网址弹窗 */
+  'syncControl:closeOpenSitesDialog': () => void
+  /** 打开 打开网址弹窗 */
+  'syncControl:openOpenSitesDialog': () => void
+  /** 显示所有正在同步的窗口列表弹窗 */
+  'syncControl:openSyncingWindowListDialog': () => void
+  /** 关闭所有正在同步的窗口列表弹窗 */
+  'syncControl:closeSyncingWindowListDialog': () => void
+  /** 获取主控窗口 dirId */
+  'syncControl:getMainControlDirId': () => string | undefined
+  /** 获取所有群控中的窗口 */
+  'syncControl:getAllSyncingWindows': () => WindowItemType[]
 }

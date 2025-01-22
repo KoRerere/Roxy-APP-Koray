@@ -1,7 +1,7 @@
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
-import '/@/styles/index.css'
+import '/@/styles/index.scss'
 import Aura from '@primevue/themes/aura'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'

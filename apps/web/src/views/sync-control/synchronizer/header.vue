@@ -2,7 +2,7 @@
 import { RxSvgIcon } from '/@/components/rx-icon';
 
 function closeWindow() {
-  window.close();
+  electronAPI.send('syncControl:close');
 }
 
 function showPreferences() {
@@ -14,18 +14,18 @@ function showPreferences() {
   <div class="header">
     <div class="title">
       <span class="production-name">RoxyBrowser</span>
-      <span class="sub-title">Synchronizer</span>
+      <span class="sub-title">{{ $t('窗口同步') }}</span>
     </div>
     <div class="actions">
-      <div class="action-item" @click="showPreferences">
+      <div v-if="false" class="action-item" @click="showPreferences">
         <RxSvgIcon name="base/rx_ic_gear" />
         <span class="text">{{ $t('设置') }}</span>
       </div>
-      <div class="action-item">
+      <div v-if="false" class="action-item">
         <RxSvgIcon name="base/rx_ic_info_line" />
         <span class="text">{{ $t('帮助') }}</span>
       </div>
-      <div class="split-line"></div>
+      <div v-if="false" class="split-line"></div>
       <RxButton icon="base/rx_ic_delete" size="xxs" variant="text" class="no-drag" @click="closeWindow" />
     </div>
   </div>

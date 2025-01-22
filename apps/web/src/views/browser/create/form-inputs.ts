@@ -220,7 +220,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'userAgent',
       value: data.userAgent,
       icon: 'base/rx_ic_shuffle',
-      disabled: true,
       rows: 4,
       iconClick: async () => {
         await setUaWebgl(inputsGroup)

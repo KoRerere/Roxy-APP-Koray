@@ -24,11 +24,14 @@ function showBusinessPopup() {
   })
 }
 
-electronAPI.on('app:show-business-popup', () => {
-  showBusinessPopup()
+electronAPI.send('app:isMainWindow').then((isMainWindow) => {
+  if (isMainWindow) {
+    electronAPI.on('app:show-business-popup', () => {
+      showBusinessPopup()
+    })
+    emitter.on('showRoxyOperationNotice', showBusinessPopup)
+  }
 })
-
-emitter.on('showRoxyOperationNotice', showBusinessPopup)
 
 onMounted(() => {
   electronAPI.send('web:ready')

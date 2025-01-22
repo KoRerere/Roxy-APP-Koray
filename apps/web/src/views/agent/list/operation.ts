@@ -86,11 +86,6 @@ export async function getCustomFilters() {
       },
     },
     {
-      type: 'text',
-      label: $t('代理 ID'),
-      name: 'id',
-    },
-    {
       type: 'Checkbox',
       label: $t('代理类型'),
       name: 'protocol',

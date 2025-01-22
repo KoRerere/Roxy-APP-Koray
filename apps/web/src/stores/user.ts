@@ -111,8 +111,8 @@ export const useUserStore = defineStore('user', () => {
     workspaceStore.resetWorkspace()
   }
 
-  async function getUserConfig() {
-    if (userConfig.value) {
+  async function getUserConfig(force = false) {
+    if (!force && userConfig.value) {
       return userConfig.value
     }
     return updateUserConfig()

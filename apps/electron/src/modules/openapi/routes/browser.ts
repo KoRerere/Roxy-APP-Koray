@@ -73,6 +73,7 @@ router.post('/create', async (req, res) => {
     const result = await API.window.userAddWindowInfoV2Create({
       ...params,
       ...data,
+      userAgent: params.userAgent ? params.userAgent : data.userAgent,
     }, {
       headers: {
         workspaceId,

@@ -30,7 +30,7 @@ export async function checkRoxySyncBin(webDomain: string) {
   // roxySync 执行文件下载地址
   const downloadUrl = `${webDomain}/public/static/roxysync/${platform}/${arch}/${binFile}`
   // roxySync 版本文件下载地址
-  const versionUrl = `${webDomain}/public/static/roxysync/version`
+  const versionUrl = `${webDomain}/public/static/roxysync/${platform}/version`
   // roxySync 版本文件本地路径
   const localVersionFilePath = join(roxySyncBinDir, 'version')
   // roxySync 版本文件本地版本

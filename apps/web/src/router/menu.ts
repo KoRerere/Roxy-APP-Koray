@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { Role } from '/@/enums'
 import { $t } from '/@/locales'
+import { isWindows } from '/@/utils'
 
 export const getMenuRoutes = (): RouteRecordRaw[] => [
   {
@@ -124,18 +125,14 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
     meta: { title: $t('自动化'), type: 'group' },
     children: [
       {
-        path: 'api-keys',
-        name: 'api-keys',
-        meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
-        component: () => import('/@/views/api-keys'),
-      },
-      {
         path: 'sync-control',
         name: 'sync-control',
         meta: {
           title: $t('窗口同步'),
           type: 'button',
-          icon: 'base/rx_ic_doc_code',
+          icon: 'base/rx_ic_frame_stack',
+          newBadge: 'base/new_badge',
+          hideInMenu: !isWindows,
           onClick: () => {
             console.log('sync-control')
             electronAPI.send('syncControl:open')
@@ -143,6 +140,12 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         },
         component: () => import('/@/views/api-keys'),
       },
+      {
+        path: 'api-keys',
+        name: 'api-keys',
+        meta: { title: $t('API'), icon: 'base/rx_ic_doc_code', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER] },
+        component: () => import('/@/views/api-keys'),
+      }
     ],
   },
 

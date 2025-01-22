@@ -1,0 +1,29 @@
+body {
+  .p-button:disabled {
+    cursor: not-allowed !important;
+  }
+
+  .p-button:focus-visible {
+    outline: 0;
+  }
+
+  .p-toast-message-content:has(.p-toast-detail:empty) {
+    align-items: center;
+  }
+
+  .p-toast-message-content:has(.p-toast-detail:empty) .p-toast-close-button {
+    margin: -25% 0 -25%;
+  }
+
+  .p-toast-detail:empty {
+    display: none;
+  }
+
+  .p-dialog-content {
+    color: var(--Color-neutrals-600, #575d61);
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--Line-Height-text-sm, 18px);
+  }
+}

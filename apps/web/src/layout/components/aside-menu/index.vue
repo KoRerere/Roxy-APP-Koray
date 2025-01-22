@@ -18,11 +18,7 @@ defineProps({
   collapsed: {
     type: Boolean,
     default: false,
-  },
-  transitionend: {
-    type: Boolean,
-    default: true,
-  },
+  }
 })
 
 const cssModule = useCssModule()
@@ -149,7 +145,7 @@ async function toCreateBrowser() {
 </script>
 
 <template>
-  <aside class="aside" :class="{ collapsed, transitionend }">
+  <aside class="aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
       <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn"
         @click="toCreateBrowser" />
@@ -196,11 +192,11 @@ async function toCreateBrowser() {
 
   &.collapsed {
     overflow: unset;
-  }
 
-  &.transitionend {
-    .menu {
-      overflow-y: auto;
+    .new-profile-btn {
+      :deep(.p-button-label) {
+        display: none;
+      }
     }
   }
 
@@ -209,7 +205,9 @@ async function toCreateBrowser() {
     white-space: nowrap;
     word-break: keep-all;
     transition: width 0.3s;
-    height: 34px;
+    height: 36px;
+    font-size: 14px;
+    gap: 8px;
   }
 
   .menu {
@@ -220,6 +218,11 @@ async function toCreateBrowser() {
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
     overflow: hidden;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
 </style>

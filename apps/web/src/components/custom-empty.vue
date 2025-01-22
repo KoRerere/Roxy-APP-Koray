@@ -14,7 +14,11 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
       <div class="empty-info-title">
         {{ title }}
       </div>
-      <div class="empty-info-desc" v-html="desc" />
+      <div class="empty-info-desc">
+        <slot name="desc">
+          <div v-html="desc" />
+        </slot>
+      </div>
       <slot name="extra" />
     </div>
   </div>

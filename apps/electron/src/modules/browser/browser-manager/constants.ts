@@ -81,8 +81,21 @@ export function getInvalidUrls() {
     'chrome://newtab/',
     'chrome-extension://',
     'about:blank',
+    ...getLocalWebServerURL()
+  ]
+}
+
+
+/** 本地 web 服务 URL */
+export function getLocalWebServerURL() {
+  return [
     import.meta.env.VITE_DEV_SERVER_URL,
     `http://localhost:${store.appPort}`,
     `http://127.0.0.1:${store.appPort}`,
   ]
+}
+
+/** 是否为本地 web 服务 URL */
+export function isLocalWebServerURL(fullUrl: string) {
+  return getLocalWebServerURL().some(url => fullUrl.startsWith(url))
 }

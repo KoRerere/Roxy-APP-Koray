@@ -4,7 +4,7 @@
       <template #item="{ item, props, hasSubmenu }">
         <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
           v-bind="props.action">
-          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" />
+          <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
           <span v-if="!collapsed || !item.rootMenu" class="menu-title">
             {{ item.label }}
             <RxSvgIcon v-if="item.newBadge && isShowNewBadge" :name="item.newBadge" size="24px" class="new-badge" />
@@ -101,7 +101,7 @@ const items = [
   .menu-item {
     display: flex;
     gap: var(--spacing-xl, 12px);
-    color: var(--Component-Colors-SideNav-link-text, #252a2e);
+    color: var(--Component-Colors-SideNav-link-text, #575D61);
     padding: var(--spacing-lg, 9px) var(--spacing-xl, 12px);
     align-items: center;
     align-self: stretch;
@@ -109,38 +109,41 @@ const items = [
     word-break: keep-all;
     white-space: nowrap;
 
-
-
     &:hover {
       color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
       background: var(--Component-Colors-SideNav-link-bg-hover, #f0f3f5);
-
-      .menu-icon {
-        color: var(--Component-Colors-SideNav-link-icon-hover, #7c8387);
-      }
-    }
-
-    &.active {
-      color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
-      background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
 
       .menu-icon {
         color: currentColor;
       }
     }
 
+    &.active {
+      color: #0085EB;
+      background: #D6ECFA;
+
+      .menu-icon {
+        color: currentColor;
+      }
+
+      .menu-title {
+        font-weight: bold;
+        color: currentColor;
+      }
+    }
+
     .menu-icon {
-      color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
       transition: color .2s ease-in-out;
     }
 
     .menu-title {
       position: relative;
       font-family: Inter;
-      font-size: 13px;
+      font-size: 14px;
       font-style: normal;
       font-weight: 500;
       line-height: var(--Line-Height-text-md, 16px);
+      color: var(--Component-Colors-SideNav-link-text, #252A2E);
     }
 
     .new-badge {

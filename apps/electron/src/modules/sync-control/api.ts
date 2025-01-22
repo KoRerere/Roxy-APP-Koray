@@ -1,6 +1,15 @@
 import axios from "axios";
-import { getRoxySyncAPIBaseURL } from "/@/modules/sync-control/bin";
+import { getAllSyncControlBrowsers, getRoxySyncAPIBaseURL, setMainControlColor } from "/@/modules/sync-control/bin";
 import { SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from "/@/modules/sync-control/model";
+import { setTimeout } from "timers/promises";
+import { getSynchronizerActionBarWindow } from "/@/modules/sync-control/actionBar";
+import { getMainWindow } from "/@/modules/app/mainWindow";
+
+const instance = axios.create();
+
+instance.interceptors.response.use((response) => {
+  return response.data;
+})
 
 /**
  * 2. 窗口排列：
@@ -25,7 +34,8 @@ import { SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSett
  * */
 export function windowArrange(params: SyncControlDoLayoutPayload) {
   const baseUrl = getRoxySyncAPIBaseURL()
-  return axios.get(`${baseUrl}/api/arrange`, { params })
+  console.log('窗口排列 params:', params)
+  return instance.get(`${baseUrl}/api/arrange`, { params })
 }
 
 /**
@@ -53,13 +63,17 @@ export function windowArrange(params: SyncControlDoLayoutPayload) {
  */
 export function sendText(params: SyncControlSendTextPayload) {
   const baseUrl = getRoxySyncAPIBaseURL()
-  return axios.post(`${baseUrl}/api/send_text`, params)
+  return instance.post(`${baseUrl}/api/send_text`, params)
 }
 
 /** 显示所有窗口 */
-export function showAllWindows() {
+export async function showAllWindows() {
   const baseUrl = getRoxySyncAPIBaseURL()
-  return axios.get(`${baseUrl}/api/show_window`)
+  return instance.get(`${baseUrl}/api/show_window`)
+  // const actionBar = getMainWindow()
+  // for (const browser of getAllSyncControlBrowsers()) {
+  //   await browser.launch()
+  // }
 }
 
 /**
@@ -69,5 +83,23 @@ export function showAllWindows() {
  */
 export function syncSettings(settings: SyncControlSettings) {
   const baseUrl = getRoxySyncAPIBaseURL()
-  return axios.post(`${baseUrl}/api/sync_settings`, settings)
+  setMainControlColor(settings.mainControlWindowColor)
+  const { enableClickDelay, enableInputDelay } = settings
+
+  // 是否启用了点击延迟
+  if (!enableClickDelay) {
+    settings.clickIntervalMinMs = 0
+    settings.clickIntervalMaxMs = 0
+  }
+
+
+  // 是否启用了输入延迟
+  if (!enableInputDelay) {
+    settings.inputIntervalMinMs = 0
+    settings.inputIntervalMaxMs = 0
+  }
+
+  console.log('syncSettings settings:', settings)
+
+  return instance.post(`${baseUrl}/api/sync_settings`, settings)
 }

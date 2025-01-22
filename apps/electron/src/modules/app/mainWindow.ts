@@ -8,6 +8,7 @@ import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY }
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
 import { isDev, isPackaged, isProd, isWindows } from '/@/utils/'
+import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
@@ -117,6 +118,8 @@ export async function intoMainPage() {
     event.preventDefault()
   })
 
+  handleWindowMove(mainWin)
+
   mainWin.on('close', (event) => {
     console.log('on window close')
     handleCloseWindow(event)
@@ -131,7 +134,7 @@ export async function intoMainPage() {
 /** 更新主窗口页面标题 */
 export async function updateMainWindowPageTitle() {
   const webVersion = await getLocalWebVersion()
-  getMainWindow()?.setTitle(`${import.meta.env.VITE_APP_TITLE} | ${app.getVersion()} | ${webVersion}`)
+  getMainWindow()?.setTitle(`${import.meta.env.VITE_APP_TITLE} Beta v${app.getVersion()}`)
 }
 
 let mainWindow: BrowserWindow | undefined

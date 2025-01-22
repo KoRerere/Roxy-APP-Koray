@@ -1,7 +1,7 @@
 
 import { startRoxynet } from "/@/modules/roxynet"
 import { IPCMainInstance } from "/@/modules/ipc/types"
-import { app, BrowserWindow, Config, shell } from "electron"
+import { app, BrowserWindow, Config, shell, screen } from "electron"
 import { fetchUserConfig, store } from "/@/modules/store"
 import { openAPIServer } from "/@/modules/openapi"
 import { appUpdater } from "/@/modules/updater"
@@ -10,6 +10,7 @@ import { webUpdater } from "/@/modules/updater/webUpdater"
 import { getMacAddress } from "/@/utils"
 import { appConfig } from "/@/constants"
 import { getMainWindow } from "/@/modules/app/mainWindow"
+import { startMoveWindow, stopMoveWindow } from "/@/modules/ipc/utils"
 
 export function setupAppIpc(ipcMain: IPCMainInstance) {
 
@@ -129,6 +130,29 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     getMainWindow()?.setWindowButtonVisibility(show)
   })
 
+  /** 当前 APP 窗口是否是主窗口 */
+  ipcMain.on('app:isMainWindow', (event,) => {
+    return getMainWindow()?.id === BrowserWindow.fromWebContents(event.sender)?.id
+  })
+
+  /** 显示当前网页所在的窗口 */
+  ipcMain.on('app:showCurrentWebviewWindow', (event,) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.show()
+  })
+
+  /** 开始移动窗口 */
+  ipcMain.on('app:startMoveWindow', (event,) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win && startMoveWindow(win)
+  })
+
+  /** 停止移动窗口 */
+  ipcMain.on('app:stopMoveWindow', (event,) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win && stopMoveWindow(win)
+  })
+
   /** 开启系统代理 */
   ipcMain.on('app:setProxy', async (event, payload: Config) => {
     const mainWindow = getMainWindow()!
@@ -145,3 +169,5 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     mainWindow.webContents.session.setProxy({})
   })
 }
+
+

@@ -29,7 +29,7 @@
     "@types/adm-zip": "^0.5.7",
     "@types/body-parser": "^1.19.5",
     "@types/formidable": "^3.4.5",
-    "vite": "^6.0.7",
+    "vite": "^6.0.11",
     "vite-plugin-dts": "^4.4.0"
   }
 }

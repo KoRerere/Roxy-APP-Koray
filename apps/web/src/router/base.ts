@@ -31,4 +31,28 @@ export const baseRoutes: RouteRecordRaw[] = [
     meta: { title: '同步器偏好设置弹窗' },
     component: () => import('/@/views/sync-control/dialog/preferences.vue'),
   },
+  {
+    name: 'sync-control-custom-layout-dialog',
+    path: '/sync-control-custom-layout-dialog',
+    meta: { title: '自定义窗口布局弹窗' },
+    component: () => import('/@/views/sync-control/dialog/custom-layout.vue'),
+  },
+  {
+    name: 'sync-control-batch-inputs-dialog',
+    path: '/sync-control-batch-inputs-dialog',
+    meta: { title: '自定义窗口布局弹窗' },
+    component: () => import('/@/views/sync-control/dialog/batch-inputs.vue'),
+  },
+  {
+    name: 'sync-control-open-sites-dialog',
+    path: '/sync-control-open-sites-dialog',
+    meta: { title: '打开网址弹窗' },
+    component: () => import('/@/views/sync-control/dialog/open-sites.vue'),
+  },
+  {
+    name: 'syncing-window-list-dialog',
+    path: '/syncing-window-list-dialog',
+    meta: { title: '打开网址弹窗' },
+    component: () => import('/@/views/sync-control/dialog/syncing-window-list.vue'),
+  },
 ]

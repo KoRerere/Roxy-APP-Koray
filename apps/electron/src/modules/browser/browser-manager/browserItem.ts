@@ -14,6 +14,7 @@ import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
+import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 
 // webpack 5 之后，不再支持直接引入 es6 模块，需要使用 default 属性
 const emitter: ReturnType<typeof mitt> = mitt?.default?.() || mitt()
@@ -181,6 +182,7 @@ export class BrowserItem {
   handleOnDisconnected = async () => {
     const dirId = this.winInfo.dirId!
     emitter.emit(`close-${dirId}`)
+    removeSyncWindowByPid(this.browserPid!)
     try {
       delRoxynetProxy(dirId)
       await this.uploadData()
@@ -202,7 +204,7 @@ export class BrowserItem {
             process.kill(pid)
           }
           catch (error) {
-            // $LOG(`kill browser process`, error);
+            // $console.error(`kill browser process`, error);
           }
         }
       })

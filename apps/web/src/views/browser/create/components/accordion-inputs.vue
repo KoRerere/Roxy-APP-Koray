@@ -83,9 +83,7 @@ function onCopy(dirId: string) {
         <template #expandicon>
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
-
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
-          :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>

@@ -8,6 +8,10 @@ const props = defineProps<{
   collapsed: boolean
 }>()
 
+const cacheKey = 'isShowSyncControlNewBadge'
+
+const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
+
 const route = useRoute()
 const isCollapsed = defineModel('open', { default: false })
 const canOpen = computed(() => props.item.children?.some(n => !n.meta?.hideInMenu))
@@ -36,6 +40,11 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   else if (!canOpen.value || props.item.redirect) {
     navigate()
   }
+
+  if (props.item.meta?.newBadge) {
+    localStorage.setItem(cacheKey, 'true')
+    isShowNewBadge.value = false
+  }
 }
 </script>
 
@@ -50,6 +59,8 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
         <div class="menu-title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
           {{ item.meta?.title }}
+          <RxSvgIcon v-if="item.meta?.newBadge && isShowNewBadge" :name="item.meta?.newBadge" size="24px"
+            class="new-badge" />
         </div>
         <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
           @click.stop="toggle" />
@@ -81,53 +92,59 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
   }
 }
 
-$delay: 0.2s;
 
 .menu-item {
   display: flex;
   gap: var(--spacing-xl, 12px);
-  color: var(--Component-Colors-SideNav-link-text, #252a2e);
+  color: #575D61;
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   align-items: center;
   align-self: stretch;
   border-radius: 4px;
   cursor: pointer;
-  transition:
-    color $delay ease-in-out,
-    background $delay ease-in-out;
+  transition: all 0.15s ease-in-out;
+
+  .menu-title {
+    position: relative;
+    flex: auto;
+    font-family: Inter;
+    font-size: 14px;
+    font-weight: 500;
+    font-style: normal;
+    line-height: var(--Line-Height-text-md, 16px);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    line-height: 20px;
+    color: var(--Component-Colors-SideNav-link-text, #252A2E);
+  }
+
 
   &:hover {
     color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
     background: var(--Component-Colors-SideNav-link-bg-hover, #f0f3f5);
-
-    .menu-icon {
-      color: var(--Component-Colors-SideNav-link-icon-hover, #7c8387);
-    }
   }
 
   &.active {
-    color: var(--Component-Colors-SideNav-link-text-active, #0e1214);
-    background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
+    color: #0085EB;
+    background: #D6ECFA;
+    font-weight: bold;
 
-    .menu-icon {
+    .menu-title {
+      font-weight: bold;
       color: currentColor;
     }
   }
 
   .menu-icon {
-    color: var(--Component-Colors-SideNav-link-icon, #a3a9ad);
-    transition: color $delay ease-in-out;
+    color: currentColor;
   }
 
-  .menu-title {
-    flex: auto;
-    font-family: Inter;
-    font-size: 13px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: var(--Line-Height-text-md, 16px);
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+
+}
+
+.new-badge {
+  position: absolute;
+  margin-left: 6px;
+  top: -3px;
 }
 </style>

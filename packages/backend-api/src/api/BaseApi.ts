@@ -16,6 +16,8 @@ import {
   GetAppUpgradeCreatePayload,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
+  GetCoreUpgradeCreateData,
+  GetCoreUpgradeCreatePayload,
   LoginCreateData,
   LoginCreatePayload,
   LoginGoogleV2CreateData,
@@ -170,7 +172,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserChangeAccountCreate
-   * @summary 修改姓名
+   * @summary 修改真实姓名(老的版本用)
    * @request POST:/user_change_account
    * @response `200` `UserChangeAccountCreateData`
    */
@@ -275,7 +277,7 @@ export class BaseApi<SecurityDataType = unknown> {
    *
    * @tags Base
    * @name UserGetCoreUpgradeCreate
-   * @summary core升版
+   * @summary core升级->获取版本信息--有权限认证
    * @request POST:/user_get_core_upgrade
    * @response `200` `UserGetCoreUpgradeCreateData`
    */
@@ -673,6 +675,24 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetBannerPictureListListData, any>({
       path: `/user_get_banner_picture_list`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetCoreUpgradeCreate
+   * @summary core升级->获取版本信息--无权限认证
+   * @request POST:/get_core_upgrade
+   * @response `200` `GetCoreUpgradeCreateData`
+   */
+  getCoreUpgradeCreate = (data: GetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
+    this.http.request<GetCoreUpgradeCreateData, any>({
+      path: `/get_core_upgrade`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

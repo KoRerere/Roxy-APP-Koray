@@ -21,7 +21,9 @@ const commonRequestHeaders = {
   os: osConfig.os,
   osVersion: osConfig.osVersion,
   osBit: osConfig.osBit,
-  appVersion: app.getVersion(),
+  get appVersion() {
+    return app.getVersion()
+  },
 }
 
 let baseURL = ''
@@ -43,6 +45,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
     workspaceId: config.headers.workspaceId || store.workspaceId,
     language: store.language,
   })
+  // console.log('config.headers', config.headers)
   return config
 })
 

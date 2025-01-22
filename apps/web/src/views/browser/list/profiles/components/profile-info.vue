@@ -192,7 +192,7 @@ function saveWindowName(closeCallback: () => void) {
   <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
     <div>
       <span class="profile-name">{{ workspaceName }}-</span>
-      <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort}`.length, '0') }}</span>
+      <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[104px]': list.length > 1 }" @click.stop>
       <div v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"

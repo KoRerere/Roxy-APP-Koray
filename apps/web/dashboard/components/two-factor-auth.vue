@@ -3,6 +3,7 @@ import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-a
 import { useToast } from 'primevue/usetoast'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
+import defaultPlatformIcon from '/@/assets/images/base/rx_ic_user_key.svg?url'
 
 const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo', { default: {} })
 
@@ -10,8 +11,8 @@ const toast = useToast()
 
 function startCountdown(item, remainingTime = 0) {
   const worker = new Worker(new URL('./countdown-worker.ts', import.meta.url), {
-  type: 'module',
-});
+    type: 'module',
+  });
   const duration = 30
   const interval = 10
 
@@ -76,8 +77,7 @@ initTwoFactorCodeList()
     <template v-for="item in winInfo.windowPlatformList" :key="item.id">
       <div class="box">
         <div class="platform-info">
-          <img v-if="item.platformIcon" :src="item.platformIcon" class="platform-icon">
-          <Avatar v-else label="?" shape="circle" class="platform-icon" />
+          <img :src="item.platformIcon || defaultPlatformIcon" class="platform-icon">
           <div class="platform-account">
             <a :href="item.platformUrl" target="_blank" class="platform-url">
               {{ item.platformUrl }}
@@ -102,8 +102,7 @@ initTwoFactorCodeList()
             <svg class="progress-circle" width="30" height="30" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
               <circle class="progress" cx="18" cy="18" r="14"
-                      :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F53838' : '#12a3fc' }"
-              />
+                :style="{ '--progress': -item.progress, '--stroke-color': item.progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </template>
         </div>
@@ -151,9 +150,11 @@ initTwoFactorCodeList()
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
 }
+
 .platform-icon {
   height: 20px;
 }
+
 .box {
   display: flex;
   padding: var(--spacing-xl, 12px);
