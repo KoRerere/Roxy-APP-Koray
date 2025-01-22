@@ -26,12 +26,19 @@ function showPreferences() {
         <span class="text">{{ $t('帮助') }}</span>
       </div>
       <div v-if="false" class="split-line"></div>
-      <RxButton icon="base/rx_ic_delete" size="xxs" variant="text" class="no-drag" @click="closeWindow" />
+      <RxButton class="close no-drag" text severity="secondary" icon="base/rx_ic_delete" size="xxs"
+        @click="closeWindow" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.close {
+  &:not(:hover) {
+    background-color: transparent;
+  }
+}
+
 .no-drag {
   -webkit-app-region: no-drag;
 }
@@ -45,7 +52,6 @@ function showPreferences() {
 
   .title {
     .production-name {
-      color: #fff;
       font-family: Archivo;
       font-size: 16px;
       font-style: normal;
@@ -55,7 +61,6 @@ function showPreferences() {
     }
 
     .sub-title {
-      color: var(--Colors-Alpha-alpha-white-60, rgba(255, 255, 255, 0.6));
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -68,7 +73,6 @@ function showPreferences() {
     display: flex;
     align-items: center;
     gap: var(--spacing-xl, 12px);
-    color: white;
 
     .action-item {
       display: flex;
@@ -81,7 +85,6 @@ function showPreferences() {
       cursor: pointer;
 
       .text {
-        color: var(--Component-Colors-Buttons-Secondary-text, #FFF);
         text-align: center;
         font-family: Inter;
         font-size: var(--Font-Size-text-sm, 12px);

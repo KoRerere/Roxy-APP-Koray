@@ -31,7 +31,7 @@ body {
   gap: var(--spacing-lg, 8px);
   flex-shrink: 0;
   border-radius: 8px;
-  background: var(--Color-neutrals-950, #0e1214);
+  background: #F7FBFD;
   box-shadow:
     0px 3px 17px 0px rgba(0, 0, 0, 0.04),
     0px 4px 30px 0px rgba(0, 0, 0, 0.12),

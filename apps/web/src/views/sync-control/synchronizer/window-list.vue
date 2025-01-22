@@ -240,6 +240,9 @@ function startSync() {
 <style lang="scss" scoped>
 .sync-control-table {
   overflow: hidden;
+  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
+  border-radius: var(--radius-sm, 6px);
+
 
   &.syncing {
     :deep(.p-datatable-thead) {

@@ -69,7 +69,7 @@ export const preferenceSettings = {
     /** 输入延迟最大值 */
     inputIntervalMaxMs: 300,
     /** 是否开启点击延迟 */
-    enableClickDelay: true,
+    enableClickDelay: false,
     /** 是否开启输入延迟 */
     enableInputDelay: false,
     /** 点击延迟最小值 */
