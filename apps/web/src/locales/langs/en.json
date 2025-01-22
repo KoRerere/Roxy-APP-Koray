@@ -910,5 +910,6 @@
   "默认空间剩余用量不足": "Insufficient remaining profiles in default space",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
   "默认项目": "Default project",
-  "请输入文本": "Please enter text"
+  "请输入文本": "Please enter text",
+  "窗口同步：即窗口群控，可同时控制多个窗口，实现鼠标同步，键盘同步，大幅提高工作效率。": "Synchronizer: it allows simultaneous control of multiple windows, enabling clicking and content input synchronization, significantly improving work efficiency."
 }

@@ -40,7 +40,7 @@ function onMore(event: Event) {
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center" v-tooltip="{ value: $t('更多操作') }">
     <div class="quick">
       <div v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
