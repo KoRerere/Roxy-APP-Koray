@@ -40,15 +40,19 @@ function onMore(event: Event) {
 </script>
 
 <template>
-  <div class="flex items-center" v-tooltip="{ value: $t('更多操作') }">
+  <div class="flex items-center">
     <div class="quick">
       <div v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
-        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
-          :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
+        <RxSvgIcon v-else
+          v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }"
+          class="quick-item" :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon"
+          :size="16"
+          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]"
+          @click.stop="quickClick(item)" />
       </div>
-      <div v-if="showMenu && _operation.length" class="cursor-pointer line-height-none" @click.stop="onMore">
+      <div v-tooltip="{ value: $t('更多操作'), pt: { text: { class: '!whitespace-nowrap !break-keep' } } }"
+        v-if="showMenu && _operation.length" class="cursor-pointer line-height-none" @click.stop="onMore">
         <slot name="more-icon">
           <RxSvgIcon :name="actionIcon" class="pointer-events-none" />
         </slot>

@@ -12,7 +12,8 @@ import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { RxSvgIcon } from "/@/components/rx-icon";
 import Tooltip from 'primevue/tooltip'
-import { Role } from '/@/enums'
+import DanceLion from './components/dance-lion.vue'
+import ChineseKnot from './components/chinese-knot.vue'
 
 defineProps({
   collapsed: {
@@ -21,6 +22,8 @@ defineProps({
   }
 })
 
+const chineseKnotRef = useTemplateRef('chineseKnot')
+const isShowLion = ref(false)
 const cssModule = useCssModule()
 const [dialogInstance] = useDialog()
 const router = useRouter()
@@ -142,11 +145,24 @@ async function toCreateBrowser() {
     })
   }
 }
+
+function onPullUp() {
+  isShowLion.value = true
+
+  setTimeout(() => {
+    isShowLion.value = false
+    chineseKnotRef.value?.dropDown()
+  }, 4000)
+}
 </script>
 
 <template>
   <aside class="aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
+      <template v-if="!collapsed">
+        <DanceLion :visible="isShowLion" />
+        <ChineseKnot ref="chineseKnot" @pull-up="onPullUp" />
+      </template>
       <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn"
         @click="toCreateBrowser" />
     </template>
@@ -201,6 +217,7 @@ async function toCreateBrowser() {
   }
 
   .new-profile-btn {
+    position: relative;
     flex-shrink: 0;
     white-space: nowrap;
     word-break: keep-all;
@@ -208,6 +225,8 @@ async function toCreateBrowser() {
     height: 36px;
     font-size: 14px;
     gap: 8px;
+    z-index: 10;
+    opacity: 1 !important;
   }
 
   .menu {
