@@ -236,6 +236,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('syncControl:closeCurrentTab', (event) => {
     console.log('关闭当前标签页')
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
+    globalThis.getAllSyncControlBrowsers = getAllSyncControlBrowsers
 
     allSyncControlBrowsers.forEach(async (browser) => {
       const activeTargetId = await getActivePageTargetId(browser)
@@ -357,7 +358,8 @@ export async function getActivePageTargetId(browser: BrowserItem) {
   const baseUrl = browser?.launchInfo?.http
   const result = await axios.get(`http://${baseUrl}/json/list`)
   if (result.status === 200) {
-    const currentActivePage = result.data[0]
+    // 过滤掉 devtools:// 开头的标签页（针对移动端）
+    const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
     return currentActivePage.webSocketDebuggerUrl.split('/').at(-1)
   } else {
     console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
