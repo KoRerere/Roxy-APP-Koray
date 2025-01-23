@@ -27,13 +27,13 @@
         <div class="form-item-content">
           <div class="input-number-row">
             <IconField>
-              <InputIcon> W </InputIcon>
-              <InputText id="number" v-model.number="formData.w" v-keyfilter.num fluid size="small"
+              <InputIcon class="prefix"> W </InputIcon>
+              <InputNumber v-model="formData.w" fluid size="small" :min="0" :useGrouping="false"
                 v-tooltip.top="$t('宽度')" />
             </IconField>
             <IconField>
-              <InputIcon> H </InputIcon>
-              <InputText id="number" v-model.number="formData.h" v-keyfilter.num fluid size="small"
+              <InputIcon class="prefix"> H </InputIcon>
+              <InputNumber v-model="formData.h" fluid size="small" :min="0" :useGrouping="false"
                 v-tooltip.top="$t('高度')" />
             </IconField>
           </div>
@@ -44,17 +44,17 @@
         <div class="form-item-content">
           <div class="input-number-row">
             <IconField>
-              <InputIcon>
+              <InputIcon class="prefix">
                 <RxSvgIcon name="base/rx_ic_gap_h" size="16px" />
               </InputIcon>
-              <InputText v-model.number="formData.gap_horizontal" v-keyfilter.num fluid size="small"
+              <InputNumber v-model="formData.gap_horizontal" :min="0" :useGrouping="false" fluid size="small"
                 v-tooltip.top="$t('水平间距')" />
             </IconField>
             <IconField>
-              <InputIcon>
+              <InputIcon class="prefix">
                 <RxSvgIcon name="base/rx_ic_gap_v" size="16px" />
               </InputIcon>
-              <InputText v-model.number="formData.gap_vertical" v-keyfilter.num fluid size="small"
+              <InputNumber v-model="formData.gap_vertical" :min="0" :useGrouping="false" fluid size="small"
                 v-tooltip.top="$t('垂直间距')" />
             </IconField>
           </div>
@@ -110,6 +110,16 @@ electronAPI.send('syncControl:getMainControlBrowserSize').then((result) => {
 
   :deep(.p-inputicon) {
     line-height: 18px;
+
+    &.prefix {
+      position: absolute;
+      left: 12px;
+      z-index: 10;
+    }
+  }
+
+  :deep(.p-inputtext) {
+    padding-left: 32px;
   }
 }
 

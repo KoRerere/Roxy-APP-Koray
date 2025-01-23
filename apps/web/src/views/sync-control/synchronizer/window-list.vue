@@ -137,13 +137,18 @@ function startSync() {
 </script>
 
 <template>
-  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableData" :columns="columns" :selection-mode="selectionMode" :showTableHeader="false"
-    :paginator="false" :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableData.length === 0 }">
+  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableData"
+    :columns="columns" :selection-mode="selectionMode" :showTableHeader="false" :paginator="false" :show-actions="false"
+    :show-display="false" :context-menu="false" class="sync-control-table"
+    :class="{ syncing: isSyncing, 'no-data': tableData.length === 0 }">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_roxybrowser.png" :title="$t('请先打开至少两个窗口')">
         <template #desc>
           <div class="whitespace-pre-wrap">
             {{ $t('窗口同步：即窗口群控，可同时控制多个窗口，实现鼠标同步，键盘同步，大幅提高工作效率。') }}
+          </div>
+          <div class="mt-[16px] whitespace-pre-wrap">
+            {{ $t('注意：不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
           </div>
           <div v-if="false" class="mt-3">
             <i18n-t :keypath="$t('更多的文档说明，请访问：{link}', { link: '{link}' })" scope="global">
@@ -169,7 +174,8 @@ function startSync() {
     <template #actions="{ data }">
       <div class="flex gap-2 cursor-pointer">
         <RxSvgIcon v-tooltip="$t('预览')" name="base/rx_ic_show_profile" @click="viewBrowser(data.dirId)" />
-        <RxSvgIcon v-tooltip="$t('设为主控')" name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }" @click="isSyncing || (mainControlWindowDirId = data.dirId)" />
+        <RxSvgIcon v-tooltip="$t('设为主控')" name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }"
+          @click="isSyncing || (mainControlWindowDirId = data.dirId)" />
       </div>
     </template>
   </RyTable>
