@@ -236,7 +236,6 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('syncControl:closeCurrentTab', (event) => {
     console.log('关闭当前标签页')
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
-    globalThis.getAllSyncControlBrowsers = getAllSyncControlBrowsers
 
     allSyncControlBrowsers.forEach(async (browser) => {
       const activeTargetId = await getActivePageTargetId(browser)
