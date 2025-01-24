@@ -8,6 +8,7 @@ import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
 import { isMac, isWebReady, isWindows } from '/@/utils'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
+import { appUpdater } from '/@/modules/updater'
 
 // 获取 GPU 信息
 // app.getGPUFeatureStatus()
@@ -146,6 +147,8 @@ export async function setupApp() {
 function initAppEvent() {
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   let isQuittingForUpdate = false
+  /** 是否已经在 APP 退出前同步过浏览器数据了 */
+  let isSyncBrowserData = false
 
   autoUpdater.on('before-quit-for-update', () => {
     isQuittingForUpdate = true
@@ -153,12 +156,7 @@ function initAppEvent() {
   })
 
   app.on('before-quit', async (event) => {
-    if (isQuittingForUpdate) {
-      console.log('Application is quitting for update.')
-      // 退出所有浏览器进程, 防止有漏网之鱼
-      killAllBrowserProcess()
-    }
-    else {
+    if (!isSyncBrowserData) {
       event.preventDefault()
       try {
         // 关闭所有浏览器进程，并同步数据
@@ -172,9 +170,19 @@ function initAppEvent() {
         console.log('Application is quitting finally.')
         // 退出所有浏览器进程, 防止有漏网之鱼
         killAllBrowserProcess()
-        // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
-        app.exit()
       }
+    }
+
+    if (isQuittingForUpdate) {
+      console.log('Application is quitting for update.')
+      if (!isSyncBrowserData) {
+        appUpdater.upgradeNow()
+        isSyncBrowserData = true
+      }
+    }
+    else {
+      // 立即退出应用程序,所有窗口都将立即被关闭，而不询问用户，而且 before-quit 和 will-quit 事件也不会被触发。
+      app.exit()
     }
   })
 }

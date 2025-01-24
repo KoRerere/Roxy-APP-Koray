@@ -180,7 +180,7 @@ router.post('/open', async (req, res) => {
   }
 
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId, openStatus: true }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: "open" }, { headers: { workspaceId, ...commonHeaders } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]
       if (!winInfo) {
