@@ -176,8 +176,8 @@ function initAppEvent() {
     if (isQuittingForUpdate) {
       console.log('Application is quitting for update.')
       if (!isSyncBrowserData) {
-        appUpdater.upgradeNow()
         isSyncBrowserData = true
+        appUpdater.upgradeNow()
       }
     }
     else {
