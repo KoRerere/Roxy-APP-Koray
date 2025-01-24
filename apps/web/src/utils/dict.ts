@@ -30,12 +30,15 @@ export function clearDictCache() {
   localStorage.removeItem('lastDictVersion')
 }
 
-export async function getDictMap() {
-  // if (DICT_CONFIG.isExpired()) {
-  // await getDictVersion()
-  // }
 
-  const $dict_map = new Proxy(JSON.parse(localStorage.getItem('$dict_map') ?? '{}'), {
+export async function getDictMap() {
+  let dictMap = localStorage.getItem('$dict_map')
+  if (!dictMap) {
+    await getDictVersion()
+    dictMap = localStorage.getItem('$dict_map')
+  }
+
+  const $dict_map = new Proxy(JSON.parse(dictMap ?? '{}'), {
     get(target, key) {
       return target[key] || []
     },
@@ -43,8 +46,12 @@ export async function getDictMap() {
   return $dict_map
 }
 
+let getDictVersionPromise = null
 export async function getDictVersion() {
-  const { data: newVersion } = await API.base.userGetDictVersionList()
+  getDictVersionPromise ||= API.base.userGetDictVersionList()
+  const { data: newVersion } = await getDictVersionPromise.finally(() => {
+    getDictVersionPromise = null
+  })
   const oldVersion = JSON.parse(localStorage.getItem('$dict_version') || 'null')
 
   const needUpdateDict = DICT_CONFIG.isDictLose()
