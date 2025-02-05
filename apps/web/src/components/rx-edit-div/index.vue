@@ -11,7 +11,7 @@ const props = defineProps({
     default: undefined,
   },
 })
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits(['update:modelValue', 'blur', 'startEdit'])
 
 const myTitle = computed(() => props.modelValue || '')
 
@@ -29,17 +29,24 @@ function focusEditableDiv() {
     sel!.removeAllRanges()
     sel!.addRange(range)
     editableDiv.focus()
+    emits('startEdit')
   })
 }
 
 function divInput(ev: any) {
   emits('update:modelValue', ev.target.textContent)
 }
+
+function onBlur() {
+  contenteditable.value = false
+  emits('blur')
+}
 </script>
 
 <template>
   <div class="flex cursor-pointer editdiv" @click="focusEditableDiv">
-    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder" @input="divInput" @blur="contenteditable = false">
+    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder"
+      @input="divInput" @blur="onBlur">
       {{ myTitle }}
     </div>
     <RxSvgIcon class="editdiv-icon" name="base/rx_ic_edit" color="#A3A9AD" />

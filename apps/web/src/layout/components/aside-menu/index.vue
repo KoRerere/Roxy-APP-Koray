@@ -12,8 +12,7 @@ import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { RxSvgIcon } from "/@/components/rx-icon";
 import Tooltip from 'primevue/tooltip'
-import DanceLion from './components/dance-lion.vue'
-import ChineseKnot from './components/chinese-knot.vue'
+import { I18nT } from 'vue-i18n'
 
 defineProps({
   collapsed: {
@@ -22,8 +21,6 @@ defineProps({
   }
 })
 
-const chineseKnotRef = useTemplateRef('chineseKnot')
-const isShowLion = ref(false)
 const cssModule = useCssModule()
 const [dialogInstance] = useDialog()
 const router = useRouter()
@@ -145,24 +142,11 @@ async function toCreateBrowser() {
     })
   }
 }
-
-function onPullUp() {
-  isShowLion.value = true
-
-  setTimeout(() => {
-    isShowLion.value = false
-    chineseKnotRef.value?.dropDown()
-  }, 4000)
-}
 </script>
 
 <template>
   <aside class="aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
-      <template v-if="!collapsed">
-        <DanceLion :visible="isShowLion" />
-        <ChineseKnot ref="chineseKnot" @pull-up="onPullUp" />
-      </template>
       <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn"
         @click="toCreateBrowser" />
     </template>

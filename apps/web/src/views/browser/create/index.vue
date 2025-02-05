@@ -63,7 +63,8 @@ const tabs = ref([
   { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const windowName = ref($t('未命名窗口'))
+const defaultWindowName = $t('未命名窗口')
+const windowName = ref(defaultWindowName)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
 const rawMainSetting: any = ref([])
@@ -356,6 +357,18 @@ async function deleteTemplate(data: any) {
     },
   })
 }
+
+function handleWindowNameInputBlur() {
+  if (windowName.value.trim() === '') {
+    windowName.value = defaultWindowName
+  }
+}
+
+function handleWindowNameStartEdit() {
+  if (windowName.value === defaultWindowName) {
+    windowName.value = ''
+  }
+}
 </script>
 
 <template>
@@ -374,7 +387,8 @@ async function deleteTemplate(data: any) {
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
           <div v-show="tabsValue !== 'import'" class="flex gap-2">
-            <rxEditDiv v-model="windowName" class="flex-1" />
+            <rxEditDiv v-model="windowName" class="flex-1" @blur="handleWindowNameInputBlur"
+              @startEdit="handleWindowNameStartEdit" />
             <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
               <template #option-extra="{ option }">
                 <div v-if="option.action" class="flex flex-1 justify-end gap-2">

@@ -210,6 +210,15 @@ function startSync() {
 
   .p-datatable-thead {
 
+    &::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 20px;
+      background-color: white;
+      top: -20px;
+    }
+
     th.p-datatable-header-cell {
       border-top-width: 0.5px;
       border-top-color: var(--Colors-Border-border-subtle, #E4E8EB);
