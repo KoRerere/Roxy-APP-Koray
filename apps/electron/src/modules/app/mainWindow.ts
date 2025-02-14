@@ -144,7 +144,7 @@ let mainWindow: BrowserWindow | undefined
  */
 export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions) {
   // mainWindow = BrowserWindow.getAllWindows().find(w => !w.isDestroyed())
-  console.log('restoreOrCreateWindow', mainWindow)
+  console.log('restoreOrCreateWindow', mainWindow?.['ROXY:WINDOW_PROCESS_ID'])
 
   if (!mainWindow) {
     mainWindow = createWindow(options)

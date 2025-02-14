@@ -6,10 +6,11 @@
           <Tab :value="tab.id">{{ tab.label }}</Tab>
         </template>
       </TabList>
-      <TabPanels>
+      <TabPanels v-if="isLoaded">
         <template v-for="(tab) in tabs" :key="tab.id">
           <TabPanel :value="tab.id">
-            <component v-model="formData[tab.id]" :is="tab.component" class="form-container" />
+            <component v-model="formData[tab.id]" :ref="(ins) => refs[tab.id] = ins" :is="tab.component"
+              class="form-container" />
             <RxButton class="save-button" @click="tab.onSave">
               {{ $t('保存并生效') }}
             </RxButton>
@@ -24,17 +25,21 @@
 import { preferenceSettings } from '../model';
 import { savePreferenceSettings } from '../util';
 import BaseDialog from './base-dialog.vue';
-import CustomLayout from './custom-layout.vue';
-import BaseSettings from './base-settings.vue'
-import Simulate from './simulate.vue';
+import CustomLayout from './preferences-components/custom-layout.vue';
+import BaseSettings from './preferences-components/base-settings.vue'
+import Simulate from './preferences-components/simulate.vue';
+import KeyboardShortcut from './preferences-components/keyboard-shortcut.vue';
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import { $t } from '/@/locales';
 import { useUserStore } from '/@/stores/user';
+import { merge } from 'es-toolkit';
 
 const route = useRoute()
 const { getUserConfig } = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
+const isLoaded = ref(false)
 
+const refs = ref<Recordable>({})
 const formData = ref(preferenceSettings)
 
 const tabs = ref([
@@ -62,7 +67,23 @@ const tabs = ref([
     component: markRaw(Simulate),
     onSave: saveSettings
   },
-  // { id: 'shortcutKey', label: $t('快捷键设置'), component: markRaw(RandomText) },
+  {
+    id: 'shortcutKey',
+    label: $t('快捷键设置'),
+    component: markRaw(KeyboardShortcut),
+    async onSave() {
+      const isValid = refs.value.shortcutKey?.valid()
+
+      if (!isValid) {
+        onlyErrorToast(-1, $t('快捷键设置冲突'))
+        return
+      }
+
+      const registerResult = await electronAPI.send('syncControl:registerShortcut', toRaw(formData.value.shortcutKey));
+      console.log('registerResult', registerResult);
+      saveSettings()
+    }
+  },
 ])
 
 const defaultActiveTabId = tabs.value.find(tab => tab.id === route.query.tab)?.id || tabs.value[0].id
@@ -83,17 +104,30 @@ function saveSettings() {
 
 onMounted(async () => {
   const userSetting = await getUserConfig()
+  isLoaded.value = true
   if (userSetting?.preferenceSettings) {
     Object.keys(formData.value).forEach(key => {
       if (Reflect.has(userSetting.preferenceSettings!, key)) {
-        Object.assign(formData.value[key], userSetting.preferenceSettings![key])
+        merge(formData.value[key], userSetting.preferenceSettings![key])
       }
     })
   }
+  setTimeout(() => {
+    const tablistEl = document.querySelector('.p-tablist')
+    console.log('tablistEl scrollWidth', tablistEl?.scrollWidth, 'clientWidth', tablistEl?.clientWidth)
+    electronAPI.send('app:resizeWindow', {
+      width: window.innerWidth + tablistEl?.scrollWidth - tablistEl?.clientWidth,
+      height: window.innerHeight + tablistEl?.scrollHeight - tablistEl?.clientHeight
+    })
+  }, 60)
 })
 </script>
 
 <style lang="scss">
+.p-tablist {
+  // overflow: auto hidden;
+}
+
 .form-container {
   display: flex;
   flex-direction: column;
@@ -112,11 +146,15 @@ onMounted(async () => {
     font-size: 14px;
     font-style: normal;
     font-weight: 400;
-    line-height: 32px;
+    line-height: 18px;
 
     &::after {
       content: ':';
     }
+  }
+
+  .form-item-content {
+    align-self: flex-start;
   }
 }
 
@@ -125,5 +163,9 @@ onMounted(async () => {
   bottom: 24px;
   left: 24px;
   right: 24px;
+}
+
+.p-tabpanels {
+  margin-bottom: 48px;
 }
 </style>

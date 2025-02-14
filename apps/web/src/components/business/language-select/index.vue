@@ -18,14 +18,14 @@ watch(() => currentLocale.value, (val) => {
 
 <template>
   <div class="card flex justify-center">
-    <RxButton text severity="secondary" class="help-btn">
+    <div variant="text" class="help-btn">
       <LiveChat class="live-chat">
         <SvgIcon name="base/rx_ic_headphone_2" />
         <span class="text">
           {{ $t('帮助') }}
         </span>
       </LiveChat>
-    </RxButton>
+    </div>
 
     <RxInputSelect v-model="currentLocale" name="language" :options="ISO639" :filter="false" class="md:w-36" />
 
@@ -43,6 +43,7 @@ watch(() => currentLocale.value, (val) => {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  z-index: 10;
 
   .help-btn {
     display: flex;
@@ -51,19 +52,21 @@ watch(() => currentLocale.value, (val) => {
     justify-content: center;
     align-items: center;
     gap: var(--spacing-md, 6px);
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
     text-align: center;
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
     line-height: var(--Line-Height-text-lg, 20px);
+    cursor: pointer;
 
     .live-chat {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: var(--spacing-md, 6px);
+      color: white;
     }
   }
 }

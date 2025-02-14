@@ -51,6 +51,10 @@ body {
 
   .p-tabs {
     height: 100%;
+
+    .p-tab {
+      text-transform: capitalize;
+    }
   }
 
   .p-tabpanel {
@@ -66,5 +70,7 @@ body {
   }
 }
 
-.form-item-label {}
+.form-item-label {
+  text-transform: capitalize;
+}
 </style>

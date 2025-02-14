@@ -10,11 +10,13 @@ import profileInfo from '/@/views/browser/list/profiles/components/profile-info.
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
 import { getColumnsConfig } from './columns'
 import { getOperation } from './operation'
+import { useUserStore } from '/@/stores/user'
 
 const confirm = useConfirm()
 
 const [columns] = useColumns(getColumnsConfig())
 
+const userStore = useUserStore()
 const [showToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 
@@ -78,6 +80,7 @@ async function deleteHandler(datas: any) {
       const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
       showToast(code, msg)
       tableRef.value?.refresh()
+      userStore.fetchUserInfo()
       if (code === 0) {
         electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }

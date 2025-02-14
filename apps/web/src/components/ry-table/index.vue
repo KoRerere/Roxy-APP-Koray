@@ -9,6 +9,7 @@ import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableSort from './table-sort.vue'
+import TableReload from './table-reload.vue'
 import type { SelectChangeEvent } from 'primevue/select'
 
 defineOptions({
@@ -97,6 +98,7 @@ const props = defineProps({
 
 defineEmits(['update:columns'])
 
+const rootElRef = useTemplateRef('rootEl')
 const route = useRoute()
 const [show] = useContextMenu()
 
@@ -294,6 +296,7 @@ onBeforeMount(async () => {
 })
 
 defineExpose({
+  rootElRef,
   selectionData,
   refresh: async (outerParams: any = {}, force = true) => {
     _outerParams.value = outerParams
@@ -308,23 +311,28 @@ defineExpose({
 </script>
 
 <template>
-  <div class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
+  <div ref="rootEl" class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
     <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
-      <div class="flex flex-1 gap-2">
-        <TableFilter :filters="_filters" @change="onFilterChange" />
-        <slot name="header-extra" />
-      </div>
-      <div class="flex gap-2">
-        <TableDisplay v-if="showDisplay" :columns="columns" @update:columns="$emit('update:columns', $event)">
-          <template v-if="$slots['config-footer']" #footer>
-            <slot name="config-footer" />
-          </template>
-        </TableDisplay>
-        <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
-      </div>
+      <slot name="table-header">
+        <div class="flex flex-1 gap-2">
+          <TableFilter :filters="_filters" @change="onFilterChange" />
+          <slot name="header-extra" />
+        </div>
+        <div v-if="showDisplay" class="flex gap-2 items-center">
+          <TableDisplay :columns="columns" @update:columns="$emit('update:columns', $event)">
+            <template #footer>
+              <slot name="config-footer">
+                <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
+              </slot>
+            </template>
+          </TableDisplay>
+          <Divider layout="vertical" class="!mx-[3px] h-[20px]" />
+          <TableReload :loading="_loading" @click="_request" />
+        </div>
+      </slot>
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
-      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :pt="{
+      <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
         table: !tableList?.length ? 'flex-1' : '',
         emptymessagecell: '!whitespace-normal !text-center',
         headerrow: Css_Module.headerrow,
@@ -336,7 +344,7 @@ defineExpose({
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width: 3rem"
+        <Column v-if="selectionMode" header-style="width: 3%"
           :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
           :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen" :pt="{
@@ -411,6 +419,10 @@ defineExpose({
 :deep(.p-checkbox-box) {
   width: 16px;
   height: 16px;
+}
+
+:deep(.p-datatable-empty-message) {
+  background-color: transparent !important;
 }
 
 .rx-paginator {

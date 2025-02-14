@@ -92,7 +92,7 @@ async function showCreateWorkspaceDialog() {
       if (workspaceFormRef.value?.errorMessage) {
         return Promise.reject(new Error('表单校验失败'))
       }
-
+      Reflect.deleteProperty(workspaceForm.value, 'maxWindowCount')
       const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(workspaceForm.value)
       if (code === 0) {
         toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('创建成功') })
@@ -154,18 +154,10 @@ function getAvatarStyle(workspacePicture: string) {
               <div v-if="slotProps.option.role === Role.OWNER && slotProps.option.workspaceDefault"
                 class="default-workspace">
                 <span>{{ $t('默认空间') }}</span><span class="divider">|</span>
-                <i18n-t :keypath="$t('剩余可分配用量：{count}个', { count: '{count}' })" scope="global">
-                  <template #count>
-                    {{
-                      Number.isInteger(outerMaxCreateWindowCount)
-                        ? outerMaxCreateWindowCount
-                        : slotProps.option.maxWindowCount - slotProps.option.useWindowCount
-                    }}
-                  </template>
-                </i18n-t>
+                {{ $t('已使用窗口数量：') }}{{ slotProps.option.useWindowCount }}
               </div>
               <template v-else>
-                {{ $t('用量：') }}{{ slotProps.option.useWindowCount }}/{{ slotProps.option.maxWindowCount }}
+                {{ $t('已使用窗口数量：') }}{{ slotProps.option.useWindowCount }}
               </template>
             </span>
           </div>

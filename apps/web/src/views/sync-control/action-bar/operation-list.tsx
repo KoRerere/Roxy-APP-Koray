@@ -1,11 +1,14 @@
 import ToggleSwitch from "primevue/toggleswitch";
 import { $t } from "/@/locales";
-import { useToast } from "primevue/usetoast";
 import type { PreferenceSettings } from "../model";
 import type { Ref } from 'vue';
+import { isWindows } from "/@/utils";
+
+const os = isWindows ? 'windows' : 'mac'
+
 
 export function getOperationList(formData: Ref<PreferenceSettings>) {
-  const toast = useToast();
+  const shortcutKey = formData.value.shortcutKey[os]
 
   return [
     {
@@ -14,12 +17,14 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
       items: [
         {
           label: $t('宫格布局'),
+          shortcutKey: shortcutKey.gridLayout,
           command: () => {
             electronAPI.send('syncControl:doLayout', { type: 'grid' })
           }
         },
         {
           label: $t('堆叠布局'),
+          shortcutKey: shortcutKey.stackLayout,
           command: () => {
             electronAPI.send('syncControl:doLayout', { type: 'stack' })
           }
@@ -47,6 +52,7 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
       icon: 'base/rx_ic_tabs',
       items: [
         // {
+        //   id: 'unifyTabs',
         //   label: $t('统一页签'),
         //   command: () => {
         //     electronAPI.send('syncControl:unifyTabs')
@@ -54,18 +60,22 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
         // },
         {
           label: $t('关闭其他标签页'),
+          shortcutKey: shortcutKey.closeOtherTabs,
           command: () => {
             electronAPI.send('syncControl:closeOtherTabs')
           }
         },
         {
           label: $t('关闭当前标签页'),
+          shortcutKey: shortcutKey.closeCurrentTab,
           command: () => {
             electronAPI.send('syncControl:closeCurrentTab')
           }
         },
         {
+          id: 'closeBlankTabs',
           label: $t('关闭空白页签'),
+          shortcutKey: shortcutKey.closeBlankTabs,
           command: () => {
             electronAPI.send('syncControl:closeBlankTabs')
           }
@@ -74,7 +84,9 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
           separator: true
         },
         {
+          id: 'openOpenSitesDialog',
           label: $t('打开网址'),
+          shortcutKey: shortcutKey.openSites,
           command: () => {
             electronAPI.send('syncControl:openOpenSitesDialog')
           }

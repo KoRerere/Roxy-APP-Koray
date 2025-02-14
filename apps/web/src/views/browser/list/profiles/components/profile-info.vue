@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { getDefaultWindowName } from '../../../create/utils'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useContextMenu } from '/@/hooks/useContextMenu'
 import { $t } from '/@/locales'
@@ -32,6 +33,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['profileOperate'])
 
+const defaultWindowName = getDefaultWindowName()
 const windowName = ref(props.data.windowName)
 
 const isOpenBrowser = computed(() => {
@@ -177,14 +179,26 @@ function getAccountOperation() {
   ]
 }
 
-function saveWindowName(closeCallback: () => void) {
-  if (windowName.value.trim() && windowName.value !== props.data.windowName) {
+function saveWindowName(closeCallback: () => void,) {
+  const name = windowName.value.trim()
+  if (name !== props.data.windowName) {
     props.data.windowName = windowName.value
     emits('profileOperate', 'saveWindowName')
   } else {
     windowName.value = props.data.windowName
   }
   closeCallback()
+}
+
+function handleFocusWindowName() {
+  windowName.value = windowName.value.startsWith(defaultWindowName) ? '' : windowName.value
+}
+
+function handleClickInplace(e: MouseEvent) {
+  if (props.disabled || props.readonly) {
+    return
+  }
+  e.stopPropagation()
 }
 </script>
 
@@ -217,16 +231,17 @@ function saveWindowName(closeCallback: () => void) {
         </svg>
       </div>
     </div>
-    <Inplace v-focustrap :pt="{ display: { class: '!outline-0' } }" :disabled="disabled || readonly">
+    <Inplace v-focustrap :disabled="disabled || readonly" @click="handleClickInplace">
       <template #display>
-        <div>
-          <span style="color: #171C1F;">{{ windowName }}</span>
-          <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub edit-window-name-icon" />
+        <div class="profile-name-content">
+          {{ windowName }}
+          <!-- <RxSvgIcon name="base/rx_ic_edit" size="14" color="#A3A9AD" class="align-sub edit-window-name-icon" /> -->
         </div>
       </template>
       <template #content="{ closeCallback }">
         <InputText v-model="windowName" autofocus size="small" class="window-name-input"
-          @blur="saveWindowName(closeCallback)" @keydown.enter="saveWindowName(closeCallback)" />
+          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+          @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
   </div>
@@ -342,15 +357,41 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   visibility: hidden;
 }
 
+:deep(.p-inplace-display) {
+  display: flex;
+  justify-content: center;
+  border: 0 none;
+  padding: 0;
+
+  &:focus-visible {
+    outline-color: transparent;
+  }
+}
+
+.profile-name-content {
+  width: 160px;
+  height: 26px;
+  padding: 4px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+  border-radius: 4px;
+
+  &:hover {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.7);
+  }
+}
+
 .window-name-input {
   font-size: 12px;
-  border: 1px solid transparent !important;
+  border: 1px solid #12A3FC;
+  border-radius: 4px;
   box-shadow: none !important;
-  background-color: transparent !important;
-  height: 16px;
+  background-color: #fff !important;
   line-height: 16px;
   color: #171C1F;
-  padding: 8px 12px;
-  box-sizing: content-box;
+  padding: 4px 8px;
+  width: 160px;
 }
 </style>

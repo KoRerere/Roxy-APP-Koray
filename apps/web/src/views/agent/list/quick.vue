@@ -164,7 +164,7 @@ function saveSelected() {
     <div class="flex justify-between proxy-header">
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
-        @click="testAllProxy" />
+        @click.stop="testAllProxy" />
     </div>
     <RxAlert v-if="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
       :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"
@@ -209,7 +209,7 @@ function saveSelected() {
       </RyTable>
     </div>
     <div class="w-full flex justify-end gap-3 button-group">
-      <RxButton :label="$t('保存')" @click="saveSelected" />
+      <RxButton :label="$t('保存')" @click.stop="saveSelected" />
     </div>
   </div>
 </template>

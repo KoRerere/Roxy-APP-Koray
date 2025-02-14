@@ -59,4 +59,14 @@ export interface MainMessage {
   'app:show-business-popup': () => void
   /** 同步窗口个数发生变化 */
   'syncControl:syncWindowCountChange': (count: number) => void
+  /** 开始同步窗口 */
+  'syncControl:start': () => void
+  /** 停止同步窗口 */
+  'syncControl:stop': () => void
+  /** 宫格布局、堆叠布局、自定义布局 */
+  'syncControl:doLayout': () => void
+  /** 开启/关闭延迟点击 */
+  'syncControl:toggleClickDelay': () => void
+  /** 开启/关闭延迟输入 */
+  'syncControl:toggleInputDelay': () => void
 }

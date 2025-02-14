@@ -222,7 +222,7 @@ export async function getSorts() {
         { label: $t('最后打开时间'), value: 'openTime' },
         { label: $t('最后关闭时间'), value: 'closeTime' },
       ],
-      icon: 'base/rx_ic_sort_ascending',
+      icon: 'base/rx_ic_sort_a2z',
     },
     {
       label: $t('排序方式'),

@@ -308,3 +308,7 @@ export async function parseTemplate(file: File) {
     console.log(error)
   }
 }
+
+export function getDefaultWindowName() {
+  return $t('未命名窗口')
+}

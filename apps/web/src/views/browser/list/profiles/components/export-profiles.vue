@@ -221,8 +221,8 @@ onMounted(() => {
       </div>
     </div>
     <div class="footer">
-      <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton size="sm" :label="$t('导出数据')" severity="info" @click="confirm" />
+      <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click.stop="close" />
+      <RxButton size="sm" :label="$t('导出数据')" severity="info" @click.stop="confirm" />
     </div>
   </div>
 </template>

@@ -52,7 +52,8 @@ defineExpose({ testProxy, visible })
           <inputLabel :label="input.label" />
           <div class="flex">
             <div class="w-1/3">
-              <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value" class="!border-r-0 !rounded-tr-none !rounded-br-none" />
+              <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value"
+                class="!border-r-0 !rounded-tr-none !rounded-br-none" />
             </div>
             <inputNumberGroup class="!rounded-tl-none !rounded-bl-none !shadow-none" :inputs="input.items" />
           </div>
@@ -65,16 +66,22 @@ defineExpose({ testProxy, visible })
             <div class="flex-1">
               <RxInputSelect v-bind="input.props" v-model="input.value" :name="input.name" />
             </div>
-            <RxButton :size="input.props.size" outlined severity="secondary" :label="$t('测试代理')" icon="base/rx_ic_speed_test" @click="testProxy" />
+            <RxButton :size="input.props.size" outlined severity="secondary" :label="$t('测试代理')"
+              icon="base/rx_ic_speed_test" @click="testProxy" />
           </div>
         </div>
       </template>
       <template #checkermessage>
-        <RxAlert ref="rxalert" v-model:visible="visible" class="!w-full checkermessage" type="success" :title="$t('测试成功')" content="内容">
+        <RxAlert ref="rxalert" v-model:visible="visible" class="!w-full checkermessage" type="success"
+          :title="$t('测试成功')" content="内容">
           <template #content>
-            <i18n-t :keypath="$t('{location}{ip}{timezone}', { location: '{location}', timezone: '{timezone}', ip: '{ip}' })" scope="global">
+            <i18n-t
+              :keypath="$t('{location}{ip}{timezone}', { location: '{location}', timezone: '{timezone}', ip: '{ip}' })"
+              scope="global">
               <template #location>
-                <span>{{ $t('位置: {location}', { location: `${checkeResult.lastCountry}${strConcat('/', checkeResult.lastCity as string)}` }) }}</span>
+                <span>{{ $t('位置: {location}', {
+                  location: `${checkeResult.lastCountry}${strConcat('/',
+                    checkeResult.lastCity as string)}` }) }}</span>
               </template>
               <template #ip>
                 <br><span>{{ $t('IP: {ip}', { ip: checkeResult.lastIp }) }}</span>
@@ -93,6 +100,7 @@ defineExpose({ testProxy, visible })
 <style lang="scss" scoped>
 .proxies-form {
   overflow-y: auto;
+  padding-bottom: 12px;
 
   &::-webkit-scrollbar {
     display: none;

@@ -79,6 +79,81 @@ export const preferenceSettings = {
     /** 延迟模式：0 串行， 1 并行 */
     clickDelayMode: 1,
   },
+  /** 快捷键设置 */
+  shortcutKey: {
+    windows: {
+      /** 开始同步 */
+      // startSync: 'Ctrl + Alt + S',
+      /** 停止同步 */
+      stopSync: 'Ctrl + Alt + D',
+      /** 显示所有窗口 */
+      showAllWindows: 'Ctrl + Alt + A',
+      /** 窗口排列 - 宫格布局 */
+      gridLayout: 'Ctrl + Alt + F3',
+      /** 窗口排列 - 堆叠布局 */
+      stackLayout: 'Ctrl + Alt + F4',
+      /** 批量输入 */
+      openBatchInputDialog: 'Ctrl + Alt + F5',
+      // /** 延迟点击 开/关 */
+      // toggleClickDelay: 'Ctrl + Alt + F9',
+      // /** 延迟输入 开关 */
+      // toggleInputDelay: 'Ctrl + Alt + F10',
+      /** 相同文本输入 */
+      // openSameTextDialog: 'Ctrl + Alt + G',
+      // /** 随机数字输入 */
+      // openRandomNumberDialog: 'Ctrl + Alt + F',
+      /** 统一标签页 */
+      // unifiedTabs: 'Ctrl + Alt + X',
+      /** 关闭其他标签页 */
+      closeOtherTabs: 'Ctrl + Alt + B',
+      /** 关闭当前标签页 */
+      closeCurrentTab: 'Ctrl + Alt + C',
+      /** 关闭空白标签页 */
+      closeBlankTabs: 'Ctrl + Alt + N',
+      /** 打开网址 */
+      openSites: 'Ctrl + Alt + O',
+      /** 显示同步窗口列表 */
+      openSyncWindowList: 'Ctrl + Alt + L',
+      /** 同步偏好设置 */
+      openPreferenceSettings: 'Ctrl + Alt + P',
+    },
+    mac: {
+      /** 开始同步 */
+      startSync: 'Ctrl + Alt + S',
+      /** 停止同步 */
+      stopSync: 'Ctrl + Alt + D',
+      /** 显示所有窗口 */
+      showAllWindows: 'Ctrl + Alt + A',
+      /** 窗口排列 - 宫格布局 */
+      gridLayout: 'Ctrl + Alt + F3',
+      /** 窗口排列 - 堆叠布局 */
+      stackLayout: 'Ctrl + Alt + F4',
+      /** 批量输入 */
+      openBatchInputDialog: 'Ctrl + Alt + F5',
+      // /** 延迟点击 开/关 */
+      // toggleClickDelay: 'Ctrl + Alt + F9',
+      // /** 延迟输入 开关 */
+      // toggleInputDelay: 'Ctrl + Alt + F10',
+      /** 相同文本输入 */
+      // openSameTextDialog: 'Ctrl + Alt + G',
+      // /** 随机数字输入 */
+      // openRandomNumberDialog: 'Ctrl + Alt + F',
+      /** 统一标签页 */
+      // unifiedTabs: 'Ctrl + Alt + X',
+      /** 关闭其他标签页 */
+      closeOtherTabs: 'Ctrl + Alt + B',
+      /** 关闭当前标签页 */
+      closeCurrentTab: 'Ctrl + Alt + C',
+      /** 关闭空白标签页 */
+      closeBlankTabs: 'Ctrl + Alt + N',
+      /** 打开网址 */
+      openSites: 'Ctrl + Alt + O',
+      /** 显示同步窗口列表 */
+      openSyncWindowList: 'Ctrl + Alt + L',
+      /** 同步偏好设置 */
+      openPreferenceSettings: 'Ctrl + Alt + P',
+    },
+  },
 }
 
 export type PreferenceSettings = typeof preferenceSettings

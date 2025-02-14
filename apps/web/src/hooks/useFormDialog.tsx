@@ -13,6 +13,7 @@ type FormDialogProps = UseDialogProps & {
 }
 
 interface FormDialogSlots extends DialogSlots {
+  beforeForm?: () => any
 }
 
 export function useFormDialog() {
@@ -42,7 +43,10 @@ export function useFormDialog() {
       ...innerProps.value,
       slots: {
         default: () => {
-          return <RxForm ref={formRef} {...innerProps.value.formProps} schemas={innerProps.value.schemas} footer={false}></RxForm>
+          return <>
+            {innerProps.value.dialogSlots?.beforeForm?.()}
+            <RxForm ref={formRef} {...innerProps.value.formProps} schemas={innerProps.value.schemas} footer={false}></RxForm>
+          </>
         },
         ...innerProps.value.dialogSlots,
       },

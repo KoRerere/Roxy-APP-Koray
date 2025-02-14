@@ -58,9 +58,39 @@ ul {
   background-color: #f1f1f1;
 }
 
+/* overwrite markdown styles */
+
 .editor-content-view ul,
 .editor-content-view ol {
   padding-left: 20px;
+}
+
+.editor-content-view p {
+  color: var(--Colors-Text-text-secondary, #575d61) !important;
+}
+
+.editor-content-view span {
+  color: var(--Colors-Text-text-secondary, #575d61) !important;
+}
+
+.editor-content-view h1,
+.editor-content-view h2,
+.editor-content-view h3,
+.editor-content-view h4,
+.editor-content-view h5,
+.editor-content-view h6 {
+  color: var(--Colors-Text-text-primary, #171c1f) !important;
+  font-family: Inter !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 160% !important;
+  margin: 8px 0 !important;
+}
+
+.editor-content-view a span {
+  color: #0881cc !important;
+  text-decoration: underline !important;
 }
 
 .editor-content-view input[type='checkbox'] {

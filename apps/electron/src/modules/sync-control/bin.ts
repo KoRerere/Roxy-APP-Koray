@@ -1,7 +1,7 @@
 import { ChildProcess, spawn } from "node:child_process";
 import { appConfig } from "/@/constants";
 import { Buffer } from "node:buffer";
-import { defaultSyncSettings, SyncControlSettings, type PreferenceSettings } from "/@/modules/sync-control/model";
+import { defaultSyncSettings, preferenceSettings, SyncControlSettings, type PreferenceSettings } from "/@/modules/sync-control/model";
 import { API } from "/@/api";
 import { ipcMain } from '/@/modules/ipc'
 import { browserManager } from "/@/modules/browser";
@@ -116,7 +116,7 @@ export async function startRoxySync(pIds: number[] = []) {
         syncWindowPIds = pIds
         // 第一个PID为主窗口
         mainControlPId = pIds[0]
-        setMainControlColor()
+        setMainControlColor(syncControlSettings.mainControlWindowColor)
         resolve(true)
         const browser = getMainControlBrowser()
         Reflect.set(browser!, 'disconnectedListener', () => {
@@ -199,8 +199,8 @@ export function getAllSyncControlBrowsers() {
 }
 
 /** 设置主控窗口颜色 */
-export async function setMainControlColor(color = preferenceSettings.mainControlWindowColor) {
-  const mainControlWindowColor = color.split('#').at(-1)
+export async function setMainControlColor(color = syncControlSettings.mainControlWindowColor) {
+  const mainControlWindowColor = color.split('#').at(-1)!
   console.log('mainControlWindowColor', mainControlWindowColor)
   const rgb = mainControlWindowColor === defaultMainControlWindowColor ? '' : mainControlWindowColor.slice(-2) + mainControlWindowColor.slice(0, -2)
   console.log('设置主控窗口颜色', rgb)

@@ -14,7 +14,8 @@ function toggle(event: Event) {
 
 <template>
   <div class="position-relative flex">
-    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')" @click="toggle" />
+    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')"
+      @click="toggle" />
     <!-- <div class="changed" /> -->
   </div>
   <RyPopover ref="popRef">
@@ -22,7 +23,7 @@ function toggle(event: Event) {
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
           <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
-          <span class="flex-auto">{{ item.title }}</span>
+          <span class="flex-auto" :class="display.label">{{ item.title }}</span>
           <rxToggleSwitch v-if="!item.disabledToggle" v-model="item._visible" />
         </div>
       </VueDraggable>
@@ -36,6 +37,10 @@ function toggle(event: Event) {
 <style lang="scss" module="display">
 .content {
   padding: var(--spacing-md, 6px) var(--spacing-sm, 4px);
+}
+
+.label {
+  font-weight: 500;
 }
 
 .column {

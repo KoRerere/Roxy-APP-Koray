@@ -47,24 +47,6 @@ const formData = defineModel<PreferenceSettings['base']>({ required: true });
 </template>
 
 <style lang="scss" scoped>
-.group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-2xl, 16px);
-  margin-top: 6px;
-
-  .group-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
-
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 20px;
-  }
-}
-
-
 .checkbox-list {
   display: flex;
   align-items: center;

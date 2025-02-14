@@ -1,6 +1,6 @@
 <template>
   <BaseDialog :header="$t('同步窗口列表')" @hide="handleHide">
-    <WindowList v-if="mainControlWindowDirId" showType="syncing" :mainControlWindowDirId />
+    <WindowList v-if="mainControlWindowDirId" showType="syncing" :showTableHeader="false" :mainControlWindowDirId />
   </BaseDialog>
 </template>
 

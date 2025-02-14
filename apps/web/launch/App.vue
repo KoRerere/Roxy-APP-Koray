@@ -113,7 +113,7 @@ watch(isShowTrafficLight, (val) => {
   color: var(--Colors-Text-text-tertiary, #7c8387);
   text-align: center;
   font-family: Inter;
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
@@ -127,6 +127,7 @@ watch(isShowTrafficLight, (val) => {
   left: 0;
   background: linear-gradient(rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 1) 100%);
 }
+
 .wave {
   background-image: linear-gradient(-60deg, rgba(193, 235, 255, 0.5) 50%, rgba(255, 255, 255, 0.4) 50%);
   position: absolute;
@@ -141,6 +142,7 @@ watch(isShowTrafficLight, (val) => {
   left: -50%;
   right: -50%;
 }
+
 .wave2 {
   animation: slide 10s ease-in-out infinite alternate-reverse;
   left: -80%;
@@ -157,6 +159,7 @@ watch(isShowTrafficLight, (val) => {
   0% {
     transform: translateX(-20%);
   }
+
   100% {
     transform: translateX(20%);
   }
@@ -166,9 +169,11 @@ watch(isShowTrafficLight, (val) => {
   0% {
     transform: translateX(-10%);
   }
+
   50% {
     transform: translateX(10%);
   }
+
   100% {
     transform: translateX(-10%);
   }

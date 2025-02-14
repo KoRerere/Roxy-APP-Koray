@@ -23,9 +23,13 @@ export const appConfig = {
   /** 应用日志目录 */
   logsDir: app.getPath('logs'),
   /** roxynet 执行文件路径 */
-  roxynetBinPath: join(sessionDir, 'roxynet-bin', isMac ? 'roxynet' : 'roxynet.exe'),
+  get roxynetBinPath() {
+    return join(sessionDir, 'roxynet-bin', isMac ? 'roxynet' : 'roxynet.exe')
+  },
   /** roxysync 执行文件路径 */
-  roxySyncBinPath: join(sessionDir, 'roxy-sync-bin', isMac ? 'roxy-sync' : 'roxy-sync.exe'),
+  get roxySyncBinPath() {
+    return join(sessionDir, 'roxy-sync-bin', isMac ? 'roxy-sync' : 'roxy-sync.exe')
+  },
   /** 配置文件 */
   configFile: join(sessionDir, 'config.json'),
   /** 默认浏览器缓存根目录 */

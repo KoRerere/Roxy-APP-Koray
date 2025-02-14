@@ -12,24 +12,7 @@ export function getRegisterValidation(z: z.ZodString) {
 
 export function getFormSchemas(isRegister = false) {
   return defineFormSchema([
-    {
-      field: 'user_name',
-      component: 'InputText',
-      label: $t('邮箱'),
-      componentProps: {
-        placeholder: $t('请输入您的邮箱'),
-      },
-      rule: {
-        trigger: 'change',
-        validator(zod) {
-          const z = zod.string()
-          if (isRegister) {
-            return z.min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
-          }
-          return z.min(1, $t('请输入您的邮箱'))
-        },
-      },
-    },
+    ...getEmailSchemas(isRegister),
     {
       field: 'password',
       component: 'Password',
@@ -53,12 +36,35 @@ export function getFormSchemas(isRegister = false) {
   ])
 }
 
+export function getEmailSchemas(isRegister = false) {
+  return defineFormSchema([
+    {
+      field: 'user_name',
+      component: 'InputText',
+      label: $t('邮箱'),
+      componentProps: {
+        placeholder: $t('请输入您的邮箱'),
+      },
+      rule: {
+        trigger: 'change',
+        validator(zod) {
+          const z = zod.string()
+          if (isRegister) {
+            return z.min(1, $t('请输入您的邮箱')).email($t('请输入正确的邮箱'))
+          }
+          return z.min(1, $t('请输入您的邮箱'))
+        },
+      },
+    }
+  ])
+}
+
 export function getResetPasswordSchemas() {
   return defineFormSchema([
     {
       field: 'newPassword',
       component: 'Password',
-      label: '',
+      label: $t('新密码'),
       componentProps: {
         feedback: false,
         toggleMask: true,
@@ -74,7 +80,7 @@ export function getResetPasswordSchemas() {
     {
       field: 'confirmPassword',
       component: 'Password',
-      label: '',
+      label: $t('确认密码'),
       componentProps: {
         feedback: false,
         toggleMask: true,

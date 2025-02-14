@@ -7,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { isDev } from '/@/utils'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { getFormSchemas } from './schemas'
+import SignCardHeader from './sign-card-header.vue'
 
 const props = defineProps({
   type: {
@@ -54,8 +55,15 @@ async function handleSubmit() {
 }
 
 function openGoogleAuth2Login() {
-  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth`
+  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth?source=google`
   const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.email&response_type=code&redirect_uri=${redirect_url}&client_id=663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com`
+  window.open(url)
+}
+
+function openGithubAuth2Login() {
+  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth?source=github`
+  const client_id = isDev ? 'Ov23lidZHwoteYPc2Bbv' : 'Ov23li2tP2jopYhz3S0A'
+  const url = `https://github.com/login/oauth/authorize?client_id=${client_id}&scope=user:email&redirect_uri=${redirect_url}`
   window.open(url)
 }
 
@@ -68,8 +76,10 @@ function switchFormMode(val: boolean) {
 </script>
 
 <template>
-  <!-- <ry-form class="w-full" :inputs="inputs" /> -->
-  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+  <SignCardHeader :title="isRegister ? $t('创建账号') : $t('登录')"
+    :description="isRegister ? $t('创建账号以体验 Roxy 提供的服务') : $t('登录账号以体验 Roxy 提供的服务')" />
+  <RxForm ref="formInstance" v-model="signFormData" :schemas="formSchemas" :colon="false" :footer="false"
+    layout="vertical" @keydown.enter="handleSubmit" />
   <div v-if="!isRegister" class="remember-me">
     <div class="flex items-center text-[12px]">
       <Checkbox v-model="rememberMe" input-id="remember-me" :binary="true" />
@@ -84,10 +94,13 @@ function switchFormMode(val: boolean) {
       {{ isRegister ? $t('注册') : $t('登录') }}
     </RxButton>
     <div class="divider">
-      <span class="mx-2">{{ $t('或通过以下方式继续') }}</span>
+      <span class="mx-2">{{ $t('或') }}</span>
     </div>
     <RxButton class="w-full" outlined severity="secondary" size="md" @click="openGoogleAuth2Login">
-      <img src="/google.svg"> {{ $t('Google') }}
+      <SvgIcon name="websites/rx_site_google" /> {{ $t('通过 Google 账号登录') }}
+    </RxButton>
+    <RxButton class="w-full" outlined severity="secondary" size="md" @click="openGithubAuth2Login">
+      <SvgIcon name="websites/rx_site_github" /> {{ $t('通过 Github 账号登录') }}
     </RxButton>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
@@ -98,7 +111,7 @@ function switchFormMode(val: boolean) {
     <div v-else class="signup-tips">
       {{ $t("没有RoxyBrowser账户？") }}
       <a class="cursor-pointer" @click="switchFormMode(true)">
-        {{ $t('前往注册') }}
+        {{ $t('创建账号') }}
       </a>
     </div>
   </div>

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
-import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
+import { BrowserItem, LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
@@ -32,7 +32,7 @@ export class BrowserManager {
   }
 
   /** 启动浏览器 */
-  async launch(winInfo: WindowItemType) {
+  async launch(winInfo: WindowItemType, launchBy?: LaunchBy) {
     const dirId = winInfo.dirId
     console.log(`BrowserManager ${dirId} === 启动浏览器`)
     if (!dirId) {
@@ -47,7 +47,7 @@ export class BrowserManager {
       return
     }
 
-    const browserItem = new BrowserItem(winInfo)
+    const browserItem = new BrowserItem(winInfo, launchBy)
     // 如果浏览器没有打开
     if (!this.openingBrowserMap.has(dirId)) {
       // 则加入打开中的浏览器集合

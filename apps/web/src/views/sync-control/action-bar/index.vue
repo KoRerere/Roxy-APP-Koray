@@ -5,6 +5,11 @@ import { RxSvgIcon } from '/@/components/rx-icon';
 import { preferenceSettings } from '../model'
 import { savePreferenceSettings } from '/@/views/sync-control/util';
 import { useUserStore } from '/@/stores/user';
+import { merge } from 'es-toolkit';
+import { isWindows } from '/@/utils';
+import { $t } from '/@/locales';
+
+const os = isWindows ? 'windows' : 'mac'
 
 const isDragging = ref(false);
 const { getUserConfig, } = useUserStore()
@@ -15,9 +20,19 @@ const kernelNoSame = ref(false)
 const defaultWidth = ref('auto')
 const syncWindowCount = ref(0)
 const formData = ref(preferenceSettings)
-const operationList = getOperationList(formData)
+const operationList = ref(getOperationList(formData))
 let removeHoverTimer: any = null
 let dragTimer: any = null
+
+const syncWindowListTooltip = computed(() => {
+  const openSyncWindowList = formData.value.shortcutKey[os].openSyncWindowList
+  return $t('同步窗口列表') + (openSyncWindowList ? ` (${openSyncWindowList})` : '')
+})
+
+const settingsTooltip = computed(() => {
+  const preferenceSettings = formData.value.shortcutKey[os].openPreferenceSettings
+  return $t('设置') + (preferenceSettings ? ` (${preferenceSettings})` : '')
+})
 
 watch(isDragging, (newVal) => {
   if (newVal) {
@@ -93,9 +108,10 @@ async function initUserConfig() {
   if (userSetting?.preferenceSettings) {
     Object.keys(formData.value).forEach(key => {
       if (Reflect.has(userSetting.preferenceSettings!, key)) {
-        Object.assign(formData.value[key], userSetting.preferenceSettings![key])
+        merge(formData.value[key], userSetting.preferenceSettings![key])
       }
     })
+    operationList.value = getOperationList(formData)
   }
 }
 
@@ -112,6 +128,15 @@ onMounted(async () => {
   }, { deep: true })
 })
 
+electronAPI.on('syncControl:toggleClickDelay', () => {
+  formData.value.simulate.enableClickDelay = !formData.value.simulate.enableClickDelay
+  savePreferenceSettings(toRaw(formData.value))
+})
+
+electronAPI.on('syncControl:toggleInputDelay', () => {
+  formData.value.simulate.enableInputDelay = !formData.value.simulate.enableInputDelay
+  savePreferenceSettings(toRaw(formData.value))
+})
 
 electronAPI.send('syncControl:getSyncWindowCount').then((count) => {
   syncWindowCount.value = count
@@ -128,7 +153,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave" @mousedown="handleMousedown">
+  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave"
+    @mousedown="handleMousedown">
     <div class="top-bar">
       <div class="sync-text" @mouseenter="handleMouseenterSyncText">
         {{ $t('{count} 个窗口正在同步中', { count: syncWindowCount }) }}
@@ -155,15 +181,18 @@ onUnmounted(() => {
               <span v-if="item.suffix" @click.stop>
                 <component :is="item.suffix" />
               </span>
+              <span v-if="item.shortcutKey" class="shortcut-key">{{ item.shortcutKey }}</span>
               <span v-if="hasSubmenu" class="pi pi-fw pi-angle-down" />
             </a>
           </template>
         </Menubar>
         <div class="split-line"></div>
-        <div class="other-item" v-tooltip.top="$t('同步窗口列表')" @click="showSyncingWindowListDialog">
+        <div class="other-item"
+          v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }"
+          @click="showSyncingWindowListDialog">
           <RxSvgIcon name="base/rx_ic_list_2" />
         </div>
-        <div class="other-item" v-tooltip.top="$t('设置')" @click="showPreferences">
+        <div class="other-item" v-tooltip.top="settingsTooltip" @click="showPreferences">
           <RxSvgIcon name="base/rx_ic_gear" />
         </div>
       </div>
@@ -301,6 +330,16 @@ body {
     align-items: center;
     gap: 10px;
     align-self: stretch;
+
+    .shortcut-key {
+      margin-left: 12px;
+      color: var(--Colors-Text-text-inactive, #A3A9AD);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: var(--Line-Height-text-xs, 16px);
+    }
   }
 
   :deep(.p-menubar) {

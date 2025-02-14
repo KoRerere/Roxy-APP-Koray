@@ -20,7 +20,7 @@ export async function openPreferencesDialog(payload: OpenPreferencesDialogPayloa
   }
 
   const win = new BrowserWindow({
-    width: 450,
+    width: 500,
     height: 500,
     frame: false,
     alwaysOnTop: true,

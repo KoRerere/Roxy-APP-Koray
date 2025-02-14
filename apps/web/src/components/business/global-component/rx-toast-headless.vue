@@ -82,7 +82,7 @@ function cacheToast(slotData: Recordable) {
             <div class="alert-header">
               {{ message.summary }}
             </div>
-            <div class="alert-message">
+            <div v-if="message.detail" class="alert-message">
               {{ message.detail }}
             </div>
           </div>

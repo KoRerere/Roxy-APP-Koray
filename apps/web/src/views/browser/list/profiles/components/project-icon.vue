@@ -71,7 +71,7 @@ function deleteMembers() {
 </script>
 
 <template>
-  <RxTag class="cursor-pointer" icon="base/rx_ic_stack" :label="projectName" @click="openMenu" />
+  <RxTag class="cursor-pointer" icon="base/rx_ic_stack" :label="projectName" @click.stop="openMenu" />
 </template>
 
 <style scoped></style>

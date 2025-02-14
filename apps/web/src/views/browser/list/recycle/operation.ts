@@ -5,6 +5,7 @@ export function getOperation() {
     {
       name: 'restore',
       label: $t('恢复'),
+      tooltip: $t('恢复窗口'),
       icon: 'base/rx_ic_refresh',
       iconClass: 'text-gray-500',
       quick: true,
@@ -16,6 +17,7 @@ export function getOperation() {
     {
       name: 'delete',
       label: $t('彻底删除'),
+      tooltip: $t('彻底删除'),
       icon: 'base/rx_ic_shredder',
       iconClass: 'text-red',
       quick: true,

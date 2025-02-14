@@ -2,6 +2,7 @@ import { getWebDomain } from '/@/api/util'
 import { checkRoxynetBin } from '/@/modules/app/checkResource/checkRoxynetBin'
 import { checkRoxySyncBin } from '/@/modules/app/checkResource/checkRoxySyncBin'
 import { ipcMain } from '/@/modules/ipc'
+import { appUpdater } from '/@/modules/updater'
 import { webUpdater } from '/@/modules/updater/webUpdater'
 
 /** 发送启动消息 */
@@ -15,6 +16,21 @@ export async function checkResource() {
   console.log('checkResource start')
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
   try {
+    // 检测更新 app
+    await appUpdater.init(true, {
+      onDownloadProgress: (percentage) => {
+        if (percentage === 100) {
+          sendLaunchMessage($t('下载完成，准备重启...'))
+          setTimeout(() => {
+            appUpdater.upgradeNow()
+          }, 500)
+        } else {
+          sendLaunchMessage($t('正在更新中... {percentage}%', { percentage }))
+        }
+      },
+    }).catch((error) => {
+      console.log('appUpdater init error', error)
+    })
     const webDomain = await getWebDomain()
     // 检测更新 roxynet
     await checkRoxynetBin(webDomain)

@@ -1,4 +1,4 @@
-import { app, autoUpdater, crashReporter, shell } from 'electron'
+import { app, autoUpdater, crashReporter, globalShortcut, shell } from 'electron'
 import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
@@ -168,6 +168,7 @@ function initAppEvent() {
       }
       finally {
         console.log('Application is quitting finally.')
+        globalShortcut.unregisterAll()
         // 退出所有浏览器进程, 防止有漏网之鱼
         killAllBrowserProcess()
       }

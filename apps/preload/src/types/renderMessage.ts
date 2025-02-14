@@ -9,11 +9,13 @@ import type { StoreType } from '#roxybrowser/modules/store'
 import type { UpdateInfo } from '#roxybrowser/modules/updater'
 import type { ProxyDetectionParams, ProxyDetectionResult } from '#roxybrowser/utils/proxyDetection'
 import type { RandomFingerprint, RandomFingerprintFuncParameters, RandomFingerprintFuncReturnTypes } from '#roxybrowser/utils/randomFingerprint'
-import type { FileFilter } from 'electron'
+import type { FileFilter, GPUFeatureStatus } from 'electron'
 import type { ResourceUpdateMessage } from './mainMessage'
-import { SyncControlAPIResponse, SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from '#roxybrowser/modules/sync-control/model'
+import { PreferenceSettings, SyncControlAPIResponse, SyncControlDoLayoutPayload, SyncControlSendTextPayload, SyncControlSettings } from '#roxybrowser/modules/sync-control/model'
 import { RoxySyncStartResult } from '#roxybrowser/modules/sync-control/bin'
 import { OpenPreferencesDialogPayload } from '#roxybrowser/modules/sync-control/dialog/preferences'
+import { ShortcutKeyRegisterResult } from '#roxybrowser/modules/sync-control/shortcutKey'
+import { CommonRequestHeaders, DeviceInfo } from '#roxybrowser/utils'
 
 interface ReGetUpdateInfoType {
   app: UserGetAppUpgradeCreateData
@@ -101,6 +103,10 @@ export interface RenderMessage {
   'app:startMoveWindow': () => void
   /** 停止移动窗口 */
   'app:stopMoveWindow': () => void
+  /** 获取系统 GPU 信息 */
+  'app:getGPUFeatureStatus': () => GPUFeatureStatus
+  /** 动态设置窗口大小 */
+  'app:resizeWindow': (payload: { width?: number, height?: number }) => void
 
   /** 下载指定插件 */
   'extension:download': (extensions: UnwrapRowsType<UserGetSystemPluginListData>) => void
@@ -137,12 +143,15 @@ export interface RenderMessage {
   'util:checkPort': (port: number) => Promise<number>
   /** 获取网关配置 */
   'util:getGatewayConfig': () => Promise<string>
+  /** 获取公共请求头部*/
+  'util:getCommonRequestHeaders': () => CommonRequestHeaders
+  /** 获取设备唯一 ID */
+  'util:getDeviceId': () => Promise<string>
+  /** 获取设备信息 */
+  'util:getDeviceInfo': () => Promise<DeviceInfo>
 
   /** 前端已准备就绪 */
   'web:ready': () => void
-
-  /** 获取 os 配置，用于 APP 升级等接口的参数 */
-  'const:osConfig': () => OsConfig
 
   /** 窗口同步器相关 */
   /** 打开窗口同步器 */
@@ -229,4 +238,8 @@ export interface RenderMessage {
   'syncControl:getMainControlDirId': () => string | undefined
   /** 获取所有群控中的窗口 */
   'syncControl:getAllSyncingWindows': () => WindowItemType[]
+  /** 注册快捷键 */
+  'syncControl:registerShortcut': (payload: PreferenceSettings['shortcutKey']) => Promise<ShortcutKeyRegisterResult>
+  /** 检测快捷键是否被占用 */
+  'syncControl:checkShortcutKeysIsOccupied': (payload: Partial<PreferenceSettings['shortcutKey']>) => Promise<ShortcutKeyRegisterResult>
 }

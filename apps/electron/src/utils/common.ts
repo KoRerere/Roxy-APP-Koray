@@ -1,4 +1,11 @@
 import { app } from 'electron'
+import { osConfig } from '/@/constants'
+import { hostname } from 'node:os'
+import { createHash } from 'node:crypto'
+import systeminformation from 'systeminformation'
+import { UserGetLoginInfoListData } from '@roxy/backend-api'
+import { detectNetwork } from '/@/utils'
+import { format } from 'date-fns'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -39,3 +46,49 @@ export const calculateRemainingTime = (timeStep = 30) => {
   const remainingTime = timeStep - (currentTime % timeStep);
   return remainingTime;
 };
+
+export type CommonRequestHeaders = ReturnType<typeof getCommonRequestHeaders>
+export function getCommonRequestHeaders() {
+  return {
+    source: 'app',
+    appVersion: app.getVersion(),
+    osVersion: osConfig.osVersion,
+    ['R-OS']: isMac ? 'mac' : 'win',
+    ['R-OSBIT']: isMac ? osConfig.cpu : osConfig.osBit,
+    // ['R-DEVICE-ID']: await getDeviceId(),
+    ['R-DEVICE-NAME']: encodeURIComponent(hostname()),
+  }
+}
+
+/** 获取设备唯一 ID */
+export async function getDeviceId() {
+  const sys = await systeminformation.system();
+  const baseboard = await systeminformation.baseboard();
+  const disk = await systeminformation.diskLayout();
+
+  const uniqueString = `${sys.uuid}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
+  const deviceId = createHash("sha256").update(uniqueString).digest("hex");
+
+  console.log("设备唯一 ID:", deviceId);
+  return deviceId;
+}
+
+export type DeviceInfo = ReturnType<typeof getDeviceInfo>
+
+/** 获取设备信息 */
+export async function getDeviceInfo(): Promise<UserGetLoginInfoListData['data'][number]> {
+  const result = await detectNetwork('local')
+
+  return {
+    deviceName: hostname(),
+    deviceId: await getDeviceId(),
+    /** 用户IP地址 */
+    address: result.ip,
+    /** 平台 */
+    platform: isMac ? 'mac' : 'win',
+    /** 位置 */
+    location: result.city,
+    /** 登录时间 */
+    createTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+  }
+}

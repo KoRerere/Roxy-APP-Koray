@@ -106,13 +106,20 @@ app.use(PrimeVue, {
             fontWeight: '600'
           },
           content: {
-            padding: '0 {overlay.modal.padding} {overlay.modal.padding} {overlay.modal.padding}'
+            padding: '0 24px {overlay.modal.padding} 24px'
           },
           footer: {
-            padding: '0 {overlay.modal.padding} {overlay.modal.padding} {overlay.modal.padding}',
+            padding: '0 24px {overlay.modal.padding} 24px',
             gap: '0.5rem'
           }
         },
+        datatable: {
+          row: {
+            hover: {
+              // background: '#fff'
+            }
+          }
+        }
       },
     }),
   },

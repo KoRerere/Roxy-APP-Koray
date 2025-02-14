@@ -15,9 +15,12 @@ import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
+import { openAPICommonHeaders } from '/@/constants/common'
 
 // webpack 5 之后，不再支持直接引入 es6 模块，需要使用 default 属性
 const emitter: ReturnType<typeof mitt> = mitt?.default?.() || mitt()
+
+export type LaunchBy = 'app' | 'api'
 
 export class BrowserItem {
   beforeLaunchTask!: BeforeLaunchTask
@@ -25,6 +28,12 @@ export class BrowserItem {
 
   on = emitter.on
   off = emitter.off
+  /** 通过哪种方式启动的浏览器 */
+  launchBy: LaunchBy = 'app'
+  /** 公共请求头 */
+  get requestHeaders() {
+    return this.launchBy === 'api' ? openAPICommonHeaders : {}
+  }
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
   /** 浏览器关闭后，上传数据 promise */
@@ -120,7 +129,8 @@ export class BrowserItem {
     }
   }
 
-  constructor(winItem: WindowItemType) {
+  constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
+    this.launchBy = launchBy
     this.winInfo = winItem
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
@@ -142,16 +152,16 @@ export class BrowserItem {
     }
     else {
       if (this.winInfo.randomFingerprint) {
-        const [fingerprint] = await genRandomFingerprint(this.winInfo).catch((error) => {
+        const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
           console.error('genRandomFingerprint error: ', error)
           sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
           return Promise.reject(new Error($t('启动时生成随机指纹失败')))
         })
         try {
-          const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint })
+          const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
           if (code === 0) {
             console.log('修改指纹成功', fingerprint)
-            const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' })
+            const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
             if (code === 0 && data.rows[0]) {
               // console.log('获取窗口信息成功', data.rows[0])
               this.winInfo = data.rows[0]
@@ -256,7 +266,7 @@ export class BrowserItem {
       console.log('uploadData:', uploadParams)
 
       // 同步窗口状态
-      await API.window.userMdfWindowSyncV2Create([uploadParams]).then((res) => {
+      await API.window.userMdfWindowSyncV2Create([uploadParams], { headers: this.requestHeaders }).then((res) => {
         console.log('user_mdf_window_sync_v2 uploadData', res)
       }).catch((error) => {
         console.error('user_mdf_window_sync_v2 uploadData error: ', error)

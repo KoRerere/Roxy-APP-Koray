@@ -21,7 +21,7 @@ interface VersionInfo {
   releaseTime: string
 }
 
-interface CheckForUpdatesOptions {
+export interface CheckForUpdatesOptions {
   onDownloadProgress?: (percentage: number) => void
   onDownloadComplete?: () => any
 }

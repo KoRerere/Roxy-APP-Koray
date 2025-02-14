@@ -2,6 +2,14 @@ import axios from 'axios'
 import { isDev, isPackaged } from '/@/utils'
 
 const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']
+
+let openAPIUrl = ''
+
+/** 通过 API 调用的接口采用此域名 */
+export function getOpenAPIUrl(): string {
+  return openAPIUrl
+}
+
 /**
  * 读取网关配置
  */
@@ -22,12 +30,17 @@ export async function getGatewayConfig(): Promise<string> {
         return Promise.reject(error)
       })
       console.log(`getGatewayConfig response`, response.data)
-      return isDev ? response.data.test : response.data.prod
+
+      const baseUrl = isDev ? response.data.test : response.data.prod
+
+      openAPIUrl = isDev ? baseUrl : response.data.prod_api
+
+      return baseUrl
     }
     catch (error) {
       console.log(`gatewayConfig error`, error)
     }
   }
 
-  return isDev ? 'https://lumitest.lumibrowser.com' : 'https://lumigate.lumibrowser.com'
+  return isDev ? 'https://lumitest.lumibrowser.com' : 'https://gate.roxybrowser.net'
 }

@@ -1820,6 +1820,7 @@ export interface UserGetUserConfigListData {
     syncSettings: object;
     ipBlackList: string[];
     blockDomainList: string[];
+    uaModeSwitch: string;
     /** api token */
     apiToken: string;
   };
@@ -2250,6 +2251,106 @@ export interface GetCoreUpgradeCreateData {
       upgradeContentEn?: string;
       upgradeContentRu?: string;
     }[];
+  };
+  msg: string;
+}
+
+export interface UserSettingPasswordCreatePayload {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+  /** 密码 */
+  password: string;
+}
+
+export interface UserSettingPasswordCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSettingPasswordVerifyCodeListParams {
+  /**
+   * 邮箱
+   * @example "166533381@qq.com"
+   */
+  email: string;
+}
+
+export interface UserSettingPasswordVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface LoginGithubCreatePayload {
+  /** 传入github登录token */
+  githubToken: string;
+}
+
+export interface LoginGithubCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface UserGetLoginInfoListData {
+  code: number;
+  data: {
+    /** 用户id */
+    id?: number;
+    /** 用户IP地址 */
+    address?: string;
+    /** 平台 */
+    platform?: string;
+    /** 设备名称 */
+    deviceName?: string;
+    /** 设备ID */
+    deviceId?: string;
+    /** 位置 */
+    location?: string;
+    /** 登录时间 */
+    createTime?: string;
+  }[];
+  msg: string;
+}
+
+export interface CheckOtherDeviceLoginListParams {
+  /** 用户名或者邮箱 */
+  user_name?: string;
+  /** 密码 */
+  password?: string;
+  /**
+   * 登录类型
+   * @example "login/google/github"
+   */
+  login_type: string;
+  /**
+   * 登录token：google/github token
+   * @example ""
+   */
+  login_token?: string;
+}
+
+export interface CheckOtherDeviceLoginListData {
+  code: number;
+  data: {
+    /** True ：有其他设备登录， False：无其他设备登录 */
+    has_other_login: boolean;
   };
   msg: string;
 }

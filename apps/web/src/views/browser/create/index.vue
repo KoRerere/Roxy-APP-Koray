@@ -4,7 +4,7 @@ import { useDialog } from 'primevue/usedialog'
 import type { MetaData } from '/@/views/browser/create/components/type'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
-import rxEditDiv from '/@/components/rx-edit-div'
+import WindowNameEdit from './components/window-name-edit.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import simplePopup from '/@/components/simplePopup'
@@ -19,9 +19,10 @@ import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { getDefaultTemplate } from './utils'
+import { getDefaultTemplate, getDefaultWindowName } from './utils'
 import { useBackRoute } from '/@/router/utils'
 import { RxInputNumber } from '/@/components/rx-input-number'
+import { useUserStore } from '/@/stores/user'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -48,6 +49,8 @@ const confirm = useConfirm()
 const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
+const userStore = useUserStore()
+const { userInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
@@ -63,7 +66,7 @@ const tabs = ref([
   { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const defaultWindowName = $t('未命名窗口')
+const defaultWindowName = getDefaultWindowName()
 const windowName = ref(defaultWindowName)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
@@ -80,7 +83,7 @@ const metaData = ref<MetaData>({
 const loading = ref(false)
 
 const maxWindowCount = computed(() => {
-  return currentWorkspace.value.maxWindowCount - currentWorkspace.value.useWindowCount
+  return userInfo.value.maxWindowCount - userInfo.value.useWindowCount
 })
 
 const inputsGroup = computed(() => {
@@ -198,8 +201,8 @@ async function createProfile(openBrowser: boolean) {
   const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
-    windowName: windowName.value,
-    windowNamePrefix: windowName.value,
+    windowName: windowName.value === defaultWindowName ? '' : windowName.value,
+    windowNamePrefix: windowName.value === defaultWindowName ? '' : windowName.value,
     createCount: createCount.value,
     ...original.value,
     ...formData,
@@ -232,6 +235,7 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
       }
     })
     workspaceStore.fetchWorkspaceList()
+    userStore.fetchUserInfo()
   }
   showToast(code, msg)
   loading.value = false
@@ -255,6 +259,7 @@ async function batchCreateProfile(params: any) {
   if (code === 0) {
     router.back()
     workspaceStore.fetchWorkspaceList()
+    userStore.fetchUserInfo()
   }
 }
 
@@ -271,6 +276,7 @@ async function importProfile(params: any) {
   if (code === 0) {
     router.back()
     workspaceStore.fetchWorkspaceList()
+    userStore.fetchUserInfo()
   }
   else {
     fileAnalyzeError.value = msg
@@ -309,7 +315,10 @@ async function saveTemplatePopup(option?: TemplateOption) {
             required: true,
           },
         ],
-        render: () => <RxAlert class="!w-full" closable={false} type="info" title={$t('模板将不会保存代理，平台账号以及 cookies 信息')} />,
+        render: () => <ol class="pl-[14px] m-0">
+          <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
+          <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+        </ol>,
       },
       onConfirm: async (data: any) => {
         onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
@@ -387,8 +396,7 @@ function handleWindowNameStartEdit() {
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
           <div v-show="tabsValue !== 'import'" class="flex gap-2">
-            <rxEditDiv v-model="windowName" class="flex-1" @blur="handleWindowNameInputBlur"
-              @startEdit="handleWindowNameStartEdit" />
+            <WindowNameEdit v-model="windowName" class="flex-1" />
             <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
               <template #option-extra="{ option }">
                 <div v-if="option.action" class="flex flex-1 justify-end gap-2">

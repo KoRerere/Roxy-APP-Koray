@@ -16,6 +16,7 @@ const rl = readline.createInterface({
 const zip = new Zip()
 
 const isProd = process.env.NODE_ENV === 'production'
+const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'nfnlQ4tl2UVcKKUh1710868857533'
 
 const webPath = path.join(__dirname, '../apps/web/dist')
 
@@ -44,7 +45,7 @@ zip.addLocalFolder(webPath, '', (filename) => {
   return !filename.endsWith('.map')
 })
 
-async function getOssToken(token = 'nfnlQ4tl2UVcKKUh1710868857530') {
+async function getOssToken() {
   const response = await fetch(`${baseUrl}/fb-admin-api/admin_get_oss_credential`, {
     headers: {
       token,
@@ -62,6 +63,7 @@ async function startUpload(minimum_app_version = '0.0.0') {
     ...ossConfig,
     stsToken: ossConfig.securityToken,
   })
+  console.log('最低支持版本: ', minimum_app_version)
   console.log('上传 web 资源包中...')
   for (const platform of platformList) {
     const uploadZip = await ossClient.put(`/public/package/web/${platform}/dist.zip`, zip.toBuffer())

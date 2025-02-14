@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { API } from '/@/api'
-import rxEditDiv from '/@/components/rx-edit-div'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import type { MetaData } from './components/type'
@@ -9,6 +8,10 @@ import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { useBackRoute } from '/@/router/utils'
+import WindowNameEdit from './components/window-name-edit.vue'
+import { getDefaultWindowName } from './utils'
+
+const defaultWindowName = getDefaultWindowName()
 
 const router = useRouter()
 const route = useRoute()
@@ -61,9 +64,10 @@ async function createProfile(formData: any) {
   const params = {
     ...original.value,
     ...formData,
-    windowName: windowName.value,
+    windowName: windowName.value?.startsWith(defaultWindowName) ? '' : windowName.value,
   }
   loading.value = true
+  console.log('createProfile', params)
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
   showToast(code, msg)
   if (code === 0) {
@@ -88,10 +92,11 @@ function oldFieldsFormat() {
       <ViewsHeader show-back :title="$t('编辑窗口')" />
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
-          <rxEditDiv v-model="windowName" />
+          <WindowNameEdit v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo"
+            :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
             @create="createProfile" />
         </div>
       </div>

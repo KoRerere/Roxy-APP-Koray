@@ -2,7 +2,7 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import RxTag from '/@/components/rx-tag.vue'
-import {RxAlert} from '/@/components/rx-alert/'
+import { RxAlert } from '/@/components/rx-alert/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -175,7 +175,7 @@ function parseValue() {
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
       const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
-      const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
+      const { protocol = 'http', host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
@@ -340,15 +340,19 @@ function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props"
+                  @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center">
-                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
+                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap"
+                  binary />
                 <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer">{{ $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }"
+                  name="base/rx_ic_info" :size="12" />
               </div>
             </div>
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
+              @click.stop="parseValue" />
           </div>
         </div>
       </div>
@@ -382,33 +386,32 @@ function onSave() {
           {{ $t('已解析代理') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteFailDisabled" @click="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click="testAllProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1"
+            :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test"
+            :disabled="!dataList?.length" @click.stop="testAllProxy" />
         </div>
       </div>
-        <div class="parse-result-message">
-          <RxAlert v-model:visible="showMessage" type="success"  class="w-full"
-            :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
-            closable
-            @close="messageClose">
-          </RxAlert>
-          <div v-if="showMessage" class="h-[10px] w-full bg-white"></div>
-        </div>
-        <RyTable
-        :style="{ '--message-h': showMessage ? '52px' : '0px' }"
-        :columns="columns" :data-list="dataList"
-        :table-operation="tableOperation" :paginator="false" :show-table-header="false"
-        :show-actions="false" >
-          <template #table-empty>
-            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
-          </template>
-          <template #actions="{ data }">
-            <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
-          </template>
-        </RyTable>
+      <div class="parse-result-message">
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full"
+          :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
+          closable @close="messageClose">
+        </RxAlert>
+        <div v-if="showMessage" class="h-[10px] w-full bg-white"></div>
+      </div>
+      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
+        :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+        <template #table-empty>
+          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
+        </template>
+        <template #actions="{ data }">
+          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
+            :show-menu="false" @quick-click="operationHandler($event, data)" />
+        </template>
+      </RyTable>
     </div>
     <div class="flex justify-end footer">
-      <RxButton severity="info" :label="$t('保存')" :disabled="!dataList?.length" @click="onSave" />
+      <RxButton severity="info" :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
     </div>
   </div>
 </template>
@@ -496,11 +499,11 @@ function onSave() {
 
 .footer {
   position: sticky;
-    bottom: 0;
-    right: 0;
-    background-color: white;
-    width: 100%;
-    padding: 12px 0;
-    z-index: 200;
+  bottom: 0;
+  right: 0;
+  background-color: white;
+  width: 100%;
+  padding: 12px 0;
+  z-index: 200;
 }
 </style>

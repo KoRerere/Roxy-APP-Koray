@@ -5,8 +5,10 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from '/@/hooks/useDialog'
 import PaidPlan from './paid-plan.vue'
 import { emitter } from '/@/utils/eventBus'
+import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
 
 const [dialogInstance] = useDialog()
+updatePrimeVueLocale()
 
 // 显示商业化弹窗
 function showBusinessPopup() {

@@ -153,6 +153,18 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     win && stopMoveWindow(win)
   })
 
+  /** 获取系统 GPU 信息 */
+  ipcMain.on('app:getGPUFeatureStatus', (event,) => {
+    return app.getGPUFeatureStatus()
+  })
+
+  /** 动态设置窗口大小 */
+  ipcMain.on('app:resizeWindow', (event, { width, height }) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const { x, y } = win?.getBounds()!
+    win?.setBounds({ x, y, width, height })
+  })
+
   /** 开启系统代理 */
   ipcMain.on('app:setProxy', async (event, payload: Config) => {
     const mainWindow = getMainWindow()!

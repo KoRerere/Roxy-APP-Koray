@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { RxInputNumber } from '/@/components/rx-input-number'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
 
@@ -28,21 +27,6 @@ const remainWorkspaceCount = computed(() => {
   }
   return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount
 })
-
-const maxCreateWindowCount = computed(() => {
-  if (workspaceInfo.value?.id) {
-    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount
-  }
-  return workspaceStore.maxCreateWindowCount
-})
-
-const minCreateWindowCount = computed(() => {
-  if (workspaceInfo.value?.id) {
-    return workspaceStore.currentWorkspace?.useWindowCount
-  }
-  return 0
-})
-
 
 function onInput() {
   const result = z.string()
@@ -122,22 +106,6 @@ defineExpose({
         <div class="description">
           {{ $t('窗口信息示例：{name}', { name: exampleName }) }}
         </div>
-      </div>
-    </div>
-    <div v-if="!disabled && workspaceInfo.workspaceDefault !== 1" class="row">
-      <div class="w-full flex justify-between items-center">
-        <div>
-          <div class="title">{{ $t('窗口创建限制') }}</div>
-          <div class="description">
-            <i18n-t :keypath="$t('当前空间可以创建窗口的数量（剩余可分配用量：{count}个）', { count: '{count}' })" scope="global">
-              <template #count>
-                {{ remainWorkspaceCount }}
-              </template>
-            </i18n-t>
-          </div>
-        </div>
-        <RxInputNumber v-model="workspaceInfo.maxWindowCount" :min="minCreateWindowCount" :max="maxCreateWindowCount"
-          :disabled="disabled" class="!w-120px" />
       </div>
     </div>
   </div>

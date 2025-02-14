@@ -4,7 +4,9 @@ import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { useUserStore } from '/@/stores/user'
 import type { SettingsModule } from '../type'
-import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getSettings } from '../panel'
+import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getLoginActive, getSettings } from '../panel'
+import { $t } from '/@/locales'
+import RxButton from '/@/components/rx-button'
 
 type PanelKeyType = ReturnType<typeof getSettings>[number]['name']
 
@@ -14,6 +16,7 @@ interface Active {
 }
 
 const dialogRef = inject<any>('dialogRef')
+
 
 const userStore = useUserStore()
 const active = reactive<Active>({
@@ -26,24 +29,35 @@ const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({})
 const menuList = ref(
   getSettings().map(item => ({
     ...item,
-    command: () => {
+    command: async () => {
       active.key = item.name
-      active.panel = settingsPanel[active.key]
+      active.panel = await settingsPanel[active.key]
     },
   })),
 )
 
 async function getUserConfig() {
   const data = toRaw(await userStore.getUserConfig())
+
+  const promiseMap = {
+    preferences: getPreferencesPanel,
+    network: getNetworkPanel,
+    loginActivity: getLoginActive,
+  }
+
+  Object.entries(promiseMap).forEach(async ([key, value]) => {
+    settingsPanel[key as PanelKeyType] = value(data)
+  })
+
   settingsPanel.profiles = await getProfilePanel(toRaw(userStore.userInfo))
-  settingsPanel.preferences = await getPreferencesPanel(data)
-  settingsPanel.network = await getNetworkPanel(data)
-  active.panel = settingsPanel[active.key]
+  active.panel = await settingsPanel[active.key]
 }
 
 function closePopup() {
   dialogRef.value.close()
 }
+
+
 
 onBeforeMount(() => {
   active.key = dialogRef.value.data.props.activeKey
@@ -52,10 +66,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full relative">
     <div class="settings-menu">
       <div class="settings-menu-title">
-        <RxSvgIcon class="cursor-pointer" name="base/rx_ic_chevron_left" :size="20" @click="closePopup" />
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
@@ -65,6 +78,8 @@ onBeforeMount(() => {
           <span>{{ item.label }}</span>
         </div>
       </div>
+      <RxButton icon="base/rx_ic_delete" text severity="secondary" size="lg" class="close-btn" @click="closePopup">
+      </RxButton>
     </div>
     <div class="settings-content">
       <div class="settings-content-wrapper">
@@ -78,7 +93,7 @@ onBeforeMount(() => {
             </div>
           </div>
           <div v-for="item in active.panel.list" :key="item.subtitle">
-            <div v-if="item.subtitle" class="mb-3">
+            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-black">
               {{ item.subtitle }}
             </div>
             <template v-for="subItem in item.items" :key="subItem.label">
@@ -92,7 +107,7 @@ onBeforeMount(() => {
                       <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
                     </div>
                   </div>
-                  <div class="flex-1 flex justify-end w-full">
+                  <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
                     <component :is="subItem.component" v-model="subItem.value" :item="subItem"
                       class="panel-item-value" />
                   </div>
@@ -108,6 +123,13 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss" scoped>
+.close-btn {
+  position: absolute !important;
+  right: 16px;
+  top: 16px;
+}
+
+
 .settings {
   &-menu {
     display: flex;
@@ -121,6 +143,7 @@ onBeforeMount(() => {
 
     &-title {
       display: flex;
+      padding-left: 24px;
       align-items: center;
       gap: var(--spacing-xl, 12px);
       color: #000;
@@ -163,6 +186,7 @@ onBeforeMount(() => {
     width: 100%;
     overflow-y: auto;
     margin: 8px 0;
+    margin-top: 0;
 
     &-wrapper {
       margin: 0 auto;

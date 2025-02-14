@@ -35,10 +35,15 @@ const _aliOSS = new class AliOSS {
     // const { signal } = this.controller
 
     // TODO 上传凭证接口
-    const { data } = await API.base.userGetOssCredentialV2List({})
+    const { code, data, msg } = await API.base.userGetOssCredentialV2List({})
     // .finally(() => {
     //   this.controller = null
     // })
+
+    if (code !== 0) {
+      console.error('refreshUploadTokenInterval error', code, data, msg)
+      return Promise.reject(msg)
+    }
 
     this.store = new OSS({
       region: data.region,

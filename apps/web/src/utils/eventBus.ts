@@ -7,6 +7,11 @@ type Events = {
   notifyUpdateData: UserGetNotifyListData,
   maxWindowCountChange?: number
   showRoxyOperationNotice?: void
+  /** 被挤号 */
+  kickedOut?: {
+    deviceName: string
+    createTime: string
+  }
 }
 
 export const emitter = mitt<Events>()

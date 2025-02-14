@@ -44,5 +44,9 @@ defineExpose({
   align-items: center;
   gap: var(--spacing-lg, 8px);
   border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+
+  &:empty {
+    display: none;
+  }
 }
 </style>

@@ -1,18 +1,18 @@
 
 import { IPCMainInstance } from "/@/modules/ipc/types"
 import { closeSynchronizerWindow, createSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
-import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser, getMainControlBrowserSize, getRoxySyncStartResult, getSyncWindowCount, startRoxySync, stopRoxySync } from "/@/modules/sync-control/bin"
-import { browserManager } from "/@/modules/browser"
-import { closeSynchronizerActionBarWindow, createSynchronizerActionBarWindow } from "/@/modules/sync-control/actionBar"
-import { sendText, showAllWindows, syncSettings, windowArrange } from "/@/modules/sync-control/api"
+import { getAllSyncControlBrowsers, getMainControlBrowser, getMainControlBrowserSize, getRoxySyncStartResult, getSyncWindowCount, } from "/@/modules/sync-control/bin"
+import { sendText, syncSettings } from "/@/modules/sync-control/api"
 import { closePreferencesDialogWindowWindow, openPreferencesDialog, resizePreferencesDialog } from "/@/modules/sync-control/dialog/preferences"
 import { closeCustomLayoutsDialogWindow, openCustomLayoutDialog } from "/@/modules/sync-control/dialog/custom-layout"
 import { closeBatchInputsDialogWindow, openBatchInputsDialog, resizeBatchInputsDialog } from "/@/modules/sync-control/dialog/batch-inputs"
-import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constants"
 import axios from "axios"
 import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
 import { closeOpenSitesDialogWindow, openOpenSitesDialog } from "/@/modules/sync-control/dialog/open-sites"
 import { closeSyncingWindowListWindow, openSyncingWindowList } from "/@/modules/sync-control/dialog/syncing-window-list"
+import { checkShortcutKeysIsOccupied, registerGlobalShortcut } from "/@/modules/sync-control/shortcutKey"
+import { globalShortcut } from "electron"
+import { SyncControlUtil } from "/@/modules/sync-control/util"
 
 
 
@@ -25,6 +25,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
     // return createSynchronizerActionBarWindow()
     // openCustomLayoutDialog()
     createSynchronizerWindow()
+    registerGlobalShortcut()
     // openBatchInputsDialog()
   })
 
@@ -32,6 +33,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('syncControl:close', (event) => {
     console.log('关闭窗口同步器')
     closeSynchronizerWindow()
+    globalShortcut.unregisterAll()
   })
 
   /**
@@ -55,45 +57,24 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
         如果没有取到，就认为启动失败
    * */
   ipcMain.on('syncControl:start', async (event, dirIds) => {
-    const pIds = Array.from(browserManager.openedBrowserMap.values())
-      .reduce((acc, cur) => {
-        if (dirIds.includes(cur.winInfo.dirId!) && cur.launchInfo?.pid) {
-          acc.push(cur.launchInfo.pid)
-          // 第一个PID为主窗口
-          if (dirIds[0] === cur.winInfo.dirId) {
-            acc = [...new Set([cur.launchInfo.pid, ...acc])]
-          }
-        }
-        return acc
-      }, [] as number[])
-    const isSuccess = await startRoxySync(pIds)
-    console.log('syncControl:start isSuccess:', isSuccess)
-    if (isSuccess) {
-      console.log('窗口同步程序执行成功，关闭同步器窗口，开始打开同步器操作栏窗口')
-      closeSynchronizerWindow()
-      createSynchronizerActionBarWindow()
-    }
+    SyncControlUtil.start(dirIds)
   })
 
   /** 停止同步窗口 */
   ipcMain.on('syncControl:stop', (event,) => {
-    console.log('停止同步窗口')
-    stopRoxySync()
-    setTimeout(() => {
-      createSynchronizerWindow()
-    }, 1000)
+    SyncControlUtil.stop()
   })
 
   /** 宫格布局、堆叠布局、自定义布局 */
   ipcMain.on('syncControl:doLayout', (event, payload) => {
     console.log('宫格布局、堆叠布局、自定义布局:', payload)
-    return windowArrange(payload)
+    return SyncControlUtil.doLayout(payload)
   })
 
   /** 显示所有窗口 */
   ipcMain.on('syncControl:showAll', (event) => {
     console.log('显示所有窗口')
-    return showAllWindows()
+    return SyncControlUtil.showAllWindows()
   })
 
   /** 动态修改同步设置 */
@@ -178,139 +159,30 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 
   /** 统一标签页 */
   ipcMain.on('syncControl:unifyTabs', async (event) => {
-    console.log('统一标签页')
-    const mainControlBrowser = getMainControlBrowser()
-    const controlledBrowsers = getControlledBrowsers()
-    if (mainControlBrowser) {
-      const mainControlPages = await mainControlBrowser.getBrowser()?.pages()
-      const mainControlPageCount = mainControlPages?.length
-      // 关闭被控窗口的所有标签页
-      const controlledBrowserPages = await Promise.all(controlledBrowsers.map(async browser => {
-        const pages = await browser.getBrowser()?.pages() || []
-        await Promise.all(pages.slice(mainControlPageCount).map(page => page.close()))
-        return browser.getBrowser()?.pages()
-      }))
-
-      mainControlPages?.forEach((page, pageIndex) => {
-        const pageURL = page.url()
-
-        controlledBrowsers.forEach(async (item, browserIndex) => {
-          const browser = item.getBrowser()
-          const oldPages = controlledBrowserPages[browserIndex]
-          const page = oldPages?.[pageIndex] || await browser?.newPage()
-
-          const isLocalWebURL = isLocalWebServerURL(pageURL)
-          // 如果是本地 web 服务
-          if (isLocalWebURL) {
-            const url = new URL(pageURL)
-            url.searchParams.set('id', item.winInfo.dirId!)
-            await page?.goto(url.toString())
-          } else {
-            await page?.goto(pageURL)
-          }
-        })
-      })
-    }
+    await SyncControlUtil.unifyTabs()
   })
 
   /** 关闭其他标签页 */
   ipcMain.on('syncControl:closeOtherTabs', async (event) => {
-    console.log('关闭其他标签页')
-    // https://chromedevtools.github.io/devtools-protocol/
-    // http://127.0.0.1:61854/json/list
-    const allSyncControlBrowsers = getAllSyncControlBrowsers()
-
-    allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = await getActivePageTargetId(browser)
-      const pages = await browser?.getBrowser()?.pages()
-      pages?.forEach(async page => {
-        const pageId = page.target()._targetId
-        if (pageId !== activeTargetId) {
-          await page.close()
-        }
-      })
-    })
+    await SyncControlUtil.closeOtherTabs()
   })
 
   /** 关闭当前标签页 */
-  ipcMain.on('syncControl:closeCurrentTab', (event) => {
-    console.log('关闭当前标签页')
-    const allSyncControlBrowsers = getAllSyncControlBrowsers()
-
-    allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = await getActivePageTargetId(browser)
-      const pages = await browser?.getBrowser()?.pages()
-      if (pages?.length === 1) {
-        console.log('只有一个标签页，不关闭')
-        return
-      }
-      pages?.forEach(async page => {
-        const pageId = page.target()._targetId
-        if (pageId === activeTargetId) {
-          await page.close()
-        }
-      })
-    })
+  ipcMain.on('syncControl:closeCurrentTab', async (event) => {
+    await SyncControlUtil.closeCurrentTab()
   })
 
-  const blankTabs = ['chrome://newtab/', 'about:blank', 'chrome://new-tab-page/']
   /** 关闭空白标签页 */
-  ipcMain.on('syncControl:closeBlankTabs', (event) => {
-    console.log('关闭空白标签页')
-    // 例如：chrome://newtab/
-    const allSyncControlBrowsers = getAllSyncControlBrowsers()
-    allSyncControlBrowsers.forEach(async (browser) => {
-      const pages = await browser?.getBrowser()?.pages()
-      const totalPageCount = pages!.length
-      // 如果只有一个标签页，不关闭
-      if (totalPageCount === 1) {
-        console.log('只有一个标签页，不关闭')
-        return
-      }
-
-      let closeCount = 0
-      // 最少保留要一个标签页
-      for (let i = 0; i < totalPageCount; i++) {
-        if (closeCount >= totalPageCount - 1) {
-          break
-        }
-
-        const page = pages?.[i]
-        const pageURL = page.url()
-        if (blankTabs.includes(pageURL)) {
-          page.close()
-          closeCount++
-        }
-      }
-    })
+  ipcMain.on('syncControl:closeBlankTabs', async (event) => {
+    await SyncControlUtil.closeBlankTabs()
   })
 
   /** 打开网址 */
-  ipcMain.on('syncControl:openSites', (event, payload) => {
-    console.log('打开网址:', payload)
-    const { urls, replaceCurrentTab } = payload
-    const allSyncControlBrowsers = getAllSyncControlBrowsers()
-    allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = replaceCurrentTab ? await getActivePageTargetId(browser) : undefined
-      const pages = await browser?.getBrowser()?.pages()
-      // 如果是替换当前标签页
-      if (replaceCurrentTab) {
-        pages?.forEach(async page => {
-          const pageId = page.target()._targetId
-          if (pageId === activeTargetId) {
-            await page.goto(urls[0])
-          }
-        })
-      }
-      urls.slice(Number(replaceCurrentTab)).forEach(async url => {
-        const page = await browser?.getBrowser()?.newPage()
-        await page?.goto(url)
-      })
-    })
-    closeOpenSitesDialogWindow()
+  ipcMain.on('syncControl:openSites', async (event, payload) => {
+    await SyncControlUtil.openSites(payload)
   })
 
-  /** 打开打开网址弹窗 */
+  /** 打开 打开网址弹窗 */
   ipcMain.on('syncControl:openOpenSitesDialog', (event) => {
     console.log('打开打开网址弹窗')
     openOpenSitesDialog()
@@ -348,6 +220,20 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
       ...browser.winInfo,
       $pId: browser.launchInfo?.pid,
     }))
+  })
+
+  /** 注册快捷键 */
+  ipcMain.on('syncControl:registerShortcut', async (event, payload) => {
+    console.log('注册快捷键:', payload)
+    return registerGlobalShortcut(payload)
+  })
+
+  /** 检测快捷键是否被占用 */
+  ipcMain.on('syncControl:checkShortcutKeysIsOccupied', async (event, payload) => {
+    console.log('检测快捷键是否被占用:', payload)
+    const result = checkShortcutKeysIsOccupied(payload)
+    console.log('检测快捷键是否被占用 result:', result)
+    return result
   })
 }
 

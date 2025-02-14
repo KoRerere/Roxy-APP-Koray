@@ -10,6 +10,8 @@
  */
 
 import {
+  CheckOtherDeviceLoginListData,
+  CheckOtherDeviceLoginListParams,
   ForgetPasswordCreateData,
   ForgetPasswordCreatePayload,
   GetAppUpgradeCreateData,
@@ -20,6 +22,8 @@ import {
   GetCoreUpgradeCreatePayload,
   LoginCreateData,
   LoginCreatePayload,
+  LoginGithubCreateData,
+  LoginGithubCreatePayload,
   LoginGoogleV2CreateData,
   LoginGoogleV2CreatePayload,
   PostBaseData,
@@ -49,6 +53,7 @@ import {
   UserGetInviteCodeListData,
   UserGetInviteLinkListData,
   UserGetInviteUserListListData,
+  UserGetLoginInfoListData,
   UserGetNotifyListData,
   UserGetOssCredentialV2ListData,
   UserGetSystemDictV2CreateData,
@@ -61,6 +66,10 @@ import {
   UserReadNotifyCreatePayload,
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
+  UserSettingPasswordCreateData,
+  UserSettingPasswordCreatePayload,
+  UserSettingPasswordVerifyCodeListData,
+  UserSettingPasswordVerifyCodeListParams,
   UserSetUserApiCreateData,
   UserSetUserApiCreatePayload,
   UserSetUserConfigCreateData,
@@ -693,6 +702,92 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSettingPasswordCreate
+   * @summary 设置密码
+   * @request POST:/user_setting_password
+   * @response `200` `UserSettingPasswordCreateData`
+   */
+  userSettingPasswordCreate = (data: UserSettingPasswordCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserSettingPasswordCreateData, any>({
+      path: `/user_setting_password`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSettingPasswordVerifyCodeList
+   * @summary 设置密码的验证码
+   * @request GET:/user_setting_password_verify_code
+   * @response `200` `UserSettingPasswordVerifyCodeListData`
+   */
+  userSettingPasswordVerifyCodeList = (query: UserSettingPasswordVerifyCodeListParams, params: RequestParams = {}) =>
+    this.http.request<UserSettingPasswordVerifyCodeListData, any>({
+      path: `/user_setting_password_verify_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginGithubCreate
+   * @summary Github登录
+   * @request POST:/login_github
+   * @response `200` `LoginGithubCreateData`
+   */
+  loginGithubCreate = (data: LoginGithubCreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginGithubCreateData, any>({
+      path: `/login_github`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetLoginInfoList
+   * @summary 获取用户登录信息
+   * @request GET:/user_get_login_info
+   * @response `200` `UserGetLoginInfoListData`
+   */
+  userGetLoginInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetLoginInfoListData, any>({
+      path: `/user_get_login_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckOtherDeviceLoginList
+   * @summary 判断是否有在其他设备已经登录
+   * @request GET:/check_other_device_login
+   * @response `200` `CheckOtherDeviceLoginListData`
+   */
+  checkOtherDeviceLoginList = (query: CheckOtherDeviceLoginListParams, params: RequestParams = {}) =>
+    this.http.request<CheckOtherDeviceLoginListData, any>({
+      path: `/check_other_device_login`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

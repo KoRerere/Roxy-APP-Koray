@@ -7,6 +7,9 @@ export const getColumnsConfig = () => ({
       title: $t('窗口信息'),
       key: 'profile',
       slot: 'profile',
+      style: {
+        width: '40%'
+      }
     },
     {
       title: $t('标签'),

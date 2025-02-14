@@ -24,34 +24,22 @@ function onReset() {
 }
 
 function onUpdate() {
-  popRef.value.getRef().hide()
   emits('sort')
 }
 </script>
 
 <template>
-  <div class="position-relative flex">
-    <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_sort_ascending" :label="$t('排序')" @click="toggle" />
-    <div v-if="changed" class="changed" />
-  </div>
-  <RyPopover ref="popRef">
-    <div :class="classes.content">
-      <div v-for="item in _sorts" :key="item.name" :class="classes.item">
-        <RxSvgIcon :name="item.icon" :size="16" />
-        <span class="flex-1">{{ item.label }}</span>
-        <div class="flex-1">
-          <RxInputSelect v-model="item.value" v-bind="{ optionValue: 'value', filter: false, name: item.label, options: item.options, placeholder: item.placeholder }" checkmark
-            :highlight-on-select="false" />
-        </div>
+  <div class="flex flex-col w-full">
+    <div v-for="item in _sorts" :key="item.name" :class="classes.item">
+      <RxSvgIcon :name="item.icon" :size="16" />
+      <span class="flex-1">{{ item.label }}</span>
+      <div class="flex-1">
+        <RxInputSelect v-model="item.value" size="xxs"
+          v-bind="{ optionValue: 'value', filter: false, name: item.label, options: item.options, placeholder: item.placeholder }"
+          checkmark :highlight-on-select="false" @change="onUpdate" />
       </div>
     </div>
-    <template #footer>
-      <div class="flex justify-end gap-2 w-full">
-        <RxButton size="sm" severity="secondary" text :label="$t('重置')" @click="onReset" />
-        <RxButton size="sm" severity="info" :label="$t('保存')" @click="onUpdate" />
-      </div>
-    </template>
-  </RyPopover>
+  </div>
 </template>
 
 <style lang="scss" module="classes">
@@ -64,8 +52,7 @@ function onUpdate() {
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-sm, 4px);
-  padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  min-width: 300px;
+  padding: var(--spacing-sm, 4px) 0;
   color: var(--Color-neutrals-700, #343a3d);
   font-family: Inter;
   font-size: 13px;

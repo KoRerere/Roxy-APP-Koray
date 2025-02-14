@@ -88,7 +88,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
             </div>
             <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
           </div>
-          <div class="pl-[56px]">
+          <div class="pl-[56px] pr-[16px]">
             <rich-text :html="item.originUpgradeData?.upgradeContent" />
             <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
               :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"

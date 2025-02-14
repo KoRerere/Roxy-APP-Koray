@@ -3,6 +3,8 @@ import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
+import SignCardHeader from './sign-card-header.vue'
+import { RxAlert } from '/@/components/rx-alert/'
 
 const props = defineProps({
   type: {
@@ -20,6 +22,8 @@ const emailCode = defineModel('emailCode', { default: '' })
 
 const { setCurrentComponent, getSignFormData, toSignIn } = useLoginContext()
 const toast = useToast()
+const countdown = ref(0)
+const isShowAlert = ref(false)
 
 const getEmail = computed(() => {
   return props.email || getSignFormData().user_name
@@ -34,6 +38,30 @@ function toReEnter() {
   }
 }
 
+function startCountdown() {
+  countdown.value = 60
+  const timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value === 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
+}
+
+async function handleSendCode() {
+  const method = props.type === 'signUp' ? 'sendEmailRegisterVerifyCodeList' : 'sendEmailForgetVerifyCodeList'
+  const { code, msg } = await API.base[method]({ email: getEmail.value })
+  if (code === 0) {
+    startCountdown()
+    toast.add({ severity: 'success', summary: $t('验证码已发送'), detail: $t('请检查您的邮箱。'), life: 2500 })
+  }
+  else {
+    mixpanel.track(props.type, { method: 'email', success: false, error: msg })
+    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+  }
+
+}
+
 async function handleSubmit() {
   if (emailCode.value.length !== 6) {
     return
@@ -46,7 +74,7 @@ async function handleSubmit() {
 
   if (!verifyCodeRes.data) {
     mixpanel.track(props.type, { method: 'email', success: false, error: 'invalid verify code' })
-    toast.add({ severity: 'error', summary: 'Error', detail: $t('无效的验证码'), life: 2500 })
+    isShowAlert.value = true
     return
   }
 
@@ -77,20 +105,36 @@ async function handleSubmit() {
 function showLiveChat() {
   LiveChatWidget.call('maximize')
 }
+
+onBeforeMount(() => {
+  startCountdown()
+})
 </script>
 
 <template>
   <div class="container">
-    <div class="description">
-      <span class="email-text">{{ getEmail }}</span> <br>
-      {{ $t("我们已经向您的邮箱发送了一个6位数字验证码：") }} <br>
-    </div>
-    <div class="title">
-      {{ $t('请检查邮件以获取验证码') }}
-    </div>
+    <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
+    <SignCardHeader :subTitle="$t('请检查您的邮箱')">
+      <template #description>
+        <div class="description">
+          <div class="description-item">{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
+          <div class="email-text">{{ getEmail }} </div>
+          <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
+          <div class="description-item mt-[12px]">
+            {{ $t('请检查邮件以获取验证码') }}
+          </div>
+        </div>
+      </template>
+    </SignCardHeader>
     <InputOtp v-model="emailCode" class="inputotp" :length="6" />
     <RxButton size="md" class="w-full" :disabled="emailCode.length !== 6" @click="handleSubmit">
       {{ type === 'signUp' ? $t('完成注册') : $t('下一步') }}
+    </RxButton>
+    <Divider class="!my-[-12px]">
+      <span class="divider-text">{{ $t('或') }}</span>
+    </Divider>
+    <RxButton severity="secondary" outlined size="md" class="w-full" :disabled="countdown > 0" @click="handleSendCode">
+      {{ countdown > 0 ? $t('{time} 秒后可重新获取', { time: `${countdown}` }) : $t('重新发送') }}
     </RxButton>
     <div class="tips">
       <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global">
@@ -132,7 +176,16 @@ function showLiveChat() {
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-lg, 20px);
-    /* 166.667% */
+
+    .description-item {
+      color: var(--Colors-Text-text-tertiary, #7C8387);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: var(--Line-Height-text-lg, 20px);
+      /* 166.667% */
+    }
   }
 }
 
@@ -193,5 +246,15 @@ function showLiveChat() {
   line-height: var(--Line-Height-text-xs, 16px);
   text-decoration-line: underline;
   cursor: pointer;
+}
+
+.divider-text {
+  color: #000;
+  text-align: center;
+  font-family: Inter;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 </style>

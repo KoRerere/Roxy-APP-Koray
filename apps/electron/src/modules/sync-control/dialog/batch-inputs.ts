@@ -8,7 +8,10 @@ export function getBatchInputsDialogWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID)
 }
 
-export async function openBatchInputsDialog() {
+export type OpenBatchInputsDialogPayload = { tab: 'same' | 'diff' | 'random' }
+
+
+export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayload = { tab: 'same' }) {
   const targetWin = getBatchInputsDialogWindow()
 
   if (targetWin) {
@@ -30,7 +33,7 @@ export async function openBatchInputsDialog() {
     },
   })
   win[ROXY_WINDOW_ID_KEY] = ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID
-  win.loadURL(await getWebEntryUrl('#/sync-control-batch-inputs-dialog'))
+  win.loadURL(await getWebEntryUrl(`#/sync-control-batch-inputs-dialog?tab=${payload.tab}`))
   if (!isPackaged) {
     win.webContents.openDevTools()
   }

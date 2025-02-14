@@ -17,6 +17,8 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { handleResponseHeaders } from '/@/api/message/'
+import { emitter } from '/@/utils/eventBus'
+import { debounce } from 'es-toolkit'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -30,16 +32,11 @@ export const httpClient = new HttpClient({
 })
 
 let baseURL = ''
-let osConfig: {
-  os: NodeJS.Platform
-  osVersion: string
-  cpu: 'intel' | 'apple'
-  osBit: '64' | '32'
-}
+let commonRequestHeaders
 
 httpClient.instance.interceptors.request.use(async (config) => {
   baseURL ||= await electronAPI.send('util:getGatewayConfig')
-  osConfig ||= await electronAPI.send('const:osConfig')
+  commonRequestHeaders ||= await electronAPI.send('util:getCommonRequestHeaders').catch(() => electronAPI.send('const:osConfig'))
 
   config.baseURL = baseURL
 
@@ -48,24 +45,43 @@ httpClient.instance.interceptors.request.use(async (config) => {
   const { currentLocale } = useSimpleLocale()
   config.headers.token ||= token
   config.headers.language = currentLocale
+  config.headers.source = 'app'
   config.headers.appVersion = appVersion
   config.headers.workspaceId = currentWorkspace?.id
   // R-OS:mac/win
   // R-OSBIT:apple/intel/64/11
   // R-VERSION:1.0.0
-  config.headers['R-OS'] = osConfig.os === 'darwin' ? 'mac' : 'win'
-  config.headers['R-OSBIT'] = osConfig.os === 'darwin' ? osConfig.cpu : osConfig.osBit
-
+  config.headers['R-OS'] ||= commonRequestHeaders.os === 'darwin' ? 'mac' : 'win'
+  config.headers['R-OSBIT'] ||= commonRequestHeaders.os === 'darwin' ? commonRequestHeaders.cpu : commonRequestHeaders.osBit
+  Object.assign(config.headers, commonRequestHeaders)
   // await handleRequest(config)
 
   return config
 })
 
+const closeOtherWindow = debounce(async () => {
+  const isMainWindow = await electronAPI.send('app:isMainWindow')
+  if (!isMainWindow) {
+    window.close()
+  }
+}, 200)
+
 httpClient.instance.interceptors.response.use(async (response) => {
-  if (response.data.code === 405) {
+  const code = response.data.code
+  if (code === 405) {
+    closeOtherWindow()
     // 未登录
     useUserStore().clearUserInfo()
-    router.push({ name: 'login' })
+    // router.push({ name: 'login' })
+    emitter.emit('kickedOut', response.data.data)
+    return response
+  } else if (code === 403) {
+    closeOtherWindow()
+    // 未登录
+    useUserStore().clearUserInfo()
+    router.push({ name: 'login' }).catch(() => {
+      location.reload()
+    })
     return response
   }
   const { config } = response

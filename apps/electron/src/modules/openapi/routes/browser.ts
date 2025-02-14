@@ -4,19 +4,18 @@ import { browserManager } from '/@/modules/browser'
 import { accountMapping, browserListMapping, browserListMappingV2, mapping2List } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
-import { defaultBrowserCreateParams } from './constants/'
+import { getDefaultBrowserCreateParams } from './constants/'
+import { openAPICommonHeaders } from '/@/constants/common'
 
 const router = express.Router()
 
-const commonHeaders = {
-  source: 'api',
-}
+// sourceType 后端用于区分来源的字段
 
 /** 获取账号列表 */
 router.get('/account', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = mappingKeys(accountMapping, result.data.rows)
     }
@@ -31,7 +30,7 @@ router.get('/account', async (req, res) => {
 router.get('/label', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.api.userGetLabelInfoApiList({ ...rest }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.api.userGetLabelInfoApiList({ ...rest }, { headers: { workspaceId, ...openAPICommonHeaders } })
     res.json(result)
   }
   catch (error) {
@@ -43,7 +42,7 @@ router.get('/label', async (req, res) => {
 router.get('/workspace', async (req, res) => {
   const { ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.api.userGetWorkspaceListApiList({ ...rest }, { headers: { ...commonHeaders } })
+    const result = await API.api.userGetWorkspaceListApiList({ ...rest }, { headers: { ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = result.data.rows.map((item) => {
         Reflect.deleteProperty(item, 'userId')
@@ -61,14 +60,14 @@ router.get('/workspace', async (req, res) => {
 router.post('/create', async (req, res) => {
   const { proxyInfo = {}, fingerInfo = {}, workspaceId } = req.body || {}
   const params = {
-    ...defaultBrowserCreateParams,
+    ...getDefaultBrowserCreateParams(),
     ...req.body,
     ...proxyInfo,
     ...fingerInfo,
   }
 
   try {
-    const [data] = await genRandomFingerprint(params)
+    const [data] = await genRandomFingerprint(params, 1, 'api')
 
     const result = await API.window.userAddWindowInfoV2Create({
       ...params,
@@ -77,7 +76,7 @@ router.post('/create', async (req, res) => {
     }, {
       headers: {
         workspaceId,
-        ...commonHeaders,
+        ...openAPICommonHeaders,
       },
     })
 
@@ -100,7 +99,7 @@ router.post('/mdf', async (req, res) => {
   const result = await API.window.userMdfWindowInfoSingleV2Create(params, {
     headers: {
       workspaceId,
-      ...commonHeaders,
+      ...openAPICommonHeaders,
     },
   })
   res.json(result)
@@ -110,7 +109,7 @@ router.post('/mdf', async (req, res) => {
 router.get('/list', async (req, res) => {
   const { dirId, workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, ...rest }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       // console.log('browserListMapping', result.data.rows)
       result.data.rows = mapping2List(result.data.rows, browserListMapping, ['cookie'])
@@ -129,7 +128,7 @@ router.get('/list', async (req, res) => {
 router.get('/list_v2', async (req, res) => {
   const { workspaceId, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.window.userGetWindowInfoListList(rest, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       // console.log('browserListV2Mapping', result.data.rows)
       result.data.rows = mapping2List(result.data.rows, browserListMappingV2, ['cookie'])
@@ -152,7 +151,7 @@ router.post('/delete', async (req, res) => {
   }
 
   try {
-    const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.api.userDelWindowInfoApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
     dirIds.forEach(dirId => browserManager.removeLocalData(dirId))
 
     res.json(result)
@@ -180,7 +179,7 @@ router.post('/open', async (req, res) => {
   }
 
   try {
-    const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: "open" }, { headers: { workspaceId, ...commonHeaders } })
+    const result = await API.window.userGetWindowInfoV2List({ dirId, sourceType: "open" }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0) {
       const winInfo = result.data.rows[0]
       if (!winInfo) {
@@ -188,7 +187,7 @@ router.post('/open', async (req, res) => {
       }
       winInfo.startupParam = [winInfo.startupParam, ...args].join(',')
       try {
-        const launchInfo = await browserManager.launch(winInfo)
+        const launchInfo = await browserManager.launch(winInfo, 'api')
         res.success(launchInfo)
         return
       }
@@ -227,7 +226,7 @@ router.post('/close', async (req, res) => {
 /* 窗口随机指纹 */
 router.post('/random_env', async (req, res) => {
   const { dirId, workspaceId } = req.body
-  const result = await API.api.userMdfWindowInfoRandomV2Create({ dirId }, { headers: { workspaceId, ...commonHeaders } })
+  const result = await API.api.userMdfWindowInfoRandomV2Create({ dirId }, { headers: { workspaceId, ...openAPICommonHeaders } })
 
   return res.json(result)
 })
@@ -260,7 +259,7 @@ router.post('/clear_server_cache', async (req, res) => {
     return res.error('dirIds is required')
   }
 
-  const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId, ...commonHeaders } })
+  const result = await API.api.userClearWindowCacheApiV2Create({ dirIds }, { headers: { workspaceId, ...openAPICommonHeaders } })
 
   if (result.code === 0) {
     res.success()

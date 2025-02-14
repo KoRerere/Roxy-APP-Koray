@@ -9,6 +9,7 @@ import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
 import { isMac } from '/@/utils'
+import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 
 export type { UpdateInfo } from 'electron-updater'
 
@@ -17,6 +18,8 @@ const isDevelopment = !app.isPackaged
 export const appUpdater = new class AppUpdater {
   /** 是否在下载中 */
   isInProgress = false
+  /** 检查升级配置 */
+  checkForUpdatesOptions?: CheckForUpdatesOptions
   /** 是否由 autoUpdater.quitAndInstal() 退出应用程序 */
   isQuittingForUpdate = false
   #autoUpdater!: MacUpdater | NsisUpdater
@@ -26,11 +29,15 @@ export const appUpdater = new class AppUpdater {
     percent: 0,
     description: '',
   }
+  /** 等待下载 */
+  downloadPromiser: PromiseWithResolvers<void> | null = null
 
   constructor() { }
 
-  async init() {
-    const result = await API.base.userGetAppUpgradeCreate(osConfig)
+  async init(waitForDownload = false, options?: CheckForUpdatesOptions) {
+    this.downloadPromiser = Promise.withResolvers<void>()
+    this.checkForUpdatesOptions = options
+    const result = await API.base.getAppUpgradeCreate(osConfig)
 
     console.log(`user_get_app_upgrade result`, result)
 
@@ -52,17 +59,17 @@ export const appUpdater = new class AppUpdater {
       console.log(`更新地址为空 跳出更新`)
       return result
     }
-    const options = {
+    const publishOptions = {
       requestHeaders: {},
       provider: 'generic',
       url: downloadUrl,
     }
 
-    console.log(`autoUpdater options`, options)
+    console.log(`autoUpdater options`, publishOptions)
 
     if (this.#autoUpdater) {
       // 动态更新autoUpdater的配置
-      this.#autoUpdater.setFeedURL(options)
+      this.#autoUpdater.setFeedURL(publishOptions)
       console.log('APP 远程版本：', version)
       console.log('APP 本地版本：', app.getVersion())
       console.log('远程版本是否大于本地版本：', compare(version, app.getVersion(), '>'))
@@ -70,10 +77,10 @@ export const appUpdater = new class AppUpdater {
       if (version && compare(version, app.getVersion(), '>')) {
         await this.checkForUpdates()
       }
-      return result
+      return waitForDownload ? this.downloadPromiser?.promise : result
     }
 
-    this.#autoUpdater = isMac ? new MacUpdater(options) : new NsisUpdater(options)
+    this.#autoUpdater = isMac ? new MacUpdater(publishOptions) : new NsisUpdater(publishOptions)
 
     // 防止报错no such file or directory dev-app-update.yml
     if (isDevelopment) {
@@ -89,6 +96,7 @@ export const appUpdater = new class AppUpdater {
       if (ignoreList.every(n => !error.message.includes(n))) {
         this.sendErrorMessage()
       }
+      this.downloadPromiser?.reject(error)
       console.error(`autoUpdater 出现错误`, error)
     })
 
@@ -108,16 +116,19 @@ export const appUpdater = new class AppUpdater {
       this.#updateMessageData.percent = 100
       this.#updateMessageData.status = 'downloaded'
       this.sendSuccessMessage()
+      this.downloadPromiser?.resolve()
     })
 
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
       this.isInProgress = false
       console.log(`当前无更新`, updateInfo)
+      this.downloadPromiser?.resolve()
     })
 
     this.#autoUpdater.on(`download-progress`, (progressInfo) => {
       this.isInProgress = true
       const { percent, total } = progressInfo
+      this.checkForUpdatesOptions?.onDownloadProgress?.(Math.floor(percent))
       console.log(`更新进度: `, percent)
       this.#updateMessageData.status = 'downloading'
       this.#updateMessageData.percent = percent
@@ -134,7 +145,7 @@ export const appUpdater = new class AppUpdater {
     })
 
     this.checkForUpdates()
-    return result
+    return waitForDownload ? this.downloadPromiser?.promise : result
   }
 
   async checkForUpdates() {

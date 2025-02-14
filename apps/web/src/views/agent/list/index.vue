@@ -200,12 +200,15 @@ function onRefreshTable() {
 <template>
   <div class="flex flex-col w-full h-full">
     <ViewsHeader class="proxies-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('添加代理')" @click="createProxy" />
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click="testAllProxy" />
+      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('添加代理')"
+        @click.stop="createProxy" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
+        @click.stop="testAllProxy" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
+      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple"
+        :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #header-extra>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
@@ -214,7 +217,8 @@ function onRefreshTable() {
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click="createProxy" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')"
+                  @click.stop="createProxy" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" /> -->
               </div>
             </template>
@@ -236,12 +240,15 @@ function onRefreshTable() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }" :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.remark }"
-            class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }"
+            :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.remark }" class="cursor-pointer"
+            @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
+            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
+              :show-menu="false" @quick-click="operationHandler($event, data)" />
           </div>
         </template>
       </RyTable>

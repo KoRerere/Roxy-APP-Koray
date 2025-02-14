@@ -167,7 +167,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <span>{{ $t('团队指南') }}</span>
       </div> -->
       <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
-        :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
+        :label="$t('邀请')" @click.stop="handleShowInviteUserFormDialog" />
     </ViewsHeader>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
@@ -185,7 +185,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_user_add" :label="$t('邀请')"
-              @click="handleShowInviteUserFormDialog" />
+              @click.stop="handleShowInviteUserFormDialog" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('邀请文档')" /> -->
           </div>
         </template>

@@ -81,15 +81,19 @@ watch(() => formData.value.clickIntervalMaxMs, () => {
         <RadioButtonGroup v-model="formData.clickDelayMode" name="ingredient" class="flex flex-wrap gap-4">
           <div class="flex items-center gap-2">
             <RadioButton input-id="parallel-delay" :value="1" size="small" />
-            <label for="parallel-delay">{{ $t('并行延迟') }}</label>
-            <RxSvgIcon v-tooltip.top="{ value: $t('并行延迟模式下，所有窗口同步执行延迟间隔'), showDelay: 500 }" class="align-middle ml-1"
-              name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+            <div>
+              <label for="parallel-delay">{{ $t('并行延迟') }}</label>
+              <RxSvgIcon v-tooltip.top="$t('并行延迟模式下，所有窗口同步执行延迟间隔')" class="align-middle ml-1" name="base/rx_ic_info"
+                :size="12" color="#C7CDD1" />
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <RadioButton input-id="serialization-delay" :value="0" size="small" />
-            <label for="serialization-delay">{{ $t('串行延迟') }}</label>
-            <RxSvgIcon v-tooltip.top="{ value: $t('串行延迟模式下，窗口逐个依次执行延迟间隔'), showDelay: 500 }" class="align-middle ml-1"
-              name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+            <div>
+              <label for="serialization-delay">{{ $t('串行延迟') }}</label>
+              <RxSvgIcon v-tooltip.top="$t('串行延迟模式下，窗口逐个依次执行延迟间隔')" class="align-middle ml-1" name="base/rx_ic_info"
+                :size="12" color="#C7CDD1" />
+            </div>
           </div>
         </RadioButtonGroup>
       </div>

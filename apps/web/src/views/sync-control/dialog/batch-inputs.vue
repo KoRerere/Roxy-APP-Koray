@@ -36,6 +36,7 @@ import { $t } from '/@/locales';
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
+const route = useRoute()
 
 let syncWindowCount = 0
 const tabRefMap = ref<Recordable>({})
@@ -47,7 +48,8 @@ const tabs = ref([
   { id: 'diff', label: $t('差异文本'), component: markRaw(DiffText) },
   { id: 'random', label: $t('随机数字'), component: markRaw(RandomText) },
 ])
-const activeTab = ref(tabs.value[0].id)
+const defaultActiveTabId = tabs.value.find(tab => tab.id === route.query.tab)?.id || tabs.value[0].id
+const activeTab = ref(defaultActiveTabId)
 
 watch(activeTab, (val) => {
   if (val === 'diff') {
@@ -98,8 +100,14 @@ onMounted(() => {
 })
 </script>
 
+<style lang="scss">
+.p-dialog-content {
+  height: 100%;
+}
+</style>
 <style lang="scss" scoped>
 :deep(.p-tabpanels) {
+  height: 100%;
 
   .p-tabpanel {
     height: 100%;

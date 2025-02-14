@@ -205,7 +205,7 @@ onBeforeMount(() => {
           </div>
           <div class="referral-link">
             <div v-if="isNewUser" class="mask">
-              <div class="show-link" @click="showMyLink">
+              <div class="show-link" @click.stop="showMyLink">
                 <RxSvgIcon name="base/rx_ic_link"></RxSvgIcon> {{ $t('获取链接') }}
               </div>
             </div>
@@ -216,7 +216,7 @@ onBeforeMount(() => {
               </template>
             </div>
             <RxButton v-if="!isNewUser" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy"
-              :label="$t('复制')" @click="onCopy(referralLink)" />
+              :label="$t('复制')" @click.stop="onCopy(referralLink)" />
           </div>
         </div>
         <div v-if="['old', 'agent'].includes(userInfo.identity)" class="row">
@@ -234,7 +234,7 @@ onBeforeMount(() => {
               </span>
             </div>
             <RxButton class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')"
-              @click="onCopy(premiumCode)" />
+              @click.stop="onCopy(premiumCode)" />
           </div>
           <div class="description">
             <div>
@@ -272,10 +272,10 @@ onBeforeMount(() => {
           <div class="banner-preview">
             <Image :src="currentBannerImage.image_1x" alt="Image" preview
               :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
-              <template #preview="slotProps">
+              <template #original="slotProps">
                 <img :src="currentBannerImage.image_1x"
                   :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
-                  :style="slotProps.style" @click="slotProps.onClick" />
+                  :style="slotProps.style" @click.stop="slotProps.previewCallback" />
               </template>
             </Image>
           </div>
@@ -283,13 +283,13 @@ onBeforeMount(() => {
         <div class="row">
           <div class="referral-link">
             <div v-if="isNewUser" class="mask">
-              <div class="show-link" @click="showMyLink">
+              <div class="show-link" @click.stop="showMyLink">
                 <RxSvgIcon name="base/rx_ic_link"></RxSvgIcon> {{ $t('获取链接') }}
               </div>
             </div>
             <div class="referral-link-value">{{ bannerImagePreviewHtmlCode }}</div>
             <RxButton v-if="!isNewUser" class="flex-shrink-0 self-start copy-btn" text size="xxs" icon="base/rx_ic_copy"
-              :label="$t('复制')" @click="onCopy(bannerImagePreviewHtmlCode)" />
+              :label="$t('复制')" @click.stop="onCopy(bannerImagePreviewHtmlCode)" />
           </div>
         </div>
       </div>

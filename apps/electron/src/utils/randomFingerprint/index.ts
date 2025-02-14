@@ -2,6 +2,8 @@ import type { UserAddWindowInfoV2CreatePayload } from '@roxy/backend-api'
 import { API } from '/@/api/'
 import { genRandomFonts, getMacAddress } from '/@/utils'
 import { voices } from './constants/'
+import { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
+import { openAPICommonHeaders } from '/@/constants/common'
 
 /**
  * 获取canvas随机值,从0123456789ABCDEF里面随机取32位
@@ -47,7 +49,7 @@ export function getRandomInt(min: number, max: number) {
 /**
  * 一般isLocalService 会有3个true
  */
-function getSpeechSynthesis(os) {
+function getSpeechSynthesis(os: string) {
   const newVoices = [...voices]
   for (let i = 0; i < Math.floor(Math.random() * 2); i++) {
     newVoices.splice(Math.floor(Math.random() * (newVoices.length - 1)), 1)
@@ -65,7 +67,7 @@ function getSpeechSynthesis(os) {
   }
 
   let windowsVoices: any[] = []
-  if (os === 'Windows') {
+  if (os === 'Windows' || !os) {
     windowsVoices = [
       {
         "name": "Microsoft David - English (United States)",
@@ -92,14 +94,15 @@ function getSpeechSynthesis(os) {
 export type RandomFingerprint = ReturnType<typeof genRandomFingerprint>
 
 /** 生成随机指纹 */
-export async function genRandomFingerprint(payload: UserAddWindowInfoV2CreatePayload, count = 1): Promise<any[]> {
+export async function genRandomFingerprint(payload: UserAddWindowInfoV2CreatePayload, count = 1, genType?: LaunchBy): Promise<any[]> {
   const { fontType, canvas, webGL, audioContext, speechVoices, clientRects, macInfo, os, osVersion, coreVersion } = payload
+  const headers = genType === 'api' ? { ...openAPICommonHeaders } : {}
 
   const result = await Promise.all([
-    API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }),
-    API.window.userGetDeviceNameV2List({ os, count }),
+    API.window.userGetUaWebglV2List({ os, osVersion, coreVersion, count }, { headers }),
+    API.window.userGetDeviceNameV2List({ os, count }, { headers }),
     macInfo
-      ? API.window.userGetMacAddrV2List({ count })
+      ? API.window.userGetMacAddrV2List({ count }, { headers })
       : { code: 0, data: [{ macAddr: await getMacAddress() }] },
   ])
   console.log('result', result)

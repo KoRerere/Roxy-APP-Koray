@@ -10,14 +10,25 @@ import { SettingAppearance, UaStrictMode } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { getDictMap } from '/@/utils'
+import { getDictMap, isWindows } from '/@/utils'
 import type { Items, SettingsModule } from './type'
 import FolderDirectory from './components/folder-directory.vue'
 import UploadAvatar from './components/upload-avatar.vue'
+import InputNumber from 'primevue/inputnumber'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import { useFormDialog } from '/@/hooks/useFormDialog'
+import { getResetPasswordFormSchemas, getSettingPasswordFormSchemas } from '/@/layout/components/header/profile/components/schemas'
+import { RxAlert } from '/@/components/rx-alert'
+import router from '/@/router'
+import LoginDevices from './components/login-devices.vue'
+import { format } from 'date-fns'
 
 const { fetchUserInfo, updateUserConfig } = useUserStore()
 
 const toast = ref()
+const dialog = ref()
+let dialogRef;
 
 async function updateAvatar(item: Items) {
   const { code, msg } = await API.base.userUploadAvatarCreate({ avatar: item.value })
@@ -37,6 +48,73 @@ async function updateUserName(item: Items) {
     fetchUserInfo()
     item.oldValue = item.value
   }
+}
+
+/** 显示设置密码弹窗 */
+async function showSettingPasswordDialog() {
+  console.log('showSettingPasswordDialog')
+  const userStore = useUserStore()
+
+  await dialog.value.showModal({
+    header: $t('设置密码'),
+    class: 'w-[400px]',
+    schemas: getSettingPasswordFormSchemas(),
+    formProps: {
+      layout: 'vertical',
+      initialValues: {
+        email: userStore.userInfo?.email,
+      }
+    },
+    dialogSlots: {
+      beforeForm: () => (
+        <RxAlert visible={true} type="info" title={$t('使用邮箱和密码登录您的账号')} closable={false} class="w-full" />
+      ),
+    },
+    handleOk: async (params: any) => {
+      const res = await API.base.userSettingPasswordCreate({ ...params })
+      toast.value(res.code, res.msg)
+      if (res.code === 0 && params.password) {
+        userStore.setPassword(params.password)
+        toast.value(0, $t('密码设置成功'))
+        userStore.fetchUserInfo()
+      } else {
+        return Promise.reject(res.msg)
+      }
+    },
+  })
+}
+
+/** 显示重置密码弹窗 */
+async function showResetPasswordDialog() {
+  console.log('showResetPasswordDialog')
+  const userStore = useUserStore()
+
+  await dialog.value.showModal({
+    header: $t('重置密码'),
+    class: 'w-[400px]',
+    schemas: getResetPasswordFormSchemas(),
+    formProps: {
+      layout: 'vertical',
+    },
+    handleOk: async (params: any) => {
+      const res = await API.base.userChangePwdCreate({
+        old_pwd: params.oldPassword,
+        new_pwd: params.newPassword,
+      })
+      toast.value(res.code, res.msg)
+      if (res.code === 0) {
+        userStore.setPassword('')
+        userStore.clearUserInfo()
+        toast.value(0, $t('密码重置成功'))
+        dialogRef.value.close();
+        setTimeout(() => {
+          router.push({ name: 'login' })
+        })
+      } else {
+        return Promise.reject(res.msg)
+      }
+    },
+  })
 }
 
 async function saveUserConfig(item: Items, items: SettingsModule | null = null) {
@@ -81,7 +159,11 @@ async function detectSystemNetwork(item: Items) {
 
 export function getSettings() {
   const [showToast] = useResponseToast()
+  const formDialog = useFormDialog()
   toast.value = showToast
+  dialog.value = formDialog[0]
+  dialogRef = inject('dialogRef')
+
   return [
     {
       label: $t('个人信息'),
@@ -98,10 +180,17 @@ export function getSettings() {
       name: 'network',
       icon: 'base/rx_ic_wifi',
     },
+    {
+      label: $t('登录历史'),
+      name: 'loginActivity',
+      icon: 'base/rx_ic_monitor',
+    },
   ] as const
 }
 
 export async function getProfilePanel(data?: any): Promise<SettingsModule> {
+  const userStore = useUserStore()
+
   return {
     title: $t('个人信息'),
     description: $t('设置您的账号信息和邮箱'),
@@ -143,6 +232,21 @@ export async function getProfilePanel(data?: any): Promise<SettingsModule> {
             component: ({ item, ...props }: { item: Items, props: any }) => {
               return (
                 <InputText {...item.props} {...props} class="!w-0 flex-1" type="text" onBlur={() => updateUserName(item)} />
+              )
+            },
+          },
+          {
+            label: $t('密码'),
+            name: 'password',
+            component: ({ item, ...props }: { item: Items, props: any }) => {
+              const hasPassword = userStore.userInfo?.setPasswordStatus
+              return (
+                <div class="w-full flex items-center justify-between">
+                  <div>{hasPassword ? '********' : $t('当前未设置密码')}</div>
+                  <RxButton severity="secondary" size="sm" outlined onClick={hasPassword ? showResetPasswordDialog : showSettingPasswordDialog}>
+                    {hasPassword ? $t('重置密码') : $t('设置密码')}
+                  </RxButton>
+                </div>
               )
             },
           },
@@ -266,6 +370,24 @@ export async function getPreferencesPanel(data?: any): Promise<SettingsModule> {
             component: () => {
               return (
                 <RxButton severity="secondary" outlined onClick={() => electronAPI.send('app:showLogDir')}>{$t('查看详情')}</RxButton>
+              )
+            },
+          },
+          {
+            label: $t('内存限制'),
+            name: 'memoryLimit',
+            value: data?.memoryLimit ?? '',
+            text: () => (
+              <div class="w-[370px]">{$t('内存使用达到设置的阈值时，将停止打开浏览器窗口')}</div>
+            ),
+            component: ({ item, ...props }: { item: Items, props: any }) => {
+              return (
+                <div class="flex">
+                  <IconField class="w-[60px]">
+                    <InputNumber {...item.props} {...props} name={item.name} useGrouping={false} fluid min={0} max={100} onValueChange={() => saveUserConfig(item)} />
+                    <InputIcon>%</InputIcon>
+                  </IconField>
+                </div>
               )
             },
           },
@@ -437,4 +559,52 @@ export async function getNetworkPanel(data?: any): Promise<SettingsModule> {
     ],
   })
   return items
+}
+
+const deviceInfo: Recordable = {}
+setTimeout(() => {
+  electronAPI.send('util:getDeviceInfo').then(async (info) => {
+    Object.assign(deviceInfo, info)
+    console.log('deviceInfo', deviceInfo)
+
+    info.createTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+
+    if (!info.address) {
+      const result = await electronAPI.send('proxy:detectNetwork')
+      deviceInfo.address = result.ip
+      deviceInfo.location = result.city
+      deviceInfo.platform = isWindows ? 'win' : 'mac'
+      deviceInfo.createTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+    }
+  })
+})
+export async function getLoginActive(data?: any): Promise<SettingsModule> {
+  const { data: loginHistory } = await API.base.userGetLoginInfoList()
+  const currentDevice = loginHistory.find((item) => item.deviceId === deviceInfo.deviceId) || loginHistory.find((item) => decodeURIComponent(item.deviceName || '') === decodeURIComponent(deviceInfo.deviceName))
+  const historicalDevices = loginHistory.filter((item) => item !== currentDevice)
+
+  return {
+    title: $t('登录历史'),
+    description: $t('近 90 天内的登录记录'),
+    list: [
+      {
+        subtitle: $t('当前设备'),
+        items: [
+          {
+            name: 'currentDevice',
+            text: () => <LoginDevices devices={[currentDevice || deviceInfo]} />
+          },
+        ],
+      },
+      ...(historicalDevices.length ? [{
+        subtitle: $t('历史设备'),
+        items: [
+          {
+            name: 'historicalDevices',
+            text: () => <LoginDevices devices={historicalDevices} />
+          }
+        ]
+      }] : [])
+    ],
+  }
 }

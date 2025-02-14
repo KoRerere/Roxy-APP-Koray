@@ -361,9 +361,9 @@ defineExpose({
           data-key="value" @change="filters.onChange" />
         <div class="group-button">
           <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')"
-            @click="installViaUrl" />
+            @click.stop="installViaUrl" />
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')"
-            @click="onUploadExtension()" />
+            @click.stop="onUploadExtension()" />
         </div>
       </div>
     </template>
@@ -373,7 +373,7 @@ defineExpose({
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs"
-              icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click="$emit('search')" />
+              icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
@@ -406,7 +406,7 @@ defineExpose({
 
     <template #related="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
-        @click="operationHandler({ name: 'install' }, data)">
+        @click.stop="operationHandler({ name: 'install' }, data)">
         <!-- <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" /> -->
         <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -425,7 +425,7 @@ defineExpose({
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
         <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs"
-          @click="updateExtension(data)" />
+          @click.stop="updateExtension(data)" />
         <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info"
           color="#C7CDD1" />
       </div>
@@ -437,7 +437,7 @@ defineExpose({
     <template #actions="{ data }">
       <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
         class="flex items-center">
-        <div class="cursor-pointer mr-2" @click="showPinMenu($event, data)">
+        <div class="cursor-pointer mr-2" @click.stop="showPinMenu($event, data)">
           <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
             :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
         </div>

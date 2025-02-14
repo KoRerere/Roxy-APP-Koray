@@ -86,7 +86,7 @@ export class BeforeLaunchTask {
     API.window.userMdfWindowSyncV2Create([{
       id: this.browserItem.winInfo.id,
       openStatus: true,
-    }]).then(() => {
+    }], { headers: this.browserItem.requestHeaders }).then(() => {
       console.log('启动前同步窗口状态成功')
     })
     if (this.proxyInfo?.ip) {
@@ -94,7 +94,7 @@ export class BeforeLaunchTask {
         id: this.browserItem.winInfo.id!,
         lastIp: this.proxyInfo.ip,
         lastCountry: this.proxyInfo.country_code,
-      }).then(() => {
+      }, { headers: this.browserItem.requestHeaders }).then(() => {
         console.log('同步ip信息成功')
       })
     }
@@ -532,7 +532,6 @@ export class BeforeLaunchTask {
     // 获取系统的总内存和空闲内存，单位是字节
     const totalMemory = totalmem()
     const freeMemory = freemem()
-    const memoryLimit = 95
 
     // 计算已使用的内存
     const usedMemory = totalMemory - freeMemory
@@ -541,8 +540,8 @@ export class BeforeLaunchTask {
     const memoryUsageRate = (usedMemory / totalMemory) * 100
 
     // 判断内存使用率是否超过用户设置的阈值
-    if (memoryUsageRate > memoryLimit) {
-      const tips = $t('启动失败，内存使用率超出 {memoryLimit}%', { memoryLimit })
+    if (memoryUsageRate > store.memoryLimit) {
+      const tips = $t('启动失败，内存使用率超出 {memoryLimit}%', { memoryLimit: store.memoryLimit })
       // 停止打开后续窗口
       return Promise.reject(new Error(tips))
     }

@@ -17,7 +17,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   })
 
   watch(currentWorkspace, (val, old) => {
-    if (val?.id === old?.id) return
+    if (!val || val?.id === old?.id) return
 
     const currentRoute = router.currentRoute.value
     // 如果当前路由是项目详情页，则跳转到项目列表页

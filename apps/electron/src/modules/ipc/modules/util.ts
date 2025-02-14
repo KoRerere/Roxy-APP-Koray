@@ -5,7 +5,7 @@ import url from 'node:url'
 import { mediaProtocolName } from '/@/constants'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { decryptAESGCM, encryptAESGCM, genRandomFonts } from '/@/utils'
+import { decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
@@ -107,5 +107,20 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
       console.error('Error checking port:', error)
       return port
     }
+  })
+
+  /** 获取公共请求头部 */
+  ipcMain.on('util:getCommonRequestHeaders', (event,) => {
+    return getCommonRequestHeaders()
+  })
+
+  /** 获取设备唯一 ID */
+  ipcMain.on('util:getDeviceId', (event,) => {
+    return getDeviceId()
+  })
+
+  /** 获取设备信息 */
+  ipcMain.on('util:getDeviceInfo', async (event,) => {
+    return getDeviceInfo()
   })
 }

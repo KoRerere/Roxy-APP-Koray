@@ -2,6 +2,7 @@
 import RxAvatar from '/@/components/rx-avatar'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 defineProps({
   userName: String,
@@ -11,6 +12,7 @@ defineProps({
 const emit = defineEmits(['change'])
 const modelValue = defineModel<string>()
 const previewUrl = ref(modelValue.value)
+const [showToast] = useResponseToast()
 
 const color = defaultColors[getRandomInt(0, defaultColors.length - 1)]
 
@@ -25,6 +27,7 @@ async function uploadAvatar() {
       }
       catch (error) {
         console.log('🚀 ~ uploadAvatar ~ error:', error)
+        showToast(-1, error)
       }
     }
   }
@@ -39,10 +42,13 @@ async function removeAvatar() {
 
 <template>
   <div class="upload-area">
-    <RxAvatar :avatar="previewUrl" :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100" :font-size="52" />
+    <RxAvatar :avatar="previewUrl" :name="userName?.slice(0, 2)" :color="avatarColor || color" :size="100"
+      :font-size="52" />
     <div class="upload-area-buttons">
-      <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')" @click="removeAvatar" />
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')" @click="uploadAvatar" />
+      <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')"
+        @click="removeAvatar" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')"
+        @click="uploadAvatar" />
     </div>
   </div>
 </template>

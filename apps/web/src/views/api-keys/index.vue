@@ -21,7 +21,7 @@ const [showToast] = useResponseToast()
 const locale = useSimpleLocale()
 
 const apiDocUrl = computed(() => {
-  return `https://faq.roxybrowser.org/${locale.currentLocale.split('-')[0]}/guide/9-API`
+  return `https://faq.roxybrowser.org/${locale.currentLocale.split('-')[0]}/guide/10-API`
 })
 
 const illustrate = [

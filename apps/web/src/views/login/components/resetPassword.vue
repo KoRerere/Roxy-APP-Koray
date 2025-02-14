@@ -6,44 +6,50 @@ import { RxForm } from '/@/components/rx-form'
 import { $t } from '/@/locales'
 import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
-import { getResetPasswordSchemas } from './schemas'
+import { getResetPasswordSchemas, getEmailSchemas } from './schemas'
+import SignCardHeader from './sign-card-header.vue'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
 
 const rxFormRef = useTemplateRef('rxForm')
-const email = ref('')
+const emailFormData = ref({
+  user_name: '',
+})
 const emailCode = ref('')
 const resetPwdFormData = ref({ email: '', newPassword: '', confirmPassword: '' })
 const currentStep = ref<'step1' | 'step2' | 'step3'>('step1')
 const isShowAlert = ref(false)
 
 async function handleSubmit() {
+  isShowAlert.value = false
+
   if (currentStep.value === 'step1') {
     const { code, msg } = await API.base.sendEmailForgetVerifyCodeList({
-      email: email.value,
+      email: emailFormData.value.user_name,
     })
 
     if (code === 0) {
-      // toast.add({ severity: 'success', summary: $t('#Verification code sent!'), detail: $t('#Please checkout your email.'), life: 2500 })
+      toast.add({ severity: 'success', summary: $t('验证码已发送'), detail: $t('请检查您的邮箱。'), life: 2500 })
       currentStep.value = 'step2'
     }
     else {
       mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
-      toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+      // toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
+      isShowAlert.value = true
     }
   }
   else if (currentStep.value === 'step3') {
     const formData = await rxFormRef.value?.submit()
     const { code, msg } = await API.base.forgetPasswordCreate({
-      email: email.value,
+      email: emailFormData.value.user_name,
       new_pwd: formData?.newPassword,
       ver_code: emailCode.value,
     })
     if (code === 0) {
       mixpanel.track('resetPassword', { method: 'email', success: true })
-      toast.add({ severity: 'success', summary: 'Success', detail: $t('密码重置成功'), life: 2500 })
-      setSignFormData({ user_name: email.value, password: '' })
+      toast.add({ severity: 'success', summary: $t('密码重置成功'), life: 2500 })
+      setSignFormData({ user_name: emailFormData.value.user_name, password: '' })
       setCurrentComponent('signForm')
     }
     else {
@@ -68,28 +74,33 @@ function receiveEmailCode(code: string) {
 <template>
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
+      <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')"
+        class="w-full" />
+      <SignCardHeader :subTitle="$t('重置密码')"
+        :description="currentStep === 'step1' ? $t('请输入您的邮箱，我们将向您发送验证码') : $t('请在下方设置您的新密码')" />
       <div class="box">
-        <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')" />
-        <div class="title">
-          {{ $t('重置密码') }}
-        </div>
         <div class="flex flex-col gap-2 w-full">
           <template v-if="currentStep === 'step1'">
-            <InputText id="email" v-model="email" :placeholder="$t('请输入您的邮箱')" />
+            <RxForm ref="rxForm" v-model="emailFormData" :schemas="getEmailSchemas()" :colon="false" :footer="false"
+              layout="vertical" @keydown.enter="handleSubmit" />
           </template>
           <template v-else>
-            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :colon="false"
+              :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
           </template>
         </div>
       </div>
       <RxButton class="w-full" size="md" @click="handleSubmit">
         {{ currentStep === 'step1' ? $t('前往验证') : $t('确认') }}
       </RxButton>
-      <a class="text-sm text-blue-500 cursor-pointer" @click="backToSignIn">{{ $t('返回登录') }}</a>
+      <RxButton class="w-full" severity="secondary" outlined size="md" @click="backToSignIn">
+        {{ $t('返回登录') }}
+      </RxButton>
     </div>
   </template>
   <template v-else>
-    <EmailCodeInputOtp type="resetPassword" :email @ok="receiveEmailCode" @back="currentStep = 'step1'" />
+    <EmailCodeInputOtp type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode"
+      @back="currentStep = 'step1'" />
   </template>
 </template>
 
@@ -128,7 +139,6 @@ function receiveEmailCode(code: string) {
 }
 
 .reset-password {
-  margin-top: 30px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -148,14 +158,11 @@ function receiveEmailCode(code: string) {
   align-self: stretch;
 
   .title {
-    width: 100%;
-    color: var(--Colors-Text-text-primary, #171c1f);
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: var(--Line-Height-text-xs, 16px);
-    /* 100% */
+    display: flex;
+    height: 20px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
   }
 
   .description {

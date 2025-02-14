@@ -45,14 +45,14 @@
           <div class="input-number-row">
             <IconField>
               <InputIcon class="prefix">
-                <RxSvgIcon name="base/rx_ic_gap_h" size="16px" />
+                <RxSvgIcon name="base/rx_ic_gap_h" size="14px" />
               </InputIcon>
               <InputNumber v-model="formData.gap_horizontal" :min="0" :useGrouping="false" fluid size="small"
                 v-tooltip.top="$t('水平间距')" />
             </IconField>
             <IconField>
               <InputIcon class="prefix">
-                <RxSvgIcon name="base/rx_ic_gap_v" size="16px" />
+                <RxSvgIcon name="base/rx_ic_gap_v" size="14px" />
               </InputIcon>
               <InputNumber v-model="formData.gap_vertical" :min="0" :useGrouping="false" fluid size="small"
                 v-tooltip.top="$t('垂直间距')" />
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PreferenceSettings } from '../model';
+import type { PreferenceSettings } from '../../model';
 import { RxSvgIcon } from '/@/components/rx-icon';
 import { $t } from '/@/locales';
 
@@ -109,7 +109,7 @@ electronAPI.send('syncControl:getMainControlBrowserSize').then((result) => {
   gap: 16px;
 
   :deep(.p-inputicon) {
-    line-height: 18px;
+    line-height: 15px;
 
     &.prefix {
       position: absolute;

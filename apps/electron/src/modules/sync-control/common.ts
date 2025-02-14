@@ -5,6 +5,7 @@ import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-
 import { closePreferencesDialogWindowWindow } from "/@/modules/sync-control/dialog/preferences"
 import { closeSyncingWindowListWindow } from "/@/modules/sync-control/dialog/syncing-window-list"
 
+
 /** 关闭所有同步相关的弹窗 */
 export function closeAllSyncDialogs() {
   closeSynchronizerActionBarWindow()

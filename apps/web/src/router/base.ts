@@ -35,7 +35,7 @@ export const baseRoutes: RouteRecordRaw[] = [
     name: 'sync-control-custom-layout-dialog',
     path: '/sync-control-custom-layout-dialog',
     meta: { title: '自定义窗口布局弹窗' },
-    component: () => import('/@/views/sync-control/dialog/custom-layout.vue'),
+    component: () => import('../views/sync-control/dialog/preferences-components/custom-layout.vue'),
   },
   {
     name: 'sync-control-batch-inputs-dialog',

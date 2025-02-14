@@ -59,6 +59,7 @@ const [show] = useContextMenu()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+
 const filtersMenu = ref()
 const operation = ref(getOperation())
 const openMessage = reactive<any>({})
@@ -482,7 +483,7 @@ async function deleteProfile(datas: any, ids: number[]) {
     confirm.require({
       group: 'deleteConfirmDialog',
       header: $t('删除窗口'),
-      message: $t('您确认要删除所选窗口吗？'),
+      message: $t('您确认要将所选窗口移至回收站吗？'),
       rejectProps: {
         label: $t('取消'),
         severity: 'secondary',
@@ -695,7 +696,7 @@ defineExpose({
         :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <!-- <template #config-footer>
-      <div class="w-full text-right cursor-pointer" @click="coverDefaultDisplay">
+      <div class="w-full text-right cursor-pointer" @click.stop="coverDefaultDisplay">
         Save for default display
       </div>
     </template> -->
@@ -708,7 +709,7 @@ defineExpose({
           <div class="flex items-center gap-3">
             <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add"
               :label="$t('创建窗口')"
-              @click="router.push({ name: 'browser-create', query: { projectId: route.params.id } })" />
+              @click.stop="router.push({ name: 'browser-create', query: { projectId: route.params.id } })" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('窗口文档')" /> -->
           </div>
         </template>
@@ -723,7 +724,7 @@ defineExpose({
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
     <template #note="{ data }">
-      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 500 }"
+      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }"
         :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
         :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer"
         @click.stop="operationHandler({ name: 'addNotes' }, data)" />
