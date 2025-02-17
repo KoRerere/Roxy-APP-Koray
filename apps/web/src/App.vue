@@ -3,6 +3,7 @@ import { useDialog } from './hooks/useDialog';
 import { $t } from './locales';
 import { emitter } from './utils/eventBus';
 import GlobalComponent from '/@/components/business/global-component/index.vue'
+import { useUserStore } from '/@/stores/user'
 
 const [dialog] = useDialog()
 const router = useRouter()
@@ -20,11 +21,17 @@ emitter.on('kickedOut', (params) => {
     okText: $t('确认'),
     slots: {
       default: () => <div>
-        <div>{$t('当前账号于 {time} 在 {deviceName} 设备上登录。', { time: params?.createTime, deviceName: decodeURIComponent(params?.deviceName || '') })}</div>
+        <div>
+          {$t('当前账号于 {time} 在 {deviceName} 设备上登录。', {
+            time: params?.createTime,
+            deviceName: decodeURIComponent(params?.deviceName || '')
+          })}
+        </div>
         <div class="mt-[20px]">{$t('若非本人操作，请及时修改密码。')}</div>
       </div>,
     },
     handleOk() {
+      useUserStore().clearUserInfo()
       router.push({ name: 'login' })
     },
   })

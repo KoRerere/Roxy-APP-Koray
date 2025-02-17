@@ -70,9 +70,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
   const code = response.data.code
   if (code === 405) {
     closeOtherWindow()
-    // 未登录
-    useUserStore().clearUserInfo()
-    // router.push({ name: 'login' })
+    // 踢出登录
     emitter.emit('kickedOut', response.data.data)
     return response
   } else if (code === 403) {
