@@ -20,7 +20,7 @@ watch(() => currentWorkspace.value?.id, () => {
 
 async function getAnnt() {
   const { data } = await API.base.userGetAnntListList()
-  anntList.value = data.rows
+  anntList.value = data?.rows || []
 }
 
 onBeforeMount(() => {

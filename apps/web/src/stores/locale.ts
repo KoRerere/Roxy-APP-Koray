@@ -9,7 +9,11 @@ import { localesMap } from '/@/locales/i18n'
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
   const defaultLocale = localesMap[navigator.language] ? navigator.language : 'en'
-  const currentLocale = ref(defaultLocale)
+  const currentLocale = ref('')
+
+  if (!currentLocale.value) {
+    currentLocale.value = defaultLocale
+  }
 
   const setSimpleLocale = async (locale: string) => {
     if (currentLocale.value === locale) {
@@ -27,8 +31,8 @@ export const useSimpleLocale = defineStore('locale', () => {
   }
 
   const initLocale = async () => {
-    const { data } = await API.base.userGetUserConfigList()
-    if (data) {
+    const { code, data } = await API.base.userGetUserConfigList()
+    if (code === 0 && data) {
       currentLocale.value = data.language
     }
   }

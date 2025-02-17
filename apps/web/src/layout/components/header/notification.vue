@@ -66,7 +66,13 @@ function toggle(event: Event) {
 }
 
 async function getMessageList(result?: UserGetNotifyListData) {
-  const { data } = result || await API.base.userGetNotifyList()
+  const { code, data } = result || await API.base.userGetNotifyList()
+
+  if (code !== 0) {
+    console.log('getMessageList', code, data)
+    return
+  }
+
   const [sysTab, teamsTab] = tabs.value
 
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {

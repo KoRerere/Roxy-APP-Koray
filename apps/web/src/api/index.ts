@@ -79,9 +79,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     closeOtherWindow()
     // 未登录
     useUserStore().clearUserInfo()
-    router.push({ name: 'login' }).catch(() => {
-      location.reload()
-    })
+    router.push({ name: 'login' })
     return response
   }
   const { config } = response
