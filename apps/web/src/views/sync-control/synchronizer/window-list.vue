@@ -76,7 +76,6 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
         console.log('tableContainer scrollWidth', tableContainer?.scrollWidth)
         electronAPI.send('app:resizeWindow', {
           width: window.innerWidth + tableContainer?.scrollWidth - tableContainer?.clientWidth,
-          height: window.innerHeight + tableContainer?.scrollHeight - tableContainer?.clientHeight
         })
       }
     }, 60)

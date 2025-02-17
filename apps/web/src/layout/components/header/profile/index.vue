@@ -44,7 +44,7 @@ const items = computed(() => {
     {
       render: () => {
         return (
-          <div class="w-full" onClick={withModifiers(() => { }, ['stop'])}>
+          <div class="w-full">
             <div class={styles['user-info']}>
               <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
               <Identity />

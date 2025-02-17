@@ -7,7 +7,6 @@ import GlobalComponent from '/@/components/business/global-component/index.vue'
 const [dialog] = useDialog()
 const router = useRouter()
 
-
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
 emitter.on('kickedOut', (params) => {
@@ -21,7 +20,7 @@ emitter.on('kickedOut', (params) => {
     okText: $t('确认'),
     slots: {
       default: () => <div>
-        <div>{$t('当前账号于 {time} 在 {deviceName} 设备上登录。', { time: params?.createTime, deviceName: params?.deviceName })}</div>
+        <div>{$t('当前账号于 {time} 在 {deviceName} 设备上登录。', { time: params?.createTime, deviceName: decodeURIComponent(params?.deviceName || '') })}</div>
         <div class="mt-[20px]">{$t('若非本人操作，请及时修改密码。')}</div>
       </div>,
     },

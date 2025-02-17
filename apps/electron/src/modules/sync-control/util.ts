@@ -4,8 +4,10 @@ import { getAllSyncControlBrowsers, getControlledBrowsers, getMainControlBrowser
 import { closeSynchronizerWindow, createSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
 import { showAllWindows, windowArrange } from "/@/modules/sync-control/api"
 import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constants"
-import { getActivePageTargetId } from "/@/modules/ipc/modules/syncControl"
 import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
+import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
+import axios from "axios"
+import { Page } from "puppeteer-core"
 
 /** 同步控制工具 */
 export class SyncControlUtil {
@@ -89,11 +91,11 @@ export class SyncControlUtil {
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
 
     allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = await getActivePageTargetId(browser)
+      const activeTargetId = await this.getActivePageTargetId(browser)
       const pages = await browser?.getBrowser()?.pages()
       pages?.forEach(async page => {
-        const pageId = page.target()._targetId
-        if (pageId !== activeTargetId) {
+        const { targetId } = await this.getPageTargetInfo(page)
+        if (targetId !== activeTargetId) {
           await page.close()
         }
       })
@@ -106,15 +108,15 @@ export class SyncControlUtil {
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
 
     allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = await getActivePageTargetId(browser)
+      const activeTargetId = await this.getActivePageTargetId(browser)
       const pages = await browser?.getBrowser()?.pages()
       if (pages?.length === 1) {
         console.log('只有一个标签页，不关闭')
         return
       }
       pages?.forEach(async page => {
-        const pageId = page.target()._targetId
-        if (pageId === activeTargetId) {
+        const { targetId } = await this.getPageTargetInfo(page)
+        if (targetId === activeTargetId) {
           await page.close()
         }
       })
@@ -159,7 +161,7 @@ export class SyncControlUtil {
     const { urls, replaceCurrentTab } = payload
     const allSyncControlBrowsers = getAllSyncControlBrowsers()
     allSyncControlBrowsers.forEach(async (browser) => {
-      const activeTargetId = replaceCurrentTab ? await getActivePageTargetId(browser) : undefined
+      const activeTargetId = replaceCurrentTab ? await this.getActivePageTargetId(browser) : undefined
       const pages = await browser?.getBrowser()?.pages()
       // 如果是替换当前标签页
       if (replaceCurrentTab) {
@@ -176,5 +178,27 @@ export class SyncControlUtil {
       })
     })
     closeOpenSitesDialogWindow()
+  }
+
+  /** 获取某个页面的 targetInfo */
+  static getPageTargetInfo = async (page: Page) => {
+    // 创建 CDP 会话
+    const client = await page.createCDPSession();
+    // 获取目标信息
+    const targetInfo = await client.send('Target.getTargetInfo');
+    return targetInfo.targetInfo;
+  }
+
+  /** 获取浏览器当前被激活的标签页的 targetId */
+  static getActivePageTargetId = async (browser: BrowserItem) => {
+    const baseUrl = browser?.launchInfo?.http
+    const result = await axios.get(`http://${baseUrl}/json/list`)
+    if (result.status === 200) {
+      // 过滤掉 devtools:// 开头的标签页（针对移动端）
+      const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
+      return currentActivePage.webSocketDebuggerUrl.split('/').at(-1)
+    } else {
+      console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
+    }
   }
 }

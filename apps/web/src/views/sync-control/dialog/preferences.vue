@@ -117,7 +117,6 @@ onMounted(async () => {
     console.log('tablistEl scrollWidth', tablistEl?.scrollWidth, 'clientWidth', tablistEl?.clientWidth)
     electronAPI.send('app:resizeWindow', {
       width: window.innerWidth + tablistEl?.scrollWidth - tablistEl?.clientWidth,
-      height: window.innerHeight + tablistEl?.scrollHeight - tablistEl?.clientHeight
     })
   }, 60)
 })

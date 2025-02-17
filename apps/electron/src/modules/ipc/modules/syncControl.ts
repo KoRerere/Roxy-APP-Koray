@@ -6,14 +6,11 @@ import { sendText, syncSettings } from "/@/modules/sync-control/api"
 import { closePreferencesDialogWindowWindow, openPreferencesDialog, resizePreferencesDialog } from "/@/modules/sync-control/dialog/preferences"
 import { closeCustomLayoutsDialogWindow, openCustomLayoutDialog } from "/@/modules/sync-control/dialog/custom-layout"
 import { closeBatchInputsDialogWindow, openBatchInputsDialog, resizeBatchInputsDialog } from "/@/modules/sync-control/dialog/batch-inputs"
-import axios from "axios"
-import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
 import { closeOpenSitesDialogWindow, openOpenSitesDialog } from "/@/modules/sync-control/dialog/open-sites"
 import { closeSyncingWindowListWindow, openSyncingWindowList } from "/@/modules/sync-control/dialog/syncing-window-list"
 import { checkShortcutKeysIsOccupied, registerGlobalShortcut } from "/@/modules/sync-control/shortcutKey"
 import { globalShortcut } from "electron"
 import { SyncControlUtil } from "/@/modules/sync-control/util"
-
 
 
 /** 窗口同步器相关 */
@@ -238,15 +235,4 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
 }
 
 
-/** 获取浏览器当前被激活的标签页的 targetId */
-export async function getActivePageTargetId(browser: BrowserItem) {
-  const baseUrl = browser?.launchInfo?.http
-  const result = await axios.get(`http://${baseUrl}/json/list`)
-  if (result.status === 200) {
-    // 过滤掉 devtools:// 开头的标签页（针对移动端）
-    const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
-    return currentActivePage.webSocketDebuggerUrl.split('/').at(-1)
-  } else {
-    console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
-  }
-}
+

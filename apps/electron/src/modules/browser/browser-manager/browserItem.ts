@@ -151,27 +151,8 @@ export class BrowserItem {
       })
     }
     else {
-      if (this.winInfo.randomFingerprint) {
-        const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
-          console.error('genRandomFingerprint error: ', error)
-          sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
-          return Promise.reject(new Error($t('启动时生成随机指纹失败')))
-        })
-        try {
-          const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
-          if (code === 0) {
-            console.log('修改指纹成功', fingerprint)
-            const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
-            if (code === 0 && data.rows[0]) {
-              // console.log('获取窗口信息成功', data.rows[0])
-              this.winInfo = data.rows[0]
-            }
-          }
-        } catch (error) {
-          console.error('userMdfWindowInfoSingleV2Create error: ', error)
-        }
-      }
-
+      // 启动时是否需要生成随机指纹
+      this.handleRandomFingerprint()
       // 创建启动任务
       this.beforeLaunchTask = new BeforeLaunchTask(this)
       // 拉起浏览器
@@ -271,6 +252,30 @@ export class BrowserItem {
       }).catch((error) => {
         console.error('user_mdf_window_sync_v2 uploadData error: ', error)
       })
+    }
+  }
+
+  /** 启动时生成随机指纹 */
+  async handleRandomFingerprint() {
+    if (this.winInfo.randomFingerprint) {
+      const [fingerprint] = await genRandomFingerprint(this.winInfo, 1, this.launchBy).catch((error) => {
+        console.error('genRandomFingerprint error: ', error)
+        sendErrorMessage($t('启动时生成随机指纹失败'), this.winInfo.dirId!, error)
+        return Promise.reject(new Error($t('启动时生成随机指纹失败')))
+      })
+      try {
+        const { code } = await API.window.userMdfWindowInfoSingleV2Create({ id: this.winInfo.id, ...fingerprint }, { headers: this.requestHeaders })
+        if (code === 0) {
+          console.log('修改指纹成功', fingerprint)
+          const { code, data } = await API.window.userGetWindowInfoV2List({ id: this.winInfo.id, sourceType: 'open' }, { headers: this.requestHeaders })
+          if (code === 0 && data.rows[0]) {
+            // console.log('获取窗口信息成功', data.rows[0])
+            this.winInfo = data.rows[0]
+          }
+        }
+      } catch (error) {
+        console.error('userMdfWindowInfoSingleV2Create error: ', error)
+      }
     }
   }
 
