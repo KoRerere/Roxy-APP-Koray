@@ -26,7 +26,8 @@ function showBusinessPopup() {
   })
 }
 
-electronAPI.send('app:isMainWindow').then((isMainWindow) => {
+requestIdleCallback(async () => {
+  const isMainWindow = await electronAPI.send('app:isMainWindow')
   if (isMainWindow) {
     electronAPI.on('app:show-business-popup', () => {
       showBusinessPopup()
@@ -62,7 +63,7 @@ onMounted(() => {
             <Checkbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }"
               input-id="double" binary />
             <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">{{ message.checkboxProps.label
-              }}</label>
+            }}</label>
             <RxSvgIcon v-if="message.checkboxProps.tooltip"
               v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }"
               name="base/rx_ic_info" :size="12" />

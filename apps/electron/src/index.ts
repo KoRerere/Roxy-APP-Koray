@@ -1,4 +1,4 @@
-import './polyfill'
+import './catchException'
 import './locales/'
 import { setupModules } from '/@/modules/'
 

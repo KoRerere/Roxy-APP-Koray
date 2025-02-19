@@ -160,7 +160,7 @@ async function uploadFile() {
   })
 
   const extNames = isMac ? ['dmg', 'zip'] : ['exe']
-  const osBits = isMac ? ['arm64', 'x64'] : ['ia32', 'x64']
+  const osBits = isMac ? ['arm64', 'x64'] : ['x64']
 
   for (const osBit of osBits) {
     for (const extName of extNames) {

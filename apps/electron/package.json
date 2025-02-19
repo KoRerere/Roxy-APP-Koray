@@ -15,8 +15,8 @@
   },
   "main": "dist-vite/index.cjs",
   "engines": {
-    "node": ">=v16.13",
-    "npm": ">=8.1"
+    "node": ">=v20.18",
+    "npm": ">=10.1"
   },
   "scripts": {
     "bundle": "npx rimraf ./dist && webpack --config webpack.config.js",
@@ -52,7 +52,7 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "ejs": "^3.1.10",
-    "electron": "22.3.27",
+    "electron": "34.2.0",
     "electron-builder": "25.1.8",
     "electron-log": "^5.3.0",
     "electron-updater": "6.3.9",
@@ -67,7 +67,7 @@
     "node-2fa": "^2.0.3",
     "node-machine-id": "^1.1.12",
     "portfinder": "^1.0.32",
-    "puppeteer-core": "21.3.8",
+    "puppeteer-core": "24.2.1",
     "socks-proxy-agent": "^8.0.5",
     "systeminformation": "^5.25.11",
     "terser-webpack-plugin": "^5.3.11",

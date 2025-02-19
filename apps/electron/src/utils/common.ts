@@ -2,10 +2,10 @@ import { app } from 'electron'
 import { osConfig } from '/@/constants'
 import { hostname } from 'node:os'
 import { createHash } from 'node:crypto'
-import systeminformation from 'systeminformation'
 import { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { detectNetwork } from '/@/utils'
 import { format } from 'date-fns'
+import { fileOperations } from '/@/modules/fileOperations'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -61,17 +61,24 @@ export function getCommonRequestHeaders() {
 }
 
 /** 获取设备唯一 ID */
-export async function getDeviceId() {
-  const sys = await systeminformation.system();
-  const baseboard = await systeminformation.baseboard();
-  const disk = await systeminformation.diskLayout();
+export const getDeviceId = (() => {
+  let deviceId = ''
+  console.time('获取设备 ID 耗时')
 
-  const uniqueString = `${sys.uuid}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
-  const deviceId = createHash("sha256").update(uniqueString).digest("hex");
+  return async () => {
+    if (deviceId) {
+      return deviceId
+    }
 
-  console.log("设备唯一 ID:", deviceId);
-  return deviceId;
-}
+    if (!deviceId) {
+      deviceId = await fileOperations.executeTask('genDeviceId', undefined)
+      console.timeEnd('获取设备 ID 耗时')
+      console.log("设备唯一 ID:", deviceId);
+    }
+
+    return deviceId;
+  }
+})()
 
 export type DeviceInfo = ReturnType<typeof getDeviceInfo>
 

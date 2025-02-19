@@ -4,19 +4,11 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import AsideMenu from './components/aside-menu/index.vue'
 import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
-import { emitter } from '../utils/eventBus'
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const collapsed = ref<boolean>(false)
-const loading = ref<boolean>(false)
 const anntList = ref()
 
-watch(() => currentWorkspace.value?.id, () => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = !currentWorkspace.value?.id
-  }, 1200)
-}, { immediate: true })
 
 async function getAnnt() {
   const { data } = await API.base.userGetAnntListList()
@@ -29,11 +21,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <div v-show="loading" class="absolute inset-0 flex flex-col items-center justify-center gap-[16px] z-10 bg-white/90">
-    <SvgIcon name="base/logo" size="64" />
-    <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
-  </div>
-  <div v-show="!loading" class="rx-layout">
+  <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />

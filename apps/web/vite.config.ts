@@ -107,6 +107,15 @@ const config: UserConfig = {
         'dashboard': join(PACKAGE_ROOT, 'dashboard.html'),
         'figma-icons': join(PACKAGE_ROOT, 'figma-icons.html'),
       },
+      output: {
+        chunkFileNames(chunkInfo) {
+          // 语言文件不生成哈希
+          if (chunkInfo.moduleIds.at(-1)?.includes('/locales/langs/')) {
+            return "[name].js"
+          }
+          return "[name]-[hash].js"
+        },
+      },
     },
     emptyOutDir: true,
     reportCompressedSize: false,

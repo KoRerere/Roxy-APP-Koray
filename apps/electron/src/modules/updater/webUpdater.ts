@@ -76,11 +76,7 @@ export const webUpdater = new class WebUpdater {
     if (this.isInProgress) {
       return
     }
-    if (this.remoteVersionInfo) {
-      this.sendSuccessMessage()
-      console.log('[WebUpdater] checkForUpdates already downloaded')
-      return
-    }
+
     this.isInProgress = true
     console.log('[WebUpdater] checkForUpdates start')
     try {
@@ -88,6 +84,13 @@ export const webUpdater = new class WebUpdater {
       // 获取远程版本信息
       const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl).then(response => response.data)
       console.log('[WebUpdater] remoteVersionInfo', remoteVersionInfo)
+
+      if (this.remoteVersionInfo && compare(this.remoteVersionInfo.version, remoteVersionInfo.version, '>=')) {
+        this.sendSuccessMessage()
+        this.isInProgress = false
+        console.log('[WebUpdater] checkForUpdates already downloaded')
+        return
+      }
 
       // 检查 app 版本是否过低
       if (compare(remoteVersionInfo.minimum_app_version, app.getVersion(), '>')) {

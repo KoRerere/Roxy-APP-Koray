@@ -11,6 +11,7 @@ import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import BgCanvas from './components/bg-canvas.vue'
+import { hidePageLoading } from '/@/utils'
 
 const isSupportGPU = ref(false)
 const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
@@ -26,6 +27,8 @@ const signFormData = ref<LoginCreatePayload>({
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
 const [dialog] = useDialog()
+
+hidePageLoading()
 
 async function handleSubmit() {
   console.log(signFormData)
@@ -170,7 +173,12 @@ const cancelCallback = window.electronAPI.on('oauth2:google-callback', async (se
 })
 
 async function getCommonHeaders() {
-  commonHeaders['R-DEVICE-ID'] ||= await electronAPI.send('util:getDeviceId')
+  if (!commonHeaders['R-DEVICE-ID']) {
+    console.time('获取设备 ID 耗时')
+  }
+  commonHeaders['R-DEVICE-ID'] ||= await electronAPI.send('util:getDeviceId').finally(() => {
+    console.timeEnd('获取设备 ID 耗时')
+  })
   return commonHeaders
 }
 

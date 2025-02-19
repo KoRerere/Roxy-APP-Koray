@@ -561,26 +561,28 @@ export async function getNetworkPanel(data?: any): Promise<SettingsModule> {
   return items
 }
 
-const deviceInfo: Recordable = {}
-setTimeout(() => {
+const deviceInfo: Recordable = ref({})
+requestIdleCallback(() => {
   electronAPI.send('util:getDeviceInfo').then(async (info) => {
-    Object.assign(deviceInfo, info)
-    console.log('deviceInfo', deviceInfo)
+    Object.assign(deviceInfo.value, info)
+    console.log('deviceInfo', deviceInfo.value)
 
     info.createTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
 
     if (!info.address) {
       const result = await electronAPI.send('proxy:detectNetwork')
-      deviceInfo.address = result.ip
-      deviceInfo.location = result.city
-      deviceInfo.platform = isWindows ? 'win' : 'mac'
-      deviceInfo.createTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+      deviceInfo.value.address = result.ip
+      deviceInfo.value.location = result.city
+      deviceInfo.value.platform = isWindows ? 'win' : 'mac'
+      deviceInfo.value.createTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }
   })
 })
 export async function getLoginActive(data?: any): Promise<SettingsModule> {
   const { data: loginHistory } = await API.base.userGetLoginInfoList()
-  const currentDevice = loginHistory.find((item) => item.deviceId === deviceInfo.deviceId) || loginHistory.find((item) => decodeURIComponent(item.deviceName || '') === decodeURIComponent(deviceInfo.deviceName))
+
+  const currentDevice = loginHistory.find((item) => item.deviceId === deviceInfo.value.deviceId) || loginHistory.find((item) => decodeURIComponent(item.deviceName || '') === decodeURIComponent(deviceInfo.value.deviceName))
+
   const historicalDevices = loginHistory.filter((item) => item !== currentDevice)
 
   return {
@@ -592,7 +594,7 @@ export async function getLoginActive(data?: any): Promise<SettingsModule> {
         items: [
           {
             name: 'currentDevice',
-            text: () => <LoginDevices devices={[currentDevice || deviceInfo]} />
+            text: () => <LoginDevices devices={[currentDevice || deviceInfo.value]} />
           },
         ],
       },

@@ -141,7 +141,9 @@ export const useUserStore = defineStore('user', () => {
     }
   }, { priority: 'background' })
 
-  electronAPI.send('app:getAppVersion').then((version) => {
+
+  requestIdleCallback(async () => {
+    const version = await electronAPI.send('app:getAppVersion')
     appVersion.value = version
   })
 

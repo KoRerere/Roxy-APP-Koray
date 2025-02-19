@@ -4,6 +4,8 @@ import { stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { parentPort } from 'node:worker_threads'
 import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
+import systeminformation from 'systeminformation'
+import { createHash } from 'node:crypto'
 
 // 确保 parentPort 存在
 if (parentPort) {
@@ -36,6 +38,12 @@ if (parentPort) {
             const dest = payload as TaskQueueItem<typeof task>['payload']
             const size = getCompressedSize(dest)
             sendSuccess(size)
+            break
+          }
+        case 'genDeviceId':
+          {
+            const deviceId = await genDeviceId()
+            sendSuccess(deviceId)
             break
           }
         default:
@@ -96,4 +104,19 @@ function getCompressedSize(dest: string) {
   const zip = new AdmZip()
   zip.addLocalFolder(dest)
   return zip.toBuffer().length
+}
+
+
+/** 生成设备唯一 ID */
+const genDeviceId = async () => {
+  console.time('获取设备 ID 耗时')
+  const queue = [systeminformation.system(), systeminformation.baseboard(), systeminformation.diskLayout()] as const
+  const [sys, baseboard, disk] = await Promise.all(queue)
+
+  const uniqueString = `${sys.uuid}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
+  const deviceId = createHash("sha256").update(uniqueString).digest("hex");
+  console.timeEnd('获取设备 ID 耗时')
+  console.log("设备唯一 ID:", deviceId);
+
+  return deviceId;
 }

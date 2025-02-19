@@ -7,6 +7,7 @@ import { $t } from '/@/locales'
 import { ExcelAccept } from '/@/utils/constants'
 import { downloadTemplate, parseTemplate } from '../utils';
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useUserStore } from '/@/stores/user'
 
 const emit = defineEmits(['importSuccess'])
 
@@ -29,10 +30,15 @@ const emit = defineEmits(['importSuccess'])
 // type Data = Partial<Record<typeof excelMap[keyof typeof excelMap], any>> & { rowNum: number }
 const [showToast, onlyErrorToast] = useResponseToast()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const userStore = useUserStore()
 
 const fileAnalyzeError = defineModel<any>()
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+const maxWindowCount = computed(() => {
+  return userStore.userInfo.maxWindowCount - userStore.userInfo.useWindowCount
+})
 
 function fileDragover(event: Event) {
   event.preventDefault()
@@ -150,7 +156,7 @@ async function handleBeforeUpload(rawFile: any) {
           <span class="upload-title-link" @click="downloadTemplate">{{ $t('窗口导入模板') }}</span>
         </template>
         <template #maxCreateWindowCount>
-          {{ currentWorkspace.maxWindowCount - currentWorkspace.useWindowCount }}
+          {{ maxWindowCount }}
         </template>
       </i18n-t>
     </div>

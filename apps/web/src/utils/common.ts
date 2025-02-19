@@ -7,3 +7,11 @@ export const isWindows = navigator.platform.includes('Win')
 
 console.log('isDev', isDev)
 console.log('isProd', isProd)
+
+export function showPageLoading() {
+  document.querySelector('#page-loading')?.setAttribute('style', 'display: flex')
+}
+
+export function hidePageLoading() {
+  document.querySelector('#page-loading')?.setAttribute('style', 'display: none')
+}

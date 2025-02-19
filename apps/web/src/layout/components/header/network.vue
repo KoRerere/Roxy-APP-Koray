@@ -10,6 +10,10 @@ const proxyInfo = ref({
 })
 
 async function detectNetwork() {
+  if (loading.value) {
+    return
+  }
+
   loading.value = true
   await electronAPI.send('proxy:getSystemProxy')
   const result = await electronAPI.send('proxy:detectNetwork').finally(() => {

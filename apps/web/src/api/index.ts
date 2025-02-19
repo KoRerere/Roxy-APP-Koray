@@ -33,10 +33,16 @@ export const httpClient = new HttpClient({
 
 let baseURL = ''
 let commonRequestHeaders
+let getGatewayConfigPromise: Promise<any> | null = null
+let getCommonRequestHeadersPromise: Promise<any> | null = null
 
 httpClient.instance.interceptors.request.use(async (config) => {
-  baseURL ||= await electronAPI.send('util:getGatewayConfig')
-  commonRequestHeaders ||= await electronAPI.send('util:getCommonRequestHeaders').catch(() => electronAPI.send('const:osConfig'))
+  baseURL ||= await (getGatewayConfigPromise ||= electronAPI.send('util:getGatewayConfig')).finally(() => {
+    getGatewayConfigPromise = null
+  })
+  commonRequestHeaders ||= await (getCommonRequestHeadersPromise ||= electronAPI.send('util:getCommonRequestHeaders').catch(() => electronAPI.send('const:osConfig')).finally(() => {
+    getCommonRequestHeadersPromise = null
+  }))
 
   config.baseURL = baseURL
 

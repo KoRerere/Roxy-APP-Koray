@@ -33,7 +33,7 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
 const ipchecker = computed(() => {
-  const channel = proxyInfo.value?.detectionChannel
+  const channel = proxyInfo.value?.checkChannel
 
   if (channel) {
     return new URL(channel)
@@ -81,14 +81,14 @@ async function proxyDetection(event?: MouseEvent) {
     }
     else {
       console.error('代理检查失败')
-      toast.add({ severity: 'error', summary: 'Errors occur', detail: result.message, life: 3000 })
+      toast.add({ severity: 'error', summary: result.msg || $t('代理检测失败'), life: 3000 })
       proxyInfo.value = {}
       isTestSuccess.value = false
     }
   }
   catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: 'Errors occur', detail: '代理检查失败', life: 3000 })
+    toast.add({ severity: 'error', summary: $t('代理检测失败'), life: 3000 })
   }
   finally {
     testProxyLoading.value = false
@@ -160,20 +160,21 @@ onBeforeMount(() => {
       </div>
     </div>
 
-    <IpChangeWarnMessage v-if="!testProxyLoading && windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
+    <IpChangeWarnMessage
+      v-if="!testProxyLoading && windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp" />
 
     <div class="card base-info">
       <div class="card-header">
         <Skeleton v-if="testProxyLoading" shape="circle" size="3rem" class="mr-2" />
-        <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
+        <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }"
+          :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <rx-button v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
-                       :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL"
-            />
-            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')" outlined :disabled="refreshUrlLoading || testProxyLoading"
-                       @click="proxyDetection"
-            />
+            <rx-button v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew"
+              class="btn" :label="$t('刷新 URL')" outlined :disabled="refreshUrlLoading || testProxyLoading"
+              @click="refreshURL" />
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')"
+              outlined :disabled="refreshUrlLoading || testProxyLoading" @click="proxyDetection" />
           </div>
         </Teleport>
       </div>
@@ -187,7 +188,9 @@ onBeforeMount(() => {
         <div class="ip">
           <Skeleton v-if="testProxyLoading" class="mt-2" height="2rem" />
           <template v-else>
-            <span :class="{ 'is-ip-changed': windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP: {{ proxyInfo.ip || '--' }}</span>
+            <span
+              :class="{ 'is-ip-changed': windowInfo.lastIp && proxyInfo.ip && proxyInfo.ip !== windowInfo.lastIp }">IP:
+              {{ proxyInfo.ip || '--' }}</span>
           </template>
         </div>
       </div>
@@ -235,7 +238,8 @@ onBeforeMount(() => {
         </div>
       </div>
 
-      <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length" class="card more-info account">
+      <div v-if="windowInfo?.windowPlatformList?.length || windowInfo.defaultOpenUrl?.length"
+        class="card more-info account">
         <div class="list">
           <div class="title">
             {{ $t('平台账号') }}
@@ -451,7 +455,7 @@ onBeforeMount(() => {
     }
   }
 
-  > * {
+  >* {
     z-index: 1;
   }
 

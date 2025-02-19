@@ -159,10 +159,12 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 动态设置窗口大小 */
-  ipcMain.on('app:resizeWindow', (event, { width, height }) => {
+  ipcMain.on('app:resizeWindow', (event, payload) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    const { x, y } = win?.getBounds()!
-    win?.setBounds({ x, y, width, height })
+    const { x, y, width, height } = win?.getBounds()!
+    payload.width ||= width
+    payload.height ||= height
+    win?.setBounds({ ...payload, x, y })
   })
 
   /** 开启系统代理 */

@@ -6,9 +6,46 @@
   <link rel="icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoxyBrowser</title>
+  <style>
+    #page-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 10000;
+      background-color: #fff;
+
+      .logo {
+        width: 64px;
+        height: 64px;
+      }
+
+      .loading-img {
+        width: 32px;
+        height: 32px;
+        animation: loadingCircle 1s infinite linear;
+      }
+    }
+
+    @keyframes loadingCircle {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="page-loading">
+    <img src="/images/logo.svg" class="logo" />
+    <img class="loading-img" src="/images/loading.png" />
+  </div>
   <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>

@@ -141,6 +141,7 @@ export async function proxyDetection(proxyDetectionParams: ProxyDetectionParams)
 
   // 下面为什么会有这么多的判断？因为不同的检测渠道返回的数据字段名不一样，所以需要做一些兼容处理
   if (result) {
+    result.checkChannel = params.checkChannel
     result.ip ||= result.query
     result.region ||= result.region_name
     result.city ||= result.city_name

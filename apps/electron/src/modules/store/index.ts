@@ -2,7 +2,6 @@ import { debounce } from 'es-toolkit'
 import { readFile, writeFile } from 'node:fs/promises'
 import { API } from '/@/api'
 import { appConfig } from '/@/constants'
-import { messages, systemLanguage } from '/@/locales'
 import { createTray } from '/@/modules/app/tray'
 import { fileExists } from '/@/utils/file'
 import ejs from "ejs";
@@ -136,9 +135,9 @@ export async function setupStore() {
     await fetchUserConfig()
 
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
-    if (!messages[store.language]) {
-      store.language = messages[systemLanguage] ? systemLanguage : 'en'
-    }
+    // if (!messages[store.language]) {
+    //   store.language = messages[systemLanguage] ? systemLanguage : 'en'
+    // }
   }
   catch (error) {
     console.error('setupStore', error)
