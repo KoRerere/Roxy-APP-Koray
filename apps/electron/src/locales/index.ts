@@ -17,8 +17,10 @@ function formatMessage(id: string, values: Record<string, any> = {}) {
 
   if (!message) {
     try {
-      const targetLanguageFilePath = isPackaged ? `./web/${language}.js` : `../../../web/src/locales/langs/${language}.json`
-      const result = readFileSync(resolve(__dirname, targetLanguageFilePath), 'utf-8')
+      const targetLanguageFilePath = isPackaged ? `./web/${language}.js` : `../../web/src/locales/langs/${language}.json`
+      const absPath = resolve(__dirname, targetLanguageFilePath)
+      console.log('targetLanguageFilePath', absPath)
+      const result = readFileSync(absPath, 'utf-8')
       messages[language] = JSON.parse(result)
     } catch (error) {
       messages[language] = {}

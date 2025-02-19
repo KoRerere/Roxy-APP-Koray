@@ -133,8 +133,8 @@ function getAvatarStyle(workspacePicture: string) {
 </script>
 
 <template>
-  <div v-if="currentWorkspace" class="workspace">
-    <Select v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select"
+  <div class="workspace">
+    <Select v-if="currentWorkspace"  v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select"
       :overlay-class="$style['workspace-select-overlay']" @show="workspaceStore.fetchWorkspaceList">
       <template #value="slotProps">
         <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)"

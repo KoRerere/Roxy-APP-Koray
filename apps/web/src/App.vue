@@ -24,10 +24,16 @@ watch(() => currentWorkspace.value?.id, () => {
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
 emitter.on('kickedOut', (params) => {
+  hidePageLoading()
   dialog.showModal({
     header: $t('登录提醒'),
     style: {
       width: '420px',
+    },
+    pt: {
+      mask: {
+        class: '!backdrop-blur',
+      }
     },
     cancelText: '',
     closable: false,
