@@ -144,6 +144,7 @@ async function initStore() {
   catch (error) {
     console.error('setupStore', error)
   } finally {
+    setTimeout(createTray)
     setTimeout(renderEjsFile, 2000)
   }
 }
