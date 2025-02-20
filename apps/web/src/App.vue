@@ -50,6 +50,7 @@ emitter.on('kickedOut', (params) => {
       </div>,
     },
     handleOk() {
+      showPageLoading()
       useUserStore().clearUserInfo()
       router.push({ name: 'login' })
     },

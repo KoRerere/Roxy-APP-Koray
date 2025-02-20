@@ -110,9 +110,9 @@ const config: UserConfig = {
       output: {
         chunkFileNames(chunkInfo) {
           // 语言文件不生成哈希
-          if (chunkInfo.moduleIds.at(-1)?.includes('/locales/langs/')) {
-            return "[name].js"
-          }
+          // if (chunkInfo.moduleIds.at(-1)?.includes('/locales/langs/')) {
+          //   return "[name].js"
+          // }
           return "[name]-[hash].js"
         },
       },

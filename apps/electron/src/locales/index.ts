@@ -3,7 +3,11 @@ import { store } from '/@/modules/store'
 import { isDev, isPackaged } from '/@/utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { appConfig } from '/@/constants'
+import { createRequire } from 'node:module'
 
+
+const require = createRequire(import.meta.url);
 /** Intl.DateTimeFormat 依赖于系统的 ICU 数据。输出的格式是标准的 IETF BCP 47 language tag（如 en-US 或 zh-CN），不包含编码信息 */
 export const systemLanguage = Intl.DateTimeFormat().resolvedOptions().locale
 
@@ -16,12 +20,15 @@ function formatMessage(id: string, values: Record<string, any> = {}) {
 
   if (!message) {
     try {
-      const targetLanguageFilePath = isPackaged ? `./web/${language}.js` : `../../web/src/locales/langs/${language}.json`
-      const absPath = resolve(__dirname, targetLanguageFilePath)
-      console.log('targetLanguageFilePath', absPath)
-      const result = readFileSync(absPath, 'utf-8')
-      messages[language] = JSON.parse(result)
+      const targetLanguageFilePath = isPackaged
+        ? resolve(appConfig.unpackedFilePath, `./dist/web/locales/${language}.json`)
+        : resolve(__dirname, `../../web/src/locales/langs/${language}.json`)
+
+      console.log('targetLanguageFilePath', targetLanguageFilePath)
+
+      messages[language] = require(targetLanguageFilePath)
     } catch (error) {
+      console.error('加载语言文件失败：', error)
       messages[language] = {}
     }
   }
