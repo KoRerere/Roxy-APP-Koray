@@ -6,6 +6,7 @@ import { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { detectNetwork } from '/@/utils'
 import { format } from 'date-fns'
 import { fileOperations } from '/@/modules/fileOperations'
+import { initStorePromise, store } from '/@/modules/store'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -62,21 +63,43 @@ export function getCommonRequestHeaders() {
 
 /** 获取设备唯一 ID */
 export const getDeviceId = (() => {
-  let deviceId = ''
-  console.time('获取设备 ID 耗时')
+  let genDeviceIdPromise
+
+  queueMicrotask(() => {
+    initStorePromise.promise.then(() => {
+      if (!store.deviceId) {
+        genDeviceIdPromise = fileOperations.executeTask('genDeviceId', undefined)
+      } else {
+        console.log('设备 ID 已存在', store.deviceId)
+      }
+    })
+  })
 
   return async () => {
-    if (deviceId) {
-      return deviceId
+    if (store.deviceId) {
+      return store.deviceId
+    }
+    const { promise, resolve } = Promise.withResolvers<string>()
+    if (!store.deviceId) {
+      // 如果 10s 内没有获取到设备 ID，则生成一个随机 ID
+      const timer = setTimeout(() => {
+        store.deviceId = crypto.randomUUID()
+        console.log('10s 内没有获取到设备 ID，随机生成：', store.deviceId)
+        resolve(store.deviceId)
+      }, 10000)
+      console.time('获取设备 ID 耗时')
+      genDeviceIdPromise?.then((deviceId) => {
+        store.deviceId ||= deviceId
+        resolve(store.deviceId!)
+        clearTimeout(timer)
+        console.timeEnd('获取设备 ID 耗时')
+        console.log("设备唯一 ID:", store.deviceId);
+      })
+    } else {
+      resolve(store.deviceId)
     }
 
-    if (!deviceId) {
-      deviceId = await fileOperations.executeTask('genDeviceId', undefined)
-      console.timeEnd('获取设备 ID 耗时')
-      console.log("设备唯一 ID:", deviceId);
-    }
-
-    return deviceId;
+    return promise;
   }
 })()
 

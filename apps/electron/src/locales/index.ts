@@ -12,8 +12,7 @@ const messages: Record<string, Record<string, string>> = {}
 /** 格式化消息函数 */
 function formatMessage(id: string, values: Record<string, any> = {}) {
   const language = store.language || systemLanguage
-  const message = messages[language]
-  const messageTemplate = message?.[id]
+  let message = messages[language]
 
   if (!message) {
     try {
@@ -26,6 +25,9 @@ function formatMessage(id: string, values: Record<string, any> = {}) {
       messages[language] = {}
     }
   }
+
+  message ||= messages[language]
+  const messageTemplate = message?.[id]
 
   if (!messageTemplate) {
     if (isDev) {

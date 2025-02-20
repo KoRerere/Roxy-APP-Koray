@@ -51,6 +51,8 @@ export interface StoreType {
   isExternalWeb: boolean
   /** 是否提示商业化弹窗 */
   isShowBusinessDialog?: boolean
+  /** 设备 ID */
+  deviceId?: string
 }
 
 const defaultValues: StoreType = {
@@ -120,7 +122,7 @@ export async function fetchUserConfig() {
   }
 }
 
-export async function setupStore() {
+async function initStore() {
   try {
     const config = await readFile(appConfig.configFile, 'utf-8').catch(err => {
       store.isShowBusinessDialog = false
@@ -146,6 +148,16 @@ export async function setupStore() {
   }
 }
 
+/** 初始化 store 的 promise */
+export const initStorePromise = Promise.withResolvers<void>()
+
+export const setupStore = new Proxy(initStore, {
+  async apply(target, thisArg) {
+    await target.apply(thisArg)
+    initStorePromise.resolve()
+    return initStorePromise.promise
+  },
+})
 
 /** appPort 变化的时候重新生成 */
 async function renderEjsFile() {
