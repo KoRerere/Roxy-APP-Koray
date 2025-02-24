@@ -75,9 +75,9 @@ const closeOtherWindow = debounce(async () => {
 httpClient.instance.interceptors.response.use(async (response) => {
   const code = response.data.code
   if (code === 405) {
-    closeOtherWindow()
     // 踢出登录
     emitter.emit('kickedOut', response.data.data)
+    closeOtherWindow()
     return response
   } else if (code === 403) {
     closeOtherWindow()

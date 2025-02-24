@@ -68,3 +68,18 @@ export function getProcessIdsByExePath(processPath: string) {
 
   return promise
 }
+
+/** 判断进程是否存在 */
+export async function isProcessExists(pid: number) {
+  const { promise, resolve } = Promise.withResolvers<boolean>()
+  const platform = process.platform;
+  const command = platform === 'win32'
+    ? `tasklist /FI "PID eq ${pid}"`
+    : `ps -p ${pid}`;
+
+  exec(command, (error, stdout) => {
+    resolve(!error && stdout.includes(pid.toString()));
+  });
+
+  return promise
+}

@@ -48,8 +48,11 @@ function genWebVersionPlugin(): PluginOption {
       // 设置第三个参数为 '' 来加载所有环境变量，而不管是否有 `VITE_` 前缀。
       const env = loadEnv(mode, __dirname, '')
       const version = env.VITE_VERSION
+      const minAppVersion = env.VITE_MIN_APP_VERSION
       console.log(`env.VITE_VERSION `, version)
+      console.log(`env.VITE_MIN_APP_VERSION `, minAppVersion)
       writeFile(resolve(__dirname, './public', 'version'), version, 'utf-8')
+      writeFile(resolve(__dirname, './public', 'minimum_app_version'), minAppVersion, 'utf-8')
       config.define = {
         ...config.define,
         __WEB_VERSION__: JSON.stringify(version),

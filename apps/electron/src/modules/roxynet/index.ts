@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { fileExists, getSystemProxy, isMac } from '/@/utils'
+import { fileExists, getSystemProxy, isMac, isProcessExists } from '/@/utils'
 import { checkResource } from '/@/modules/app/checkResource'
 
 export * from './util'
@@ -35,10 +35,17 @@ export async function startRoxynet() {
     })
   }
 
-  if (roxynetProcess) {
+  if (roxynetProcess?.pid) {
     // 重新设置系统代理
     setSystemProxy()
     console.log('Roxynet has been started')
+    const processExists = await isProcessExists(roxynetProcess.pid)
+    if (!processExists) {
+      console.log('roxynetProcess is not exist')
+      roxynetProcess = null
+      await startRoxynet()
+      return
+    }
     return
   }
 

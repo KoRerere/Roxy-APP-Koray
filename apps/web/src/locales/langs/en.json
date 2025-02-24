@@ -411,7 +411,7 @@
   "当输入重复代理信息时不做添加": "Do not add when enter duplicate proxy info",
   "彻底删除": "Permanently Delete",
   "彻底删除所选窗口": "Permanently Delete Selected Profiles",
-  "必须包含数字和大小写字母，8-20位": "Include numbers and upper/lower letters, 8-20 char",
+  "必须包含数字和字母，6-20位": "Include numbers and letters, 6-20 char",
   "忘记密码？": "Forget Password?",
   "快捷键设置": "Keyboard shortcuts",
   "快捷键设置冲突": "Shortcut Conflict",

@@ -90,5 +90,6 @@ export async function setSystemProxy() {
   console.log('roxynet set_sysproxy 修改系统代理', params)
   return axios.post(`http://127.0.0.1:${store.roxynetLocalHttpPort}/set_sysproxy`, params).then(res => res.data).catch((e) => {
     console.error('setSystemProxy error:', e)
+    return Promise.reject(e)
   })
 }

@@ -1,5 +1,5 @@
 import './ipc'
-import * as Sentry from '@sentry/electron/main'
+// import * as Sentry from '@sentry/electron/main'
 import { setupAppServer } from '/@/modules/appServer'
 import { setupLog } from '/@/modules/log'
 import { startRoxynet } from '/@/modules/roxynet'
@@ -8,9 +8,9 @@ import { setupApp } from './app/'
 import { fileExists } from '/@/utils'
 import { appConfig } from '/@/constants'
 
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-})
+// Sentry.init({
+//   dsn: import.meta.env.VITE_SENTRY_DSN,
+// })
 
 /**
  * Setup the modules.

@@ -411,7 +411,7 @@
   "当输入重复代理信息时不做添加": "Nicht hinzufügen, wenn Sie doppelte Proxy-Informationen eingeben",
   "彻底删除": "Komplett löschen",
   "彻底删除所选窗口": "Ausgewählte Fenster vollständig löschen",
-  "必须包含数字和大小写字母，8-20位": "Muss Zahlen sowie Groß- und Kleinbuchstaben enthalten, 8–20 Zeichen",
+  "必须包含数字和字母，6-20位": "Muss Zahlen sowie Groß- und Kleinbuchstaben enthalten, 8–20 Zeichen",
   "忘记密码？": "Passwort vergessen?",
   "快捷键设置": "",
   "快捷键设置冲突": "",

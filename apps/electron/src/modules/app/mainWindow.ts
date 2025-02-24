@@ -18,9 +18,17 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
 
   if (isPackaged && !skipCompare) {
     try {
-      const buildInWebVersion = await readFile(join(appConfig.buildInWebDir, 'version'), 'utf-8')
-      const externalWebVersion = await readFile(join(appConfig.externalWebDir, 'version'), 'utf-8')
-      store.isExternalWeb = compare(externalWebVersion, buildInWebVersion, '>')
+      const minimumAppVersion = await readFile(join(appConfig.externalWebDir, 'minimum_app_version'), 'utf-8').catch(() => '0.0.0')
+      // 比较当前版本是否大于等于 web 资源要求的最低版本
+      const isMinimumAppVersion = compare(app.getVersion(), minimumAppVersion, '>=')
+      // 只有当前版本大于等于 web 资源要求的最低版本时才能使用外部 web 资源，否则使用内置 web 资源
+      if (isMinimumAppVersion) {
+        const buildInWebVersion = await readFile(join(appConfig.buildInWebDir, 'version'), 'utf-8')
+        const externalWebVersion = await readFile(join(appConfig.externalWebDir, 'version'), 'utf-8')
+        store.isExternalWeb = compare(externalWebVersion, buildInWebVersion, '>')
+      } else {
+        store.isExternalWeb = false
+      }
     }
     catch (error) {
       store.isExternalWeb = false

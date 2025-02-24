@@ -7,6 +7,7 @@ import { detectNetwork } from '/@/utils'
 import { format } from 'date-fns'
 import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
+import { readFile } from 'node:fs/promises'
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -121,4 +122,14 @@ export async function getDeviceInfo(): Promise<UserGetLoginInfoListData['data'][
     /** 登录时间 */
     createTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
   }
+}
+
+
+/** 计算文件的 sha512 哈希值 */
+export async function calculateFileHash(filePath: string) {
+  const fileBuffer = await readFile(filePath);
+  const hashSum = await createHash('sha512');
+  hashSum.update(fileBuffer);
+
+  return hashSum.digest('hex');
 }

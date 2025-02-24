@@ -1,8 +1,7 @@
 import type { UnwrapRowsType, UserAddUserByProjectInfoCreatePayload, UserGetNotifyListData } from '@roxy/backend-api'
 import mitt from 'mitt'
 
-/* eslint-disable ts/consistent-type-definitions */
-type Events = {
+export type MittEvents = {
   viewInviteDetail: UserAddUserByProjectInfoCreatePayload,
   notifyUpdateData: UserGetNotifyListData,
   maxWindowCountChange?: number
@@ -14,4 +13,4 @@ type Events = {
   }
 }
 
-export const emitter = mitt<Events>()
+export const emitter = mitt<MittEvents>()

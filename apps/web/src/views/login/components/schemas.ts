@@ -3,10 +3,12 @@ import { defineFormSchema } from '/@/components/rx-form/'
 import { $t } from '/@/locales'
 
 export function getRegisterValidation(z: z.ZodString) {
-  return z.min(6, $t('必须包含数字和大小写字母，8-20位')).max(20, $t('必须包含数字和大小写字母，8-20位')).refine((val) => {
+  const tip = $t('必须包含数字和字母，6-20位')
+
+  return z.min(6, tip).max(20, tip).refine((val) => {
     return /[a-z]/i.test(val) && /\d/.test(val)
   }, {
-    message: $t('必须包含数字和大小写字母，8-20位'),
+    message: tip,
   })
 }
 

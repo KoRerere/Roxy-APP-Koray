@@ -35,7 +35,7 @@
     "@repo/node-typesafe-worker-messages": "workspace:*",
     "@roxy/backend-api": "workspace:*",
     "@roxy/electron-preload": "workspace:*",
-    "@sentry/electron": "^5.10.0",
+    "@sentry/electron": "^6.1.0",
     "@tomjs/unzip-crx": "^1.1.3",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.11",
@@ -48,7 +48,6 @@
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "compare-versions": "^6.1.1",
-    "core-js": "^3.40.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "ejs": "^3.1.10",
@@ -74,7 +73,7 @@
     "ts-loader": "^9.5.2",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "5.7.3",
-    "vite": "^6.1.0",
+    "vite": "^6.1.1",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1"
   }

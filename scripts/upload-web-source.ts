@@ -23,7 +23,9 @@ const webPath = path.join(__dirname, '../apps/web/dist')
 const platformList = process.env.PLATFORM ? [process.env.PLATFORM === 'mac' ? 'macOS' : 'Windows'] : ['Windows', 'macOS']
 console.log('平台：', process.env.PLATFORM, platformList)
 const version = fs.readFileSync(path.join(webPath, 'version'), 'utf-8')
+const minimumAppVersion = fs.readFileSync(path.join(webPath, 'minimum_app_version'), 'utf-8')
 console.log('版本号：', version)
+console.log('最低支持版本：', minimumAppVersion)
 
 if (version === undefined) {
   throw new Error('请在package.json中配置版本号')
@@ -55,7 +57,7 @@ async function getOssToken() {
   return data
 }
 
-async function startUpload(minimum_app_version = '0.0.0') {
+async function startUpload() {
   const ossConfig = await getOssToken()
   // console.log('ossConfig',ossConfig)
   const ossClient = new AliOss({
@@ -63,14 +65,13 @@ async function startUpload(minimum_app_version = '0.0.0') {
     ...ossConfig,
     stsToken: ossConfig.securityToken,
   })
-  console.log('最低支持版本: ', minimum_app_version)
   console.log('上传 web 资源包中...')
   for (const platform of platformList) {
     const uploadZip = await ossClient.put(`/public/package/web/${platform}/dist.zip`, zip.toBuffer())
     console.log('上传 web 资源包成功：', uploadZip.url)
     const data = Buffer.from(JSON.stringify({
       version,
-      minimum_app_version,
+      minimum_app_version: minimumAppVersion,
       releaseTime: getCurrentFormattedTime(),
     }))
     const uploadVersionRes = await ossClient.put(`/public/package/web/${platform}/version.json`, data)
@@ -89,19 +90,20 @@ function getCurrentFormattedTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-if (isProd) {
-  rl.question('最低支持的 APP 版本： ', (version) => {
-    if (version) {
-      console.log(`最低支持的 APP 版本：${version}`)
-    }
-    else {
-      console.log('未输入最低支持的 APP 版本，将默认为 0.0.0')
-    }
-    startUpload(version || '0.0.0')
-    rl.close()
-  })
-} else {
-  startUpload('0.0.0').finally(() => {
-    process.exit(0)
-  })
-}
+startUpload()
+// if (isProd) {
+//   rl.question('最低支持的 APP 版本： ', (version) => {
+//     if (version) {
+//       console.log(`最低支持的 APP 版本：${version}`)
+//     }
+//     else {
+//       console.log('未输入最低支持的 APP 版本，将默认为 0.0.0')
+//     }
+//     startUpload(version || '0.0.0')
+//     rl.close()
+//   })
+// } else {
+//   startUpload('0.0.0').finally(() => {
+//     process.exit(0)
+//   })
+// }
