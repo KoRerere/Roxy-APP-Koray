@@ -5,6 +5,10 @@ export const ExcelAccept = {
   'application/vnd.ms-excel.sheet.binary.macroEnabled.12': ['.xlsb'],
 }
 
+export const TextAccept = {
+  'text/plain': ['.txt'],
+}
+
 export const ZipAccept = {
   'application/zip': ['.zip'],
   'application/x-rar-compressed': ['.rar'],

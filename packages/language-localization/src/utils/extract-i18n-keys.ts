@@ -111,7 +111,7 @@ async function writeKeysToFile(fileContent: string, outputFile: string) {
     await logError(`创建目录失败: ${outputDir} - ${error}`)
   }
   // 替换 JSON.stringify 结果中的 `\\n` 为真正的 `\n`
-  const formattedContent = fileContent.replace(/\\\\n/g, '\\n')
+  const formattedContent = fileContent.replace(/\\\\n|\\\\t/g, match => match === '\\\\n' ? '\\n' : '\\t')
   await writeFile(outputFile, formattedContent, 'utf-8')
 }
 

@@ -279,7 +279,7 @@ async function importProfile(params: any) {
     userStore.fetchUserInfo()
   }
   else {
-    fileAnalyzeError.value = msg
+    fileAnalyzeError.value = Array.isArray(msg) ? msg.join('\n') : msg
   }
 }
 // ===========================================
@@ -418,11 +418,9 @@ function handleWindowNameStartEdit() {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
-          :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
-              @click.stop="saveTemplatePopup()" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

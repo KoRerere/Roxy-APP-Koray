@@ -84,7 +84,7 @@ export function checkCookieFormat(cookie: string): boolean {
 
 export async function readCookiesFile(): Promise<any> {
   try {
-    const file = await window.showOpenFilePicker({
+    const file = await (window as any).showOpenFilePicker({
       types: [
         {
           description: 'cookies Files',
@@ -295,4 +295,15 @@ export function formatProxyTime(time: string) {
   else {
     return $t('刚刚')
   }
+}
+
+
+export function getExtname(filename: string) {
+  const parts = filename.split('.');
+
+  if (parts.length <= 1 || (parts.length === 2 && parts[0] === '')) {
+    return '';
+  }
+
+  return parts.pop();
 }

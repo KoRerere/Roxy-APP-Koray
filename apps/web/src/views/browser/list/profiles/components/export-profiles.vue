@@ -69,6 +69,7 @@ const excelSchema = [
   {
     key: 'defaultOpenUrl',
     name: $t('自定义打开 URL'),
+    getText: (item: Data) => JSON.stringify(item.defaultOpenUrl || '[]')
   },
   {
     key: 'proxyCategory',
@@ -89,17 +90,9 @@ const excelSchema = [
     },
   },
   {
-    key: 'refreshUrl',
-    name: $t('刷新URL'),
-  },
-  {
     key: 'windowRemark',
     name: $t('备注'),
   },
-  // {
-  //   key: 'userAgent',
-  //   name: 'User Agent',
-  // },
   {
     key: 'windowSize',
     name: $t('窗口大小'),
@@ -113,7 +106,6 @@ async function getExportData() {
   const { data: { rows } } = await API.window.userGetWindowInfoV2List({ windowIds: ids.join(','), isDelete: 0, page_index: 1, page_size: ids.length })
   return rows.map(item => {
     const sortArr = selection.value.sort((a, b) => a._index - b._index)
-    // const d = sortArr.map(schema => [schema.name, schema.getText?.(item) || item[schema.key as keyof typeof item]])
     return sortArr.reduce((acc, schema) => {
 
       if (acc[schema.key] || acc[schema.mergeKey!]) {
@@ -122,14 +114,15 @@ async function getExportData() {
 
       if (schema.mergeKey) {
         const mergeKeyItems = sortArr.filter(s => s.mergeKey === schema.mergeKey)
-        acc[schema.mergeKey] = item[schema.mergeKey].map((platform: any) => {
-          return mergeKeyItems.reduce((acc, schema) => {
+        const datalist = (item[schema.mergeKey as keyof typeof item] as any[])?.map((platform: any) =>
+          mergeKeyItems.reduce((acc, schema) => {
             acc[schema.key] = schema.getText?.({ ...item, ...platform }) || platform[schema.key]
             return acc
-          }, {} as Record<string, any>)
-        })
+          }, {} as Record<string, any>))
+
+        acc[schema.mergeKey] = JSON.stringify(datalist || [])
       } else {
-        acc[schema.key] = schema.getText?.(item) || item[schema.key as keyof typeof item]
+        acc[schema.key] = schema.getText?.(item) ?? item[schema.key as keyof typeof item] ?? ''
       }
       return acc
     }, {} as Record<string, any>)
@@ -138,7 +131,6 @@ async function getExportData() {
 
 async function exportExcel() {
   const data = await getExportData()
-  // console.log('exportExcel data', data)
 
   downloadTemplate({
     afterAddExplain(worksheet) {
@@ -149,10 +141,9 @@ async function exportExcel() {
 
 async function exportText() {
   const data = await getExportData()
-  console.log('exportText data', data)
   const textData = data.map(cell => {
     return Object.entries(cell).map(([key, value]) => `${key}=${value}`).join('\n')
-  }).join('\n\n\n\n')
+  }).join(`\n\n${'#'.repeat(40)}\n\n`)
   const blob = new Blob([textData], { type: 'text/plain' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
@@ -203,8 +194,7 @@ onMounted(() => {
         <div class="popup-block__title">
           {{ $t('请选择您的文件格式:') }}
         </div>
-        <RxInputRadio v-model="exportType" size="xs" name="proxySwitch"
-          :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
+        <RxInputRadio v-model="exportType" size="xs" name="proxySwitch" :options="[{ label: 'Excel (.xls)', value: true }, { label: 'Text (.txt)', value: false }]" />
         <div class="popup-block__tip">
           {{ $t('*对于具有大量 cookie 的窗口，请选择 .txt 格式') }}
         </div>
@@ -214,8 +204,7 @@ onMounted(() => {
           {{ $t('请选择您要导出的数据:') }}
         </div>
         <div class="flex-ovh-1 table-container">
-          <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]"
-            :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"
+          <RyTable v-model:selection="selection" data-key="key" :columns="[{ title: 'All', key: 'name' }]" :data-list="excelSchema" :show-table-header="false" :show-actions="false" :paginator="false"
             :multiple-operation="false" selection-mode="multiple" size="small" />
         </div>
       </div>

@@ -256,6 +256,104 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   URL.revokeObjectURL(link.href);
 }
 
+export async function downloadTextTemplate() {
+  const fields = [
+    {
+      key: 'windowName',
+      desc: $t('【必填】为浏览器窗口命名'),
+      example: ['Roxytest']
+    },
+    {
+      key: 'os',
+      desc: $t('【必填】操作系统'),
+      example: ['Windows', 'macOS', 'Android', 'IOS']
+    },
+    {
+      key: 'osVersion',
+      desc: $t('系统版本\n\t只能填写一个，留空则自动使用对应操作系统最新版本，现在支持的版本有：\n\t\t- Windows：{windows}\n\t\t- macOS：{macos}\n\t\t- Android：{android}\n\t\t- IOS：{ios}', {
+        windows: '11, 10, 8, 7',
+        macos: 'ALL',
+        android: '13、12、11、10、9',
+        ios: '17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0',
+      }),
+      example: ['11', 'ALL', '17.0']
+    },
+    {
+      key: 'proxyCategory',
+      desc: $t('代理类型\n\t如：{value}，留空则自动使用 "直连"。\n\t现在支持的类型有：{type}', { value: 'SOCKS5', type: 'HTTP、HTTPS、SOCKS5、SSH' }),
+      example: ['HTTPS', 'SSH']
+    },
+    {
+      key: 'proxyInfo',
+      desc: $t('代理信息\n\t请务必按照此顺序格式填写：代理主机:代理端口:代理用户名:代理密码[刷新URL]\n\t代理用户名、代理密码、[刷新URL] 为【选填】\n\t若网络协议为ipv6，请在代理信息最前端添加 ipv6'),
+      example: ['192.168.0.1:8800', '192.168.0.1:8800:roxytest:roxypass', '192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]', 'ipv6:192.168.0.1:8800:roxytest:roxypass']
+    },
+    {
+      key: 'windowPlatformList',
+      desc: $t('平台账号\n\t仅支持JSON格式的数组, 需要用 [ ] 包含！请务必按照示例填写\n\t\t- platformUrl: 平台网址\n\t\t- platformUserName: 平台账号\n\t\t- platformPassword: 平台密码\n\t\t- platformEfa: 平台2FA'),
+      example: ['[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]']
+    },
+    {
+      key: 'defaultOpenUrl',
+      desc: $t('启动浏览器时同时打开的标签页，需要用 [ ] 包含！多个标签页请使用英文逗号隔开!'),
+      example: ["['https://www.facebook.com', 'https://www.tiktok.com']"]
+    },
+    {
+      key: 'cookie',
+      desc: $t('仅支持JSON格式的Cookie! 需要用 [ ] 包含！'),
+      example: ['[{"name":"fb","path":"/","domain":".facebook.com"},{"name":"ma","path":"/","domain":".amazon.com"}]']
+    },
+    {
+      key: 'windowRemark',
+      desc: $t('窗口备注'),
+      example: ['RoxyRemarkTest']
+    },
+    {
+      key: 'windowSize',
+      desc: $t('浏览器窗口打开时的默认窗口大小\n\t留空则按默认 {default} 打开。\n\t格式为: 长度*高度', { default: '1000*1000' }),
+      example: ['1000*1000']
+    }
+  ]
+  const exampleData = [
+    {
+      windowName: 'name1',
+      os: 'Windows',
+      osVersion: 11,
+      proxyCategory: 'HTTP',
+      proxyInfo: 'www.proxy.com:80:username:password',
+      windowPlatformList: '[{ "platformUrl": "https://www.x.com/", "platformUserName": "xxxx", "platformPassword": "132456", "platformEfa": "" }]',
+      defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
+      cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
+      windowRemark: 'remark1',
+      windowSize: '1000*1000',
+    },
+    {
+      windowName: 'name2',
+      os: 'IOS',
+      osVersion: 17.0,
+      proxyCategory: 'HTTP',
+      proxyInfo: 'www.proxy.com:81:username:password',
+      windowPlatformList: '[{ "platformUrl": "https://www.x.com/", "platformUserName": "xxxx", "platformPassword": "132456", "platformEfa": "" }]',
+      defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
+      cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
+      windowRemark: 'remark2',
+      windowSize: '1000*1000',
+    }
+  ]
+  const str1 = fields.map(item => `- ${item.key} ${item.desc}\n${item.example.map((str, index) => `\t${$t('【示例{index}】', { index: index + 1 })}${item.key}=${str}`).join('\n')}`).join('\n\n')
+  const str2 = $t('{sign1}\n每个窗口之间请用 {sign2} 进行分隔（最少4个{sign}）。注意，备注内尽量不含空行。如存在空行，可能会导致识别失败。\n导入两个窗口，示例如下：', { sign: '#', sign1: '#'.repeat(40), sign2: '#'.repeat(10) })
+  const str3 = exampleData.map(item => Object.entries(item).map(([key, value]) => `${key}=${value}`).join('\n')).join(`\n\n${'#'.repeat(40)}\n\n`)
+  const str = `${str1}\n\n${str2}\n\n${str3}\n\n${'#'.repeat(40)}\n\n${$t('导入时，请删除本行及其以上的所有内容。')}\n\n`
+
+  const blob = new Blob([str], { type: 'text/plain' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `roxy_template_${format(new Date(), 'yyyyMMdd_HHmmss')}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 async function addExplain(worksheet: ExcelJS.Worksheet) {
   const columns = getColumns()
   worksheet.addRow(columns.map(column => column.placeholder));// 示例行
@@ -291,13 +389,16 @@ export async function parseTemplate(file: File) {
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowIndex) => {
         if (rowIndex >= 5) {
-          const data = {
+          const data: { [key: string]: any } = {
             rowNum: rowIndex,
             ...Object.fromEntries(columns.map((column, index) => {
               const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]//excel 索引从1开始
               const value = column.formatValue?.(cellValue?.text || cellValue) || cellValue
               return [column.key, value]
             }))
+          }
+          if (data.os?.toLocaleUpperCase() === 'IOS' && typeof data.osVersion === 'number') {
+            data.osVersion = data.osVersion.toFixed(1)
           }
           result.push(data)
         }
@@ -307,6 +408,26 @@ export async function parseTemplate(file: File) {
   } catch (error) {
     console.log(error)
   }
+}
+
+export async function parseTextFile(file: File) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const content = e.target?.result;
+      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map(line => {
+        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(line.trim().split('\n').map(str => str.trim().split('=')))
+        return {
+          ...data,
+          cookie: JSON.parse(cookie || '[]'),
+          defaultOpenUrl: JSON.parse(defaultOpenUrl || '[]'),
+          windowPlatformList: JSON.parse(windowPlatformList || '[]'),
+        }
+      })
+      resolve(result)
+    }
+    reader.readAsText(file)
+  })
 }
 
 export function getDefaultWindowName() {
