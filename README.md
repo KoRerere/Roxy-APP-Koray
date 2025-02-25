@@ -30,3 +30,5 @@ tail -f 2024-11-06.log | grep -A 3 "目标被创建\|url 改变\|目标被销毁
 JSON.stringify(Object.fromEntries(Object.entries(a).filter(([key,value]) => value === '')))
 
 # electron 执行文件下载失败时，VPN 工具开启 tun mode，并手动执行 node node_modules/electron/install.js
+
+https://www.ihuandu.com/help/faq/715.html

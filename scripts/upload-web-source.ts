@@ -90,7 +90,9 @@ function getCurrentFormattedTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-startUpload()
+startUpload().finally(() => {
+  process.exit(0)
+})
 // if (isProd) {
 //   rl.question('最低支持的 APP 版本： ', (version) => {
 //     if (version) {

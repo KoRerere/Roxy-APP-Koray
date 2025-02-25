@@ -33,7 +33,7 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
 const ipchecker = computed(() => {
-  const channel = proxyInfo.value?.checkChannel
+  const channel = proxyInfo.value?.checkChannel || windowInfo.value?.checkChannel
 
   if (channel) {
     return new URL(channel)
@@ -251,7 +251,7 @@ onBeforeMount(() => {
 
     <div class="footer">
       <div class="info">
-        <i18n-t :keypath="$t('IP 查询数据来源于 {link}', { link: '{link}' })" scope="global">
+        <i18n-t :keypath="$t('IP 查询数据来源: {link}', { link: '{link}' })" scope="global">
           <template #link>
             <a :href="ipchecker.origin" target="_blank">{{ ipchecker.host }}</a>
           </template>

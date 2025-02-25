@@ -31,7 +31,7 @@
   "Google 商店": "",
   "Google 扩展协议": "Accord de prolongation de Google",
   "Google 界面框架的语言，默认使用 IP 所在地区的语言，也可自定义选择": "",
-  "IP 查询数据来源于 {link}": "Les données de requête IP proviennent de {link}",
+  "IP 查询数据来源: {link}": "Les données de requête IP proviennent de {link}",
   "IP 查询渠道": "Canal de requête IP",
   "IP 检测": "",
   "IP: {ip}": "",

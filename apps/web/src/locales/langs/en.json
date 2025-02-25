@@ -31,7 +31,7 @@
   "Google 商店": "Google Store",
   "Google 扩展协议": "Google extension protocol",
   "Google 界面框架的语言，默认使用 IP 所在地区的语言，也可自定义选择": "The language of the Google interface framework. The default language is the language of the region where the IP is located, but you can also customize it.",
-  "IP 查询数据来源于 {link}": "IP data sourced from {link}",
+  "IP 查询数据来源: {link}": "IP data sourced from {link}",
   "IP 查询渠道": "IP Query Channel",
   "IP 检测": "IP Detection",
   "IP: {ip}": "IP: {ip}",

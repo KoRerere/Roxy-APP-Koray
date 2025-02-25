@@ -35,8 +35,7 @@ function onEdit(item: any) {
 }
 
 function deleteAccount(item: any) {
-  const index = windowPlatformList.value.findIndex((it: any) => it.name === item.name)
-  windowPlatformList.value.splice(index, 1)
+  windowPlatformList.value = windowPlatformList.value.filter((it: any) => (it._tempId || it.id) !== (item._tempId || item.id))
 }
 
 function onConfirm(data: any) {
@@ -66,8 +65,10 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
+        @click="toggleDrawer('list')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')"
+        @click="toggleDrawer('create')" />
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
@@ -89,8 +90,10 @@ function replaceData(data: any) {
 
     <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
       <template #default="{ closeCallback }">
-        <AccountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }" @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
-        <AccountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback" @confirm="onConfirm" />
+        <AccountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }"
+          @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
+        <AccountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback"
+          @confirm="onConfirm" />
       </template>
     </RxDrawer>
   </div>

@@ -264,6 +264,10 @@ async function batchCreateProfile(params: any) {
 }
 
 async function importProfile(params: any) {
+  if (fileAnalyzeError.value) {
+    onlyErrorToast(-1, fileAnalyzeError.value)
+    return
+  }
   if (!fileAnalyzeData.value) {
     onlyErrorToast(-1, $t('请选择要导入的文件。'))
     return
@@ -418,9 +422,11 @@ function handleWindowNameStartEdit() {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
+          :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup()" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
+              @click.stop="saveTemplatePopup()" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>
