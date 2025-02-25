@@ -45,6 +45,7 @@ export async function setupDashboardServer(app: express.Application) {
     res.success({
       appPort: store.appPort,
       language: store.language,
+      ipChecker: store.ipChecker
     })
   })
 

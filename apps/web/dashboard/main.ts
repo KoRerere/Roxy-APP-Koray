@@ -26,6 +26,7 @@ fetch(`/api/app/config`)
   .then(res => res.json())
   .then(({ code, data }) => {
     console.log('app config', data)
+    globalThis.appConfig = data
     setupI18n(app, { defaultLocale: data.language }).then(() => {
       document.querySelector('html')?.setAttribute('lang', data.language)
     })

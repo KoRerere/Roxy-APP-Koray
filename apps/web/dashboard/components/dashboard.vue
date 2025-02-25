@@ -33,7 +33,7 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isMobile = useMediaQuery('(max-width: 428px)')
 
 const ipchecker = computed(() => {
-  const channel = proxyInfo.value?.checkChannel || windowInfo.value?.checkChannel
+  const channel = proxyInfo.value?.checkChannel || windowInfo.value?.checkChannel || globalThis.appConfig?.ipChecker
 
   if (channel) {
     return new URL(channel)
