@@ -415,9 +415,10 @@ export async function parseTextFile(file: File) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const content = e.target?.result;
-      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map(line => {
+      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((line, index) => {
         const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(line.trim().split('\n').map(str => str.trim().split('=')))
         return {
+          rowNum: index + 1,
           ...data,
           cookie: JSON.parse(cookie || '[]'),
           defaultOpenUrl: JSON.parse(defaultOpenUrl || '[]'),
