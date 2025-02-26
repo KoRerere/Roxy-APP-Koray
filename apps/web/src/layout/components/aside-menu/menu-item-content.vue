@@ -56,7 +56,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
         :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
         @click="handleClickItem(navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
-        <div class="menu-title">
+        <div class="menu-title" :title="item.meta?.title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
           {{ item.meta?.title }}
           <RxSvgIcon v-if="item.meta?.newBadge && isShowNewBadge" :name="item.meta?.newBadge" size="24px"

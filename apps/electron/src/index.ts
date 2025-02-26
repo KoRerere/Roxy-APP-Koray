@@ -10,3 +10,4 @@ if (import.meta.env.DEV) {
     globalThis.electron = electron
   })
 }
+

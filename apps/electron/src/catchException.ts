@@ -1,3 +1,5 @@
+import { crashReporter } from "electron"
+
 // 捕获未捕获的异常
 process.on('uncaughtException', (error) => {
   console.error('未捕获的异常:', error)
@@ -9,3 +11,13 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('未处理的 Promise 拒绝:', reason)
   // 在这里执行一些清理操作或记录错误日志
 })
+
+// 捕获崩溃信息
+crashReporter.start({
+  uploadToServer: false,
+})
+
+// 方便测试崩溃信息
+// setTimeout(() => {
+//   process.crash()
+// }, 6000)
