@@ -63,17 +63,17 @@ export class BrowserManager {
       console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
       this.openedBrowserMap.delete(dirId)
       ipcMain.send('browser:on-close', dirId)
-      await setTimeout(100)
-      // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
-      const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
-      // 如果可以连接，则重新加入已打开的浏览器集合
-      if (canConnect) {
-        this.openedBrowserMap.set(dirId, browserItem)
-        this.launch(winInfo)
-      }
-      else {
-        browserItem.off(dirId)
-      }
+      browserItem.off(dirId)
+
+      setTimeout(2000).then(async () => {
+        // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
+        const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
+        // 如果可以连接，则重新加入已打开的浏览器集合
+        if (canConnect) {
+          this.openedBrowserMap.set(dirId, browserItem)
+          this.launch(winInfo)
+        }
+      })
     })
 
     return browserItem.launchInfo

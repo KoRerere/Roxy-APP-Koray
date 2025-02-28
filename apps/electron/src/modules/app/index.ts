@@ -23,7 +23,7 @@ if (!app.isPackaged) {
 // 设置渲染进程远程调试端口
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
 app.commandLine.appendSwitch('disable-renderer-accessibility')
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
+// app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096')
 app.commandLine.appendSwitch('--no-sandbox')
 
 export async function setupApp() {

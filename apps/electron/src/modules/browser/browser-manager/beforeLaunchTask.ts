@@ -47,6 +47,10 @@ export class BeforeLaunchTask {
   get progress() {
     return ~~((this.completedTasks / this.totalTasks) * 100)
   }
+  /** 是否是移动端 */
+  get isMobile() {
+    return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
+  }
 
   /** 用于重新拉起浏览器 */
   makeBrowserActive!: () => Promise<Browser>
@@ -142,6 +146,19 @@ export class BeforeLaunchTask {
         ignoreDefaultArgs: true,
         defaultViewport: null,
       })
+
+      // 临时解决移动端全屏问题
+      if (this.isMobile) {
+        setTimeout(async () => {
+          const pages = await this.browser?.pages()
+          setTimeout(() => {
+            const dashboardPage = pages?.find(page => page.url().startsWith(`http://127.0.0.1:${store.appPort}/dashboard`))
+            if (dashboardPage) {
+              dashboardPage.bringToFront()
+            }
+          }, pages?.length * 100 + 200)
+        })
+      }
 
       this.wsEndpoint = this.browser.wsEndpoint()
       console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
@@ -261,7 +278,7 @@ export class BeforeLaunchTask {
     }
 
     // 如果是移动端，打开开发者工具
-    if ([`Android`, `IOS`].includes(os)) {
+    if (this.isMobile) {
       args.push('--auto-open-devtools-for-tabs')
     }
 
