@@ -25,6 +25,18 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     return browserManager.batchDelete(dirIds)
   })
 
+  /** 根据进程 PID 判断进程是否存在 */
+  ipcMain.on('browser:isProcessExists', (event, dirIds) => {
+    return Promise.all(dirIds.map(async (dirId) => {
+      const browserItem = browserManager.openedBrowserMap.get(dirId)
+      const isExists = await browserItem?.beforeLaunchTask.reconnectBrowser()
+      if (!isExists) {
+        browserItem?.handleOnDisconnected()
+      }
+      return isExists
+    }))
+  })
+
   /** 获取所有已打开的窗口 */
   ipcMain.on('browser:getOpenedBrowser', (event,) => {
     return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => {

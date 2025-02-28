@@ -262,7 +262,6 @@ onMounted(() => {
 }
 
 .value {
-  word-break: break-all;
   color: var(--Colors-Text-text-secondary, #575d61);
   font-size: 14px;
   line-height: var(--Line-Height-text-md, 20px);

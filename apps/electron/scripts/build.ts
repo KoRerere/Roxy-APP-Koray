@@ -72,7 +72,7 @@ const options: Configuration = {
     target: [
       {
         target: 'nsis',
-        arch: ['x64'],
+        arch: ['ia32', 'x64'],
       },
     ],
     ...(!isDev

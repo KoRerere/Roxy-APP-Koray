@@ -37,6 +37,8 @@ export interface RenderMessage {
   'browser:getOpenedBrowserMessage': () => LastMessage[]
   /** 清除浏览器缓存， */
   'browser:clearCache': (payload: { clearType: 'partial' | 'all', dirId: string }) => void
+  /** 根据进程 PID 判断进程是否存在 */
+  'browser:isProcessExists': (dirIds: string[]) => Promise<boolean[]>
 
   /** 代理检测 */
   'proxy:detect': (proxyParams: ProxyDetectionParams) => ProxyDetectionResult

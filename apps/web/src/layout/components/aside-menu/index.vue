@@ -223,8 +223,20 @@ async function toCreateBrowser() {
     overflow: hidden;
     overflow-y: auto;
 
-    &::-webkit-scrollbar {
-      display: none;
+    &::-webkit-scrollbar-thumb,
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+      box-shadow: none;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+      background-color: rgb(190, 190, 190);
+      box-shadow: inset 0 0 6px rgb(186 183 183);
+    }
+
+    &:hover::-webkit-scrollbar-track {
+      background-color: #f5f5f5;
+      box-shadow: inset 0 0 6px rgb(186 183 183);
     }
   }
 }

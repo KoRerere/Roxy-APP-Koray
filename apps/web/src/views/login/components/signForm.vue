@@ -27,6 +27,10 @@ const formSchemas = ref(getFormSchemas())
 const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
 
+watch(isRegister, (val) => {
+  switchFormMode(val)
+}, { immediate: true, flush: 'post' })
+
 async function handleSubmit() {
   submitLoading.value = true
   try {

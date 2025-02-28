@@ -16,7 +16,7 @@ const rl = readline.createInterface({
 const zip = new Zip()
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'nfnlQ4tl2UVcKKUh1710868857533'
+const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'knjmJalcwRQrisBq1740623884200'
 
 const webPath = path.join(__dirname, '../apps/web/dist')
 
@@ -53,7 +53,11 @@ async function getOssToken() {
       token,
     },
   })
-  const { code, data } = await response.json()
+  const result = await response.json()
+  const { code, data, msg } = result
+  if (code !== 0) {
+    throw new Error(`获取 oss token 失败: ${msg}`)
+  }
   return data
 }
 
@@ -90,7 +94,10 @@ function getCurrentFormattedTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-startUpload().finally(() => {
+startUpload().catch((err) => {
+  console.error(err)
+  process.exit(1)
+}).finally(() => {
   process.exit(0)
 })
 // if (isProd) {

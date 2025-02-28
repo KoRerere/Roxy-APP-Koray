@@ -39,7 +39,7 @@ export async function startRoxynet() {
     // 重新设置系统代理
     setSystemProxy()
     console.log('Roxynet has been started')
-    const processExists = await isProcessExists(roxynetProcess.pid)
+    const [processExists] = await isProcessExists([roxynetProcess.pid])
     if (!processExists) {
       console.log('roxynetProcess is not exist')
       roxynetProcess = null

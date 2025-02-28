@@ -83,6 +83,7 @@ const drawer = reactive({
         break
       }
       case 'accountForm': {
+        data._tempId = (new Date().getTime()).toString(32)
         const _windowPlatformList = (windowPlatformList as any[]).concat(data)
         drawer.updateProfile({ id, dirId, windowPlatformList: _windowPlatformList })
         break
@@ -475,8 +476,12 @@ async function exportProfile(data: any) {
 
 async function deleteProfile(datas: any, ids: number[]) {
   if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    onlyErrorToast(-1, $t('请先关闭窗口'))
-    return
+    const result = await electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
+    console.log('browser:isProcessExists result', result)
+    if (result.some(item => item)) {
+      onlyErrorToast(-1, $t('请先关闭窗口'))
+      return
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -586,7 +591,10 @@ function profileOperate(key: string, data: any) {
       drawer.title = $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
       break
     case 'saveWindowName':
-      singleModifyWindow(_data)
+      singleModifyWindow({
+        id: _data.id,
+        windowName: _data.windowName,
+      })
       break
   }
 }

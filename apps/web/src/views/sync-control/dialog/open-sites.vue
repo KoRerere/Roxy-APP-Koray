@@ -1,7 +1,7 @@
 <template>
   <BaseDialog :header="$t('打开网址')" @hide="handleHide">
     <div class="open-sites">
-      <Textarea v-model="formData.urls" rows="7"
+      <Textarea v-model="formData.urls" rows="8"
         :placeholder="$t('输入网址，多个网址通过换行区分: \nhttps://www.amazon.com \nhttps://www.facebook.com')" class="w-full" />
     </div>
     <div class="footer">

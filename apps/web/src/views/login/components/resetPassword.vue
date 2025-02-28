@@ -8,9 +8,11 @@ import { useLoginContext } from '../hooks/useLoginContext'
 import EmailCodeInputOtp from './emailCodeInputOtp.vue'
 import { getResetPasswordSchemas, getEmailSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const { setCurrentComponent, setSignFormData } = useLoginContext()
 const toast = useToast()
+const [showToast] = useResponseToast()
 
 const rxFormRef = useTemplateRef('rxForm')
 const emailFormData = ref({
@@ -36,7 +38,12 @@ async function handleSubmit() {
     else {
       mixpanel.track('resetPassword', { method: 'email', success: false, error: msg })
       // toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
-      isShowAlert.value = true
+      if (code === 102) {
+        isShowAlert.value = true
+      } else {
+        isShowAlert.value = false
+        showToast(code, msg)
+      }
     }
   }
   else if (currentStep.value === 'step3') {

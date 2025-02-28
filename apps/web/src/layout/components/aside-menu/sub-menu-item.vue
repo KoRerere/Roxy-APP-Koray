@@ -12,13 +12,16 @@ const { level = 0, collapsed } = defineProps<{
   level?: number
 }>()
 
+const d = "max-height calc(max(calc(var(--child-count) / 3), 1) * 0.25s) cubic-bezier(0.19, 0.56, 0.03, 1.01)"
+
 const collapsedMap = ref<Record<NonNullable<RouteRecordNameGeneric>, boolean>>({})
 
 const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
 
 <template>
-  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }">
+  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]"
+    :style="{ '--child-count': items.length }">
     <template v-for="item in items" :key="item.name">
       <!-- 分组 -->
       <template v-if="isGroup(item)">
@@ -33,13 +36,16 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
       </template>
       <!-- 递归生成子菜单 -->
       <template v-if="item.children?.length">
-        <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed :class="{ collapsedChildren: collapsedMap[item.name!] }" />
+        <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed
+          :class="{ collapsedChildren: collapsedMap[item.name!] }" />
       </template>
     </template>
   </div>
 </template>
 
 <style lang="scss" scoped>
+@use "sass:string";
+
 .sub-menu {
   position: relative;
   display: flex;
@@ -51,7 +57,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
   &.level-1 {
     max-height: calc(var(--child-count) * 38px);
-    transition: max-height calc(max(calc(var(--child-count) / 3), 1) * 100ms) ease-in-out;
+    transition: v-bind(d);
     overflow: hidden;
   }
 
@@ -61,7 +67,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   }
 
   &.collapsedChildren {
-    height: calc-size(auto);
+    // height: calc-size(auto);
     max-height: 0;
     overflow: hidden;
   }

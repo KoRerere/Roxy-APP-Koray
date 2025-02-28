@@ -70,16 +70,20 @@ export function getProcessIdsByExePath(processPath: string) {
 }
 
 /** 判断进程是否存在 */
-export async function isProcessExists(pid: number) {
-  const { promise, resolve } = Promise.withResolvers<boolean>()
+export async function isProcessExists(pids: number[]): Promise<boolean[]> {
+  const { promise, resolve } = Promise.withResolvers<boolean[]>()
   const platform = process.platform;
+
+  // windows: tasklist | findstr /i /c:" 6880 " /c:" 18112 " /c:" 112 "
+  // linux: ps -p 6880 18112 112
   const command = platform === 'win32'
-    ? `tasklist /FI "PID eq ${pid}"`
-    : `ps -p ${pid}`;
+    ? `tasklist | findstr /i /c:${pids.map(pid => `" ${pid} "`).join(' /c:')}`
+    : `ps -p ${pids.join(' -p ')}`;
 
   exec(command, (error, stdout) => {
-    resolve(!error && stdout.includes(pid.toString()));
-  });
+    // 使用正则表达式精确匹配 PID，确保只匹配完整的 PID 而不是其中的部分数字
+    resolve(pids.map(pid => !error && new RegExp(`\\b${pid}\\b`).test(stdout)))
+  })
 
   return promise
 }
