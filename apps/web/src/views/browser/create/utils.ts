@@ -416,7 +416,10 @@ export async function parseTextFile(file: File) {
     reader.onload = function (e) {
       const content = e.target?.result;
       const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((line, index) => {
-        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(line.trim().split('\n').map(str => str.trim().split('=')))
+        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(line.trim().split('\n').map(str => {
+          const [key, ...value] = str.trim().split('=')
+          return [key, value.join('=')]
+        }))
         return {
           rowNum: index + 1,
           ...data,
