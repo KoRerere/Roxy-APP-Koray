@@ -6,6 +6,7 @@ import { API } from '/@/api'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { $t } from '/@/locales'
+import { appInitQuery } from '/@/utils'
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -16,7 +17,7 @@ export const useUserStore = defineStore('user', () => {
 
   const userInfo = ref<UserInfo>({})
   const userConfig = ref<UserConfig>()
-  const token = ref(localStorage.getItem('__token') || '')
+  const token = ref(appInitQuery.token || '')
   const appVersion = ref('')
   const rememberMe = ref(false)
   /** rememberMe 为 true 的时候有值 */
@@ -105,7 +106,6 @@ export const useUserStore = defineStore('user', () => {
     }
     // password.value = ''
     token.value = ''
-    localStorage.setItem('__token', '')
     electronAPI.send('user:logout')
     mixpanel.reset()
     workspaceStore.resetWorkspace()

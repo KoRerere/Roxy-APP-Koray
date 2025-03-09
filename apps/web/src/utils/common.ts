@@ -4,7 +4,10 @@ export const isDev = import.meta.env.DEV
 export const isProd = import.meta.env.PROD
 /** 是否是 Windows 系统 */
 export const isWindows = navigator.platform.includes('Win')
+/** APP 初始化时，主进程传递的查询参数对象 */
+export const appInitQuery = Object.fromEntries(new URLSearchParams(location.search))
 
+console.log('appInitQuery', appInitQuery)
 console.log('isDev', isDev)
 console.log('isProd', isProd)
 

@@ -7,9 +7,11 @@ import { fileExists } from '/@/utils/file'
 import ejs from "ejs";
 import { join } from 'node:path'
 import { isPackaged } from '/@/utils'
+import { loadLocaleMessages } from '/@/locales'
+import { app } from 'electron'
 
 export interface StoreType {
-  language: 'zh-CN' | 'en' | 'es' | 'ja' | 'fr' | 'ko' | 'pl' | 'ru' | 'tr' | 'de'
+  language: string
   /** 浏览器文件缓存根目录 */
   browserCacheRootDir: string
   /**
@@ -56,7 +58,7 @@ export interface StoreType {
 }
 
 const defaultValues: StoreType = {
-  language: 'en',
+  language: '',
   closeSoft: 'pop',
   memoryLimit: 95,
   browserCacheRootDir: appConfig.defaultBrowserCacheRootDir,
@@ -65,7 +67,7 @@ const defaultValues: StoreType = {
   appPort: 45535,
   ipBlackList: [],
   blockDomainList: [],
-  ipChecker: 'http://iprust.io/ip.json',
+  ipChecker: '',
   isExternalWeb: false,
 }
 
@@ -111,6 +113,10 @@ export async function fetchUserConfig() {
     if (code === 0) {
       console.log('setupStore userGetUserConfigList', data)
       Object.keys(data).forEach((key) => {
+        // 如果语言存在，则不覆盖
+        if (key === 'language' && store.language) {
+          return
+        }
         if (Reflect.has(store, key)) {
           Reflect.set(store, key, Reflect.get(data, key))
         }
@@ -144,6 +150,7 @@ async function initStore() {
   catch (error) {
     console.error('setupStore', error)
   } finally {
+    initLanguage()
     setTimeout(createTray)
     setTimeout(renderEjsFile, 2000)
   }
@@ -159,6 +166,17 @@ export const setupStore = new Proxy(initStore, {
     return initStorePromise.promise
   },
 })
+
+async function initLanguage() {
+  await app.whenReady()
+  const systemLanguage = app.getLocale().split('-')[0]
+  const defaultLanguage = systemLanguage === 'zh' ? 'zh-CN' : systemLanguage
+  store.language ||= defaultLanguage
+  const canLoad = loadLocaleMessages(store.language)
+  if (!canLoad) {
+    store.language = 'en'
+  }
+}
 
 /** appPort 变化的时候重新生成 */
 async function renderEjsFile() {

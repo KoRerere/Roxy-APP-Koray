@@ -130,9 +130,8 @@ app.directive('tooltip', Tooltip)
 setTimeout(async () => {
   const simpleLocale = useSimpleLocale()
 
-  await simpleLocale.initLocale().finally(() => {
-    setupI18n(app, { defaultLocale: simpleLocale.currentLocale }).then(() => {
-      app.mount('#app')
-    })
+  console.log('simpleLocale.currentLocale', simpleLocale.currentLocale)
+  setupI18n(app, { defaultLocale: simpleLocale.currentLocale }).then(() => {
+    app.mount('#app')
   })
 })

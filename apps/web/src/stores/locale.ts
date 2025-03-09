@@ -3,43 +3,28 @@ import { usePrimeVue } from 'primevue/config'
 import { ref } from 'vue'
 import { API } from '/@/api'
 import { loadLocaleMessages } from '/@/locales'
-import { clearDictCache } from '/@/utils'
+import { appInitQuery, clearDictCache } from '/@/utils'
 import { localesMap } from '/@/locales/i18n'
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
-  const defaultLocale = localesMap[navigator.language] ? navigator.language : 'en'
-  const currentLocale = ref('')
-
-  if (!currentLocale.value) {
-    currentLocale.value = defaultLocale
-  }
+  const currentLocale = ref(appInitQuery.language)
 
   const setSimpleLocale = async (locale: string) => {
     if (currentLocale.value === locale) {
       return
     }
+    electronAPI.send('app:saveSoftConfig', { language: locale })
     // loadLocaleMessages(locale)
     // primevue.config.locale = locale
-    const { code } = await API.base.userSetUserConfigCreate({ language: locale })
-    if (code === 0) {
-      electronAPI.send('app:saveSoftConfig', { language: locale })
-    }
+    await API.base.userSetUserConfigCreate({ language: locale })
     clearDictCache()
     currentLocale.value = locale
     location.reload()
   }
 
-  const initLocale = async () => {
-    const { code, data } = await API.base.userGetUserConfigList()
-    if (code === 0 && data) {
-      currentLocale.value = data.language
-    }
-  }
-
   return {
     currentLocale,
-    initLocale,
     setSimpleLocale,
   }
 }, {
