@@ -1,16 +1,15 @@
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
-import { promisify } from 'node:util'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
 import { fileExists, getSystemProxy, isMac, isProcessExists } from '/@/utils'
 import { checkResource } from '/@/modules/app/checkResource'
+import { chmod } from 'node:fs/promises'
 
 export * from './util'
 
-const spawnPromise = promisify(spawn)
 let roxynetProcess: ChildProcess | null = null
 
 export function getRoxynetProcess() {
@@ -72,7 +71,7 @@ export async function startRoxynet() {
   const encText = encryptByDESModeCBC(originText)
 
   if (isMac) {
-    await spawnPromise('chmod', ['+x', appConfig.roxynetBinPath], { stdio: 'inherit' })
+    await chmod(appConfig.roxynetBinPath, 0o755)
   }
   const startAppCmdArgs = process.argv.slice(1)
   const startRoxynetArgs = ['--arg', encText]
