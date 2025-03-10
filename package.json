@@ -2,7 +2,7 @@
   "name": "electron-vite-monorepo",
   "version": "0.0.0",
   "private": false,
-  "packageManager": "pnpm@10.4.1",
+  "packageManager": "pnpm@10.6.2",
   "author": {
     "name": "buqiyuan",
     "email": "1743369777@qq.com",
@@ -15,11 +15,11 @@
   },
   "engines": {
     "pnpm": ">=10.0.0",
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "volta": {
-    "node": "20.18.0",
-    "pnpm": "10.4.1"
+    "node": "22.14.0",
+    "pnpm": "10.6.2"
   },
   "scripts": {
     "dev": "tsx scripts/watch.ts",
@@ -69,7 +69,7 @@
     "simple-git-hooks": "^2.11.1",
     "tsx": "^4.19.3",
     "turbo": "^2.4.4",
-    "vite": "^6.2.1"
+    "vite": "catalog:"
   },
   "pnpm": {
     "peerDependencyRules": {

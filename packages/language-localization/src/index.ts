@@ -148,7 +148,7 @@ export default (options: OptionsType): PluginOption => {
         }
       })
       // 使用 serve-static 中间件提供静态资源服务
-      server.middlewares.use(baseUrl, serveStatic(join(__dirname, '../page'), { index: ['index.html'] }))
+      server.middlewares.use(baseUrl, serveStatic(join(import.meta.dirname, '../page'), { index: ['index.html'] }))
     },
   }
 }
