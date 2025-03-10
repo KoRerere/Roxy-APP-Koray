@@ -136,7 +136,7 @@ const config: UserConfig = {
     vueJsx(), // extractI18n({ targetDir: join(PACKAGE_ROOT, 'src/locales/langs'), langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'] }),
     LanguageLocalization({
       targetDir: join(PACKAGE_ROOT, 'src/locales/langs'),
-      langFileNames: ['zh-CN', 'en', 'ru', 'fr', 'de', 'es', 'ko', 'tr', 'ja', 'pl'],
+      langFileNames: ['zh-CN', 'en', 'ru'],
       // 不用在这里配置了，直接在项目根目录执行 `pnpm genLanguage` 生成即可
       immediate: false,
       sourceLang: 'zh-CN',
