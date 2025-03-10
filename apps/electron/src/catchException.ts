@@ -2,7 +2,8 @@ import { crashReporter, dialog } from "electron"
 
 // 禁止弹出错误框
 dialog.showErrorBox = function (title, content) {
-  console.log(`${title}\n${content}`);
+  // 只记录错误，不显示弹窗
+  console.error(`只记录错误，不显示系统弹窗：${title}\n${content}`);
 };
 
 // 捕获未捕获的异常

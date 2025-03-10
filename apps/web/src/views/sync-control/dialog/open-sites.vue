@@ -36,11 +36,12 @@ function openSites() {
       if (!trimmedUrl) {
         return null;
       }
-      // 如果不是 http 或 https 开头，则添加 http
-      if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
-        return `http://${trimmedUrl}`;
+      try {
+        new URL(trimmedUrl)
+        return trimmedUrl
+      } catch (error) {
+        return `http://${trimmedUrl}`
       }
-      return trimmedUrl
     }).filter(url => url),
     replaceCurrentTab: formData.value.replaceCurrentTab
   };
