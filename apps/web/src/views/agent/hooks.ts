@@ -48,7 +48,7 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
       const checkRes = await window.electronAPI.send('proxy:detect', data)
       const [code, msg] = !checkRes.ip
         ? [-1, $t('测试代理失败')]
-        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.country)}`, ip: checkRes.ip })]
+        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.city)}`, ip: checkRes.ip })]
 
       if (!options.silence) {
         showToast(code, msg)

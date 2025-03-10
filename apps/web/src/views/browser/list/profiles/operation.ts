@@ -206,7 +206,7 @@ export async function getCustomFilters(params: any = {}) {
 }
 
 export async function getSorts() {
-  const { data } = await API.window.userGetWindowTableSortOrderList()
+  const { data = {} } = await API.window.userGetWindowTableSortOrderList()
 
   const list = [
     {

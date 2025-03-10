@@ -20,10 +20,12 @@ function toggle(event: Event) {
 }
 
 async function getMembers() {
-  const { data } = await API.limit.userGetMemberInfoByProjectIdList({
+  const { code, data } = await API.limit.userGetMemberInfoByProjectIdList({
     projectId: props.projectId,
   })
-  members.value = data.rows
+  if (code === 0) {
+    members.value = data.rows
+  }
 }
 
 getMembers()
