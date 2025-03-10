@@ -1,7 +1,6 @@
 import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 import LanguageLocalization from '@roxy/language-localization/vite'
 import { genFigmaVariables, uploadIcons } from '@roxy/vite-plugins'
-import { sentryVitePlugin } from '@sentry/vite-plugin'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { debounce } from 'es-toolkit'
