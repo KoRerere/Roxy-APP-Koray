@@ -5,8 +5,7 @@
   "exports": {
     "./*": "./dist/*",
     "./vite": {
-      "import": "./dist/vite/index.js",
-      "require": "./dist/vite/index.js"
+      "import": "./dist/vite/index.mjs"
     }
   },
   "bin": {
