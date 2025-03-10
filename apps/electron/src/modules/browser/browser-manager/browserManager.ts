@@ -202,7 +202,7 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
-        return res.data.rows
+        return res.data.rows.sort((a, b) => a.windowSortNum - b.windowSortNum)
       })
       .catch((error) => {
         console.error(`BrowserManager === 获取窗口信息失败`, error)

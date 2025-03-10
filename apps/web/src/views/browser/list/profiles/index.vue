@@ -312,8 +312,8 @@ async function checkProfileStatus(datas: any) {
   return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
 }
 
-function onOpenBrowser(datas: any) {
-  const dirIds = datas.map((item: any, index: number) => {
+function onOpenBrowser(datas: any[]) {
+  const dirIds = datas.toSorted((a, b) => a.windowSortNum - b.windowSortNum).map((item: any, index: number) => {
     openMessage[item.dirId] = {
       pending: true,
       data: {

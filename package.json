@@ -38,13 +38,14 @@
     "publish:web:win:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production PLATFORM=win npx tsx ./scripts/upload-web-source.ts",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
     "genLanguage": "pnpm -F web run genLanguage",
-    "postinstall": "npm run build:pkg",
+    "postinstall": "npm run build:pkg & npm run install:electron",
     "lint": "turbo run lint",
     "lint:fix": "eslint . --fix",
     "clean:cache": "npx rimraf node_modules/.cache/ && npx rimraf node_modules/.vite",
     "clean:lib": "npx rimraf --glob node_modules **/node_modules",
     "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib",
-    "test": "cross-env NODE_ENV=development tsx scripts/test.ts"
+    "test": "cross-env NODE_ENV=development tsx scripts/test.ts",
+    "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js"
   },
   "optionalDependencies": {
     "minidump": "^0.26.0"

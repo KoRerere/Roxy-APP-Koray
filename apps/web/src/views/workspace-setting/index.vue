@@ -76,7 +76,7 @@ function handleDeleteConfirm() {
       <div class={styles['delete-confirm']}>
         <div class={styles['delete-confirm-title']}>
           <I18nT keypath={$t('您确认要删除 {workspaceName} 工作空间吗？', { workspaceName: '{workspaceName}' })}>
-            {{ workspaceName: () => <b class="mx-1">{currentWorkspace.value?.workspaceName}</b> }}
+            {{ workspaceName: () => <b class="mx-1 select-text">{currentWorkspace.value?.workspaceName}</b> }}
           </I18nT>
         </div>
         <div class={styles['delete-confirm-content']}>
@@ -204,7 +204,7 @@ function leaveWorkspace() {
   font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-lg, 20px);
-  /* 142.857% */
+  user-select: none;
 }
 
 .delete-confirm-content {
