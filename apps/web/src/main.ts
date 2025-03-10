@@ -1,5 +1,4 @@
 import '/@/styles/index.scss'
-import '@mdi/font/css/materialdesignicons.css'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'

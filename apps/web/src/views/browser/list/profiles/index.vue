@@ -225,7 +225,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await openBrowserBefore(data)
       break
     case 'restart':
-      window.electronAPI.send('browser:batchRelaunch', datas.map((item: any) => item.dirId))
+      window.electronAPI.send('browser:batchRelaunch', datas.toSorted((a, b) => a.windowSortNum - b.windowSortNum).map((item: any) => item.dirId))
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))

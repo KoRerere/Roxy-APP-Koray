@@ -1,4 +1,9 @@
-import { crashReporter } from "electron"
+import { crashReporter, dialog } from "electron"
+
+// 禁止弹出错误框
+dialog.showErrorBox = function (title, content) {
+  console.log(`${title}\n${content}`);
+};
 
 // 捕获未捕获的异常
 process.on('uncaughtException', (error) => {

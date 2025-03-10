@@ -1,4 +1,4 @@
-import { app, autoUpdater, crashReporter, globalShortcut, shell } from 'electron'
+import { app, autoUpdater, globalShortcut, shell } from 'electron'
 import path from 'node:path'
 import { appProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
