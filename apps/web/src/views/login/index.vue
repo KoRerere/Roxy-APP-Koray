@@ -28,7 +28,7 @@ const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
 const [dialog] = useDialog()
 
-hidePageLoading()
+requestIdleCallback(hidePageLoading)
 
 async function handleSubmit() {
   console.log(signFormData)

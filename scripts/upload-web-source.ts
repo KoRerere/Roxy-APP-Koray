@@ -16,7 +16,7 @@ const rl = readline.createInterface({
 const zip = new Zip()
 
 const isProd = process.env.NODE_ENV === 'production'
-const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'knjmJalcwRQrisBq1740623884200'
+const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'w00eDcSDwrXSWS7B1741162500315'
 
 const webPath = path.join(__dirname, '../apps/web/dist')
 
