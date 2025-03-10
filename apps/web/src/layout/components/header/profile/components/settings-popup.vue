@@ -37,7 +37,7 @@ const menuList = ref(
 )
 
 async function getUserConfig() {
-  const data = toRaw(await userStore.getUserConfig())
+  const data = toRaw(await userStore.getUserConfig(true))
 
   const promiseMap = {
     preferences: getPreferencesPanel,

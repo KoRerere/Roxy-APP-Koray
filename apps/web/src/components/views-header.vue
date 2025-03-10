@@ -14,6 +14,7 @@ interface Props {
 
 function onBack() {
   console.log('onBack', path, query)
+  router.back()
   router.replace({ path, query })
 }
 </script>

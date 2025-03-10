@@ -83,16 +83,17 @@ function onCopy(dirId: string) {
         <template #expandicon>
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
           <AccordionContent :pt="{ content: '!py-4 !px-2' }">
             <RyForm :inputs="inputsGroup[index]" label-position="left">
               <template #profileId="{ input }">
-                <div class="flex">
+                <div class="flex leading-[32px]">
                   <inputLabel v-bind="input" />
-                  <span class="text-3">{{ input.value }}</span>
+                  <span class="dir-id">{{ input.value }}</span>
                   <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
                 </div>
               </template>
@@ -165,6 +166,11 @@ function onCopy(dirId: string) {
 
 <style lang="scss" scoped>
 $spacing-x: 66px;
+
+.dir-id {
+  font-size: 12px;
+  font-family: 'JetBrains Mono';
+}
 
 .content {
   padding: 0 $spacing-x 40px;
