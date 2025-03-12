@@ -25,5 +25,8 @@ export const useSimpleLocale = defineStore('locale', () => {
     setSimpleLocale,
   }
 }, {
-  persist: true,
+  persist: {
+    storage: sessionStorage,
+    pick: ['currentLocale'],
+  },
 })
