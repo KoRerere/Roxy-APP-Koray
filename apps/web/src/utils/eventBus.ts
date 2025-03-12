@@ -10,7 +10,8 @@ export type MittEvents = {
   kickedOut?: {
     deviceName: string
     createTime: string
-  }
+  },
+  toggleChatVisible: 'maximized' | 'minimized' | 'hidden'
 }
 
 export const emitter = mitt<MittEvents>()

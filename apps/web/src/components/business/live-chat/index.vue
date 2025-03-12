@@ -1,48 +1,25 @@
 <script setup lang="ts">
-import { LiveChatWidget, useWidgetIsReady } from '@livechat/widget-vue'
-import { useUserStore } from '/@/stores/user'
+import { useWidgetIsReady } from '@livechat/widget-vue'
+import { emitter, type MittEvents } from '/@/utils/eventBus'
 
 const isWidgetReady = useWidgetIsReady()
-const userStore = useUserStore()
-const visibility = ref<'maximized' | 'minimized' | 'hidden'>('hidden')
+const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
 
-const sessionVariables = computed(() => {
-  const { userName, maxWindowCount, useWindowCount } = userStore.userInfo
-  return {
-    username: `[Roxy]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
-    Account_ID: userStore.token,
-    // Total_order_value: `$${totalAmount / 100}`
-  }
-})
-const customerName = computed(() => {
-  const { userName } = userStore.userInfo
-  return `[Roxy]-${userName || '游客'}`
-})
 
 function toggleChatVisible() {
   visibility.value = visibility.value === 'maximized' ? 'hidden' : 'maximized'
+  emitter.emit('toggleChatVisible', visibility.value)
 }
 
-function handleVisibilityChanged(data) {
-  console.log('data.visibility', data.visibility)
-  visibility.value = data.visibility
-}
+onErrorCaptured((err) => {
+  console.error('LiveChatWidget error', err)
+})
 </script>
 
 <template>
   <div class="cursor-pointer" @click="toggleChatVisible">
     <slot v-if="isWidgetReady" />
-
-    <LiveChatWidget
-      license="18087441"
-      :customer-name="customerName"
-      :session-variables="sessionVariables"
-      :visibility="visibility"
-      @visibility-changed="handleVisibilityChanged"
-    />
   </div>
 </template>
 
-<style>
-
-</style>
+<style></style>

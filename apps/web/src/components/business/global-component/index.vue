@@ -6,6 +6,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import PaidPlan from './paid-plan.vue'
 import { emitter } from '/@/utils/eventBus'
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
+import LiveChat from '../live-chat/live-chat.vue'
 
 const [dialogInstance] = useDialog()
 updatePrimeVueLocale()
@@ -63,7 +64,7 @@ onMounted(() => {
             <Checkbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }"
               input-id="double" binary />
             <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">{{ message.checkboxProps.label
-            }}</label>
+              }}</label>
             <RxSvgIcon v-if="message.checkboxProps.tooltip"
               v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }"
               name="base/rx_ic_info" :size="12" />
@@ -78,6 +79,7 @@ onMounted(() => {
   <DynamicDialog />
   <!-- 通过邮箱邀请链接拉起弹窗 -->
   <InviteIntoWorkspace />
+  <LiveChat />
 </template>
 
 <style module="global">
