@@ -39,7 +39,7 @@ router.beforeEach((to, from, next) => {
     // document.title = to.meta.title as string
   }
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
-  const query = { ...to.query, language: simpleLocale.currentLocale || 'zh-CN', _title: 'roxybrowser' };
+  const query = { ...to.query, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' };
 
   if (to.name !== 'login' && !userStore.token) {
     return next({ name: 'login', query })

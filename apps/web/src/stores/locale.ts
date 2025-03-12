@@ -1,10 +1,11 @@
 import { ref } from 'vue'
 import { API } from '/@/api'
-import { appInitQuery, clearDictCache } from '/@/utils'
+import { clearDictCache } from '/@/utils'
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
-  const currentLocale = ref(appInitQuery.language)
+  const defaultLanguage = navigator.language === 'zh-CN' ? navigator.language : navigator.language.split('-')[0]
+  const currentLocale = ref(defaultLanguage)
 
   const setSimpleLocale = async (locale: string) => {
     if (currentLocale.value === locale) {

@@ -12,9 +12,12 @@ import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
+<<<<<<< Updated upstream
   const queryStr = `?language=${store.language}&token=${store.token}`
+=======
+>>>>>>> Stashed changes
   if (isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
-    return `${import.meta.env.VITE_DEV_SERVER_URL}${path}${queryStr}`
+    return `${import.meta.env.VITE_DEV_SERVER_URL}${path}`
   }
 
   if (isPackaged && !skipCompare) {
@@ -36,7 +39,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
     }
   }
   console.log('store.isExternalWeb', store.isExternalWeb)
-  return `http://127.0.0.1:${store.appPort}/${path}${queryStr}`
+  return `http://127.0.0.1:${store.appPort}/${path}`
 }
 
 /** 获取本地 web 版本 */
