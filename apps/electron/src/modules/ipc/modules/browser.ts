@@ -49,7 +49,10 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
 
   /** 获取所有已打开的窗口的消息 */
   ipcMain.on('browser:getOpenedBrowserMessage', (event) => {
-    return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => browserItem.lastMessage!)
+    return [
+      ...browserManager.openedBrowserMap.values(),
+      ...browserManager.openingBrowserMap.values().map(item => item.browserItem)
+    ].map(browserItem => browserItem.lastMessage!)
   })
 
   /**

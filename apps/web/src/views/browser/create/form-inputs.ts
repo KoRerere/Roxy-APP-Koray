@@ -951,7 +951,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('启动参数'),
       name: 'startupParam',
       value: data.startupParam,
-      placeholder: $t('浏览器启动参数,如 --mute,多个参数以英文逗号分隔'),
+      placeholder: $t('浏览器启动参数,如 --mute,多个参数以英文分号分隔'),
     },
   ])
 

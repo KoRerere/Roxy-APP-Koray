@@ -11,7 +11,7 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 
 export class BrowserManager {
   /** 正在打开中的浏览器集合 */
-  private openingBrowserMap = new Map<string, Promise<void>>()
+  openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
   openedBrowserMap = new Map<string, BrowserItem>()
 
@@ -22,7 +22,7 @@ export class BrowserManager {
   /** 根据 dirId 获取已经打开的浏览器 */
   async getOpenedBrowser(dirId: string) {
     if (this.openingBrowserMap.has(dirId)) {
-      await this.openingBrowserMap.get(dirId)
+      await this.openingBrowserMap.get(dirId)!.launchPromise
     }
     // 这里需要延迟到下一次事件循环，因为浏览器启动是异步的
     await setTimeout()
@@ -51,10 +51,13 @@ export class BrowserManager {
     // 如果浏览器没有打开
     if (!this.openingBrowserMap.has(dirId)) {
       // 则加入打开中的浏览器集合
-      this.openingBrowserMap.set(dirId, browserItem.launch())
+      this.openingBrowserMap.set(dirId, {
+        browserItem,
+        launchPromise: browserItem.launch()
+      })
     }
     // 等待浏览器启动完成
-    await this.openingBrowserMap.get(dirId)!.finally(() => {
+    await this.openingBrowserMap.get(dirId)?.launchPromise.finally(() => {
       this.openingBrowserMap.delete(dirId)
     })
     this.openedBrowserMap.set(dirId, browserItem)
@@ -65,7 +68,7 @@ export class BrowserManager {
       ipcMain.send('browser:on-close', dirId)
       browserItem.off(dirId)
 
-      setTimeout(2000).then(async () => {
+      setTimeout(10000).then(async () => {
         // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
         const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
         // 如果可以连接，则重新加入已打开的浏览器集合

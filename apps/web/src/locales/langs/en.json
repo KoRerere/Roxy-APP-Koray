@@ -641,7 +641,7 @@
   "测试代理失败": "Proxy test failed",
   "测试全部": "Test All",
   "测试成功": "Test successful",
-  "浏览器启动参数,如 --mute,多个参数以英文逗号分隔": "Browser startup parameters, such as --mute, multiple parameters are separated by commas",
+  "浏览器启动参数,如 --mute,多个参数以英文分号分隔": "Browser startup parameters, such as --mute, multiple parameters are separated by semicolons",
   "浏览器启动失败": "Browser Launch Failed",
   "浏览器启动成功": "Browser Launch Success",
   "浏览器已打开": "Browser Opened",

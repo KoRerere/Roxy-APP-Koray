@@ -665,6 +665,7 @@ onBeforeMount(() => {
   window.electronAPI
     .send('browser:getOpenedBrowserMessage')
     .then((state) => {
+      console.log('browser:getOpenedBrowserMessage state', state)
       state.forEach((item: any) => {
         Reflect.set(openMessage, item.dirId, { data: item })
       })

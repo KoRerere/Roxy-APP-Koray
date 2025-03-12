@@ -240,7 +240,7 @@ export class BeforeLaunchTask {
 
     // 用户自定义启动参数
     if (startupParam && startupParam.trim?.() !== '') {
-      const userCustomArgs = startupParam.split(',')
+      const userCustomArgs = startupParam.split(';')
         .map((item: string) => item.trim())
         .filter((arg: string) => {
           // 用户自定义启动参数优先级最低，不能覆盖内置参数
