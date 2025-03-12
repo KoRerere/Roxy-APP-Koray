@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import type { UserGetUserConfigListData, UserGetUserInfoListData } from '@roxy/backend-api'
 import mixpanel from 'mixpanel-browser'
 import { defineStore } from 'pinia'
@@ -7,18 +6,6 @@ import { API } from '/@/api'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { $t } from '/@/locales'
-import { appInitQuery } from '/@/utils'
-=======
-import type { UserGetUserConfigListData, UserGetUserInfoListData, UserGetUserPayInfoListData } from "@roxy/backend-api";
-import mixpanel from "mixpanel-browser";
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import { API } from "/@/api";
-import { $t } from "/@/locales";
-import { useSimpleLocale } from "/@/stores/locale";
-import { useWorkspaceStore } from "/@/stores/workspace";
-import { emitter } from "/@/utils/eventBus";
->>>>>>> Stashed changes
 
 type UserInfo = Partial<UserGetUserInfoListData['data']>
 type UserConfig = Partial<UserGetUserConfigListData['data']>
@@ -27,26 +14,13 @@ export const useUserStore = defineStore('user', () => {
   const locale = useSimpleLocale()
   const workspaceStore = useWorkspaceStore()
 
-<<<<<<< Updated upstream
   const userInfo = ref<UserInfo>({})
   const userConfig = ref<UserConfig>()
-  const token = ref(appInitQuery.token || '')
+  const token = ref('')
   const appVersion = ref('')
   const rememberMe = ref(false)
   /** rememberMe 为 true 的时候有值 */
   const password = ref('')
-=======
-    /** 用户信息 */
-    const userInfo = ref<UserInfo>({});
-    /** 用户付费详情 */
-    const userPayInfo = ref<UserGetUserPayInfoListData["data"]>({} as UserGetUserPayInfoListData["data"]);
-    const userConfig = ref<UserConfig>();
-    const token = ref();
-    const appVersion = ref("");
-    const rememberMe = ref(false);
-    /** rememberMe 为 true 的时候有值 */
-    const password = ref("");
->>>>>>> Stashed changes
 
   /** 用户身份 */
   const identityInfo = computed(() => {

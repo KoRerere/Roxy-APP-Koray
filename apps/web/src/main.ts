@@ -6,22 +6,6 @@ import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
 // import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
 // import { init as initSentryVue } from '@sentry/vue'
-<<<<<<< Updated upstream
-import mixpanel from 'mixpanel-browser'
-import PrimeVue from 'primevue/config'
-import ConfirmationService from 'primevue/confirmationservice'
-import DialogService from 'primevue/dialogservice'
-import Ripple from 'primevue/ripple'
-import ToastService from 'primevue/toastservice'
-import Tooltip from 'primevue/tooltip'
-import { createApp } from 'vue'
-import { setupI18n } from '/@/locales'
-import { setupStore } from '/@/stores'
-import { useSimpleLocale } from '/@/stores/locale'
-import myPreset from '/@/styles/primevuePresets'
-import App from './App.vue'
-import router from './router'
-=======
 import mixpanel from "mixpanel-browser";
 import PrimeVue from "primevue/config";
 import ConfirmationService from "primevue/confirmationservice";
@@ -37,7 +21,6 @@ import myPreset from "/@/styles/primevuePresets";
 import App from "./App.vue";
 import router from "./router";
 import { useUserStore } from '/@/stores/user'
->>>>>>> Stashed changes
 
 const app = createApp(App)
 
@@ -144,10 +127,6 @@ app.use(PrimeVue, {
 app.directive('ripple', Ripple)
 app.directive('tooltip', Tooltip)
 
-<<<<<<< Updated upstream
-setTimeout(async () => {
-  const simpleLocale = useSimpleLocale()
-=======
 electronAPI.send("app:getSoftConfig").then((softConfig) => {
   console.log('softConfig', softConfig)
   const { language, token } = softConfig;
@@ -155,7 +134,6 @@ electronAPI.send("app:getSoftConfig").then((softConfig) => {
   const { setToken } = useUserStore()
   simpleLocale.currentLocale = language;
   setToken(token || '')
->>>>>>> Stashed changes
 
   setupI18n(app, { defaultLocale: language }).then(() => {
     app.mount('#app')
