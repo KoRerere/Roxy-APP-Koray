@@ -1,13 +1,16 @@
 <script setup lang="tsx">
-import InviteIntoWorkspace from './invite-into-workspace.vue'
 import RxToastHeadless from './rx-toast-headless.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useDialog } from '/@/hooks/useDialog'
-import PaidPlan from './paid-plan.vue'
 import { emitter } from '/@/utils/eventBus'
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
-import LiveChat from '../live-chat/live-chat.vue'
+import { hidePageLoading } from '/@/utils'
 
+const LiveChat = defineAsyncComponent(() => import('../live-chat/live-chat.vue'))
+const PaidPlan = defineAsyncComponent(() => import('./paid-plan.vue'))
+const InviteIntoWorkspace = defineAsyncComponent(() => import('./invite-into-workspace.vue'))
+
+const isMainWindow = ref(false)
 const [dialogInstance] = useDialog()
 updatePrimeVueLocale()
 
@@ -28,12 +31,14 @@ function showBusinessPopup() {
 }
 
 requestIdleCallback(async () => {
-  const isMainWindow = await electronAPI.send('app:isMainWindow')
-  if (isMainWindow) {
+  isMainWindow.value = await electronAPI.send('app:isMainWindow')
+  if (isMainWindow.value) {
     electronAPI.on('app:show-business-popup', () => {
       showBusinessPopup()
     })
     emitter.on('showRoxyOperationNotice', showBusinessPopup)
+  } else {
+    hidePageLoading()
   }
 })
 
@@ -63,8 +68,9 @@ onMounted(() => {
           <div class="flex flex-1 items-center" v-if="message.checkboxProps">
             <Checkbox v-model="message.checkboxProps.value" :pt="{ root: 'items-center', box: '!w-4 !h-4' }"
               input-id="double" binary />
-            <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">{{ message.checkboxProps.label
-              }}</label>
+            <label for="double" class="text-3 select-none ma-1.5 cursor-pointer">
+              {{ message.checkboxProps.label }}
+            </label>
             <RxSvgIcon v-if="message.checkboxProps.tooltip"
               v-tooltip="{ value: message.checkboxProps.tooltip, showDelay: 500, hideDelay: 300 }"
               name="base/rx_ic_info" :size="12" />
@@ -77,9 +83,11 @@ onMounted(() => {
     </template>
   </ConfirmDialog>
   <DynamicDialog />
-  <!-- 通过邮箱邀请链接拉起弹窗 -->
-  <InviteIntoWorkspace />
-  <LiveChat />
+  <template v-if="isMainWindow">
+    <!-- 通过邮箱邀请链接拉起弹窗 -->
+    <InviteIntoWorkspace />
+    <LiveChat />
+  </template>
 </template>
 
 <style module="global">
