@@ -88,7 +88,7 @@ const saveConfig = debounce(async () => {
   catch (error) {
     console.error('saveConfig error: ', error)
   }
-}, 300)
+}, 100)
 
 export const store = new Proxy(_store, {
   set(target, prop: keyof StoreType, value) {

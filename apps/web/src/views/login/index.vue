@@ -64,7 +64,7 @@ async function afterLogin(loginData: LoginCreateData['data'], method: 'password'
   console.log('rememberMe', rememberMe.value)
   await getUserInfo()
   setPassword(rememberMe.value ? signFormData.value.password : '')
-  router.push({ name: 'home' })
+  await router.push({ name: 'home' })
   mixpanel.track('login', { method })
 }
 
@@ -188,8 +188,8 @@ onMounted(() => {
   getCommonHeaders()
 })
 
-hidePageLoading()
-let timer = setInterval(hidePageLoading, 1000)
+requestIdleCallback(hidePageLoading)
+let timer = setInterval(hidePageLoading, 3000)
 
 onUnmounted(() => {
   cancelCallback?.()

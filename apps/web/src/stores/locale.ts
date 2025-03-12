@@ -10,13 +10,14 @@ export const useSimpleLocale = defineStore('locale', () => {
     if (currentLocale.value === locale) {
       return
     }
-    electronAPI.send('app:saveSoftConfig', { language: locale })
     // loadLocaleMessages(locale)
     // primevue.config.locale = locale
-    await API.base.userSetUserConfigCreate({ language: locale })
-    clearDictCache()
-    currentLocale.value = locale
-    location.reload()
+    await API.base.userSetUserConfigCreate({ language: locale }).finally(() => {
+      clearDictCache()
+      currentLocale.value = locale
+      electronAPI.send('app:saveSoftConfig', { language: locale })
+      location.reload()
+    })
   }
 
   return {
