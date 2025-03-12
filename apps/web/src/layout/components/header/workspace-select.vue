@@ -15,7 +15,7 @@ import WorkspaceGuide from './components/workspace-guide.vue'
 const userStore = useUserStore()
 const roleLabelMap = getRoleLabelMap()
 const workspaceStore = useWorkspaceStore()
-const { currentWorkspace, workspaceList,   } = storeToRefs(workspaceStore)
+const { currentWorkspace, workspaceList } = storeToRefs(workspaceStore)
 const [workspaceFormDialog] = useDialog()
 const [dialogInstance] = useDialog()
 const toast = useToast()
@@ -134,8 +134,9 @@ function getAvatarStyle(workspacePicture: string) {
 
 <template>
   <div class="workspace">
-    <Select v-if="currentWorkspace"  v-model="currentWorkspace" :options="workspaceList" option-label="name" class="workspace-select"
-      :overlay-class="$style['workspace-select-overlay']" @show="workspaceStore.fetchWorkspaceList">
+    <Select v-if="currentWorkspace" v-model="currentWorkspace" :options="workspaceList" option-label="name"
+      class="workspace-select" :overlay-class="$style['workspace-select-overlay']"
+      @show="workspaceStore.fetchWorkspaceList">
       <template #value="slotProps">
         <Avatar :label="slotProps.value.workspacePicture || slotProps.value.workspaceName.slice(0, 2)"
           class="workspace-icon-small" :style="getAvatarStyle(slotProps.value.workspacePicture)" />

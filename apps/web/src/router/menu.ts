@@ -19,13 +19,13 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
       {
         path: 'create',
         name: 'browser-create',
-        meta: { title: '新建窗口', hideInMenu: true },
+        meta: { title: '新建窗口', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER], hideInMenu: true },
         component: () => import('/@/views/browser/create'),
       },
       {
         path: 'edit',
         name: 'browser-edit',
-        meta: { title: '编辑窗口', hideInMenu: true },
+        meta: { title: '编辑窗口', roles: [Role.EDITOR, Role.MANAGER, Role.OWNER], hideInMenu: true },
         component: () => import('/@/views/browser/create/edit.vue'),
       },
     ],

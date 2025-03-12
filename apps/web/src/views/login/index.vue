@@ -28,8 +28,6 @@ const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
 const [dialog] = useDialog()
 
-requestIdleCallback(hidePageLoading)
-
 async function handleSubmit() {
   console.log(signFormData)
   signFormData.value.user_name = signFormData.value.user_name.trim()
@@ -190,8 +188,12 @@ onMounted(() => {
   getCommonHeaders()
 })
 
+hidePageLoading()
+let timer = setInterval(hidePageLoading, 1000)
+
 onUnmounted(() => {
   cancelCallback?.()
+  clearInterval(timer)
 })
 
 provideLoginContext({
