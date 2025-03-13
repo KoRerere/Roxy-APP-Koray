@@ -141,7 +141,9 @@ const tableFilterData = computed(() => {
 
 watch(tableFilterData, (val) => {
   if (val.length > 1) {
-    mainControlWindowDirId.value = val[0].dirId
+    if (!props.mainControlWindowDirId) {
+      mainControlWindowDirId.value = val[0].dirId
+    }
   }
 })
 
