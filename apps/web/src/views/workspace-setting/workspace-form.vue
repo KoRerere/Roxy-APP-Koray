@@ -33,7 +33,7 @@ function onInput() {
     .min(1, $t('请输入空间名称'))
     .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
     .min(4, $t('空间名称最少 4 个字符'))
-    .max(30, $t('空间名称最多 30 个字符'))
+    .max(20, $t('空间名称最多 20 个字符'))
     .safeParse(workspaceInfo.value.workspaceName)
 
   if (result.error) {
@@ -94,10 +94,10 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage" maxlength="30"
-            class="w-full" @input="onInput" />
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage"
+            :maxlength="20" class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
-            {{ workspaceInfo.workspaceName?.length }}/30
+            {{ workspaceInfo.workspaceName?.length }}/20
           </InputIcon>
         </IconField>
         <div v-if="errorMessage" class="description !text-red">

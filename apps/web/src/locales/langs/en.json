@@ -706,7 +706,7 @@
   "稍后提醒我": "Remind me later",
   "空间名称": "Name",
   "空间名称不能包含中文": "Space name cannot contain Chinese",
-  "空间名称最多 30 个字符": "Workspace name up to 30 characters",
+  "空间名称最多 20 个字符": "Workspace name up to 20 characters",
   "空间名称最少 4 个字符": "Workspace name should not less thant 4 characters.",
   "空间图标": "Icon",
   "空间设置": "Settings",

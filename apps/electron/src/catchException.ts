@@ -1,5 +1,8 @@
 import { crashReporter, dialog } from "electron"
 
+// （不推荐）忽略 SSL 证书验证,让 axios 忽略 SSL 证书验证，绕过 UNABLE_TO_VERIFY_LEAF_SIGNATURE 错误
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 // 禁止弹出错误框
 dialog.showErrorBox = function (title, content) {
   // 只记录错误，不显示弹窗

@@ -7,14 +7,14 @@ import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
 import { getCommonRequestHeaders, isDev, isPackaged } from '/@/utils'
 
-const agent = new https.Agent({
-  rejectUnauthorized: false,
-})
+// const agent = new https.Agent({
+//   rejectUnauthorized: false,
+// })
 
 export const httpClient = new HttpClient({
   // baseURL: 'https://lumitest.lumibrowser.com/',
   timeout: 15000,
-  httpsAgent: agent,
+  // httpsAgent: agent,
 })
 
 let commonRequestHeaders
