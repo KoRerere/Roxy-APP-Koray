@@ -1,10 +1,10 @@
 import path from 'node:path'
-import { Worker } from 'node:worker_threads'
+import { utilityProcess, MessageChannelMain, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
 
 export class FileOperations {
-  private workers = new Set<Worker>()
-  private availableWorkers = new Set<Worker>()
+  private workers = new Set<UtilityProcess>()
+  private availableWorkers = new Set<UtilityProcess>()
   private tasksQueue: Map<number, TaskQueueItem<keyof TaskMap>> = new Map()
   private maxPoolSize: number
   private taskIdCounter = 1
@@ -16,8 +16,12 @@ export class FileOperations {
   }
 
   /**  创建 worker */
-  private createWorker(): Worker {
-    const worker = new Worker(path.join(__dirname, './fileWorker.cjs'))
+  private createWorker(): UtilityProcess {
+    const { port1, port2 } = new MessageChannelMain()
+    // 加 inspect 9230
+    const worker = utilityProcess.fork(path.join(__dirname, './fileWorker.cjs'), [], {
+      execArgv: ['--inspect=9230'],
+    })
 
     const handleMessage = (message: WorkerMessage) => {
       this.handleWorkerResponse(worker, message)
@@ -25,6 +29,7 @@ export class FileOperations {
 
     worker.on('message', handleMessage)
     worker.on('exit', () => {
+      console.log('worker exit')
       this.removeWorker(worker)
     })
 
@@ -34,9 +39,10 @@ export class FileOperations {
 
   /**  处理 worker 的响应 */
   private handleWorkerResponse<K extends keyof TaskMap>(
-    worker: Worker,
+    worker: UtilityProcess,
     message: WorkerMessage<ReturnType<TaskMap[K]>>,
   ) {
+    console.log('handleWorkerResponse', message)
     const taskId = message.taskId
     if (!taskId)
       return
@@ -62,7 +68,7 @@ export class FileOperations {
   }
 
   /**  移除 worker */
-  private removeWorker(worker: Worker) {
+  private removeWorker(worker: UtilityProcess) {
     this.workers.delete(worker)
     this.availableWorkers.delete(worker)
   }
@@ -72,7 +78,7 @@ export class FileOperations {
     if (this.tasksQueue.size === 0)
       return
 
-    let worker: Worker | null = null
+    let worker: UtilityProcess | null = null
 
     if (this.availableWorkers.size > 0) {
       worker = Array.from(this.availableWorkers).shift()!
@@ -99,7 +105,7 @@ export class FileOperations {
 
   /**  终止所有 worker */
   terminate(): void {
-    this.workers.forEach(worker => worker.terminate())
+    this.workers.forEach(worker => worker.kill())
     this.workers.clear()
     this.availableWorkers.clear()
     this.tasksQueue.clear()

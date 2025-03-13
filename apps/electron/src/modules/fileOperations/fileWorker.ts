@@ -1,60 +1,57 @@
+
 import AdmZip from 'adm-zip'
 import iconv from 'iconv-lite'
 import { stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { parentPort } from 'node:worker_threads'
 import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
 import systeminformation from 'systeminformation'
 import { createHash } from 'node:crypto'
 
-// 确保 parentPort 存在
-if (parentPort) {
-  // 监听来自主线程的消息
-  parentPort.on('message', async (message: { task: keyof TaskMap, taskId, payload: any }) => {
-    const { task, payload, taskId } = message
+process.parentPort?.on('message', async (e) => {
+  const { task, payload, taskId } = e.data as { task: keyof TaskMap, taskId, payload: any }
 
-    const sendSuccess = (data: any) => parentPort?.postMessage({ taskId, status: 'success', data })
-    const sendError = (error: Error) => parentPort?.postMessage({ taskId, status: 'error', error: error.message })
+  const sendSuccess = (data: any) => process.parentPort.postMessage({ taskId, status: 'success', data })
+  const sendError = (error: Error) => process.parentPort.postMessage({ taskId, status: 'error', error: error.message })
 
-    try {
-      switch (task) {
-        case 'compress':
-          sendSuccess(compressFile(payload.src, payload.dest))
+  try {
+    switch (task) {
+      case 'compress':
+        sendSuccess(compressFile(payload.src, payload.dest))
+        break
+      case 'compressFiles':
+        {
+          const { files, dest } = payload as TaskQueueItem<typeof task>['payload']
+          sendSuccess(await compressFiles(files, dest))
           break
-        case 'compressFiles':
-          {
-            const { files, dest } = payload as TaskQueueItem<typeof task>['payload']
-            sendSuccess(await compressFiles(files, dest))
-            break
-          }
-        case 'decompress':
-          {
-            const { src, dest, filters } = payload as TaskQueueItem<typeof task>['payload']
-            sendSuccess(decompressFile(src, dest, filters))
-            break
-          }
-        case 'getCompressedSize':
-          {
-            const dest = payload as TaskQueueItem<typeof task>['payload']
-            const size = getCompressedSize(dest)
-            sendSuccess(size)
-            break
-          }
-        case 'genDeviceId':
-          {
-            const deviceId = await genDeviceId()
-            sendSuccess(deviceId)
-            break
-          }
-        default:
-          throw new Error('未知任务类型')
-      }
+        }
+      case 'decompress':
+        {
+          const { src, dest, filters } = payload as TaskQueueItem<typeof task>['payload']
+          sendSuccess(decompressFile(src, dest, filters))
+          break
+        }
+      case 'getCompressedSize':
+        {
+          const dest = payload as TaskQueueItem<typeof task>['payload']
+          const size = getCompressedSize(dest)
+          sendSuccess(size)
+          break
+        }
+      case 'genDeviceId':
+        {
+          const deviceId = await genDeviceId()
+          sendSuccess(deviceId)
+          break
+        }
+      default:
+        throw new Error('未知任务类型')
     }
-    catch (error) {
-      sendError(error as Error)
-    }
-  })
-}
+  }
+  catch (error) {
+    sendError(error as Error)
+  }
+})
+
 
 /**
  * 压缩文件
