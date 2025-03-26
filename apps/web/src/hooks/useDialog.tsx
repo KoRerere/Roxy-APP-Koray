@@ -4,32 +4,36 @@ import { createVNode, render } from 'vue'
 import RxButton from '/@/components/rx-button/'
 import { $t } from '/@/locales'
 import { isEqualWith } from 'es-toolkit'
+import type { JSX } from 'vue/jsx-runtime'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
+  /** 嵌套弹窗时，需要设置为 true */
+  innerDialog?: boolean
   handleCancel?: () => any
   handleOk?: () => any
   okText?: string
   cancelText?: string
-  slots?: Partial<DialogSlots>
+  slots?: {[key in keyof DialogSlots]?: (...args: any[]) => JSX.Element}
 }
 
 // 弹窗队列，避免一次性显示多个弹窗
 const dialogQueue:UseDialogProps[] =  []
-let _modalInstance: any
 let appContext: AppContext | null = null
 let lastProps: UseDialogProps | null = null
 
-const visible = ref(false)
-const innerProps = ref<UseDialogProps>({})
-
-const customizer = (a, b) => {
+const customizer = (a: any, b: any) => {
   if (typeof a === 'function' && typeof b === 'function') {
     return a.toString() === b.toString();
   }
 };
 
 export function useDialog(comp?: VNode | DefineComponent) {
+  let _modalInstance: any
   appContext ||= getCurrentInstance()!.appContext
+  let innerDialog = false
+  const innerProps = ref<UseDialogProps>({})
+
+  const visible = ref(false)
 
   const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
     const { handleCancel, handleOk, okText, cancelText, slots, ...dialogProps } = innerProps.value
@@ -46,7 +50,7 @@ export function useDialog(comp?: VNode | DefineComponent) {
     }
 
     return (
-      <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} modal {...dialogProps} v-model:visible={visible.value}>
+      <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
       </Dialog>
     )
   }
@@ -56,7 +60,7 @@ export function useDialog(comp?: VNode | DefineComponent) {
       return _modalInstance
     }
     const div = document.createElement('div')
-    const vnode = createVNode(DialogComponent)
+    const vnode = createVNode(DialogComponent )
     vnode.appContext = appContext
     render(vnode, div)
     _modalInstance = vnode.component!
@@ -80,16 +84,17 @@ export function useDialog(comp?: VNode | DefineComponent) {
 
 
   async function showModal(props: UseDialogProps) {
-    if (visible.value) {
+    if (!props.innerDialog && lastProps) {
       if (isEqualWith(lastProps, props, customizer) || dialogQueue.some(item => isEqualWith(item, props, customizer))) {
         return
       }
       dialogQueue.push(props)
     } else {
+      innerDialog = Boolean(props.innerDialog)
       lastProps = props
-      visible.value = true
       innerProps.value = rewriteProps(props)
       await renderDialog()
+      visible.value = true
     }
   }
 

@@ -429,7 +429,7 @@ function onSave() {
 
   .parse-result-message {
     position: sticky;
-    top: calc(-30px + 61px);
+    top: calc(-30px + 58px);
     z-index: 100;
     background-color: white;
   }
@@ -443,7 +443,7 @@ function onSave() {
 
     .p-datatable-thead {
       position: sticky;
-      top: calc(-30px + 61px + var(--message-h));
+      top: calc(-30px + 58px + var(--message-h));
       z-index: 100;
       background-color: white;
     }
@@ -504,6 +504,6 @@ function onSave() {
   background-color: white;
   width: 100%;
   padding: 12px 0;
-  z-index: 200;
+  z-index: 10;
 }
 </style>

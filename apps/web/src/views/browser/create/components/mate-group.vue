@@ -4,7 +4,7 @@ import { $t } from '/@/locales/index.js'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
-import type { MetaData } from './type.ts'
+import type { WindowMetaData } from './type.ts'
 
 defineProps({
   showRemark: {
@@ -18,7 +18,7 @@ const [showMenu] = usePopoverMenu()
 
 const { getTags, getProjects, getProjectMember } = useMateGroup()
 
-const metaData = defineModel<MetaData>('modelValue', {
+const metaData = defineModel<WindowMetaData>('modelValue', {
   default: {
     projectName: $t('未指定项目'),
     projectId: undefined,
@@ -30,10 +30,10 @@ const metaData = defineModel<MetaData>('modelValue', {
 
 onMounted(async () => {
   if (isEmptyValue(metaData.value.projectId)) {
-   const projects = await getProjects()
-  //  优先使用路由传递的 projectId
-   const routeProject = projects.find(item => item.value === route.query.projectId)
-   const defaultProject = routeProject || projects.find(item => item.projectDefault)
+    const projects = await getProjects()
+    //  优先使用路由传递的 projectId
+    const routeProject = projects.find(item => item.value === route.query.projectId)
+    const defaultProject = routeProject || projects.find(item => item.projectDefault)
     if (defaultProject) {
       metaData.value.projectId = Number(defaultProject.value)
       metaData.value.projectName = defaultProject.label

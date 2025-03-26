@@ -14,7 +14,7 @@ import Ripple from "primevue/ripple";
 import ToastService from "primevue/toastservice";
 import Tooltip from "primevue/tooltip";
 import { createApp } from "vue";
-import { setupI18n } from "/@/locales";
+import { setupI18n, type SupportedLanguagesType } from "/@/locales";
 import { setupStore } from "/@/stores";
 import { useSimpleLocale } from "/@/stores/locale";
 import myPreset from "/@/styles/primevuePresets";
@@ -22,7 +22,7 @@ import App from "./App.vue";
 import router from "./router";
 import { useUserStore } from '/@/stores/user'
 
-const app = createApp(App)
+const app = createApp(App);
 
 // https://docs.sentry.io/platforms/javascript/guides/electron/#configure
 // initSentryElectron({
@@ -45,87 +45,88 @@ const app = createApp(App)
 
 mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
   debug: import.meta.env.DEV,
-  track_pageview: 'full-url',
-  persistence: 'localStorage',
+  track_pageview: "full-url",
+  persistence: "localStorage",
   // https://documentation.freshpaint.io/integrations/destinations/apps/mixpanel
   // autotrack: true,
-})
-globalThis.mixpanel = mixpanel
-console.log('myPreset', myPreset)
+});
+globalThis.mixpanel = mixpanel;
 
-setupStore(app)
-app.use(router)
-app.use(ToastService)
-app.use(DialogService)
-app.use(ConfirmationService)
+setupStore(app);
+app.use(router);
+app.use(ToastService);
+app.use(DialogService);
+app.use(ConfirmationService);
 app.use(PrimeVue, {
   ripple: true,
   theme: {
     options: {
-      darkModeSelector: '.my-app-dark',
+      darkModeSelector: ".my-app-dark",
     },
     preset: definePreset(Aura, {
       primitive: myPreset,
       semantic: {
         primary: {
-          100: '{Color.blue.100}',
-          200: '{Color.blue.100}',
-          300: '{Color.blue.100}',
-          400: '{Color.blue.200}',
-          500: '{Color.blue.300}',
-          600: '{Color.blue.400}',
-          700: '{Color.blue.500}',
-          800: '{Color.blue.600}',
-          900: '{Color.blue.600}',
-          950: '{Color.blue.600}',
+          100: "{Color.blue.100}",
+          200: "{Color.blue.100}",
+          300: "{Color.blue.100}",
+          400: "{Color.blue.200}",
+          500: "{Color.blue.300}",
+          600: "{Color.blue.400}",
+          700: "{Color.blue.500}",
+          800: "{Color.blue.600}",
+          900: "{Color.blue.600}",
+          950: "{Color.blue.600}",
         },
       },
       components: {
         toast: {
           colorScheme: {
             light: {
-              blur: '3px',
+              blur: "3px",
             },
           },
         },
         dialog: {
+          color: "#000",
           root: {
-            background: '{overlay.modal.background}',
-            borderColor: '#A3A9AD',
-            color: '{overlay.modal.color}',
-            borderRadius: '6px',
-            shadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12)'
+            background: "{overlay.modal.background}",
+            borderColor: "#A3A9AD",
+            color: "{overlay.modal.color}",
+            borderRadius: "6px",
+            shadow:
+              "0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12)",
           },
           header: {
-            padding: '12px 18px 6px 24px',
-            gap: '0.5rem'
+            padding: "12px 18px 6px 24px",
+            gap: "0.5rem",
           },
           title: {
-            fontSize: '14px',
-            fontWeight: '600'
+            fontSize: "16px",
+            fontWeight: "600",
           },
           content: {
-            padding: '0 24px {overlay.modal.padding} 24px'
+            padding: "0 24px {overlay.modal.padding} 24px",
           },
           footer: {
-            padding: '0 24px {overlay.modal.padding} 24px',
-            gap: '0.5rem'
-          }
+            padding: "0 24px {overlay.modal.padding} 24px",
+            gap: "0.5rem",
+          },
         },
         datatable: {
           row: {
             hover: {
               // background: '#fff'
-            }
-          }
-        }
+            },
+          },
+        },
       },
     }),
   },
-})
+});
 
-app.directive('ripple', Ripple)
-app.directive('tooltip', Tooltip)
+app.directive("ripple", Ripple);
+app.directive("tooltip", Tooltip);
 
 electronAPI.send("app:getSoftConfig").then((softConfig) => {
   console.log('softConfig', softConfig)
@@ -135,7 +136,7 @@ electronAPI.send("app:getSoftConfig").then((softConfig) => {
   simpleLocale.currentLocale = language;
   setToken(token || '')
 
-  setupI18n(app, { defaultLocale: language }).then(() => {
+  setupI18n(app, { defaultLocale: language as SupportedLanguagesType }).then(() => {
     app.mount('#app')
   })
 })

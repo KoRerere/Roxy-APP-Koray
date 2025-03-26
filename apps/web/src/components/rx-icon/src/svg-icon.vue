@@ -23,7 +23,7 @@ const props = defineProps({
 
 const fontSize = computed(() => {
   const { size } = props
-  return Number.isNaN(Number(size)) ? size : `${size}px`
+  return Number.isNaN(Number(size)) ? size : CSS.px(size as number).toString()
 })
 
 const SvgComponent = computed(() => {

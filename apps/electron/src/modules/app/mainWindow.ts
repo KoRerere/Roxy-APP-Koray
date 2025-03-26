@@ -9,6 +9,7 @@ import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
 import { isDev, isPackaged, isProd, isWindows } from '/@/utils/'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { ipcMain } from '/@/modules/ipc'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
@@ -103,8 +104,8 @@ export async function intoLaunchPage() {
 export async function intoMainPage() {
   mainWindow?.removeAllListeners()
   closeMainWindow()
-  const defaultWidth = 1280
-  const defaultHeight = 832
+  const defaultWidth = 1440
+  const defaultHeight = 960
   const minWidth = 960
   const minHeight = 640
   // 获取屏幕大小
@@ -133,6 +134,11 @@ export async function intoMainPage() {
     handleCloseWindow(event)
   })
 
+  mainWin.on('focus', (event) => {
+    console.log('on window focus')
+    ipcMain.send('window:on-focus')
+  })
+
   if (!isPackaged) {
     mainWin?.webContents.openDevTools({ mode: 'detach' })
   }
@@ -142,7 +148,7 @@ export async function intoMainPage() {
 /** 更新主窗口页面标题 */
 export async function updateMainWindowPageTitle() {
   const webVersion = await getLocalWebVersion()
-  getMainWindow()?.setTitle(`${import.meta.env.VITE_APP_TITLE} Beta v${app.getVersion()}`)
+  getMainWindow()?.setTitle(`${import.meta.env.VITE_APP_TITLE} v${app.getVersion()}`)
 }
 
 let mainWindow: BrowserWindow | undefined

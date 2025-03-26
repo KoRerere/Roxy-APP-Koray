@@ -89,7 +89,6 @@ watch(isDownloadingKernel, () => {
 })
 
 window.electronAPI.on('app:resource-update', (data) => {
-  console.log('app:resource-update', data)
   // 内核升级
   if (data.type === 'kernel') {
     const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
@@ -111,7 +110,6 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       clientUpdates.value[index] = data
     }
-    console.log('clientUpdates', clientUpdates.value)
   }
 })
 </script>
@@ -121,8 +119,7 @@ window.electronAPI.on('app:resource-update', (data) => {
 
   <div class="flex justify-center">
     <OverlayBadge :value="noticeNum" severity="danger" size="small" :class="{ 'no-message': !noticeNum }">
-      <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs"
-        @click="toggle" />
+      <RxButton ref="btn" icon="base/rx_ic_updates" severity="secondary" :rotate="isDownloading" outlined size="xs" @click="toggle" />
     </OverlayBadge>
 
     <RyPopover ref="popover" :class="classes.popover">
@@ -133,8 +130,7 @@ window.electronAPI.on('app:resource-update', (data) => {
       </div>
       <Tabs v-model:value="tabModel">
         <TabList :class="classes.tablist" :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
-          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-            class="flex flex-1 justify-center items-center gap-1.5">
+          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
             {{ tab.title }}
             <Badge v-if="tab.badge" :value="tab.badge" severity="danger" size="small" />
           </Tab>

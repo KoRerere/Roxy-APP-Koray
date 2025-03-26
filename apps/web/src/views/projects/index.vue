@@ -15,6 +15,10 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
 import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useUserStore } from '/@/stores/user'
+import { BUSINESS_CODE } from '/@/constants/business-code'
+import { SubLevelEnum } from '/@/enums/pay'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
@@ -27,6 +31,9 @@ const { currentWorkspace } = useWorkspaceStore()
 const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
 const [showToast] = useResponseToast()
+const { handleBusinessCode } = useHandleBusinessCode()
+const { userPayInfo } = storeToRefs(useUserStore())
+
 
 const [columns] = useColumns(columnsRow)
 
@@ -49,6 +56,7 @@ function getOperation(data: Project) {
       icon: isPinned ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
       iconClass: isPinned ? 'text-orange' : '',
       power: role.isOwner || role.isManager,
+      tooltip: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       quick: true,
     },
     {
@@ -56,6 +64,7 @@ function getOperation(data: Project) {
       label: $t('邀请'),
       icon: 'base/rx_ic_user_add',
       power: role.isOwner || role.isManager || role.isEditor,
+      tooltip: $t('邀请'),
       quick: true,
     },
     {
@@ -74,6 +83,14 @@ function getOperation(data: Project) {
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
+
+      const { freeProjectCount, useProjectCount, subLevel } = userPayInfo.value
+
+      if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(subLevel as SubLevelEnum) && useProjectCount >= freeProjectCount) {
+        handleBusinessCode(BUSINESS_CODE.PROJECT_MAX_LIMIT)
+        return
+      }
+
       projectModfiyDialog({
         confirmNext: () => {
           tableRef.value?.refresh()
@@ -158,36 +175,30 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
 <template>
   <div class="flex flex-col h-full account">
     <ViewsHeader class="account-header" :title="$t('项目管理')">
-      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus"
-        :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest"
-        :table-operation="getOperation" :operation-handler="operationHandler" :show-gridlines="false"
-        :show-actions-menu="false" :show-actions="false" data-key="project_id">
+      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler"
+        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" data-key="project_id">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')"
-            :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
+          <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')"
-                  @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('项目文档')" /> -->
               </div>
             </template>
           </CustomEmpty>
         </template>
         <template #projectName="{ data }">
-          <router-link class="flex items-center gap-2 project-name"
-            :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
+          <router-link class="flex items-center gap-2 project-name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
             <RxSvgIcon name="base/rx_ic_stack" />
             <span>{{ data.projectName }}</span>
           </router-link>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)"
-            @more="showOperationMenu($event, data)" />
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>
       </RyTable>
     </div>

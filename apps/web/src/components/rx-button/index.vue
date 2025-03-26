@@ -2,19 +2,22 @@
 import type { ButtonProps } from 'primevue/button'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-defineOptions({
-  inheritAttrs: false,
-})
-const { size = 'sm', ...props } = defineProps<Props>()
-
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
 interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   size?: Size
   icon?: SvgNames
   rotate?: boolean
+  disabled?: boolean
   onClick?: (e: any) => Promise<void> | void
 }
+
+defineOptions({
+  inheritAttrs: false,
+})
+
+const { size = 'sm', disabled = false, ...props } = defineProps<Props>()
+
 const outerLoading = defineModel('loading', { default: false })
 
 const btnElRef = useTemplateRef('btnEl')
@@ -40,8 +43,7 @@ defineExpose({
 </script>
 
 <template>
-  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :loading="_loading || outerLoading"
-    :pt="{ root: ['rx_button', size] }">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />
@@ -66,6 +68,7 @@ defineExpose({
 }
 
 .lg {
+  min-width: 88px;
   padding: 10px var(--spacing-2xl, 16px);
   gap: var(--spacing-lg, 8px);
   font-size: var(--Font-Size-text-lg, 14px);
@@ -84,6 +87,7 @@ defineExpose({
 }
 
 .md {
+  min-width: 80px;
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   gap: var(--spacing-lg, 8px);
   font-size: 13px;
@@ -102,6 +106,7 @@ defineExpose({
 }
 
 .sm {
+  min-width: 72px;
   padding: var(--spacing-md, 6px) 10px;
   gap: var(--spacing-md, 6px);
   font-size: var(--Font-Size-text-sm, 12px);
@@ -120,6 +125,7 @@ defineExpose({
 }
 
 .xs {
+  min-width: 64px;
   padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
   gap: var(--spacing-sm, 4px);
   font-size: var(--Font-Size-text-sm, 12px);
@@ -142,6 +148,7 @@ defineExpose({
 }
 
 .xxs {
+  min-width: 56px;
   padding: var(--spacing-sm, 4px) var(--spacing-md, 6px);
   gap: var(--spacing-sm, 4px);
   font-size: var(--Font-Size-text-sm, 12px);
@@ -164,6 +171,7 @@ defineExpose({
 }
 
 .p-button.p-button-icon-only {
+  min-width: auto;
   width: auto;
   gap: 0;
 }

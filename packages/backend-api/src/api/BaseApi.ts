@@ -30,6 +30,8 @@ import {
   PostBasePayload,
   SaveChannelSourcesPeopleListData,
   SaveChannelSourcesPeopleListParams,
+  SavePromotionLinkClickCountListData,
+  SavePromotionLinkClickCountListParams,
   SendEmailForgetVerifyCodeListData,
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
@@ -46,21 +48,32 @@ import {
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
   UserGetBannerPictureListListData,
+  UserGetBannerPictureListListParams,
+  UserGetBannerPictureListV2ListData,
+  UserGetBannerPictureListV2ListParams,
+  UserGetCheckOldEmailVerCodeListData,
+  UserGetCheckOldEmailVerCodeListParams,
   UserGetCoreUpgradeCreateData,
   UserGetCoreUpgradeCreatePayload,
   UserGetDefConfigListData,
   UserGetDictVersionListData,
   UserGetInviteCodeListData,
   UserGetInviteLinkListData,
-  UserGetInviteUserListListData,
+  UserGetInviteUserListV2ListData,
+  UserGetInviteUserListV2ListParams,
   UserGetLoginInfoListData,
   UserGetNotifyListData,
   UserGetOssCredentialV2ListData,
+  UserGetPromotionInfoListData,
+  UserGetRewardRecordListListData,
+  UserGetRewardRecordListListParams,
   UserGetSystemDictV2CreateData,
   UserGetSystemDictV2CreatePayload,
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
+  UserGetWithdrawRecordListListData,
+  UserGetWithdrawRecordListListParams,
   UserMigrateDataListData,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
@@ -76,6 +89,11 @@ import {
   UserSetUserConfigCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
+  UserVerifyEmailCreateData,
+  UserVerifyEmailCreatePayload,
+  UserWithdrawCreateData,
+  UserWithdrawCreatePayload,
+  UserWithdrawVerifyCodeListData,
   UserWriteInviteCodeCreateData,
   UserWriteInviteCodeCreatePayload,
 } from "./data-contracts";
@@ -609,15 +627,16 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserGetInviteUserListList
+   * @name UserGetInviteUserListV2List
    * @summary 获取邀请的用户列表
-   * @request GET:/user_get_invite_user_list
-   * @response `200` `UserGetInviteUserListListData`
+   * @request GET:/user_get_invite_user_list_v2
+   * @response `200` `UserGetInviteUserListV2ListData`
    */
-  userGetInviteUserListList = (params: RequestParams = {}) =>
-    this.http.request<UserGetInviteUserListListData, any>({
-      path: `/user_get_invite_user_list`,
+  userGetInviteUserListV2List = (query: UserGetInviteUserListV2ListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetInviteUserListV2ListData, any>({
+      path: `/user_get_invite_user_list_v2`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -680,10 +699,11 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_banner_picture_list
    * @response `200` `UserGetBannerPictureListListData`
    */
-  userGetBannerPictureListList = (params: RequestParams = {}) =>
+  userGetBannerPictureListList = (query: UserGetBannerPictureListListParams, params: RequestParams = {}) =>
     this.http.request<UserGetBannerPictureListListData, any>({
       path: `/user_get_banner_picture_list`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -786,6 +806,159 @@ export class BaseApi<SecurityDataType = unknown> {
   checkOtherDeviceLoginList = (query: CheckOtherDeviceLoginListParams, params: RequestParams = {}) =>
     this.http.request<CheckOtherDeviceLoginListData, any>({
       path: `/check_other_device_login`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetPromotionInfoList
+   * @summary 获取用户推广信息
+   * @request GET:/user_get_promotion_info
+   * @response `200` `UserGetPromotionInfoListData`
+   */
+  userGetPromotionInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPromotionInfoListData, any>({
+      path: `/user_get_promotion_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetRewardRecordListList
+   * @summary 用户奖励记录列表
+   * @request GET:/user_get_reward_record_list
+   * @response `200` `UserGetRewardRecordListListData`
+   */
+  userGetRewardRecordListList = (query: UserGetRewardRecordListListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetRewardRecordListListData, any>({
+      path: `/user_get_reward_record_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetWithdrawRecordListList
+   * @summary 用户提款记录列表
+   * @request GET:/user_get_withdraw_record_list
+   * @response `200` `UserGetWithdrawRecordListListData`
+   */
+  userGetWithdrawRecordListList = (query: UserGetWithdrawRecordListListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetWithdrawRecordListListData, any>({
+      path: `/user_get_withdraw_record_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserWithdrawCreate
+   * @summary 用户提现
+   * @request POST:/user_withdraw
+   * @response `200` `UserWithdrawCreateData`
+   */
+  userWithdrawCreate = (data: UserWithdrawCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserWithdrawCreateData, any>({
+      path: `/user_withdraw`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name SavePromotionLinkClickCountList
+   * @summary 存储渠道推广链接点击次数
+   * @request GET:/save_promotion_link_click_count
+   * @response `200` `SavePromotionLinkClickCountListData`
+   */
+  savePromotionLinkClickCountList = (query: SavePromotionLinkClickCountListParams, params: RequestParams = {}) =>
+    this.http.request<SavePromotionLinkClickCountListData, any>({
+      path: `/save_promotion_link_click_count`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserWithdrawVerifyCodeList
+   * @summary 发送提现的验证码
+   * @request GET:/user_withdraw_verify_code
+   * @response `200` `UserWithdrawVerifyCodeListData`
+   */
+  userWithdrawVerifyCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserWithdrawVerifyCodeListData, any>({
+      path: `/user_withdraw_verify_code`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserVerifyEmailCreate
+   * @summary 邮箱换绑验证码发送
+   * @request POST:/user_verify_email
+   * @response `200` `UserVerifyEmailCreateData`
+   */
+  userVerifyEmailCreate = (data: UserVerifyEmailCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserVerifyEmailCreateData, any>({
+      path: `/user_verify_email`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetCheckOldEmailVerCodeList
+   * @summary 比对旧邮箱验证码或者密码
+   * @request GET:/user_get_check_old_email_ver_code
+   * @response `200` `UserGetCheckOldEmailVerCodeListData`
+   */
+  userGetCheckOldEmailVerCodeList = (query: UserGetCheckOldEmailVerCodeListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetCheckOldEmailVerCodeListData, any>({
+      path: `/user_get_check_old_email_ver_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetBannerPictureListV2List
+   * @summary 获取banner图片数据-收费版本
+   * @request GET:/user_get_banner_picture_list_v2
+   * @response `200` `UserGetBannerPictureListV2ListData`
+   */
+  userGetBannerPictureListV2List = (query: UserGetBannerPictureListV2ListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetBannerPictureListV2ListData, any>({
+      path: `/user_get_banner_picture_list_v2`,
       method: "GET",
       query: query,
       format: "json",

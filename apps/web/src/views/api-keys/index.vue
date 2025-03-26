@@ -18,20 +18,30 @@ const role = useRoleStore()
 const toast = useToast()
 const confirm = useConfirm()
 const [showToast] = useResponseToast()
-const locale = useSimpleLocale()
+const { getOfficialFaqWebsite } = useSimpleLocale()
+
+const original = ref()
+const apiConfig = ref({
+  apiKey: '',
+  port: 0,
+  open: false,
+  apiRate: 50
+})
+const hasOccupy = ref(false)
+
 
 const apiDocUrl = computed(() => {
-  return `https://faq.roxybrowser.org/${locale.currentLocale.split('-')[0]}/guide/10-API`
+  return getOfficialFaqWebsite('guide/10-API')
 })
 
-const illustrate = [
+const illustrate = computed(() => [
   {
     title: $t('功能概述'),
-    content: () => $t('用户可以通过 API 的方式来读写账号配置信息、创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等自动化框架实现浏览器操作的自动化'),
+    content: () => $t('用户可以通过使用 API 快速创建、打开和管理环境，还可以配合 Selenium、Puppeteer 和 Playwright 等工具实现浏览器操作的自动化'),
   },
   {
     title: $t('API 接口限制'),
-    content: () => $t('API 请求频率限制：100 次 / 分钟'),
+    content: () => $t('API 请求频率限制：{value} 次 / 分钟', { value: apiConfig.value.apiRate }),
   },
   {
     title: $t('API 使用说明'),
@@ -47,15 +57,7 @@ const illustrate = [
       </I18nT>
     ),
   },
-]
-
-const original = ref()
-const apiConfig = ref({
-  apiKey: '',
-  port: '',
-  open: false,
-})
-const hasOccupy = ref(false)
+])
 
 const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)

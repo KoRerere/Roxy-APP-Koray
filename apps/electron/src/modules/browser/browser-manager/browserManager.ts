@@ -61,23 +61,38 @@ export class BrowserManager {
       this.openingBrowserMap.delete(dirId)
     })
     this.openedBrowserMap.set(dirId, browserItem)
-    // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
-    browserItem.on(`close-${dirId}`, async () => {
+
+    const onCloseHandler = async () => {
       console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
       this.openedBrowserMap.delete(dirId)
       ipcMain.send('browser:on-close', dirId)
-      browserItem.off(dirId)
+      browserItem.off(`close-${dirId}`, onCloseHandler)
 
       setTimeout(10000).then(async () => {
+        if (this.openedBrowserMap.has(dirId)) {
+          return
+        }
         // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
         const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
         // 如果可以连接，则重新加入已打开的浏览器集合
         if (canConnect) {
           this.openedBrowserMap.set(dirId, browserItem)
+          browserItem.on(`close-${dirId}`, onCloseHandler)
           this.launch(winInfo)
+        } else {
+          const pid = browserItem.launchInfo?.pid
+          if (pid) {
+            try {
+              process.kill(pid)
+            }
+            catch (error) {
+            }
+          }
         }
       })
-    })
+    }
+    // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
+    browserItem.on(`close-${dirId}`, onCloseHandler)
 
     return browserItem.launchInfo
   }
@@ -202,10 +217,14 @@ export class BrowserManager {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
     const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') })
       .then(res => {
+        // 达到窗口打开次数限制
+        if (res.code === 417) {
+          ipcMain.send('browser:window-open-limit', res)
+        }
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
-        return res.data.rows.sort((a, b) => a.windowSortNum - b.windowSortNum)
+        return res.data.rows.sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {
         console.error(`BrowserManager === 获取窗口信息失败`, error)

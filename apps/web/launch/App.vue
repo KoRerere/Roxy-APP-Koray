@@ -29,7 +29,7 @@ watch(isShowTrafficLight, (val) => {
           RoxyBrowser
         </div>
         <span class="version">
-          <span class="beta">Beta</span> v{{ appVersion }}
+          v{{ appVersion }}
         </span>
       </div>
     </div>

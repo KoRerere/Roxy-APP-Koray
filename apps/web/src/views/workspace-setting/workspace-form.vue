@@ -2,6 +2,7 @@
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
+import { Role } from '/@/enums'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -11,14 +12,15 @@ const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
 const workspaceStore = useWorkspaceStore()
-const { isOwner } = storeToRefs(useRoleStore())
 
 const exampleName = computed(() => {
   const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
   return Array.from({ length: 2 }, (_, i) => `${_name}-${`${i + 1}`.padStart(3, '0')}`).join(', ')
 })
 
-const disabled = computed(() => !isOwner.value && workspaceInfo.value.id)
+const isOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
+
+const disabled = computed(() => !isOwner.value && Boolean(workspaceInfo.value.id))
 
 /** 剩余可创建窗口数量 */
 const remainWorkspaceCount = computed(() => {

@@ -206,13 +206,13 @@ export async function getCustomFilters(params: any = {}) {
 }
 
 export async function getSorts() {
-  const { data = {} } = await API.window.userGetWindowTableSortOrderList()
+  const { data } = await API.window.userGetWindowTableSortOrderList()
 
   const list = [
     {
       label: $t('排序标准'),
       name: 'orderName',
-      value: data.orderName ?? 'windowSortNum',
+      value: data?.orderName ?? 'windowSortNum',
       defaultValue: 'windowSortNum',
       options: [
         { label: $t('序号'), value: 'windowSortNum' },
@@ -227,7 +227,7 @@ export async function getSorts() {
     {
       label: $t('排序方式'),
       name: 'orderType',
-      value: data.orderType ?? 'desc',
+      value: data?.orderType ?? 'desc',
       defaultValue: 'desc',
       options: [
         { label: $t('倒序'), value: 'desc' },

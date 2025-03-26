@@ -41,7 +41,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    *
    * @tags Platform
    * @name UserGetPlatformInfoV2List
-   * @summary 业务平台查询（只显示当前用户添加的平台）
+   * @summary 用户添加业务平台列表
    * @request GET:/user_get_platform_info_v2
    * @response `200` `UserGetPlatformInfoV2ListData`
    */
@@ -58,7 +58,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    *
    * @tags Platform
    * @name UserGetPlatformInfoList
-   * @summary 业务平台查询（显示我们系统自带的平台）
+   * @summary 系统自带业务平台列表
    * @request GET:/user_get_platform_info
    * @response `200` `UserGetPlatformInfoListData`
    */
@@ -147,7 +147,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    *
    * @tags Platform
    * @name UserSavePlatformTableSortOrderCreate
-   * @summary 保存业务平台列表排序规则
+   * @summary 保存业务平台列表排序规则（暂时没有用到）
    * @request POST:/user_save_platform_table_sort_order
    * @response `200` `UserSavePlatformTableSortOrderCreateData`
    */
@@ -184,7 +184,7 @@ export class PlatformApi<SecurityDataType = unknown> {
    *
    * @tags Platform
    * @name UserGetPlatformTableSortOrderList
-   * @summary 获取业务平台列表排序规则
+   * @summary 获取业务平台列表排序规则（暂时没有用到）
    * @request GET:/user_get_platform_table_sort_order
    * @response `200` `UserGetPlatformTableSortOrderListData`
    */

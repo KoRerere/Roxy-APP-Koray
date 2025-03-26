@@ -1,14 +1,14 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import Network from './network.vue'
 import Notification from './notification.vue'
 import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
-import WorkspaceSelect from './workspace-select.vue'
+import WorkspaceManager from './workspace-manager/index.vue'
 </script>
 
 <template>
   <div class="rx-layout-header">
-    <WorkspaceSelect />
+    <WorkspaceManager />
     <div class="top-bar-items">
       <Network />
       <Divider class="!ma-0" layout="vertical" />

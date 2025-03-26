@@ -13,12 +13,33 @@ const emit = defineEmits(['importSuccess'])
 const [showToast, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
 
-const fileAnalyzeError = defineModel<any>()
-
 const FILE_MAX_SIZE = 5 * 1024 * 1024
 const FILE_ACCEPT = Object.freeze({ ...ExcelAccept, ...TextAccept })
 
-const maxWindowCount = computed(() => userStore.userInfo.maxWindowCount - userStore.userInfo.useWindowCount)
+const fileAnalyzeError = defineModel<any>()
+
+const timenuRef = useTemplateRef('timenu')
+const templateList = [
+  {
+    label: $t('{type} 模板', { type: 'excel' }),
+    command: () => {
+      downloadTemplate()
+    }
+  },
+  {
+    label: $t('{type} 模板', { type: 'txt' }),
+    command: () => {
+      downloadTextTemplate()
+    }
+  }
+]
+const fileData = reactive({
+  status: false,
+  name: '',
+  size: '',
+  successCount: 0,
+})
+const maxWindowCount = computed(() => userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount)
 
 function fileDragover(event: Event) {
   event.preventDefault()
@@ -48,13 +69,6 @@ async function chooseFile() {
 
   handleBeforeUpload(file)
 }
-
-const fileData = reactive({
-  status: false,
-  name: '',
-  size: '',
-  successCount: 0,
-})
 
 async function handleBeforeUpload(rawFile: any) {
   if (rawFile.size > FILE_MAX_SIZE) {
@@ -98,22 +112,6 @@ async function handleBeforeUpload(rawFile: any) {
   }
 }
 
-//=================================
-const timenuRef = useTemplateRef('timenu')
-const templateList = [
-  {
-    label: $t('{type} 模板', { type: 'excel' }),
-    command: () => {
-      downloadTemplate()
-    }
-  },
-  {
-    label: $t('{type} 模板', { type: 'txt' }),
-    command: () => {
-      downloadTextTemplate()
-    }
-  }
-]
 function openTemplates(event: Event) {
   timenuRef.value?.toggle(event)
 }

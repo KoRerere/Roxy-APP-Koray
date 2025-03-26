@@ -1,68 +1,22 @@
 <script setup lang="ts">
-import { isFunction } from 'es-toolkit'
-import { API } from '/@/api'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { useUserStore } from '/@/stores/user'
-import type { SettingsModule } from '../type'
-import { getNetworkPanel, getPreferencesPanel, getProfilePanel, getLoginActive, getSettings } from '../panel'
-import { $t } from '/@/locales'
-import RxButton from '/@/components/rx-button'
+import { isFunction } from "es-toolkit";
+import RxButton from "/@/components/rx-button";
+import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
+import { $t } from "/@/locales";
+import { useSettingsPopup } from "./settings-popup/";
 
-type PanelKeyType = ReturnType<typeof getSettings>[number]['name']
+const dialogRef = inject<any>("dialogRef");
 
-interface Active {
-  key: PanelKeyType
-  panel: SettingsModule | null
-}
-
-const dialogRef = inject<any>('dialogRef')
-
-
-const userStore = useUserStore()
-const active = reactive<Active>({
-  key: 'profiles',
-  panel: null,
-})
-
-const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({})
-
-const menuList = ref(
-  getSettings().map(item => ({
-    ...item,
-    command: async () => {
-      active.key = item.name
-      active.panel = await settingsPanel[active.key]
-    },
-  })),
-)
-
-async function getUserConfig() {
-  const data = toRaw(await userStore.getUserConfig(true))
-
-  const promiseMap = {
-    preferences: getPreferencesPanel,
-    network: getNetworkPanel,
-    loginActivity: getLoginActive,
-  }
-
-  Object.entries(promiseMap).forEach(async ([key, value]) => {
-    settingsPanel[key as PanelKeyType] = value(data)
-  })
-
-  settingsPanel.profiles = await getProfilePanel(toRaw(userStore.userInfo))
-  active.panel = await settingsPanel[active.key]
-}
+const { activePanel, panels, initPanels } = useSettingsPopup();
 
 function closePopup() {
-  dialogRef.value.close()
+  dialogRef.value.close();
 }
 
-
-
 onBeforeMount(() => {
-  active.key = dialogRef.value.data.props.activeKey
-  getUserConfig()
-})
+  activePanel.key = dialogRef.value.data.props.activeKey;
+  initPanels();
+});
 </script>
 
 <template>
@@ -72,8 +26,8 @@ onBeforeMount(() => {
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in menuList" :key="item.name" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.name === active.key }" @click="item.command">
+        <div v-for="item in panels" :key="item.name" class="settings-menu-list-item select-none cursor-pointer"
+          :class="{ active: item.name === activePanel.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -83,16 +37,16 @@ onBeforeMount(() => {
     </div>
     <div class="settings-content">
       <div class="settings-content-wrapper">
-        <div v-if="active.panel" class="w-full panel">
+        <div v-if="activePanel.panel" class="w-full panel">
           <div>
             <div class="panel-title">
-              {{ active.panel.title }}
+              {{ activePanel.panel.title }}
             </div>
             <div class="panel-description">
-              {{ active.panel.description }}
+              {{ activePanel.panel.description }}
             </div>
           </div>
-          <div v-for="item in active.panel.list" :key="item.subtitle">
+          <div v-for="item in activePanel.panel.list" :key="item.subtitle">
             <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-black">
               {{ item.subtitle }}
             </div>

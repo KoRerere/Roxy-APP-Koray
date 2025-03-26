@@ -1,43 +1,43 @@
 <script setup lang="tsx">
-import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef, withModifiers } from 'vue'
-import { API } from '/@/api'
-import RxAvatar from '/@/components/rx-avatar'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { ISO639List } from '/@/constants/iso-639'
-import { $t } from '/@/locales'
-import { useSimpleLocale } from '/@/stores/locale'
-import { useUserStore } from '/@/stores/user'
-import { getSettings } from './panel'
-import SettingsPopup from './components/settings-popup.vue'
-import { copyText } from '/@/utils'
-import { useToast } from 'primevue/usetoast'
-import Usage from './components/usage.vue'
-import { useFormDialog } from '/@/hooks/useFormDialog'
-import { redeemFormSchemas } from './components/schemas'
-import { useDialog as useCustomDialog } from "/@/hooks/useDialog"
-import RedeemSuccessfully from './components/redeemSuccessfully.vue'
+import { useDialog } from "primevue/usedialog";
+import { useToast } from "primevue/usetoast";
+import { useTemplateRef, withModifiers } from "vue";
+import { API } from "/@/api";
+import RxAvatar from "/@/components/rx-avatar";
+import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
+import { ISO639List } from "/@/constants/iso-639";
+import { $t } from "/@/locales";
+import { useSimpleLocale } from "/@/stores/locale";
+import { useUserStore } from "/@/stores/user";
+import { copyText, showPageLoading } from "/@/utils";
+import { getSettings } from "./components/settings-popup";
+import SettingsPopup from "./components/settings-popup.vue";
 
-const router = useRouter()
-const dialog = useDialog()
-const [dialogInstance] = useCustomDialog()
-const userStore = useUserStore()
-const simpleLocale = useSimpleLocale()
-const styles = useCssModule()
-const toast = useToast()
-const [formDialog] = useFormDialog()
+const router = useRouter();
+const dialog = useDialog();
+const userStore = useUserStore();
+const simpleLocale = useSimpleLocale();
+const styles = useCssModule();
+const toast = useToast();
 
-const menuRef = useTemplateRef('menu')
+const menuRef = useTemplateRef("menu");
 
 const Identity = () => {
-  const { identityInfo } = userStore
-  if (!identityInfo.icon) return null
+  const { identityInfo } = userStore;
+  if (!identityInfo.icon) return null;
 
-  return <div class={styles.identity}>
-    <RxSvgIcon name={identityInfo.icon} />
-    <span class={styles['identity-name']} style={{ color: identityInfo.color }}>{identityInfo.text}</span>
-  </div>
-}
+  return (
+    <div class={styles.identity}>
+      <RxSvgIcon name={identityInfo.icon} />
+      <span
+        class={styles["identity-name"]}
+        style={{ color: identityInfo.color }}
+      >
+        {identityInfo.text}
+      </span>
+    </div>
+  );
+};
 
 const items = computed(() => {
   return [
@@ -45,13 +45,15 @@ const items = computed(() => {
       render: () => {
         return (
           <div class="w-full">
-            <div class={styles['user-info']}>
-              <div class={styles['user-name']}>{userStore.userInfo.userName}</div>
+            <div class={styles["user-info"]}>
+              <div class={styles["user-name"]}>
+                {userStore.userInfo.userName}
+              </div>
               <Identity />
             </div>
-            <div class={styles['user-email']}>{userStore.userInfo.email}</div>
+            <div class={styles["user-email"]}>{userStore.userInfo.email}</div>
           </div>
-        )
+        );
       },
       command: copyUserInfo,
     },
@@ -59,89 +61,22 @@ const items = computed(() => {
       separator: true,
       // vIf: () => userStore.userInfo.identity !== 'agent',
     },
+    ...getSettings().map((item) => ({
+      ...item,
+      command: () => openSettings(item.name),
+    })),
     {
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-      render: () => <Usage usageType="window" label={$t('窗口用量')} tooltip={$t('窗口使用额度总览，请注意清理回收站中不再需要的窗口。')} />,
-    },
-    {
-      separator: true,
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-    },
-    {
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-      render: () => <Usage usageType="workspace" label={$t('工作空间用量')} tooltip={$t('不包括默认工作空间。')} />,
-    },
-    {
-      separator: true,
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-    },
-    {
-      label: $t('我的权益'),
-      icon: 'base/rx_ic_priviledge',
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-      command: () => {
-        dialogInstance.showModal({
-          header: $t('我的权益'),
-          class: 'w-[380px]',
-          slots: {
-            footer: null,
-            default: () => {
-              return <RedeemSuccessfully hide-fn={dialogInstance.handleCancel} />
-            },
-          },
-        })
-      },
-    },
-    {
-      label: $t('兑换特权码'),
-      icon: 'referral-program/rx_ic_award',
-      // vIf: () => userStore.userInfo.identity !== 'agent',
-      command: async () => {
-        await formDialog.showModal({
-          header: $t('兑换特权码'),
-          class: 'w-[384px]',
-          schemas: redeemFormSchemas,
-          formProps: {
-            layout: 'vertical',
-          },
-          okText: $t('兑换'),
-          handleOk: async (params: any) => {
-            const { code, msg } = await API.base.userWriteInviteCodeCreate(params)
-            if (code === 0) {
-              dialogInstance.showModal({
-                header: $t('兑换成功'),
-                class: 'w-[380px]',
-                slots: {
-                  footer: null,
-                  default: () => {
-                    return <RedeemSuccessfully showConfetti hide-fn={dialogInstance.handleCancel} />
-                  },
-                },
-              })
-            } else {
-              toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg })
-              return Promise.reject(msg)
-            }
-          },
-        })
-      },
-    },
-    {
-      separator: true,
-    },
-    ...getSettings().map(item => ({ ...item, command: () => openSettings(item.name) })),
-    {
-      label: $t('语言'),
-      icon: 'base/rx_ic_language',
+      label: $t("语言"),
+      icon: "base/rx_ic_language",
       items: ISO639List.map((item) => {
         return {
           ...item,
           command: async () => {
-            await API.base.userSetUserConfigCreate({ language: item.locale })
-            simpleLocale.setSimpleLocale(item.locale)
-            electronAPI.send('app:saveSoftConfig', { language: item.locale })
+            await API.base.userSetUserConfigCreate({ language: item.locale });
+            simpleLocale.setSimpleLocale(item.locale);
+            electronAPI.send("app:saveSoftConfig", { language: item.locale });
           },
-        }
+        };
       }),
     },
     {
@@ -150,42 +85,48 @@ const items = computed(() => {
     ...(import.meta.env.DEV
       ? [
         {
-          label: '图标(仅开发)',
-          icon: 'base/rx_ic_outlink',
+          label: "图标(仅开发)",
+          icon: "base/rx_ic_outlink",
           command: () => {
-            window.open('/figma-icons')
+            window.open("/figma-icons");
           },
         },
         {
-          label: '多语言(仅开发)',
-          icon: 'base/rx_ic_outlink',
+          label: "多语言(仅开发)",
+          icon: "base/rx_ic_outlink",
           command: () => {
-            window.open('/__language-localization__')
+            window.open("/__language-localization__");
           },
         },
         {
-          label: '实验室(仅开发)',
-          icon: 'base/rx_ic_doc_api',
+          label: "实验室(仅开发)",
+          icon: "base/rx_ic_doc_api",
           command: () => {
-            router.push({ name: 'cattle-slaughter' })
+            router.push({ name: "cattle-slaughter" });
           },
         },
       ]
       : []),
     {
-      label: $t('退出登录'),
-      icon: 'base/rx_ic_logout',
+      label: $t("退出登录"),
+      icon: "base/rx_ic_logout",
       command: () => {
-        userStore.clearUserInfo()
-        router.push({ name: 'login' })
+        showPageLoading()
+        userStore.clearUserInfo();
+        router.push({ name: "login" });
       },
     },
-  ].filter(item => !item.vIf || item.vIf())
-})
+  ].filter((item) => !item.vIf || item.vIf());
+});
 
 function copyUserInfo() {
-  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`)
-  toast.add({ severity: 'success', summary: $t('提示'), detail: $t('用户名与邮箱已复制到剪贴板'), life: 2500 })
+  copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`);
+  toast.add({
+    severity: "success",
+    summary: $t("提示"),
+    detail: $t("用户名与邮箱已复制到剪贴板"),
+    life: 2500,
+  });
 }
 
 function openSettings(activeKey: string) {
@@ -196,34 +137,36 @@ function openSettings(activeKey: string) {
       blockScroll: true,
       dismissableMask: true,
       style: {
-        width: 'var(--width-1_5xl, 960px)',
-        height: '640px',
+        width: "var(--width-1_5xl, 960px)",
+        height: "640px",
       },
-      pt: { content: '!pa-0 !overflow-y-hidden' },
+      pt: { content: "!pa-0 !overflow-y-hidden" },
     },
     data: {
       props: {
         activeKey,
       },
     },
-  })
+  });
 }
 
 function toggle(event: Event) {
-  menuRef.value?.toggle(event)
-  userStore.fetchUserInfo()
+  menuRef.value?.toggle(event);
+  userStore.fetchUserInfo();
 }
 </script>
 
 <template>
   <div class="settings cursor-pointer" @click="toggle">
-    <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
-      :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
-      :font-size="12">
-      <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall"
-        class="absolute right-[-4px] bottom-[-2px]" size="12px" />
-    </RxAvatar>
-    <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
+    <template v-if="userStore.userInfo">
+      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
+        :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
+        :font-size="12">
+        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall"
+          class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      </RxAvatar>
+      <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
+    </template>
     <RxSvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 

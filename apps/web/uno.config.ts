@@ -28,6 +28,7 @@ export default defineConfig({
     'flex-ovh-1': 'flex overflow-hidden flex-1',
     'ellipsis-1': 'text-ellipsis overflow-hidden whitespace-nowrap',
     'position-y-center': 'absolute top-1/2 transform -translate-y-1/2',
+    'rx-container': 'flex flex-col min-w-[1140px] max-w-[1340px] w-full h-full mx-auto',
   },
   theme: {
     colors: {

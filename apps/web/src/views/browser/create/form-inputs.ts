@@ -81,6 +81,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     ios: 'platforms/rx_os_iOS',
   } as const
 
+  const getCoreVersionOptions = (os: string, version: string) => {
+    return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
+      ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本  
+      : $dict_map.coreVersion
+  }
+
   const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({
     ...item,
     label,
@@ -90,6 +96,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
   const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
+  const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
 
   // 非严格模式获取浏览器版本选项
   const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
@@ -122,7 +129,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'profileId',
     },
     {
-      label: $t('系统'),
+      label: $t('操作系统'),
       items: [
         {
           type: 'select',
@@ -139,7 +146,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
             }
           },
           preview: {
-            label: $t('系统'),
+            label: $t('操作系统'),
           },
           required: true,
         },
@@ -150,18 +157,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           options: osValue?._versionOptions,
           filter: false,
           change: async (item: any) => {
-            const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')
+            const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')!
 
             if (item.value) {
               const { _osValue, value: version } = item.value
-              const coreVersionOptions = _osValue.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version.at(0))
-                ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本
-                : $dict_map.coreVersion
+              const _coreVersionOptions = getCoreVersionOptions(_osValue, version)
 
-              if (coreVersionInput!.options.length !== coreVersionOptions.length) {
-                coreVersionInput!.options = coreVersionOptions
-                coreVersionInput!.value = coreVersionOptions[0]
+              if (coreVersionInput.options.length !== _coreVersionOptions.length) {
+                coreVersionInput.options = _coreVersionOptions
+                coreVersionInput.value = _coreVersionOptions[0]
               }
+
               if (userConfig?.uaModeSwitch === UaStrictMode.close) {
                 const options = await getBrowserVersion({ os: _osValue, osVersion: version })
                 const browserVersionInput = findInputByName(windowInputs, 'browserVersion')
@@ -170,7 +176,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
               }
             }
 
-            coreVersionInput!.change?.(coreVersionInput)
+            coreVersionInput.change?.(coreVersionInput)
           },
           required: true,
         },
@@ -181,8 +187,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: $t('内核'),
       name: 'coreVersion',
-      value: $dict_map.coreVersion.find((item: any) => item.value === data.coreVersion) ?? $dict_map.coreVersion[0],
-      options: $dict_map.coreVersion,
+      value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
+      options: coreVersionOptions,
       icon: 'base/rx_ic_chrome',
       iconColor: 'var(--p-primary-color, #12a3fc)',
       required: true,

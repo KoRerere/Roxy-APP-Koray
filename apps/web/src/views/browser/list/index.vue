@@ -19,7 +19,6 @@ const confirm = useConfirm()
 const dialog = useDialog()
 const route = useRoute()
 const role = useRoleStore()
-const tabListRef = useTemplateRef('tabList')
 const workspaceStore = useWorkspaceStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 
@@ -55,6 +54,8 @@ localTabs.forEach(item => {
   }
 })
 
+const tabListRef = useTemplateRef('tabList')
+const popRef = useTemplateRef('popop')
 const tabs = ref<TabType[]>(pinTabs)
 const sortTabs = computed({
   get() {
@@ -64,7 +65,7 @@ const sortTabs = computed({
     tabs.value.splice(pinTabs.length, tabs.value.length - pinTabs.length, ...value)
   },
 })
-
+const hasSort = ref(false)
 const active = ref(tabs.value[0].id)
 const isRecycle = computed(() => active.value === trash.id)
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
@@ -74,6 +75,10 @@ const updateInkBar = debounce(() => {
 }, 100)
 
 watch(tabs, updateInkBar)
+
+onBeforeMount(() => {
+  getFilterList()
+})
 
 async function getFilterList() {
   const { code, data, msg } = await API.window.userGetWindowFilterNameListList()
@@ -185,10 +190,8 @@ async function openManageCategory() {
   })
 }
 
-const popRef = ref()
-const hasSort = ref(false)
 function showPopover(event: Event) {
-  popRef.value.getRef().show(event)
+  popRef.value?.getRef().show(event)
 }
 
 function sortChange() {
@@ -211,18 +214,11 @@ async function hidePopover() {
     onlyErrorToast(code, msg)
   }
 }
-
-onBeforeMount(() => {
-  getFilterList()
-})
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" text severity="secondary" icon="base/rx_ic_tag" :label="$t('标签管理')" @click="openManageCategory" />
-    </ViewsHeader>
-    <div class="flex items-center justify-between filter-tabs">
+    <div class="flex items-center justify-between tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList ref="tabList">
           <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
@@ -233,14 +229,16 @@ onBeforeMount(() => {
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1">
-        <div class="flex items-center cursor-pointer filter-tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
+        <div class="flex items-center cursor-pointer break-keep tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
           <RxSvgIcon name="base/rx_ic_bin_2" />
           <span>{{ $t('回收站') }}</span>
         </div>
       </div>
-      <div class="cursor-pointer filter-tabs-settings" @click="showPopover">
-        <RxSvgIcon name="base/rx_ic_gear" />
+      <RxButton text severity="secondary" size="xs" icon="base/rx_ic_gear" @click="showPopover"></RxButton>
+      <div v-if="!role.isViewer">
+        <Divider layout="vertical" class="!mx-[4px] h-[16px]" />
       </div>
+      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <recycle v-if="isRecycle" />
@@ -250,7 +248,7 @@ onBeforeMount(() => {
     </div>
   </div>
 
-  <RyPopover ref="popRef" @hide="hidePopover">
+  <RyPopover ref="popop" @hide="hidePopover">
     <div v-for="item in pinTabs" :key="item.name" class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>{{ item.label }}</span>
@@ -280,12 +278,14 @@ onBeforeMount(() => {
   gap: var(--spacing-lg, 8px);
   min-width: 260px;
   color: var(--Color-neutrals-900, #171c1f);
-  font-family: Inter;
   font-size: 13px;
   line-height: normal;
 }
 
-.filter-tabs {
+.tabs {
+  --tab-padding: 14px 8px;
+  --tab-font-size: 12px;
+
   padding: 0px var(--spacing-4xl, 24px);
   border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 
@@ -294,11 +294,10 @@ onBeforeMount(() => {
     border-color: transparent;
 
     .p-tab {
-      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+      padding: var(--tab-padding);
       color: var(--Colors-Text-text-secondary, #575d61);
-      font-family: Inter;
-      font-size: var(--Font-Size-text-sm, 12px);
-      font-weight: 500;
+      font-size: var(--tab-font-size);
+      font-weight: 400;
       line-height: var(--Line-Height-text-xs, 16px);
       border-color: transparent;
 
@@ -308,7 +307,9 @@ onBeforeMount(() => {
     }
 
     .p-tab-active {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--Colors-Text-text-primary, #171C1F);
     }
 
     .p-tablist-active-bar {
@@ -318,17 +319,22 @@ onBeforeMount(() => {
 
   &-trash {
     margin: 0 var(--spacing-2xl, 16px);
-    padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
+    padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Text-text-secondary, #575d61);
-    font-family: Inter;
-    font-size: var(--Font-Size-text-sm, 12px);
+    font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
 
+    svg {
+      color: #C7CDD1;
+    }
+
     &.active {
       position: relative;
-      color: var(--p-tabs-tab-active-color);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--Colors-Text-text-primary, #171C1F);
 
       &::before {
         content: '';
@@ -342,14 +348,6 @@ onBeforeMount(() => {
         z-index: 1;
       }
     }
-  }
-
-  &-settings {
-    display: flex;
-    padding: var(--spacing-sm, 4px);
-    border-radius: 4px;
-    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-    color: var(--Colors-Text-text-secondary, #575d61);
   }
 }
 </style>

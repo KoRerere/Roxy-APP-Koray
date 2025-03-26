@@ -40,4 +40,16 @@ export function setupExtensionIpc(ipcMain: IPCMainInstance) {
     const extensionManager = new ExtensionManager()
     return extensionManager.getInstalledExtensions()
   })
+
+  /** 根据插件 ID 获取插件信息 */
+  ipcMain.on('extension:getExtensionInfo', (event, extID: string) => {
+    const extensionManager = new ExtensionManager()
+    return extensionManager.getExtensionInfo(extID)
+  })
+
+  /** 显示插件所在文件夹 */
+  ipcMain.on('extension:showExtensionDir', (event, extID: string) => {
+    const extensionManager = new ExtensionManager()
+    return extensionManager.showExtensionDir(extID)
+  })
 }

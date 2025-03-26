@@ -62,11 +62,11 @@ async function openBrowser() {
 
 <template>
   <div class="flex items-center gap-2">
-    <div v-ripple class="flex-cc open-browser" :class="browser.classes" @click.stop="openBrowser">
+    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
       <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
-      <RxSvgIcon v-if="!browser.percent && !browser.pending" color="#12A3FC" name="base/rx_ic_chrome" />
+      <RxSvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
       <span class="select-none">{{ browser.complted ? $t('查看') : browser?.msg }}</span>
-    </div>
+    </RxButton>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
     <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill" class="text-orange" />
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />
@@ -74,7 +74,7 @@ async function openBrowser() {
 </template>
 
 <style lang="scss" scoped>
-.open-browser {
+.control {
   padding: var(--spacing-sm, 4px) 10px;
   gap: var(--spacing-sm, 4px);
 
@@ -92,5 +92,11 @@ async function openBrowser() {
   font-style: normal;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
+
+  &:not(:disabled) {
+    .control-icon {
+      color: #12A3FC;
+    }
+  }
 }
 </style>

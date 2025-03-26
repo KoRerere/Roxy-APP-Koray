@@ -49,7 +49,7 @@ export class PluginsApi<SecurityDataType = unknown> {
   }
 
   /**
-   * No description
+   * @description 一天一个空间最多上传5个（包括谷歌上传）
    *
    * @tags Plugins
    * @name UserUploadPluginInfoCreate
@@ -188,7 +188,7 @@ export class PluginsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar
+   * @description url的格式必须是以下两种： 1、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo 2、https://chromewebstore.google.com/detail/the-camelizer/ghnomdcacenbmilgjigehppbamfndblo?hl=zh-CN&utm_source=ext_sidebar 一天一个空间最多上传5个（包括本地上传）
    *
    * @tags Plugins
    * @name UserUploadChromePluginsV2Create

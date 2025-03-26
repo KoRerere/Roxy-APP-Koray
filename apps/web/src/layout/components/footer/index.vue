@@ -1,86 +1,106 @@
 <template>
   <div class="rx-layout-footer" :class="{ collapsed }">
-    <TieredMenu :model="items" appendTo="body">
-      <template #item="{ item, props, hasSubmenu }">
-        <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
-          v-bind="props.action">
+    <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }">
+      <template #item="{ item, props }">
+        <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
+          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
+            v-bind="props.action">
+            <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
+            <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
+              {{ item.label }}
+              <RxSvgIcon v-if="item.newBadge && isShowNewBadge" :name="item.newBadge" size="24px" class="new-badge" />
+            </span>
+          </a>
+        </ShinyButton>
+        <a v-else v-ripple class="menu-item"
+          :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
-          <span v-if="!collapsed || !item.rootMenu" class="menu-title">
+          <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
             {{ item.label }}
             <RxSvgIcon v-if="item.newBadge && isShowNewBadge" :name="item.newBadge" size="24px" class="new-badge" />
           </span>
         </a>
       </template>
     </TieredMenu>
+    <PayMetrics v-if="roleStore.isOwner" :collapsed />
+    <div v-else-if="!collapsed" class="no-permission">
+      <i18n-t :keypath="$t('您在此工作区中拥有{role}访问权限。', { role: '{role}' })">
+        <template #role>
+          <span class="role-label">
+            {{ roleLabelMap[currentWorkspace?.role as keyof typeof roleLabelMap] }}
+          </span>
+        </template>
+      </i18n-t>
+    </div>
   </div>
-  <LiveChat v-show="false">
-
-  </LiveChat>
 </template>
 
 <script setup lang="ts">
-import { $t } from "/@/locales";
 import { RxSvgIcon } from "/@/components/rx-icon";
-import { useSimpleLocale } from "/@/stores/locale";
-import LiveChat from '/@/components/business/live-chat/index.vue'
+import { $t } from "/@/locales";
+import PayMetrics from './components/pay-metrics.vue'
+import { useWorkspaceStore } from "/@/stores/workspace";
+import { useRoleStore } from "/@/stores/role";
+import { getRoleLabelMap } from "/@/enums";
 
 const collapsed = defineModel('collapsed', { default: false })
 
 const cacheKey = 'isShowReferralNewBadge'
 
 const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
-const { currentLocale } = useSimpleLocale()
 const router = useRouter()
+const roleStore = useRoleStore()
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const roleLabelMap = getRoleLabelMap()
+const menuCss = useCssModule('menu')
 
-const items = [
-  {
-    label: $t('推广计划'),
-    icon: 'base/rc_ic_user_referral',
-    rootMenu: true,
-    routeName: 'referral-program',
-    newBadge: 'base/new_badge',
-    command: () => {
-      router.push({ name: 'referral-program' })
-      localStorage.setItem(cacheKey, 'true')
-      isShowNewBadge.value = false
-    }
-  },
-  {
-    label: $t('帮助'),
-    icon: 'base/rx_ic_chat_question',
-    rootMenu: true,
-    items: [
-      {
-        label: $t('说明文档'),
-        icon: 'base/rx_ic_books',
-        command: () => window.open(`https://faq.roxybrowser.org/${currentLocale.split('-')[0]}`, '_blank')
-      },
-      {
-        label: $t('联系支持'),
-        icon: 'base/rx_ic_headphone_2',
-        command: () => LiveChatWidget.call('maximize')
-      }
-    ]
-  },
-  {
-    label: $t('收起'),
-    icon: 'base/rx_ic_fold_right',
-    rootMenu: true,
-    get iconAttr() {
-      return {
-        class: { 'rotate-180': collapsed.value },
+const items = computed(() => {
+  return [
+    {
+      label: $t('费用中心'),
+      icon: 'base/rx_ic_wallet',
+      rootMenu: true,
+      routeName: 'wallet',
+      visible: roleStore.isOwner,
+      command: () => {
+        router.push({ name: 'wallet' })
       }
     },
-    command() {
-      collapsed.value = !collapsed.value
+    {
+      label: $t('推广计划'),
+      icon: 'base/rx_ic_coins_hand',
+      rootMenu: true,
+      routeName: 'referral-program',
+      newBadge: 'base/new_badge',
+      visible: true,
+      shiny: true,
+      command: () => {
+        router.push({ name: 'referral-program' })
+        localStorage.setItem(cacheKey, 'true')
+        isShowNewBadge.value = false
+      }
     },
-  },
-]
+  ].filter(item => item.visible)
+})
+
 </script>
+
+<style lang="scss" module="menu">
+.rootlist {
+  :global(.p-tieredmenu-item:not(.p-disabled)) {
+    :global(.p-tieredmenu-item-content:hover) {
+      background: transparent;
+    }
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 .rx-layout-footer {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl, 12px);
 
   &.collapsed {
     .menu-item.root-menu {
@@ -111,7 +131,7 @@ const items = [
 
     &:hover {
       color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-      background: var(--Component-Colors-SideNav-link-bg-hover, #f0f3f5);
+      background: rgba(0, 0, 0, 0.05);
 
       .menu-icon {
         color: currentColor;
@@ -150,6 +170,31 @@ const items = [
       position: absolute;
       right: -28px;
       top: -8px;
+    }
+  }
+
+  .no-permission {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.60);
+    backdrop-filter: blur(5px);
+    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    max-height: 80px;
+    overflow: hidden;
+
+    .role-label {
+      color: var(--Colors-Text-text-secondary, #575D61);
+      font-family: Inter;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: normal;
     }
   }
 }

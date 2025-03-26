@@ -13,6 +13,7 @@ function toggle(event: Event) {
 </script>
 
 <template>
+  <slot name="before"></slot>
   <div class="position-relative flex">
     <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')"
       @click="toggle" />

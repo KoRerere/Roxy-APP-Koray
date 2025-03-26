@@ -2,29 +2,16 @@
 import { KICKED_OUT_CHANNEL_NAME } from './constants/channel';
 import { useDialog } from './hooks/useDialog';
 import { $t } from './locales';
-import { useWorkspaceStore } from './stores/workspace';
 import { hidePageLoading, showPageLoading } from './utils';
 import { emitter, type MittEvents } from './utils/eventBus';
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 import { useUserStore } from '/@/stores/user'
 
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME);
-const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const [dialog] = useDialog()
 const router = useRouter()
-const route = useRoute()
-
-watch(() => currentWorkspace.value?.id, () => {
-  console.log('currentWorkspace.value?.id', currentWorkspace.value?.id)
-  if (currentWorkspace.value?.id || route.name === 'login') {
-    hidePageLoading()
-  } else {
-    showPageLoading()
-  }
-}, { immediate: true })
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
-
 
 const kickedOut = (params: MittEvents['kickedOut']) => {
   hidePageLoading()

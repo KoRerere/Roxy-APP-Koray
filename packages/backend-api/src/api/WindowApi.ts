@@ -22,6 +22,7 @@ import {
   UserAnalysisWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
   UserBatchWindowInfoV2CreatePayload,
+  UserCheckWindowTotalCountListData,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
   UserCreateWindowInspectListData,
@@ -33,6 +34,8 @@ import {
   UserDelLabelInfoCreatePayload,
   UserDelWindowInfoCreateData,
   UserDelWindowInfoCreatePayload,
+  UserDelWindowInfoRecycleCreateData,
+  UserDelWindowInfoRecycleCreatePayload,
   UserGetBrowserVersionInfoListData,
   UserGetBrowserVersionInfoListParams,
   UserGetDeviceNameV2ListData,
@@ -178,7 +181,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserDelWindowInfoCreate
-   * @summary 批量删除窗口
+   * @summary 从窗口列表批量删除窗口
    * @request POST:/user_del_window_info
    * @response `200` `UserDelWindowInfoCreateData`
    */
@@ -692,6 +695,39 @@ export class WindowApi<SecurityDataType = unknown> {
     this.http.request<UserCreateWindowInspectListData, any>({
       path: `/user_create_window_inspect`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserCheckWindowTotalCountList
+   * @summary 校验窗口总额度
+   * @request GET:/user_check_window_total_count
+   * @response `200` `UserCheckWindowTotalCountListData`
+   */
+  userCheckWindowTotalCountList = (params: RequestParams = {}) =>
+    this.http.request<UserCheckWindowTotalCountListData, any>({
+      path: `/user_check_window_total_count`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserDelWindowInfoRecycleCreate
+   * @summary 从回收站批量删除窗口
+   * @request POST:/user_del_window_info_recycle
+   * @response `200` `UserDelWindowInfoRecycleCreateData`
+   */
+  userDelWindowInfoRecycleCreate = (data: UserDelWindowInfoRecycleCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserDelWindowInfoRecycleCreateData, any>({
+      path: `/user_del_window_info_recycle`,
+      method: "POST",
+      body: data,
       format: "json",
       ...params,
     });

@@ -1,0 +1,192 @@
+<script setup lang="ts">
+import currency from 'currency.js';
+import { format } from 'date-fns';
+import { API } from '/@/api'
+import { OrderType, OrderTypeStr, SubOrderType, PaymentStatus, PaymentStatusStr } from '/@/enums/pay'
+import { $t } from '/@/locales'
+import { usePay } from '../hook';
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { emitter } from '/@/utils/eventBus';
+
+const { openProcessing } = usePay()
+const [_, onlyErrorToast] = useResponseToast()
+
+const columns = [
+  {
+    title: $t('订单号'),
+    key: 'orderNo',
+  },
+  {
+    title: $t('类型'),
+    key: 'orderType',
+    getText: (row: any) => OrderTypeStr[row.orderType as keyof typeof OrderTypeStr]
+  },
+  {
+    title: $t('金额'),
+    key: 'actualAmount',
+    slot: 'amount'
+  },
+  {
+    title: $t('状态'),
+    key: 'payStatus',
+    slot: 'status'
+  },
+  {
+    title: $t('详情'),
+    key: 'detailStr',
+    style: {
+      width: '25%'
+    }
+  },
+  {
+    title: $t('日期'),
+    key: 'createTime',
+    getText: (row: any) => format(row.createTime, 'yyyy/MM/dd HH:mm:ss')
+  }
+]
+
+onMounted(() => {
+  emitter.on('updateBillList', () => {
+    tableRef.value?.refresh()
+  })
+})
+
+const tableRef = useTemplateRef('rxtable')
+
+const detailMapStr = {
+  [SubOrderType.Subscribe]: (data: any) => $t('{count} 窗口, {day} 天', { count: data.windowCount, day: data.day }),
+  [SubOrderType.Upgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
+  [SubOrderType.Auto]: (data: any) => $t('自动续订'),
+  [SubOrderType.Extend]: (data: any) => $t('套餐延长 {day} 天', { day: data.day }),
+  [SubOrderType.Workspace_Member]: (data: any) => {
+    return [
+      [data.workspace, $t('{workspace} 工作空间', { workspace: data.workspace })],
+      [data.staff, $t('{member} 团队成员', { member: data.staff })]
+    ].filter(([value]) => value > 0).map(([_, label]) => label).join(', ')
+  },
+  [SubOrderType.Downgrade]: (data: any) => $t('{oldCount} -> {newCount} 窗口', { oldCount: data.oldWindowCount, newCount: data.windowCount }),
+}
+
+async function tableRequest(params: any) {
+  const data = await API.pay.userGetPurchaseRecordsInfoList(params)
+  data.data.rows = data.data.rows.map(({ detail, ...item }) => {
+    const detailStr = detailMapStr[detail?.subType as SubOrderType]?.(detail) || '--'
+    return { detail, detailStr, ...item }
+  })
+  return data
+}
+
+async function tableFilters() {
+  return [
+    {
+      type: 'multiple',
+      name: 'orderType',
+      value: [],
+      placeholder: $t('全部类型'),
+      options: [
+        { label: $t('钱包充值'), value: OrderType.Recharge },
+        { label: $t('套餐购买'), value: OrderType.Subscribe },
+        { label: $t('套餐续费'), value: OrderType.Renew },
+        { label: $t('其他购买'), value: OrderType.Purchase },
+        // { label: $t('提现'), value: OrderType.Withdraw },
+        // { label: $t('退款'), value: OrderType.Refund },
+        // { label: $t('兑换'), value: OrderType.Exchange },
+        // { label: $t('赠送'), value: OrderType.Gift },
+      ],
+    },
+    {
+      type: 'date',
+      name: 'date',
+      placeholder: $t('全部时间'),
+      formatValue: (input: any, _: any, formData: any) => {
+        if (Array.isArray(input.value)) {
+          const [startDate, endDate] = input.value
+          Object.assign(formData, {
+            startDate: format(startDate, 'yyyy-MM-dd'),
+            endDate: format(endDate || startDate, 'yyyy-MM-dd'),
+          })
+        }
+      }
+    }
+  ]
+}
+
+async function onRepay(row: any) {
+  const { data, code, msg } = await API.pay.userGetPayLinkList({ orderNo: row.orderNo })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+
+  openProcessing({ ...row, ...data }, row.orderType)
+    .finally(() => {
+      tableRef.value?.refresh()
+    })
+}
+
+defineExpose({
+  refresh: () => {
+    tableRef.value?.refresh()
+  }
+})
+
+</script>
+
+<template>
+  <div>
+    <div class="px-6 title">{{ $t('账单列表') }}</div>
+    <div class="flex flex-1 overflow-hidden">
+      <RyTable ref="rxtable" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+        <template #table-empty>
+          <CustomEmpty icon="rx_illustration_coin.svg" :title="$t('暂无帐单记录')" :desc="$t('您的付款记录和订阅订单将在此显示')">
+          </CustomEmpty>
+        </template>
+        <template #amount="{ data }">
+          <div class="amount inc " :class="{ '!color-[#C7CDD1]': data.payStatus === PaymentStatus.Closed }" v-if="[OrderType.Recharge, OrderType.Withdraw, OrderType.Refund].includes(data.orderType)">
+            {{ currency(data.actualAmount, { symbol: '+$' }).format() }}
+          </div>
+          <div class="amount " :class="{ '!color-[#C7CDD1]': data.payStatus === PaymentStatus.Closed }" v-else>
+            {{ currency(data.actualAmount, { symbol: '-$' }).format() }}
+          </div>
+        </template>
+        <template #status="{ data }">
+          <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
+            <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
+            <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
+          </div>
+        </template>
+      </RyTable>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.title {
+  color: #000;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.amount {
+  color: var(--Colors-Text-text-primary, #171C1F);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+
+  &.inc {
+    color: var(--Color-green-300, #1CC94D);
+  }
+}
+
+.status {
+  color: var(--Color-neutrals-950, #0E1214);
+  font-family: Inter;
+  font-size: 12px;
+  line-height: normal;
+
+  &.red {
+    color: var(--Color-red-300, #F53838);
+  }
+}
+</style>

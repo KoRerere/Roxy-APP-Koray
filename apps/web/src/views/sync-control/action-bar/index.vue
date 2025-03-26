@@ -6,7 +6,7 @@ import { preferenceSettings } from '../model'
 import { savePreferenceSettings } from '/@/views/sync-control/util';
 import { useUserStore } from '/@/stores/user';
 import { merge } from 'es-toolkit';
-import { isWindows } from '/@/utils';
+import { hidePageLoading, isWindows } from '/@/utils';
 import { $t } from '/@/locales';
 
 const os = isWindows ? 'windows' : 'mac'
@@ -23,6 +23,21 @@ const formData = ref(preferenceSettings)
 const operationList = ref(getOperationList(formData))
 let removeHoverTimer: any = null
 let dragTimer: any = null
+
+hidePageLoading()
+let requestAnimationFrameId: any = null
+
+// TODO 后续要优化
+function hidePageLoadingFn() {
+  hidePageLoading()
+  requestAnimationFrameId = requestAnimationFrame(hidePageLoadingFn)
+}
+
+hidePageLoadingFn()
+
+setTimeout(() => {
+  cancelAnimationFrame(requestAnimationFrameId)
+}, 5000)
 
 const syncWindowListTooltip = computed(() => {
   const openSyncWindowList = formData.value.shortcutKey[os].openSyncWindowList

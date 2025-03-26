@@ -4,6 +4,8 @@ import { checkCoreVersion, } from './checkCoreVersion'
 import { checkNotify } from './checkNotify'
 import { checkDictVersion } from './checkDictVersion'
 import { checkSoftConfigVersion } from './checkSoftConfigVersion'
+import { checkPermission } from './checkPermission'
+import { checkPayInfoVersion } from './checkPayInfoVersion'
 
 export function handleResponseHeaders(response: AxiosResponse) {
   checkAppVersion(response)
@@ -11,4 +13,6 @@ export function handleResponseHeaders(response: AxiosResponse) {
   checkNotify(response)
   checkDictVersion(response)
   checkSoftConfigVersion(response)
+  checkPermission(response)
+  checkPayInfoVersion(response)
 }

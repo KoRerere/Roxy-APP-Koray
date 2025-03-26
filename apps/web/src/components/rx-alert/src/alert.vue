@@ -123,6 +123,7 @@ function handleClose() {
     align-self: stretch;
 
     .rx-alert__title {
+      width: 100%;
       color: var(--Colors-Text-text-primary, #171c1f);
       font-family: Inter;
       font-size: 12px;
@@ -132,6 +133,7 @@ function handleClose() {
     }
 
     .rx-alert__content {
+      width: 100%;
       color: var(--Colors-Text-text-secondary, #575d61);
       font-family: Inter;
       font-size: 12px;

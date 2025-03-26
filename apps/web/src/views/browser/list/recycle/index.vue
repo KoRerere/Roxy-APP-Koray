@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
@@ -11,6 +11,9 @@ import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
 import { getColumnsConfig } from './columns'
 import { getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
+import { useDialog } from '/@/hooks/useDialog'
+import RestoreReminderDialog from './restore-reminder-dialog.vue'
+import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
 
 const confirm = useConfirm()
 
@@ -19,6 +22,7 @@ const [columns] = useColumns(getColumnsConfig())
 const userStore = useUserStore()
 const [showToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
+const [dialogInstance] = useDialog()
 
 const operation = getOperation()
 
@@ -42,23 +46,38 @@ function operationHandler(operate: any, data: any) {
 }
 
 async function recoverHandler(datas: any) {
-  confirm.require({
-    header: $t('恢复所选窗口'),
-    message: $t('您确认要恢复所选窗口吗？'),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'info',
-    },
-    accept: async () => {
-      const ids = datas.map((item: any) => item.id)
-      await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
-      tableRef.value?.refresh()
-    },
+  const { userPayInfo } = userStore
+  const isRemind = localStorage.getItem(RESTORE_WINDOW_NOT_REMIND) ?? false
+  const recoverCount = userPayInfo.maxWindowCount - userPayInfo.useWindowCount
+
+  if (datas.length > recoverCount) {
+    showToast(1, $t('恢复的窗口数量大于剩余的窗口额度。\n(您当前仅能恢复 {0} 个窗口)', [Math.max(recoverCount, 0)]))
+    return
+  }
+
+  const onConfirm = async (isRemind: boolean) => {
+    const ids = datas.map((item: any) => item.id)
+    const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
+    showToast(code, msg)
+    tableRef.value?.refresh()
+    if (isRemind) {
+      localStorage.setItem(RESTORE_WINDOW_NOT_REMIND, 'true')
+    }
+    dialogInstance.hideModal()
+  }
+
+  if (isRemind) {
+    onConfirm(true)
+    return
+  }
+
+  dialogInstance.showModal({
+    header: $t('窗口恢复'),
+    class: 'w-[384px]',
+    slots: {
+      default: () => <RestoreReminderDialog onConfirm={onConfirm} />,
+      footer: undefined
+    }
   })
 }
 
@@ -77,7 +96,7 @@ async function deleteHandler(datas: any) {
     },
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
-      const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
+      const { code, msg } = await API.window.userDelWindowInfoRecycleCreate({ ids })
       showToast(code, msg)
       tableRef.value?.refresh()
       userStore.fetchUserInfo()

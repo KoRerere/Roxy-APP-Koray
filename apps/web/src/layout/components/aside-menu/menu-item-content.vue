@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
 import { computed } from 'vue'
+import type { RouteRecordRaw, UseLinkReturn } from 'vue-router'
 import { RxSvgIcon } from '/@/components/rx-icon'
 
 const props = defineProps<{
@@ -33,9 +33,9 @@ watchEffect(() => {
   }
 })
 
-function handleClickItem(navigate: UseLinkReturn['navigate']) {
+function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   if (props.item.meta?.type === 'button') {
-    props.item.meta?.onClick?.()
+    props.item.meta?.onClick?.(event)
   }
   else if (!canOpen.value || props.item.redirect) {
     navigate()
@@ -50,20 +50,16 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
-    <RouterLink v-slot="{ navigate, href, isActive }"
-      :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
-        :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
-        @click="handleClickItem(navigate)">
+    <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+        @click="handleClickItem($event, navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title" :title="item.meta?.title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
           {{ item.meta?.title }}
-          <RxSvgIcon v-if="item.meta?.newBadge && isShowNewBadge" :name="item.meta?.newBadge" size="24px"
-            class="new-badge" />
+          <RxSvgIcon v-if="item.meta?.newBadge && isShowNewBadge" :name="item.meta?.newBadge" size="24px" class="new-badge" />
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
-          @click.stop="toggle" />
+        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>
@@ -121,7 +117,7 @@ function handleClickItem(navigate: UseLinkReturn['navigate']) {
 
   &:hover {
     color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-    background: var(--Component-Colors-SideNav-link-bg-hover, #f0f3f5);
+    background: rgba(0, 0, 0, 0.05);
   }
 
   &.active {

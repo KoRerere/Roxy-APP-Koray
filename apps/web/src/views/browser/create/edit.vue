@@ -2,7 +2,7 @@
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import type { MetaData } from './components/type'
+import type { WindowMetaData } from './components/type'
 import accordionInputs from './components/accordion-inputs.vue'
 import previewCard from './components/preview-card.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
@@ -28,7 +28,7 @@ const accordions = ref({
 })
 const inputsGroup = ref()
 const original = ref()
-const metaData = ref<MetaData>()
+const metaData = ref<WindowMetaData>()
 const loading = ref(false)
 const windowInfo = ref({})
 
@@ -95,8 +95,7 @@ function oldFieldsFormat() {
           <WindowNameEdit v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo"
-            :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
+          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
             @create="createProfile" />
         </div>
       </div>

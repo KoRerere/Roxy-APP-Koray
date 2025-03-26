@@ -19,12 +19,14 @@ export function tableOperation(data?: ProxyItem) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: !role.isViewer,
+      tooltip: $t('编辑'),
       quick: true,
     },
     {
       name: 'test',
       label: $t('测试'),
       icon: 'base/rx_ic_speed_test',
+      tooltip: $t('测试'),
       quick: true,
       multiple: true,
       multipleProps: {
@@ -35,6 +37,7 @@ export function tableOperation(data?: ProxyItem) {
       name: 'refresh',
       label: $t('刷新代理'),
       icon: 'base/rx_ic_refresh',
+      tooltip: $t('刷新代理'),
       quick: true,
       disabled: !data?.refreshUrl,
       disabledTooltip: $t('未配置刷新URL'),
@@ -53,6 +56,7 @@ export function tableOperation(data?: ProxyItem) {
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       power: !role.isViewer,
+      tooltip: $t('删除'),
       quick: true,
       multiple: true,
       multipleProps: {

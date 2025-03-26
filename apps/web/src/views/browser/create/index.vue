@@ -1,28 +1,31 @@
 <script lang="tsx" setup>
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
-import type { MetaData } from '/@/views/browser/create/components/type'
 import { API } from '/@/api'
-import { RxAlert } from '/@/components/rx-alert'
-import WindowNameEdit from './components/window-name-edit.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import simplePopup from '/@/components/simplePopup'
 import { Role } from '/@/enums'
+import { SubLevelEnum } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
+import { useBackRoute } from '/@/router/utils'
+import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { emitter } from '/@/utils/eventBus'
+import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
 import previewCard from './components/preview-card.vue'
+import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
-import { useBackRoute } from '/@/router/utils'
-import { RxInputNumber } from '/@/components/rx-input-number'
-import { useUserStore } from '/@/stores/user'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { BUSINESS_CODE } from '/@/constants/business-code'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -42,6 +45,7 @@ interface ProfileTemplate {
     optionValue: string
     filter: boolean
     onChange: () => void
+    [key: string]: any
   }
 }
 
@@ -50,11 +54,12 @@ const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
-const { userInfo } = storeToRefs(userStore)
+const { userInfo, userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const backRoute = useBackRoute()
+const { handleBusinessCode } = useHandleBusinessCode()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -74,7 +79,7 @@ const rawMainSetting: any = ref([])
 const mainSetting: any = ref([])
 const extraSetting: any = ref([])
 const original = ref()
-const metaData = ref<MetaData>({
+const metaData = ref<WindowMetaData>({
   projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
@@ -83,7 +88,7 @@ const metaData = ref<MetaData>({
 const loading = ref(false)
 
 const maxWindowCount = computed(() => {
-  return userInfo.value.maxWindowCount - userInfo.value.useWindowCount
+  return userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount
 })
 
 const inputsGroup = computed(() => {
@@ -170,6 +175,7 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
+  profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
 async function initFormInputs(template: any = {}) {
@@ -231,10 +237,10 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
       query: {
         ...query,
         title: metaData.value.projectName,
-        browser: JSON.stringify({ windowId: data.windowId, openBrowser })
+        browser: JSON.stringify({ windowId: data?.windowId, openBrowser })
       }
     })
-    workspaceStore.fetchWorkspaceList()
+    workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
   showToast(code, msg)
@@ -258,7 +264,7 @@ async function batchCreateProfile(params: any) {
   showToast(code, msg)
   if (code === 0) {
     router.back()
-    workspaceStore.fetchWorkspaceList()
+    workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
 }
@@ -279,7 +285,7 @@ async function importProfile(params: any) {
   loading.value = false
   if (code === 0) {
     router.back()
-    workspaceStore.fetchWorkspaceList()
+    workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
   else {
@@ -299,7 +305,22 @@ const items = computed(() => [
   },
 ])
 
-async function saveTemplatePopup(option?: TemplateOption) {
+async function saveTemplatePopup(event: Event, option?: TemplateOption) {
+  if (!isOwner.value) {
+    handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
+    return
+  }
+
+  // 没有付费过的用户则提示付费墙
+  if (userPayInfo.value?.subLevel === SubLevelEnum.Free) {
+    return emitter.emit("showPayWall", {
+      event,
+      params: {
+        type: "createProfileTemplates",
+      },
+    });
+  }
+
   dialog.open(simplePopup, {
     props: {
       showHeader: false,
@@ -342,9 +363,12 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
 
-  showToast(code, msg)
   if (code === 0) {
     getTemplateList()
+  } else {
+    handleBusinessCode(code, () => {
+      showToast(code, msg)
+    })
   }
 }
 
@@ -404,7 +428,7 @@ function handleWindowNameStartEdit() {
             <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
               <template #option-extra="{ option }">
                 <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup(option)" />
+                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
                   <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
                 </div>
               </template>
@@ -426,7 +450,7 @@ function handleWindowNameStartEdit() {
           :inputs-group="inputsGroup">
           <template #footer>
             <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
-              @click.stop="saveTemplatePopup()" />
+              @click.stop="saveTemplatePopup($event)" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

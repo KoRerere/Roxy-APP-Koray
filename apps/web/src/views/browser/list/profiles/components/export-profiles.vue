@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetWindowInfoV2ListData } from '@roxy/backend-api'
 import { format } from 'date-fns'
-import { utils, writeFile } from 'xlsx'
 import { API } from '/@/api'
 import { strConcat } from '/@/utils'
 import { $t } from '/@/locales'
@@ -27,6 +26,7 @@ const excelSchema = [
   {
     key: 'os',
     name: '系统',
+    getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os// 历史原因ios特殊处理
   },
   {
     key: 'osVersion',

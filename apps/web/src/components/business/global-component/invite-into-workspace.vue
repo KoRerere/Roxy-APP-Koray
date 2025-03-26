@@ -81,10 +81,8 @@ function skipInvitation() {
     <div class="invite-into-workspace">
       <div class="detail-box">
         <div class="detail-body">
-          <Avatar class="workspace-icon"
-                  :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }"
-                  :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)" size="xlarge"
-          />
+          <Avatar class="workspace-icon" :style="{ backgroundColor: inviteInfo?.workspacePicture ? '' : 'black' }"
+            :label="inviteInfo?.workspacePicture || inviteInfo?.workspaceName?.slice(0, 2)" size="xlarge" />
           <div class="workspace-name">
             {{ inviteInfo?.workspaceName }}
           </div>

@@ -2,7 +2,7 @@ import type { UnwrapRowsType, UnwrapRowType, UserGetPluginListListData, UserGetS
 import { unzip } from '@tomjs/unzip-crx'
 import AdmZip from 'adm-zip'
 import { compare } from 'compare-versions'
-import { dialog } from 'electron'
+import { dialog, shell } from 'electron'
 import crypto from 'node:crypto'
 import { readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -14,6 +14,7 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile } from '/@/utils'
 import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 import { store } from '/@/modules/store'
+import { ipcMain } from '/@/modules/ipc'
 
 export interface UserSelectedExtensionInfo {
   type: 'warn' | 'success' | 'error'
@@ -32,6 +33,8 @@ interface ExtensionManagerOptions {
   workspaceId?: string
 }
 
+/** 正在下载的插件 */
+const downloadingExtensions = new Map<string, Promise<string>>()
 export class ExtensionManager {
   /** 工作空间 ID */
   workspaceId: string
@@ -49,6 +52,18 @@ export class ExtensionManager {
     await fileExists(this.extensionDir, true)
     const files = await readdir(this.extensionDir, { withFileTypes: true })
     return files.filter(n => n.isDirectory()).map(n => n.name)
+  }
+
+  /** 根据插件 ID 获取插件信息 */
+  async getExtensionInfo(extID: string) {
+    const pluginDir = path.join(this.extensionDir, extID)
+    return getPluginMeta(pluginDir)
+  }
+
+  /** 显示插件所在文件夹 */
+  async showExtensionDir(extID: string) {
+    const pluginDir = path.join(this.extensionDir, extID)
+    return shell.openPath(pluginDir)
   }
 
   /** 根据插件 ID 和 版本号 获取指定的插件，本地不存在则自动下载 */
@@ -106,16 +121,28 @@ export class ExtensionManager {
     const promiseArr = extensions.map(async (item) => {
       const localPath = path.join(this.extensionDir, item.pluginDir!)
       const zipPath = `${localPath}.zip`
-      try {
-        await downloadZipFile(item.pluginRoute!, zipPath)
-        await unzipFile(zipPath)
-        rm(zipPath)
-        return localPath
+      const startDownload = async () => {
+        try {
+          await downloadZipFile(item.pluginRoute!, zipPath, (progress) => {
+            ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: Math.min(progress, 99) })
+          })
+          await unzipFile(zipPath)
+          ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: 100 })
+          rm(zipPath)
+          return localPath
+        }
+        catch (error) {
+          console.error('downloadExtensions error', error)
+          const errorTips = $t('扩展 {pluginName} 下载失败', { pluginName: item.pluginName })
+          ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: -1, errorTips })
+          return Promise.reject(new Error(errorTips))
+        } finally {
+          downloadingExtensions.delete(localPath)
+        }
       }
-      catch (error) {
-        console.error('downloadExtensions error', error)
-        return Promise.reject(new Error($t('扩展 {pluginName} 下载失败', { pluginName: item.pluginName })))
-      }
+      const promise = downloadingExtensions.get(localPath) || startDownload()
+      downloadingExtensions.set(localPath, promise)
+      return promise
     })
     return Promise.allSettled(promiseArr)
   }

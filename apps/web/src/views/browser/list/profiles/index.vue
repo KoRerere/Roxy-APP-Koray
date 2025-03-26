@@ -29,6 +29,10 @@ import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
 import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+
+type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
 const props = defineProps({
   currentFilter: {
@@ -50,6 +54,7 @@ const dialog = useDialog()
 const role = useRoleStore()
 const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
+const { handleBusinessCode } = useHandleBusinessCode()
 
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
@@ -178,7 +183,7 @@ async function saveFilters(formData: any) {
 async function tableRequest(params: any) {
   // 0: 未删除
   const data = await API.window.userGetWindowInfoListList({ projectIds: route.params.id, ...params, isDelete: 0 })
-  const rows = (data.data.rows || []).map(item => ({
+  const rows = (data.data?.rows || []).map(item => ({
     ...item,
     projectName: item.projectName === '无项目' ? $t('默认项目') : item.projectName,
   }))
@@ -191,7 +196,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
   /**
    * 兼容批量操作
    */
-  const datas = [].concat(data).map(item => toRaw(item))
+  const datas: Data[] = [].concat(data).map(item => toRaw(item))
   const ids: number[] = datas.map((item: any) => item.id)
 
   switch (operate.name) {
@@ -225,7 +230,10 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await openBrowserBefore(data)
       break
     case 'restart':
-      window.electronAPI.send('browser:batchRelaunch', datas.toSorted((a, b) => a.windowSortNum - b.windowSortNum).map((item: any) => item.dirId))
+      const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
+      if (dirIds.length) {
+        window.electronAPI.send('browser:batchRelaunch', dirIds)
+      }
       break
     case 'close':
       window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
@@ -265,10 +273,10 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
   }
 }
 
-function autoOpenBrowser(list: any) {
+function autoOpenBrowser(list: Data[]) {
   const query = route.query.browser && JSON.parse(route.query.browser as string)
   if (query?.openBrowser) {
-    const data = list.find((item: any) => item.id === query.windowId)
+    const data = list.find(item => item.id === query.windowId)
     router.replace({ name: route.name })
     if (data) {
       openBrowserBefore(data)
@@ -276,12 +284,27 @@ function autoOpenBrowser(list: any) {
   }
 }
 
-async function openBrowserBefore(data: any) {
-  const datas = [].concat(data)
+async function openBrowserBefore(data: Data | Data[]) {
+  //过滤打开限制的 profile
+  const datas = ([] as Data[]).concat(data)
+    .filter(item => item.openLimitStatus)
+    .toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
+
+  if (!datas.length) {
+    return
+  }
+
+  datas.forEach((item, index) => {
+    Reflect.set(openMessage, item.dirId!, {
+      pending: true,
+      data: {
+        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`
+      }
+    })
+  })
+
   const result = await checkProfileStatus(datas)
-  /**
-   *过滤自身打开的窗口
-   */
+  //过滤自身打开的窗口
   const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userStore.userInfo.id))
   if (!list.length) {
     onOpenBrowser(datas)
@@ -303,26 +326,25 @@ async function openBrowserBefore(data: any) {
     accept: async () => {
       onOpenBrowser(datas)
     },
+    reject: async () => {
+      datas.forEach(item => {
+        Reflect.deleteProperty(openMessage, item.dirId!)
+      })
+    },
   })
 }
 
-async function checkProfileStatus(datas: any) {
-  const ids = datas.map((item: any) => item.id)
+async function checkProfileStatus(datas: Data[]) {
+  const ids = datas.map(item => item.id!)
   const { data } = await API.window.userGetWindowStatusInfoCreate({ ids })
   return data.filter(item => item.openStatus === ProfileOpenStatus.opened)
 }
 
-function onOpenBrowser(datas: any[]) {
-  const dirIds = datas.toSorted((a, b) => a.windowSortNum - b.windowSortNum).map((item: any, index: number) => {
-    openMessage[item.dirId] = {
-      pending: true,
-      data: {
-        message: `${index === 0 ? $t('启动中...') : $t('等待中...')}`,
-      },
-    }
-    return item.dirId
-  })
-  window.electronAPI.send('browser:batchLaunch', dirIds)
+function onOpenBrowser(datas: Data[]) {
+  const dirIds = datas.map(item => item.dirId!)
+  if (dirIds.length) {
+    window.electronAPI.send('browser:batchLaunch', dirIds)
+  }
 }
 
 function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
@@ -656,6 +678,17 @@ function listenCloseMessage() {
   })
 }
 
+async function toCreateBrowser() {
+  const { code, msg } = await API.window.userCheckWindowTotalCountList()
+  if (code === 0) {
+    router.push({ name: 'browser-create', query: { projectId: route.params.id } })
+  } else {
+    handleBusinessCode(code, () => {
+      showToast(code, msg)
+    })
+  }
+}
+
 let canceOpenlListener: any
 let canceCloselListener: any
 onBeforeMount(() => {
@@ -696,19 +729,13 @@ defineExpose({
 </script>
 
 <template>
-  <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false"
-    :table-filters="tableFilters" :table-sort="getSorts" :table-request="tableRequest" :operation="operation"
-    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" class="window-table">
-    <template #header-extra>
+    :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
+    <template #filter-after>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
         :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
-    <!-- <template #config-footer>
-      <div class="w-full text-right cursor-pointer" @click.stop="coverDefaultDisplay">
-        Save for default display
-      </div>
-    </template> -->
     <template #table-empty>
       <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')"
         :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
@@ -717,14 +744,11 @@ defineExpose({
         <template #extra>
           <div class="flex items-center gap-3">
             <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add"
-              :label="$t('创建窗口')"
-              @click.stop="router.push({ name: 'browser-create', query: { projectId: route.params.id } })" />
-            <!-- <RxButton text severity="secondary" size="xs" :label="$t('窗口文档')" /> -->
+              :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
           </div>
         </template>
       </CustomEmpty>
     </template>
-
     <template #profile="{ data }">
       <ProfileInfo :workspace-name="workspaceName" :data="data" :open-message="openMessage"
         @profile-operate="profileOperate($event, data)" />
@@ -747,18 +771,20 @@ defineExpose({
         @update="updateMeta($event, [data.id], 'single')" />
     </template>
     <template #actions="{ data }">
-      <div class="flex items-center">
-        <RxSvgIcon v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-          :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'"
-          :class="{ 'color-[#FC9D12]': data.isOften }" class="cursor-pointer mr-2"
-          @click.stop="operationHandler({ name: 'fav' }, data)" />
+      <div class="flex items-center gap-2">
+        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
+          class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5"
+          @click.stop="operationHandler({ name: 'fav' }, data)">
+          <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'"
+            :class="{ 'color-[#FC9D12]': data.isOften }" />
+        </div>
         <Actions :operation="operation" @quick-click="operationHandler($event, data)"
           @more="showOperationMenu($event, data)" />
       </div>
     </template>
   </RyTable>
   <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false"
-    @update="updateMeta($event, tableRef?.selectionData?.map(n => n.id))" />
+    @update="updateMeta($event, tableRef?.selectionData?.map((n: any) => n.id))" />
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
     <template #default="{ closeCallback }">
       <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName"
@@ -769,23 +795,6 @@ defineExpose({
   </RxDrawer>
 </template>
 
-<style lang="scss" module="classes">
-.browser-drawer {
-  padding: var(--spacing-xl, 12px);
-
-  &-content {
-    border-radius: var(--radius-lg, 8px);
-    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad) !important;
-    background: var(--Colors-Background-bg-body, #fff) !important;
-    box-shadow:
-      0px 1px 1px 0px rgba(0, 0, 0, 0.04),
-      0px 2px 8px 0px rgba(0, 0, 0, 0.04),
-      0px 3px 17px 0px rgba(0, 0, 0, 0.04),
-      0px 4px 30px 0px rgba(0, 0, 0, 0.12) !important;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
 :deep(.window-table) {
   tr:not([data-p-selected=true]):hover .direct-info {
@@ -795,13 +804,5 @@ defineExpose({
   tr:not([data-p-selected=true]):hover .edit-window-name-icon {
     visibility: visible;
   }
-}
-
-
-.table-filter {
-  height: 54px;
-  background-color: #fff;
-  border-top: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
-  border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
 }
 </style>

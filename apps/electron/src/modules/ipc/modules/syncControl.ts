@@ -13,6 +13,11 @@ import { globalShortcut } from "electron"
 import { SyncControlUtil } from "/@/modules/sync-control/util"
 
 
+export function closeSyncControl() {
+  closeSynchronizerWindow()
+  globalShortcut.unregisterAll()
+}
+
 /** 窗口同步器相关 */
 export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   /** 打开窗口同步器 */
@@ -29,8 +34,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   /** 关闭窗口同步器 */
   ipcMain.on('syncControl:close', (event) => {
     console.log('关闭窗口同步器')
-    closeSynchronizerWindow()
-    globalShortcut.unregisterAll()
+    closeSyncControl()
   })
 
   /**

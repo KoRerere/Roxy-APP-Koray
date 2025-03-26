@@ -29,6 +29,7 @@ import {
   UserInviteCreateData,
   UserInviteCreatePayload,
   UserLeaveWorkspaceListData,
+  UserLeaveWorkspaceListParams,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
   UserMdfWorkspaceInfoCreateData,
@@ -125,10 +126,11 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_leave_workspace
    * @response `200` `UserLeaveWorkspaceListData`
    */
-  userLeaveWorkspaceList = (params: RequestParams = {}) =>
+  userLeaveWorkspaceList = (query: UserLeaveWorkspaceListParams, params: RequestParams = {}) =>
     this.http.request<UserLeaveWorkspaceListData, any>({
       path: `/user_leave_workspace`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

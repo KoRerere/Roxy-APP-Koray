@@ -7,14 +7,16 @@ import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { hidePageLoading, showPageLoading } from '/@/utils'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
+import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
-import BgCanvas from './components/bg-canvas.vue'
-import { hidePageLoading } from '/@/utils'
+import { useSimpleLocale } from '/@/stores/locale'
 
 const isSupportGPU = ref(false)
-const { getUserInfo, setToken, setPassword, userInfo } = useUserStore()
+const { getOfficialWebsite } = useSimpleLocale()
+const { setToken, setPassword, initUserInfo, userInfo } = useUserStore()
 const { rememberMe, password } = storeToRefs(useUserStore())
 const router = useRouter()
 const toast = useToast()
@@ -62,7 +64,8 @@ async function handleSubmit() {
 async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | 'google' | 'github' = 'password') {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
-  await getUserInfo()
+  await initUserInfo()
+  showPageLoading()
   setPassword(rememberMe.value ? signFormData.value.password : '')
   await router.push({ name: 'home' })
   mixpanel.track('login', { method })
@@ -191,7 +194,7 @@ onMounted(() => {
 requestIdleCallback(hidePageLoading)
 let timer = setInterval(hidePageLoading, 3000)
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   cancelCallback?.()
   clearInterval(timer)
 })
@@ -227,10 +230,10 @@ provideLoginContext({
     <div class="footer">
       <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
         <template #terms>
-          <a href="https://roxybrowser.com/copyright/user" target="_blank">{{ $t('用户协议') }}</a>
+          <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
         </template>
         <template #policy>
-          <a href="https://roxybrowser.com/copyright/privacy" target="_blank">{{ $t('隐私政策') }}</a>
+          <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
         </template>
       </i18n-t>
     </div>

@@ -45,6 +45,8 @@ export interface MainMessage {
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
   /** 浏览器关闭时 */
   'browser:on-close': (dirId: string) => void
+  /** 达到窗口打开次数限制 */
+  'browser:window-open-limit': (result: { code: number, msg: string }) => void
   /** google 授权登录 */
   'oauth2:google-callback': (payload: string) => void
   /** 邀请用户进入项目 */
@@ -55,8 +57,10 @@ export interface MainMessage {
   'app:launch-message': (payload: string) => void
   /** 内核列表有更新时，发出 */
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
-  /** 用户升级到 3.1.4 之后，需要弹窗商业化弹窗 */
-  'app:show-business-popup': () => void
+  /** 当主窗口聚焦时 */
+  'window:on-focus': () => void
+  /** 插件下载进度, 如果 errorTips 不为空，则表示下载失败 */
+  'extension:download-progress': (payload: { extID: string, percent: number, errorTips?: string }) => void
   /** 同步窗口个数发生变化 */
   'syncControl:syncWindowCountChange': (count: number) => void
   /** 开始同步窗口 */

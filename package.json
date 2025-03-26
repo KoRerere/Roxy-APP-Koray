@@ -38,6 +38,8 @@
     "publish:web:dev": "pnpm -F web run build:dev && cross-env NODE_ENV=development npx tsx ./scripts/upload-web-source.ts",
     "publish:web:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production npx tsx ./scripts/upload-web-source.ts",
     "publish:web:win:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production PLATFORM=win npx tsx ./scripts/upload-web-source.ts",
+    "publish:app:dev:noPack": "cross-env NODE_ENV=development tsx scripts/publish.ts",
+    "publish:app:prod:noPack": "cross-env NODE_ENV=production tsx scripts/publish.ts",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
     "genLanguage": "pnpm -F web run genLanguage",
     "postinstall": "npm run build:pkg & npm run install:electron",
@@ -53,38 +55,31 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.8.1",
+    "@antfu/eslint-config": "^4.11.0",
     "@dotenvx/dotenvx": "^1.38.4",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.13.9",
     "@unocss/eslint-plugin": "^66.0.0",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.22.0",
     "cross-env": "^7.0.3",
-    "eslint": "9.22.0",
+    "eslint": "9.23.0",
     "eslint-plugin-format": "^1.0.1",
     "js-yaml": "^4.1.0",
-    "lint-staged": "^15.4.3",
+    "lint-staged": "^15.5.0",
     "rimraf": "^6.0.1",
-    "simple-git-hooks": "^2.11.1",
+    "simple-git-hooks": "^2.12.1",
     "tsx": "^4.19.3",
     "turbo": "^2.4.4",
-    "vite": "catalog:"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.3"
   },
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {}
     },
     "overrides": {}
-  },
-  "simple-git-hooks": {
-    "post-checkout": "",
-    "pre-commit": "pnpm lint-staged",
-    "post-merge": "pnpm install"
-  },
-  "lint-staged": {
-    "*": "eslint --fix"
   }
 }

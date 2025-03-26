@@ -8,7 +8,7 @@ const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
 
 const sessionVariables = computed(() => {
   const { userName, } = userStore.userInfo
-  const { maxWindowCount, useWindowCount } = userStore.userInfo
+  const { maxWindowCount, useWindowCount } = userStore.userPayInfo
   return {
     username: `[Roxy]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
     Account_ID: userStore.token,

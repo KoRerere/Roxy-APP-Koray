@@ -51,12 +51,8 @@ function handleSave() {
   <div class="flex flex-col h-full account-content">
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-ovh-1">
-      <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
-        :table-request="tableRequest" :table-filters="tableFilters" :columns="columns" :show-table-header="false"
-        :show-display="false" :context-menu="false" :show-actions="false">
-        <!-- <template #header-extra>
-          <InputBase type="text" left-icon="base/rx_ic_magnify" name="search" placeholder="search" />
-        </template> -->
+      <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"
+        :show-table-header="false" :show-display="false" :context-menu="false" :show-actions="false">
         <template #platform="{ data: row }">
           <div class="flex gap-2 account">
             <div>
@@ -75,8 +71,7 @@ function handleSave() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }"
-            :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
             :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
         </template>
         <template #actions="{ data: row }">

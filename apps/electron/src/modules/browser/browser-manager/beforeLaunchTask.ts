@@ -1,6 +1,5 @@
-import type { Browser } from 'puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
 import { readFile, rm, writeFile } from 'node:fs/promises'
-import { freemem, totalmem } from 'node:os'
 import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
 import type { proxyDetection } from '/@/utils'
@@ -36,7 +35,8 @@ export class BeforeLaunchTask {
   exePath = ''
   /** 最后一次发送的消息 */
   lastMessage?: LastMessage
-
+  /** 启动浏览器超时 */
+  launchTimer?: NodeJS.Timeout
   /** 总任务数 */
   private totalTasks = 0
   /** 已完成任务数 */
@@ -113,6 +113,10 @@ export class BeforeLaunchTask {
       throw new Error($t('没有指定内核版本'))
     }
 
+    const { promise, resolve, reject } = Promise.withResolvers<void>()
+
+    clearTimeout(this.launchTimer)
+
     let initCount = 1
     // 获取内核执行程序路径
     this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (msg: string) => {
@@ -134,18 +138,26 @@ export class BeforeLaunchTask {
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
+    this.launchTimer = setTimeout(() => {
+      this.sendErrorMessage($t('浏览器启动超时'))
+      reject(new Error($t('浏览器启动超时')))
+    }, 10000)
+
     this.makeBrowserActive = async () => {
+
       if (this.browser) {
         await this.reconnectBrowser()
       }
 
-      this.browser = await puppeteer.launch({
+      const launchOptions: PuppeteerLaunchOptions = {
         args: launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
-      })
+      }
+      console.log('launchOptions', launchOptions)
+      this.browser = await puppeteer.launch(launchOptions)
 
       // 临时解决移动端全屏问题
       if (this.isMobile) {
@@ -162,14 +174,19 @@ export class BeforeLaunchTask {
 
       this.wsEndpoint = this.browser.wsEndpoint()
       console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
+      resolve()
       return this.browser
     }
 
     // 拉起浏览器
-    this.browser = await this.makeBrowserActive().catch((error) => {
+    this.makeBrowserActive().catch((error) => {
       this.sendErrorMessage($t('浏览器启动失败'), error)
-      return Promise.reject(error)
+      return reject(error)
+    }).finally(() => {
+      clearTimeout(this.launchTimer)
     })
+
+    return promise
   }
 
   /** 重新连接浏览器 */
@@ -210,6 +227,7 @@ export class BeforeLaunchTask {
       '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
+      '--disable-backgrounding-occluded-windows',
       `http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`,
     ]
 
@@ -547,14 +565,13 @@ export class BeforeLaunchTask {
     }
 
     // 获取系统的总内存和空闲内存，单位是字节
-    const totalMemory = totalmem()
-    const freeMemory = freemem()
+    const { free, total } = process.getSystemMemoryInfo()
 
     // 计算已使用的内存
-    const usedMemory = totalMemory - freeMemory
+    const usedMemory = total - free
 
     // 计算内存使用率
-    const memoryUsageRate = (usedMemory / totalMemory) * 100
+    const memoryUsageRate = (usedMemory / total) * 100
 
     // 判断内存使用率是否超过用户设置的阈值
     if (memoryUsageRate > store.memoryLimit) {

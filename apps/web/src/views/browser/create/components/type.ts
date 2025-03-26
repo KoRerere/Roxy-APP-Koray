@@ -1,9 +1,9 @@
-export interface MetaData {
+export interface WindowMetaData {
   projectName?: string
-  projectId: number | undefined
-  labelIds: (number | string)[] | undefined
-  windowRemark: string | undefined
-  projectDefault: number
+  projectId?: number
+  labelIds?: (number | string)[]
+  windowRemark?: string
+  projectDefault?: number
 }
 
 export interface Accordions {

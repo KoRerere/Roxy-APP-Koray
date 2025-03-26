@@ -2,6 +2,7 @@
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxInputNumber } from '/@/components/rx-input-number'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { concurrentControl, setOperationLoading, strConcat } from '/@/utils'
@@ -9,8 +10,7 @@ import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import { getRawColumns } from './columns'
-import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
-import { RxInputNumber } from '/@/components/rx-input-number'
+import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
 
 
 interface Boundeds {
@@ -166,7 +166,7 @@ function saveSelected() {
       <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
         @click.stop="testAllProxy" />
     </div>
-    <RxAlert v-if="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
+    <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
       :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"
       :closable="false" />
     <div class="flex-ovh-1">

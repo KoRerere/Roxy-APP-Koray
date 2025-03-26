@@ -51,8 +51,6 @@ export interface StoreType {
   ipChecker: string
   /** 是否使用外置 web 资源 */
   isExternalWeb: boolean
-  /** 是否提示商业化弹窗 */
-  isShowBusinessDialog?: boolean
   /** 设备 ID */
   deviceId?: string
 }
@@ -130,15 +128,8 @@ export async function fetchUserConfig() {
 
 async function initStore() {
   try {
-    const config = await readFile(appConfig.configFile, 'utf-8').catch(err => {
-      store.isShowBusinessDialog = false
-      return Promise.reject(err)
-    })
+    const config = await readFile(appConfig.configFile, 'utf-8')
     const lastStore = JSON.parse(config)
-    // 如果没有商业化弹窗配置，则默认显示
-    if (!Reflect.has(lastStore, 'isShowBusinessDialog')) {
-      store.isShowBusinessDialog = true
-    }
     Object.assign(store, lastStore)
     await fetchUserConfig()
 

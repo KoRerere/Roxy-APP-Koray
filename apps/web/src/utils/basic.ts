@@ -156,7 +156,7 @@ export function getUserAgentOs() {
   }
 }
 
-export function strConcat(str1: string, str2: string) {
+export function strConcat(str1?: string, str2?: string) {
   if (!str1)
     return str1
   if (!str2)
@@ -306,4 +306,34 @@ export function getExtname(filename: string) {
   }
 
   return parts.pop();
+}
+
+export function startCountdown(
+  endTime: number | string | Date,
+  callback: (time: { timestamp: number, hours: number, minutes: number, seconds: number, done: boolean }) => void
+) {
+  const endTimestamp = new Date(endTime).getTime()
+  let remainingTime = endTimestamp - Date.now();
+  let timer: number | null = null
+
+  function updateCountdown(): void {
+    if (remainingTime <= 0) {
+      callback({ timestamp: 0, hours: 0, minutes: 0, seconds: 0, done: true });
+      return;
+    }
+    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+    callback({ timestamp: remainingTime, hours, minutes, seconds, done: false });
+
+    remainingTime = endTimestamp - Date.now();
+    requestAnimationFrame(updateCountdown);
+  }
+
+  function stop() {
+    timer && cancelAnimationFrame(timer)
+  }
+
+  updateCountdown();
+  return stop
 }

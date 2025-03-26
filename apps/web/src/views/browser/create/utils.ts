@@ -83,18 +83,18 @@ export const getColumns = () => {
       example: `${exampleText}:\nRoxytest`
     },
     {
-      header: $t('系统'),
+      header: $t('操作系统'),
       key: 'os',
       required: true,
       placeholder: $t('操作系统（必填项）\n如: Windows'),
-      example: `${exampleText}1: Windows\n${exampleText}2: macOS\n${exampleText}3: Android\n${exampleText}4: IOS`
+      example: `${exampleText}1: Windows\n${exampleText}2: macOS\n${exampleText}3: Android\n${exampleText}4: iOS`
     },
     {
       header: $t('系统版本'),
       key: 'osVersion',
       width: 50,
       placeholder: $t('操作系统版本, 如: 11\n每行只能填写一个, 留空则自动使用对应操作系统最新版本'),
-      example: `${exampleText}1: Windows: 11、10、8、7\n${exampleText}2: macOS: ALL\n${exampleText}3: Android: 13、12、11、10、9\n${exampleText}4: IOS: 17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0`
+      example: `${exampleText}1: Windows: 11、10、8、7\n${exampleText}2: macOS: ALL\n${exampleText}3: Android: 13、12、11、10、9\n${exampleText}4: iOS: 17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0`
     },
     {
       header: $t('代理类型'),
@@ -266,11 +266,11 @@ export async function downloadTextTemplate() {
     {
       key: 'os',
       desc: $t('【必填】操作系统'),
-      example: ['Windows', 'macOS', 'Android', 'IOS']
+      example: ['Windows', 'macOS', 'Android', 'iOS']
     },
     {
       key: 'osVersion',
-      desc: $t('系统版本\n\t只能填写一个，留空则自动使用对应操作系统最新版本，现在支持的版本有：\n\t\t- Windows：{windows}\n\t\t- macOS：{macos}\n\t\t- Android：{android}\n\t\t- IOS：{ios}', {
+      desc: $t('系统版本\n\t只能填写一个，留空则自动使用对应操作系统最新版本，现在支持的版本有：\n\t\t- Windows：{windows}\n\t\t- macOS：{macos}\n\t\t- Android：{android}\n\t\t- iOS：{ios}', {
         windows: '11, 10, 8, 7',
         macos: 'ALL',
         android: '13、12、11、10、9',
@@ -329,7 +329,7 @@ export async function downloadTextTemplate() {
     },
     {
       windowName: 'name2',
-      os: 'IOS',
+      os: 'iOS',
       osVersion: 17.0,
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:81:username:password',
@@ -397,8 +397,13 @@ export async function parseTemplate(file: File) {
               return [column.key, value]
             }))
           }
-          if (data.os?.toLocaleUpperCase() === 'IOS' && typeof data.osVersion === 'number') {
-            data.osVersion = data.osVersion.toFixed(1)
+
+          // 历史原因特殊处理 ios
+          if (data.os?.toLocaleUpperCase() === 'IOS') {
+            data.os = data.os.toLocaleUpperCase()
+            if (typeof data.osVersion === 'number') {
+              data.osVersion = data.osVersion.toFixed(1)
+            }
           }
           result.push(data)
         }

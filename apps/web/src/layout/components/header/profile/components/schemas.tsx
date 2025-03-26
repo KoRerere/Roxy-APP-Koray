@@ -3,6 +3,7 @@ import { $t } from '/@/locales'
 import styles from './schemas.module.css'
 import { getRegisterValidation, getResetPasswordSchemas } from '/@/views/login/components/schemas'
 import RxVerificationCodeSender from '/@/components/rx-verification-code-sender.vue'
+import { API } from '/@/api'
 
 export const redeemFormSchemas = defineFormSchema([
   {
@@ -37,7 +38,7 @@ export const getSettingPasswordFormSchemas = () => defineFormSchema([
   {
     field: 'ver_code',
     label: $t('验证码'),
-    component: ({ formModel }) => <RxVerificationCodeSender v-model={formModel.value.ver_code} email={formModel.value.email} />,
+    component: ({ formModel }) => <RxVerificationCodeSender v-model={formModel.value.ver_code} email={formModel.value.email} request={API.base.userSettingPasswordVerifyCodeList} />,
     componentProps: {
       placeholder: $t('请输入验证码'),
     },

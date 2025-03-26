@@ -8,19 +8,20 @@ interface Props extends /* @vue-ignore */ Omit<InputTextProps, 'size'> {
   size?: Size
   leftIcon?: SvgNames | undefined
   icon?: SvgNames | undefined
+  iconFieldClass?: string
 }
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'sm', leftIcon, icon, ...props } = defineProps<Props>()
+const { size = 'sm', leftIcon, icon, iconFieldClass, ...props } = defineProps<Props>()
 
 defineEmits(['iconClick', 'change'])
 </script>
 
 <template>
-  <IconField class="w-full" :pt="{ root: size }">
+  <IconField class="w-full" :class="iconFieldClass" :pt="{ root: size }">
     <InputIcon v-if="leftIcon">
       <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>

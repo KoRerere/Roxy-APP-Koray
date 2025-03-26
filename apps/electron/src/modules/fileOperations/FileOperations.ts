@@ -1,6 +1,9 @@
 import path from 'node:path'
-import { utilityProcess, MessageChannelMain, UtilityProcess } from 'electron'
+import { utilityProcess, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
+
+let inspectPort = 9230
+let workerNo = 1
 
 export class FileOperations {
   private workers = new Set<UtilityProcess>()
@@ -17,12 +20,12 @@ export class FileOperations {
 
   /**  创建 worker */
   private createWorker(): UtilityProcess {
-    const { port1, port2 } = new MessageChannelMain()
     // 加 inspect 9230
     const worker = utilityProcess.fork(path.join(__dirname, './fileWorker.cjs'), [], {
-      execArgv: ['--inspect=9230'],
+      execArgv: [`--inspect=${inspectPort++}`],
+      serviceName: `roxyFileWorker${workerNo++}`,
     })
-
+    console.log('worker created', worker.pid)
     const handleMessage = (message: WorkerMessage) => {
       this.handleWorkerResponse(worker, message)
     }

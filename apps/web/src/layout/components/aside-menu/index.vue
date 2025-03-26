@@ -1,18 +1,17 @@
 <script setup lang="tsx">
-import type { RouteRecordRaw } from 'vue-router'
 import { cloneDeep } from 'es-toolkit'
+import Tooltip from 'primevue/tooltip'
+import type { RouteRecordRaw } from 'vue-router'
+import { API } from '/@/api'
+import { RxSvgIcon } from "/@/components/rx-icon";
+import { $t } from '/@/locales'
 import { getMenuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import SubMenuItem from './sub-menu-item.vue'
-import { API } from '/@/api'
-import { useDialog } from '/@/hooks/useDialog'
-import { $t } from '/@/locales'
-import { useUserStore } from '/@/stores/user'
-import { RxSvgIcon } from "/@/components/rx-icon";
-import Tooltip from 'primevue/tooltip'
-import { I18nT } from 'vue-i18n'
+import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 defineProps({
   collapsed: {
@@ -21,21 +20,14 @@ defineProps({
   }
 })
 
-const cssModule = useCssModule()
-const [dialogInstance] = useDialog()
+const { handleBusinessCode } = useHandleBusinessCode()
+const [showToast, onlyErrorToast] = useResponseToast()
 const router = useRouter()
 const roleStore = useRoleStore()
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const projectStore = useProjectStore()
-const { userInfo } = storeToRefs(useUserStore())
 const menuRoutes = getMenuRoutes()
 
-const Tips = {
-  directives: { tooltip: Tooltip },
-  setup() {
-    return () => <RxSvgIcon name="base/rx_ic_info" class="tips" size="12px" v-tooltip:top={$t('回收站中的窗口也会计算用量')} />
-  },
-};
 
 const projectList = computed(() => {
   return projectStore.projects.filter(item => !!item.topTime).slice(0, 5).map((item) => {
@@ -88,57 +80,12 @@ function filterMenus(menus: RouteRecordRaw[]) {
 }
 
 async function toCreateBrowser() {
-  const { code } = await API.window.userCreateWindowInspectList()
+  const { code, msg } = await API.window.userCheckWindowTotalCountList()
   if (code === 0) {
     router.push({ name: 'browser-create' })
-  } else if (code === 407) {
-    // 超出总额度
-  const { useWindowCount, maxWindowCount } = userInfo.value
-  const percent = `${maxWindowCount}/${maxWindowCount}`
-    dialogInstance.showModal({
-      header: $t('窗口额度不足（{percent}）', { percent }),
-      class: 'w-[380px]',
-      okText: $t('好的'),
-      slots: {
-        default: () => <div class={cssModule.description}>
-          <div>{$t('您的窗口用量已达账号上限。')}</div>
-          <I18nT tag="div" keypath={$t('您可以通过彻底删除不常用的窗口来恢复相应额度。{tips}', { tips: '{tips}' })}>
-            {{ tips: () => <Tips />}}
-          </I18nT>
-          <div>{$t('或关注Roxy相关社群动态以获取更多。')}</div>
-        </div>,
-      },
-    })
-  } else if (code === 408) {
-    // 超出空间最大额度
-    const { useWindowCount, maxWindowCount } = currentWorkspace.value
-    dialogInstance.showModal({
-      header: $t('该工作空间的窗口额度不足（{percent}）', { percent: `${useWindowCount}/${maxWindowCount}` }),
-      class: 'w-[380px]',
-      okText: $t('好的'),
-      slots: {
-        default: () => <div class={cssModule.description}>
-          <div>{$t('您在当前工作空间中可创建窗口的数量已经到达上限。')}</div>
-          <I18nT tag="div" keypath={$t('您可以通过彻底删除不常用的窗口来恢复相应额度。{tips}', { tips: '{tips}' })}>
-            {{ tips: () => <Tips />}}
-          </I18nT>
-          <div>{$t('或增加为当前工作空间分配的总窗口数量。')}</div>
-        </div>,
-      },
-    })
-  } else if (code === 410) {
-    // 默认空间额度不足
-    dialogInstance.showModal({
-      header: $t('默认空间剩余用量不足'),
-      class: 'w-[380px]',
-      okText: $t('好的'),
-      slots: {
-        default: () => <div class={cssModule.description}>
-          <div>{$t('您的默认工作空间可剩余的窗口用量已达上限。')}</div>
-          <div>{$t('您可以通过彻底删除不常用的窗口或调整其他空间的窗口限制数来恢复默认空间的相应额度。')}</div>
-          <div>{$t('如您需要更多窗口，请关注Roxy相关社群动态以获取更多。')}</div>
-        </div>,
-      },
+  } else {
+    handleBusinessCode(code, () => {
+      showToast(code, msg)
     })
   }
 }
@@ -191,7 +138,10 @@ async function toCreateBrowser() {
   overflow: hidden;
 
   &.collapsed {
-    overflow: unset;
+
+    .menu::-webkit-scrollbar {
+      display: none;
+    }
 
     .new-profile-btn {
       :deep(.p-button-label) {

@@ -1641,7 +1641,7 @@ export interface UserChangeEmailCreatePayload {
   /** 新邮箱 */
   email: string;
   /** 验证码 */
-  code: string;
+  ver_code: string;
 }
 
 export interface UserChangeEmailCreateData {
@@ -1662,6 +1662,12 @@ export interface UserGetUserInfoListData {
     phone: string;
     /** 邮箱 */
     email: string;
+    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    userIdentity: string;
+    /** 名下用户：true:有,false：没有 */
+    underName: boolean;
+    /** 推荐用户：true:是,false：不是 */
+    recommendUser: boolean;
     /** 头像 */
     avatar: string;
     /** 头像颜色 */
@@ -1683,9 +1689,9 @@ export interface UserGetUserInfoListData {
     /** 已使用窗口数量 */
     useWindowCount: number;
     /** 已使用空间数量 */
-    useWorkspaceCount: string;
+    useWorkspaceCount: number;
     /** 获取用户总空间数量 */
-    maxWorkspaceCount: string;
+    maxWorkspaceCount: number;
     /** 邀请链接 */
     inviteLink: string;
     /** 首次创建空间提示 */
@@ -1820,9 +1826,7 @@ export interface UserGetUserConfigListData {
     syncSettings: object;
     ipBlackList: string[];
     blockDomainList: string[];
-    uaModeSwitch: string;
-    /** api token */
-    apiToken: string;
+    uaModeSwitch: number;
   };
   msg: string;
 }
@@ -1846,8 +1850,6 @@ export interface UserGetDefConfigListData {
     autoDelSize: string;
     /** 性能监控，内存使用率%95以上时停止打开窗口 */
     memoryLimit: string;
-    /** app 风格 0:系统 ,1:亮色,2:暗色 */
-    appearance: number;
     /** 系统代理开关，true,false,默认true */
     systemProxySwitch: boolean;
     /** v2ray开关，true,false,默认true */
@@ -1862,8 +1864,6 @@ export interface UserGetDefConfigListData {
     syncSettings: object;
     ipBlackList: string[];
     blockDomainList: string[];
-    /** api token */
-    apiToken: string;
   };
   msg: string;
 }
@@ -1900,8 +1900,9 @@ export interface UserGetUserApiListData {
   code: number;
   data: {
     apiKey: string;
-    port: string;
+    port: number;
     open: boolean;
+    apiRate: number;
   };
   msg: string;
 }
@@ -1910,7 +1911,7 @@ export interface UserSetUserApiCreatePayload {
   /** api */
   apiKey: string;
   /** 端口 */
-  port: string;
+  port: number;
   /** 打开，关闭 */
   open: boolean;
 }
@@ -1923,7 +1924,6 @@ export interface UserSetUserApiCreateData {
 export interface UserGetDictVersionListData {
   code: number;
   data: {
-    dictVersion: string;
     os: string;
     proxyMethod: string;
     proxyType: string;
@@ -1992,22 +1992,27 @@ export interface UserGetAnntListListData {
 export interface UserGetNotifyListData {
   code: number;
   data: {
-    /** 用户ID */
     id?: number;
-    /** 消息类型 */
     type?: string;
-    /** 消息内容 */
     notify?: string;
-    /** 消息状态 */
     status?: number;
-    /** 创建时间 */
+    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    userIdentity?: string;
+    /** 名下用户：true:有,false：没有 */
+    underName?: boolean;
+    /** 推荐用户：true:是,false：不是 */
+    recommendUser?: boolean;
     createTime?: string;
-    /** 消息模块 */
     messageModule?: string;
-    /** 用户头像 */
+    userName?: string;
     avatar?: string;
-    /** 工作空间ID */
-    workspaceId?: number;
+    avatarColor?: string;
+    param_data?: {
+      data: string;
+      workspaceName: string;
+      workspacePicture: string;
+      endTime: string;
+    };
   }[];
   msg: string;
 }
@@ -2156,7 +2161,35 @@ export interface SaveChannelSourcesPeopleListData {
   msg: string;
 }
 
-export interface UserGetInviteUserListListData {
+export interface UserGetInviteUserListV2ListParams {
+  /**
+   * 来源，邀请码，A1,B,C,D
+   * @example ""
+   */
+  source?: string;
+  /**
+   * 开始时间
+   * @example 1741104000
+   */
+  start_time?: number;
+  /**
+   * 结束时间
+   * @example 1741104000
+   */
+  end_time?: number;
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+}
+
+export interface UserGetInviteUserListV2ListData {
   code: number;
   data: {
     total: number;
@@ -2165,6 +2198,10 @@ export interface UserGetInviteUserListListData {
       email?: string;
       /** 创建时间 */
       createTime?: string;
+      /** 推广者返利(%) */
+      youGet?: number;
+      /** 用户折扣(%)(%) */
+      theyGet?: number;
       /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
       source?: string;
     }[];
@@ -2200,6 +2237,11 @@ export interface UserWriteInviteCodeCreatePayload {
 export interface UserWriteInviteCodeCreateData {
   code: number;
   msg: string;
+}
+
+export interface UserGetBannerPictureListListParams {
+  /** 链接类型 */
+  linkType?: string;
 }
 
 export interface UserGetBannerPictureListListData {
@@ -2352,6 +2394,224 @@ export interface CheckOtherDeviceLoginListData {
     /** True ：有其他设备登录， False：无其他设备登录 */
     has_other_login: boolean;
   };
+  msg: string;
+}
+
+export interface UserGetPromotionInfoListData {
+  code: number;
+  data: {
+    /** 可提现金额 */
+    withdrawAmount: number;
+    /** 用户推广点击链接次数 */
+    promotionClickCount: number;
+    /** 当天推广点击链接次数 */
+    todayPromotionClickCount: number;
+    /** 已注册的用户数量 */
+    registeredUserNum: number;
+    /** 当天注册的用户数量 */
+    todayRegisteredUserNum: number;
+    /** 已下单购买成功的用户数量 */
+    purchaseUserNum: number;
+    /** 当天下单购买成功的用户数量 */
+    todayPurchaseUserNum: number;
+    /** 用户总收益 */
+    totalIncome: number;
+    /** 当天收益 */
+    todayIncome: number;
+    /** 推荐用户的总交易额 */
+    purchaseUserTotalAmount: number;
+    /** 待收益金额 */
+    pendingAmount: number;
+    promotionLinkList: {
+      promotionLink?: string;
+      linkType?: string;
+      linkStatus?: number;
+      promotionDiscount?: number;
+      userDiscount?: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetRewardRecordListListParams {
+  /**
+   * 来源
+   * @example "A,B,C,D"
+   */
+  source?: string;
+  /**
+   * 支付开始时间
+   * @example 1741104000
+   */
+  start_time?: number;
+  /**
+   * 支付结束时间
+   * @example 1741104000
+   */
+  end_time?: number;
+  /**
+   * 充值状态
+   * @example "active,pending"
+   */
+  reward_status?: string;
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+}
+
+export interface UserGetRewardRecordListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 邮箱 */
+      email?: string;
+      /** 来源 A1,B,C,D */
+      source?: string;
+      /** 支付金额 */
+      payAmount?: number;
+      /** 奖励百分比（%） */
+      rewardRatio?: number;
+      /** 奖励金额 */
+      reward?: number;
+      /** 状态：审核中：auditing,审核成功： approved, 审核失败：rejected */
+      rewardStatus?: string;
+      /** 支付时间 */
+      payTime?: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetWithdrawRecordListListParams {
+  /**
+   * 提款方式：Balance，USDT
+   * @example "Balance"
+   */
+  withdraw_type?: string;
+  /**
+   * 提款开始时间
+   * @example "1741104000"
+   */
+  start_time?: string;
+  /**
+   * 提款结束时间
+   * @example "1741104000"
+   */
+  end_time?: string;
+  /**
+   * 提款状态：Success,Pending，Fail
+   * @example "Success"
+   */
+  withdraw_status?: string;
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+}
+
+export interface UserGetWithdrawRecordListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 提款方式 */
+      withdrawType?: string;
+      /** 提款金额（美元） */
+      withdrawAmount?: number;
+      /** 状态：active,pending，fail */
+      rewardStatus?: string;
+      /** 提款时间 */
+      withdrawTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserWithdrawCreatePayload {
+  /** 提现金额 */
+  amount: number;
+  /** 提现方式：Balance，USDT */
+  withdraw_method: string;
+  /** 提现地址：USDT才有，余额可以不用传 */
+  withdraw_address?: string;
+  /** 提现验证码：USDT才有，余额可以不用传 */
+  ver_code?: string;
+}
+
+export interface UserWithdrawCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface SavePromotionLinkClickCountListParams {
+  /** 链接码 */
+  code: string;
+}
+
+export interface SavePromotionLinkClickCountListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserWithdrawVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserVerifyEmailCreatePayload {
+  /** 来源 new,old */
+  source: string;
+  /** 来源是new的才需要 */
+  email?: string;
+}
+
+export interface UserVerifyEmailCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetCheckOldEmailVerCodeListParams {
+  /** 密码 */
+  password?: string;
+  /** 验证码 */
+  ver_code?: string;
+}
+
+export interface UserGetCheckOldEmailVerCodeListData {
+  code: number;
+  /** 验证码是成功 */
+  data: boolean;
+  msg: string;
+}
+
+export interface UserGetBannerPictureListV2ListParams {
+  /** 链接类型：Link_C、Link_B、Link_A、Link_S */
+  linkType?: string;
+}
+
+export interface UserGetBannerPictureListV2ListData {
+  code: number;
+  data: {
+    language: string;
+    images: {
+      size: string;
+      image: string;
+    }[];
+  }[];
   msg: string;
 }
 
@@ -3336,6 +3596,7 @@ export interface UserGetWindowInfoListListData {
       lastCity?: string;
       checkTime?: string;
       checkStatus?: number;
+      openLimitStatus?: boolean;
       labelInfo?: string[];
       platformUrlList?: string[];
       maxWindowSort?: number;
@@ -3566,6 +3827,22 @@ export interface UserSaveWindowRowsSortCreateData {
 
 export interface UserCreateWindowInspectListData {
   /** 407:超出总额度,408:超出空间最大额度 */
+  code: number;
+  msg: string;
+}
+
+export interface UserCheckWindowTotalCountListData {
+  code: number;
+  data: number;
+  msg: string;
+}
+
+export interface UserDelWindowInfoRecycleCreatePayload {
+  /** 要删除的窗口id列表 */
+  ids: number[];
+}
+
+export interface UserDelWindowInfoRecycleCreateData {
   code: number;
   msg: string;
 }
@@ -4511,6 +4788,10 @@ export interface UserGetWorkspaceListListData {
       userId?: number;
       /** 工作空间名称 */
       workspaceName?: string;
+      /** 总窗口数量 */
+      totalWindowCount?: number;
+      /** 总成员数量 */
+      totalMemberCount?: number;
       /** 工作空间图片 */
       workspacePicture?: string;
       /** 是否默认工作空间，1：是 0：不是，默认不是 */
@@ -4571,6 +4852,11 @@ export interface UserDelWorkspaceInfoCreatePayload {
 export interface UserDelWorkspaceInfoCreateData {
   code: number;
   msg: string;
+}
+
+export interface UserLeaveWorkspaceListParams {
+  /** 空间ID */
+  workspaceId?: number;
 }
 
 export interface UserLeaveWorkspaceListData {
@@ -4773,5 +5059,451 @@ export interface UserShowInvitationLinkStatusCreateData {
   code: number;
   /** 已失效 */
   data: string;
+  msg: string;
+}
+
+export interface UserGetDurationDiscountsListData {
+  code: number;
+  data: {
+    /**
+     * 每个月折扣比例
+     * 每个月折扣比例
+     */
+    "1": number;
+    "3": number;
+    "6": number;
+    "12": number;
+  };
+  msg: string;
+}
+
+export interface UserGetWindowPricingRulesListListData {
+  code: number;
+  data: {
+    rows: {
+      apiRate: number;
+      logDays: number;
+      /** 最大窗口数量 */
+      maxWindows: number;
+      /** 最小窗口数量 */
+      minWindows: number;
+      /** 订阅级别 */
+      subLevel: string;
+      /** 窗口单个价格 */
+      windowPrice: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserPaySettlementCreatePayload {
+  /**
+   * 购买数量
+   * 购买、订阅才有购买数量详细信息{"profile":100,"workspace":1,"staff":2}
+   */
+  purchaseMember?: object;
+  /**
+   * 购买类型(wallet/workspace/staff/profile/workspace_staff)
+   * 购买、订阅才有
+   */
+  purchaseType?: string;
+  /**
+   * 订阅等级(Basic/Pro/Business/Enterprise)
+   * 订阅才有
+   */
+  subLevel?: string;
+  /**
+   * 购买月数(1/3/6/12)
+   * 续费、订阅才有
+   */
+  subscriptionMonths?: number;
+  /**
+   * 是否自动购买和续费,
+   * 续费、订阅才有
+   */
+  isAuto?: boolean;
+  /**
+   * 订单号
+   * 续费才有
+   */
+  orderNo?: string;
+  /**
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   * 都有
+   */
+  payType: string;
+  /**
+   * 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift)
+   * 都有
+   */
+  orderType: string;
+  /**
+   * 子订单类型upgrade:升级, purchase：购买
+   * 订阅才有
+   */
+  subOrderType?: string;
+}
+
+export interface UserPaySettlementCreateData {
+  code: number;
+  data: {
+    /**
+     * 订单号
+     * 订单号
+     */
+    order_no: string;
+    /**
+     * 支付方式
+     * 支付方式
+     */
+    pay_type: string;
+    /**
+     * 支付地址
+     * 支付地址
+     */
+    pay_url: string;
+    /**
+     * usdt支付id
+     * usdt支付id
+     */
+    pay_id: string;
+    /**
+     * 订单金额
+     * 订单金额
+     */
+    order_amount: string;
+    /**
+     * 支付结束时间
+     * 支付结束时间
+     */
+    end_time: string;
+    /**
+     * 实际支付金额
+     * 实际支付金额
+     */
+    real_amount: string;
+    /** 类型 */
+    subOrderType: string;
+  };
+  msg: string;
+}
+
+export interface UserGetPurchaseRecordsInfoListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /** 订单类型 */
+  orderType?: string;
+  /** 开始时间 */
+  startDate?: string;
+  /** 结束时间 */
+  endDate?: string;
+  /** 是否自动续费 */
+  isAuto?: string;
+  /** 主订单号 */
+  mainOrderNo?: string;
+}
+
+export interface UserGetPurchaseRecordsInfoListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 订单号 */
+      orderNo?: string;
+      /** 订单类型 */
+      orderType?: string;
+      /** 实际金额(美元) */
+      actualAmount?: number;
+      /** 支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败' */
+      payStatus?: string;
+      detail?: {
+        /** 天数 */
+        day: number;
+        /** # 普通订阅、升级、主动续订、延长套餐、购买空间成员数量、降级 # subscribe, upgrade, auto, extend , workspace_member, downgrade */
+        subType: string;
+        /** 老窗口数量 */
+        oldWindowCount: number;
+        /** 购买类型 */
+        purchaseType: string;
+        /** 成员数量 */
+        staff: number;
+        /** 现有窗口数量 */
+        windowCount: number;
+        /** 工作时间 */
+        workspace: number;
+      };
+      /** 订单创建时间 */
+      createTime?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetUserPayInfoListData {
+  code: number;
+  data: {
+    /** 用户折扣 */
+    discount: number;
+    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
+    identity: string;
+    /** 已用空间数量 */
+    useWorkspaceCount: number;
+    /** 已用窗口数量 */
+    useWindowCount: number;
+    /** 已用成员数量 */
+    useMemberCount: number;
+    /** 最大窗口数量 */
+    maxWindowCount: number;
+    /** 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise) */
+    subLevel: string;
+    /** 订阅到期时间 */
+    subEndDate: number;
+    /** 最大成员数量 */
+    maxMemberCount: number;
+    /** 最大空间数量 */
+    maxWorkspaceCount: number;
+    /** 免费项目数量 */
+    freeProjectCount: number;
+    /** 已使用项目数量 */
+    useProjectCount: number;
+    /** 余额 */
+    balance: number;
+    /** 自动续费折扣 */
+    autoRenewDiscount: number;
+    /** 7天是否试用，0：未试用 1：已试用 2：试用中 */
+    isTrial: number;
+    /** '是否自动购买和续费,1:自动 0:人工', */
+    isAuto: number;
+    /** 实际金额 */
+    realAmount: string;
+    /** 订单号 */
+    orderNo: string;
+    /** 成员价格(美元) */
+    staffSinglePrice: number;
+    /** 空间价格(美元) */
+    workspaceSinglePrice: number;
+    /** 单个价格(美元) */
+    singlePrice: number;
+    /** 原始金额(美元) */
+    originalAmount: number;
+    /** 钱包优惠余额 */
+    walletDiscount: number;
+    /** 订阅到期 */
+    showSubExpiredDlg: boolean;
+    /** 付费墙显示 */
+    showPayWallDlg: boolean;
+    /** 自动续费降级接口状态判断 true:调用，false：不调用 */
+    autoRenewDowngrade: boolean;
+    /** 购买窗口数量 */
+    purchaseWindowCount: number;
+    /** "免费窗口数量" */
+    freeWindowCount: number;
+    /** 今日已创建次数 */
+    createWindowTimes: number;
+    /** /今日总共可创建次数 */
+    totalCreateWindowTimes: number;
+    /** 今日打开次数 */
+    openWindowTimes: number;
+    /** 今日总共可打开次数 */
+    totalOpenWindowTimes: number;
+  };
+  msg: string;
+}
+
+export interface UserRechargeSettlementCreatePayload {
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  payType: string;
+  /** 充值金额 */
+  rechargeAmount: number;
+}
+
+export interface UserRechargeSettlementCreateData {
+  code: number;
+  data: {
+    endTime: string;
+    orderAmount: number;
+    orderNo: string;
+    payId: string;
+    payType: string;
+    payUrl: string;
+    realAmount: number;
+  };
+  msg: string;
+}
+
+export type UserSevenDayTrialCreatePayload = object;
+
+export interface UserSevenDayTrialCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetSupportPayTypeListParams {
+  /** @example "2.85" */
+  amount: string;
+}
+
+export interface UserGetSupportPayTypeListData {
+  code: number;
+  data: {
+    "2.85": string[];
+  };
+  msg: string;
+}
+
+export interface UserQueryOrderStatusListParams {
+  /**
+   * 订单号
+   * @example "1740982093313502130869"
+   */
+  orderNo: string;
+}
+
+export interface UserQueryOrderStatusListData {
+  code: number;
+  /** 支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败 */
+  data: string;
+  msg: string;
+}
+
+export interface UserGetPayLinkListParams {
+  /** @example "174116208471299315708" */
+  orderNo: string;
+}
+
+export interface UserGetPayLinkListData {
+  code: number;
+  /** 订单支付链接 */
+  data: {
+    payUrl: string;
+  };
+  msg: string;
+}
+
+export interface UserCalculatePriceDifferenceListParams {
+  /**
+   * 窗口数量
+   * @example 100
+   */
+  purchaseMember: number;
+  /**
+   * 来源 自动续费：AutoRenew，固定套餐：Fixed
+   * @example "AutoRenew"
+   */
+  source: string;
+}
+
+export interface UserCalculatePriceDifferenceListData {
+  code: number;
+  /** 差价金额(美元) */
+  data: number;
+  msg: string;
+}
+
+export interface UserManageSubscriptionListParams {
+  /**
+   * 订单号
+   * @example "174157725142891219538"
+   */
+  orderNo: string;
+}
+
+export interface UserManageSubscriptionListData {
+  code: number;
+  /** 订阅地址 */
+  data: string;
+  msg: string;
+}
+
+export interface UserUpdatePayTipsListParams {
+  /** @example "Wall/Expired" */
+  source: string;
+}
+
+export interface UserUpdatePayTipsListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCalculateWindowMonthsPriceListParams {
+  /** @example 100 */
+  windowCount: number;
+}
+
+export interface UserCalculateWindowMonthsPriceListData {
+  code: number;
+  /** 金额(美元) */
+  data: number;
+  msg: string;
+}
+
+export interface UserCancelSubscriptionListParams {
+  /**
+   * 订单号
+   * @example "174157725142891219538"
+   */
+  orderNo: string;
+}
+
+export interface UserCancelSubscriptionListData {
+  code: number;
+  /** 订阅地址 */
+  data: string;
+  msg: string;
+}
+
+export interface UserDowngradeSubscriptionListParams {
+  /**
+   * 窗口数量
+   * @example 0
+   */
+  purchaseMember: number;
+}
+
+export interface UserDowngradeSubscriptionListData {
+  code: number;
+  /** 订阅地址 */
+  data: string;
+  msg: string;
+}
+
+export interface UserAutoRenewUpgradeListParams {
+  /**
+   * 窗口数量
+   * @example 100
+   */
+  purchaseMember: number;
+}
+
+export interface UserAutoRenewUpgradeListData {
+  code: number;
+  /** 差价金额(美元) */
+  data: number;
+  msg: string;
+}
+
+export interface UserGetDowngradeSubscriptionInfoListData {
+  code: number;
+  data: {
+    /** 金额 */
+    amount: number;
+    /** 窗口数 */
+    windowCount: number;
+    /** 扣费时间 */
+    windowStartDate: number;
+  };
+  msg: string;
+}
+
+export interface UserUpdateGiftTipsListData {
+  code: number;
   msg: string;
 }

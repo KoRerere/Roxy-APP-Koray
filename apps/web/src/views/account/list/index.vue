@@ -28,6 +28,7 @@ const operation = ref([
     label: $t('编辑'),
     icon: 'base/rx_ic_edit',
     power: !role.isViewer,
+    tooltip: $t('编辑'),
     quick: true,
   },
   {
@@ -49,6 +50,7 @@ const operation = ref([
     icon: 'base/rx_ic_bin_1',
     power: !role.isViewer,
     quick: true,
+    tooltip: $t('删除'),
     multiple: true,
     multipleProps: {
       name: 'one',
@@ -162,30 +164,25 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <ViewsHeader class="account-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')"
-        @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple"
-        :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+      <RyTable ref="accountTable" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')"
-                  @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
           </CustomEmpty>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }"
-            :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-            :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer"
-            @click.stop="operationHandler({ name: 'remark' }, data)" />
+          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #platform="{ data }">
           <div class="flex gap-2 account">
@@ -206,8 +203,7 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">
-            <Actions :operation="operation" :show-menu="false"
-              @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </RyTable>

@@ -1,17 +1,49 @@
-import type { UnwrapRowsType, UserAddUserByProjectInfoCreatePayload, UserGetNotifyListData } from '@roxy/backend-api'
-import mitt from 'mitt'
+import type { UnwrapRowsType, UserAddUserByProjectInfoCreatePayload, UserGetNotifyListData, UserPaySettlementCreateData } from "@roxy/backend-api";
+import mitt from "mitt";
+import type { ToastMessageOptions } from "primevue/toast";
+
+export type PayWallType = "synchronizer" | "createProfileTemplates";
 
 export type MittEvents = {
-  viewInviteDetail: UserAddUserByProjectInfoCreatePayload,
-  notifyUpdateData: UserGetNotifyListData,
-  maxWindowCountChange?: number
-  showRoxyOperationNotice?: void
+  viewInviteDetail: UserAddUserByProjectInfoCreatePayload;
+  notifyUpdateData: UserGetNotifyListData;
+  maxWindowCountChange?: number;
+  /** 显示 toast */
+  showToast: ToastMessageOptions;
   /** 被挤号 */
   kickedOut?: {
-    deviceName: string
-    createTime: string
-  },
-  toggleChatVisible: 'maximized' | 'minimized' | 'hidden'
-}
+    deviceName: string;
+    createTime: string;
+  };
+  /** 显示升级套餐弹窗 */
+  showUpgradePlanDialog?: 'subscriptionExpired' | 'windowLimitReached';
+  /** 显示订阅到期弹窗 */
+  showSubscriptionExpiredDialog?: void;
+  /** 显示续费弹窗 */
+  showRenewalDialog?: {
+    paySuccess?: (result: UserPaySettlementCreateData) => void
+    payError?: (result: UserPaySettlementCreateData) => void
+    afterConfirm?: (result: UserPaySettlementCreateData) => void
+  };
+  /** 显示扩容弹窗 */
+  showExpandDialog?: {
+    paySuccess?: (result: UserPaySettlementCreateData) => void
+    payError?: (result: UserPaySettlementCreateData) => void
+    afterConfirm?: (result: UserPaySettlementCreateData) => void
+  };
+  /** 显示付费墙 */
+  showPayWall: {
+    event: Event;
+    params: {
+      type: PayWallType;
+    };
+  };
+  /** 显示聊天窗口 */
+  toggleChatVisible: 'maximized' | 'minimized' | 'hidden';
+  /** 更新账单列表 */
+  updateBillList?: void;
+  /** 显示老用户福利弹窗 */
+  showOldUserGiftDialog?: void;
+};
 
-export const emitter = mitt<MittEvents>()
+export const emitter = mitt<MittEvents>();

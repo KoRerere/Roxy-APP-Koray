@@ -2,9 +2,8 @@
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import InputDate from '/@/components/ry-form/input-date.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { getFormData } from '/@/utils'
 
-const props = defineProps({
+defineProps({
   filters: {
     type: Array as PropType<any[]>,
     default: () => [],
@@ -14,6 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['change'])
 
 const multiChanged = ref(false)
+const _date = ref([])
 
 function onMultiChange() {
   multiChanged.value = true
@@ -31,10 +31,14 @@ function onDateClear() {
   onFilterChange()
 }
 
+function onDateChange(value: any) {
+  _date.value = value
+}
+
 function onDateHide() {
-  const formData = getFormData(props.filters)
-  if (formData.startDate && formData.endDate) {
+  if (_date.value?.length && _date.value.some((item: any) => !!item)) {
     emit('change')
+    _date.value = []
   }
 }
 
@@ -45,15 +49,19 @@ function onFilterChange() {
 
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
-    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item"
-      @change="onMultiChange" @hide="onMultiHide">
+    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label"
+      option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item" @change="onMultiChange"
+      @hide="onMultiHide">
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>
     </MultiSelect>
-    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
-    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
-      :placeholder="item.placeholder" @hide="onDateHide" @clear-click="onDateClear" />
+    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false"
+      v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
+    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse"
+      selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+      :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange"
+      @clear-click="onDateClear" />
   </div>
 </template>
 

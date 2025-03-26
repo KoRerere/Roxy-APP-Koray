@@ -884,6 +884,9 @@ onMounted(() => {
   --gradient-color-2: #00B3FF;
   --gradient-color-3: #1A93EB;
   --gradient-color-4: #1B5BBC;
+  background-image: url('/login_bg_2x.jpg');
+  background-position: center;
+  background-size: 100% 100%;
 }
 
 .auth {

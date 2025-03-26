@@ -1,57 +1,30 @@
 <script setup lang="tsx">
-import RxToastHeadless from './rx-toast-headless.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { useDialog } from '/@/hooks/useDialog'
-import { emitter } from '/@/utils/eventBus'
+import { $t } from '/@/locales'
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
-import { hidePageLoading } from '/@/utils'
+import RxToastHeadless from './rx-toast-headless.vue'
+import { useSubscribe } from './useSubscribe'
 
 const LiveChat = defineAsyncComponent(() => import('../live-chat/live-chat.vue'))
-const PaidPlan = defineAsyncComponent(() => import('./paid-plan.vue'))
 const InviteIntoWorkspace = defineAsyncComponent(() => import('./invite-into-workspace.vue'))
+const PayWall = defineAsyncComponent(() => import('./pay-wall.vue'))
+const Help = defineAsyncComponent(() => import('./help.vue'))
 
-const isMainWindow = ref(false)
-const [dialogInstance] = useDialog()
+const { isMainWindow } = useSubscribe()
+
+const isShowLiveChat = ref(false)
+
 updatePrimeVueLocale()
 
-// 显示商业化弹窗
-function showBusinessPopup() {
-  const hideFn = () => {
-    dialogInstance.handleCancel()
-    electronAPI.send('app:hideBusinessPopup')
-  }
-
-  dialogInstance.showModal({
-    slots: {
-      container: () => {
-        return <PaidPlan hide-fn={hideFn} />
-      },
-    },
-  })
-}
-
-requestIdleCallback(async () => {
-  isMainWindow.value = await electronAPI.send('app:isMainWindow')
-  if (isMainWindow.value) {
-    electronAPI.on('app:show-business-popup', () => {
-      showBusinessPopup()
-    })
-    emitter.on('showRoxyOperationNotice', showBusinessPopup)
-  } else {
-    hidePageLoading()
-  }
-})
-
-onMounted(() => {
-  electronAPI.send('web:ready')
-  console.log('web:ready')
-})
-
+setTimeout(() => {
+  isShowLiveChat.value = true
+}, 600)
 
 </script>
 
 <template>
   <Toast group="tr" />
+  <ConfirmPopup group="popup"></ConfirmPopup>
   <RxToastHeadless />
   <ConfirmDialog :pt="{ root: global.dialog }" />
   <!-- 删除确认弹窗 -->
@@ -83,10 +56,14 @@ onMounted(() => {
     </template>
   </ConfirmDialog>
   <DynamicDialog />
+  <!-- 只有在主窗口中显示的全局组件 -->
   <template v-if="isMainWindow">
     <!-- 通过邮箱邀请链接拉起弹窗 -->
     <InviteIntoWorkspace />
-    <LiveChat />
+    <!-- 帮助 -->
+    <Help v-if="$route.name !== 'login'" />
+    <PayWall />
+    <LiveChat v-if="isShowLiveChat" />
   </template>
 </template>
 

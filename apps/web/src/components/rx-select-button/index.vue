@@ -23,7 +23,8 @@ defineProps<Props>()
   background: var(--Color-neutrals-50, #fafbfc);
 
   :deep(.p-togglebutton) {
-    padding: var(--spacing-xs, 2px) 10px;
+    min-width: 64px;
+    padding: 2px var(--spacing-xl, 12px);
     border: 0.5px solid transparent;
     border-radius: 4px !important;
     background: var(--Colors-Alpha-alpha-white-0, rgba(255, 255, 255, 0));
@@ -44,6 +45,11 @@ defineProps<Props>()
       box-shadow:
         0px 4px 4px -1px rgba(0, 0, 0, 0.02),
         0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+    }
+
+    .p-togglebutton-content {
+      padding: 0;
+      box-shadow: none;
     }
   }
 }

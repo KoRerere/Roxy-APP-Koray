@@ -14,13 +14,13 @@ function formatKernelBtnLabel(item: ResourceUpdateMessage) {
     return `${$t('正在下载')} ${Math.floor(item.percent)}%`
   }
   else if (item.status === 'downloaded') {
-    return $t('升级完成')
+    return $t('下载完成')
   }
   else if (item.status === 'failed') {
     return $t('重试')
   }
   else {
-    return $t('升级')
+    return $t('下载')
   }
 }
 
@@ -51,8 +51,7 @@ function handleCollapsed(item: ResourceUpdateMessage) {
             </div>
           </div>
           <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-                    :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)"
-          />
+            :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
         </div>
         <rich-text :html="item.upgradeContent" class="updater-content" />
       </div>

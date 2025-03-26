@@ -4,9 +4,9 @@ import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales/index.js'
-import { filterFieldByValue, getFormDataByList, isEmptyValue, isFunction } from '/@/utils'
+import { getFormDataByList, isFunction } from '/@/utils'
 import { copyText } from '/@/utils/'
-import type { Accordions, MetaData } from './type.ts'
+import type { Accordions, WindowMetaData } from './type.ts'
 import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
@@ -41,7 +41,7 @@ const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRef
 
 const hasOuterMetadata = isFunction(onUpdateMetadata?.value)
 
-const innerMetaData = ref<MetaData>({
+const innerMetaData = ref<WindowMetaData>({
   projectName: $t('未指定项目'),
   projectId: undefined,
   labelIds: [],
@@ -50,9 +50,9 @@ const innerMetaData = ref<MetaData>({
 
 const metaData = computed({
   get() {
-    return (hasOuterMetadata ? outerMetadata.value : innerMetaData.value) as MetaData
+    return (hasOuterMetadata ? outerMetadata.value : innerMetaData.value) as WindowMetaData
   },
-  set(value: MetaData) {
+  set(value: WindowMetaData) {
     if (hasOuterMetadata) {
       (onUpdateMetadata?.value as any)(value)
     }
@@ -83,8 +83,7 @@ function onCopy(dirId: string) {
         <template #expandicon>
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
-          :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>

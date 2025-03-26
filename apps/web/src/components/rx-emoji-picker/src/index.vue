@@ -32,7 +32,8 @@ function handleClose(e: MouseEvent) {
 </script>
 
 <template>
-  <div v-bind="$attrs" :style="{ cursor: disabled ? 'not-allowed' : '' }" class="rx-emoji-picker" @click="showEmojiPicker">
+  <div v-bind="$attrs" :style="{ cursor: disabled ? 'not-allowed' : '' }" class="rx-emoji-picker"
+    @click="showEmojiPicker">
     <RxSvgIcon v-if="modelValue && !disabled" name="base/rx_ic_delete" class="close-icon" @click="handleClose" />
     <slot>
       <div class="default-box">
@@ -53,7 +54,7 @@ function handleClose(e: MouseEvent) {
 </template>
 
 <style lang="scss" module>
-  .popover {
+.popover {
   :global(.p-popover-content) {
     padding: 0;
   }
@@ -71,10 +72,11 @@ function handleClose(e: MouseEvent) {
     }
   }
 }
+
 .close-icon {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 2px;
+  right: 8px;
   font-size: 10px;
   display: none;
 }
@@ -109,7 +111,8 @@ function handleClose(e: MouseEvent) {
     font-size: 34px;
     font-style: normal;
     font-weight: 700;
-    line-height: 28px; /* 70% */
+    line-height: 28px;
+    /* 70% */
   }
 }
 </style>

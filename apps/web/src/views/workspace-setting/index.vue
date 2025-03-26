@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import type { DynamicDialogInstance } from 'primevue/dynamicdialogoptions'
 import InputText from 'primevue/inputtext'
 import { useConfirm } from 'primevue/useconfirm'
@@ -8,33 +9,39 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import RxButton from '/@/components/rx-button'
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { Role } from '/@/enums'
+import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import WorkspaceForm from './workspace-form.vue'
-import { useDialog as useCustomDialog } from '/@/hooks/useDialog'
-import { useUserStore } from '/@/stores/user'
+import { copyText, showPageLoading } from '/@/utils'
 
-const router = useRouter()
+const props = defineProps<{
+  workspaceInfo: UnwrapRowType<UserGetWorkspaceListListData>
+}>()
+
+const emit = defineEmits<{
+  delete: [],
+  save: [],
+  leave: [{ isCurrentWorkspace: boolean }],
+}>()
+
 const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
 const confirm = useConfirm()
 const [dialogInstance] = useCustomDialog()
+const { getWorkspaceList, currentWorkspace } = useWorkspaceStore()
 
 const userStore = useUserStore()
-const workspaceStore = useWorkspaceStore()
-const { isOwner } = storeToRefs(useRoleStore())
-const { currentWorkspace } = storeToRefs(workspaceStore)
 const moreActionPopoverRef = useTemplateRef('moreActionPopover')
 
 const errorMessage = ref('')
-const workspaceInfo = ref({
-  id: currentWorkspace.value?.id,
-  workspacePicture: currentWorkspace.value?.workspacePicture,
-  workspaceName: currentWorkspace.value?.workspaceName,
-  workspaceDefault: currentWorkspace.value?.workspaceDefault,
-})
+
+const workspaceInfo = ref({ ...props.workspaceInfo })
+const isOwner = computed(() => workspaceInfo.value.role === Role.OWNER)
 
 // watch(currentWorkspace, () => {
 //   workspaceInfo.value.id = currentWorkspace.value?.id
@@ -48,13 +55,18 @@ function showMoreActions(event: MouseEvent) {
   moreActionPopoverRef.value?.toggle(event)
 }
 
+function copyWorkspaceName() {
+  copyText(workspaceInfo.value.workspaceName)
+  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
+}
+
 function handleDeleteConfirm() {
   const workspaceName = ref('')
   dialog.open(() => {
     const dialogRef = inject<Ref<DynamicDialogInstance>>('dialogRef')!
 
     async function confirmDelete() {
-      const workspaceId = currentWorkspace.value!.id!
+      const workspaceId = workspaceInfo.value.id
       // 先删除本地空间的浏览器数据
       await electronAPI.send('util:removeWorkspace', workspaceId)
       const { code, msg } = await API.limit.userDelWorkspaceInfoCreate({
@@ -62,10 +74,11 @@ function handleDeleteConfirm() {
         workspaceId,
       })
       if (code === 0) {
-        workspaceStore.getWorkspaceList()
+        getWorkspaceList()
         userStore.fetchUserInfo()
         dialogRef.value.close()
         toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
+        emit('delete')
       }
       else {
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
@@ -76,7 +89,7 @@ function handleDeleteConfirm() {
       <div class={styles['delete-confirm']}>
         <div class={styles['delete-confirm-title']}>
           <I18nT keypath={$t('您确认要删除 {workspaceName} 工作空间吗？', { workspaceName: '{workspaceName}' })}>
-            {{ workspaceName: () => <b class="mx-1 select-text">{currentWorkspace.value?.workspaceName}</b> }}
+            {{ workspaceName: () => <b class="mx-1 cursor-pointer" onClick={copyWorkspaceName}>{workspaceInfo.value.workspaceName}</b> }}
           </I18nT>
         </div>
         <div class={styles['delete-confirm-content']}>
@@ -87,7 +100,7 @@ function handleDeleteConfirm() {
         <InputText v-model={workspaceName.value} class="w-full" placeholder={$t('请确认要删除的空间名称')} />
         <div class="w-full flex justify-end gap-2">
           <RxButton outlined label={$t('取消')} onClick={() => dialogRef.value.close()} />
-          <RxButton severity="danger" label={$t('删除空间')} disabled={workspaceName.value !== currentWorkspace.value?.workspaceName} onClick={confirmDelete} />
+          <RxButton severity="danger" label={$t('删除空间')} disabled={workspaceName.value !== workspaceInfo.value.workspaceName} onClick={confirmDelete} />
         </div>
       </div>
     )
@@ -106,8 +119,9 @@ async function handleSaveChange() {
 
   const { code, data, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value)
   if (code === 0) {
-    workspaceStore.getWorkspaceList()
+    getWorkspaceList()
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })
+    emit('save')
   } else if (code === 409) {
     dialogInstance.showModal({
       header: $t('各空间可创建总量大于账号本身的限额'),
@@ -141,11 +155,15 @@ function leaveWorkspace() {
       severity: 'danger',
     },
     accept: async () => {
-      const { code, msg } = await API.limit.userLeaveWorkspaceList()
+      const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
+      const { code, msg } = await API.limit.userLeaveWorkspaceList({ workspaceId: workspaceInfo.value.id })
       if (code === 0) {
         toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开工作空间'), life: 3000 })
-        await workspaceStore.getWorkspaceList()
-        router.push({ name: 'browser' })
+        if (isCurrentWorkspace) {
+          showPageLoading()
+        }
+        await getWorkspaceList()
+        emit('leave', { isCurrentWorkspace })
       }
       else {
         toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg, life: 3000 })
@@ -160,10 +178,10 @@ function leaveWorkspace() {
     <WorkspaceForm v-model:workspace-info="workspaceInfo" v-model:error-message="errorMessage" />
 
     <div class="footer">
-      <template v-if="isOwner && !currentWorkspace?.workspaceDefault">
+      <template v-if="isOwner && !workspaceInfo?.workspaceDefault">
         <RxButton outlined severity="secondary" icon="base/rx_ic_more-h" :label="$t('更多操作')" @click="showMoreActions" />
       </template>
-      <div class="flex justify-end" :class="{ 'w-full': !(isOwner && !currentWorkspace?.workspaceDefault) }">
+      <div class="flex justify-end" :class="{ 'w-full': !(isOwner && !workspaceInfo?.workspaceDefault) }">
         <RxButton v-if="isOwner" :label="$t('保存修改')" @click="handleSaveChange" />
         <RxButton v-else :label="$t('离开空间')" severity="danger" @click="leaveWorkspace" />
       </div>
@@ -248,7 +266,7 @@ function leaveWorkspace() {
   width: 100%;
   display: flex;
   width: 452px;
-  padding: var(--spacing-2xl, 16px) var(--spacing-none, 0px) var(--spacing-3xl, 20px) var(--spacing-none, 0px);
+  padding: var(--spacing-2xl, 16px) var(--spacing-none, 0px) 0 var(--spacing-none, 0px);
   justify-content: space-between;
   align-items: center;
 }
@@ -280,7 +298,6 @@ function leaveWorkspace() {
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
-    /* 123.077% */
   }
 }
 </style>

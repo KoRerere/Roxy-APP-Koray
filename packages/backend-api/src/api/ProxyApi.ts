@@ -95,7 +95,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserGetProxyTableSortOrderList
-   * @summary 获取代理列表排序规则
+   * @summary 获取代理列表排序规则（暂时没有用到）
    * @request GET:/user_get_proxy_table_sort_order
    * @response `200` `UserGetProxyTableSortOrderListData`
    */
@@ -111,7 +111,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserSaveProxyTableSortOrderCreate
-   * @summary 保存代理列表排序规则
+   * @summary 保存代理列表排序规则（暂时没有用到）
    * @request POST:/user_save_proxy_table_sort_order
    * @response `200` `UserSaveProxyTableSortOrderCreateData`
    */
@@ -163,7 +163,7 @@ export class ProxyApi<SecurityDataType = unknown> {
    *
    * @tags Proxy
    * @name UserGetProxyRecommendInfoList
-   * @summary 代理推荐列表
+   * @summary 代理推荐列表（暂时没有用到）
    * @request GET:/user_get_proxy_recommend_info
    * @response `200` `UserGetProxyRecommendInfoListData`
    */

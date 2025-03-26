@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DataTableRowContextMenuEvent } from 'primevue/datatable'
 import type { PageState } from 'primevue/paginator'
+import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
@@ -8,9 +9,8 @@ import { getFormData, isEmptyValue, isFunction, operationPower } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
-import TableSort from './table-sort.vue'
 import TableReload from './table-reload.vue'
-import type { SelectChangeEvent } from 'primevue/select'
+import TableSort from './table-sort.vue'
 
 defineOptions({
   inheritAttrs: false,
@@ -150,7 +150,6 @@ const selectionData = computed({
 })
 
 const cachedRows = Number(localStorage.getItem(`table:${props.cacheKey}`)) || 10
-console.log('route.query.page_index', route.query.page_index)
 const paginatorConfig = reactive({
   rows: cachedRows,
   first: cachedRows * ((Number(route.query.page_index) || 1) - 1),
@@ -179,7 +178,6 @@ const paginatorConfig = reactive({
     _request()
   },
 })
-console.log('paginatorConfig', paginatorConfig)
 const paginatorInfo = computed(() => $t('总计 {total} 个', {
   total: paginatorConfig.totalRecords,
 }))
@@ -308,18 +306,24 @@ defineExpose({
   clearSelection: _clearSelection,
   getParams: () => [_getParams(), (list: any) => { _dataList.value = list || [] }],
 })
+
+const slots: any = useSlots()
 </script>
 
 <template>
   <div ref="rootEl" class="position-relative w-full h-full flex flex-col" :class="$attrs.class">
     <div v-if="showTableHeader" class="flex items-start justify-between self-stretch rx-header">
       <slot name="table-header">
-        <div class="flex flex-1 gap-2">
+        <div class="flex flex-1 gap-2 flex-wrap">
+          <slot name="filter-before" />
           <TableFilter :filters="_filters" @change="onFilterChange" />
-          <slot name="header-extra" />
+          <slot name="filter-after" />
         </div>
         <div v-if="showDisplay" class="flex gap-2 items-center">
           <TableDisplay :columns="columns" @update:columns="$emit('update:columns', $event)">
+            <template #before>
+              <slot name="display-before" />
+            </template>
             <template #footer>
               <slot name="config-footer">
                 <TableSort v-if="_sorts.value && _sorts.value.length > 0" :sorts="_sorts.value" @sort="_onSortChange" />
@@ -333,12 +337,12 @@ defineExpose({
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
-        table: !tableList?.length ? 'flex-1' : '',
+        table: !tableList?.length ? 'flex-1 !h-full' : '',
         emptymessagecell: '!whitespace-normal !text-center',
         headerrow: Css_Module.headerrow,
         bodyrow: Css_Module.bodyrow,
       }" @row-contextmenu="onRowContextMenu">
-        <template v-for="(_, name) in $slots" #[name]="slotProps">
+        <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
         </template>
         <template #empty v-if="_firstLoad">
@@ -346,15 +350,19 @@ defineExpose({
         </template>
         <Column v-if="selectionMode" header-style="width: 3%"
           :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
-        <Column v-for="column in _columns" :key="column.key" :field="column.key" :header="column.title"
-          :header-style="column.style" :frozen="!!column.alignFrozen" :align-frozen="column.alignFrozen" :pt="{
+        <Column v-for="{ headerSlot, slot, render, ...column } in _columns" :key="column.key" :field="column.key"
+          :header="headerSlot ? '' : column.title" :header-style="column.style" :frozen="!!column.alignFrozen"
+          :align-frozen="column.alignFrozen" :pt="{
             columntitle: Css_Module.columntitle,
             headercell: Css_Module.headercell,
             bodycell: Css_Module.bodycell,
           }">
+          <template v-if="headerSlot" #header>
+            <slot :name="headerSlot" :data="column"></slot>
+          </template>
           <template #body="{ data }">
-            <slot :name="column.slot" :data="data">
-              <component :is="column.render" v-if="column.render" :data="data" />
+            <slot :name="slot" :data="data" :column="column">
+              <component :is="render" v-if="render" :data="data" :class="[Css_Module.columntitle, column.classes]" />
               <div v-else :style="{ width: `${column.width}px` || 'auto' }"
                 :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
@@ -362,8 +370,12 @@ defineExpose({
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" header="Actions" align-frozen="right" frozen
-          header-style="width: 9rem">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
+          header-style="width: 9rem" :pt="{
+            columntitle: Css_Module.columntitle,
+            headercell: Css_Module.headercell,
+            bodycell: Css_Module.bodycell,
+          }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
@@ -376,9 +388,7 @@ defineExpose({
           </template>
         </Column>
       </DataTable>
-      <div v-if="_loading" class="absolute inset-0 flex items-center justify-center z-10 bg-white/90">
-        <img class="w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
-      </div>
+      <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"

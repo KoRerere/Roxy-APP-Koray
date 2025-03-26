@@ -1,7 +1,7 @@
 import type { FormSchema } from './src/types/form'
 
 export * from './src/form'
-export { default as RxForm } from './src/form.vue'
+export { default as RxForm } from './src/rx-form.vue'
 
 export * from './src/types/form'
 

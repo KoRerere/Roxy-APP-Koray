@@ -22,7 +22,6 @@ async function detectNetwork() {
   proxyInfo.value.city = `${result.country_code}/${result.city}`
   proxyInfo.value.ip = result.ip
   setNetworkInfo(result)
-  console.log('result', result)
 }
 
 window.addEventListener('online', detectNetwork)

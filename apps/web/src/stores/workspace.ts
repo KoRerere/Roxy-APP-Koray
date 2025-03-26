@@ -4,9 +4,17 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
 import { Role } from '/@/enums'
+import { hidePageLoading, showPageLoading } from '/@/utils'
+import { useUserStore } from '/@/stores/user'
+import { useToast } from 'primevue/usetoast'
+import { $t } from '/@/locales'
+
+let hidePageLoadingTimeout: number
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
+  const userStore = useUserStore()
+  const toast = useToast()
 
   const currentWorkspace = ref<UnwrapRowType<UserGetWorkspaceListListData>>()
   const workspaceList = ref<UnwrapRowsType<UserGetWorkspaceListListData>>([])
@@ -16,9 +24,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     return defaultWorkspace.value.maxWindowCount - defaultWorkspace.value.useWindowCount
   })
 
+  const debounceGetPayInfo = debounce(() => {
+    userStore.getUserPayInfo()
+  }, 50)
+
   watch(currentWorkspace, (val, old) => {
     if (!val || val?.id === old?.id) return
+    clearTimeout(hidePageLoadingTimeout)
 
+    debounceGetPayInfo()
     const currentRoute = router.currentRoute.value
     // 如果当前路由是项目详情页，则跳转到项目列表页
     if (currentRoute.name === 'project-item') {
@@ -33,7 +47,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       window.electronAPI.send('user:setWorkspaceId', val.id)
       rememberLastWorkspace()
     }
-  })
+    hidePageLoadingTimeout = setTimeout(() => {
+      hidePageLoading()
+    }, 1200)
+  }, { flush: 'post' })
 
   /** 记住用户最后一次使用的工作空间 */
   const rememberLastWorkspace = debounce(() => {
@@ -42,8 +59,18 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   async function fetchWorkspaceList() {
     const result = await API.limit.userGetWorkspaceListList()
-    workspaceList.value = result.data.rows
-    updateCurrentWorkspace(result.data)
+    // 如果获取工作空间列表失败，则清除用户信息
+    if (result.code !== 0 || !result.data?.rows?.length) {
+      userStore.clearUserInfo()
+      router.push({ name: 'login' })
+      toast.add({
+        severity: 'error',
+        summary: $t('提示'),
+        detail: $t('获取工作空间列表失败，请重新登录'),
+        life: 5000,
+      })
+    }
+    workspaceList.value = result.data?.rows || []
     return result
   }
 
@@ -72,10 +99,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   /** 登录成功后，设置当前工作区 */
-  function setCurrentWorkspace(workspaceId: number) {
+  async function setCurrentWorkspace(workspaceId: number) {
+    showPageLoading()
+    if (!workspaceList.value.length) {
+      await fetchWorkspaceList()
+    }
     const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
     if (targetWorkspace) {
       currentWorkspace.value = targetWorkspace
+    } else {
+      currentWorkspace.value = defaultWorkspace.value
     }
   }
 

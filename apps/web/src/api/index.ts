@@ -9,6 +9,7 @@ import {
   ProxyApi,
   TeamApi,
   WindowApi,
+  PayApi,
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { handleRequest, handleResponse } from '/@/api/util'
@@ -86,6 +87,13 @@ httpClient.instance.interceptors.response.use(async (response) => {
     router.push({ name: 'login' })
     return response
   }
+  // 没有空间权限或被移出空间
+  else if (code === 418) {
+    const { defaultWorkspace, setCurrentWorkspace, fetchWorkspaceList } = useWorkspaceStore()
+    setCurrentWorkspace(defaultWorkspace!.id!)
+    fetchWorkspaceList()
+    return response
+  }
   const { config } = response
   if (config.headers.token) {
     handleResponseHeaders(response)
@@ -104,4 +112,5 @@ export const API = {
   platform: new PlatformApi(httpClient),
   limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),
+  pay: new PayApi(httpClient),
 }

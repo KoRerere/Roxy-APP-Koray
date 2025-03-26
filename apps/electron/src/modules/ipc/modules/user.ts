@@ -6,6 +6,7 @@ import { IPCMainInstance } from "/@/modules/ipc/types"
 import { openAPIServer } from "/@/modules/openapi"
 import { fetchUserConfig, store } from "/@/modules/store"
 import { aliOSS } from "/@/utils"
+import { closeSyncControl } from "/@/modules/ipc/modules/syncControl"
 
 export function setupUserIpc(ipcMain: IPCMainInstance) {
 
@@ -14,17 +15,14 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     store.token = userInfo.token
     store.userId = userInfo.userId
     // 重新获取用户配置
-    fetchUserConfig().then(() => {
-      if (store.isShowBusinessDialog) {
-        ipcMain.send('app:show-business-popup')
-      }
-    })
+    fetchUserConfig()
     openAPIServer.start()
     // aliOSS.init()
   })
 
   /** 登录成功后，保存用户信息 */
   ipcMain.on('user:logout', (event,) => {
+    closeSyncControl()
     browserManager.closeAll().finally(() => {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')

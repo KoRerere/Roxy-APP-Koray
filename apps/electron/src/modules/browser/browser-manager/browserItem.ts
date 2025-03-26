@@ -2,6 +2,7 @@ import mitt from 'mitt'
 import { createReadStream } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { EventEmitter } from 'node:events'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { getInvalidUrls, needSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
@@ -17,8 +18,8 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 
-// webpack 5 之后，不再支持直接引入 es6 模块，需要使用 default 属性
-const emitter: ReturnType<typeof mitt> = mitt?.default?.() || mitt()
+// 创建一个事件发射器
+const emitter = new EventEmitter()
 
 export type LaunchBy = 'app' | 'api'
 
@@ -26,8 +27,16 @@ export class BrowserItem {
   beforeLaunchTask!: BeforeLaunchTask
   private afterLaunchTask!: AfterLaunchTask
 
-  on = emitter.on
-  off = emitter.off
+  on = (event: string, listener: (...args: any[]) => void) => {
+    emitter.on(event, listener)
+    return this
+  }
+
+  off = (event: string, listener: (...args: any[]) => void) => {
+    emitter.off(event, listener)
+    return this
+  }
+
   /** 通过哪种方式启动的浏览器 */
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
@@ -157,8 +166,6 @@ export class BrowserItem {
       this.beforeLaunchTask = new BeforeLaunchTask(this)
       // 拉起浏览器
       await this.beforeLaunchTask.run()
-      // 记录浏览器进程 ID
-      this.browserPid = this.#browser?.process()?.pid
       // 创建启动后任务
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
       // 异步执行启动后的任务, 不需要等待
@@ -167,6 +174,8 @@ export class BrowserItem {
 
     // 浏览器关闭时，需要上传本地数据和状态
     this.#browser?.on('disconnected', this.handleOnDisconnected)
+    // 记录浏览器进程 ID
+    this.browserPid = this.#browser?.process()?.pid
   }
 
   /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
@@ -175,12 +184,13 @@ export class BrowserItem {
     emitter.emit(`close-${dirId}`)
     removeSyncWindowByPid(this.browserPid!)
     try {
-      delRoxynetProxy(dirId)
       await this.uploadData()
       this.uploadDataPromiser.resolve(true)
     }
     catch (error) {
       this.uploadDataPromiser.reject(error)
+    } finally {
+      delRoxynetProxy(dirId)
     }
   }
 
@@ -188,15 +198,12 @@ export class BrowserItem {
   async close() {
     if (this.#browser) {
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
-      const pid = this.#browser.process()?.pid
       await this.#browser.close().finally(async () => {
-        if (pid) {
-          try {
-            process.kill(pid)
-          }
-          catch (error) {
-            // $console.error(`kill browser process`, error);
-          }
+        try {
+          process.kill(this.browserPid!)
+        }
+        catch (error) {
+          // $console.error(`kill browser process`, error);
         }
       })
       this.beforeLaunchTask.browser = null

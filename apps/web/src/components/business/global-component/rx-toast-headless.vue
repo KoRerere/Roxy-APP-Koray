@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { isString } from 'es-toolkit'
 import type { SvgNames } from '../../rx-icon'
 
 const iconMap: Record<string, SvgNames> = {
   success: 'base/rx_ic_check_fill',
-  warn: 'base/rx_ic_delete_fill',
+  warn: 'base/rx_ic_info_fill',
   error: 'base/rx_ic_info_fill',
   info: 'base/rx_ic_warn_fill',
 }
@@ -72,8 +73,7 @@ function cacheToast(slotData: Recordable) {
   <Toast position="top-center" unstyled :pt="{ root: 'translate-x-[-50%]' }">
     <template #container="{ message, closeCallback }">
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
-        <section class="alert" :data-life="cacheToast({ message, closeCallback })"
-          @mouseenter="handleMouseenter({ message, closeCallback })"
+        <section class="alert" :data-life="cacheToast({ message, closeCallback })" @mouseenter="handleMouseenter({ message, closeCallback })"
           @mouseleave="handleMouseleave({ message, closeCallback })">
           <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
@@ -83,7 +83,10 @@ function cacheToast(slotData: Recordable) {
               {{ message.summary }}
             </div>
             <div v-if="message.detail" class="alert-message">
-              {{ message.detail }}
+              <template v-if="isString(message.detail)">
+                {{ message.detail }}
+              </template>
+              <component v-else :is="message.detail" />
             </div>
           </div>
           <div class="alert-close">
@@ -184,6 +187,7 @@ function cacheToast(slotData: Recordable) {
     font-style: normal;
     font-weight: 400;
     line-height: 18px;
+    word-break: normal;
     /* 150% */
   }
 }
