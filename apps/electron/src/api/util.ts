@@ -36,7 +36,12 @@ export function handleResponse(response: AxiosResponse<any, any>) {
 let lastRequestTime = 0
 let lastWebDomain = ''
 /** 获取 webDomain, 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
-export async function getWebDomain() {
+export async function getWebDomain(force = true) {
+  // 如果 force 为 false，则不强制更新 webDomain
+  if (!force) {
+    return lastWebDomain
+  }
+
   if (lastWebDomain && Date.now() - lastRequestTime < 1000 * 60 * 5) {
     return lastWebDomain
   }

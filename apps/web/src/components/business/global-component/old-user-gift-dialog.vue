@@ -17,19 +17,19 @@ const giftInfo = computed(() => {
 
   if (userInfo.identity === 'old') {
     return {
-      name: $t('尊敬的创始用户'),
+      name: $t('尊贵的创始用户'),
       count: 200,
       ratio: 40,
     }
   } else if (userInfo.identity === 'invited') {
     return {
-      name: $t('尊敬的特邀用户'),
+      name: $t('尊贵的特邀用户'),
       count: 100,
       ratio: 20,
     }
   } else if (userInfo.identity === 'new') {
     return {
-      name: $t('尊敬的 Roxy 用户'),
+      name: $t('尊贵的 Roxy 用户'),
       count: 0,
       ratio: 0,
     }

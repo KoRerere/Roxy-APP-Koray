@@ -39,7 +39,7 @@ const sliderTrack = useTemplateRef('slider')
 const thumbExtra = useTemplateRef('thumbex')
 
 const currentPosition = computed(() => getPosition(selectedValue.value))
-
+const currentCount = computed(() => formatNumber(selectedValue.value))
 // 额外提示框的位置，处理边界情况
 const thumbExtraPosition = computed(() => {
   if (!sliderTrack.value || !thumbExtra.value)
@@ -377,7 +377,7 @@ onMounted(() => {
       <div class="absolute top-1/2 -translate-1/2 thumb" :class="[isDragging ? 'thumb-dragging' : '']" :style="{
         left: `${currentPosition}%`,
         transition: isDragging ? 'none' : 'all 0.3s ease',
-      }" :data-count="formatNumber(selectedValue)">
+      }" :data-count="currentCount">
         <div class="cursor-grab active:cursor-grabbing thumb-tooltip" />
         <!-- Thumb Extra -->
         <div ref="thumbex" class="absolute top-15" :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">
@@ -407,17 +407,12 @@ onMounted(() => {
   }
 
   &::before {
-    opacity: 0;
     content: attr(data-count);
     position: absolute;
     top: -110%;
     left: 50%;
     transform: translateX(-50%);
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
     padding: var(--spacing-sm, 4px) var(--spacing-lg, 8px);
-    min-width: 32px;
     border-radius: var(--radius-sm, 4px);
     background: var(--Color-neutrals-900, #171c1f);
     box-shadow:
@@ -426,11 +421,11 @@ onMounted(() => {
       0px 1px 1px 0px rgba(0, 0, 0, 0.07);
     color: var(--Color-neutrals-0, #fff);
     text-align: center;
-    font-family: Inter;
     font-size: 12px;
     font-weight: 600;
     line-height: var(--Line-Height-text-xs, 16px);
     transition: opacity 0.3s ease;
+    white-space: nowrap;
   }
 
   &-tooltip {

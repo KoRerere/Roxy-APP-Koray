@@ -56,7 +56,7 @@ export const webUpdater = new class WebUpdater {
   }
 
   constructor() {
-    // this.startInterval()
+    this.startInterval()
   }
 
   async startInterval() {
@@ -80,7 +80,7 @@ export const webUpdater = new class WebUpdater {
     this.isInProgress = true
     console.log('[WebUpdater] checkForUpdates start')
     try {
-      this.webDomain = await getWebDomain()
+      this.webDomain = await getWebDomain(false)
       // 获取远程版本信息
       const remoteVersionInfo = await axios.get<VersionInfo>(this.versionUrl).then(response => response.data)
       console.log('[WebUpdater] remoteVersionInfo', remoteVersionInfo)

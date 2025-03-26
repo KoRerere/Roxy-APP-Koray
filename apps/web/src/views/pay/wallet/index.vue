@@ -80,6 +80,7 @@ const planActions = computed(() => [
         showHeader: false,
         modal: true,
         blockScroll: true,
+        innerDialog: true,
         pt: {
           content: '!pa-0'
         },

@@ -114,7 +114,7 @@ async function showCreateWorkspaceDialog() {
       {{ $t('我的工作空间') }}
     </div>
     <div class="description">
-      {{ $t('* 您在 Roxy 中的权益，如窗口用量，成员额度等，于自己的空间内共用') }}
+      {{ $t('* 您在 Roxy 中的权益(如窗口用量，成员额度等)，于自己创建的工作空间内共用。') }}
     </div>
     <WorkspaceList :list="workspaceGroup.owner" @enterWorkspace="hideFn" />
     <RxButton severity="secondary" outlined class="w-full" size="md" @click="showCreateWorkspaceDialog">
@@ -126,7 +126,7 @@ async function showCreateWorkspaceDialog() {
       {{ $t('加入的工作空间') }}
     </div>
     <div class="description">
-      {{ $t('* 加入的空间中的窗口用量，成员额度等，取决于空间拥有者的权益') }}
+      {{ $t('* 您加入工作空间中的权益(如:窗口用量，成员额度等)，取决于空间拥有者的权益。') }}
     </div>
     <WorkspaceList :list="workspaceGroup.member" type="member" @enterWorkspace="hideFn" />
   </div>

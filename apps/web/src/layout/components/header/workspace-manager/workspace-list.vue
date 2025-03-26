@@ -54,7 +54,8 @@ function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>) {
     <template v-for="item in list" :key="item.id">
       <div class="workspace-item">
         <div class="workspace-item-info">
-          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
+          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
+            :style="getAvatarStyle(item.workspacePicture)"
             :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
           <div class="workspace-item-detail">
             <div class="detail-header">
@@ -70,14 +71,15 @@ function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>) {
               </div>
             </div>
             <div v-if="type !== 'member'" class="detail-footer">
-              {{ $t('窗口用量: ') }} {{ item.useWindowCount }}
+              {{ $t('窗口已用量: ') }} {{ item.useWindowCount }}
               <div class="divide"></div>
               {{ $t('成员: ') }} {{ item.useMemberCount }}
             </div>
           </div>
         </div>
         <div class="workspace-item-actions">
-          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id" @click="enterWorkspace(item)">
+          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id"
+            @click="enterWorkspace(item)">
             {{ item.id === currentWorkspace?.id ? $t('当前空间') : $t('进入空间') }}
           </RxButton>
           <RxButton severity="secondary" outlined size="md" @click="showEditWorkspaceDialog(item)">

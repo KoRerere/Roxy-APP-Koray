@@ -226,6 +226,7 @@ async function hidePopover() {
               {{ item.label }}
             </div>
           </Tab>
+          <Tab class="!pa-0 opacity-0" :value="trash.id"></Tab>
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1">
@@ -318,7 +319,7 @@ async function hidePopover() {
   }
 
   &-trash {
-    margin: 0 var(--spacing-2xl, 16px);
+    margin-right: 16px;
     padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Text-text-secondary, #575d61);

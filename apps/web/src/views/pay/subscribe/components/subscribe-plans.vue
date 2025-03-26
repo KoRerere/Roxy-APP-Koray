@@ -13,14 +13,19 @@ const { list } = defineProps<Props>()
 
 const { userPayInfo } = storeToRefs(useUserStore())
 
-const subscribePlans = computed(() => Object.values((list || []).reduce((acc, item) => {
-  acc[item.subLevel] ??= { ...item }
-  acc[item.subLevel].windowPrice = Math.min(acc[item.subLevel].windowPrice!, item.windowPrice)
-  acc[item.subLevel].minWindows = Math.min(acc[item.subLevel].minWindows!, item.minWindows)
-  acc[item.subLevel].maxWindows = Math.max(acc[item.subLevel].maxWindows!, item.maxWindows)
-  return acc
-}, { free: { subLevel: 'Free', logDays: 3, apiRate: 50, disabled: true } } as Record<string, Partial<Plan>>)))
+const subscribePlans = computed(() => {
+  const { maxWindowCount, freeWindowCount } = userPayInfo.value
+  const currentWindowCount = currency(maxWindowCount).subtract(freeWindowCount).value
 
+  return Object.values((list || []).reduce((acc, item) => {
+    acc[item.subLevel] ??= { ...item }
+    acc[item.subLevel].windowPrice = Math.min(acc[item.subLevel].windowPrice!, item.windowPrice)
+    acc[item.subLevel].minWindows = Math.min(acc[item.subLevel].minWindows!, item.minWindows)
+    acc[item.subLevel].maxWindows = Math.max(acc[item.subLevel].maxWindows!, item.maxWindows)
+    acc[item.subLevel].disabled = !userPayInfo.value.isAuto && currentWindowCount > acc[item.subLevel].maxWindows!
+    return acc
+  }, { free: { subLevel: 'Free', logDays: 3, apiRate: 50, disabled: true } } as Record<string, Partial<Plan>>))
+})
 
 function onSwitchPlan(plan: Partial<Plan>) {
   if (plan.disabled) return

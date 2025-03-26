@@ -10,6 +10,7 @@ import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
 import router from "/@/router";
 import { useToast } from "primevue/usetoast";
+import { SubLevelEnum } from "/@/enums/pay";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -168,6 +169,10 @@ export const useUserStore = defineStore(
           if (data.showGiftDlg) {
             emitter.emit('showOldUserGiftDialog')
           }
+        }
+        // 免费用户或者过期用户，关闭窗口同步器
+        if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
+          electronAPI.send('syncControl:close');
         }
       }
     }
