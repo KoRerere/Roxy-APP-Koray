@@ -137,25 +137,25 @@ export enum SubLevelEnum {
 
 export const SubLevelEnumStr = {
   get [SubLevelEnum.Free]() {
-    return 'Free';
+    return $t('免费');
   },
   get [SubLevelEnum.Expired]() {
-    return 'Expired';
+    return $t('已过期');
   },
   get [SubLevelEnum.Trial]() {
-    return '7-Day Trial';
+    return $t('7天试用');
   },
   get [SubLevelEnum.Basic]() {
-    return 'Basic';
+    return $t('基础版');
   },
   get [SubLevelEnum.Pro]() {
-    return 'Pro';
+    return $t('专业版');
   },
   get [SubLevelEnum.Business]() {
-    return 'Business';
+    return $t('商业版');
   },
   get [SubLevelEnum.Enterprise]() {
-    return 'Enterprise';
+    return $t('企业版');
   },
 };
 
