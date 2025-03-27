@@ -15,6 +15,11 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     return browserManager.batchClose(dirIds)
   })
 
+  /** 关闭所有浏览器 */
+  ipcMain.on('browser:closeAll', (event) => {
+    return browserManager.closeAll()
+  })
+
   /** 批量重启浏览器 */
   ipcMain.on('browser:batchRelaunch', (event, dirIds) => {
     return browserManager.batchReLaunch(dirIds)

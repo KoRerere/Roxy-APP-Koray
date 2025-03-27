@@ -525,34 +525,38 @@ export class BeforeLaunchTask {
           'Cookies',
         )
 
-        try {
-          console.log('cookieFilePath: ', cookieFilePath)
-          await rm(cookieFilePath, { recursive: true })
-          console.log('cookieFilePath 删除成功')
+        if (await fileExists(cookieFilePath)) {
+          try {
+            console.log('cookieFilePath: ', cookieFilePath)
+            await rm(cookieFilePath, { recursive: true })
+            console.log('cookieFilePath 删除成功')
+          }
+          catch (err) {
+            this.warningMessages.push($t('cookie文件删除失败'))
+            console.log(`cookieFilePath 删除失败`, err)
+          }
         }
-        catch (err) {
-          this.warningMessages.push($t('cookie文件删除失败'))
-          console.log(`cookieFilePath 删除失败`, err)
-        }
-      }
 
-      console.log(`是否清空 localStorage:${clearLocalStorage}`)
-      // 当清空缓存先删除
-      if (clearLocalStorage) {
-        const localStorageFilePath = join(
-          this.browserItem.userDataDir,
-          'Default',
-          'Local Storage',
-        )
+        console.log(`是否清空 localStorage:${clearLocalStorage}`)
+        // 当清空缓存先删除
+        if (clearLocalStorage) {
+          const localStorageFilePath = join(
+            this.browserItem.userDataDir,
+            'Default',
+            'Local Storage',
+          )
 
-        try {
-          console.log('localStorageFilePath: ', localStorageFilePath)
-          await rm(localStorageFilePath, { recursive: true })
-          console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
-        }
-        catch (err) {
-          console.log(`localStorage_fileUrl 删失败`, err)
-          this.warningMessages.push($t('localStorage文件删除失败'))
+          if (await fileExists(localStorageFilePath)) {
+            try {
+              console.log('localStorageFilePath: ', localStorageFilePath)
+              await rm(localStorageFilePath, { recursive: true })
+              console.log('localStorage_fileUrl 删除成功', localStorageFilePath)
+            }
+            catch (err) {
+              console.log(`localStorage_fileUrl 删失败`, err)
+              this.warningMessages.push($t('localStorage文件删除失败'))
+            }
+          }
         }
       }
     }

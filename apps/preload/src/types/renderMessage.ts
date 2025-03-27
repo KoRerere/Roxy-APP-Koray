@@ -56,6 +56,8 @@ export interface RenderMessage {
   "browser:batchRelaunch": (dirIds: string[]) => void;
   /** 批量关闭窗口 */
   "browser:batchClose": (dirIds: string[]) => void;
+  /** 关闭所有窗口 */
+  "browser:closeAll": () => void;
   /** 批量删除窗口 */
   "browser:batchRemove": (dirIds: string[]) => void;
   /** 获取已打开的窗口 */

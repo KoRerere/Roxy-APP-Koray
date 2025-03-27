@@ -12,6 +12,7 @@ import { MENU_COLLAPSED } from '../constants/storage-key'
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const userStore = useUserStore()
 const { userPayInfo } = storeToRefs(userStore)
+const router = useRouter()
 
 // 订阅到期时间，3 天前显示天
 const remainTime = ref(0)
@@ -74,7 +75,7 @@ function calcSubscriptionExpired() {
 
 setTimeout(calcSubscriptionExpired, 5000)
 // 每 30 秒计算一次订阅到期时间
-let timer = setInterval(calcSubscriptionExpired, 30 * 1000)
+let timer = setInterval(calcSubscriptionExpired, 10 * 1000)
 
 onBeforeMount(() => {
   getAnnt()
@@ -85,11 +86,16 @@ onBeforeUnmount(() => {
 })
 
 function onRenewal() {
-  emitter.emit('showRenewalDialog', {
-    paySuccess: () => {
-      emitter.emit('updateBillList')
-    }
-  })
+  // 如果是试用，则跳转到订阅页面
+  if (userPayInfo.value?.isTrial === 2) {
+    router.push({ name: 'subscribe-plan' })
+  } else {
+    emitter.emit('showRenewalDialog', {
+      paySuccess: () => {
+        emitter.emit('updateBillList')
+      }
+    })
+  }
 }
 </script>
 
@@ -127,7 +133,9 @@ function onRenewal() {
               :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
               scope="global">
               <template #link>
-                <span class="font-bold underline cursor-pointer" @click="onRenewal">{{ $t('前往续费') }}</span>
+                <span class="font-bold underline cursor-pointer" @click="onRenewal">
+                  {{ userPayInfo.isTrial === 2 ? $t('前往购买') : $t('前往续费') }}
+                </span>
               </template>
             </i18n-t>
           </template>

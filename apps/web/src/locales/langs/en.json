@@ -323,6 +323,7 @@
   "前往支付": "Proceed to Payment",
   "前往登录": "Login",
   "前往续费": "Proceed to Renewal",
+  "前往购买": "",
   "前往验证": "Go to Verify",
   "功能概述": "Feature Overview",
   "加入工作空间": "Join Workspace",
@@ -577,6 +578,7 @@
   "您已达到最大窗口打开次数限制，{link}": "You have reached the maximum profile opening limit, {link}",
   "您已达到最大项目创建限制，可通过删除不再使用的项目或{link}": "You have reached the maximum project creation limit. You can delete unused projects or {link}",
   "您当前拥有: {member} 团队成员, {workspace} 工作空间": "You currently have: {member} team members, {workspace} workspaces",
+  "您当前有 {count} 个窗口正在使用中，切换空间将关闭这些窗口，是否继续？": "You currently have {count} profiles in use. Switching spaces will close these profiles. Do you want to continue?",
   "您当日的扩展上传数量已达上限": "You have reached the daily upload limit for extensions",
   "您暂未加入任何工作空间": "You haven't joined any workspaces yet",
   "您点击了关闭按钮，您确定：": "You clicked the close button and you are sure:",
@@ -937,6 +939,7 @@
   "窗口导入": "Import Profile",
   "窗口导入模板": "Profile Import Template",
   "窗口尺寸": "Window Size",
+  "窗口已用量: ": "Profile usage: ",
   "窗口布局": "Layout",
   "窗口总价将通过各个区间的 数量×对应单价 进行累加计算": "Total profile price is calculated by summing (quantity × corresponding unit price) for each range",
   "窗口恢复": "Restore Profile",
@@ -947,7 +950,6 @@
   "窗口模板": "Profile Templates",
   "窗口模板功能支持保存配置环境的系统、内核、UA、基础设置、高级指纹设置及偏好设置中的各种参数": "Profile template feature supports saving various parameters from system configuration, kernel, UA, basic settings, advanced fingerprint settings, and preferences",
   "窗口用量": "Profile usage",
-  "窗口已用量: ": "Profile usage: ",
   "窗口用量不足": "Insufficient Profile Quota",
   "窗口自动布局、同步窗口标签页、模拟键盘鼠标输入": "Automatic profile layout, synchronized profile tabs, simulated keyboard/mouse input",
   "窗口转移（即将推出）": "Profile Transfer (coming soon)",
@@ -1269,5 +1271,6 @@
   "默认 IP 查询渠道": "Default IP Query Channel",
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
-  "默认项目": "Default project"
+  "默认项目": "Default project",
+  "修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。": "Modifying the kernel may cause cache incompatibility and invalidate your login information. Please proceed with caution."
 }

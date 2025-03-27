@@ -197,6 +197,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         if (item.value) {
           await setUaWebgl(inputsGroup)
         }
+        if (data.dirId) {
+          item.help = data.coreVersion !== item.value.value
+            ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
+            : ''
+        }
       },
     },
     {

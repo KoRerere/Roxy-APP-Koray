@@ -175,7 +175,7 @@ export class BrowserItem {
     // 浏览器关闭时，需要上传本地数据和状态
     this.#browser?.on('disconnected', this.handleOnDisconnected)
     // 记录浏览器进程 ID
-    this.browserPid = this.#browser?.process()?.pid
+    this.browserPid = this.#browser?.process()?.pid || this.browserPid
   }
 
   /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
