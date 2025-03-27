@@ -15,6 +15,7 @@ export const httpClient = new HttpClient({
   // baseURL: 'https://lumitest.lumibrowser.com/',
   timeout: 15000,
   // httpsAgent: agent,
+  // adapter: 'fetch',
 })
 
 let commonRequestHeaders

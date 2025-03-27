@@ -536,7 +536,7 @@
   "当前空间下的团队成员数量已到达上限，请删除不再活跃的团队成员或者联系空间的拥有者进行升级。": "The maximum number of team members has been reached in the current workspace. Please delete inactive team members or contact the workspace owner to upgrade.",
   "当前空间下的窗口打开次数已到达上限，请删除不再使用的窗口或者联系空间的拥有者进行升级。": "The maximum number of profile openings has been reached in the current workspace. Please delete unused profiles or contact the workspace owner to upgrade.",
   "当前空间下的项目数量已到达上限，请删除不再使用的项目或者联系空间的拥有者进行升级。": "The maximum number of projects has been reached in the current workspace. Please delete unused projects or contact the workspace owner to upgrade.",
-  "当前系统不支持使用该内核": "Current system does not support this kernel",
+  "当前系统不支持使用{version}内核": "Current system does not support using {version} kernel",
   "当前设备": "Current Device",
   "当前账号于 {time} 在 {deviceName} 设备上登录。": "Your account was accessed on {deviceName} at {time}.",
   "当前选择绑定的代理数量已超过创建窗口数。": "Chosen proxies exceed the number of profiles you create.",
