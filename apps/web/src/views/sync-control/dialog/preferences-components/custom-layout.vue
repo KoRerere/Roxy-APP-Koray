@@ -97,8 +97,8 @@ const monitorOptions = ref([]);
 // });
 
 electronAPI.send('syncControl:getMainControlBrowserSize').then((result) => {
-  formData.value.w = result?.width || 0;
-  formData.value.h = result?.height || 0;
+  formData.value.w ||= result?.width || 0;
+  formData.value.h ||= result?.height || 0;
 });
 </script>
 

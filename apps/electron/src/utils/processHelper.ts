@@ -1,4 +1,7 @@
 import { exec } from 'node:child_process'
+import { normalize } from 'node:path'
+import { appConfig } from '/@/constants'
+import os from 'node:os'
 
 /**
  * 关闭指定进程名称的进程
@@ -53,7 +56,11 @@ export function getProcessIdsByExePath(processPath: string) {
      */
     const matchingProcesses = lines
       .map(line => line.trim().split(/\s{2,}/)) // 分割每行，获取执行路径和进程ID
-      .filter(parts => parts[0] === processPath) // 过滤出匹配指定路径的进程
+      .filter(parts => {
+        const exePath = normalize(String.raw`${parts[0]}`).toLocaleLowerCase()
+        console.log("exePath", exePath, processPath.toLocaleLowerCase())
+        return exePath.includes(processPath.toLocaleLowerCase())
+      }) // 过滤出匹配指定路径的进程
       .map(parts => Number(parts[1]))
 
     if (matchingProcesses.length > 0) {
@@ -87,3 +94,113 @@ export async function isProcessExists(pids: number[]): Promise<boolean[]> {
 
   return promise
 }
+
+
+/**
+ * 查找占用某个句柄的进程
+ *
+ * 示例：查找占用 `test.txt` 句柄的进程
+ *
+ * findProcessByHandle('test.txt')
+ *   .then(processes => console.log(processes))
+ *   .catch(err => console.error(err));
+ *
+ * */
+export function findProcessByHandle(handleName: string) {
+  const { promise, resolve, reject } = Promise.withResolvers<{ name: string; pid: number }[] | null>()
+
+  let command;
+  if (os.platform() === 'win32') {
+    command = `${appConfig.handleExePath} /accepteula ${handleName}`;
+  } else {
+    // 在 Unix/Linux/macOS 上使用 lsof
+    command = `lsof | grep ${handleName}`;
+  }
+
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error('获取进程失败:', stderr);
+      return reject(error);
+    }
+
+    const lines = stdout.split('\n');
+    const processes: { name: string; pid: number }[] = [];
+
+    lines.forEach(line => {
+      let match;
+      if (os.platform() === 'win32') {
+        match = line.match(/^(.+?)\s+pid:\s+(\d+)/);
+      } else {
+        match = line.match(/^(\S+)\s+(\d+)/); // 解析 lsof 输出
+      }
+
+      if (match) {
+        const processName = match[1].trim();
+        const pid = parseInt(match[2], 10);
+
+        if (!ignoredProcesses.includes(processName.toLowerCase())) {
+          processes.push({ name: processName, pid });
+        }
+      }
+    });
+
+    resolve(processes.length ? processes : null);
+  });
+
+  return promise
+}
+
+
+// 过滤掉系统关键进程，不尝试终止这些重要的系统进程
+const ignoredProcesses = [
+  // Windows 系统进程
+  'explorer.exe',      // Windows 资源管理器
+  'system',            // Windows 系统进程
+  'smss.exe',          // Windows 会话管理器
+  'csrss.exe',         // Windows 客户端/服务器运行时子系统
+  'wininit.exe',       // Windows 初始化进程
+  'services.exe',      // Windows 服务控制管理器
+  'lsass.exe',         // Windows 本地安全认证服务
+  'winlogon.exe',      // Windows 登录进程
+  'svchost.exe',       // Windows 服务主机
+  'taskmgr.exe',       // Windows 任务管理器
+  'dwm.exe',           // Windows 桌面窗口管理器
+  'taskhost.exe',      // Windows 任务主机
+  'conhost.exe',       // Windows 控制台窗口主机
+  'ctfmon.exe',        // Windows CTF监视器
+  'rundll32.exe',      // Windows 运行DLL
+  'dllhost.exe',       // Windows DLL主机
+  'sihost.exe',        // Windows Shell基础设施主机
+  'fontdrvhost.exe',   // Windows 字体驱动主机
+  'SearchHost.exe',    // Windows 搜索主机
+  'SearchApp.exe',     // Windows 搜索应用
+  'ShellExperienceHost.exe',  // Windows Shell体验主机
+  'StartMenuExperienceHost.exe', // Windows 开始菜单体验主机
+  'RuntimeBroker.exe', // Windows 运行时代理
+
+  // macOS 系统进程
+  'launchd',           // macOS 系统初始化进程
+  'kernel_task',       // macOS 内核任务
+  'WindowServer',      // macOS 窗口服务器
+  'Finder',            // macOS 文件管理器
+  'Dock',              // macOS 程序坞
+  'SystemUIServer',    // macOS 系统UI服务器
+  'loginwindow',       // macOS 登录窗口
+  'coreaudiod',        // macOS 核心音频
+  'mds',               // macOS 元数据服务器
+  'opendirectoryd',    // macOS 开放目录服务
+  'powerd',            // macOS 电源管理
+  'securityd',         // macOS 安全服务
+  'syslogd',           // macOS 系统日志
+  'distnoted',         // macOS 分布式通知中心
+  'cfprefsd',          // macOS 核心基础配置数据
+
+  // 通用/跨平台进程
+  'chrome.exe',        // Google Chrome 浏览器（可能被用作系统浏览器）
+  'firefox.exe',       // Firefox 浏览器
+  'msedge.exe',        // Microsoft Edge 浏览器
+  'safari',            // Safari 浏览器
+  'antivirus',         // 通用防病毒软件名称匹配
+  'defender',          // Windows Defender
+  'firewall'           // 防火墙程序
+];

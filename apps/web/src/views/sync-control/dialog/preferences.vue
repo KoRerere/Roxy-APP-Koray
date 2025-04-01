@@ -104,7 +104,6 @@ function saveSettings() {
 
 onMounted(async () => {
   const userSetting = await getUserConfig()
-  isLoaded.value = true
   if (userSetting?.preferenceSettings) {
     Object.keys(formData.value).forEach(key => {
       if (Reflect.has(userSetting.preferenceSettings!, key)) {
@@ -112,6 +111,7 @@ onMounted(async () => {
       }
     })
   }
+  isLoaded.value = true
   setTimeout(() => {
     const tablistEl = document.querySelector('.p-tablist')
     console.log('tablistEl scrollWidth', tablistEl?.scrollWidth, 'clientWidth', tablistEl?.clientWidth)

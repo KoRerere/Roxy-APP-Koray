@@ -11,7 +11,8 @@ import { osConfig } from "/@/constants";
 import { appConfig } from "/@/constants/appConfig";
 import { browserManager } from "/@/modules/browser/browser-manager";
 import { ipcMain } from "/@/modules/ipc";
-import { downloadZipFile, fileExists, isMac, unzipFile } from "/@/utils";
+import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, isMac, unzipFile } from "/@/utils";
+import { setTimeout } from "node:timers/promises";
 
 export const chromeCoreManager = new (class ChromeCoreManager {
   /** 拉取内核 promise */
@@ -190,12 +191,26 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       coreVersion,
     };
 
+    const unzipTask = async () => {
+      // 删除本地内核
+      await rm(this.genCoreDir(coreVersion), {
+        recursive: true,
+        force: true,
+      });
+      msgCallback?.($t("正在解压内核"));
+      // 解压缩内核
+      await unzipFile(outputZipPath, appConfig.chromeBinDir);
+      msgCallback?.($t("内核解压完成"));
+      // 异步删除下载的 zip 文件，不需要等待
+      rm(outputZipPath);
+    }
+
     const downloadTask = async () => {
       try {
         console.log("downloadCore start", coreVersion);
         // 下载内核
         await downloadZipFile(
-          availableCore.downloadUrl,
+          availableCore.downloadUrl!,
           outputZipPath,
           (progress) => {
             // console.log(`Download progress: ${progress}%`)
@@ -212,19 +227,37 @@ export const chromeCoreManager = new (class ChromeCoreManager {
         payload.status = "downloaded";
         payload.description = $t("内核下载完成");
         ipcMain.send("app:resource-update", payload);
-        // 删除本地内核
-        await rm(this.genCoreDir(coreVersion), {
-          recursive: true,
-          force: true,
-        });
-        msgCallback?.($t("正在解压内核"));
-        // 解压缩内核
-        await unzipFile(outputZipPath, appConfig.chromeBinDir);
-        msgCallback?.($t("内核解压完成"));
-        // 异步删除下载的 zip 文件，不需要等待
-        rm(outputZipPath);
-      } catch (error) {
+        await unzipTask();
+      } catch (error: any) {
+        console.dir(error, { depth: null });
         console.error("downloadCore error", error);
+        if (error?.code === 'EBUSY') {
+          // const processIds = await getProcessIdsByExePath(this.genCoreDir(coreVersion));
+          const processIds = await findProcessByHandle(this.genCoreDir(coreVersion));
+          console.log("findProcessByHandle", processIds);
+          if (processIds) {
+            try {
+              processIds.forEach(({ pid }) => {
+                process.kill(pid);
+              });
+            } catch (error) {
+              console.error("killProcess error", error);
+            }
+
+            if (payload.status === "downloaded" && await fileExists(outputZipPath)) {
+              await setTimeout(3000)
+              try {
+                console.log("unzipTask start");
+                await unzipTask();
+                console.log("unzipTask end");
+                return
+              } catch (error) {
+                console.error("unzipTask error", error);
+                return Promise.reject(error);
+              }
+            }
+          }
+        }
         return Promise.reject(error);
       } finally {
         // 无论成功与否，记得将其从下载队列中移除
