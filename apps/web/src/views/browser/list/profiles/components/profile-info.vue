@@ -90,12 +90,18 @@ function onClick(event: Event, key: string) {
   }
 
   switch (key) {
-    case 'proxy':
-      show(event, { model: getProxyOperation() })
+    case 'proxy': {
+      const model = getProxyOperation()
+      if (model.every(item => !item.visible)) return
+      show(event, { model })
       break
-    case 'account':
-      show(event, { model: getAccountOperation() })
+    }
+    case 'account': {
+      const model = getAccountOperation()
+      if (model.every(item => !item.visible)) return
+      show(event, { model })
       break
+    }
   }
 }
 
@@ -110,7 +116,7 @@ function getProxyOperation() {
     },
     {
       label: $t('选择代理'),
-      visible: !isProxy.value,
+      visible: !isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'selectProxy')
       },
@@ -131,7 +137,7 @@ function getProxyOperation() {
       },
     },
     {
-      visible: isProxy.value,
+      visible: isProxy.value && !role.isViewer,
       separator: true,
     },
     {
@@ -143,13 +149,13 @@ function getProxyOperation() {
     },
     {
       label: $t('切换代理'),
-      visible: isProxy.value,
+      visible: isProxy.value && !role.isViewer,
       command: () => {
         emits('profileOperate', 'selectProxy')
       },
     },
     {
-      visible: isProxy.value,
+      visible: isProxy.value && !role.isViewer,
       separator: true,
     },
     {
@@ -173,6 +179,7 @@ function getAccountOperation() {
     },
     {
       label: $t('选择平台账号'),
+      visible: !role.isViewer,
       command: () => {
         emits('profileOperate', 'selectAccount')
       },

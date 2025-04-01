@@ -862,7 +862,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'select',
       label: $t('硬件并发数'),
       name: 'hardwareConcurrent',
-      value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '4')),
+      value: $dict_map.hardwareConcurrent.find((item: any) => item.value === (data.hardwareConcurrent ?? '12')),
       options: $dict_map.hardwareConcurrent,
       filter: false,
       preview: {

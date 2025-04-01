@@ -1272,5 +1272,7 @@
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
   "默认项目": "Default project",
-  "修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。": "Modifying the kernel may cause cache incompatibility and invalidate your login information. Please proceed with caution."
+  "修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。": "Modifying the kernel may cause cache incompatibility and invalidate your login information. Please proceed with caution.",
+  "如需查看更多日志，请联系空间的拥有者进行升级。": "To view more logs, please contact the workspace owner for an upgrade.",
+  "所选窗口 {names} 已在该项目中": "Selected profiles {names} already exist in this project"
 }

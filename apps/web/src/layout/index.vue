@@ -8,6 +8,10 @@ import RxLayoutFooter from './components/footer/index.vue'
 import RxLayoutHeader from './components/header/index.vue'
 import { emitter } from '/@/utils/eventBus';
 import { MENU_COLLAPSED } from '../constants/storage-key'
+import { SubLevelEnum } from '/@/enums/pay'
+import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
+
+type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const userStore = useUserStore()
@@ -18,7 +22,7 @@ const router = useRouter()
 const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
 const collapsed = ref<boolean>(Boolean(~~(localStorage.getItem(MENU_COLLAPSED) as string)))
-const anntList = ref()
+const anntList = ref<AnntData>()
 
 /** 订阅到期时间 */
 const subEndDate = computed(() => {
@@ -38,9 +42,9 @@ async function getAnnt() {
   anntList.value = data?.rows || []
 }
 
-function handleCloseAnnt(id: string) {
+function handleCloseAnnt(id: number) {
   setTimeout(() => {
-    anntList.value = anntList.value.filter(annt => annt.id !== id)
+    anntList.value = anntList.value?.filter(annt => annt.id !== id)
   }, 400)
 }
 
@@ -87,7 +91,7 @@ onBeforeUnmount(() => {
 
 function onRenewal() {
   // 如果是试用，则跳转到订阅页面
-  if (userPayInfo.value?.isTrial === 2) {
+  if (userPayInfo.value.subLevel === SubLevelEnum.Trial) {
     router.push({ name: 'subscribe-plan' })
   } else {
     emitter.emit('showRenewalDialog', {
@@ -102,8 +106,7 @@ function onRenewal() {
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
-      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')"
-        @click="collapsed = !collapsed">
+      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')" @click="collapsed = !collapsed">
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
@@ -116,8 +119,7 @@ function onRenewal() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content"
-          closable @close="handleCloseAnnt(annt.id)">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -125,16 +127,13 @@ function onRenewal() {
             <SvgIcon name="base/rx_ic_delete" />
           </template>
         </Message>
-        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success"
-          class="w-full rx-main-announcement__content subscription-expired" closable
+        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success" class="w-full rx-main-announcement__content subscription-expired" closable
           @close="handleCloseSubscriptionExpired">
           <template #default>
-            <i18n-t
-              :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
-              scope="global">
+            <i18n-t :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
               <template #link>
                 <span class="font-bold underline cursor-pointer" @click="onRenewal">
-                  {{ userPayInfo.isTrial === 2 ? $t('前往购买') : $t('前往续费') }}
+                  {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}
                 </span>
               </template>
             </i18n-t>

@@ -6,7 +6,7 @@ export function getDefaultTemplate() {
   return {
     os: 'Windows',
     osVersion: '11',
-    coreVersion: '125',
+    coreVersion: '130',
     browserVersion: null,
     isLanguageBaseIp: true,
     language: 'sq-AL',
@@ -41,7 +41,7 @@ export function getDefaultTemplate() {
     deviceInfo: true,
     deviceNameSwitch: true,
     macInfo: true,
-    hardwareConcurrent: '4',
+    hardwareConcurrent: '12',
     deviceMemory: '8',
     disableSsl: false,
     disableSslList: [],
@@ -393,7 +393,7 @@ export async function parseTemplate(file: File) {
             rowNum: rowIndex,
             ...Object.fromEntries(columns.map((column, index) => {
               const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]//excel 索引从1开始
-              const value = column.formatValue?.(cellValue?.text || cellValue) || cellValue
+              const value = column.formatValue?.((cellValue as any)?.text || cellValue) || cellValue
               return [column.key, value]
             }))
           }
