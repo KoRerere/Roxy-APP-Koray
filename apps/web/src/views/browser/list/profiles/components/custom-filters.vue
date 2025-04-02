@@ -245,13 +245,15 @@ async function modifyFilter() {
         <span v-if="!labels.length">{{ $t('筛选条件') }}</span>
       </RxButton>
     </div>
-    <div v-show="enabledFilterSave && isChanged" class="labels-actions">
-      <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
-      <template v-if="labels.length">
-        <RxButton v-if="isAllProfiles" severity="info" size="xxs" :label="$t('保存')" @click="saveFilters" />
-        <SplitButton v-else severity="info" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
-      </template>
-      <div>|</div>
+    <div v-show="enabledFilterSave && isChanged" class="flex items-start">
+      <div class="labels-actions">
+        <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
+        <template v-if="labels.length">
+          <RxButton v-if="isAllProfiles" severity="info" size="xxs" :label="$t('保存')" @click="saveFilters" />
+          <SplitButton v-else severity="info" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
+        </template>
+        <div>|</div>
+      </div>
     </div>
   </div>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
@@ -317,8 +319,7 @@ async function modifyFilter() {
 
   &-actions {
     display: flex;
-    justify-content: center;
-    align-items: start;
+    align-items: center;
     margin-right: var(--spacing-md, 6px);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Border-border-container, #c7cdd1);
