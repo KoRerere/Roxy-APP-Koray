@@ -528,6 +528,7 @@ const slots: any = useSlots()
     padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
     background: var(--Colors-Background-bg-page, #fafbfc);
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+    user-select: none;
 
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);

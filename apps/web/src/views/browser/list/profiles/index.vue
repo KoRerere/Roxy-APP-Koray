@@ -197,11 +197,11 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
    * 兼容批量操作
    */
   const datas: Data[] = [].concat(data).map(item => toRaw(item))
-  const ids: number[] = datas.map((item: any) => item.id)
+  const ids = datas.map(item => item.id!)
 
   switch (operate.name) {
     case 'edit':
-      const [{ page_index }] = tableRef.value?.getParams()
+      const [{ page_index }] = tableRef.value!.getParams()
       const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
         if (cur.value) {
           acc[cur.name] = toRaw(cur.value)
@@ -209,7 +209,8 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
         return acc
       }, {})
       router.push({
-        name: 'browser-edit', query: {
+        name: 'browser-edit',
+        query: {
           ...route.query,
           id: data.id,
           page_index,
@@ -487,16 +488,7 @@ async function exportProfile(data: any) {
       props: {
         data,
         workspaceName: workspaceName.value,
-      },
-      onConfirm: async () => {
-        // if (result === ClearType.cloud) {
-        //   await API.window.userClearWindowCacheCreate({ ids: [data.id] })
-        //   await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirId: data.dirId })
-        // }
-        // else {
-        //   await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
-        // }
-      },
+      }
     },
   })
 }
@@ -543,7 +535,7 @@ async function deleteProfile(datas: any, ids: number[]) {
       reject: () => {
         reject($t('取消'))
       },
-    })
+    } as any)
   })
 }
 
@@ -755,9 +747,16 @@ defineExpose({
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
-    <template #note="{ data }">
-      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
-        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+    <template #noteHeader="{ column: { title, headerProps } }">
+      <div class="flex items-center gap-2 note-header">
+        <span>{{ title }}</span>
+        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="headerProps.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="headerProps.extend = !headerProps.extend" />
+      </div>
+    </template>
+    <template #note="{ data, column: { headerProps } }">
+      <div v-if="headerProps.extend">{{ data.windowRemark }}</div>
+      <RxSvgIcon v-else v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+        :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
     </template>
     <template #project="{ data }">
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
@@ -785,6 +784,14 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+.note-header {
+  color: #000;
+  font-family: Inter;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
 :deep(.window-table) {
   tr:not([data-p-selected=true]):hover .direct-info {
     background-color: var(--Colors-Background-bg-body-hover, #f0f3f5);

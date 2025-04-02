@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import FormItem from '/@/components/ry-form/form-item.vue'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { validateURL } from '/@/utils'
@@ -13,10 +13,6 @@ const invalid = defineModel('invalid', { default: false })
 
 const platformOptions = ref()
 const urls = ref<Record<string, any>[]>([])
-
-watch(urls.value, (value) => {
-  invalid.value = value.some(item => item.invalid)
-})
 
 watch(modelValue, (value) => {
   urls.value = value.map(value => createItem(value))
@@ -41,6 +37,7 @@ function createItem(value?: string) {
   return {
     value,
     props: {
+      type: 'select',
       name: (new Date().getTime()).toString(32),
       options: platformOptions.value,
       optionValue: 'value',
@@ -70,11 +67,15 @@ function onBlur(input: any) {
   }
   else {
     input.invalid = true
+    invalid.value = true
   }
 }
 
 function updateUrls() {
   modelValue.value = urls.value.filter(item => !item.invalid).map(item => item.value)
+  nextTick(() => {
+    invalid.value = urls.value.some(item => item.invalid)
+  })
 }
 </script>
 
@@ -82,7 +83,7 @@ function updateUrls() {
   <div class="flex-1">
     <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加 URL')" @click="addInputs" />
     <RxCard v-for="(input, index) in urls" :key="input.name" class="!border-none !pa-0 mt-2.5" @close="deleteInput(index)">
-      <RxInputSelect v-model="input.value" v-bind="input.props" @blur="onBlur(input)" @change="onChange(input)" />
+      <FormItem v-model="input.value" v-bind="input.props" :invalid="input.invalid" @blur="onBlur(input)" @change="onChange(input)" />
     </RxCard>
   </div>
 </template>
