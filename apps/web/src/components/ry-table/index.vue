@@ -348,7 +348,7 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width: 3%" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
+        <Column v-if="selectionMode" header-style="min-width: 3%" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" :field="column.key" :header-style="column.style" :frozen="!!column.alignFrozen"
           :align-frozen="column.alignFrozen" :pt="{
             headercell: Css_Module.headercell,
