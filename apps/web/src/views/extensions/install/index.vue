@@ -4,19 +4,19 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon, } from '/@/components/rx-icon/'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ExtensionsInstallType, ExtensionsSource, extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
+import { extensionsSourceFormat, ExtensionsStatus, PluginSwitchType } from '/@/enums'
 import { setColumns } from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import installExtension from '/@/views/extensions/install/components/install-extension.vue'
 import uploadExtension from '/@/views/extensions/install/components/upload-extension.vue'
-import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
 import { useDialog as useCustomDialog } from "/@/hooks/useDialog";
 import ShieldDialog from './components/shield-dialog.vue'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
+
 type Data = UnwrapRowType<UserGetPluginListListData>
 
 defineEmits(['search'])
@@ -27,9 +27,8 @@ const role = useRoleStore()
 
 const [dialogOpen] = useSimpleDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [show] = useContextMenu()
-const [showMenu] = usePopoverMenu()
 const [dialogInstance] = useCustomDialog()
+const { showMenu: showPopupMenu } = usePopupMenu()
 
 
 const needsync = defineModel('needsync')
@@ -94,59 +93,68 @@ const filters = reactive({
   },
 })
 
-
-const pinMenus = [
-  {
-    label: $t('自定义'),
-    value: 'customize',
-  },
-  {
-    label: $t('始终固定到工具栏'),
-    value: 'pin',
-  },
-  {
-    label: $t('始终不固定到工具栏'),
-    value: 'unpin',
-  },
-]
-
 async function tableRequest(params: any) {
   return API.plugins.userGetPluginListList(params)
 }
 
 async function showPinMenu(event: any, data: any) {
-  showMenu(event, {
-    type: 'radio',
-    value: data.fixedPlugin,
-    operation: pinMenus,
-    onHide: async (fixedPlugin: string) => {
-      if (fixedPlugin !== data.fixedPlugin) {
-        await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin })
-        data.fixedPlugin = fixedPlugin
+  showPopupMenu(event, {
+    mode: {
+      type: 'single',
+      value: data.fixedPlugin,
+      options: [
+        {
+          label: $t('自定义'),
+          name: 'customize',
+        },
+        {
+          label: $t('始终固定到工具栏'),
+          name: 'pin',
+        },
+        {
+          label: $t('始终不固定到工具栏'),
+          name: 'unpin',
+        },
+      ]
+    },
+    menuProps: {
+      onHide: async ({ value }: any) => {
+        if (value !== data.fixedPlugin) {
+          await API.plugins.userFixedPluginToWindowCreate({ id: data.id, fixedPlugin: value })
+          data.fixedPlugin = value
+        }
       }
     },
-    beforeCmp: () => {
-      return <div class="pl-4 pt-2">{$t('固定方式')}</div>
-    },
+    slots: {
+      start: () => {
+        return <div class="pl-4 pt-2">{$t('固定方式')}</div>
+      }
+    }
   })
 }
 
 function tableOperation(data: any) {
   const datas = [].concat(data)
   const isPersonal = !datas.some((data: any) => data.pluginSwitchType !== PluginSwitchType.personal)
-
   return [
     {
       name: 'checkUpdate',
       label: $t('检查更新'),
       icon: 'base/rx_ic_clock_rotate',
       power: isPersonal || role.isOwner || role.isManager,
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
-    data.source === 'local' && {
+    {
       name: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: isPersonal || role.isOwner || role.isManager,
+      visible: data.source === 'local',
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
     {
       separator: true,
@@ -163,8 +171,11 @@ function tableOperation(data: any) {
       multipleProps: {
         name: 'one',
       },
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
-  ].filter(Boolean)
+  ].filter(item => item.visible !== false)
 }
 
 async function operationHandler(operate: any, data: any) {
@@ -230,7 +241,7 @@ function installViaUrl() {
   })
 }
 
-function onUploadExtension(data = {}) {
+function onUploadExtension(data = ({} as any)) {
   const { pluginDir, localKey } = data
 
   dialog.open(uploadExtension, {
@@ -338,10 +349,9 @@ async function deleteExtension(datas: Data[]) {
   })
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
-  show(event, {
-    operation,
-    operationHandler: (operate: any) => operationHandler(operate, data),
+function showOperationMenu({ event, operation }: { event: MouseEvent, operation: any }) {
+  showPopupMenu(event, {
+    model: operation,
   })
 }
 
@@ -448,7 +458,7 @@ defineExpose({
           @click.stop="showShieldDialog(data)">
           <RxSvgIcon name="base/rx_ic_shield" />
         </div>
-        <Actions :operation="tableOperation(data)" @more="showOperationMenu($event, data)" />
+        <Actions :operation="tableOperation(data)" @more="showOperationMenu" />
       </div>
     </template>
   </RyTable>

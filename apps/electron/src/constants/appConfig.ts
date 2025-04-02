@@ -46,7 +46,10 @@ export const appConfig = {
   get buildInWebDir() {
     return join(appConfig.unpackedFilePath, 'dist', 'web')
   },
-
+  /** 查找占用某个句柄的进程， handle.exe（微软工具） */
+  get handleExePath() {
+    return isPackaged ? join(appConfig.unpackedFilePath, './dist/bin/handle.exe') : join(__dirname, '../bin', 'handle.exe')
+  },
 } as const
 
 console.log('appConfig', appConfig)

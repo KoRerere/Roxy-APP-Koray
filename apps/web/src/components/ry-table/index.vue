@@ -348,41 +348,37 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width: 3%"
-          :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
-        <Column v-for="{ headerSlot, slot, render, ...column } in _columns" :key="column.key" :field="column.key"
-          :header="headerSlot ? '' : column.title" :header-style="column.style" :frozen="!!column.alignFrozen"
+        <Column v-if="selectionMode" header-style="width: 3%" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" :field="column.key" :header-style="column.style" :frozen="!!column.alignFrozen"
           :align-frozen="column.alignFrozen" :pt="{
-            columntitle: Css_Module.columntitle,
             headercell: Css_Module.headercell,
             bodycell: Css_Module.bodycell,
           }">
-          <template v-if="headerSlot" #header>
-            <slot :name="headerSlot" :data="column"></slot>
+          <template #header>
+            <slot :name="headerSlot" :column="column">
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="Css_Module.columntitle" />
+              <span v-else :class="Css_Module.columntitle">{{ column.title }}</span>
+            </slot>
           </template>
           <template #body="{ data }">
             <slot :name="slot" :data="data" :column="column">
-              <component :is="render" v-if="render" :data="data" :class="[Css_Module.columntitle, column.classes]" />
-              <div v-else :style="{ width: `${column.width}px` || 'auto' }"
-                :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
+              <component :is="render" v-if="render" :data="data" :class="column.classes" />
+              <div v-else :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
-          header-style="width: 9rem" :pt="{
-            columntitle: Css_Module.columntitle,
-            headercell: Css_Module.headercell,
-            bodycell: Css_Module.bodycell,
-          }">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 9rem" :pt="{
+          columntitle: Css_Module.columntitle,
+          headercell: Css_Module.headercell,
+          bodycell: Css_Module.bodycell,
+        }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data, 'single')"
-                  @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -391,14 +387,12 @@ const slots: any = useSlots()
       <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
-        @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
-              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -409,9 +403,8 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -527,6 +520,7 @@ const slots: any = useSlots()
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
+  font-weight: 600;
 }
 
 .headerrow {
@@ -562,6 +556,11 @@ const slots: any = useSlots()
     padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px);
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
+    color: var(--Color-neutrals-950, #0E1214);
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: normal;
 
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);

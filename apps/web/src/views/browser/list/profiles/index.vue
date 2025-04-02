@@ -375,6 +375,7 @@ async function onMoveToProject(datas: any) {
 
   return new Promise((resolve, reject) => {
     const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
+    const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
 
     dialog.open(Popup, {
       props: {
@@ -385,7 +386,7 @@ async function onMoveToProject(datas: any) {
       data: {
         props: {
           title: $t('移动项目'),
-          content: $t('将移动 {names} 到所选项目', { names: `[${names}${datas.length > 10 ? '...' : ''}]` }),
+          content: $t('将移动 {names} 到所选项目', { names: namesStr }),
           inputs: [
             {
               type: 'select',
@@ -400,6 +401,10 @@ async function onMoveToProject(datas: any) {
         onConfirm: async (formData: any) => {
           if (formData.projectId) {
             const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+            if (!ids.length) {
+              onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
+              return
+            }
             await batchModifyWindow({ ids, projectId: formData.projectId })
           }
           resolve(true)
@@ -729,68 +734,52 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false"
-    :table-sort="getSorts" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
+  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" :table-sort="getSorts" :table-request="tableRequest" :operation="operation"
+    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
     <template #filter-after>
-      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
-        :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #table-empty>
-      <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')"
-        :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
-      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')"
-        :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
+      <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
+      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add"
-              :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
+            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
           </div>
         </template>
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="workspaceName" :data="data" :open-message="openMessage"
-        @profile-operate="profileOperate($event, data)" />
+      <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
     </template>
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
     <template #note="{ data }">
-      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }"
-        :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-        :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer"
-        @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
+        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
     </template>
     <template #project="{ data }">
-      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName"
-        @update="updateMeta($event, [data.id])" />
+      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
     </template>
     <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId"
-        @update="updateMeta($event, [data.id], 'single')" />
+      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, [data.id], 'single')" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
-        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-          class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5"
+        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5"
           @click.stop="operationHandler({ name: 'fav' }, data)">
-          <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'"
-            :class="{ 'color-[#FC9D12]': data.isOften }" />
+          <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
         </div>
-        <Actions :operation="operation" @quick-click="operationHandler($event, data)"
-          @more="showOperationMenu($event, data)" />
+        <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>
   </RyTable>
-  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false"
-    @update="updateMeta($event, tableRef?.selectionData?.map((n: any) => n.id))" />
+  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateMeta($event, tableRef?.selectionData?.map((n: any) => n.id))" />
   <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
     <template #default="{ closeCallback }">
-      <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName"
-        @confirm="drawer.confirm(drawer.type, $event)" />
-      <DrawersTtems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback"
-        @confirm="drawer.confirm(drawer.type, $event)" />
+      <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
+      <DrawersTtems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
     </template>
   </RxDrawer>
 </template>

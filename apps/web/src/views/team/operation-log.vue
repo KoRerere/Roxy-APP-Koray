@@ -6,16 +6,18 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { } from "date-fns";
 import { useUserStore } from '/@/stores/user'
-import { useToast } from 'primevue/usetoast'
+import { useRoleStore } from "/@/stores/role"
 import { I18nT } from 'vue-i18n'
-import { toUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { LogRetentionDays, SubLevelEnum } from '/@/enums/pay'
+import { emitter } from "/@/utils/eventBus"
+import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 type Data = UnwrapRowType<UserGetOperateLogListData>
 
+const router = useRouter()
 const styles = useCssModule()
 const { userPayInfo } = storeToRefs(useUserStore())
-const toast = useToast()
+const { isOwner } = storeToRefs(useRoleStore())
 
 const columns = ref([
   {
@@ -95,12 +97,16 @@ async function tableFilters() {
         // 如果用户是免费用户，则只能查询过去3天的数据， 3 天之前需要提示
         if (input.value?.[0] && days < 60) {
           if (differenceInDays(new Date(), new Date(input.value[0])) > days) {
-            toast.add({
+            showToast({
               severity: 'warn',
               summary: $t('您只能查看{days}天内的日志', { days }),
-              detail: <I18nT keypath={$t('如需查看更多历史日志，请{link}', { link: '{link}' })} >
-                {{ link: () => <a class="cursor-pointer align-middle" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
-              </I18nT>,
+              detail: !isOwner.value
+                ? $t('如需查看更多日志，请联系空间的拥有者进行升级。')
+                : userPayInfo.value.autoRenewDowngrade
+                  ? ''// 特殊情况，如果用户是自动续费降级用户，则不显示升级提醒
+                  : <I18nT keypath={$t('如需查看更多历史日志，请{link}', { link: '{link}' })} >
+                    {{ link: () => <a class="cursor-pointer align-middle" onClick={upgradePlan}>{$t('单击此处升级')}</a> }}
+                  </I18nT>,
               life: 5000
             })
             return
@@ -113,6 +119,21 @@ async function tableFilters() {
     },
   ]
 }
+
+function upgradePlan() {
+  const { userPayInfo } = useUserStore()
+  const isFree = [SubLevelEnum.Free, SubLevelEnum.Trial].includes(userPayInfo.subLevel as SubLevelEnum)
+  const isExpired = userPayInfo.subLevel === SubLevelEnum.Expired
+
+  if (isFree) {
+    router.push({ name: 'subscribe-plan' })
+  } else if (isExpired) {
+    emitter.emit('showRenewalDialog')
+  } else {
+    router.push({ name: 'upgrade-plan' })
+  }
+}
+
 </script>
 
 <template>

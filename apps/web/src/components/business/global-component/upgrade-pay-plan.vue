@@ -29,7 +29,7 @@ const alertTextMap = {
 }
 
 const alertInfo = computed(() => {
-  return alertTextMap[props.alertType]
+  return alertTextMap[props.alertType!]
 })
 
 const images = ref([
@@ -95,7 +95,7 @@ onUnmounted(() => {
       <div class="upgrade-pay-plan-header">
         {{ $t('升级到') }} <span class="upgrade-pay-plan-header-plus">{{ $t('Roxy 会员') }}</span>
       </div>
-      <RxAlert v-if="alertInfo" class="w-full" :type="alertInfo.type" :content="alertInfo.content" :closable="false">
+      <RxAlert v-if="alertInfo" class="w-full" :type="(alertInfo.type as any)" :content="alertInfo.content" :closable="false">
       </RxAlert>
       <div class="upgrade-pay-plan-content">
         <div class="description">

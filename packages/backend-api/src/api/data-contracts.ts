@@ -1996,18 +1996,27 @@ export interface UserGetNotifyListData {
     type?: string;
     notify?: string;
     status?: number;
-    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    /**
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     */
     userIdentity?: string;
-    /** 名下用户：true:有,false：没有 */
+    /**
+     * 名下用户：true:有,false：没有
+     * 名下用户：true:有,false：没有
+     */
     underName?: boolean;
-    /** 推荐用户：true:是,false：不是 */
+    /**
+     * 推荐用户：true:是,false：不是
+     * 推荐用户：true:是,false：不是
+     */
     recommendUser?: boolean;
     createTime?: string;
     messageModule?: string;
     userName?: string;
     avatar?: string;
     avatarColor?: string;
-    param_data?: {
+    paramData?: {
       data: string;
       workspaceName: string;
       workspacePicture: string;
@@ -5250,70 +5259,173 @@ export interface UserGetPurchaseRecordsInfoListData {
 export interface UserGetUserPayInfoListData {
   code: number;
   data: {
-    /** 用户折扣 */
+    /**
+     * 用户折扣
+     * 用户折扣
+     */
     discount: number;
-    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
+    /**
+     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
+     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
+     */
     identity: string;
-    /** 已用空间数量 */
+    /**
+     * 已用空间数量
+     * 已用空间数量
+     */
     useWorkspaceCount: number;
-    /** 已用窗口数量 */
+    /**
+     * 已用窗口数量
+     * 已用窗口数量
+     */
     useWindowCount: number;
-    /** 已用成员数量 */
+    /**
+     * 已用成员数量
+     * 已用成员数量
+     */
     useMemberCount: number;
-    /** 最大窗口数量 */
+    /**
+     * 最大窗口数量
+     * 最大窗口数量
+     */
     maxWindowCount: number;
-    /** 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise) */
+    /**
+     * 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise)
+     * 订阅等级(Free/Expired/Trail/Basic/Pro/Business/Enterprise)
+     */
     subLevel: string;
-    /** 订阅到期时间 */
+    /**
+     * 订阅到期时间
+     * 订阅到期时间
+     */
     subEndDate: number;
-    /** 最大成员数量 */
+    /**
+     * 最大成员数量
+     * 最大成员数量
+     */
     maxMemberCount: number;
-    /** 最大空间数量 */
+    /**
+     * 最大空间数量
+     * 最大空间数量
+     */
     maxWorkspaceCount: number;
-    /** 免费项目数量 */
+    /**
+     * 免费项目数量
+     * 免费项目数量
+     */
     freeProjectCount: number;
-    /** 已使用项目数量 */
+    /**
+     * 已使用项目数量
+     * 已使用项目数量
+     */
     useProjectCount: number;
-    /** 余额 */
+    /**
+     * 余额
+     * 余额
+     */
     balance: number;
-    /** 自动续费折扣 */
+    /**
+     * 自动续费折扣
+     * 自动续费折扣
+     */
     autoRenewDiscount: number;
-    /** 7天是否试用，0：未试用 1：已试用 2：试用中 */
+    /**
+     * 7天是否试用，0：未试用 1：已试用 2：试用中
+     * 7天是否试用，0：未试用 1：已试用 2：试用中
+     */
     isTrial: number;
-    /** '是否自动购买和续费,1:自动 0:人工', */
+    /**
+     * '是否自动购买和续费,1:自动 0:人工',
+     * '是否自动购买和续费,1:自动 0:人工',
+     */
     isAuto: number;
-    /** 实际金额 */
+    /**
+     * 实际金额
+     * 实际金额
+     */
     realAmount: string;
-    /** 订单号 */
+    /**
+     * 订单号
+     * 订单号
+     */
     orderNo: string;
-    /** 成员价格(美元) */
+    /**
+     * 成员价格(美元)
+     * 成员价格(美元)
+     */
     staffSinglePrice: number;
-    /** 空间价格(美元) */
+    /**
+     * 空间价格(美元)
+     * 空间价格(美元)
+     */
     workspaceSinglePrice: number;
-    /** 单个价格(美元) */
+    /**
+     * 单个价格(美元)
+     * 单个价格(美元)
+     */
     singlePrice: number;
-    /** 原始金额(美元) */
+    /**
+     * 原始金额(美元)
+     * 原始金额(美元)
+     */
     originalAmount: number;
-    /** 钱包优惠余额 */
+    /**
+     * 钱包优惠余额
+     * 钱包优惠余额
+     */
     walletDiscount: number;
-    /** 订阅到期 */
+    /**
+     * 订阅到期
+     * 订阅到期
+     */
     showSubExpiredDlg: boolean;
-    /** 付费墙显示 */
+    /**
+     * 付费墙显示
+     * 付费墙显示
+     */
     showPayWallDlg: boolean;
-    /** 自动续费降级接口状态判断 true:调用，false：不调用 */
+    /**
+     * 自动续费降级接口状态判断 true:已降级，false：未降级
+     * 自动续费降级接口状态判断 true:已降级，false：未降级
+     */
     autoRenewDowngrade: boolean;
-    /** 购买窗口数量 */
+    /**
+     * 购买窗口数量
+     * 购买窗口数量
+     */
     purchaseWindowCount: number;
-    /** "免费窗口数量" */
+    /**
+     * "免费窗口数量"
+     * "免费窗口数量"
+     */
     freeWindowCount: number;
-    /** 今日已创建次数 */
+    /**
+     * 今日已创建次数
+     * 今日已创建次数
+     */
     createWindowTimes: number;
-    /** /今日总共可创建次数 */
+    /**
+     * /今日总共可创建次数
+     * /今日总共可创建次数
+     */
     totalCreateWindowTimes: number;
-    /** 今日打开次数 */
+    /**
+     * 今日打开次数
+     * 今日打开次数
+     */
     openWindowTimes: number;
-    /** 今日总共可打开次数 */
+    /**
+     * 今日总共可打开次数
+     * 今日总共可打开次数
+     */
     totalOpenWindowTimes: number;
+    /**
+     * GIft显示,false: 不显示，true:显示
+     * GIft显示,false: 不显示，true:显示
+     */
+    showGiftDlg: boolean;
+    /** 服务器当前时间 */
+    subCurrentDate: number;
   };
   msg: string;
 }

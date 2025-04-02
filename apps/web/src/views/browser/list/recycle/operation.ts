@@ -1,4 +1,7 @@
 import { $t } from '/@/locales'
+import { useRoleStore } from '/@/stores/role'
+
+const { isViewer } = storeToRefs(useRoleStore())
 
 export function getOperation() {
   return [
@@ -8,6 +11,7 @@ export function getOperation() {
       tooltip: $t('恢复窗口'),
       icon: 'base/rx_ic_refresh',
       iconClass: 'text-gray-500',
+      power: !isViewer.value,
       quick: true,
       multiple: true,
       multipleProps: {
@@ -20,6 +24,7 @@ export function getOperation() {
       tooltip: $t('彻底删除'),
       icon: 'base/rx_ic_shredder',
       iconClass: 'text-red',
+      power: !isViewer.value,
       quick: true,
       multiple: true,
       multipleProps: {

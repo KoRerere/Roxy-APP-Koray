@@ -3,30 +3,41 @@ import { useNetworkStore } from '/@/stores/network'
 
 const { setNetworkInfo } = useNetworkStore()
 
+let retryCount = 0
 const loading = ref(false)
-const proxyInfo = ref({
+const defaultProxyInfo = {
   city: '',
   ip: '',
-})
+}
+const proxyInfo = ref(defaultProxyInfo)
 
 async function detectNetwork() {
-  if (loading.value) {
-    return
-  }
+  // if (loading.value) {
+  //   return
+  // }
 
   loading.value = true
-  await electronAPI.send('proxy:getSystemProxy')
-  const result = await electronAPI.send('proxy:detectNetwork').finally(() => {
+  try {
+    await electronAPI.send('proxy:getSystemProxy')
+    const result = await electronAPI.send('proxy:detectNetwork')
+    proxyInfo.value.city = `${result.country_code}/${result.city}`
+    proxyInfo.value.ip = result.ip
+    console.log('detectNetwork result', result)
+    setNetworkInfo(result)
+  } catch (error) {
+    proxyInfo.value = defaultProxyInfo
+    retryCount++
+    if (retryCount < 3) {
+      detectNetwork()
+    }
+  } finally {
     loading.value = false
-  })
-  proxyInfo.value.city = `${result.country_code}/${result.city}`
-  proxyInfo.value.ip = result.ip
-  setNetworkInfo(result)
+  }
 }
 
 window.addEventListener('online', detectNetwork)
 // window.addEventListener('offline', detectNetwork)
-detectNetwork()
+requestIdleCallback(detectNetwork)
 </script>
 
 <template>

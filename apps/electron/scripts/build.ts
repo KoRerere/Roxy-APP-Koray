@@ -27,6 +27,7 @@ const copySyncOptions: CopySyncOptions = {
 cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
 cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dist/web/locales'), copySyncOptions)
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
+cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
 
 const options: Configuration = {
   artifactName: '${productName}_${arch}_${version}.${ext}',
@@ -35,7 +36,8 @@ const options: Configuration = {
   copyright: appName,
   asar: true,
   asarUnpack: [
-    "dist/web"
+    "dist/web",
+    "dist/bin"
   ],
   extraMetadata: {
     version,
@@ -122,15 +124,6 @@ const options: Configuration = {
     entitlementsInherit: 'buildResources/entitlements.plist', // 继承的沙盒权限
     identity: 'LINKV TECH PTE. LTD. (GLM223L5MF)',
     notarize: false,
-  },
-
-  linux: {
-    desktop: {
-      StartupNotify: 'false',
-      Encoding: 'UTF-8',
-      MimeType: 'x-scheme-handler/deeplink',
-    },
-    target: ['AppImage', 'rpm', 'deb'],
   },
   publish: [
     {

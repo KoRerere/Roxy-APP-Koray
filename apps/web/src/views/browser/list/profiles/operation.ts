@@ -321,6 +321,7 @@ export function getOperation(_params: any = {}) {
       name: 'addTag',
       label: $t('添加标签'),
       icon: 'base/rx_ic_tag',
+      power: !role.isViewer,
       multiple: true,
     },
     {
@@ -336,9 +337,11 @@ export function getOperation(_params: any = {}) {
     {
       name: 'copyId',
       label: $t('复制窗口 ID'),
+      power: !role.isViewer,
       icon: 'base/rx_ic_copy',
     },
     {
+      power: !role.isViewer,
       separator: true,
     },
     {

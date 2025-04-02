@@ -3,7 +3,7 @@ import RemarkIcon from '/@/components/remark-icon'
 import { $t } from '/@/locales/index.js'
 import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import { usePopoverMenu } from '/@/views/browser/list/profiles/components/popover-menu'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import type { WindowMetaData } from './type.ts'
 
 defineProps({
@@ -14,7 +14,7 @@ defineProps({
 })
 
 const route = useRoute()
-const [showMenu] = usePopoverMenu()
+const { showMenu: showPopupMenu } = usePopupMenu()
 
 const { getTags, getProjects, getProjectMember } = useMateGroup()
 
@@ -42,39 +42,49 @@ onMounted(async () => {
   }
 })
 
-async function selectProject(event: Event) {
+async function selectProject(event: MouseEvent) {
   const operation = await getProjects()
   const value = metaData.value.projectId?.toString()
 
-  showMenu(event, {
-    type: 'radio',
-    value,
-    operation,
-    onHide: (projectId: string) => {
-      if (!isEmptyValue(projectId) && projectId !== value) {
-        const project = operation.find((item: any) => item.value === projectId)
-        metaData.value.projectId = Number(projectId)
-        metaData.value.projectName = project?.label || $t('未指定项目')
-        metaData.value.projectDefault = project?.projectDefault || 0
-      }
+  showPopupMenu(event, {
+    mode: {
+      type: 'single',
+      value,
+      options: operation,
+      field: 'value',
     },
+    menuProps: {
+      onHide: ({ value: projectId }: any) => {
+        if (!isEmptyValue(projectId) && projectId !== value) {
+          const project = operation.find((item: any) => item.value === projectId)
+          metaData.value.projectId = Number(projectId)
+          metaData.value.projectName = project?.label || $t('未指定项目')
+          metaData.value.projectDefault = project?.projectDefault || 0
+        }
+      }
+    }
   })
 }
 
-async function selectTags(event: Event) {
+async function selectTags(event: MouseEvent) {
   const value = metaData.value?.labelIds?.map((item: any) => `${item}`)
   const [tagList, memberList] = await Promise.all([
     getTags(),
     metaData.value?.projectId ? getProjectMember(metaData.value.projectId) : Promise.resolve([]),
   ])
 
-  showMenu(event, {
-    type: 'checkbox',
-    value,
-    operation: memberList.concat(tagList),
-    onHide: (labelIds: string[]) => {
-      if (!isEq(value, toRaw(labelIds))) {
-        metaData.value.labelIds = (labelIds || []).map(value => value.startsWith('u_') ? value : Number(value))
+  showPopupMenu(event, {
+    mode: {
+      type: 'multiple',
+      value,
+      options: memberList.concat(tagList),
+      field: 'value',
+    },
+    menuProps: {
+      onHide: ({ value: labelIds }: any) => {
+        if (!isEq(value, toRaw(labelIds))) {
+          metaData.value.labelIds = (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value))
+        }
       }
     },
   })

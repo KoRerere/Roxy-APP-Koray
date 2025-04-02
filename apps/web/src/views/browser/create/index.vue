@@ -178,7 +178,7 @@ async function getTemplateList() {
   profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
-async function initFormInputs(template: any = {}) {
+async function initFormInputs(template: Record<string, any> = {}) {
   const [inputsGroup, _original] = await getInputsGroup(template, showToast)
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
