@@ -1996,18 +1996,27 @@ export interface UserGetNotifyListData {
     type?: string;
     notify?: string;
     status?: number;
-    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    /**
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     */
     userIdentity?: string;
-    /** 名下用户：true:有,false：没有 */
+    /**
+     * 名下用户：true:有,false：没有
+     * 名下用户：true:有,false：没有
+     */
     underName?: boolean;
-    /** 推荐用户：true:是,false：不是 */
+    /**
+     * 推荐用户：true:是,false：不是
+     * 推荐用户：true:是,false：不是
+     */
     recommendUser?: boolean;
     createTime?: string;
     messageModule?: string;
     userName?: string;
     avatar?: string;
     avatarColor?: string;
-    param_data?: {
+    paramData?: {
       data: string;
       workspaceName: string;
       workspacePicture: string;

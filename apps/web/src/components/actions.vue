@@ -2,33 +2,22 @@
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { type Operation, operationPower } from '/@/utils'
 
-const props = defineProps({
-  operation: {
-    type: Array as PropType<Operation[]>,
-    default: () => [],
-  },
-  loadingOperationMap: {
-    type: Object,
-    default: () => ({}),
-  },
-  showMenu: {
-    type: Boolean,
-    default: true,
-  },
-  actionIcon: {
-    type: String as PropType<SvgNames>,
-    default: 'base/rx_ic_more-v',
-  },
-})
+interface Props {
+  operation: Operation[]
+  loadingOperationMap?: Record<string, boolean>
+  showMenu?: boolean
+  actionIcon?: SvgNames
+}
+
+const { operation, loadingOperationMap, showMenu = true, actionIcon = 'base/rx_ic_more-v' } = defineProps<Props>()
 
 const emit = defineEmits(['quickClick', 'more'])
 
-const _operation = computed(() => operationPower(props.operation))
-const quickOperation: any = computed(() => _operation.value.filter((item: any) => item.quick))
-const loadingQuickOperation: any = computed(() => props.loadingOperationMap)
+const _operation = computed(() => operationPower(operation))
+const quickOperation = computed(() => _operation.value.filter(item => item.quick))
 
-function quickClick(item: any) {
-  if (item.disabled || loadingQuickOperation.value?.[item.name]) {
+function quickClick(item: Operation) {
+  if (item.disabled || loadingOperationMap?.[item.name as string]) {
     return
   }
   emit('quickClick', item)
@@ -45,8 +34,8 @@ function onMore(event: Event) {
       <div v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
         <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
-          :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
+          :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
+          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingOperationMap?.[item.name as string] }]" @click.stop="quickClick(item)" />
       </div>
       <div v-tooltip="{ value: $t('更多操作'), pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length"
         class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5" @click.stop="onMore">

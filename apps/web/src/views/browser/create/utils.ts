@@ -70,7 +70,6 @@ export function getDefaultTemplate() {
   }
 }
 
-
 export const getColumns = () => {
   const exampleText = $t('举例')
 
@@ -80,7 +79,7 @@ export const getColumns = () => {
       key: 'windowName',
       required: true,
       placeholder: $t('为浏览器窗口命名（必填项）'),
-      example: `${exampleText}:\nRoxytest`
+      example: `${exampleText}: Roxytest`
     },
     {
       header: $t('操作系统'),
@@ -100,7 +99,7 @@ export const getColumns = () => {
       header: $t('代理类型'),
       key: 'proxyCategory',
       placeholder: $t('代理类型, 如: SOCKS5, 留空则自动使用 "直连"'),
-      example: `${exampleText}1: 直连\n${exampleText}2: SOCKS5\n${exampleText}3: HTTP\n${exampleText}4: HTTPS\n${exampleText}5: SSH`
+      example: `${exampleText}1: SOCKS5\n${exampleText}2: HTTP\n${exampleText}3: HTTPS\n${exampleText}4: SSH`
     },
     {
       header: $t('代理信息'),
@@ -118,11 +117,11 @@ export const getColumns = () => {
     {
       header: $t('平台账号'),
       key: 'windowPlatformList',
-      width: 70,
+      width: 90,
       placeholder: 'richText',
-      example: `${exampleText}:\n[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]`,
+      example: `${exampleText}: \n[\n${Array.from({ length: 2 }, () => '  {"platformUrl": "", "platformUserName": "", "platformPassword": "", "platformEfa": ""}').join(',\n')}\n]`,
       richText: [
-        { 'text': $t('仅支持JSON格式的数组, ') },
+        { 'text': $t('仅支持 JSON 格式的数组, 可支持填写多个账号, 多个账号请使用英文逗号隔开! ') },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
         { 'text': `${$t('请务必按照示例填写, 其中')}\n` },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': `${$t('platformUrl: 平台网址')}\n` },
@@ -144,7 +143,7 @@ export const getColumns = () => {
       key: 'defaultOpenUrl',
       width: 60,
       placeholder: 'richText',
-      example: `${exampleText}:\n["https://www.facebook.com", "https://www.tiktok.com"]`,
+      example: `${exampleText}: \n["https://www.facebook.com", "https://www.tiktok.com"]`,
       richText: [
         { 'text': $t('启动浏览器时同时打开的标签页，需要用 ') },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
@@ -163,9 +162,10 @@ export const getColumns = () => {
       header: 'Cookie',
       key: 'cookie',
       placeholder: 'richText',
-      example: `${exampleText}:\n[{"name":"fb","path":"/","domain":".facebook.com"},{"name":"ma","path":"/","domain":".amazon.com"}]`,
+      width: 60,
+      example: `${exampleText}: \n[\n  {"name":"fb","path":"/","domain":".facebook.com"},\n  {"name":"ma","path":"/","domain":".amazon.com"},\n  {"name":"x","path":"/","domain":".x.com"}\n]`,
       richText: [
-        { 'text': $t('仅支持JSON格式的Cookie! ') },
+        { 'text': $t('仅支持 JSON 格式的数组, 可支持填写多个 cookie, 多个 cookie 请使用英文逗号隔开! ') },
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('需要用 [ ] 包含！') },
       ],
       formatValue(value: string) {
@@ -181,12 +181,23 @@ export const getColumns = () => {
       header: $t('窗口备注'),
       key: 'windowRemark',
       placeholder: $t('此处填写该浏览器窗口的备注信息! '),
+      example: ''
     },
     {
       header: $t('窗口尺寸'),
       key: 'windowSize',
       placeholder: $t('浏览器窗口打开时的默认窗口大小, 留空则按默认1000*1000打开。\n格式为: 长度*高度'),
-      example: `${exampleText}:\n1000*1000`
+      example: `${exampleText}: 1000*1000`
+    },
+    {
+      header: 'User-Agent',
+      key: 'userAgent',
+      placeholder: 'richText',
+      example: `${exampleText}: \nMozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36`,
+      richText: [
+        { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('若无需指定 UA, 则可不填写;') },
+        { 'text': $t('若填写, 请务必确保 UA 格式正确。') },
+      ],
     }
   ]
 }
@@ -206,7 +217,7 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
     return {
       key,
       header,
-      width: width || 40,
+      width: width || 50,
       style: {
         alignment: { wrapText: true, horizontal: 'left', vertical: 'top' },
       }
@@ -257,63 +268,15 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
 }
 
 export async function downloadTextTemplate() {
-  const fields = [
-    {
-      key: 'windowName',
-      desc: $t('【必填】为浏览器窗口命名'),
-      example: ['Roxytest']
-    },
-    {
-      key: 'os',
-      desc: $t('【必填】操作系统'),
-      example: ['Windows', 'macOS', 'Android', 'iOS']
-    },
-    {
-      key: 'osVersion',
-      desc: $t('系统版本\n\t只能填写一个，留空则自动使用对应操作系统最新版本，现在支持的版本有：\n\t\t- Windows：{windows}\n\t\t- macOS：{macos}\n\t\t- Android：{android}\n\t\t- iOS：{ios}', {
-        windows: '11, 10, 8, 7',
-        macos: 'ALL',
-        android: '13、12、11、10、9',
-        ios: '17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0',
-      }),
-      example: ['11', 'ALL', '17.0']
-    },
-    {
-      key: 'proxyCategory',
-      desc: $t('代理类型\n\t如：{value}，留空则自动使用 "直连"。\n\t现在支持的类型有：{type}', { value: 'SOCKS5', type: 'HTTP、HTTPS、SOCKS5、SSH' }),
-      example: ['HTTPS', 'SSH']
-    },
-    {
-      key: 'proxyInfo',
-      desc: $t('代理信息\n\t请务必按照此顺序格式填写：代理主机:代理端口:代理用户名:代理密码[刷新URL]\n\t代理用户名、代理密码、[刷新URL] 为【选填】\n\t若网络协议为ipv6，请在代理信息最前端添加 ipv6'),
-      example: ['192.168.0.1:8800', '192.168.0.1:8800:roxytest:roxypass', '192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]', 'ipv6:192.168.0.1:8800:roxytest:roxypass']
-    },
-    {
-      key: 'windowPlatformList',
-      desc: $t('平台账号\n\t仅支持JSON格式的数组, 需要用 [ ] 包含！请务必按照示例填写\n\t\t- platformUrl: 平台网址\n\t\t- platformUserName: 平台账号\n\t\t- platformPassword: 平台密码\n\t\t- platformEfa: 平台2FA'),
-      example: ['[{"platformUrl": "xxx", "platformUserName": "xxx", "platformPassword": "xxx", "platformEfa": "xxx"}]']
-    },
-    {
-      key: 'defaultOpenUrl',
-      desc: $t('启动浏览器时同时打开的标签页，需要用 [ ] 包含！多个标签页请使用英文逗号隔开!'),
-      example: ["['https://www.facebook.com', 'https://www.tiktok.com']"]
-    },
-    {
-      key: 'cookie',
-      desc: $t('仅支持JSON格式的Cookie! 需要用 [ ] 包含！'),
-      example: ['[{"name":"fb","path":"/","domain":".facebook.com"},{"name":"ma","path":"/","domain":".amazon.com"}]']
-    },
-    {
-      key: 'windowRemark',
-      desc: $t('窗口备注'),
-      example: ['RoxyRemarkTest']
-    },
-    {
-      key: 'windowSize',
-      desc: $t('浏览器窗口打开时的默认窗口大小\n\t留空则按默认 {default} 打开。\n\t格式为: 长度*高度', { default: '1000*1000' }),
-      example: ['1000*1000']
-    }
-  ]
+  const fields = getColumns().map(({ header, key, example, placeholder, richText }) => ({
+    header,
+    key,
+    desc: (!richText ? placeholder : richText.map(item => item.text).join('')).split('\n').join('\n\t'),
+    example: ['cookie', 'windowPlatformList', 'defaultOpenUrl', 'userAgent'].includes(key)
+      ? example.split('\n').map(str => str.trimStart()).join('')
+      : example.split('\n').join('\n\t\t'),
+  }))
+
   const exampleData = [
     {
       windowName: 'name1',
@@ -326,6 +289,7 @@ export async function downloadTextTemplate() {
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark1',
       windowSize: '1000*1000',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
     },
     {
       windowName: 'name2',
@@ -338,14 +302,17 @@ export async function downloadTextTemplate() {
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark2',
       windowSize: '1000*1000',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
     }
   ]
-  const str1 = fields.map(item => `- ${item.key} ${item.desc}\n${item.example.map((str, index) => `\t${$t('【示例{index}】', { index: index + 1 })}${item.key}=${str}`).join('\n')}`).join('\n\n')
-  const str2 = $t('{sign1}\n每个窗口之间请用 {sign2} 进行分隔（最少4个{sign}）。注意，备注内尽量不含空行。如存在空行，可能会导致识别失败。\n导入两个窗口，示例如下：', { sign: '#', sign1: '#'.repeat(40), sign2: '#'.repeat(10) })
-  const str3 = exampleData.map(item => Object.entries(item).map(([key, value]) => `${key}=${value}`).join('\n')).join(`\n\n${'#'.repeat(40)}\n\n`)
-  const str = `${str1}\n\n${str2}\n\n${str3}\n\n${'#'.repeat(40)}\n\n${$t('导入时，请删除本行及其以上的所有内容。')}\n\n`
 
-  const blob = new Blob([str], { type: 'text/plain' })
+  const firstText = $t('*如需查看完整案例, 请跳转至文本最后, 如果您是第一次使用 txt 模板导入, 建议您按顺序阅读。')
+  const fieldText = fields.map(item => `- ${item.key}  (${item.header})\n\t${item.desc}\n\t\t${item.example}`).join('\n\n')
+  const separatorText = $t('{sign1}\n每个窗口之间请用 {sign2} 进行分隔（最少4个{sign}）。注意，备注内尽量不含空行。如存在空行，可能会导致识别失败。\n导入两个窗口，示例如下：', { sign: '#', sign1: '#'.repeat(40), sign2: '#'.repeat(10) })
+  const exampleText = exampleData.map(item => Object.entries(item).map(([key, value]) => `${key}=${value}`).join('\n')).join(`\n\n${'#'.repeat(40)}\n\n`)
+  const fullText = `${firstText}\n\n${fieldText}\n\n${separatorText}\n\n${exampleText}\n\n${'#'.repeat(40)}\n\n${$t('导入时，请删除本行及其以上的所有内容。')}\n\n`
+
+  const blob = new Blob([fullText], { type: 'text/plain' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
   link.download = `roxy_template_${format(new Date(), 'yyyyMMdd_HHmmss')}.txt`
@@ -420,11 +387,14 @@ export async function parseTextFile(file: File) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const content = e.target?.result;
-      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((line, index) => {
-        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(line.trim().split('\n').map(str => {
-          const [key, ...value] = str.trim().split('=')
-          return [key, value.join('=')]
-        }))
+      const keys = getColumns().map(column => column.key)
+      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((text, index) => {
+        const textFmt = text.trim().split('\n').map(line => {
+          const [key, ...value] = line.trim().split('=')
+          return keys.includes(key) ? [key, value.join('=')] : []
+        }).filter(item => item.length)
+
+        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
         return {
           rowNum: index + 1,
           ...data,

@@ -5,8 +5,8 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
-import { usePopoverMenu } from './popover-menu'
 import type { Operation } from '/@/utils'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
 
 interface Props {
   labels: any[]
@@ -20,9 +20,9 @@ const { labels, projectId, disabled = false, showCreateTag = true } = defineProp
 const emit = defineEmits(['update'])
 
 const [addTag] = useTagsActions({ toast: false })
-const [showMenu] = usePopoverMenu()
 const role = useRoleStore()
 const { getTags, getProjectMember } = useMateGroup()
+const { showMenu: showPopupMenu } = usePopupMenu()
 
 // const styles = useCssModule()
 
@@ -34,31 +34,38 @@ const _members = computed(() =>
 )
 const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
 
-async function openMenu(event: any) {
+async function openMenu(event: MouseEvent) {
   if (_disabled.value)
     return
 
   const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
   const value = labels?.map((item: any) => `${item.labelId}`)
 
-  showMenu(event, {
-    type: 'checkbox',
-    value,
-    operation: memberList.concat(tagList),
-    onHide: (labelIds: string[]) => {
-      if (!isEq(value, toRaw(labelIds))) {
-        // u_ 开头的表示人员 id
-        emit('update', { labelIds: (labelIds || []).map(value => value.startsWith('u_') ? value : Number(value)) })
+  showPopupMenu(event, {
+    mode: {
+      type: 'multiple',
+      value,
+      options: memberList.concat(tagList),
+      field: 'value',
+    },
+    menuProps: {
+      onHide: ({ value: labelIds }: any) => {
+        if (!isEq(value, toRaw(labelIds))) {
+          // u_ 开头的表示人员 id
+          emit('update', { labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)) })
+        }
       }
     },
-    afterCmp: showCreateTag ? () => {
-      return (
-        <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
-          <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
-          <div>{$t('新增标签')}</div>
-        </div>
-      )
-    } : undefined,
+    slots: {
+      end: showCreateTag ? () => {
+        return (
+          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
+            <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
+            <div>{$t('新增标签')}</div>
+          </div>
+        )
+      } : undefined,
+    }
   })
 }
 
@@ -80,7 +87,7 @@ defineExpose({ openMenu })
 
 <template>
   <div class="flex items-center gap-2">
-    <RxTag v-if="!labels?.length" class="cursor-pointer !rounded-full" :disabled="_disabled" icon="base/rx_ic_tag" @click.stop="openMenu" />
+    <RxButton v-if="!labels?.length" class="cursor-pointer !rounded-full" size="xxs" text severity="secondary" :disabled="_disabled" icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
       <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :title="label.labelName" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']"

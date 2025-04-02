@@ -47,15 +47,12 @@ function onChange() {
   <ContextMenu ref="ctxMenu" :model="operation" @before-hide="onHide">
     <template #item="{ item, props: ctxProps }">
       <a v-ripple class="!pa-0" v-bind="ctxProps.action">
-        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
-          @click.stop>
-          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop
-            @change="onChange" />
+        <label v-if="type === 'radio'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
+          <RadioButton v-model="selected" name="radio" :input-id="item.value" :value="item.value" @click.stop @change="onChange" />
           <span>{{ item.label }}</span>
         </label>
 
-        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value"
-          @click.stop>
+        <label v-if="type === 'checkbox'" class="cursor-pointer" :class="classes['context-item']" :for="item.value" @click.stop>
           <Checkbox v-model="selected" name="checkbox" :input-id="item.value" :value="item.value" @click.stop />
           <span>{{ item.label }}</span>
         </label>
@@ -71,14 +68,6 @@ function onChange() {
 
 <style lang="scss" module="classes">
 .context {
-  &-content {
-    padding: var(--spacing-md, 6px) var(--spacing-sm, 4px) !important;
-  }
-
-  &-separator {
-    margin: var(--spacing-md, 6px) 0;
-  }
-
   &-item {
     display: flex;
     align-items: center;

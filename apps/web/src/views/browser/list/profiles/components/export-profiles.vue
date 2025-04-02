@@ -25,13 +25,17 @@ const excelSchema = [
   },
   {
     key: 'os',
-    name: '系统',
+    name: $t('操作系统'),
     getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os// 历史原因ios特殊处理
   },
   {
     key: 'osVersion',
-    name: '系统版本',
+    name: $t('系统版本'),
     getText: (item: Data) => item.osVersion?.toUpperCase()
+  },
+  {
+    key: 'userAgent',
+    name: 'User-Agent',
   },
   {
     key: 'platformUrl',

@@ -4,7 +4,6 @@ import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
-import { isDev } from '/@/utils'
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -30,10 +29,10 @@ const tabs = ref<Tab[]>([
     noRead: 0,
   },
 ])
-
 const tabsValue = ref('sys')
 
 const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 0))
+const readSet = ref<Set<number>>(new Set())
 
 function toggle(event: Event) {
   getMessageList()
@@ -63,46 +62,49 @@ async function getMessageList(result?: UserGetNotifyListData) {
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
-      // TODO 待优化
-      acc.teamsRead += item.status
+      acc.teamsRead += item.status!
     }
     else {
       acc.sys.push(item)
-      acc.sysRead += item.status
+      acc.sysRead += item.status!
     }
     return acc
-  }, { teams: [], sys: [], teamsRead: 0, sysRead: 0 })
+  }, { teams: [] as any, sys: [] as any, teamsRead: 0, sysRead: 0 })
 
   teamsTab.noRead = teams.length - teamsRead
   sysTab.noRead = sys.length - sysRead
   teamsTab.list = teams
   sysTab.list = sys
-  // TODO 待复现 bug 时调试
-  if (isDev && (teamsTab.noRead < 0 || sysTab.noRead < 0)) {
-    debugger
-  }
 }
 
 async function onRead(item: Message | Message[]) {
-  if (!Array.isArray(item) && item.status === NotifyStatus.read)
+  if (!Array.isArray(item) && (item.status === NotifyStatus.read || readSet.value.has(item.id!)))
     return
 
   const items = ([] as Message[]).concat(item)
-  const ids = items.map(item => item.id)
+  const ids = items.map(item => item.id!)
 
-  await API.base.userReadNotifyCreate({ ids: ids as number[] })
+  readSet.value = new Set([...readSet.value, ...ids])// 标记已读 id
+
+  const { code } = await API.base.userReadNotifyCreate({ ids })
+  if (code !== 0) {
+    ids.forEach(id => readSet.value.delete(id))
+    return
+  }
   tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
   items.forEach(item => item.status = NotifyStatus.read)
 }
 
-function markAllAsRead() {
-  const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread)
-  list?.length && onRead(list)
+async function markAllAsRead() {
+  const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread && !readSet.value.has(item.id!))
+  if (list?.length) {
+    await onRead(list)
+  }
 }
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    emitter.emit('viewInviteDetail', item.paramData)
+    emitter.emit('viewInviteDetail', item.paramData!)
   }
 }
 
@@ -131,13 +133,11 @@ onMounted(() => {
           <div :class="message.title">
             {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')"
-            @click="markAllAsRead" />
+          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-              class="flex flex-1 justify-center items-center gap-1.5">
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
@@ -145,11 +145,9 @@ onMounted(() => {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex"
-                  :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
+                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2" :avatar="handleAvatar(item)"
-                      :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="handleAvatar(item)" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div class="w-full">
                     <div :class="message.value">

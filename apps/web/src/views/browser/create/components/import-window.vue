@@ -80,7 +80,8 @@ async function handleBeforeUpload(rawFile: any) {
   const excelData = getExtname(fileName) === 'txt'
     ? await parseTextFile(rawFile)
     : await parseTemplate(rawFile)
-
+  console.log("🚀 ~ handleBeforeUpload ~ excelData:", excelData)
+  return
   if (excelData.length === 0) {
     onlyErrorToast(-1, $t('导入的内容不能为空'))
     return
