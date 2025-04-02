@@ -4,6 +4,7 @@ import { UaStrictMode } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { checkCookieFormat, createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { z } from "zod";
 
 const userStore = useUserStore()
 
@@ -445,6 +446,22 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.longitude,
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue > 180) {
+            newValue = 180
+          }
+          if (newValue < -180) {
+            newValue = -180
+          }
+        } else {
+          newValue = ''
+          setInputFieldByInputKey(basicInputs, 'longitude', 'invalid', true)
+        }
+        setInputFieldByInputKey(basicInputs, 'longitude', 'value', newValue)
+      },
     },
     {
       type: 'text',
@@ -454,6 +471,22 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.latitude,
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue > 90) {
+            newValue = 90
+          }
+          if (newValue < -90) {
+            newValue = -90
+          }
+        } else {
+          newValue = ''
+          setInputFieldByInputKey(basicInputs, 'latitude', 'invalid', true)
+        }
+        setInputFieldByInputKey(basicInputs, 'latitude', 'value', newValue)
+      },
     },
     {
       type: 'text',
@@ -462,6 +495,23 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'precisionPos',
       value: data.precisionPos,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        // 输入的内容如果不是数字，就清空，如果是数字就走下边的校验
+        // 不能为空字符
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue < 10) {
+            newValue = 10
+          }
+          if (newValue > 5000) {
+            newValue = 5000
+          }
+        } else {
+          newValue = ''
+        }
+        setInputFieldByInputKey(basicInputs, 'precisionPos', 'value', newValue)
+      },
     },
     {
       type: 'radio',
