@@ -206,6 +206,10 @@ export function usePreferencesPanel() {
 								);
 							},
 						},
+
+						// TODO: 这里需要添加应用上锁相关的设
+						// 1. 设置解锁密码
+						// 2. 设置快捷键
 					],
 				},
 			],

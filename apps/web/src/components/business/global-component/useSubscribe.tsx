@@ -16,7 +16,7 @@ const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-ex
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
 const OldUserGiftDialog = defineAsyncComponent(() => import('./old-user-gift-dialog.vue'))
-
+const Locker = defineAsyncComponent(() => import('./locker.vue'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
@@ -77,6 +77,8 @@ export function useSubscribe() {
         getUserPayInfo()
       }
     })
+
+    // TODO: 如何去监听快捷键，而且这个快捷键用户修改了，这里还需要立马做出改变
   }
 
   requestIdleCallback(async () => {
@@ -196,6 +198,63 @@ export function useSubscribe() {
           }
           options?.afterConfirm?.({ code, data, msg })
         },
+      }
+    })
+  }
+
+  function openLocker() {
+    // 遮罩层元素的id
+    const MASK_ID = 'locker-dialog-mask'
+
+    // 监听元素删除事件(防止用户通过浏览器开发者工具删除元素来绕开应用锁)
+    function watchElementRemoval(targetElement: HTMLElement, callback: () => void) {
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          // 遍历 mutation.removedNodes，检查是否有目标元素
+          for (const node of Array.from(mutation.removedNodes)) {
+            if (node === targetElement || node.contains(targetElement)) {
+              callback();
+              observer.disconnect(); // 解除监听
+              return;
+            }
+          }
+        }
+      });
+
+      // 监听父节点的子节点变化
+      if (targetElement.parentElement) {
+        observer.observe(targetElement.parentElement, { childList: true });
+      } else {
+        console.warn("目标元素没有父节点，无法监听删除事件");
+      }
+
+      return observer;
+    }
+
+    const lockerDialog = dialog.open(Locker, {
+      props: {
+        showHeader: false,
+        modal: true,
+        blockScroll: true,
+        closeOnEscape: false,
+        draggable: false,
+        pt: {
+          mask: {
+            id: MASK_ID
+          }
+        }
+      },
+      emits: {
+        onShow: () => {
+          const mask = document.getElementById(MASK_ID)
+          if (mask) {
+            watchElementRemoval(mask, openLocker)
+          }
+        },
+        onClose: () => {
+          // 关闭了
+          lockerDialog.close()
+        }
       }
     })
   }

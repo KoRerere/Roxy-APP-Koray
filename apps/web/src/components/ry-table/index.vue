@@ -324,7 +324,7 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="min-width: 3%" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" :selection-mode="selectionMode" />
+        <Column v-if="selectionMode" header-style="min-width: 45px" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" :selection-mode="selectionMode" />
         <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
