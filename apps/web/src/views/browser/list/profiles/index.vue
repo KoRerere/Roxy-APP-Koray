@@ -757,7 +757,7 @@ defineExpose({
       <div class="flex items-center gap-2">
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
           class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <span v-if="_caches.extend">{{ data.windowRemark || $t('添加备注') }}</span>
+        <span class="w-100 ellipsis-1" v-if="_caches.extend">{{ data.windowRemark || $t('添加备注') }}</span>
       </div>
     </template>
     <template #project="{ data }">
