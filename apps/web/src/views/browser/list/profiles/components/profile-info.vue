@@ -48,7 +48,11 @@ const list = computed(() => {
     {
       key: 'os',
       svg: OS_ICON[(data.os as string).toLocaleLowerCase()],
-      tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', { os: data.os, osVersion: data.osVersion, coreVersion: data.coreVersion }),
+      tooltip: $t('系统: {os} {osVersion}\n内核: Chrome {coreVersion}', {
+        os: data.os === 'IOS' ? 'iOS' : data.os,
+        osVersion: data.osVersion,
+        coreVersion: data.coreVersion
+      }),
     },
     {
       key: 'proxy',

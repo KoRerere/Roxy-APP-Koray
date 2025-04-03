@@ -5,7 +5,7 @@ import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
-import { getFormData, isEmptyValue, isFunction, operationPower } from '/@/utils'
+import { getFormData, isEmptyValue, isFunction, operationPower, type Operation } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
@@ -16,91 +16,51 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps({
-  dataKey: {
-    type: String,
-    default: 'id',
-  },
-  cacheKey: {
-    type: String,
-    default: '',
-  },
-  dataList: {
-    type: Array as PropType<any[]>,
-    default: null,
-  },
-  tableParams: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  },
-  tableRequest: {
-    type: Function as PropType<(data: any) => Promise<any>>,
-    default: () => () => Promise.resolve({}),
-  },
-  immediate: {
-    type: Boolean,
-    default: true,
-  },
-  columns: {
-    type: Array as PropType<any[]>,
-    required: true,
-    default: () => [],
-  },
-  tableFilters: {
-    type: Function as PropType<() => any>,
-    default: () => [],
-  },
-  tableSort: {
-    type: Function as PropType<() => any>,
-    default: () => [],
-  },
-  operation: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  tableOperation: {
-    type: Function as PropType<(data: any) => any[]>,
-    default: () => [],
-  },
-  operationHandler: {
-    type: Function as PropType<(event: any, data: any, operationType: 'single' | 'batch') => any | Promise<any>>,
-    default: () => () => { },
-  },
-  multipleOperation: {
-    type: Boolean,
-    default: true,
-  },
-  paginator: {
-    type: Boolean,
-    default: true,
-  },
-  showTableHeader: {
-    type: Boolean,
-    default: true,
-  },
-  showDisplay: {
-    type: Boolean,
-    default: true,
-  },
-  showActions: {
-    type: Boolean,
-    default: true,
-  },
-  showActionsMenu: {
-    type: Boolean,
-    default: true,
-  },
-  selectionMode: {
-    type: String as PropType<'single' | 'multiple' | undefined>,
-    default: undefined,
-  },
+interface Props {
+  dataKey?: string
+  cacheKey?: string
+  columns: any[]
+  dataList?: any[]
+  operation?: Operation[]
+  tableParams?: Record<string, any>
+  tableSort?: () => any
+  tableFilters?: () => any
+  tableRequest?: (data: any) => any | Promise<any>
+  tableOperation?: (data: any) => Operation[]
+  operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
+  selectionMode?: 'single' | 'multiple'
+  immediate?: boolean
+  multipleOperation?: boolean
+  paginator?: boolean
+  showTableHeader?: boolean
+  showDisplay?: boolean
+  showActions?: boolean
+  showActionsMenu?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  dataKey: 'id',
+  cacheKey: '',
+  tableRequest: () => ({}),
+  tableSort: () => [],
+  tableFilters: () => [],
+  tableOperation: () => [],
+  operationHandler: () => ({}),
+  immediate: true,
+  multipleOperation: true,
+  paginator: true,
+  showTableHeader: true,
+  showDisplay: true,
+  showActions: true,
+  showActionsMenu: true,
 })
 
 defineEmits(['update:columns'])
 
-const rootElRef = useTemplateRef('rootEl')
 const route = useRoute()
 const [show] = useContextMenu()
+const columnCss = useCssModule('ColumnCss_Module')
+const rootElRef = useTemplateRef('rootEl')
 
 let _getConditionPromise: Promise<any> | undefined
 const _firstLoad = ref(false)
@@ -182,6 +142,30 @@ const paginatorInfo = computed(() => $t('总计 {total} 个', {
   total: paginatorConfig.totalRecords,
 }))
 
+onBeforeMount(async () => {
+  _getConditionPromise = _getCondition()
+  if (props.immediate) {
+    await _request()
+  }
+  _firstLoad.value = true
+})
+
+function fmtColumnProps(column: Record<string, any>) {
+  const { key, style, alignFrozen, pt, ...props } = column
+  return {
+    field: key,
+    headerStyle: style,
+    frozen: !!alignFrozen,
+    alignFrozen,
+    pt: {
+      headercell: columnCss.headercell,
+      bodycell: columnCss.bodycell,
+      ...pt
+    },
+    ...props
+  }
+}
+
 async function batchOperation(item: any) {
   try {
     await props.operationHandler(item, selectionData.value, 'batch')
@@ -205,9 +189,9 @@ async function _onSortChange() {
 
 async function _getCondition() {
   _loading.value = true
-  const [filterList, { data, onChange }] = await Promise.all([
-    props.tableFilters(),
+  const [{ data, onChange }, filterList] = await Promise.all([
     props.tableSort(),
+    props.tableFilters(),
   ])
   _filters.value = filterList
   _sorts.value = data
@@ -237,7 +221,7 @@ async function _request() {
 }
 
 function _getOperation(data: any) {
-  return operationPower(!isEmptyValue(props.operation) ? props.operation : props.tableOperation(data))
+  return operationPower(!isEmptyValue(props.operation) ? props.operation! : props.tableOperation(data))
 }
 
 function _clearSelection() {
@@ -285,14 +269,6 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   })
 }
 
-onBeforeMount(async () => {
-  _getConditionPromise = _getCondition()
-  if (props.immediate) {
-    await _request()
-  }
-  _firstLoad.value = true
-})
-
 defineExpose({
   rootElRef,
   selectionData,
@@ -339,8 +315,8 @@ const slots: any = useSlots()
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
         table: !tableList?.length ? 'flex-1 !h-full' : '',
         emptymessagecell: '!whitespace-normal !text-center',
-        headerrow: Css_Module.headerrow,
-        bodyrow: Css_Module.bodyrow,
+        headerrow: ColumnCss_Module.headerrow,
+        bodyrow: ColumnCss_Module.bodyrow,
       }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
@@ -348,16 +324,12 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="min-width: 3%" :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
-        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" :field="column.key" :header-style="column.style" :frozen="!!column.alignFrozen"
-          :align-frozen="column.alignFrozen" :pt="{
-            headercell: Css_Module.headercell,
-            bodycell: Css_Module.bodycell,
-          }">
+        <Column v-if="selectionMode" header-style="min-width: 3%" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }" :selection-mode="selectionMode" />
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
-              <component v-if="headerRender" :is="headerRender" :column="column" :class="Css_Module.columntitle" />
-              <span v-else :class="Css_Module.columntitle">{{ column.title }}</span>
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
+              <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
           <template #body="{ data }">
@@ -370,9 +342,9 @@ const slots: any = useSlots()
           </template>
         </Column>
         <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 9rem" :pt="{
-          columntitle: Css_Module.columntitle,
-          headercell: Css_Module.headercell,
-          bodycell: Css_Module.bodycell,
+          columntitle: ColumnCss_Module.columntitle,
+          headercell: ColumnCss_Module.headercell,
+          bodycell: ColumnCss_Module.bodycell,
         }">
           <template #body="{ data }">
             <div class="flex items-center">
@@ -514,7 +486,7 @@ const slots: any = useSlots()
 }
 </style>
 
-<style lang="scss" module="Css_Module">
+<style lang="scss" module="ColumnCss_Module">
 .columntitle {
   color: #000;
   font-family: Inter;

@@ -28,13 +28,13 @@ export function getColumns() {
       {
         title: $t('备注'),
         key: 'note',
-        headerProps: {
-          extend: false,
-        },
         headerSlot: 'noteHeader',
         slot: 'note',
         style: {
           minWidth: '100px',
+        },
+        _caches: {
+          extend: false,
         }
       },
       {

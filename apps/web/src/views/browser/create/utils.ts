@@ -395,6 +395,12 @@ export async function parseTextFile(file: File) {
         }).filter(item => item.length)
 
         const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
+
+        // 历史原因特殊处理 ios
+        if (data.os.toLocaleUpperCase() === 'IOS') {
+          data.os = data.os.toLocaleUpperCase()
+        }
+
         return {
           rowNum: index + 1,
           ...data,

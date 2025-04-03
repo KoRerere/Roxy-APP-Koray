@@ -22,6 +22,7 @@ const repayCss = useCssModule('repay')
 
 const emit = defineEmits(['close'])
 
+const rtableRef = useTemplateRef('rtable')
 const features = getAdvancedFeature()
 const featureTexts = [
   features.slice(0, 5),
@@ -123,7 +124,8 @@ async function cancelSubscribe() {
 }
 
 async function onRepay(row: any) {
-  window.open(row.invoiceUrl)
+  window.open(row.failAddress)
+
   dialogInstance.showModal({
     innerDialog: true,
     showHeader: false,
@@ -139,7 +141,7 @@ async function onRepay(row: any) {
           <div class={`${repayCss.header}`}>{$t('支付处理中...')}</div>
           <div class={`flex flex-col gap-3 whitespace-pre-wrap ${repayCss.content}`}>{$t('请在打开的页面中完成订单的支付，支付成功后请点击以下按钮')}</div>
           <div class={`flex flex-col gap-2.5 ${repayCss.help}`}>
-            <RxButton class="flex-1" size='lg' label={$t('完成支付')}></RxButton>
+            <RxButton class="flex-1" size='lg' label={$t('完成支付')} onClick={confirm}></RxButton>
             <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={() => dialogInstance.handleCancel()}></RxButton>
             <I18nT tag="div" keypath={$t('* 支付遇到问题？ {link}', { link: '{link}' })} scope="global">
               {{ link: () => <span class={`cursor-pointer ${repayCss.link}`} onClick={openLiveChat}>{$t('联系我们')}</span> }}
@@ -149,6 +151,11 @@ async function onRepay(row: any) {
       }
     },
   })
+
+  function confirm() {
+    dialogInstance.handleCancel()
+    rtableRef.value?.refresh()
+  }
 }
 
 function openLiveChat() {
@@ -186,11 +193,12 @@ function onClose() {
     <div>
       <div class="py-4 record">{{ $t('账单记录') }}</div>
       <div class="flex h-80">
-        <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
+        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
           <template #status="{ data }">
-            <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
+            <div class="flex items-center gap-2.5 status" :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
               <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-              <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
+              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
+                @click="onRepay(data)"></RxButton>
             </div>
           </template>
         </RyTable>

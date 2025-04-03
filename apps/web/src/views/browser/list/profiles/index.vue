@@ -747,16 +747,18 @@ defineExpose({
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
-    <template #noteHeader="{ column: { title, headerProps } }">
+    <template #noteHeader="{ column: { title, _caches } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="headerProps.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="headerProps.extend = !headerProps.extend" />
+        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_caches.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="_caches.extend = !_caches.extend" />
       </div>
     </template>
-    <template #note="{ data, column: { headerProps } }">
-      <div v-if="headerProps.extend">{{ data.windowRemark }}</div>
-      <RxSvgIcon v-else v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-        :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+    <template #note="{ data, column: { _caches } }">
+      <div class="flex items-center gap-2">
+        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
+          class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+        <span v-if="_caches.extend">{{ data.windowRemark || $t('添加备注') }}</span>
+      </div>
     </template>
     <template #project="{ data }">
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
