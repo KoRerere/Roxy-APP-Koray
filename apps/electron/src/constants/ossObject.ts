@@ -1,4 +1,7 @@
+import { join } from 'node:path'
 import { store } from '/@/modules/store'
+import { isPackaged } from '/@/utils'
+import { appConfig } from '/@/constants'
 
 /**
  * 在各语言SDK中，ObjectKey、Key以及ObjectName是同一概念，均表示对Object执行相关操作时需要填写的Object名称。
@@ -17,5 +20,9 @@ export const ossObject = {
   /** 用户插件目录 */
   get userPluginDataDir() {
     return `/groupdata/workspace/${store.workspaceId}/plugin`
+  },
+  /** 默认插件图标本地路径 */
+  get defaultPluginIconPath() {
+    return isPackaged ? join(appConfig.unpackedFilePath, './dist/web/images/default-plugin-icon.png') : join(__dirname, '../../web/public/images/default-plugin-icon.png')
   },
 } as const

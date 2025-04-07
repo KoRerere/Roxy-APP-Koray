@@ -154,8 +154,8 @@ importers:
         specifier: ^3.1.10
         version: 3.1.10
       electron:
-        specifier: 35.1.1
-        version: 35.1.1
+        specifier: 35.1.4
+        version: 35.1.4
       electron-builder:
         specifier: 26.0.12
         version: 26.0.12(electron-builder-squirrel-windows@25.1.8)
@@ -229,8 +229,8 @@ importers:
   apps/preload:
     dependencies:
       electron:
-        specifier: ^35.1.1
-        version: 35.1.1
+        specifier: ^35.1.4
+        version: 35.1.4
     devDependencies:
       '@roxy/backend-api':
         specifier: workspace:*
@@ -3157,8 +3157,8 @@ packages:
   electron-updater@6.6.2:
     resolution: {integrity: sha512-Cr4GDOkbAUqRHP5/oeOmH/L2Bn6+FQPxVLZtPbcmKZC63a1F3uu5EefYOssgZXG3u/zBlubbJ5PJdITdMVggbw==}
 
-  electron@35.1.1:
-    resolution: {integrity: sha512-0c4q8SuYsec9uqb1d2B/FDP/pifAT/Rc7721EjUdRfTKABFqXgYKAtyEKIlmFPjxPbwQt2EMfL35zVmpEAGI3A==}
+  electron@35.1.4:
+    resolution: {integrity: sha512-8HjE2wqxY//T09Of8k1eTpK/NeTG2FkTyRD+fyKXmec4wZVscGgZcmWFC0HYN4ktyHAjtplpxdFXjtqRnvzBMg==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -10144,7 +10144,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@35.1.1:
+  electron@35.1.4:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 22.13.10

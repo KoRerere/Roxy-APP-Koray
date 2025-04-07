@@ -79,9 +79,11 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 动态修改同步设置 */
-  ipcMain.on('syncControl:changeSyncSettings', (event, payload) => {
-    console.log('动态修改同步设置:', payload)
-    return syncSettings(payload)
+  ipcMain.on('syncControl:changeSyncSettings', async (event, payload) => {
+    console.log('动态修改同步设置 payload:', payload)
+    const result = await syncSettings(payload)
+    console.log('动态修改同步设置 result:', result)
+    return result
   })
 
   /** 打开偏好设置弹窗 */

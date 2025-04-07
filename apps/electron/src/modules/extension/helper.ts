@@ -2,7 +2,7 @@ import { access, readdir, readFile } from 'node:fs/promises'
 import path, { join } from 'node:path'
 import url from 'node:url'
 import crypto from 'node:crypto'
-import { mediaProtocolName } from '/@/constants'
+import { mediaProtocolName, ossObject } from '/@/constants'
 import { fileExists } from '/@/utils'
 import { generateKeyPairSync } from 'crypto';
 
@@ -93,8 +93,9 @@ export async function getPluginMeta(pluginDir: string) {
 
     try {
       const iconPath = manifestInfo.icons?.['128'] || Object.values(manifestInfo.icons || {})[0]
+      const iconPathExist = iconPath ? await fileExists(path.join(targetPluginDir, iconPath)) : false
       /** 插件图标所在路径 */
-      const pluginIconPath = path.join(targetPluginDir, iconPath)
+      const pluginIconPath = iconPathExist ? path.join(targetPluginDir, iconPath) : ossObject.defaultPluginIconPath
       await access(pluginIconPath)
       pluginIcon = url.format({
         protocol: mediaProtocolName,
