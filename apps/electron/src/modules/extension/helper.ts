@@ -77,18 +77,24 @@ export async function getPluginMeta(pluginDir: string) {
 
     // 多语言插件名
     if (manifestInfo.name.startsWith('__MSG_') && manifestInfo.default_locale) {
-      const messageKey = manifestInfo.name.replace('__MSG_', '').replace('__', '')
+      const messageKey = manifestInfo.name.replace('__MSG_', '').replace('__', '').toLowerCase()
       const messageJSON = await readFile(path.join(targetPluginDir, '_locales', manifestInfo.default_locale, 'messages.json'), 'utf-8')
-      const message = JSON.parse(messageJSON)
-      manifestInfo.name = message[messageKey].message
+      const message = Object.entries(JSON.parse(messageJSON)).reduce((acc, [key, value]) => {
+        acc[key.toLowerCase()] = value
+        return acc
+      }, {})
+      manifestInfo.name = message[messageKey]?.message
     }
 
     // 多语言插件描述
     if (manifestInfo.description?.startsWith('__MSG_') && manifestInfo.default_locale) {
-      const messageKey = manifestInfo.description.replace('__MSG_', '').replace('__', '')
+      const messageKey = manifestInfo.description.replace('__MSG_', '').replace('__', '').toLowerCase()
       const messageJSON = await readFile(path.join(targetPluginDir, '_locales', manifestInfo.default_locale, 'messages.json'), 'utf-8')
-      const message = JSON.parse(messageJSON)
-      manifestInfo.description = message[messageKey].message
+      const message = Object.entries(JSON.parse(messageJSON)).reduce((acc, [key, value]) => {
+        acc[key.toLowerCase()] = value
+        return acc
+      }, {})
+      manifestInfo.description = message[messageKey]?.message
     }
 
     try {

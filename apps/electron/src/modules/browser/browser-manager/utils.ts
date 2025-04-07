@@ -39,6 +39,7 @@ export function encryptFingerprintConfig(data) {
 export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
   const isMobile = [`Android`, `IOS`].includes(winInfo.os)
   const isWindows = winInfo.os === `Windows`
+  const isMacOS = winInfo.os === `macOS`
 
   return {
     computerName: winInfo.computerName,
@@ -301,9 +302,10 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       platform: winInfo.platform,
       mobile: isMobile,
       /**  操作系统版本,可以不填 */
-      get platformVersion() {
-        if (isMobile || isWindows) {
-          return winInfo.platformVersion
+      platformVersion: winInfo.platformVersion,
+      get architecture() {
+        if (isMacOS) {
+          return winInfo.architecture
         }
       },
       get model() {

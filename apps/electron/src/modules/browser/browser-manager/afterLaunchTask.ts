@@ -1,11 +1,11 @@
-import type { Browser } from 'puppeteer-core'
+import type { Browser, Protocol } from 'puppeteer-core'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
   /** 最新的 cookies */
-  private cookies = ''
+  private cookies: Protocol.Network.Cookie[] = []
   /** 判断是否手机端 */
   get isPhone() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
@@ -89,7 +89,7 @@ export class AfterLaunchTask {
 
     const saveCookies = async () => {
       const { cookies } = await cdpSession.send('Storage.getCookies')
-      this.cookies = JSON.stringify(cookies)
+      this.cookies = cookies
     }
 
     console.log('createCDPSession success')
