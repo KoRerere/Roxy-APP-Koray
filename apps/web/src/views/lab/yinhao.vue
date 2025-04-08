@@ -101,6 +101,30 @@ async function onSearch() {
   await sleep(10000)
   loading.value = false
 }
+
+const activeDirection = ref()
+const directions = [
+  { value: 'up-left', class: 'up-left' },
+  { value: 'up', class: 'up' },
+  { value: 'up-right', class: 'up-right' },
+  { value: 'left', class: 'left' },
+  { value: 'center', class: 'center' },
+  { value: 'right', class: 'right' },
+  { value: 'down-left', class: 'down-left' },
+  { value: 'down', class: 'down' },
+  { value: 'down-right', class: 'down-right' }
+]
+
+function handleDirectionDown(direction: string) {
+  activeDirection.value = direction
+}
+
+function handleDirectionUp() {
+  if (activeDirection.value) {
+    activeDirection.value = null
+  }
+}
+
 </script>
 
 <template>
@@ -114,37 +138,79 @@ async function onSearch() {
         <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header"></Column>
       </DataTable>
     </div> -->
-
+    <div class="direction">
+      <div v-for="(direction, index) in directions" :key="index" class="direction-btn" :class="[direction.class, { 'active': activeDirection === direction.value }]"
+        @mousedown="handleDirectionDown(direction.value)" @touchstart="handleDirectionDown(direction.value)" @mouseup="handleDirectionUp" @touchend="handleDirectionUp" @mouseleave="handleDirectionUp">
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.title {
-  color: var(--Colors-text-text-primary, #111213);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 20px;
+.direction {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 5px;
+  margin: 20px auto;
+
+  &-btn {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background-color: #e0e0e0;
+    }
+
+    &.active {
+      background-color: #4CAF50;
+      transform: scale(0.95);
+    }
+  }
 }
 
-.workspace {
-  border-bottom: 1px dashed var(--Colors-border-border-inactive, #C7D1D6);
+/* 为每个方向按钮添加图标或样式 */
+.up::after {
+  content: "↑";
+}
 
-  &:last-of-type {
-    border-bottom: none;
-  }
+.down::after {
+  content: "↓";
+}
 
-  &-name {
-    color: var(--Colors-text-text-primary, #111213);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: normal;
-  }
+.left::after {
+  content: "←";
+}
 
-  &-id {
-    color: var(--Colors-text-text-tertiary, #575D60);
-    font-family: "JetBrains Mono";
-    font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
-  }
+.right::after {
+  content: "→";
+}
+
+.up-left::after {
+  content: "↖";
+}
+
+.up-right::after {
+  content: "↗";
+}
+
+.down-left::after {
+  content: "↙";
+}
+
+.down-right::after {
+  content: "↘";
+}
+
+.center::after {
+  content: "○";
 }
 </style>
