@@ -36,10 +36,7 @@ const columns = [
 ]
 
 async function tableRequest(params: any) {
-  return API.window.userGetWindowInfoListList({
-    ...params,
-    isDelete: 2,//窗口转移固定传 2
-  })
+  return API.window.userGetTransferReceiveWindowListList(params)
 }
 </script>
 
@@ -53,8 +50,10 @@ async function tableRequest(params: any) {
       <RemarkIcon :value="data.windowRemark" disabled />
     </template>
     <template #transfer="{ data }">
-      <div>
-        111
+      <div class="flex items-center">
+        <RxAvatar :name="data.workspacePicture" :size="36" color="orange" :font-size="16" />
+        <div class="">{{ data.workspaceName }}</div>
+        <div class="">ID: {{ data.workspaceNo }}</div>
       </div>
     </template>
   </RyTable>

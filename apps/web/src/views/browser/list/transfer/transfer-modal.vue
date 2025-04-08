@@ -1,25 +1,31 @@
 <script setup lang="ts">
 import { RxAlert } from '/@/components/rx-alert/'
 import ChooseSpace from './choose-space.vue'
+import { API } from '/@/api';
+import { useResponseToast } from "/@/hooks/useResponseToast";
+import { $t } from '/@/locales';
+import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
+import { startCountdown } from '/@/utils';
 
 
 const { ids: windowIds } = defineProps<{
   ids: number[]
 }>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'confirm'])
+const [_, onlyErrorToast] = useResponseToast()
 
-const targetWorkspaceId = ref()
+const selectedWorkspace = ref()
 const isDelete = ref()
 const transferParam = ref({
   value: [],
   options: [
     {
-      label: 'Profile name',
+      label: $t('窗口名称'),
       value: 'name'
     },
     {
-      label: 'Profile notes',
+      label: $t('窗口备注'),
       value: 'notes'
     }
   ]
@@ -27,27 +33,56 @@ const transferParam = ref({
 //===============================================
 const emailCode = ref()
 const step2 = ref(false)
+const countdown = ref()
+const stopCountdown = ref()
 
-function sendCode() {
+onBeforeUnmount(() => {
+  stopCountdown.value?.()
+})
+
+async function sendCode() {
+  if (!selectedWorkspace.value) return
+
+  if (selectedWorkspace.value.type === SpaceType.Self) {
+    onTransfer()
+    return
+  }
+
+  const { code, msg } = await API.window.userTransferWindowVerifyCodeList()
+  if (code !== 0) return onlyErrorToast(code, msg)
   step2.value = true
+  stopCountdown.value = startCountdown(Date.now() + 1000 * 60, (time) => {
+    countdown.value = time
+  })
+}
+
+async function onTransfer() {
+  await API.window.userTransferWindowCreate({
+    windowIds,
+    targetWorkspaceId: selectedWorkspace.value.workspaceId,
+    isDelete: isDelete.value,
+    emailCode: emailCode.value,
+    transferParam: transferParam.value.value
+  })
+  emit('confirm')
 }
 </script>
 
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
-      <span class="header">Transfer</span>
+      <span class="header">{{ $t('窗口转移') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-5">
-      <RxAlert class="w-full" type="info" content="Transfer including cloud synchronization data, proxy, account password, 2FA, Cookies, fingerprints, etc." :closable="false" />
+      <RxAlert class="w-full" type="info" content="转移包括云同步数据、代理、账号密码、2FA、Cookies、指纹等" :closable="false" />
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-3">
-          <div class="title">Transfer to</div>
-          <ChooseSpace v-model="targetWorkspaceId" :ids="windowIds"></ChooseSpace>
+          <div class="title">{{ $t('转移至') }}</div>
+          <ChooseSpace v-model="selectedWorkspace" :ids="windowIds"></ChooseSpace>
         </div>
         <div class="flex flex-col gap-3">
-          <div class="title">Transferable options</div>
+          <div class="title">{{ $t('转移选项') }}</div>
           <div class="flex gap-4">
             <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of transferParam.options" :key="option.value">
               <Checkbox v-model="transferParam.value" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
@@ -57,25 +92,30 @@ function sendCode() {
         </div>
       </div>
       <div class="flex flex-col gap-3">
-        <RxButton label="Confirm" size="lg" @click="sendCode"></RxButton>
+        <RxButton size="lg" :disabled="!selectedWorkspace || countdown?.done === false" @click="sendCode">
+          <span>{{ $t('下一步') }}</span>
+          <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
+        </RxButton>
         <div class="flex items-center gap-2 checkboxitem">
           <Checkbox v-model="isDelete" binary size="small" input-id="del" />
-          <label for="del">After the transfer, delete the profiles from your own space</label>
+          <label for="del">{{ $t('转移后删除窗口') }}</label>
         </div>
       </div>
     </div>
 
     <div v-if="step2" class="flex flex-col gap-6">
-      <RxAlert class="w-full" type="warn" content="Transfer cannot be undone. Unaccepted or rejected profiles will auto-return in 24 hours. No modifications allowed during processing."
-        :closable="false" />
+      <RxAlert class="w-full" type="warn" content="转移操作无法撤销。未接受或被拒绝的配置文件将在24小时内自动返回。处理过程中不允许修改。" :closable="false" />
       <div class="flex flex-col gap-4">
-        <div class="description">For security verification, we've sent a code to your email. Please enter it to confirm and finalize this transfer.</div>
+        <div class="description">{{ $t('为了安全验证，我们已向您的邮箱发送了验证码。请输入验证码以确认并完成此次转移。') }}</div>
         <InputOtp class="inputotp" v-model="emailCode" integer-only :length="6" size="large" />
       </div>
       <div class="flex flex-col gap-3">
-        <RxButton label="Confirm" size="lg"></RxButton>
-        <RxButton outlined severity="secondary" label="Resend" size="lg"></RxButton>
-        <div class="cursor-pointer back" @click="step2 = false">Go back to first step</div>
+        <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer"></RxButton>
+        <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="sendCode">
+          <span>{{ $t('重新发送') }}</span>
+          <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
+        </RxButton>
+        <div class="cursor-pointer back" @click="step2 = false">{{ $t('返回上一步') }}</div>
       </div>
     </div>
   </div>

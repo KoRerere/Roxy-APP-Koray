@@ -35,15 +35,15 @@ const pinTabs = [
   { id: 'rx_1000', label: $t('全部窗口'), name: 'profiles' },
 ]
 
-const suffixTabs = [
-  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_bin_2', name: 'transfer', component: markRaw(Transfer) },
-  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), power: role.isOwner || role.isManager },
-].filter(item => item.power !== false)
-
 const rawTabs = [
   { id: 'rx_1002', label: $t('收藏'), name: 'favorite', _params: { isOften: true } },
   { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
 ]
+
+const suffixTabs = [
+  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_bin_2', name: 'transfer', component: markRaw(Transfer) },
+  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), power: role.isOwner || role.isManager },
+].filter(item => item.power !== false)
 
 const tabIdLangMap = {
   rx_1002: $t('收藏'),
@@ -118,6 +118,10 @@ async function updateFilterTabs(isEdit: boolean = false) {
   if (!isEdit) {
     active.value = tabs.value[tabs.value.length - 1].id
   }
+}
+
+function switchTab(name: string) {
+  active.value = [...tabs.value, ...suffixTabs].find(tab => tab.name === name)?.id || tabs.value[tabs.value.length - 1].id
 }
 
 async function onEditFilter(item: any) {
@@ -253,7 +257,7 @@ async function hidePopover() {
     <div class="flex flex-1 overflow-hidden">
       <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
       <div v-show="!currentSuffixTab.visible" class="flex-1 overflow-hidden">
-        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
+        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" @switch-tab="switchTab" />
       </div>
     </div>
   </div>

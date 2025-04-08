@@ -18,11 +18,15 @@ import {
   UserAddWindowInfoV2CreatePayload,
   UserAddWindowTemplateInfoCreateData,
   UserAddWindowTemplateInfoCreatePayload,
+  UserAgreeTransferWindowCreateData,
+  UserAgreeTransferWindowCreatePayload,
   UserAnalysisWindowInfoCreateData,
   UserAnalysisWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
   UserBatchWindowInfoV2CreatePayload,
   UserCheckWindowTotalCountListData,
+  UserClearTransferWorkspaceCreateData,
+  UserClearTransferWorkspaceCreatePayload,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
   UserCreateWindowInspectListData,
@@ -74,6 +78,8 @@ import {
   UserMdfWindowTemplateInfoCreatePayload,
   UserModifyWindowReportTimeCreateData,
   UserModifyWindowReportTimeCreatePayload,
+  UserRejectTransferWindowCreateData,
+  UserRejectTransferWindowCreatePayload,
   UserSaveWindowRowsSortCreateData,
   UserSaveWindowRowsSortCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
@@ -807,6 +813,60 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_get_transfer_receive_window_list`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAgreeTransferWindowCreate
+   * @summary 同意转移窗口
+   * @request POST:/user_agree_transfer_window
+   * @response `200` `UserAgreeTransferWindowCreateData`
+   */
+  userAgreeTransferWindowCreate = (data: UserAgreeTransferWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAgreeTransferWindowCreateData, any>({
+      path: `/user_agree_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserRejectTransferWindowCreate
+   * @summary 拒绝转移窗口
+   * @request POST:/user_reject_transfer_window
+   * @response `200` `UserRejectTransferWindowCreateData`
+   */
+  userRejectTransferWindowCreate = (data: UserRejectTransferWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserRejectTransferWindowCreateData, any>({
+      path: `/user_reject_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserClearTransferWorkspaceCreate
+   * @summary 清除转移空间
+   * @request POST:/user_clear_transfer_workspace
+   * @response `200` `UserClearTransferWorkspaceCreateData`
+   */
+  userClearTransferWorkspaceCreate = (data: UserClearTransferWorkspaceCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserClearTransferWorkspaceCreateData, any>({
+      path: `/user_clear_transfer_workspace`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

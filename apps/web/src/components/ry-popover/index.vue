@@ -9,7 +9,7 @@ const slots: any = useSlots()
 
 defineExpose({
   getRef,
-  show(event: Event, target?: HTMLElement) {
+  show(event: Event, target?: EventTarget) {
     popoverRef.value?.show(event, target)
   }
 })

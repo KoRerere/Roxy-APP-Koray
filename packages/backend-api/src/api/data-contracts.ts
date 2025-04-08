@@ -3901,6 +3901,8 @@ export interface UserGetTransferWorkspaceListListParams {
 export interface UserGetTransferWorkspaceListListData {
   code: number;
   data: {
+    /** 窗口任务编号,只有类型为2才有值 */
+    windowTransferNo?: string;
     /** 空间编号 */
     workspaceNo?: string;
     /** 空间名称 */
@@ -3983,6 +3985,36 @@ export interface UserGetTransferReceiveWindowListListData {
       workspacePicture?: string;
     }[];
   };
+  msg: string;
+}
+
+export interface UserAgreeTransferWindowCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string;
+}
+
+export interface UserAgreeTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserRejectTransferWindowCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string;
+}
+
+export interface UserRejectTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserClearTransferWorkspaceCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string[];
+}
+
+export interface UserClearTransferWorkspaceCreateData {
+  code: number;
   msg: string;
 }
 

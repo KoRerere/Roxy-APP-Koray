@@ -47,7 +47,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['updateFilterTabs'])
+const emit = defineEmits(['updateFilterTabs', 'switchTab'])
 
 const route = useRoute()
 const router = useRouter()
@@ -392,9 +392,15 @@ async function onTransfer(datas: Data[]) {
     slots: {
       container: () => h(TransferModal, {
         ids: datas.map(item => item.id!),
-        onClose: () => dialogInstance.hideModal(),
-        onConfirm: resolve,
-        onCancel: reject,
+        onClose: () => {
+          dialogInstance.hideModal()
+          reject()
+        },
+        onConfirm: () => {
+          dialogInstance.hideModal()
+          emit('switchTab', 'transfer')
+          resolve()
+        },
       })
     }
   })
@@ -818,7 +824,6 @@ defineExpose({
 <style lang="scss" scoped>
 .note-header {
   color: #000;
-  font-family: Inter;
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;

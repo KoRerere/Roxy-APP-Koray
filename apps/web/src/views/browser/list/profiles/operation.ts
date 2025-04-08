@@ -259,6 +259,8 @@ export function getOperation(_params: any = {}) {
       name: 'transfer',
       label: $t('转移窗口'),
       icon: 'base/rx_ic_billing',
+      tooltip: $t('转移窗口'),
+      quick: true,
       multiple: true,
       multipleProps: {
         name: 'G3',

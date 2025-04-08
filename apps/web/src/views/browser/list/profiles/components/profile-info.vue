@@ -8,7 +8,7 @@ import CanvasLine from './canvas-line.vue';
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 
 interface Props {
-  workspaceName: string
+  workspaceName?: string
   data: Record<string, any>
   openMessage?: Record<string, any>
   disabled?: boolean
@@ -16,7 +16,8 @@ interface Props {
   filterKeys?: string[]
 }
 
-const { workspaceName,
+const {
+  workspaceName,
   data,
   openMessage,
   disabled = false,

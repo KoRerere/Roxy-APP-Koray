@@ -3,9 +3,15 @@ import { API } from '/@/api';
 import { $t } from '/@/locales';
 import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import { useResponseToast } from "/@/hooks/useResponseToast";
+
+const { windowTransferNo } = defineProps<{
+  windowTransferNo: string
+}>()
 
 const emit = defineEmits(['close'])
 
+const [showToast, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
@@ -45,10 +51,24 @@ const columns = [
 ]
 
 async function tableRequest(params: any) {
-  return API.window.userGetWindowInfoListList({
+  return API.window.userGetTransferReceiveWindowListList({
     ...params,
-    isDelete: 2,//窗口转移固定传 2
+    windowTransferNo
   })
+}
+
+async function onReceive() {
+  const { code, msg } = await API.window.userAgreeTransferWindowCreate({ windowTransferNo })
+  showToast(code, msg)
+  if (code !== 0) return
+  emit('close')
+}
+
+async function onReject() {
+  const { code, msg } = await API.window.userRejectTransferWindowCreate({ windowTransferNo })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+  emit('close')
 }
 </script>
 
@@ -58,19 +78,27 @@ async function tableRequest(params: any) {
       <span class="header">Transfer profiles</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
-    <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false">
-      <template #profile="{ data }">
-        <ProfileInfo :workspace-name="workspaceName" :data="data" disabled />
-      </template>
-      <template #note="{ data }">
-        <RemarkIcon :value="data.windowRemark" disabled />
-      </template>
-      <template #transfer="{ data }">
-        <div>
-          111
-        </div>
-      </template>
-    </RyTable>
+    <div class="h-120">
+      <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false">
+        <template #profile="{ data }">
+          <ProfileInfo :workspace-name="workspaceName" :data="data" disabled />
+        </template>
+        <template #note="{ data }">
+          <RemarkIcon :value="data.windowRemark" disabled />
+        </template>
+        <template #transfer="{ data }">
+          <div class="flex items-center">
+            <RxAvatar :name="data.workspacePicture" :size="36" color="orange" :font-size="16" />
+            <div class="">{{ data.workspaceName }}</div>
+            <div class="">ID: {{ data.workspaceNo }}</div>
+          </div>
+        </template>
+      </RyTable>
+    </div>
+    <div class="flex justify-end gap-2">
+      <RxButton severity="secondary" size="sm" outlined :label="$t('拒绝')" @click="onReject" />
+      <RxButton severity="primary" size="sm" :label="$t('接收')" @click="onReceive" />
+    </div>
   </div>
 </template>
 
