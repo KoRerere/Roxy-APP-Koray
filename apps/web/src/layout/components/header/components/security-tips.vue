@@ -6,7 +6,7 @@ const remind = ref(false)
 
 function onClose() {
   if (remind.value) {
-    // localStorage.setItem('security-tips', 'true')
+    localStorage.setItem('NOT_REMIND_TRANSFER_SECURITY', '1')
   }
   emit('close')
 }

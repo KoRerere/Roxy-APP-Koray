@@ -6,7 +6,6 @@ import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
-import SecurityTips from '/@/layout/components/header/components/security-tips.vue';
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -136,23 +135,6 @@ function checkTransfer(item: Message) {
     }
   })
 }
-
-function checkSecurityTips() {
-  dialogInstance.showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    innerDialog: true,
-    pt: {
-      content: '!pa-0'
-    },
-    slots: {
-      container: () => h(SecurityTips, {
-        onClose: () => dialogInstance.hideModal()
-      })
-    }
-  })
-}
 </script>
 
 <template>
@@ -188,7 +170,7 @@ function checkSecurityTips() {
                     <div :class="message.time" class="w-full flex justify-between">
                       <span>{{ item.createTime }}</span>
                       <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{ $t('查看详情') }}</span>
-                      <span v-if="!item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
+                      <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
                   </div>
                 </div>

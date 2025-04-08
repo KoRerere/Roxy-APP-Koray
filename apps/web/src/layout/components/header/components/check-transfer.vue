@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import SecurityTips from '/@/layout/components/header/components/security-tips.vue';
 import { API } from '/@/api';
 import { $t } from '/@/locales';
 import { useWorkspaceStore } from '/@/stores/workspace'
-import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import { useResponseToast } from "/@/hooks/useResponseToast";
+import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
 const { windowTransferNo } = defineProps<{
   windowTransferNo: string
@@ -11,7 +14,9 @@ const { windowTransferNo } = defineProps<{
 
 const emit = defineEmits(['close'])
 
+const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
+const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
@@ -59,8 +64,12 @@ async function tableRequest(params: any) {
 
 async function onReceive() {
   const { code, msg } = await API.window.userAgreeTransferWindowCreate({ windowTransferNo })
-  showToast(code, msg)
-  if (code !== 0) return
+  handleBusinessCode(code, () => {
+    if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
+      checkSecurityTips()
+    }
+    showToast(code, msg)
+  })
   emit('close')
 }
 
@@ -69,6 +78,23 @@ async function onReject() {
   onlyErrorToast(code, msg)
   if (code !== 0) return
   emit('close')
+}
+
+function checkSecurityTips() {
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(SecurityTips, {
+        onClose: () => dialogInstance.hideModal()
+      })
+    }
+  })
 }
 </script>
 
