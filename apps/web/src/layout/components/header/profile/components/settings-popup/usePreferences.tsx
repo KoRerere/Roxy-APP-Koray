@@ -233,10 +233,10 @@ export function usePreferencesPanel() {
 								</div>
 							),
 							name: "openWorkbench",
-							value: data?.openWorkbench ?? true,
+							value: data?.openWorkbench ?? 1,
 							props: {
-								trueValue: true,
-								falseValue: false,
+								trueValue: 1,
+								falseValue: 0,
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
 								return (
