@@ -67,6 +67,8 @@ export function getDefaultTemplate() {
     stopOpenNet: false,
     stopOpenIP: false,
     stopOpenPosition: false,
+    openWorkbench: true,
+    searchEngine: 1
   }
 }
 
@@ -198,6 +200,12 @@ export const getColumns = () => {
         { 'font': { 'color': { 'argb': 'EF4444' } }, 'text': $t('若无需指定 UA, 则可不填写;') },
         { 'text': $t('若填写, 请务必确保 UA 格式正确。') },
       ],
+    },
+    {
+      header: $t('搜索引擎'),
+      key: 'searchEngine',
+      placeholder: $t('搜索引擎, 如: bing'),
+      example: `${exampleText}: bing`
     }
   ]
 }

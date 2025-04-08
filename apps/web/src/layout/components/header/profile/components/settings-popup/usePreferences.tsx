@@ -4,6 +4,7 @@ import InputNumber from "primevue/inputnumber";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
+import RxSelectButton from '/@/components/rx-select-button'
 import { UaStrictMode } from "/@/enums";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import type {
@@ -12,12 +13,23 @@ import type {
 } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import FolderDirectory from "../folder-directory.vue";
+import { API } from '/@/api'
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
 
 	const getPreferencesPanels = async (data?: any): Promise<SettingsModule> => {
 		const softConfig = await electronAPI.send("app:getSoftConfig");
+
+		const searchEngineResult = await API.platform.userGetSearchEnginesList()
+
+		let searchEngineOptions: { label: string, value: string }[] = []
+		if (searchEngineResult.code === 0 && searchEngineResult.data) {
+			searchEngineOptions = searchEngineResult.data.map((item: any) => ({
+				label: item.code,
+				value: item.url
+			}))
+		}
 
 		return {
 			title: $t("软件设置"),
@@ -207,9 +219,79 @@ export function usePreferencesPanel() {
 							},
 						},
 
-						// TODO: 这里需要添加应用上锁相关的设
+						// TODO:(anbin) 这里需要添加应用上锁相关的设置
 						// 1. 设置解锁密码
-						// 2. 设置快捷键
+
+						// TODO:(anbin) 
+						{
+							label: $t("工作台"),
+							text: () => (
+								<div class="w-[370px]">
+									{$t(
+										"打开窗口时，是否打开工作台页面。",
+									)}
+								</div>
+							),
+							name: "openWorkbench",
+							value: data?.openWorkbench ?? true,
+							props: {
+								trueValue: true,
+								falseValue: false,
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxToggleSwitch
+										{...item.props}
+										{...props}
+										onChange={() => saveUserConfig(item)}
+									/>
+								);
+							},
+						},
+						{
+							label: $t("搜索引擎"),
+							name: "searchEngine",
+							text: $t("打开窗口时，浏览器使用的默认搜索引擎"),
+							value: data?.searchEngine ?? searchEngineOptions[0]?.value,
+							props: {
+								filter: false,
+								optionValue: "value",
+								options: searchEngineOptions
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxInputSelect
+										{...item.props}
+										{...props}
+										name={item.name}
+										onChange={() => saveUserConfig(item)}
+									/>
+								);
+							},
+						},
+						{
+							label: $t('导入Chrome书签'),
+							name: 'bookType',
+							text: $t('浏览器窗口配置必须开启“书签”此功能方可生效！'),
+							value: data?.bookType ?? 'combine',
+							props: {
+								filter: false,
+								optionValue: "value",
+								optionLabel: "label",
+								options: [
+									{ label: $t("合并"), value: "combine" },
+									{ label: $t("替换"), value: "replace" }
+								],
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return <RxSelectButton
+									{...item.props}
+									{...props}
+									name={item.name}
+									onChange={() => saveUserConfig(item)}
+								/>
+							},
+						}
 					],
 				},
 			],

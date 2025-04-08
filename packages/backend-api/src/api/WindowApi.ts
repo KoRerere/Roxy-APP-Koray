@@ -689,6 +689,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserCreateWindowInspectList
    * @summary 窗口创建个数检验
    * @request GET:/user_create_window_inspect
+   * @deprecated
    * @response `200` `UserCreateWindowInspectListData`
    */
   userCreateWindowInspectList = (params: RequestParams = {}) =>

@@ -307,11 +307,13 @@ async function openBrowserBefore(data: Data | Data[]) {
   const result = await checkProfileStatus(datas)
   //过滤自身打开的窗口
   const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userStore.userInfo.id))
+  // 1.如果没有其他人打开窗口，则直接打开
   if (!list.length) {
     onOpenBrowser(datas)
     return
   }
 
+  // 2.如果窗口其他人打开了，那么就提示用户，让用户选择是否继续打开
   confirm.require({
     header: $t('警告'),
     message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),

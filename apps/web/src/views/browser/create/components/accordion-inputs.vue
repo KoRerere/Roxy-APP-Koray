@@ -150,6 +150,24 @@ function onCopy(dirId: string) {
                   </div>
                 </div>
               </template>
+              <template #delayInterval="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <div class="flex-1">
+                    <div class="flex gap-2 items-center">
+                      <IconField class="w-[110px]">
+                        <InputNumber v-model="input.items[0].value" :min="0" :useGrouping="false" fluid />
+                        <InputIcon> ms </InputIcon>
+                      </IconField>
+                      <div class="divider" />
+                      <IconField class="w-[110px]">
+                        <InputNumber v-model="input.items[1].value" :min="1" :useGrouping="false" fluid />
+                        <InputIcon> ms </InputIcon>
+                      </IconField>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
@@ -228,5 +246,11 @@ $spacing-x: 66px;
   font-style: normal;
   font-weight: 400;
   line-height: 16px;
+}
+
+.divider {
+  width: 10px;
+  height: 1px;
+  background: var(--Colors-Border-border-container, #C7CDD1);
 }
 </style>

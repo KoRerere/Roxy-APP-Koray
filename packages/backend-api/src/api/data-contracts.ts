@@ -3856,6 +3856,17 @@ export interface UserDelWindowInfoRecycleCreateData {
   msg: string;
 }
 
+export interface UserGetSearchEnginesListData {
+  code: number;
+  data: {
+    icon: string;
+    code: string;
+    url: string;
+    sort: number;
+  }[];
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台

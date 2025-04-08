@@ -20,6 +20,7 @@ import {
   UserGetPlatformInfoV2ListParams,
   UserGetPlatformTableRowsListData,
   UserGetPlatformTableSortOrderListData,
+  UserGetSearchEnginesListData,
   UserMdfPlatformInfoCreateData,
   UserMdfPlatformInfoCreatePayload,
   UserSavePlatformTableSortOrderCreateData,
@@ -50,6 +51,22 @@ export class PlatformApi<SecurityDataType = unknown> {
       path: `/user_get_platform_info_v2`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Platform
+   * @name UserGetSearchEnginesList
+   * @summary 获取搜索引擎列表
+   * @request GET:/user_get_search_engines
+   * @response `200` `UserGetSearchEnginesListData`
+   */
+  userGetSearchEnginesList = (params: RequestParams = {}) =>
+    this.http.request<UserGetSearchEnginesListData, any>({
+      path: `/user_get_search_engines`,
+      method: "GET",
       format: "json",
       ...params,
     });
