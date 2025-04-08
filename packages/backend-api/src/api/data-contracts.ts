@@ -3867,6 +3867,125 @@ export interface UserGetSearchEnginesListData {
   msg: string;
 }
 
+export interface UserTransferWindowVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserTransferWindowCreatePayload {
+  windowIds: number[];
+  /** 目标空间ID */
+  targetWorkspaceId: number;
+  /** 是否删除,1：删除, 0: 不删除 */
+  isDelete: number;
+  /** 邮箱验证码（如果当前是自己空间转自己空间可以不用传入） */
+  emailCode: string;
+  transferParam: string[];
+}
+
+export interface UserTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetTransferWorkspaceListListParams {
+  /** 转移空间编号(当等于1查询的时候在传) */
+  transferWorkspaceNo?: string;
+  /**
+   * 窗口id列表，用于校验窗口数量是否超出
+   * @example "1,2,3"
+   */
+  windowIds: string;
+}
+
+export interface UserGetTransferWorkspaceListListData {
+  code: number;
+  data: {
+    /** 空间编号 */
+    workspaceNo?: string;
+    /** 空间名称 */
+    workspaceName?: string;
+    /** 空间图标 */
+    workspacePicture?: string;
+    /** 窗口数量是否充足  true:充足, flase: 超出 */
+    isWindowCountEnough?: boolean;
+    /** 类型：1：自己的空间 ，2：已转移的空间   0 ：默认没有 */
+    type?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetTransferReceiveWindowListListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /**
+   * 窗口任务编号,编号有则接收方，否则就是转移方
+   * @example "transfer_15708_20251104"
+   */
+  windowTransferNo?: string;
+}
+
+export interface UserGetTransferReceiveWindowListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      windowSortNum?: number;
+      windowName?: string;
+      platformUrl?: string;
+      platformIds?: string[];
+      windowPlatformList?: string[];
+      platformUserName?: string;
+      platformPassword?: string;
+      coreVersion?: string;
+      os?: string;
+      osVersion?: string;
+      windowRemark?: string;
+      moduleId?: number;
+      proxyMethod?: string;
+      moduleName?: string;
+      proxyNetwork?: string;
+      proxyCategory?: string;
+      ipType?: string;
+      proxyProvider?: string;
+      protocol?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyTime?: string;
+      refreshUrl?: string;
+      checkChannel?: string;
+      extraChannel?: string;
+      lastIp?: string;
+      lastCountry?: string;
+      lastCity?: string;
+      checkTime?: string;
+      checkStatus?: number;
+      platformUrlList?: string[];
+      maxWindowSort?: number;
+      /** 空间名称 */
+      workspaceName?: string;
+      /** 空间编号 */
+      workspaceNo?: string;
+      /** 空间图片 */
+      workspacePicture?: string;
+    }[];
+  };
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台

@@ -3,14 +3,15 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { VueDraggable } from 'vue-draggable-plus'
 import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import tags from '/@/views/browser/list/tags'
-import profiles from './profiles'
-import recycle from './recycle'
+import Profiles from './profiles'
+import Recycle from './recycle'
+import Transfer from './transfer'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { sleep } from '/@/utils'
 import { debounce } from 'es-toolkit'
@@ -30,20 +31,24 @@ type TabType = {
   [key: string]: any
 }
 
-const trash = { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash' }
 const pinTabs = [
   { id: 'rx_1000', label: $t('全部窗口'), name: 'profiles' },
+]
+
+const suffixTabs = [
+  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_bin_2', name: 'transfer', component: markRaw(Transfer) },
+  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), power: role.isOwner || role.isManager },
+].filter(item => item.power !== false)
+
+const rawTabs = [
+  { id: 'rx_1002', label: $t('收藏'), name: 'favorite', _params: { isOften: true } },
+  { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
 ]
 
 const tabIdLangMap = {
   rx_1002: $t('收藏'),
   rx_1003: $t('已打开'),
 } as Record<string, string>
-
-const rawTabs = [
-  { id: 'rx_1002', label: $t('收藏'), name: 'favorite', _params: { isOften: true } },
-  { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
-]
 
 const localTabKey = `localTabs_${workspaceStore.currentWorkspace?.id}`
 const localTabs: TabType[] = JSON.parse(localStorage.getItem(localTabKey) || 'null') || rawTabs.map(item => ({ ...item, sort: -1, isLocal: true, disabledFilter: true }))
@@ -55,7 +60,7 @@ localTabs.forEach(item => {
 })
 
 const tabListRef = useTemplateRef('tabList')
-const popRef = useTemplateRef('popop')
+const configRef = useTemplateRef('config')
 const tabs = ref<TabType[]>(pinTabs)
 const sortTabs = computed({
   get() {
@@ -67,7 +72,10 @@ const sortTabs = computed({
 })
 const hasSort = ref(false)
 const active = ref(tabs.value[0].id)
-const isRecycle = computed(() => active.value === trash.id)
+const currentSuffixTab = computed(() => {
+  const component = suffixTabs.find(item => item.id === active.value)?.component
+  return { component, visible: !!component }
+})
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
 
 const updateInkBar = debounce(() => {
@@ -191,7 +199,7 @@ async function openManageCategory() {
 }
 
 function showPopover(event: Event) {
-  popRef.value?.getRef().show(event)
+  configRef.value?.show(event)
 }
 
 function sortChange() {
@@ -226,13 +234,14 @@ async function hidePopover() {
               {{ item.label }}
             </div>
           </Tab>
-          <Tab class="!pa-0 opacity-0" :value="trash.id"></Tab>
+          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id"></Tab>
         </TabList>
       </Tabs>
-      <div class="inline-flex justify-start flex-1">
-        <div class="flex items-center cursor-pointer break-keep tabs-trash" :class="{ active: isRecycle }" @click="active = trash.id">
-          <RxSvgIcon name="base/rx_ic_bin_2" />
-          <span>{{ $t('回收站') }}</span>
+      <div class="inline-flex justify-start flex-1 suffix">
+        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
+          @click="active = suffixItem.id">
+          <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
+          <span>{{ suffixItem.label }}</span>
         </div>
       </div>
       <RxButton text severity="secondary" size="xs" icon="base/rx_ic_gear" @click="showPopover"></RxButton>
@@ -242,14 +251,14 @@ async function hidePopover() {
       <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
     </div>
     <div class="flex flex-1 overflow-hidden">
-      <recycle v-if="isRecycle" />
-      <div v-show="!isRecycle" class="flex-1 overflow-hidden">
-        <profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
+      <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
+      <div v-show="!currentSuffixTab.visible" class="flex-1 overflow-hidden">
+        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
       </div>
     </div>
   </div>
 
-  <RyPopover ref="popop" @hide="hidePopover">
+  <RyPopover ref="config" @hide="hidePopover">
     <div v-for="item in pinTabs" :key="item.name" class="sort-item">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
       <span>{{ item.label }}</span>
@@ -264,9 +273,9 @@ async function hidePopover() {
         </template>
       </div>
     </VueDraggable>
-    <div class="sort-item">
+    <div class="sort-item" v-for="suffixItem in suffixTabs" :key="suffixItem.id">
       <RxSvgIcon name="base/rx_ic_dots" class="invisible" />
-      <span>{{ trash.label }}</span>
+      <span>{{ suffixItem.label }}</span>
     </div>
   </RyPopover>
 </template>
@@ -317,19 +326,18 @@ async function hidePopover() {
       height: 2px;
     }
   }
+}
 
-  &-trash {
-    margin-right: 16px;
+.suffix {
+  margin-right: 16px;
+
+  &-tab {
     padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
     color: var(--Colors-Text-text-secondary, #575d61);
     font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
-
-    svg {
-      color: #C7CDD1;
-    }
 
     &.active {
       position: relative;
@@ -348,6 +356,10 @@ async function hidePopover() {
         transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
         z-index: 1;
       }
+    }
+
+    svg {
+      color: #C7CDD1;
     }
   }
 }

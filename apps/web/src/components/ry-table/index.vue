@@ -539,5 +539,10 @@ const slots: any = useSlots()
       padding-left: var(--spacing-4xl, 24px);
     }
   }
+
+  :global(.p-datatable-frozen-column) {
+    border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+    box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
+  }
 }
 </style>

@@ -12,10 +12,10 @@ interface Options {
 
 export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) {
   const rawCache = safeParseJSON(localStorage.getItem(key))
-  const cache = (Array.isArray(rawCache) ? rawCache : [])
-    .reduce((cacheMap: Record<string, any>, data: [string, Record<string, any>]) => {
-      const [columnKey, cache] = data
-      cacheMap[columnKey] = cache
+  const cacheMap = (Array.isArray(rawCache) ? rawCache : [])
+    .reduce((cacheMap: Record<string, any>, item: [string, Record<string, any>]) => {
+      const [columnKey, value] = item
+      cacheMap[columnKey] = value
       return cacheMap
     }, {})
 
@@ -23,16 +23,16 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
     data
       .filter(item => !filterColumnKeys || !filterColumnKeys.includes(item.key))
       .map((item, index) => {
-        const { sort, visible, caches } = cache[item.key] ?? {}
+        const { sort, visible, cache } = cacheMap[item.key] ?? {}
 
         const _sort = sort ?? item._sort ?? index
         const _visible = visible ?? item._visible ?? true
-        const _caches = caches ?? item._caches ?? undefined
+        const _cache = cache ?? item._cache ?? undefined
 
         const column = { ...item, _sort, _visible }
 
-        if (_caches) {
-          column._caches = _caches
+        if (_cache) {
+          column._cache = _cache
         }
 
         return column
@@ -41,7 +41,7 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
   )
 
   onUnmounted(() => {
-    const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, caches: item._caches }])
+    const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, cache: item._cache }])
     localStorage.setItem(key, JSON.stringify(_cache))
   })
 

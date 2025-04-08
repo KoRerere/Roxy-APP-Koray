@@ -33,7 +33,7 @@ export function getColumns() {
         style: {
           minWidth: '100px',
         },
-        _caches: {
+        _cache: {
           extend: false,
         }
       },
@@ -87,7 +87,7 @@ export function getColumns() {
       {
         title: $t('其他'),
         key: 'actions',
-        // alignFrozen: 'right',
+        alignFrozen: 'right',
         slot: 'actions',
         style: {
           width: '10%',

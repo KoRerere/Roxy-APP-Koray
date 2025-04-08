@@ -30,7 +30,7 @@ export function tableOperation(data?: ProxyItem) {
       quick: true,
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
       },
     },
     {
@@ -60,7 +60,7 @@ export function tableOperation(data?: ProxyItem) {
       quick: true,
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
       },
     },
   ]

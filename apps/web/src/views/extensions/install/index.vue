@@ -169,7 +169,7 @@ function tableOperation(data: any) {
       power: isPersonal || role.isOwner || role.isManager,
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
       },
       command: ({ item }: any) => {
         operationHandler(item, data)

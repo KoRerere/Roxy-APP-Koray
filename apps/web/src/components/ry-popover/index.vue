@@ -1,14 +1,17 @@
 <script setup lang="ts">
-const popover = ref()
+const popoverRef = useTemplateRef('popover')
 
 function getRef() {
-  return popover.value
+  return popoverRef.value
 }
 
-const { footer: footerSlot } = useSlots()
+const slots: any = useSlots()
 
 defineExpose({
   getRef,
+  show(event: Event, target?: HTMLElement) {
+    popoverRef.value?.show(event, target)
+  }
 })
 </script>
 
@@ -17,7 +20,7 @@ defineExpose({
     <div>
       <slot />
     </div>
-    <div v-if="footerSlot" :class="classes.footer">
+    <div v-if="slots.footer" :class="classes.footer">
       <slot name="footer" />
     </div>
   </Popover>

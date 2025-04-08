@@ -4,6 +4,8 @@ import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -13,6 +15,8 @@ interface Tab {
   list: Message[]
   noRead: number
 }
+
+const [dialogInstance] = RxUseDialog()
 
 const pop = ref()
 const tabs = ref<Tab[]>([
@@ -33,6 +37,12 @@ const tabsValue = ref('sys')
 
 const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 0))
 const readSet = ref<Set<number>>(new Set())
+
+onBeforeMount(() => {
+  getMessageList().finally(() => {
+    emitter.on('notifyUpdateData', getMessageList)
+  })
+})
 
 function toggle(event: Event) {
   getMessageList()
@@ -108,18 +118,23 @@ function checkDetail(item: Message) {
   }
 }
 
-function handleAvatar(item: Message) {
-  if (item.messageModule === NotifyModule.sys) {
-    return '/images/system-notice-avatar.png'
-  }
-  return item.avatar
-}
-
-onMounted(() => {
-  getMessageList().finally(() => {
-    emitter.on('notifyUpdateData', getMessageList)
+function checkTransfer(item: Message) {
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(CheckTransfer, {
+        data: item,
+        onClose: () => dialogInstance.hideModal(),
+      })
+    }
   })
-})
+}
 </script>
 
 <template>
@@ -147,19 +162,15 @@ onMounted(() => {
               <template v-if="tab.list?.length">
                 <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2" :avatar="handleAvatar(item)" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || '/images/system-notice-avatar.png'" :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32"
+                      :font-size="18" />
                   </div>
                   <div class="w-full">
-                    <div :class="message.value">
-                      {{ item.notify }}
-                    </div>
+                    <div :class="message.value">{{ item.notify }}</div>
                     <div :class="message.time" class="w-full flex justify-between">
-                      <span>
-                        {{ item.createTime }}
-                      </span>
-                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">
-                        {{ $t('查看详情') }}
-                      </span>
+                      <span>{{ item.createTime }}</span>
+                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{ $t('查看详情') }}</span>
+                      <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
                   </div>
                 </div>

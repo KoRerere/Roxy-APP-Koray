@@ -15,7 +15,7 @@ export function getOperation() {
       quick: true,
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
       },
     },
     {
@@ -28,7 +28,7 @@ export function getOperation() {
       quick: true,
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
       },
     },
   ]

@@ -33,11 +33,11 @@ function onMore(event: Event) {
     <div class="quick">
       <div v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
-        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
+        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" class="quick-item"
           :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
           :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingOperationMap?.[item.name as string] }]" @click.stop="quickClick(item)" />
       </div>
-      <div v-tooltip="{ value: $t('更多操作'), pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length"
+      <div v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length"
         class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5" @click.stop="onMore">
         <slot name="more-icon">
           <RxSvgIcon :name="actionIcon" class="pointer-events-none" />

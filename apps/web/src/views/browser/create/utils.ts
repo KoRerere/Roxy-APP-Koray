@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import ExcelJS from 'exceljs';
 import { $t } from '/@/locales';
+import { getDictMap } from '/@/utils'
 
 export function getDefaultTemplate() {
   return {
@@ -72,8 +73,20 @@ export function getDefaultTemplate() {
   }
 }
 
-export const getColumns = () => {
+const getExportColumns = async () => {
   const exampleText = $t('举例')
+
+  const $dict_map = await getDictMap()
+
+  const { os, version } = $dict_map.os.reduce((acc, item, index) => {
+    const os = `${exampleText}${index + 1}: ${item.label}`
+    const version = $dict_map[`osversion_${item.value.toLocaleLowerCase()}`].map(item => item.value).join('、')
+
+    acc.os.push(os)
+    acc.version.push(`${os}: ${version}`)
+
+    return acc
+  }, { os: [] as string[], version: [] as string[] })
 
   return [
     {
@@ -88,14 +101,14 @@ export const getColumns = () => {
       key: 'os',
       required: true,
       placeholder: $t('操作系统（必填项）\n如: Windows'),
-      example: `${exampleText}1: Windows\n${exampleText}2: macOS\n${exampleText}3: Android\n${exampleText}4: iOS`
+      example: os.join('\n')
     },
     {
       header: $t('系统版本'),
       key: 'osVersion',
       width: 50,
       placeholder: $t('操作系统版本, 如: 11\n每行只能填写一个, 留空则自动使用对应操作系统最新版本'),
-      example: `${exampleText}1: Windows: 11、10、8、7\n${exampleText}2: macOS: 15.3.2、15.3.1、15.3、15.2、15.1、15.0.1、15.0、14.7.4、14.7.3、14.7.2、14.7.1、14.7、14.6.1、14.6、14.5、14.4.1、14.4、14.3.1、14.3、14.2.1、14.2、14.1、13.7.4、13.7.3、13.7.2、13.7.1、13.7\n${exampleText}3: Android: 13、12、11、10、9\n${exampleText}4: iOS: 17.0、16.6、16.5、16.4、16.3、16.2、16.1、16.0、15.7、15.6、15.5、15.4、15.3、15.2、15.1、15.0、14.7、14.6、14.5、14.4、14.3、14.2、14.1、14.0`
+      example: version.join('\n')
     },
     {
       header: $t('代理类型'),
@@ -218,7 +231,7 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Sheet1');
   worksheet.properties.defaultRowHeight = 30;
-  const columns = getColumns()
+  const columns = await getExportColumns()
 
   worksheet.columns = columns.map(column => {
     const { key, header, width } = column;
@@ -276,7 +289,7 @@ export async function downloadTemplate(options: DownloadTemplateOptions = {}) {
 }
 
 export async function downloadTextTemplate() {
-  const fields = getColumns().map(({ header, key, example, placeholder, richText }) => ({
+  const fields = (await getExportColumns()).map(({ header, key, example, placeholder, richText }) => ({
     header,
     key,
     desc: (!richText ? placeholder : richText.map(item => item.text).join('')).split('\n').join('\n\t'),
@@ -330,7 +343,7 @@ export async function downloadTextTemplate() {
 }
 
 async function addExplain(worksheet: ExcelJS.Worksheet) {
-  const columns = getColumns()
+  const columns = await getExportColumns()
   worksheet.addRow(columns.map(column => column.placeholder));// 示例行
   worksheet.addRow(columns.map(column => column.example));// 示例行
 
@@ -359,7 +372,7 @@ export async function parseTemplate(file: File) {
   try {
     const result: any = []
     const workbook = new ExcelJS.Workbook();
-    const columns = getColumns()
+    const columns = await getExportColumns()
     await workbook.xlsx.load(await file.arrayBuffer());
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowIndex) => {
@@ -395,29 +408,31 @@ export async function parseTextFile(file: File) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const content = e.target?.result;
-      const keys = getColumns().map(column => column.key)
-      const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((text, index) => {
-        const textFmt = text.trim().split('\n').map(line => {
-          const [key, ...value] = line.trim().split('=')
-          return keys.includes(key) ? [key, value.join('=')] : []
-        }).filter(item => item.length)
+      getExportColumns().then(columns => {
+        const keys = columns.map(column => column.key)
+        const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((text, index) => {
+          const textFmt = text.trim().split('\n').map(line => {
+            const [key, ...value] = line.trim().split('=')
+            return keys.includes(key) ? [key, value.join('=')] : []
+          }).filter(item => item.length)
 
-        const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
+          const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
 
-        // 历史原因特殊处理 ios
-        if (data.os.toLocaleUpperCase() === 'IOS') {
-          data.os = data.os.toLocaleUpperCase()
-        }
+          // 历史原因特殊处理 ios
+          if (data.os.toLocaleUpperCase() === 'IOS') {
+            data.os = data.os.toLocaleUpperCase()
+          }
 
-        return {
-          rowNum: index + 1,
-          ...data,
-          cookie: JSON.parse(cookie || '[]'),
-          defaultOpenUrl: JSON.parse(defaultOpenUrl || '[]'),
-          windowPlatformList: JSON.parse(windowPlatformList || '[]'),
-        }
+          return {
+            rowNum: index + 1,
+            ...data,
+            cookie: JSON.parse(cookie || '[]'),
+            defaultOpenUrl: JSON.parse(defaultOpenUrl || '[]'),
+            windowPlatformList: JSON.parse(windowPlatformList || '[]'),
+          }
+        })
+        resolve(result)
       })
-      resolve(result)
     }
     reader.readAsText(file)
   })

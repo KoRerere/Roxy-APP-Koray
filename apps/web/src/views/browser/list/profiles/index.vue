@@ -28,9 +28,11 @@ import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
-import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
+import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
+import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -55,6 +57,7 @@ const role = useRoleStore()
 const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
+const [dialogInstance] = RxUseDialog()
 
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
@@ -223,6 +226,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
       break
+    case 'transfer':
+      await onTransfer(datas)
+      break
     case 'moveToProject':
       await onMoveToProject(datas)
       break
@@ -371,6 +377,28 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, i
   } else {
     await batchModifyWindow({ ...params, ids })
   }
+}
+
+async function onTransfer(datas: Data[]) {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(TransferModal, {
+        ids: datas.map(item => item.id!),
+        onClose: () => dialogInstance.hideModal(),
+        onConfirm: resolve,
+        onCancel: reject,
+      })
+    }
+  })
+  return promise
 }
 
 async function onMoveToProject(datas: any) {
@@ -749,17 +777,17 @@ defineExpose({
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
-    <template #noteHeader="{ column: { title, _caches } }">
+    <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_caches.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="_caches.extend = !_caches.extend" />
+        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="_cache.extend = !_cache.extend" />
       </div>
     </template>
-    <template #note="{ data, column: { _caches } }">
+    <template #note="{ data, column: { _cache } }">
       <div class="flex items-center gap-2">
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
           class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <span class="w-100 ellipsis-1" v-if="_caches.extend">{{ data.windowRemark || $t('添加备注') }}</span>
+        <span class="w-100 ellipsis-1" v-if="_cache.extend">{{ data.windowRemark || $t('添加备注') }}</span>
       </div>
     </template>
     <template #project="{ data }">

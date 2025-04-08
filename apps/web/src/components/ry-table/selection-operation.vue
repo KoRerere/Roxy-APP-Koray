@@ -26,7 +26,9 @@ const emit = defineEmits(['update:selection', 'batchOperation', 'batchMore'])
 const multipleOperation = props.operation.filter(item => item.multiple).map(item => toRaw(item))
 const { count, ...groupMap } = multipleOperation.reduce((data, item) => {
   if (item.multipleProps) {
-    (data[item.multipleProps.name] || (data[item.multipleProps.name] = [])).push({
+    data[item.multipleProps.name] ??= ([] as any)
+
+    data[item.multipleProps.name].push({
       _rawItem: item,
       ...item,
       ...item.multipleProps,
@@ -36,7 +38,7 @@ const { count, ...groupMap } = multipleOperation.reduce((data, item) => {
   return data
 }, { count: 0 } as Data)
 
-const groups = ref<any[][]>(Object.values(groupMap))
+const groups = ref<any[][]>(Object.entries(groupMap).toSorted((a, b) => a[0].localeCompare(b[0])).map(([_, value]) => value) as any)
 const showMore = multipleOperation.length > count
 
 function batchOperation(item: any) {
@@ -65,14 +67,12 @@ function onMore(event: Event) {
           </template>
         </i18n-t>
       </div>
-      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff"
-        @click="$emit('update:selection', [])" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#ffffff" @click="$emit('update:selection', [])" />
     </div>
     <slot name="custom-operation">
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
-        <div v-for="item in list" :key="item.name"
-          v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }"
-          :class="{ disabled: item.disabled }" class="multiple-group-item" @click="batchOperation(item._rawItem)">
+        <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
+          @click="batchOperation(item._rawItem)">
           <RxSvgIcon :name="item.icon" v-bind="item.iconProps" />
           <span v-if="item.showLabel">{{ item.label }}</span>
         </div>

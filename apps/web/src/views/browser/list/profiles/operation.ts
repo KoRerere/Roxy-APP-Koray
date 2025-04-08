@@ -256,6 +256,17 @@ export function getOperation(_params: any = {}) {
       power: !role.isViewer,
     },
     {
+      name: 'transfer',
+      label: $t('转移窗口'),
+      icon: 'base/rx_ic_billing',
+      multiple: true,
+      multipleProps: {
+        name: 'G3',
+        showLabel: true,
+      },
+      power: role.isOwner || role.isManager,
+    },
+    {
       name: 'moveToProject',
       label: $t('移动到项目'),
       icon: 'base/rx_ic_stack',
@@ -273,7 +284,7 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_chrome',
       multiple: true,
       multipleProps: {
-        name: 'one',
+        name: 'G1',
         showLabel: true,
         iconProps: {
           color: '#12A3FC',
@@ -292,7 +303,7 @@ export function getOperation(_params: any = {}) {
       tooltip: $t('重启窗口'),
       multiple: true,
       multipleProps: {
-        name: 'two',
+        name: 'G2',
         showLabel: true,
       },
     },
@@ -302,10 +313,6 @@ export function getOperation(_params: any = {}) {
       icon: 'base/rx_ic_shut_down',
       tooltip: $t('关闭窗口'),
       multiple: true,
-      multipleProps: {
-        name: 'three',
-        showLabel: true,
-      },
     },
     {
       separator: true,
