@@ -44,6 +44,22 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
   return {
     computerName: winInfo.computerName,
     macAddress: winInfo.macAddress,
+    get searchEngine() {
+      const target = store.searchEngines.find(item => item.code === winInfo.searchEngine)
+
+      if (!target) {
+        console.log(`searchEngine not found`, winInfo.searchEngine)
+        return
+      }
+
+      return {
+        name: target?.code,
+        keyword: target?.keyword,
+        faviconUrl: target?.faviconUrl,
+        searchUrl: target?.searchUrl,
+        suggestUrl: target?.suggestUrl,
+      }
+    },
     /** 窗口名称 */
     get windowName() {
       if (winInfo.isDisplayName) {
