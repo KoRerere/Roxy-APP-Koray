@@ -14,6 +14,8 @@ import type {
 import { $t } from "/@/locales";
 import FolderDirectory from "../folder-directory.vue";
 import { API } from '/@/api'
+import LockAppComponent from "../lock-app.vue";
+import { useLock } from '/@/stores/lock'
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
@@ -27,9 +29,11 @@ export function usePreferencesPanel() {
 		if (searchEngineResult.code === 0 && searchEngineResult.data) {
 			searchEngineOptions = searchEngineResult.data.map((item: any) => ({
 				label: item.code,
-				value: item.url
+				value: item.code
 			}))
 		}
+
+		const lockStore = useLock()
 
 		return {
 			title: $t("软件设置"),
@@ -218,10 +222,6 @@ export function usePreferencesPanel() {
 								);
 							},
 						},
-
-						// TODO:(anbin) 这里需要添加应用上锁相关的设置
-						// 1. 设置解锁密码
-
 						// TODO:(anbin) 
 						{
 							label: $t("工作台"),
@@ -290,6 +290,26 @@ export function usePreferencesPanel() {
 									name={item.name}
 									onChange={() => saveUserConfig(item)}
 								/>
+							},
+						},
+						{
+							label: $t('应用上锁'),
+							name: 'lockApp',
+							value: !!lockStore.lockData.password,
+							props: {
+								trueValue: true,
+								falseValue: false,
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<LockAppComponent
+										{...item.props}
+										{...props}
+										onChange={(data) => {
+											lockStore.setLockData({ password: data.password })
+										}}
+									/>
+								);
 							},
 						}
 					],

@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import ExcelJS from 'exceljs';
 import { $t } from '/@/locales';
 import { getDictMap } from '/@/utils'
+import { API } from '/@/api'
 
 export function getDefaultTemplate() {
   return {
@@ -68,15 +69,18 @@ export function getDefaultTemplate() {
     stopOpenNet: false,
     stopOpenIP: false,
     stopOpenPosition: false,
-    openWorkbench: true,
-    searchEngine: 1
+    openWorkbench: 1,
+    searchEngine: 'Google'
   }
 }
 
 const getExportColumns = async () => {
   const exampleText = $t('举例')
 
-  const $dict_map = await getDictMap()
+  const [$dict_map, searchEngineResult] = await Promise.all([
+    getDictMap(),
+    API.platform.userGetSearchEnginesList()
+  ])
 
   const { os, version } = $dict_map.os.reduce((acc, item, index) => {
     const os = `${exampleText}${index + 1}: ${item.label}`
@@ -87,6 +91,11 @@ const getExportColumns = async () => {
 
     return acc
   }, { os: [] as string[], version: [] as string[] })
+
+  let searchEngine: string[] = []
+  if (searchEngineResult.code === 0 && searchEngineResult.data) {
+    searchEngine = searchEngineResult.data.map((item: any, index) => (`${exampleText}${index + 1}: ${item.code}`))
+  }
 
   return [
     {
@@ -198,12 +207,12 @@ const getExportColumns = async () => {
       placeholder: $t('此处填写该浏览器窗口的备注信息! '),
       example: ''
     },
-    {
-      header: $t('窗口尺寸'),
-      key: 'windowSize',
-      placeholder: $t('浏览器窗口打开时的默认窗口大小, 留空则按默认1000*1000打开。\n格式为: 长度*高度'),
-      example: `${exampleText}: 1000*1000`
-    },
+    // {
+    //   header: $t('窗口尺寸'),
+    //   key: 'windowSize',
+    //   placeholder: $t('浏览器窗口打开时的默认窗口大小, 留空则按默认1000*1000打开。\n格式为: 长度*高度'),
+    //   example: `${exampleText}: 1000*1000`
+    // },
     {
       header: 'User-Agent',
       key: 'userAgent',
@@ -217,9 +226,9 @@ const getExportColumns = async () => {
     {
       header: $t('搜索引擎'),
       key: 'searchEngine',
-      placeholder: $t('搜索引擎, 如: bing'),
-      example: `${exampleText}: bing`
-    }
+      placeholder: $t('搜索引擎, 如: Google'),
+      example: searchEngine.join('\n'),
+    },
   ]
 }
 
@@ -311,6 +320,7 @@ export async function downloadTextTemplate() {
       windowRemark: 'remark1',
       windowSize: '1000*1000',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
+      searchEngine: 'Google',
     },
     {
       windowName: 'name2',
@@ -324,6 +334,7 @@ export async function downloadTextTemplate() {
       windowRemark: 'remark2',
       windowSize: '1000*1000',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
+      searchEngine: 'Bing',
     }
   ]
 

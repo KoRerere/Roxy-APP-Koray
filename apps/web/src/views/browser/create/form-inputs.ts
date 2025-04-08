@@ -105,7 +105,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   // TODO:(anbin) 
   const searchEngineOptions = searchEngine.code == 0 ?
-    (searchEngine.data || []).map(item => ({ label: item.code, value: item.url })) : []
+    (searchEngine.data || []).map(item => ({ label: item.code, value: item.code })) : []
+
+  const searchEngineValue = data.searchEngine ?? userConfig?.searchEngine
 
   // 非严格模式获取浏览器版本选项
   const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
@@ -330,7 +332,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('搜索引擎'),
       name: 'searchEngine',
       type: 'select',
-      value: searchEngineOptions.find((item: any) => item.value === data.searchEngine) ?? searchEngineOptions[0],
+      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
       options: searchEngineOptions,
       filter: false,
     },
@@ -589,82 +591,83 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
       slot: 'windowSize',
     },
-    {
-      type: 'radio',
-      label: $t('点击延迟'),
-      name: 'clickDelay',
-      value: data.clickDelay ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
-      change(input: any) {
-        setInputVisible(basicInputs, 'clickDelayInterval', input.value === true)
-      },
-    },
-    {
-      label: $t('点击延迟间隔'),
-      visible: initInputVisible(data.clickDelay, false, false),
-      name: 'clickDelayInterval',
-      items: [
-        {
-          type: 'text',
-          placeholder: $t('请输入最小间隔'),
-          name: 'minDelay',
-          value: data.minDelay ?? 100,
-        },
-        {
-          type: 'text',
-          placeholder: $t('请输入最大间隔'),
-          name: 'maxDelay',
-          value: data.maxDelay ?? 300,
-        },
-      ],
-      slot: 'delayInterval',
-    },
-    {
-      type: 'radio',
-      label: $t('输入延迟'),
-      name: 'inputDelay',
-      value: data.inputDelay ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
-      change(input: any) {
-        setInputVisible(basicInputs, 'inputDelayInterval', input.value === true)
-      },
-    },
-    {
-      label: $t('输入延迟间隔'),
-      visible: initInputVisible(data.inputDelay, false, false),
-      name: 'inputDelayInterval',
-      items: [
-        {
-          type: 'text',
-          placeholder: $t('请输入最小间隔'),
-          name: 'minDelay',
-          value: data.minDelay ?? 100,
-        },
-        {
-          type: 'text',
-          placeholder: $t('请输入最大间隔'),
-          name: 'maxDelay',
-          value: data.maxDelay ?? 300,
-        },
-      ],
-      slot: 'delayInterval',
-    },
-    {
-      type: 'radio',
-      label: $t('延迟模式'),
-      name: 'delayMode',
-      value: data.delayMode ?? 0,
-      options: [
-        { label: $t('并行延迟'), value: 0 },
-        { label: $t('串行延迟'), value: 1 },
-      ],
-    },
+    // {
+    //   type: 'radio',
+    //   label: $t('点击延迟'),
+    //   name: 'clickDelay',
+    //   value: data.clickDelay ?? false,
+    //   options: [
+    //     { label: $t('开启'), value: true },
+    //     { label: $t('关闭'), value: false },
+    //   ],
+    //   change(input: any) {
+    //     setInputVisible(basicInputs, 'clickDelayInterval', input.value === true)
+    //   },
+    // },
+    // {
+    //   label: $t('点击延迟间隔'),
+    //   visible: initInputVisible(data.clickDelay, false, false),
+    //   name: 'clickDelayInterval',
+    //   items: [
+    //     {
+    //       type: 'text',
+    //       placeholder: $t('请输入最小间隔'),
+    //       name: 'minDelay',
+    //       value: data.minDelay ?? 100,
+    //     },
+    //     {
+    //       type: 'text',
+    //       placeholder: $t('请输入最大间隔'),
+    //       name: 'maxDelay',
+    //       value: data.maxDelay ?? 300,
+    //     },
+    //   ],
+    //   slot: 'delayInterval',
+    // },
+    // {
+    //   type: 'radio',
+    //   label: $t('输入延迟'),
+    //   name: 'inputDelay',
+    //   value: data.inputDelay ?? false,
+    //   options: [
+    //     { label: $t('开启'), value: true },
+    //     { label: $t('关闭'), value: false },
+    //   ],
+    //   change(input: any) {
+    //     setInputVisible(basicInputs, 'inputDelayInterval', input.value === true)
+    //   },
+    // },
+    // {
+    //   label: $t('输入延迟间隔'),
+    //   visible: initInputVisible(data.inputDelay, false, false),
+    //   name: 'inputDelayInterval',
+    //   items: [
+    //     {
+    //       type: 'text',
+    //       placeholder: $t('请输入最小间隔'),
+    //       name: 'minDelay',
+    //       value: data.minDelay ?? 100,
+    //     },
+    //     {
+    //       type: 'text',
+    //       placeholder: $t('请输入最大间隔'),
+    //       name: 'maxDelay',
+    //       value: data.maxDelay ?? 300,
+    //     },
+    //   ],
+    //   slot: 'delayInterval',
+    // },
+    // {
+    //   type: 'radio',
+    //   label: $t('延迟模式'),
+    //   name: 'delayMode',
+    //   value: data.delayMode ?? 0,
+    //   options: [
+    //     { label: $t('并行延迟'), value: 0 },
+    //     { label: $t('串行延迟'), value: 1 },
+    //   ],
+    // },
+    // TODO:(anbin)
     {
       type: 'radio',
       label: $t('开启书签'),
@@ -1296,10 +1299,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'radio',
       label: $t('打开工作台'),
       name: 'openWorkbench',
-      value: data.openWorkbench ?? true,
+      value: data.openWorkbench ?? 1,
       options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
+        { label: $t('开启'), value: 1 },
+        { label: $t('关闭'), value: 0 },
+        { label: $t('跟随软件设置'), value: 2 },
       ],
     },
   ])
