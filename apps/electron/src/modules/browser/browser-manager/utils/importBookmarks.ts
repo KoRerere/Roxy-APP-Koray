@@ -1,7 +1,8 @@
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import bookmarks from "./bookmarks.json";
 import { fileExists } from "/@/utils";
 import crypto from 'crypto'
+import { dirname } from "path";
 
 export type BookmarkType = {
   name: string
@@ -76,6 +77,8 @@ export async function importBookmarks(bookmarkPath: string) {
     } catch (error) {
 
     }
+  } else {
+    await mkdir(dirname(bookmarkPath), { recursive: true })
   }
 
   const nextId = generateNextId(originBookmarks);

@@ -136,7 +136,9 @@ export class BeforeLaunchTask {
     // 修改浏览器 Local State 文件
     await this.modifyLocalStateFile()
     // 导入书签
-    await this.importBookmarks()
+    await this.importBookmarks().catch((error) => {
+      console.error('导入书签失败', error)
+    })
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
