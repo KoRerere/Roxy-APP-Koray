@@ -210,6 +210,8 @@ export interface RenderMessage {
   "util:getDeviceId": () => Promise<string>;
   /** 获取设备信息 */
   "util:getDeviceInfo": () => Promise<DeviceInfo>;
+  /** 检测某个快捷键是否被占用 */
+  "util:checkShortcutKeysIsOccupied": (payload: string) => Promise<boolean>;
 
   /** 前端已准备就绪 */
   "web:ready": () => void;

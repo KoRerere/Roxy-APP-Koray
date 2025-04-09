@@ -10,6 +10,7 @@ import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomF
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
 import { getPortPromise } from 'portfinder'
+import { globalShortcut } from 'electron'
 
 export function setupUtilIpc(ipcMain: IPCMainInstance) {
 
@@ -123,4 +124,10 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('util:getDeviceInfo', async (event,) => {
     return getDeviceInfo()
   })
+
+  /** 检测某个快捷键是否被占用 */
+  ipcMain.on('util:checkShortcutKeysIsOccupied', async (event, accelerator) => {
+    return globalShortcut.isRegistered(accelerator)
+  })
+
 }
