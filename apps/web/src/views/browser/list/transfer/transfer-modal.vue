@@ -4,9 +4,7 @@ import ChooseSpace from './choose-space.vue'
 import { API } from '/@/api';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
-import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { startCountdown } from '/@/utils';
-
 
 const { ids: windowIds } = defineProps<{
   ids: number[]
@@ -43,7 +41,7 @@ onBeforeUnmount(() => {
 async function sendCode() {
   if (!selectedWorkspace.value) return
 
-  if (selectedWorkspace.value.type === SpaceType.Self) {
+  if (selectedWorkspace.value.isWorkspace) {
     onTransfer()
     return
   }

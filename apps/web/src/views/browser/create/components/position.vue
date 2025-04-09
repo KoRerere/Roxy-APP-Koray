@@ -6,6 +6,7 @@ type Point = {
   x: number
   y: number
   pid: number
+  [key: string]: any
 }
 
 const ratioPositon = defineModel<string>('modelValue')
@@ -20,9 +21,16 @@ const x = ref(PADDING)
 const y = ref(PADDING)
 const activeIndex = ref(0)
 
-const pointsStr = [$t('左上'), $t('中上'), $t('右上'), $t('左中'), $t('中间'), $t('右中'), $t('左下'), $t('中下'), $t('右下')]
+const angleMap = {
+  3: 'tr',
+  6: 'tr',
+  7: 'bl',
+  8: 'bl',
+  9: 'br',
+}
 
-const points = generateGridPoints(3, 3, CONTAINER_W, CONTAINER_H)
+const points = generateGridPoints(3, 3, CONTAINER_W, CONTAINER_H).map(item => ({ ...item, angle: angleMap[item.pid as keyof typeof angleMap] || 'tl' }))
+const pointsStr = [$t('左上'), $t('中上'), $t('右上'), $t('左中'), $t('中间'), $t('右中'), $t('左下'), $t('中下'), $t('右下')]
 
 onBeforeMount(() => {
   initPoints()
@@ -31,9 +39,10 @@ onBeforeMount(() => {
 function initPoints() {
   if (ratioPositon.value) {
     const [rax, ray] = ratioPositon.value?.split(',')
-    const _x = Number(rax) * CONTAINER_W
-    const _y = Number(ray) * CONTAINER_H
-    const point = points.find(item => Math.floor(item.x - _x) === 0 && Math.floor(item.y - _y) === 0)
+    const point = points.find(item => {
+      const { ratioX, ratioY } = getPointPosition(item)
+      return Math.abs(ratioX - Number(rax)) < 0.0001 && Math.abs(ratioY - Number(ray)) < 0.0001
+    })
     if (point) {
       handlePointClick(point)
     }
@@ -59,15 +68,20 @@ function generateGridPoints(rows: number = 3, cols: number = 3, containerWidth: 
   return points
 }
 
+function getPointPosition(point: Point) {
+  const x = Math.min(point.x + PADDING, CONTAINER_W - RECT_W - PADDING)
+  const y = Math.min(point.y + PADDING, CONTAINER_H - RECT_H - PADDING)
+  const ratioX = (x - PADDING) / CONTAINER_W
+  const ratioY = (y - PADDING) / CONTAINER_H
+  return { x, y, ratioX, ratioY }
+}
+
 function handlePointClick(point: Point) {
   activeIndex.value = point.pid
-  x.value = Math.min(point.x + PADDING, CONTAINER_W - RECT_W - PADDING)
-  y.value = Math.min(point.y + PADDING, CONTAINER_H - RECT_H - PADDING)
-
-  const ratioX = (x.value - PADDING) / CONTAINER_W
-  const ratioY = (y.value - PADDING) / CONTAINER_H
-
-  ratioPositon.value = `${ratioX},${ratioY}`
+  const { x: _x, y: _y, ratioX, ratioY } = getPointPosition(point)
+  x.value = _x
+  y.value = _y
+  ratioPositon.value = `${ratioX},${ratioY},${point.angle}`
 }
 </script>
 
@@ -117,16 +131,23 @@ function handlePointClick(point: Point) {
   cursor: pointer;
   z-index: 1;
 
+  &:hover {
+    .point-mark:not(.active) {
+      background: var(--Colors-border-border-inactive, #C7D1D6);
+      box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px var(--Colors-border-border-subtle, #C7D1D6);
+    }
+  }
+
   &-mark {
     width: 6px;
     height: 6px;
     border-radius: 1px;
-    background: var(--Colors-border-border-inactive, #C7D1D6);
-    box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px var(--Colors-border-border-subtle, #C7D1D6);
+    background: #E9EEF2;
+    box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px #E3E9EC;
 
     &.active {
       background: var(--Colors-background-bg-brand, #11A3FD);
-      box-shadow: 0px 0px 0px 1px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px var(--Colors-border-border-brand, #11A3FD);
+      box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px rgba(17, 163, 253, 0.40);
     }
   }
 }

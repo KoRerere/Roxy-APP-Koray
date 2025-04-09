@@ -174,7 +174,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
               const { _osValue, value: version } = item.value
               const _coreVersionOptions = getCoreVersionOptions(_osValue, version)
 
-              if (coreVersionInput.options.length !== _coreVersionOptions.length) {
+              if (coreVersionInput.options?.length !== _coreVersionOptions.length) {
                 coreVersionInput.options = _coreVersionOptions
                 coreVersionInput.value = _coreVersionOptions[0]
               }

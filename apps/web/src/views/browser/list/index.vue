@@ -41,7 +41,7 @@ const rawTabs = [
 ]
 
 const suffixTabs = [
-  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_bin_2', name: 'transfer', component: markRaw(Transfer) },
+  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer) },
   { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), power: role.isOwner || role.isManager },
 ].filter(item => item.power !== false)
 

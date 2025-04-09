@@ -3,12 +3,15 @@ import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
 import { API } from '/@/api'
 import { $t } from '/@/locales';
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
+import { useWorkspaceStore } from "/@/stores/workspace";
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
 const { ids: windowIds } = defineProps<{
   ids: number[]
 }>()
+
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 
 const selectedWorkspace = defineModel<Data>('modelValue')
 
@@ -72,7 +75,7 @@ async function clearHistory(space: any) {
 }
 
 function handleChoose(item: Data) {
-  if (!item.isWindowCountEnough) return
+  if (!item.isWindowCountEnough || item.workspaceNo === currentWorkspace.value!.workspaceNo) return
   selectedWorkspace.value = item
   search.value = ''
   chooseRef.value?.hide()
@@ -105,12 +108,16 @@ function getAvatarStyle(workspacePicture: string) {
                 <span>{{ $t('清除历史') }}</span>
               </div>
             </div>
-            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace" @click="handleChoose(item)">
+            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace" :class="{ 'current': item.workspaceNo === currentWorkspace!.workspaceNo }"
+              @click="handleChoose(item)">
               <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
                 :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
               <div>
                 <div class="workspace-name">{{ item.workspaceName }}</div>
-                <div class="mt-1 workspace-id">ID: {{ item.workspaceNo }}</div>
+                <div class="mt-1 workspace-id">
+                  <span v-if="item.workspaceNo === currentWorkspace!.workspaceNo" class="current">{{ $t('当前空间') }}</span>
+                  <span v-else>ID: {{ item.workspaceNo }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -119,8 +126,6 @@ function getAvatarStyle(workspacePicture: string) {
     </RyPopover>
   </div>
 </template>
-
-
 
 <style scoped lang="scss">
 .workspace-icon {
@@ -155,6 +160,20 @@ function getAvatarStyle(workspacePicture: string) {
 
 .workspace {
   border-bottom: 1px dashed var(--Colors-border-border-inactive, #C7D1D6);
+
+  &.current {
+    cursor: not-allowed;
+    user-select: none;
+
+    .workspace-name,
+    .workspace-id {
+      color: var(--Colors-text-text-inactive, #7D8387);
+    }
+
+    .workspace-icon {
+      opacity: 0.4;
+    }
+  }
 
   &:last-of-type {
     border-bottom: none;
