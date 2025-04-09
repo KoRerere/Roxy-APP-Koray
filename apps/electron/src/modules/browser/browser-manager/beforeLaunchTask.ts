@@ -12,7 +12,7 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
-import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
+import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
 import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
 
 /** 最后一次发送的消息 */
@@ -135,6 +135,8 @@ export class BeforeLaunchTask {
     await this.writeLoginData()
     // 修改浏览器 Local State 文件
     await this.modifyLocalStateFile()
+    // 导入书签
+    await this.importBookmarks()
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
@@ -217,7 +219,8 @@ export class BeforeLaunchTask {
       os,
       allOpenUrl,
       useGpu,
-      workspaceId
+      workspaceId,
+      openWorkbench
     } = this.browserItem.winInfo
 
     const args = [
@@ -228,8 +231,11 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
-      `http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`,
     ]
+
+    if (openWorkbench || (openWorkbench === 2 && store.openWorkbench)) {
+      args.push(`http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`)
+    }
 
     // 如果用户开启了插件
     if (usePluginList.length) {
@@ -401,6 +407,7 @@ export class BeforeLaunchTask {
     // 生成指纹配置
     const fingerprintConfig = genFingerprintConfig(this.browserItem.winInfo, this.proxyInfo)
     console.log('fingerprintConfig fproxy', fingerprintConfig.fproxy)
+    console.log('fingerprintConfig searchEngine', fingerprintConfig.searchEngine)
     try {
       await fileExists(dirname(this.browserItem.fingerprintConfigPath), true)
       const content = encryptFingerprintConfig(JSON.stringify(fingerprintConfig))
@@ -410,6 +417,12 @@ export class BeforeLaunchTask {
       console.error('创建指纹配置文件失败', error)
       return Promise.reject(new Error($t('创建指纹配置文件失败')))
     }
+  }
+
+  /** 导入书签 */
+  private async importBookmarks() {
+    const bookmarkPath = join(this.browserItem.userDataDir, 'Default', 'Bookmarks')
+    await importBookmarks(bookmarkPath)
   }
 
   /** 拉取远程缓存文件 */

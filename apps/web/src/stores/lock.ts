@@ -1,4 +1,3 @@
-
 export const useLock = defineStore('lock', () => {
   const lockData = reactive({
     password: '',
@@ -9,9 +8,15 @@ export const useLock = defineStore('lock', () => {
     Object.assign(lockData, data)
   }
 
+  const resetLockData = () => {
+    lockData.password = ''
+    lockData.openScreenLock = false
+  }
+
   return {
     lockData,
-    setLockData
+    setLockData,
+    resetLockData,
   }
 }, {
   persist: {

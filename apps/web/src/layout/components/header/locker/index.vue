@@ -1,6 +1,6 @@
 <template>
   <template v-if="!!lockData.password">
-    <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="xs" @click="openLocker" />
+    <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
     <Divider class="!ma-0" layout="vertical" />
   </template>
 </template>
@@ -13,9 +13,14 @@ import Mask from './mask.vue'
 const dialog = useDialog()
 const { lockData, setLockData } = useLock()
 const lockScreen = useCssModule('lockScreen')
-console.log(lockScreen)
+
+const handleOpenLocker = () => {
+  setLockData({ openScreenLock: true })
+  openLocker()
+}
 
 function openLocker() {
+  
   // 遮罩层元素的id
   const MASK_ID = 'locker-dialog-mask'
 
@@ -60,6 +65,7 @@ function openLocker() {
           class: lockScreen['mask-root']
         }
       },
+      contentClass: lockScreen['mask-content']
     },
     emits: {
       onShow: () => {
@@ -77,8 +83,15 @@ function openLocker() {
   })
 }
 
-watch(lockData, (newVal) => {
-  if (newVal.openScreenLock) {
+// watch(lockData, (newVal) => {
+//   if (newVal.openScreenLock) {
+//     openLocker()
+//   }
+// })
+
+onMounted(() => {
+  console.log('lockData', lockData)
+  if (lockData.openScreenLock) {
     openLocker()
   }
 })
@@ -88,22 +101,22 @@ watch(lockData, (newVal) => {
 .mask {
   background: var(--Colors-background-bg-blur, rgba(255, 255, 255, 0.60)) !important;
   backdrop-filter: blur(30px);
+  display: block !important;
 }
 
 .mask-root {
   position: absolute;
-  top: 477px;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
   // 重置一些样式
   background-color: transparent;
   border: none;
   box-shadow: none;
+  max-height: 100% !important;
+}
 
-  display: flex;
-  width: 348px;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--oversize-spacing-3rem, 48px);
+.mask-content {
+  height: 100%;
+  width: 100%;
 }
 </style>
