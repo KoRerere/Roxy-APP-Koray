@@ -1,6 +1,6 @@
 <template>
   <template v-if="!!lockData.password">
-    <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
+    <RxButton icon="base/rx_ic_unlock2" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
     <Divider class="!ma-0" layout="vertical" />
   </template>
 </template>

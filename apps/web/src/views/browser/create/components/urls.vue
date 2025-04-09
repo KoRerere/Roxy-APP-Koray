@@ -3,6 +3,7 @@ import { $t } from '/@/locales'
 import rxInputTextarea from '/@/components/ry-form/rx-input-textarea.vue'
 
 const modelValue = defineModel<string[]>({ default: [] })
+const invalid = defineModel('invalid', { default: false })
 
 const urlsText = ref('')
 
@@ -11,15 +12,17 @@ watch(modelValue, (value) => {
 }, { immediate: true })
 
 function onBlur() {
-  modelValue.value = urlsText.value.split('\n').filter((url) => {
-    try {
-      new URL(url)
-      return true
+  const currUrls = urlsText.value.split('\n').filter(url => !!url);
+  try {
+    for (let i = 0; i < currUrls.length; i++) {
+      new URL(currUrls[i])
     }
-    catch (error) {
-      return false
-    }
-  })
+    modelValue.value = currUrls
+    invalid.value = false
+  } catch(err) {
+    console.error(err)
+    invalid.value = true
+  }
 }
 </script>
 
@@ -29,7 +32,12 @@ function onBlur() {
       v-model="urlsText"
       rows="4"
       @blur="onBlur"
+      :placeholder="$t('必须以 http:// 或 https:// 开头')"
+      :invalid="invalid"
     />
+    <Message v-if="invalid" severity="error" size="small" variant="simple">{{
+      $t('url格式有误，必须以 http:// 或 https:// 开头') }}
+    </Message>
     <div class="direct">
       {{ $t('* 换行可以添加多个') }}
     </div>

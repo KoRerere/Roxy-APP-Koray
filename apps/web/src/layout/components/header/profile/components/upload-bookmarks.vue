@@ -1,7 +1,55 @@
 <script setup lang="ts">
-const emit = defineEmits(['change', 'update:modelValue'])
+import Dialog from 'primevue/dialog';
+import { $t } from '/@/locales';
 
-defineModel<string>('modelValue')
+const emit = defineEmits(['change', 'update:modelValue'])
+const modelValue = defineModel<string>('modelValue')
+const importMode = ref('merge')
+const upLoadFileName = ref('')
+
+watch(modelValue, (value) => {
+  console.log('value', value)
+  const data = JSON.parse(value || '{}');
+  importMode.value = data.importMode || 'merge'
+}, { immediate: true })
+
+// 转换字段
+const convertField = (tree: any) => {
+  tree.forEach((item: any) => {
+    item.label = item.name;
+    item.key = item.type === 'url' ? item.url : item.label;
+    if (item.children) {
+      convertField(item.children)
+    }
+  })
+}
+
+const tree = computed(() => {
+  const data = JSON.parse(modelValue.value || '[]');
+  const bookmarkBar = data.bookmarkBar || [];
+  convertField(bookmarkBar)
+  convertField(data.other)
+  bookmarkBar.push({
+    label: $t('其他标签'),
+    key: 1,
+    children: data.other || []
+  })
+  console.log('bookmarkBar', bookmarkBar)
+  return bookmarkBar
+})
+
+const bookmarkOptions = computed(() => {
+  return [
+    {
+      label: $t('与配置文件中的现有书签合并'),
+      value: 'merge',
+    },
+    {
+      label: $t('覆盖配置文件中的现有书签'),
+      value: 'replace',
+    },
+  ]
+})
 
 function parserBookmarksDt(nodes) {
   return Array.from(nodes).map((item) => {
@@ -47,55 +95,173 @@ function parseHtml(html: string) {
   return {
     bookmarkBar,
     other,
-    importMode: 'merge',
+    importMode: importMode.value,
   }
 }
 
-function fileToString(file: File) {
-  // 把这个文件转成字符串，因为这里是一个html
-  const reader = new FileReader()
-  reader.onload = (e: any) => {
-    const html = e.target.result
-    const result = parseHtml(html)
-    console.log('result', result)
-    emit('update:modelValue', JSON.stringify(result))
-    emit('change', result)
-  }
-  reader.readAsText(file)
-}
-
-function uploadBookmarks() {
+// 是否立即上传
+function uploadBookmarks(isEmitChange = true) {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.html'
   input.onchange = (e: any) => {
     const file = e.target.files[0]
-    fileToString(file)
+    upLoadFileName.value = file.name
+    // 把这个文件转成字符串，因为这里是一个html
+    const reader = new FileReader()
+    reader.onload = (e: any) => {
+      const html = e.target.result
+      const result = parseHtml(html)
+      emit('update:modelValue', JSON.stringify(result))
+      isEmitChange && emit('change', result)
+    }
+    reader.readAsText(file)
   }
   input.click()
+}
+
+const visible = ref(false)
+function editBookmarks() {
+  visible.value = true
+}
+
+function saveBookmarks() {
+  const result = JSON.parse(modelValue.value || '{}');
+  result.importMode = importMode.value
+  console.log(result)
+  const data = JSON.stringify(result)
+  emit('update:modelValue', data)
+  emit('change', data)
 }
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton
-      severity="secondary"
-      outlined
-      :label="$t('上传文件')"
-      icon="base/rx_ic_export"
-      @click="uploadBookmarks"
-    />
-    <span class="upload-desc-text">
-      {{ $t('* 仅支持 .html') }}
-    </span>
+    <template v-if="!modelValue">
+      <RxButton
+        severity="secondary"
+        outlined
+        :label="$t('上传文件')"
+        icon="base/rx_ic_export"
+        @click="uploadBookmarks"
+      />
+      <span class="upload-desc-text">
+        {{ $t('* 仅支持 .html') }}
+      </span>
+    </template>
+    <template v-else>
+      <RxButton
+        :label="$t('编辑')" severity="secondary" outlined icon="base/rx_ic_edit" @click="editBookmarks"
+      />
+    </template>
   </div>
+
+  <!-- 允许点击遮罩关闭 -->
+  <Dialog class="w-[640px]" v-model:visible="visible" :header="$t('编辑书签')" modal :draggable="false" dismissableMask>
+    <div class="flex flex-col gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <RxButton
+            severity="secondary"
+            outlined
+            :label="$t('上传文件')"
+            icon="base/rx_ic_export"
+            @click="uploadBookmarks(false)"
+          />
+          <span class="upload-file-name">{{ upLoadFileName }}</span>
+        </div>
+        <div class="mt-1 upload-desc-text">{{ $t('* 重新上传您的配置文件以更改书签。') }}</div>
+      </div>
+      <div class="tree-wrapper">
+        <Tree :value="tree" class="w-full">
+          <template #nodetoggleicon="{ node, expanded }">
+            <SvgIcon v-if="expanded" name="base/rx_ic_folder_open" size="18" />
+            <SvgIcon v-else name="base/rx_ic_folder_close" size="18" />
+          </template>
+          <template #nodeicon="{ node }">
+            <SvgIcon v-if="node.type === 'url'" name="base/rx_ic_doc_line" size="18" />
+          </template>
+          <template #default="{ node }">
+            <div v-if="node.type === 'folder'" class="bookmark-label">
+              {{ node.label }}
+            </div>
+            <div v-else class="flex items-center gap-2">
+              <span class="bookmark-label">{{ node.label }}</span>
+              <span class="bookmark-url">{{ node.url }}</span>
+            </div>
+          </template>
+        </Tree>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div class="bookmark-options-title">{{ $t('书签选项') }}</div>
+        <div class="flex flex-col gap-4">
+          <div v-for="bookmark in bookmarkOptions" class="flex items-center gap-2">
+            <RadioButton v-model="importMode" :inputId="bookmark.value" name="dynamic" :value="bookmark.value" />
+            <label :for="bookmark.value">{{ bookmark.label }}</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <template #footer>
+      <div class="w-full flex justify-between">
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined></RxButton>
+        <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" /> 
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <style lang="scss" scoped>
 .upload-desc-text {
   color: var(--Colors-text-text-inactive, #7d8387);
-  text-align: center;
   font-family: Inter;
   font-size: 12px;
+  line-height: 20px;
+}
+
+.upload-file-name {
+  color: var(--Colors-text-text-primary, #111213);
+  font-family: Inter;
+  font-size: 14px;
+}
+
+.tree-wrapper {
+  height: 360px;
+  padding: 16px 24px 24px 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4xl, 24px);
+  align-self: stretch;
+  border-radius: 8px;
+  background: var(--Colors-background-bg-block, #F1F5F8);
+  overflow-y: auto;
+
+  :deep(.p-tree) {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  :deep(.p-tree-node-content) {
+    padding-left: 0 !important;
+  }
+}
+
+.bookmark-options-title {
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.bookmark-label {
+  color: var(--Colors-text-text-primary, #111213);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.bookmark-url {
+  color: var(--Colors-text-text-tertiary, #575D60);
+  font-size: 14px;
+  font-weight: 400;
 }
 </style>
