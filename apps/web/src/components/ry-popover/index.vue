@@ -1,16 +1,17 @@
 <script setup lang="ts">
 const popoverRef = useTemplateRef('popover')
 
-function getRef() {
-  return popoverRef.value
-}
-
 const slots: any = useSlots()
 
 defineExpose({
-  getRef,
+  getRef() {
+    return popoverRef.value
+  },
   show(event: Event, target?: EventTarget) {
     popoverRef.value?.show(event, target)
+  },
+  hide() {
+    popoverRef.value?.hide()
   }
 })
 </script>

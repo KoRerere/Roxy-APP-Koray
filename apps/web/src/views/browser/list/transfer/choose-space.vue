@@ -52,7 +52,8 @@ async function getTransferHistory(event: MouseEvent) {
 async function onSearch() {
   if (!search.value) return
   const { data } = await API.window.userGetTransferWorkspaceListList({
-    windowIds: windowIds.join(',')
+    windowIds: windowIds.join(','),
+    transferWorkspaceNo: search.value
   })
 
   spaceList.value = [
@@ -73,6 +74,12 @@ async function clearHistory(space: any) {
 function handleChoose(item: Data) {
   if (!item.isWindowCountEnough) return
   selectedWorkspace.value = item
+  search.value = ''
+  chooseRef.value?.hide()
+}
+
+function getAvatarStyle(workspacePicture: string) {
+  return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 }
 </script>
 
@@ -98,11 +105,12 @@ function handleChoose(item: Data) {
                 <span>{{ $t('清除历史') }}</span>
               </div>
             </div>
-            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 workspace" @click="handleChoose(item)">
-              <RxAvatar :name="item.label" :size="36" color="orange" :font-size="16" />
+            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace" @click="handleChoose(item)">
+              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
+                :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
               <div>
-                <div class="workspace-name">{{ item.name }}</div>
-                <div class="mt-1 workspace-id">{{ item.id }}</div>
+                <div class="workspace-name">{{ item.workspaceName }}</div>
+                <div class="mt-1 workspace-id">ID: {{ item.workspaceNo }}</div>
               </div>
             </div>
           </div>
@@ -115,6 +123,20 @@ function handleChoose(item: Data) {
 
 
 <style scoped lang="scss">
+.workspace-icon {
+  width: 48px;
+  height: 48px;
+  color: #fff;
+  text-align: center;
+  font-family: 'JetBrains Mono';
+  font-size: 20px !important;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 20px;
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+}
+
 .choose {
   border-radius: var(--radius-lg, 8px);
   border: 1px solid var(--Colors-border-border-base, #AFB7BB);

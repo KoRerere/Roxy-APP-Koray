@@ -16,7 +16,7 @@ const emit = defineEmits(['close', 'confirm'])
 const [_, onlyErrorToast] = useResponseToast()
 
 const selectedWorkspace = ref()
-const isDelete = ref()
+const isDelete = ref(false)
 const transferParam = ref({
   value: [],
   options: [
@@ -57,13 +57,14 @@ async function sendCode() {
 }
 
 async function onTransfer() {
-  await API.window.userTransferWindowCreate({
+  const { code, msg } = await API.window.userTransferWindowCreate({
     windowIds,
     targetWorkspaceId: selectedWorkspace.value.workspaceId,
     isDelete: isDelete.value,
     emailCode: emailCode.value,
     transferParam: transferParam.value.value
   })
+  if (code !== 0) return onlyErrorToast(code, msg)
   emit('confirm')
 }
 </script>

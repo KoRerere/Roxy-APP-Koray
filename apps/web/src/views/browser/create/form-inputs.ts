@@ -103,7 +103,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
 
-  // TODO:(anbin) 
+  // TODO:(anbin)
   const searchEngineOptions = searchEngine.code == 0 ?
     (searchEngine.data || []).map(item => ({ label: item.code, value: item.code })) : []
 
@@ -327,7 +327,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
 
-    // TODO:(anbin) 
+    // TODO:(anbin)
     {
       label: $t('搜索引擎'),
       name: 'searchEngine',
@@ -590,6 +590,13 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         },
       ],
       slot: 'windowSize',
+    },
+    {
+      label: $t('窗口位置'),
+      name: 'windowRatioPosition',
+      value: data.windowRatioPosition || '0,0',
+      tooltip: $t('浏览器窗口打开时在屏幕中的初始位置'),
+      slot: 'windowRatioPosition',
     },
     // {
     //   type: 'radio',
@@ -1294,7 +1301,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('关闭'), value: false },
       ],
     },
-    // TODO:(anbin) 
+    // TODO:(anbin)
     {
       type: 'radio',
       label: $t('打开工作台'),

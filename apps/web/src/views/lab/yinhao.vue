@@ -2,8 +2,7 @@
 import PlanModal from '../pay/wallet/components/plan-success.vue'
 import BalanceModal from '../pay/wallet/components/balance-success.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { sleep } from '/@/utils'
-
+import Position from '/@/views/browser/create/components/position.vue'
 
 const [dialogInstance] = useDialog()
 
@@ -36,30 +35,9 @@ function open2() {
     },
   })
 }
-//====================
-// const products = Array.from({ length: 10 }, (_, index) => ({
-//   id: index,
-//   code: 'f230fh0g3',
-//   name: 'Bamboo Watch',
-//   description: 'Product Description',
-//   image: 'bamboo-watch.jpg',
-//   price: 65,
-//   category: 'Accessories',
-//   quantity: 24,
-//   inventoryStatus: 'INSTOCK',
-//   rating: 5
-// }))
-
-// const columns = [
-//   { field: 'code', header: 'Code' },
-//   { field: 'name', header: 'Name' },
-//   { field: 'category', header: 'Category' },
-//   { field: 'quantity', header: 'Quantity' }
-// ]
 
 //=================================
-import { motion, AnimatePresence } from 'motion-v'
-
+const ratioPositon = ref('0,0.5')
 </script>
 
 <template>
@@ -68,12 +46,7 @@ import { motion, AnimatePresence } from 'motion-v'
     <RxButton class="!w-20" @click="open2">blance</RxButton>
     <br>
     <br>
-    <!-- <div class="flex w-260 h-100 gap-20 overflow-hidden">
-      <DataTable :value="products">
-        <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header"></Column>
-      </DataTable>
-    </div> -->
-
+    <Position v-model="ratioPositon"></Position>
   </div>
 </template>
 

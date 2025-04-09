@@ -11,6 +11,7 @@ import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
+import Position from '/@/views/browser/create/components/position.vue'
 
 const props = defineProps({
   isEdit: {
@@ -127,11 +128,18 @@ function onCopy(dirId: string) {
               <template #windowSize="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <InputGroup>
-                    <template v-for="item in input.items" :key="item.name">
+                  <div class="flex gap-[8px]">
+                    <InputGroup v-for="(item, index) in input.items" :key="item.name">
+                      <InputGroupAddon>{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
                       <InputText v-bind="item" v-model="item.value" type="text" />
-                    </template>
-                  </InputGroup>
+                    </InputGroup>
+                  </div>
+                </div>
+              </template>
+              <template #windowRatioPosition="{ input }">
+                <div class="flex py-4">
+                  <inputLabel v-bind="input" />
+                  <Position v-model="input.value" />
                 </div>
               </template>
               <template #forbiddenPictureSize="{ input }">
