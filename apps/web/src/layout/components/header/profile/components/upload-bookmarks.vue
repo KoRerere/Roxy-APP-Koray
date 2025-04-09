@@ -15,12 +15,12 @@ function parserBookmarksDt(nodes) {
       if (a) {
         return {
           name: a.innerText,
-          type: 'link',
+          type: 'url',
           url: a.href,
         }
       }
     }
-  })
+  }).filter(item => item)
 }
 
 function parserBookmarksDl(nodes) {
@@ -40,10 +40,10 @@ function parseHtml(html: string) {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   const bookmarks = parserBookmarksDl(doc.body.children)
-  const bookmarkBar = bookmarks?.children.filter(item => item?.type === 'folder')
-  const other = bookmarks?.children.filter(item => item?.type === 'link')
-  // console.log('bookmarkBar', bookmarkBar)
-  // console.log('other', other)
+  // 获取书签栏
+  const bookmarkBar = bookmarks?.children?.filter(item => item?.type === 'folder')?.[0]?.children || []
+  // 获取其他书签
+  const other = bookmarks?.children?.filter(item => item?.type === 'url') || []
   return {
     bookmarkBar,
     other,
@@ -57,6 +57,7 @@ function fileToString(file: File) {
   reader.onload = (e: any) => {
     const html = e.target.result
     const result = parseHtml(html)
+    console.log('result', result)
     emit('update:modelValue', JSON.stringify(result))
     emit('change', result)
   }
@@ -76,13 +77,25 @@ function uploadBookmarks() {
 </script>
 
 <template>
-  <div>
+  <div class="flex items-center gap-2">
     <RxButton
       severity="secondary"
       outlined
+      :label="$t('上传文件')"
+      icon="base/rx_ic_export"
       @click="uploadBookmarks"
-    >
-      {{ $t("上传文件") }}
-    </RxButton>
+    />
+    <span class="upload-desc-text">
+      {{ $t('* 仅支持 .html') }}
+    </span>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.upload-desc-text {
+  color: var(--Colors-text-text-inactive, #7d8387);
+  text-align: center;
+  font-family: Inter;
+  font-size: 12px;
+}
+</style>

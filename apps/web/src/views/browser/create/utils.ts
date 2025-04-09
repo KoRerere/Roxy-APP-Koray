@@ -318,7 +318,6 @@ export async function downloadTextTemplate() {
       defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark1',
-      windowSize: '1000*1000',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
       searchEngine: 'Google',
     },
@@ -332,7 +331,6 @@ export async function downloadTextTemplate() {
       defaultOpenUrl: '["https://www.google.com/", "https://x.com/"]',
       cookie: '[{ "domain": "example", "expires": 0, "httpOnly": false, "name": "X-AB", "path": "xxx", "priority": "Medium", "sameParty": false, "sameSite": "None", "secure": true, "session": false, "size": 36, "sourcePort": 0, "sourceScheme": "Secure", "value": "xxxx" }]',
       windowRemark: 'remark2',
-      windowSize: '1000*1000',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
       searchEngine: 'Microsoft Bing',
     }
