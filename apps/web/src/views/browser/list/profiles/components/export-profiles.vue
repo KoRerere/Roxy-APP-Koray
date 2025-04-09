@@ -98,10 +98,14 @@ const excelSchema = [
     name: $t('备注'),
   },
   {
-    key: 'windowSize',
-    name: $t('窗口大小'),
-    getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
+    key: 'searchEngine',
+    name: $t('搜索引擎'),
   },
+  // {
+  //   key: 'windowSize',
+  //   name: $t('窗口大小'),
+  //   getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
+  // },
 ].map((item, _index) => ({ ...item, _index }))
 const selection = ref(excelSchema.slice())
 

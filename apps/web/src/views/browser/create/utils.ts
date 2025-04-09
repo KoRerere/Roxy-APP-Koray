@@ -226,7 +226,7 @@ const getExportColumns = async () => {
     {
       header: $t('搜索引擎'),
       key: 'searchEngine',
-      placeholder: $t('搜索引擎, 如: Google'),
+      placeholder: $t('浏览器窗口打开时地址栏使用的搜索引擎，留空则默认使用Google!'),
       example: searchEngine.join('\n'),
     },
   ]
@@ -334,7 +334,7 @@ export async function downloadTextTemplate() {
       windowRemark: 'remark2',
       windowSize: '1000*1000',
       userAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.99 Safari/537.36',
-      searchEngine: 'Bing',
+      searchEngine: 'Microsoft Bing',
     }
   ]
 

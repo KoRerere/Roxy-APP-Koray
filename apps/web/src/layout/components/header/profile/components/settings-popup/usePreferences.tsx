@@ -252,10 +252,11 @@ export function usePreferencesPanel() {
 							label: $t("搜索引擎"),
 							name: "searchEngine",
 							text: $t("打开窗口时，浏览器使用的默认搜索引擎"),
-							value: data?.searchEngine ?? searchEngineOptions[0]?.value,
+							value: searchEngineOptions.find((item) => item.value === data?.searchEngine)?.value ?? searchEngineOptions[0].value,
 							props: {
 								filter: false,
 								optionValue: "value",
+								optionLabel: "label",
 								options: searchEngineOptions
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
