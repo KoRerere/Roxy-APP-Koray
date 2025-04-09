@@ -13,11 +13,11 @@
         </span>
 
         <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" />
-        <template v-if="invalid">
+        <!-- <template v-if="invalid">
           <Message v-for="msg in issues" severity="error" size="small" variant="simple" class="error-message">
             {{ msg }}
           </Message>
-        </template>
+        </template> -->
         <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
         </RxButton>
       </div>
@@ -83,9 +83,9 @@ const handleResetPassword = () => {
 
 const handleBlur = () => {
   const schema = z.string()
-    .min(4, $t('密码长度必须在 4-12 个字符之间'))
-    .max(12, $t('密码长度必须在 4-12 个字符之间'))
-    .regex(/^[a-zA-Z0-9]+$/, $t('密码必须由字母、数字或符号组成'))
+    .min(4)
+    .max(12)
+    .regex(/^[^\u4e00-\u9fa5]+$/)
 
   const result = schema.safeParse(password.value)
   invalid.value = !result.success
@@ -93,7 +93,10 @@ const handleBlur = () => {
 }
 
 const handleSubmit = () => {
-  emit('change', { password: password.value })
-  visible.value = false
+  if (!invalid.value) {
+    emit('change', { password: password.value })
+    visible.value = false
+    password.value = ''
+  }
 }
 </script>

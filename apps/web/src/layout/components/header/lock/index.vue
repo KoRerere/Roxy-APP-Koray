@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { useLock } from '/@/stores/lock'
 import { useDialog } from "primevue/usedialog"
-import Mask from './mask.vue'
+import LockScreen from './lock-screen.vue'
 
 const dialog = useDialog()
 const { lockData, setLockData } = useLock()
@@ -49,7 +49,7 @@ function openLocker() {
     return observer;
   }
 
-  const lockerDialog = dialog.open(Mask, {
+  const lockerDialog = dialog.open(LockScreen, {
     props: {
       showHeader: false,
       modal: true,
@@ -90,7 +90,6 @@ function openLocker() {
 // })
 
 onMounted(() => {
-  console.log('lockData', lockData)
   if (lockData.openScreenLock) {
     openLocker()
   }

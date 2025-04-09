@@ -2,22 +2,53 @@
 import Dialog from 'primevue/dialog';
 import { $t } from '/@/locales';
 
-const emit = defineEmits(['change', 'update:modelValue'])
+enum BookmarkType {
+  FOLDER = 'folder',
+  URL = 'url',
+}
+
+enum ImportMode {
+  MERGE = 'merge',
+  REPLACE = 'replace',
+}
+
+type BookmarkItem = {
+  name: string
+  url?: string
+  type: BookmarkType
+  children?: BookmarkItem[]
+}
+
+type BookText = {
+  bookmarkBar: BookmarkItem[]
+  other: BookmarkItem[]
+  importMode: ImportMode
+}
+
+const emit = defineEmits(['change'])
 const modelValue = defineModel<string>('modelValue')
-const importMode = ref('merge')
+const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 
 watch(modelValue, (value) => {
-  console.log('value', value)
   const data = JSON.parse(value || '{}');
-  importMode.value = data.importMode || 'merge'
+  importMode.value = data.importMode || ImportMode.MERGE
 }, { immediate: true })
+
+const isEdit = computed(() => {
+  try {
+    const data = JSON.parse(modelValue.value || '{}');
+    return data.bookmarkBar.length > 0 || data.other.length > 0
+  } catch {
+    return false
+  }
+})
 
 // 转换字段
 const convertField = (tree: any) => {
   tree.forEach((item: any) => {
     item.label = item.name;
-    item.key = item.type === 'url' ? item.url : item.label;
+    item.key = item.type === BookmarkType.URL ? item.url : item.label;
     if (item.children) {
       convertField(item.children)
     }
@@ -25,16 +56,20 @@ const convertField = (tree: any) => {
 }
 
 const tree = computed(() => {
-  const data = JSON.parse(modelValue.value || '[]');
+  let data = []
+  try {
+    data = JSON.parse(modelValue.value || '[]');
+  } catch { /** ... */ }
   const bookmarkBar = data.bookmarkBar || [];
   convertField(bookmarkBar)
   convertField(data.other)
-  bookmarkBar.push({
-    label: $t('其他标签'),
-    key: 1,
-    children: data.other || []
-  })
-  console.log('bookmarkBar', bookmarkBar)
+  if (data.other.length > 0) {
+    bookmarkBar.push({
+      label: $t('其他标签'),
+      key: 1,
+      children: data.other || []
+    })
+  }
   return bookmarkBar
 })
 
@@ -42,11 +77,11 @@ const bookmarkOptions = computed(() => {
   return [
     {
       label: $t('与配置文件中的现有书签合并'),
-      value: 'merge',
+      value: ImportMode.MERGE,
     },
     {
       label: $t('覆盖配置文件中的现有书签'),
-      value: 'replace',
+      value: ImportMode.REPLACE,
     },
   ]
 })
@@ -63,7 +98,7 @@ function parserBookmarksDt(nodes) {
       if (a) {
         return {
           name: a.innerText,
-          type: 'url',
+          type: BookmarkType.URL,
           url: a.href,
         }
       }
@@ -78,20 +113,20 @@ function parserBookmarksDl(nodes) {
   if (title) {
     const item: { children: any[], name?: string, type?: string } = { children: [] }
     item.name = title.innerText
-    item.type = 'folder'
+    item.type = BookmarkType.FOLDER
     item.children = parserBookmarksDt(dl.children)
     return item
   }
 }
 
-function parseHtml(html: string) {
+function parseHtml(html: string): BookText {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   const bookmarks = parserBookmarksDl(doc.body.children)
   // 获取书签栏
-  const bookmarkBar = bookmarks?.children?.filter(item => item?.type === 'folder')?.[0]?.children || []
+  const bookmarkBar = bookmarks?.children?.filter(item => item?.type === BookmarkType.FOLDER)?.[0]?.children || []
   // 获取其他书签
-  const other = bookmarks?.children?.filter(item => item?.type === 'url') || []
+  const other = bookmarks?.children?.filter(item => item?.type === BookmarkType.URL) || []
   return {
     bookmarkBar,
     other,
@@ -128,16 +163,24 @@ function editBookmarks() {
 function saveBookmarks() {
   const result = JSON.parse(modelValue.value || '{}');
   result.importMode = importMode.value
-  console.log(result)
   const data = JSON.stringify(result)
-  emit('update:modelValue', data)
+  modelValue.value = data;
+  emit('change', data)
+  visible.value = false
+}
+
+function deleteBookmarks() {
+  const data = JSON.parse(modelValue.value || '{}');
+  data.bookmarkBar = []
+  data.other = []
+  modelValue.value = JSON.stringify(data)
   emit('change', data)
 }
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <template v-if="!modelValue">
+    <template v-if="!isEdit">
       <RxButton
         severity="secondary"
         outlined
@@ -205,7 +248,7 @@ function saveBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined></RxButton>
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks"></RxButton>
         <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" /> 
       </div>
     </template>

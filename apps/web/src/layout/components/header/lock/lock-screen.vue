@@ -42,7 +42,7 @@ const handleUnlock = () => {
   if (password.value === lockData.password) {
     emit('close')
   } else {
-    toast.add({ severity: 'error', summary: '密码错误', detail: '请重新输入密码', life: 3000 });
+    toast.add({ severity: 'error', summary: $t('密码错误'), detail: $t('请重新输入密码'), life: 3000 });
   }
 }
 
