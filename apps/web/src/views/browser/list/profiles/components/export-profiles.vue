@@ -30,8 +30,7 @@ const excelSchema = [
   },
   {
     key: 'osVersion',
-    name: $t('系统版本'),
-    getText: (item: Data) => item.osVersion?.toUpperCase()
+    name: $t('系统版本')
   },
   {
     key: 'userAgent',
