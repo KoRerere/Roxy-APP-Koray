@@ -20,6 +20,7 @@ const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
+const transferTotal = ref(0)
 const columns = [
   {
     title: $t('窗口信息'),
@@ -56,14 +57,19 @@ const columns = [
 ]
 
 async function tableRequest(params: any) {
-  return API.window.userGetTransferReceiveWindowListList({
+  const result = await API.window.userGetTransferReceiveWindowListList({
     ...params,
     windowTransferNo
   })
+  transferTotal.value = result.data.total
+  return result
 }
 
 async function onReceive() {
-  const { code, msg } = await API.window.userAgreeTransferWindowCreate({ windowTransferNo })
+  const { code, msg } = await API.window.userAgreeTransferWindowCreate({
+    total: transferTotal.value,
+    windowTransferNo
+  })
   handleBusinessCode(code, () => {
     if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
       checkSecurityTips()

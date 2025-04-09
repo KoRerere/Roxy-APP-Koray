@@ -335,6 +335,12 @@ async function hidePopover() {
 .suffix {
   margin-right: 16px;
 
+  &:has(.suffix-tab + .suffix-tab) {
+    .suffix-tab:first-of-type {
+      padding-left: 0;
+    }
+  }
+
   &-tab {
     padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
