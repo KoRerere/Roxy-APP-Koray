@@ -71,8 +71,8 @@ function generateGridPoints(rows: number = 3, cols: number = 3, containerWidth: 
 function getPointPosition(point: Point) {
   const x = Math.min(point.x + PADDING, CONTAINER_W - RECT_W - PADDING)
   const y = Math.min(point.y + PADDING, CONTAINER_H - RECT_H - PADDING)
-  const ratioX = (x - PADDING) / CONTAINER_W
-  const ratioY = (y - PADDING) / CONTAINER_H
+  const ratioX = point.x / CONTAINER_W
+  const ratioY = point.y / CONTAINER_H
   return { x, y, ratioX, ratioY }
 }
 
