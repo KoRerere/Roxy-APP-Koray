@@ -1,4 +1,5 @@
 import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
+import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
@@ -222,7 +223,8 @@ export class BeforeLaunchTask {
       allOpenUrl,
       useGpu,
       workspaceId,
-      openWorkbench
+      openWorkbench,
+      windowRatioPositon
     } = this.browserItem.winInfo
 
     const args = [
@@ -281,8 +283,13 @@ export class BeforeLaunchTask {
       args.push(`--window-position=${OpenPositonX},${OpenPositonY}`)
     }
     else {
-      args.push(`--window-position=0,0`)
-      // exe_strs.push(`--window-position=${parseInt(Math.random() * 1000)},${parseInt(Math.random() * 1000)}`)
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
+      const [x = 0, y = 0] = windowRatioPositon?.split(',') || []
+      const positions = [Math.floor(screenWidth * x), Math.floor(screenHeight * y)].join(',')
+
+      args.push(`--window-position=${positions}`)
     }
 
     // 设置浏览器窗口大小
