@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
-import bookmarks from "./bookmarks.json";
 import { fileExists } from "/@/utils";
 import crypto from 'crypto'
 import { dirname } from "path";
+import { getBookText, } from "/@/modules/store";
 
 export type BookmarkType = {
   name: string
@@ -11,85 +11,87 @@ export type BookmarkType = {
   url?: string
 }
 
-type OriginBookmarkType = typeof defaultBookmarks
+type OriginBookmarkType = ReturnType<typeof getDefaultBookmarks>
 
 // bookmark_bar、other、synced 字段都需要，否则 checksum 不会自动生成
-const defaultBookmarks = {
+const getDefaultBookmarks = () => ({
   "bookmark_bar": {
     "children": [],
-    get date_added() {
-      return `${Date.now() * 1000 + 11644473600000000}`
-    },
+    date_added: `${Date.now() * 1000 + 11644473600000000}`,
     "date_last_used": "0",
     "date_modified": "0",
-    get guid() {
-      return crypto.randomUUID()
-    },
+    guid: crypto.randomUUID(),
     "id": "1",
     "name": "书签栏",
     "type": "folder"
   },
   "other": {
     "children": [],
-    get date_added() {
-      return `${Date.now() * 1000 + 11644473600000000}`
-    },
+    date_added: `${Date.now() * 1000 + 11644473600000000}`,
     "date_last_used": "0",
     "date_modified": "0",
-    get guid() {
-      return crypto.randomUUID()
-    },
+    guid: crypto.randomUUID(),
     "id": "2",
     "name": "其他书签",
     "type": "folder"
   },
   "synced": {
     "children": [],
-    get date_added() {
-      return `${Date.now() * 1000 + 11644473600000000}`
-    },
+    date_added: `${Date.now() * 1000 + 11644473600000000}`,
     "date_last_used": "0",
     "date_modified": "0",
-    get guid() {
-      return crypto.randomUUID()
-    },
+    guid: crypto.randomUUID(),
     "id": "3",
     "name": "移动设备书签",
     "type": "folder"
   }
-}
+})
 
 /** 导入书签到 Chrome */
 export async function importBookmarks(bookmarkPath: string) {
-  const importMode: 'merge' | 'replace' = 'merge'
+  const bookmarks = getBookText()
+  if (!bookmarks) {
+    return
+  }
+
+  const { importMode, bookmarkBar, other, synced } = bookmarks
+  const isReplace = importMode === 'replace'
+
 
   const originBookmarks = {
     checksum: '',
     "roots": {
-      ...defaultBookmarks
+      ...getDefaultBookmarks()
     },
     "version": 1
   }
 
-  if (await fileExists(bookmarkPath)) {
-    try {
-      Object.assign(originBookmarks, JSON.parse(await readFile(bookmarkPath, 'utf-8')))
-    } catch (error) {
+  if (!isReplace) {
+    if (await fileExists(bookmarkPath)) {
+      try {
+        Object.assign(originBookmarks, JSON.parse(await readFile(bookmarkPath, 'utf-8')))
+      } catch (error) {
 
+      }
+    } else {
+      await mkdir(dirname(bookmarkPath), { recursive: true })
     }
-  } else {
-    await mkdir(dirname(bookmarkPath), { recursive: true })
   }
 
-  const nextId = generateNextId(originBookmarks);
+  let nextId = generateNextId(originBookmarks);
 
-  if (importMode === 'merge') {
-    mergeBookmarks(originBookmarks.roots.bookmark_bar.children, bookmarks.bookmarkBar, nextId)
-    await writeFile(bookmarkPath, JSON.stringify(originBookmarks, null, 2), 'utf-8')
-  } else {
-    originBookmarks.roots = bookmarks
-    await writeFile(bookmarkPath, JSON.stringify(originBookmarks, null, 2), 'utf-8')
+
+  if (Array.isArray(bookmarkBar) && bookmarkBar.length) {
+    nextId = mergeBookmarks(originBookmarks.roots.bookmark_bar.children, bookmarkBar, nextId, isReplace)
   }
+  if (Array.isArray(other) && other.length) {
+    nextId = mergeBookmarks(originBookmarks.roots.other.children, other, nextId, isReplace)
+  }
+  if (Array.isArray(synced) && synced.length) {
+    nextId = mergeBookmarks(originBookmarks.roots.synced.children, synced, nextId, isReplace)
+  }
+  await writeFile(bookmarkPath, JSON.stringify(originBookmarks, null, 2), 'utf-8')
+
 }
 
 /** 生成递增的 id（基于现有最大 id） */
@@ -105,17 +107,15 @@ function generateNextId(existingBookmarks) {
   return (maxId + 1).toString();
 }
 
-function generateChecksum(roots) {
-  const rootsJson = JSON.stringify(roots, null, 0);
-  return crypto.createHash('md5').update(rootsJson).digest('hex').toLowerCase();
-}
-
 // ================== 合并书签 ==================
-function mergeBookmarks(existingData: OriginBookmarkType['bookmark_bar']['children'], newItems: BookmarkType[], nextId: any) {
+function mergeBookmarks(existingData: OriginBookmarkType['bookmark_bar']['children'], newItems: BookmarkType[], nextId: any, replace = false) {
   newItems.forEach(item => {
+    if (!item) {
+      return
+    }
     if (item.type === 'folder') {
       const targetItem = existingData.find?.(i => i.name === item.name && i.type === 'folder')
-      if (targetItem) {
+      if (!replace && targetItem) {
         if (item.children?.length) {
           targetItem.children ||= []
           mergeBookmarks(targetItem.children, item.children, nextId)
@@ -136,7 +136,7 @@ function mergeBookmarks(existingData: OriginBookmarkType['bookmark_bar']['childr
         }
         existingData.push(newItem)
       }
-    } else if (item.type === 'url' && !existingData.find?.(i => i.url === item.url)) {
+    } else if (replace || (item.type === 'url' && !existingData.find?.(i => i.url === item.url))) {
       const newItem = {
         "date_added": `${Date.now() * 1000 + 11644473600000000}`,
         "date_last_used": "0",

@@ -235,7 +235,7 @@ export class BeforeLaunchTask {
       '--disable-backgrounding-occluded-windows',
     ]
 
-    if (openWorkbench || (openWorkbench === 2 && store.openWorkbench)) {
+    if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
       args.push(`http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`)
     }
 
@@ -423,6 +423,10 @@ export class BeforeLaunchTask {
 
   /** 导入书签 */
   private async importBookmarks() {
+    if (!this.browserItem.winInfo.openBookmarks) {
+      return
+    }
+
     const bookmarkPath = join(this.browserItem.userDataDir, 'Default', 'Bookmarks')
     await importBookmarks(bookmarkPath)
   }

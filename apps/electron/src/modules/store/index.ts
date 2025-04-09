@@ -60,6 +60,20 @@ export interface StoreType {
   searchEngines: UserGetSearchEnginesListData['data']
 }
 
+/** 全局书签 */
+let bookText: Record<string, any>
+
+export function getBookText() {
+  return bookText
+}
+
+export function setBookText(value: Record<string, any>) {
+  console.log('setBookText', value)
+  bookText = value
+}
+
+const excludeKeys = ['bookText']
+
 const defaultValues: StoreType = {
   language: '',
   closeSoft: 'pop',
@@ -117,19 +131,33 @@ export async function fetchUserConfig() {
     const { code, data } = await API.base.userGetUserConfigList()
     if (code === 0) {
       console.log('setupStore userGetUserConfigList', data)
-      Object.keys(data).forEach((key) => {
-        // 如果语言存在，则不覆盖
-        if (key === 'language' && store.language) {
-          return
-        }
-        if (Reflect.has(store, key)) {
-          Reflect.set(store, key, Reflect.get(data, key))
-        }
-      })
+      setUserConfig(data)
     }
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
+  }
+}
+
+export function setUserConfig(data: Record<string, any>) {
+  Object.keys(data).forEach((key) => {
+    if (excludeKeys.includes(key)) {
+      return
+    }
+    // 如果语言存在，则不覆盖
+    if (key === 'language' && store.language) {
+      return
+    }
+    if (Reflect.has(store, key)) {
+      Reflect.set(store, key, Reflect.get(data, key))
+    }
+  })
+  if (data?.bookText) {
+    try {
+      setBookText(JSON.parse(data.bookText))
+    }
+    catch (error) {
+    }
   }
 }
 
