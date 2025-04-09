@@ -4,7 +4,6 @@ import InputNumber from "primevue/inputnumber";
 import RxButton from "/@/components/rx-button";
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
-import RxSelectButton from '/@/components/rx-select-button'
 import { UaStrictMode } from "/@/enums";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import type {
@@ -16,6 +15,7 @@ import FolderDirectory from "../folder-directory.vue";
 import { API } from '/@/api'
 import LockAppComponent from "../lock-app.vue";
 import { useLock } from '/@/stores/lock'
+import UploadBookmarks from "../upload-bookmarks.vue";
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
@@ -222,7 +222,7 @@ export function usePreferencesPanel() {
 								);
 							},
 						},
-						// TODO:(anbin) 
+						// TODO:(anbin) 软件设置 
 						{
 							label: $t("工作台"),
 							text: () => (
@@ -272,23 +272,13 @@ export function usePreferencesPanel() {
 						},
 						{
 							label: $t('导入Chrome书签'),
-							name: 'bookType',
+							name: 'bookText',
 							text: $t('浏览器窗口配置必须开启“书签”此功能方可生效！'),
-							value: data?.bookType ?? 'combine',
-							props: {
-								filter: false,
-								optionValue: "value",
-								optionLabel: "label",
-								options: [
-									{ label: $t("合并"), value: "combine" },
-									{ label: $t("替换"), value: "replace" }
-								],
-							},
+							value: data?.bookText,
 							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return <RxSelectButton
+								return <UploadBookmarks
 									{...item.props}
 									{...props}
-									name={item.name}
 									onChange={() => saveUserConfig(item)}
 								/>
 							},
