@@ -224,7 +224,7 @@ export class BeforeLaunchTask {
       useGpu,
       workspaceId,
       openWorkbench,
-      windowRatioPositon
+      windowRatioPosition
     } = this.browserItem.winInfo
 
     const args = [
@@ -286,7 +286,7 @@ export class BeforeLaunchTask {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
-      const [x = 0, y = 0] = windowRatioPositon?.split(',') || []
+      const [x = 0, y = 0] = windowRatioPosition?.split(',') || []
       const positions = [Math.floor(screenWidth * x), Math.floor(screenHeight * y)].join(',')
 
       args.push(`--window-position=${positions}`)
