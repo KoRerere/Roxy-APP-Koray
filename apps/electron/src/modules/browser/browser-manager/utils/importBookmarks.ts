@@ -48,7 +48,7 @@ const getDefaultBookmarks = () => ({
 })
 
 /** 导入书签到 Chrome */
-export async function importBookmarks(bookmarkPath: string) {
+export async function importBookmarks(bookmarkPath: string, preferencesPath: string) {
   const bookmarks = getBookText()
   if (!bookmarks) {
     return
@@ -92,6 +92,32 @@ export async function importBookmarks(bookmarkPath: string) {
   }
   await writeFile(bookmarkPath, JSON.stringify(originBookmarks, null, 2), 'utf-8')
 
+  await showBookmarkBar(preferencesPath)
+}
+
+async function showBookmarkBar(preferencesPath: string) {
+  // 显示书签栏
+  if (await fileExists(preferencesPath)) {
+    try {
+      const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
+
+      if (!Reflect.has(preferences, 'bookmark_bar') || !Reflect.has(preferences.bookmark_bar, 'show_on_all_tabs')) {
+        preferences.bookmark_bar = {
+          ...preferences?.bookmark_bar,
+          "show_on_all_tabs": true
+        }
+        await writeFile(preferencesPath, JSON.stringify(preferences, null, 2), 'utf-8')
+      }
+    } catch (error) {
+    }
+  } else {
+    const preferences = {
+      "bookmark_bar": {
+        "show_on_all_tabs": true
+      },
+    }
+    await writeFile(preferencesPath, JSON.stringify(preferences, null, 2), 'utf-8')
+  }
 }
 
 /** 生成递增的 id（基于现有最大 id） */

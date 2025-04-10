@@ -448,7 +448,7 @@ export class BeforeLaunchTask {
     }
 
     const bookmarkPath = join(this.browserItem.userDataDir, 'Default', 'Bookmarks')
-    await importBookmarks(bookmarkPath)
+    await importBookmarks(bookmarkPath, this.browserItem.preferencesPath)
   }
 
   /** 拉取远程缓存文件 */
