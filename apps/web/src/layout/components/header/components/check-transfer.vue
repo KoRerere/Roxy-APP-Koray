@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RxAvatar from "/@/components/rx-avatar";
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import SecurityTips from '/@/layout/components/header/components/security-tips.vue';
 import { API } from '/@/api';
@@ -74,12 +75,13 @@ async function onReceive() {
     windowTransferNo
   })
   handleBusinessCode(code, () => {
+    showToast(code, msg)
+    if (code !== 0) return
     if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
       checkSecurityTips()
     } else {
       toProject()
     }
-    showToast(code, msg)
   })
   emit('close')
 }
@@ -112,6 +114,7 @@ function checkSecurityTips() {
 }
 
 async function toProject() {
+  //接收完窗口后跳转到项目列表
   const { data: { rows } } = await getProjectList()
   const projectItem = rows.find(item => item.projectName === 'Transfers')
   if (projectItem) {
@@ -130,16 +133,23 @@ async function toProject() {
     <div class="h-120">
       <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false">
         <template #profile="{ data }">
-          <ProfileInfo :workspace-name="workspaceName" :data="data" disabled />
+          <ProfileInfo :workspace-name="workspaceName" :data="data" readonly />
         </template>
         <template #note="{ data }">
           <RemarkIcon :value="data.windowRemark" disabled />
         </template>
         <template #transfer="{ data }">
           <div class="flex items-center">
-            <RxAvatar :name="data.workspacePicture" :size="36" color="orange" :font-size="16" />
-            <div class="">{{ data.workspaceName }}</div>
-            <div class="">ID: {{ data.workspaceNo }}</div>
+            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+              :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
+            <div class="ml-3 space-name">{{ data.workspaceName }}</div>
+            <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
+          </div>
+        </template>
+        <template #from="{ data }">
+          <div class="flex items-center gap-2">
+            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)" :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
+            <span class="space-name">{{ data.operatorUserName }}</span>
           </div>
         </template>
       </RyTable>
@@ -163,5 +173,33 @@ async function toProject() {
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
+}
+
+.space-icon {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  text-align: center;
+  font-family: 'JetBrains Mono';
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+}
+
+.space-name {
+  color: var(--Colors-text-text-primary, #111213);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.space-id {
+  color: var(--Colors-text-text-tertiary, #575D60);
+  font-family: "JetBrains Mono";
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
 }
 </style>

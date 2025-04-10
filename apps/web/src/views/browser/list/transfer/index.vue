@@ -22,7 +22,7 @@ const columns = [
     key: 'note',
     slot: 'note',
     style: {
-      width: '30%',
+      width: '10%',
     },
   },
   {
@@ -30,7 +30,7 @@ const columns = [
     key: 'transfer',
     slot: 'transfer',
     style: {
-      width: '30%',
+      width: '50%',
     },
   },
 ]
@@ -44,19 +44,48 @@ async function tableRequest(params: any) {
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="workspaceName" :data="data" disabled />
+      <ProfileInfo :workspace-name="workspaceName" :data="data" readonly />
     </template>
     <template #note="{ data }">
       <RemarkIcon :value="data.windowRemark" disabled />
     </template>
     <template #transfer="{ data }">
       <div class="flex items-center">
-        <RxAvatar :name="data.workspacePicture" :size="36" color="orange" :font-size="16" />
-        <div class="">{{ data.workspaceName }}</div>
-        <div class="">ID: {{ data.workspaceNo }}</div>
+        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+          :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
+        <div class="ml-3 space-name">{{ data.workspaceName }}</div>
+        <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
       </div>
     </template>
   </RyTable>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.space-icon {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  text-align: center;
+  font-family: 'JetBrains Mono';
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: -0.4px;
+  text-transform: uppercase;
+}
+
+.space-name {
+  color: var(--Colors-text-text-primary, #111213);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.space-id {
+  color: var(--Colors-text-text-tertiary, #575D60);
+  font-family: "JetBrains Mono";
+  font-size: 12px;
+  line-height: var(--Line-Height-text-xs, 16px);
+}
+</style>

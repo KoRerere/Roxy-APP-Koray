@@ -85,6 +85,8 @@ const updateInkBar = debounce(() => {
 watch(tabs, updateInkBar)
 
 onBeforeMount(() => {
+  // 初始化时如果是 suffixTab 避免获取所有窗口列表
+  findActiveTab(suffixTabs)
   getFilterList()
 })
 
@@ -98,11 +100,7 @@ async function getFilterList() {
       label: item.filter_name,
     })).concat(localTabs as any).sort((a, b) => a.sort - b.sort)
     tabs.value = [...pinTabs, ...list]
-    const routeActiveTab = tabs.value.find(tab => tab.id === route.query.activeTabId)
-
-    if (routeActiveTab) {
-      active.value = routeActiveTab.id
-    }
+    findActiveTab(tabs.value)
 
     setTimeout(() => {
       // TODO 等官方修复 https://github.com/primefaces/primevue/issues/6310
@@ -112,16 +110,19 @@ async function getFilterList() {
   onlyErrorToast(code, msg)
 }
 
+function findActiveTab(list: TabType[]) {
+  const routeActiveTab = list.find(tab => tab.id === route.query.activeTabId)
+  if (routeActiveTab) {
+    active.value = routeActiveTab.id
+  }
+}
+
 async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterList()
 
   if (!isEdit) {
     active.value = tabs.value[tabs.value.length - 1].id
   }
-}
-
-function switchTab(name: string) {
-  active.value = [...tabs.value, ...suffixTabs].find(tab => tab.name === name)?.id || tabs.value[tabs.value.length - 1].id
 }
 
 async function onEditFilter(item: any) {
@@ -256,8 +257,8 @@ async function hidePopover() {
     </div>
     <div class="flex flex-1 overflow-hidden">
       <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
-      <div v-show="!currentSuffixTab.visible" class="flex-1 overflow-hidden">
-        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" @switch-tab="switchTab" />
+      <div v-else class="flex-1 overflow-hidden">
+        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
       </div>
     </div>
   </div>

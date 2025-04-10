@@ -9,7 +9,7 @@ import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
 
-let hidePageLoadingTimeout: number
+let hidePageLoadingTimeout: any
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
@@ -21,7 +21,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
   const maxCreateWindowCount = computed(() => {
-    return defaultWorkspace.value.maxWindowCount - defaultWorkspace.value.useWindowCount
+    return defaultWorkspace.value?.maxWindowCount! - defaultWorkspace.value?.useWindowCount!
   })
 
   const debounceGetPayInfo = debounce(() => {
@@ -39,7 +39,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ name: 'project-list' })
     }
     // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role)) {
+    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role!)) {
       router.replace({ path: '/' })
     }
 

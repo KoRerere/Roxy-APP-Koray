@@ -48,7 +48,7 @@ function getOperation(data: Project) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: role.isOwner || role.isManager,
-      disabled: !!data.projectDefault,// 1 默认项目 0 非默认项目
+      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
       command: ({ item }: any) => {
         operationHandler(item, data)
       }
@@ -85,7 +85,7 @@ function getOperation(data: Project) {
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       power: role.isOwner || role.isManager,
-      disabled: !!data.projectDefault,// 1 默认项目 0 非默认项目
+      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
       command: ({ item }: any) => {
         operationHandler(item, data)
       }

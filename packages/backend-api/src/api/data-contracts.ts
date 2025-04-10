@@ -5144,6 +5144,8 @@ export interface UserGetProjectInfoByWorkspaceListData {
       pinStatus?: number;
       /** 1 默认项目 0 非默认项目 */
       projectDefault?: number;
+      /** 1 转移项目 0 非转移项目 */
+      isTransfer?: number;
       /**
        * 项目ID
        * 项目ID

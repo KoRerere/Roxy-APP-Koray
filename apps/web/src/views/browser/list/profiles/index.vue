@@ -33,7 +33,6 @@ import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import { useProjectStore } from '/@/stores/project'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -48,7 +47,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['updateFilterTabs', 'switchTab'])
+const emit = defineEmits(['updateFilterTabs'])
 
 const route = useRoute()
 const router = useRouter()
@@ -59,7 +58,6 @@ const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [dialogInstance] = RxUseDialog()
-const { getProjects: getProjectList } = useProjectStore()
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -400,7 +398,7 @@ async function onTransfer(datas: Data[]) {
         onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
           dialogInstance.hideModal()
           if (!isSelf) {
-            emit('switchTab', 'transfer')
+            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
           } else {
             showToast(0, $t('转移成功'))
             if (needRefresh) {
@@ -801,7 +799,7 @@ defineExpose({
       <div class="flex items-center gap-2">
         <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
           class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <span class="w-100 ellipsis-1" v-if="_cache.extend">{{ data.windowRemark || $t('添加备注') }}</span>
+        <span class="w-100 ellipsis-1" v-if="_cache.extend">{{ data.windowRemark }}</span>
       </div>
     </template>
     <template #project="{ data }">

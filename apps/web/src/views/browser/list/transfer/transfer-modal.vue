@@ -5,7 +5,6 @@ import { API } from '/@/api';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
 import { startCountdown } from '/@/utils';
-import { useWorkspaceStore } from '/@/stores/workspace'
 
 const { ids: windowIds } = defineProps<{
   ids: number[]
@@ -13,7 +12,6 @@ const { ids: windowIds } = defineProps<{
 
 const emit = defineEmits(['close', 'confirm'])
 const [_, onlyErrorToast] = useResponseToast()
-const { getWorkspaceList } = useWorkspaceStore()
 
 const selectedWorkspace = ref()
 const isDelete = ref(false)
@@ -65,7 +63,6 @@ async function onTransfer(isSelf: boolean) {
     transferParam: transferParam.value.value
   })
   if (code !== 0) return onlyErrorToast(code, msg)
-  if (isSelf) await getWorkspaceList()
   emit('confirm', { isSelf, needRefresh: isDelete.value })
 }
 </script>

@@ -17,15 +17,20 @@ const selectedWorkspace = defineModel<Data>('modelValue')
 
 const chooseRef = useTemplateRef('choose')
 
+const openLoading = ref(false)
 const search = ref()
-const loading = ref(false)
+const searchLoading = ref(false)
 
 const spaceList = ref()
 
 async function getTransferHistory(event: MouseEvent) {
+  if (openLoading.value) return
+
+  openLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
     windowIds: windowIds.join(',')
   })
+  openLoading.value = false
 
   const { self, history } = data.reduce((acc, item) => {
     if (item.type === SpaceType.Self) {
@@ -54,11 +59,12 @@ async function getTransferHistory(event: MouseEvent) {
 
 async function onSearch() {
   if (!search.value) return
+  searchLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
     windowIds: windowIds.join(','),
     transferWorkspaceNo: search.value
   })
-
+  searchLoading.value = false
   spaceList.value = [
     {
       key: SpaceType.Other,
@@ -89,17 +95,19 @@ function getAvatarStyle(workspacePicture: string) {
 <template>
   <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose" @click="getTransferHistory">
     <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
-    <SvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" />
-
+    <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />
+    <div v-else class="relative px-3">
+      <RxLoading :size="16" v-model="openLoading" />
+    </div>
     <RyPopover ref="choose">
       <div class="w-125 relative flex flex-col gap-3 pa-3">
-        <RxLoading v-model="loading" />
-        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="loading" @keyup.enter="onSearch">
+        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch">
           <template #icon>
-            <SvgIcon v-show="search && !loading" class="cursor-pointer" name="base/rx_ic_delete" @click="search = ''"></SvgIcon>
+            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="search = ''"></SvgIcon>
           </template>
         </RxInputText>
-        <div class="flex flex-col gap-6 max-h-100 overflow-y-auto">
+        <div class="relative flex flex-col gap-6 max-h-100 overflow-y-auto">
+          <RxLoading v-model="searchLoading" />
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
               <div>{{ space.title }}</div>
