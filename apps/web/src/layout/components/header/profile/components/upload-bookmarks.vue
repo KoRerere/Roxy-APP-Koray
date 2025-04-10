@@ -169,44 +169,41 @@ function parseHtml(html: string): BookText {
 }
 
 // 是否立即上传
-function parseBookmarks() {
+async function parseBookmarks() {
   bookmarkCount = 0;
-  return new Promise((resolve, reject) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.html'
-    input.onchange = (e: any) => {
-      const file = e.target.files[0]
-      upLoadFileName.value = file.name
-      // 把这个文件转成字符串
-      const reader = new FileReader()
-      reader.onload = (e: any) => {
-        const html = e.target.result
-        try {
-          const result = parseHtml(html)
-          if (!result.bookmarkBar.length && !result.other.length) {
-            return reject($t('上传失败，没有解析到书签'));
-          }
-          resolve(result)
-        } catch (error) {
-          console.log('error', error)
-          if (error instanceof MaximumLimitExceeded) {
-            reject(error.message);
-          } else {
-            reject($t('上传失败，请检查文件格式是否正确'));
-          }
-        }
-      }
-      reader.readAsText(file)
-    }
-    input.click()
+
+  const [fileHandle] = await showOpenFilePicker({
+    // 只限制html
+    types: [
+      {
+        description: 'HTML Files',
+        accept: {
+          'text/html': ['.html'],
+        },
+      },
+    ],
+    excludeAcceptAllOption: true, // 禁用所有文件类型选项
+    multiple: false
   })
+
+  const file = await fileHandle.getFile();
+  const html = await file.text();
+  const result = parseHtml(html)
+
+  if (!result.bookmarkBar.length && !result.other.length) {
+    throw new Error('没有解析到书签')
+  }
+
+  return result
 }
 
 function uploadError(error) {
-  if (typeof error === 'string') {
-    toast.add({ severity: 'error', summary: $t('上传失败'), detail: error })
-  } else {
+  console.error(error)
+  if (error instanceof MaximumLimitExceeded) {
+    return toast.add({ severity: 'error', summary: $t('上传失败'), detail: error.message })
+  }
+  // 当前用户打开文件管理器，没有选择文件就关闭了，这个时候会抛出 AbortError 错误，我们不需要对这个错误做任何提示
+  if (error.name !== 'AbortError') {
     toast.add({ severity: 'error', summary: $t('上传失败'), detail: $t('上传失败，请检查文件格式是否正确') })
   }
 }

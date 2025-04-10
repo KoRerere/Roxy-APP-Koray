@@ -149,7 +149,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           options: osOptions,
           filter: false,
           style: {
-            width: '60px',
+            width: '66px',
             flex: 'none',
           },
           // class: '!w-[60px] !flex-1',
