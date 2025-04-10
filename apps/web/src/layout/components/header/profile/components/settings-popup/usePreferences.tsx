@@ -28,11 +28,12 @@ export function usePreferencesPanel() {
 
 		const searchEngineResult = await API.platform.userGetSearchEnginesList()
 
-		let searchEngineOptions: { label: string, value: string }[] = []
+		let searchEngineOptions: { label: string, value: string, image: string }[] = []
 		if (searchEngineResult.code === 0 && searchEngineResult.data) {
 			searchEngineOptions = searchEngineResult.data.map((item: any) => ({
 				label: item.code,
-				value: item.code
+				value: item.code,
+				image: item.icon
 			}))
 		}
 
@@ -187,6 +188,7 @@ export function usePreferencesPanel() {
 								</div>
 							),
 							component: ({ item, ...props }: { item: Items; props: any }) => {
+								const oldValue = item.value;
 								return (
 									<div class="flex">
 										<IconField class="w-[60px]">
@@ -198,7 +200,11 @@ export function usePreferencesPanel() {
 												fluid
 												min={0}
 												max={100}
-												onValueChange={() => saveUserConfig(item)}
+												onValueChange={() => {
+													if (oldValue !== item.value) {
+														saveUserConfig(item)
+													}
+												}}
 											/>
 											<InputIcon>%</InputIcon>
 										</IconField>
@@ -261,20 +267,26 @@ export function usePreferencesPanel() {
 							label: $t("搜索引擎"),
 							name: "searchEngine",
 							text: $t("打开窗口时，浏览器使用的默认搜索引擎"),
-							value: searchEngineOptions.find((item) => item.value === data?.searchEngine)?.value ?? searchEngineOptions[0].value,
+							value: searchEngineOptions.find((item) => item.value === data?.searchEngine) ?? searchEngineOptions[0],
 							props: {
 								filter: false,
-								optionValue: "value",
-								optionLabel: "label",
+								// optionValue: "value",
+								// optionLabel: "label",
 								options: searchEngineOptions
 							},
+							formatValue: (item: Items) => {
+								return item.value.value;
+							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
+								const oldValue = item.value.vlaue;
 								return (
 									<RxInputSelect
 										{...item.props}
 										{...props}
 										name={item.name}
-										onChange={() => saveUserConfig(item)}
+										onChange={() => {
+											saveUserConfig(item)
+										}}
 									/>
 								);
 							},
@@ -352,13 +364,19 @@ export function usePreferencesPanel() {
 								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return <InputNumber
-									{...item.props}
-									{...props}
-									onValueChange={() => {
-										saveUserConfig(item)
-									}}
-								/>
+								const oldValue = item.value;
+								return <IconField>
+									<InputNumber
+										{...item.props}
+										{...props}
+										onValueChange={() => {
+											if (oldValue !== item.value) {
+												saveUserConfig(item)
+											}
+										}}
+									/>
+									<InputIcon class="tip-text">ms</InputIcon>
+								</IconField>
 							}
 						},
 						{

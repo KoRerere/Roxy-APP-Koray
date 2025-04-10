@@ -26,6 +26,7 @@ type BookText = {
   importMode: ImportMode
 }
 
+// 显示书签只能上传500个url
 class MaximumLimitExceeded extends Error {
   private static MAX_BOOKMARK_COUNT = 500;
   constructor() {
@@ -44,6 +45,7 @@ const modelValue = defineModel<BookText>({
 const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 const toast = useToast()
+const expandedKeys = ref({});
 
 watch(modelValue, (value) => {
   importMode.value = value.importMode || ImportMode.MERGE
@@ -55,29 +57,49 @@ const isEdit = computed(() => {
 })
 
 // primeVue的Tree组件字段
-const renderTree = (tree: any) => {
-  return tree.map((item: any) => {
+const renderTree = (tree: any, prefix = '') => {
+  return tree.map((item: any, index: number) => {
+    const key = prefix + item.name + index
     return {
       label: item.name,
-      key: item.type === BookmarkType.URL ? (item.url + item.name) : item.name,
-      children: item.children ? renderTree(item.children) : [],
+      key: key,
+      children: item.children ? renderTree(item.children, key) : [],
     }
   })
 }
 
 const tree = computed(() => {
   const data = modelValue.value || {};
-  const bookmarkBar = renderTree(data.bookmarkBar || []);
-  const other = renderTree(data.other || []);
+  const bookmarkBar = renderTree(data.bookmarkBar || [], 'bookmarkBar');
+  const other = renderTree(data.other || [], '__other__');
   if (other.length > 0) {
     bookmarkBar.push({
       label: $t('其他标签'),
-      key: window.btoa("other"),
+      key: "__other__",
       children: other
     })
   }
+  expandAll(bookmarkBar)
   return bookmarkBar
 })
+
+const expandAll = (tree) => {
+  const __expandedKeys = {};
+  for (let node of tree) {
+    expandNode(node, __expandedKeys);
+  }
+  expandedKeys.value = __expandedKeys
+};
+
+const expandNode = (node, __expandedKeys) => {
+  if (node.children && node.children.length) {
+    __expandedKeys[node.key] = true;
+
+    for (let child of node.children) {
+      expandNode(child, __expandedKeys);
+    }
+  }
+};
 
 const bookmarkOptions = computed(() => {
   return [
@@ -147,37 +169,75 @@ function parseHtml(html: string): BookText {
 }
 
 // 是否立即上传
-function uploadBookmarks(isEmitChange = true) {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.html'
-  input.onchange = (e: any) => {
-    const file = e.target.files[0]
-    upLoadFileName.value = file.name
-    // 把这个文件转成字符串，因为这里是一个html
-    const reader = new FileReader()
-    reader.onload = (e: any) => {
-      const html = e.target.result
-      try {
-        const result = parseHtml(html)
-        modelValue.value = result
-        isEmitChange && emit('change', result)
-      } catch (error) {
-        if (error instanceof MaximumLimitExceeded) {
-          toast.add({ severity: 'error', summary: $t('上传失败'), detail: error.message })
-        } else {
-          toast.add({ severity: 'error', summary: $t('上传失败'), detail: $t('上传失败，请检查文件格式是否正确') })
+function parseBookmarks() {
+  bookmarkCount = 0;
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.html'
+    input.onchange = (e: any) => {
+      const file = e.target.files[0]
+      upLoadFileName.value = file.name
+      // 把这个文件转成字符串
+      const reader = new FileReader()
+      reader.onload = (e: any) => {
+        const html = e.target.result
+        try {
+          const result = parseHtml(html)
+          if (!result.bookmarkBar.length && !result.other.length) {
+            return reject($t('上传失败，没有解析到书签'));
+          }
+          resolve(result)
+        } catch (error) {
+          console.log('error', error)
+          if (error instanceof MaximumLimitExceeded) {
+            reject(error.message);
+          } else {
+            reject($t('上传失败，请检查文件格式是否正确'));
+          }
         }
       }
+      reader.readAsText(file)
     }
-    reader.readAsText(file)
+    input.click()
+  })
+}
+
+function uploadError(error) {
+  if (typeof error === 'string') {
+    toast.add({ severity: 'error', summary: $t('上传失败'), detail: error })
+  } else {
+    toast.add({ severity: 'error', summary: $t('上传失败'), detail: $t('上传失败，请检查文件格式是否正确') })
   }
-  input.click()
+}
+
+async function uploadBookmarks() {
+  try {
+    const result = await parseBookmarks()
+    modelValue.value = result
+    emit('change', result)
+    visible.value = true;
+  } catch (error) {
+    console.log('error', error)
+    uploadError(error)
+  }
 }
 
 const visible = ref(false)
+
+// 点击编辑书签
 function editBookmarks() {
   visible.value = true
+}
+
+async function reUploadBookmarks() {
+  try {
+    const result = await parseBookmarks()
+    modelValue.value = result
+  } catch (error) {
+    console.log('error', error)
+    uploadError(error)
+  }
 }
 
 function saveBookmarks() {
@@ -212,13 +272,13 @@ function deleteBookmarks() {
       <div>
         <div class="flex items-center gap-3">
           <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export"
-            @click="uploadBookmarks(false)" />
+            @click="reUploadBookmarks" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('* 重新上传您的配置文件以更改书签。') }}</div>
       </div>
       <div class="tree-wrapper">
-        <Tree :value="tree" class="w-full">
+        <Tree v-model:expandedKeys="expandedKeys" :value="tree" class="w-full">
           <template #nodetoggleicon="{ node, expanded }">
             <SvgIcon v-if="expanded" name="base/rx_ic_folder_open" size="18" />
             <SvgIcon v-else name="base/rx_ic_folder_close" size="18" />

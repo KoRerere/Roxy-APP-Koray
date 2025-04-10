@@ -94,7 +94,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({
     ...item,
-    label,
+    // label,
     icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
     _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`].map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
   }))
@@ -105,7 +105,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   // TODO:(anbin)
   const searchEngineOptions = searchEngine.code == 0 ?
-    (searchEngine.data || []).map(item => ({ label: item.code, value: item.code })) : []
+    (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon })) : []
 
   const searchEngineValue = data.searchEngine ?? userConfig?.searchEngine
 
@@ -148,6 +148,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: osValue,
           options: osOptions,
           filter: false,
+          style: {
+            width: '60px',
+            flex: 'none',
+          },
+          // class: '!w-[60px] !flex-1',
           change: async (item: any) => {
             const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
@@ -168,7 +173,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           options: osValue?._versionOptions,
           filter: false,
           change: async (item: any) => {
-            const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')!
+            const coreVersionInput = findInputByName(windowInputs, 'coreVersion')
+            // windowInputs.find((item: any) => item.name === 'coreVersion')!
 
             if (item.value) {
               const { _osValue, value: version } = item.value
@@ -191,29 +197,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           },
           required: true,
         },
+        {
+          type: 'select',
+          name: 'coreVersion',
+          value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
+          options: coreVersionOptions,
+          icon: 'base/rx_ic_chrome',
+          iconColor: 'var(--p-primary-color, #12a3fc)',
+          required: true,
+          filter: false,
+          change: async (item: any) => {
+            if (item.value) {
+              await setUaWebgl(inputsGroup)
+            }
+            if (data.dirId) {
+              item.help = data.coreVersion !== item.value.value
+                ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
+                : ''
+            }
+          },
+        }
       ],
       slot: 'system', // items 特殊实现
-    },
-    {
-      type: 'select',
-      label: $t('内核'),
-      name: 'coreVersion',
-      value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
-      options: coreVersionOptions,
-      icon: 'base/rx_ic_chrome',
-      iconColor: 'var(--p-primary-color, #12a3fc)',
-      required: true,
-      filter: false,
-      change: async (item: any) => {
-        if (item.value) {
-          await setUaWebgl(inputsGroup)
-        }
-        if (data.dirId) {
-          item.help = data.coreVersion !== item.value.value
-            ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
-            : ''
-        }
-      },
     },
     {
       type: 'multiSelect',
@@ -250,6 +255,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: 'User Agent',
       },
+    },
+    {
+      label: $t('搜索引擎'),
+      name: 'searchEngine',
+      type: 'select',
+      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
+      options: searchEngineOptions,
+      filter: false,
+      required: true,
+      slot: 'searchEngine'
     },
     {
       separator: true,
@@ -325,16 +340,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           setInputFieldByInputKey(windowInputs, 'cookie', 'invalid', true)
         }
       },
-    },
-
-    // TODO:(anbin)
-    {
-      label: $t('搜索引擎'),
-      name: 'searchEngine',
-      type: 'select',
-      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
-      options: searchEngineOptions,
-      filter: false,
     },
   ])
 

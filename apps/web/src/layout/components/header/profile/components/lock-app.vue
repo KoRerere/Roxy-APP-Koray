@@ -93,7 +93,7 @@ const handleBlur = () => {
 }
 
 const handleSubmit = () => {
-  if (!invalid.value) {
+  if (!invalid.value && password.value) {
     emit('change', { password: password.value })
     visible.value = false
     password.value = ''

@@ -84,7 +84,8 @@ function onCopy(dirId: string) {
         <template #expandicon>
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
@@ -100,11 +101,19 @@ function onCopy(dirId: string) {
               <template #system="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <InputGroup>
-                    <template v-for="item in input.items" :key="item.name">
-                      <RxInputSelect v-bind="item" v-model="item.value" @change="item.change?.(item, input.items)" />
-                    </template>
-                  </InputGroup>
+                  <div class="flex-1 flex gap-2">
+                    <InputGroup>
+                      <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value"
+                        @change="input.items[0].change?.(input.items[0], input.items)" />
+                      <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value"
+                        @change="input.items[1].change?.(input.items[1], input.items)" />
+                      <!-- <template v-for="item in input.items" :key="item.name">
+                        <RxInputSelect v-bind="item" v-model="item.value" @change="item.change?.(item, input.items)" />
+                      </template> -->
+                    </InputGroup>
+                    <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value"
+                      @change="input.items[2].change?.(input.items[2], input.items)" />
+                  </div>
                 </div>
               </template>
               <template #proxy="{ input }">
@@ -158,7 +167,19 @@ function onCopy(dirId: string) {
                   </div>
                 </div>
               </template>
-              <template #delayInterval="{ input }">
+              <template #searchEngine="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <div class="flex-1 flex gap-2">
+                    <div class="flex-1">
+                      <RxInputSelect v-bind="input" v-model="input.value"
+                        @change="input.change?.(input, input.items)" />
+                    </div>
+                    <div class="flex-1"></div>
+                  </div>
+                </div>
+              </template>
+              <!-- <template #delayInterval="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
                   <div class="flex-1">
@@ -175,7 +196,7 @@ function onCopy(dirId: string) {
                     </div>
                   </div>
                 </div>
-              </template>
+              </template> -->
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
