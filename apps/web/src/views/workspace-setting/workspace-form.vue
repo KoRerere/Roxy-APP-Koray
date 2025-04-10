@@ -4,14 +4,16 @@ import { z } from 'zod'
 import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
 import { Role } from '/@/enums'
 import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { emitter } from '/@/utils/eventBus'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { copyText } from '/@/utils/'
 
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
 const workspaceStore = useWorkspaceStore()
+const [showToast] = useResponseToast()
 
 const exampleName = computed(() => {
   const _name = workspaceInfo.value.workspaceName?.slice(0, 3).toLocaleUpperCase()
@@ -25,9 +27,9 @@ const disabled = computed(() => !isOwner.value && Boolean(workspaceInfo.value.id
 /** 剩余可创建窗口数量 */
 const remainWorkspaceCount = computed(() => {
   if (workspaceInfo.value?.id) {
-    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount - workspaceInfo.value.maxWindowCount
+    return workspaceStore.maxCreateWindowCount + workspaceStore.currentWorkspace?.maxWindowCount! - workspaceInfo.value.maxWindowCount!
   }
-  return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount
+  return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount!
 })
 
 function onInput() {
@@ -58,6 +60,11 @@ onBeforeUnmount(() => {
   }
 })
 
+function onCopy(text: any) {
+  copyText(text)
+  showToast(0, $t('复制成功'))
+}
+
 defineExpose({
   workspaceInfo,
   errorMessage,
@@ -68,6 +75,15 @@ defineExpose({
 <template>
   <div class="content">
     <div class="row">
+      <div class="flex items-center gap-3">
+        <div class="title">{{ $t('空间ID') }}:</div>
+        <div class="flex items-center !mt-0 gap-2 description">
+          <span>{{ workspaceInfo.workspaceNo }}</span>
+          <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" @click="onCopy(workspaceInfo.workspaceNo!)"></SvgIcon>
+        </div>
+      </div>
+    </div>
+    <div class="row">
       <div>
         <div class="title">
           {{ $t('空间图标') }}
@@ -77,8 +93,7 @@ defineExpose({
         </div>
       </div>
       <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
-          :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
         </div>
@@ -96,8 +111,7 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage"
-            :maxlength="20" class="w-full" @input="onInput" />
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage" :maxlength="20" class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/20
           </InputIcon>

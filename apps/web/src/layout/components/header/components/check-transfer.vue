@@ -7,6 +7,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import { useProjectStore } from '/@/stores/project'
 
 const { windowTransferNo } = defineProps<{
   windowTransferNo: string
@@ -14,8 +15,10 @@ const { windowTransferNo } = defineProps<{
 
 const emit = defineEmits(['close'])
 
+const router = useRouter()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
+const { getProjects: getProjectList } = useProjectStore()
 const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
@@ -73,6 +76,8 @@ async function onReceive() {
   handleBusinessCode(code, () => {
     if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
       checkSecurityTips()
+    } else {
+      toProject()
     }
     showToast(code, msg)
   })
@@ -97,11 +102,23 @@ function checkSecurityTips() {
     },
     slots: {
       container: () => h(SecurityTips, {
-        onClose: () => dialogInstance.hideModal()
+        onClose: () => {
+          dialogInstance.hideModal()
+          toProject()
+        }
       })
     }
   })
 }
+
+async function toProject() {
+  const { data: { rows } } = await getProjectList()
+  const projectItem = rows.find(item => item.projectName === 'Transfers')
+  if (projectItem) {
+    router.push({ name: 'project-item', params: { id: projectItem.project_id }, query: { title: projectItem.projectName } })
+  }
+}
+
 </script>
 
 <template>

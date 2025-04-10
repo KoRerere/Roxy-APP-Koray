@@ -857,7 +857,7 @@ export class WindowApi<SecurityDataType = unknown> {
    *
    * @tags Window
    * @name UserClearTransferWorkspaceCreate
-   * @summary 清除转移空间
+   * @summary 清除转移空间历史记录
    * @request POST:/user_clear_transfer_workspace
    * @response `200` `UserClearTransferWorkspaceCreateData`
    */

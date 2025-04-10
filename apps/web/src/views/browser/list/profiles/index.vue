@@ -33,6 +33,7 @@ import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import { useProjectStore } from '/@/stores/project'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -58,7 +59,7 @@ const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [dialogInstance] = RxUseDialog()
-
+const { getProjects: getProjectList } = useProjectStore()
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -396,9 +397,13 @@ async function onTransfer(datas: Data[]) {
           dialogInstance.hideModal()
           reject()
         },
-        onConfirm: () => {
+        onConfirm: async (isSelf: boolean) => {
           dialogInstance.hideModal()
-          emit('switchTab', 'transfer')
+          if (!isSelf) {
+            emit('switchTab', 'transfer')
+          } else {
+            showToast(0, $t('转移成功'))
+          }
           resolve()
         },
       })

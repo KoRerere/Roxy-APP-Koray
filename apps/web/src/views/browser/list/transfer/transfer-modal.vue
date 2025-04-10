@@ -42,7 +42,7 @@ async function sendCode() {
   if (!selectedWorkspace.value) return
 
   if (selectedWorkspace.value.isWorkspace) {
-    onTransfer()
+    onTransfer(true)
     return
   }
 
@@ -54,7 +54,7 @@ async function sendCode() {
   })
 }
 
-async function onTransfer() {
+async function onTransfer(isSelf: boolean) {
   const { code, msg } = await API.window.userTransferWindowCreate({
     windowIds,
     targetWorkspaceId: selectedWorkspace.value.workspaceId,
@@ -63,7 +63,7 @@ async function onTransfer() {
     transferParam: transferParam.value.value
   })
   if (code !== 0) return onlyErrorToast(code, msg)
-  emit('confirm')
+  emit('confirm', isSelf)
 }
 </script>
 
@@ -109,7 +109,7 @@ async function onTransfer() {
         <InputOtp class="inputotp" v-model="emailCode" integer-only :length="6" size="large" />
       </div>
       <div class="flex flex-col gap-3">
-        <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer"></RxButton>
+        <RxButton :label="$t('确认')" size="lg" :disabled="emailCode?.length !== 6" @click="onTransfer(false)"></RxButton>
         <RxButton outlined severity="secondary" size="lg" :disabled="countdown?.done === false" @click="sendCode">
           <span>{{ $t('重新发送') }}</span>
           <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>

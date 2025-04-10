@@ -3874,11 +3874,17 @@ export interface UserTransferWindowVerifyCodeListData {
 
 export interface UserTransferWindowCreatePayload {
   windowIds: number[];
-  /** 目标空间ID */
+  /**
+   * 目标空间ID
+   * 目标空间ID
+   */
   targetWorkspaceId: number;
-  /** 是否删除,1：删除, 0: 不删除 */
-  isDelete: number;
-  /** 邮箱验证码（如果当前是自己空间转自己空间可以不用传入） */
+  /** 是否删除,true：删除, false: 不删除 */
+  isDelete: boolean;
+  /**
+   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
+   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
+   */
   emailCode: string;
   transferParam: string[];
 }
@@ -3901,6 +3907,10 @@ export interface UserGetTransferWorkspaceListListParams {
 export interface UserGetTransferWorkspaceListListData {
   code: number;
   data: {
+    /** 空间ID */
+    workspaceId?: number;
+    /** 是否为自己空间（判断发邮箱依据），true：自己的，false：别人的 */
+    isWorkspace?: boolean;
     /** 窗口任务编号,只有类型为2才有值 */
     windowTransferNo?: string;
     /** 空间编号 */
@@ -3991,6 +4001,8 @@ export interface UserGetTransferReceiveWindowListListData {
 export interface UserAgreeTransferWindowCreatePayload {
   /** 窗口任务编号 */
   windowTransferNo: string;
+  /** 总条数 */
+  total: number;
 }
 
 export interface UserAgreeTransferWindowCreateData {
@@ -4953,32 +4965,73 @@ export interface UserGetWorkspaceListListData {
   code: number;
   data: {
     rows: {
-      /** ID */
+      /**
+       * ID
+       * ID
+       */
       id?: number;
-      /** 创建人ID */
+      /**
+       * 创建人ID
+       * 创建人ID
+       */
       userId?: number;
-      /** 工作空间名称 */
+      /**
+       * 工作空间名称
+       * 工作空间名称
+       */
       workspaceName?: string;
-      /** 总窗口数量 */
+      /**
+       * 总窗口数量
+       * 总窗口数量
+       */
       totalWindowCount?: number;
-      /** 总成员数量 */
+      /**
+       * 总成员数量
+       * 总成员数量
+       */
       totalMemberCount?: number;
-      /** 工作空间图片 */
+      /**
+       * 工作空间图片
+       * 工作空间图片
+       */
       workspacePicture?: string;
-      /** 是否默认工作空间，1：是 0：不是，默认不是 */
+      /**
+       * 是否默认工作空间，1：是 0：不是，默认不是
+       * 是否默认工作空间，1：是 0：不是，默认不是
+       */
       workspaceDefault?: number;
-      /** 工作空间状态，1：启用 0：停用 */
+      /**
+       * 工作空间状态，1：启用 0：停用
+       * 工作空间状态，1：启用 0：停用
+       */
       workspaceStatus?: number;
-      /** 创建时间 */
+      /**
+       * 创建时间
+       * 创建时间
+       */
       createTime?: string;
-      /** 修改时间 */
+      /**
+       * 修改时间
+       * 修改时间
+       */
       updateTime?: string;
-      /** 权限 */
+      /**
+       * 权限
+       * 权限
+       */
       role?: number;
-      /** 总窗口数量 */
+      /**
+       * 总窗口数量
+       * 总窗口数量
+       */
       maxWindowCount?: number;
-      /** 窗口使用数量 */
+      /**
+       * 窗口使用数量
+       * 窗口使用数量
+       */
       useWindowCount?: number;
+      /** 窗口编号 */
+      workspaceNo?: number;
     }[];
   };
   msg: string;

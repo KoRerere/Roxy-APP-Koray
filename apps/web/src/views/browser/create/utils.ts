@@ -27,6 +27,7 @@ export function getDefaultTemplate() {
     forbidMedia: true,
     openWidth: 1000,
     openHeight: 1000,
+    windowRatioPosition: '0,0,tl',
     resolutionType: false,
     resolutionX: '1280',
     resolutionY: '720',

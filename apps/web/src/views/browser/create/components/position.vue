@@ -32,9 +32,9 @@ const angleMap = {
 const points = generateGridPoints(3, 3, CONTAINER_W, CONTAINER_H).map(item => ({ ...item, angle: angleMap[item.pid as keyof typeof angleMap] || 'tl' }))
 const pointsStr = [$t('左上'), $t('中上'), $t('右上'), $t('左中'), $t('中间'), $t('右中'), $t('左下'), $t('中下'), $t('右下')]
 
-onBeforeMount(() => {
+watch(ratioPositon, () => {
   initPoints()
-})
+}, { immediate: true })
 
 function initPoints() {
   if (ratioPositon.value) {
