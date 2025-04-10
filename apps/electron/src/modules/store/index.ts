@@ -58,6 +58,13 @@ export interface StoreType {
   openWorkbench?: 0 | 1
   /** 搜索引擎列表 */
   searchEngines: UserGetSearchEnginesListData['data']
+  /** 订阅等级 */
+  subLevel?: string
+  simulation: {
+    delay: 100,
+    enable: false,
+    shortcutKey: "Shift E"
+  }
 }
 
 /** 全局书签 */
@@ -88,6 +95,12 @@ const defaultValues: StoreType = {
   isExternalWeb: false,
   openWorkbench: 1,
   searchEngines: [],
+  subLevel: '',
+  simulation: {
+    delay: 100,
+    enable: false,
+    shortcutKey: "Shift E"
+  }
 }
 
 const _store: StoreType = {
@@ -223,4 +236,9 @@ export async function updateSearchEngines() {
   if (code === 0) {
     store.searchEngines = data
   }
+}
+
+/** 是否可以使用群控 */
+export function canUseSyncControl() {
+  return !['Expired', 'Free'].includes(store.subLevel!)
 }

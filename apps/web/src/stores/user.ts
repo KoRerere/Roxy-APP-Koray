@@ -170,9 +170,17 @@ export const useUserStore = defineStore(
             emitter.emit('showOldUserGiftDialog')
           }
         }
+
+        electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
+
         // 免费用户或者过期用户，关闭窗口同步器
+        console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
         if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
+          console.log('免费用户或者过期用户，关闭所有同步相关的弹窗')
           electronAPI.send('syncControl:close');
+          setTimeout(() => {
+            electronAPI.send('syncControl:stop', false);
+          }, 500)
         }
       }
     }

@@ -12,6 +12,7 @@ import { DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-defaul
 import { isWindows } from '/@/utils/common';
 import { useToast } from 'primevue/usetoast'
 import type { ToastMessageOptions } from 'primevue/toast'
+import { $t } from '/@/locales'
 
 const emit = defineEmits(['change'])
 const invalid = ref(false)
@@ -66,20 +67,23 @@ function onReset() {
 }
 
 function handleBlur() {
-  const key = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
-  electronAPI.send('util:checkShortcutKeysIsOccupied', key)
-    .then((value: boolean) => {
-      if (value) {
-        emit('change', modelValue.value)
-      } else {
-        toast.add({
-          severity: 'error',
-          summary: $t('操作失败'),
-          detail: $t('快捷键已被占用'),
-          ...Object.assign(({ life: 3000 } as ToastMessageOptions))
-        })
-      }
-    })
+  const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+  console.log('keyboard', keyboard)
+  emit('change', modelValue.value)
+  // electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
+  //   .then((value: boolean) => {
+  //     console.log('value', value);
+  //     if (value) {
+  //       emit('change', modelValue.value)
+  //     } else {
+  //       toast.add({
+  //         severity: 'error',
+  //         summary: $t('操作失败'),
+  //         detail: $t('快捷键已被占用'),
+  //         ...Object.assign(({ life: 3000 } as ToastMessageOptions))
+  //       })
+  //     }
+  //   })
 
 }
 </script>

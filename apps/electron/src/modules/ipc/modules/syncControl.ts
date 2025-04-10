@@ -62,8 +62,8 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 停止同步窗口 */
-  ipcMain.on('syncControl:stop', (event,) => {
-    SyncControlUtil.stop()
+  ipcMain.on('syncControl:stop', (event, payload) => {
+    SyncControlUtil.stop(payload)
   })
 
   /** 宫格布局、堆叠布局、自定义布局 */
