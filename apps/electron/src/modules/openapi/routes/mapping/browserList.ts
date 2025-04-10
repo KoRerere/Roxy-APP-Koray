@@ -13,6 +13,7 @@ export const browserListMapping = {
       domain: '3',
     },
   ], // cookie, List类型
+  searchEngine: 'Google',
   windowPlatformList: [{
     platformUrl: 'https://www.tiktok.com/', // 业务平台URL，str类型
     platformUserName: 'Roxytest', // 平台账号，str类型
@@ -118,63 +119,63 @@ export const browserListMapping = {
 }
 
 export const browserListMappingV2 = {
-  "dirId": "dc1e73d4dd954a",                              // 浏览器窗口id, str类型
-  "windowSortNum": 99,                                    // 窗口序号, int类型
-  "windowName": "Roxytest",                               // 窗口名称, str类型
-  "coreVersion": "117",                                   // 内核版本，枚举值：117，109, str类型
-  "os": "Windows",                                        // 操作系统, 枚举值：Windows、macOS、Linux, str类型
-  "osVersion": "11",                                      // 操作系统版本, 枚举值：Windows的枚举值：11、10、8、7; macOS和Linux的枚举值：ALL，str类型
-  "userAgent": "Mozilla/5.0 (Windows NT 10.0)",           // User Agent, str类型
-  "cookie": [
+  dirId: 'dc1e73d4dd954a', // 浏览器窗口id, str类型
+  windowSortNum: 99, // 窗口序号, int类型
+  windowName: 'Roxytest', // 窗口名称, str类型
+  coreVersion: '117', // 内核版本，枚举值：117，109, str类型
+  os: 'Windows', // 操作系统, 枚举值：Windows、macOS、Linux, str类型
+  osVersion: '11', // 操作系统版本, 枚举值：Windows的枚举值：11、10、8、7; macOS和Linux的枚举值：ALL，str类型
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0)', // User Agent, str类型
+  cookie: [
     {
-      "name": "1",
-      "value": "2",
-      "domain": "3"
-    }
-  ],                                                      // cookie, List类型
-  "windowPlatformList": [{
-    "platformUrl": "https://www.tiktok.com/",           // 业务平台URL，str类型
-    "platformUserName": "Roxytest",                     // 平台账号，str类型
-    "platformPassword": "Roxytest",                     // 平台密码，str类型
-    "platformEfa": "2F3CD67B6D",                        // efa，str类型
-    "platformRemarks": "Roxytest"                       // 平台备注，str类型
+      name: '1',
+      value: '2',
+      domain: '3',
+    },
+  ], // cookie, List类型
+  windowPlatformList: [{
+    platformUrl: 'https://www.tiktok.com/', // 业务平台URL，str类型
+    platformUserName: 'Roxytest', // 平台账号，str类型
+    platformPassword: 'Roxytest', // 平台密码，str类型
+    platformEfa: '2F3CD67B6D', // efa，str类型
+    platformRemarks: 'Roxytest', // 平台备注，str类型
   }],
-  "defaultOpenUrl": ["https://www.facebook.com"],         // 存储浏览器标签页，List类型
-  "windowRemark": "Roxytest",                             // 窗口备注, str类型
-  "projectId": 4,                                            // 项目ID, int类型
-  "projectName": "Roxytest",                                // 项目名称, str类型
-  "openStatus": false,                                    // 团队内是否已打开, 枚举值：true: 已打开，false: 未打开，布尔类型
-  "statusInfo": [
+  defaultOpenUrl: ['https://www.facebook.com'], // 存储浏览器标签页，List类型
+  windowRemark: 'Roxytest', // 窗口备注, str类型
+  projectId: 4, // 项目ID, int类型
+  projectName: 'Roxytest', // 项目名称, str类型
+  openStatus: false, // 团队内是否已打开, 枚举值：true: 已打开，false: 未打开，布尔类型
+  statusInfo: [
     {
-      "openTime": "2024-01-09 12:12:12",              // 打开时间，str类型
-      "openUserName": "test"                          // 打开人用户名，str类型
-    }
-  ],                                                      // 窗口打开时的详细信息，List类型
-  "createTime": "2023-12-04 21:55:58",                    // 窗口创建时间, str类型
-  "updateTime": "2023-12-04 21:56:01",                    // 窗口修改时间, str类型
-  "userName": "roxytest",                                 // 窗口归属人用户名,即用户账号, str类型
-  "openTime": "2024-12-05 10:57:43",                        // 窗口最后打开时间, str类型
-  "closeTime": "2024-12-05 10:40:54",                        // 窗口最后关闭时间, str类型
-  "proxyInfo": {
-    "proxyMethod": "custom",                            // 代理方式，枚举值：手动填写：custom，选择代理资源：choose，API接入：api，str类型
-    "proxyCategory": "noproxy",                         // 代理类型，枚举值：noproxy, HTTP, HTTPS, SOCKS5, SSH, str类型
-    "ipType": "IPV4",                                   // 网络协议, 枚举值：IPV4, IPV6，str类型
-    "protocol": "SOCKS5",                               // 代理协议，枚举值：HTTP, HTTPS, SOCKS5，str类型
-    "host": "122.11.11.11",                             // 代理主机，str类型
-    "port": "37746",                                    // 代理端口，str类型
-    "proxyUserName": "roxytest",                        // 代理账号，str类型
-    "proxyPassword": "roxytest",                        // 代理密码，str类型
-    "refreshUrl": "http://refresh-hk.roxybrowser.com",  // 刷新URL，str类型
-    "lastIp": "119.1.2.3",                              // 出口IP，str类型
-    "lastCountry": "CN",                                // 出口国家，str类型
-    "checkChannel": "http://iprust.io/ip.json"            // IP查询渠道，str类型
+      openTime: '2024-01-09 12:12:12', // 打开时间，str类型
+      openUserName: 'test', // 打开人用户名，str类型
+    },
+  ], // 窗口打开时的详细信息，List类型
+  createTime: '2023-12-04 21:55:58', // 窗口创建时间, str类型
+  updateTime: '2023-12-04 21:56:01', // 窗口修改时间, str类型
+  userName: 'roxytest', // 窗口归属人用户名,即用户账号, str类型
+  openTime: '2024-12-05 10:57:43', // 窗口最后打开时间, str类型
+  closeTime: '2024-12-05 10:40:54', // 窗口最后关闭时间, str类型
+  proxyInfo: {
+    proxyMethod: 'custom', // 代理方式，枚举值：手动填写：custom，选择代理资源：choose，API接入：api，str类型
+    proxyCategory: 'noproxy', // 代理类型，枚举值：noproxy, HTTP, HTTPS, SOCKS5, SSH, str类型
+    ipType: 'IPV4', // 网络协议, 枚举值：IPV4, IPV6，str类型
+    protocol: 'SOCKS5', // 代理协议，枚举值：HTTP, HTTPS, SOCKS5，str类型
+    host: '122.11.11.11', // 代理主机，str类型
+    port: '37746', // 代理端口，str类型
+    proxyUserName: 'roxytest', // 代理账号，str类型
+    proxyPassword: 'roxytest', // 代理密码，str类型
+    refreshUrl: 'http://refresh-hk.roxybrowser.com', // 刷新URL，str类型
+    lastIp: '119.1.2.3', // 出口IP，str类型
+    lastCountry: 'CN', // 出口国家，str类型
+    checkChannel: 'http://iprust.io/ip.json', // IP查询渠道，str类型
   },
-  "isOften": false,                                        // 是否收藏，true：是，false：否，布尔类型
-  "labelInfo": [
+  isOften: false, // 是否收藏，true：是，false：否，布尔类型
+  labelInfo: [
     {
-      "labelId": 859,                                    // 标签ID，int类型
-      "labelName": "Roxytest",                        // 标签名称，str类型
-      "labelColor": "#FC9D12"                            // 标签颜色，str类型
-    }
-  ]                                                        // 标签详细信息，List类型
+      labelId: 859, // 标签ID，int类型
+      labelName: 'Roxytest', // 标签名称，str类型
+      labelColor: '#FC9D12', // 标签颜色，str类型
+    },
+  ], // 标签详细信息，List类型
 }

@@ -463,6 +463,14 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       if (!winInfo.forbidImage) {
         return Number(winInfo.forbiddenPictureSize)
       }
-    }
+    },
+    get simulation() {
+      const { simulation } = store
+      const prefixKey = process.platform === 'win32' ? 'Ctrl' : 'Command'
+      return {
+        ...simulation,
+        shortcutKey: `${prefixKey} ${simulation.shortcutKey}`,
+      }
+    },
   }
 }

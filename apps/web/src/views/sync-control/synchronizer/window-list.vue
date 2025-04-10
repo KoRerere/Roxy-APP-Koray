@@ -85,7 +85,7 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
   childList: true,
   subtree: true,
 })
- 
+
 
 const disabled = computed(() => {
   if (!selectedRows.value?.length) return true
@@ -255,7 +255,8 @@ electronAPI.on('syncControl:start', startSync)
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly />
+      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data"
+        :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
     <template #status="{ data }">
       <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">
@@ -284,6 +285,23 @@ electronAPI.on('syncControl:start', startSync)
 .no-data {
   .p-datatable-thead {
     display: none;
+  }
+}
+
+.p-datatable-selectable-row:not(:has(.can-use-sync-control)) {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.5;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: not-allowed;
+    z-index: 10;
   }
 }
 
