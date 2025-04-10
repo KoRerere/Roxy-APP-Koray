@@ -89,7 +89,7 @@ function getAvatarStyle(workspacePicture: string) {
 <template>
   <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose" @click="getTransferHistory">
     <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
-    <SvgIcon name="base/rx_ic_chevron_down" />
+    <SvgIcon class="pointer-events-none" name="base/rx_ic_chevron_down" />
 
     <RyPopover ref="choose">
       <div class="w-125 relative flex flex-col gap-3 pa-3">

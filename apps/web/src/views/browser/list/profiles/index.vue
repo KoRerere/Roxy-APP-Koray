@@ -397,12 +397,15 @@ async function onTransfer(datas: Data[]) {
           dialogInstance.hideModal()
           reject()
         },
-        onConfirm: async (isSelf: boolean) => {
+        onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
           dialogInstance.hideModal()
           if (!isSelf) {
             emit('switchTab', 'transfer')
           } else {
             showToast(0, $t('转移成功'))
+            if (needRefresh) {
+              onRefreshTable()
+            }
           }
           resolve()
         },
