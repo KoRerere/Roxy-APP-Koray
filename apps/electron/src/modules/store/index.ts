@@ -166,11 +166,7 @@ export function setUserConfig(data: Record<string, any>) {
     }
   })
   if (data?.bookText) {
-    try {
-      setBookText(JSON.parse(data.bookText))
-    }
-    catch (error) {
-    }
+    setBookText(data.bookText)
   }
 }
 

@@ -1,4 +1,5 @@
 import './catchException'
+import './polyfill'
 import './locales/'
 import { setupModules } from '/@/modules/'
 
