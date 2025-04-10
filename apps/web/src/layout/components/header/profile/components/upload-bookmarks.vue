@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
 import { $t } from '/@/locales';
-import { safeParseJSON } from '/@/utils/basic';
+import { useToast } from 'primevue/usetoast';
 
 enum BookmarkType {
   FOLDER = 'folder',
@@ -26,38 +26,49 @@ type BookText = {
   importMode: ImportMode
 }
 
+class MaximumLimitExceeded extends Error {
+  private static MAX_BOOKMARK_COUNT = 500;
+  constructor() {
+    super($t('书签数量超过{count}，请检查文件格式是否正确', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
+  }
+}
+
 const emit = defineEmits(['change'])
-const modelValue = defineModel<string>('modelValue')
+const modelValue = defineModel<BookText>({
+  default: {
+    bookmarkBar: [],
+    other: [],
+    importMode: ImportMode.MERGE
+  }
+})
 const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
+const toast = useToast()
 
 watch(modelValue, (value) => {
-  const data = safeParseJSON(value, {});
-  importMode.value = data.importMode || ImportMode.MERGE
+  importMode.value = value.importMode || ImportMode.MERGE
 }, { immediate: true })
 
 const isEdit = computed(() => {
-  const data = safeParseJSON(modelValue.value, {});
+  const data = modelValue.value
   return data.bookmarkBar?.length > 0 || data.other?.length > 0
 })
 
-// 适配primeVue的Tree组件字段
-const convertField = (tree: any) => {
-  tree.forEach((item: any) => {
-    item.label = item.name;
-    item.key = item.type === BookmarkType.URL ? (item.url + item.name) : item.name;
-    if (item.children) {
-      convertField(item.children)
+// primeVue的Tree组件字段
+const renderTree = (tree: any) => {
+  return tree.map((item: any) => {
+    return {
+      label: item.name,
+      key: item.type === BookmarkType.URL ? (item.url + item.name) : item.name,
+      children: item.children ? renderTree(item.children) : [],
     }
   })
 }
 
 const tree = computed(() => {
-  const data = safeParseJSON(modelValue.value, {});
-  const bookmarkBar = data.bookmarkBar || [];
-  const other = data.other || [];
-  convertField(bookmarkBar)
-  convertField(other)
+  const data = modelValue.value || {};
+  const bookmarkBar = renderTree(data.bookmarkBar || []);
+  const other = renderTree(data.other || []);
   if (other.length > 0) {
     bookmarkBar.push({
       label: $t('其他标签'),
@@ -81,6 +92,7 @@ const bookmarkOptions = computed(() => {
   ]
 })
 
+let bookmarkCount = 0;
 function parserBookmarksDt(nodes) {
   return Array.from(nodes).map((item) => {
     if (item.localName === 'dt') {
@@ -91,6 +103,10 @@ function parserBookmarksDt(nodes) {
       }
       const a = children.find(n => n.localName === 'a')
       if (a) {
+        if (bookmarkCount > MaximumLimitExceeded.MAX_BOOKMARK_COUNT) {
+          throw new MaximumLimitExceeded()
+        }
+        bookmarkCount++;
         return {
           name: a.innerText,
           type: BookmarkType.URL,
@@ -106,10 +122,11 @@ function parserBookmarksDl(nodes) {
   const title = children.find(n => n.localName === 'h3' || n.localName === 'h1')
   const dl = children.find(n => n.localName === 'dl')
   if (title) {
-    const item: { children: any[], name?: string, type?: string } = { children: [] }
-    item.name = title.innerText
-    item.type = BookmarkType.FOLDER
-    item.children = parserBookmarksDt(dl.children)
+    const item: BookmarkItem = {
+      name: title.innerText,
+      type: BookmarkType.FOLDER,
+      children: parserBookmarksDt(dl.children)
+    }
     return item
   }
 }
@@ -143,11 +160,14 @@ function uploadBookmarks(isEmitChange = true) {
       const html = e.target.result
       try {
         const result = parseHtml(html)
-        modelValue.value = JSON.stringify(result)
+        modelValue.value = result
         isEmitChange && emit('change', result)
       } catch (error) {
-        console.error(error)
-        message.error($t('上传失败，请检查文件格式是否正确'))
+        if (error instanceof MaximumLimitExceeded) {
+          toast.add({ severity: 'error', summary: $t('上传失败'), detail: error.message })
+        } else {
+          toast.add({ severity: 'error', summary: $t('上传失败'), detail: $t('上传失败，请检查文件格式是否正确') })
+        }
       }
     }
     reader.readAsText(file)
@@ -161,18 +181,14 @@ function editBookmarks() {
 }
 
 function saveBookmarks() {
-  const result = safeParseJSON(modelValue.value, {});
-  result.importMode = importMode.value
-  modelValue.value = JSON.stringify(result);
+  modelValue.value.importMode = importMode.value
   emit('change', modelValue.value)
   visible.value = false
 }
 
 function deleteBookmarks() {
-  const data = safeParseJSON(modelValue.value, {});
-  data.bookmarkBar = []
-  data.other = []
-  modelValue.value = JSON.stringify(data)
+  modelValue.value.bookmarkBar = []
+  modelValue.value.other = []
   emit('change', modelValue.value)
 }
 </script>

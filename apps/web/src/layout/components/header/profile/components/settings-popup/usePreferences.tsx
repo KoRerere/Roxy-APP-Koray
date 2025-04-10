@@ -38,12 +38,10 @@ export function usePreferencesPanel() {
 
 		const lockStore = useLock()
 
-		const simulation: Record<string, any> = {}
-		if (data?.simulation) {
-			const _simulation = safeParseJSON(data.simulation, {})
-			simulation.delay = _simulation.delay ?? DEFAULT_SIMULATION_DELAY
-			simulation.enable = _simulation.enable ?? DEFAULT_SIMULATION_ENABLE
-			simulation.shortcutKey = _simulation.shortcutKey ?? DEFAULT_SIMULATION_SHORTCUT_KEYS;
+		const simulation: Record<string, any> = data?.simulation ? data.simulation : {
+			delay: DEFAULT_SIMULATION_DELAY,
+			enable: DEFAULT_SIMULATION_ENABLE,
+			shortcutKey: DEFAULT_SIMULATION_SHORTCUT_KEYS
 		}
 
 		const items = reactive({
@@ -329,14 +327,16 @@ export function usePreferencesPanel() {
 							},
 							formatValue: (item: Items) => {
 								simulation.enable = item.value
-								return JSON.stringify(simulation)
+								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
 								return (
 									<RxToggleSwitch
 										{...item.props}
 										{...props}
-										onChange={() => saveUserConfig(item, items)}
+										onChange={() => {
+											saveUserConfig(item, items)
+										}}
 									/>
 								);
 							},
@@ -349,7 +349,7 @@ export function usePreferencesPanel() {
 							__type: 'controlDisplay',
 							formatValue: (item: Items) => {
 								simulation.delay = item.value
-								return JSON.stringify(simulation)
+								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
 								return <InputNumber
@@ -369,7 +369,7 @@ export function usePreferencesPanel() {
 							__type: 'controlDisplay',
 							formatValue: (item: Items) => {
 								simulation.shortcutKey = item.value
-								return JSON.stringify(simulation)
+								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
 								return <SimulationShortcut {...item.props} {...props} onChange={() => {
