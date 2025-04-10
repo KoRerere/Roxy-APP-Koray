@@ -23,6 +23,7 @@ export const ossObject = {
   },
   /** 默认插件图标本地路径 */
   get defaultPluginIconPath() {
-    return isPackaged ? join(appConfig.unpackedFilePath, './dist/web/images/default-plugin-icon.png') : join(__dirname, '../../web/public/images/default-plugin-icon.png')
+    const icon = 'images/default-plugin-icon.png'
+    return isPackaged ? join(appConfig.unpackedFilePath, `./dist/web/${icon}`) : join(__dirname, `../../web/public/${icon}`)
   },
 } as const

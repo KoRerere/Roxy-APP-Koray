@@ -85,9 +85,7 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
   childList: true,
   subtree: true,
 })
-
-
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
+ 
 
 const disabled = computed(() => {
   if (!selectedRows.value?.length) return true
@@ -257,7 +255,7 @@ electronAPI.on('syncControl:start', startSync)
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="workspaceName" :data="data" :filter-keys="['os']" readonly />
+      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly />
     </template>
     <template #status="{ data }">
       <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">

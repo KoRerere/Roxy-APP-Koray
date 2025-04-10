@@ -24,7 +24,8 @@ const _aliOSS = new class AliOSS {
   /**
    * 定时刷新 OSS 上传凭证
    */
-  async refreshUploadTokenInterval() {
+  async refreshUploadTokenInterval(workspaceId?: number) {
+    console.log('aliOSS refreshUploadTokenInterval workspaceId', workspaceId)
     // 如果上一次请求还没结束，取消上一次请求
     // if (this.controller) {
     //   this.controller.abort() // 中止之前的请求
@@ -35,7 +36,7 @@ const _aliOSS = new class AliOSS {
     // const { signal } = this.controller
 
     // TODO 上传凭证接口
-    const { code, data, msg } = await API.base.userGetOssCredentialV2List({})
+    const { code, data, msg } = await API.base.userGetOssCredentialV2List({ headers: { workspaceId } })
     // .finally(() => {
     //   this.controller = null
     // })
@@ -88,7 +89,7 @@ export const aliOSS = new Proxy({} as OSS & typeof _aliOSS, {
   get(_, key: keyof OSS) {
     return async (...args: any[]) => {
       // 每次都重新获取上传凭证
-      await _aliOSS.refreshUploadTokenInterval()
+      await _aliOSS.refreshUploadTokenInterval(args.at(-1)?.workspaceId)
       const target = Reflect.has(_aliOSS.store, key) ? _aliOSS.store : _aliOSS
 
       try {

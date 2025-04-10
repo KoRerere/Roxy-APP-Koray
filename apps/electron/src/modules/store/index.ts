@@ -131,6 +131,10 @@ export async function fetchUserConfig() {
     const { code, data } = await API.base.userGetUserConfigList()
     if (code === 0) {
       console.log('setupStore userGetUserConfigList', data)
+      // 如果语言存在，则不覆盖
+      if (store.language) {
+        Reflect.deleteProperty(data, 'language')
+      }
       setUserConfig(data)
     }
   }
@@ -142,10 +146,6 @@ export async function fetchUserConfig() {
 export function setUserConfig(data: Record<string, any>) {
   Object.keys(data).forEach((key) => {
     if (excludeKeys.includes(key)) {
-      return
-    }
-    // 如果语言存在，则不覆盖
-    if (key === 'language' && store.language) {
       return
     }
     if (Reflect.has(store, key)) {

@@ -450,7 +450,10 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       /** 圆点的颜色 */
       color: 'FF6000d7',
       /** 圆点里面的内容，这个内容同时也会显示到左边工具栏 */
-      text: String(winInfo.windowSortNum),
+      get text() {
+        const { windowSortNum, workspaceName } = winInfo
+        return `${workspaceName.slice(0, 3).toLocaleUpperCase()}-${windowSortNum}`
+      },
     },
     blockDomainList: store.blockDomainList,
     /** 禁止域名的提示页面 */

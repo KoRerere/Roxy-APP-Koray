@@ -1,4 +1,3 @@
-import mitt from 'mitt'
 import { createReadStream } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -41,7 +40,10 @@ export class BrowserItem {
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
   get requestHeaders() {
-    return this.launchBy === 'api' ? openAPICommonHeaders : {}
+    return {
+      ...(this.launchBy === 'api' ? openAPICommonHeaders : {}),
+      workspaceId: this.winInfo.workspaceId,
+    }
   }
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
@@ -231,7 +233,7 @@ export class BrowserItem {
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       console.log('开始上传缓存文件', remoteOssPath)
-      const data = await aliOSS.putStream(remoteOssPath, readStream)
+      const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
       console.log(`oss 缓存文件上传成功`, data)

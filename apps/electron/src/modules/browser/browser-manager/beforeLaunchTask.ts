@@ -286,10 +286,24 @@ export class BeforeLaunchTask {
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
-      const [x = 0, y = 0] = windowRatioPosition?.split(',') || []
-      const positions = [Math.floor(screenWidth * x), Math.floor(screenHeight * y)].join(',')
+      const [x = 0, y = 0, direction = 'tl'] = windowRatioPosition?.split(',') || []
+      const xx = Math.floor(screenWidth * x)
+      const yy = Math.floor(screenHeight * y)
+      const winWidth = Number(openWidth)
+      const winHeight = Number(openHeight)
+      let positions = [xx, yy]
+      console.log('screenWidth', screenWidth, 'screenHeight', screenHeight)
+      console.log('windowRatioPosition', windowRatioPosition, positions)
 
-      args.push(`--window-position=${positions}`)
+      if (direction === 'tr') {
+        positions = [xx - winWidth, yy]
+      } else if (direction === 'br') {
+        positions = [xx - winWidth, yy - winHeight]
+      } else if (direction === 'bl') {
+        positions = [xx, yy - winHeight]
+      }
+      console.log('positions', positions)
+      args.push(`--window-position=${positions.join(',')}`)
     }
 
     // 设置浏览器窗口大小
@@ -468,7 +482,7 @@ export class BeforeLaunchTask {
       await fileExists(dirname(localCacheFilePath), true)
       console.log('开始拉取远程缓存文件', remoteCacheFilePath)
       // 下载远程缓存文件
-      await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
+      await aliOSS.get(remoteCacheFilePath, localCacheFilePath, { workspaceId: this.browserItem.winInfo.workspaceId })
       console.log('下载远程缓存文件成功', localCacheFilePath)
       // 解压缓存文件
       await fileOperations.executeTask('decompress', {

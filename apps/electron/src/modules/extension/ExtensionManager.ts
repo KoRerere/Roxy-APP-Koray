@@ -30,21 +30,21 @@ export interface UploadExtensionToOSSPayload {
 }
 
 interface ExtensionManagerOptions {
-  workspaceId?: string
+  workspaceId?: number
 }
 
 /** 正在下载的插件 */
 const downloadingExtensions = new Map<string, Promise<string>>()
 export class ExtensionManager {
   /** 工作空间 ID */
-  workspaceId: string
+  workspaceId: number
   /** 插件目录 */
   get extensionDir() {
     return `${appConfig.browserExtensionsDir}/w_${this.workspaceId}`
   }
 
   constructor({ workspaceId }: ExtensionManagerOptions = {}) {
-    this.workspaceId = workspaceId || String(store.workspaceId)
+    this.workspaceId = workspaceId || store.workspaceId!
   }
 
   /** 获取本地所有插件 */
@@ -111,7 +111,7 @@ export class ExtensionManager {
 
   /** 从用户插件列表下载所需的插件 */
   async downloadUserExtensions(extIDs: string[]) {
-    const { data } = await API.plugins.userGetPluginListList({})
+    const { data } = await API.plugins.userGetPluginListList({}, { headers: { workspaceId: this.workspaceId } })
     const needDownloads = data.rows.filter(item => extIDs.includes(item.pluginDir!))
     return this.downloadExtensions(needDownloads)
   }

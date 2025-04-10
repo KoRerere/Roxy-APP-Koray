@@ -44,34 +44,6 @@ async function showEditWorkspaceDialog(workspaceInfo: UnwrapRowType<UserGetWorks
 }
 
 async function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>) {
-  const windowList = await electronAPI.send('browser:getOpenedBrowser')
-  const { promise, resolve, reject } = Promise.withResolvers<void>()
-
-  if (windowList.length) {
-    const dirIds = windowList.map(item => item.dirId!)
-
-    dialogInstance.showModal({
-      header: $t('提示'),
-      class: 'w-[370px]',
-      innerDialog: true,
-      okText: $t('继续'),
-      slots: {
-        default: () => <>{$t('您当前有 {count} 个窗口正在使用中，切换空间将关闭这些窗口，是否继续？', { count: windowList.length })}</>,
-      },
-      async handleOk() {
-        await electronAPI.send('browser:batchClose', dirIds)
-        resolve()
-      },
-      handleCancel() {
-        reject()
-      }
-    })
-  } else {
-    resolve()
-  }
-
-  await promise
-
   workspaceStore.setCurrentWorkspace(item.id)
   emit('enterWorkspace')
 }
