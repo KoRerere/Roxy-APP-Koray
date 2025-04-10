@@ -53,6 +53,14 @@ export function useCommonUtil() {
 					v2.hide = !value;
 				}
 			}
+
+			if (items && item.name === "simulation") {
+				items.list[2].items.forEach((i: any) => {
+					if (i.__type === "controlDisplay") {
+						i.hide = !item.value;
+					}
+				})
+			}
 		}
 	}
 

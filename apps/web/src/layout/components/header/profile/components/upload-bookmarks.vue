@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Dialog from 'primevue/dialog';
 import { $t } from '/@/locales';
+import { safeParseJSON } from '/@/utils/basic';
 
 enum BookmarkType {
   FOLDER = 'folder',
@@ -31,24 +32,20 @@ const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 
 watch(modelValue, (value) => {
-  const data = JSON.parse(value || '{}');
+  const data = safeParseJSON(value, {});
   importMode.value = data.importMode || ImportMode.MERGE
 }, { immediate: true })
 
 const isEdit = computed(() => {
-  try {
-    const data = JSON.parse(modelValue.value || '{}');
-    return data.bookmarkBar.length > 0 || data.other.length > 0
-  } catch {
-    return false
-  }
+  const data = safeParseJSON(modelValue.value, {});
+  return data.bookmarkBar.length > 0 || data.other.length > 0
 })
 
-// 转换字段
+// 适配primeVue的Tree组件字段
 const convertField = (tree: any) => {
   tree.forEach((item: any) => {
     item.label = item.name;
-    item.key = item.type === BookmarkType.URL ? item.url : item.label;
+    item.key = item.type === BookmarkType.URL ? (item.url + item.name) : item.name;
     if (item.children) {
       convertField(item.children)
     }
@@ -56,18 +53,16 @@ const convertField = (tree: any) => {
 }
 
 const tree = computed(() => {
-  let data = []
-  try {
-    data = JSON.parse(modelValue.value || '[]');
-  } catch { /** ... */ }
+  const data = safeParseJSON(modelValue.value, {});
   const bookmarkBar = data.bookmarkBar || [];
+  const other = data.other || [];
   convertField(bookmarkBar)
-  convertField(data.other)
-  if (data.other.length > 0) {
+  convertField(other)
+  if (other.length > 0) {
     bookmarkBar.push({
       label: $t('其他标签'),
-      key: 1,
-      children: data.other || []
+      key: window.btoa("other"),
+      children: other
     })
   }
   return bookmarkBar
@@ -124,9 +119,9 @@ function parseHtml(html: string): BookText {
   const doc = parser.parseFromString(html, 'text/html')
   const bookmarks = parserBookmarksDl(doc.body.children)
   // 获取书签栏
-  const bookmarkBar = bookmarks?.children?.filter(item => item?.type === BookmarkType.FOLDER)?.[0]?.children || []
-  // 获取其他书签
-  const other = bookmarks?.children?.filter(item => item?.type === BookmarkType.URL) || []
+  const bookmarkBar = bookmarks?.children?.[0]?.children || []
+  // 除了一个书签栏，其他都属于其他书签
+  const other = bookmarks?.children?.slice(1) || []
   return {
     bookmarkBar,
     other,
@@ -146,9 +141,14 @@ function uploadBookmarks(isEmitChange = true) {
     const reader = new FileReader()
     reader.onload = (e: any) => {
       const html = e.target.result
-      const result = parseHtml(html)
-      emit('update:modelValue', JSON.stringify(result))
-      isEmitChange && emit('change', result)
+      try {
+        const result = parseHtml(html)
+        modelValue.value = JSON.stringify(result)
+        isEmitChange && emit('change', result)
+      } catch (error) {
+        console.error(error)
+        message.error($t('上传失败，请检查文件格式是否正确'))
+      }
     }
     reader.readAsText(file)
   }
@@ -161,41 +161,32 @@ function editBookmarks() {
 }
 
 function saveBookmarks() {
-  const result = JSON.parse(modelValue.value || '{}');
+  const result = safeParseJSON(modelValue.value, {});
   result.importMode = importMode.value
-  const data = JSON.stringify(result)
-  modelValue.value = data;
-  emit('change', data)
+  modelValue.value = JSON.stringify(result);
+  emit('change', modelValue.value)
   visible.value = false
 }
 
 function deleteBookmarks() {
-  const data = JSON.parse(modelValue.value || '{}');
+  const data = safeParseJSON(modelValue.value, {});
   data.bookmarkBar = []
   data.other = []
   modelValue.value = JSON.stringify(data)
-  emit('change', data)
+  emit('change', modelValue.value)
 }
 </script>
 
 <template>
   <div class="flex items-center gap-2">
     <template v-if="!isEdit">
-      <RxButton
-        severity="secondary"
-        outlined
-        :label="$t('上传文件')"
-        icon="base/rx_ic_export"
-        @click="uploadBookmarks"
-      />
+      <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export" @click="uploadBookmarks" />
       <span class="upload-desc-text">
         {{ $t('* 仅支持 .html') }}
       </span>
     </template>
     <template v-else>
-      <RxButton
-        :label="$t('编辑')" severity="secondary" outlined icon="base/rx_ic_edit" @click="editBookmarks"
-      />
+      <RxButton :label="$t('编辑')" severity="secondary" outlined icon="base/rx_ic_edit" @click="editBookmarks" />
     </template>
   </div>
 
@@ -204,13 +195,8 @@ function deleteBookmarks() {
     <div class="flex flex-col gap-4">
       <div>
         <div class="flex items-center gap-3">
-          <RxButton
-            severity="secondary"
-            outlined
-            :label="$t('上传文件')"
-            icon="base/rx_ic_export"
-            @click="uploadBookmarks(false)"
-          />
+          <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export"
+            @click="uploadBookmarks(false)" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('* 重新上传您的配置文件以更改书签。') }}</div>
@@ -249,7 +235,7 @@ function deleteBookmarks() {
     <template #footer>
       <div class="w-full flex justify-between">
         <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks"></RxButton>
-        <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" /> 
+        <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
       </div>
     </template>
   </Dialog>

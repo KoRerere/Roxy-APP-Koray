@@ -17,6 +17,8 @@ import LockAppComponent from "../lock-app.vue";
 import { useLock } from '/@/stores/lock'
 import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
+import { safeParseJSON } from '/@/utils/basic';
+import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
@@ -36,22 +38,15 @@ export function usePreferencesPanel() {
 
 		const lockStore = useLock()
 
-		let simulation = {
-			"delay": 100,
-			"enable": true,
-			"shortcutKey": ["Shift", "E"]
-		}
+		const simulation: Record<string, any> = {}
 		if (data?.simulation) {
-			try {
-				const _simulation = JSON.parse(data?.simulation)
-				_simulation.shortcutKey = _simulation.shortcutKey.split(' ')
-				simulation = _simulation
-			} catch (error) {
-				/** */
-			}
+			const _simulation = safeParseJSON(data.simulation, {})
+			simulation.delay = _simulation.delay ?? DEFAULT_SIMULATION_DELAY
+			simulation.enable = _simulation.enable ?? DEFAULT_SIMULATION_ENABLE
+			simulation.shortcutKey = _simulation.shortcutKey ?? DEFAULT_SIMULATION_SHORTCUT_KEYS;
 		}
 
-		return {
+		const items = reactive({
 			title: $t("软件设置"),
 			description: $t("设置您的客户端使用偏好"),
 			list: [
@@ -341,7 +336,7 @@ export function usePreferencesPanel() {
 									<RxToggleSwitch
 										{...item.props}
 										{...props}
-										onChange={() => saveUserConfig(item)}
+										onChange={() => saveUserConfig(item, items)}
 									/>
 								);
 							},
@@ -351,6 +346,7 @@ export function usePreferencesPanel() {
 							name: 'simulation',
 							value: simulation.delay,
 							hide: !simulation.enable,
+							__type: 'controlDisplay',
 							formatValue: (item: Items) => {
 								simulation.delay = item.value
 								return JSON.stringify(simulation)
@@ -360,7 +356,6 @@ export function usePreferencesPanel() {
 									{...item.props}
 									{...props}
 									onValueChange={() => {
-										console.log(item)
 										saveUserConfig(item)
 									}}
 								/>
@@ -371,8 +366,9 @@ export function usePreferencesPanel() {
 							name: 'simulation',
 							value: simulation.shortcutKey,
 							hide: !simulation.enable,
+							__type: 'controlDisplay',
 							formatValue: (item: Items) => {
-								simulation.shortcutKey = item.value.join(' ')
+								simulation.shortcutKey = item.value
 								return JSON.stringify(simulation)
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
@@ -382,11 +378,11 @@ export function usePreferencesPanel() {
 							}
 						}
 					]
-
-
 				}
 			],
-		};
+		});
+
+		return items
 	};
 
 	return {
