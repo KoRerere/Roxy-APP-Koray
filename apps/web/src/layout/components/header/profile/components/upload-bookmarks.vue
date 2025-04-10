@@ -38,7 +38,7 @@ watch(modelValue, (value) => {
 
 const isEdit = computed(() => {
   const data = safeParseJSON(modelValue.value, {});
-  return data.bookmarkBar.length > 0 || data.other.length > 0
+  return data.bookmarkBar?.length > 0 || data.other?.length > 0
 })
 
 // 适配primeVue的Tree组件字段

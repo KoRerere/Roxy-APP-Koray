@@ -12,6 +12,7 @@ import { DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-defaul
 import { isWindows } from '/@/utils/common';
 import { useToast } from 'primevue/usetoast'
 import type { ToastMessageOptions } from 'primevue/toast'
+import { $t } from '/@/locales'
 
 const emit = defineEmits(['change'])
 const invalid = ref(false)
@@ -66,9 +67,11 @@ function onReset() {
 }
 
 function handleBlur() {
-  const key = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
-  electronAPI.send('util:checkShortcutKeysIsOccupied', key)
+  const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+  console.log('keyboard', keyboard)
+  electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
     .then((value: boolean) => {
+      console.log('value', value);
       if (value) {
         emit('change', modelValue.value)
       } else {
