@@ -70,7 +70,7 @@ export async function delRoxynetProxy(dirId: string) {
   // 如果浏览器已经关闭，直接删除roxynet中的代理
   if (getRoxynetProcess() && !browserManager.openedBrowserMap.has(dirId)) {
     return axios.get(`http://127.0.0.1:${store.roxynetLocalHttpPort}/del_proxy?id=${dirId}`).then(res => res.data).catch((e) => {
-      console.error('delRoxynetProxy error:', e)
+      // console.error('delRoxynetProxy error:', e)
     })
   }
 }

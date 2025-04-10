@@ -451,8 +451,8 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       color: 'FF6000d7',
       /** 圆点里面的内容，这个内容同时也会显示到左边工具栏 */
       get text() {
-        const { windowSortNum, workspaceName } = winInfo
-        return `${workspaceName.slice(0, 3).toLocaleUpperCase()}-${windowSortNum}`
+        const { windowSortNum } = winInfo
+        return `${windowSortNum}`
       },
     },
     blockDomainList: store.blockDomainList,

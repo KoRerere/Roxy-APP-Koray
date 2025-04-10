@@ -1,5 +1,5 @@
 import http from "node:http";
-import https from "node:https";
+import { HttpProxyAgent } from "http-proxy-agent";
 import type { AxiosProxyConfig } from "axios";
 import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -337,29 +337,18 @@ async function checkHttpProxy(
   let proxyConfig;
 
   if (host) {
-    if (isUseSystemProxy && checkChannelIsHttp) {
-      proxyConfig = {
-        proxy: {
-          protocol: "http",
-          host,
-          port: Number(port),
-          auth,
+    const httpUrl = `${protocol}://${proxyUserName}:${proxyPassword}@${host}:${port}`;
+    const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
+    proxyConfig = {
+      [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
+        httpUrl,
+        {
+          timeout: TIMEOUT,
+          rejectUnauthorized: false,
         },
-      };
-      console.log(`checkHttpProxy proxyConfig`, proxyConfig);
-    } else {
-      const httpUrl = `${protocol}://${proxyUserName}:${proxyPassword}@${host}:${port}`;
-      proxyConfig = {
-        [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new HttpsProxyAgent(
-          httpUrl,
-          {
-            timeout: TIMEOUT,
-            rejectUnauthorized: false,
-          },
-        ),
-      };
-      console.log(`checkHttpProxy proxyConfig`, httpUrl);
-    }
+      ),
+    };
+    console.log(`checkHttpProxy proxyConfig`, httpUrl);
   }
 
   const response = await axios({
