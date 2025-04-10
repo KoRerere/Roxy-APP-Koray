@@ -16,6 +16,7 @@ import { API } from '/@/api'
 import LockAppComponent from "../lock-app.vue";
 import { useLock } from '/@/stores/lock'
 import UploadBookmarks from "../upload-bookmarks.vue";
+import SimulationShortcut from "../simulation-shortcut.vue";
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
@@ -34,6 +35,21 @@ export function usePreferencesPanel() {
 		}
 
 		const lockStore = useLock()
+
+		let simulation = {
+			"delay": 100,
+			"enable": true,
+			"shortcutKey": ["Shift", "E"]
+		}
+		if (data?.simulation) {
+			try {
+				const _simulation = JSON.parse(data?.simulation)
+				_simulation.shortcutKey = _simulation.shortcutKey.split(' ')
+				simulation = _simulation
+			} catch (error) {
+				/** */
+			}
+		}
 
 		return {
 			title: $t("软件设置"),
@@ -305,6 +321,70 @@ export function usePreferencesPanel() {
 						}
 					],
 				},
+				{
+					subtitle: $t('仿真输入'),
+					items: [
+						{
+							label: $t('是否启用'),
+							name: 'simulation',
+							value: !!simulation.enable,
+							props: {
+								trueValue: true,
+								falseValue: false,
+							},
+							formatValue: (item: Items) => {
+								simulation.enable = item.value
+								return JSON.stringify(simulation)
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxToggleSwitch
+										{...item.props}
+										{...props}
+										onChange={() => saveUserConfig(item)}
+									/>
+								);
+							},
+						},
+						{
+							label: $t('延迟时间'),
+							name: 'simulation',
+							value: simulation.delay,
+							hide: !simulation.enable,
+							formatValue: (item: Items) => {
+								simulation.delay = item.value
+								return JSON.stringify(simulation)
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return <InputNumber
+									{...item.props}
+									{...props}
+									onValueChange={() => {
+										console.log(item)
+										saveUserConfig(item)
+									}}
+								/>
+							}
+						},
+						{
+							label: $t('快捷键'),
+							name: 'simulation',
+							value: simulation.shortcutKey,
+							hide: !simulation.enable,
+							formatValue: (item: Items) => {
+								simulation.shortcutKey = item.value.join(' ')
+								return JSON.stringify(simulation)
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return <SimulationShortcut {...item.props} {...props} onChange={() => {
+									saveUserConfig(item)
+								}} />
+							}
+						}
+					]
+
+
+				}
 			],
 		};
 	};
