@@ -505,6 +505,11 @@ const slots: any = useSlots()
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);
     }
+
+    &:global(.p-datatable-frozen-column) {
+      padding-left: 16px;
+      background: var(--Colors-Background-bg-page, #fafbfc);
+    }
   }
 }
 
@@ -541,7 +546,8 @@ const slots: any = useSlots()
   }
 
   :global(.p-datatable-frozen-column) {
-    border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+    padding-left: 16px;
+    border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb) !important;
     box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
   }
 }

@@ -117,6 +117,10 @@ function findActiveTab(list: TabType[]) {
   }
 }
 
+function switchTab(tabId: string) {
+  active.value = tabId
+}
+
 async function updateFilterTabs(isEdit: boolean = false) {
   await getFilterList()
 
@@ -258,7 +262,7 @@ async function hidePopover() {
     <div class="flex flex-1 overflow-hidden">
       <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
       <div v-else class="flex-1 overflow-hidden">
-        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" />
+        <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" @switch-tab="switchTab" />
       </div>
     </div>
   </div>
@@ -349,6 +353,10 @@ async function hidePopover() {
     font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
+
+    // &:first-of-type {
+    //   margin-left: -16px;
+    // }
 
     &.active {
       position: relative;

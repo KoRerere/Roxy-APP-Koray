@@ -47,7 +47,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['updateFilterTabs'])
+const emit = defineEmits(['updateFilterTabs', 'switchTab'])
 
 const route = useRoute()
 const router = useRouter()
@@ -398,13 +398,14 @@ async function onTransfer(datas: Data[]) {
         onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
           dialogInstance.hideModal()
           if (!isSelf) {
-            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
+            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 转移成功后，切换到转移窗口 tab
+            emit('switchTab', 'rx_1004')
           } else {
-            showToast(0, $t('转移成功'))
             if (needRefresh) {
               onRefreshTable()
             }
           }
+          showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
           resolve()
         },
       })
@@ -796,10 +797,10 @@ defineExpose({
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
-      <div class="flex items-center gap-2">
-        <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
-          class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
-        <span class="w-100 ellipsis-1" v-if="_cache.extend">{{ data.windowRemark }}</span>
+      <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
+        <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+          :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+        <span v-if="_cache.extend" class="w-100 ellipsis-1">{{ data.windowRemark }}</span>
       </div>
     </template>
     <template #project="{ data }">
@@ -810,7 +811,8 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
-        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5"
+        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
+          class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
           @click.stop="operationHandler({ name: 'fav' }, data)">
           <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
         </div>
@@ -833,6 +835,24 @@ defineExpose({
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;
+}
+
+.remark-light {
+  :deep(svg) {
+    color: var(--Colors-text-text-brand, #11A3FD) !important;
+  }
+}
+
+.quick-icon {
+  color: var(--Colors-icon-icon-secondary, #575D60);
+
+  &:active {
+    color: orange;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+  }
 }
 
 :deep(.window-table) {

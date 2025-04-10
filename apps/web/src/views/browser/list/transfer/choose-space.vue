@@ -20,10 +20,17 @@ const chooseRef = useTemplateRef('choose')
 const openLoading = ref(false)
 const search = ref()
 const searchLoading = ref(false)
+const historyList = ref()
 
 const spaceList = ref()
 
 async function getTransferHistory(event: MouseEvent) {
+  if (historyList.value) {
+    spaceList.value = historyList.value
+    chooseRef.value?.show(event, event.target!)
+    return
+  }
+
   if (openLoading.value) return
 
   openLoading.value = true
@@ -54,11 +61,17 @@ async function getTransferHistory(event: MouseEvent) {
     }
   ].filter(item => item.items.length)
 
+  historyList.value = spaceList.value
   chooseRef.value?.show(event, event.target!)
 }
 
+function clearSearch() {
+  search.value = ''
+  spaceList.value = historyList.value
+}
+
 async function onSearch() {
-  if (!search.value) return
+  if (!search.value || searchLoading.value) return
   searchLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
     windowIds: windowIds.join(','),
@@ -75,8 +88,8 @@ async function onSearch() {
 }
 
 async function clearHistory(space: any) {
-  const windowTransferNo = space.items.map((item: any) => item.windowTransferNo)
-  await API.window.userClearTransferWorkspaceCreate({ windowTransferNo })
+  const workspaceIds = space.items.map((item: any) => item.workspaceId)
+  await API.window.userClearTransferWorkspaceCreate({ workspaceIds })
   spaceList.value = spaceList.value.filter((item: any) => item.key !== space.key)
 }
 
@@ -103,11 +116,11 @@ function getAvatarStyle(workspacePicture: string) {
       <div class="w-125 relative flex flex-col gap-3 pa-3">
         <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch">
           <template #icon>
-            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="search = ''"></SvgIcon>
+            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
           </template>
         </RxInputText>
         <div class="relative flex flex-col gap-6 max-h-100 overflow-y-auto">
-          <RxLoading v-model="searchLoading" />
+          <RxLoading :opacity="0.9" v-model="searchLoading" />
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
               <div>{{ space.title }}</div>

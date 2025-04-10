@@ -11,6 +11,7 @@ interface Props {
   workspaceName?: string
   data: Record<string, any>
   openMessage?: Record<string, any>
+  showSort?: boolean,
   disabled?: boolean
   readonly?: boolean
   filterKeys?: string[]
@@ -20,6 +21,7 @@ const {
   workspaceName,
   data,
   openMessage,
+  showSort = true,
   disabled = false,
   readonly = false,
   filterKeys = ['os', 'proxy', 'account']
@@ -209,7 +211,7 @@ function handleClickInplace(e: MouseEvent) {
 
 <template>
   <div class="position-relative flex h-full items-center profile" :class="{ 'disabled-mask': disabled }">
-    <div>
+    <div v-if="showSort">
       <span class="profile-name">{{ workspaceName }}-</span>
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>

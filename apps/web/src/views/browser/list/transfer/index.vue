@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -14,7 +15,7 @@ const columns = [
     key: 'profile',
     slot: 'profile',
     style: {
-      width: '40%',
+      width: '30%',
     },
   },
   {
@@ -30,7 +31,16 @@ const columns = [
     key: 'transfer',
     slot: 'transfer',
     style: {
-      width: '50%',
+      width: '40%',
+    },
+  },
+  ,
+  {
+    title: $t('转移发起时间'),
+    key: 'createTime',
+    getText: (row: any) => row.createTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
+    style: {
+      width: '20%',
     },
   },
 ]
