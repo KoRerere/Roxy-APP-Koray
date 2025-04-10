@@ -24,6 +24,7 @@ const role = useRoleStore()
 const { getTags, getProjectMember } = useMateGroup()
 const { showMenu: showPopupMenu } = usePopupMenu()
 
+const loading = ref(false)
 // const styles = useCssModule()
 
 const _disabled = computed(() => disabled || role.isViewer)
@@ -35,11 +36,13 @@ const _members = computed(() =>
 const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
 
 async function openMenu(event: MouseEvent) {
-  if (_disabled.value)
+  if (_disabled.value || loading.value)
     return
 
+  loading.value = true
   const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
   const value = labels?.map((item: any) => `${item.labelId}`)
+  loading.value = false
 
   showPopupMenu(event, {
     mode: {
@@ -87,7 +90,7 @@ defineExpose({ openMenu })
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton v-if="!labels?.length" class="cursor-pointer !rounded-full" size="xxs" text severity="secondary" :disabled="_disabled" icon="base/rx_ic_tag" @click.stop="openMenu" />
+    <RxTag v-if="!labels?.length" class="cursor-pointer !rounded-full" icon="base/rx_ic_tag" @click.stop="openMenu" />
     <template v-else>
       <RxAvatar v-if="_members.length" class="cursor-pointer" :list="_members" :size="24" :font-size="12" :max="3" @click.stop="openMenu" />
       <div v-for="label in _tags" :key="label.labelId" class="flex items-center select-none" :title="label.labelName" :class="[_disabled ? 'cursor-not-allowed' : 'cursor-pointer']"

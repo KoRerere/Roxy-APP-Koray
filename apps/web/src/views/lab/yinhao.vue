@@ -37,7 +37,10 @@ function open2() {
 }
 
 //=================================
-const ratioPositon = ref('0,0.5')
+
+const data = ref({
+  windowRemark: '1111111'
+})
 </script>
 
 <template>
@@ -46,8 +49,26 @@ const ratioPositon = ref('0,0.5')
     <RxButton class="!w-20" @click="open2">blance</RxButton>
     <br>
     <br>
-    <Position v-model="ratioPositon"></Position>
+
+    <!-- <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" text severity="secondary" size="xxs">
+      <SvgIcon :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer" />
+    </RxButton> -->
+
+    <!-- <SvgIcon  :class="{ 'color-[#12A3FC]': data.windowRemark }" class="cursor-pointer" /> -->
+
+
+    <div class="flex items-center gap-1">
+      <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+        :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark ? '' : $t('添加备注')"></RxButton>
+      <span>{{ data.windowRemark }}</span>
+    </div>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.remark-light {
+  :deep(svg) {
+    color: var(--Colors-text-text-brand, #11A3FD) !important;
+  }
+}
+</style>

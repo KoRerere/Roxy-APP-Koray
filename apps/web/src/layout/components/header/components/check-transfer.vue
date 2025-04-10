@@ -39,7 +39,7 @@ const columns = [
     key: 'note',
     slot: 'note',
     style: {
-      width: '20%',
+      width: '10%',
     },
   },
   {
@@ -47,7 +47,7 @@ const columns = [
     key: 'transfer',
     slot: 'transfer',
     style: {
-      width: '20%',
+      width: '30%',
     },
   },
   {
@@ -133,7 +133,7 @@ async function toProject() {
     <div class="h-120">
       <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false">
         <template #profile="{ data }">
-          <ProfileInfo :workspace-name="workspaceName" :data="data" readonly />
+          <ProfileInfo :show-sort="false" :workspace-name="workspaceName" :data="data" readonly />
         </template>
         <template #note="{ data }">
           <RemarkIcon :value="data.windowRemark" disabled />
@@ -143,7 +143,6 @@ async function toProject() {
             <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
               :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
             <div class="ml-3 space-name">{{ data.workspaceName }}</div>
-            <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
           </div>
         </template>
         <template #from="{ data }">

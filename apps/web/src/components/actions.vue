@@ -40,11 +40,13 @@ function onMore(event: Event) {
       <div v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length" class="quick-item"
         @click.stop="onMore">
         <slot name="more-icon">
-          <RxSvgIcon :name="actionIcon" class="pointer-events-none" />
+          <RxSvgIcon :name="actionIcon" class="pointer-events-none quick-icon" />
         </slot>
       </div>
     </div>
   </div>
+  <!-- <RxButton v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" text severity="secondary" size="xxs"
+  :icon="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :loading="loadingOperationMap?.[item.name as string]" @click.stop="quickClick(item)"></RxButton> -->
 </template>
 
 <style lang="scss" scoped>
@@ -68,6 +70,7 @@ function onMore(event: Event) {
     font-size: 16px;
     line-height: 1;
     cursor: pointer;
+    color: var(--Colors-icon-icon-secondary, #575D60);
 
     &:active {
       color: orange;

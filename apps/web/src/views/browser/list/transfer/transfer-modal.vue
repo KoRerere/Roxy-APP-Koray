@@ -5,6 +5,7 @@ import { API } from '/@/api';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
 import { startCountdown } from '/@/utils';
+import { useWorkspaceStore } from '/@/stores/workspace'
 
 const { ids: windowIds } = defineProps<{
   ids: number[]
@@ -12,6 +13,7 @@ const { ids: windowIds } = defineProps<{
 
 const emit = defineEmits(['close', 'confirm'])
 const [_, onlyErrorToast] = useResponseToast()
+const { getWorkspaceList } = useWorkspaceStore()
 
 const selectedWorkspace = ref()
 const isDelete = ref(false)
@@ -70,12 +72,12 @@ async function onTransfer(isSelf: boolean) {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
-      <span class="header">{{ $t('窗口转移') }}</span>
+      <span class="header">{{ windowIds.length > 1 ? $t('转移 {count} 个窗口', { count: windowIds.length }) : $t('转移窗口') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
-    <div v-if="!step2" class="flex flex-col gap-5">
+    <div v-if="!step2" class="flex flex-col gap-6">
       <RxAlert class="w-full" type="info" content="转移包括云同步数据、代理、账号密码、2FA、Cookies、指纹等" :closable="false" />
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-3">
           <div class="title">{{ $t('转移至') }}</div>
           <ChooseSpace v-model="selectedWorkspace" :ids="windowIds"></ChooseSpace>
@@ -95,9 +97,9 @@ async function onTransfer(isSelf: boolean) {
           <span>{{ $t('下一步') }}</span>
           <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
         </RxButton>
-        <div class="flex items-center gap-2 checkboxitem">
-          <Checkbox v-model="isDelete" binary size="small" input-id="del" />
-          <label for="del">{{ $t('转移后删除窗口') }}</label>
+        <div class="flex items-start gap-2 checkboxitem">
+          <Checkbox class="mt-0.5" v-model="isDelete" binary size="small" input-id="del" />
+          <label for="del">{{ $t('转移后删除配置文件。（如果关联的代理和账号没有链接到其他配置文件，也会被删除）') }}</label>
         </div>
       </div>
     </div>
@@ -165,9 +167,9 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .checkboxitem {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--Colors-text-text-tertiary, #575D60);
   font-size: 12px;
-  line-height: 16px;
+  line-height: 19.2px;
 }
 
 .description {
