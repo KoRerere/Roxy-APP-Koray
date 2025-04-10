@@ -133,6 +133,7 @@ export const browserListMappingV2 = {
       domain: '3',
     },
   ], // cookie, List类型
+  searchEngine: 'Google',
   windowPlatformList: [{
     platformUrl: 'https://www.tiktok.com/', // 业务平台URL，str类型
     platformUserName: 'Roxytest', // 平台账号，str类型
