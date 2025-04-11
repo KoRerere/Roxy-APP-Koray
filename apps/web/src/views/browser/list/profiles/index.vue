@@ -68,7 +68,7 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const filtersMenu = ref()
-const operation = ref(getOperation())
+const operation = computed(getOperation)
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
 
@@ -847,7 +847,7 @@ defineExpose({
 .quick-icon {
   color: var(--Colors-icon-icon-secondary, #575D60);
 
-  &:active {
+  &:active:not(.disabled) {
     color: orange;
   }
 

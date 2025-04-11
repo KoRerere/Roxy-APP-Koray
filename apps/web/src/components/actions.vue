@@ -72,7 +72,7 @@ function onMore(event: Event) {
     cursor: pointer;
     color: var(--Colors-icon-icon-secondary, #575D60);
 
-    &:active {
+    &:active:not(.disabled) {
       color: orange;
     }
 

@@ -25,6 +25,7 @@ export function getDefaultTemplate() {
     forbidAudio: true,
     forbidImage: true,
     forbidMedia: true,
+    positonSwitch: true,
     openWidth: 1000,
     openHeight: 1000,
     windowRatioPosition: '0,0,tl',
