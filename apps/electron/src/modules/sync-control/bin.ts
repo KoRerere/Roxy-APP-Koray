@@ -215,6 +215,6 @@ export async function setMainControlColor(color = syncControlSettings.mainContro
     })
     console.log('设置主控窗口颜色成功', rgb)
   } else {
-    console.error('主控窗口不存在', mainControlPId)
+    mainControlPId && console.error('主控窗口不存在', mainControlPId)
   }
 }
