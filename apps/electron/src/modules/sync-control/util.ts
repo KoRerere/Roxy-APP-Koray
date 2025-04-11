@@ -35,7 +35,7 @@ export class SyncControlUtil {
 
   /** 停止同步 */
   static stop = async (isShowSyncingWindowListDialog = true) => {
-    console.log('停止同步窗口')
+    console.log('停止同步窗口', isShowSyncingWindowListDialog)
     stopRoxySync()
     if (isShowSyncingWindowListDialog) {
       setTimeout(() => {

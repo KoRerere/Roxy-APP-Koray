@@ -127,7 +127,17 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
 
   /** 检测某个快捷键是否被占用 */
   ipcMain.on('util:checkShortcutKeysIsOccupied', async (event, accelerator) => {
-    return globalShortcut.isRegistered(accelerator)
+    let isRegistered = globalShortcut.isRegistered(accelerator)
+    if (!isRegistered) {
+      isRegistered = await globalShortcut.register(accelerator, () => {
+        console.log(`${accelerator} is pressed`)
+      })
+      // 如果注册成功，则注销
+      if (isRegistered) {
+        globalShortcut.unregister(accelerator)
+      }
+    }
+    return isRegistered
   })
 
 }
