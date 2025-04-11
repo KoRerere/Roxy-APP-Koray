@@ -207,7 +207,7 @@ async function parseBookmarks() {
   const result = parseHtml(html)
 
   if (!result.bookmarkBar.length && !result.other.length) {
-    throw new Error('没有解析到书签')
+    throw new Error($t('没有解析到书签'))
   }
 
   return result

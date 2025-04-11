@@ -8,10 +8,10 @@
 <script setup lang="ts">
 import { useLock } from '/@/stores/lock'
 
-const { lockData, setLockData } = useLock()
+const { lockData, openLockMark } = useLock()
 
 const handleOpenLocker = () => {
-  setLockData({ openScreenLock: true })
+  openLockMark()
 }
 
 </script>

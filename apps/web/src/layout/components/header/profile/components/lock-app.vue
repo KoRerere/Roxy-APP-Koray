@@ -1,16 +1,16 @@
 <template>
   <div class="flex items-center gap-2">
-    <RxToggleSwitch v-bind="$attrs" @change="handleChange" />
+    <RxToggleSwitch v-bind="$attrs" v-model="modelValue" @change="handleToggle" />
     <RxButton v-if="!!lockStore.lockData.password" severity="secondary" outlined @click="handleResetPassword">{{
       $t('重置密码') }}</RxButton>
   </div>
-  <Dialog v-model:visible="visible" :header="$t('重置密码')" :modal="true" :draggable="false" style="width: 384px;">
+  <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('重置密码')" :modal="true" :draggable="false" style="width: 384px;">
     <div class="flex flex-col gap-4">
       <span class="text-sm text-gray-500">
         {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
       </span>
 
-      <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
+      <RxInputText v-model="password" @change="invalid = false" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
       
       <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
       </RxButton>
@@ -25,7 +25,6 @@ import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import { $t } from "/@/locales";
 import { z } from 'zod'
 import { useLock } from '/@/stores/lock'
-import type { Items } from '../type'
 
 const lockStore = useLock()
 
@@ -38,12 +37,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps({
-  item: {
-    type: Object as PropType<Items>,
-    required: true,
-  },
-})
+const modelValue = defineModel<boolean>()
 
 const emit = defineEmits(['change'])
 
@@ -56,20 +50,22 @@ const invalid = ref(false)
 // 0为设置密码，1为重置密码
 const dialogType = ref<DialogType>(DialogType.SET_PASSWORD)
 
-const handleChange = (e: Event) => {
+const handleToggle = (e: Event) => {
   if ((e.target as HTMLInputElement).checked) {
     // 打开时
     visible.value = true
     dialogType.value = DialogType.SET_PASSWORD
+    password.value = ''
   } else {
     // 关闭时
-    emit('change', { password: '' })
+    emit('change', '')
   }
 }
 
 const handleResetPassword = () => {
   dialogType.value = DialogType.RESET_PASSWORD
   visible.value = true
+  password.value = ''
 }
 
 const handleBlur = () => {
@@ -85,10 +81,17 @@ const handleBlur = () => {
 
 const handleSubmit = () => {
   if (!invalid.value && password.value) {
-    emit('change', { password: password.value })
+    emit('change', password.value)
     visible.value = false
-    password.value = ''
   }
+}
+
+function handleHide() {
+  // 主要解决用户打开应用上锁，没设置密码就关闭弹窗，此时modelValue的值已经改了。
+  // 延迟时间是为了设置了密码回调没有这个回调快，就会导致设置了密码后，modelValue又被改回去了
+  setTimeout(() => {
+    modelValue.value = !!lockStore.lockData.password;
+  }, 300)
 }
 
 function onKeyDown() {

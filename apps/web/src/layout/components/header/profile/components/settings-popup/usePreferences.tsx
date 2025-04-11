@@ -257,11 +257,15 @@ export function usePreferencesPanel() {
 								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return <SimulationShortcut {...item.props} {...props} onChange={() => {
-									if (simulation.shortcutKey !== item.value) {
-										saveUserConfig(item)
-									}
-								}} />
+								return <SimulationShortcut
+									{...item.props}
+									{...props}
+									onChange={() => {
+										if (simulation.shortcutKey !== item.value) {
+											saveUserConfig(item)
+										}
+									}}
+								/>
 							}
 						}
 					]
@@ -394,8 +398,8 @@ export function usePreferencesPanel() {
 									<LockAppComponent
 										{...item.props}
 										{...props}
-										onChange={(data) => {
-											lockStore.setLockData({ password: data.password })
+										onChange={(password) => {
+											lockStore.setPassword(password)
 										}}
 									/>
 								);

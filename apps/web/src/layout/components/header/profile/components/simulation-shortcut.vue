@@ -1,8 +1,25 @@
 <template>
-  <div class="flex items-center gap-2">
-    <InputText type="text" :placeholder="$t('设置快捷键')" :invalid="invalid" @keydown="handleKeydown" v-model="shortcutKey"
-      @blur="handleBlur" />
+  <div class="flex items-center gap-2 relative">
+    <InputText 
+      type="text" 
+      :placeholder="$t('设置快捷键')" 
+      :invalid="invalid" 
+      @keydown="handleKeydown" 
+      v-model="shortcutKey"
+      @blur="handleBlur" 
+      @change="handleChange"
+    />
     <RxButton :label="$t('重置')" severity="secondary" outlined @click="onReset" />
+
+    <Message 
+      v-if="invalid" 
+      severity="error" 
+      size="small" 
+      variant="simple" 
+      class="absolute top-[calc(100%+4px)] left-[6px]"
+    >
+        {{ $t('快捷键已被占用') }}
+      </Message>
   </div>
 </template>
 
@@ -74,25 +91,18 @@ function onReset() {
 }
 
 function handleBlur() {
-  const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
-  console.log('keyboard', keyboard)
   emit('change', modelValue.value)
-  // electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
-  //   .then((value: boolean) => {
-  //     console.log('value', value);
-  //     if (value) {
-  //       emit('change', modelValue.value)
-  //     } else {
-  //       toast.add({
-  //         severity: 'error',
-  //         summary: $t('操作失败'),
-  //         detail: $t('快捷键已被占用'),
-  //         ...Object.assign(({ life: 3000 } as ToastMessageOptions))
-  //       })
-  //     }
-  //   })
-
 }
+
+function handleChange() { 
+  invalid.value = true;
+}
+
+onMounted(async () => {
+  const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+  const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
+  invalid.value = !isKeyboard
+})
 </script>
 
 <style lang="scss" scoped>

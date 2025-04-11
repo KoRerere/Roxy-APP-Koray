@@ -18,7 +18,7 @@
             <RxInputText 
               type="password" 
               v-model="password" 
-              placeholder="请输入密码" 
+              :placeholder="$t('请输入密码')" 
               class="flex-1" 
               @keydown.enter="handleUnlock" 
               :invalid="invalid"
@@ -60,15 +60,16 @@ const router = useRouter()
 const inputRef = ref()
 
 const lockStore = useLock()
-const { lockData, resetLockData, setLockData } = lockStore
+const { resetLockData, closeLockMark, checkPassword } = lockStore
 const invalid = ref(false)
 
 // 触发解锁动作
-const handleUnlock = () => {
-  if (password.value === lockData.password) {
-    setLockData({ openScreenLock: false })
+const handleUnlock = async () => {
+  const result = await checkPassword(password.value)
+  if (result) {
     password.value = ''
     invalid.value = false
+    closeLockMark();
   } else {
     inputRef.value?.$el?.querySelector('input')?.select()
     invalid.value = true;
@@ -79,16 +80,20 @@ const handleChange = () => {
   invalid.value = false
 }
 
+let timer: NodeJS.Timeout | null = null;
+let trendsMark: HTMLElement | null = null;
+
 // 退出登录
 const handleLogout = () => {
   showPageLoading()
   userStore.clearUserInfo();
   resetLockData()
+  trendsMark && document.body!.removeChild(trendsMark)
+  timer && clearInterval(timer)
+  password.value = ''
   router.push({ name: "login" });
 }
 
-let timer: NodeJS.Timeout | null = null;
-let trendsMark: HTMLElement | null = null;
 onMounted(() => {
   if (lockStore.isLocked) {
     timer && clearInterval(timer)
