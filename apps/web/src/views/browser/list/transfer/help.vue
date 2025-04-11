@@ -3,15 +3,6 @@ import { $t } from '/@/locales';
 
 const emit = defineEmits(['close'])
 
-const videoPlayer = useTemplateRef('video')
-
-function togglePlay() {
-  if (videoPlayer.value!.paused) {
-    videoPlayer.value!.play()
-  } else {
-    videoPlayer.value!.pause()
-  }
-}
 </script>
 
 <template>
@@ -25,7 +16,7 @@ function togglePlay() {
       <li class="description">{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。') }}</li>
       <li class="description">{{ $t('要转移到其他人的工作空间，您需要他们的工作空间 ID。这可以通过在 Workspace 管理模式中点击设置按钮来复制。') }}</li>
     </ol>
-    <video ref="video" class="block w-full rounded-md cursor-pointer" autoplay muted loop playsinline @click="togglePlay">
+    <video class="block w-full rounded-md" autoplay muted loop playsinline>
       <source src="/video/copy_workspace_id.mp4" type="video/webm" />
     </video>
     <RxButton class="self-end" @click="$emit('close')" size="md" :label="$t('我明白了')" />

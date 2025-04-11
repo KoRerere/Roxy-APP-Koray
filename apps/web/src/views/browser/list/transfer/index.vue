@@ -4,9 +4,11 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import TransferHelp from '/@/views/browser/list/transfer/help.vue'
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
+const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
-
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
 const columns = [
@@ -48,11 +50,47 @@ const columns = [
 async function tableRequest(params: any) {
   return API.window.userGetTransferReceiveWindowListList(params)
 }
+
+async function howToGetHelp() {
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(TransferHelp, {
+        onClose: () => {
+          dialogInstance.hideModal()
+        },
+        onConfirm: () => {
+          dialogInstance.hideModal()
+        },
+      })
+    }
+  })
+}
 </script>
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
   <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false" :show-actions="false" :show-table-header="false">
+    <template #table-empty>
+      <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无转移窗口数据')">
+        <template #extra>
+          <div class="flex flex-col gap-3 help">
+            <div>{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。或者使用工作空间 ID 转移到他人的工作空间。') }}</div>
+            <i18n-t tag="div" :keypath="$t('更多信息请查看：{link}。', { link: '{link}' })" scope="global">
+              <template #link>
+                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('工作空间 ID') }}</span>
+              </template>
+            </i18n-t>
+          </div>
+        </template>
+      </CustomEmpty>
+    </template>
     <template #profile="{ data }">
       <ProfileInfo :workspace-name="workspaceName" :data="data" readonly />
     </template>
@@ -97,5 +135,15 @@ async function tableRequest(params: any) {
   font-family: "JetBrains Mono";
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.help {
+  color: var(--Colors-text-text-inactive, #7D8387);
+  font-size: 12px;
+  line-height: 20px;
+
+  &-link {
+    color: var(--Colors-text-text-link, #11A3FD);
+  }
 }
 </style>

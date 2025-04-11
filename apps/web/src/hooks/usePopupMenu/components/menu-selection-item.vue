@@ -16,7 +16,7 @@ const value = item[field ?? 'name']
 </script>
 
 <template>
-  <a class="max-w-50 !pa-0">
+  <a class="max-w-80 !pa-0">
     <label class="flex items-center py-2 pl-2.5 pr-2.5 gap-2 cursor-pointer w-full" :for="value">
       <RadioButton v-if="type === 'single'" v-model="selected" name="radio" :input-id="value" :value="value" />
       <Checkbox v-if="type === 'multiple'" v-model="selected" name="checkbox" :input-id="value" :value="value" />

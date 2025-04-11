@@ -108,7 +108,7 @@ function getProxyOperation() {
       },
     },
     {
-      label: $t('选择代理'),
+      label: $t('选择已有代理'),
       icon: 'base/rx_ic_exchange',
       visible: !isProxy.value && !role.isViewer,
       command: () => {
@@ -178,7 +178,7 @@ function getAccountOperation() {
       },
     },
     {
-      label: $t('选择平台账号'),
+      label: $t('选择已有平台账号'),
       visible: !role.isViewer,
       icon: 'base/rx_ic_exchange',
       command: () => {

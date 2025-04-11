@@ -90,7 +90,8 @@ export function getColumns() {
         alignFrozen: 'right',
         slot: 'actions',
         style: {
-          width: '11%',
+          width: '0rem',
+          minWidth: '120px',
         }
       },
     ],

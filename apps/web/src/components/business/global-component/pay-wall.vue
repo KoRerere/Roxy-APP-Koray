@@ -62,7 +62,7 @@ const reCalculatePosition = debounce(() => {
     if (showPayWallOptions.value?.params.type === 'synchronizer') {
       handleSynchronizerClick(showPayWallOptions.value.event)
     } else {
-      popoverRef.value?.getRef().alignOverlay()
+      popoverRef.value?.getRef()?.alignOverlay()
     }
   }
 }, 0)
@@ -75,7 +75,7 @@ emitter.on('showPayWall', (options) => {
   currentType.value = params.type
   reCalculatePosition()
   console.log('event', event)
-  popoverRef.value?.getRef().show(event)
+  popoverRef.value?.getRef()?.show(event)
 })
 
 
@@ -86,7 +86,7 @@ function handleSynchronizerClick(event: Event) {
     const { left, top } = a.getBoundingClientRect()
     const popoverLeft = left + a.clientWidth
     setTimeout(() => {
-      const container = popoverRef.value?.getRef().container
+      const container = popoverRef.value?.getRef()?.container
       if (container) {
         container.style.top = `${top - container.offsetHeight / 2}px`
         container.style.left = `${popoverLeft}px`
@@ -96,12 +96,12 @@ function handleSynchronizerClick(event: Event) {
 }
 
 function toUpgrade(event: Event) {
-  popoverRef.value?.getRef().toggle(event)
+  popoverRef.value?.getRef()?.toggle(event)
   toUpgradePlan()
 }
 
 function toDocument(event: Event) {
-  popoverRef.value?.getRef().toggle(event)
+  popoverRef.value?.getRef()?.toggle(event)
   window.open(currentText.value.document, '_blank')
 }
 
