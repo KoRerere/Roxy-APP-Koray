@@ -1,3 +1,3 @@
 import { net } from 'electron'
 
-globalThis.fetch = net.fetch
+Reflect.set(globalThis, 'fetch', net.fetch)
