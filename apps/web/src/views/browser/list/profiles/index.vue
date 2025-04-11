@@ -398,14 +398,15 @@ async function onTransfer(datas: Data[]) {
         onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
           dialogInstance.hideModal()
           if (!isSelf) {
+            showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
             router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 转移成功后，切换到转移窗口 tab
             emit('switchTab', 'rx_1004')
           } else {
             if (needRefresh) {
               onRefreshTable()
             }
+            showToast(0, $t('转移成功'))
           }
-          showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
           resolve()
         },
       })
@@ -793,7 +794,7 @@ defineExpose({
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'" @click.stop="_cache.extend = !_cache.extend" />
+        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="_cache.extend = !_cache.extend" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">

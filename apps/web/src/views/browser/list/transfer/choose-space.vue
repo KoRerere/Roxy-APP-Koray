@@ -4,6 +4,8 @@ import { API } from '/@/api'
 import { $t } from '/@/locales';
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { useWorkspaceStore } from "/@/stores/workspace";
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
@@ -12,6 +14,7 @@ const { ids: windowIds } = defineProps<{
 }>()
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const [dialogInstance] = RxUseDialog()
 
 const selectedWorkspace = defineModel<Data>('modelValue')
 
@@ -65,6 +68,29 @@ async function getTransferHistory(event: MouseEvent) {
   chooseRef.value?.show(event, event.target!)
 }
 
+async function howToGetHelp() {
+  chooseRef.value?.hide()
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(TransferHelp, {
+        onClose: () => {
+          dialogInstance.hideModal()
+        },
+        onConfirm: () => {
+          dialogInstance.hideModal()
+        },
+      })
+    }
+  })
+}
+
 function clearSearch() {
   search.value = ''
   spaceList.value = historyList.value
@@ -114,6 +140,14 @@ function getAvatarStyle(workspacePicture: string) {
     </div>
     <RyPopover ref="choose">
       <div class="w-125 relative flex flex-col gap-3 pa-3">
+        <div class="flex justify-between items-center">
+          <div class="header">{{ $t('选择空间') }}</div>
+          <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
+            <template #link>
+              <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
+            </template>
+          </i18n-t>
+        </div>
         <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch">
           <template #icon>
             <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
@@ -171,6 +205,23 @@ function getAvatarStyle(workspacePicture: string) {
   color: var(--Colors-text-text-placeholder, #575D60);
   font-size: 14px;
   line-height: var(--Line-Height-text-lg, 20px);
+}
+
+.header {
+  color: var(--Colors-text-text-primary, #111213);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.help {
+  color: var(--Colors-text-text-inactive, #7D8387);
+  font-size: 12px;
+  line-height: 20px;
+
+  &-link {
+    color: var(--Colors-text-text-link, #11A3FD);
+  }
 }
 
 .title {
