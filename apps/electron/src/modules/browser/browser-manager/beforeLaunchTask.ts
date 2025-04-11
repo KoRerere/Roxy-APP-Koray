@@ -216,7 +216,6 @@ export class BeforeLaunchTask {
       sandboxPermission,
       usePluginList,
       startupParam,
-      systemInfo = {},
       openWidth,
       openHeight,
       os,
@@ -224,14 +223,13 @@ export class BeforeLaunchTask {
       useGpu,
       workspaceId,
       openWorkbench,
-      windowRatioPosition
+      windowRatioPosition,
+      positionSwitch
     } = this.browserItem.winInfo
 
     const args = [
       ...defaultCLIArgs,
       `--user-data-dir=${this.browserItem.userDataDir}`,
-      '--window-position=0,0',
-      '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
@@ -277,12 +275,13 @@ export class BeforeLaunchTask {
       args.push(...userCustomArgs)
     }
 
-    const { winOpenType, OpenPositonX, OpenPositonY } = systemInfo
-    // 浏览器打开位置设置
-    if (winOpenType === 'pos') {
-      args.push(`--window-position=${OpenPositonX},${OpenPositonY}`)
-    }
-    else {
+
+    // 如果是全屏，则不设置窗口大小
+    if (!positionSwitch) {
+      args.push('--start-maximized')
+    } else {
+      args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
+
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
@@ -304,24 +303,6 @@ export class BeforeLaunchTask {
       }
       console.log('positions', positions)
       args.push(`--window-position=${positions.join(',')}`)
-    }
-
-    // 设置浏览器窗口大小
-    if (winOpenType === 'max') {
-      // 最大化
-      args.push(`--start-maximized`)
-    }
-    else if (winOpenType === 'min') {
-      // 最小化
-      args.push(`--start-minimized`)
-    }
-    else {
-      // 默认尺寸
-      // if (data.resolutionType === true) {
-      args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
-      // } else {
-      //   exe_strs.push(`--window-size=1280,720`);
-      // }
     }
 
     // 如果是移动端，打开开发者工具
