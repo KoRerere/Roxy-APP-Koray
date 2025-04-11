@@ -94,7 +94,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const osOptions = $dict_map.os.map(({ label, ...item }: any) => ({
     ...item,
-    // label,
+    label,
     icon: osIconMap[(label.toLocaleLowerCase()) as keyof typeof osIconMap],
     _versionOptions: $dict_map[`osversion_${label.toLocaleLowerCase()}`].map((vitem: any) => ({ ...vitem, label: `${label} ${vitem.label}`, _osValue: item.value })),
   }))
@@ -152,7 +152,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
             width: '66px',
             flex: 'none',
           },
-          // class: '!w-[60px] !flex-1',
+          overlayStyle: {
+            width: '120px',
+          },
+          class: 'items-center',
           change: async (item: any) => {
             const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {

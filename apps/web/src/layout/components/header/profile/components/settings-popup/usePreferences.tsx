@@ -17,7 +17,6 @@ import LockAppComponent from "../lock-app.vue";
 import { useLock } from '/@/stores/lock'
 import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
-import { safeParseJSON } from '/@/utils/basic';
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 
@@ -258,9 +257,8 @@ export function usePreferencesPanel() {
 								return simulation
 							},
 							component: ({ item, ...props }: { item: Items; props: any }) => {
-								const oldValue = item.value;
 								return <SimulationShortcut {...item.props} {...props} onChange={() => {
-									if (oldValue !== item.value) {
+									if (simulation.shortcutKey !== item.value) {
 										saveUserConfig(item)
 									}
 								}} />

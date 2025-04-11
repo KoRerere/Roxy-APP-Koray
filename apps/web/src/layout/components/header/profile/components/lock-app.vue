@@ -12,12 +12,7 @@
           {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
         </span>
 
-        <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" />
-        <!-- <template v-if="invalid">
-          <Message v-for="msg in issues" severity="error" size="small" variant="simple" class="error-message">
-            {{ msg }}
-          </Message>
-        </template> -->
+        <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
         <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
         </RxButton>
       </div>
@@ -60,8 +55,6 @@ const visible = ref(false)
 
 const invalid = ref(false)
 
-const issues = ref<string[]>([])
-
 // 0为设置密码，1为重置密码
 const dialogType = ref<DialogType>(DialogType.SET_PASSWORD)
 
@@ -89,7 +82,7 @@ const handleBlur = () => {
 
   const result = schema.safeParse(password.value)
   invalid.value = !result.success
-  issues.value = result.error?.issues.map(issue => issue.message) ?? []
+  return result.success
 }
 
 const handleSubmit = () => {
@@ -97,6 +90,13 @@ const handleSubmit = () => {
     emit('change', { password: password.value })
     visible.value = false
     password.value = ''
+  }
+}
+
+function onKeyDown() {
+  const success = handleBlur();
+  if (success) {
+    handleSubmit();
   }
 }
 </script>

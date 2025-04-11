@@ -12,6 +12,7 @@ import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
 import Position from '/@/views/browser/create/components/position.vue'
+import Os from './os.vue'
 
 const props = defineProps({
   isEdit: {
@@ -103,13 +104,10 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <div class="flex-1 flex gap-2">
                     <InputGroup>
-                      <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value"
-                        @change="input.items[0].change?.(input.items[0], input.items)" />
+                      <Os v-bind="input.items[0]" v-model="input.items[0].value"
+                      @change="input.items[0].change?.(input.items[0], input.items)"/>
                       <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value"
                         @change="input.items[1].change?.(input.items[1], input.items)" />
-                      <!-- <template v-for="item in input.items" :key="item.name">
-                        <RxInputSelect v-bind="item" v-model="item.value" @change="item.change?.(item, input.items)" />
-                      </template> -->
                     </InputGroup>
                     <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value"
                       @change="input.items[2].change?.(input.items[2], input.items)" />

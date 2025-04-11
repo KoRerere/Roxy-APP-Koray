@@ -5,7 +5,7 @@
   >
     <slot />
   </motion.div> 
-  <LockScreenMark @delete="handleDelete" :key="lockStore.isLocked" v-if="lockStore.isLocked" />
+  <LockScreenMark />
 </template>
 
 <script setup lang="ts">
@@ -14,10 +14,6 @@ import LockScreenMark from './screen.vue'
 import { useLock } from '/@/stores/lock'
 
 const lockStore = useLock()
-
-async function handleDelete() {
-  window.location.reload();
-}
 </script>
 
 <style scoped lang="scss">

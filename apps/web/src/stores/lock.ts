@@ -1,11 +1,16 @@
 import { safeParseJSON } from '/@/utils'
 
 export const useLock = defineStore('lock', () => {
-  const localLockData = localStorage.getItem('lock')
-  const lockData = reactive(safeParseJSON(localLockData, {
+  const defaultValue = {
     password: '',
     openScreenLock: false,
-  }))
+  }
+  let __localLockData = localStorage.getItem('lock');
+  if (__localLockData == 'null') {
+    __localLockData = JSON.stringify(defaultValue)
+  }
+  const localLockData = __localLockData || JSON.stringify(defaultValue);
+  const lockData = reactive(safeParseJSON(localLockData, defaultValue))
 
   const route = useRoute()
   const isLocked = computed(() => lockData.openScreenLock && route.name !== 'login');

@@ -63,6 +63,8 @@ const renderTree = (tree: any, prefix = '') => {
     return {
       label: item.name,
       key: key,
+      type: item.type,
+      url: item.url,
       children: item.children ? renderTree(item.children, key) : [],
     }
   })
@@ -274,28 +276,28 @@ function deleteBookmarks() {
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('* 重新上传您的配置文件以更改书签。') }}</div>
       </div>
-      <div class="tree-wrapper">
+      <div class="tree-wrapper" v-if="tree.length">
         <Tree v-model:expandedKeys="expandedKeys" :value="tree" class="w-full">
           <template #nodetoggleicon="{ node, expanded }">
             <SvgIcon v-if="expanded" name="base/rx_ic_folder_open" size="18" />
             <SvgIcon v-else name="base/rx_ic_folder_close" size="18" />
           </template>
           <template #nodeicon="{ node }">
-            <SvgIcon v-if="node.type === 'url'" name="base/rx_ic_doc_line" size="18" />
+            <SvgIcon v-if="node.type === 'url'" name="base/rx_ic_link" size="18" />
           </template>
           <template #default="{ node }">
             <div v-if="node.type === 'folder'" class="bookmark-label">
               {{ node.label }}
             </div>
-            <div v-else class="flex items-center gap-2">
-              <span class="bookmark-label">{{ node.label }}</span>
-              <span class="bookmark-url">{{ node.url }}</span>
+            <div v-else class="gap-2 ellipsis-1 w-full" :title="node.label + ' ' + node.url">
+              <span class="bookmark-label url">{{ node.label }}</span>
+              <span class="bookmark-url" >{{ node.url }}</span>
             </div>
           </template>
         </Tree>
       </div>
 
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2" v-if="tree.length">
         <div class="bookmark-options-title">{{ $t('书签选项') }}</div>
         <div class="flex flex-col gap-4">
           <div v-for="bookmark in bookmarkOptions" class="flex items-center gap-2">
@@ -307,7 +309,7 @@ function deleteBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks"></RxButton>
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks" :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
         <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
       </div>
     </template>
@@ -347,6 +349,21 @@ function deleteBookmarks() {
   :deep(.p-tree-node-content) {
     padding-left: 0 !important;
   }
+
+  :deep(.p-tree-node-label) {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  :deep(.p-tree-node-content) {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  :deep(.p-tree-node-children) {
+    border-left: 1px solid var(--Colors-border-border-subtle, #C7D1D6);
+    margin-left: 12px;
+  }
 }
 
 .bookmark-options-title {
@@ -361,9 +378,15 @@ function deleteBookmarks() {
   font-weight: 400;
 }
 
+.bookmark-label.url {
+  margin-right: 8px;
+}
+
 .bookmark-url {
   color: var(--Colors-text-text-tertiary, #575D60);
   font-size: 14px;
   font-weight: 400;
 }
+
+
 </style>
