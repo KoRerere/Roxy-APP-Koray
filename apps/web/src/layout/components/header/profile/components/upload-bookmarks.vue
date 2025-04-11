@@ -28,7 +28,7 @@ type BookText = {
 
 // 显示书签只能上传500个url
 class MaximumLimitExceeded extends Error {
-  private static MAX_BOOKMARK_COUNT = 500;
+  static MAX_BOOKMARK_COUNT = 500;
   constructor() {
     super($t('书签数量超过{count}，请检查文件格式是否正确', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
   }
@@ -115,7 +115,7 @@ const bookmarkOptions = computed(() => {
 })
 
 let bookmarkCount = 0;
-function parserBookmarksDt(nodes) {
+function parserBookmarksDt(nodes: HTMLCollection) {
   return Array.from(nodes).map((item) => {
     if (item.localName === 'dt') {
       const children = Array.from(item.children)
@@ -139,15 +139,15 @@ function parserBookmarksDt(nodes) {
   }).filter(item => item)
 }
 
-function parserBookmarksDl(nodes) {
+function parserBookmarksDl(nodes: HTMLCollection) {
   const children = Array.from(nodes)
-  const title = children.find(n => n.localName === 'h3' || n.localName === 'h1')
-  const dl = children.find(n => n.localName === 'dl')
+  const title = children.find(n => n.localName === 'h3' || n.localName === 'h1') as HTMLDivElement
+  const dl = children.find(n => n.localName === 'dl') as HTMLDivElement
   if (title) {
     const item: BookmarkItem = {
       name: title.innerText,
       type: BookmarkType.FOLDER,
-      children: parserBookmarksDt(dl.children)
+      children: parserBookmarksDt(dl?.children || [])
     }
     return item
   }
