@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
-import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
-import { format } from 'date-fns'
 import { useMutationObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit'
 
@@ -26,7 +23,6 @@ const props = defineProps({
 
 const syncControlTableRef = useTemplateRef('syncControlTable')
 const toast = useToast()
-const workspaceStore = useWorkspaceStore()
 
 const searchParams = ref({
   projectIds: [],
@@ -156,7 +152,7 @@ const disabledRows = debounce(() => {
     const dialogMask = n.querySelector<HTMLDivElement>('.dialog-mask')
     if (!dialogMask) {
       const dialogMask = document.createElement('div')
-      dialogMask.setAttribute('title', $t('该窗口属于免费套餐的窗口，无法进行同步'))
+      dialogMask.setAttribute('title', $t('免费套餐的窗口，无法进行同步'))
       dialogMask.onclick = (event: MouseEvent) => {
         event.stopPropagation()
       }
