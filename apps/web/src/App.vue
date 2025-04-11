@@ -6,6 +6,7 @@ import { hidePageLoading, showPageLoading } from './utils';
 import { emitter, type MittEvents } from './utils/eventBus';
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 import { useUserStore } from '/@/stores/user'
+import LockScreen from '/@/components/lock-screen/index.vue'
 
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME);
 const [dialog] = useDialog()
@@ -61,7 +62,9 @@ emitter.on('kickedOut', (params) => {
 </script>
 
 <template>
-  <RouterView />
+  <LockScreen>
+    <RouterView />
+  </LockScreen>
   <GlobalComponent />
 </template>
 

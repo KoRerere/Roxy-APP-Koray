@@ -4,14 +4,14 @@ import Notification from './notification.vue'
 import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
 import WorkspaceManager from './workspace-manager/index.vue'
-import Lock from './lock/index.vue'
+import LockButton from './lock-button.vue'
 </script>
 
 <template>
   <div class="rx-layout-header">
     <WorkspaceManager />
     <div class="top-bar-items">
-      <Lock />
+      <LockButton />
       <Network />
       <Divider class="!ma-0" layout="vertical" />
       <ResourceUpdater />

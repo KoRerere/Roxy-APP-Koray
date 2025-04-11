@@ -19,6 +19,7 @@ import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
 import { safeParseJSON } from '/@/utils/basic';
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
+import { isWindows } from '/@/utils/common';
 
 export function usePreferencesPanel() {
 	const { saveUserConfig } = useCommonUtil();
@@ -138,7 +139,134 @@ export function usePreferencesPanel() {
 								);
 							},
 						},
+						{
+							label: $t("工作台"),
+							text: () => (
+								<div class="w-[370px]">
+									{$t(
+										"打开窗口时，是否打开工作台页面。",
+									)}
+								</div>
+							),
+							name: "openWorkbench",
+							value: data?.openWorkbench ?? 1,
+							props: {
+								trueValue: 1,
+								falseValue: 0,
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxToggleSwitch
+										{...item.props}
+										{...props}
+										onChange={() => saveUserConfig(item)}
+									/>
+								);
+							},
+						},
+						{
+							label: $t("搜索引擎"),
+							name: "searchEngine",
+							text: $t("打开窗口时，浏览器使用的默认搜索引擎"),
+							value: searchEngineOptions.find((item) => item.value === data?.searchEngine) ?? searchEngineOptions[0],
+							props: {
+								filter: false,
+								// optionValue: "value",
+								// optionLabel: "label",
+								options: searchEngineOptions
+							},
+							formatValue: (item: Items) => {
+								return item.value.value;
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxInputSelect
+										{...item.props}
+										{...props}
+										name={item.name}
+										onChange={() => {
+											saveUserConfig(item)
+										}}
+									/>
+								);
+							},
+						},
 					],
+				},
+				{
+					subtitle: $t('仿真输入'),
+					items: [
+						{
+							label: $t('是否启用'),
+							name: 'simulation',
+							value: !!simulation.enable,
+							props: {
+								trueValue: true,
+								falseValue: false,
+							},
+							formatValue: (item: Items) => {
+								simulation.enable = item.value
+								return simulation
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return (
+									<RxToggleSwitch
+										{...item.props}
+										{...props}
+										onChange={() => {
+											saveUserConfig(item, items)
+										}}
+									/>
+								);
+							},
+						},
+						{
+							label: $t('延迟时间'),
+							name: 'simulation',
+							value: simulation.delay,
+							hide: !simulation.enable,
+							__type: 'controlDisplay',
+							formatValue: (item: Items) => {
+								simulation.delay = item.value
+								return simulation
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								const oldValue = item.value;
+								return <IconField>
+									<InputNumber
+										{...item.props}
+										{...props}
+										onValueChange={() => {
+											if (oldValue !== item.value) {
+												saveUserConfig(item)
+											}
+										}}
+									/>
+									<InputIcon class="tip-text">ms</InputIcon>
+								</IconField>
+							}
+						},
+						{
+							label: $t('快捷键'),
+							name: 'simulation',
+							text: $t('快捷键必须以 {firstKey} 开头', { firstKey: isWindows ? 'Ctrl' : 'Command' }),
+							value: simulation.shortcutKey,
+							hide: !simulation.enable,
+							__type: 'controlDisplay',
+							formatValue: (item: Items) => {
+								simulation.shortcutKey = item.value
+								return simulation
+							},
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								const oldValue = item.value;
+								return <SimulationShortcut {...item.props} {...props} onChange={() => {
+									if (oldValue !== item.value) {
+										saveUserConfig(item)
+									}
+								}} />
+							}
+						}
+					]
 				},
 				{
 					subtitle: $t("本地设置"),
@@ -213,6 +341,24 @@ export function usePreferencesPanel() {
 							},
 						},
 						{
+							label: $t('导入Chrome书签'),
+							name: 'bookText',
+							text: $t('书签附件仅支持 .html 格式，浏览器窗口配置必须开启“书签”此功能方可生效！'),
+							value: data?.bookText,
+							component: ({ item, ...props }: { item: Items; props: any }) => {
+								return <UploadBookmarks
+									{...item.props}
+									{...props}
+									onChange={() => saveUserConfig(item)}
+								/>
+							},
+						},
+					],
+				},
+				{
+					subtitle: $t('行为设置'),
+					items: [
+						{
 							label: $t("关闭客户端"),
 							text: $t("当点击关闭客户端时"),
 							name: "closeSoft",
@@ -237,73 +383,6 @@ export function usePreferencesPanel() {
 								);
 							},
 						},
-						// TODO:(anbin) 软件设置 
-						{
-							label: $t("工作台"),
-							text: () => (
-								<div class="w-[370px]">
-									{$t(
-										"打开窗口时，是否打开工作台页面。",
-									)}
-								</div>
-							),
-							name: "openWorkbench",
-							value: data?.openWorkbench ?? 1,
-							props: {
-								trueValue: 1,
-								falseValue: 0,
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<RxToggleSwitch
-										{...item.props}
-										{...props}
-										onChange={() => saveUserConfig(item)}
-									/>
-								);
-							},
-						},
-						{
-							label: $t("搜索引擎"),
-							name: "searchEngine",
-							text: $t("打开窗口时，浏览器使用的默认搜索引擎"),
-							value: searchEngineOptions.find((item) => item.value === data?.searchEngine) ?? searchEngineOptions[0],
-							props: {
-								filter: false,
-								// optionValue: "value",
-								// optionLabel: "label",
-								options: searchEngineOptions
-							},
-							formatValue: (item: Items) => {
-								return item.value.value;
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								const oldValue = item.value.vlaue;
-								return (
-									<RxInputSelect
-										{...item.props}
-										{...props}
-										name={item.name}
-										onChange={() => {
-											saveUserConfig(item)
-										}}
-									/>
-								);
-							},
-						},
-						{
-							label: $t('导入Chrome书签'),
-							name: 'bookText',
-							text: $t('浏览器窗口配置必须开启“书签”此功能方可生效！'),
-							value: data?.bookText,
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return <UploadBookmarks
-									{...item.props}
-									{...props}
-									onChange={() => saveUserConfig(item)}
-								/>
-							},
-						},
 						{
 							label: $t('应用上锁'),
 							name: 'lockApp',
@@ -323,77 +402,6 @@ export function usePreferencesPanel() {
 									/>
 								);
 							},
-						}
-					],
-				},
-				{
-					subtitle: $t('仿真输入'),
-					items: [
-						{
-							label: $t('是否启用'),
-							name: 'simulation',
-							value: !!simulation.enable,
-							props: {
-								trueValue: true,
-								falseValue: false,
-							},
-							formatValue: (item: Items) => {
-								simulation.enable = item.value
-								return simulation
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<RxToggleSwitch
-										{...item.props}
-										{...props}
-										onChange={() => {
-											saveUserConfig(item, items)
-										}}
-									/>
-								);
-							},
-						},
-						{
-							label: $t('延迟时间'),
-							name: 'simulation',
-							value: simulation.delay,
-							hide: !simulation.enable,
-							__type: 'controlDisplay',
-							formatValue: (item: Items) => {
-								simulation.delay = item.value
-								return simulation
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								const oldValue = item.value;
-								return <IconField>
-									<InputNumber
-										{...item.props}
-										{...props}
-										onValueChange={() => {
-											if (oldValue !== item.value) {
-												saveUserConfig(item)
-											}
-										}}
-									/>
-									<InputIcon class="tip-text">ms</InputIcon>
-								</IconField>
-							}
-						},
-						{
-							label: $t('快捷键'),
-							name: 'simulation',
-							value: simulation.shortcutKey,
-							hide: !simulation.enable,
-							__type: 'controlDisplay',
-							formatValue: (item: Items) => {
-								simulation.shortcutKey = item.value
-								return simulation
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return <SimulationShortcut {...item.props} {...props} onChange={() => {
-									saveUserConfig(item)
-								}} />
-							}
 						}
 					]
 				}

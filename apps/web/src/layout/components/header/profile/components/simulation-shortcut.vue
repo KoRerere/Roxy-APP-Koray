@@ -11,15 +11,17 @@ import { upperFirst } from 'es-toolkit';
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 import { useToast } from 'primevue/usetoast'
-import type { ToastMessageOptions } from 'primevue/toast'
 import { $t } from '/@/locales'
 
 const emit = defineEmits(['change'])
 const invalid = ref(false)
 const modelValue = defineModel<string>({ default: DEFAULT_SIMULATION_SHORTCUT_KEYS })
+  const firstKey = computed(() => {
+  return isWindows ? 'Ctrl' : 'Command'
+})
 const shortcutKey = computed(() => {
   const keys = Array.isArray(modelValue.value) ? modelValue.value : modelValue.value.split(' ')
-  return [isWindows ? 'Ctrl' : 'Command', ...keys].join(' + ')
+  return [firstKey.value, ...keys].join(' + ')
 })
 const toast = useToast()
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
@@ -57,7 +59,12 @@ function handleKeydown(event: KeyboardEvent) {
     };
     modelValue.value = keyCombination.join(' ')
   } else {
-    console.log('请先按下Ctrl或Cmd键');
+    toast.add({
+      severity: 'error',
+      summary: $t('操作失败'),
+      detail: $t(`请先按下 {firstKey} 键`, { firstKey: firstKey.value }),
+      life: 3000
+    })
   }
 }
 
@@ -92,5 +99,11 @@ function handleBlur() {
 .simulation {
   width: 100%;
   height: 100%;
+}
+
+.description {
+  color: var(--Colors-text-text-tertiary, #575D60);
+  font-size: 12px;
+  line-height: 20px; /* 166.667% */
 }
 </style>
