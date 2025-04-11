@@ -4,18 +4,16 @@
     <RxButton v-if="!!lockStore.lockData.password" severity="secondary" outlined @click="handleResetPassword">{{
       $t('重置密码') }}</RxButton>
   </div>
-  <Dialog v-model:visible="visible" :header="$t('重置密码')" :modal="true" :draggable="false" :resizable="false"
-    :closable="false">
-    <div class="flex flex-col gap-2">
-      <div class="flex flex-col gap-2">
-        <span class="text-sm text-gray-500">
-          {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
-        </span>
+  <Dialog v-model:visible="visible" :header="$t('重置密码')" :modal="true" :draggable="false" style="width: 384px;">
+    <div class="flex flex-col gap-4">
+      <span class="text-sm text-gray-500">
+        {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
+      </span>
 
-        <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
-        <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
-        </RxButton>
-      </div>
+      <RxInputText v-model="password" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
+      
+      <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
+      </RxButton>
     </div>
   </Dialog>
 </template>

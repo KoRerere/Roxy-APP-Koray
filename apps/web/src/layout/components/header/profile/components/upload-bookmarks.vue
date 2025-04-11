@@ -116,6 +116,20 @@ const bookmarkOptions = computed(() => {
   ]
 })
 
+function convertFolder(nodes: BookmarkItem[]) {
+  // name一样的话，就把children合并为一个即可
+  const newNodes: BookmarkItem[] = []
+  for (const node of nodes) {
+    const item = newNodes.find(item => item.name == node.name);
+    if (item) {
+      item.children = [...(item.children || []), ...(node.children || [])]
+    } else {
+      newNodes.push(node)
+    }
+  }
+  return newNodes
+}
+
 let bookmarkCount = 0;
 function parserBookmarksDt(nodes: HTMLCollection) {
   return Array.from(nodes).map((item) => {
@@ -134,7 +148,7 @@ function parserBookmarksDt(nodes: HTMLCollection) {
         return {
           name: a.innerText,
           type: BookmarkType.URL,
-          url: a.href,
+          url: a.href
         }
       }
     }
@@ -149,7 +163,7 @@ function parserBookmarksDl(nodes: HTMLCollection) {
     const item: BookmarkItem = {
       name: title.innerText,
       type: BookmarkType.FOLDER,
-      children: parserBookmarksDt(dl?.children || [])
+      children: convertFolder(parserBookmarksDt(dl?.children || []))
     }
     return item
   }
@@ -358,11 +372,22 @@ function deleteBookmarks() {
   :deep(.p-tree-node-content) {
     overflow: hidden;
     white-space: nowrap;
+    gap: 8px;
   }
 
   :deep(.p-tree-node-children) {
     border-left: 1px solid var(--Colors-border-border-subtle, #C7D1D6);
     margin-left: 12px;
+    gap: 12px;
+    padding-left: 20px;
+  }
+
+  :deep(.p-tree-node-leaf > .p-tree-node-content .p-tree-node-toggle-button) {
+    display: none;
+  }
+
+  :deep(.p-tree-node-toggle-button) {
+    color: var(--Colors-icon-icon-primary, #2C2E30);
   }
 }
 

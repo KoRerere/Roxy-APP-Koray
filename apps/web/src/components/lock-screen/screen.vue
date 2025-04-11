@@ -23,12 +23,13 @@
               @keydown.enter="handleUnlock" 
               :invalid="invalid"
               autofocus
+              @change="handleChange"
+              ref="inputRef"
             />
-            <RxButton class="step-plus" icon="base/rx_ic_arrow_right_2" outlined severity="secondary" @click="handleUnlock">
-              
-            </RxButton>
 
-            <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-0">
+            <RxButton class="step-plus" icon="base/rx_ic_arrow_right_2" outlined severity="secondary" @click="handleUnlock" />
+
+            <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-[6px]">
               {{ $t('密码错误') }}
             </Message>
           </div>
@@ -56,6 +57,7 @@ import { motion, AnimatePresence } from 'motion-v';
 const password = ref('')
 const userStore = useUserStore()
 const router = useRouter()
+const inputRef = ref()
 
 const lockStore = useLock()
 const { lockData, resetLockData, setLockData } = lockStore
@@ -66,9 +68,15 @@ const handleUnlock = () => {
   if (password.value === lockData.password) {
     setLockData({ openScreenLock: false })
     password.value = ''
+    invalid.value = false
   } else {
+    inputRef.value?.$el?.querySelector('input')?.select()
     invalid.value = true;
   }
+}
+
+const handleChange = () => {
+  invalid.value = false
 }
 
 // 退出登录
