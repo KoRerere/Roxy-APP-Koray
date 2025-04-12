@@ -55,7 +55,7 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.11.0",
+    "@antfu/eslint-config": "^4.12.0",
     "@dotenvx/dotenvx": "^1.38.4",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.11",
@@ -75,7 +75,7 @@
     "tsx": "^4.19.3",
     "turbo": "^2.5.0",
     "typescript": "^5.8.3",
-    "vite": "^6.2.5",
+    "vite": "^6.2.6",
     "vite-plugin-dts": "^4.5.3"
   },
   "pnpm": {

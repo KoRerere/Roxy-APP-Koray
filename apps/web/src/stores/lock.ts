@@ -1,10 +1,10 @@
 import { safeParseJSON } from '/@/utils'
-import { useSubscribe } from '/@/components/business/global-component/useSubscribe'
+import { useCommonStore } from '/@/stores/common';
 
 const LOCK_KEY = '__lock__';
 
 export const useLock = defineStore('lock', () => {
-  const { isMainWindow } = useSubscribe()
+  const { isMainWindow } = storeToRefs(useCommonStore())
 
   const defaultValue = {
     password: '',

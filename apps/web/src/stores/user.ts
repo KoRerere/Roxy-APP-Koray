@@ -11,6 +11,7 @@ import { useRoleStore } from "/@/stores/role";
 import router from "/@/router";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
+import { encryptAESGCM } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -190,8 +191,8 @@ export const useUserStore = defineStore(
     }
 
     /** 记住我的时候需要保存密码 */
-    function setPassword(pwd: string) {
-      password.value = btoa(pwd);
+    async function setPassword(pwd: string) {
+      password.value = await encryptAESGCM(pwd);
     }
 
     const initUserInfo = async () => {

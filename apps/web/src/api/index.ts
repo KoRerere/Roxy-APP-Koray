@@ -21,6 +21,7 @@ import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { useLock } from '/@/stores/lock'
+import { useCommonStore } from '/@/stores/common'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -74,7 +75,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
 })
 
 const closeOtherWindow = debounce(async () => {
-  const isMainWindow = await electronAPI.send('app:isMainWindow')
+  const isMainWindow = await useCommonStore().getIsMainWindow()
   if (!isMainWindow) {
     window.close()
   }
