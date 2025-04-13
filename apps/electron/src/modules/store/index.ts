@@ -9,7 +9,6 @@ import { join } from 'node:path'
 import { isPackaged } from '/@/utils'
 import { loadLocaleMessages } from '/@/locales'
 import { app } from 'electron'
-import { UserGetSearchEnginesListData } from '@roxy/backend-api'
 
 export interface StoreType {
   language: string
@@ -56,8 +55,6 @@ export interface StoreType {
   deviceId?: string
   /** 是否开启工作台, 0: 不开启, 1: 开启*/
   openWorkbench?: 0 | 1
-  /** 搜索引擎列表 */
-  searchEngines: UserGetSearchEnginesListData['data']
   /** 订阅等级 */
   subLevel?: string
   simulation: {
@@ -94,7 +91,6 @@ const defaultValues: StoreType = {
   ipChecker: '',
   isExternalWeb: false,
   openWorkbench: 1,
-  searchEngines: [],
   subLevel: '',
   simulation: {
     delay: 100,
@@ -176,7 +172,6 @@ async function initStore() {
     const lastStore = JSON.parse(config)
     Object.assign(store, lastStore)
     await fetchUserConfig()
-    updateSearchEngines()
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
     // if (!messages[store.language]) {
     //   store.language = messages[systemLanguage] ? systemLanguage : 'en'
@@ -224,14 +219,6 @@ async function renderEjsFile() {
   ejs.renderFile(join(basePath, 'blockDomain.ejs'), { baseUrl }, (err, str) => {
     writeFile(join(basePath, 'blockDomain.html'), str)
   })
-}
-
-/** 更新搜索引擎 */
-export async function updateSearchEngines() {
-  const { code, data } = await API.platform.userGetSearchEnginesList()
-  if (code === 0) {
-    store.searchEngines = data
-  }
 }
 
 /** 是否可以使用群控 */

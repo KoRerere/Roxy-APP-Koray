@@ -152,6 +152,8 @@
   "个人信息": "Profile",
   "个人头像": "Profile Picture",
   "串行延迟": "Serial delay",
+  "您的 IP 地址已变更": "Your IP has changed",
+  "请注意，您访问账户的操作可能存在风险": "Please note that your action to access your accounts can be risky",
   "串行延迟模式下，窗口逐个依次执行延迟间隔": "In serial delay mode, profiles execute delay intervals sequentially",
   "为[{workspaceName}-{uid}]添加代理": "Add proxy for [{workspaceName}-{uid}]",
   "为[{workspaceName}-{uid}]添加平台账号": "Add account for [{workspaceName}-{uid}]",

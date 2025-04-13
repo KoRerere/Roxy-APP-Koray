@@ -11,7 +11,7 @@ import { useRoleStore } from "/@/stores/role";
 import router from "/@/router";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
-import { encryptAESGCM } from "/@/utils";
+import { encryptAESGCM, isWindows } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -174,14 +174,16 @@ export const useUserStore = defineStore(
 
         electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
 
-        // 免费用户或者过期用户，关闭窗口同步器
-        console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
-        if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
-          console.log('免费用户或者过期用户，关闭所有同步相关的弹窗')
-          electronAPI.send('syncControl:close');
-          setTimeout(() => {
-            electronAPI.send('syncControl:stop', false);
-          }, 500)
+        if (isWindows) {
+          // 免费用户或者过期用户，关闭窗口同步器
+          console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
+          if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
+            console.log('免费用户或者过期用户，关闭所有同步相关的弹窗')
+            electronAPI.send('syncControl:close');
+            setTimeout(() => {
+              electronAPI.send('syncControl:stop', false);
+            }, 500)
+          }
         }
       }
     }
