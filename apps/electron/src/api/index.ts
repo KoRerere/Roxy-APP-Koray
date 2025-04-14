@@ -5,8 +5,8 @@ import { getGatewayConfig, getOpenAPIUrl } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
-import { getCommonRequestHeaders, isDev, isPackaged } from '/@/utils'
-import { useAxiosLogger } from '/@/api/axios-logger'
+import { appCliStartArgs, getCommonRequestHeaders, isDev, isPackaged } from '/@/utils'
+import { attachAxiosLogger } from './axiosLogger'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
 // })
@@ -21,7 +21,12 @@ export const httpClient = new HttpClient({
 let commonRequestHeaders
 
 let baseURL = ''
-useAxiosLogger(httpClient.instance)
+
+console.log("appCliStartArgs['req-log']", appCliStartArgs['req-log'])
+// 开启请求日志
+if (appCliStartArgs['req-log']) {
+  attachAxiosLogger(httpClient.instance)
+}
 
 httpClient.instance.interceptors.request.use(async (config) => {
   if (!baseURL) {

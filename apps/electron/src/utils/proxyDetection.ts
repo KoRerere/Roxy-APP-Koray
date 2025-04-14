@@ -14,7 +14,6 @@ import {
 } from "/@/modules/roxynet";
 import { store } from "/@/modules/store";
 import { getSystemProxy } from "/@/utils/getSystemProxy";
-import { getAccurateProxyType } from "/@/utils/getAccurateProxyType";
 
 export interface ProxyDetectionResult {
   ip: string;
@@ -246,65 +245,6 @@ async function noProxy(winInfo: ProxyDetectionParams) {
 }
 
 /**
- * Https 代理
- */
-function checkHttpsProxy(winInfo: ProxyDetectionParams) {
-  const { promise, resolve, reject } = Promise.withResolvers();
-  const { checkChannel, host, port, proxyUserName, proxyPassword } = winInfo;
-
-  const auth =
-    proxyPassword && proxyUserName ? `${proxyUserName}:${proxyPassword}@` : ``;
-
-  // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
-  const httpsUrl = `https://${auth}${host}:${port}`;
-  console.log(`httpsUrl`, httpsUrl);
-  http
-    .get(
-      checkChannel,
-      {
-        headers: {
-          "user-agent": "electron ",
-        },
-        timeout: TIMEOUT,
-        agent: new HttpsProxyAgent(httpsUrl, {
-          timeout: TIMEOUT,
-          rejectUnauthorized: false,
-        }),
-      },
-      (res) => {
-        // res.pipe(process.stdout);
-        let data = ``;
-
-        res.on("data", (chunk) => {
-          data += chunk;
-        });
-
-        res.on("end", () => {
-          try {
-            console.log(`checkHttpsProxy data`, data);
-            const json = JSON.parse(data);
-            resolve(json);
-          } catch (error) {
-            console.log(`checkHttpsProxy error 转json 出错 返回 所有结果`);
-            reject(error);
-          }
-        });
-
-        res.on(`error`, (error) => {
-          console.log(`checkHttpsProxy error`, error);
-          reject(error);
-        });
-      },
-    )
-    .on(`error`, (error) => {
-      console.log(`checkHttpsProxy error`, error);
-      reject(error);
-    });
-
-  return promise;
-}
-
-/**
  * Http 代理
  */
 async function checkHttpProxy(
@@ -338,7 +278,8 @@ async function checkHttpProxy(
   let proxyConfig;
 
   if (host) {
-    const httpUrl = `${protocol}://${proxyUserName}:${proxyPassword}@${host}:${port}`;
+    const auth = proxyUserName ? `${proxyUserName}:${proxyPassword}@` : '';
+    const httpUrl = `${protocol}://${auth}${host}:${port}`;
     const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
     proxyConfig = {
       [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
@@ -356,6 +297,7 @@ async function checkHttpProxy(
     url: checkChannel,
     timeout: TIMEOUT,
     maxRedirects: 0,
+    proxy: false,
     ...proxyConfig,
   });
 
@@ -387,6 +329,7 @@ async function checkSocks5Proxy(parmes: any) {
     //   Host: new URL(checkChannel).host
     // },
     timeout: TIMEOUT,
+    proxy: false,
     [checkChannel.startsWith("https") ? "httpsAgent" : "httpAgent"]: agent,
   });
 
@@ -396,13 +339,13 @@ async function checkSocks5Proxy(parmes: any) {
 export async function detectNetwork(type?: "local" | "system") {
   type ||= store.systemProxySwitch ? "system" : "local";
   if (type === "system") {
-    const proxyResult = await getAccurateProxyType();
-    console.log("systemProxy", proxyResult);
-    const { type, host, port } = proxyResult
+    const systemProxy = await getSystemProxy();
+    console.log("systemProxy", systemProxy);
+    const [host, port] = systemProxy.split(":");
     return proxyDetection({
       host,
       port,
-      proxyCategory: type.toUpperCase(),
+      proxyCategory: "HTTP",
       systemProxySwitch: false,
     });
   } else {

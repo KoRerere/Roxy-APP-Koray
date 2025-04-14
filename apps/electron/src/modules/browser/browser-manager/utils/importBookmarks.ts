@@ -66,16 +66,16 @@ export async function importBookmarks(bookmarkPath: string, preferencesPath: str
     "version": 1
   }
 
-  if (!isReplace) {
-    if (await fileExists(bookmarkPath)) {
+  if (await fileExists(bookmarkPath)) {
+    if (!isReplace) {
       try {
         Object.assign(originBookmarks, JSON.parse(await readFile(bookmarkPath, 'utf-8')))
       } catch (error) {
 
       }
-    } else {
-      await mkdir(dirname(bookmarkPath), { recursive: true })
     }
+  } else {
+    await mkdir(dirname(bookmarkPath), { recursive: true })
   }
 
   let nextId = generateNextId(originBookmarks);

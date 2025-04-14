@@ -29,7 +29,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }, 50)
 
   watch(currentWorkspace, (val, old) => {
-    if (!val || val?.id === old?.id) return
+    if (!val || val?.id === old?.id) {
+      val?.id && hidePageLoading()
+      return
+    }
     clearTimeout(hidePageLoadingTimeout)
 
     debounceGetPayInfo()
