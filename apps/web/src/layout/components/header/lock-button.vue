@@ -59,7 +59,7 @@ const schemas = defineFormSchema([
       toggleMask: true,
       feedback: false,
       placeholder: $t('请输入密码'),
-      autoFocus: true,
+      autofocus: true,
     },
     rule: {
       trigger: 'blur',
