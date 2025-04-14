@@ -16,7 +16,7 @@ const emit = defineEmits(['close', 'confirm'])
 const [_, onlyErrorToast] = useResponseToast()
 
 const selectedWorkspace = ref()
-const transferParam = ref()
+const transferParam = ref<string[]>([])
 const isDelete = computed(() => !!transferParam.value?.includes('delete'))
 const optionsGroup = computed(() => [
   {
@@ -79,12 +79,16 @@ async function sendCode() {
 }
 
 async function onTransfer(isSelf: boolean) {
+  const _transferParam = isDelete.value
+    ? transferParam.value
+    : transferParam.value.filter(item => ['name', 'notes'].includes(item))// 取消彻底删除时过滤依赖项
+
   const { code, msg } = await API.window.userTransferWindowCreate({
     windowIds,
     targetWorkspaceId: selectedWorkspace.value.workspaceId,
     isDelete: isDelete.value,
     emailCode: emailCode.value,
-    transferParam: transferParam.value
+    transferParam: _transferParam
   })
   if (code !== 0) return onlyErrorToast(code, msg)
   emit('confirm', { isSelf, needRefresh: isDelete.value })
