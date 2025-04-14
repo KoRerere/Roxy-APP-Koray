@@ -11,9 +11,9 @@ const emit = defineEmits(['close'])
       <span class="header">{{ $t('如何获取空间 ID') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
-    <div class="description">{{ $t('RoxyBrowser 允许您在不同的工作空间之间转移窗口：') }}</div>
+    <div class="description">{{ $t('RoxyBrowser 允许您在不同的工作空间之间投送窗口：') }}</div>
     <ol class="flex flex-col gap-1 ma-0 pa-0 pl-5">
-      <li class="description">{{ $t('您可以直接将窗口转移到您拥有的其他工作空间。') }}</li>
+      <li class="description">{{ $t('您可以直接将窗口投送到您拥有的其他工作空间。') }}</li>
       <li class="description">{{ $t('要转移到其他人的工作空间，您需要他们的工作空间 ID。这可以通过在 Workspace 管理模式中点击设置按钮来复制。') }}</li>
     </ol>
     <video class="block w-full rounded-md" autoplay muted loop playsinline>

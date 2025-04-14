@@ -2,12 +2,9 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import { useUserStore } from "/@/stores/user"
 import { getDictMap, getFormData, setInputValueByFormData } from '/@/utils'
-import { SubLevelEnum } from '/@/enums/pay'
 
 const role = useRoleStore()
-const { userPayInfo } = storeToRefs(useUserStore())
 
 export function tableFilters(_params: any = {}) {
   return [
@@ -251,7 +248,6 @@ export async function getSorts() {
 }
 
 export function getOperation(_params: any = {}) {
-  const isFree = [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum)
 
   return [
     {
@@ -262,16 +258,16 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'transfer',
-      label: $t('转移窗口'),
+      label: $t('投送窗口'),
       icon: 'base/rx_ic_transfer',
-      tooltip: $t('转移窗口'),
+      tooltip: $t('投送窗口'),
       quick: true,
       multiple: true,
       multipleProps: {
         name: 'G3',
         showLabel: true,
       },
-      power: (role.isOwner || role.isManager) && !isFree,
+      power: role.isOwner || role.isManager,
     },
     {
       name: 'moveToProject',

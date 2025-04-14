@@ -26,7 +26,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     synchronizer: {
       title: $t('使用窗口同步器提高多任务处理效率'),
       description: () => {
-        return <I18nT keypath={$t('通过升级至 {member} 解锁窗口同步器功能\n\n窗口同步器模块同时包括{bold}等细分功能', { member: '{member}', bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('通过升级至 {member} 解锁窗口同步器功能\n\n窗口同步器模块同时包括{bold}等细分功能', { member: '{member}', bold: '{bold}' })} >
           {{
             member: () => <span class="font-bold">{$t('Roxy 会员')}</span>,
             bold: () => <span class="font-bold">{$t('窗口自动布局、同步窗口标签页、模拟键盘鼠标输入')}</span>
@@ -40,7 +40,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     createProfileTemplates: {
       title: $t('使用窗口模板快速新建环境'),
       description: () => {
-        return <I18nT keypath={$t('通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', bold: '{bold}' })} >
           {{
             member: () => <span class="font-bold">{$t('Roxy 会员')}</span>,
             bold: () => <span class="font-bold">{$t('系统、内核、UA、基础设置、高级指纹设置及偏好设置')}</span>
@@ -50,6 +50,20 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
       about: $t('关于窗口模板'),
       document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
     },
+    transfer: {
+      title: $t('使用窗口投送提升资源分享效率'),
+      description: () => {
+        return <I18nT scope="global" keypath={$t('窗口投送功能允许您在不同的工作空间之间投送窗口，包括您自己或他人的工作空间。投送{cloud}, 还包括 {bold}', { cloud: '{cloud}', bold: '{bold}' })} >
+          {{
+            cloud: () => <span class="font-bold">{$t('不仅保留窗口的云端数据')}</span>,
+            bold: () => <span class="font-bold">{$t('代理设置、平台账号、cookies 和指纹信息')}</span>
+          }}
+        </I18nT>
+      },
+      image: '/images/payments/pay-wall-transfer.png',
+      about: $t('关于窗口投送'),
+      // document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
+    }
   }
 })
 

@@ -584,8 +584,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     {
       type: 'radio',
       label: $t('窗口大小'),
-      name: 'positonSwitch',
-      value: data.positonSwitch ?? true,
+      name: 'positionSwitch',
+      value: data.positionSwitch ?? true,
       options: [
         { label: $t('自定义'), value: true },
         { label: $t('全屏'), value: false },
@@ -611,7 +611,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: data.openHeight ?? '1000',
         },
       ],
-      visible: initInputVisible(data.positonSwitch, true, true),
+      visible: initInputVisible(data.positionSwitch, true, true),
       slot: 'windowOpenSize',
     },
     {
@@ -619,7 +619,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'windowRatioPosition',
       value: data.windowRatioPosition || '0,0',
       tooltip: $t('浏览器窗口打开时在屏幕中的初始位置'),
-      visible: initInputVisible(data.positonSwitch, true, true),
+      visible: initInputVisible(data.positionSwitch, true, true),
       slot: 'windowRatioPosition',
     },
     // TODO:(anbin)

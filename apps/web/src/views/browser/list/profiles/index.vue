@@ -33,6 +33,8 @@ import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import { SubLevelEnum } from '/@/enums/pay'
+import { emitter } from '/@/utils/eventBus'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -54,10 +56,10 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
-const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [dialogInstance] = RxUseDialog()
+const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -68,9 +70,10 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const filtersMenu = ref()
-const operation = computed(getOperation)
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+
+const operation = computed(getOperation)
 
 const drawer = reactive({
   type: 'proxyList',
@@ -226,7 +229,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       showToast(0, $t('复制成功'))
       break
     case 'transfer':
-      await onTransfer(datas)
+      await onTransfer(datas, operate._event)
       break
     case 'moveToProject':
       await onMoveToProject(datas)
@@ -311,7 +314,7 @@ async function openBrowserBefore(data: Data | Data[]) {
 
   const result = await checkProfileStatus(datas)
   //过滤自身打开的窗口
-  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userStore.userInfo.id))
+  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
   // 1.如果没有其他人打开窗口，则直接打开
   if (!list.length) {
     onOpenBrowser(datas)
@@ -378,7 +381,19 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, i
   }
 }
 
-async function onTransfer(datas: Data[]) {
+async function onTransfer(datas: Data[], event?: MouseEvent) {
+  if (isNoPayUser.value) {
+    if (event) {
+      emitter.emit("showPayWall", {
+        event,
+        params: {
+          type: "transfer",
+        },
+      })
+    }
+    return
+  }
+
   const { promise, resolve, reject } = Promise.withResolvers<void>();
   dialogInstance.showModal({
     showHeader: false,
@@ -399,7 +414,7 @@ async function onTransfer(datas: Data[]) {
           dialogInstance.hideModal()
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
-            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 转移成功后，切换到转移窗口 tab
+            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 转移成功后，切换到投送中 tab
             emit('switchTab', 'rx_1004')
           } else {
             if (needRefresh) {

@@ -7,20 +7,23 @@ import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import simplePopup from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
-import { useRoleStore } from '/@/stores/role'
 import tags from '/@/views/browser/list/tags'
 import Profiles from './profiles'
 import Recycle from './recycle'
 import Transfer from './transfer'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useUserStore } from '/@/stores/user'
+import { useRoleStore } from '/@/stores/role'
 import { sleep } from '/@/utils'
 import { debounce } from 'es-toolkit'
+import { emitter } from '/@/utils/eventBus'
 
 const confirm = useConfirm()
 const dialog = useDialog()
 const route = useRoute()
-const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
+const role = useRoleStore()
+const { isNoPayUser } = storeToRefs(useUserStore())
 const [showToast, onlyErrorToast] = useResponseToast()
 
 type TabType = {
@@ -40,10 +43,10 @@ const rawTabs = [
   { id: 'rx_1003', label: $t('已打开'), name: 'opened', _params: { openStatus: true } },
 ]
 
-const suffixTabs = [
-  { id: 'rx_1004', label: $t('转移窗口'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer) },
-  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle), power: role.isOwner || role.isManager },
-].filter(item => item.power !== false)
+const suffixTabs = computed(() => [
+  { id: 'rx_1004', label: $t('投送中'), icon: 'base/rx_ic_transfer_solid', name: 'transfer', component: markRaw(Transfer), power: role.isOwner || role.isManager },
+  { id: 'rx_1001', label: $t('回收站'), icon: 'base/rx_ic_bin_2', name: 'trash', component: markRaw(Recycle) },
+].filter(item => item.power !== false))
 
 const tabIdLangMap = {
   rx_1002: $t('收藏'),
@@ -73,7 +76,7 @@ const sortTabs = computed({
 const hasSort = ref(false)
 const active = ref(tabs.value[0].id)
 const currentSuffixTab = computed(() => {
-  const component = suffixTabs.find(item => item.id === active.value)?.component
+  const component = suffixTabs.value.find(item => item.id === active.value)?.component
   return { component, visible: !!component }
 })
 const currentFilter = computed(() => tabs.value.find((tab: any) => tab.id === active.value))
@@ -86,7 +89,7 @@ watch(tabs, updateInkBar)
 
 onBeforeMount(() => {
   // 初始化时如果是 suffixTab 避免获取所有窗口列表
-  findActiveTab(suffixTabs)
+  findActiveTab(suffixTabs.value)
   getFilterList()
 })
 
@@ -117,7 +120,16 @@ function findActiveTab(list: TabType[]) {
   }
 }
 
-function switchTab(tabId: string) {
+function switchTab(tabId: string, event?: Event) {
+  if (isNoPayUser.value && tabId === 'rx_1004') {
+    emitter.emit('showPayWall', {
+      event: event as Event,
+      params: {
+        type: 'transfer',
+      },
+    })
+    return
+  }
   active.value = tabId
 }
 
@@ -248,7 +260,7 @@ async function hidePopover() {
       </Tabs>
       <div class="inline-flex justify-start flex-1 suffix">
         <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
-          @click="active = suffixItem.id">
+          @click="switchTab(suffixItem.id, $event)">
           <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
           <span>{{ suffixItem.label }}</span>
         </div>

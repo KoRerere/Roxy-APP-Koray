@@ -40,6 +40,11 @@ export const useUserStore = defineStore(
       return userPayInfo.value.subEndDate && Date.now() > userPayInfo.value.subEndDate
     })
 
+    /** 是否为未付费用户 */
+    const isNoPayUser = computed(() => {
+      return [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum)
+    })
+
     /** 用户身份 */
     const identityInfo = computed(() => {
       const { identity } = userInfo.value;
@@ -219,6 +224,7 @@ export const useUserStore = defineStore(
       appVersion,
       identityInfo,
       isExpiredUser,
+      isNoPayUser,
       setPassword,
       clearUserInfo,
       setToken,

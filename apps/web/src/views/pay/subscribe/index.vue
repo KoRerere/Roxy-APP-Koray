@@ -12,7 +12,7 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import SubscribeModal from './components/subscribe-modal.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, purchaseType, subOrderType } from '/@/enums/pay'
+import { OrderType, PayWay, purchaseType, PaySubOrderType } from '/@/enums/pay'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
@@ -149,7 +149,7 @@ async function onSubscribe() {
           purchaseType: purchaseType.Profile,
           subLevel: selectedPlan.value.subLevel,
           subscriptionMonths: selectedDuration.value.month,
-          subOrderType: subOrderType.Purchase,
+          subOrderType: PaySubOrderType.Purchase,
           ...params,
           orderType: OrderType.Subscribe,
         })

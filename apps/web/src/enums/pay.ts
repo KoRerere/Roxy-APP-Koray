@@ -58,6 +58,13 @@ export enum SubOrderType {
   Downgrade = "downgrade",
 }
 
+export enum PaySubOrderType {
+  /** 购买 */
+  Purchase = "purchase",
+  /** 升级 */
+  Upgrade = "upgrade",
+}
+
 export enum PaymentStatus {
   /** 支付成功 */
   Success = "TRADE_SUCCESS",
@@ -91,13 +98,6 @@ export enum PayIdentity {
   new = "new",
   /** 特邀用户 */
   invited = "invited",
-}
-
-export enum subOrderType {
-  /** 购买 */
-  Purchase = "purchase",
-  /** 升级 */
-  Upgrade = "upgrade",
 }
 
 export enum purchaseType {

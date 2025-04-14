@@ -72,7 +72,7 @@ async function onTransfer(isSelf: boolean) {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
-      <span class="header">{{ windowIds.length > 1 ? $t('转移 {count} 个窗口', { count: windowIds.length }) : $t('转移窗口') }}</span>
+      <span class="header">{{ windowIds.length > 1 ? $t('转移 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">
