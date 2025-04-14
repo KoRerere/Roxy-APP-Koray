@@ -205,6 +205,7 @@ async function parseBookmarks() {
   const file = await fileHandle.getFile();
   const html = await file.text();
   const result = parseHtml(html)
+  upLoadFileName.value = file.name
 
   if (!result.bookmarkBar.length && !result.other.length) {
     throw new Error($t('没有解析到书签'))
@@ -305,7 +306,7 @@ function deleteBookmarks() {
             </div>
             <div v-else class="gap-2 ellipsis-1 w-full" :title="node.label + ' ' + node.url">
               <span class="bookmark-label url">{{ node.label }}</span>
-              <span class="bookmark-url" >{{ node.url }}</span>
+              <span class="bookmark-url">{{ node.url }}</span>
             </div>
           </template>
         </Tree>
@@ -323,7 +324,8 @@ function deleteBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks" :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks"
+          :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
         <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
       </div>
     </template>
@@ -412,6 +414,4 @@ function deleteBookmarks() {
   font-size: 14px;
   font-weight: 400;
 }
-
-
 </style>
