@@ -11,11 +11,11 @@ import LockButton from './lock-button.vue'
   <div class="rx-layout-header">
     <WorkspaceManager />
     <div class="top-bar-items">
-      <LockButton />
       <Network />
       <Divider class="!ma-0" layout="vertical" />
       <ResourceUpdater />
       <Notification />
+      <LockButton />
       <Profile />
     </div>
   </div>

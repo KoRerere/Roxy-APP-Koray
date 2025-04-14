@@ -13,13 +13,13 @@ import type {
 import { $t } from "/@/locales";
 import FolderDirectory from "../folder-directory.vue";
 import { API } from '/@/api'
-import LockAppComponent from "../lock-app.vue";
-import { useLock } from '/@/stores/lock'
 import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
-import LockAppLabel from "../lock-app-label.vue";
+// import { useLock } from '/@/stores/lock'
+// import LockAppComponent from "../lock-app.vue";
+// import LockAppLabel from "../lock-app-label.vue";
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil();
@@ -38,7 +38,7 @@ export function usePreferencesPanel() {
       }))
     }
 
-    const lockStore = useLock()
+    // const lockStore = useLock()
 
     const simulation: Record<string, any> = data?.simulation ? data.simulation : {
       delay: DEFAULT_SIMULATION_DELAY,
@@ -385,26 +385,26 @@ export function usePreferencesPanel() {
                 );
               },
             },
-            {
-              label: () => <LockAppLabel />,
-              name: 'lockApp',
-              value: !!lockStore.lockData.password,
-              props: {
-                trueValue: true,
-                falseValue: false,
-              },
-              component: ({ item, ...props }: { item: Items; props: any }) => {
-                return (
-                  <LockAppComponent
-                    {...item.props}
-                    {...props}
-                    onChange={(password) => {
-                      lockStore.setPassword(password)
-                    }}
-                  />
-                );
-              },
-            }
+            // {
+            //   label: () => <LockAppLabel />,
+            //   name: 'lockApp',
+            //   value: !!lockStore.lockData.password,
+            //   props: {
+            //     trueValue: true,
+            //     falseValue: false,
+            //   },
+            //   component: ({ item, ...props }: { item: Items; props: any }) => {
+            //     return (
+            //       <LockAppComponent
+            //         {...item.props}
+            //         {...props}
+            //         onChange={(password) => {
+            //           lockStore.setPassword(password)
+            //         }}
+            //       />
+            //     );
+            //   },
+            // }
           ]
         }
       ],

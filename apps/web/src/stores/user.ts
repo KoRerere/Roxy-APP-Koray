@@ -215,6 +215,11 @@ export const useUserStore = defineStore(
       appVersion.value = version;
     });
 
+    function clearRememberMe() {
+      rememberMe.value = false
+      password.value = ''
+    }
+
     return {
       token,
       rememberMe,
@@ -234,6 +239,7 @@ export const useUserStore = defineStore(
       fetchUserInfo,
       getUserPayInfo,
       initUserInfo,
+      clearRememberMe
     };
   },
   {

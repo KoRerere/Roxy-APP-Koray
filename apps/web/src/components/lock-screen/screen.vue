@@ -96,10 +96,10 @@ let trendsMark: HTMLElement | null = null;
 // 退出登录
 const handleLogout = () => {
   showPageLoading()
+  userStore.clearRememberMe();
   userStore.clearUserInfo();
   resetLockData()
-  trendsMark && document.body!.removeChild(trendsMark)
-  timer && clearInterval(timer)
+  unlock()
   password.value = ''
   router.push({ name: "login" });
 }
