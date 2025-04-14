@@ -55,7 +55,7 @@ onBeforeMount(() => {
                 <div class="flex flex-1 items-center" :class="subItem.classes">
                   <div class="flex-1">
                     <div class="panel-item-label">
-                      {{ subItem.label }}
+                      <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
                     </div>
                     <div class="panel-item-text">
                       <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />

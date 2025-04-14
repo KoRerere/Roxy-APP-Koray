@@ -19,6 +19,7 @@ import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
+import LockAppLabel from "../lock-app-label.vue";
 
 export function usePreferencesPanel() {
   const { saveUserConfig } = useCommonUtil();
@@ -384,7 +385,7 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('应用上锁'),
+              label: () => <LockAppLabel />,
               name: 'lockApp',
               value: !!lockStore.lockData.password,
               props: {
