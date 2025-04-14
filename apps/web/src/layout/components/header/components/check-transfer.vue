@@ -78,11 +78,7 @@ async function onReceive() {
   handleBusinessCode(code, () => {
     showToast(code, msg)
     if (code !== 0) return
-    if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
-      // checkSecurityTips()
-    } else {
-      toProject()
-    }
+    toProject()
   })
   emit('close')
 }
@@ -93,26 +89,6 @@ async function onReject() {
   if (code !== 0) return
   emit('close')
 }
-
-// function checkSecurityTips() {
-//   dialogInstance.showModal({
-//     showHeader: false,
-//     modal: true,
-//     blockScroll: true,
-//     innerDialog: true,
-//     pt: {
-//       content: '!pa-0'
-//     },
-//     slots: {
-//       container: () => h(SecurityTips, {
-//         onClose: () => {
-//           dialogInstance.hideModal()
-//           toProject()
-//         }
-//       })
-//     }
-//   })
-// }
 
 async function toProject() {
   //接收完窗口后跳转到项目列表

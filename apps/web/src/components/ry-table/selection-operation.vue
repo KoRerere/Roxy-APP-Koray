@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { deepClone } from '/@/utils'
 
 interface Data {
   count: number
@@ -45,8 +46,7 @@ function batchOperation(event: MouseEvent, item: any) {
   if (item.disabled) {
     return
   }
-  item._event = event
-  emit('batchOperation', item)
+  emit('batchOperation', { ...deepClone(toRaw(item)), _event: event, _type: 'batch_quick' })
 }
 
 function onMore(event: Event) {

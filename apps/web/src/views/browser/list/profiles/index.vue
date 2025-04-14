@@ -14,7 +14,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
+import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue, deepClone } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
@@ -33,8 +33,10 @@ import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
-import { SubLevelEnum } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
+import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
+import { I18nT } from "vue-i18n"
+
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -229,7 +231,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       showToast(0, $t('复制成功'))
       break
     case 'transfer':
-      await onTransfer(datas, operate._event)
+      await onTransfer(datas, operate)
       break
     case 'moveToProject':
       await onMoveToProject(datas)
@@ -363,7 +365,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     operation,
     operationHandler: async (operate: any) => {
       try {
-        await operationHandler(operate, data)
+        const _operate = { ...deepClone(toRaw(operate)), _event: event }
+        await operationHandler(_operate, data)
       }
       catch (error) {
         console.log(error)
@@ -381,14 +384,38 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, i
   }
 }
 
-async function onTransfer(datas: Data[], event?: MouseEvent) {
+async function onTransfer(datas: Data[], operate?: any) {
   if (isNoPayUser.value) {
-    if (event) {
+    if (!role.isOwner) {
+      wcisToast({
+        severity: 'warn',
+        summary: $t('窗口投送不可用'),
+        detail: $t('请联系空间的拥有者进行升级。'),
+        life: 5000
+      })
+      return
+    }
+
+    if (operate._event && ['quick', 'batch_quick'].includes(operate._type)) {
       emitter.emit("showPayWall", {
-        event,
+        event: operate._event,
         params: {
           type: "transfer",
         },
+      })
+    } else {
+      wcisToast({
+        severity: 'warn',
+        summary: $t('窗口投送不可用'),
+        detail: h(I18nT, {
+          keypath: $t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' }),
+        }, {
+          link: () => h('a', {
+            class: 'cursor-pointer',
+            onClick: () => router.push({ name: 'subscribe-plan' }),
+          }, $t('升级会员'))
+        }),
+        life: 5000
       })
     }
     return

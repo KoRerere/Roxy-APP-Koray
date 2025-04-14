@@ -11,6 +11,8 @@ import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableReload from './table-reload.vue'
 import TableSort from './table-sort.vue'
+import { deepClone } from '/@/utils'
+
 
 defineOptions({
   inheritAttrs: false,
@@ -245,7 +247,8 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
     operation,
     operationHandler: async (operate: any) => {
       try {
-        await props.operationHandler(operate, event.data, 'single')
+        const _operate = { ...deepClone(toRaw(operate)), _event: event.originalEvent }
+        await props.operationHandler(_operate, event.data, 'single')
       }
       catch (error) {
         console.log(error)
@@ -259,8 +262,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     operation,
     operationHandler: async (operate: any) => {
       try {
-        operate._event = event
-        await props.operationHandler(operate, data, operationType)
+        const _operate = { ...deepClone(toRaw(operate)), _event: event }
+        await props.operationHandler(_operate, data, operationType)
       }
       catch (error) {
         console.log(error)

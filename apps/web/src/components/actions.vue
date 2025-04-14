@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { type Operation, operationPower } from '/@/utils'
+import { type Operation, operationPower, deepClone } from '/@/utils'
 
 interface Props {
   operation: Operation[]
@@ -20,8 +20,7 @@ function quickClick(event: MouseEvent, item: Operation) {
   if (item.disabled || loadingOperationMap?.[item.name as string]) {
     return
   }
-  item._event = event
-  emit('quickClick', item)
+  emit('quickClick', { ...deepClone(toRaw(item)), _event: event, _type: 'quick' })
 }
 
 function onMore(event: Event) {
@@ -32,12 +31,12 @@ function onMore(event: Event) {
 <template>
   <div class="flex items-center">
     <div class="flex items-center gap-2 quick">
-      <div class="quick-item" v-for="item in quickOperation" :key="item.name">
+      <div class="quick-item" :class="{ 'disabled': item.disabled || loadingOperationMap?.[item.name as string] }" v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
-        <div v-else class="flex items-center" @click.stop="quickClick($event, item)">
-          <RxSvgIcon v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" class="pointer-events-none quick-icon"
-            :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-            :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingOperationMap?.[item.name as string] }]" />
+        <div v-else class="flex items-center" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }"
+          @click.stop="quickClick($event, item)">
+          <RxSvgIcon class="pointer-events-none quick-icon" :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
+            :class="[item.iconClass, { 'pi-spin': loadingOperationMap?.[item.name as string] }]" />
         </div>
       </div>
       <div v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length" class="quick-item"
@@ -53,35 +52,30 @@ function onMore(event: Event) {
 </template>
 
 <style lang="scss" scoped>
-.quick {
-  &-item {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease-in-out;
+.quick-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
 
-    &:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
+  &:hover:not(.disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
   }
 
-  &-icon {
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-    color: var(--Colors-icon-icon-secondary, #575D60);
+  &.disabled {
+    cursor: not-allowed;
 
-    &:active:not(.disabled) {
-      color: orange;
-    }
-
-    &.disabled {
-      cursor: not-allowed;
+    :deep(svg) {
+      color: #d1d5db;
     }
   }
+}
+
+:where(.quick-icon) {
+  color: var(--Colors-icon-icon-secondary, #575D60);
 }
 </style>

@@ -68,33 +68,6 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
   }
 })
 
-const toastMap: Record<PayWallType, any> = {
-  synchronizer: () => {
-    showToast({
-      severity: 'warn',
-      summary: $t('同步器不可用'),
-      detail: $t('请联系空间的拥有者进行升级。'),
-      life: 5000
-    })
-  },
-  createProfileTemplates: () => {
-    showToast({
-      severity: 'warn',
-      summary: $t('无法创建模板'),
-      detail: $t('当前空间下无法创建窗口模板，请联系空间的拥有者进行升级。'),
-      life: 5000
-    })
-  },
-  transfer: () => {
-    showToast({
-      severity: 'warn',
-      summary: $t('窗口投送不可用'),
-      detail: $t('请联系空间的拥有者进行升级。'),
-      life: 5000
-    })
-  },
-}
-
 const currentText = computed(() => {
   return textMap.value[currentType.value!]
 })
@@ -112,11 +85,6 @@ const reCalculatePosition = debounce(() => {
 watch(isImageLoaded, reCalculatePosition, { immediate: true })
 
 emitter.on('showPayWall', (options) => {
-  if (!isOwner.value) {
-    toastMap[options.params.type]()
-    return
-  }
-
   showPayWallOptions.value = options
   const { event, params } = options
   currentType.value = params.type
