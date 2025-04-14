@@ -73,7 +73,7 @@ function onMore(event: Event) {
       <div v-for="(list, index) in groups" :key="index" class="multiple-group">
         <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
           @click="batchOperation($event, item._rawItem)">
-          <RxSvgIcon :name="item.icon" v-bind="item.iconProps" />
+          <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
           <span v-if="item.showLabel">{{ item.label }}</span>
         </div>
       </div>

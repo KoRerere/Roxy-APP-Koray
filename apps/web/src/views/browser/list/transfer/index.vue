@@ -29,7 +29,7 @@ const columns = [
     },
   },
   {
-    title: $t('转移至'),
+    title: $t('投送至'),
     key: 'transfer',
     slot: 'transfer',
     style: {
@@ -38,7 +38,7 @@ const columns = [
   },
   ,
   {
-    title: $t('转移发起时间'),
+    title: $t('投送发起时间'),
     key: 'createTime',
     getText: (row: any) => row.createTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
     style: {
@@ -81,7 +81,7 @@ async function howToGetHelp() {
       <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无投送窗口数据')">
         <template #extra>
           <div class="flex flex-col gap-3 help">
-            <div>{{ $t('您可以直接将窗口投送到您拥有的其他工作空间。或者使用工作空间 ID 转移到他人的工作空间。') }}</div>
+            <div>{{ $t('您可以直接将窗口投送到您拥有的其他工作空间。或者使用工作空间 ID 投送到他人的工作空间。') }}</div>
             <i18n-t tag="div" :keypath="$t('更多信息请查看：{link}。', { link: '{link}' })" scope="global">
               <template #link>
                 <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('工作空间 ID') }}</span>

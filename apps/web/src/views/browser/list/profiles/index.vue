@@ -414,13 +414,13 @@ async function onTransfer(datas: Data[], event?: MouseEvent) {
           dialogInstance.hideModal()
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
-            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 转移成功后，切换到投送中 tab
+            router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })// 投送成功后，切换到投送中 tab
             emit('switchTab', 'rx_1004')
           } else {
             if (needRefresh) {
               onRefreshTable()
             }
-            showToast(0, $t('转移成功'))
+            showToast(0, $t('投送成功'))
           }
           resolve()
         },

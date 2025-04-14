@@ -54,7 +54,7 @@ async function getTransferHistory(event: MouseEvent) {
   spaceList.value = [
     {
       key: SpaceType.History,
-      title: $t('转移历史'),
+      title: $t('投送历史'),
       items: history.slice(0, 3)
     },
     {

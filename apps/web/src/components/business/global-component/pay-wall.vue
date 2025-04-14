@@ -6,7 +6,10 @@ import { $t } from '/@/locales';
 import { useSimpleLocale } from '/@/stores/locale';
 import { type MittEvents, type PayWallType, emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
+import { useRoleStore } from "/@/stores/role"
+import { showToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 
+const { isOwner } = storeToRefs(useRoleStore())
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const popoverRef = useTemplateRef('popover')
 const currentType = ref<PayWallType | null>(null)
@@ -21,7 +24,6 @@ type TextMap = {
   document: string;
 }
 const textMap = computed<Record<PayWallType, TextMap>>(() => {
-
   return {
     synchronizer: {
       title: $t('使用窗口同步器提高多任务处理效率'),
@@ -53,10 +55,9 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     transfer: {
       title: $t('使用窗口投送提升资源分享效率'),
       description: () => {
-        return <I18nT scope="global" keypath={$t('窗口投送功能允许您在不同的工作空间之间投送窗口，包括您自己或他人的工作空间。投送{cloud}, 还包括 {bold}', { cloud: '{cloud}', bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('窗口投送功能允许您向任意的工作空间投送窗口，{bold}', { bold: '{bold}' })} >
           {{
-            cloud: () => <span class="font-bold">{$t('不仅保留窗口的云端数据')}</span>,
-            bold: () => <span class="font-bold">{$t('代理设置、平台账号、cookies 和指纹信息')}</span>
+            bold: () => <span class="font-bold">{$t('窗口投送不仅支持同步窗口云端数据，还包括代理设置、平台账号、Cookies 和指纹参数等相关信息')}</span>
           }}
         </I18nT>
       },
@@ -66,6 +67,33 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     }
   }
 })
+
+const toastMap: Record<PayWallType, any> = {
+  synchronizer: () => {
+    showToast({
+      severity: 'warn',
+      summary: $t('同步器不可用'),
+      detail: $t('请联系空间的拥有者进行升级。'),
+      life: 5000
+    })
+  },
+  createProfileTemplates: () => {
+    showToast({
+      severity: 'warn',
+      summary: $t('无法创建模板'),
+      detail: $t('当前空间下无法创建窗口模板，请联系空间的拥有者进行升级。'),
+      life: 5000
+    })
+  },
+  transfer: () => {
+    showToast({
+      severity: 'warn',
+      summary: $t('窗口投送不可用'),
+      detail: $t('请联系空间的拥有者进行升级。'),
+      life: 5000
+    })
+  },
+}
 
 const currentText = computed(() => {
   return textMap.value[currentType.value!]
@@ -84,12 +112,17 @@ const reCalculatePosition = debounce(() => {
 watch(isImageLoaded, reCalculatePosition, { immediate: true })
 
 emitter.on('showPayWall', (options) => {
+  if (!isOwner.value) {
+    toastMap[options.params.type]()
+    return
+  }
+
   showPayWallOptions.value = options
   const { event, params } = options
   currentType.value = params.type
   reCalculatePosition()
   console.log('event', event)
-  popoverRef.value?.getRef()?.show(event)
+  popoverRef.value?.getRef()?.show(event, event.target)
 })
 
 

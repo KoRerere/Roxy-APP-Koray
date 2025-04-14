@@ -12,6 +12,14 @@ export const getColumnsConfig = () => ({
       }
     },
     {
+      title: $t('备注'),
+      key: 'note',
+      slot: 'note',
+      style: {
+        width: '10%',
+      },
+    },
+    {
       title: $t('标签'),
       slot: 'tags',
     },

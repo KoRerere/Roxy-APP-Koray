@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RxAlert } from '/@/components/rx-alert/'
 import RxAvatar from "/@/components/rx-avatar";
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import SecurityTips from '/@/layout/components/header/components/security-tips.vue';
@@ -43,7 +44,7 @@ const columns = [
     },
   },
   {
-    title: $t('转移至'),
+    title: $t('投送至'),
     key: 'transfer',
     slot: 'transfer',
     style: {
@@ -78,7 +79,7 @@ async function onReceive() {
     showToast(code, msg)
     if (code !== 0) return
     if (!localStorage.getItem('NOT_REMIND_TRANSFER_SECURITY')) {
-      checkSecurityTips()
+      // checkSecurityTips()
     } else {
       toProject()
     }
@@ -93,25 +94,25 @@ async function onReject() {
   emit('close')
 }
 
-function checkSecurityTips() {
-  dialogInstance.showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    innerDialog: true,
-    pt: {
-      content: '!pa-0'
-    },
-    slots: {
-      container: () => h(SecurityTips, {
-        onClose: () => {
-          dialogInstance.hideModal()
-          toProject()
-        }
-      })
-    }
-  })
-}
+// function checkSecurityTips() {
+//   dialogInstance.showModal({
+//     showHeader: false,
+//     modal: true,
+//     blockScroll: true,
+//     innerDialog: true,
+//     pt: {
+//       content: '!pa-0'
+//     },
+//     slots: {
+//       container: () => h(SecurityTips, {
+//         onClose: () => {
+//           dialogInstance.hideModal()
+//           toProject()
+//         }
+//       })
+//     }
+//   })
+// }
 
 async function toProject() {
   //接收完窗口后跳转到项目列表
@@ -127,9 +128,10 @@ async function toProject() {
 <template>
   <div class="flex flex-col pa-6 pt-4 gap-5 popup">
     <div class="flex justify-between items-center">
-      <span class="header">Transfer profiles</span>
+      <span class="header">{{ $t('接收投送') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
+    <RxAlert class="w-full" type="warn" :closable="false" :content="$t('注意：使用他人的窗口可能存在潜在风险，请确保来源可靠。')"></RxAlert>
     <div class="h-120">
       <RyTable :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false">
         <template #profile="{ data }">
