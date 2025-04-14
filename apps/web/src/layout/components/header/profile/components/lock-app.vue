@@ -26,6 +26,12 @@
           }
         }"
       />
+
+      <template v-if="invalid">
+        <Message severity="error" size="small" variant="simple" class="error-message" v-for="issue in errorIssues">
+          {{ issue.message }}
+        </Message>
+      </template>
       
       <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
       </RxButton>
@@ -34,11 +40,10 @@
 </template>
 
 <script setup lang="ts">
-import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import RxButton from '/@/components/rx-button'
 import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import { $t } from "/@/locales";
-import { z } from 'zod'
+import { z, type ZodIssue } from 'zod'
 import { useLock } from '/@/stores/lock'
 
 const lockStore = useLock()
@@ -62,6 +67,8 @@ const visible = ref(false)
 
 const invalid = ref(false)
 
+const errorIssues = ref<ZodIssue[]>([])
+
 // 0为设置密码，1为重置密码
 const dialogType = ref<DialogType>(DialogType.SET_PASSWORD)
 
@@ -84,13 +91,18 @@ const handleResetPassword = () => {
 }
 
 const handleBlur = () => {
+  if (!password.value) return;
+  
   const schema = z.string()
-    .min(4)
-    .max(12)
-    .regex(/^[^\u4e00-\u9fa5]+$/)
+    .min(4, { message: $t('密码长度需为 4-12 位。') })
+    .max(12, { message: $t('密码长度需为 4-12 位。') })
+    .regex(/^[^\u4e00-\u9fa5]+$/, { message: $t('密码中包含不允许的字符。请使用字母、数字以及符号组合。') })
 
   const result = schema.safeParse(password.value)
   invalid.value = !result.success
+  if (!result.success) {
+    errorIssues.value = result.error?.issues || []
+  }
   return result.success
 }
 

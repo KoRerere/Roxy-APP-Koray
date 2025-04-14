@@ -25,7 +25,7 @@ async function selectDir(item: Items) {
 
 <template>
   <div class="flex gap-2">
-    <InputText v-bind="$attrs" class="flex-1" type="text" />
+    <InputText v-bind="$attrs" class="w-[186px]" type="text" />
     <RxButton outlined severity="secondary" icon="base/rx_ic_folder" @click="selectDir(item)" />
   </div>
 </template>

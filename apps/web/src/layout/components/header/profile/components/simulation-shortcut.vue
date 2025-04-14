@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2 relative">
+  <div class="flex items-center gap-2 relative flex-1">
     <InputText 
       type="text" 
       :placeholder="$t('设置快捷键')" 
@@ -8,8 +8,10 @@
       v-model="shortcutKey"
       @blur="handleBlur" 
       @change="handleChange"
+      class="w-[172px]"
     />
-    <RxButton :label="$t('重置')" severity="secondary" outlined @click="onReset" />
+
+    <RxButton class="w-[48px] !min-w-auto" :label="$t('重置')" severity="secondary" outlined @click="onReset" />
 
     <Message 
       v-if="invalid" 

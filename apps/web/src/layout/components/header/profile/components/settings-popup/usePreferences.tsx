@@ -231,7 +231,7 @@ export function usePreferencesPanel() {
               },
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 const oldValue = item.value;
-                return <IconField>
+                return <IconField class="w-full">
                   <InputNumber
                     {...item.props}
                     {...props}
@@ -240,6 +240,7 @@ export function usePreferencesPanel() {
                         saveUserConfig(item)
                       }
                     }}
+                    pt={{ root: { class: 'w-full' } }}
                   />
                   <InputIcon class="tip-text">ms</InputIcon>
                 </IconField>

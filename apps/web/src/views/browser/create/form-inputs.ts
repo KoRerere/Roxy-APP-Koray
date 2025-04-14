@@ -250,7 +250,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'userAgent',
       value: data.userAgent,
       icon: 'base/rx_ic_shuffle',
-      rows: 4,
+      rows: 3,
       iconClick: async () => {
         await setUaWebgl(inputsGroup)
         showToast(0, $t('UA刷新成功'))

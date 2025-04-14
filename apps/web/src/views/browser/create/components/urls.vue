@@ -30,17 +30,14 @@ function onBlur() {
   <div class="flex-1 flex flex-col gap-2">
     <rxInputTextarea
       v-model="urlsText"
-      rows="4"
+      rows="3"
       @blur="onBlur"
-      :placeholder="$t('必须以 http:// 或 https:// 开头')"
+      :placeholder="$t('必须以 http:// 或 https:// 开头\n换行可以添加多个')"
       :invalid="invalid"
     />
     <Message v-if="invalid" severity="error" size="small" variant="simple">{{
       $t('url格式有误，必须以 http:// 或 https:// 开头') }}
     </Message>
-    <div class="direct">
-      {{ $t('* 换行可以添加多个') }}
-    </div>
   </div>
 </template>
 
