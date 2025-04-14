@@ -44,7 +44,9 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
   return {
     computerName: winInfo.computerName,
     macAddress: winInfo.macAddress,
-    searchEngine: winInfo.searchEngine,
+    searchEngine: {
+      name: winInfo.searchEngine
+    },
     /** 窗口名称 */
     get windowName() {
       if (winInfo.isDisplayName) {
