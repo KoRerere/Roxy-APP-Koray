@@ -10,7 +10,22 @@
         {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
       </span>
 
-      <RxInputText v-model="password" @change="invalid = false" @blur="handleBlur" :invalid="invalid" @keydown.enter="onKeyDown" />
+      <Password 
+        v-model="password" 
+        @change="invalid = false" 
+        @blur="handleBlur" 
+        :invalid="invalid" 
+        @keydown.enter="onKeyDown" 
+        :feedback="false"
+        toggleMask
+        :pt="{
+          pcInputText: {
+            root: {
+              class: '!w-full'
+            }
+          }
+        }"
+      />
       
       <RxButton @click="handleSubmit">{{ dialogType === DialogType.SET_PASSWORD ? $t('设置密码') : $t('重置密码') }}
       </RxButton>

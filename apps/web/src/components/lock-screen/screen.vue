@@ -15,21 +15,31 @@
             <span class="locker-message">{{ $t('RoxyBrowser 已被锁定') }}</span>
           </div>
           <div class="flex gap-2 relative">
-            <RxInputText 
-              type="password" 
+            <Password 
               v-model="password" 
               :placeholder="$t('请输入密码')" 
-              class="flex-1" 
               @keydown.enter="handleUnlock" 
               :invalid="invalid"
               autofocus
               @change="handleChange"
               ref="inputRef"
+              :feedback="false"
+              toggleMask 
+              :pt="{
+                root: {
+                  class: 'flex-1'
+                },
+                pcInputText: {
+                  root: {
+                    class: '!w-full'
+                  }
+                }
+              }"
             />
 
             <RxButton class="step-plus" icon="base/rx_ic_arrow_right_2" outlined severity="secondary" @click="handleUnlock" />
 
-            <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-[6px]">
+            <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-[10px]">
               {{ $t('密码错误') }}
             </Message>
           </div>
@@ -94,27 +104,48 @@ const handleLogout = () => {
   router.push({ name: "login" });
 }
 
+// 上锁
+function lock() {
+  nextTick(() => inputRef.value?.$el?.querySelector('input')?.focus())
+  timer && clearInterval(timer)
+  timer = setInterval(() => {
+    trendsMark && document.body!.removeChild(trendsMark)
+    const mark = document.createElement('div');
+    mark.style.position = 'absolute'
+    mark.style.top = '0'
+    mark.style.left = '0'
+    mark.style.width = '100%'
+    mark.style.height = '100%'
+    mark.style.zIndex = '2147483646'
+    mark.style.display = 'block'
+    trendsMark = mark
+    document.body!.appendChild(mark);
+  }, 1000)
+}
+
+// 解锁
+function unlock() {
+  trendsMark && document.body!.removeChild(trendsMark)
+  trendsMark = null;
+  timer && clearInterval(timer)
+  timer = null;
+}
+
+watch(() => lockStore.isLocked, (val) => {
+  if (val) {
+    lock()
+  } else {
+    unlock();
+  }
+})
+
 onMounted(() => {
   if (lockStore.isLocked) {
-    timer && clearInterval(timer)
-    timer = setInterval(() => {
-      trendsMark && document.body!.removeChild(trendsMark)
-      const mark = document.createElement('div');
-      mark.style.position = 'absolute'
-      mark.style.top = '0'
-      mark.style.left = '0'
-      mark.style.width = '100%'
-      mark.style.height = '100%'
-      mark.style.zIndex = '2147483646'
-      mark.style.display = 'block'
-      trendsMark = mark
-      document.body!.appendChild(mark);
-    }, 1000)
+    lock();
   }
 
   onBeforeUnmount(() => {
-    trendsMark && document.body!.removeChild(trendsMark)
-    timer && clearInterval(timer)
+    unlock();
   })
 })
 </script>

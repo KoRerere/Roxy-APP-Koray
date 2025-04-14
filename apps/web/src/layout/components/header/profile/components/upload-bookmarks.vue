@@ -267,7 +267,7 @@ function deleteBookmarks() {
 </script>
 
 <template>
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2" v-bind="$attrs">
     <template v-if="!isEdit">
       <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export" @click="uploadBookmarks" />
       <!-- <span class="upload-desc-text">

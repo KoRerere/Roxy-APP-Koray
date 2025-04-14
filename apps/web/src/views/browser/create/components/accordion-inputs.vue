@@ -101,12 +101,17 @@ function onCopy(dirId: string) {
               <template #system="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <div class="flex-1 flex gap-2">
-                    <InputGroup>
-                      <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
-                      <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
-                    </InputGroup>
-                    <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                  <div class="flex-1 flex flex-col gap-2">
+                    <div class="flex-1 flex gap-2">
+                      <InputGroup>
+                        <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
+                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
+                      </InputGroup>
+                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                    </div>
+                    <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
+                      {{ input.items[2].help }}
+                    </Message>
                   </div>
                 </div>
               </template>
@@ -172,24 +177,6 @@ function onCopy(dirId: string) {
                   </div>
                 </div>
               </template>
-              <!-- <template #delayInterval="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1">
-                    <div class="flex gap-2 items-center">
-                      <IconField class="w-[110px]">
-                        <InputNumber v-model="input.items[0].value" :min="0" :useGrouping="false" fluid />
-                        <InputIcon> ms </InputIcon>
-                      </IconField>
-                      <div class="divider" />
-                      <IconField class="w-[110px]">
-                        <InputNumber v-model="input.items[1].value" :min="1" :useGrouping="false" fluid />
-                        <InputIcon> ms </InputIcon>
-                      </IconField>
-                    </div>
-                  </div>
-                </div>
-              </template> -->
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
