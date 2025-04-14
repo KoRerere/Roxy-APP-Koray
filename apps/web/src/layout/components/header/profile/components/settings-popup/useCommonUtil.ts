@@ -43,24 +43,6 @@ export function useCommonUtil() {
         electronAPI.send("app:saveSoftConfig", { [item.name as any]: isProxy(value) ? toRaw(value) : value });
         updateUserConfig();
       }
-
-      if (items && item.name === "systemProxySwitch") {
-        const v2 = items.list[0].items.find(
-          (i: any) => i.name === "v2raySwitch",
-        );
-
-        if (v2) {
-          v2.hide = !value;
-        }
-      }
-
-      if (items && item.name === "simulation") {
-        items.list[2].items.forEach((i: any) => {
-          if (i.__type === "controlDisplay") {
-            i.hide = !item.value;
-          }
-        })
-      }
     }
   }
 

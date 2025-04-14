@@ -51,7 +51,7 @@ onBeforeMount(() => {
               {{ item.subtitle }}
             </div>
             <template v-for="subItem in item.items" :key="subItem.label">
-              <div v-if="!subItem.hide" class="panel-item">
+              <div v-if="!subItem.hide?.(subItem, item.items)" class="panel-item">
                 <div class="flex flex-1 items-center" :class="subItem.classes">
                   <div class="flex-1">
                     <div class="panel-item-label">
