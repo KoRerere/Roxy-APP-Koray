@@ -72,7 +72,7 @@ export function getBookText() {
 }
 
 export function setBookText(value: Record<string, any>) {
-  console.log('setBookText', value)
+  // console.log('setBookText', value)
   bookText = value
 }
 

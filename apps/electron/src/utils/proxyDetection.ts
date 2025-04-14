@@ -14,6 +14,7 @@ import {
 } from "/@/modules/roxynet";
 import { store } from "/@/modules/store";
 import { getSystemProxy } from "/@/utils/getSystemProxy";
+import { getAccurateProxyType } from "/@/utils/getAccurateProxyType";
 
 export interface ProxyDetectionResult {
   ip: string;
@@ -395,13 +396,13 @@ async function checkSocks5Proxy(parmes: any) {
 export async function detectNetwork(type?: "local" | "system") {
   type ||= store.systemProxySwitch ? "system" : "local";
   if (type === "system") {
-    const systemProxy = await getSystemProxy();
-    console.log("systemProxy", systemProxy);
-    const [host, port] = systemProxy.split(":");
+    const proxyResult = await getAccurateProxyType();
+    console.log("systemProxy", proxyResult);
+    const { type, host, port } = proxyResult
     return proxyDetection({
       host,
       port,
-      proxyCategory: "HTTP",
+      proxyCategory: type.toUpperCase(),
       systemProxySwitch: false,
     });
   } else {

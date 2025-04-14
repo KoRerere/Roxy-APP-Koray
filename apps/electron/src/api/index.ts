@@ -6,7 +6,7 @@ import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
 import { getCommonRequestHeaders, isDev, isPackaged } from '/@/utils'
-
+import { useAxiosLogger } from '/@/api/axios-logger'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
 // })
@@ -21,6 +21,8 @@ export const httpClient = new HttpClient({
 let commonRequestHeaders
 
 let baseURL = ''
+useAxiosLogger(httpClient.instance)
+
 httpClient.instance.interceptors.request.use(async (config) => {
   if (!baseURL) {
     baseURL = await getGatewayConfig()

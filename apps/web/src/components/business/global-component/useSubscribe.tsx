@@ -98,6 +98,7 @@ export function useSubscribe() {
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
 
     dialogInstance.showModal({
+      innerDialog: true,
       slots: {
         container: () => {
           return <UpgradePayPlan hideFn={dialogInstance.hideModal} alertType={alertType} />

@@ -7,6 +7,7 @@ import { store } from '/@/modules/store'
 import { fileExists, getSystemProxy, isMac, isProcessExists } from '/@/utils'
 import { checkResource } from '/@/modules/app/checkResource'
 import { chmod } from 'node:fs/promises'
+import { getAccurateProxyType } from '/@/utils/getAccurateProxyType'
 
 export * from './util'
 
@@ -48,8 +49,9 @@ export async function startRoxynet() {
     return
   }
 
-  const systemProxy = await getSystemProxy()
-  console.log('systemProxy', systemProxy)
+  const proxyResult = await getAccurateProxyType();
+  console.log('systemProxy', proxyResult)
+  const { type, host, port } = proxyResult
 
   // if (!systemProxy) {
   //   console.log('没有获取到系统代理，停止拉起 roxynet')
@@ -58,8 +60,8 @@ export async function startRoxynet() {
 
   const launchParams = {
     system_proxy: {
-      addr: systemProxy,
-      protocal: 'http',
+      addr: `${host}:${port}`,
+      protocal: type,
       v2: store.v2raySwitch, // 是否走v2兼任模式，代理为http的情况下需要设置为true
     },
     api_server: `127.0.0.1:${store.appPort}`,
