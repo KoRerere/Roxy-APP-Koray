@@ -23,9 +23,10 @@ function toNumber(num: string | number) {
   return Number.isNaN(number) ? null : number
 }
 
+const key = '402ead7d23b43b6d1e0528d4f99c59bd'
+const nonce = '3a105229aa31'
+
 export function encryptFingerprintConfig(data) {
-  const key = '402ead7d23b43b6d1e0528d4f99c59bd'
-  const nonce = '3a105229aa31'
   const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce)
   const encryptedValue = Buffer.concat([
     cipher.update(data),
