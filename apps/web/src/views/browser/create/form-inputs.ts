@@ -618,7 +618,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('窗口位置'),
       name: 'windowRatioPosition',
       value: data.windowRatioPosition || '0,0',
-      tooltip: $t('浏览器窗口打开时在屏幕中的初始位置'),
+      tooltip: $t('窗口打开时在屏幕中的初始位置'),
       visible: initInputVisible(data.positionSwitch, true, true),
       slot: 'windowRatioPosition',
     },

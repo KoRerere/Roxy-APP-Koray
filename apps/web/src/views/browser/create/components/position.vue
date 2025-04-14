@@ -95,7 +95,7 @@ function handlePointClick(point: Point) {
         <img :style="{ width: RECT_W + 'px', height: RECT_H + 'px' }" src="/images/mini_browser.svg">
       </motion.div>
     </div>
-    <div class="mt-4 text">{{ $t('窗口从{position}开始', { position: pointsStr[activeIndex - 1] }) }}</div>
+    <!-- <div class="mt-4 text">{{ $t('窗口从{position}开始', { position: pointsStr[activeIndex - 1] }) }}</div> -->
   </div>
 </template>
 

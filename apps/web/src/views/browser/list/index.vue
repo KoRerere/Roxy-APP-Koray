@@ -347,16 +347,24 @@ async function hidePopover() {
       height: 2px;
     }
   }
+
+  &:not(:has(.p-tablist-nav-button)) {
+    .suffix {
+      margin-left: -16px;
+      z-index: 1;
+
+      &:has(.suffix-tab + .suffix-tab) {
+        .suffix-tab:first-of-type {
+          padding-left: 0;
+        }
+      }
+    }
+  }
 }
 
 .suffix {
+  gap: 16px;
   margin-right: 16px;
-
-  &:has(.suffix-tab + .suffix-tab) {
-    .suffix-tab:first-of-type {
-      padding-left: 0;
-    }
-  }
 
   &-tab {
     padding: var(--tab-padding);
@@ -365,10 +373,6 @@ async function hidePopover() {
     font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
-
-    // &:first-of-type {
-    //   margin-left: -16px;
-    // }
 
     &.active {
       position: relative;
