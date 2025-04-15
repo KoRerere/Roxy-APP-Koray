@@ -93,6 +93,26 @@ function onReset() {
 }
 
 function handleBlur() {
+  const keys = modelValue.value.split(' ');
+  if (!keys.length) {
+    toast.add({
+      severity: 'error',
+      summary: $t('操作失败'),
+      detail: $t('快捷键不合法'),
+      life: 3000
+    })
+    return
+  }
+  const lastKey = keys[keys.length - 1];
+  if (!allowedKeys.includes(lastKey)) {
+    toast.add({
+      severity: 'error',
+      summary: $t('操作失败'),
+      detail: $t('快捷键不合法'),
+      life: 3000
+    })
+    return
+  }
   emit('change', modelValue.value)
 }
 

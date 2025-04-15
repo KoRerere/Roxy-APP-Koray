@@ -2,6 +2,7 @@
 import Dialog from 'primevue/dialog';
 import { $t } from '/@/locales';
 import { useToast } from 'primevue/usetoast';
+import { MaximumLimitExceeded } from './settings-popup';
 
 enum BookmarkType {
   FOLDER = 'folder',
@@ -26,14 +27,6 @@ type BookText = {
   importMode: ImportMode
 }
 
-// 显示书签只能上传500个url
-class MaximumLimitExceeded extends Error {
-  static MAX_BOOKMARK_COUNT = 500;
-  constructor() {
-    super($t('书签数量超过{count}，请检查文件格式是否正确', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
-  }
-}
-
 const emit = defineEmits(['change'])
 const modelValue = defineModel<BookText>({
   default: {
@@ -46,7 +39,7 @@ const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 const toast = useToast()
 const expandedKeys = ref({});
-const visibleDel = ref(false);
+const popover = ref();
 
 watch(modelValue, (value) => {
   importMode.value = value.importMode || ImportMode.MERGE
@@ -266,12 +259,20 @@ function saveBookmarks() {
   visible.value = false
 }
 
+function openPopover(event: MouseEvent) {
+  popover.value.getRef()?.toggle(event)
+}
+
 function deleteBookmarks() {
   modelValue.value.bookmarkBar = []
   modelValue.value.other = []
   emit('change', modelValue.value)
-  visibleDel.value = false
+  popover.value.getRef()?.toggle(false)
   upLoadFileName.value = ''
+}
+
+function cancelDelete() {
+  popover.value.getRef()?.toggle(false)
 }
 </script>
 
@@ -290,7 +291,7 @@ function deleteBookmarks() {
 
   <!-- 允许点击遮罩关闭 -->
   <Dialog class="w-[640px]" v-model:visible="visible" :header="$t('自定义书签')" modal :draggable="false" dismissableMask>
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-5">
       <div>
         <div class="flex items-center gap-3">
           <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export"
@@ -299,27 +300,37 @@ function deleteBookmarks() {
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（仅支持.html格式）') }}</div>
       </div>
-      <div class="tree-wrapper" v-if="tree.length">
-        <Tree v-model:expandedKeys="expandedKeys" :value="tree" class="w-full">
-          <template #nodetoggleicon="{ node, expanded }">
-            <SvgIcon v-if="expanded" name="base/rx_ic_folder_open" size="18" />
-            <SvgIcon v-else name="base/rx_ic_folder_close" size="18" />
-          </template>
-          <template #nodeicon="{ node }">
-            <SvgIcon v-if="node.type === 'url'" name="base/rx_ic_link" size="18" />
-          </template>
-          <template #default="{ node }">
-            <div v-if="node.type === 'folder'" class="bookmark-label">
-              {{ node.label }}
-            </div>
-            <div v-else class="gap-2 ellipsis-1 w-full" :title="node.label + ' ' + node.url">
-              <span class="bookmark-label url">{{ node.label }}</span>
-              <span class="bookmark-url">{{ node.url }}</span>
-            </div>
-          </template>
-        </Tree>
+
+      <div class="flex flex-col gap-2">
+        <div class="bookmark-preview-title">{{ $t('书签预览') }}</div>
+        <div class="tree-wrapper" v-if="tree.length">
+          <Tree v-model:expandedKeys="expandedKeys" :value="tree" class="w-full">
+            <template #nodetoggleicon="{ node, expanded }">
+              <SvgIcon v-if="expanded" name="base/rx_ic_folder_open" size="18" />
+              <SvgIcon v-else name="base/rx_ic_folder_close" size="18" />
+            </template>
+            <template #nodeicon="{ node }">
+              <SvgIcon v-if="node.type === 'url'" name="base/rx_ic_link" size="18" />
+            </template>
+            <template #default="{ node }">
+              <div v-if="node.type === 'folder'" class="bookmark-label">
+                {{ node.label }}
+              </div>
+              <div v-else class="gap-2 ellipsis-1 w-full" :title="node.label + ' ' + node.url">
+                <span class="bookmark-label url">{{ node.label }}</span>
+                <span class="bookmark-url">{{ node.url }}</span>
+              </div>
+            </template>
+          </Tree>
+        </div>
+        <div class="tree-wrapper flex !items-center justify-center !h-[160px]" v-else>
+          <div class="flex flex-col items-center gap-3">
+            <SvgIcon name="base/rx_ic_bookmarks" size="32" color="#AFB7BB" />
+            {{ $t('没有书签') }}
+          </div>
+        </div>
       </div>
-      <div class="tree-wrapper flex !items-center justify-center !h-[160px]" v-else>{{ $t('没有书签') }}</div>
+      
 
       <div class="flex flex-col gap-2" v-if="tree.length">
         <div class="bookmark-options-title">{{ $t('书签选项') }}</div>
@@ -333,28 +344,25 @@ function deleteBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="visibleDel = true"
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="openPopover"
           :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
         <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
       </div>
     </template>
   </Dialog>
 
-  <Dialog v-model:visible="visibleDel" :header="$t('删除书签')" modal :draggable="false" dismissableMask>
-    <div class="flex flex-col gap-4">
-      <div class="text-sm text-gray-500">
+  <RyPopover ref="popover" dismissableMask>
+    <div class="flex flex-col gap-4 p-3 w-[220px]">
+      <div class="text-3 text-[#111213]">
         {{ $t('您确认要删除当前的自定义书签吗？') }}
       </div>
-      
-    </div>
 
-    <template #footer>
-      <div class="w-full flex justify-between">
-        <RxButton :label="$t('取消')" severity="secondary" outlined @click="visibleDel = false"></RxButton>
+      <div class="w-full flex justify-end gap-[6px]">
+        <RxButton :label="$t('取消')" severity="secondary" outlined @click="cancelDelete"></RxButton>
         <RxButton :label="$t('删除')" severity="danger" @click="deleteBookmarks" />
       </div>
-    </template>
-  </Dialog>
+    </div>
+  </RyPopover>
 </template>
 
 <style lang="scss" scoped>
@@ -405,7 +413,7 @@ function deleteBookmarks() {
   :deep(.p-tree-node-children) {
     border-left: 1px solid var(--Colors-border-border-subtle, #C7D1D6);
     margin-left: 12px;
-    gap: 12px;
+    gap: 2px;
     padding-left: 20px;
   }
 
@@ -418,9 +426,9 @@ function deleteBookmarks() {
   }
 }
 
-.bookmark-options-title {
+.bookmark-options-title, .bookmark-preview-title {
   color: #000;
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: 600;
 }
 

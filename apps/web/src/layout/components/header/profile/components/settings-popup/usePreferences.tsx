@@ -17,6 +17,7 @@ import UploadBookmarks from "../upload-bookmarks.vue";
 import SimulationShortcut from "../simulation-shortcut.vue";
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
+import { MaximumLimitExceeded } from './index'
 // import { useLock } from '/@/stores/lock'
 // import LockAppComponent from "../lock-app.vue";
 // import LockAppLabel from "../lock-app-label.vue";
@@ -347,7 +348,7 @@ export function usePreferencesPanel() {
             {
               label: $t('导入自定义书签'),
               name: 'bookText',
-              text: $t('仅支持.html 格式，窗口偏好设置中开启“自定义书签”功能生效'),
+              text: $t('仅支持.html 格式，最多 {count} 个 URL\n窗口偏好设置中开启“自定义书签”功能生效', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }),
               value: data?.bookText,
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return <UploadBookmarks

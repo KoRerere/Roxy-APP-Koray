@@ -101,3 +101,11 @@ export function useSettingsPopup() {
 		panels: ref(settings),
 	};
 }
+
+// 显示书签只能上传500个url
+export class MaximumLimitExceeded extends Error {
+	static MAX_BOOKMARK_COUNT = 500;
+	constructor() {
+		super($t('URL 数量超过{count}，请检查文件', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
+	}
+}
