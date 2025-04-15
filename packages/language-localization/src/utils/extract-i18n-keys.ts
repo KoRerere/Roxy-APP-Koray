@@ -125,13 +125,15 @@ export async function genLangFiles(langFiles: string[] = [], outputDir: string, 
   const keys = await scanFiles(cwd)
   const replacer = (key: string, value: any) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      const sortedKeys = Object.keys(value).sort()
-      const sorted = sortedKeys.filter(k => value[k] !== '').reduce((sorted, k) => {
+      const { empty = [], notEmpty = [] } = Object.groupBy(Object.keys(value).sort(), k => {
+        return value[k] === '' ? 'empty' : 'notEmpty'
+      })
+      const sorted = notEmpty.reduce((sorted, k) => {
         sorted[k] = value[k]
         return sorted
       }, {})
 
-      const emptySorted = sortedKeys.filter(k => value[k] === '').reduce((sorted, k) => {
+      const emptySorted = empty.reduce((sorted, k) => {
         sorted[k] = value[k]
         return sorted
       }, {})
