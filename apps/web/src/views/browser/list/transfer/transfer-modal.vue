@@ -128,7 +128,7 @@ async function onTransfer(isSelf: boolean) {
             </div>
           </div>
         </div>
-        <div class="flex flex-col" v-if="isDelete">
+        <div class="flex flex-col pa-3 pt-2 illustrate" v-if="isDelete">
           <div class="title mb-3">{{ $t('删除说明') }}</div>
           <div class="checkboxitem">{{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}</div>
           <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}</div>
@@ -223,6 +223,11 @@ async function onTransfer(isSelf: boolean) {
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
+}
+
+.illustrate {
+  border-radius: 4px;
+  background: var(--Colors-background-bg-block, #F1F5F8);
 }
 
 .title {

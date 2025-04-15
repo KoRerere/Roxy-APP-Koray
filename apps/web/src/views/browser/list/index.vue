@@ -251,9 +251,7 @@ async function hidePopover() {
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList ref="tabList">
           <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
-            <div class="flex items-center text-inherit">
-              {{ item.label }}
-            </div>
+            <div class="flex items-center text-inherit font-[Inter]">{{ item.label }}</div>
           </Tab>
           <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id"></Tab>
         </TabList>

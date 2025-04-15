@@ -31,7 +31,7 @@ export function getColumns() {
         headerSlot: 'noteHeader',
         slot: 'note',
         style: {
-          minWidth: '100px',
+          minWidth: '75px',
         },
         _cache: {
           extend: false,

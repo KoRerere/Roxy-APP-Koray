@@ -501,7 +501,7 @@ const slots: any = useSlots()
 
 .headerrow {
   .headercell {
-    padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+    padding: 8px 12px;
     background: var(--Colors-Background-bg-page, #fafbfc);
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     user-select: none;
@@ -535,7 +535,8 @@ const slots: any = useSlots()
   }
 
   .bodycell {
-    padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px);
+    padding: 0 12px;
+    height: 60px;
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
     color: var(--Color-neutrals-950, #0E1214);

@@ -413,7 +413,7 @@ async function onTransfer(datas: Data[], operate?: any) {
           link: () => h('a', {
             class: 'cursor-pointer',
             onClick: () => router.push({ name: 'subscribe-plan' }),
-          }, $t('升级会员'))
+          }, $t('升级'))
         }),
         life: 5000
       })
@@ -835,14 +835,15 @@ defineExpose({
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="_cache.extend = !_cache.extend" />
+        <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('备注折叠') : $t('备注展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
+          :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="_cache.extend = !_cache.extend" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
       <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
-        <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+        <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
           :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
-        <span v-if="_cache.extend" class="w-100 ellipsis-1">{{ data.windowRemark }}</span>
+        <div v-if="_cache.extend" class="min-w-50 whitespace-pre-wrap note-content">{{ data.windowRemark }}</div>
       </div>
     </template>
     <template #project="{ data }">
@@ -877,6 +878,16 @@ defineExpose({
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;
+}
+
+.note-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
 }
 
 .remark-light {
