@@ -388,26 +388,6 @@ export function usePreferencesPanel() {
                 );
               },
             },
-            // {
-            //   label: () => <LockAppLabel />,
-            //   name: 'lockApp',
-            //   value: !!lockStore.lockData.password,
-            //   props: {
-            //     trueValue: true,
-            //     falseValue: false,
-            //   },
-            //   component: ({ item, ...props }: { item: Items; props: any }) => {
-            //     return (
-            //       <LockAppComponent
-            //         {...item.props}
-            //         {...props}
-            //         onChange={(password) => {
-            //           lockStore.setPassword(password)
-            //         }}
-            //       />
-            //     );
-            //   },
-            // }
           ]
         }
       ],
