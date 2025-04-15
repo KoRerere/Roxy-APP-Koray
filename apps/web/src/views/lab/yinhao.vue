@@ -37,6 +37,7 @@ function open2() {
 
 //=================================
 import { motion, AnimatePresence } from 'motion-v'
+import { $t } from '/@/locales'
 
 const allIngredients = [
   { icon: "🍅", label: "Tomato" },
@@ -51,6 +52,53 @@ const [tomato, lettuce, cheese, carrot, banana, champers] = allIngredients
 const tabs = [tomato, lettuce, cheese, carrot, banana, champers]
 
 const selectedTab = ref(tabs[0])
+//================================
+
+const colums = [
+  {
+    title: $t('创建时间'),
+    key: 'createTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
+  },
+  {
+    title: $t('更新时间'),
+    key: 'updateTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
+  },
+  {
+    title: $t('最后打开'),
+    key: 'openTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
+  },
+  {
+    title: $t('其他'),
+    key: 'actions',
+    alignFrozen: 'right',
+    slot: 'actions',
+    style: {
+      width: '0rem',
+      minWidth: '120px',
+    }
+  },
+]
+
+const mannnnndata = Array.from({ length: 5 }, (_, index) => ({
+  id: `${index}`,
+  createTime: new Date(),
+  updateTime: new Date(),
+  openTime: new Date(),
+  actions: 'actions',
+}))
+
 </script>
 
 <template>
@@ -59,15 +107,14 @@ const selectedTab = ref(tabs[0])
     <RxButton class="!w-20" @click="open2">blance</RxButton>
     <br>
     <br>
-    <!-- ellipsis-1 -->
-    <div class="table-cell whitespace-nowrap">
-      <div class="whitespace-normal max-w-50 inline-flex items-center gap-2">
-        <div class="w-10 h-10 bg-orange flex-shrink-0"></div>
-        <div class="flex-1 note-content">mannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnnmannnnnn</div>
-      </div>
+    <div class="flex gap-4">
+      <div class="mannnnnnn" data-active="false"></div>
+      <div class="mannnnnnn" data-active="true"></div>
     </div>
     <br>
-    <div class="container">
+    <RyTable selection-mode="multiple" :columns="colums" :data-list="mannnnndata" :show-table-header="false" :paginator="false" :show-actions="false" />
+
+    <!-- <div class="container">
       <nav class="nav">
         <ul class="tabs-container">
           <motion.li v-for="item in tabs" :key="item.label" tag="li" class="tab" :initial="false" @click="selectedTab = item">
@@ -84,20 +131,25 @@ const selectedTab = ref(tabs[0])
           </motion.div>
         </AnimatePresence>
       </main>
-    </div>
+    </div> -->
   </div>
 
 </template>
 
 <style lang="scss" scoped>
-.note-content {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-all;
+.mannnnnnn {
+  width: 200px;
+  height: 100px;
+  background-color: skyblue;
+  transition: all 0.5s;
+
+  &:not([data-active="true"]):hover {
+    background: orange;
+  }
+
+  &[data-active="true"] {
+    background: yellowgreen;
+  }
 }
 
 .container {

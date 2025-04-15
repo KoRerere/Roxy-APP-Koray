@@ -316,8 +316,10 @@ const slots: any = useSlots()
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
-        table: !tableList?.length ? 'flex-1 !h-full' : '',
+        root: ColumnCss_Module.tableroot,
+        table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
         emptymessagecell: '!whitespace-normal !text-center',
+        tbody: ColumnCss_Module.tbody,
         headerrow: ColumnCss_Module.headerrow,
         bodyrow: ColumnCss_Module.bodyrow,
       }" @row-contextmenu="onRowContextMenu">
@@ -517,30 +519,45 @@ const slots: any = useSlots()
   }
 }
 
+.tableroot {
+  .table {
+    .tbody {
+      .bodyrow {
+        &[data-p-selected='true'] {
+          background: var(--Colors-Background-bg-secondary, #e8f5fc);
+
+          .bodycell {
+            border-color: var(--Color-blue-200, #7eccfc);
+
+            &:global(.p-datatable-frozen-column) {
+              background: var(--Colors-Background-bg-secondary, #e8f5fc);
+            }
+          }
+        }
+
+        &:not([data-p-selected='true']):hover {
+          background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+
+          .bodycell {
+            border-color: var(--Colors-Border-border-container, #c7cdd1);
+
+            &:global(.p-datatable-frozen-column) {
+              background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .bodyrow {
-  &[data-p-selected='true'] {
-    background: var(--Colors-Background-bg-secondary, #e8f5fc);
-
-    .bodycell {
-      border-color: var(--Color-blue-200, #7eccfc);
-    }
-  }
-
-  &:not([data-p-selected='true']):hover {
-    background: var(--Colors-Background-bg-body-hover, #f0f3f5);
-
-    .bodycell {
-      border-color: var(--Colors-Border-border-container, #c7cdd1);
-    }
-  }
-
   .bodycell {
     padding: 0 12px;
     height: 60px;
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
     color: var(--Color-neutrals-950, #0E1214);
-    font-family: Inter;
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
@@ -548,12 +565,13 @@ const slots: any = useSlots()
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);
     }
-  }
 
-  :global(.p-datatable-frozen-column) {
-    padding-left: 16px;
-    border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb) !important;
-    box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
+    &:global(.p-datatable-frozen-column) {
+      padding-left: 16px;
+      border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+      box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
+      transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
+    }
   }
 }
 </style>

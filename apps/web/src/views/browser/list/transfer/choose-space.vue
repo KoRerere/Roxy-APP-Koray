@@ -117,6 +117,7 @@ async function clearHistory(space: any) {
   const workspaceIds = space.items.map((item: any) => item.workspaceId)
   await API.window.userClearTransferWorkspaceCreate({ workspaceIds })
   spaceList.value = spaceList.value.filter((item: any) => item.key !== space.key)
+  historyList.value = spaceList.value
 }
 
 function handleChoose(item: Data) {
