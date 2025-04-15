@@ -42,12 +42,13 @@ requestIdleCallback(detectNetwork)
 
 <template>
   <div class="flex items-center gap-1">
-    <RxButton icon="base/rx_ic_route" severity="secondary" outlined size="xs" @click="detectNetwork" />
+    <RxButton :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" severity="secondary" outlined size="xs"
+      @click="detectNetwork" />
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />
     </template>
-    <template v-else>
+    <template v-else-if="proxyInfo.ip">
       <div class="city">
         {{ proxyInfo.city }}
       </div>

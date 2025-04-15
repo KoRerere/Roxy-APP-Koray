@@ -150,16 +150,13 @@ export class BeforeLaunchTask {
 
     this.makeBrowserActive = async () => {
 
-      if (this.browser) {
-        await this.reconnectBrowser()
-      }
-
       const launchOptions: PuppeteerLaunchOptions = {
         args: launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
+        timeout: 10000,
       }
       console.log('launchOptions', launchOptions)
       this.browser = await puppeteer.launch(launchOptions)
