@@ -22,7 +22,6 @@ let commonRequestHeaders
 
 let baseURL = ''
 
-console.log("appCliStartArgs['req-log']", appCliStartArgs['req-log'])
 // 开启请求日志
 if (appCliStartArgs['req-log']) {
   attachAxiosLogger(httpClient.instance)

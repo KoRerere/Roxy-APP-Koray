@@ -149,14 +149,14 @@ watch(tableFilterData, (val) => {
 
 const disabledRows = debounce(() => {
   document.querySelectorAll('.p-datatable-selectable-row:not(:has(.can-use-sync-control))').forEach((n) => {
-    const dialogMask = n.querySelector<HTMLDivElement>('.dialog-mask')
+    const dialogMask = n.querySelector<HTMLDivElement>('.disable-mask')
     if (!dialogMask) {
       const dialogMask = document.createElement('div')
       dialogMask.setAttribute('title', $t('免费套餐的窗口，无法进行同步'))
       dialogMask.onclick = (event: MouseEvent) => {
         event.stopPropagation()
       }
-      dialogMask.classList.add('dialog-mask')
+      dialogMask.classList.add('disable-mask')
       n.appendChild(dialogMask)
     }
   })
@@ -325,7 +325,7 @@ electronAPI.on('syncControl:start', startSync)
   position: relative;
   opacity: 0.5;
 
-  .dialog-mask {
+  .disable-mask {
     content: '';
     position: absolute;
     width: 100%;

@@ -135,7 +135,6 @@ export async function intoMainPage() {
   })
 
   mainWin.on('focus', (event) => {
-    console.log('on window focus')
     ipcMain.send('window:on-focus')
   })
 
