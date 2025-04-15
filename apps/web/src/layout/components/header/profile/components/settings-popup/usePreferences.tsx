@@ -252,7 +252,7 @@ export function usePreferencesPanel() {
             {
               label: $t('快捷键'),
               name: 'simulation',
-              text: $t('快捷键必须以 {firstKey} 开头', { firstKey: isWindows ? 'Ctrl' : 'Command' }),
+              text: $t('必须是 {firstKey} + 字母 或 {firstKey} + Shift + 字母', { firstKey: isWindows ? 'Ctrl' : 'Command' }),
               value: simulation.shortcutKey,
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === "simulation")?.value,
               formatValue: (item: Items) => {

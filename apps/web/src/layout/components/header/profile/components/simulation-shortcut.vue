@@ -35,7 +35,7 @@ import { $t } from '/@/locales'
 const emit = defineEmits(['change'])
 const invalid = ref(false)
 const modelValue = defineModel<string>({ default: DEFAULT_SIMULATION_SHORTCUT_KEYS })
-  const firstKey = computed(() => {
+const firstKey = computed(() => {
   return isWindows ? 'Ctrl' : 'Command'
 })
 const shortcutKey = computed(() => {
@@ -45,20 +45,22 @@ const shortcutKey = computed(() => {
 const toast = useToast()
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
-const allowedKeys = [
-  // 功能键
-  ...Array.from({ length: 24 }, (_, i) => `F${i + 1}`),
-  // 导航键
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-  // 空格键
-  ' ',
-  // 数字
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  // A-Z 26个大写字母
-  ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
-  '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+',
-  '[', ']', '{', '}', '\\', '|', ';', ':', "'", '"', ',', '<', '.', '>', '/', '?',
-];
+// const allowedKeys = [
+//   // 功能键
+//   ...Array.from({ length: 24 }, (_, i) => `F${i + 1}`),
+//   // 导航键
+//   'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+//   // 空格键
+//   ' ',
+//   // 数字
+//   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+//   // A-Z 26个大写字母
+//   ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
+//   '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+',
+//   '[', ']', '{', '}', '\\', '|', ';', ':', "'", '"', ',', '<', '.', '>', '/', '?',
+// ];
+
+const allowedKeys = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
 
 function handleKeydown(event: KeyboardEvent) {
   event.preventDefault();
@@ -69,12 +71,12 @@ function handleKeydown(event: KeyboardEvent) {
     // if (event.metaKey) keyCombination.push('Cmd');
     // if (event.ctrlKey) keyCombination.push('Ctrl');
     if (event.shiftKey) keyCombination.push('Shift');
-    if (event.altKey) keyCombination.push('Alt');
+    // if (event.altKey) keyCombination.push('Alt');
 
     const keyName = event.key
     console.log('keyName', keyName);
     if (!modifierKeys.includes(keyName) && allowedKeys.includes(upperFirst(keyName))) {
-      keyCombination.push(keyName === ' ' ? 'Space' : upperFirst(keyName));
+      keyCombination.push(upperFirst(keyName));
     };
     modelValue.value = keyCombination.join(' ')
   } else {

@@ -3,6 +3,7 @@ import Dialog from 'primevue/dialog';
 import { $t } from '/@/locales';
 import { useToast } from 'primevue/usetoast';
 import { MaximumLimitExceeded } from './settings-popup';
+import { cloneDeep } from 'es-toolkit';
 
 enum BookmarkType {
   FOLDER = 'folder',
@@ -39,21 +40,27 @@ const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 const toast = useToast()
 const expandedKeys = ref({});
-const popover = ref();
+const visible = ref(false)
+const __modelValue = ref<BookText>({
+  bookmarkBar: [],
+  other: [],
+  importMode: ImportMode.MERGE
+})
 
-watch(modelValue, (value) => {
-  importMode.value = value.importMode || ImportMode.MERGE
+watch([modelValue, visible], (values) => {
+  importMode.value = modelValue.value.importMode || ImportMode.MERGE
+  __modelValue.value = cloneDeep(modelValue.value);
 }, { immediate: true })
 
-const isEdit = computed(() => {
-  const data = modelValue.value
-  return data.bookmarkBar?.length > 0 || data.other?.length > 0
-})
+// const isEdit = computed(() => {
+//   const data = __modelValue.value
+//   return data.bookmarkBar?.length > 0 || data.other?.length > 0
+// })
 
-const isEmpty = computed(() => {
-  const data = modelValue.value
-  return !data.bookmarkBar?.length && !data.other?.length
-})
+// const isEmpty = computed(() => {
+//   const data = __modelValue.value
+//   return !data.bookmarkBar?.length && !data.other?.length
+// })
 
 // primeVue的Tree组件字段
 const renderTree = (tree: any, prefix = '') => {
@@ -70,7 +77,7 @@ const renderTree = (tree: any, prefix = '') => {
 }
 
 const tree = computed(() => {
-  const data = modelValue.value || {};
+  const data = __modelValue.value || {};
   const bookmarkBar = renderTree(data.bookmarkBar || [], 'bookmarkBar');
   const other = renderTree(data.other || [], '__other__');
   if (other.length > 0) {
@@ -227,8 +234,7 @@ function uploadError(error) {
 async function uploadBookmarks() {
   try {
     const result = await parseBookmarks()
-    modelValue.value = result
-    emit('change', result)
+    __modelValue.value = result
     visible.value = true;
   } catch (error) {
     console.log('error', error)
@@ -236,57 +242,49 @@ async function uploadBookmarks() {
   }
 }
 
-const visible = ref(false)
-
 // 点击编辑书签
 function editBookmarks() {
   visible.value = true
 }
 
-async function reUploadBookmarks() {
-  try {
-    const result = await parseBookmarks()
-    modelValue.value = result
-  } catch (error) {
-    console.log('error', error)
-    uploadError(error)
-  }
-}
+// async function reUploadBookmarks() {
+//   try {
+//     const result = await parseBookmarks()
+//     __modelValue.value = result
+//   } catch (error) {
+//     console.log('error', error)
+//     uploadError(error)
+//   }
+// }
 
 function saveBookmarks() {
-  modelValue.value.importMode = importMode.value
+  __modelValue.value.importMode = importMode.value
+  modelValue.value = cloneDeep(__modelValue.value);
   emit('change', modelValue.value)
   visible.value = false
 }
 
-function openPopover(event: MouseEvent) {
-  popover.value.getRef()?.toggle(event)
-}
-
 function deleteBookmarks() {
-  modelValue.value.bookmarkBar = []
-  modelValue.value.other = []
-  emit('change', modelValue.value)
-  popover.value.getRef()?.toggle(false)
+  __modelValue.value.bookmarkBar = []
+  __modelValue.value.other = []
   upLoadFileName.value = ''
 }
 
-function cancelDelete() {
-  popover.value.getRef()?.toggle(false)
+function cancelBookmarks() {
+  __modelValue.value = cloneDeep(modelValue.value);
+  visible.value = false
 }
 </script>
 
 <template>
   <div class="flex items-center gap-2" v-bind="$attrs">
-    <template v-if="!isEdit">
+    <!-- <template v-if="!isEdit">
       <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export" @click="uploadBookmarks" />
-      <!-- <span class="upload-desc-text">
+      <span class="upload-desc-text">
         {{ $t('* 仅支持 .html') }}
-      </span> -->
-    </template>
-    <template v-else>
-      <RxButton :label="$t('编辑')" severity="secondary" outlined icon="base/rx_ic_edit" @click="editBookmarks" />
-    </template>
+      </span>
+    </template> -->
+    <RxButton :label="$t('编辑')" severity="secondary" outlined icon="base/rx_ic_edit" @click="editBookmarks" />
   </div>
 
   <!-- 允许点击遮罩关闭 -->
@@ -295,7 +293,7 @@ function cancelDelete() {
       <div>
         <div class="flex items-center gap-3">
           <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export"
-            @click="reUploadBookmarks" />
+            @click="uploadBookmarks" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（仅支持.html格式）') }}</div>
@@ -344,14 +342,17 @@ function cancelDelete() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="openPopover"
+        <RxButton icon="base/rx_ic_bin_1" severity="secondary" outlined @click="deleteBookmarks"
           :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
-        <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
+        <div class="flex items-center gap-2">
+          <RxButton :label="$t('取消')" severity="secondary" outlined @click="cancelBookmarks" />
+          <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
+        </div>
       </div>
     </template>
   </Dialog>
 
-  <RyPopover ref="popover" dismissableMask>
+  <!-- <RyPopover ref="popover" dismissableMask>
     <div class="flex flex-col gap-4 p-3 w-[220px]">
       <div class="text-3 text-[#111213]">
         {{ $t('您确认要删除当前的自定义书签吗？') }}
@@ -362,7 +363,7 @@ function cancelDelete() {
         <RxButton :label="$t('删除')" severity="danger" @click="deleteBookmarks" />
       </div>
     </div>
-  </RyPopover>
+  </RyPopover> -->
 </template>
 
 <style lang="scss" scoped>
