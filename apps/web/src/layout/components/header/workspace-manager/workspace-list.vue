@@ -59,7 +59,7 @@ function onConfig(event: MouseEvent, item: Data) {
   showPopupMenu(event, {
     model: [
       {
-        label: $t('复制空间ID'),
+        label: $t('复制空间 ID'),
         icon: 'base/rx_ic_copy',
         command: () => {
           copyText(item.workspaceNo!.toString())

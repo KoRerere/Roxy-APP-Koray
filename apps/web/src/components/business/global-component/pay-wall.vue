@@ -55,14 +55,14 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     transfer: {
       title: $t('使用窗口投送提升资源分享效率'),
       description: () => {
-        return <I18nT scope="global" keypath={$t('窗口投送功能允许您向任意的工作空间投送窗口，{bold}', { bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('窗口投送功能允许您向任意的工作空间投送窗口。{bold}', { bold: '{bold}' })} >
           {{
             bold: () => <span class="font-bold">{$t('窗口投送不仅支持同步窗口云端数据，还包括代理设置、平台账号、Cookies 和指纹参数等相关信息')}</span>
           }}
         </I18nT>
       },
       image: '/images/payments/pay-wall-transfer.png',
-      about: $t('关于窗口投送'),
+      // about: $t('关于窗口投送'),
       // document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
     }
   }
@@ -144,7 +144,7 @@ function handleImageLoad() {
           <component :is="currentText.description"></component>
         </div>
         <div class="pay-wall-footer">
-          <RxButton class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
+          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
             {{ currentText.about }}
           </RxButton>
           <RxButton class="pay-wall-footer-button" @click="toUpgrade($event)">

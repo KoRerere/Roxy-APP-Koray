@@ -272,7 +272,7 @@ export function getOperation(_params: any = {}) {
     {
       name: 'moveToProject',
       label: $t('移动到项目'),
-      icon: 'base/rx_ic_stack',
+      icon: 'base/rx_ic_stack_move',
       multiple: true,
       power: role.isOwner || role.isManager,
     },

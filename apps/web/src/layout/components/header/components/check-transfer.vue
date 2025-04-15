@@ -2,7 +2,6 @@
 import { RxAlert } from '/@/components/rx-alert/'
 import RxAvatar from "/@/components/rx-avatar";
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
-import SecurityTips from '/@/layout/components/header/components/security-tips.vue';
 import { API } from '/@/api';
 import { $t } from '/@/locales';
 import { useWorkspaceStore } from '/@/stores/workspace'

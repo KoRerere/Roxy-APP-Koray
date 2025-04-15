@@ -84,7 +84,7 @@ async function howToGetHelp() {
             <div>{{ $t('您可以直接将窗口投送到您拥有的其他工作空间。或者使用工作空间 ID 投送到他人的工作空间。') }}</div>
             <i18n-t tag="div" :keypath="$t('更多信息请查看：{link}。', { link: '{link}' })" scope="global">
               <template #link>
-                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('工作空间 ID') }}</span>
+                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
               </template>
             </i18n-t>
           </div>

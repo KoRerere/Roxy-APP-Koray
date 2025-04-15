@@ -26,8 +26,7 @@ onBeforeMount(() => {
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in panels" :key="item.name" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.name === activePanel.key }" @click="item.command">
+        <div v-for="item in panels" :key="item.name" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.name === activePanel.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -57,13 +56,12 @@ onBeforeMount(() => {
                     <div class="panel-item-label">
                       <component :is="isFunction(subItem.label) ? subItem.label : () => subItem.label" />
                     </div>
-                    <div class="panel-item-text">
+                    <div class="whitespace-pre-wrap panel-item-text">
                       <component :is="isFunction(subItem.text) ? subItem.text : () => subItem.text" />
                     </div>
                   </div>
                   <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
-                    <component :is="subItem.component" v-model="subItem.value" :item="subItem"
-                      class="panel-item-value" />
+                    <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
                   </div>
                 </div>
                 <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />

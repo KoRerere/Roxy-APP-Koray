@@ -74,7 +74,7 @@ function onMore(event: Event) {
         <div v-for="item in list" :key="item.name" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }" :class="{ disabled: item.disabled }" class="multiple-group-item"
           @click="batchOperation($event, item._rawItem)">
           <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
-          <span v-if="item.showLabel">{{ item.label }}</span>
+          <span class="icon-label" v-if="item.showLabel">{{ item.label }}</span>
         </div>
       </div>
       <div v-if="showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
@@ -107,7 +107,7 @@ function onMore(event: Event) {
   &-group {
     display: flex;
     align-items: center;
-    padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+    padding: 8px 12px;
     border-radius: 5px;
     border: 0.5px solid var(--Color-neutrals-600, #575d61);
     background: var(--Color-neutrals-800, #252a2e);
@@ -123,8 +123,16 @@ function onMore(event: Event) {
   }
 
   &-group {
-    gap: var(--spacing-xl, 12px);
+    gap: 12px;
     color: #ffffff;
+
+    &:has(.icon-label) {
+      padding: 0;
+
+      .multiple-group-item {
+        padding: 8px 12px;
+      }
+    }
 
     &-item {
       display: flex;

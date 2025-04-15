@@ -346,7 +346,7 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('导入自定义书签'),
+              label: $t('自定义书签'),
               name: 'bookText',
               text: $t('仅支持.html 格式，最多 {count} 个 URL\n窗口偏好设置中开启“自定义书签”功能生效', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }),
               value: data?.bookText,

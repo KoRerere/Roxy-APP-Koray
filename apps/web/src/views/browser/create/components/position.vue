@@ -30,7 +30,6 @@ const angleMap = {
 }
 
 const points = generateGridPoints(3, 3, CONTAINER_W, CONTAINER_H).map(item => ({ ...item, angle: angleMap[item.pid as keyof typeof angleMap] || 'tl' }))
-const pointsStr = [$t('左上'), $t('中上'), $t('右上'), $t('左中'), $t('中间'), $t('右中'), $t('左下'), $t('中下'), $t('右下')]
 
 watch(ratioPositon, () => {
   initPoints()
@@ -95,7 +94,6 @@ function handlePointClick(point: Point) {
         <img :style="{ width: RECT_W + 'px', height: RECT_H + 'px' }" src="/images/mini_browser.svg">
       </motion.div>
     </div>
-    <!-- <div class="mt-4 text">{{ $t('窗口从{position}开始', { position: pointsStr[activeIndex - 1] }) }}</div> -->
   </div>
 </template>
 

@@ -59,7 +59,7 @@ async function getTransferHistory(event: MouseEvent) {
     },
     {
       key: SpaceType.Self,
-      title: $t('我的空间'),
+      title: $t('我的工作空间'),
       items: self
     }
   ].filter(item => item.items.length)

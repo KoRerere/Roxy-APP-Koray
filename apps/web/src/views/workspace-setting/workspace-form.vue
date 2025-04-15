@@ -76,7 +76,7 @@ defineExpose({
   <div class="content">
     <div class="row" v-if="workspaceInfo.workspaceNo">
       <div class="flex items-center gap-3">
-        <div class="title">{{ $t('空间ID') }}:</div>
+        <div class="title">{{ $t('空间 ID') }}:</div>
         <div class="flex items-center !mt-0 gap-2 description">
           <span>{{ workspaceInfo.workspaceNo }}</span>
           <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" @click="onCopy(workspaceInfo.workspaceNo!)"></SvgIcon>

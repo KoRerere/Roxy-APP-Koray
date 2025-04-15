@@ -102,18 +102,20 @@ async function onTransfer(isSelf: boolean) {
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">
-      <RxAlert class="w-full" type="warn" :closable="false">
-        <template #content>
-          <i18n-t scope="global" :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
-            <template #bold>
-              <span class="font-bold"> {{ $t('已同步过的云端数据、代理信息、平台账号、Cookies 和指纹参数等') }} </span>
-            </template>
-            <template #bold2>
-              <span class="font-bold"> {{ $t('扩展应用，需要接收方手动安装') }} </span>
-            </template>
-          </i18n-t>
-        </template>
-      </RxAlert>
+      <div class="flex flex-col gap-2">
+        <RxAlert class="w-full" type="info" :closable="false">
+          <template #content>
+            <i18n-t scope="global" :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
+              <template #bold>
+                <span class="font-bold"> {{ $t('已同步过的云端数据、代理信息、平台账号、Cookies 和指纹参数等') }} </span>
+              </template>
+              <template #bold2>
+                <span class="font-bold"> {{ $t('扩展应用，需要接收方手动安装') }} </span>
+              </template>
+            </i18n-t>
+          </template>
+        </RxAlert>
+      </div>
       <div class="flex flex-col gap-6">
         <div class="flex flex-col gap-3">
           <div class="title">{{ $t('投送至') }}</div>
@@ -141,10 +143,6 @@ async function onTransfer(isSelf: boolean) {
           <span>{{ $t('下一步') }}</span>
           <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
         </RxButton>
-        <!-- <div class="flex items-start gap-2 checkboxitem">
-          <Checkbox class="mt-0.5" v-model="isDelete" binary size="small" input-id="del" />
-          <label for="del">{{ $t('投送后彻底删除窗口。（该操作无法撤销如果关联的代理和账号没有链接到其他窗口，也会被删除）') }}</label>
-        </div> -->
       </div>
     </div>
 
@@ -182,7 +180,7 @@ async function onTransfer(isSelf: boolean) {
           <span>{{ $t('重新发送') }}</span>
           <span v-if="countdown?.done === false">{{ `(${countdown.seconds}s)` }}</span>
         </RxButton>
-        <div class="cursor-pointer back" @click="step2 = false">{{ $t('返回上一步') }}</div>
+        <div class="cursor-pointer back" @click="step2 = false">{{ $t('返回') }}</div>
       </div>
     </div>
   </div>
