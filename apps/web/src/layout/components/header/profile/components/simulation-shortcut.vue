@@ -1,27 +1,14 @@
 <template>
   <div class="flex items-center gap-2 relative flex-1">
-    <InputText 
-      type="text" 
-      :placeholder="$t('设置快捷键')" 
-      :invalid="invalid" 
-      @keydown="handleKeydown" 
-      v-model="shortcutKey"
-      @blur="handleBlur" 
-      @change="handleChange"
-      class="w-[172px]"
-    />
+    <InputText type="text" :placeholder="$t('设置快捷键')" :invalid="invalid" @keydown="handleKeydown" v-model="shortcutKey"
+      @blur="handleBlur" @change="handleChange" class="w-[172px]" />
 
     <RxButton class="w-[48px] !min-w-auto" :label="$t('重置')" severity="secondary" outlined @click="onReset" />
 
-    <Message 
-      v-if="invalid" 
-      severity="error" 
-      size="small" 
-      variant="simple" 
-      class="absolute top-[calc(100%+4px)] left-[6px]"
-    >
-        {{ $t('快捷键已被占用') }}
-      </Message>
+    <Message v-if="invalid" severity="error" size="small" variant="simple"
+      class="absolute top-[calc(100%+4px)] left-[6px]">
+      {{ $t('快捷键已被占用') }}
+    </Message>
   </div>
 </template>
 
@@ -100,7 +87,7 @@ function handleBlur() {
     toast.add({
       severity: 'error',
       summary: $t('操作失败'),
-      detail: $t('快捷键不合法'),
+      detail: $t('必须是 {firstKey} + 字母 或 {firstKey} + Shift + 字母', { firstKey: firstKey.value }),
       life: 3000
     })
     return
@@ -110,7 +97,7 @@ function handleBlur() {
     toast.add({
       severity: 'error',
       summary: $t('操作失败'),
-      detail: $t('快捷键不合法'),
+      detail: $t('必须是 {firstKey} + 字母 或 {firstKey} + Shift + 字母', { firstKey: firstKey.value }),
       life: 3000
     })
     return
@@ -118,14 +105,18 @@ function handleBlur() {
   emit('change', modelValue.value)
 }
 
-function handleChange() { 
+function handleChange() {
   invalid.value = true;
 }
 
 onMounted(async () => {
-  const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
-  const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
-  invalid.value = !isKeyboard
+  try {
+    const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+    const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
+    invalid.value = !isKeyboard
+  } catch (error) {
+
+  }
 })
 </script>
 
@@ -138,6 +129,7 @@ onMounted(async () => {
 .description {
   color: var(--Colors-text-text-tertiary, #575D60);
   font-size: 12px;
-  line-height: 20px; /* 166.667% */
+  line-height: 20px;
+  /* 166.667% */
 }
 </style>

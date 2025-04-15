@@ -328,7 +328,7 @@ function cancelBookmarks() {
           </div>
         </div>
       </div>
-      
+
 
       <div class="flex flex-col gap-2" v-if="tree.length">
         <div class="bookmark-options-title">{{ $t('书签选项') }}</div>
@@ -351,19 +351,6 @@ function cancelBookmarks() {
       </div>
     </template>
   </Dialog>
-
-  <!-- <RyPopover ref="popover" dismissableMask>
-    <div class="flex flex-col gap-4 p-3 w-[220px]">
-      <div class="text-3 text-[#111213]">
-        {{ $t('您确认要删除当前的自定义书签吗？') }}
-      </div>
-
-      <div class="w-full flex justify-end gap-[6px]">
-        <RxButton :label="$t('取消')" severity="secondary" outlined @click="cancelDelete"></RxButton>
-        <RxButton :label="$t('删除')" severity="danger" @click="deleteBookmarks" />
-      </div>
-    </div>
-  </RyPopover> -->
 </template>
 
 <style lang="scss" scoped>
@@ -427,7 +414,8 @@ function cancelBookmarks() {
   }
 }
 
-.bookmark-options-title, .bookmark-preview-title {
+.bookmark-options-title,
+.bookmark-preview-title {
   color: #000;
   font-size: 14px;
   font-weight: 600;
