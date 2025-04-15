@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
 import { Role } from '/@/enums'
-import { hidePageLoading, showPageLoading } from '/@/utils'
+import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
@@ -46,7 +46,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ path: '/' })
     }
 
-    if (val?.id) {
+    // 如果当前工作空间有 ID 且是主窗口，则发送消息给主进程
+    if (val?.id && isMainWindow) {
       window.electronAPI.send('user:setWorkspaceId', val.id)
       rememberLastWorkspace()
     }
