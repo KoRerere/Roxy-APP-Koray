@@ -80,10 +80,6 @@ const options: Configuration = {
     ...(!isDev
       ? {
         verifyUpdateCodeSignature: false,
-        signingHashAlgorithms: [
-          'sha256',
-          'sha1',
-        ],
         signDlls: false,
         rfc3161TimeStampServer: 'http://timestamp.digicert.com',
         certificateFile: './pfx/linkv.pfx',
