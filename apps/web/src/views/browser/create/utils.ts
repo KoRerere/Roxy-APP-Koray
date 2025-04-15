@@ -72,7 +72,8 @@ export function getDefaultTemplate() {
     stopOpenIP: false,
     stopOpenPosition: false,
     openWorkbench: 1,
-    searchEngine: 'Google'
+    searchEngine: 'Google',
+    openBookmarks: false,
   }
 }
 
@@ -326,7 +327,7 @@ export async function downloadTextTemplate() {
     {
       windowName: 'name2',
       os: 'iOS',
-      osVersion: 17.0,
+      osVersion: '17.0',
       proxyCategory: 'HTTP',
       proxyInfo: 'www.proxy.com:81:username:password',
       windowPlatformList: '[{ "platformUrl": "https://www.x.com/", "platformUserName": "xxxx", "platformPassword": "132456", "platformEfa": "" }]',
