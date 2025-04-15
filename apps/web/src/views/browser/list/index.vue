@@ -17,6 +17,7 @@ import { useRoleStore } from '/@/stores/role'
 import { sleep } from '/@/utils'
 import { debounce } from 'es-toolkit'
 import { emitter } from '/@/utils/eventBus'
+import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 
 const confirm = useConfirm()
 const dialog = useDialog()
@@ -122,6 +123,15 @@ function findActiveTab(list: TabType[]) {
 
 function switchTab(tabId: string, event?: Event) {
   if (isNoPayUser.value && tabId === 'rx_1004') {
+    if (!role.isOwner) {
+      wcisToast({
+        severity: 'warn',
+        summary: $t('窗口投送不可用'),
+        detail: $t('请联系空间的拥有者进行升级。'),
+        life: 5000
+      })
+      return
+    }
     emitter.emit('showPayWall', {
       event: event as Event,
       params: {
