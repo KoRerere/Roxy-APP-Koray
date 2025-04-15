@@ -622,17 +622,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.positionSwitch, true, true),
       slot: 'windowRatioPosition',
     },
-    // TODO:(anbin)
-    {
-      type: 'radio',
-      label: $t('开启书签'),
-      name: 'openBookmarks',
-      value: data.openBookmarks ?? false,
-      options: [
-        { label: $t('开启'), value: true },
-        { label: $t('关闭'), value: false },
-      ],
-    },
   ])
 
   const highLevelInputs = reactive([
@@ -1091,6 +1080,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     },
     {
       type: 'radio',
+      label: $t('自定义书签'),
+      name: 'openBookmarks',
+      value: data.openBookmarks ?? false,
+      options: [
+        { label: $t('开启'), value: true },
+        { label: $t('关闭'), value: false },
+      ],
+    },
+    {
+      type: 'radio',
       label: $t('同步书签'),
       name: 'syncBookmark',
       value: data.syncBookmark ?? false,
@@ -1260,7 +1259,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('关闭'), value: 0 },
         { label: $t('跟随软件设置'), value: 2 },
       ],
-    },
+    }
   ])
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])

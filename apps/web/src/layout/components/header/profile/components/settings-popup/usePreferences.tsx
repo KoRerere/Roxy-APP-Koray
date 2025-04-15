@@ -144,7 +144,7 @@ export function usePreferencesPanel() {
               text: () => (
                 <div class="w-[370px]">
                   {$t(
-                    "打开窗口时，是否打开工作台页面。",
+                    "打开窗口时，是否打开工作台页面",
                   )}
                 </div>
               ),
@@ -221,9 +221,11 @@ export function usePreferencesPanel() {
               },
             },
             {
+              // 默认值调整为100
               label: $t('延迟时间'),
               name: 'simulation',
               value: simulation.delay,
+              text: $t('粘贴时每个字符键入的延迟时间'),
               hide: (item: Items, items: Items[]) => !items.find(i => i.name === "simulation")?.value,
               formatValue: (item: Items) => {
                 simulation.delay = item.value
@@ -343,9 +345,9 @@ export function usePreferencesPanel() {
               },
             },
             {
-              label: $t('导入Chrome书签'),
+              label: $t('导入自定义书签'),
               name: 'bookText',
-              text: $t('书签附件仅支持 .html 格式，浏览器窗口配置必须开启“书签”此功能方可生效！'),
+              text: $t('仅支持.html 格式，窗口偏好设置中开启“自定义书签”功能生效'),
               value: data?.bookText,
               component: ({ item, ...props }: { item: Items; props: any }) => {
                 return <UploadBookmarks

@@ -46,6 +46,7 @@ const importMode = ref<ImportMode>(ImportMode.MERGE)
 const upLoadFileName = ref('')
 const toast = useToast()
 const expandedKeys = ref({});
+const visibleDel = ref(false);
 
 watch(modelValue, (value) => {
   importMode.value = value.importMode || ImportMode.MERGE
@@ -54,6 +55,11 @@ watch(modelValue, (value) => {
 const isEdit = computed(() => {
   const data = modelValue.value
   return data.bookmarkBar?.length > 0 || data.other?.length > 0
+})
+
+const isEmpty = computed(() => {
+  const data = modelValue.value
+  return !data.bookmarkBar?.length && !data.other?.length
 })
 
 // primeVue的Tree组件字段
@@ -106,11 +112,11 @@ const expandNode = (node, __expandedKeys) => {
 const bookmarkOptions = computed(() => {
   return [
     {
-      label: $t('与配置文件中的现有书签合并'),
+      label: $t('与窗口中已有书签合并'),
       value: ImportMode.MERGE,
     },
     {
-      label: $t('覆盖配置文件中的现有书签'),
+      label: $t('覆盖原窗口中已有书签'),
       value: ImportMode.REPLACE,
     },
   ]
@@ -192,9 +198,9 @@ async function parseBookmarks() {
     // 只限制html
     types: [
       {
-        description: 'HTML Files',
+        description: 'HTML Document',
         accept: {
-          'text/html': ['.html'],
+          'application/x-extension-html': ['.html']
         },
       },
     ],
@@ -264,6 +270,8 @@ function deleteBookmarks() {
   modelValue.value.bookmarkBar = []
   modelValue.value.other = []
   emit('change', modelValue.value)
+  visibleDel.value = false
+  upLoadFileName.value = ''
 }
 </script>
 
@@ -281,7 +289,7 @@ function deleteBookmarks() {
   </div>
 
   <!-- 允许点击遮罩关闭 -->
-  <Dialog class="w-[640px]" v-model:visible="visible" :header="$t('编辑书签')" modal :draggable="false" dismissableMask>
+  <Dialog class="w-[640px]" v-model:visible="visible" :header="$t('自定义书签')" modal :draggable="false" dismissableMask>
     <div class="flex flex-col gap-4">
       <div>
         <div class="flex items-center gap-3">
@@ -289,7 +297,7 @@ function deleteBookmarks() {
             @click="reUploadBookmarks" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
-        <div class="mt-1 upload-desc-text">{{ $t('* 重新上传您的配置文件以更改书签。') }}</div>
+        <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（仅支持.html格式）') }}</div>
       </div>
       <div class="tree-wrapper" v-if="tree.length">
         <Tree v-model:expandedKeys="expandedKeys" :value="tree" class="w-full">
@@ -311,6 +319,7 @@ function deleteBookmarks() {
           </template>
         </Tree>
       </div>
+      <div class="tree-wrapper flex !items-center justify-center !h-[160px]" v-else>{{ $t('没有书签') }}</div>
 
       <div class="flex flex-col gap-2" v-if="tree.length">
         <div class="bookmark-options-title">{{ $t('书签选项') }}</div>
@@ -324,9 +333,25 @@ function deleteBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="deleteBookmarks"
+        <RxButton :label="$t('删除书签')" severity="secondary" outlined @click="visibleDel = true"
           :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
         <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
+      </div>
+    </template>
+  </Dialog>
+
+  <Dialog v-model:visible="visibleDel" :header="$t('删除书签')" modal :draggable="false" dismissableMask>
+    <div class="flex flex-col gap-4">
+      <div class="text-sm text-gray-500">
+        {{ $t('您确认要删除当前的自定义书签吗？') }}
+      </div>
+      
+    </div>
+
+    <template #footer>
+      <div class="w-full flex justify-between">
+        <RxButton :label="$t('取消')" severity="secondary" outlined @click="visibleDel = false"></RxButton>
+        <RxButton :label="$t('删除')" severity="danger" @click="deleteBookmarks" />
       </div>
     </template>
   </Dialog>

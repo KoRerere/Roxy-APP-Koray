@@ -1,10 +1,10 @@
 <template>
   <RxButton icon="base/rx_ic_unlock2" severity="secondary" outlined size="xs" @click="handleOpenLocker" />
 
-  <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('重置密码')" :modal="true" :draggable="false" style="width: 384px;">
+  <Dialog v-model:visible="visible" @hide="handleHide" :header="$t('设置锁定密码')" :modal="true" :draggable="false" style="width: 384px;">
     <div class="flex flex-col gap-4">
       <span class="text-sm text-gray-500">
-        {{ $t('设置密码以解锁应用程序请使用 4-12 个字符（字母、数字或符号）。') }}
+        {{ $t('密码格式：4-12 个字符（字母、数字或符号）') }}
       </span>
 
       <RxForm 
@@ -65,8 +65,8 @@ const schemas = defineFormSchema([
       trigger: 'blur',
       validator(zod) {
         return zod.string()
-          .min(4, { message: $t('密码长度需为 4-12 位。') })
-          .max(12, { message: $t('密码长度需为 4-12 位。') })
+          .min(4, { message: $t('密码长度需为 4-12 位') })
+          .max(12, { message: $t('密码长度需为 4-12 位') })
           .regex(/^[^\u4e00-\u9fa5]+$/, { message: $t('密码中包含不允许的字符。请使用字母、数字以及符号组合。') })
       },
     },
@@ -79,7 +79,7 @@ const schemas = defineFormSchema([
     componentProps: {
       toggleMask: true,
       feedback: false,
-      placeholder: $t('请再次输入密码'),
+      placeholder: $t('请再次输入您的密码'),
     },
     rule: {
       trigger: 'blur',
@@ -88,7 +88,7 @@ const schemas = defineFormSchema([
           .refine((val) => {
             return val === data.value.password
           }, {
-            message: $t('密码不一致'),
+            message: $t('两次输入的密码不一致'),
           })
       },
     },
