@@ -29,6 +29,8 @@ async function detectNetwork() {
     retryCount++
     if (retryCount < 3) {
       detectNetwork()
+    } else {
+      proxyInfo.value.ip = ''
     }
   } finally {
     loading.value = false

@@ -58,7 +58,6 @@ function handleCloseSubscriptionExpired() {
 function calcSubscriptionExpired() {
   const subCurrentDate = userPayInfo.value?.subCurrentDate
   const subEndDate = userPayInfo.value?.subEndDate
-
   if (subEndDate && subEndDate > subCurrentDate) {
     const diffTime = subEndDate - subCurrentDate
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
@@ -77,9 +76,14 @@ function calcSubscriptionExpired() {
   }
 }
 
-setTimeout(calcSubscriptionExpired, 5000)
 // 每 30 秒计算一次订阅到期时间
 let timer = setInterval(calcSubscriptionExpired, 10 * 1000)
+
+watch(() => currentWorkspace.value?.id, () => {
+  remainTime.value = 0
+  clearInterval(timer)
+  timer = setInterval(calcSubscriptionExpired, 10 * 1000)
+})
 
 onBeforeMount(() => {
   getAnnt()
@@ -106,7 +110,8 @@ function onRenewal() {
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
-      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')" @click="collapsed = !collapsed">
+      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')"
+        @click="collapsed = !collapsed">
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
@@ -119,7 +124,8 @@ function onRenewal() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content"
+          closable @close="handleCloseAnnt(annt.id!)">
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -127,10 +133,13 @@ function onRenewal() {
             <SvgIcon name="base/rx_ic_delete" />
           </template>
         </Message>
-        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success" class="w-full rx-main-announcement__content subscription-expired" closable
+        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success"
+          class="w-full rx-main-announcement__content subscription-expired" closable
           @close="handleCloseSubscriptionExpired">
           <template #default>
-            <i18n-t :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
+            <i18n-t
+              :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
+              scope="global">
               <template #link>
                 <span class="font-bold underline cursor-pointer" @click="onRenewal">
                   {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}

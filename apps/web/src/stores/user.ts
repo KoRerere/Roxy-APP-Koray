@@ -158,6 +158,7 @@ export const useUserStore = defineStore(
 
     /** 获取用户付费详情 */
     async function getUserPayInfo() {
+      userPayInfo.value = {} as UserGetUserPayInfoListData['data']
       const { code, data } = await API.pay.userGetUserPayInfoList();
 
       if (code === 0) {
