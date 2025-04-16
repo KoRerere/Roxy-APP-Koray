@@ -7,6 +7,8 @@ import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
+const route = useRoute()
+const router = useRouter()
 const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
@@ -46,6 +48,13 @@ const columns = [
     },
   },
 ]
+
+onBeforeMount(() => {
+  // 存在 activeTabId 参数，代表从项目列表跳转，需要清除 activeTabId
+  if (route.query.activeTabId) {
+    router.replace({ name: 'browser-list' })
+  }
+})
 
 async function tableRequest(params: any) {
   return API.window.userGetTransferReceiveWindowListList(params)

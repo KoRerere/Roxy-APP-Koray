@@ -14,6 +14,7 @@ const { ids: windowIds } = defineProps<{
 
 const emit = defineEmits(['close', 'confirm'])
 const [_, onlyErrorToast] = useResponseToast()
+const messageRef = useTemplateRef('message')
 
 const selectedWorkspace = ref()
 const transferParam = ref<string[]>([])
@@ -51,6 +52,14 @@ const optionsGroup = computed(() => [
     ]
   }
 ].filter(item => item.visible !== false))
+
+watch(isDelete, (value) => {
+  if (value) {
+    nextTick(() => {
+      messageRef.value?.scrollIntoView({ behavior: 'smooth' })
+    })
+  }
+})
 
 //===============================================
 const emailCode = ref()
@@ -121,21 +130,23 @@ async function onTransfer(isSelf: boolean) {
           <div class="title">{{ $t('投送至') }}</div>
           <ChooseSpace v-model="selectedWorkspace" :ids="windowIds"></ChooseSpace>
         </div>
-        <div class="flex flex-col gap-3" v-for="group of optionsGroup" :key="group.title">
-          <div class="title">{{ group.title }}</div>
-          <div class="flex flex-col gap-3">
-            <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
-              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
-              <label :for="option.value">{{ option.label }}</label>
+        <div class="flex flex-col gap-6 max-h-85 overflow-y-auto">
+          <div class="flex flex-col gap-3" v-for="group of optionsGroup" :key="group.title">
+            <div class="title">{{ group.title }}</div>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
+                <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
+                <label :for="option.value">{{ option.label }}</label>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="flex flex-col pa-3 pt-2 illustrate" v-if="isDelete">
-          <div class="title mb-3">{{ $t('删除说明') }}</div>
-          <div class="checkboxitem">{{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}</div>
-          <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}</div>
-          <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 a 将从代理资源中删除') }}</div>
-          <div class="checkboxitem">{{ $t('(平台账号删除规则同代理)') }}</div>
+          <div ref="message" class="flex flex-col pa-3 pt-2 illustrate" v-if="isDelete">
+            <div class="title mb-3">{{ $t('删除说明') }}</div>
+            <div class="checkboxitem">{{ $t('若代理 a 仅与窗口 A 绑定，窗口 A 被投送，则代理 a 将从代理资源中删除') }}</div>
+            <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，仅窗口 A 被投送，则代理 a 不会被删除') }}</div>
+            <div class="checkboxitem">{{ $t('若代理 a 与窗口 A、B 绑定，窗口 A、B 均被投送，则代理 a 将从代理资源中删除') }}</div>
+            <div class="checkboxitem">{{ $t('(平台账号删除规则同代理)') }}</div>
+          </div>
         </div>
       </div>
       <div class="flex flex-col gap-3">

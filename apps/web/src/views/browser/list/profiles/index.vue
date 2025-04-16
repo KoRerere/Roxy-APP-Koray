@@ -14,7 +14,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue, deepClone } from '/@/utils'
+import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue, deepClone, safeParseJSON } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
@@ -455,7 +455,12 @@ async function onTransfer(datas: Data[], operate?: any) {
           dialogInstance.hideModal()
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
-            emit('switchTab', 'rx_1004')
+            // 如果在项目列表中投送，投送成功则跳到投送中 tab
+            if (route.name === 'project-item') {
+              router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
+            } else {
+              emit('switchTab', 'rx_1004')
+            }
           } else {
             if (needRefresh) {
               onRefreshTable()
@@ -784,6 +789,7 @@ async function toCreateBrowser() {
 
 let canceOpenlListener: any
 let canceCloselListener: any
+
 onBeforeMount(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
@@ -797,12 +803,7 @@ onBeforeMount(() => {
       })
     })
 
-  let customFilterParams = {}
-  try {
-    customFilterParams = JSON.parse(route.query.customFilterParams as string)
-  } catch (error) {
-    // console.log('parse customFilterParams error',error)
-  }
+  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
 
   getCustomFilters(customFilterParams).then((data) => {
     filtersMenu.value ??= data
