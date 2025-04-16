@@ -1,4 +1,4 @@
-import type { UnwrapRowsType, UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
+import type { UnwrapRowsType, UnwrapRowType, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API } from '/@/api'
@@ -28,6 +28,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   })
 
   const debounceGetPayInfo = debounce(() => {
+    userStore.userPayInfo = {} as UserGetUserPayInfoListData['data']
     userStore.getUserPayInfo()
   }, 50)
 
