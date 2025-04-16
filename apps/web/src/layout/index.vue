@@ -153,7 +153,7 @@ function onRenewal() {
         </Message>
       </div>
       <div class="rx-main-content">
-        <RouterView v-if="currentWorkspace?.id && Object.keys(userPayInfo).length" :key="currentWorkspace?.id" />
+        <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
       </div>
     </main>
   </div>
