@@ -549,6 +549,12 @@ const slots: any = useSlots()
       }
     }
   }
+
+  &:global(.p-datatable-sm) {
+    .bodycell {
+      height: 40px;
+    }
+  }
 }
 
 .bodyrow {
