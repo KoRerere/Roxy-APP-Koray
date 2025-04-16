@@ -78,7 +78,7 @@ const options: Configuration = {
       },
     ],
     verifyUpdateCodeSignature: false,
-    signtoolOptions: {
+    signtoolOptions: isDev ? undefined : {
       rfc3161TimeStampServer: 'http://timestamp.digicert.com',
       certificateFile: './pfx/linkv.pfx',
       certificatePassword: '0000',

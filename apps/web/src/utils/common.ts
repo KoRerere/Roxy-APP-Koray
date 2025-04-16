@@ -6,7 +6,7 @@ export const isProd = import.meta.env.PROD
 export const isWindows = navigator.platform.includes('Win')
 /** 是否为主窗口 */
 /* eslint-disable antfu/no-top-level-await */
-export const isMainWindow = await electronAPI.send('app:isMainWindow').catch(() => true)
+export const isMainWindow = await globalThis.electronAPI?.send('app:isMainWindow').catch(() => true)
 
 console.log('isDev', isDev)
 console.log('isProd', isProd)
