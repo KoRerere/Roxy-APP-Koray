@@ -38,7 +38,7 @@ export async function getDictMap() {
     dictMap = localStorage.getItem('$dict_map')
   }
 
-  const $dict_map = new Proxy(JSON.parse(dictMap ?? '{}'), {
+  const $dict_map: Record<string, DictItem[]> = new Proxy(JSON.parse(dictMap ?? '{}'), {
     get(target, key) {
       return target[key] || []
     },

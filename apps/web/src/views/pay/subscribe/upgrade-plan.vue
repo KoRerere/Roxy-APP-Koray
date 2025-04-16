@@ -14,7 +14,7 @@ import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, purchaseType, subOrderType } from '/@/enums/pay'
+import { OrderType, PayWay, purchaseType, PaySubOrderType } from '/@/enums/pay'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
@@ -224,7 +224,7 @@ async function planUpgrade() {
           purchaseMember: { profile: selectedCount.value },
           purchaseType: purchaseType.Profile,
           subLevel: selectedPlan.value.subLevel,
-          subOrderType: subOrderType.Upgrade,
+          subOrderType: PaySubOrderType.Upgrade,
           ...params,
           orderType: OrderType.Subscribe,
         })

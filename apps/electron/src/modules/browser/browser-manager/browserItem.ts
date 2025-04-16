@@ -1,4 +1,3 @@
-import mitt from 'mitt'
 import { createReadStream } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -17,6 +16,7 @@ import { BeforeLaunchTask } from './beforeLaunchTask'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
+import { canUseSyncControl } from '/@/modules/store'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -41,7 +41,10 @@ export class BrowserItem {
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
   get requestHeaders() {
-    return this.launchBy === 'api' ? openAPICommonHeaders : {}
+    return {
+      ...(this.launchBy === 'api' ? openAPICommonHeaders : {}),
+      workspaceId: this.winInfo.workspaceId,
+    }
   }
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
@@ -141,6 +144,7 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
+    Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
@@ -231,7 +235,7 @@ export class BrowserItem {
       const remoteOssPath = `${ossDirPath}${this.browserCacheFileName}`
       const readStream = createReadStream(outputZipPath)
       console.log('开始上传缓存文件', remoteOssPath)
-      const data = await aliOSS.putStream(remoteOssPath, readStream)
+      const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
       console.log(`oss 缓存文件上传成功`, data)
@@ -278,6 +282,7 @@ export class BrowserItem {
           if (code === 0 && data.rows[0]) {
             // console.log('获取窗口信息成功', data.rows[0])
             this.winInfo = data.rows[0]
+            Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
           }
         }
       } catch (error) {

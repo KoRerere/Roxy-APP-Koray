@@ -13,7 +13,8 @@ const avatarStyle = computed(() => {
   return currentWorkspace.value?.workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 })
 
-function showWorkspaceManager() {
+async function showWorkspaceManager() {
+  await workspaceStore.getWorkspaceList()
   dialogInstance.showModal({
     header: $t('工作空间管理'),
     pt: {
@@ -30,8 +31,7 @@ function showWorkspaceManager() {
 
 <template>
   <div class="workspace-manager" @click="showWorkspaceManager">
-    <Avatar :label="currentWorkspace?.workspacePicture || currentWorkspace?.workspaceName?.slice(0, 2)"
-      class="workspace-icon-small" :style="avatarStyle" />
+    <Avatar :label="currentWorkspace?.workspacePicture || currentWorkspace?.workspaceName?.slice(0, 2)" class="workspace-icon-small" :style="avatarStyle" />
     <div>{{ currentWorkspace?.workspaceName }}</div>
     <RxSvgIcon name="base/rx_ic_chevron_right" :size="12" />
   </div>

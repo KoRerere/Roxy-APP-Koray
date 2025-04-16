@@ -14,7 +14,7 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue } from '/@/utils'
+import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue, deepClone, safeParseJSON } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
@@ -28,9 +28,15 @@ import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
-import { getCustomFilters, getOperation, getSorts, tableFilters } from './operation'
+import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
+import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import { emitter } from '/@/utils/eventBus'
+import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
+import { I18nT } from "vue-i18n"
+
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -45,17 +51,17 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['updateFilterTabs'])
+const emit = defineEmits(['updateFilterTabs', 'switchTab'])
 
 const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const role = useRoleStore()
-const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
-
+const [dialogInstance] = RxUseDialog()
+const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
 const { getProjects } = useMateGroup()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
@@ -66,9 +72,10 @@ const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const filtersMenu = ref()
-const operation = ref(getOperation())
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+
+const operation = computed(getOperation)
 
 const drawer = reactive({
   type: 'proxyList',
@@ -197,11 +204,11 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
    * 兼容批量操作
    */
   const datas: Data[] = [].concat(data).map(item => toRaw(item))
-  const ids: number[] = datas.map((item: any) => item.id)
+  const ids = datas.map(item => item.id!)
 
   switch (operate.name) {
     case 'edit':
-      const [{ page_index }] = tableRef.value?.getParams()
+      const [{ page_index }] = tableRef.value!.getParams()
       const customFilterParams = filtersMenu.value.reduce((acc: any, cur: any) => {
         if (cur.value) {
           acc[cur.name] = toRaw(cur.value)
@@ -209,7 +216,8 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
         return acc
       }, {})
       router.push({
-        name: 'browser-edit', query: {
+        name: 'browser-edit',
+        query: {
           ...route.query,
           id: data.id,
           page_index,
@@ -221,6 +229,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
     case 'copyId':
       copyText(data.dirId)
       showToast(0, $t('复制成功'))
+      break
+    case 'transfer':
+      await onTransfer(datas, operate)
       break
     case 'moveToProject':
       await onMoveToProject(datas)
@@ -305,12 +316,14 @@ async function openBrowserBefore(data: Data | Data[]) {
 
   const result = await checkProfileStatus(datas)
   //过滤自身打开的窗口
-  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userStore.userInfo.id))
+  const list = result.filter(item => !item.statusInfo.some(info => info.openUserId === userInfo.value.id))
+  // 1.如果没有其他人打开窗口，则直接打开
   if (!list.length) {
     onOpenBrowser(datas)
     return
   }
 
+  // 2.如果窗口其他人打开了，那么就提示用户，让用户选择是否继续打开
   confirm.require({
     header: $t('警告'),
     message: $t('[{names}] 已被其他成员打开，是否继续打开？', { names: result.map(item => `${workspaceName.value}-${item.sortNum}`).join(', ') }),
@@ -352,7 +365,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     operation,
     operationHandler: async (operate: any) => {
       try {
-        await operationHandler(operate, data)
+        const _operate = { ...deepClone(toRaw(operate)), _event: event }
+        await operationHandler(_operate, data)
       }
       catch (error) {
         console.log(error)
@@ -368,6 +382,97 @@ async function updateMeta(params: { labelIds?: number[], projectId?: number }, i
   } else {
     await batchModifyWindow({ ...params, ids })
   }
+}
+
+async function getNotUsedProfiles(datas: Data[]) {
+  if (!datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
+    return datas
+  }
+  const result = await electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
+  return datas.filter((_, index) => !result[index])
+}
+
+async function onTransfer(datas: Data[], operate?: any) {
+  if (isNoPayUser.value) {
+    if (!role.isOwner) {
+      wcisToast({
+        severity: 'warn',
+        summary: $t('窗口投送不可用'),
+        detail: $t('请联系空间的拥有者进行升级。'),
+        life: 5000
+      })
+      return
+    }
+
+    if (operate._event && ['quick', 'batch_quick'].includes(operate._type)) {
+      emitter.emit("showPayWall", {
+        event: operate._event,
+        params: {
+          type: "transfer",
+        },
+      })
+    } else {
+      wcisToast({
+        severity: 'warn',
+        summary: $t('窗口投送不可用'),
+        detail: h(I18nT, {
+          keypath: $t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' }),
+        }, {
+          link: () => h('a', {
+            class: 'cursor-pointer',
+            onClick: () => router.push({ name: 'subscribe-plan' }),
+          }, $t('升级'))
+        }),
+        life: 5000
+      })
+    }
+    return
+  }
+
+  const result = await getNotUsedProfiles(datas)
+  if (result.length !== datas.length) {
+    onlyErrorToast(-1, $t('当前已打开的窗口无法被投送'))
+    return
+  }
+
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(TransferModal, {
+        ids: datas.map(item => item.id!),
+        onClose: () => {
+          dialogInstance.hideModal()
+          reject()
+        },
+        onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
+          dialogInstance.hideModal()
+          if (!isSelf) {
+            showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
+            // 如果在项目列表中投送，投送成功则跳到投送中 tab
+            if (route.name === 'project-item') {
+              router.replace({ name: 'browser-list', query: { activeTabId: 'rx_1004' } })
+            } else {
+              emit('switchTab', 'rx_1004')
+            }
+          } else {
+            if (needRefresh) {
+              onRefreshTable()
+            }
+            showToast(0, $t('投送成功'))
+          }
+          resolve()
+        },
+      })
+    }
+  })
+  return promise
 }
 
 async function onMoveToProject(datas: any) {
@@ -487,28 +592,16 @@ async function exportProfile(data: any) {
       props: {
         data,
         workspaceName: workspaceName.value,
-      },
-      onConfirm: async () => {
-        // if (result === ClearType.cloud) {
-        //   await API.window.userClearWindowCacheCreate({ ids: [data.id] })
-        //   await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirId: data.dirId })
-        // }
-        // else {
-        //   await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
-        // }
-      },
+      }
     },
   })
 }
 
 async function deleteProfile(datas: any, ids: number[]) {
-  if (datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
-    const result = await electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
-    console.log('browser:isProcessExists result', result)
-    if (result.some(item => item)) {
-      onlyErrorToast(-1, $t('请先关闭窗口'))
-      return
-    }
+  const result = await getNotUsedProfiles(datas)
+  if (result.length !== datas.length) {
+    onlyErrorToast(-1, $t('请先关闭窗口'))
+    return
   }
 
   return new Promise((resolve, reject) => {
@@ -543,7 +636,7 @@ async function deleteProfile(datas: any, ids: number[]) {
       reject: () => {
         reject($t('取消'))
       },
-    })
+    } as any)
   })
 }
 
@@ -696,6 +789,7 @@ async function toCreateBrowser() {
 
 let canceOpenlListener: any
 let canceCloselListener: any
+
 onBeforeMount(() => {
   canceOpenlListener = listenOpenMessage()
   canceCloselListener = listenCloseMessage()
@@ -709,12 +803,7 @@ onBeforeMount(() => {
       })
     })
 
-  let customFilterParams = {}
-  try {
-    customFilterParams = JSON.parse(route.query.customFilterParams as string)
-  } catch (error) {
-    // console.log('parse customFilterParams error',error)
-  }
+  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
 
   getCustomFilters(customFilterParams).then((data) => {
     filtersMenu.value ??= data
@@ -755,9 +844,19 @@ defineExpose({
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
     </template>
-    <template #note="{ data }">
-      <RxSvgIcon v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" :name="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.windowRemark }"
-        class="cursor-pointer" @click.stop="operationHandler({ name: 'addNotes' }, data)" />
+    <template #noteHeader="{ column: { title, _cache } }">
+      <div class="flex items-center gap-2 note-header">
+        <span>{{ title }}</span>
+        <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+          @click.stop="_cache.extend = !_cache.extend" />
+      </div>
+    </template>
+    <template #note="{ data, column: { _cache } }">
+      <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
+        <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+          :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+        <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{ data.windowRemark }}</div>
+      </div>
     </template>
     <template #project="{ data }">
       <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
@@ -767,7 +866,8 @@ defineExpose({
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
-        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }" class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5"
+        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
+          class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
           @click.stop="operationHandler({ name: 'fav' }, data)">
           <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
         </div>
@@ -785,6 +885,42 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+.note-header {
+  color: #000;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.note-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.remark-light {
+  :deep(svg) {
+    color: var(--Colors-text-text-brand, #11A3FD) !important;
+  }
+}
+
+.quick-icon {
+  color: var(--Colors-icon-icon-secondary, #575D60);
+
+  &:active:not(.disabled) {
+    color: orange;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
 :deep(.window-table) {
   tr:not([data-p-selected=true]):hover .direct-info {
     background-color: var(--Colors-Background-bg-body-hover, #f0f3f5);

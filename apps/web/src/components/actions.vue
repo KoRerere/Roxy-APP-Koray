@@ -1,37 +1,26 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { type Operation, operationPower } from '/@/utils'
+import { type Operation, operationPower, deepClone } from '/@/utils'
 
-const props = defineProps({
-  operation: {
-    type: Array as PropType<Operation[]>,
-    default: () => [],
-  },
-  loadingOperationMap: {
-    type: Object,
-    default: () => ({}),
-  },
-  showMenu: {
-    type: Boolean,
-    default: true,
-  },
-  actionIcon: {
-    type: String as PropType<SvgNames>,
-    default: 'base/rx_ic_more-v',
-  },
-})
+interface Props {
+  operation: Operation[]
+  loadingOperationMap?: Record<string, boolean>
+  showMenu?: boolean
+  actionIcon?: SvgNames
+}
+
+const { operation, loadingOperationMap, showMenu = true, actionIcon = 'base/rx_ic_more-v' } = defineProps<Props>()
 
 const emit = defineEmits(['quickClick', 'more'])
 
-const _operation = computed(() => operationPower(props.operation))
-const quickOperation: any = computed(() => _operation.value.filter((item: any) => item.quick))
-const loadingQuickOperation: any = computed(() => props.loadingOperationMap)
+const _operation = computed(() => operationPower(operation))
+const quickOperation = computed(() => _operation.value.filter(item => item.quick))
 
-function quickClick(item: any) {
-  if (item.disabled || loadingQuickOperation.value?.[item.name]) {
+function quickClick(event: MouseEvent, item: Operation) {
+  if (item.disabled || loadingOperationMap?.[item.name as string]) {
     return
   }
-  emit('quickClick', item)
+  emit('quickClick', { ...deepClone(toRaw(item)), _event: event, _type: 'quick' })
 }
 
 function onMore(event: Event) {
@@ -41,41 +30,52 @@ function onMore(event: Event) {
 
 <template>
   <div class="flex items-center">
-    <div class="quick">
-      <div v-for="item in quickOperation" :key="item.name">
+    <div class="flex items-center gap-2 quick">
+      <div class="quick-item" :class="{ 'disabled': item.disabled || loadingOperationMap?.[item.name as string] }" v-for="item in quickOperation" :key="item.name">
         <component :is="item.render" v-if="item.render" />
-        <RxSvgIcon v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, hideDelay: 300, pt: { root: '!max-w-sm' } }" class="quick-item"
-          :name="loadingQuickOperation?.[item.name] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
-          :class="[item.iconClass, { 'disabled text-gray-300': item.disabled }, { 'pi-spin disabled': loadingQuickOperation?.[item.name] }]" @click.stop="quickClick(item)" />
+        <div v-else class="flex items-center" v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }"
+          @click.stop="quickClick($event, item)">
+          <RxSvgIcon class="pointer-events-none quick-icon" :name="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :size="16"
+            :class="[item.iconClass, { 'pi-spin': loadingOperationMap?.[item.name as string] }]" />
+        </div>
       </div>
-      <div v-tooltip="{ value: $t('更多操作'), pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length"
-        class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5" @click.stop="onMore">
+      <div v-tooltip.top="{ value: $t('更多操作'), showDelay: 500, pt: { text: { class: '!whitespace-nowrap !break-keep' } } }" v-if="showMenu && _operation.length" class="quick-item"
+        @click.stop="onMore">
         <slot name="more-icon">
-          <RxSvgIcon :name="actionIcon" class="pointer-events-none" />
+          <RxSvgIcon :name="actionIcon" class="pointer-events-none quick-icon" />
         </slot>
       </div>
     </div>
   </div>
+  <!-- <RxButton v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" text severity="secondary" size="xxs"
+  :icon="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :loading="loadingOperationMap?.[item.name as string]" @click.stop="quickClick(item)"></RxButton> -->
 </template>
 
 <style lang="scss" scoped>
-.quick {
+.quick-item {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-xl, 12px);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
 
-  &-item {
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
+  &:hover:not(.disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 
-    &:active {
-      color: orange;
-    }
+  &.disabled {
+    cursor: not-allowed;
 
-    &.disabled {
-      cursor: not-allowed;
+    :deep(svg) {
+      color: #d1d5db;
     }
   }
+}
+
+:where(.quick-icon) {
+  color: var(--Colors-icon-icon-secondary, #575D60);
 }
 </style>

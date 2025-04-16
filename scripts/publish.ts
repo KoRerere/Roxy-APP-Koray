@@ -19,7 +19,7 @@ const ossConfig = {
 
 const apiBaseUrl = `${isProd ? "https://admin.lumibrowser.com" : "https://admintest.roxybrowser.co"}/fb-admin-api`;
 // 懒得模拟登录获取 token 了，反正 token 是永久的
-const token = isProd ? 'nfnlQ4tl2UVcKKUh1710868857530' : 'w00eDcSDwrXSWS7B1741162500315'
+const token = isProd ? 'ratCYB7Rf5LOp89x1744776621745' : 'UJ4UKYUU3UKGfAmo1743595549211'
 /** 安装包输出路径 */
 const outDir = join(__dirname, "../out");
 /** YAML 文件路径 */
@@ -83,7 +83,6 @@ async function getOssCredentials() {
     .then((res) => res.json())
     .then((res) => res.data);
 
-  // console.log(data)
 
   return data;
 }

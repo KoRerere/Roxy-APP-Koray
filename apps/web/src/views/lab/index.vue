@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import QiYuan from './qiyuan.vue'
 import YinHao from './yinhao.vue'
+import XiaoZheng from './xiaozheng.vue'
 
 const who = ref(localStorage.getItem('__who') ?? '0')
 
@@ -18,6 +19,9 @@ watch(who, () => {
       <Tab value="1">
         跛豪
       </Tab>
+      <Tab value="2">
+        小郑
+      </Tab>
     </TabList>
     <TabPanels>
       <TabPanel value="0">
@@ -25,6 +29,9 @@ watch(who, () => {
       </TabPanel>
       <TabPanel value="1">
         <YinHao />
+      </TabPanel>
+      <TabPanel value="2">
+        <XiaoZheng />
       </TabPanel>
     </TabPanels>
   </Tabs>

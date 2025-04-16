@@ -28,10 +28,13 @@ export function getColumns() {
       {
         title: $t('备注'),
         key: 'note',
+        headerSlot: 'noteHeader',
         slot: 'note',
         style: {
-          width: '10%',
-          minWidth: '50px',
+          minWidth: '75px',
+        },
+        _cache: {
+          extend: false,
         }
       },
       {
@@ -84,11 +87,11 @@ export function getColumns() {
       {
         title: $t('其他'),
         key: 'actions',
-        // alignFrozen: 'right',
+        alignFrozen: 'right',
         slot: 'actions',
         style: {
-          width: '10%',
-          minWidth: '95px',
+          width: '0rem',
+          minWidth: '120px',
         }
       },
     ],

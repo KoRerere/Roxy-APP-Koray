@@ -1,9 +1,12 @@
 <script setup lang="ts">
-const props = defineProps({
-  icon: String,
-  title: String,
-  desc: String,
-})
+interface Props {
+  title: string
+  icon?: string
+  desc?: string
+}
+
+const props = defineProps<Props>()
+
 const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, import.meta.url).href)
 </script>
 
@@ -14,7 +17,7 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
       <div class="empty-info-title">
         {{ title }}
       </div>
-      <div class="empty-info-desc">
+      <div v-if="desc" class="empty-info-desc">
         <slot name="desc">
           <div v-html="desc" />
         </slot>

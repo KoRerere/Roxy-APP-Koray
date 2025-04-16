@@ -27,6 +27,8 @@ export async function createSynchronizerActionBarWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     hasShadow: false,
+    // https://github.com/electron/electron/issues/46468
+    roundedCorners: false,
     frame: false,
     webPreferences: {
       preload: appConfig.preloadFilePath

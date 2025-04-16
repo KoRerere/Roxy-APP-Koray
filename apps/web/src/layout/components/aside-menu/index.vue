@@ -51,6 +51,7 @@ const menus = computed(() => {
   ]))
 })
 
+// 切换空间后重新获取 pin 项目
 watch(currentWorkspace, () => {
   if (currentWorkspace.value?.id) {
     setTimeout(() => {
@@ -72,7 +73,7 @@ function filterMenus(menus: RouteRecordRaw[]) {
 
     let hasRole = true
     if (item.meta?.roles?.length) {
-      hasRole = item.meta.roles.includes(currentWorkspace.value?.role)
+      hasRole = item.meta.roles.includes(currentWorkspace.value?.role!)
     }
 
     return !item.meta?.hideInMenu && hasRole
@@ -94,8 +95,7 @@ async function toCreateBrowser() {
 <template>
   <aside class="aside" :class="{ collapsed }">
     <template v-if="!roleStore.isViewer">
-      <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn"
-        @click="toCreateBrowser" />
+      <RxButton :label="collapsed ? '' : $t('创建窗口')" icon="base/rx_ic_browser_add" class="new-profile-btn" @click="toCreateBrowser" />
     </template>
     <nav class="menu">
       <SubMenuItem :items="menus" :collapsed />

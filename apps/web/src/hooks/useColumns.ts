@@ -1,8 +1,4 @@
-import { deepClone } from '/@/utils'
-
-interface ColumnCache {
-  [key: string]: { visible: string, sort: string }
-}
+import { deepClone, safeParseJSON } from '/@/utils'
 
 interface Columns {
   key: string
@@ -14,41 +10,39 @@ interface Options {
   filters?: string[]
 }
 
-export function useColumns(columns: Columns, filterColumnKeys?: string[]) {
-  const { key, data } = columns
-
-  const cache = (localStorage.getItem(key)?.split(',') || []).reduce(
-    (settingMap, columnSetting: string) => {
-      const [columnKey, visible, sort] = columnSetting.split('_')
-      settingMap[columnKey] = {
-        visible: visible ? JSON.parse(visible) : undefined,
-        sort,
-      }
-      return settingMap
-    },
-    {} as ColumnCache,
-  )
+export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) {
+  const rawCache = safeParseJSON(localStorage.getItem(key))
+  const cacheMap = (Array.isArray(rawCache) ? rawCache : [])
+    .reduce((cacheMap: Record<string, any>, item: [string, Record<string, any>]) => {
+      const [columnKey, value] = item
+      cacheMap[columnKey] = value
+      return cacheMap
+    }, {})
 
   const _list = ref(
     data
-      .map((item, index) => {
-        const _visible = cache[item.key]?.visible ?? item._visible ?? true
-        const _sort = cache[item.key]?.sort ?? item._sort ?? index
-        return {
-          ...item,
-          _visible,
-          _sort,
-        }
-      })
       .filter(item => !filterColumnKeys || !filterColumnKeys.includes(item.key))
-      .sort((a, b) => a._sort - b._sort),
+      .map((item, index) => {
+        const { sort, visible, cache } = cacheMap[item.key] ?? {}
+
+        const _sort = sort ?? item._sort ?? index
+        const _visible = visible ?? item._visible ?? true
+        const _cache = cache ?? item._cache ?? undefined
+
+        const column = { ...item, _sort, _visible }
+
+        if (_cache) {
+          column._cache = _cache
+        }
+
+        return column
+      })
+      .toSorted((a, b) => a._sort - b._sort)
   )
 
   onUnmounted(() => {
-    const _cache = _list.value
-      .map((item, index) => `${item.key}_${item._visible}_${index}`)
-      .join(',')
-    localStorage.setItem(key, _cache)
+    const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, cache: item._cache }])
+    localStorage.setItem(key, JSON.stringify(_cache))
   })
 
   return [_list]

@@ -120,15 +120,27 @@ async function writeKeysToFile(fileContent: string, outputFile: string) {
  */
 export async function genLangFiles(langFiles: string[] = [], outputDir: string, defaultLang = 'en', cwd?: string) {
   /**
-   * 扫描提取的键
+   * 扫描提取的键，value 为空字符串的 key，排在最后
    */
   const keys = await scanFiles(cwd)
-  const replacer = (key, value) => {
+  const replacer = (key: string, value: any) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return Object.keys(value).sort().reduce((sorted, k) => {
+      const { empty = [], notEmpty = [] } = Object.groupBy(Object.keys(value).sort(), k => {
+        return value[k] === '' ? 'empty' : 'notEmpty'
+      })
+      const sorted = notEmpty.reduce((sorted, k) => {
         sorted[k] = value[k]
         return sorted
       }, {})
+
+      const emptySorted = empty.reduce((sorted, k) => {
+        sorted[k] = value[k]
+        return sorted
+      }, {})
+      return {
+        ...sorted,
+        ...emptySorted,
+      }
     }
     return value
   }

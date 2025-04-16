@@ -20,6 +20,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
+import { isMainWindow } from '/@/utils'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -38,6 +39,12 @@ let getGatewayConfigPromise: Promise<any> | null = null
 let getCommonRequestHeadersPromise: Promise<any> | null = null
 
 httpClient.instance.interceptors.request.use(async (config) => {
+  // const lockStore = useLock();
+  // if (lockStore.isLocked) {
+  //   return new Promise((resolve) => {
+  //     // 永不执行的 Promise
+  //   })
+  // }
   baseURL ||= await (getGatewayConfigPromise ||= electronAPI.send('util:getGatewayConfig')).finally(() => {
     getGatewayConfigPromise = null
   })
@@ -66,8 +73,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   return config
 })
 
-const closeOtherWindow = debounce(async () => {
-  const isMainWindow = await electronAPI.send('app:isMainWindow')
+const closeOtherWindow = debounce(() => {
   if (!isMainWindow) {
     window.close()
   }

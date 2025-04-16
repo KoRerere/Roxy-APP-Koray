@@ -4,8 +4,13 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap, Role } from '/@/enums';
 import { useWorkspaceStore } from '/@/stores/workspace';
 import { useDialog } from '/@/hooks/useDialog';
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import WorkspaceSetting from '/@/views/workspace-setting/index.vue'
 import { $t } from '/@/locales';
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { copyText } from '/@/utils/'
+
+type Data = UnwrapRowType<UserGetWorkspaceListListData>
 
 const { list = [] } = defineProps<{
   list: UnwrapRowsType<UserGetWorkspaceListListData>,
@@ -18,6 +23,8 @@ const [dialogInstance] = useDialog()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const roleLabelMap = getRoleLabelMap()
+const { showMenu: showPopupMenu } = usePopupMenu()
+const [showToast] = useResponseToast()
 
 function getAvatarStyle(workspacePicture: string) {
   return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
@@ -31,7 +38,7 @@ function handleLeaveWorkspace({ isCurrentWorkspace }: { isCurrentWorkspace: bool
   }
 }
 
-async function showEditWorkspaceDialog(workspaceInfo: UnwrapRowType<UserGetWorkspaceListListData>) {
+async function showEditWorkspaceDialog(workspaceInfo: Data) {
   dialogInstance.showModal({
     header: $t('编辑工作空间'),
     class: 'w-[520px]',
@@ -43,37 +50,31 @@ async function showEditWorkspaceDialog(workspaceInfo: UnwrapRowType<UserGetWorks
   })
 }
 
-async function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>) {
-  const windowList = await electronAPI.send('browser:getOpenedBrowser')
-  const { promise, resolve, reject } = Promise.withResolvers<void>()
-
-  if (windowList.length) {
-    const dirIds = windowList.map(item => item.dirId!)
-
-    dialogInstance.showModal({
-      header: $t('提示'),
-      class: 'w-[370px]',
-      innerDialog: true,
-      okText: $t('继续'),
-      slots: {
-        default: () => <>{$t('您当前有 {count} 个窗口正在使用中，切换空间将关闭这些窗口，是否继续？', { count: windowList.length })}</>,
-      },
-      async handleOk() {
-        await electronAPI.send('browser:batchClose', dirIds)
-        resolve()
-      },
-      handleCancel() {
-        reject()
-      }
-    })
-  } else {
-    resolve()
-  }
-
-  await promise
-
-  workspaceStore.setCurrentWorkspace(item.id)
+async function enterWorkspace(item: Data) {
+  workspaceStore.setCurrentWorkspace(item.id!)
   emit('enterWorkspace')
+}
+
+function onConfig(event: MouseEvent, item: Data) {
+  showPopupMenu(event, {
+    model: [
+      {
+        label: $t('复制空间 ID'),
+        icon: 'base/rx_ic_copy',
+        command: () => {
+          copyText(item.workspaceNo!.toString())
+          showToast(0, $t('复制成功'))
+        },
+      },
+      {
+        label: $t('编辑空间'),
+        icon: 'base/rx_ic_edit',
+        command: () => {
+          showEditWorkspaceDialog(item)
+        },
+      },
+    ]
+  })
 }
 </script>
 
@@ -82,8 +83,7 @@ async function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>)
     <template v-for="item in list" :key="item.id">
       <div class="workspace-item">
         <div class="workspace-item-info">
-          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
-            :style="getAvatarStyle(item.workspacePicture)"
+          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
             :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
           <div class="workspace-item-detail">
             <div class="detail-header">
@@ -106,14 +106,13 @@ async function enterWorkspace(item: UnwrapRowType<UserGetWorkspaceListListData>)
           </div>
         </div>
         <div class="workspace-item-actions">
-          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id"
-            @click="enterWorkspace(item)">
+          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id" @click="enterWorkspace(item)">
             {{ item.id === currentWorkspace?.id ? $t('当前空间') : $t('进入空间') }}
           </RxButton>
-          <RxButton severity="secondary" outlined size="md" @click="showEditWorkspaceDialog(item)">
+          <RxButton severity="secondary" outlined size="md" icon="base/rx_ic_gear" @click="onConfig($event, item)">
             <template #icon>
               <div class="p-[2px] flex-cc">
-                <RxSvgIcon name="base/rx_ic_gear" :size="16" />
+                <RxSvgIcon name="base/rx_ic_gear" />
               </div>
             </template>
           </RxButton>

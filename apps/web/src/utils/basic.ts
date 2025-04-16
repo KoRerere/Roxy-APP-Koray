@@ -337,3 +337,12 @@ export function startCountdown(
   updateCountdown();
   return stop
 }
+
+export function safeParseJSON(data: any, fallback?: any) {
+  try {
+    return JSON.parse(data)
+  }
+  catch (error) {
+    return fallback ?? data
+  }
+}

@@ -79,7 +79,10 @@ export const preferenceSettings = {
     /** 延迟模式：0 串行， 1 并行 */
     clickDelayMode: 1,
   },
-  /** 快捷键设置 */
+  /**
+   * 快捷键设置
+   * https://github.com/electron/electron/blob/main/docs/api/accelerator.md
+   */
   shortcutKey: {
     windows: {
       /** 开始同步 */

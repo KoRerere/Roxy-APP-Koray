@@ -4,7 +4,8 @@ import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
 import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
-import { isDev } from '/@/utils'
+import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
+import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -14,6 +15,8 @@ interface Tab {
   list: Message[]
   noRead: number
 }
+
+const [dialogInstance] = RxUseDialog()
 
 const pop = ref()
 const tabs = ref<Tab[]>([
@@ -30,10 +33,16 @@ const tabs = ref<Tab[]>([
     noRead: 0,
   },
 ])
-
 const tabsValue = ref('sys')
 
 const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 0))
+const readSet = ref<Set<number>>(new Set())
+
+onBeforeMount(() => {
+  getMessageList().finally(() => {
+    emitter.on('notifyUpdateData', getMessageList)
+  })
+})
 
 function toggle(event: Event) {
   getMessageList()
@@ -63,61 +72,69 @@ async function getMessageList(result?: UserGetNotifyListData) {
   const { teams, sys, teamsRead, sysRead } = (data ?? []).reduce((acc, item) => {
     if (item.messageModule === NotifyModule.teams) {
       acc.teams.push(item)
-      // TODO 待优化
-      acc.teamsRead += item.status
+      acc.teamsRead += item.status!
     }
     else {
       acc.sys.push(item)
-      acc.sysRead += item.status
+      acc.sysRead += item.status!
     }
     return acc
-  }, { teams: [], sys: [], teamsRead: 0, sysRead: 0 })
+  }, { teams: [] as any, sys: [] as any, teamsRead: 0, sysRead: 0 })
 
   teamsTab.noRead = teams.length - teamsRead
   sysTab.noRead = sys.length - sysRead
   teamsTab.list = teams
   sysTab.list = sys
-  // TODO 待复现 bug 时调试
-  if (isDev && (teamsTab.noRead < 0 || sysTab.noRead < 0)) {
-    debugger
-  }
 }
 
 async function onRead(item: Message | Message[]) {
-  if (!Array.isArray(item) && item.status === NotifyStatus.read)
+  if (!Array.isArray(item) && (item.status === NotifyStatus.read || readSet.value.has(item.id!)))
     return
 
   const items = ([] as Message[]).concat(item)
-  const ids = items.map(item => item.id)
+  const ids = items.map(item => item.id!)
 
-  await API.base.userReadNotifyCreate({ ids: ids as number[] })
+  readSet.value = new Set([...readSet.value, ...ids])// 标记已读 id
+
+  const { code } = await API.base.userReadNotifyCreate({ ids })
+  if (code !== 0) {
+    ids.forEach(id => readSet.value.delete(id))
+    return
+  }
   tabs.value.find(tab => tab.value === tabsValue.value)!.noRead -= ids.length
   items.forEach(item => item.status = NotifyStatus.read)
 }
 
-function markAllAsRead() {
-  const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread)
-  list?.length && onRead(list)
+async function markAllAsRead() {
+  const list = tabs.value.find(tab => tab.value === tabsValue.value)!.list.filter(item => item.status === NotifyStatus.unread && !readSet.value.has(item.id!))
+  if (list?.length) {
+    await onRead(list)
+  }
 }
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    emitter.emit('viewInviteDetail', item.paramData)
+    emitter.emit('viewInviteDetail', item.paramData!)
   }
 }
 
-function handleAvatar(item: Message) {
-  if (item.messageModule === NotifyModule.sys) {
-    return '/images/system-notice-avatar.png'
-  }
-  return item.avatar
-}
-
-onMounted(() => {
-  getMessageList().finally(() => {
-    emitter.on('notifyUpdateData', getMessageList)
+function checkTransfer(item: Message) {
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: () => h(CheckTransfer, {
+        windowTransferNo: item.windowTransferNo,
+        onClose: () => dialogInstance.hideModal(),
+      })
+    }
   })
-})
+}
 </script>
 
 <template>
@@ -148,20 +165,18 @@ onMounted(() => {
                 <div v-for="item in tab.list" :key="item.id" class="flex"
                   :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2" :avatar="handleAvatar(item)"
+                    <RxAvatar class="cursor-pointer mr-2"
+                      :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
                       :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div class="w-full">
-                    <div :class="message.value">
-                      {{ item.notify }}
-                    </div>
+                    <div :class="message.value">{{ item.notify }}</div>
                     <div :class="message.time" class="w-full flex justify-between">
-                      <span>
-                        {{ item.createTime }}
-                      </span>
-                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">
-                        {{ $t('查看详情') }}
-                      </span>
+                      <span>{{ item.createTime }}</span>
+                      <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{
+                        $t('查看详情') }}</span>
+                      <span v-if="item.windowTransferNo" :class="message['check-detail']"
+                        @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
                   </div>
                 </div>

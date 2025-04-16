@@ -5,208 +5,208 @@ import RxToggleSwitch from "/@/components/rx-toggle-switch";
 import RxInputSelect from "/@/components/ry-form/rx-input-select.vue";
 import { useCommonUtil } from "/@/layout/components/header/profile/components/settings-popup/useCommonUtil";
 import type {
-	Items,
-	SettingsModule,
+  Items,
+  SettingsModule,
 } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import { getDictMap } from "/@/utils";
 
 export function useNetworkPanel() {
-	const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } =
-		useCommonUtil();
+  const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } =
+    useCommonUtil();
 
-	const getNetworkPanels = async (data?: any): Promise<SettingsModule> => {
-		const $dict_map = await getDictMap();
+  const getNetworkPanels = async (data?: any): Promise<SettingsModule> => {
+    const $dict_map = await getDictMap();
 
-		const items = reactive({
-			title: $t("网络设置"),
-			description: $t("设置您的客户端网络连接，包括白名单和默认 IP 查询渠道"),
-			list: [
-				{
-					subtitle: $t("网络连接方式"),
-					items: [
-						{
-							label: $t("使用系统代理"),
-							text: () => (
-								<div>
-									<div>{$t("关闭后使用本地网络连接")}</div>
-									<div class="w-[370px] text-red line-height-normal">
-										{$t("改变此开关状态后，请重启窗口以确保生效")}
-									</div>
-								</div>
-							),
-							name: "systemProxySwitch",
-							value: data?.systemProxySwitch ?? false,
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<RxToggleSwitch
-										{...item.props}
-										{...props}
-										onChange={() => saveUserConfig(item, items)}
-									/>
-								);
-							},
-						},
-						{
-							label: $t("网络兼容模式"),
-							text: $t("当系统代理识别失败时尝试启用"),
-							name: "v2raySwitch",
-							hide: !data?.systemProxySwitch,
-							value: data?.v2raySwitch ?? false,
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<RxToggleSwitch
-										{...item.props}
-										{...props}
-										onChange={() => saveUserConfig(item)}
-									/>
-								);
-							},
-						},
-						{
-							label: $t("检查系统代理"),
-							component: ({ item }: any) => {
-								return (
-									<RxButton
-										class="mb-1.5"
-										size="sm"
-										outlined
-										severity="secondary"
-										icon="base/rx_ic_speed_test"
-										label={$t("检测")}
-										onClick={() => detectSystemNetwork(item)}
-									/>
-								);
-							},
-							afterComponent: ({ item }: any) => {
-								return (
-									item.value && (
-										<Message
-											icon="pi pi-check-circle"
-											severity="success"
-											closable={true}
-											pt={{ content: "!items-start" }}
-											onClose={() => {
-												item.value = null;
-											}}
-										>
-											<div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-											<div class="text-3 line-height-normal color-[#575D61]">
-												{$t("位置")}:{item.value.country_code}/
-												{item.value.country}
-											</div>
-											<div class="text-3 line-height-normal color-[#575D61]">
-												IP:
-												{item.value.ip}
-											</div>
-										</Message>
-									)
-								);
-							},
-						},
-						{
-							label: $t("检测本地网络"),
-							component: ({ item }: any) => {
-								return (
-									<RxButton
-										class="mb-1.5"
-										size="sm"
-										outlined
-										severity="secondary"
-										icon="base/rx_ic_speed_test"
-										label={$t("检测")}
-										onClick={() => detectLocalNetwork(item)}
-									/>
-								);
-							},
-							afterComponent: ({ item }: any) => {
-								return (
-									item.value && (
-										<Message
-											icon="pi pi-check-circle"
-											severity="success"
-											closable={true}
-											pt={{ content: "!items-start" }}
-											onClose={() => {
-												item.value = null;
-											}}
-										>
-											<div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-											<div class="text-3 line-height-normal color-[#575D61]">
-												{$t("位置")}:{item.value.country_code}/
-												{item.value.country}
-											</div>
-											<div class="text-3 line-height-normal color-[#575D61]">
-												IP:
-												{item.value.ip}
-											</div>
-										</Message>
-									)
-								);
-							},
-						},
-					],
-				},
-				{
-					items: [
-						{
-							label: $t("默认 IP 查询渠道"),
-							text: $t("所有 IP 查询结果都会通过该渠道获取"),
-							name: "ipChecker",
-							value: data?.ipChecker ?? "",
-							props: {
-								filter: false,
-								optionValue: "value",
-								options: $dict_map.checkChannel,
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<RxInputSelect
-										{...item.props}
-										{...props}
-										name={item.name}
-										onChange={() => saveUserConfig(item)}
-									/>
-								);
-							},
-						},
-						{
-							label: $t("白名单"),
-							text: $t("使用本地网络请求以下域名"),
-							name: "ipBlackList",
-							classes: "flex-col !items-start gap-4",
-							value: Array.isArray(data?.ipBlackList)
-								? data.ipBlackList.join("\n")
-								: (data.ipBlackList ?? ""),
-							oldValue: Array.isArray(data?.ipBlackList)
-								? data.ipBlackList.join("\n")
-								: (data.ipBlackList ?? ""),
-							formatValue: (item: Items) => item.value.split("\n"),
-							vaildator: (item: Items) => item.oldValue !== item.value,
-							props: {
-								class: "resize-none w-full",
-								placeholder: `${$t("请直接输入 *域名 用回车键分割")}\n${$t("示例")}:\n* google.com\n* facebook.com`,
-							},
-							component: ({ item, ...props }: { item: Items; props: any }) => {
-								return (
-									<Textarea
-										{...item.props}
-										{...props}
-										rows="8"
-										onBlur={() => saveUserConfig(item)}
-									/>
-								);
-							},
-						},
-					],
-				},
-			],
-		});
+    const items = reactive({
+      title: $t("网络设置"),
+      description: $t("设置您的客户端网络连接，包括白名单和默认 IP 查询渠道"),
+      list: [
+        {
+          subtitle: $t("网络连接方式"),
+          items: [
+            {
+              label: $t("使用系统代理"),
+              text: () => (
+                <div>
+                  <div>{$t("关闭后使用本地网络连接")}</div>
+                  <div class="w-[370px] text-red line-height-normal">
+                    {$t("改变此开关状态后，请重启窗口以确保生效")}
+                  </div>
+                </div>
+              ),
+              name: "systemProxySwitch",
+              value: data?.systemProxySwitch ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item, items)}
+                  />
+                );
+              },
+            },
+            {
+              label: $t("网络兼容模式"),
+              text: $t("当系统代理识别失败时尝试启用"),
+              name: "v2raySwitch",
+              hide: (item: Items, items: Items[]) => !items.find(i => i.name === "systemProxySwitch")?.value,
+              value: data?.v2raySwitch ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
+            {
+              label: $t("检查系统代理"),
+              component: ({ item }: any) => {
+                return (
+                  <RxButton
+                    class="mb-1.5"
+                    size="sm"
+                    outlined
+                    severity="secondary"
+                    icon="base/rx_ic_speed_test"
+                    label={$t("检测")}
+                    onClick={() => detectSystemNetwork(item)}
+                  />
+                );
+              },
+              afterComponent: ({ item }: any) => {
+                return (
+                  item.value && (
+                    <Message
+                      icon="pi pi-check-circle"
+                      severity="success"
+                      closable={true}
+                      pt={{ content: "!items-start" }}
+                      onClose={() => {
+                        item.value = null;
+                      }}
+                    >
+                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
+                      <div class="text-3 line-height-normal color-[#575D61]">
+                        {$t("位置")}:{item.value.country_code}/
+                        {item.value.country}
+                      </div>
+                      <div class="text-3 line-height-normal color-[#575D61]">
+                        IP:
+                        {item.value.ip}
+                      </div>
+                    </Message>
+                  )
+                );
+              },
+            },
+            {
+              label: $t("检测本地网络"),
+              component: ({ item }: any) => {
+                return (
+                  <RxButton
+                    class="mb-1.5"
+                    size="sm"
+                    outlined
+                    severity="secondary"
+                    icon="base/rx_ic_speed_test"
+                    label={$t("检测")}
+                    onClick={() => detectLocalNetwork(item)}
+                  />
+                );
+              },
+              afterComponent: ({ item }: any) => {
+                return (
+                  item.value && (
+                    <Message
+                      icon="pi pi-check-circle"
+                      severity="success"
+                      closable={true}
+                      pt={{ content: "!items-start" }}
+                      onClose={() => {
+                        item.value = null;
+                      }}
+                    >
+                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
+                      <div class="text-3 line-height-normal color-[#575D61]">
+                        {$t("位置")}:{item.value.country_code}/
+                        {item.value.country}
+                      </div>
+                      <div class="text-3 line-height-normal color-[#575D61]">
+                        IP:
+                        {item.value.ip}
+                      </div>
+                    </Message>
+                  )
+                );
+              },
+            },
+          ],
+        },
+        {
+          items: [
+            {
+              label: $t("默认 IP 查询渠道"),
+              text: $t("所有 IP 查询结果都会通过该渠道获取"),
+              name: "ipChecker",
+              value: data?.ipChecker ?? "",
+              props: {
+                filter: false,
+                optionValue: "value",
+                options: $dict_map.checkChannel,
+              },
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxInputSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
+            {
+              label: $t("白名单"),
+              text: $t("使用本地网络请求以下域名"),
+              name: "ipBlackList",
+              classes: "flex-col !items-start gap-4",
+              value: Array.isArray(data?.ipBlackList)
+                ? data.ipBlackList.join("\n")
+                : (data.ipBlackList ?? ""),
+              oldValue: Array.isArray(data?.ipBlackList)
+                ? data.ipBlackList.join("\n")
+                : (data.ipBlackList ?? ""),
+              formatValue: (item: Items) => item.value.split("\n"),
+              vaildator: (item: Items) => item.oldValue !== item.value,
+              props: {
+                class: "resize-none w-full",
+                placeholder: `${$t("请直接输入 *域名 用回车键分割")}\n${$t("示例")}:\n* google.com\n* facebook.com`,
+              },
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <Textarea
+                    {...item.props}
+                    {...props}
+                    rows="8"
+                    onBlur={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
+          ],
+        },
+      ],
+    });
 
-		return items;
-	};
+    return items;
+  };
 
-	return {
-		getNetworkPanels,
-	};
+  return {
+    getNetworkPanels,
+  };
 }

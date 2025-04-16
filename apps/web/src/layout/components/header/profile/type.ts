@@ -13,7 +13,7 @@ export interface Items {
   props?: any
   component?: any
   afterComponent?: any
-  hide?: boolean
+  hide?: ((item: Items, items: Items[]) => boolean)
   formatValue?: (item: Items) => any
   vaildator?: (item: Items) => boolean
 }

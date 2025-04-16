@@ -10,8 +10,8 @@ let regetTime = Date.now()
 
 /** 获取系统代理设置 */
 export async function getSystemProxy(force = false) {
-  // 1分钟内不重复获取
-  if (!force && systemProxyAddr && Date.now() - regetTime < 60 * 1000) {
+  // 6秒内不重复获取
+  if (!force && systemProxyAddr && Date.now() - regetTime < 6 * 1000) {
     return systemProxyAddr
   }
   regetTime = Date.now()

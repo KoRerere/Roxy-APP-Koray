@@ -68,7 +68,7 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-.rx-icon:active {
+.rx-icon:active:not(.disabled) {
   color: orange;
 }
 

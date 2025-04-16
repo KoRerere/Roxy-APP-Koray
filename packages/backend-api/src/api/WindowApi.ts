@@ -18,11 +18,15 @@ import {
   UserAddWindowInfoV2CreatePayload,
   UserAddWindowTemplateInfoCreateData,
   UserAddWindowTemplateInfoCreatePayload,
+  UserAgreeTransferWindowCreateData,
+  UserAgreeTransferWindowCreatePayload,
   UserAnalysisWindowInfoCreateData,
   UserAnalysisWindowInfoCreatePayload,
   UserBatchWindowInfoV2CreateData,
   UserBatchWindowInfoV2CreatePayload,
   UserCheckWindowTotalCountListData,
+  UserClearTransferWorkspaceCreateData,
+  UserClearTransferWorkspaceCreatePayload,
   UserClearWindowCacheCreateData,
   UserClearWindowCacheCreatePayload,
   UserCreateWindowInspectListData,
@@ -44,6 +48,10 @@ import {
   UserGetLabelInfoListParams,
   UserGetMacAddrV2ListData,
   UserGetMacAddrV2ListParams,
+  UserGetTransferReceiveWindowListListData,
+  UserGetTransferReceiveWindowListListParams,
+  UserGetTransferWorkspaceListListData,
+  UserGetTransferWorkspaceListListParams,
   UserGetUaWebglV2ListData,
   UserGetUaWebglV2ListParams,
   UserGetWindowFilterNameListListData,
@@ -70,10 +78,15 @@ import {
   UserMdfWindowTemplateInfoCreatePayload,
   UserModifyWindowReportTimeCreateData,
   UserModifyWindowReportTimeCreatePayload,
+  UserRejectTransferWindowCreateData,
+  UserRejectTransferWindowCreatePayload,
   UserSaveWindowRowsSortCreateData,
   UserSaveWindowRowsSortCreatePayload,
   UserSaveWindowTableSortOrderCreateData,
   UserSaveWindowTableSortOrderCreatePayload,
+  UserTransferWindowCreateData,
+  UserTransferWindowCreatePayload,
+  UserTransferWindowVerifyCodeListData,
   UserUpdateWindowFilterNameCreateData,
   UserUpdateWindowFilterNameCreatePayload,
   UserUpdateWindowFilterSortCreateData,
@@ -689,6 +702,7 @@ export class WindowApi<SecurityDataType = unknown> {
    * @name UserCreateWindowInspectList
    * @summary 窗口创建个数检验
    * @request GET:/user_create_window_inspect
+   * @deprecated
    * @response `200` `UserCreateWindowInspectListData`
    */
   userCreateWindowInspectList = (params: RequestParams = {}) =>
@@ -728,6 +742,131 @@ export class WindowApi<SecurityDataType = unknown> {
       path: `/user_del_window_info_recycle`,
       method: "POST",
       body: data,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserTransferWindowVerifyCodeList
+   * @summary 发送转移窗口的验证码
+   * @request GET:/user_transfer_window_verify_code
+   * @response `200` `UserTransferWindowVerifyCodeListData`
+   */
+  userTransferWindowVerifyCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserTransferWindowVerifyCodeListData, any>({
+      path: `/user_transfer_window_verify_code`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserTransferWindowCreate
+   * @summary 窗口转移
+   * @request POST:/user_transfer_window
+   * @response `200` `UserTransferWindowCreateData`
+   */
+  userTransferWindowCreate = (data: UserTransferWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserTransferWindowCreateData, any>({
+      path: `/user_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetTransferWorkspaceListList
+   * @summary 获取转移空间列表
+   * @request GET:/user_get_transfer_workspace_list
+   * @response `200` `UserGetTransferWorkspaceListListData`
+   */
+  userGetTransferWorkspaceListList = (query: UserGetTransferWorkspaceListListParams, params: RequestParams = {}) =>
+    this.http.request<UserGetTransferWorkspaceListListData, any>({
+      path: `/user_get_transfer_workspace_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserGetTransferReceiveWindowListList
+   * @summary 获取转移或接收窗口列表
+   * @request GET:/user_get_transfer_receive_window_list
+   * @response `200` `UserGetTransferReceiveWindowListListData`
+   */
+  userGetTransferReceiveWindowListList = (
+    query: UserGetTransferReceiveWindowListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetTransferReceiveWindowListListData, any>({
+      path: `/user_get_transfer_receive_window_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserAgreeTransferWindowCreate
+   * @summary 同意转移窗口
+   * @request POST:/user_agree_transfer_window
+   * @response `200` `UserAgreeTransferWindowCreateData`
+   */
+  userAgreeTransferWindowCreate = (data: UserAgreeTransferWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserAgreeTransferWindowCreateData, any>({
+      path: `/user_agree_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserRejectTransferWindowCreate
+   * @summary 拒绝转移窗口
+   * @request POST:/user_reject_transfer_window
+   * @response `200` `UserRejectTransferWindowCreateData`
+   */
+  userRejectTransferWindowCreate = (data: UserRejectTransferWindowCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserRejectTransferWindowCreateData, any>({
+      path: `/user_reject_transfer_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserClearTransferWorkspaceCreate
+   * @summary 清除转移空间历史记录
+   * @request POST:/user_clear_transfer_workspace
+   * @response `200` `UserClearTransferWorkspaceCreateData`
+   */
+  userClearTransferWorkspaceCreate = (data: UserClearTransferWorkspaceCreatePayload, params: RequestParams = {}) =>
+    this.http.request<UserClearTransferWorkspaceCreateData, any>({
+      path: `/user_clear_transfer_workspace`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

@@ -2,7 +2,7 @@ import { access, readdir, readFile } from 'node:fs/promises'
 import path, { join } from 'node:path'
 import url from 'node:url'
 import crypto from 'node:crypto'
-import { mediaProtocolName } from '/@/constants'
+import { mediaProtocolName, ossObject } from '/@/constants'
 import { fileExists } from '/@/utils'
 import { generateKeyPairSync } from 'crypto';
 
@@ -77,24 +77,31 @@ export async function getPluginMeta(pluginDir: string) {
 
     // 多语言插件名
     if (manifestInfo.name.startsWith('__MSG_') && manifestInfo.default_locale) {
-      const messageKey = manifestInfo.name.replace('__MSG_', '').replace('__', '')
+      const messageKey = manifestInfo.name.replace('__MSG_', '').replace('__', '').toLowerCase()
       const messageJSON = await readFile(path.join(targetPluginDir, '_locales', manifestInfo.default_locale, 'messages.json'), 'utf-8')
-      const message = JSON.parse(messageJSON)
-      manifestInfo.name = message[messageKey].message
+      const message = Object.entries(JSON.parse(messageJSON)).reduce((acc, [key, value]) => {
+        acc[key.toLowerCase()] = value
+        return acc
+      }, {})
+      manifestInfo.name = message[messageKey]?.message
     }
 
     // 多语言插件描述
     if (manifestInfo.description?.startsWith('__MSG_') && manifestInfo.default_locale) {
-      const messageKey = manifestInfo.description.replace('__MSG_', '').replace('__', '')
+      const messageKey = manifestInfo.description.replace('__MSG_', '').replace('__', '').toLowerCase()
       const messageJSON = await readFile(path.join(targetPluginDir, '_locales', manifestInfo.default_locale, 'messages.json'), 'utf-8')
-      const message = JSON.parse(messageJSON)
-      manifestInfo.description = message[messageKey].message
+      const message = Object.entries(JSON.parse(messageJSON)).reduce((acc, [key, value]) => {
+        acc[key.toLowerCase()] = value
+        return acc
+      }, {})
+      manifestInfo.description = message[messageKey]?.message
     }
 
     try {
       const iconPath = manifestInfo.icons?.['128'] || Object.values(manifestInfo.icons || {})[0]
+      const iconPathExist = iconPath ? await fileExists(path.join(targetPluginDir, iconPath)) : false
       /** 插件图标所在路径 */
-      const pluginIconPath = path.join(targetPluginDir, iconPath)
+      const pluginIconPath = iconPathExist ? path.join(targetPluginDir, iconPath) : ossObject.defaultPluginIconPath
       await access(pluginIconPath)
       pluginIcon = url.format({
         protocol: mediaProtocolName,

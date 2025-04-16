@@ -6,7 +6,7 @@ import type { IPCMainInstance } from "/@/modules/ipc/types";
 import { startMoveWindow, stopMoveWindow } from "/@/modules/ipc/utils";
 import { openAPIServer } from "/@/modules/openapi";
 import { startRoxynet } from "/@/modules/roxynet";
-import { fetchUserConfig, store } from "/@/modules/store";
+import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
 import { getMacAddress } from "/@/utils";
@@ -31,11 +31,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   ipcMain.on("app:saveSoftConfig", (event, config) => {
     const originSystemProxySwitch = store.systemProxySwitch;
     const originV2raySwitch = store.v2raySwitch;
-    Object.keys(config).forEach((key) => {
-      if (Reflect.has(store, key)) {
-        Reflect.set(store, key, Reflect.get(config, key));
-      }
-    });
+    setUserConfig(config)
 
     if (store.systemProxySwitch !== originSystemProxySwitch) {
       if (store.systemProxySwitch) {

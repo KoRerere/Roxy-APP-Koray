@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 interface Props {
   opacity?: number
   size?: number
@@ -12,7 +11,6 @@ const loading = defineModel<boolean>('modelValue', { required: true })
 const bgColor = computed(() => `rgba(255, 255, 255, ${opacity})`)
 
 const iconSize = computed(() => Number.isNaN(Number(size)) ? size : CSS.px(size as number).toString())
-
 </script>
 
 <template>

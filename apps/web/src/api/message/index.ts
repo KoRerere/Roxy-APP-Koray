@@ -7,7 +7,15 @@ import { checkSoftConfigVersion } from './checkSoftConfigVersion'
 import { checkPermission } from './checkPermission'
 import { checkPayInfoVersion } from './checkPayInfoVersion'
 
+const ignoreUrl = [
+  '/login',
+]
+
 export function handleResponseHeaders(response: AxiosResponse) {
+  if (ignoreUrl.some((url) => response.config.url === url)) {
+    return
+  }
+
   checkAppVersion(response)
   checkCoreVersion(response)
   checkNotify(response)

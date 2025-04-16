@@ -34,12 +34,14 @@ export class SyncControlUtil {
   }
 
   /** 停止同步 */
-  static stop = async () => {
-    console.log('停止同步窗口')
+  static stop = async (isShowSyncingWindowListDialog = true) => {
+    console.log('停止同步窗口', isShowSyncingWindowListDialog)
     stopRoxySync()
-    setTimeout(() => {
-      createSynchronizerWindow()
-    }, 1000)
+    if (isShowSyncingWindowListDialog) {
+      setTimeout(() => {
+        createSynchronizerWindow()
+      }, 1000)
+    }
   }
 
   /** 显示所有窗口 */

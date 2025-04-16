@@ -1,115 +1,102 @@
 <script setup lang="tsx">
-import { Motion } from "motion-v";
-import TierSlider from '../pay/subscribe/components/tier-slider.vue'
-import { useDialog } from 'primevue/usedialog'
-const dialog = useDialog()
-
 import PlanModal from '../pay/wallet/components/plan-success.vue'
 import BalanceModal from '../pay/wallet/components/balance-success.vue'
+import { useDialog } from '/@/hooks/useDialog'
 
-
-const tiers = [
-  {
-    "start": 0,
-    "end": 10,
-    "step": 10
-  },
-  {
-    "start": 10,
-    "end": 50,
-    "step": 40
-  },
-  {
-    "start": 50,
-    "end": 100,
-    "step": 50
-  },
-  {
-    "start": 100,
-    "end": 500,
-    "step": 100
-  },
-  {
-    "start": 500,
-    "end": 1000,
-    "step": 100
-  }
-]
-
-const count = ref(0)
+const [dialogInstance] = useDialog()
 
 function open1() {
-  dialog.open(PlanModal, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        root: '!bg-transparent !border-none !shadow-none',
-        content: '!pa-20',
-        mask: 'backdrop-blur-md'
-      }
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
     },
-    data: {
-      props: {
-      },
-      onConfirm: async (params: any) => {
-
-      },
+    slots: {
+      container: () => <PlanModal />,
     },
   })
 }
 
 function open2() {
-  dialog.open(BalanceModal, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      pt: {
-        root: '!bg-transparent !border-none !shadow-none',
-        content: '!pa-20',
-        mask: 'backdrop-blur-md'
-      }
+  dialogInstance.showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
     },
-    data: {
-      props: {
-      },
-      onConfirm: async (params: any) => {
-
-      },
+    slots: {
+      container: () => <BalanceModal />,
     },
   })
 }
 
-const progress = ref(0.5)
+//=================================
+import { motion, AnimatePresence } from 'motion-v'
+import { $t } from '/@/locales'
 
-//====================
+const allIngredients = [
+  { icon: "🍅", label: "Tomato" },
+  { icon: "🥬", label: "Lettuce" },
+  { icon: "🧀", label: "Cheese" },
+  { icon: "🥕", label: "Carrot" },
+  { icon: "🍌", label: "Banana" },
+  { icon: "🥂", label: "Champers?" },
+]
 
-const columns = ref([
+const [tomato, lettuce, cheese, carrot, banana, champers] = allIngredients
+const tabs = [tomato, lettuce, cheese, carrot, banana, champers]
+
+const selectedTab = ref(tabs[0])
+//================================
+
+const colums = [
   {
-    title: 'aaa',
-    key: 'aaa',
+    title: $t('创建时间'),
+    key: 'createTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
   },
   {
-    title: 'bbb',
-    key: 'bbb',
+    title: $t('更新时间'),
+    key: 'updateTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
   },
   {
-    title: 'ccc',
-    key: 'ccc',
-    props: {
-      eye: false
-    },
-    headerSlot: 'mannnnnn',
-    slot: 'mamba',
+    title: $t('最后打开'),
+    key: 'openTime',
+    style: {
+      width: '13%',
+      minWidth: '140px',
+    }
   },
-])
+  {
+    title: $t('其他'),
+    key: 'actions',
+    alignFrozen: 'right',
+    slot: 'actions',
+    style: {
+      width: '0rem',
+      minWidth: '120px',
+    }
+  },
+]
 
-const data = Array.from({ length: 10 }, (_, index) => ({
-  aaa: index,
-  bbb: index,
-  ccc: index,
+const mannnnndata = Array.from({ length: 5 }, (_, index) => ({
+  id: `${index}`,
+  createTime: new Date(),
+  updateTime: new Date(),
+  openTime: new Date(),
+  actions: 'actions',
 }))
 
 </script>
@@ -118,78 +105,135 @@ const data = Array.from({ length: 10 }, (_, index) => ({
   <div class="relative back">
     <RxButton class="!w-20" @click="open1">plan</RxButton>
     <RxButton class="!w-20" @click="open2">blance</RxButton>
-    <div class="mt-20 mx-auto w-200">
-      <TierSlider v-model="count" :tiers="tiers"></TierSlider>
+    <br>
+    <br>
+    <div class="flex gap-4">
+      <div class="mannnnnnn" data-active="false"></div>
+      <div class="mannnnnnn" data-active="true"></div>
     </div>
     <br>
+    <RyTable selection-mode="multiple" :columns="colums" :data-list="mannnnndata" :show-table-header="false" :paginator="false" :show-actions="false" />
 
-    <!-- <div class="flex h-80 items-center justify-center Shiny">
-      <div class="element">
-        <Motion as="span" class="man-text" :style="{
-          maskImage: 'linear-gradient(-75deg,hsl(202.82deg 97.5% 52.94%) calc(var(--x) + 20%),transparent calc(var(--x) + 30%),hsl(202.82deg 97.5% 52.94%) calc(var(--x) + 100%))'
-        }" :animate="{ '--x': '-100%' }" :initial="{ '--x': '100%' }" :transition="{
-          repeat: Infinity,
-          repeatType: 'loop',
-          repeatDelay: 1,
-          type: 'spring',
-          stiffness: 20,
-          damping: 15,
-          mass: 2
-        }">
-          Shiny Button
-        </Motion>
-        <Motion as="span" class="man-border" :style="{
-          mask: 'linear-gradient(rgb(0,0,0), rgb(0,0,0)) content-box,linear-gradient(rgb(0,0,0), rgb(0,0,0))',
-          maskComposite: 'exclude'
-        }" :animate="{ '--x': '-100%' }" :initial="{ '--x': '100%' }" :transition="{
-          repeat: Infinity,
-          repeatType: 'loop',
-          repeatDelay: 1,
-          type: 'spring',
-          stiffness: 20,
-          damping: 15,
-          mass: 2
-        }"></Motion>
-      </div>
+    <!-- <div class="container">
+      <nav class="nav">
+        <ul class="tabs-container">
+          <motion.li v-for="item in tabs" :key="item.label" tag="li" class="tab" :initial="false" @click="selectedTab = item">
+            {{ `${item.icon} ${item.label}` }}
+            <motion.div v-if="item.label === selectedTab.label" class="underline" layout-id="underline" id="underline" />
+          </motion.li>
+        </ul>
+      </nav>
+      <main class="icon-container">
+        <AnimatePresence mode="wait">
+          <motion.div :key="selectedTab ? selectedTab.label : 'empty'" :initial="{ y: 10, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :exit="{ y: -10, opacity: 0 }" :transition="{ duration: 0.2 }"
+            class="icon">
+            {{ selectedTab ? selectedTab.icon : "😋" }}
+          </motion.div>
+        </AnimatePresence>
+      </main>
     </div> -->
-
-
-    <!-- <div class="mx-auto flex w-200 h-100 gap-20 overflow-hidden">
-      <RyTable :columns="columns" :data-list="data" show-gridlines :showTableHeader="false" :paginator="false" :showActions="false">
-        <template #mannnnnn="{ data }">
-          <div class="flex items-center gap-2" @click="data.props.eye = !data.props.eye">
-            <span>{{ data.title }}</span>
-            <SvgIcon :name="data.props.eye ? 'base/rx_ic_eye' : 'base/rx_ic_hidden'"></SvgIcon>
-          </div>
-        </template>
-<template #mamba="{ data, column }">
-          <div v-if="column.props.eye">{{ data.ccc }}</div>
-          <div v-else>{{ column }}</div>
-        </template>
-</RyTable>
-</div> -->
   </div>
+
 </template>
 
 <style lang="scss" scoped>
-.progress {
-  &-value {
-    fill: none;
-    stroke-width: 4.5;
-    stroke-dasharray: calc(2 * 3.14159 * 14);
-    stroke: var(--stroke-color, #12A3FC);
-    stroke-linecap: round;
-    stroke-dashoffset: calc(2 * 3.14159 * 14 * var(--progress));
+.mannnnnnn {
+  width: 200px;
+  height: 100px;
+  background-color: skyblue;
+  transition: all 0.5s;
+
+  &:not([data-active="true"]):hover {
+    background: orange;
   }
 
-  &-circle {
-    transform: rotate(-90deg);
+  &[data-active="true"] {
+    background: yellowgreen;
   }
+}
 
-  &-bg {
-    fill: none;
-    stroke: #E8F5FC;
-    stroke-width: 4.5;
-  }
+.container {
+  width: 480px;
+  height: 60vh;
+  max-height: 360px;
+  border-radius: 10px;
+  background: white;
+  overflow: hidden;
+  box-shadow:
+    0 1px 1px hsl(0deg 0% 0% / 0.075),
+    0 2px 2px hsl(0deg 0% 0% / 0.075),
+    0 4px 4px hsl(0deg 0% 0% / 0.075),
+    0 8px 8px hsl(0deg 0% 0% / 0.075),
+    0 16px 16px hsl(0deg 0% 0% / 0.075),
+    0 2px 2px hsl(0deg 0% 0% / 0.075),
+    0 4px 4px hsl(0deg 0% 0% / 0.075),
+    0 8px 8px hsl(0deg 0% 0% / 0.075),
+    0 16px 16px hsl(0deg 0% 0% / 0.075);
+  display: flex;
+  flex-direction: column;
+}
+
+.nav {
+  background: #fdfdfd;
+  padding: 5px 5px 0;
+  border-radius: 10px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 1px solid #eeeeee;
+  height: 44px;
+}
+
+.tabs-container {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  width: 100%;
+}
+
+.tab {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 5px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  width: 100%;
+  padding: 10px 15px;
+  position: relative;
+  background: white;
+  cursor: pointer;
+  height: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  user-select: none;
+  color: #0f1115;
+}
+
+.underline {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: orange;
+}
+
+.icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.icon {
+  font-size: 128px;
 }
 </style>

@@ -53,7 +53,30 @@ export interface StoreType {
   isExternalWeb: boolean
   /** 设备 ID */
   deviceId?: string
+  /** 是否开启工作台, 0: 不开启, 1: 开启*/
+  openWorkbench?: 0 | 1
+  /** 订阅等级 */
+  subLevel?: string
+  simulation: {
+    delay: 100,
+    enable: false,
+    shortcutKey: "Shift E"
+  }
 }
+
+/** 全局书签 */
+let bookText: Record<string, any>
+
+export function getBookText() {
+  return bookText
+}
+
+export function setBookText(value: Record<string, any>) {
+  // console.log('setBookText', value)
+  bookText = value
+}
+
+const excludeKeys = ['bookText']
 
 const defaultValues: StoreType = {
   language: '',
@@ -67,6 +90,13 @@ const defaultValues: StoreType = {
   blockDomainList: [],
   ipChecker: '',
   isExternalWeb: false,
+  openWorkbench: 1,
+  subLevel: '',
+  simulation: {
+    delay: 100,
+    enable: false,
+    shortcutKey: "Shift E"
+  }
 }
 
 const _store: StoreType = {
@@ -110,19 +140,29 @@ export async function fetchUserConfig() {
     const { code, data } = await API.base.userGetUserConfigList()
     if (code === 0) {
       console.log('setupStore userGetUserConfigList', data)
-      Object.keys(data).forEach((key) => {
-        // 如果语言存在，则不覆盖
-        if (key === 'language' && store.language) {
-          return
-        }
-        if (Reflect.has(store, key)) {
-          Reflect.set(store, key, Reflect.get(data, key))
-        }
-      })
+      // 如果语言存在，则不覆盖
+      if (store.language) {
+        Reflect.deleteProperty(data, 'language')
+      }
+      setUserConfig(data)
     }
   }
   catch (error) {
     console.error('setupStore userGetUserConfigList', error)
+  }
+}
+
+export function setUserConfig(data: Record<string, any>) {
+  Object.keys(data).forEach((key) => {
+    if (excludeKeys.includes(key)) {
+      return
+    }
+    if (Reflect.has(store, key)) {
+      Reflect.set(store, key, Reflect.get(data, key))
+    }
+  })
+  if (data?.bookText) {
+    setBookText(data.bookText)
   }
 }
 
@@ -132,7 +172,6 @@ async function initStore() {
     const lastStore = JSON.parse(config)
     Object.assign(store, lastStore)
     await fetchUserConfig()
-
     // 如果语言不存在，则使用系统语言, 如果系统语言也不存在，则使用英文
     // if (!messages[store.language]) {
     //   store.language = messages[systemLanguage] ? systemLanguage : 'en'
@@ -180,4 +219,9 @@ async function renderEjsFile() {
   ejs.renderFile(join(basePath, 'blockDomain.ejs'), { baseUrl }, (err, str) => {
     writeFile(join(basePath, 'blockDomain.html'), str)
   })
+}
+
+/** 是否可以使用群控 */
+export function canUseSyncControl() {
+  return !['Expired', 'Free'].includes(store.subLevel!)
 }

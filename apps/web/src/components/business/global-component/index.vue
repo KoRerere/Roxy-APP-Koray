@@ -4,13 +4,14 @@ import { $t } from '/@/locales'
 import { updatePrimeVueLocale } from '/@/locales/primevueLocale'
 import RxToastHeadless from './rx-toast-headless.vue'
 import { useSubscribe } from './useSubscribe'
+import { isMainWindow } from '/@/utils'
 
 const LiveChat = defineAsyncComponent(() => import('../live-chat/live-chat.vue'))
 const InviteIntoWorkspace = defineAsyncComponent(() => import('./invite-into-workspace.vue'))
 const PayWall = defineAsyncComponent(() => import('./pay-wall.vue'))
 const Help = defineAsyncComponent(() => import('./help.vue'))
 
-const { isMainWindow } = useSubscribe()
+useSubscribe()
 
 const isShowLiveChat = ref(false)
 

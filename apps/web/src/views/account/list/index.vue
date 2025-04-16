@@ -38,7 +38,7 @@ const operation = ref([
     power: !role.isViewer,
     multiple: true,
     multipleProps: {
-      name: 'one',
+      name: 'G1',
     },
   },
   {
@@ -53,7 +53,7 @@ const operation = ref([
     tooltip: $t('删除'),
     multiple: true,
     multipleProps: {
-      name: 'one',
+      name: 'G1',
     },
   },
 ])

@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { utilityProcess, UtilityProcess } from 'electron'
+import { app, utilityProcess, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
 
 let inspectPort = 9230
@@ -98,10 +98,11 @@ export class FileOperations {
   }
 
   /**  执行任务 */
-  executeTask<K extends keyof TaskMap>(task: K, payload: Parameters<TaskMap[K]>[0]) {
+  async executeTask<K extends keyof TaskMap>(task: K, payload: Parameters<TaskMap[K]>[0]) {
     const { promise, resolve, reject } = Promise.withResolvers<ReturnType<TaskMap[K]>>()
     const taskId = this.taskIdCounter++
     this.tasksQueue.set(taskId, { taskId, task, payload, resolve, reject })
+    await app.whenReady()
     this.processTaskQueue()
     return promise
   }

@@ -11,6 +11,8 @@ import accountItem from './account.vue'
 import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
+import Position from '/@/views/browser/create/components/position.vue'
+import Os from './os.vue'
 
 const props = defineProps({
   isEdit: {
@@ -99,11 +101,18 @@ function onCopy(dirId: string) {
               <template #system="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <InputGroup>
-                    <template v-for="item in input.items" :key="item.name">
-                      <RxInputSelect v-bind="item" v-model="item.value" @change="item.change?.(item, input.items)" />
-                    </template>
-                  </InputGroup>
+                  <div class="flex-1 flex flex-col gap-2">
+                    <div class="flex-1 flex gap-2">
+                      <InputGroup>
+                        <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
+                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
+                      </InputGroup>
+                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                    </div>
+                    <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
+                      {{ input.items[2].help }}
+                    </Message>
+                  </div>
                 </div>
               </template>
               <template #proxy="{ input }">
@@ -124,14 +133,21 @@ function onCopy(dirId: string) {
                   <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
                 </div>
               </template>
-              <template #windowSize="{ input }">
+              <template #windowOpenSize="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <InputGroup>
-                    <template v-for="item in input.items" :key="item.name">
+                  <div class="flex gap-[8px]">
+                    <InputGroup v-for="(item, index) in input.items" :key="item.name">
+                      <InputGroupAddon>{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
                       <InputText v-bind="item" v-model="item.value" type="text" />
-                    </template>
-                  </InputGroup>
+                    </InputGroup>
+                  </div>
+                </div>
+              </template>
+              <template #windowRatioPosition="{ input }">
+                <div class="flex py-4">
+                  <inputLabel v-bind="input" />
+                  <Position v-model="input.value" />
                 </div>
               </template>
               <template #forbiddenPictureSize="{ input }">
@@ -147,6 +163,17 @@ function onCopy(dirId: string) {
                         <InputIcon class="tip-text">KB</InputIcon>
                       </IconField>
                     </div>
+                  </div>
+                </div>
+              </template>
+              <template #searchEngine="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <div class="flex-1 flex gap-2">
+                    <div class="flex-1">
+                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
+                    </div>
+                    <div class="flex-1"></div>
                   </div>
                 </div>
               </template>
@@ -228,5 +255,11 @@ $spacing-x: 66px;
   font-style: normal;
   font-weight: 400;
   line-height: 16px;
+}
+
+.divider {
+  width: 10px;
+  height: 1px;
+  background: var(--Colors-Border-border-container, #C7CDD1);
 }
 </style>

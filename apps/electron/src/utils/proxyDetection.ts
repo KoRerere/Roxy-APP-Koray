@@ -1,5 +1,5 @@
 import http from "node:http";
-import https from "node:https";
+import { HttpProxyAgent } from "http-proxy-agent";
 import type { AxiosProxyConfig } from "axios";
 import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -245,65 +245,6 @@ async function noProxy(winInfo: ProxyDetectionParams) {
 }
 
 /**
- * Https 代理
- */
-function checkHttpsProxy(winInfo: ProxyDetectionParams) {
-  const { promise, resolve, reject } = Promise.withResolvers();
-  const { checkChannel, host, port, proxyUserName, proxyPassword } = winInfo;
-
-  const auth =
-    proxyPassword && proxyUserName ? `${proxyUserName}:${proxyPassword}@` : ``;
-
-  // let auth = $isNull(proxyPassword) || $isNull(proxyUserName) ? `` : `${proxyUserName}:${proxyPassword}@`
-  const httpsUrl = `https://${auth}${host}:${port}`;
-  console.log(`httpsUrl`, httpsUrl);
-  http
-    .get(
-      checkChannel,
-      {
-        headers: {
-          "user-agent": "electron ",
-        },
-        timeout: TIMEOUT,
-        agent: new HttpsProxyAgent(httpsUrl, {
-          timeout: TIMEOUT,
-          rejectUnauthorized: false,
-        }),
-      },
-      (res) => {
-        // res.pipe(process.stdout);
-        let data = ``;
-
-        res.on("data", (chunk) => {
-          data += chunk;
-        });
-
-        res.on("end", () => {
-          try {
-            console.log(`checkHttpsProxy data`, data);
-            const json = JSON.parse(data);
-            resolve(json);
-          } catch (error) {
-            console.log(`checkHttpsProxy error 转json 出错 返回 所有结果`);
-            reject(error);
-          }
-        });
-
-        res.on(`error`, (error) => {
-          console.log(`checkHttpsProxy error`, error);
-          reject(error);
-        });
-      },
-    )
-    .on(`error`, (error) => {
-      console.log(`checkHttpsProxy error`, error);
-      reject(error);
-    });
-
-  return promise;
-}
-
-/**
  * Http 代理
  */
 async function checkHttpProxy(
@@ -337,35 +278,26 @@ async function checkHttpProxy(
   let proxyConfig;
 
   if (host) {
-    if (isUseSystemProxy && checkChannelIsHttp) {
-      proxyConfig = {
-        proxy: {
-          protocol: "http",
-          host,
-          port: Number(port),
-          auth,
+    const auth = proxyUserName ? `${proxyUserName}:${proxyPassword}@` : '';
+    const httpUrl = `${protocol}://${auth}${host}:${port}`;
+    const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
+    proxyConfig = {
+      [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
+        httpUrl,
+        {
+          timeout: TIMEOUT,
+          rejectUnauthorized: false,
         },
-      };
-      console.log(`checkHttpProxy proxyConfig`, proxyConfig);
-    } else {
-      const httpUrl = `${protocol}://${proxyUserName}:${proxyPassword}@${host}:${port}`;
-      proxyConfig = {
-        [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new HttpsProxyAgent(
-          httpUrl,
-          {
-            timeout: TIMEOUT,
-            rejectUnauthorized: false,
-          },
-        ),
-      };
-      console.log(`checkHttpProxy proxyConfig`, httpUrl);
-    }
+      ),
+    };
+    console.log(`checkHttpProxy proxyConfig`, httpUrl);
   }
 
   const response = await axios({
     url: checkChannel,
     timeout: TIMEOUT,
     maxRedirects: 0,
+    proxy: false,
     ...proxyConfig,
   });
 
@@ -397,6 +329,7 @@ async function checkSocks5Proxy(parmes: any) {
     //   Host: new URL(checkChannel).host
     // },
     timeout: TIMEOUT,
+    proxy: false,
     [checkChannel.startsWith("https") ? "httpsAgent" : "httpAgent"]: agent,
   });
 

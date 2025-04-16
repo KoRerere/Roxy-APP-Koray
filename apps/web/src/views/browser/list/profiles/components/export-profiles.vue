@@ -25,13 +25,16 @@ const excelSchema = [
   },
   {
     key: 'os',
-    name: '系统',
+    name: $t('操作系统'),
     getText: (item: Data) => item.os === 'IOS' ? 'iOS' : item.os// 历史原因ios特殊处理
   },
   {
     key: 'osVersion',
-    name: '系统版本',
-    getText: (item: Data) => item.osVersion?.toUpperCase()
+    name: $t('系统版本')
+  },
+  {
+    key: 'userAgent',
+    name: 'User-Agent',
   },
   {
     key: 'platformUrl',
@@ -94,10 +97,14 @@ const excelSchema = [
     name: $t('备注'),
   },
   {
-    key: 'windowSize',
-    name: $t('窗口大小'),
-    getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
+    key: 'searchEngine',
+    name: $t('搜索引擎'),
   },
+  // {
+  //   key: 'windowSize',
+  //   name: $t('窗口大小'),
+  //   getText: (item: Data) => `${item.openWidth}*${item.openHeight}`,
+  // },
 ].map((item, _index) => ({ ...item, _index }))
 const selection = ref(excelSchema.slice())
 

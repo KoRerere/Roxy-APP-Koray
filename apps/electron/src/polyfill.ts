@@ -1,2 +1,3 @@
-import 'core-js/actual/promise'
-import 'core-js/proposals/array-grouping-v2'
+import { net } from 'electron'
+
+Reflect.set(globalThis, 'fetch', net.fetch)

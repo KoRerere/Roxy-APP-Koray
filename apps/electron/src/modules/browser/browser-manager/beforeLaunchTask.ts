@@ -1,4 +1,5 @@
 import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
+import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import puppeteer from 'puppeteer-core'
@@ -12,7 +13,7 @@ import { fileOperations } from '/@/modules/fileOperations'
 import { store } from '/@/modules/store'
 import { aliOSS, fileExists, getErrorMessage } from '/@/utils'
 import type { BrowserItem } from './browserItem'
-import { encryptFingerprintConfig, genFingerprintConfig } from './utils'
+import { encryptFingerprintConfig, genFingerprintConfig, importBookmarks } from './utils'
 import { genExtensionID, getExtensionIDByPath } from '/@/modules/extension/helper'
 
 /** 最后一次发送的消息 */
@@ -135,6 +136,10 @@ export class BeforeLaunchTask {
     await this.writeLoginData()
     // 修改浏览器 Local State 文件
     await this.modifyLocalStateFile()
+    // 导入书签
+    await this.importBookmarks().catch((error) => {
+      console.error('导入书签失败', error)
+    })
 
     this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
 
@@ -145,16 +150,13 @@ export class BeforeLaunchTask {
 
     this.makeBrowserActive = async () => {
 
-      if (this.browser) {
-        await this.reconnectBrowser()
-      }
-
       const launchOptions: PuppeteerLaunchOptions = {
         args: launchArgs,
         executablePath: this.exePath,
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
+        timeout: 10500,
       }
       console.log('launchOptions', launchOptions)
       this.browser = await puppeteer.launch(launchOptions)
@@ -211,25 +213,28 @@ export class BeforeLaunchTask {
       sandboxPermission,
       usePluginList,
       startupParam,
-      systemInfo = {},
       openWidth,
       openHeight,
       os,
       allOpenUrl,
       useGpu,
-      workspaceId
+      workspaceId,
+      openWorkbench,
+      windowRatioPosition,
+      positionSwitch
     } = this.browserItem.winInfo
 
     const args = [
       ...defaultCLIArgs,
       `--user-data-dir=${this.browserItem.userDataDir}`,
-      '--window-position=0,0',
-      '--window-size=1000,1000',
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
-      `http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`,
     ]
+
+    if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
+      args.push(`http://127.0.0.1:${store.appPort}/dashboard?id=${dirId}`)
+    }
 
     // 如果用户开启了插件
     if (usePluginList.length) {
@@ -267,32 +272,34 @@ export class BeforeLaunchTask {
       args.push(...userCustomArgs)
     }
 
-    const { winOpenType, OpenPositonX, OpenPositonY } = systemInfo
-    // 浏览器打开位置设置
-    if (winOpenType === 'pos') {
-      args.push(`--window-position=${OpenPositonX},${OpenPositonY}`)
-    }
-    else {
-      args.push(`--window-position=0,0`)
-      // exe_strs.push(`--window-position=${parseInt(Math.random() * 1000)},${parseInt(Math.random() * 1000)}`)
-    }
 
-    // 设置浏览器窗口大小
-    if (winOpenType === 'max') {
-      // 最大化
-      args.push(`--start-maximized`)
-    }
-    else if (winOpenType === 'min') {
-      // 最小化
-      args.push(`--start-minimized`)
-    }
-    else {
-      // 默认尺寸
-      // if (data.resolutionType === true) {
+    // 如果是全屏，则不设置窗口大小
+    if (!positionSwitch) {
+      args.push('--start-maximized')
+    } else {
       args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
-      // } else {
-      //   exe_strs.push(`--window-size=1280,720`);
-      // }
+
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
+      const [x = 0, y = 0, direction = 'tl'] = windowRatioPosition?.split(',') || []
+      const xx = Math.floor(screenWidth * x)
+      const yy = Math.floor(screenHeight * y)
+      const winWidth = Number(openWidth)
+      const winHeight = Number(openHeight)
+      let positions = [xx, yy]
+      console.log('screenWidth', screenWidth, 'screenHeight', screenHeight)
+      console.log('windowRatioPosition', windowRatioPosition, positions)
+
+      if (direction === 'tr') {
+        positions = [xx - winWidth, yy]
+      } else if (direction === 'br') {
+        positions = [xx - winWidth, yy - winHeight]
+      } else if (direction === 'bl') {
+        positions = [xx, yy - winHeight]
+      }
+      console.log('positions', positions)
+      args.push(`--window-position=${positions.join(',')}`)
     }
 
     // 如果是移动端，打开开发者工具
@@ -412,6 +419,16 @@ export class BeforeLaunchTask {
     }
   }
 
+  /** 导入书签 */
+  private async importBookmarks() {
+    if (!this.browserItem.winInfo.openBookmarks) {
+      return
+    }
+
+    const bookmarkPath = join(this.browserItem.userDataDir, 'Default', 'Bookmarks')
+    await importBookmarks(bookmarkPath, this.browserItem.preferencesPath)
+  }
+
   /** 拉取远程缓存文件 */
   private async pullRemoteCacheFiles() {
     const { version: remoteVersion } = this.browserItem.winInfo.syncValue as Record<string, any>
@@ -442,7 +459,7 @@ export class BeforeLaunchTask {
       await fileExists(dirname(localCacheFilePath), true)
       console.log('开始拉取远程缓存文件', remoteCacheFilePath)
       // 下载远程缓存文件
-      await aliOSS.get(remoteCacheFilePath, localCacheFilePath)
+      await aliOSS.get(remoteCacheFilePath, localCacheFilePath, { workspaceId: this.browserItem.winInfo.workspaceId })
       console.log('下载远程缓存文件成功', localCacheFilePath)
       // 解压缓存文件
       await fileOperations.executeTask('decompress', {

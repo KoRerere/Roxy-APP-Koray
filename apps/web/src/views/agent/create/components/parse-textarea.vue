@@ -40,7 +40,7 @@ onMounted(() => {
 
   &-line {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-xl, 12px);
-    width: 33px;
+    width: 40px;
     border: none;
     outline: none;
     resize: none;

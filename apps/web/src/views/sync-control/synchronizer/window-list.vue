@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
-import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
-import { useWorkspaceStore } from '/@/stores/workspace'
 import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
-import { format } from 'date-fns'
 import { useMutationObserver } from '@vueuse/core'
+import { debounce } from 'es-toolkit'
 
 const props = defineProps({
   showType: {
@@ -25,7 +23,6 @@ const props = defineProps({
 
 const syncControlTableRef = useTemplateRef('syncControlTable')
 const toast = useToast()
-const workspaceStore = useWorkspaceStore()
 
 const searchParams = ref({
   projectIds: [],
@@ -64,6 +61,10 @@ const columns = ref([
 
 const selectedRows = ref()
 
+const selectedRowsFilter = computed(() => {
+  return selectedRows.value?.filter((n: any) => n.$canUseSyncControl)
+})
+
 const isSyncing = computed(() => {
   return props.showType === 'syncing'
 })
@@ -87,12 +88,10 @@ useMutationObserver(() => syncControlTableRef.value?.rootElRef, (mutations) => {
 })
 
 
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
-
 const disabled = computed(() => {
-  if (!selectedRows.value?.length) return true
+  if (!selectedRowsFilter.value?.length) return true
 
-  return selectedRows.value?.length < 2 || !selectedRows.value?.some((n: any) => n.dirId === mainControlWindowDirId.value)
+  return selectedRowsFilter.value?.length < 2 || !selectedRowsFilter.value?.some((n: any) => n.dirId === mainControlWindowDirId.value)
 })
 
 const searchList = computed(() => {
@@ -141,11 +140,27 @@ const tableFilterData = computed(() => {
 
 watch(tableFilterData, (val) => {
   if (val.length > 1) {
+    disabledRows()
     if (!props.mainControlWindowDirId) {
-      mainControlWindowDirId.value = val[0].dirId
+      mainControlWindowDirId.value = val.find(n => n.$canUseSyncControl)?.dirId
     }
   }
 })
+
+const disabledRows = debounce(() => {
+  document.querySelectorAll('.p-datatable-selectable-row:not(:has(.can-use-sync-control))').forEach((n) => {
+    const dialogMask = n.querySelector<HTMLDivElement>('.disable-mask')
+    if (!dialogMask) {
+      const dialogMask = document.createElement('div')
+      dialogMask.setAttribute('title', $t('免费套餐的窗口，无法进行同步'))
+      dialogMask.onclick = (event: MouseEvent) => {
+        event.stopPropagation()
+      }
+      dialogMask.classList.add('disable-mask')
+      n.appendChild(dialogMask)
+    }
+  })
+}, 100)
 
 window.electronAPI.on('browser:launch-process-message', (event) => {
   getOpenedBrowser()
@@ -170,25 +185,40 @@ onMounted(() => {
 })
 
 function startSync() {
-  if (selectedRows.value?.length < 2) {
-    console.log('请先打开至少两个窗口', selectedRows.value?.length)
+  if (selectedRowsFilter.value?.length < 2) {
+    console.log('请先打开至少两个窗口', selectedRowsFilter.value?.length)
     return
   }
 
-  const hasWindows = selectedRows.value.find(item => ['Windows', 'macOS'].includes(item.platform))
-  const hasMobile = selectedRows.value.find(item => ['Android', 'IOS'].includes(item.platform))
+  const hasWindows = selectedRowsFilter.value.find(item => ['Windows', 'macOS'].includes(item.platform))
+  const hasMobile = selectedRowsFilter.value.find(item => ['Android', 'IOS'].includes(item.platform))
   if (hasWindows && hasMobile) {
     toast.add({ severity: 'warn', summary: $t('同步窗口失败'), detail: $t('桌面系统的窗口暂时无法和手机系统的窗口进行同步操作') })
     return
   }
-  console.log('startSync', selectedRows.value)
+  console.log('startSync', selectedRowsFilter.value)
   const dirIds = [...new Set([
     mainControlWindowDirId.value,
-    ...selectedRows.value?.map((n: any) => n.dirId)
+    ...selectedRowsFilter.value?.map((n: any) => n.dirId)
   ])
   ]
   console.log('dirIds', dirIds)
   window.electronAPI.send('syncControl:start', dirIds)
+}
+
+async function handleRowSelectAll() {
+  await nextTick()
+  document.querySelectorAll('.p-datatable-selectable-row:not(:has(.can-use-sync-control))').forEach((n) => {
+
+    const checkboxChecked = n.querySelector<HTMLDivElement>('.p-checkbox-checked')
+    if (checkboxChecked) {
+      checkboxChecked.classList.remove('p-checkbox-checked')
+      const checkboxIcon = checkboxChecked.querySelector<HTMLDivElement>('.p-checkbox-icon')
+      if (checkboxIcon) {
+        checkboxIcon.style.display = 'none'
+      }
+    }
+  })
 }
 
 electronAPI.on('syncControl:start', startSync)
@@ -198,7 +228,8 @@ electronAPI.on('syncControl:start', startSync)
   <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false"
     :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
     :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table"
-    :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }" v-bind="$attrs">
+    :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }" @row-select-all="handleRowSelectAll"
+    v-bind="$attrs">
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex justify-between">
         <template v-for="item in searchList" :key="item.name">
@@ -257,7 +288,8 @@ electronAPI.on('syncControl:start', startSync)
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="workspaceName" :data="data" :filter-keys="['os']" readonly />
+      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data"
+        :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
     <template #status="{ data }">
       <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">
@@ -277,8 +309,8 @@ electronAPI.on('syncControl:start', startSync)
       </div>
     </template>
   </RyTable>
-  <RxButton v-if="showType === 'opened'" :disabled="disabled" :label="selectedRows?.length
-    ? $t('开始同步 {count} 个窗口', { count: selectedRows.length })
+  <RxButton v-if="showType === 'opened'" :disabled="disabled" :label="selectedRowsFilter?.length
+    ? $t('开始同步 {count} 个窗口', { count: selectedRowsFilter.length })
     : $t('开始同步')" class="start-sync-btn" @click.stop="startSync" />
 </template>
 
@@ -286,6 +318,22 @@ electronAPI.on('syncControl:start', startSync)
 .no-data {
   .p-datatable-thead {
     display: none;
+  }
+}
+
+.p-datatable-selectable-row:not(:has(.can-use-sync-control)) {
+  position: relative;
+  opacity: 0.5;
+
+  .disable-mask {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: not-allowed;
+    z-index: 10;
   }
 }
 
@@ -361,6 +409,10 @@ electronAPI.on('syncControl:start', startSync)
     padding-bottom: 0;
     border-bottom: 0;
     background-color: white;
+
+    .p-multiselect-label {
+      height: 100%;
+    }
   }
 
 }

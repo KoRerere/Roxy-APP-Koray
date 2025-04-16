@@ -77,19 +77,12 @@ const options: Configuration = {
         arch: ['ia32', 'x64'],
       },
     ],
-    ...(!isDev
-      ? {
-        verifyUpdateCodeSignature: false,
-        signingHashAlgorithms: [
-          'sha256',
-          'sha1',
-        ],
-        signDlls: false,
-        rfc3161TimeStampServer: 'http://timestamp.digicert.com',
-        certificateFile: './pfx/linkv.pfx',
-        certificatePassword: '0000',
-      }
-      : {}),
+    verifyUpdateCodeSignature: false,
+    signtoolOptions: isDev ? undefined : {
+      rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+      certificateFile: './pfx/linkv.pfx',
+      certificatePassword: '0000',
+    }
   },
   nsis: {
     installerSidebar: './buildResources/installerSidebar.bmp',

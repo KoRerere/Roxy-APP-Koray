@@ -239,12 +239,16 @@ export class BrowserManager {
   /** 每隔 5分钟 定时同步窗口状态 */
   async #syncWindowStatus() {
     setInterval(() => {
-      const ids = [...this.openedBrowserMap.values()].map(item => item.winInfo.id!)
-      API.window.userModifyWindowReportTimeCreate({ ids }).then(() => {
-        console.log(`定时同步窗口状态`, ids)
-      }).catch((e) => {
-        console.error(`窗口 ids:`, ids)
-        console.error(`定时同步窗口状态失败`, e)
+      const groupByWorkspaceId = Object.groupBy([...this.openedBrowserMap.values()], item => item.winInfo.workspaceId!)
+
+      Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
+        const ids = browserItems!.map(item => item.winInfo.id!)
+        API.window.userModifyWindowReportTimeCreate({ ids }, { headers: { workspaceId } }).then(() => {
+          console.log(`定时同步窗口状态`, ids)
+        }).catch((e) => {
+          console.error(`窗口 ids:`, ids)
+          console.error(`定时同步窗口状态失败`, e)
+        })
       })
     }, 1000 * 60 * 5)
   }

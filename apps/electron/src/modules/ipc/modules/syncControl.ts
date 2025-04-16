@@ -62,8 +62,8 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 停止同步窗口 */
-  ipcMain.on('syncControl:stop', (event,) => {
-    SyncControlUtil.stop()
+  ipcMain.on('syncControl:stop', (event, payload) => {
+    SyncControlUtil.stop(payload)
   })
 
   /** 宫格布局、堆叠布局、自定义布局 */
@@ -79,9 +79,11 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 动态修改同步设置 */
-  ipcMain.on('syncControl:changeSyncSettings', (event, payload) => {
-    console.log('动态修改同步设置:', payload)
-    return syncSettings(payload)
+  ipcMain.on('syncControl:changeSyncSettings', async (event, payload) => {
+    console.log('动态修改同步设置 payload:', payload)
+    const result = await syncSettings(payload)
+    console.log('动态修改同步设置 result:', result)
+    return result
   })
 
   /** 打开偏好设置弹窗 */

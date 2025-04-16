@@ -17,17 +17,22 @@ defineOptions({
 
 const { size = 'sm', leftIcon, icon, iconFieldClass, ...props } = defineProps<Props>()
 
-defineEmits(['iconClick', 'change'])
+defineEmits(['leftIconClick', 'iconClick', 'change'])
+
+const slots = useSlots()
+
 </script>
 
 <template>
   <IconField class="w-full" :class="iconFieldClass" :pt="{ root: size }">
     <InputIcon v-if="leftIcon">
-      <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
+      <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('leftIconClick')" />
     </InputIcon>
     <InputText v-bind="{ ...$attrs, ...props }" fluid @input="$emit('change')" />
-    <InputIcon v-if="icon">
-      <RxSvgIcon :name="(icon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
+    <InputIcon v-if="icon || slots.icon">
+      <slot name="icon">
+        <RxSvgIcon :name="(icon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
+      </slot>
     </InputIcon>
   </IconField>
 </template>

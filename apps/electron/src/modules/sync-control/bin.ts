@@ -7,6 +7,7 @@ import { ipcMain } from '/@/modules/ipc'
 import { browserManager } from "/@/modules/browser";
 import { closeAllSyncDialogs, defaultMainControlWindowColor } from "/@/modules/sync-control/common";
 import { createSynchronizerWindow } from "/@/modules/sync-control/synchronizer";
+import { killProcessByName } from "/@/utils";
 
 export type RoxySyncStartResult = { "listening": number, "monitors": [{ "height": number, "index": number, "width": number }] }
 
@@ -162,6 +163,7 @@ export function stopRoxySync() {
     roxySyncProcess = null
     roxySyncStartResult = {} as RoxySyncStartResult
   }
+  killProcessByName('roxysync.exe')
 }
 
 /** 获取主控浏览器 */
@@ -215,6 +217,6 @@ export async function setMainControlColor(color = syncControlSettings.mainContro
     })
     console.log('设置主控窗口颜色成功', rgb)
   } else {
-    console.error('主控窗口不存在', mainControlPId)
+    mainControlPId && console.error('主控窗口不存在', mainControlPId)
   }
 }

@@ -136,7 +136,7 @@ onMounted(async () => {
     document.body.style.pointerEvents = 'auto'
   }, 60)
   getAllSyncingWindows()
-  initUserConfig()
+  await initUserConfig()
 
   watch(formData, (newVal) => {
     savePreferenceSettings(newVal)

@@ -5,102 +5,64 @@ import type { SelectChangeEvent } from 'primevue/select'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { $t } from '/@/locales'
-import { getFormData, isEmptyValue, isFunction, operationPower } from '/@/utils'
+import { getFormData, isEmptyValue, isFunction, operationPower, type Operation } from '/@/utils'
 import SelectionOperation from './selection-operation.vue'
 import TableDisplay from './table-display.vue'
 import TableFilter from './table-filter.vue'
 import TableReload from './table-reload.vue'
 import TableSort from './table-sort.vue'
+import { deepClone } from '/@/utils'
+
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps({
-  dataKey: {
-    type: String,
-    default: 'id',
-  },
-  cacheKey: {
-    type: String,
-    default: '',
-  },
-  dataList: {
-    type: Array as PropType<any[]>,
-    default: null,
-  },
-  tableParams: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  },
-  tableRequest: {
-    type: Function as PropType<(data: any) => Promise<any>>,
-    default: () => () => Promise.resolve({}),
-  },
-  immediate: {
-    type: Boolean,
-    default: true,
-  },
-  columns: {
-    type: Array as PropType<any[]>,
-    required: true,
-    default: () => [],
-  },
-  tableFilters: {
-    type: Function as PropType<() => any>,
-    default: () => [],
-  },
-  tableSort: {
-    type: Function as PropType<() => any>,
-    default: () => [],
-  },
-  operation: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  tableOperation: {
-    type: Function as PropType<(data: any) => any[]>,
-    default: () => [],
-  },
-  operationHandler: {
-    type: Function as PropType<(event: any, data: any, operationType: 'single' | 'batch') => any | Promise<any>>,
-    default: () => () => { },
-  },
-  multipleOperation: {
-    type: Boolean,
-    default: true,
-  },
-  paginator: {
-    type: Boolean,
-    default: true,
-  },
-  showTableHeader: {
-    type: Boolean,
-    default: true,
-  },
-  showDisplay: {
-    type: Boolean,
-    default: true,
-  },
-  showActions: {
-    type: Boolean,
-    default: true,
-  },
-  showActionsMenu: {
-    type: Boolean,
-    default: true,
-  },
-  selectionMode: {
-    type: String as PropType<'single' | 'multiple' | undefined>,
-    default: undefined,
-  },
+interface Props {
+  dataKey?: string
+  cacheKey?: string
+  columns: any[]
+  dataList?: any[]
+  operation?: Operation[]
+  tableParams?: Record<string, any>
+  tableSort?: () => any
+  tableFilters?: () => any
+  tableRequest?: (data: any) => any | Promise<any>
+  tableOperation?: (data: any) => Operation[]
+  operationHandler?: (event: Event, data: any, operationType: 'single' | 'batch') => any | Promise<any>
+  selectionMode?: 'single' | 'multiple'
+  immediate?: boolean
+  multipleOperation?: boolean
+  paginator?: boolean
+  showTableHeader?: boolean
+  showDisplay?: boolean
+  showActions?: boolean
+  showActionsMenu?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  dataKey: 'id',
+  cacheKey: '',
+  tableRequest: () => ({}),
+  tableSort: () => [],
+  tableFilters: () => [],
+  tableOperation: () => [],
+  operationHandler: () => ({}),
+  immediate: true,
+  multipleOperation: true,
+  paginator: true,
+  showTableHeader: true,
+  showDisplay: true,
+  showActions: true,
+  showActionsMenu: true,
 })
 
 defineEmits(['update:columns'])
 
-const rootElRef = useTemplateRef('rootEl')
 const route = useRoute()
 const [show] = useContextMenu()
+const columnCss = useCssModule('ColumnCss_Module')
+const rootElRef = useTemplateRef('rootEl')
 
 let _getConditionPromise: Promise<any> | undefined
 const _firstLoad = ref(false)
@@ -182,6 +144,30 @@ const paginatorInfo = computed(() => $t('总计 {total} 个', {
   total: paginatorConfig.totalRecords,
 }))
 
+onBeforeMount(async () => {
+  _getConditionPromise = _getCondition()
+  if (props.immediate) {
+    await _request()
+  }
+  _firstLoad.value = true
+})
+
+function fmtColumnProps(column: Record<string, any>) {
+  const { key, style, alignFrozen, pt, ...props } = column
+  return {
+    field: key,
+    headerStyle: style,
+    frozen: !!alignFrozen,
+    alignFrozen,
+    pt: {
+      headercell: columnCss.headercell,
+      bodycell: columnCss.bodycell,
+      ...pt
+    },
+    ...props
+  }
+}
+
 async function batchOperation(item: any) {
   try {
     await props.operationHandler(item, selectionData.value, 'batch')
@@ -205,9 +191,9 @@ async function _onSortChange() {
 
 async function _getCondition() {
   _loading.value = true
-  const [filterList, { data, onChange }] = await Promise.all([
-    props.tableFilters(),
+  const [{ data, onChange }, filterList] = await Promise.all([
     props.tableSort(),
+    props.tableFilters(),
   ])
   _filters.value = filterList
   _sorts.value = data
@@ -237,7 +223,7 @@ async function _request() {
 }
 
 function _getOperation(data: any) {
-  return operationPower(!isEmptyValue(props.operation) ? props.operation : props.tableOperation(data))
+  return operationPower(!isEmptyValue(props.operation) ? props.operation! : props.tableOperation(data))
 }
 
 function _clearSelection() {
@@ -261,7 +247,8 @@ function onRowContextMenu(event: DataTableRowContextMenuEvent) {
     operation,
     operationHandler: async (operate: any) => {
       try {
-        await props.operationHandler(operate, event.data, 'single')
+        const _operate = { ...deepClone(toRaw(operate)), _event: event.originalEvent }
+        await props.operationHandler(_operate, event.data, 'single')
       }
       catch (error) {
         console.log(error)
@@ -275,8 +262,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     operation,
     operationHandler: async (operate: any) => {
       try {
-        operate._event = event
-        await props.operationHandler(operate, data, operationType)
+        const _operate = { ...deepClone(toRaw(operate)), _event: event }
+        await props.operationHandler(_operate, data, operationType)
       }
       catch (error) {
         console.log(error)
@@ -284,14 +271,6 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     },
   })
 }
-
-onBeforeMount(async () => {
-  _getConditionPromise = _getCondition()
-  if (props.immediate) {
-    await _request()
-  }
-  _firstLoad.value = true
-})
 
 defineExpose({
   rootElRef,
@@ -337,10 +316,12 @@ const slots: any = useSlots()
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
       <DataTable v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :selectionMode :pt="{
-        table: !tableList?.length ? 'flex-1 !h-full' : '',
+        root: ColumnCss_Module.tableroot,
+        table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : ''],
         emptymessagecell: '!whitespace-normal !text-center',
-        headerrow: Css_Module.headerrow,
-        bodyrow: Css_Module.bodyrow,
+        tbody: ColumnCss_Module.tbody,
+        headerrow: ColumnCss_Module.headerrow,
+        bodyrow: ColumnCss_Module.bodyrow,
       }" @row-contextmenu="onRowContextMenu">
         <template v-for="(_, name) in slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps" />
@@ -348,41 +329,34 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width: 3%"
-          :pt="{ headercell: Css_Module.headercell, bodycell: Css_Module.bodycell }" :selection-mode="selectionMode" />
-        <Column v-for="{ headerSlot, slot, render, ...column } in _columns" :key="column.key" :field="column.key"
-          :header="headerSlot ? '' : column.title" :header-style="column.style" :frozen="!!column.alignFrozen"
-          :align-frozen="column.alignFrozen" :pt="{
-            columntitle: Css_Module.columntitle,
-            headercell: Css_Module.headercell,
-            bodycell: Css_Module.bodycell,
-          }">
-          <template v-if="headerSlot" #header>
-            <slot :name="headerSlot" :data="column"></slot>
+        <Column v-if="selectionMode" header-style="width:0rem; min-width: 45px" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
+          :selection-mode="selectionMode" />
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
+          <template #header>
+            <slot :name="headerSlot" :column="column">
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
+              <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
+            </slot>
           </template>
           <template #body="{ data }">
             <slot :name="slot" :data="data" :column="column">
-              <component :is="render" v-if="render" :data="data" :class="[Css_Module.columntitle, column.classes]" />
-              <div v-else :style="{ width: `${column.width}px` || 'auto' }"
-                :class="[Css_Module.columntitle, column.classes]" :title="column.getText?.(data) || data[column.key]">
+              <component :is="render" v-if="render" :data="data" :class="column.classes" />
+              <div v-else :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
                 {{ column.getText?.(data) || data[column.key] }}
               </div>
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
-          header-style="width: 9rem" :pt="{
-            columntitle: Css_Module.columntitle,
-            headercell: Css_Module.headercell,
-            bodycell: Css_Module.bodycell,
-          }">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0rem; min-width: 120px" :pt="{
+          columntitle: ColumnCss_Module.columntitle,
+          headercell: ColumnCss_Module.headercell,
+          bodycell: ColumnCss_Module.bodycell,
+        }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data, 'single')"
-                  @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -391,14 +365,12 @@ const slots: any = useSlots()
       <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
-        @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
-              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -409,9 +381,8 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -521,50 +492,91 @@ const slots: any = useSlots()
 }
 </style>
 
-<style lang="scss" module="Css_Module">
+<style lang="scss" module="ColumnCss_Module">
 .columntitle {
   color: #000;
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
+  font-weight: 600;
 }
 
 .headerrow {
   .headercell {
-    padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
+    padding: 8px 12px;
     background: var(--Colors-Background-bg-page, #fafbfc);
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+    user-select: none;
 
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);
+    }
+
+    &:global(.p-datatable-frozen-column) {
+      padding-left: 16px;
+      background: var(--Colors-Background-bg-page, #fafbfc);
+    }
+  }
+}
+
+.tableroot {
+  .table {
+    .tbody {
+      .bodyrow {
+        &[data-p-selected='true'] {
+          background: var(--Colors-Background-bg-secondary, #e8f5fc);
+
+          .bodycell {
+            border-color: var(--Color-blue-200, #7eccfc);
+
+            &:global(.p-datatable-frozen-column) {
+              background: var(--Colors-Background-bg-secondary, #e8f5fc);
+            }
+          }
+        }
+
+        &:not([data-p-selected='true']):hover {
+          background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+
+          .bodycell {
+            border-color: var(--Colors-Border-border-container, #c7cdd1);
+
+            &:global(.p-datatable-frozen-column) {
+              background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  &:global(.p-datatable-sm) {
+    .bodycell {
+      height: 40px;
     }
   }
 }
 
 .bodyrow {
-  &[data-p-selected='true'] {
-    background: var(--Colors-Background-bg-secondary, #e8f5fc);
-
-    .bodycell {
-      border-color: var(--Color-blue-200, #7eccfc);
-    }
-  }
-
-  &:not([data-p-selected='true']):hover {
-    background: var(--Colors-Background-bg-body-hover, #f0f3f5);
-
-    .bodycell {
-      border-color: var(--Colors-Border-border-container, #c7cdd1);
-    }
-  }
-
   .bodycell {
-    padding: var(--spacing-2xl, 16px) var(--spacing-md, 6px);
+    padding: 0 12px;
+    height: 60px;
     border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
+    color: var(--Color-neutrals-950, #0E1214);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: normal;
 
     &:first-of-type {
       padding-left: var(--spacing-4xl, 24px);
+    }
+
+    &:global(.p-datatable-frozen-column) {
+      padding-left: 16px;
+      border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+      box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
+      transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
     }
   }
 }

@@ -13,6 +13,8 @@ const { promotionInfo } = defineProps<{
   promotionInfo: UserGetPromotionInfoListData['data']
 }>()
 
+
+const maxNumber = 999999
 const [dialogInstance] = useDialog()
 const { getPromotionInfo } = useReferralProgram()
 const overviewItems = computed(() => {
@@ -43,7 +45,7 @@ const overviewItems = computed(() => {
     },
     {
       title: $t('已获推广奖励'),
-      total: Math.min(100000, totalIncome),
+      total: Math.min(maxNumber, totalIncome),
       todayCount: todayIncome,
       // tootip: $t('已获推广奖励'),
       style: {
@@ -53,20 +55,20 @@ const overviewItems = computed(() => {
         format: {
           style: 'currency',
           currency: 'USD',
-          maximumFractionDigits: totalIncome > 100000 ? 0 : 2,
+          maximumFractionDigits: totalIncome > maxNumber ? 0 : 2,
         }
       },
     },
     {
       title: $t('近 30 天名下用户消费金额'),
-      total: Math.min(purchaseUserTotalAmount, 100000),
+      total: Math.min(purchaseUserTotalAmount, maxNumber),
       todayCount: 0,
       // tootip: $t('近 30 天名下用户消费金额'),
       totalNumberFlowProps: {
         format: {
           style: 'currency',
           currency: 'USD',
-          maximumFractionDigits: purchaseUserTotalAmount > 100000 ? 0 : 2,
+          maximumFractionDigits: purchaseUserTotalAmount > maxNumber ? 0 : 2,
         }
       }
     },
@@ -119,10 +121,12 @@ function showWithdrawDialog() {
         <div class="referal-reward-overview-item">
           <div class="title">
             <span class="total" :style="item.style">
-              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0" v-bind="item.totalNumberFlowProps" />
+              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0"
+                v-bind="item.totalNumberFlowProps" />
             </span>
             <span v-if="item.todayCount" class="increase">
-              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0" v-bind="item.todayNumberFlowProps" />
+              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0"
+                v-bind="item.todayNumberFlowProps" />
             </span>
           </div>
           <div class="desc">

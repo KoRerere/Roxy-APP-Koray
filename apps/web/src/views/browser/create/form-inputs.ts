@@ -4,6 +4,7 @@ import { UaStrictMode } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { checkCookieFormat, createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { z } from "zod";
 
 const userStore = useUserStore()
 
@@ -71,7 +72,11 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
 }
 
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
-  const [$dict_map, userConfig] = await Promise.all([getDictMap(), userStore.getUserConfig()])
+  const [$dict_map, userConfig, searchEngine] = await Promise.all([
+    getDictMap(),
+    userStore.getUserConfig(),
+    API.platform.userGetSearchEnginesList()
+  ])
 
   const osIconMap = {
     windows: 'platforms/rx_os_windows',
@@ -97,6 +102,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const osValue = osOptions.find((item: any) => item.value.toLocaleLowerCase() === (data?.os || getUserAgentOs()).toLocaleLowerCase())
   const osVersionValue = osValue?._versionOptions.find((item: any) => item.value === data.osVersion) ?? osValue?._versionOptions[0]
   const coreVersionOptions = getCoreVersionOptions(osValue?.value, osVersionValue?.value)
+
+  // TODO:(anbin)
+  const searchEngineOptions = searchEngine.code == 0 ?
+    (searchEngine.data || []).map(item => ({ label: item.code, value: item.code, image: item.icon })) : []
+
+  const searchEngineValue = data.searchEngine ?? userConfig?.searchEngine
 
   // 非严格模式获取浏览器版本选项
   const browserVersionOptions = userConfig?.uaModeSwitch === UaStrictMode.close && osValue && osVersionValue
@@ -137,6 +148,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: osValue,
           options: osOptions,
           filter: false,
+          style: {
+            width: '66px',
+            flex: 'none',
+          },
+          overlayStyle: {
+            width: '120px',
+          },
+          class: 'items-center',
           change: async (item: any) => {
             const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
@@ -157,13 +176,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           options: osValue?._versionOptions,
           filter: false,
           change: async (item: any) => {
-            const coreVersionInput = windowInputs.find((item: any) => item.name === 'coreVersion')!
+            const coreVersionInput = findInputByName(windowInputs, 'coreVersion')
+            // windowInputs.find((item: any) => item.name === 'coreVersion')!
 
             if (item.value) {
               const { _osValue, value: version } = item.value
               const _coreVersionOptions = getCoreVersionOptions(_osValue, version)
 
-              if (coreVersionInput.options.length !== _coreVersionOptions.length) {
+              if (coreVersionInput.options?.length !== _coreVersionOptions.length) {
                 coreVersionInput.options = _coreVersionOptions
                 coreVersionInput.value = _coreVersionOptions[0]
               }
@@ -180,29 +200,28 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           },
           required: true,
         },
+        {
+          type: 'select',
+          name: 'coreVersion',
+          value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
+          options: coreVersionOptions,
+          icon: 'base/rx_ic_chrome',
+          iconColor: 'var(--p-primary-color, #12a3fc)',
+          required: true,
+          filter: false,
+          change: async (item: any) => {
+            if (item.value) {
+              await setUaWebgl(inputsGroup)
+            }
+            if (data.dirId) {
+              item.help = data.coreVersion !== item.value.value
+                ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
+                : ''
+            }
+          },
+        }
       ],
       slot: 'system', // items 特殊实现
-    },
-    {
-      type: 'select',
-      label: $t('内核'),
-      name: 'coreVersion',
-      value: coreVersionOptions.find((item: any) => item.value === data.coreVersion) ?? coreVersionOptions[0],
-      options: coreVersionOptions,
-      icon: 'base/rx_ic_chrome',
-      iconColor: 'var(--p-primary-color, #12a3fc)',
-      required: true,
-      filter: false,
-      change: async (item: any) => {
-        if (item.value) {
-          await setUaWebgl(inputsGroup)
-        }
-        if (data.dirId) {
-          item.help = data.coreVersion !== item.value.value
-            ? $t('修改内核可能导致缓存不兼容，从而使账号登录信息失效，请谨慎操作。')
-            : ''
-        }
-      },
     },
     {
       type: 'multiSelect',
@@ -231,7 +250,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'userAgent',
       value: data.userAgent,
       icon: 'base/rx_ic_shuffle',
-      rows: 4,
+      rows: 3,
       iconClick: async () => {
         await setUaWebgl(inputsGroup)
         showToast(0, $t('UA刷新成功'))
@@ -239,6 +258,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       preview: {
         label: 'User Agent',
       },
+    },
+    {
+      label: $t('搜索引擎'),
+      name: 'searchEngine',
+      type: 'select',
+      value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
+      options: searchEngineOptions,
+      filter: false,
+      required: true,
+      slot: 'searchEngine'
     },
     {
       separator: true,
@@ -445,6 +474,22 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.longitude,
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue > 180) {
+            newValue = 180
+          }
+          if (newValue < -180) {
+            newValue = -180
+          }
+        } else {
+          newValue = ''
+          setInputFieldByInputKey(basicInputs, 'longitude', 'invalid', true)
+        }
+        setInputFieldByInputKey(basicInputs, 'longitude', 'value', newValue)
+      },
     },
     {
       type: 'text',
@@ -454,6 +499,22 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       value: data.latitude,
       required: true,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue > 90) {
+            newValue = 90
+          }
+          if (newValue < -90) {
+            newValue = -90
+          }
+        } else {
+          newValue = ''
+          setInputFieldByInputKey(basicInputs, 'latitude', 'invalid', true)
+        }
+        setInputFieldByInputKey(basicInputs, 'latitude', 'value', newValue)
+      },
     },
     {
       type: 'text',
@@ -462,6 +523,23 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'precisionPos',
       value: data.precisionPos,
       visible: initInputVisible(data.isPositionBaseIp, false, false),
+      onBlur(event: any) {
+        let newValue = event.target.value;
+        // 输入的内容如果不是数字，就清空，如果是数字就走下边的校验
+        // 不能为空字符
+        const isValid = z.number().safeParse(Number(newValue));
+        if (isValid.success && newValue != '') {
+          if (newValue < 10) {
+            newValue = 10
+          }
+          if (newValue > 5000) {
+            newValue = 5000
+          }
+        } else {
+          newValue = ''
+        }
+        setInputFieldByInputKey(basicInputs, 'precisionPos', 'value', newValue)
+      },
     },
     {
       type: 'radio',
@@ -504,7 +582,21 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
+      type: 'radio',
       label: $t('窗口大小'),
+      name: 'positionSwitch',
+      value: data.positionSwitch ?? true,
+      options: [
+        { label: $t('自定义'), value: true },
+        { label: $t('全屏'), value: false },
+      ],
+      change(input: any) {
+        setInputVisible(basicInputs, ['windowOpenSize', 'windowRatioPosition'], input.value === true)
+      },
+    },
+    {
+      label: ' ',
+      name: 'windowOpenSize',
       items: [
         {
           type: 'text',
@@ -519,7 +611,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           value: data.openHeight ?? '1000',
         },
       ],
-      slot: 'windowSize',
+      visible: initInputVisible(data.positionSwitch, true, true),
+      slot: 'windowOpenSize',
+    },
+    {
+      label: $t('窗口位置'),
+      name: 'windowRatioPosition',
+      value: data.windowRatioPosition || '0,0',
+      tooltip: $t('窗口打开时在屏幕中的初始位置'),
+      visible: initInputVisible(data.positionSwitch, true, true),
+      slot: 'windowRatioPosition',
     },
   ])
 
@@ -979,6 +1080,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     },
     {
       type: 'radio',
+      label: $t('自定义书签'),
+      name: 'openBookmarks',
+      value: data.openBookmarks ?? false,
+      options: [
+        { label: $t('开启'), value: true },
+        { label: $t('关闭'), value: false },
+      ],
+    },
+    {
+      type: 'radio',
       label: $t('同步书签'),
       name: 'syncBookmark',
       value: data.syncBookmark ?? false,
@@ -1137,6 +1248,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('关闭'), value: false },
       ],
     },
+    // TODO:(anbin)
+    {
+      type: 'radio',
+      label: $t('打开工作台'),
+      name: 'openWorkbench',
+      value: data.openWorkbench ?? 1,
+      options: [
+        { label: $t('开启'), value: 1 },
+        { label: $t('关闭'), value: 0 },
+        { label: $t('跟随软件设置'), value: 2 },
+      ],
+    }
   ])
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])

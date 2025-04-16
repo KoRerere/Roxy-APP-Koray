@@ -3,7 +3,6 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums/project'
 import useColumns from '/@/hooks/useColumns'
@@ -19,6 +18,7 @@ import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessC
 import { useUserStore } from '/@/stores/user'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
@@ -28,11 +28,11 @@ const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
-const [show] = useContextMenu()
 const [projectModfiyDialog] = useProjectActions()
 const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo } = storeToRefs(useUserStore())
+const { showMenu: showPopupMenu } = usePopupMenu()
 
 
 const [columns] = useColumns(columnsRow)
@@ -48,7 +48,10 @@ function getOperation(data: Project) {
       label: $t('编辑'),
       icon: 'base/rx_ic_edit',
       power: role.isOwner || role.isManager,
-      disabled: !!data.projectDefault,// 1 默认项目 0 非默认项目
+      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
     {
       name: 'pin',
@@ -58,6 +61,9 @@ function getOperation(data: Project) {
       power: role.isOwner || role.isManager,
       tooltip: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       quick: true,
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
     {
       name: 'invite',
@@ -66,6 +72,9 @@ function getOperation(data: Project) {
       power: role.isOwner || role.isManager || role.isEditor,
       tooltip: $t('邀请'),
       quick: true,
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
     {
       separator: true,
@@ -76,6 +85,10 @@ function getOperation(data: Project) {
       label: $t('删除'),
       icon: 'base/rx_ic_bin_1',
       power: role.isOwner || role.isManager,
+      disabled: !!data.projectDefault || !!data.isTransfer,// 1 默认项目 0 非默认项目
+      command: ({ item }: any) => {
+        operationHandler(item, data)
+      }
     },
   ]
 }
@@ -164,10 +177,9 @@ function deletePopup(item: Project) {
   })
 }
 
-function showOperationMenu({ event, operation }: { event: Event, operation: any }, data: any) {
-  show(event, {
-    operation,
-    operationHandler: (operate: any) => operationHandler(operate, data),
+function showOperationMenu({ event, operation }: { event: MouseEvent, operation: any }) {
+  showPopupMenu(event, {
+    model: operation,
   })
 }
 </script>
@@ -179,8 +191,8 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
     </ViewsHeader>
     <div class="account-content">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :operation-handler="operationHandler"
-        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" data-key="project_id">
+      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-gridlines="false" :show-actions-menu="false"
+        :show-actions="false" data-key="project_id">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
@@ -198,7 +210,7 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
           </router-link>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu" />
         </template>
       </RyTable>
     </div>

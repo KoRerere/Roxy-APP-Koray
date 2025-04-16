@@ -2,7 +2,7 @@ import type { UnwrapRowsType, UserAddUserByProjectInfoCreatePayload, UserGetNoti
 import mitt from "mitt";
 import type { ToastMessageOptions } from "primevue/toast";
 
-export type PayWallType = "synchronizer" | "createProfileTemplates";
+export type PayWallType = "synchronizer" | "createProfileTemplates" | "transfer";
 
 export type MittEvents = {
   viewInviteDetail: UserAddUserByProjectInfoCreatePayload;

@@ -122,7 +122,6 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
           title: $t("窗口同步"),
           type: "button",
           icon: "base/rx_ic_frame_stack",
-          newBadge: "base/new_badge",
           hideInMenu: !isWindows,
           onClick: (event: Event) => {
             const { userPayInfo } = useUserStore();

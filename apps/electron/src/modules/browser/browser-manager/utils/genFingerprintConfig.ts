@@ -23,9 +23,10 @@ function toNumber(num: string | number) {
   return Number.isNaN(number) ? null : number
 }
 
+const key = '402ead7d23b43b6d1e0528d4f99c59bd'
+const nonce = '3a105229aa31'
+
 export function encryptFingerprintConfig(data) {
-  const key = '402ead7d23b43b6d1e0528d4f99c59bd'
-  const nonce = '3a105229aa31'
   const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce)
   const encryptedValue = Buffer.concat([
     cipher.update(data),
@@ -39,10 +40,14 @@ export function encryptFingerprintConfig(data) {
 export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
   const isMobile = [`Android`, `IOS`].includes(winInfo.os)
   const isWindows = winInfo.os === `Windows`
+  const isMacOS = winInfo.os === `macOS`
 
   return {
     computerName: winInfo.computerName,
     macAddress: winInfo.macAddress,
+    searchEngine: {
+      name: winInfo.searchEngine
+    },
     /** 窗口名称 */
     get windowName() {
       if (winInfo.isDisplayName) {
@@ -301,9 +306,10 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       platform: winInfo.platform,
       mobile: isMobile,
       /**  操作系统版本,可以不填 */
-      get platformVersion() {
-        if (isMobile || isWindows) {
-          return winInfo.platformVersion
+      platformVersion: winInfo.platformVersion,
+      get architecture() {
+        if (isMacOS) {
+          return winInfo.architecture
         }
       },
       get model() {
@@ -432,7 +438,10 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       /** 圆点的颜色 */
       color: 'FF6000d7',
       /** 圆点里面的内容，这个内容同时也会显示到左边工具栏 */
-      text: String(winInfo.windowSortNum),
+      get text() {
+        const { windowSortNum } = winInfo
+        return `${windowSortNum}`
+      },
     },
     blockDomainList: store.blockDomainList,
     /** 禁止域名的提示页面 */
@@ -442,6 +451,14 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
       if (!winInfo.forbidImage) {
         return Number(winInfo.forbiddenPictureSize)
       }
-    }
+    },
+    get simulation() {
+      const { simulation } = store
+      const prefixKey = process.platform === 'win32' ? 'Ctrl' : 'Command'
+      return {
+        ...simulation,
+        shortcutKey: `${prefixKey} ${simulation.shortcutKey}`,
+      }
+    },
   }
 }

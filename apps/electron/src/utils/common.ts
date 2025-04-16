@@ -8,6 +8,7 @@ import { format } from 'date-fns'
 import { fileOperations } from '/@/modules/fileOperations'
 import { initStorePromise, store } from '/@/modules/store'
 import { readFile } from 'node:fs/promises'
+import { parseArgs } from 'node:util';
 
 const webReadyPromise = Promise.withResolvers<true>()
 
@@ -27,6 +28,28 @@ export const isWebReady = () => webReadyPromise.promise
 export const setWebReady = () => webReadyPromise.resolve(true)
 
 console.log('isDev', isDev)
+
+export const appCliStartArgs = (() => {
+  const options = {
+    /** 是否开启请求日志 */
+    'req-log': {
+      type: 'boolean',
+      default: false,  // 默认不开启
+    },
+  } as const
+
+  const args = parseArgs({
+    options,
+    strict: false, // 默认 true，遇到未知参数会报错
+  });
+
+  if (isDev) {
+    console.log('appCliStartArgs', args)
+  }
+
+  return args.values
+})()
+
 
 export function safeStringify(obj) {
   const seen = new WeakSet()

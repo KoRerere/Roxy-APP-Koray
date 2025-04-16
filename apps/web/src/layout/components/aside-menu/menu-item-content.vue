@@ -8,9 +8,6 @@ const props = defineProps<{
   collapsed: boolean
 }>()
 
-const cacheKey = 'isShowSyncControlNewBadge'
-
-const isShowNewBadge = ref(!localStorage.getItem(cacheKey))
 
 const route = useRoute()
 const isCollapsed = defineModel('open', { default: false })
@@ -40,26 +37,23 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   else if (!canOpen.value || props.item.redirect) {
     navigate()
   }
-
-  if (props.item.meta?.newBadge) {
-    localStorage.setItem(cacheKey, 'true')
-    isShowNewBadge.value = false
-  }
 }
 </script>
 
 <template>
   <div class="menu-item-content" :class="{ collapsed }">
-    <RouterLink v-slot="{ navigate, href, isActive }" :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
-      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item" :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
+    <RouterLink v-slot="{ navigate, href, isActive }"
+      :to="{ name: item.name, params: item.meta?.params, query: { title: item.meta?.title } }" custom>
+      <a v-ripple v-tooltip="{ value: item.meta?.title, disabled: !collapsed }" class="menu-item"
+        :href="canOpen || item.meta?.type === 'button' ? undefined : href" :class="{ active: isActive }"
         @click="handleClickItem($event, navigate)">
         <RxSvgIcon v-if="item.meta?.icon" :name="item.meta?.icon" class="menu-icon" :size="18" />
         <div class="menu-title" :title="item.meta?.title">
           <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
           {{ item.meta?.title }}
-          <RxSvgIcon v-if="item.meta?.newBadge && isShowNewBadge" :name="item.meta?.newBadge" size="24px" class="new-badge" />
         </div>
-        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus" @click.stop="toggle" />
+        <RxSvgIcon v-if="canOpen" :name="isCollapsed ? 'base/rx_ic_plus' : 'base/rx_ic_minus'" class="menu-icon plus"
+          @click.stop="toggle" />
       </a>
     </RouterLink>
   </div>

@@ -7,7 +7,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { hidePageLoading, showPageLoading } from '/@/utils'
+import { decryptAESGCM, hidePageLoading, showPageLoading } from '/@/utils'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
@@ -23,12 +23,28 @@ const toast = useToast()
 const commonHeaders = { ['R-DEVICE-ID']: '' }
 const signFormData = ref<LoginCreatePayload>({
   user_name: userInfo.email || '',
-  password: password.value ? atob(password.value) : '',
+  password: '',
 })
 
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
 const [dialog] = useDialog()
+
+async function decryptPassword() {
+  if (password.value) {
+    try {
+      signFormData.value.password = atob(password.value)
+    } catch (e) {
+      try {
+        signFormData.value.password = await decryptAESGCM(password.value)
+      } catch (e) {
+        console.error('decrypt password error', e)
+      }
+    }
+  }
+}
+
+decryptPassword()
 
 async function handleSubmit() {
   console.log(signFormData)

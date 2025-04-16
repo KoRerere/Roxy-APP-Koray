@@ -4,12 +4,15 @@ import { ref } from 'vue'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
 import { Role } from '/@/enums'
-import { hidePageLoading, showPageLoading } from '/@/utils'
+import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useToast } from 'primevue/usetoast'
 import { $t } from '/@/locales'
+import { SWITCH_WORKSPACE_CHANNEL_NAME } from '/@/constants/channel'
 
-let hidePageLoadingTimeout: number
+const workspaceChangeChannel = new BroadcastChannel(SWITCH_WORKSPACE_CHANNEL_NAME);
+
+let hidePageLoadingTimeout: any
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const router = useRouter()
@@ -21,7 +24,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
 
   const maxCreateWindowCount = computed(() => {
-    return defaultWorkspace.value.maxWindowCount - defaultWorkspace.value.useWindowCount
+    return defaultWorkspace.value?.maxWindowCount! - defaultWorkspace.value?.useWindowCount!
   })
 
   const debounceGetPayInfo = debounce(() => {
@@ -29,7 +32,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }, 50)
 
   watch(currentWorkspace, (val, old) => {
-    if (!val || val?.id === old?.id) return
+    if (!val || val?.id === old?.id) {
+      val?.id && hidePageLoading()
+      return
+    }
     clearTimeout(hidePageLoadingTimeout)
 
     debounceGetPayInfo()
@@ -39,11 +45,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       router.replace({ name: 'project-list' })
     }
     // 如果当前路由有角色限制，且当前用户不在限制角色内，则跳转到首页
-    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role)) {
+    if (currentRoute.meta?.roles?.length && !currentRoute.meta.roles.includes(val?.role!)) {
       router.replace({ path: '/' })
     }
 
-    if (val?.id) {
+    // 如果当前工作空间有 ID 且是主窗口，则发送消息给主进程
+    if (val?.id && isMainWindow) {
       window.electronAPI.send('user:setWorkspaceId', val.id)
       rememberLastWorkspace()
     }
@@ -100,7 +107,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   /** 登录成功后，设置当前工作区 */
   async function setCurrentWorkspace(workspaceId: number) {
-    showPageLoading()
+    isMainWindow && showPageLoading()
+
     if (!workspaceList.value.length) {
       await fetchWorkspaceList()
     }
@@ -110,7 +118,19 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     } else {
       currentWorkspace.value = defaultWorkspace.value
     }
+    if (isMainWindow) {
+      workspaceChangeChannel.postMessage({
+        workspaceId,
+        workspaceName: currentWorkspace.value?.workspaceName,
+      })
+    }
   }
+
+  // 监听主窗口发来的消息
+  workspaceChangeChannel.onmessage = (event) => {
+    console.log('Received message:', event.data);
+    setCurrentWorkspace(event.data.workspaceId)
+  };
 
   return {
     defaultWorkspace,

@@ -241,31 +241,29 @@ defineExpose({
     border-color: transparent;
   }
 
-  &.p-button {
-    &-secondary {
-      color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-      background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  &.p-button-secondary {
+    color: var(--Colors-text-text-primary, #111213);
+    background: transparent;
+
+    svg {
+      color: var(--Colors-icon-icon-secondary, #575D60);
+    }
+
+    &:not(:disabled):hover {
+      color: var(--Colors-text-text-primary, #111213);
+      background: var(--Common-Buttons-Tertiary-bg-hover, #F1F5F8);
 
       svg {
-        color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
+        color: var(--Colors-icon-icon-secondary, #575D60);
       }
+    }
 
-      &:not(:disabled):hover {
-        color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-        background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+    &:disabled {
+      color: var(--Colors-text-text-inactive, #7D8387);
+      background: var(--Colors-background-bg-action-inactive, #E2E9EE);
 
-        svg {
-          color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
-        }
-      }
-
-      &:disabled {
-        color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-        background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
-
-        svg {
-          color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-        }
+      svg {
+        color: var(--Colors-icon-icon-inactive, #989CA0);
       }
     }
   }
@@ -301,34 +299,32 @@ defineExpose({
     }
   }
 
-  &.p-button {
-    &-secondary {
-      color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-      border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-      background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  &.p-button-secondary {
+    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+
+    svg {
+      color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
+    }
+
+    &:not(:disabled):hover {
+      color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
+      border-color: var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
+      background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f0f3f5);
 
       svg {
-        color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
+        color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
       }
+    }
 
-      &:not(:disabled):hover {
-        color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-        border-color: var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
-        background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f0f3f5);
+    &:disabled {
+      color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
+      border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+      background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
 
-        svg {
-          color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
-        }
-      }
-
-      &:disabled {
+      svg {
         color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-        border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-        background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
-
-        svg {
-          color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-        }
       }
     }
   }

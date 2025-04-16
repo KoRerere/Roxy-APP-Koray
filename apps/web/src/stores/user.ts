@@ -11,6 +11,7 @@ import { useRoleStore } from "/@/stores/role";
 import router from "/@/router";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
+import { encryptAESGCM, isWindows } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -37,6 +38,11 @@ export const useUserStore = defineStore(
     /** 是否为过期用户 */
     const isExpiredUser = computed(() => {
       return userPayInfo.value.subEndDate && Date.now() > userPayInfo.value.subEndDate
+    })
+
+    /** 是否为未付费用户 */
+    const isNoPayUser = computed(() => {
+      return [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum)
     })
 
     /** 用户身份 */
@@ -152,6 +158,7 @@ export const useUserStore = defineStore(
 
     /** 获取用户付费详情 */
     async function getUserPayInfo() {
+      userPayInfo.value = {} as UserGetUserPayInfoListData['data']
       const { code, data } = await API.pay.userGetUserPayInfoList();
 
       if (code === 0) {
@@ -170,9 +177,19 @@ export const useUserStore = defineStore(
             emitter.emit('showOldUserGiftDialog')
           }
         }
-        // 免费用户或者过期用户，关闭窗口同步器
-        if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
-          electronAPI.send('syncControl:close');
+
+        electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
+
+        if (isWindows) {
+          // 免费用户或者过期用户，关闭窗口同步器
+          console.log('can use syncControl:', [SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum), data.subLevel)
+          if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(data.subLevel as SubLevelEnum)) {
+            console.log('免费用户或者过期用户，关闭所有同步相关的弹窗')
+            electronAPI.send('syncControl:close');
+            setTimeout(() => {
+              electronAPI.send('syncControl:stop', false);
+            }, 500)
+          }
         }
       }
     }
@@ -182,8 +199,8 @@ export const useUserStore = defineStore(
     }
 
     /** 记住我的时候需要保存密码 */
-    function setPassword(pwd: string) {
-      password.value = btoa(pwd);
+    async function setPassword(pwd: string) {
+      password.value = await encryptAESGCM(pwd);
     }
 
     const initUserInfo = async () => {
@@ -199,6 +216,11 @@ export const useUserStore = defineStore(
       appVersion.value = version;
     });
 
+    function clearRememberMe() {
+      rememberMe.value = false
+      password.value = ''
+    }
+
     return {
       token,
       rememberMe,
@@ -208,6 +230,7 @@ export const useUserStore = defineStore(
       appVersion,
       identityInfo,
       isExpiredUser,
+      isNoPayUser,
       setPassword,
       clearUserInfo,
       setToken,
@@ -217,9 +240,12 @@ export const useUserStore = defineStore(
       fetchUserInfo,
       getUserPayInfo,
       initUserInfo,
+      clearRememberMe
     };
   },
   {
-    persist: true,
+    persist: {
+      pick: ['token', 'rememberMe', 'password', 'userInfo.email'],
+    },
   },
 );

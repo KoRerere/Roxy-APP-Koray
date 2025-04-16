@@ -6,7 +6,10 @@ import { $t } from '/@/locales';
 import { useSimpleLocale } from '/@/stores/locale';
 import { type MittEvents, type PayWallType, emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
+import { useRoleStore } from "/@/stores/role"
+import { showToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 
+const { isOwner } = storeToRefs(useRoleStore())
 const { getOfficialFaqWebsite } = useSimpleLocale()
 const popoverRef = useTemplateRef('popover')
 const currentType = ref<PayWallType | null>(null)
@@ -21,12 +24,11 @@ type TextMap = {
   document: string;
 }
 const textMap = computed<Record<PayWallType, TextMap>>(() => {
-
   return {
     synchronizer: {
       title: $t('使用窗口同步器提高多任务处理效率'),
       description: () => {
-        return <I18nT keypath={$t('通过升级至 {member} 解锁窗口同步器功能\n\n窗口同步器模块同时包括{bold}等细分功能', { member: '{member}', bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('通过升级至 {member} 解锁窗口同步器功能\n\n窗口同步器模块同时包括{bold}等细分功能', { member: '{member}', bold: '{bold}' })} >
           {{
             member: () => <span class="font-bold">{$t('Roxy 会员')}</span>,
             bold: () => <span class="font-bold">{$t('窗口自动布局、同步窗口标签页、模拟键盘鼠标输入')}</span>
@@ -40,7 +42,7 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
     createProfileTemplates: {
       title: $t('使用窗口模板快速新建环境'),
       description: () => {
-        return <I18nT keypath={$t('通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', bold: '{bold}' })} >
+        return <I18nT scope="global" keypath={$t('通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数', { member: '{member}', bold: '{bold}' })} >
           {{
             member: () => <span class="font-bold">{$t('Roxy 会员')}</span>,
             bold: () => <span class="font-bold">{$t('系统、内核、UA、基础设置、高级指纹设置及偏好设置')}</span>
@@ -50,6 +52,19 @@ const textMap = computed<Record<PayWallType, TextMap>>(() => {
       about: $t('关于窗口模板'),
       document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
     },
+    transfer: {
+      title: $t('使用窗口投送提升资源分享效率'),
+      description: () => {
+        return <I18nT scope="global" keypath={$t('窗口投送功能允许您向任意的工作空间投送窗口。{bold}', { bold: '{bold}' })} >
+          {{
+            bold: () => <span class="font-bold">{$t('窗口投送不仅支持同步窗口云端数据，还包括代理设置、平台账号、Cookies 和指纹参数等相关信息')}</span>
+          }}
+        </I18nT>
+      },
+      image: '/images/payments/pay-wall-transfer.png',
+      // about: $t('关于窗口投送'),
+      // document: getOfficialFaqWebsite('guide/2-Basic-Settings#template')
+    }
   }
 })
 
@@ -62,7 +77,7 @@ const reCalculatePosition = debounce(() => {
     if (showPayWallOptions.value?.params.type === 'synchronizer') {
       handleSynchronizerClick(showPayWallOptions.value.event)
     } else {
-      popoverRef.value?.getRef().alignOverlay()
+      popoverRef.value?.getRef()?.alignOverlay()
     }
   }
 }, 0)
@@ -75,7 +90,7 @@ emitter.on('showPayWall', (options) => {
   currentType.value = params.type
   reCalculatePosition()
   console.log('event', event)
-  popoverRef.value?.getRef().show(event)
+  popoverRef.value?.getRef()?.show(event, event.target)
 })
 
 
@@ -86,7 +101,7 @@ function handleSynchronizerClick(event: Event) {
     const { left, top } = a.getBoundingClientRect()
     const popoverLeft = left + a.clientWidth
     setTimeout(() => {
-      const container = popoverRef.value?.getRef().container
+      const container = popoverRef.value?.getRef()?.container
       if (container) {
         container.style.top = `${top - container.offsetHeight / 2}px`
         container.style.left = `${popoverLeft}px`
@@ -96,12 +111,12 @@ function handleSynchronizerClick(event: Event) {
 }
 
 function toUpgrade(event: Event) {
-  popoverRef.value?.getRef().toggle(event)
+  popoverRef.value?.getRef()?.toggle(event)
   toUpgradePlan()
 }
 
 function toDocument(event: Event) {
-  popoverRef.value?.getRef().toggle(event)
+  popoverRef.value?.getRef()?.toggle(event)
   window.open(currentText.value.document, '_blank')
 }
 
@@ -129,7 +144,7 @@ function handleImageLoad() {
           <component :is="currentText.description"></component>
         </div>
         <div class="pay-wall-footer">
-          <RxButton class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
+          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
             {{ currentText.about }}
           </RxButton>
           <RxButton class="pay-wall-footer-button" @click="toUpgrade($event)">

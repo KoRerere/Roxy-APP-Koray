@@ -4,7 +4,7 @@ import path from "path"
 import { browserManager } from "/@/modules/browser"
 import { IPCMainInstance } from "/@/modules/ipc/types"
 import { openAPIServer } from "/@/modules/openapi"
-import { fetchUserConfig, store } from "/@/modules/store"
+import { fetchUserConfig, store, } from "/@/modules/store"
 import { aliOSS } from "/@/utils"
 import { closeSyncControl } from "/@/modules/ipc/modules/syncControl"
 

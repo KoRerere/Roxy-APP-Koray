@@ -1996,18 +1996,27 @@ export interface UserGetNotifyListData {
     type?: string;
     notify?: string;
     status?: number;
-    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    /**
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     */
     userIdentity?: string;
-    /** 名下用户：true:有,false：没有 */
+    /**
+     * 名下用户：true:有,false：没有
+     * 名下用户：true:有,false：没有
+     */
     underName?: boolean;
-    /** 推荐用户：true:是,false：不是 */
+    /**
+     * 推荐用户：true:是,false：不是
+     * 推荐用户：true:是,false：不是
+     */
     recommendUser?: boolean;
     createTime?: string;
     messageModule?: string;
     userName?: string;
     avatar?: string;
     avatarColor?: string;
-    param_data?: {
+    paramData?: {
       data: string;
       workspaceName: string;
       workspacePicture: string;
@@ -3847,6 +3856,180 @@ export interface UserDelWindowInfoRecycleCreateData {
   msg: string;
 }
 
+export interface UserGetSearchEnginesListData {
+  code: number;
+  data: {
+    icon: string;
+    code: string;
+    url: string;
+    sort: number;
+  }[];
+  msg: string;
+}
+
+export interface UserTransferWindowVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserTransferWindowCreatePayload {
+  windowIds: number[];
+  /**
+   * 目标空间ID
+   * 目标空间ID
+   */
+  targetWorkspaceId: number;
+  /** 是否删除,true：删除, false: 不删除 */
+  isDelete: boolean;
+  /**
+   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
+   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
+   */
+  emailCode: string;
+  transferParam: string[];
+}
+
+export interface UserTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetTransferWorkspaceListListParams {
+  /** 转移空间编号(当等于1查询的时候在传) */
+  transferWorkspaceNo?: string;
+  /**
+   * 窗口id列表，用于校验窗口数量是否超出
+   * @example "1,2,3"
+   */
+  windowIds: string;
+}
+
+export interface UserGetTransferWorkspaceListListData {
+  code: number;
+  data: {
+    /** 空间ID */
+    workspaceId?: number;
+    /** 是否为自己空间（判断发邮箱依据），true：自己的，false：别人的 */
+    isWorkspace?: boolean;
+    /** 窗口任务编号,只有类型为2才有值 */
+    windowTransferNo?: string;
+    /** 空间编号 */
+    workspaceNo?: string;
+    /** 空间名称 */
+    workspaceName?: string;
+    /** 空间图标 */
+    workspacePicture?: string;
+    /** 窗口数量是否充足  true:充足, flase: 超出 */
+    isWindowCountEnough?: boolean;
+    /** 类型：1：自己的空间 ，2：已转移的空间   0 ：默认没有 */
+    type?: number;
+  }[];
+  msg: string;
+}
+
+export interface UserGetTransferReceiveWindowListListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /**
+   * 窗口任务编号,编号有则接收方，否则就是转移方
+   * @example "transfer_15708_20251104"
+   */
+  windowTransferNo?: string;
+}
+
+export interface UserGetTransferReceiveWindowListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      windowSortNum?: number;
+      windowName?: string;
+      platformUrl?: string;
+      platformIds?: string[];
+      windowPlatformList?: string[];
+      platformUserName?: string;
+      platformPassword?: string;
+      coreVersion?: string;
+      os?: string;
+      osVersion?: string;
+      windowRemark?: string;
+      moduleId?: number;
+      proxyMethod?: string;
+      moduleName?: string;
+      proxyNetwork?: string;
+      proxyCategory?: string;
+      ipType?: string;
+      proxyProvider?: string;
+      protocol?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyTime?: string;
+      refreshUrl?: string;
+      checkChannel?: string;
+      extraChannel?: string;
+      lastIp?: string;
+      lastCountry?: string;
+      lastCity?: string;
+      checkTime?: string;
+      checkStatus?: number;
+      platformUrlList?: string[];
+      maxWindowSort?: number;
+      /** 空间名称 */
+      workspaceName?: string;
+      /** 空间编号 */
+      workspaceNo?: string;
+      /** 空间图片 */
+      workspacePicture?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserAgreeTransferWindowCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string;
+  /** 总条数 */
+  total: number;
+}
+
+export interface UserAgreeTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserRejectTransferWindowCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string;
+}
+
+export interface UserRejectTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserClearTransferWorkspaceCreatePayload {
+  /** 窗口任务编号 */
+  windowTransferNo: string[];
+}
+
+export interface UserClearTransferWorkspaceCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -4782,32 +4965,73 @@ export interface UserGetWorkspaceListListData {
   code: number;
   data: {
     rows: {
-      /** ID */
+      /**
+       * ID
+       * ID
+       */
       id?: number;
-      /** 创建人ID */
+      /**
+       * 创建人ID
+       * 创建人ID
+       */
       userId?: number;
-      /** 工作空间名称 */
+      /**
+       * 工作空间名称
+       * 工作空间名称
+       */
       workspaceName?: string;
-      /** 总窗口数量 */
+      /**
+       * 总窗口数量
+       * 总窗口数量
+       */
       totalWindowCount?: number;
-      /** 总成员数量 */
+      /**
+       * 总成员数量
+       * 总成员数量
+       */
       totalMemberCount?: number;
-      /** 工作空间图片 */
+      /**
+       * 工作空间图片
+       * 工作空间图片
+       */
       workspacePicture?: string;
-      /** 是否默认工作空间，1：是 0：不是，默认不是 */
+      /**
+       * 是否默认工作空间，1：是 0：不是，默认不是
+       * 是否默认工作空间，1：是 0：不是，默认不是
+       */
       workspaceDefault?: number;
-      /** 工作空间状态，1：启用 0：停用 */
+      /**
+       * 工作空间状态，1：启用 0：停用
+       * 工作空间状态，1：启用 0：停用
+       */
       workspaceStatus?: number;
-      /** 创建时间 */
+      /**
+       * 创建时间
+       * 创建时间
+       */
       createTime?: string;
-      /** 修改时间 */
+      /**
+       * 修改时间
+       * 修改时间
+       */
       updateTime?: string;
-      /** 权限 */
+      /**
+       * 权限
+       * 权限
+       */
       role?: number;
-      /** 总窗口数量 */
+      /**
+       * 总窗口数量
+       * 总窗口数量
+       */
       maxWindowCount?: number;
-      /** 窗口使用数量 */
+      /**
+       * 窗口使用数量
+       * 窗口使用数量
+       */
       useWindowCount?: number;
+      /** 窗口编号 */
+      workspaceNo?: number;
     }[];
   };
   msg: string;
@@ -4920,6 +5144,8 @@ export interface UserGetProjectInfoByWorkspaceListData {
       pinStatus?: number;
       /** 1 默认项目 0 非默认项目 */
       projectDefault?: number;
+      /** 1 转移项目 0 非转移项目 */
+      isTransfer?: number;
       /**
        * 项目ID
        * 项目ID

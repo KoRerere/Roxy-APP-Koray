@@ -210,6 +210,8 @@ export interface RenderMessage {
   "util:getDeviceId": () => Promise<string>;
   /** 获取设备信息 */
   "util:getDeviceInfo": () => Promise<DeviceInfo>;
+  /** 检测某个快捷键是否被占用 */
+  "util:checkShortcutKeysIsOccupied": (payload: string) => Promise<boolean>;
 
   /** 前端已准备就绪 */
   "web:ready": () => void;
@@ -222,7 +224,7 @@ export interface RenderMessage {
   /** 开始同步窗口 */
   "syncControl:start": (dirIds: string[]) => void;
   /** 停止同步窗口 */
-  "syncControl:stop": () => void;
+  "syncControl:stop": (isShowSyncingWindowListDialog?: boolean) => void;
   /** 销毁顶部操作栏 */
   "syncControl:destroyActionBar": () => void;
   /** 宫格布局、堆叠布局、自定义布局 */

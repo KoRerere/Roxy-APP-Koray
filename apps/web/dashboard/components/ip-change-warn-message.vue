@@ -9,11 +9,11 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
     </template>
     <div class="content">
       <div class="title">
-        Your IP has changed
+        {{ $t('您的 IP 地址已变更') }}
       </div>
 
       <div class="description">
-        Please note that your action to access your accounts can be risky
+        {{ $t('请注意，您访问账户的操作可能存在风险') }}
       </div>
     </div>
   </Message>
@@ -50,7 +50,8 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: 18px; /* 150% */
+    line-height: 18px;
+    /* 150% */
   }
 }
 </style>
