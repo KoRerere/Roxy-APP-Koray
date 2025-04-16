@@ -92,7 +92,7 @@ async function onReject() {
 async function toProject() {
   //接收完窗口后跳转到项目列表
   const { data: { rows } } = await getProjectList()
-  const projectItem = rows.find(item => item.projectName === 'Transfers')
+  const projectItem = rows.find(item => !!item.isTransfer)
   if (projectItem) {
     router.push({ name: 'project-item', params: { id: projectItem.project_id }, query: { title: projectItem.projectName } })
   }
