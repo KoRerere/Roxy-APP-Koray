@@ -145,7 +145,7 @@ function getProxyOperation() {
       },
     },
     {
-      label: $t('切换代理'),
+      label: $t('选择已有代理'),
       icon: 'base/rx_ic_exchange',
       visible: isProxy.value && !role.isViewer,
       command: () => {
