@@ -178,6 +178,14 @@ function getAvatarStyle(workspacePicture: string) {
               </div>
             </div>
           </div>
+          <div v-if="search && !spaceList[0]?.items?.length" class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
+            <div>{{ $t('空间不存在') }}</div>
+            <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
+              <template #link>
+                <span class="cursor-pointer help-link" @click="howToGetHelp">{{ $t('空间 ID') }}</span>
+              </template>
+            </i18n-t>
+          </div>
         </div>
       </div>
     </RyPopover>
@@ -266,5 +274,12 @@ function getAvatarStyle(workspacePicture: string) {
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
   }
+}
+
+.search-empty {
+  color: var(--Colors-text-text-primary, #111213);
+  font-size: 14px;
+  font-style: normal;
+  line-height: 20px;
 }
 </style>
