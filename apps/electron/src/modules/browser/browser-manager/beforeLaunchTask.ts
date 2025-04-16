@@ -156,7 +156,7 @@ export class BeforeLaunchTask {
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
-        timeout: 10000,
+        timeout: 10500,
       }
       console.log('launchOptions', launchOptions)
       this.browser = await puppeteer.launch(launchOptions)

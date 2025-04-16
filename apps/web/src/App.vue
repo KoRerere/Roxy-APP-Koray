@@ -2,7 +2,7 @@
 import { KICKED_OUT_CHANNEL_NAME } from './constants/channel';
 import { useDialog } from './hooks/useDialog';
 import { $t } from './locales';
-import { hidePageLoading, showPageLoading } from './utils';
+import { hidePageLoading, isMainWindow, showPageLoading } from './utils';
 import { emitter, type MittEvents } from './utils/eventBus';
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 import { useUserStore } from '/@/stores/user'
@@ -50,13 +50,21 @@ const kickedOut = (params: MittEvents['kickedOut']) => {
 
 // 监听其他窗口/标签页发来的消息
 channel.onmessage = (event) => {
-  console.log('Received message:', event.data);
-  kickedOut(event.data)
+  if (isMainWindow) {
+    console.log('Received message:', event.data);
+    kickedOut(event.data)
+  } else {
+    window.close()
+  }
 };
 
 emitter.on('kickedOut', (params) => {
-  channel.postMessage(params)
-  kickedOut(params)
+  if (isMainWindow) {
+    channel.postMessage(params)
+    kickedOut(params)
+  } else {
+    window.close()
+  }
 })
 
 </script>
