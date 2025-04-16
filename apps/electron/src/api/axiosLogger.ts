@@ -19,12 +19,12 @@ export function attachAxiosLogger(instance: AxiosInstance) {
     const start = Date.now()
       ; (config as any).metadata = { start }
 
-    axiosLogger.info('[Axios][Request]', JSON.stringify({
+    axiosLogger.info('[Axios][Request]', {
       method,
       url,
       headers,
       data,
-    }, null, 2))
+    })
 
     return config
   })
@@ -36,14 +36,14 @@ export function attachAxiosLogger(instance: AxiosInstance) {
       const { method, url } = config
       const duration = Date.now() - (config as any).metadata?.start
 
-      axiosLogger.info('[Axios][Response]', JSON.stringify({
+      axiosLogger.info('[Axios][Response]', {
         method,
         url,
         status,
         statusText,
         duration: `${duration}ms`,
-        data: JSON.stringify(data),
-      }, null, 2))
+        data,
+      })
 
       return response
     },
@@ -51,14 +51,14 @@ export function attachAxiosLogger(instance: AxiosInstance) {
       const config = error.config
       const duration = config?.metadata ? Date.now() - config.metadata.start : undefined
 
-      axiosLogger.error('[Axios][Error]', JSON.stringify({
+      axiosLogger.error('[Axios][Error]', {
         message: error.message,
         code: error.code,
         url: config?.url,
         method: config?.method,
         duration: duration ? `${duration}ms` : undefined,
         response: error.response?.data,
-      }, null, 2))
+      })
 
       return Promise.reject(error)
     }
