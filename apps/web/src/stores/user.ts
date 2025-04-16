@@ -244,7 +244,7 @@ export const useUserStore = defineStore(
   },
   {
     persist: {
-      pick: ['token', 'rememberMe', 'password'],
+      pick: ['token', 'rememberMe', 'password', 'userInfo.email'],
     },
   },
 );
