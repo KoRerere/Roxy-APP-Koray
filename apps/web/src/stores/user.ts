@@ -243,6 +243,8 @@ export const useUserStore = defineStore(
     };
   },
   {
-    persist: true,
+    persist: {
+      pick: ['token', 'rememberMe', 'password'],
+    },
   },
 );

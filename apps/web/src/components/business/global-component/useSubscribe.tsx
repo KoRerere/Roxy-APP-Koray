@@ -10,7 +10,7 @@ import type { ToastMessageOptions } from "primevue/toast";
 import { useToast } from 'primevue/usetoast'
 import { $t } from "/@/locales";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
-import { useCommonStore } from "/@/stores/common";
+import { isMainWindow } from "/@/utils";
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
@@ -23,13 +23,12 @@ let lastFocusTime = Date.now()
 
 export function useSubscribe() {
 
-  if (isSubscribe) {
+  if (isSubscribe || !isMainWindow) {
     return
   }
 
   isSubscribe = true
 
-  const commonStore = useCommonStore()
   const { purchaseSuccess, planSuccess, openProcessing } = usePay()
   const dialog = useDialog()
   const [dialogInstance] = useDialogHook()
@@ -48,7 +47,6 @@ export function useSubscribe() {
 
   /** 初始化事件监听 */
   function initListener() {
-    if (!commonStore.isMainWindow) return
 
     // 显示升级套餐弹窗
     emitter.on('showUpgradePlanDialog', showUpgradePlanDialog)
@@ -80,8 +78,6 @@ export function useSubscribe() {
   requestIdleCallback(async () => {
     electronAPI.send('web:ready')
     console.log('web:ready')
-
-    await commonStore.getIsMainWindow()
     initListener()
   })
 

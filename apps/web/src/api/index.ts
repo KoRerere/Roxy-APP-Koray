@@ -20,8 +20,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
-import { useLock } from '/@/stores/lock'
-import { useCommonStore } from '/@/stores/common'
+import { isMainWindow } from '/@/utils'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -74,8 +73,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   return config
 })
 
-const closeOtherWindow = debounce(async () => {
-  const isMainWindow = await useCommonStore().getIsMainWindow()
+const closeOtherWindow = debounce(() => {
   if (!isMainWindow) {
     window.close()
   }

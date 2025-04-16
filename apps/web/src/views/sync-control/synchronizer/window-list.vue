@@ -409,6 +409,10 @@ electronAPI.on('syncControl:start', startSync)
     padding-bottom: 0;
     border-bottom: 0;
     background-color: white;
+
+    .p-multiselect-label {
+      height: 100%;
+    }
   }
 
 }

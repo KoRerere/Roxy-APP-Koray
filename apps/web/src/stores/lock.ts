@@ -1,10 +1,8 @@
-import { safeParseJSON } from '/@/utils'
-import { useCommonStore } from '/@/stores/common';
+import { isMainWindow, safeParseJSON } from '/@/utils'
 
 const LOCK_KEY = '__lock__';
 
 export const useLock = defineStore('lock', () => {
-  const { isMainWindow } = storeToRefs(useCommonStore())
 
   const defaultValue = {
     password: '',
@@ -19,7 +17,7 @@ export const useLock = defineStore('lock', () => {
   const lockData = reactive(safeParseJSON(localLockData, defaultValue))
 
   const route = useRoute()
-  const isLocked = computed(() => lockData.password && lockData.openScreenLock && route.name !== 'login' && isMainWindow.value);
+  const isLocked = computed(() => lockData.password && lockData.openScreenLock && route.name !== 'login' && isMainWindow);
 
   async function sha256(password: string) {
     const encoder = new TextEncoder();
