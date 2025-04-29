@@ -10,11 +10,13 @@ import { emitter } from '/@/utils/eventBus';
 import { MENU_COLLAPSED } from '../constants/storage-key'
 import { SubLevelEnum } from '/@/enums/pay'
 import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
+import { useRoleStore } from '/@/stores/role'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const userStore = useUserStore()
+const roleStore = useRoleStore()
 const { userPayInfo } = storeToRefs(userStore)
 const router = useRouter()
 
@@ -137,7 +139,7 @@ function onRenewal() {
           class="w-full rx-main-announcement__content subscription-expired" closable
           @close="handleCloseSubscriptionExpired">
           <template #default>
-            <i18n-t
+            <i18n-t v-if="roleStore.isOwner"
               :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
               scope="global">
               <template #link>
@@ -145,6 +147,10 @@ function onRenewal() {
                   {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}
                 </span>
               </template>
+            </i18n-t>
+            <i18n-t v-else
+              :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })"
+              scope="global">
             </i18n-t>
           </template>
           <template #closeicon>
