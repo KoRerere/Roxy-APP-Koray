@@ -44,7 +44,7 @@ const buyList = ref([
 
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
 
-const disabled = computed(() => !buyList.value.some(item => item.value > 0) || (loading.value || selectedPayway.value === PayWay.Balance && allAmount.value > userPayInfo.value?.balance))
+const disabled = computed(() => !buyList.value.some(item => item.value > 0) || (loading.value || selectedPayway.value === PayWay.Balance && finalAmount.value > userPayInfo.value?.balance))
 
 const allDiscount = computed(() => {
   const { discount, walletDiscount } = userPayInfo.value!
