@@ -15,6 +15,7 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import { getColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
+import { useDrawer } from '/@/hooks/useDrawer'
 
 const router = useRouter()
 const tableRef = useTemplateRef('proxyTable')
@@ -25,14 +26,10 @@ const role = useRoleStore()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
+const drawerInstance = useDrawer()
 
 const filtersMenu = ref()
 const dataList = ref()
-
-const drawer: any = reactive({
-  data: null,
-  visible: false,
-})
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
@@ -49,8 +46,7 @@ async function operationHandler(operate: any, data: ProxyItem) {
 
   switch (operate.name) {
     case 'edit':
-      drawer.visible = true
-      drawer.data = data
+      editProxy(data)
       break
     case 'refresh':
       refreshUrl(data)
@@ -65,6 +61,23 @@ async function operationHandler(operate: any, data: ProxyItem) {
       await deleteProxy(datas)
       break
   }
+}
+
+function editProxy(data: ProxyItem) {
+  drawerInstance.showDrawer({
+    title: $t('编辑代理'),
+    slots: {
+      container: () => h(EditProxy, {
+        data,
+        onConfirm: async (formData: any) => {
+          const { code, msg } = await onEdit([formData])
+          showToast(code, msg)
+          tableRef.value?.refresh()
+          drawerInstance.hideDrawer()
+        }
+      })
+    }
+  })
 }
 
 async function refreshUrl(data: ProxyItem) {
@@ -149,13 +162,6 @@ async function addRemark(remark: string, data: any) {
   tableRef.value?.refresh()
 }
 
-async function onEditConfirm(data: any) {
-  const { code, msg } = await onEdit([data])
-  showToast(code, msg)
-  tableRef.value?.refresh()
-  drawer.visible = false
-}
-
 async function onEdit(data: any) {
   return API.proxy.userMdfProxyModuleCreate(data)
 }
@@ -200,13 +206,16 @@ function onRefreshTable() {
 <template>
   <div class="flex flex-col w-full h-full">
     <ViewsHeader class="proxies-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" severity="info" icon="base/rx_ic_internet"
+        :label="$t('添加代理')" @click.stop="createProxy" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
+        @click.stop="testAllProxy" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
-        :operation-handler="operationHandler" :show-gridlines="false" :show-actions="false">
+      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple"
+        :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
+        :show-gridlines="false" :show-actions="false">
         <template #filter-after>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
@@ -214,7 +223,8 @@ function onRefreshTable() {
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs"
+                  icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" /> -->
               </div>
             </template>
@@ -236,22 +246,20 @@ function onRefreshTable() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }" :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.remark }"
-            class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }"
+            :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.remark }" class="cursor-pointer"
+            @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
+            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
+              :show-menu="false" @quick-click="operationHandler($event, data)" />
           </div>
         </template>
       </RyTable>
     </div>
   </div>
-  <RxDrawer v-model:visible="drawer.visible" :title="$t('编辑代理')">
-    <template #default="{ closeCallback }">
-      <EditProxy :data="drawer.data" @close="closeCallback" @confirm="onEditConfirm" />
-    </template>
-  </RxDrawer>
 </template>
 
 <style lang="scss" scoped>

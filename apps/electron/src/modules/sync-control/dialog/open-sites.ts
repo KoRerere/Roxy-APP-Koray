@@ -3,6 +3,7 @@ import { appConfig, ROXY_SYNC_CONTROL_OPEN_SITES_WINDOW_ID, ROXY_WINDOW_ID_KEY }
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { isPackaged } from '/@/utils'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { createWindow } from '/@/utils/browser-window'
 
 export function getOpenSitesDialogWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_OPEN_SITES_WINDOW_ID)
@@ -16,7 +17,8 @@ export async function openOpenSitesDialog() {
     return
   }
 
-  const win = new BrowserWindow({
+  const win = createWindow({
+    roxyWindowId: ROXY_SYNC_CONTROL_OPEN_SITES_WINDOW_ID,
     width: 450,
     height: 320,
     frame: false,
@@ -25,9 +27,6 @@ export async function openOpenSitesDialog() {
     resizable: false,
     skipTaskbar: true,
     hasShadow: true,
-    webPreferences: {
-      preload: appConfig.preloadFilePath
-    },
   })
   win[ROXY_WINDOW_ID_KEY] = ROXY_SYNC_CONTROL_OPEN_SITES_WINDOW_ID
   win.loadURL(await getWebEntryUrl('#/sync-control-open-sites-dialog'))

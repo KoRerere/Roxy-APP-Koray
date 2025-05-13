@@ -32,7 +32,7 @@ const styles = useCssModule()
 const dialog = useDialog()
 const toast = useToast()
 const confirm = useConfirm()
-const [dialogInstance] = useCustomDialog()
+const [showModal] = useCustomDialog()
 const { getWorkspaceList, currentWorkspace } = useWorkspaceStore()
 
 const userStore = useUserStore()
@@ -123,7 +123,7 @@ async function handleSaveChange() {
     toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('工作空间信息更新成功'), life: 3000 })
     emit('save')
   } else if (code === 409) {
-    dialogInstance.showModal({
+    showModal({
       header: $t('各空间可创建总量大于账号本身的限额'),
       class: 'w-[380px]',
       okText: $t('好的'),

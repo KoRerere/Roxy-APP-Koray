@@ -3,10 +3,10 @@ import crypto from 'node:crypto'
 
 // 固定密钥（32字节）
 const secretKey = Buffer.from('00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff', 'hex')
-const nonce = crypto.randomBytes(12)
 
 /** AES-GCM 加密函数 */
 export function encryptAESGCM(msg: string) {
+  const nonce = crypto.randomBytes(12)
   const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce)
   const ciphertext = Buffer.concat([cipher.update(msg), cipher.final()])
   const authTag = cipher.getAuthTag()

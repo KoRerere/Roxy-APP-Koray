@@ -4,7 +4,7 @@ import type { JSX } from 'vue/jsx-runtime'
 export type UserConfig = UserGetUserConfigListData['data']
 
 export interface Items {
-  label?: string
+  label?: string | (() => JSX.Element)
   text?: string | (() => JSX.Element)
   name?: string
   value?: any

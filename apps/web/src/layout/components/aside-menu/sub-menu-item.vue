@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { RouteRecordNameGeneric, RouteRecordRaw } from 'vue-router'
 import MenuItemContent from './menu-item-content.vue'
+import { motion, AnimatePresence } from "motion-v";
 
 defineOptions({
   name: 'SubMenuItem',
+  inheritAttrs: false
 })
 
-const { level = 0, collapsed } = defineProps<{
+const { level = 0, collapsed, collapsedChildren } = defineProps<{
   items: RouteRecordRaw[]
   collapsed: boolean
+  collapsedChildren?: boolean
   level?: number
 }>()
 
@@ -20,27 +23,34 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 </script>
 
 <template>
-  <div v-if="items.length" class="sub-menu" :class="[`level-${level}`, { collapsed }]"
-    :style="{ '--child-count': items.length }">
-    <template v-for="item in items" :key="item.name">
-      <!-- 分组 -->
-      <template v-if="isGroup(item)">
-        <div v-if="!collapsed" class="group-title">
-          <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
-          {{ $t(item.meta?.title) }}
-        </div>
-        <div v-else class="line" />
+  <AnimatePresence :initial="false">
+    <motion.div v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }"
+      :animate="{ height: 'auto', opacity: 1, y: 0 }" :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
+        duration: 0.6,
+        ease: [0, 0.71, 0.2, 1.01],
+        opacity: { duration: 0.3, ease: 'backOut' },
+      }" v-if="items.length && !collapsedChildren" class="sub-menu" :class="[`level-${level}`, { collapsed }]"
+      :style="{ '--child-count': items.length }">
+      <template v-for="item in items" :key="item.name">
+        <!-- 分组 -->
+        <template v-if="isGroup(item)">
+          <div v-if="!collapsed" class="group-title">
+            <!-- <i18n-t :keypath="item.meta?.title" scope="global" /> -->
+            {{ item.meta?.title }}
+          </div>
+          <div v-else class="line" />
+        </template>
+        <template v-else>
+          <MenuItemContent v-model:open="collapsedMap[item.name!]" :item="item" :collapsed />
+        </template>
+        <!-- 递归生成子菜单 -->
+        <template v-if="item.children?.length">
+          <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed
+            :collapsedChildren="collapsedMap[item.name!]" />
+        </template>
       </template>
-      <template v-else>
-        <MenuItemContent v-model:open="collapsedMap[item.name!]" :item="item" :collapsed />
-      </template>
-      <!-- 递归生成子菜单 -->
-      <template v-if="item.children?.length">
-        <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed
-          :class="{ collapsedChildren: collapsedMap[item.name!] }" />
-      </template>
-    </template>
-  </div>
+    </motion.div>
+  </AnimatePresence>
 </template>
 
 <style lang="scss" scoped>
@@ -56,8 +66,6 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   padding-left: calc(32px * v-bind(level));
 
   &.level-1 {
-    max-height: calc(var(--child-count) * 38px);
-    transition: v-bind(d);
     overflow: hidden;
   }
 
@@ -66,11 +74,11 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
     margin-bottom: 0;
   }
 
-  &.collapsedChildren {
-    // height: calc-size(auto);
-    max-height: 0;
-    overflow: hidden;
-  }
+  // &.collapsedChildren {
+  //   // height: calc-size(auto);
+  //   max-height: 0;
+  //   overflow: hidden;
+  // }
 
   &.level-1::before {
     content: '';

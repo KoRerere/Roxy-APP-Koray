@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -39,7 +40,10 @@ export class ApiApi<SecurityDataType = unknown> {
    * @request GET:/user_get_workspace_list_api
    * @response `200` `UserGetWorkspaceListApiListData`
    */
-  userGetWorkspaceListApiList = (query: UserGetWorkspaceListApiListParams, params: RequestParams = {}) =>
+  userGetWorkspaceListApiList = (
+    query: UserGetWorkspaceListApiListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetWorkspaceListApiListData, any>({
       path: `/user_get_workspace_list_api`,
       method: "GET",
@@ -56,7 +60,10 @@ export class ApiApi<SecurityDataType = unknown> {
    * @request POST:/user_del_window_info_api_v2
    * @response `200` `UserDelWindowInfoApiV2CreateData`
    */
-  userDelWindowInfoApiV2Create = (data: UserDelWindowInfoApiV2CreatePayload, params: RequestParams = {}) =>
+  userDelWindowInfoApiV2Create = (
+    data: UserDelWindowInfoApiV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelWindowInfoApiV2CreateData, any>({
       path: `/user_del_window_info_api_v2`,
       method: "POST",
@@ -74,7 +81,10 @@ export class ApiApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_window_info_random_v2
    * @response `200` `UserMdfWindowInfoRandomV2CreateData`
    */
-  userMdfWindowInfoRandomV2Create = (data: UserMdfWindowInfoRandomV2CreatePayload, params: RequestParams = {}) =>
+  userMdfWindowInfoRandomV2Create = (
+    data: UserMdfWindowInfoRandomV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWindowInfoRandomV2CreateData, any>({
       path: `/user_mdf_window_info_random_v2`,
       method: "POST",
@@ -92,7 +102,10 @@ export class ApiApi<SecurityDataType = unknown> {
    * @request POST:/user_clear_window_cache_api_v2
    * @response `200` `UserClearWindowCacheApiV2CreateData`
    */
-  userClearWindowCacheApiV2Create = (data: UserClearWindowCacheApiV2CreatePayload, params: RequestParams = {}) =>
+  userClearWindowCacheApiV2Create = (
+    data: UserClearWindowCacheApiV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserClearWindowCacheApiV2CreateData, any>({
       path: `/user_clear_window_cache_api_v2`,
       method: "POST",
@@ -109,7 +122,10 @@ export class ApiApi<SecurityDataType = unknown> {
    * @request GET:/user_get_label_info_api
    * @response `200` `UserGetLabelInfoApiListData`
    */
-  userGetLabelInfoApiList = (query: UserGetLabelInfoApiListParams, params: RequestParams = {}) =>
+  userGetLabelInfoApiList = (
+    query: UserGetLabelInfoApiListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetLabelInfoApiListData, any>({
       path: `/user_get_label_info_api`,
       method: "GET",

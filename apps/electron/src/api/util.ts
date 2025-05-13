@@ -46,7 +46,7 @@ export async function getWebDomain(force = true) {
     return lastWebDomain
   }
   const { code, data } = await API.base.getAppUpgradeCreate(osConfig)
-  console.log('getWebDomain', code, data)
+  console.debug('getWebDomain', code, data)
   if (code === 0 && data.webDomain) {
     lastWebDomain = data.webDomain
     lastRequestTime = Date.now()

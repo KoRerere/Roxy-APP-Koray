@@ -9,7 +9,7 @@ interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   icon?: SvgNames
   rotate?: boolean
   disabled?: boolean
-  onClick?: (e: any) => Promise<void> | void
+  onClick?: (e: any) => Promise<any> | any
 }
 
 defineOptions({
@@ -43,7 +43,8 @@ defineExpose({
 </script>
 
 <template>
-  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :pt="{ root: ['rx_button', size] }">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }"
+    :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :class="['rx_button', size]">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />
@@ -177,154 +178,123 @@ defineExpose({
 }
 
 .p-button {
-  font-family: Inter;
   font-weight: 500;
-  color: var(--Component-Colors-Buttons-Primary-text, #fff);
-  border-style: solid;
-  border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
-  background: var(--Component-Colors-Buttons-Primary-bg, #12a3fc);
-  box-shadow:
-    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+  background: var(--component-button-primary-bg, #11A3FD);
+  border-color: var(--component-button-primary-border, #0282D4);
+  color: var(--component-button-primary-text, #FFF);
+  box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+
+  svg {
+    transition: color var(--p-button-transition-duration);
+  }
 
   &:not(:disabled):hover {
-    color: var(--Component-Colors-Buttons-Primary-text, #fff);
-    border-color: var(--Component-Colors-Buttons-Primary-border-hover, #015c94);
-    background: var(--Component-Colors-Buttons-Primary-bg-hover, #0881cc);
-
-    svg {
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #ffffff);
-    }
+    background: var(--component-button-primary-bg-hover, #0282D4);
+    border-color: var(--component-button-primary-border-hover, #025F9C);
+    color: var(--component-button-primary-text, #FFF);
   }
 
   &:disabled {
-    color: var(--Component-Colors-Buttons-Primary-text-inactive, #e8f5fc);
-    border-color: var(--Component-Colors-Buttons-Primary-border-inactive, #12a3fc);
-    background: var(--Component-Colors-Buttons-Primary-bg-inactive, #7eccfc);
-
-    svg {
-      color: var(--Component-Colors-Buttons-Secondary-text-inactive, #e8f5fc);
-    }
-  }
-
-  svg {
-    color: var(--Component-Colors-Buttons-Secondary-text, #e8f5fc);
+    background: var(--component-button-primary-bg-inactive, #6CC9FE);
+    border-color: var(--component-button-primary-border-inactive, #3FB6FD);
+    color: var(--component-button-primary-text-inactive, #C8EBFE);
+    opacity: 1;
   }
 
   &-danger {
-    border-color: var(--Color-red-400, #c72626);
-    background: var(--Color-red-300, #f53838);
+    background: var(--colors-background-bg-error, #F53838);
+    border-color: var(--colors-border-border-error, #E90C10);
 
     &:not(:disabled):hover {
-      background: var(--p-button-danger-hover-background);
-      border-color: var(--p-button-danger-hover-border-color);
+      background: var(--colors-background-bg-error-hover, #E90C10);
+      border-color: var(--colors-border-border-error-hover, #B3090C);
     }
 
     &:disabled {
-      background: var(--p-button-danger-hover-background);
-      border-color: var(--p-button-danger-hover-border-color);
-      opacity: var(--p-disabled-opacity);
+      background: var(--component-button-error-bg-inactive, #F98A86);
+      border-color: var(--component-button-error-border-inactive, #F7625F);
+      color: var(--component-button-error-text-inactive, #FDD6D3);
+    }
+  }
+}
+
+.p-button-outlined {
+  background: var(--component-button-ghost-bg, #FFF);
+  border-color: var(--colors-border-border-brand, #11A3FD);
+  color: var(--colors-text-text-brand, #11A3FD);
+
+  &:not(:disabled):hover {
+    background: var(--component-button-ghost-bg-hover, #DEF3FF);
+    border-color: var(--component-button-ghost-border-hover, #0282D4);
+    color: var(--component-button-ghost-text-hover, #0282D4);
+  }
+
+  &:disabled {
+    background: var(--component-button-ghost-bg-inactive, #FFF);
+    border-color: var(--component-button-ghost-border-inactive, #9ADBFE);
+    color: var(--component-button-ghost-text-inactive, #6CC9FE);
+  }
+
+  &.p-button-secondary {
+    background: var(--colors-background-bg-action, #FFF);
+    border-color: var(--colors-border-border-base, #AFB7BB);
+    color: var(--colors-text-text-primary, #111213);
+
+    svg {
+      color: var(--colors-icon-icon-secondary, #575D60);
+    }
+
+    &:not(:disabled):hover {
+      background: var(--colors-background-bg-action-hover, #F1F5F8);
+      border-color: var(--colors-border-border-base-hover, #989CA0);
+      color: var(--colors-text-text-primary-hover, #050505);
+
+      svg {
+        color: var(--colors-icon-icon-secondary-hover, #34393D);
+      }
+    }
+
+    &:disabled {
+      background: var(--colors-background-bg-action-inactive, #E2E9EE);
+      border-color: var(--colors-border-border-subtle, #C7D1D6);
+      color: var(--colors-text-text-inactive, #7D8387);
+
+      svg {
+        color: var(--colors-icon-icon-inactive, #989CA0);
+      }
     }
   }
 }
 
 .p-button-text {
-  border-color: transparent;
-  background: transparent;
   box-shadow: none;
-
-  &:not(:disabled):hover {
-    box-shadow: none;
-  }
 
   &:disabled {
     border-color: transparent;
   }
 
   &.p-button-secondary {
-    color: var(--Colors-text-text-primary, #111213);
-    background: transparent;
+    color: var(--colors-text-text-primary, #111213);
 
     svg {
-      color: var(--Colors-icon-icon-secondary, #575D60);
+      color: var(--colors-icon-icon-secondary, #575D60);
     }
 
     &:not(:disabled):hover {
-      color: var(--Colors-text-text-primary, #111213);
-      background: var(--Common-Buttons-Tertiary-bg-hover, #F1F5F8);
+      color: var(--colors-text-text-primary, #111213);
+      background: var(--component-button-tertiary-bg-hover, #F1F5F8);
 
       svg {
-        color: var(--Colors-icon-icon-secondary, #575D60);
+        color: var(--colors-icon-icon-secondary, #575D60);
       }
     }
 
     &:disabled {
-      color: var(--Colors-text-text-inactive, #7D8387);
-      background: var(--Colors-background-bg-action-inactive, #E2E9EE);
+      color: var(--colors-text-text-inactive, #7D8387);
+      background: var(--colors-background-bg-action-inactive, #E2E9EE);
 
       svg {
-        color: var(--Colors-icon-icon-inactive, #989CA0);
-      }
-    }
-  }
-}
-
-.p-button-outlined {
-  background-color: transparent;
-  border-color: var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
-  color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
-
-  svg {
-    color: var(--Colors-Icon-icon-brand, #12a3fc);
-  }
-
-  &:not(:disabled):hover {
-    background-color: var(--Component-Colors-Buttons-Ghost-bg-hover, #e8f5fc);
-    border-color: var(--Component-Colors-Buttons-Ghost-border-hover, #0881cc);
-    color: var(--Component-Colors-Buttons-Ghost-text-hover, #0881cc);
-
-    svg {
-      color: var(--Colors-Icon-icon-brand-hover, #0881cc);
-    }
-  }
-
-  &:disabled {
-    background-color: transparent;
-    color: var(--Component-Colors-Buttons-Ghost-text-inactive, #7eccfc);
-    border-color: var(--Component-Colors-Buttons-Tertiary-bg-hover, #7eccfc);
-    opacity: 1;
-
-    svg {
-      color: var(--Component-Colors-Buttons-Ghost-text-inactive, #7eccfc);
-    }
-  }
-
-  &.p-button-secondary {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-    border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-    background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
-
-    svg {
-      color: var(--Component-Colors-Buttons-Secondary-text, #575d61);
-    }
-
-    &:not(:disabled):hover {
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-      border-color: var(--Component-Colors-Buttons-Secondary-border-hover, #a3a9ad);
-      background: var(--Component-Colors-Buttons-Secondary-bg-hover, #f0f3f5);
-
-      svg {
-        color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
-      }
-    }
-
-    &:disabled {
-      color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
-      border-color: var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-      background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
-
-      svg {
-        color: var(--Component-Colors-Buttons-Secondary-text-inactive, #a3a9ad);
+        color: var(--colors-icon-icon-inactive, #989CA0);
       }
     }
   }

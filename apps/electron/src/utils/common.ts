@@ -1,5 +1,5 @@
-import { app } from 'electron'
-import { osConfig } from '/@/constants'
+import { app, } from 'electron'
+import { osConfig, } from '/@/constants'
 import { hostname } from 'node:os'
 import { createHash } from 'node:crypto'
 import { UserGetLoginInfoListData } from '@roxy/backend-api'
@@ -31,10 +31,11 @@ console.log('isDev', isDev)
 
 export const appCliStartArgs = (() => {
   const options = {
-    /** 是否开启请求日志 */
-    'req-log': {
-      type: 'boolean',
-      default: false,  // 默认不开启
+    /** 日志级别 */
+    'roxy-log-level': {
+      type: 'string',
+      default: isPackaged ? 'info' : 'silly',  // 默认 info
+      // default: 'info',  // 默认 info
     },
   } as const
 
@@ -50,6 +51,8 @@ export const appCliStartArgs = (() => {
   return args.values
 })()
 
+/** 是否处于调试模式 */
+export const isDebugMode = appCliStartArgs['roxy-log-level'] === 'debug'
 
 export function safeStringify(obj) {
   const seen = new WeakSet()
@@ -62,6 +65,15 @@ export function safeStringify(obj) {
     }
     return value
   })
+}
+
+export function safeParseJSON(str: string, fallback?: () => any) {
+  try {
+    return JSON.parse(str)
+  } catch (error) {
+    console.error('safeParseJSON', error)
+    return fallback?.() ?? null
+  }
 }
 
 
@@ -82,47 +94,40 @@ export function getCommonRequestHeaders() {
     ['R-OSBIT']: isMac ? osConfig.cpu : osConfig.osBit,
     // ['R-DEVICE-ID']: await getDeviceId(),
     ['R-DEVICE-NAME']: encodeURIComponent(hostname()),
+    ['R-Local-Timezone-Offset']: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ['R-Local-System-Language']: app.getLocale(),
   }
 }
 
 /** 获取设备唯一 ID */
 export const getDeviceId = (() => {
-  let genDeviceIdPromise
+  const { promise, resolve } = Promise.withResolvers<string>()
 
-  queueMicrotask(() => {
-    initStorePromise.promise.then(() => {
-      if (!store.deviceId) {
-        genDeviceIdPromise = fileOperations.executeTask('genDeviceId', undefined)
-      } else {
-        console.log('设备 ID 已存在', store.deviceId)
-      }
-    })
+  queueMicrotask(async () => {
+    await initStorePromise.promise
+    if (!store.deviceId) {
+      // 如果 15s 内没有获取到设备 ID，则生成一个随机 ID
+      const timer = setTimeout(() => {
+        store.deviceId ||= crypto.randomUUID()
+        console.debug('15s 内没有获取到设备 ID，随机生成：', store.deviceId)
+        resolve(store.deviceId)
+      }, 1000 * 15)
+
+      console.time('获取设备 ID 耗时')
+      store.deviceId ||= await fileOperations.executeTask('genDeviceId', undefined)
+      resolve(store.deviceId)
+      console.timeEnd('获取设备 ID 耗时')
+      console.debug("设备唯一 ID:", store.deviceId)
+      clearTimeout(timer)
+    } else {
+      console.debug('设备 ID 已存在', store.deviceId)
+    }
   })
 
-  return async () => {
+  return () => {
     if (store.deviceId) {
       return store.deviceId
     }
-    const { promise, resolve } = Promise.withResolvers<string>()
-    if (!store.deviceId) {
-      // 如果 10s 内没有获取到设备 ID，则生成一个随机 ID
-      const timer = setTimeout(() => {
-        store.deviceId = crypto.randomUUID()
-        console.log('10s 内没有获取到设备 ID，随机生成：', store.deviceId)
-        resolve(store.deviceId)
-      }, 10000)
-      console.time('获取设备 ID 耗时')
-      genDeviceIdPromise?.then((deviceId) => {
-        store.deviceId ||= deviceId
-        resolve(store.deviceId!)
-        clearTimeout(timer)
-        console.timeEnd('获取设备 ID 耗时')
-        console.log("设备唯一 ID:", store.deviceId);
-      })
-    } else {
-      resolve(store.deviceId)
-    }
-
     return promise;
   }
 })()
@@ -155,4 +160,11 @@ export async function calculateFileHash(filePath: string) {
   hashSum.update(fileBuffer);
 
   return hashSum.digest('hex');
+}
+
+
+
+export function getUTCOffsetHours() {
+  const offsetMinutes = -new Date().getTimezoneOffset(); // 负号，转换为正偏移
+  return offsetMinutes / 60;
 }

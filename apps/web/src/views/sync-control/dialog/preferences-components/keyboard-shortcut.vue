@@ -128,7 +128,6 @@ const keyboardItems = ref<KeyboardItem[]>([
   // {
   //   label: $t('统一标签页'),
   //   key: 'unifiedTabs',
-  //   onClear
   // },
   {
     label: $t('关闭其他标签页'),

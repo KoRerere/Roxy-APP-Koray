@@ -17,6 +17,8 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
+import { setTimeout } from 'node:timers/promises'
+import { CDPSession } from 'puppeteer-core'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -36,7 +38,10 @@ export class BrowserItem {
     emitter.off(event, listener)
     return this
   }
-
+  /** 启动后是否已经同步过窗口打开状态 */
+  isSyncedWindowOpenStatus = false
+  /** 是否通过程序关闭 */
+  isClosedByProgram = false
   /** 通过哪种方式启动的浏览器 */
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
@@ -49,7 +54,7 @@ export class BrowserItem {
   /** 当前浏览器配置信息 */
   winInfo: WindowItemType
   /** 浏览器关闭后，上传数据 promise */
-  private uploadDataPromiser = Promise.withResolvers()
+  private uploadDataPromiser = Promise.withResolvers<{ requestHeaders?: any, uploadParams?: any }>()
   /** 当前浏览器用户数据目录 */
   userDataDir: string
   /** 用户浏览器数据缓存文件名称 */
@@ -60,6 +65,8 @@ export class BrowserItem {
   get #browser() {
     return this.beforeLaunchTask?.browser
   }
+  /** 浏览器 CDP 会话 */
+  cdpSession?: CDPSession
 
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
@@ -174,6 +181,9 @@ export class BrowserItem {
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
+      this.#browser?.target().createCDPSession().then((cdpSession) => {
+        this.cdpSession = cdpSession
+      })
     }
 
     // 浏览器关闭时，需要上传本地数据和状态
@@ -185,11 +195,12 @@ export class BrowserItem {
   /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
   handleOnDisconnected = async () => {
     const dirId = this.winInfo.dirId!
-    emitter.emit(`close-${dirId}`)
-    removeSyncWindowByPid(this.browserPid!)
     try {
-      await this.uploadData()
-      this.uploadDataPromiser.resolve(true)
+      const uploadDataPromise = this.uploadData()
+      emitter.emit(`close-${dirId}`, this.isClosedByProgram ? undefined : uploadDataPromise)
+      removeSyncWindowByPid(this.browserPid!)
+      const { requestHeaders, uploadParams } = await uploadDataPromise
+      this.uploadDataPromiser.resolve({ requestHeaders, uploadParams })
     }
     catch (error) {
       this.uploadDataPromiser.reject(error)
@@ -201,8 +212,10 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
+      this.isClosedByProgram = true
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
       await this.#browser.close().finally(async () => {
+        await setTimeout()
         try {
           process.kill(this.browserPid!)
         }
@@ -238,7 +251,7 @@ export class BrowserItem {
       const data = await aliOSS.putStream(remoteOssPath, readStream, { workspaceId: this.winInfo.workspaceId })
       newVersion = newVersion + 1
       writeFile(this.ossCacheVersionPath, String(newVersion))
-      console.log(`oss 缓存文件上传成功`, data)
+      console.log(`oss 缓存文件上传成功`)
     }
     catch (error) {
       console.log('uploadData error: ', error)
@@ -255,14 +268,14 @@ export class BrowserItem {
         openStatus: false,
       }
 
-      console.log('uploadData:', uploadParams)
+      return { requestHeaders: this.requestHeaders, uploadParams }
 
       // 同步窗口状态
-      await API.window.userMdfWindowSyncV2Create([uploadParams], { headers: this.requestHeaders }).then((res) => {
-        console.log('user_mdf_window_sync_v2 uploadData', res)
-      }).catch((error) => {
-        console.error('user_mdf_window_sync_v2 uploadData error: ', error)
-      })
+      // await API.window.userMdfWindowSyncV2Create([uploadParams], { headers: this.requestHeaders }).then((res) => {
+      //   console.log('user_mdf_window_sync_v2 uploadData', res)
+      // }).catch((error) => {
+      //   console.error('user_mdf_window_sync_v2 uploadData error: ', error)
+      // })
     }
   }
 
@@ -293,11 +306,16 @@ export class BrowserItem {
 
   /** 代理检测 */
   async proxyDetection() {
-    return proxyDetection(this.winInfo)
+    const res = await proxyDetection(this.winInfo)
+    if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
+      this.beforeLaunchTask.proxyInfo = res
+    }
+    return res
   }
 
   /** 是否是有效的 URL */
   isValidURL(url: string) {
     return !getInvalidUrls().some(n => url.startsWith(n!))
   }
+
 }

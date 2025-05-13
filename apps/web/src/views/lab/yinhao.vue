@@ -1,239 +1,209 @@
 <script setup lang="tsx">
-import PlanModal from '../pay/wallet/components/plan-success.vue'
-import BalanceModal from '../pay/wallet/components/balance-success.vue'
-import { useDialog } from '/@/hooks/useDialog'
-
-const [dialogInstance] = useDialog()
-
-function open1() {
-  dialogInstance.showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    innerDialog: true,
-    pt: {
-      content: '!pa-0'
-    },
-    slots: {
-      container: () => <PlanModal />,
-    },
-  })
-}
-
-function open2() {
-  dialogInstance.showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    innerDialog: true,
-    pt: {
-      content: '!pa-0'
-    },
-    slots: {
-      container: () => <BalanceModal />,
-    },
-  })
-}
-
-//=================================
-import { motion, AnimatePresence } from 'motion-v'
 import { $t } from '/@/locales'
+import { sleep } from '/@/utils'
+import { useResponseToast } from '/@/hooks/useResponseToast';
 
-const allIngredients = [
-  { icon: "🍅", label: "Tomato" },
-  { icon: "🥬", label: "Lettuce" },
-  { icon: "🧀", label: "Cheese" },
-  { icon: "🥕", label: "Carrot" },
-  { icon: "🍌", label: "Banana" },
-  { icon: "🥂", label: "Champers?" },
+const [showToast] = useResponseToast()
+
+//===============================
+import wcisTable from './components/table/table.vue'
+
+async function tableFilters() {
+  return [
+    {
+      type: 'select',
+      name: 'wcis',
+      value: [],
+      props: {
+        placeholder: $t('操作'),
+        options: [
+          { label: $t('窗口'), value: 'Profiles' },
+          { label: $t('代理'), value: 'Proxies' },
+          { label: $t('账号'), value: 'Accounts' },
+          { label: $t('项目'), value: 'Projects' },
+          { label: $t('扩展'), value: 'Extensions' },
+          { label: $t('团队'), value: 'Teams' },
+        ],
+      }
+    },
+    {
+      type: 'multiple',
+      name: 'operateModule',
+      value: [],
+      props: {
+        placeholder: $t('全部操作'),
+        options: [
+          { label: $t('窗口'), value: 'Profiles' },
+          { label: $t('代理'), value: 'Proxies' },
+          { label: $t('账号'), value: 'Accounts' },
+          { label: $t('项目'), value: 'Projects' },
+          { label: $t('扩展'), value: 'Extensions' },
+          { label: $t('团队'), value: 'Teams' },
+        ],
+      }
+    },
+    {
+      type: 'date',
+      name: 'date',
+      props: {
+        placeholder: $t('全部时间'),
+        maxDate: new Date(),
+      }
+    },
+  ]
+}
+
+const columns = ref([
+  { header: "Tomato 🍅", field: 'code' },
+  { header: "Lettuce 🥬", field: 'name' },
+  { header: "Cheese 🧀", field: 'category' },
+  { header: "Carrot 🥕", field: 'quantity' }
+])
+
+const originalModel = [
+  {
+    label: 'only quick',
+    icon: 'base/rx_ic_at',
+    command: (event: any) => {
+      return false
+    },
+    quick: true,
+    onlyQuick: true,
+    multiple: {
+      name: 'G1',
+      props: {
+        label: 'Restart',
+      }
+    },
+  },
+  {
+    label: 'only multiple',
+    icon: 'base/rx_ic_shut_down',
+    command: (event: any) => {
+    },
+    quick: true,
+    onlyMultiple: true,
+    multiple: {
+      name: 'G2',
+    },
+  },
+  {
+    label: 'quick, multiple, normal, async command',
+    icon: 'base/rx_ic_2fa',
+    command: async (event: any) => {
+      await sleep(2000)
+    },
+    quick: true,
+    multiple: {
+      name: 'G2',
+    },
+  },
+  {
+    separator: true,
+  },
+  {
+    label: 'normal1',
+    icon: 'base/rx_ic_download',
+    command: (event: any) => {
+      const data: any = [].concat(event.data)[0]
+      showToast(0, data.category + ': normal1')
+    }
+  },
+  {
+    label: 'normal2',
+    icon: 'base/rx_ic_download',
+    disabled: true,
+  },
 ]
 
-const [tomato, lettuce, cheese, carrot, banana, champers] = allIngredients
-const tabs = [tomato, lettuce, cheese, carrot, banana, champers]
-
-const selectedTab = ref(tabs[0])
-//================================
-
-const colums = [
-  {
-    title: $t('创建时间'),
-    key: 'createTime',
-    style: {
-      width: '13%',
-      minWidth: '140px',
-    }
-  },
-  {
-    title: $t('更新时间'),
-    key: 'updateTime',
-    style: {
-      width: '13%',
-      minWidth: '140px',
-    }
-  },
-  {
-    title: $t('最后打开'),
-    key: 'openTime',
-    style: {
-      width: '13%',
-      minWidth: '140px',
-    }
-  },
-  {
-    title: $t('其他'),
-    key: 'actions',
-    alignFrozen: 'right',
-    slot: 'actions',
-    style: {
-      width: '0rem',
-      minWidth: '120px',
-    }
-  },
-]
-
-const mannnnndata = Array.from({ length: 5 }, (_, index) => ({
+const datalist = Array.from({ length: 50 }, (_, index) => ({
   id: `${index}`,
-  createTime: new Date(),
-  updateTime: new Date(),
-  openTime: new Date(),
-  actions: 'actions',
+  code: index * 2,
+  name: `mamba_${index}`,
+  category: `category_${index}`,
+  quantity: 'actions',
 }))
+//====================================
+import MForm from './components/form/index.vue';
+import Test from './components/test.vue'
 
+const inputs = [
+  {
+    type: 'text',
+    name: 'username',
+    label: 'Username',
+    props: {
+      preIcon: 'base/rx_ic_2fa',
+      icon: 'base/rx_ic_2fa',
+      size: 'md',
+    },
+    resolver: (z: any) => z.string({
+      invalid_type_error: $t('请输入空间名称'),
+    })
+      .min(1, $t('请输入空间名称'))
+      .regex(/^[^\u4E00-\u9FA5]+$/, $t('空间名称不能包含中文'))
+      .max(20, $t('空间名称最多 20 个字符')),
+  },
+  // {
+  //   type: 'number',
+  //   name: 'age',
+  //   label: 'Age',
+  //   value: 1102,
+  // },
+  // {
+  //   type: 'select',
+  //   name: 'scvr',
+  //   label: 'Scvr',
+  //   value: { label: '1', value: 1 },
+  //   props: {
+  //     options: [
+  //       { label: '1', value: 1 },
+  //       { label: '2', value: 2 },
+  //       { label: '3', value: 3 },
+  //     ],
+  //   },
+  // },
+  {
+    type: 'textarea',
+    name: 'lastname',
+    label: 'Last Name',
+    resolver: (z: any) => z.string({
+      invalid_type_error: 'wcis man!',
+    })
+      .min(2, 'wcis man!')
+  },
+  {
+    name: 'mamba',
+    label: 'mamba',
+    value: 'what can is say men!',
+    render: (props: any) => <Test {...props}></Test>,
+    resolver: (z: any) => z.string({
+      invalid_type_error: 'must 5 string man!'
+    })
+      .min(5, 'must 5 string man!'),
+  }
+]
+
+const onFormSubmit = (values: Record<string, any>) => {
+  console.log(values)
+}
+
+const formRef = useTemplateRef<any>('wcisman')
+
+function noFormIdSubmit() {
+  formRef.value?.instance.submit()
+}
 </script>
 
 <template>
-  <div class="relative back">
-    <RxButton class="!w-20" @click="open1">plan</RxButton>
-    <RxButton class="!w-20" @click="open2">blance</RxButton>
-    <br>
-    <br>
-    <div class="flex gap-4">
-      <div class="mannnnnnn" data-active="false"></div>
-      <div class="mannnnnnn" data-active="true"></div>
+  <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
+    <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
+      <MForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></MForm>
+      <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
+      <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div>
-    <br>
-    <RyTable selection-mode="multiple" :columns="colums" :data-list="mannnnndata" :show-table-header="false" :paginator="false" :show-actions="false" />
-
-    <!-- <div class="container">
-      <nav class="nav">
-        <ul class="tabs-container">
-          <motion.li v-for="item in tabs" :key="item.label" tag="li" class="tab" :initial="false" @click="selectedTab = item">
-            {{ `${item.icon} ${item.label}` }}
-            <motion.div v-if="item.label === selectedTab.label" class="underline" layout-id="underline" id="underline" />
-          </motion.li>
-        </ul>
-      </nav>
-      <main class="icon-container">
-        <AnimatePresence mode="wait">
-          <motion.div :key="selectedTab ? selectedTab.label : 'empty'" :initial="{ y: 10, opacity: 0 }" :animate="{ y: 0, opacity: 1 }" :exit="{ y: -10, opacity: 0 }" :transition="{ duration: 0.2 }"
-            class="icon">
-            {{ selectedTab ? selectedTab.icon : "😋" }}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-    </div> -->
   </div>
-
 </template>
 
-<style lang="scss" scoped>
-.mannnnnnn {
-  width: 200px;
-  height: 100px;
-  background-color: skyblue;
-  transition: all 0.5s;
-
-  &:not([data-active="true"]):hover {
-    background: orange;
-  }
-
-  &[data-active="true"] {
-    background: yellowgreen;
-  }
-}
-
-.container {
-  width: 480px;
-  height: 60vh;
-  max-height: 360px;
-  border-radius: 10px;
-  background: white;
-  overflow: hidden;
-  box-shadow:
-    0 1px 1px hsl(0deg 0% 0% / 0.075),
-    0 2px 2px hsl(0deg 0% 0% / 0.075),
-    0 4px 4px hsl(0deg 0% 0% / 0.075),
-    0 8px 8px hsl(0deg 0% 0% / 0.075),
-    0 16px 16px hsl(0deg 0% 0% / 0.075),
-    0 2px 2px hsl(0deg 0% 0% / 0.075),
-    0 4px 4px hsl(0deg 0% 0% / 0.075),
-    0 8px 8px hsl(0deg 0% 0% / 0.075),
-    0 16px 16px hsl(0deg 0% 0% / 0.075);
-  display: flex;
-  flex-direction: column;
-}
-
-.nav {
-  background: #fdfdfd;
-  padding: 5px 5px 0;
-  border-radius: 10px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: 1px solid #eeeeee;
-  height: 44px;
-}
-
-.tabs-container {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-weight: 500;
-  font-size: 14px;
-  display: flex;
-  width: 100%;
-}
-
-.tab {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-weight: 500;
-  font-size: 14px;
-  border-radius: 5px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  width: 100%;
-  padding: 10px 15px;
-  position: relative;
-  background: white;
-  cursor: pointer;
-  height: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  user-select: none;
-  color: #0f1115;
-}
-
-.underline {
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: orange;
-}
-
-.icon-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-}
-
-.icon {
-  font-size: 128px;
-}
-</style>
+<style lang="scss" scoped></style>

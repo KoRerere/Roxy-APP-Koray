@@ -66,6 +66,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   align-items: flex-start;
   gap: var(--spacing-none, 0px);
   align-self: stretch;
+  z-index: 1;
 
   &.collapsed {
     .menu-item {
@@ -111,7 +112,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
 
   &:hover {
     color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-    background: rgba(0, 0, 0, 0.05);
+    background: #eaeef0;
   }
 
   &.active {

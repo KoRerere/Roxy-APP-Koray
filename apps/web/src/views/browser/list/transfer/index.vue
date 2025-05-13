@@ -9,7 +9,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
 const route = useRoute()
 const router = useRouter()
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
@@ -61,7 +61,7 @@ async function tableRequest(params: any) {
 }
 
 async function howToGetHelp() {
-  dialogInstance.showModal({
+  showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -70,12 +70,12 @@ async function howToGetHelp() {
       content: '!pa-0'
     },
     slots: {
-      container: () => h(TransferHelp, {
+      container: ({ hideModal }) => h(TransferHelp, {
         onClose: () => {
-          dialogInstance.hideModal()
+          hideModal()
         },
         onConfirm: () => {
-          dialogInstance.hideModal()
+          hideModal()
         },
       })
     }
@@ -85,7 +85,8 @@ async function howToGetHelp() {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false" :show-actions="false" :show-table-header="false">
+  <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false"
+    :show-actions="false" :show-table-header="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无投送窗口数据')">
         <template #extra>
@@ -108,7 +109,8 @@ async function howToGetHelp() {
     </template>
     <template #transfer="{ data }">
       <div class="flex items-center">
-        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon"
+          :class="{ '!bg-black': !data.workspacePicture }"
           :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
         <div class="ml-3 space-name">{{ data.workspaceName }}</div>
         <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>

@@ -83,6 +83,13 @@ async function onInstall(plugin: PluginItem) {
       },
       onConfirm: async (params: any) => {
         try {
+          // 下载并校验插件 sha512 值
+          const [result] = await window.electronAPI.send('extension:download', [toRaw(plugin)])
+          console.log('extension:download', result)
+          if (result?.status === 'rejected' && result.reason?.message) {
+            return showToast(-1, result.reason.message)
+          }
+
           const { code, data, msg } = await API.plugins.userAddSystemPluginCreate({ id: plugin.id })
           plugin.addStatus = true
           needsync.value = true
@@ -90,7 +97,6 @@ async function onInstall(plugin: PluginItem) {
           if (code === 0) {
             const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
             if (code === 0) {
-              window.electronAPI.send('extension:download', [toRaw(plugin)])
               showToast(code, msg)
             }
           }

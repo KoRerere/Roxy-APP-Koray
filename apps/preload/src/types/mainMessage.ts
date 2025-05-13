@@ -29,13 +29,19 @@ export interface ResourceUpdateMessage {
   /** 更新标题信息 */
   title?: string
   /** 更新描述信息 */
-  description: string
+  description?: string
+  /** 更新内容 */
+  upgradeContent?: string
   /** 版本号 */
   version?: string
+  /** 当前版本 */
+  currentVersion?: string
   /** 内核版本 */
   coreVersion?: string
   /** 发布时间 */
   releaseTime?: string
+  /** 新功能提示 */
+  newFeatureTips?: string[]
   /** 原始的更新数据 */
   originUpgradeData?: any
 }
@@ -57,6 +63,8 @@ export interface MainMessage {
   'app:launch-message': (payload: string) => void
   /** 内核列表有更新时，发出 */
   'app:core-list-update': (payload: ResourceUpdateMessage[]) => void
+  /** 后端地址发生变化 */
+  'app:backend-url-change': (payload: string) => void
   /** 当主窗口聚焦时 */
   'window:on-focus': () => void
   /** 插件下载进度, 如果 errorTips 不为空，则表示下载失败 */

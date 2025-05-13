@@ -1,0 +1,17 @@
+{
+  "googleApi": {
+    "apiKey": "AIzaSyBvBVNwfpQjdQIiLQJYaiBg3P-DoAUPGmQ",
+    "clientId": "77185425430.apps.googleusercontent.com",
+    "clientSecret": "OTJgUOQcT7lO7GsGZq2G4IlT"
+  },
+  "needDeviceIdApis": [
+    "/reg",
+    "/login",
+    "/login_google_v2",
+    "/login_github",
+    "/login_vk",
+    "/login_facebook",
+    "/send_email_register_verify_code",
+    "/check_other_device_login"
+  ]
+}

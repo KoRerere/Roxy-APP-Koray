@@ -16,7 +16,7 @@ import LoadingImage from '/@/assets/images/status/loading.png';
 const [showToast, onlyErrorToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 const cancelCss = useCssModule('popup')
 const repayCss = useCssModule('repay')
 
@@ -66,7 +66,7 @@ function tableRequest() {
 }
 
 async function cancelSubscribe() {
-  dialogInstance.showModal({
+  const dialogInstance = showModal({
     innerDialog: true,
     showHeader: false,
     modal: true,
@@ -75,11 +75,11 @@ async function cancelSubscribe() {
       content: '!pa-0'
     },
     slots: {
-      container: () => {
+      container: ({ handleCancel }) => {
         return <div class="flex flex-col pt-4 pb-6 px-6 gap-4 w-160">
           <div class={`relative flex items-center h-9 ${cancelCss.header}`}>
             <span>{$t('取消订阅服务')}</span>
-            <span class="absolute right-0 cursor-pointer" onClick={() => dialogInstance.handleCancel()}>
+            <span class="absolute right-0 cursor-pointer" onClick={handleCancel}>
               <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
             </span>
           </div>
@@ -104,7 +104,7 @@ async function cancelSubscribe() {
             <div>{$t('订阅取消后，您的 Roxy 会员权益将会持续至 {date}', { date: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') })}</div>
           </div>
           <div class="flex gap-3">
-            <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={() => dialogInstance.handleCancel()}></RxButton>
+            <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={handleCancel}></RxButton>
             <RxButton class="flex-1" severity="danger" size='lg' label={$t('确认并取消订阅')} onClick={_onCancel}></RxButton>
           </div>
         </div>
@@ -117,7 +117,7 @@ async function cancelSubscribe() {
     onlyErrorToast(code, msg)
     if (code !== 0) return
     await getUserPayInfo()
-    showToast(code, $t('取消成功'))
+    showToast(code, msg)
     dialogInstance.handleCancel()
     onClose()
   }
@@ -126,7 +126,7 @@ async function cancelSubscribe() {
 async function onRepay(row: any) {
   window.open(row.failAddress)
 
-  dialogInstance.showModal({
+  const dialogInstance = showModal({
     innerDialog: true,
     showHeader: false,
     modal: true,
@@ -135,14 +135,14 @@ async function onRepay(row: any) {
       content: '!pa-0'
     },
     slots: {
-      container: () => {
+      container: ({ handleCancel }) => {
         return <div class="flex flex-col pt-12 pb-6 px-6 gap-6 w-110">
           <img class="block mx-auto w-8 h-8 loading-circle" src={LoadingImage} />
           <div class={`${repayCss.header}`}>{$t('支付处理中...')}</div>
-          <div class={`flex flex-col gap-3 whitespace-pre-wrap ${repayCss.content}`}>{$t('请在打开的页面中完成订单的支付，支付成功后请点击以下按钮')}</div>
+          <div class={`flex flex-col gap-3 whitespace-pre-wrap ${repayCss.content}`}>{$t('请在打开的页面中完成订单支付，支付成功后请点击以下按钮 (订单处理最多存在 5 分钟延迟)')}</div>
           <div class={`flex flex-col gap-2.5 ${repayCss.help}`}>
             <RxButton class="flex-1" size='lg' label={$t('完成支付')} onClick={confirm}></RxButton>
-            <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={() => dialogInstance.handleCancel()}></RxButton>
+            <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={handleCancel}></RxButton>
             <I18nT tag="div" keypath={$t('* 支付遇到问题？ {link}', { link: '{link}' })} scope="global">
               {{ link: () => <span class={`cursor-pointer ${repayCss.link}`} onClick={openLiveChat}>{$t('联系我们')}</span> }}
             </I18nT>
@@ -171,7 +171,8 @@ function onClose() {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 w-185">
     <div class="relative flex items-center h-9 header">
       <span>{{ $t('管理订阅') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete" @click="onClose">
+      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete"
+        @click="onClose">
       </SvgIcon>
     </div>
     <div>
@@ -193,11 +194,14 @@ function onClose() {
     <div>
       <div class="py-4 record">{{ $t('账单记录') }}</div>
       <div class="flex h-80">
-        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
+        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false"
+          :show-table-header="false" :context-menu="false" :paginator="false">
           <template #status="{ data }">
-            <div class="flex items-center gap-2.5 status" :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
+            <div class="flex items-center gap-2.5 status"
+              :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
               <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
+              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined
+                severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
                 @click="onRepay(data)"></RxButton>
             </div>
           </template>

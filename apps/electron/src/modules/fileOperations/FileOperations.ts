@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { app, utilityProcess, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
+import { appCliStartArgs, isDev } from '/@/utils'
 
 let inspectPort = 9230
 let workerNo = 1
@@ -22,7 +23,7 @@ export class FileOperations {
   private createWorker(): UtilityProcess {
     // 加 inspect 9230
     const worker = utilityProcess.fork(path.join(__dirname, './fileWorker.cjs'), [], {
-      execArgv: [`--inspect=${inspectPort++}`],
+      execArgv: appCliStartArgs['roxy-log-level'] === 'debug' || isDev ? [`--inspect=${inspectPort++}`] : [],
       serviceName: `roxyFileWorker${workerNo++}`,
     })
     console.log('worker created', worker.pid)

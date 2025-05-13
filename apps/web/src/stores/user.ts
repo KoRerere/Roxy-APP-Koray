@@ -8,10 +8,9 @@ import { useSimpleLocale } from "/@/stores/locale";
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
-import router from "/@/router";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
-import { encryptAESGCM, isWindows } from "/@/utils";
+import { encryptAESGCM, isWindows, type OauthLoginType } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -19,11 +18,14 @@ type UserConfig = Partial<UserGetUserConfigListData["data"]>;
 export const useUserStore = defineStore(
   "user",
   () => {
+    const router = useRouter()
     const toast = useToast()
     const locale = useSimpleLocale();
     const workspaceStore = useWorkspaceStore();
     const roleStore = useRoleStore();
 
+    // 登录方式
+    const loginWay = ref<'password' | OauthLoginType>('password');
     /** 用户信息 */
     const userInfo = ref<UserInfo>({});
     /** 用户付费详情 */
@@ -95,10 +97,18 @@ export const useUserStore = defineStore(
       }
     }
 
+    /** 检查是否显示账号设置弹窗 */
+    function checkShowAccountSetupDialog() {
+      if (userInfo.value.isBindEmail === false) {
+        emitter.emit('showAccountSetupDialog')
+      }
+    }
+
     async function fetchUserInfo() {
       const result = await API.base.userGetUserInfoList();
       if (result.code === 0) {
         userInfo.value = result.data;
+        checkShowAccountSetupDialog()
       }
       return result;
     }
@@ -110,6 +120,7 @@ export const useUserStore = defineStore(
         window.electronAPI.send("user:setUserInfo", {
           token: token.value,
           userId: userInfo.value.id!,
+          workspaceId: userInfo.value.workspaceId!,
         });
       });
 
@@ -131,10 +142,14 @@ export const useUserStore = defineStore(
     }
 
     function clearUserInfo() {
-      userInfo.value = {
-        email: userInfo.value.email,
+      if (loginWay.value === 'password') {
+        userInfo.value = {
+          email: userInfo.value.email,
+        }
+      } else {
+        userInfo.value = {}
+        password.value = ''
       }
-      // password.value = ''
       token.value = ''
       electronAPI.send('user:logout')
       mixpanel.reset()
@@ -146,6 +161,10 @@ export const useUserStore = defineStore(
         return userConfig.value;
       }
       return updateUserConfig();
+    }
+
+    function setLoginWay(way: 'password' | OauthLoginType) {
+      loginWay.value = way
     }
 
     async function updateUserConfig() {
@@ -205,6 +224,7 @@ export const useUserStore = defineStore(
     const initUserInfo = async () => {
       if (token.value) {
         getUserInfo();
+        getUserConfig(true);
       }
     };
 
@@ -222,8 +242,10 @@ export const useUserStore = defineStore(
 
     return {
       token,
+      loginWay,
       rememberMe,
       userInfo,
+      userConfig,
       userPayInfo,
       password,
       appVersion,
@@ -239,12 +261,13 @@ export const useUserStore = defineStore(
       fetchUserInfo,
       getUserPayInfo,
       initUserInfo,
-      clearRememberMe
+      clearRememberMe,
+      setLoginWay
     };
   },
   {
     persist: {
-      pick: ['token', 'rememberMe', 'password', 'userInfo.email'],
+      pick: ['token', 'rememberMe', 'password', 'userInfo.email', 'loginWay'],
     },
   },
 );

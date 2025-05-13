@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -32,6 +33,8 @@ import {
   UserGetSystemPluginListData,
   UserGetSystemPluginListParams,
   UserRecordPluginUploadV2ListData,
+  UserReportSystemPluginErrorCreateData,
+  UserReportSystemPluginErrorCreatePayload,
   UserUpgradePluginsCreateData,
   UserUpgradePluginsCreatePayload,
   UserUploadChromePluginsV2CreateData,
@@ -57,7 +60,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_upload_plugin_info
    * @response `200` `UserUploadPluginInfoCreateData`
    */
-  userUploadPluginInfoCreate = (data: UserUploadPluginInfoCreatePayload, params: RequestParams = {}) =>
+  userUploadPluginInfoCreate = (
+    data: UserUploadPluginInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUploadPluginInfoCreateData, any>({
       path: `/user_upload_plugin_info`,
       method: "POST",
@@ -91,7 +97,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request GET:/user_get_system_plugin
    * @response `200` `UserGetSystemPluginListData`
    */
-  userGetSystemPluginList = (query: UserGetSystemPluginListParams, params: RequestParams = {}) =>
+  userGetSystemPluginList = (
+    query: UserGetSystemPluginListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetSystemPluginListData, any>({
       path: `/user_get_system_plugin`,
       method: "GET",
@@ -108,7 +117,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_add_system_plugin
    * @response `200` `UserAddSystemPluginCreateData`
    */
-  userAddSystemPluginCreate = (data: UserAddSystemPluginCreatePayload, params: RequestParams = {}) =>
+  userAddSystemPluginCreate = (
+    data: UserAddSystemPluginCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddSystemPluginCreateData, any>({
       path: `/user_add_system_plugin`,
       method: "POST",
@@ -126,7 +138,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request GET:/user_get_plugin_list
    * @response `200` `UserGetPluginListListData`
    */
-  userGetPluginListList = (query: UserGetPluginListListParams, params: RequestParams = {}) =>
+  userGetPluginListList = (
+    query: UserGetPluginListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPluginListListData, any>({
       path: `/user_get_plugin_list`,
       method: "GET",
@@ -143,7 +158,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_del_plugin_info
    * @response `200` `UserDelPluginInfoCreateData`
    */
-  userDelPluginInfoCreate = (data: UserDelPluginInfoCreatePayload, params: RequestParams = {}) =>
+  userDelPluginInfoCreate = (
+    data: UserDelPluginInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelPluginInfoCreateData, any>({
       path: `/user_del_plugin_info`,
       method: "POST",
@@ -161,7 +179,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request GET:/user_check_all_plugins_version
    * @response `200` `UserCheckAllPluginsVersionListData`
    */
-  userCheckAllPluginsVersionList = (query: UserCheckAllPluginsVersionListParams, params: RequestParams = {}) =>
+  userCheckAllPluginsVersionList = (
+    query: UserCheckAllPluginsVersionListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserCheckAllPluginsVersionListData, any>({
       path: `/user_check_all_plugins_version`,
       method: "GET",
@@ -178,7 +199,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_upgrade_plugins
    * @response `200` `UserUpgradePluginsCreateData`
    */
-  userUpgradePluginsCreate = (data: UserUpgradePluginsCreatePayload, params: RequestParams = {}) =>
+  userUpgradePluginsCreate = (
+    data: UserUpgradePluginsCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpgradePluginsCreateData, any>({
       path: `/user_upgrade_plugins`,
       method: "POST",
@@ -196,7 +220,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_upload_chrome_plugins_v2
    * @response `200` `UserUploadChromePluginsV2CreateData`
    */
-  userUploadChromePluginsV2Create = (data: UserUploadChromePluginsV2CreatePayload, params: RequestParams = {}) =>
+  userUploadChromePluginsV2Create = (
+    data: UserUploadChromePluginsV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUploadChromePluginsV2CreateData, any>({
       path: `/user_upload_chrome_plugins_v2`,
       method: "POST",
@@ -214,7 +241,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_batch_del_plugin_info
    * @response `200` `UserBatchDelPluginInfoCreateData`
    */
-  userBatchDelPluginInfoCreate = (data: UserBatchDelPluginInfoCreatePayload, params: RequestParams = {}) =>
+  userBatchDelPluginInfoCreate = (
+    data: UserBatchDelPluginInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserBatchDelPluginInfoCreateData, any>({
       path: `/user_batch_del_plugin_info`,
       method: "POST",
@@ -232,7 +262,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request GET:/user_get_plugin_window
    * @response `200` `UserGetPluginWindowListData`
    */
-  userGetPluginWindowList = (query: UserGetPluginWindowListParams, params: RequestParams = {}) =>
+  userGetPluginWindowList = (
+    query: UserGetPluginWindowListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPluginWindowListData, any>({
       path: `/user_get_plugin_window`,
       method: "GET",
@@ -249,7 +282,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_add_plugin_to_window
    * @response `200` `UserAddPluginToWindowCreateData`
    */
-  userAddPluginToWindowCreate = (data: UserAddPluginToWindowCreatePayload, params: RequestParams = {}) =>
+  userAddPluginToWindowCreate = (
+    data: UserAddPluginToWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddPluginToWindowCreateData, any>({
       path: `/user_add_plugin_to_window`,
       method: "POST",
@@ -283,7 +319,10 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request GET:/user_get_plugin_info_by_id
    * @response `200` `UserGetPluginInfoByIdListData`
    */
-  userGetPluginInfoByIdList = (query: UserGetPluginInfoByIdListParams, params: RequestParams = {}) =>
+  userGetPluginInfoByIdList = (
+    query: UserGetPluginInfoByIdListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPluginInfoByIdListData, any>({
       path: `/user_get_plugin_info_by_id`,
       method: "GET",
@@ -300,9 +339,33 @@ export class PluginsApi<SecurityDataType = unknown> {
    * @request POST:/user_fixed_plugin_to_window
    * @response `200` `UserFixedPluginToWindowCreateData`
    */
-  userFixedPluginToWindowCreate = (data: UserFixedPluginToWindowCreatePayload, params: RequestParams = {}) =>
+  userFixedPluginToWindowCreate = (
+    data: UserFixedPluginToWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserFixedPluginToWindowCreateData, any>({
       path: `/user_fixed_plugin_to_window`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Plugins
+   * @name UserReportSystemPluginErrorCreate
+   * @summary 异常系统插件上报接口
+   * @request POST:/user_report_system_plugin_error
+   * @response `200` `UserReportSystemPluginErrorCreateData`
+   */
+  userReportSystemPluginErrorCreate = (
+    data: UserReportSystemPluginErrorCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserReportSystemPluginErrorCreateData, any>({
+      path: `/user_report_system_plugin_error`,
       method: "POST",
       body: data,
       type: ContentType.Json,

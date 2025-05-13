@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -33,7 +34,10 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @request GET:/user_get_operate_log
    * @response `200` `UserGetOperateLogListData`
    */
-  userGetOperateLogList = (query: UserGetOperateLogListParams, params: RequestParams = {}) =>
+  userGetOperateLogList = (
+    query: UserGetOperateLogListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetOperateLogListData, any>({
       path: `/user_get_operate_log`,
       method: "GET",
@@ -50,7 +54,10 @@ export class LoggingApi<SecurityDataType = unknown> {
    * @request GET:/user_get_login_log
    * @response `200` `UserGetLoginLogListData`
    */
-  userGetLoginLogList = (query: UserGetLoginLogListParams, params: RequestParams = {}) =>
+  userGetLoginLogList = (
+    query: UserGetLoginLogListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetLoginLogListData, any>({
       path: `/user_get_login_log`,
       method: "GET",

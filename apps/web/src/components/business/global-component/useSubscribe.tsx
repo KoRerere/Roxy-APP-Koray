@@ -2,7 +2,7 @@ import { useDialog } from "primevue/usedialog"
 import { useUserStore } from "/@/stores/user"
 import { usePay } from "/@/views/pay/wallet/hook.tsx"
 import { useResponseToast } from "/@/hooks/useResponseToast";
-import { OrderType, PayWay, purchaseType } from "/@/enums/pay";
+import { OrderType, PayWay, PurchaseType } from "/@/enums/pay";
 import { API } from "/@/api";
 import { emitter, type MittEvents } from "/@/utils/eventBus";
 import { useDialog as useDialogHook } from '/@/hooks/useDialog'
@@ -11,12 +11,18 @@ import { useToast } from 'primevue/usetoast'
 import { $t } from "/@/locales";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { isMainWindow } from "/@/utils";
-
+import { useFormDialog } from "/@/hooks/useFormDialog";
+import { getAccountSetupFormSchemas } from "/@/components/business/global-component/schemas";
+import { RxAlert } from "/@/components/rx-alert";
+import RxButton from "/@/components/rx-button";
+import { RouterLink } from "vue-router";
+import styles from './schemas.module.css'
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
 const OldUserGiftDialog = defineAsyncComponent(() => import('./old-user-gift-dialog.vue'))
+const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
 
 let isSubscribe = false
 let lastFocusTime = Date.now()
@@ -29,21 +35,25 @@ export function useSubscribe() {
 
   isSubscribe = true
 
+  const router = useRouter()
+  const [showFormDialog] = useFormDialog();
   const { purchaseSuccess, planSuccess, openProcessing } = usePay()
   const dialog = useDialog()
-  const [dialogInstance] = useDialogHook()
+  const [showModal] = useDialogHook()
   const toast = useToast()
-  const [_, onlyErrorToast] = useResponseToast()
+  const [showResToast, onlyErrorToast] = useResponseToast()
   const { handleBusinessCode } = useHandleBusinessCode()
-  const { getUserPayInfo } = useUserStore()
+  const userStore = useUserStore()
+  const { getUserPayInfo, clearUserInfo } = userStore
 
   // 显示toast
   emitter.on('showToast', showToast)
-
+  // showSubscriptionExpiredDialog
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
-  // showBusinessPopup({})
+  // // showBusinessPopup({})
   // showOldUserGiftDialog()
+
 
   /** 初始化事件监听 */
   function initListener() {
@@ -58,6 +68,8 @@ export function useSubscribe() {
     emitter.on('showExpandDialog', onExpand)
     // 显示老用户福利弹窗
     emitter.on('showOldUserGiftDialog', showOldUserGiftDialog)
+    // 显示账号设置弹窗
+    emitter.on('showAccountSetupDialog', showAccountSetupDialog)
 
     // 达到窗口打开次数限制
     electronAPI.on('browser:window-open-limit', (result) => {
@@ -79,25 +91,34 @@ export function useSubscribe() {
     electronAPI.send('web:ready')
     console.log('web:ready')
     initListener()
+    // 检查是否显示新功能提示
+    electronAPI.send('app:getNewFeatureTips').then((result) => {
+      console.log('app:getNewFeatureTips', result)
+      const newFeatureTips = result?.filter(item => item.content?.length)
+      if (newFeatureTips?.length) {
+        showAppUpgradeDialog(newFeatureTips)
+      }
+    })
   })
 
 
   /** 显示老用户福利弹窗 */
   function showOldUserGiftDialog() {
-    dialogInstance.showModal({
+    showModal({
+      header: 'showOldUserGiftDialog',
       slots: {
-        container: () => <OldUserGiftDialog hideFn={dialogInstance.hideModal} />,
+        container: ({ hideModal }) => <OldUserGiftDialog hideFn={hideModal} />,
       }
     })
   }
   /** 显示升级套餐弹窗 */
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
 
-    dialogInstance.showModal({
-      innerDialog: true,
+    showModal({
+      header: 'showUpgradePlanDialog',
       slots: {
-        container: () => {
-          return <UpgradePayPlan hideFn={dialogInstance.hideModal} alertType={alertType} />
+        container: ({ hideModal }) => {
+          return <UpgradePayPlan hideFn={hideModal} alertType={alertType} />
         },
       }
     })
@@ -105,7 +126,7 @@ export function useSubscribe() {
 
   /** 显示订阅到期弹窗 */
   function showSubscriptionExpiredDialog() {
-    dialogInstance.showModal({
+    showModal({
       header: $t('订阅已到期'),
       closable: false,
       pt: {
@@ -113,8 +134,26 @@ export function useSubscribe() {
         title: '!text-[20px]'
       },
       slots: {
-        default: () => {
-          return <SubscriptionExpired hideFn={dialogInstance.hideModal} />
+        default: ({ hideModal }) => {
+          return <SubscriptionExpired hideFn={hideModal} />
+        },
+        footer: undefined
+      }
+    })
+  }
+
+  /** 显示 APP 新特性升级弹窗 */
+  function showAppUpgradeDialog(newFeatureTips: string[]) {
+    showModal({
+      header: $t('v{appVersion} 更新概览', { appVersion: userStore.appVersion }),
+      class: 'w-[500px] max-h-[90vh]',
+      draggable: false,
+      handleCancel: () => {
+        electronAPI.send('app:hideNewFeatureTips')
+      },
+      slots: {
+        default: ({ hideModal }) => {
+          return <AppUpgradeTips onSkip={hideModal} newFeatureTips={newFeatureTips} />
         },
         footer: undefined
       }
@@ -169,11 +208,14 @@ export function useSubscribe() {
         }
       },
       data: {
+        props: {
+          defaultType: options?.defaultType
+        },
         onConfirm: async ({ payType, ...purchaseMember }: { payType: PayWay, staff: number, workspace: number }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             payType,
             purchaseMember,
-            purchaseType: purchaseType.Workspace_Staff,
+            purchaseType: PurchaseType.Workspace_Staff,
             orderType: OrderType.Purchase,
           })
           onlyErrorToast(code, msg)
@@ -194,6 +236,54 @@ export function useSubscribe() {
       }
     })
   }
-}
 
+  /** 显示账号设置弹窗 */
+  async function showAccountSetupDialog() {
+
+    function toLogin() {
+      router.push({ name: 'login' })
+      formInstance.handleCancel()
+      clearUserInfo()
+    }
+
+    const formInstance = await showFormDialog({
+      header: $t("账号设置"),
+      class: "w-[400px]",
+      closable: false,
+      schemas: getAccountSetupFormSchemas(),
+      formProps: {
+        layout: "vertical",
+      },
+      dialogSlots: {
+        beforeForm: () => (
+          <RxAlert
+            visible={true}
+            type="info"
+            title={$t("为了提高账户安全性，请添加邮箱地址并设置密码。")}
+            closable={false}
+            class="w-full"
+          />
+        ),
+        footer: () => <div class="w-full">
+          <RxButton class="w-full" onClick={() => formInstance.handleOk()}>{$t("确定")}</RxButton>
+          <div class={[styles.text, 'mt-[16px]']}>
+            {$t('已有账号？')}
+            <a onClick={toLogin} class={styles.link}> {$t('点击返回登录页面。')}</a>
+          </div>
+        </div>
+      },
+      handleOk: async (params: any) => {
+        const res = await API.base.userSettingAccountPasswordCreate({ ...params });
+        showResToast(res.code, res.msg);
+        if (res.code === 0 && params.password) {
+          userStore.setPassword(params.password);
+          showResToast(0, $t("邮箱和密码设置成功"));
+          userStore.fetchUserInfo();
+        } else {
+          return Promise.reject(res.msg);
+        }
+      },
+    });
+  }
+}
 

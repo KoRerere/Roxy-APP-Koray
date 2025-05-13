@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -46,7 +47,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request GET:/user_get_platform_info_v2
    * @response `200` `UserGetPlatformInfoV2ListData`
    */
-  userGetPlatformInfoV2List = (query: UserGetPlatformInfoV2ListParams, params: RequestParams = {}) =>
+  userGetPlatformInfoV2List = (
+    query: UserGetPlatformInfoV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPlatformInfoV2ListData, any>({
       path: `/user_get_platform_info_v2`,
       method: "GET",
@@ -79,7 +83,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request GET:/user_get_platform_info
    * @response `200` `UserGetPlatformInfoListData`
    */
-  userGetPlatformInfoList = (query: UserGetPlatformInfoListParams, params: RequestParams = {}) =>
+  userGetPlatformInfoList = (
+    query: UserGetPlatformInfoListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPlatformInfoListData, any>({
       path: `/user_get_platform_info`,
       method: "GET",
@@ -96,7 +103,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request POST:/user_add_platform_info
    * @response `200` `UserAddPlatformInfoCreateData`
    */
-  userAddPlatformInfoCreate = (data: UserAddPlatformInfoCreatePayload, params: RequestParams = {}) =>
+  userAddPlatformInfoCreate = (
+    data: UserAddPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddPlatformInfoCreateData, any>({
       path: `/user_add_platform_info`,
       method: "POST",
@@ -114,7 +124,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request POST:/user_del_platform_info
    * @response `200` `UserDelPlatformInfoCreateData`
    */
-  userDelPlatformInfoCreate = (data: UserDelPlatformInfoCreatePayload, params: RequestParams = {}) =>
+  userDelPlatformInfoCreate = (
+    data: UserDelPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelPlatformInfoCreateData, any>({
       path: `/user_del_platform_info`,
       method: "POST",
@@ -132,7 +145,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_platform_info
    * @response `200` `UserMdfPlatformInfoCreateData`
    */
-  userMdfPlatformInfoCreate = (data: UserMdfPlatformInfoCreatePayload, params: RequestParams = {}) =>
+  userMdfPlatformInfoCreate = (
+    data: UserMdfPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfPlatformInfoCreateData, any>({
       path: `/user_mdf_platform_info`,
       method: "POST",
@@ -150,7 +166,10 @@ export class PlatformApi<SecurityDataType = unknown> {
    * @request POST:/user_update_platform_table_rows
    * @response `200` `UserUpdatePlatformTableRowsCreateData`
    */
-  userUpdatePlatformTableRowsCreate = (data: UserUpdatePlatformTableRowsCreatePayload, params: RequestParams = {}) =>
+  userUpdatePlatformTableRowsCreate = (
+    data: UserUpdatePlatformTableRowsCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpdatePlatformTableRowsCreateData, any>({
       path: `/user_update_platform_table_rows`,
       method: "POST",

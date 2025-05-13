@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -22,10 +23,14 @@ import {
   GetCoreUpgradeCreatePayload,
   LoginCreateData,
   LoginCreatePayload,
+  LoginFacebookCreateData,
+  LoginFacebookCreatePayload,
   LoginGithubCreateData,
   LoginGithubCreatePayload,
   LoginGoogleV2CreateData,
   LoginGoogleV2CreatePayload,
+  LoginVkCreateData,
+  LoginVkCreatePayload,
   PostBaseData,
   PostBasePayload,
   SaveChannelSourcesPeopleListData,
@@ -36,6 +41,11 @@ import {
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
   SendEmailRegisterVerifyCodeListParams,
+  UserBindEmailCreateData,
+  UserBindEmailCreatePayload,
+  UserBindEmailListListData,
+  UserBindEmailVerifyCodeListData,
+  UserBindEmailVerifyCodeListParams,
   UserChangeAccountCreateData,
   UserChangeAccountCreatePayload,
   UserChangeEmailCreateData,
@@ -77,8 +87,12 @@ import {
   UserMigrateDataListData,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
+  UserSendAccountPasswordVerifyCodeListData,
+  UserSendAccountPasswordVerifyCodeListParams,
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
+  UserSettingAccountPasswordCreateData,
+  UserSettingAccountPasswordCreatePayload,
   UserSettingPasswordCreateData,
   UserSettingPasswordCreatePayload,
   UserSettingPasswordVerifyCodeListData,
@@ -87,6 +101,8 @@ import {
   UserSetUserApiCreatePayload,
   UserSetUserConfigCreateData,
   UserSetUserConfigCreatePayload,
+  UserUnbindEmailCreateData,
+  UserUnbindEmailCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
   UserVerifyEmailCreateData,
@@ -94,6 +110,7 @@ import {
   UserWithdrawCreateData,
   UserWithdrawCreatePayload,
   UserWithdrawVerifyCodeListData,
+  UserWithdrawVerifyCodeListParams,
   UserWriteInviteCodeCreateData,
   UserWriteInviteCodeCreatePayload,
 } from "./data-contracts";
@@ -151,7 +168,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/send_email_forget_verify_code
    * @response `200` `SendEmailForgetVerifyCodeListData`
    */
-  sendEmailForgetVerifyCodeList = (query: SendEmailForgetVerifyCodeListParams, params: RequestParams = {}) =>
+  sendEmailForgetVerifyCodeList = (
+    query: SendEmailForgetVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<SendEmailForgetVerifyCodeListData, any>({
       path: `/send_email_forget_verify_code`,
       method: "GET",
@@ -168,7 +188,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/forget_password
    * @response `200` `ForgetPasswordCreateData`
    */
-  forgetPasswordCreate = (data: ForgetPasswordCreatePayload, params: RequestParams = {}) =>
+  forgetPasswordCreate = (
+    data: ForgetPasswordCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<ForgetPasswordCreateData, any>({
       path: `/forget_password`,
       method: "POST",
@@ -186,7 +209,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/send_email_register_verify_code
    * @response `200` `SendEmailRegisterVerifyCodeListData`
    */
-  sendEmailRegisterVerifyCodeList = (query: SendEmailRegisterVerifyCodeListParams, params: RequestParams = {}) =>
+  sendEmailRegisterVerifyCodeList = (
+    query: SendEmailRegisterVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<SendEmailRegisterVerifyCodeListData, any>({
       path: `/send_email_register_verify_code`,
       method: "GET",
@@ -203,7 +229,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_change_account
    * @response `200` `UserChangeAccountCreateData`
    */
-  userChangeAccountCreate = (data: UserChangeAccountCreatePayload, params: RequestParams = {}) =>
+  userChangeAccountCreate = (
+    data: UserChangeAccountCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserChangeAccountCreateData, any>({
       path: `/user_change_account`,
       method: "POST",
@@ -221,7 +250,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_change_pwd
    * @response `200` `UserChangePwdCreateData`
    */
-  userChangePwdCreate = (data: UserChangePwdCreatePayload, params: RequestParams = {}) =>
+  userChangePwdCreate = (
+    data: UserChangePwdCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserChangePwdCreateData, any>({
       path: `/user_change_pwd`,
       method: "POST",
@@ -239,7 +271,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_send_email_verify_code
    * @response `200` `UserSendEmailVerifyCodeListData`
    */
-  userSendEmailVerifyCodeList = (query: UserSendEmailVerifyCodeListParams, params: RequestParams = {}) =>
+  userSendEmailVerifyCodeList = (
+    query: UserSendEmailVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSendEmailVerifyCodeListData, any>({
       path: `/user_send_email_verify_code`,
       method: "GET",
@@ -256,7 +291,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_change_email
    * @response `200` `UserChangeEmailCreateData`
    */
-  userChangeEmailCreate = (data: UserChangeEmailCreatePayload, params: RequestParams = {}) =>
+  userChangeEmailCreate = (
+    data: UserChangeEmailCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserChangeEmailCreateData, any>({
       path: `/user_change_email`,
       method: "POST",
@@ -290,7 +328,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_get_app_upgrade
    * @response `200` `UserGetAppUpgradeCreateData`
    */
-  userGetAppUpgradeCreate = (data: UserGetAppUpgradeCreatePayload, params: RequestParams = {}) =>
+  userGetAppUpgradeCreate = (
+    data: UserGetAppUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetAppUpgradeCreateData, any>({
       path: `/user_get_app_upgrade`,
       method: "POST",
@@ -308,7 +349,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_get_core_upgrade
    * @response `200` `UserGetCoreUpgradeCreateData`
    */
-  userGetCoreUpgradeCreate = (data: UserGetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
+  userGetCoreUpgradeCreate = (
+    data: UserGetCoreUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetCoreUpgradeCreateData, any>({
       path: `/user_get_core_upgrade`,
       method: "POST",
@@ -358,7 +402,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_set_user_config
    * @response `200` `UserSetUserConfigCreateData`
    */
-  userSetUserConfigCreate = (data: UserSetUserConfigCreatePayload, params: RequestParams = {}) =>
+  userSetUserConfigCreate = (
+    data: UserSetUserConfigCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSetUserConfigCreateData, any>({
       path: `/user_set_user_config`,
       method: "POST",
@@ -392,7 +439,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_set_user_api
    * @response `200` `UserSetUserApiCreateData`
    */
-  userSetUserApiCreate = (data: UserSetUserApiCreatePayload, params: RequestParams = {}) =>
+  userSetUserApiCreate = (
+    data: UserSetUserApiCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSetUserApiCreateData, any>({
       path: `/user_set_user_api`,
       method: "POST",
@@ -426,7 +476,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_get_system_dict_v2
    * @response `200` `UserGetSystemDictV2CreateData`
    */
-  userGetSystemDictV2Create = (data: UserGetSystemDictV2CreatePayload, params: RequestParams = {}) =>
+  userGetSystemDictV2Create = (
+    data: UserGetSystemDictV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetSystemDictV2CreateData, any>({
       path: `/user_get_system_dict_v2`,
       method: "POST",
@@ -476,7 +529,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_read_notify
    * @response `200` `UserReadNotifyCreateData`
    */
-  userReadNotifyCreate = (data: UserReadNotifyCreatePayload, params: RequestParams = {}) =>
+  userReadNotifyCreate = (
+    data: UserReadNotifyCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserReadNotifyCreateData, any>({
       path: `/user_read_notify`,
       method: "POST",
@@ -494,7 +550,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/login_google_v2
    * @response `200` `LoginGoogleV2CreateData`
    */
-  loginGoogleV2Create = (data: LoginGoogleV2CreatePayload, params: RequestParams = {}) =>
+  loginGoogleV2Create = (
+    data: LoginGoogleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<LoginGoogleV2CreateData, any>({
       path: `/login_google_v2`,
       method: "POST",
@@ -528,7 +587,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_upload_avatar
    * @response `200` `UserUploadAvatarCreateData`
    */
-  userUploadAvatarCreate = (data: UserUploadAvatarCreatePayload, params: RequestParams = {}) =>
+  userUploadAvatarCreate = (
+    data: UserUploadAvatarCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUploadAvatarCreateData, any>({
       path: `/user_upload_avatar`,
       method: "POST",
@@ -546,7 +608,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_change_username
    * @response `200` `UserChangeUsernameCreateData`
    */
-  userChangeUsernameCreate = (data: UserChangeUsernameCreatePayload, params: RequestParams = {}) =>
+  userChangeUsernameCreate = (
+    data: UserChangeUsernameCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserChangeUsernameCreateData, any>({
       path: `/user_change_username`,
       method: "POST",
@@ -564,7 +629,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/get_check_bind_email_ver_code
    * @response `200` `GetCheckBindEmailVerCodeListData`
    */
-  getCheckBindEmailVerCodeList = (query: GetCheckBindEmailVerCodeListParams, params: RequestParams = {}) =>
+  getCheckBindEmailVerCodeList = (
+    query: GetCheckBindEmailVerCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<GetCheckBindEmailVerCodeListData, any>({
       path: `/get_check_bind_email_ver_code`,
       method: "GET",
@@ -597,7 +665,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/get_app_upgrade
    * @response `200` `GetAppUpgradeCreateData`
    */
-  getAppUpgradeCreate = (data: GetAppUpgradeCreatePayload, params: RequestParams = {}) =>
+  getAppUpgradeCreate = (
+    data: GetAppUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<GetAppUpgradeCreateData, any>({
       path: `/get_app_upgrade`,
       method: "POST",
@@ -615,7 +686,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/save_channel_sources_people
    * @response `200` `SaveChannelSourcesPeopleListData`
    */
-  saveChannelSourcesPeopleList = (query: SaveChannelSourcesPeopleListParams, params: RequestParams = {}) =>
+  saveChannelSourcesPeopleList = (
+    query: SaveChannelSourcesPeopleListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<SaveChannelSourcesPeopleListData, any>({
       path: `/save_channel_sources_people`,
       method: "GET",
@@ -632,7 +706,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_invite_user_list_v2
    * @response `200` `UserGetInviteUserListV2ListData`
    */
-  userGetInviteUserListV2List = (query: UserGetInviteUserListV2ListParams, params: RequestParams = {}) =>
+  userGetInviteUserListV2List = (
+    query: UserGetInviteUserListV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetInviteUserListV2ListData, any>({
       path: `/user_get_invite_user_list_v2`,
       method: "GET",
@@ -681,7 +758,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_write_invite_code
    * @response `200` `UserWriteInviteCodeCreateData`
    */
-  userWriteInviteCodeCreate = (data: UserWriteInviteCodeCreatePayload, params: RequestParams = {}) =>
+  userWriteInviteCodeCreate = (
+    data: UserWriteInviteCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserWriteInviteCodeCreateData, any>({
       path: `/user_write_invite_code`,
       method: "POST",
@@ -699,7 +779,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_banner_picture_list
    * @response `200` `UserGetBannerPictureListListData`
    */
-  userGetBannerPictureListList = (query: UserGetBannerPictureListListParams, params: RequestParams = {}) =>
+  userGetBannerPictureListList = (
+    query: UserGetBannerPictureListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetBannerPictureListListData, any>({
       path: `/user_get_banner_picture_list`,
       method: "GET",
@@ -716,7 +799,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/get_core_upgrade
    * @response `200` `GetCoreUpgradeCreateData`
    */
-  getCoreUpgradeCreate = (data: GetCoreUpgradeCreatePayload, params: RequestParams = {}) =>
+  getCoreUpgradeCreate = (
+    data: GetCoreUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<GetCoreUpgradeCreateData, any>({
       path: `/get_core_upgrade`,
       method: "POST",
@@ -734,7 +820,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_setting_password
    * @response `200` `UserSettingPasswordCreateData`
    */
-  userSettingPasswordCreate = (data: UserSettingPasswordCreatePayload, params: RequestParams = {}) =>
+  userSettingPasswordCreate = (
+    data: UserSettingPasswordCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSettingPasswordCreateData, any>({
       path: `/user_setting_password`,
       method: "POST",
@@ -752,7 +841,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_setting_password_verify_code
    * @response `200` `UserSettingPasswordVerifyCodeListData`
    */
-  userSettingPasswordVerifyCodeList = (query: UserSettingPasswordVerifyCodeListParams, params: RequestParams = {}) =>
+  userSettingPasswordVerifyCodeList = (
+    query: UserSettingPasswordVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSettingPasswordVerifyCodeListData, any>({
       path: `/user_setting_password_verify_code`,
       method: "GET",
@@ -769,7 +861,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/login_github
    * @response `200` `LoginGithubCreateData`
    */
-  loginGithubCreate = (data: LoginGithubCreatePayload, params: RequestParams = {}) =>
+  loginGithubCreate = (
+    data: LoginGithubCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<LoginGithubCreateData, any>({
       path: `/login_github`,
       method: "POST",
@@ -803,7 +898,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/check_other_device_login
    * @response `200` `CheckOtherDeviceLoginListData`
    */
-  checkOtherDeviceLoginList = (query: CheckOtherDeviceLoginListParams, params: RequestParams = {}) =>
+  checkOtherDeviceLoginList = (
+    query: CheckOtherDeviceLoginListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<CheckOtherDeviceLoginListData, any>({
       path: `/check_other_device_login`,
       method: "GET",
@@ -836,7 +934,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_reward_record_list
    * @response `200` `UserGetRewardRecordListListData`
    */
-  userGetRewardRecordListList = (query: UserGetRewardRecordListListParams, params: RequestParams = {}) =>
+  userGetRewardRecordListList = (
+    query: UserGetRewardRecordListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetRewardRecordListListData, any>({
       path: `/user_get_reward_record_list`,
       method: "GET",
@@ -853,7 +954,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_withdraw_record_list
    * @response `200` `UserGetWithdrawRecordListListData`
    */
-  userGetWithdrawRecordListList = (query: UserGetWithdrawRecordListListParams, params: RequestParams = {}) =>
+  userGetWithdrawRecordListList = (
+    query: UserGetWithdrawRecordListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetWithdrawRecordListListData, any>({
       path: `/user_get_withdraw_record_list`,
       method: "GET",
@@ -870,7 +974,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_withdraw
    * @response `200` `UserWithdrawCreateData`
    */
-  userWithdrawCreate = (data: UserWithdrawCreatePayload, params: RequestParams = {}) =>
+  userWithdrawCreate = (
+    data: UserWithdrawCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserWithdrawCreateData, any>({
       path: `/user_withdraw`,
       method: "POST",
@@ -888,7 +995,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/save_promotion_link_click_count
    * @response `200` `SavePromotionLinkClickCountListData`
    */
-  savePromotionLinkClickCountList = (query: SavePromotionLinkClickCountListParams, params: RequestParams = {}) =>
+  savePromotionLinkClickCountList = (
+    query: SavePromotionLinkClickCountListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<SavePromotionLinkClickCountListData, any>({
       path: `/save_promotion_link_click_count`,
       method: "GET",
@@ -905,10 +1015,14 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_withdraw_verify_code
    * @response `200` `UserWithdrawVerifyCodeListData`
    */
-  userWithdrawVerifyCodeList = (params: RequestParams = {}) =>
+  userWithdrawVerifyCodeList = (
+    query: UserWithdrawVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserWithdrawVerifyCodeListData, any>({
       path: `/user_withdraw_verify_code`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -921,7 +1035,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request POST:/user_verify_email
    * @response `200` `UserVerifyEmailCreateData`
    */
-  userVerifyEmailCreate = (data: UserVerifyEmailCreatePayload, params: RequestParams = {}) =>
+  userVerifyEmailCreate = (
+    data: UserVerifyEmailCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserVerifyEmailCreateData, any>({
       path: `/user_verify_email`,
       method: "POST",
@@ -939,7 +1056,10 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_check_old_email_ver_code
    * @response `200` `UserGetCheckOldEmailVerCodeListData`
    */
-  userGetCheckOldEmailVerCodeList = (query: UserGetCheckOldEmailVerCodeListParams, params: RequestParams = {}) =>
+  userGetCheckOldEmailVerCodeList = (
+    query: UserGetCheckOldEmailVerCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetCheckOldEmailVerCodeListData, any>({
       path: `/user_get_check_old_email_ver_code`,
       method: "GET",
@@ -956,9 +1076,170 @@ export class BaseApi<SecurityDataType = unknown> {
    * @request GET:/user_get_banner_picture_list_v2
    * @response `200` `UserGetBannerPictureListV2ListData`
    */
-  userGetBannerPictureListV2List = (query: UserGetBannerPictureListV2ListParams, params: RequestParams = {}) =>
+  userGetBannerPictureListV2List = (
+    query: UserGetBannerPictureListV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetBannerPictureListV2ListData, any>({
       path: `/user_get_banner_picture_list_v2`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginFacebookCreate
+   * @summary Facebook登录
+   * @request POST:/login_facebook
+   * @response `200` `LoginFacebookCreateData`
+   */
+  loginFacebookCreate = (
+    data: LoginFacebookCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginFacebookCreateData, any>({
+      path: `/login_facebook`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginVkCreate
+   * @summary VK登录
+   * @request POST:/login_vk
+   * @response `200` `LoginVkCreateData`
+   */
+  loginVkCreate = (data: LoginVkCreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginVkCreateData, any>({
+      path: `/login_vk`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserBindEmailListList
+   * @summary 用户绑定邮箱列表
+   * @request GET:/user_bind_email_list
+   * @response `200` `UserBindEmailListListData`
+   */
+  userBindEmailListList = (params: RequestParams = {}) =>
+    this.http.request<UserBindEmailListListData, any>({
+      path: `/user_bind_email_list`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserBindEmailCreate
+   * @summary 用户校验绑定第三方邮箱
+   * @request POST:/user_bind_email
+   * @response `200` `UserBindEmailCreateData`
+   */
+  userBindEmailCreate = (
+    data: UserBindEmailCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBindEmailCreateData, any>({
+      path: `/user_bind_email`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserUnbindEmailCreate
+   * @summary 用户解绑第三方邮箱
+   * @request POST:/user_unbind_email
+   * @response `200` `UserUnbindEmailCreateData`
+   */
+  userUnbindEmailCreate = (
+    data: UserUnbindEmailCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUnbindEmailCreateData, any>({
+      path: `/user_unbind_email`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserBindEmailVerifyCodeList
+   * @summary 用户绑定邮箱验证码
+   * @request GET:/user_bind_email_verify_code
+   * @response `200` `UserBindEmailVerifyCodeListData`
+   */
+  userBindEmailVerifyCodeList = (
+    query: UserBindEmailVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBindEmailVerifyCodeListData, any>({
+      path: `/user_bind_email_verify_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSettingAccountPasswordCreate
+   * @summary 设置第三方绑定账号密码
+   * @request POST:/user_setting_account_password
+   * @response `200` `UserSettingAccountPasswordCreateData`
+   */
+  userSettingAccountPasswordCreate = (
+    data: UserSettingAccountPasswordCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSettingAccountPasswordCreateData, any>({
+      path: `/user_setting_account_password`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSendAccountPasswordVerifyCodeList
+   * @summary 发送绑定邮箱的验证码
+   * @request GET:/user_send_account_password_verify_code
+   * @response `200` `UserSendAccountPasswordVerifyCodeListData`
+   */
+  userSendAccountPasswordVerifyCodeList = (
+    query: UserSendAccountPasswordVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSendAccountPasswordVerifyCodeListData, any>({
+      path: `/user_send_account_password_verify_code`,
       method: "GET",
       query: query,
       format: "json",

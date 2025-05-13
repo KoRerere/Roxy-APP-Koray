@@ -1,4 +1,4 @@
-import { createVNode, getCurrentInstance, render } from 'vue'
+import { createVNode, getCurrentInstance, render, nextTick } from 'vue'
 import type { VNode } from 'vue'
 
 import Menu from './components/menu.vue';
@@ -13,6 +13,7 @@ export function usePopupMenu() {
   const opRef = ref()
   const innerProps = ref<MenuProps>({})
   let currentVNode: VNode | null = null
+  let domContainer: HTMLElement | null = null
 
   const popupMenuComponent = () => {
     const { slots, ...props } = innerProps.value
@@ -22,18 +23,34 @@ export function usePopupMenu() {
   }
 
   const renderCmp = async () => {
-    destroy()
-    const vnode = createVNode(popupMenuComponent)
-    vnode.appContext = appContext
-    currentVNode = vnode
-    render(vnode, document.body)
-    await nextTick()
+    try {
+      destroy()
+      // 创建容器元素
+      domContainer = document.createElement('div')
+      document.body.appendChild(domContainer)
+
+      const vnode = createVNode(popupMenuComponent)
+      vnode.appContext = appContext
+      currentVNode = vnode
+
+      // 使用容器元素进行渲染
+      render(vnode, domContainer)
+      await nextTick()
+    } catch (error) {
+      console.error('Failed to render popup menu:', error)
+      destroy()
+    }
   }
 
   const showMenu = async (event: MouseEvent, props: MenuProps) => {
     try {
       innerProps.value = props
       await renderCmp()
+
+      if (!opRef.value) {
+        throw new Error('Menu component reference is not available')
+      }
+
       // 异步会导致 event.currentTarget 为 null,等待官方支持指定 target
       // https://github.com/primefaces/primevue/issues/7556
       const _event = new Proxy(event, {
@@ -43,16 +60,22 @@ export function usePopupMenu() {
             : Reflect.get(target, prop)
         }
       })
+
       opRef.value?.toggle(_event)
     } catch (error) {
       console.error('Failed to show popup menu:', error)
+      destroy()
     }
   }
 
   const destroy = () => {
-    if (currentVNode) {
-      render(null, document.body)
+    if (currentVNode && domContainer) {
+      render(null, domContainer)
       currentVNode = null
+    }
+    if (domContainer) {
+      document.body.removeChild(domContainer)
+      domContainer = null
     }
   }
 

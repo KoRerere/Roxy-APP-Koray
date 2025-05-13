@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { store } from '/@/modules/store'
-import { isMac, isPackaged } from '/@/utils'
+import { isDev, isMac, isPackaged } from '/@/utils/'
 
 const sessionDir = app.getPath('sessionData')
 
@@ -50,6 +50,21 @@ export const appConfig = {
   get handleExePath() {
     return isPackaged ? join(appConfig.unpackedFilePath, './dist/bin/handle.exe') : join(__dirname, '../bin', 'handle.exe')
   },
+  /** html-template 目录 */
+  get htmlTemplateDir() {
+    return join(appConfig.currentWebDir, 'html-template')
+  },
+  /** 当前使用的 web 资源目录 */
+  get currentWebDir() {
+    if (!isPackaged) {
+      return join(__dirname, '../../web/public')
+    }
+    return store.isExternalWeb ? appConfig.externalWebDir : appConfig.buildInWebDir
+  },
+  /** web 资源基础 url */
+  get webBaseUrl() {
+    return isPackaged ? `http://127.0.0.1:${store.appPort}` : import.meta.env.VITE_DEV_SERVER_URL?.replace(/\/$/, '')
+  }
 } as const
 
 console.log('appConfig', appConfig)

@@ -8,8 +8,9 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac } from '/@/utils'
+import { isMac, isPackaged } from '/@/utils'
 import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
+import { forceSaveConfig, store } from '/@/modules/store'
 
 export type { UpdateInfo } from 'electron-updater'
 
@@ -39,21 +40,23 @@ export const appUpdater = new class AppUpdater {
     this.checkForUpdatesOptions = options
     const result = await API.base.getAppUpgradeCreate(osConfig)
 
-    console.log(`user_get_app_upgrade result`, result)
+    console.debug(`user_get_app_upgrade result`, result)
 
     if (result.code !== 0 || !result.data) {
       console.log(`更新数据为空 跳出更新`)
       return result
     }
 
-    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime } = result.data
+    const { downloadUrl, version, upgradeContent, upgradeTitle, releaseTime, newFeatureTips = [] } = result.data
     this.#updateMessageData.originUpgradeData = result.data
     this.#updateMessageData.upgradeContent = upgradeContent
-    this.#updateMessageData.title = upgradeTitle
+    this.#updateMessageData.title = upgradeTitle || 'RoxyBrowser'
     this.#updateMessageData.version = version
+    this.#updateMessageData.currentVersion = app.getVersion()
     this.#updateMessageData.releaseTime = releaseTime
+    this.#updateMessageData.newFeatureTips = newFeatureTips
     // downloadUrl = `http://localhost:7788/static`
-    console.log(`AppUpdater downloadUrl`, downloadUrl)
+    console.debug(`AppUpdater downloadUrl`, downloadUrl)
 
     if (!downloadUrl) {
       console.log(`更新地址为空 跳出更新`)
@@ -65,7 +68,7 @@ export const appUpdater = new class AppUpdater {
       url: downloadUrl,
     }
 
-    console.log(`autoUpdater options`, publishOptions)
+    console.debug(`autoUpdater options`, publishOptions)
 
     if (this.#autoUpdater) {
       // 动态更新autoUpdater的配置
@@ -92,10 +95,14 @@ export const appUpdater = new class AppUpdater {
 
     this.#autoUpdater.on(`error`, (error) => {
       this.isInProgress = false
-      const ignoreList = ['.blockmap', 'com.github.Electron', 'disableWebInstaller is set to false']
-      if (ignoreList.every(n => !error.message.includes(n))) {
-        this.sendErrorMessage()
+
+      if (this.#updateMessageData.version && compare(this.#updateMessageData.version, app.getVersion(), '>')) {
+        const ignoreList = ['.blockmap', 'com.github.Electron', 'disableWebInstaller is set to false']
+        if (ignoreList.every(n => !error.message.includes(n))) {
+          this.sendErrorMessage()
+        }
       }
+
       this.downloadPromiser?.reject(error)
       console.error(`autoUpdater 出现错误`, error)
     })
@@ -117,6 +124,8 @@ export const appUpdater = new class AppUpdater {
       this.#updateMessageData.status = 'downloaded'
       this.sendSuccessMessage()
       this.downloadPromiser?.resolve()
+      store.showNewFeatureTips = Boolean(this.#updateMessageData.newFeatureTips?.[store.language]?.length)
+      forceSaveConfig()
     })
 
     this.#autoUpdater.on(`update-not-available`, (updateInfo) => {
@@ -168,7 +177,12 @@ export const appUpdater = new class AppUpdater {
     })
 
     console.log(`checkResult`, checkResult)
-    return checkResult?.updateInfo
+    return this.#updateMessageData
+  }
+
+  /** 获取更新内容 */
+  getUpdateMessageData() {
+    return this.#updateMessageData
   }
 
   /** 是否有更新 */
@@ -183,8 +197,10 @@ export const appUpdater = new class AppUpdater {
   upgradeNow() {
     // autoUpdater.quitAndInstall();
     console.info(`立即退出应用并且更新`)
-    this.isQuittingForUpdate = true
-    this.#autoUpdater.quitAndInstall(true, true)
+    if (isPackaged) {
+      this.isQuittingForUpdate = true
+      this.#autoUpdater.quitAndInstall(true, true)
+    }
   }
 
   private sendSuccessMessage() {

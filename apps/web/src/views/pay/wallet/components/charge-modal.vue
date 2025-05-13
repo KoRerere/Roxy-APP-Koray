@@ -1,9 +1,9 @@
 <script setup lang="tsx">
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
+import currency from 'currency.js'
 import { $t } from '/@/locales'
 import { PayWay } from '/@/enums/pay'
 import { ceilByStep } from '/@/views/pay/subscribe/util'
-import currency from 'currency.js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 import { debounce } from 'es-toolkit'
@@ -14,8 +14,10 @@ const dialogRef = inject<any>('dialogRef')
 const _onConfirm = ref()
 const _onCancel = ref()
 
-const payways = [PayWay.Card, PayWay.Alipay, PayWay.Wechat, PayWay.USDT].map(item => ({ value: item }))
-const selectedPayway = ref(PayWay.Card);
+const payways = [PayWay.Card, PayWay.Alipay, PayWay.Wechat, PayWay.USDT]
+  .map(item => ({ value: item }))
+
+const selectedPayway = ref(PayWay.Card)
 const disabledMethods = ref<PayWay[]>([])
 const step = 10
 const min = 10
@@ -27,6 +29,7 @@ onMounted(() => {
   const { onConfirm, onCancel } = dialogRef.value.data
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
+  querySupportPayway()//部分地区不支持某些支付，初始化时查询一次
 })
 
 async function querySupportPayway() {
@@ -35,11 +38,11 @@ async function querySupportPayway() {
   loading.value = false
   onlyErrorToast(code, msg)
   if (code !== 0) return
-  const payway = Object.values(data).flat()
+  const payway = Object.values(data).flat() as PayWay[]
   disabledMethods.value = Object.values(PayWay).filter(item => !payway.includes(item))
 
   if (!payway.includes(selectedPayway.value)) {
-    selectedPayway.value = payway[0] as PayWay
+    selectedPayway.value = payway[0]
   }
 }
 
@@ -48,8 +51,13 @@ const delayQuery = debounce(querySupportPayway, 300)
 function onUpdate(value: number) {
   nextTick(() => {
     amount.value = Math.min(Math.max(ceilByStep(currency(value).value, step), min), max)
-    querySupportPayway()
+    delayQuery()
   })
+}
+
+function quickSelect(value: number) {
+  amount.value = value
+  delayQuery()
 }
 
 async function confirm() {
@@ -79,7 +87,7 @@ function close(isCancel: boolean) {
       <div class="sub-title">{{ $t('请输入充值金额') }}</div>
       <div class="flex items-center gap-2">
         <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
-        <rx-amount-quick-check @select="amount = $event" />
+        <rx-amount-quick-check @select="quickSelect" />
       </div>
     </div>
     <ItemBlock :title="$t('支付方式')">

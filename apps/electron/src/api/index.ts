@@ -1,7 +1,5 @@
 import { ApiApi, BaseApi, HttpClient, LimitApi, LoggingApi, PlatformApi, PluginsApi, ProxyApi, TeamApi, WindowApi } from '@roxy/backend-api'
-import { app } from 'electron'
-import https from 'node:https'
-import { getGatewayConfig, getOpenAPIUrl } from '/@/api/getGatewayConfig'
+import { getBaseUrl, getGatewayConfig, getOpenAPIUrl } from '/@/api/getGatewayConfig'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { osConfig } from '/@/constants/osConfig'
 import { store } from '/@/modules/store'
@@ -15,24 +13,19 @@ export const httpClient = new HttpClient({
   // baseURL: 'https://lumitest.lumibrowser.com/',
   timeout: 15000,
   // httpsAgent: agent,
-  adapter: 'fetch',
+  // adapter: 'fetch',
 })
 
 let commonRequestHeaders
 
-let baseURL = ''
-
 // 开启请求日志
-if (appCliStartArgs['req-log']) {
+if (appCliStartArgs['roxy-log-level'] === 'debug') {
   attachAxiosLogger(httpClient.instance)
 }
 
 httpClient.instance.interceptors.request.use(async (config) => {
-  if (!baseURL) {
-    baseURL = await getGatewayConfig()
-  }
-  commonRequestHeaders ||= await getCommonRequestHeaders()
-  config.baseURL = baseURL
+  commonRequestHeaders ||= getCommonRequestHeaders()
+  config.baseURL = getBaseUrl() || await getGatewayConfig()
 
   // handleRequest(config)
   config.headers.token = store.token
@@ -47,12 +40,15 @@ httpClient.instance.interceptors.request.use(async (config) => {
     config.baseURL = getOpenAPIUrl()
   }
 
-  if (isDev) {
-    console.log('config.headers', config.url, config.headers)
-  }
-
+  console.debug('config.headers', config.url, config.headers)
   // console.log('config.headers', config.headers)
   return config
+}, (error) => {
+  // 如果是连接被重置（ERR_CONNECTION_RESET）, 则重新获取后端地址
+  if (error?.message?.includes('ERR_CONNECTION_RESET')) {
+    getGatewayConfig()
+  }
+  return Promise.reject(error)
 })
 
 httpClient.instance.interceptors.response.use((response) => {

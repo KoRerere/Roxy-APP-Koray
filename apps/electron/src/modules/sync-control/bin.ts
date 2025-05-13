@@ -136,10 +136,10 @@ export async function startRoxySync(pIds: number[] = []) {
     }
   })
 
-  // 6s 超时
+  // 最低 6 秒超时，超过 6 秒的则根据启动的窗口个数增加超时时间
   setTimeout(() => {
     resolve(false)
-  }, 6000)
+  }, 3000 + pIds.length * 1000)
 
   return promise
 }

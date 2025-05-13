@@ -18,11 +18,12 @@ const subscribeDuration = ref()
 const subscribeOriginalPrice = ref()
 
 const isAuto = ref(false)
-const selectedPayway = ref(PayWay.Card)
+const selectedPayway = ref()
 const disabledPayWays = ref<PayWay[]>([])
 
 const supportPayWays = computed(() => {
-  return Object.values(PayWay).map((item: PayWay) => ({ value: item, discount: item === PayWay.Balance ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
+  return Object.values(PayWay)
+    .map((item: PayWay) => ({ value: item, discount: item === PayWay.Balance ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
 })
 
 const showAutoRebuy = computed(() => subscribeDuration.value?.month === 1 && [PayWay.Card].includes(selectedPayway.value))
@@ -102,8 +103,8 @@ onMounted(() => {
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
 
-  const payWayList = props.supportPayWay.concat(PayWay.Balance)
-  selectedPayway.value = payWayList[0]
+  const payWayList = props.supportPayWay.concat(PayWay.Balance) as PayWay[]
+  selectedPayway.value = payWayList[0] !== PayWay.Card ? PayWay.Balance : payWayList[0]
   disabledPayWays.value = Object.values(PayWay).filter(item => !payWayList.includes(item))
 })
 
@@ -129,8 +130,7 @@ function close(isCancel: boolean) {
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)"></SvgIcon>
     </div>
     <ItemBlock :title="$t('支付方式')">
-      <RxPaymentMethods v-model="selectedPayway" :methods="supportPayWays" :disabledMethods="disabledPayWays">
-      </RxPaymentMethods>
+      <RxPaymentMethods v-model="selectedPayway" :methods="supportPayWays" :disabledMethods="disabledPayWays"></RxPaymentMethods>
     </ItemBlock>
     <ItemBlock v-if="showAutoRebuy" :title="$t('订阅选项')">
       <RenewalTerms v-model="isAuto" :discount-amount="autoRenewAmount"></RenewalTerms>

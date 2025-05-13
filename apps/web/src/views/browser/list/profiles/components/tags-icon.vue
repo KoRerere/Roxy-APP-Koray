@@ -5,8 +5,8 @@ import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
-import type { Operation } from '/@/utils'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import type { Operation } from '/@/utils'
 
 interface Props {
   labels: any[]
@@ -42,20 +42,32 @@ async function openMenu(event: MouseEvent) {
   loading.value = true
   const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
   const value = labels?.map((item: any) => `${item.labelId}`)
+  const options: Operation[] = memberList.concat(tagList)
   loading.value = false
 
   showPopupMenu(event, {
     mode: {
       type: 'multiple',
       value,
-      options: memberList.concat(tagList),
+      options,
       field: 'value',
     },
     menuProps: {
       onHide: ({ value: labelIds }: any) => {
+        const labelInfo = options.reduce((acc, item) => {
+          if (labelIds.includes(item.value)) {
+            const { avatar, avatarColor, userId, userName, color, id, name } = item._origin
+            const data = userId
+              ? { avatar, labelColor: avatarColor, labelId: `u_${userId}`, labelName: userName }
+              : { labelColor: color, labelId: id, labelName: name }
+            acc.push(data)
+          }
+          return acc
+        }, [])
+
         if (!isEq(value, toRaw(labelIds))) {
           // u_ 开头的表示人员 id
-          emit('update', { labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)) })
+          emit('update', { labelInfo, labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)) })
         }
       }
     },
@@ -79,8 +91,11 @@ function isEq(oldIds: any, newIds: any) {
 function onAddTag() {
   const oldIds = labels.map((item: any) => item.labelId)
   addTag({
-    confirmNext: ({ res }: any) => {
-      emit('update', { labelIds: [...oldIds, res.data.id] })
+    confirmNext: ({ params, res }: any) => {
+      emit('update', {
+        labelInfo: [...labels, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
+        labelIds: [...oldIds, res.data.id]
+      })
     },
   })
 }

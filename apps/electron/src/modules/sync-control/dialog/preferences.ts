@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { appConfig, ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { BrowserWindow, } from 'electron'
+import { ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { isPackaged } from '/@/utils'
-import { getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { createWindow } from '/@/utils/browser-window'
 
 export function getPreferencesDialogWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID)
@@ -19,7 +20,8 @@ export async function openPreferencesDialog(payload: OpenPreferencesDialogPayloa
     return
   }
 
-  const win = new BrowserWindow({
+  const win = createWindow({
+    roxyWindowId: ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID,
     width: 500,
     height: 500,
     frame: false,
@@ -28,11 +30,7 @@ export async function openPreferencesDialog(payload: OpenPreferencesDialogPayloa
     show: false,
     skipTaskbar: true,
     hasShadow: true,
-    webPreferences: {
-      preload: appConfig.preloadFilePath
-    },
   })
-  win[ROXY_WINDOW_ID_KEY] = ROXY_SYNC_CONTROL_PREFERENCES_WINDOW_ID
   win.loadURL(await getWebEntryUrl(`#/sync-control-preferences-dialog?tab=${tab}`))
   if (!isPackaged) {
     win.webContents.openDevTools()

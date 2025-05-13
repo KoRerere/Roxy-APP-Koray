@@ -27,6 +27,7 @@ export type MittEvents = {
   };
   /** 显示扩容弹窗 */
   showExpandDialog?: {
+    defaultType?: 'workspace' | 'staff'
     paySuccess?: (result: UserPaySettlementCreateData) => void
     payError?: (result: UserPaySettlementCreateData) => void
     afterConfirm?: (result: UserPaySettlementCreateData) => void
@@ -44,6 +45,8 @@ export type MittEvents = {
   updateBillList?: void;
   /** 显示老用户福利弹窗 */
   showOldUserGiftDialog?: void;
+  /** 显示账号设置弹窗 */
+  showAccountSetupDialog?: void;
 };
 
 export const emitter = mitt<MittEvents>();

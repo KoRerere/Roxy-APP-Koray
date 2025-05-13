@@ -1,4 +1,5 @@
 import '/@/styles/index.scss'
+import '/@/styles/theme/'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
@@ -19,8 +20,7 @@ import { setupStore } from "/@/stores";
 import { useSimpleLocale } from "/@/stores/locale";
 import myPreset from "/@/styles/primevuePresets";
 import App from "./App.vue";
-import router from "./router";
-import { useUserStore } from '/@/stores/user'
+import { setupRouter } from '/@/router'
 
 const app = createApp(App);
 
@@ -53,7 +53,6 @@ mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
 globalThis.mixpanel = mixpanel;
 
 setupStore(app);
-app.use(router);
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
@@ -128,14 +127,8 @@ app.use(PrimeVue, {
 app.directive("ripple", Ripple);
 app.directive("tooltip", Tooltip);
 
-electronAPI.send("app:getSoftConfig").then((softConfig) => {
-  console.log('softConfig', softConfig)
-  const { language, token } = softConfig;
-  const simpleLocale = useSimpleLocale();
-  const { setToken } = useUserStore()
-  simpleLocale.currentLocale = language;
-  setToken(token || '')
-
+setupRouter(app).then((softConfig) => {
+  const { language, } = softConfig;
   setupI18n(app, { defaultLocale: language as SupportedLanguagesType }).then(() => {
     app.mount('#app')
   })

@@ -2,7 +2,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { $t } from "/@/locales";
 import type { PreferenceSettings } from "../model";
 import type { Ref } from 'vue';
-import { isWindows } from "/@/utils";
+import { isProd, isWindows } from "/@/utils";
 
 const os = isWindows ? 'windows' : 'mac'
 
@@ -51,13 +51,15 @@ export function getOperationList(formData: Ref<PreferenceSettings>) {
       label: $t('标签控制'),
       icon: 'base/rx_ic_tabs',
       items: [
-        // {
-        //   id: 'unifyTabs',
-        //   label: $t('统一页签'),
-        //   command: () => {
-        //     electronAPI.send('syncControl:unifyTabs')
-        //   }
-        // },
+        {
+          id: 'unifyTabs',
+          label: $t('统一标签页'),
+          hidden: isProd,
+          // shortcutKey: shortcutKey.unifiedTabs,
+          command: () => {
+            electronAPI.send('syncControl:unifyTabs')
+          }
+        },
         {
           label: $t('关闭其他标签页'),
           shortcutKey: shortcutKey.closeOtherTabs,

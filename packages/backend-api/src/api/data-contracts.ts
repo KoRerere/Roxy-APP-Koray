@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -1996,24 +1997,19 @@ export interface UserGetNotifyListData {
     type?: string;
     notify?: string;
     status?: number;
-    /**
-     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
-     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
-     */
+    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
     userIdentity?: string;
-    /**
-     * 名下用户：true:有,false：没有
-     * 名下用户：true:有,false：没有
-     */
+    /** 名下用户：true:有,false：没有 */
     underName?: boolean;
-    /**
-     * 推荐用户：true:是,false：不是
-     * 推荐用户：true:是,false：不是
-     */
+    /** 推荐用户：true:是,false：不是 */
     recommendUser?: boolean;
     createTime?: string;
     messageModule?: string;
     userName?: string;
+    /** 窗口转移编号 */
+    windowTransferNo?: string;
+    /** 系统通知类型判断，1：系统通知， 0：用户通知 */
+    sysType?: number;
     avatar?: string;
     avatarColor?: string;
     paramData?: {
@@ -2576,6 +2572,11 @@ export interface SavePromotionLinkClickCountListData {
   msg: string;
 }
 
+export interface UserWithdrawVerifyCodeListParams {
+  /** 提现金额 */
+  amount?: string;
+}
+
 export interface UserWithdrawVerifyCodeListData {
   code: number;
   msg: string;
@@ -2621,6 +2622,139 @@ export interface UserGetBannerPictureListV2ListData {
       image: string;
     }[];
   }[];
+  msg: string;
+}
+
+export interface LoginFacebookCreatePayload {
+  /** 传入Facebook登录token */
+  facebookToken: string;
+}
+
+export interface LoginFacebookCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+    /** 是否绑定邮箱, true:绑定,false:未绑定 */
+    isBindEmail: boolean;
+  };
+  msg: string;
+}
+
+export interface LoginVkCreatePayload {
+  /** 传入vk登录token */
+  vkToken: string;
+  /** 随机字符串，由 a-z, A-Z, 0-9, _ or -, 长度为 43 ~ 128之间 */
+  code_verifier: string;
+  device_id: string;
+  state: string;
+}
+
+export interface LoginVkCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface UserBindEmailListListData {
+  code: number;
+  data: {
+    bindType: string;
+    thirdEmail: string;
+    thirdId: string;
+    thirdUserName: string;
+  }[];
+  msg: string;
+}
+
+export interface UserBindEmailCreatePayload {
+  /** 绑定的邮箱 */
+  email: string;
+  /** 绑定类型: Google/Github/Facebook/VK */
+  bind_type: string;
+  /** 验证码 */
+  ver_code: number;
+}
+
+export interface UserBindEmailCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUnbindEmailCreatePayload {
+  /** 绑定类型: Google/Github/Facebook/VK */
+  bind_type: string;
+}
+
+export interface UserUnbindEmailCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserBindEmailVerifyCodeListParams {
+  /**
+   * 邮箱
+   * @example "166533381@qq.com"
+   */
+  email: string;
+}
+
+export interface UserBindEmailVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSettingAccountPasswordCreatePayload {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+  /** 密码 */
+  password: string;
+}
+
+export interface UserSettingAccountPasswordCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSendAccountPasswordVerifyCodeListParams {
+  /**
+   * 新邮箱
+   * @example "117363767@qq.com"
+   */
+  email: string;
+}
+
+export interface UserSendAccountPasswordVerifyCodeListData {
+  code: number;
   msg: string;
 }
 
@@ -3604,6 +3738,7 @@ export interface UserGetWindowInfoListListData {
       lastCountry?: string;
       lastCity?: string;
       checkTime?: string;
+      openTime?: string;
       checkStatus?: number;
       openLimitStatus?: boolean;
       labelInfo?: string[];
@@ -3867,6 +4002,10 @@ export interface UserGetSearchEnginesListData {
   msg: string;
 }
 
+export interface UserTransferWindowVerifyCodeListParams {
+  targetWorkspaceId?: string;
+}
+
 export interface UserTransferWindowVerifyCodeListData {
   code: number;
   msg: string;
@@ -4021,11 +4160,52 @@ export interface UserRejectTransferWindowCreateData {
 }
 
 export interface UserClearTransferWorkspaceCreatePayload {
-  /** 窗口任务编号 */
-  windowTransferNo: string[];
+  /** 窗口ID */
+  workspaceIds: string[];
 }
 
 export interface UserClearTransferWorkspaceCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWindowDataBatchCreatePayload {
+  /** 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/platform_edit/cookie_edit */
+  type: string;
+  ids: number[];
+  paramList?: {
+    platformUrlIds?: number[];
+    /** 添加账号平台 */
+    windowPlatformList?: string[];
+    /** 选择代理 */
+    moduleId?: number;
+    /** 编辑cookie */
+    cookie?: string[];
+    loading?: boolean;
+    checkStatus?: number;
+    error?: string;
+    lastIp?: string;
+    lastCity?: string;
+    lastCountry?: string;
+    timezone?: string;
+    checkTime?: string;
+    proxyRules?: string;
+    ipType?: string;
+    protocol?: string;
+    proxyCategory?: string;
+    host?: string;
+    port?: number;
+    proxyUserName?: string;
+    proxyPassword?: string;
+    refreshUrl?: string;
+    checkChannel?: string;
+    id?: number;
+    dirId?: string;
+    proxyMethod?: string;
+  };
+}
+
+export interface UserMdfWindowDataBatchCreateData {
   code: number;
   msg: string;
 }
@@ -4564,6 +4744,8 @@ export interface UserGetSystemPluginListData {
   data: {
     rows: {
       id: number;
+      /** 插件 sha512 哈希值 */
+      hashValue: string;
       pluginDir: string;
       category: number;
       categoryName: string;
@@ -4798,6 +4980,16 @@ export interface UserFixedPluginToWindowCreatePayload {
 }
 
 export interface UserFixedPluginToWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserReportSystemPluginErrorCreatePayload {
+  /** 插件dirID */
+  pluginDir: string;
+}
+
+export interface UserReportSystemPluginErrorCreateData {
   code: number;
   msg: string;
 }

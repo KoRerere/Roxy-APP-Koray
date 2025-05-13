@@ -14,7 +14,7 @@ import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, purchaseType, PaySubOrderType } from '/@/enums/pay'
+import { OrderType, PayWay, PurchaseType, PaySubOrderType } from '/@/enums/pay'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
@@ -22,7 +22,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useSimpleLocale } from '/@/stores/locale'
 const router = useRouter()
 const dialog = useDialog()
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { openProcessing, planSuccess } = usePay()
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -222,7 +222,7 @@ async function planUpgrade() {
       onConfirm: async (params: { isAuto: boolean, payType: PayWay }) => {
         const { code, data, msg } = await API.pay.userPaySettlementCreate({
           purchaseMember: { profile: selectedCount.value },
-          purchaseType: purchaseType.Profile,
+          purchaseType: PurchaseType.Profile,
           subLevel: selectedPlan.value.subLevel,
           subOrderType: PaySubOrderType.Upgrade,
           ...params,
@@ -242,7 +242,7 @@ async function planUpgrade() {
 
 // 自动续订套餐升级
 function subscribeUpgrade() {
-  dialogInstance.showModal({
+  const dialogInstance = showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -251,18 +251,18 @@ function subscribeUpgrade() {
       content: '!pa-0'
     },
     slots: {
-      container: () => {
+      container: ({ handleCancel }) => {
         return <div class={`flex flex-col pt-4 pb-6 px-6 gap-5 w-100 ${popupCss.header}`}>
           <div class="relative flex items-center h-9">
             <span>{$t('套餐升级提醒')}</span>
-            <span class="absolute right-0 cursor-pointer" onClick={() => dialogInstance.handleCancel()}>
+            <span class="absolute right-0 cursor-pointer" onClick={handleCancel}>
               <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
             </span>
           </div>
           <div class={`whitespace-pre-wrap ${popupCss.content}`}>{$t('您的支付信息已绑定至当前账户，点击下方按钮，系统将执行扣费操作。')}</div>
           <RxAlert class="w-full" type="info" closable={false} title={$t('操作后，新的订阅将会立即生效')}></RxAlert>
           <div class="flex justify-end gap-2">
-            <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={() => dialogInstance.handleCancel()}></RxButton>
+            <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={handleCancel}></RxButton>
             <RxButton size='md' label={$t('确认升级')} onClick={_onConfirm}></RxButton>
           </div>
         </div>
@@ -282,7 +282,7 @@ function subscribeUpgrade() {
 
 // 自动续订套餐降级
 async function subscribeDowngrade() {
-  dialogInstance.showModal({
+  const dialogInstance = showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -291,18 +291,18 @@ async function subscribeDowngrade() {
       content: '!pa-0'
     },
     slots: {
-      container: () => {
+      container: ({ handleCancel }) => {
         return <div class={`flex flex-col pt-4 pb-6 px-6 gap-5 w-115 ${popupCss.header}`}>
           <div class="relative flex items-center h-9">
             <span>{$t('套餐降级提醒')}</span>
-            <span class="absolute right-0 cursor-pointer" onClick={() => dialogInstance.handleCancel()}>
+            <span class="absolute right-0 cursor-pointer" onClick={handleCancel}>
               <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
             </span>
           </div>
           <div class={`whitespace-pre-wrap ${popupCss.content}`}>{$t('您选择的窗口数量少于当前套餐，确认后，新的订阅将会在下个付费周期生效。')}</div>
           <RxAlert class="w-full" type="warn" closable={false} title={$t('操作后，套餐订阅状态在下个付费周期前无法再次修改。')}></RxAlert>
           <div class="flex justify-end gap-2">
-            <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={() => dialogInstance.handleCancel()}></RxButton>
+            <RxButton outlined severity='secondary' size='md' label={$t('取消')} onClick={handleCancel}></RxButton>
             <RxButton size='md' label={$t('确认降级')} onClick={_onConfirm}></RxButton>
           </div>
         </div>
@@ -332,8 +332,10 @@ function jumpToProfile() {
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :min="sliderMin"></Profile>
-          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[#C7CDD1]" v-if="dataList?.length">
+          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount"
+            :list="dataList" :min="sliderMin"></Profile>
+          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[#C7CDD1]"
+            v-if="dataList?.length">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
             <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
             <div v-else class="due">
@@ -372,21 +374,24 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
-                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0"
+                  :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
+                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
+                  scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                      }}</a>
+                    }}</a>
                   </template>
                 </i18n-t>
               </div>
             </template>
           </Detail>
-          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount" class="mt2.5 whitespace-pre-wrap next-bill">{{
-            $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
-              bill: currency(nextBill.amount).format(),
-              date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
-            }) }}
+          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount"
+            class="mt2.5 whitespace-pre-wrap next-bill">{{
+              $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
+                bill: currency(nextBill.amount).format(),
+                date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
+              }) }}
           </div>
         </div>
       </div>

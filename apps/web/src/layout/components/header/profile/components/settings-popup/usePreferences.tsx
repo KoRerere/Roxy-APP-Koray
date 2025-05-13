@@ -166,6 +166,48 @@ export function usePreferencesPanel() {
               },
             },
             {
+              label: $t("Google 登录"),
+              text: () => (
+                <div class="w-[370px]">
+                  {$t(
+                    "窗口是否开启谷歌账号登录",
+                  )}
+                </div>
+              ),
+              name: "googleLoginEnable",
+              value: data?.googleLoginEnable ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
+            {
+              label: $t("IP 变化提示"),
+              text: () => (
+                <div class="w-[370px]">
+                  {$t(
+                    "IP 变化时是否弹窗提示",
+                  )}
+                </div>
+              ),
+              name: "ipChangeModal",
+              value: data?.ipChangeModal ?? false,
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxToggleSwitch
+                    {...item.props}
+                    {...props}
+                    onChange={() => saveUserConfig(item)}
+                  />
+                );
+              },
+            },
+            {
               label: $t("搜索引擎"),
               name: "searchEngine",
               text: $t("打开窗口时，浏览器使用的默认搜索引擎"),

@@ -18,6 +18,8 @@ export enum OrderType {
   Renew = "renew",
   /** 订阅 */
   Subscribe = "subscribe",
+  /** 变更 */
+  Change = "change",
   /** 购买 */
   Purchase = "purchase",
   /** 充值 */
@@ -36,6 +38,7 @@ export const OrderTypeStr = {
   get [OrderType.Renew]() { return $t("续费") },
   get [OrderType.Subscribe]() { return $t("订阅") },
   get [OrderType.Purchase]() { return $t("购买") },
+  get [OrderType.Change]() { return $t("变更") },
   get [OrderType.Recharge]() { return $t("充值") },
   get [OrderType.Withdraw]() { return $t("提现") },
   get [OrderType.Refund]() { return $t("退款") },
@@ -100,7 +103,7 @@ export enum PayIdentity {
   invited = "invited",
 }
 
-export enum purchaseType {
+export enum PurchaseType {
   /** 钱包 */
   Wallet = "wallet",
   /** 工作空间 */

@@ -17,7 +17,7 @@ const defaultOptions: TagActionsOptions = {
 };
 
 export function useProjectActions(options: TagActionsOptions = defaultOptions) {
-  const [dialog] = useFormDialog();
+  const [showFormDialog] = useFormDialog();
   const [showToast] = useResponseToast();
   const toast = useToast();
   const router = useRouter();
@@ -26,7 +26,7 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
   async function addDialog(props?: any) {
     const { confirmNext, ...data } = props || {};
 
-    await dialog.showModal({
+    const formDialogInstance = await showFormDialog({
       header: data.project_id ? $t("编辑项目") : $t("创建项目"),
       class: "w-[500px]",
       schemas: projectFormSchemas,
@@ -51,7 +51,7 @@ export function useProjectActions(options: TagActionsOptions = defaultOptions) {
       },
     });
 
-    dialog.formRef.value?.setFieldsValue({
+    formDialogInstance.formRef.value?.setFieldsValue({
       id: data.project_id,
       ...data,
     });

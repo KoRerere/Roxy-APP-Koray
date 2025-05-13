@@ -22,7 +22,7 @@ interface PropsType {
 }
 
 export function useInviteUserFormDialog() {
-  const [dialog] = useFormDialog();
+  const [showFormDialog] = useFormDialog();
   const isInviteMore = ref(false);
   const toast = useToast();
   const router = useRouter();
@@ -32,7 +32,7 @@ export function useInviteUserFormDialog() {
   const showDialog = async ({ tableRef, disableds, ...data }: PropsType) => {
     const originl = data;
 
-    await dialog.showModal({
+    const dialogInstance = await showFormDialog({
       header: originl.user_id ? $t("编辑用户") : $t("邀请用户"),
       class: "w-[500px]",
       formProps: {
@@ -47,7 +47,7 @@ export function useInviteUserFormDialog() {
       dialogSlots: {
         footer: () => (
           <div class="w-full flex justify-between gap-2">
-            <RxButton label={$t("取消")} text severity="secondary" type="button" onClick={dialog.handleCancel} />
+            <RxButton label={$t("取消")} text severity="secondary" type="button" onClick={() => dialogInstance.handleCancel()} />
             <div class="flex gap-2">
               {!originl.user_id && (
                 <div class="flex items-center">
@@ -60,7 +60,7 @@ export function useInviteUserFormDialog() {
               <RxButton
                 label={originl.user_id ? $t("保存") : $t("发送邀请")}
                 severity="primary"
-                onClick={dialog.handleOk}
+                onClick={() => dialogInstance.handleOk()}
               />
             </div>
           </div>
@@ -82,14 +82,14 @@ export function useInviteUserFormDialog() {
           })
         }
         if (isInviteMore.value) {
-          dialog.formRef.value?.resetFields();
+          dialogInstance.formRef.value?.resetFields();
           return Promise.reject(new Error("continue"));
         }
       },
     });
 
     disableds?.forEach((item) => {
-      dialog.formRef.value?.updateSchema({
+      dialogInstance.formRef.value?.updateSchema({
         field: item,
         componentProps: {
           disabled: true,

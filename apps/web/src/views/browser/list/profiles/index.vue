@@ -1,34 +1,38 @@
 <!-- eslint-disable ts/ban-ts-comment -->
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { RxSvgIcon } from '/@/components/rx-icon/'
+import { RxAlert } from '/@/components/rx-alert/'
+import ProxyCreate from '/@/views/agent/create/quick.vue'
+import ProxyList from '/@/views/agent/list/quick.vue'
+import AccountCreate from '/@/views/account/create'
+import AccountList from '/@/views/account/list/quick.vue'
 import Popup from '/@/components/simplePopup'
-import { ClearType, ProfileOpenStatus, ProxyCheckStatus } from '/@/enums'
+import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
+import { ClearType, ProfileModifyType, ProfileOpenStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { copyText, createDefaultObject, filterFieldByValue, getFormData, isEmptyValue, deepClone, safeParseJSON } from '/@/utils'
-import { useCheckProxy } from '/@/views/agent/hooks'
+import { copyText, filterFieldByValue, getFormData, isEmptyValue, deepClone, safeParseJSON, createDefaultObject } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
 import BrowserControl from './components/browser-control.vue'
 import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
-import DrawersTtems from './components/drawers-item.vue'
 import EditCookies from './components/edit-cookies.vue'
 import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
-import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
+import { silentUpdateProxy, silentUpdateAccount } from './components/util'
 import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
@@ -36,19 +40,15 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
-
+import { useDrawer } from '/@/hooks/useDrawer'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
-const props = defineProps({
-  currentFilter: {
-    type: Object,
-    default: undefined,
-  },
-  isProjectProfile: {
-    type: Boolean,
-    default: false,
-  },
+const props = withDefaults(defineProps<{
+  currentFilter?: Record<string, any>,
+  isProjectProfile?: boolean
+}>(), {
+  isProjectProfile: false,
 })
 
 const emit = defineEmits(['updateFilterTabs', 'switchTab'])
@@ -57,65 +57,24 @@ const route = useRoute()
 const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
-const role = useRoleStore()
-const workspaceStore = useWorkspaceStore()
+const drawerInstance = useDrawer()
+const [showModal] = RxUseDialog()
 const { handleBusinessCode } = useHandleBusinessCode()
-const [dialogInstance] = RxUseDialog()
-const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
 const { getProjects } = useMateGroup()
-const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions({ toast: false })
 const [show] = useContextMenu()
-const tableRef = useTemplateRef('windownTable')
-const tagsIconRef = useTemplateRef('tagsIcon')
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
+const role = useRoleStore()
+const workspaceStore = useWorkspaceStore()
+const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
+
+const tableRef = useTemplateRef('windownTable')
+const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
-
-const operation = computed(getOperation)
-
-const drawer = reactive({
-  type: 'proxyList',
-  title: '',
-  data: null,
-  visible: false,
-  dismissable: false,
-  confirm: (type: any, data: any) => {
-    const { id, dirId, windowPlatformList } = drawer.data!
-    switch (type) {
-      case 'proxyForm': {
-        drawer.updateProfile({ ...data, id, dirId, moduleId: 0, proxyMethod: 'custom' })
-        break
-      }
-      case 'proxyList': {
-        drawer.updateProfile({ id, dirId, moduleId: data.id, proxyMethod: 'choose' })
-        break
-      }
-      case 'accountForm': {
-        data._tempId = (new Date().getTime()).toString(32)
-        const _windowPlatformList = (windowPlatformList as any[]).concat(data)
-        drawer.updateProfile({ id, dirId, windowPlatformList: _windowPlatformList })
-        break
-      }
-      case 'accountList': {
-        const platformUrlIds = data.map((item: any) => item.id).filter(Boolean)
-        drawer.updateProfile({ id, dirId, platformUrlIds })
-        break
-      }
-      case 'editCookies': {
-        drawer.updateProfile({ id, cookie: data })
-        break
-      }
-    }
-  },
-  updateProfile: async (data: any) => {
-    await singleModifyWindow(data)
-    drawer.visible = false
-  },
-})
 
 watch(() => props.currentFilter, (value: any) => {
   if (value) {
@@ -234,11 +193,26 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       await onTransfer(datas, operate)
       break
     case 'moveToProject':
-      await onMoveToProject(datas)
+      await onMoveToProject(data)
       break
     case 'open':
     case 'view':
       await openBrowserBefore(data)
+      break
+    case 'addProxy':
+      multipleProxyChange(data, { operationType, proxyMethod: 'custom' })
+      break
+    case 'chooseProxy':
+      multipleProxyChange(data, { operationType, proxyMethod: 'choose' })
+      break
+    case 'deleteProxy':
+      await multipleProxyDelete(data)
+      break
+    case 'addPlatformAccount':
+      multipleAccountChange(data, { operationType, isChoose: false })
+      break
+    case 'choosePlatformAccount':
+      multipleAccountChange(data, { operationType, isChoose: true })
       break
     case 'restart':
       const dirIds = datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
@@ -254,23 +228,26 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
         tagsIconRef.value?.openMenu(operate._event)
       } else {
         addTag({
-          confirmNext: ({ res }: any) => {
-            updateMeta({ labelIds: [...data.labelIds, res.data.id] }, ids)
+          confirmNext: ({ params, res }: any) => {
+            updateProfileMeta({
+              labelInfo: [...data.labelInfo, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
+              labelIds: [...data.labelIds, res.data.id]
+            }, data)
           },
         })
       }
       break
     case 'fav':
-      singleModifyWindow({ id: data.id, isOften: !data.isOften })
+      singleModifyWindow({ id: data.id, isOften: !data.isOften }, true)
+        .then(() => {
+          data.isOften = !data.isOften
+        })
       break
     case 'addNotes':
-      await onRemark(datas)
+      await onRemark(data)
       break
     case 'editCookies':
-      drawer.visible = true
-      drawer.data = data
-      drawer.type = 'editCookies'
-      drawer.title = $t('为[{workspaceName}-{uid}]编辑 Cookies', { workspaceName: workspaceName.value, uid: data.windowSortNum })
+      onEditCookies(data)
       break
     case 'clearCache':
       onClearCache(data)
@@ -375,13 +352,23 @@ function showOperationMenu({ event, operation }: { event: Event, operation: any 
   })
 }
 
-async function updateMeta(params: { labelIds?: number[], projectId?: number }, ids: number[], type?: 'single' | 'batch') {
+async function updateProfileMeta(params: Record<string, any>, data: Data, type?: 'single' | 'batch') {
+  const { projectId, labelIds } = params
   // why? 当标签关联人员的时候，需要调单个修改窗口的接口
-  if (type === 'single') {
-    await singleModifyWindow({ ...params, id: ids[0] })
-  } else {
-    await batchModifyWindow({ ...params, ids })
-  }
+  const datas = ([] as Data[]).concat(data);
+  const ids = datas.map(item => item.id!);
+
+  (type === 'single'
+    ? singleModifyWindow({ projectId, labelIds, id: ids[0] }, true)
+    : batchModifyWindow({ projectId, labelIds, ids }, true)
+  ).then(() => {
+    const updateParams = Object.entries(params).filter(([_, value]) => !!value)
+    datas.forEach(item => {
+      updateParams.forEach(([key, value]) => {
+        item[key as keyof Data] = value
+      })
+    })
+  })
 }
 
 async function getNotUsedProfiles(datas: Data[]) {
@@ -436,7 +423,7 @@ async function onTransfer(datas: Data[], operate?: any) {
   }
 
   const { promise, resolve, reject } = Promise.withResolvers<void>();
-  dialogInstance.showModal({
+  showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -445,14 +432,14 @@ async function onTransfer(datas: Data[], operate?: any) {
       content: '!pa-0'
     },
     slots: {
-      container: () => h(TransferModal, {
+      container: ({ hideModal }) => h(TransferModal, {
         ids: datas.map(item => item.id!),
         onClose: () => {
-          dialogInstance.hideModal()
+          hideModal()
           reject()
         },
         onConfirm: async ({ isSelf, needRefresh }: Record<string, boolean>) => {
-          dialogInstance.hideModal()
+          hideModal()
           if (!isSelf) {
             showToast(0, $t('未接受或被拒绝的窗口将在24小时内自动返回。'))
             // 如果在项目列表中投送，投送成功则跳到投送中 tab
@@ -475,8 +462,9 @@ async function onTransfer(datas: Data[], operate?: any) {
   return promise
 }
 
-async function onMoveToProject(datas: any) {
+async function onMoveToProject(data: any) {
   const options = await getProjects()
+  const datas: any[] = [].concat(data)
 
   return new Promise((resolve, reject) => {
     const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
@@ -510,7 +498,16 @@ async function onMoveToProject(datas: any) {
               onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
               return
             }
-            await batchModifyWindow({ ids, projectId: formData.projectId })
+            await batchModifyWindow({ ids, projectId: formData.projectId }, true)
+              .then(() => {
+                const projectName = options.find(item => item.value === formData.projectId)!.label
+                datas.forEach(item => {
+                  item.projectName = projectName
+                  item.projectId = Number(formData.projectId)
+                  item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+                  item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
+                })
+              })
           }
           resolve(true)
         },
@@ -522,7 +519,205 @@ async function onMoveToProject(datas: any) {
   })
 }
 
-async function onRemark(datas: any) {
+function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }: any) {
+  const datas = ([] as Data[]).concat(data)
+  const isMulti = operationType === 'batch'
+  const isChoose = proxyMethod === 'choose'
+
+  const _proxydata = {
+    id: datas[0].moduleId,
+    ...Object.fromEntries(
+      ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
+        .map(key => [key, datas[0][key as keyof Data]])
+    )
+  }
+
+  const containerRender = isChoose
+    ? () => <div class="h-full flex flex-col">
+      {isMulti && <div class="px-4 pt-4">
+        <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
+      </div>}
+      <ProxyList data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyList>
+    </div>
+    : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
+
+  drawerInstance.showDrawer({
+    title: isChoose ? $t('选择代理') : $t('添加代理'),
+    dismissable: false,
+    slots: {
+      container: containerRender
+    }
+  })
+
+  async function onConfirm({ id, ...formData }: any) {
+    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+      type: isChoose ? ProfileModifyType.ProxySelect : ProfileModifyType.ProxyAdd,
+      ids: datas.map(item => item.id!),
+      paramList: {
+        moduleId: id ?? 0,
+        proxyMethod,
+        ...formData
+      }
+    })
+    drawerInstance.hideDrawer()
+    showToast(code, msg)
+    if (code !== 0) return
+
+    const { protocol, proxyCategory, ...rest } = formData
+    const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol }
+    datas.forEach(item => {
+      silentUpdateProxy(item, params)
+    })
+  }
+}
+
+function multipleProxyDelete(data: Data | Data[]) {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  const datas = ([] as Data[]).concat(data)
+
+  confirm.require({
+    header: $t('删除代理'),
+    message: $t('您确认要删除代理吗？'),
+    rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
+    acceptProps: { label: $t('确认'), severity: 'danger' },
+    accept: async () => {
+      const ids = datas.map(item => item.id!)
+      const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete })
+      showToast(code, msg)
+      resolve()
+      if (code === 0) {
+        const params = {
+          moduleId: 0, // 为 0 表示解除关联
+          proxyCategory: 'noproxy',
+          proxyMethod: 'custom',
+          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+        }
+        datas.forEach(item => {
+          if (!item.openTime) {
+            Reflect.set(params, 'lastIp', '')
+          } else {
+            Reflect.deleteProperty(params, 'lastIp')
+          }
+          silentUpdateProxy(item, params)
+        })
+      }
+    },
+    reject: () => {
+      reject()
+    }
+  })
+  return promise
+}
+
+function multipleAccountChange(data: Data | Data[], { operationType, isChoose = false }: any) {
+  const datas = ([] as Data[]).concat(data)
+  const isMulti = operationType === 'batch'
+
+  const title = isChoose
+    ? $t('选择平台账号')
+    : $t('添加平台账号')
+
+  const containerRender = isChoose
+    ? () => <div class="h-full flex flex-col">
+      {isMulti && <div class="px-4 pt-4">
+        <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
+      </div>}
+      <AccountList data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
+    </div>
+    : () => <AccountCreate showRemark={false} showCreateMore={false} onConfirm={onConfirm}></AccountCreate>
+
+  drawerInstance.showDrawer({
+    title,
+    dismissable: false,
+    slots: {
+      container: containerRender
+    }
+  })
+
+  async function onConfirm(formData: any) {
+    const { code, msg } = isMulti
+      ? await multiConfirm(formData)
+      : await singleConfirm(formData)
+    drawerInstance.hideDrawer()
+    showToast(code, msg)
+  }
+
+  async function multiConfirm(dataList: any | any[]) {
+    const platformUrlIds = ([] as any[]).concat(dataList).map(item => item.id)
+    const paramList = isChoose ? { platformUrlIds } : { windowPlatformList: [dataList] }
+    const type = isChoose ? ProfileModifyType.PlatformSelect : ProfileModifyType.PlatformAdd
+    const ids = datas.map(item => item.id!)
+
+    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ paramList, type, ids })
+
+    if (code === 0) {
+      datas.forEach((item, index) => {
+        const _windowPlatformList = isChoose && Array.isArray(dataList)
+          ? dataList
+          : item.windowPlatformList!.concat({ ...dataList, _tempId: (Date.now() + index ** 2).toString(32) })
+        silentUpdateAccount(item, _windowPlatformList)
+      })
+    }
+    return { code, msg }
+  }
+
+  async function singleConfirm(formData: any) {
+    const { id, dirId, windowPlatformList } = datas[0]
+    const params: any = { id, dirId }
+    if (isChoose) {
+      params.platformUrlIds = (formData as any[]).filter(item => item.id).map(item => item.id)
+    } else {
+      params.windowPlatformList = windowPlatformList!.concat({ ...formData, _tempId: Date.now().toString(32) })
+    }
+    const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
+    if (code === 0) {
+      const _windowPlatformList = params.windowPlatformList || windowPlatformList!.filter((item: any) => !item.id).concat(formData)
+      silentUpdateAccount(datas[0], _windowPlatformList)
+    }
+    return { code, msg }
+  }
+}
+
+async function onEditCookies(data: Data | Data[]) {
+  const datas = ([] as Data[]).concat(data)
+  const names = datas.slice(0, length).map(item => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
+  const namesStr = `[${names}${datas.length > length ? '...' : ''}]`
+  const isMulti = datas.length > 1
+  drawerInstance.showDrawer({
+    title: $t('为 {names} 编辑 Cookies', { names: namesStr }),
+    dismissable: false,
+    slots: {
+      container: () => <div class="h-full flex flex-col">
+        {isMulti && <div class="px-4 pt-4">
+          <RxAlert class="min-w-full" type="warn" closable={false} title={$t('所选窗口的所有 Cookie 都将被覆盖，请谨慎操作。')}></RxAlert>
+        </div>}
+        <EditCookies class="flex-1"
+          data={datas.length > 1 ? undefined : datas[0]}
+          onConfirm={onConfirm}
+        ></EditCookies>
+      </div>
+    }
+  })
+
+  async function onConfirm(formData: any) {
+    const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+      type: ProfileModifyType.CookieEdit,
+      ids: datas.map(item => item.id!),
+      paramList: {
+        cookie: formData
+      }
+    })
+    drawerInstance.hideDrawer()
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+    datas.forEach(item => {
+      Reflect.set(item, 'cookie', formData)
+    })
+  }
+}
+
+async function onRemark(data: Data | Data[]) {
+  const datas = ([] as Data[]).concat(data)
   return new Promise((resolve, reject) => {
     dialog.open(Popup, {
       props: {
@@ -544,9 +739,15 @@ async function onRemark(datas: any) {
           ],
         },
         onConfirm: async (formData: any) => {
-          const ids = datas.map((item: any) => item.id)
-          await batchModifyWindow({ ids, windowRemark: formData.windowRemark })
-          resolve(true)
+          try {
+            const ids = datas.map(item => item.id)
+            await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
+            datas.forEach(item => {
+              item.windowRemark = formData.windowRemark
+            })
+          } finally {
+            resolve(true)
+          }
         },
         onCancel: () => {
           reject($t('取消'))
@@ -640,131 +841,35 @@ async function deleteProfile(datas: any, ids: number[]) {
   })
 }
 
-async function singleModifyWindow(params: any) {
-  try {
-    const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-    showToast(code, msg)
-    if (code === 0) {
+async function singleModifyWindow(params: any, silent = false) {
+  const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
+  showToast(code, msg)
+  if (code === 0) {
+    if (!silent) {
       onRefreshTable()
     }
-  }
-  catch (error) {
-    onlyErrorToast(-1, error as string)
+    return Promise.resolve()
+  } else {
+    return Promise.reject(msg)
   }
 }
 
-async function batchModifyWindow(params: any) {
-  try {
-    const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
-    showToast(code, msg)
-    if (code === 0) {
+async function batchModifyWindow(params: any, silent = false) {
+  const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
+  showToast(code, msg)
+  if (code === 0) {
+    if (!silent) {
       onRefreshTable()
-      return Promise.resolve()
     }
+    return Promise.resolve()
+  } else {
+    return Promise.reject(msg)
   }
-  catch (error) {
-    onlyErrorToast(-1, error as string)
-    return Promise.reject(error)
-  }
-}
-
-/**
- * profile =================
- */
-function profileOperate(key: string, data: any) {
-  const _data = toRaw(data)
-  console.log('profileOperate', key, _data)
-  drawer.data = _data
-  switch (key) {
-    case 'addProxy':
-      drawer.visible = true
-      drawer.type = 'proxyForm'
-      drawer.title = $t('为[{workspaceName}-{uid}]添加代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
-      break
-    case 'editProxy':
-      drawer.visible = true
-      drawer.type = 'proxyForm'
-      drawer.title = $t('为[{workspaceName}-{uid}]编辑代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
-      break
-    case 'selectProxy':
-      drawer.visible = true
-      drawer.type = 'proxyList'
-      drawer.title = $t('为[{workspaceName}-{uid}]选择代理', { workspaceName: workspaceName.value, uid: data.windowSortNum })
-      break
-    case 'testProxy':
-      testProxy(_data)
-      break
-    case 'refreshUrl':
-      refreshUrl(_data)
-      break
-    case 'deleteProxy':
-      deleteProxy(_data)
-      break
-    case 'addAccount':
-      drawer.visible = true
-      drawer.type = 'accountForm'
-      drawer.title = $t('为[{workspaceName}-{uid}]添加平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
-      break
-    case 'selectAccount':
-      drawer.visible = true
-      drawer.type = 'accountList'
-      drawer.title = $t('为[{workspaceName}-{uid}]选择平台账号', { workspaceName: workspaceName.value, uid: data.windowSortNum })
-      break
-    case 'saveWindowName':
-      singleModifyWindow({
-        id: _data.id,
-        windowName: _data.windowName,
-      })
-      break
-  }
-}
-
-async function testProxy(data: any) {
-  const checkRes = await checkProxy(toRaw(data))
-
-  if (data.moduleId) {
-    await API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
-  }
-
-  if (checkRes.checkStatus === ProxyCheckStatus.success) {
-    singleModifyWindow({ id: data.id, dirId: data.dirId, ...checkRes })
-  }
-}
-
-async function refreshUrl(data: any) {
-  const isOK = await window.electronAPI.send('proxy:refreshUrl', data.refreshUrl)
-  showToast(isOK ? 0 : -1, data.refreshUrl)
-}
-
-async function deleteProxy(data: any) {
-  confirm.require({
-    header: $t('删除代理'),
-    message: $t('您确认要删除代理吗？'),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'danger',
-    },
-    accept: () => {
-      // 删除代理也是调用修改接口
-      singleModifyWindow({
-        id: data.id,
-        dirId: data.dirId,
-        moduleId: 0, // 为0表示解除关联
-        proxyCategory: 'noproxy',
-        proxyMethod: 'custom',
-        ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'] as const, ''),
-      })
-    },
-  })
 }
 
 function listenOpenMessage() {
   return window.electronAPI.on('browser:launch-process-message', (event) => {
+    // console.log('browser:launch-process-message', event)
     const id = event.data?.dirId || event.data
     Reflect.set(openMessage, id as string, event)
   })
@@ -823,7 +928,7 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" :table-sort="getSorts" :table-request="tableRequest" :operation="operation"
+  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
     :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
     <template #filter-after>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
@@ -839,7 +944,7 @@ defineExpose({
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @profile-operate="profileOperate($event, data)" />
+      <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
     </template>
     <template #open="{ data }">
       <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
@@ -855,14 +960,15 @@ defineExpose({
       <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
         <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
           :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
-        <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{ data.windowRemark }}</div>
+        <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
+          data.windowRemark }}</div>
       </div>
     </template>
     <template #project="{ data }">
-      <ProjectIcon :label-ids="data.labelIds" :project-id="data.projectId" :project-name="data.projectName" @update="updateMeta($event, [data.id])" />
+      <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
     </template>
     <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateMeta($event, [data.id], 'single')" />
+      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
@@ -871,17 +977,11 @@ defineExpose({
           @click.stop="operationHandler({ name: 'fav' }, data)">
           <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
         </div>
-        <Actions :operation="operation" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+        <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
       </div>
     </template>
   </RyTable>
-  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateMeta($event, tableRef?.selectionData?.map((n: any) => n.id))" />
-  <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
-    <template #default="{ closeCallback }">
-      <EditCookies v-if="drawer.type === 'editCookies'" :data="drawer.data!" :workspace-name="workspaceName" @confirm="drawer.confirm(drawer.type, $event)" />
-      <DrawersTtems v-else :type="drawer.type" :data="drawer.data" :title="drawer.title" @close="closeCallback" @confirm="drawer.confirm(drawer.type, $event)" />
-    </template>
-  </RxDrawer>
+  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateProfileMeta($event, tableRef?.selectionData)" />
 </template>
 
 <style lang="scss" scoped>

@@ -163,7 +163,9 @@ const disabledRows = debounce(() => {
 }, 100)
 
 window.electronAPI.on('browser:launch-process-message', (event) => {
-  getOpenedBrowser()
+  if (event.code === 0 && event.data.percent === 100) {
+    getOpenedBrowser()
+  }
 })
 
 window.electronAPI.on('browser:on-close', (dirId) => {
@@ -184,7 +186,7 @@ onMounted(() => {
   getOpenedBrowser()
 })
 
-function startSync() {
+async function startSync() {
   if (selectedRowsFilter.value?.length < 2) {
     console.log('请先打开至少两个窗口', selectedRowsFilter.value?.length)
     return
@@ -203,7 +205,7 @@ function startSync() {
   ])
   ]
   console.log('dirIds', dirIds)
-  window.electronAPI.send('syncControl:start', dirIds)
+  await window.electronAPI.send('syncControl:start', dirIds)
 }
 
 async function handleRowSelectAll() {
@@ -262,7 +264,7 @@ electronAPI.on('syncControl:start', startSync)
         </template>
         <IconField>
           <InputIcon class="pi pi-search" />
-          <InputText v-model="searchParams.windowName" placeholder="Search" class="w-[120px]" size="small" />
+          <InputText v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" class="w-[120px]" size="small" />
         </IconField>
       </div>
     </template>

@@ -6,7 +6,7 @@ import { IPCMainInstance } from "/@/modules/ipc/types"
 import { openAPIServer } from "/@/modules/openapi"
 import { fetchUserConfig, store, } from "/@/modules/store"
 import { aliOSS } from "/@/utils"
-import { closeSyncControl } from "/@/modules/ipc/modules/syncControl"
+import { closeAllSyncDialogs } from "/@/modules/sync-control/common"
 
 export function setupUserIpc(ipcMain: IPCMainInstance) {
 
@@ -14,19 +14,21 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('user:setUserInfo', (event, userInfo) => {
     store.token = userInfo.token
     store.userId = userInfo.userId
+    store.workspaceId = userInfo.workspaceId
     // 重新获取用户配置
     fetchUserConfig()
     openAPIServer.start()
     // aliOSS.init()
   })
 
-  /** 登录成功后，保存用户信息 */
+  /** 退出登录 */
   ipcMain.on('user:logout', (event,) => {
-    closeSyncControl()
+    closeAllSyncDialogs()
     browserManager.closeAll().finally(() => {
       store.token = ''
       Reflect.deleteProperty(store, 'userId')
     })
+    openAPIServer.stop()
   })
 
   /** 切换空间时设置当前空间 ID  */

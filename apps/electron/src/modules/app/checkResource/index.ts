@@ -11,7 +11,7 @@ export function sendLaunchMessage(message: string) {
 }
 
 export async function checkResource() {
-  const { promise, resolve } = Promise.withResolvers()
+  const { promise, resolve, reject } = Promise.withResolvers()
   const startCheckTime = Date.now()
   console.log('checkResource start')
   sendLaunchMessage($t('正在检查资源是否需要更新...'))
@@ -24,6 +24,7 @@ export async function checkResource() {
           setTimeout(() => {
             appUpdater.upgradeNow()
           }, 500)
+          reject('下载完成，准备重启...')
         } else {
           sendLaunchMessage($t('正在更新中... {percentage}%', { percentage }))
         }

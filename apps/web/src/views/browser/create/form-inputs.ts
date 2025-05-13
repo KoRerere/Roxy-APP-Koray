@@ -1259,7 +1259,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         { label: $t('关闭'), value: 0 },
         { label: $t('跟随软件设置'), value: 2 },
       ],
-    }
+    },
   ])
 
   inputsGroup.push(...[windowInputs, basicInputs, highLevelInputs, otherInputs])

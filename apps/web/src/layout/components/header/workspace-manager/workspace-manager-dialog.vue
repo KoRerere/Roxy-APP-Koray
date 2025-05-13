@@ -21,8 +21,8 @@ const workspaceStore = useWorkspaceStore()
 const { workspaceList } = storeToRefs(workspaceStore)
 const userStore = useUserStore()
 const { handleBusinessCode } = useHandleBusinessCode()
-const [workspaceFormDialog] = useDialog()
-const [dialogInstance] = useDialog()
+const [showWorkspaceFormDialog] = useDialog()
+const [showModal] = useDialog()
 const toast = useToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 
@@ -48,11 +48,12 @@ function showFirstCreateTipsDialog() {
     userStore.userInfo.firstCreateTip = false
     resolve()
   }
-  dialogInstance.showModal({
+
+  const dialogInstance = showModal({
     class: 'w-[480px]',
     innerDialog: true,
     slots: {
-      container: () => <WorkspaceGuide hide-fn={hideFn} />,
+      container: ( ) => <WorkspaceGuide hide-fn={hideFn} />,
     },
   })
   return promise
@@ -76,7 +77,7 @@ async function showCreateWorkspaceDialog() {
     workspaceForm.value.maxWindowCount = 0
   }
 
-  return workspaceFormDialog.showModal({
+  return showWorkspaceFormDialog({
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
     innerDialog: true,

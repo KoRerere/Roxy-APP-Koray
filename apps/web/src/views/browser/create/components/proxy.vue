@@ -1,5 +1,6 @@
-<!-- eslint-disable ts/ban-ts-comment -->
 <script setup lang="ts">
+import ProxyCreate from '/@/views/agent/create/quick.vue'
+import ProxyTable from '/@/views/agent/list/quick.vue'
 import { useDialog } from 'primevue/usedialog'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
@@ -7,25 +8,24 @@ import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { useNetworkStore } from '/@/stores/network'
-import { isEmptyValue, strConcat } from '/@/utils'
-import ProxyCreate from '/@/views/agent/create/quick.vue'
+import { deepClone, isEmptyValue, strConcat } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
-import ProxyTable from '/@/views/agent/list/quick.vue'
+import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps({
-  windowInfo: {
-    type: Object,
-    default: () => ({}),
-  },
+const props = withDefaults(defineProps<{
+  windowInfo: Record<string, any>
+}>(), {
+  windowInfo: () => ({}),
 })
 
 const dialog = useDialog()
 const network = useNetworkStore()
+const drawerInstance = useDrawer()
 
 const [checkProxy, checkResult] = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
@@ -34,17 +34,10 @@ const proxyList = defineModel<any>('modelValue')
 const proxySwitch = defineModel('proxySwitch', { default: false })
 
 const checkIndex = ref()
-const drawer = reactive({
-  title: '',
-  dismissable: false,
-  visible: false,
-  type: 'create',
-  data: undefined,
-})
 const sumProxyCount = computed(() => proxyList.value.reduce((sum: number, item: any) => sum + (item?._proxyCount || 0), 0))
 const selectedPorxys = computed(() => proxyList.value.filter((item: any) => item.id))
 const proxyInfo = computed(() => {
-  const filterKeys = ['ipType','proxyCategory','host','port','proxyUserName','proxyPassword','refreshUrl','checkChannel']
+  const filterKeys = ['ipType', 'proxyCategory', 'host', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'checkChannel']
 
   return filterKeys.reduce((acc, key) => {
     acc[key] = props.windowInfo[key]
@@ -52,12 +45,30 @@ const proxyInfo = computed(() => {
   }, {} as Record<string, any>)
 })
 
-function toggleDrawer(type: 'create' | 'list', data?: any) {
-  drawer.visible = true
-  drawer.type = type
-  drawer.dismissable = type === 'list'
-  drawer.title = type === 'list' ? $t('代理列表') : $t('添加代理')
-  drawer.data = data
+function toggleDrawer(type: 'create' | 'list', item?: any) {
+  const dismissable = type === 'list'
+  const title = dismissable ? $t('代理列表') : $t('添加代理')
+  const data = !dismissable
+    ? deepClone(item)
+    : isBatch.value ? selectedPorxys.value : selectedPorxys.value[0]
+  const RenderComponent = dismissable ? ProxyTable : ProxyCreate
+
+  drawerInstance.showDrawer({
+    title,
+    dismissable,
+    slots: {
+      container: () => h(RenderComponent, {
+        data,
+        isBatch: isBatch.value,
+        createCount: createCount.value,
+        onClose: () => drawerInstance.hideDrawer(),
+        onConfirm: (formData: Record<string, any>) => {
+          dismissable ? onChoose(formData) : addProxy(formData)
+          drawerInstance.hideDrawer()
+        }
+      })
+    }
+  })
 }
 
 function onEdit(item: any) {
@@ -206,29 +217,13 @@ function replaceData(data: any) {
         </template>
       </div>
     </template>
-
-    <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
-      <template #default="{ closeCallback }">
-        <ProxyTable v-if="drawer.type === 'list'" :data="selectedPorxys" :is-batch="isBatch" :create-count="createCount" @close="closeCallback"
-          @confirm="(data: any) => { onChoose(data); closeCallback() }" />
-        <ProxyCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback" @confirm="(data: any) => { addProxy(data); closeCallback() }" />
-      </template>
-    </RxDrawer>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .proxy-switch {
-  :deep(.rx-radio-group) {
-    // gap: var(--spacing-4xl, 24px);
-
-    .rx-radio-group-item {
-      // padding-left: 0;
-      // border: none;
-      // min-width: auto;
-      // box-shadow: none;
-      min-width: 90px;
-    }
+  :deep(.rx-radio-group-item) {
+    min-width: 90px;
   }
 }
 

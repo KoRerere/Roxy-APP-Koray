@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -72,7 +73,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_add_workspace_info
    * @response `200` `UserAddWorkspaceInfoCreateData`
    */
-  userAddWorkspaceInfoCreate = (data: UserAddWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+  userAddWorkspaceInfoCreate = (
+    data: UserAddWorkspaceInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddWorkspaceInfoCreateData, any>({
       path: `/user_add_workspace_info`,
       method: "POST",
@@ -90,7 +94,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_workspace_info
    * @response `200` `UserMdfWorkspaceInfoCreateData`
    */
-  userMdfWorkspaceInfoCreate = (data: UserMdfWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+  userMdfWorkspaceInfoCreate = (
+    data: UserMdfWorkspaceInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWorkspaceInfoCreateData, any>({
       path: `/user_mdf_workspace_info`,
       method: "POST",
@@ -108,7 +115,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_del_workspace_info
    * @response `200` `UserDelWorkspaceInfoCreateData`
    */
-  userDelWorkspaceInfoCreate = (data: UserDelWorkspaceInfoCreatePayload, params: RequestParams = {}) =>
+  userDelWorkspaceInfoCreate = (
+    data: UserDelWorkspaceInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelWorkspaceInfoCreateData, any>({
       path: `/user_del_workspace_info`,
       method: "POST",
@@ -126,7 +136,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_leave_workspace
    * @response `200` `UserLeaveWorkspaceListData`
    */
-  userLeaveWorkspaceList = (query: UserLeaveWorkspaceListParams, params: RequestParams = {}) =>
+  userLeaveWorkspaceList = (
+    query: UserLeaveWorkspaceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserLeaveWorkspaceListData, any>({
       path: `/user_leave_workspace`,
       method: "GET",
@@ -159,7 +172,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_add_project_info
    * @response `200` `UserAddProjectInfoCreateData`
    */
-  userAddProjectInfoCreate = (data: UserAddProjectInfoCreatePayload, params: RequestParams = {}) =>
+  userAddProjectInfoCreate = (
+    data: UserAddProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddProjectInfoCreateData, any>({
       path: `/user_add_project_info`,
       method: "POST",
@@ -177,7 +193,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_project_info
    * @response `200` `UserMdfProjectInfoCreateData`
    */
-  userMdfProjectInfoCreate = (data: UserMdfProjectInfoCreatePayload, params: RequestParams = {}) =>
+  userMdfProjectInfoCreate = (
+    data: UserMdfProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfProjectInfoCreateData, any>({
       path: `/user_mdf_project_info`,
       method: "POST",
@@ -195,7 +214,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_get_project_info_by_workspace
    * @response `200` `UserGetProjectInfoByWorkspaceListData`
    */
-  userGetProjectInfoByWorkspaceList = (query: UserGetProjectInfoByWorkspaceListParams, params: RequestParams = {}) =>
+  userGetProjectInfoByWorkspaceList = (
+    query: UserGetProjectInfoByWorkspaceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
       path: `/user_get_project_info_by_workspace`,
       method: "GET",
@@ -212,7 +234,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request GET:/user_get_member_info_by_project_id
    * @response `200` `UserGetMemberInfoByProjectIdListData`
    */
-  userGetMemberInfoByProjectIdList = (query: UserGetMemberInfoByProjectIdListParams, params: RequestParams = {}) =>
+  userGetMemberInfoByProjectIdList = (
+    query: UserGetMemberInfoByProjectIdListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetMemberInfoByProjectIdListData, any>({
       path: `/user_get_member_info_by_project_id`,
       method: "GET",
@@ -229,7 +254,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_invite
    * @response `200` `UserInviteCreateData`
    */
-  userInviteCreate = (data: UserInviteCreatePayload, params: RequestParams = {}) =>
+  userInviteCreate = (
+    data: UserInviteCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserInviteCreateData, any>({
       path: `/user_invite`,
       method: "POST",
@@ -247,7 +275,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_add_user_by_project_info
    * @response `200` `UserAddUserByProjectInfoCreateData`
    */
-  userAddUserByProjectInfoCreate = (data: UserAddUserByProjectInfoCreatePayload, params: RequestParams = {}) =>
+  userAddUserByProjectInfoCreate = (
+    data: UserAddUserByProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddUserByProjectInfoCreateData, any>({
       path: `/user_add_user_by_project_info`,
       method: "POST",
@@ -265,7 +296,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_del_project_info
    * @response `200` `UserDelProjectInfoCreateData`
    */
-  userDelProjectInfoCreate = (data: UserDelProjectInfoCreatePayload, params: RequestParams = {}) =>
+  userDelProjectInfoCreate = (
+    data: UserDelProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelProjectInfoCreateData, any>({
       path: `/user_del_project_info`,
       method: "POST",
@@ -299,7 +333,10 @@ export class LimitApi<SecurityDataType = unknown> {
    * @request POST:/user_show_invitation_link_status
    * @response `200` `UserShowInvitationLinkStatusCreateData`
    */
-  userShowInvitationLinkStatusCreate = (data: UserShowInvitationLinkStatusCreatePayload, params: RequestParams = {}) =>
+  userShowInvitationLinkStatusCreate = (
+    data: UserShowInvitationLinkStatusCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserShowInvitationLinkStatusCreateData, any>({
       path: `/user_show_invitation_link_status`,
       method: "POST",

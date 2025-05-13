@@ -5,11 +5,21 @@ export interface Operation {
   quick?: boolean
   multiple?: boolean
   separator?: boolean
+  items?: Operation[]
   [key: string]: any
 }
 
 export function operationPower(operation: Operation[]) {
-  return (operation || []).filter(op => op.power !== false)
+  return operation.reduce((acc, item) => {
+    if (item.power === false)
+      return acc
+
+    if (item.items && Array.isArray(item.items)) {
+      item.items = operationPower(item.items)
+    }
+    acc.push(item)
+    return acc
+  }, [] as Operation[])
 }
 
 export function setRowsLoading(row: any, operateName: string, fn: (row: any) => Promise<any>) {

@@ -9,14 +9,16 @@ import popup from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import accountCreate from '/@/views/account/create'
+import AccountCreate from '/@/views/account/create'
 import { getColumns } from './columns'
+import { useDrawer } from '/@/hooks/useDrawer'
 
-type Item = UnwrapRowType<UserGetPlatformInfoV2ListData>
+type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const tableRef = useTemplateRef('accountTable')
 
 const confirm = useConfirm()
+const drawerInstance = useDrawer()
 const [showToast, onlyErrorToast] = useResponseToast()
 const columns = getColumns()
 const role = useRoleStore()
@@ -58,32 +60,11 @@ const operation = ref([
   },
 ])
 
-const drawer = reactive({
-  visible: false,
-  data: {},
-  title: '',
-  confirm: async (formData: any) => {
-    const { code, msg } = formData.id
-      ? await editAccount([formData])
-      : await createAccount(formData)
-    onlyErrorToast(code, msg)
-    if (code === 0) {
-      tableRef.value?.refresh()
-    }
-  },
-})
-
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
     case 'create':
-      drawer.data = {}
-      drawer.title = $t('添加平台账号')
-      drawer.visible = true
-      break
     case 'edit':
-      drawer.data = data
-      drawer.title = $t('编辑平台账号')
-      drawer.visible = true
+      createAccount(data)
       break
     case 'remark':
       onRemark(data)
@@ -98,15 +79,30 @@ function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-function createAccount(formData: any) {
-  return API.platform.userAddPlatformInfoCreate(formData)
+function createAccount(data?: Data) {
+  drawerInstance.showDrawer({
+    title: data?.id ? $t('编辑平台账号') : $t('添加平台账号'),
+    slots: {
+      container: () => h(AccountCreate, {
+        data,
+        onClose: () => {
+          drawerInstance.hideDrawer()
+        },
+        onConfirm: async (formData: any) => {
+          const { code, msg } = data?.id
+            ? await API.platform.userMdfPlatformInfoCreate([formData])
+            : await API.platform.userAddPlatformInfoCreate(formData)
+          onlyErrorToast(code, msg)
+          if (code === 0) {
+            tableRef.value?.refresh()
+          }
+        }
+      })
+    }
+  })
 }
 
-function editAccount(formData: any) {
-  return API.platform.userMdfPlatformInfoCreate(formData)
-}
-
-function onRemark(data: Item) {
+function onRemark(data: Data) {
   dialog.open(popup, {
     props: {
       showHeader: false,
@@ -126,8 +122,8 @@ function onRemark(data: Item) {
         ],
       },
       onConfirm: async (formData: any) => {
-        const datas = ([] as Item[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
-        const { code, msg } = await editAccount(datas)
+        const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
+        const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
         showToast(code, msg)
         tableRef.value?.refresh()
       },
@@ -164,7 +160,7 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <ViewsHeader class="account-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
@@ -174,7 +170,8 @@ function deletePopup(data: any) {
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')"
+                  @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
@@ -209,11 +206,6 @@ function deletePopup(data: any) {
       </RyTable>
     </div>
   </div>
-  <RxDrawer v-model:visible="drawer.visible" :title="drawer.title">
-    <template #default="{ closeCallback }">
-      <accountCreate :data="drawer.data" @close="closeCallback" @confirm="drawer.confirm" />
-    </template>
-  </RxDrawer>
 </template>
 
 <style lang="scss" scoped>

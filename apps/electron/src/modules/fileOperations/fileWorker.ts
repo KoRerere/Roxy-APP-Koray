@@ -1,11 +1,11 @@
 
 import AdmZip from 'adm-zip'
-import iconv from 'iconv-lite'
 import { stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
 import systeminformation from 'systeminformation'
 import { createHash } from 'node:crypto'
+import { exec } from 'node:child_process'
 
 process.parentPort?.on('message', async (e) => {
   const { task, payload, taskId } = e.data as { task: keyof TaskMap, taskId, payload: any }
@@ -90,7 +90,9 @@ function decompressFile(src: string, dest: string, filters?: string[]) {
       zip.deleteFile(entry)
       return
     }
-    entry.entryName = iconv.decode(entry.rawEntryName, 'gbk')
+    const decoder = new TextDecoder('gbk');    // 创建 GBK 解码器
+    entry.entryName = decoder.decode(entry.rawEntryName);
+    // entry.entryName = iconv.decode(entry.rawEntryName, 'gbk')
   })
   zip.extractAllTo(dest, true, true)
   return dest
@@ -110,10 +112,42 @@ const genDeviceId = async () => {
   const queue = [systeminformation.system(), systeminformation.baseboard(), systeminformation.diskLayout()] as const
   const [sys, baseboard, disk] = await Promise.all(queue)
 
-  const uniqueString = `${sys.uuid}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
+  console.debug('sys.uuid', sys.uuid)
+  console.debug('baseboard.serial', baseboard.serial)
+  console.debug('disk[0]?.serialNum', disk[0]?.serialNum)
+
+  const uniqueString = `${sys.uuid || await getDeviceUuid()}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
   const deviceId = createHash("sha256").update(uniqueString).digest("hex");
   console.timeEnd('获取设备 ID 耗时')
-  console.log("设备唯一 ID:", deviceId);
+  console.debug("设备唯一 ID:", deviceId);
 
   return deviceId;
+}
+
+/** 如果用户没有安装 powerShell，则使用 wmic 命令获取设备 UUID */
+const getDeviceUuid = async () => {
+  const { resolve, promise } = Promise.withResolvers<string>()
+
+  exec('wmic csproduct get UUID', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`执行错误: ${error.message}`);
+      resolve('')
+    }
+    if (stderr) {
+      console.error(`标准错误: ${stderr}`);
+      resolve('')
+    }
+
+    const lines = stdout.trim().split('\n');
+    if (lines.length >= 2) {
+      const uuid = lines[1].trim();
+      console.log(`UUID: ${uuid}`);
+      resolve(uuid)
+    } else {
+      console.log('未能解析 UUID');
+      resolve('')
+    }
+  });
+
+  return promise
 }

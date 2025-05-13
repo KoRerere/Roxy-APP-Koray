@@ -16,7 +16,7 @@ interface Tab {
   noRead: number
 }
 
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 
 const pop = ref()
 const tabs = ref<Tab[]>([
@@ -119,7 +119,7 @@ function checkDetail(item: Message) {
 }
 
 function checkTransfer(item: Message) {
-  dialogInstance.showModal({
+  showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -128,9 +128,9 @@ function checkTransfer(item: Message) {
       content: '!pa-0'
     },
     slots: {
-      container: () => h(CheckTransfer, {
+      container: ({ hideModal }) => h(CheckTransfer, {
         windowTransferNo: item.windowTransferNo,
-        onClose: () => dialogInstance.hideModal(),
+        onClose: hideModal,
       })
     }
   })

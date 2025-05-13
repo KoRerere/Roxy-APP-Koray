@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { CSSProperties } from 'vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { hexToRgba } from '/@/utils'
+// import { hexToRgba } from '/@/utils'
 
 const props = defineProps({
   type: {
@@ -26,23 +26,22 @@ const emit = defineEmits(['close'])
 
 const visibleModel = defineModel('visible', { default: true })
 
+
+
 const iconMap: Record<string, [string, SvgNames]> = {
-  success: ['#1CC94D', 'status/rx_ic_check_fill'],
-  info: ['#12A3FC', 'base/rx_ic_info_fill'],
-  warn: ['#FC9D12', 'base/rx_ic_warn_fill'],
-  error: ['#F53838', 'base/rx_ic_delete_fill'],
+  success: ['var(--colors-icon-icon-success, #1DC94D)', 'status/rx_ic_check_fill'],
+  error: ['var(--colors-icon-icon-error, #F53838)', 'base/rx_ic_delete_fill'],
+  info: ['var(--colors-icon-icon-info, #12A3FC)', 'base/rx_ic_info_fill'],
+  warn: ['var(--colors-icon-icon-warn, #FC9D12)', 'base/rx_ic_warn_fill'],
 }
 
-const styles = computed<CSSProperties>(() => {
+const bgColor = computed(() => {
   return {
-    backgroundColor: {
-      success: '#EBFCF0',
-      info: '#E8F5FC',
-      warn: '#FFF5E6',
-      error: '#FCEDED',
-    }[props.type],
-    // border: `1px solid ${hexToRgba(iconMap[props.type][0], 0.3)}`,
-  }
+    success: 'var(--component-alert-bg-success, #CEF8D4)',
+    error: 'var(--component-alert-bg-error, #FDD6D3)',
+    info: 'var(--colors-background-bg-info, #DEF3FF)',
+    warn: 'var(--component-alert-bg-warn, #FEEAC7)',
+  }[props.type]
 })
 
 const iconProps = computed(() => {
@@ -61,7 +60,7 @@ function handleClose() {
 
 <template>
   <Transition>
-    <div v-if="visibleModel" class="rx-alert" v-bind="$attrs" :style="styles">
+    <div v-if="visibleModel" class="rx-alert" v-bind="$attrs">
       <slot name="tips-icon">
         <RxSvgIcon v-bind="iconProps" />
       </slot>
@@ -104,7 +103,7 @@ function handleClose() {
   align-items: flex-start;
   gap: 10px;
   border-radius: var(--radius-md, 6px);
-  background: var(--Color-green-100, #ebfcf0);
+  background: v-bind(bgColor);
   overflow: hidden;
   transition: height 0.2s;
 
@@ -124,7 +123,7 @@ function handleClose() {
 
     .rx-alert__title {
       width: 100%;
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #111213);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -134,7 +133,7 @@ function handleClose() {
 
     .rx-alert__content {
       width: 100%;
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #34393D);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

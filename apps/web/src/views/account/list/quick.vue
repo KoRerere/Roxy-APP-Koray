@@ -88,7 +88,7 @@ function handleSave() {
 <style lang="scss" scoped>
 .account-content {
   padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
-  width: var(--width-xl, 768px);
+  min-width: var(--width-xl, 768px);
 }
 
 .account {

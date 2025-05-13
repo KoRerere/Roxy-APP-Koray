@@ -58,8 +58,9 @@ function onChange() {
         </label>
 
         <div v-if="type === 'default'" :class="classes['context-item']" @click="operationHandler(item)">
-          <RxSvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" :size="16" />
-          <span>{{ item.label }}</span>
+          <RxSvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
+          <span class="flex-1">{{ item.label }}</span>
+          <RxSvgIcon v-if="item.items" :class="item.iconClass" name="base/rx_ic_chevron_right" />
         </div>
       </a>
     </template>

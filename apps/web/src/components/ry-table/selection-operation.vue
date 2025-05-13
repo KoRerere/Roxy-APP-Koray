@@ -24,8 +24,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selection', 'batchOperation', 'batchMore'])
 
-const multipleOperation = props.operation.filter(item => item.multiple).map(item => toRaw(item))
-const { count, ...groupMap } = multipleOperation.reduce((data, item) => {
+const multipleOperation = computed<any[]>(() => props.operation.reduce((acc, item) => {
+  if (!item.multiple) return acc
+  const { items, ...rest } = toRaw(item)
+  acc.push({
+    ...rest,
+    items: items?.filter((item: any) => item.multiple !== false),
+  })
+  return acc
+}, []))
+
+const { count, ...groupMap } = props.operation.reduce((data, item) => {
   if (item.multipleProps) {
     data[item.multipleProps.name] ??= ([] as any)
 
@@ -40,7 +49,7 @@ const { count, ...groupMap } = multipleOperation.reduce((data, item) => {
 }, { count: 0 } as Data)
 
 const groups = ref<any[][]>(Object.entries(groupMap).toSorted((a, b) => a[0].localeCompare(b[0])).map(([_, value]) => value) as any)
-const showMore = multipleOperation.length > count
+const showMore = multipleOperation.value.length > count
 
 function batchOperation(event: MouseEvent, item: any) {
   if (item.disabled) {
@@ -50,7 +59,7 @@ function batchOperation(event: MouseEvent, item: any) {
 }
 
 function onMore(event: Event) {
-  emit('batchMore', { event, operation: multipleOperation })
+  emit('batchMore', { event, operation: multipleOperation.value })
 }
 </script>
 

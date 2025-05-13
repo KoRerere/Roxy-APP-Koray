@@ -15,7 +15,7 @@ const { promotionInfo } = defineProps<{
 
 
 const maxNumber = 999999
-const [dialogInstance] = useDialog()
+const [showModal] = useDialog()
 const { getPromotionInfo } = useReferralProgram()
 const overviewItems = computed(() => {
   const {
@@ -86,14 +86,14 @@ const overviewItems = computed(() => {
 })
 
 function showWithdrawDialog() {
-  dialogInstance.showModal({
+  showModal({
     header: $t('申请提现'),
     class: 'w-[480px]',
     pt: {
       title: '!text-[20px]'
     },
     slots: {
-      default: () => <WithdrawDialog hideFn={dialogInstance.handleCancel} onSuccess={getPromotionInfo} promotionInfo={promotionInfo} />,
+      default: ({ handleCancel }) => <WithdrawDialog hideFn={handleCancel} onSuccess={getPromotionInfo} promotionInfo={promotionInfo} />,
       footer: undefined
     },
   })

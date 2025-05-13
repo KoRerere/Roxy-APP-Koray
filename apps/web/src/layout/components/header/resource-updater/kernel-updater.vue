@@ -2,10 +2,15 @@
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 
 defineProps<{
   upgradeList: ResourceUpdateMessage[]
 }>()
+
+const toast = useToast();
+const confirm = useConfirm();
 
 const collapsedMap = ref<Recordable<boolean>>({})
 
@@ -36,6 +41,39 @@ function handleCollapsed(item: ResourceUpdateMessage) {
   console.log('handleCollapsed', item)
   collapsedMap.value[item.coreVersion] = !collapsedMap.value[item.coreVersion]
 }
+
+const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
+  if (item.status !== 'downloaded') {
+    return
+  }
+
+  confirm.require({
+    target: event.currentTarget,
+    message: $t('确定删除该内核吗？'),
+    group: 'popup',
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+      onClick: (e: MouseEvent) => e.stopPropagation()
+    },
+    acceptProps: {
+      label: $t('确定'),
+      severity: 'danger',
+      onClick: (e: MouseEvent) => e.stopPropagation()
+    },
+    accept: async () => {
+      try {
+        await window.electronAPI.send('app:delete-chrome-core', item.coreVersion)
+        item.status = 'uninstalled'
+        toast.add({ severity: 'success', summary: $t('删除成功'), life: 2500 });
+      } catch (error) {
+        console.error('error', error)
+        toast.add({ severity: 'error', summary: error || $t('删除失败'), life: 2500 });
+      }
+    },
+  });
+};
 </script>
 
 <template>
@@ -44,14 +82,21 @@ function handleCollapsed(item: ResourceUpdateMessage) {
       <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion] }">
         <div class="updater-header">
           <div class="updater-header-left">
-            <RxSvgIcon :name="collapsedMap[item.coreVersion] ? 'base/rx_ic_chevron_down' : 'base/rx_ic_chevron_right'" class="cursor-pointer" @click="handleCollapsed(item)" />
             <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
             <div class="updater-title">
               RoxyChrome {{ item.coreVersion }}
             </div>
           </div>
-          <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-            :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
+          <div class="flex items-center gap-2">
+            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)"
+              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'"
+              @click="handleKernelItemClick(item)" />
+            <div class="flex-cc cursor-pointer" @click="handleRemove($event, item)">
+              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon"
+                :class="{ 'disabled': item.status !== 'downloaded' }" />
+            </div>
+          </div>
         </div>
         <rich-text :html="item.upgradeContent" class="updater-content" />
       </div>
@@ -64,6 +109,15 @@ function handleCollapsed(item: ResourceUpdateMessage) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+
+  .remove-icon {
+    cursor: pointer;
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
 }
 
 .updater-item {

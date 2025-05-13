@@ -17,29 +17,29 @@ interface FormDialogSlots extends DialogSlots {
 }
 
 export function useFormDialog() {
-  const [dialogInstance] = useDialog()
+  const [showDialog] = useDialog()
 
-  const formRef = ref<InstanceType<typeof RxForm>>()
-  const innerProps = ref<FormDialogProps>({})
-
-  const rewriteProps = (props?: FormDialogProps) => {
-    return {
+  async function showModal(props: FormDialogProps) {
+    const formRef = ref<InstanceType<typeof RxForm>>()
+    const innerProps = ref<FormDialogProps>({
       ...props,
+
+    })
+
+    innerProps.value = {
+      ...innerProps.value,
       handleCancel: () => {
-        hideModal()
+        dialogInstance.hideModal()
         props?.handleCancel?.()
       },
       handleOk: async () => {
         const res = await formRef.value?.submit()
         await props?.handleOk?.(res!)
-        hideModal()
+        dialogInstance.hideModal()
       },
     }
-  }
 
-  async function showModal(props: FormDialogProps) {
-    innerProps.value = rewriteProps(props)
-    await dialogInstance.showModal({
+    const dialogInstance = showDialog({
       ...innerProps.value,
       slots: {
         default: () => {
@@ -51,19 +51,16 @@ export function useFormDialog() {
         ...innerProps.value.dialogSlots,
       },
     })
+
+    await nextTick()
+
+    return {
+      formRef,
+      hideModal: dialogInstance.hideModal,
+      handleOk: () => innerProps.value.handleOk?.(),
+      handleCancel: () => innerProps.value.handleCancel?.(),
+    }
   }
 
-  function hideModal() {
-    dialogInstance.hideModal()
-  }
-
-  const instance = {
-    formRef,
-    showModal,
-    hideModal,
-    handleOk: (formModel: Recordable) => innerProps.value.handleOk?.(formModel),
-    handleCancel: () => innerProps.value.handleCancel?.(),
-  }
-
-  return [instance]
+  return [showModal]
 }

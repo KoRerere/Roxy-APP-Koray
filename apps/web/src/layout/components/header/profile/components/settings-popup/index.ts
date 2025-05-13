@@ -7,105 +7,109 @@ import { useLoginActive } from "./useLoginActivity";
 import { useNetworkPanel } from "./useNetwork";
 import { usePreferencesPanel } from "./usePreferences";
 import { useUserProfilePanel } from "./useUserProfile";
+import type { DynamicDialogInstance } from "primevue/dynamicdialogoptions";
 
 export type PanelKeyType = ReturnType<typeof getSettings>[number]["name"];
 
 export interface Active {
-	key: PanelKeyType;
-	panel: SettingsModule | null;
+  key: PanelKeyType;
+  panel: SettingsModule | null;
 }
 
 export const getSettings = () =>
-	[
-		{
-			label: $t("个人信息"),
-			name: "profiles",
-			icon: "base/rx_ic_user_circle",
-		},
-		{
-			label: $t("软件设置"),
-			name: "preferences",
-			icon: "base/rx_ic_slider",
-		},
-		{
-			label: $t("网络设置"),
-			name: "network",
-			icon: "base/rx_ic_wifi",
-		},
-		{
-			label: $t("登录历史"),
-			name: "loginActivity",
-			icon: "base/rx_ic_monitor",
-		},
-		// {
-		// 	label: $t("内核管理"),
-		// 	name: "kernel",
-		// 	icon: "base/rx_ic_chrome",
-		// },
-		// {
-		// 	label: $t("关于"),
-		// 	name: "about",
-		// 	icon: "base/rx_ic_info_line",
-		// },
-	] as const;
+  [
+    {
+      label: $t("个人信息"),
+      name: "profiles",
+      icon: "base/rx_ic_user_circle",
+    },
+    {
+      label: $t("软件设置"),
+      name: "preferences",
+      icon: "base/rx_ic_slider",
+    },
+    {
+      label: $t("网络设置"),
+      name: "network",
+      icon: "base/rx_ic_wifi",
+    },
+    {
+      label: $t("登录历史"),
+      name: "loginActivity",
+      icon: "base/rx_ic_monitor",
+    },
+    // {
+    //   label: $t("内核管理"),
+    //   name: "kernel",
+    //   icon: "base/rx_ic_chrome",
+    // },
+    // {
+    //   label: $t("关于"),
+    //   name: "about",
+    //   icon: "base/rx_ic_info_line",
+    // },
+  ] as const;
 
 export function useSettingsPopup() {
-	const userStore = useUserStore();
+  const dialogRef = inject<ComputedRef<DynamicDialogInstance>>("dialogRef");
 
-	const { getNetworkPanels } = useNetworkPanel();
-	const { getPreferencesPanels } = usePreferencesPanel();
-	const { getLoginActivityPanels } = useLoginActive();
-	const { getUserProfilePanels } = useUserProfilePanel();
-	// const { getKernelPanels } = useKernel();
-	// const { getAboutPanels } = useAbout();
+  const userStore = useUserStore();
 
-	const promiseMap = {
-		preferences: getPreferencesPanels,
-		network: getNetworkPanels,
-		loginActivity: getLoginActivityPanels,
-		// kernel: getKernelPanels,
-		// about: getAboutPanels,
-	};
+  const { getNetworkPanels } = useNetworkPanel();
+  const { getPreferencesPanels } = usePreferencesPanel();
+  const { getLoginActivityPanels } = useLoginActive();
+  const { getUserProfilePanels } = useUserProfilePanel();
+  // const { getKernelPanels } = useKernel();
+  // const { getAboutPanels } = useAbout();
 
-	const activePanel = reactive<Active>({
-		key: "profiles",
-		panel: null,
-	});
+  const promiseMap = {
+    preferences: getPreferencesPanels,
+    network: getNetworkPanels,
+    loginActivity: getLoginActivityPanels,
+    // kernel: getKernelPanels,
+    // about: getAboutPanels,
+  };
 
-	const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({});
+  const activePanel = reactive<Active>({
+    key: "profiles",
+    panel: null,
+  });
 
-	const settings = getSettings().map((item) => ({
-		...item,
-		command: async () => {
-			activePanel.key = item.name;
-			activePanel.panel = await settingsPanel[activePanel.key];
-		},
-	}));
+  const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({});
 
-	async function initPanels() {
-		const data = toRaw(await userStore.getUserConfig());
+  const settings = getSettings().map((item) => ({
+    ...item,
+    command: async () => {
+      activePanel.key = item.name;
+      activePanel.panel = await settingsPanel[activePanel.key];
+    },
+  }));
 
-		Object.entries(promiseMap).forEach(async ([key, value]) => {
-			settingsPanel[key as PanelKeyType] = value(data);
-		});
+  async function initPanels() {
+    const data = toRaw(await userStore.getUserConfig());
 
-		settingsPanel.profiles = await getUserProfilePanels(
-			toRaw(userStore.userInfo),
-		);
-		activePanel.panel = await settingsPanel[activePanel.key];
-	}
+    Object.entries(promiseMap).forEach(async ([key, value]) => {
+      settingsPanel[key as PanelKeyType] = value(data);
+    });
 
-	return {
-		activePanel,
-		initPanels,
-		panels: ref(settings),
-	};
+    settingsPanel.profiles = await getUserProfilePanels(
+      toRaw(userStore.userInfo),
+    );
+    activePanel.panel = await settingsPanel[activePanel.key];
+  }
+
+  return {
+    dialogRef,
+    activePanel,
+    initPanels,
+    panels: ref(settings),
+  };
 }
 
 // 显示书签只能上传500个url
 export class MaximumLimitExceeded extends Error {
-	static MAX_BOOKMARK_COUNT = 500;
-	constructor() {
-		super($t('URL 数量超过{count}，请检查文件', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
-	}
+  static MAX_BOOKMARK_COUNT = 500;
+  constructor() {
+    super($t('URL 数量超过{count}，请检查文件', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
+  }
 }

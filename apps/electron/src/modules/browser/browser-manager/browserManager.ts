@@ -1,6 +1,6 @@
 import { readdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { setTimeout } from 'node:timers/promises'
+import { setTimeout, scheduler } from 'node:timers/promises'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { API } from '/@/api'
 import { BrowserItem, LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
@@ -14,6 +14,8 @@ export class BrowserManager {
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
   openedBrowserMap = new Map<string, BrowserItem>()
+  /** 同步窗口打开状态控制器 */
+  syncWindowOpenStatusController?: AbortController
 
   constructor() {
     this.#syncWindowStatus()
@@ -61,8 +63,9 @@ export class BrowserManager {
       this.openingBrowserMap.delete(dirId)
     })
     this.openedBrowserMap.set(dirId, browserItem)
+    this.syncWindowOpenStatus()
 
-    const onCloseHandler = async () => {
+    const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
       console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
       this.openedBrowserMap.delete(dirId)
       ipcMain.send('browser:on-close', dirId)
@@ -90,6 +93,11 @@ export class BrowserManager {
           }
         }
       })
+
+      if (uploadDataPromise) {
+        const { requestHeaders, uploadParams } = await uploadDataPromise
+        await this.syncWindowData([uploadParams], requestHeaders)
+      }
     }
     // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
     browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -131,7 +139,7 @@ export class BrowserManager {
   async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
-      await browserItem.close().finally(() => {
+      return browserItem.close().finally(() => {
         this.openedBrowserMap.delete(dirId)
       })
     }
@@ -140,13 +148,30 @@ export class BrowserManager {
   /** 批量关闭浏览器 */
   async batchClose(dirIds: string[]) {
     const closePromises = dirIds.map(dirId => this.close(dirId))
-    return Promise.allSettled(closePromises)
+    const results = await Promise.allSettled(closePromises)
+    console.debug('batchClose results', results)
+    const uploadParamsObj = Object.groupBy(results, item => {
+      if (item.status === 'fulfilled' && item.value?.requestHeaders) {
+        return JSON.stringify(item.value.requestHeaders)
+      }
+      return ''
+    })
+
+    console.debug('batchClose uploadParamsObj', uploadParamsObj)
+
+    const uploadParamsList = Object.entries(uploadParamsObj).map(([key, value]) => {
+      if (key && value?.length) {
+        const params = value.map(item => item.status === 'fulfilled' && item.value?.uploadParams).filter(Boolean)
+        return this.syncWindowData(params, JSON.parse(key))
+      }
+    })
+
+    return Promise.allSettled(uploadParamsList)
   }
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
-    const closePromises = [...this.openedBrowserMap.keys()].map(dirId => this.close(dirId))
-    return Promise.allSettled(closePromises)
+    return this.batchClose([...this.openedBrowserMap.keys()])
   }
 
   /** 停止打开后续窗口 */
@@ -236,7 +261,18 @@ export class BrowserManager {
     return winInfoList
   }
 
-  /** 每隔 5分钟 定时同步窗口状态 */
+  /** 同步窗口数据 */
+  async syncWindowData(uploadParams: Record<string, any>[], headers: any) {
+    console.debug('syncWindowData uploadParams', uploadParams)
+    console.debug('syncWindowData headers', headers)
+    await API.window.userMdfWindowSyncV2Create(uploadParams, { headers }).then((res) => {
+      console.log('user_mdf_window_sync_v2 uploadData', res)
+    }).catch((error) => {
+      console.error('user_mdf_window_sync_v2 uploadData error: ', error)
+    })
+  }
+
+  /** 每隔 30分钟 定时同步窗口状态 */
   async #syncWindowStatus() {
     setInterval(() => {
       const groupByWorkspaceId = Object.groupBy([...this.openedBrowserMap.values()], item => item.winInfo.workspaceId!)
@@ -250,6 +286,28 @@ export class BrowserManager {
           console.error(`定时同步窗口状态失败`, e)
         })
       })
-    }, 1000 * 60 * 5)
+    }, 1000 * 60 * 30)
+  }
+
+  /** 同步窗口打开状态 */
+  async syncWindowOpenStatus() {
+    this.syncWindowOpenStatusController?.abort()
+    this.syncWindowOpenStatusController = new AbortController()
+    const { signal } = this.syncWindowOpenStatusController
+    await scheduler.wait(1000 * 3, { signal })
+
+    const browserItems = [...this.openedBrowserMap.values()]
+    const needSyncItems = browserItems.filter(item => !item.isSyncedWindowOpenStatus)
+    const groupByWorkspaceId = Object.groupBy(needSyncItems, item => item.winInfo.workspaceId!)
+
+    Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
+      const params = browserItems!.map(item => ({ id: item.winInfo.id, openStatus: true }))
+      API.window.userMdfWindowSyncV2Create(params, { headers: { workspaceId } }).then(() => {
+        console.log(`启动时同步窗口打开状态`, params)
+        browserItems?.forEach(item => {
+          item.isSyncedWindowOpenStatus = true
+        })
+      })
+    })
   }
 }

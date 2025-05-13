@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { $t } from '/@/locales'
+
 interface Tier {
   start: number
   end: number
@@ -377,7 +379,7 @@ onMounted(() => {
       <div class="absolute top-1/2 -translate-1/2 thumb" :class="[isDragging ? 'thumb-dragging' : '']" :style="{
         left: `${currentPosition}%`,
         transition: isDragging ? 'none' : 'all 0.3s ease',
-      }" :data-count="currentCount">
+      }" :data-count="$t('{count} 个窗口', { count: currentCount })">
         <div class="cursor-grab active:cursor-grabbing thumb-tooltip" />
         <!-- Thumb Extra -->
         <div ref="thumbex" class="absolute top-15" :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">

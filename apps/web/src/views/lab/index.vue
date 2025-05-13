@@ -11,7 +11,7 @@ watch(who, () => {
 </script>
 
 <template>
-  <Tabs v-model:value="who" class="h-full w-full">
+  <Tabs v-model:value="who" class="h-full w-full lab-container">
     <TabList>
       <Tab value="0">
         原神
@@ -25,7 +25,7 @@ watch(who, () => {
     </TabList>
     <TabPanels>
       <TabPanel value="0">
-        <QiYuan />
+        <QiYuan text="原神" />
       </TabPanel>
       <TabPanel value="1">
         <YinHao />
@@ -40,9 +40,14 @@ watch(who, () => {
 <style lang="scss" scoped>
 :deep(.p-tabpanels) {
   flex: 1;
+  background: var(--Colors-background-bg-page, #FFF);
 
   .p-tabpanel {
     height: 100%;
   }
+}
+
+.lab-container {
+  background: var(--Colors-background-bg-page, #FFF);
 }
 </style>

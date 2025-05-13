@@ -9,14 +9,14 @@ import { useUserStore } from '/@/stores/user'
 import LockScreen from '/@/components/lock-screen/index.vue'
 
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME);
-const [dialog] = useDialog()
+const [showModal] = useDialog()
 const router = useRouter()
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
 const kickedOut = (params: MittEvents['kickedOut']) => {
   hidePageLoading()
-  dialog.showModal({
+  showModal({
     header: $t('登录提醒'),
     style: {
       width: '420px',

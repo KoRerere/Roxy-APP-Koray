@@ -1,10 +1,11 @@
 import { BrowserWindow, } from 'electron'
-import { appConfig, ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { setTimeout } from 'timers/promises'
 import { isPackaged } from '/@/utils'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
+import { createWindow } from '/@/utils/browser-window'
 
 export function getSynchronizerWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_WINDOW_ID)
@@ -23,7 +24,8 @@ export async function createSynchronizerWindow() {
     return
   }
 
-  const win = new BrowserWindow({
+  const win = createWindow({
+    roxyWindowId: ROXY_SYNC_CONTROL_WINDOW_ID,
     width: 556,
     height: 472,
     resizable: false,
@@ -32,11 +34,8 @@ export async function createSynchronizerWindow() {
     hasShadow: true,
     skipTaskbar: true,
     show: false,
-    webPreferences: {
-      preload: appConfig.preloadFilePath
-    },
   })
-  win[ROXY_WINDOW_ID_KEY] = ROXY_SYNC_CONTROL_WINDOW_ID
+
   win.loadURL(await getWebEntryUrl('#/sync-control-synchronizer'))
   // win.setShape([])
   // 设置窗口部分点击可穿透
@@ -46,7 +45,7 @@ export async function createSynchronizerWindow() {
   }
   handleWindowMove(win)
   win.on('close', async () => {
-    await setTimeout(1500)
+    win.destroy()
     // 如果操作栏窗口存在，则不关闭
     if (!getSynchronizerActionBarWindow()) {
       closeAllSyncDialogs()

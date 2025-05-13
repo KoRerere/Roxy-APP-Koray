@@ -21,10 +21,10 @@
     "openapi": "npx tsx openapi.config.ts && npm run build"
   },
   "peerDependencies": {
-    "axios": "^1.7.4"
+    "axios": "catalog:"
   },
   "devDependencies": {
-    "swagger-typescript-api": "^13.0.23",
+    "swagger-typescript-api": "^13.1.3",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:"
   }

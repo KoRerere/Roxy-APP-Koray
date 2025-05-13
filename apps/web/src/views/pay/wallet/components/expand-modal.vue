@@ -21,7 +21,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 const { userPayInfo } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 
-const selectedPayway = ref(PayWay.Card)
+const selectedPayway = ref()
 const disabledMethods = ref<PayWay[]>([])
 const loading = ref(false)
 const min = 0
@@ -42,6 +42,11 @@ const buyList = ref([
   }
 ])
 
+const supportPayWays = computed(() => {
+  return Object.values(PayWay)
+    .map((item: PayWay) => ({ value: item, discount: (item === PayWay.Balance && walletAmount.value) ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
+})
+
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
 
 const disabled = computed(() => !buyList.value.some(item => item.value > 0) || (loading.value || selectedPayway.value === PayWay.Balance && finalAmount.value > userPayInfo.value?.balance))
@@ -61,10 +66,6 @@ const walletAmount = computed(() => {
   const discount: number[] = Object.values({ ...otherDiscount, walletDiscount: userPayInfo.value.walletDiscount })
   const _amount = currency(allAmount.value).multiply(discountCalculate(discount)).value
   return currency(allAmount.value).multiply(discountCalculate(Object.values(otherDiscount))).subtract(_amount).value
-})
-
-const supportPayWays = computed(() => {
-  return Object.values(PayWay).map((item: PayWay) => ({ value: item, discount: (item === PayWay.Balance && walletAmount.value) ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
 })
 
 const finalAmount = computed(() => currency(allAmount.value).multiply(discountCalculate(Object.values(allDiscount.value))).value)
@@ -127,6 +128,12 @@ onMounted(() => {
   _props.value = props
   _onConfirm.value = onConfirm
   _onCancel.value = onCancel
+  buyList.value.forEach(item => {
+    if (item.key === props.defaultType) {
+      Reflect.set(item, 'value', 1)
+    }
+  })
+  querySupportPayway()//部分地区不支持某些支付，初始化时查询一次
 })
 
 async function querySupportPayway() {
@@ -135,11 +142,11 @@ async function querySupportPayway() {
   loading.value = false
   onlyErrorToast(code, msg)
   if (code !== 0) return
-  const supportPayway = Object.values(data).flat().concat(PayWay.Balance)
+  const supportPayway = Object.values(data).flat().concat(PayWay.Balance) as PayWay[]
   disabledMethods.value = Object.values(PayWay).filter(item => !supportPayway.includes(item))
 
   if (!supportPayway.includes(selectedPayway.value)) {
-    selectedPayway.value = supportPayway[0] as PayWay
+    selectedPayway.value = supportPayway[0] !== PayWay.Card ? PayWay.Balance : supportPayway[0]
   }
 }
 

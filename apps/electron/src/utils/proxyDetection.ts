@@ -30,6 +30,15 @@ export interface ProxyDetectionResult {
   region: string;
 }
 
+
+// 检测超时时间
+const TIMEOUT = 10000;
+
+const commonAxiosConfig = {
+  timeout: TIMEOUT,
+  adapter: 'http'
+}
+
 const getDefaultCheckChannel = () =>
   store.ipChecker || "http://iprust.io/ip.json";
 
@@ -61,8 +70,6 @@ export type ProxyDetectionParams = Pick<
   systemProxySwitch: boolean;
 };
 
-// 检测超时时间
-const TIMEOUT = 10000;
 
 /** 根据协议获取检测方法 */
 function getCheckFunction(protocol: ProtocolMapType) {
@@ -236,7 +243,7 @@ function logProxyConfig(params: ProxyDetectionParams, name = ``) {
  */
 async function noProxy(winInfo: ProxyDetectionParams) {
   const { checkChannel = getDefaultCheckChannel() } = winInfo;
-  const response = await axios.get(checkChannel, { timeout: TIMEOUT });
+  const response = await axios.get(checkChannel, commonAxiosConfig);
   response.data.country ||=
     response.data.country_name || response.data.country_long;
   response.data.country_code ||= response.data.country_short;
@@ -285,7 +292,7 @@ async function checkHttpProxy(
       [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
         httpUrl,
         {
-          timeout: TIMEOUT,
+          ...commonAxiosConfig,
           rejectUnauthorized: false,
         },
       ),
@@ -295,7 +302,7 @@ async function checkHttpProxy(
 
   const response = await axios({
     url: checkChannel,
-    timeout: TIMEOUT,
+    ...commonAxiosConfig,
     maxRedirects: 0,
     proxy: false,
     ...proxyConfig,
@@ -320,15 +327,13 @@ async function checkSocks5Proxy(parmes: any) {
 
   const url = `socks5h://${auth}${host}:${port}`;
   console.log(`SocksProxyAgent url`, url);
-  const agent = new SocksProxyAgent(url, {
-    timeout: TIMEOUT,
-  });
+  const agent = new SocksProxyAgent(url, commonAxiosConfig);
 
   const response = await axios.get(checkChannel, {
     // headers: {
     //   Host: new URL(checkChannel).host
     // },
-    timeout: TIMEOUT,
+    ...commonAxiosConfig,
     proxy: false,
     [checkChannel.startsWith("https") ? "httpsAgent" : "httpAgent"]: agent,
   });

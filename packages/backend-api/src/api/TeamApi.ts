@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -35,7 +36,10 @@ export class TeamApi<SecurityDataType = unknown> {
    * @request GET:/user_get_member_info_by_workspace
    * @response `200` `UserGetMemberInfoByWorkspaceListData`
    */
-  userGetMemberInfoByWorkspaceList = (query: UserGetMemberInfoByWorkspaceListParams, params: RequestParams = {}) =>
+  userGetMemberInfoByWorkspaceList = (
+    query: UserGetMemberInfoByWorkspaceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetMemberInfoByWorkspaceListData, any>({
       path: `/user_get_member_info_by_workspace`,
       method: "GET",
@@ -52,7 +56,10 @@ export class TeamApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_team_info_v2
    * @response `200` `UserMdfTeamInfoV2CreateData`
    */
-  userMdfTeamInfoV2Create = (data: UserMdfTeamInfoV2CreatePayload, params: RequestParams = {}) =>
+  userMdfTeamInfoV2Create = (
+    data: UserMdfTeamInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfTeamInfoV2CreateData, any>({
       path: `/user_mdf_team_info_v2`,
       method: "POST",
@@ -70,7 +77,10 @@ export class TeamApi<SecurityDataType = unknown> {
    * @request POST:/user_del_team_info
    * @response `200` `UserDelTeamInfoCreateData`
    */
-  userDelTeamInfoCreate = (data: UserDelTeamInfoCreatePayload, params: RequestParams = {}) =>
+  userDelTeamInfoCreate = (
+    data: UserDelTeamInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelTeamInfoCreateData, any>({
       path: `/user_del_team_info`,
       method: "POST",

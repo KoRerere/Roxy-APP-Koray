@@ -47,12 +47,12 @@ export const webUpdater = new class WebUpdater {
   }
   /** 最新 web 资源版本号文件地址 */
   get versionUrl() {
-    return `${this.webDomain}/public/package/web/${isMac ? 'macOS' : 'Windows'}/version.json`
+    return `${this.webDomain}/public/package/web/${app.getVersion()}/${isMac ? 'macOS' : 'Windows'}/version.json`
   }
 
   /** web 资源包下载地址 */
   get downloadUrl() {
-    return `${this.webDomain}/public/package/web/${isMac ? 'macOS' : 'Windows'}/dist.zip`
+    return `${this.webDomain}/public/package/web/${app.getVersion()}/${isMac ? 'macOS' : 'Windows'}/dist.zip`
   }
 
   constructor() {
@@ -101,11 +101,13 @@ export const webUpdater = new class WebUpdater {
       // 获取本地版本信息
       const localVersion = await getLocalWebVersion()
       console.log('[WebUpdater] localVersion', localVersion)
+      console.log('[WebUpdater] remoteVersion', remoteVersionInfo.version)
       // 检查是否需要更新
       if (compare(remoteVersionInfo.version, localVersion, '>')) {
         this.#updateMessageData.originUpgradeData = remoteVersionInfo
         this.#updateMessageData.version = remoteVersionInfo.version
         this.#updateMessageData.releaseTime = remoteVersionInfo.releaseTime
+        this.#updateMessageData.currentVersion = localVersion
         console.log('[WebUpdater] downloading...')
         const response = await axios({
           url: this.downloadUrl,

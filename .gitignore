@@ -41,4 +41,5 @@ yarn-error.log*
 vite.config.ts.*
 apps/web/public/version
 apps/web/public/minimum_app_version
+apps/web/public/current_app_version
 apps/electron/logs

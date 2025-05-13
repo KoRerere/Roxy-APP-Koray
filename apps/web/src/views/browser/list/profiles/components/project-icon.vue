@@ -4,20 +4,14 @@ import { isEmptyValue } from '/@/utils'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 
-const props = defineProps({
-  labelIds: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  projectId: {
-    type: [Number, String],
-    default: undefined,
-  },
-  projectName: {
-    type: String,
-    default: undefined,
-  },
-})
+interface Props {
+  labels: any[]
+  projectId?: number
+  projectName?: string
+}
+
+const props = defineProps<Props>()
+
 const emit = defineEmits(['update'])
 const { getProjects } = useMateGroup()
 const role = useRoleStore()
@@ -40,7 +34,11 @@ async function openMenu(event: any) {
     menuProps: {
       onHide: ({ value: projectId }: any) => {
         if (!isEmptyValue(projectId) && projectId !== value) {
-          emit('update', { projectId: Number(projectId), labelIds: deleteMembers() })
+          emit('update', {
+            projectName: operation.find(item => item.value === projectId)!.label,
+            projectId: Number(projectId),
+            ...deleteMembers()
+          })
         }
       }
     }
@@ -51,7 +49,9 @@ async function openMenu(event: any) {
  * 切换项目删除人员标签
  */
 function deleteMembers() {
-  return props.labelIds.filter((id: any) => !`${id}`.startsWith('u_'))
+  const labelInfo = props.labels.filter(item => !`${item.labelId}`.startsWith('u_'))
+  const labelIds = labelInfo.map(item => item.labelId)
+  return { labelInfo, labelIds }
 }
 </script>
 

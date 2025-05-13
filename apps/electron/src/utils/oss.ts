@@ -53,7 +53,7 @@ const _aliOSS = new class AliOSS {
       bucket: data.bucket,
       stsToken: data.securityToken,
     })
-    console.log('aliOSS init success', data)
+    console.debug('aliOSS init success', data)
     // 避免存在多个定时器
     // clearTimeout(this.#timer)
     // 提前 2 分钟刷新

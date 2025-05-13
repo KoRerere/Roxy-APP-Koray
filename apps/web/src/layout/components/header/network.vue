@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { isNotNil } from 'es-toolkit'
 import { useNetworkStore } from '/@/stores/network'
+import { useUserStore } from '/@/stores/user'
 
 const { setNetworkInfo } = useNetworkStore()
+const userStore = useUserStore()
 
 let retryCount = 0
-const loading = ref(false)
+const loading = ref(true)
 const defaultProxyInfo = {
   city: '',
   ip: '',
@@ -12,17 +15,13 @@ const defaultProxyInfo = {
 const proxyInfo = ref(defaultProxyInfo)
 
 async function detectNetwork() {
-  // if (loading.value) {
-  //   return
-  // }
-
   loading.value = true
   try {
     await electronAPI.send('proxy:getSystemProxy')
     const result = await electronAPI.send('proxy:detectNetwork')
     proxyInfo.value.city = `${result.country_code}/${result.city}`
     proxyInfo.value.ip = result.ip
-    console.log('detectNetwork result', result)
+    console.log('detectNetwork result', result, proxyInfo)
     setNetworkInfo(result)
   } catch (error) {
     proxyInfo.value = defaultProxyInfo
@@ -37,15 +36,21 @@ async function detectNetwork() {
   }
 }
 
+watch(() => userStore.userConfig?.systemProxySwitch, (val, oldVal) => {
+  if (isNotNil(val) && isNotNil(oldVal)) {
+    detectNetwork()
+  }
+})
+
 window.addEventListener('online', detectNetwork)
 // window.addEventListener('offline', detectNetwork)
-requestIdleCallback(detectNetwork)
+setTimeout(detectNetwork, 2000)
 </script>
 
 <template>
   <div class="flex items-center gap-1">
-    <RxButton :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" severity="secondary" outlined size="xs"
-      @click="detectNetwork" />
+    <RxButton class="shrink-0" :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" severity="secondary" outlined
+      size="xs" @click="detectNetwork" />
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />

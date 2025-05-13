@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -46,7 +47,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request GET:/user_get_proxy_module
    * @response `200` `UserGetProxyModuleListData`
    */
-  userGetProxyModuleList = (query: UserGetProxyModuleListParams, params: RequestParams = {}) =>
+  userGetProxyModuleList = (
+    query: UserGetProxyModuleListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetProxyModuleListData, any>({
       path: `/user_get_proxy_module`,
       method: "GET",
@@ -63,7 +67,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request POST:/user_add_proxy_module
    * @response `200` `UserAddProxyModuleCreateData`
    */
-  userAddProxyModuleCreate = (data: UserAddProxyModuleCreatePayload, params: RequestParams = {}) =>
+  userAddProxyModuleCreate = (
+    data: UserAddProxyModuleCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddProxyModuleCreateData, any>({
       path: `/user_add_proxy_module`,
       method: "POST",
@@ -81,7 +88,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_proxy_module
    * @response `200` `UserMdfProxyModuleCreateData`
    */
-  userMdfProxyModuleCreate = (data: UserMdfProxyModuleCreatePayload, params: RequestParams = {}) =>
+  userMdfProxyModuleCreate = (
+    data: UserMdfProxyModuleCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfProxyModuleCreateData, any>({
       path: `/user_mdf_proxy_module`,
       method: "POST",
@@ -115,7 +125,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request POST:/user_save_proxy_table_sort_order
    * @response `200` `UserSaveProxyTableSortOrderCreateData`
    */
-  userSaveProxyTableSortOrderCreate = (data: UserSaveProxyTableSortOrderCreatePayload, params: RequestParams = {}) =>
+  userSaveProxyTableSortOrderCreate = (
+    data: UserSaveProxyTableSortOrderCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSaveProxyTableSortOrderCreateData, any>({
       path: `/user_save_proxy_table_sort_order`,
       method: "POST",
@@ -133,7 +146,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request POST:/user_update_proxy_table_rows
    * @response `200` `UserUpdateProxyTableRowsCreateData`
    */
-  userUpdateProxyTableRowsCreate = (data: UserUpdateProxyTableRowsCreatePayload, params: RequestParams = {}) =>
+  userUpdateProxyTableRowsCreate = (
+    data: UserUpdateProxyTableRowsCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpdateProxyTableRowsCreateData, any>({
       path: `/user_update_proxy_table_rows`,
       method: "POST",
@@ -183,7 +199,10 @@ export class ProxyApi<SecurityDataType = unknown> {
    * @request POST:/user_del_proxy_module_v2
    * @response `200` `UserDelProxyModuleV2CreateData`
    */
-  userDelProxyModuleV2Create = (data: UserDelProxyModuleV2CreatePayload, params: RequestParams = {}) =>
+  userDelProxyModuleV2Create = (
+    data: UserDelProxyModuleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelProxyModuleV2CreateData, any>({
       path: `/user_del_proxy_module_v2`,
       method: "POST",

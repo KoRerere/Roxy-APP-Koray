@@ -7,6 +7,7 @@ import language from '/@/constants/language.json'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxyAddress, isPackaged } from '/@/utils'
+import { readFileSync } from 'node:fs'
 
 function getCityCode(key: string) {
   return language.find(item => item.key === key)?.code
@@ -35,6 +36,27 @@ export function encryptFingerprintConfig(data) {
   ])
   return encryptedValue.toString('base64')
 }
+
+/** 获取远程配置 */
+export const getRemoteConfig = (() => {
+  let lastTime = 0
+  let config: Record<string, any> = {}
+  return () => {
+    try {
+      const currentTime = Date.now()
+      if (currentTime - lastTime > 1000 * 60 * 5) {
+        const configFile = readFileSync(join(appConfig.currentWebDir, 'config.json'))
+        config = JSON.parse(configFile.toString())
+        lastTime = currentTime
+      }
+      return config
+    }
+    catch (error) {
+      console.error(error)
+      return config
+    }
+  }
+})()
 
 /** 生成浏览器指纹配置 */
 export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<string, any> = {}) {
@@ -460,5 +482,9 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
         shortcutKey: `${prefixKey} ${simulation.shortcutKey}`,
       }
     },
+    googleApi: {
+      ...getRemoteConfig()?.googleApi,
+      enable: store.googleLoginEnable,
+    }
   }
 }

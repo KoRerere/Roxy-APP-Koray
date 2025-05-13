@@ -73,10 +73,10 @@ const shortcutKeyCallbackMap: Record<ShortcutKey, () => any> = {
   //   openBatchInputsDialog({ tab: 'random' })
   // },
   /** 统一标签页 */
-  // unifiedTabs: () => {
-  //   console.log('统一标签页 的快捷键被触发')
-  //   SyncControlUtil.unifyTabs()
-  // },
+  unifiedTabs: () => {
+    console.log('统一标签页 的快捷键被触发')
+    SyncControlUtil.unifyTabs()
+  },
   /** 关闭其他标签页 */
   closeOtherTabs: () => {
     console.log('关闭其他标签页 的快捷键被触发')

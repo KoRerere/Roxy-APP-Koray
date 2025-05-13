@@ -68,7 +68,7 @@ function handleMouseleave() {
   console.log('handleMouseleave')
   electronAPI.send('app:set-ignore-mouse-events', true, { forward: true })
   removeHoverTimer = setTimeout(() => {
-    actionBarRef.value!.classList.remove('hover')
+    actionBarRef.value?.classList.remove('hover')
   }, 1900)
   // actionBarRef.value?.style.setProperty('-webkit-app-region', 'no-drag')
   // 触发 menuBar 的失焦事件，隐藏菜单

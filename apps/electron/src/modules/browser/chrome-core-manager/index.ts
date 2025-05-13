@@ -25,7 +25,8 @@ export const chromeCoreManager = new (class ChromeCoreManager {
 
   /** 正在下载中的内核 */
   private downloadingMap = new Map<string, Promise<any>>();
-
+  /** msgCallback task map */
+  private msgCallbackTaskMap = new Map<string, ((payload: Partial<ResourceUpdateMessage>) => void)[]>();
   /** 正在使用中的内核 */
   get usingCores() {
     const cores = [...browserManager.openedBrowserMap.values()].map(
@@ -100,7 +101,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       .finally(() => {
         this.fetchAvailableCoreListPromise = null;
       });
-    console.log("user_get_core_upgrade", result);
+    console.debug("user_get_core_upgrade", result);
     this.availableCoreList = result.data?.rows || [];
 
     if (this.availableCoreList.length) {
@@ -113,11 +114,11 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   /** 根据内核版本获取对应的内核执行文件 */
   async getCoreExePath(
     coreVersion: string,
-    msgCallback?: (msg: string) => void,
+    msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void,
   ) {
     if (!this.availableCoreList.length) {
       await this.fetchAvailableCoreList().catch((error) => {
-        msgCallback?.($t("获取内核列表失败"));
+        msgCallback?.({ description: $t("获取内核列表失败") });
         return Promise.reject(error);
       });
     }
@@ -141,7 +142,6 @@ export const chromeCoreManager = new (class ChromeCoreManager {
 
     // 如果本地不存在该内核或版本文件不存在，则下载
     if (!isExeExists || !isVersionFileExists) {
-      msgCallback?.($t("正在下载内核"));
       // 等待下载完成
       await this.downloadCore(coreVersion, msgCallback);
     }
@@ -154,7 +154,6 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       );
       // 如果本地内核版本小于远程内核版本
       if (compare(localCoreVersion.trim(), availableCore.version, "<")) {
-        msgCallback?.($t("正在下载内核"));
         // 重新下载
         await this.downloadCore(coreVersion, msgCallback);
       }
@@ -169,8 +168,15 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   }
 
   /** 下载内核 */
-  async downloadCore(coreVersion: string, msgCallback?: (msg: string) => void) {
+  async downloadCore(coreVersion: string, msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void) {
     if (this.downloadingMap.has(coreVersion)) {
+      if (msgCallback) {
+        if (this.msgCallbackTaskMap.has(coreVersion)) {
+          this.msgCallbackTaskMap.get(coreVersion)?.push(msgCallback);
+        } else {
+          this.msgCallbackTaskMap.set(coreVersion, [msgCallback]);
+        }
+      }
       return this.downloadingMap.get(coreVersion);
     }
 
@@ -191,16 +197,29 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       coreVersion,
     };
 
+    const doMsgCallbacks = () => {
+      ipcMain.send("app:resource-update", payload);
+      msgCallback?.(payload)
+      if (this.msgCallbackTaskMap.has(coreVersion)) {
+        this.msgCallbackTaskMap.get(coreVersion)?.forEach((callback) => {
+          callback(payload);
+        });
+      }
+    }
+
     const unzipTask = async () => {
       // 删除本地内核
       await rm(this.genCoreDir(coreVersion), {
         recursive: true,
         force: true,
       });
-      msgCallback?.($t("正在解压内核"));
+      payload.description = $t("正在解压内核");
+      doMsgCallbacks()
       // 解压缩内核
       await unzipFile(outputZipPath, appConfig.chromeBinDir);
-      msgCallback?.($t("内核解压完成"));
+      payload.description = $t("内核解压完成");
+      payload.percent = 100;
+      doMsgCallbacks()
       // 异步删除下载的 zip 文件，不需要等待
       rm(outputZipPath);
     }
@@ -214,20 +233,22 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           outputZipPath,
           (progress) => {
             // console.log(`Download progress: ${progress}%`)
-            payload.percent = progress;
+            payload.percent = Math.min(progress, 99);
             payload.status = "downloading";
-            ipcMain.send("app:resource-update", payload);
+            payload.description = $t("正在下载内核");
+            doMsgCallbacks()
           },
         ).catch((error) => {
           console.error("downloadCore downloadZipFile error", error);
           payload.status = "failed";
-          ipcMain.send("app:resource-update", payload);
-          return Promise.reject(new Error($t("下载内核失败")));
+          payload.description = $t("下载内核失败");
+          doMsgCallbacks()
+          return Promise.reject(new Error(payload.description));
         });
+        await unzipTask();
         payload.status = "downloaded";
         payload.description = $t("内核下载完成");
-        ipcMain.send("app:resource-update", payload);
-        await unzipTask();
+        doMsgCallbacks()
       } catch (error: any) {
         console.dir(error, { depth: null });
         console.error("downloadCore error", error);
@@ -262,6 +283,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       } finally {
         // 无论成功与否，记得将其从下载队列中移除
         this.downloadingMap.delete(coreVersion);
+        this.msgCallbackTaskMap.delete(coreVersion);
       }
     };
 

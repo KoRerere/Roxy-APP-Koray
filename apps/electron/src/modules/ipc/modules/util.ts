@@ -5,14 +5,22 @@ import url from 'node:url'
 import { mediaProtocolName } from '/@/constants'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
-import { decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo } from '/@/utils'
+import { decryptAESGCM, encryptAESGCM, genRandomFonts, getCommonRequestHeaders, getDeviceId, getDeviceInfo, getUTCOffsetHours } from '/@/utils'
 import { genRandomFingerprint, randomFingerprintFuncMap } from '/@/utils/randomFingerprint'
 import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { store } from '/@/modules/store'
 import { getPortPromise } from 'portfinder'
-import { globalShortcut } from 'electron'
+import { app, globalShortcut } from 'electron'
 
 export function setupUtilIpc(ipcMain: IPCMainInstance) {
+
+  /** 获取系统信息 */
+  ipcMain.on('util:getSystemInfo', (event,) => {
+    return {
+      language: app.getLocale(),
+      UTCOffsetHours: getUTCOffsetHours(),
+    }
+  })
 
   /** 生成 api key */
   ipcMain.on('util:genApiKey', (event,) => {
@@ -21,11 +29,7 @@ export function setupUtilIpc(ipcMain: IPCMainInstance) {
 
   /** 将本地绝对路径转为自定义媒体协议路径 */
   ipcMain.on('util:toMediaPath', (event, pathname) => {
-    return url.format({
-      protocol: mediaProtocolName,
-      slashes: true,
-      pathname,
-    })
+    return `${mediaProtocolName}:${pathname}`
   })
 
   /** 删除工作空间 */

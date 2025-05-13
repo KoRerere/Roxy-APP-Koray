@@ -58,7 +58,7 @@ export function setupSyncControlIpc(ipcMain: IPCMainInstance) {
         如果没有取到，就认为启动失败
    * */
   ipcMain.on('syncControl:start', async (event, dirIds) => {
-    SyncControlUtil.start(dirIds)
+    return SyncControlUtil.start(dirIds)
   })
 
   /** 停止同步窗口 */

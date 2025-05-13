@@ -7,7 +7,6 @@ import { $t } from '/@/locales';
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
-import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useProjectStore } from '/@/stores/project'
 
 const { windowTransferNo } = defineProps<{
@@ -20,7 +19,6 @@ const router = useRouter()
 const { handleBusinessCode } = useHandleBusinessCode()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects: getProjectList } = useProjectStore()
-const [dialogInstance] = RxUseDialog()
 const workspaceStore = useWorkspaceStore()
 const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName!.slice(0, 3).toLocaleUpperCase()!)
 
@@ -117,14 +115,16 @@ async function toProject() {
         </template>
         <template #transfer="{ data }">
           <div class="flex items-center">
-            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon"
+              :class="{ '!bg-black': !data.workspacePicture }"
               :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
             <div class="ml-3 space-name">{{ data.workspaceName }}</div>
           </div>
         </template>
         <template #from="{ data }">
           <div class="flex items-center gap-2">
-            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)" :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
+            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)"
+              :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
             <span class="space-name">{{ data.operatorUserName }}</span>
           </div>
         </template>

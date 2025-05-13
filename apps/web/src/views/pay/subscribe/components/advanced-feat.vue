@@ -53,6 +53,7 @@ const advanced = computed(() => [
   }
 
   &-value {
+    min-width: 150px;
     color: #000;
     font-family: Inter;
     font-size: 14px;

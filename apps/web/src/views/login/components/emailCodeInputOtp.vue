@@ -114,6 +114,7 @@ onBeforeMount(() => {
 <template>
   <div class="container">
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
+    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter"></RxButton>
     <SignCardHeader :subTitle="$t('请检查您的邮箱')">
       <template #description>
         <div class="description">
@@ -187,6 +188,10 @@ onBeforeMount(() => {
       /* 166.667% */
     }
   }
+}
+
+.back-first {
+  margin-left: -12px;
 }
 
 .inputotp {

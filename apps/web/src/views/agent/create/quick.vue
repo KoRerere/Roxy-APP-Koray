@@ -3,32 +3,31 @@ import { getFormData } from '/@/utils'
 import { getInputs } from '/@/views/agent/create/components/form-inputs'
 import ProxiesForm from '/@/views/agent/create/components/proxies-form.vue'
 
-const props = defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
-  },
-})
-const emits = defineEmits(['confirm'])
+interface Props {
+  data?: Record<string, any>
+  onConfirm?: (formData: Record<string, any>) => void | Promise<void>
+}
 
-const formInputs = ref()
-const original = ref(props.data)
+const { data, onConfirm = () => { } } = defineProps<Props>()
+
 const proxiesFormRef = useTemplateRef('proxiesForm')
+const formInputs = ref()
+const original = ref(data)
 
-async function onConfirm() {
+async function _onConfirm() {
   try {
     if (!proxiesFormRef.value?.visible) {
       await proxiesFormRef.value?.testProxy()
     }
     const formData = getFormData(formInputs.value, original.value)
-    emits('confirm', { ...formData })
+    await onConfirm({ ...formData })
   }
   catch (error) {
     console.log(error)
   }
 }
 onBeforeMount(async () => {
-  formInputs.value = await getInputs(props.data || {})
+  formInputs.value = await getInputs(data)
 })
 </script>
 
@@ -39,7 +38,7 @@ onBeforeMount(async () => {
     </div>
     <div class="flex items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="onConfirm" />
+        <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="_onConfirm" />
       </div>
     </div>
   </div>
@@ -48,7 +47,7 @@ onBeforeMount(async () => {
 <style lang="scss" scoped>
 .account-content {
   padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
-  width: var(--width-xs, 384px);
+  min-width: var(--width-xs, 384px);
 }
 
 .button-group {

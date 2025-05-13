@@ -6,21 +6,21 @@ import LanguageSelect from '/@/components/business/language-select/index.vue'
 import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { decryptAESGCM, hidePageLoading, showPageLoading } from '/@/utils'
+import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback, type OauthLoginType } from '/@/utils'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
 import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
 
+const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
-const { getOfficialWebsite } = useSimpleLocale()
-const { setToken, setPassword, initUserInfo, userInfo } = useUserStore()
+const simpleLocaleStore = useSimpleLocale()
+const { getOfficialWebsite, } = simpleLocaleStore
+const { setToken, setPassword, initUserInfo, userInfo, setLoginWay } = useUserStore()
 const { rememberMe, password } = storeToRefs(useUserStore())
 const router = useRouter()
 const toast = useToast()
-const commonHeaders = { ['R-DEVICE-ID']: '' }
 const signFormData = ref<LoginCreatePayload>({
   user_name: userInfo.email || '',
   password: '',
@@ -28,7 +28,7 @@ const signFormData = ref<LoginCreatePayload>({
 
 const currentComp = ref<CurrentComp>('signForm')
 const currentCompProps = ref<Recordable>()
-const [dialog] = useDialog()
+const [showModal] = useDialog()
 
 async function decryptPassword() {
   if (password.value) {
@@ -56,7 +56,7 @@ async function handleSubmit() {
     return
   }
 
-  const { code, data, msg } = await API.base.loginCreate(signFormData.value, { headers: await getCommonHeaders() })
+  const { code, data, msg } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
     mixpanel.track('login', { method: 'password', success: false, error: msg })
@@ -64,10 +64,10 @@ async function handleSubmit() {
     return
   }
   if (data.workspaceId === 0) {
-    dialog.showModal({
+    showModal({
       slots: {
-        container: ({ closeCallback }) => (
-          <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data)} />
+        container: ({ hideModal }) => (
+          <MigrationTips closeCallback={hideModal} token={data.token} onFinish={() => afterLogin(data)} />
         ),
       },
     })
@@ -77,12 +77,14 @@ async function handleSubmit() {
   await afterLogin(data)
 }
 
-async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | 'google' | 'github' = 'password') {
+async function afterLogin(loginData: LoginCreateData['data'], method: 'password' | OauthLoginType = 'password') {
   setToken(loginData.token)
   console.log('rememberMe', rememberMe.value)
   await initUserInfo()
   showPageLoading()
   setPassword(rememberMe.value ? signFormData.value.password : '')
+  setLoginWay(method)
+  API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale })
   await router.push({ name: 'home' })
   mixpanel.track('login', { method })
 }
@@ -90,7 +92,7 @@ async function afterLogin(loginData: LoginCreateData['data'], method: 'password'
 /** 是否继续登录，true 为继续，false 停止 */
 async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
   const { promise, resolve } = Promise.withResolvers<boolean>()
-  const { code, data, msg } = await API.base.checkOtherDeviceLoginList(params, { headers: await getCommonHeaders() })
+  const { code, data, msg } = await API.base.checkOtherDeviceLoginList(params)
 
   if (code !== 0) {
     toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
@@ -103,7 +105,7 @@ async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
   if (!has_other_login) {
     resolve(true)
   } else {
-    dialog.showModal({
+    showModal({
       header: $t('登录提醒'),
       style: {
         width: '420px',
@@ -126,62 +128,46 @@ async function checkContinueLogin(params: CheckOtherDeviceLoginListParams) {
   return promise
 }
 
-// TODO 这里后面就要去掉了
-async function googleAuth2Login(googleToken: string) {
-  const isContinueLogin = await checkContinueLogin({ googleToken, login_type: 'google' })
-
-  if (!isContinueLogin) {
-    return
-  }
-
-
-  const { code, data, msg = $t('登录失败') } = await API.base.loginGoogleV2Create({ googleToken }, { headers: await getCommonHeaders() })
-  if (code === 0) {
-    if (data.workspaceId === 0) {
-      dialog.showModal({
-        slots: {
-          container: ({ closeCallback }) => (
-            <MigrationTips closeCallback={closeCallback} token={data.token} onFinish={() => afterLogin(data)} />
-          ),
-        },
-      })
-      return
-    }
-    afterLogin(data, 'google')
-  }
-  else {
-    mixpanel.track('login', { method: 'google', success: false, error: msg })
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
-    return Promise.reject(msg)
-  }
-}
-
 function setCurrentComponent(comp: CurrentComp, compProps?: Recordable) {
   currentComp.value = comp
   currentCompProps.value = compProps
 }
 
-const cancelCallback = window.electronAPI.on('oauth2:google-callback', async (searchStr) => {
-  console.log('oauth2:google-callback', searchStr)
-  const oauthCode = new URLSearchParams(searchStr).get('code')
-  const source = new URLSearchParams(searchStr).get('source')
+useOauth2Callback(async (params) => {
+  const { oauthCode, source, api } = params
   if (oauthCode) {
-    if (source === 'google') {
-      googleAuth2Login(oauthCode)
-    }
-    else if (source === 'github') {
-      const isContinueLogin = await checkContinueLogin({ githubToken: oauthCode, login_type: 'github' })
+    try {
+      signFormRef.value?.setSubmitLoading(true)
+      const isContinueLogin = await checkContinueLogin({ login_token: oauthCode })
 
       if (!isContinueLogin) {
         return
       }
-      const { code, data, msg = $t('登录失败') } = await API.base.loginGithubCreate({ githubToken: oauthCode }, { headers: await getCommonHeaders() })
+
+      const { code, data, msg = $t('登录失败') } = await api()
+
       if (code === 0) {
-        afterLogin(data, 'github')
+        if (source === 'google' && data.workspaceId === 0) {
+          showModal({
+            slots: {
+              container: ({ hideModal }) => (
+                <MigrationTips closeCallback={hideModal} token={data.token} onFinish={() => afterLogin(data)} />
+              ),
+            },
+          })
+          return
+        }
+
+        afterLogin(data, source)
       } else {
-        mixpanel.track('login', { method: 'github', success: false, error: msg })
+        mixpanel.track('login', { method: source, success: false, error: msg })
         toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 2500 })
       }
+    }
+    catch (e) {
+      console.error('oauth2 error', e)
+    } finally {
+      signFormRef.value?.setSubmitLoading(false)
     }
   }
   else {
@@ -189,29 +175,14 @@ const cancelCallback = window.electronAPI.on('oauth2:google-callback', async (se
   }
 })
 
-async function getCommonHeaders() {
-  if (!commonHeaders['R-DEVICE-ID']) {
-    console.time('获取设备 ID 耗时')
-  }
-  commonHeaders['R-DEVICE-ID'] ||= await electronAPI.send('util:getDeviceId').finally(() => {
-    console.timeEnd('获取设备 ID 耗时')
-  })
-  return commonHeaders
-}
-
 electronAPI.send('app:getGPUFeatureStatus').then((res) => {
   isSupportGPU.value = res['2d_canvas'] === 'enabled' && res['webgl'] === 'enabled'
-})
-
-onMounted(() => {
-  getCommonHeaders()
 })
 
 requestIdleCallback(hidePageLoading)
 let timer = setInterval(hidePageLoading, 3000)
 
 onBeforeUnmount(() => {
-  cancelCallback?.()
   clearInterval(timer)
 })
 
@@ -239,7 +210,7 @@ provideLoginContext({
       <LanguageSelect />
     </div>
     <div class="sign-card">
-      <SignForm v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" />
+      <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" />
       <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
       <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
     </div>

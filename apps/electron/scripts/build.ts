@@ -37,7 +37,7 @@ const options: Configuration = {
   asar: true,
   asarUnpack: [
     "dist/web",
-    "dist/bin"
+    "dist/bin",
   ],
   extraMetadata: {
     version,

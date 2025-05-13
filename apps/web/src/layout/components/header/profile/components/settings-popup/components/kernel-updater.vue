@@ -78,11 +78,9 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 <template>
   <div class="kernel-updater">
     <template v-for="item in coreList" :key="item.releaseTime">
-      <div class="updater-item" :class="{ collapsed: collapsedMap[item.coreVersion] }">
+      <div class="updater-item">
         <div class="updater-header">
           <div class="updater-header-left">
-            <RxSvgIcon :name="collapsedMap[item.coreVersion] ? 'base/rx_ic_chevron_down' : 'base/rx_ic_chevron_right'"
-              class="cursor-pointer" @click="handleCollapsed(item)" />
             <img src="/kernel-logo.png" class="w-[32px] h-[32px] ">
             <div class="updater-title">
               RoxyChrome {{ item.coreVersion }}
@@ -99,7 +97,9 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
         </div>
-        <rich-text :html="item.upgradeContent" class="updater-content" />
+        <div class="updater-content">
+          <rich-text :html="item?.upgradeContent" />
+        </div>
       </div>
     </template>
   </div>
@@ -130,26 +130,11 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   align-items: flex-start;
   border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
   background: var(--Color-neutrals-0, #fff);
-
-  &.collapsed {
-    gap: var(--spacing-xl, 12px);
-    border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
-    background: var(--Color-blue-100, #e8f5fc);
-
-    &:last-of-type {
-      border-bottom: 0;
-    }
-
-    .updater-content {
-      max-height: 300px;
-    }
-  }
 }
 
 .updater-header {
   width: 100%;
   display: flex;
-  padding: 0px 16px;
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
@@ -171,9 +156,14 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 }
 
 .updater-content {
-  max-height: 0;
+  padding-left: 3px;
   overflow: hidden;
-  transition: max-height 0.3s;
-  padding-left: 42px;
+  color: var(--Colors-text-text-tertiary, #575D60);
+  text-overflow: ellipsis;
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 </style>

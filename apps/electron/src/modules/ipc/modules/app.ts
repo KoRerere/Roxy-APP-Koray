@@ -10,6 +10,7 @@ import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
 import { getMacAddress } from "/@/utils";
+import { compare } from "compare-versions";
 
 export function setupAppIpc(ipcMain: IPCMainInstance) {
 
@@ -74,10 +75,14 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     }
   });
 
-  /** 检查更新 */
+  /** APP 检查更新 */
   ipcMain.on("app:checkForUpdates", (event) => {
-    appUpdater.checkForUpdates();
-    webUpdater.checkForUpdates();
+    return appUpdater.checkForUpdates();
+  });
+
+  /** WEB 检查更新 */
+  ipcMain.on("app:checkWebForUpdates", (event) => {
+    return webUpdater.checkForUpdates();
   });
 
   /** 检查是否有更新 */
@@ -160,6 +165,22 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     payload.width ||= width;
     payload.height ||= height;
     win?.setBounds({ ...payload, x, y });
+  });
+
+  /** 获取新功能提示 */
+  ipcMain.on("app:getNewFeatureTips", (event) => {
+    const { version, newFeatureTips } = appUpdater.getUpdateMessageData()
+    // return newFeatureTips?.[store.language] || []
+
+    if (store.showNewFeatureTips && version && compare(app.getVersion(), version, '>=')) {
+      return newFeatureTips?.[store.language]?.[0]?.content ? newFeatureTips?.[store.language] : []
+    }
+    return []
+  });
+
+  /** 用户已读新功能提示 */
+  ipcMain.on("app:hideNewFeatureTips", (event) => {
+    store.showNewFeatureTips = false
   });
 
   /** 开启系统代理 */

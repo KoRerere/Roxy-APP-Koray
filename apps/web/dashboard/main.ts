@@ -7,7 +7,6 @@ import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
 import { createApp } from 'vue'
 import { $t, setupI18n } from '/@/locales'
-import { setupStore } from '/@/stores'
 import App from './App.vue'
 
 const app = createApp(App)
@@ -19,8 +18,6 @@ app.use(PrimeVue, {
 })
 
 app.use(ToastService)
-setupStore(app)
-
 
 fetch(`/api/app/config`)
   .then(res => res.json())

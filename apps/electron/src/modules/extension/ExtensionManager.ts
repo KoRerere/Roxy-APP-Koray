@@ -15,6 +15,7 @@ import { aliOSS, downloadZipFile, fileExists, getErrorMessage, isMac, unzipFile 
 import { genExtensionKey, getPluginDir, getPluginManifestInfo, getPluginMeta } from './helper'
 import { store } from '/@/modules/store'
 import { ipcMain } from '/@/modules/ipc'
+import { ExtensionValidationError } from '/@/modules/extension/errors'
 
 export interface UserSelectedExtensionInfo {
   type: 'warn' | 'success' | 'error'
@@ -117,7 +118,7 @@ export class ExtensionManager {
   }
 
   /** 下载指定的插件 */
-  async downloadExtensions(extensions: UnwrapRowsType<UserGetSystemPluginListData | UserGetPluginListListData>) {
+  async downloadExtensions(extensions: UnwrapRowsType<UserGetSystemPluginListData & UserGetPluginListListData>) {
     const promiseArr = extensions.map(async (item) => {
       const localPath = path.join(this.extensionDir, item.pluginDir!)
       const zipPath = `${localPath}.zip`
@@ -126,6 +127,19 @@ export class ExtensionManager {
           await downloadZipFile(item.pluginRoute!, zipPath, (progress) => {
             ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: Math.min(progress, 99) })
           })
+          if (item.hashValue) {
+            const hash = crypto.createHash('sha512')
+            hash.update(await readFile(zipPath))
+            const hashValue = hash.digest('hex')
+            console.debug('local hashValue', hashValue)
+            console.debug('remote hashValue', item.hashValue)
+            // 如何判断文件是否被篡改，sha512
+            if (hashValue !== item.hashValue) {
+              API.plugins.userReportSystemPluginErrorCreate({ pluginDir: item.pluginDir })
+              rm(zipPath)
+              throw new ExtensionValidationError(item.pluginDir, item.pluginName)
+            }
+          }
           await unzipFile(zipPath)
           ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: 100 })
           rm(zipPath)
@@ -133,9 +147,12 @@ export class ExtensionManager {
         }
         catch (error) {
           console.error('downloadExtensions error', error)
-          const errorTips = $t('扩展 {pluginName} 下载失败', { pluginName: item.pluginName })
+          let errorTips = $t('扩展 {pluginName} 安装失败', { pluginName: item.pluginName })
+          if (error instanceof ExtensionValidationError) {
+            errorTips = error.message
+          }
           ipcMain.send('extension:download-progress', { extID: item.pluginDir!, percent: -1, errorTips })
-          return Promise.reject(new Error(errorTips))
+          return Promise.reject(new Error(errorTips, { cause: error }))
         } finally {
           downloadingExtensions.delete(localPath)
         }
@@ -197,7 +214,7 @@ export class ExtensionManager {
       dirName = hash.digest('hex')
     }
 
-    pluginIconPath = pluginIconPath.replace(`${mediaProtocolName}:///`, isMac ? '/' : '')
+    pluginIconPath = pluginIconPath.replace(`${mediaProtocolName}:`, isMac ? '/' : '')
 
     const zip = new AdmZip()
     // 获取目录名

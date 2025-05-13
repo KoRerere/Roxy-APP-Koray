@@ -13,7 +13,6 @@ import {
 } from '@roxy/backend-api'
 import qs from 'qs'
 import { handleRequest, handleResponse } from '/@/api/util'
-import router from '/@/router'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -28,31 +27,13 @@ export const httpClient = new HttpClient({
   /**
    * baseURL: import.meta.env.VITE_BASE_URL,
    */
+  baseURL: 'https://roxybrowser.app/api',
   paramsSerializer(params) {
     return qs.stringify(params, { arrayFormat: 'comma' })
   },
 })
 
-let baseURL = ''
-let commonRequestHeaders
-let getGatewayConfigPromise: Promise<any> | null = null
-let getCommonRequestHeadersPromise: Promise<any> | null = null
-
 httpClient.instance.interceptors.request.use(async (config) => {
-  // const lockStore = useLock();
-  // if (lockStore.isLocked) {
-  //   return new Promise((resolve) => {
-  //     // 永不执行的 Promise
-  //   })
-  // }
-  baseURL ||= await (getGatewayConfigPromise ||= electronAPI.send('util:getGatewayConfig')).finally(() => {
-    getGatewayConfigPromise = null
-  })
-  commonRequestHeaders ||= await (getCommonRequestHeadersPromise ||= electronAPI.send('util:getCommonRequestHeaders').catch(() => electronAPI.send('const:osConfig')).finally(() => {
-    getCommonRequestHeadersPromise = null
-  }))
-
-  config.baseURL = baseURL
 
   const { token, appVersion } = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
@@ -65,18 +46,24 @@ httpClient.instance.interceptors.request.use(async (config) => {
   // R-OS:mac/win
   // R-OSBIT:apple/intel/64/11
   // R-VERSION:1.0.0
-  config.headers['R-OS'] ||= commonRequestHeaders.os === 'darwin' ? 'mac' : 'win'
-  config.headers['R-OSBIT'] ||= commonRequestHeaders.os === 'darwin' ? commonRequestHeaders.cpu : commonRequestHeaders.osBit
-  Object.assign(config.headers, commonRequestHeaders)
   // await handleRequest(config)
 
   return config
+}, (error) => {
+  if (error?.message?.includes('ERR_CONNECTION_RESET')) {
+    reGetGatewayConfig()
+  }
+  return Promise.reject(error)
 })
 
 const closeOtherWindow = debounce(() => {
   if (!isMainWindow) {
     window.close()
   }
+}, 200)
+
+const reGetGatewayConfig = debounce(() => {
+  electronAPI.send('util:getGatewayConfig')
 }, 200)
 
 httpClient.instance.interceptors.response.use(async (response) => {
@@ -87,6 +74,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     closeOtherWindow()
     return response
   } else if (code === 403) {
+    const router = useRouter()
     closeOtherWindow()
     // 未登录
     useUserStore().clearUserInfo()

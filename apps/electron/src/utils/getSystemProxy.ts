@@ -6,15 +6,15 @@ export function getSystemProxyAddress() {
   return systemProxyAddr
 }
 
-let regetTime = Date.now()
+let reGetTime = Date.now()
 
 /** 获取系统代理设置 */
 export async function getSystemProxy(force = false) {
   // 6秒内不重复获取
-  if (!force && systemProxyAddr && Date.now() - regetTime < 6 * 1000) {
+  if (!force && systemProxyAddr && Date.now() - reGetTime < 6 * 1000) {
     return systemProxyAddr
   }
-  regetTime = Date.now()
+  reGetTime = Date.now()
 
   const proxy = await session.defaultSession.resolveProxy('https://www.google.com')
   console.log('getSystemProxy resolveProxy', proxy)

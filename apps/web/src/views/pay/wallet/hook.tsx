@@ -12,7 +12,7 @@ import { OrderType, PayWay } from "/@/enums/pay";
 export function usePay() {
   const router = useRouter();
   const dialog = useDialog();
-  const [dialogInstance] = RxUseDialog()
+  const [showModal] = RxUseDialog()
   const [showToast] = useResponseToast();
   const { userPayInfo } = storeToRefs(useUserStore());
   const { getUserPayInfo } = useUserStore();
@@ -22,7 +22,7 @@ export function usePay() {
     type: OrderType | "silent",
   ) {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
-    dialogInstance.showModal({
+    showModal({
       showHeader: false,
       modal: true,
       blockScroll: true,
@@ -32,18 +32,18 @@ export function usePay() {
         content: '!pa-0'
       },
       slots: {
-        container: () => data.payType === PayWay.USDT
+        container: ({ hideModal }) => data.payType === PayWay.USDT
           ? <UsdtPayModal
             data={data}
             onConfirm={onConfirm}
             onCancel={onCancel}
-            onClose={() => dialogInstance.hideModal()}
+            onClose={hideModal}
           />
           : <ProcessingModal
             data={data}
             onConfirm={onConfirm}
             onCancel={onCancel}
-            onClose={() => dialogInstance.hideModal()}
+            onClose={hideModal}
           />,
       },
     })

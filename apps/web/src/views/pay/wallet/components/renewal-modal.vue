@@ -21,13 +21,14 @@ const { getOfficialWebsite } = useSimpleLocale()
 
 const isAuto = ref(false)
 const selectedDuration = ref()
-const selectedPayway = ref(PayWay.Card)
+const selectedPayway = ref()
 const disabledMethods = ref<PayWay[]>([])
 const monthAmount = ref(0)
 const loading = ref(false)
 
 const paywayList = computed(() => {
-  return Object.values(PayWay).map(item => ({ value: item, discount: item === PayWay.Balance ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
+  return Object.values(PayWay)
+    .map(item => ({ value: item, discount: item === PayWay.Balance ? currency(walletAmount.value, { symbol: '-$' }).format() : 0 }))
 })
 
 const allDiscount = computed(() => {
@@ -155,11 +156,11 @@ async function querySupportPayway() {
   loading.value = false
   onlyErrorToast(code, msg)
   if (code !== 0) return
-  const supportPayway = Object.values(data).flat().concat(PayWay.Balance)
+  const supportPayway = Object.values(data).flat().concat(PayWay.Balance) as PayWay[]
   disabledMethods.value = Object.values(PayWay).filter(item => !supportPayway.includes(item))
 
   if (!supportPayway.includes(selectedPayway.value)) {
-    selectedPayway.value = supportPayway[0] as PayWay
+    selectedPayway.value = supportPayway[0] !== PayWay.Card ? PayWay.Balance : supportPayway[0]
   }
 }
 

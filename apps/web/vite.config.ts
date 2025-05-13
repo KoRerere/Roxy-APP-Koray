@@ -50,15 +50,23 @@ function genWebVersionPlugin(): PluginOption {
     name: "gen-web-version",
     config(config, { mode }) {
       // 设置第三个参数为 '' 来加载所有环境变量，而不管是否有 `VITE_` 前缀。
-      const env = loadEnv(mode, __dirname, "");
-      const version = env.VITE_VERSION;
-      const minAppVersion = env.VITE_MIN_APP_VERSION;
-      console.log(`env.VITE_VERSION `, version);
-      console.log(`env.VITE_MIN_APP_VERSION `, minAppVersion);
+      const webEnv = loadEnv(mode, __dirname, "");
+      const electronEnv = loadEnv(mode, join(PACKAGE_ROOT, "../electron"), "");
+      const version = webEnv.VITE_VERSION;
+      const minAppVersion = webEnv.VITE_MIN_APP_VERSION;
+      const currentAppVersion = electronEnv.VITE_APP_VERSION;
+      console.log(`webEnv.VITE_VERSION `, version);
+      console.log(`webEnv.VITE_MIN_APP_VERSION `, minAppVersion);
+      console.log(`electronEnv.VITE_CURRENT_APP_VERSION `, currentAppVersion);
       writeFile(resolve(__dirname, "./public", "version"), version, "utf-8");
       writeFile(
         resolve(__dirname, "./public", "minimum_app_version"),
         minAppVersion,
+        "utf-8",
+      );
+      writeFile(
+        resolve(__dirname, "./public", "current_app_version"),
+        currentAppVersion,
         "utf-8",
       );
       config.define = {
@@ -66,6 +74,24 @@ function genWebVersionPlugin(): PluginOption {
         __WEB_VERSION__: JSON.stringify(version),
       };
     },
+  };
+}
+
+function replaceRootInScss() {
+  return {
+    name: 'replace-root-in-scss',
+    enforce: 'pre', // 在加载前替换
+    transform(code: string, id: string) {
+      if (!id.includes('/node_modules/')) {
+        if (id.endsWith('dark.css')) {
+          return code.replace(/:root\b/g, ':root[data-theme="dark"]');
+        }
+        if (id.endsWith('light.css')) {
+          return code.replace(/:root\b/g, ':root[data-theme="light"]');
+        }
+      }
+      return null;
+    }
   };
 }
 
@@ -134,6 +160,7 @@ const config: UserConfig = {
 
   plugins: [
     genWebVersionPlugin(),
+    replaceRootInScss(),
     vue({
       template: {
         compilerOptions: {

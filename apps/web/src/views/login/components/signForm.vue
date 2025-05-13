@@ -4,7 +4,7 @@ import { API } from '/@/api'
 import { RxForm } from '/@/components/rx-form'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { isDev } from '/@/utils'
+import { oauth2LoginMap } from '/@/utils'
 import { useLoginContext } from '../hooks/useLoginContext'
 import { getFormSchemas } from './schemas'
 import SignCardHeader from './sign-card-header.vue'
@@ -58,18 +58,7 @@ async function handleSubmit() {
   }
 }
 
-function openGoogleAuth2Login() {
-  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth?source=google`
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.email&response_type=code&redirect_uri=${redirect_url}&client_id=663574245714-elgschngb873e831n3d7ul9b6s4a8cvq.apps.googleusercontent.com`
-  window.open(url)
-}
 
-function openGithubAuth2Login() {
-  const redirect_url = `https://roxybrowser.com/${isDev ? 'dev-' : ''}auth?source=github`
-  const client_id = isDev ? 'Ov23lidZHwoteYPc2Bbv' : 'Ov23li2tP2jopYhz3S0A'
-  const url = `https://github.com/login/oauth/authorize?client_id=${client_id}&scope=user:email&redirect_uri=${redirect_url}`
-  window.open(url)
-}
 
 function switchFormMode(val: boolean) {
   isRegister.value = val
@@ -77,6 +66,12 @@ function switchFormMode(val: boolean) {
   formInstance.value?.updateSchema(getFormSchemas(val))
   formInstance.value?.clearValidateMessages()
 }
+
+defineExpose({
+  setSubmitLoading: (val: boolean) => {
+    submitLoading.value = val
+  },
+})
 </script>
 
 <template>
@@ -100,12 +95,16 @@ function switchFormMode(val: boolean) {
     <div class="divider">
       <span class="mx-2">{{ $t('或') }}</span>
     </div>
-    <RxButton class="w-full" outlined severity="secondary" size="md" @click="openGoogleAuth2Login">
-      <SvgIcon name="websites/rx_site_google" /> {{ $t('通过 Google 账号登录') }}
-    </RxButton>
-    <RxButton class="w-full" outlined severity="secondary" size="md" @click="openGithubAuth2Login">
-      <SvgIcon name="websites/rx_site_github" /> {{ $t('通过 Github 账号登录') }}
-    </RxButton>
+    <RxButton class="w-full" outlined severity="secondary" size="md" icon="websites/rx_site_google"
+      :label="$t('通过 Google 账号登录')" @click="oauth2LoginMap.google"></RxButton>
+    <div class="w-full flex gap-2">
+      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_facebook"
+        @click="oauth2LoginMap.facebook"></RxButton>
+      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_github"
+        @click="oauth2LoginMap.github"></RxButton>
+      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_vk"
+        @click="oauth2LoginMap.vk"></RxButton>
+    </div>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">

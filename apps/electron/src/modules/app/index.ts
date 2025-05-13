@@ -1,14 +1,15 @@
-import { app, autoUpdater, globalShortcut, shell } from 'electron'
+import { app, autoUpdater, globalShortcut, net, protocol, session, shell } from 'electron'
 import path from 'node:path'
-import { appProtocolName } from '/@/constants'
+import { appProtocolName, mediaProtocolName } from '/@/constants'
 import { checkResource } from '/@/modules/app/checkResource'
 import { createTray } from '/@/modules/app/tray'
 import { killAllBrowserProcess } from '/@/modules/app/utils'
 import { browserManager } from '/@/modules/browser'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isWebReady, isWindows } from '/@/utils'
+import { isMac, isPackaged, isWebReady, isWindows } from '/@/utils'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
+import { pathToFileURL } from 'node:url'
 
 // 获取 GPU 信息
 // app.getGPUFeatureStatus()
@@ -25,6 +26,8 @@ if (!app.isPackaged) {
 app.commandLine.appendSwitch('disable-renderer-accessibility')
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=3072')
 app.commandLine.appendSwitch('--no-sandbox')
+// 开发环境忽略 localhost 连接数限制
+!isPackaged && app.commandLine.appendSwitch('--ignore-connections-limit=localhost')
 
 export async function setupApp() {
   /**
@@ -106,7 +109,6 @@ export async function setupApp() {
    */
   try {
     await app.whenReady()
-
     // 临时减少崩溃的问题：https://github.com/electron/electron/issues/39574
     app.setAccessibilitySupportEnabled(false)
 
@@ -176,3 +178,6 @@ function initAppEvent() {
     }
   })
 }
+
+
+

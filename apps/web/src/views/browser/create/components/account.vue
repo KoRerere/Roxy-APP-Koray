@@ -1,28 +1,48 @@
 <script setup lang="ts">
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import { $t } from '/@/locales'
-import { deepClone } from '/@/utils'
 import AccountCreate from '/@/views/account/create'
 import AccountList from '/@/views/account/list/quick.vue'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import { $t } from '/@/locales'
+import { deepClone } from '/@/utils'
+import { useDrawer } from '/@/hooks/useDrawer'
 
-const windowPlatformList: any = defineModel('modelValue')
+const drawerInstance = useDrawer()
 
-const selectedAccount = computed(() => windowPlatformList.value.filter((item: any) => item.id))
+const windowPlatformList = defineModel<any[]>('modelValue')
+const selectedAccount = computed(() => windowPlatformList.value?.filter((item: any) => item.id))
 
-const drawer = reactive({
-  title: '',
-  dismissable: false,
-  visible: false,
-  type: 'list',
-  data: undefined,
-})
+function toggleDrawer(type: 'create' | 'list', item?: any) {
+  const dismissable = type === 'list'
+  const title = dismissable ? $t('平台账号列表') : $t('添加平台账号')
+  const data = dismissable ? { windowPlatformList: selectedAccount.value } : deepClone(item)
+  const RenderComponent = dismissable ? AccountList : AccountCreate
 
-function toggleDrawer(type: 'create' | 'list', data?: any) {
-  drawer.visible = true
-  drawer.type = type
-  drawer.dismissable = type === 'list'
-  drawer.title = type === 'list' ? $t('平台账号列表') : $t('添加平台账号')
-  drawer.data = deepClone(data)
+  drawerInstance.showDrawer({
+    title,
+    dismissable,
+    slots: {
+      container: () => h(RenderComponent, {
+        data,
+        onClose: () => drawerInstance.hideDrawer(),
+        onConfirm: (formData: Record<string, any>) => {
+          drawerInstance.hideDrawer()
+
+          if (formData._tempId) {
+            replaceData(formData)
+            return
+          }
+          if (!Array.isArray(formData) && !formData.id) {
+            windowPlatformList.value!.push({
+              ...formData,
+              _tempId: Date.now().toString(32)
+            })
+          } else {
+            windowPlatformList.value = windowPlatformList.value!.filter(item => !item.id).concat(formData)
+          }
+        }
+      })
+    }
+  })
 }
 
 function onEdit(item: any) {
@@ -35,29 +55,13 @@ function onEdit(item: any) {
 }
 
 function deleteAccount(item: any) {
-  windowPlatformList.value = windowPlatformList.value.filter((it: any) => (it._tempId || it.id) !== (item._tempId || item.id))
-}
-
-function onConfirm(data: any) {
-  if (data._tempId) {
-    replaceData(data)
-    return
-  }
-
-  if (!Array.isArray(data) && !data.id) {
-    data._tempId = (new Date().getTime()).toString(32)
-    windowPlatformList.value.push(data)
-  }
-  else {
-    const list = windowPlatformList.value.filter((item: any) => !item.id)
-    windowPlatformList.value = list.concat(data)
-  }
+  windowPlatformList.value = windowPlatformList.value!.filter((it: any) => (it._tempId || it.id) !== (item._tempId || item.id))
 }
 
 function replaceData(data: any) {
-  const index = windowPlatformList.value.findIndex((item: any) => item._tempId === data._tempId)
+  const index = windowPlatformList.value!.findIndex((item: any) => item._tempId === data._tempId)!
   if (index > -1) {
-    Reflect.set(windowPlatformList.value, index, data)
+    Reflect.set(windowPlatformList.value!, index, data)
   }
 }
 </script>
@@ -65,10 +69,8 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
-        @click="toggleDrawer('list')" />
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')"
-        @click="toggleDrawer('create')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
@@ -87,15 +89,6 @@ function replaceData(data: any) {
         </div>
       </RxCard>
     </div>
-
-    <RxDrawer v-model:visible="drawer.visible" :dismissable="drawer.dismissable" :title="drawer.title">
-      <template #default="{ closeCallback }">
-        <AccountList v-if="drawer.type === 'list'" :data="{ windowPlatformList: selectedAccount }"
-          @close="closeCallback" @confirm="(data: any) => { onConfirm(data); closeCallback() }" />
-        <AccountCreate v-if="drawer.type === 'create'" :data="drawer.data" @close="closeCallback"
-          @confirm="onConfirm" />
-      </template>
-    </RxDrawer>
   </div>
 </template>
 

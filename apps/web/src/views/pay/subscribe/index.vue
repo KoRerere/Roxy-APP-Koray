@@ -12,7 +12,7 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import SubscribeModal from './components/subscribe-modal.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import { tierCalculate, discountCalculate } from './util'
-import { OrderType, PayWay, purchaseType, PaySubOrderType } from '/@/enums/pay'
+import { OrderType, PayWay, PurchaseType, PaySubOrderType } from '/@/enums/pay'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
@@ -34,13 +34,15 @@ const selectedDuration = ref()
 const subscribeOriginalPrice = computed(() => tierCalculate(dataList.value!, selectedCount.value).value)
 
 const showAlert = computed(() => selectedCount.value && currency(selectedCount.value).add(userPayInfo.value.freeWindowCount).value < userPayInfo.value.useWindowCount)
+
+const finalDiscount = computed(() => discountCalculate([userPayInfo.value?.discount, selectedDuration.value?.discount]))
+
+const finalAmount = computed(() => currency(subscribeOriginalPrice.value).multiply(selectedDuration.value?.month ?? 1).multiply(finalDiscount.value).value)
+
 const details = computed(() => {
-  const { discount } = userPayInfo.value
 
-  const finalDiscount = discountCalculate([discount, selectedDuration.value?.discount])
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
-
-  const totalAmount = currency(subscribeOriginalPrice.value).multiply(finalDiscount).value
+  const totalAmount = currency(subscribeOriginalPrice.value).multiply(finalDiscount.value).value
   const discountAmount = currency(subscribeOriginalPrice.value).subtract(totalAmount).value
 
   return [
@@ -73,9 +75,9 @@ const details = computed(() => {
       items: [
         {
           label: $t('专属折扣'),
-          value: `-${discount}%`,
+          value: `-${userPayInfo.value?.discount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!discount
+          visible: !!userPayInfo.value?.discount
         },
         {
           label: $t('订阅折扣'),
@@ -124,7 +126,7 @@ async function getTierPricingList() {
 }
 
 async function onSubscribe() {
-  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(subscribeOriginalPrice.value) })
+  const { code, data, msg } = await API.pay.userGetSupportPayTypeList({ amount: String(finalAmount.value) })
   onlyErrorToast(code, msg)
   if (code !== 0) return
 
@@ -146,7 +148,7 @@ async function onSubscribe() {
       onConfirm: async (params: { isAuto: boolean, payType: PayWay }) => {
         const { code, data, msg } = await API.pay.userPaySettlementCreate({
           purchaseMember: { profile: selectedCount.value },
-          purchaseType: purchaseType.Profile,
+          purchaseType: PurchaseType.Profile,
           subLevel: selectedPlan.value.subLevel,
           subscriptionMonths: selectedDuration.value.month,
           subOrderType: PaySubOrderType.Purchase,

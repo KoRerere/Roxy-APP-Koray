@@ -1,8 +1,9 @@
 import { BrowserWindow, } from 'electron'
-import { appConfig, ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { isPackaged } from '/@/utils'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { createWindow } from '/@/utils/browser-window'
 
 export function getBatchInputsDialogWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID)
@@ -19,7 +20,8 @@ export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayloa
     return
   }
 
-  const win = new BrowserWindow({
+  const win = createWindow({
+    roxyWindowId: ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID,
     width: 450,
     height: 374,
     frame: false,
@@ -28,11 +30,7 @@ export async function openBatchInputsDialog(payload: OpenBatchInputsDialogPayloa
     show: false,
     skipTaskbar: true,
     hasShadow: true,
-    webPreferences: {
-      preload: appConfig.preloadFilePath
-    },
   })
-  win[ROXY_WINDOW_ID_KEY] = ROXY_SYNC_CONTROL_BATCH_INPUTS_WINDOW_ID
   win.loadURL(await getWebEntryUrl(`#/sync-control-batch-inputs-dialog?tab=${payload.tab}`))
   if (!isPackaged) {
     win.webContents.openDevTools()

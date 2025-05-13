@@ -86,6 +86,7 @@ async function tableFilters() {
       options: [
         { label: $t('钱包充值'), value: OrderType.Recharge },
         { label: $t('套餐购买'), value: OrderType.Subscribe },
+        { label: $t('套餐变更'), value: OrderType.Change },
         { label: $t('套餐续费'), value: OrderType.Renew },
         { label: $t('其他购买'), value: OrderType.Purchase },
         // { label: $t('提现'), value: OrderType.Withdraw },

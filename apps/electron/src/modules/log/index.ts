@@ -4,8 +4,9 @@ import { readdirSync, renameSync } from 'node:fs'
 import { readdir, rm, stat } from 'node:fs/promises'
 import { join, parse } from 'node:path'
 import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/utils'
+import { appCliStartArgs, isPackaged } from '/@/utils'
 import { app } from 'electron'
+import { LevelOption } from 'electron-log'
 
 export function setupLog() {
   // 记录渲染进程的日志
@@ -17,6 +18,8 @@ export function setupLog() {
   if (isPackaged) {
     log.transports.console.level = false
   }
+  // silly < debug < verbose < info < warn < error，文件只保留 info 及以上
+  log.transports.file.level = appCliStartArgs['roxy-log-level'] as LevelOption
   // 禁用同步写入
   log.transports.file.sync = false
   /**

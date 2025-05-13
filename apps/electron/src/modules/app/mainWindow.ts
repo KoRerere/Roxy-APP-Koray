@@ -1,22 +1,19 @@
 import type { BrowserWindowConstructorOptions } from 'electron'
 import axios from 'axios'
 import { compare } from 'compare-versions'
-import { app, BrowserWindow, screen } from 'electron'
+import { app, BrowserWindow, screen, } from 'electron'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { appConfig, mediaProtocolName, ROXY_MAIN_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { appConfig, ROXY_MAIN_WINDOW_ID, } from '/@/constants'
 import { handleCloseWindow } from '/@/modules/app/utils'
 import { store } from '/@/modules/store'
 import { isDev, isPackaged, isProd, isWindows } from '/@/utils/'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { ipcMain } from '/@/modules/ipc'
+import { createWindow } from '/@/utils/browser-window'
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string, skipCompare = false) {
-  if (isDev && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
-    return `${import.meta.env.VITE_DEV_SERVER_URL}${path}`
-  }
-
   if (isPackaged && !skipCompare) {
     try {
       const minimumAppVersion = await readFile(join(appConfig.externalWebDir, 'minimum_app_version'), 'utf-8').catch(() => '0.0.0')
@@ -36,7 +33,7 @@ export async function getWebEntryUrl(path: string, skipCompare = false) {
     }
   }
   console.log('store.isExternalWeb', store.isExternalWeb)
-  return `http://127.0.0.1:${store.appPort}/${path}`
+  return `${appConfig.webBaseUrl}/${path}`
 }
 
 /** 获取本地 web 版本 */
@@ -45,31 +42,16 @@ export async function getLocalWebVersion() {
 }
 
 /** 创建窗口 */
-function createWindow(options?: BrowserWindowConstructorOptions) {
-  const browserWindow = new BrowserWindow({
+function createMainWindow(options?: BrowserWindowConstructorOptions) {
+
+  const browserWindow = createWindow({
     // Use 'ready-to-show' event to show window
+    roxyWindowId: ROXY_MAIN_WINDOW_ID,
     show: false,
     resizable: false,
     autoHideMenuBar: true, // 自动隐藏菜单栏
-    webPreferences: {
-      spellcheck: false,
-      // https://www.electronjs.org/docs/latest/api/webview-tag#warning
-      webviewTag: false,
-      preload: appConfig.preloadFilePath
-      // devTools: !isProd,
-    },
     ...options,
   })
-
-  browserWindow[ROXY_WINDOW_ID_KEY] = ROXY_MAIN_WINDOW_ID
-
-  browserWindow.webContents.session.protocol.registerFileProtocol(
-    mediaProtocolName,
-    (request, callback) => {
-      const pathname = decodeURIComponent(request.url.replace(`${mediaProtocolName}:///`, ''))
-      callback(pathname)
-    },
-  )
 
   /**
    * @see https://github.com/electron/electron/issues/25012
@@ -160,7 +142,7 @@ export function restoreOrCreateWindow(options?: BrowserWindowConstructorOptions)
   console.log('restoreOrCreateWindow', mainWindow?.['ROXY:WINDOW_PROCESS_ID'])
 
   if (!mainWindow) {
-    mainWindow = createWindow(options)
+    mainWindow = createMainWindow(options)
   }
 
   if (mainWindow.isMinimized()) {

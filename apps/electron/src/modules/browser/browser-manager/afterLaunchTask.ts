@@ -1,6 +1,13 @@
 import type { Browser, Protocol } from 'puppeteer-core'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
+import { SyncControlUtil } from '/@/modules/sync-control/util'
+import { join } from 'node:path'
+import ejs from "ejs";
+import { appConfig } from '/@/constants'
+import { isPackaged } from '/@/utils'
+import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { store } from '/@/modules/store'
 
 /** 浏览器启动后要做的事情 */
 export class AfterLaunchTask {
@@ -10,11 +17,18 @@ export class AfterLaunchTask {
   get isPhone() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
+  /** 是否继续访问 */
+  private continueAccess = false
+  /** 检测 IP 变化定时器 */
+  private checkIpChangeTimer: NodeJS.Timeout | null = null
 
   constructor(private browserItem: BrowserItem, public browser: Browser) { }
 
   async run() {
     this.handleBrowserEvent()
+    setTimeout(() => {
+      this.checkIpChange()
+    }, 5000)
   }
 
   /** 获取标签页 */
@@ -127,7 +141,105 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
+      this.browser.on('disconnected', () => {
+        this.continueAccess = true
+        clearTimeout(this.checkIpChangeTimer)
+      })
     }
 
+  }
+
+  /** 定时检测浏览器网页 IP 变化 */
+  async checkIpChange() {
+    // 如果 IP 变化时弹窗提示关闭，则不检测 IP 变化
+    if (!store.ipChangeModal || this.continueAccess) {
+      return
+    }
+
+    this.checkIpChangeTimer = setTimeout(() => {
+      this.checkIpChange()
+    }, isPackaged ? 1000 * 60 : 1000 * 5)
+
+    const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
+    const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))
+
+    if (activePage) {
+      // 在网页里面发送检测 IP 请求
+      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '' }))
+
+      console.debug('当前 IP', latestProxyInfo.ip)
+      console.debug('上次 IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
+      if (latestProxyInfo.ip && this.browserItem.beforeLaunchTask.proxyInfo.ip && latestProxyInfo.ip !== this.browserItem.beforeLaunchTask.proxyInfo.ip) {
+
+        const dialogHtmlString = await ejs.renderFile(join(appConfig.htmlTemplateDir, 'ip-change-modal.ejs'), {
+          latestProxyInfo,
+          beforeProxyInfo: this.browserItem.beforeLaunchTask.proxyInfo,
+          title: $t('IP 变化提醒'),
+          description: $t('您的 IP 地址已变化，当前 IP 位置：{city}，当前 IP：{ip}。', {
+            city: latestProxyInfo.city,
+            ip: latestProxyInfo.ip,
+          }),
+          ask: $t('您确定要继续使用该窗口吗？'),
+          cancelBtnText: $t('关闭窗口'),
+          confirmBtnText: $t('继续使用'),
+          baseUrl: await getWebEntryUrl(''),
+        })
+
+        const result = await activePage.evaluate((html) => {
+          const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal-container')
+          if (!dialog) {
+            let resolve, reject;
+            const promise = new Promise((res, rej) => {
+              resolve = res;
+              reject = rej;
+            });
+            const escapeHTMLPolicy = trustedTypes.createPolicy("myEscapePolicy", {
+              createHTML: (string) => string,
+            });
+
+            const escaped = escapeHTMLPolicy.createHTML(html);
+            document.body.insertAdjacentHTML('beforeend', escaped)
+            const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal')
+            const cancelBtn = document.querySelector('#roxy-modal #cancelBtn')
+            const confirmBtn = document.querySelector('#roxy-modal #confirmBtn')
+            const dialogContainer = document.querySelector<HTMLDivElement>('#roxy-modal-container')!
+
+
+            cancelBtn?.addEventListener('click', () => {
+              resolve('close-window')
+              dialog?.close()
+              dialogContainer.style.display = 'none'
+            })
+
+            confirmBtn?.addEventListener('click', () => {
+              resolve('continue-access')
+              dialog?.close()
+              dialogContainer.style.display = 'none'
+            })
+
+            return promise
+          }
+
+        }, dialogHtmlString)
+
+        console.debug('checkIpChange modal result', result)
+
+        if (result === 'close-window') {
+          this.browserItem.close()
+        } else if (result === 'continue-access') {
+          this.continueAccess = true
+
+          const pages = await this.browser?.pages()
+          pages.forEach(page => {
+            page.evaluate(() => {
+              const dialog = document.querySelector<HTMLDialogElement>('#roxy-modal-container')
+              if (dialog) {
+                dialog.style.display = 'none'
+              }
+            })
+          })
+        }
+      }
+    }
   }
 }

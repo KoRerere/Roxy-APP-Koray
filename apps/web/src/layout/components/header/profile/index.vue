@@ -12,11 +12,13 @@ import { useUserStore } from "/@/stores/user";
 import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
+import { colorSchemeList, useThemeStore } from "/@/stores/theme";
 
 const router = useRouter();
 const dialog = useDialog();
 const userStore = useUserStore();
 const simpleLocale = useSimpleLocale();
+const themeStore = useThemeStore()
 const styles = useCssModule();
 const toast = useToast();
 
@@ -71,6 +73,7 @@ const items = computed(() => {
       items: ISO639List.map((item) => {
         return {
           ...item,
+          isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
             await API.base.userSetUserConfigCreate({ language: item.locale });
             simpleLocale.setSimpleLocale(item.locale);
@@ -80,33 +83,47 @@ const items = computed(() => {
       }),
     },
     {
+      label: $t("主题模式"),
+      icon: "base/rx_ic_language",
+      vIf: () => import.meta.hot,
+      items: colorSchemeList.map((item) => {
+        return {
+          ...item,
+          isCheck: () => themeStore.theme === item.value,
+          command: async () => {
+            await API.base.userSetUserConfigCreate({ colorScheme: item.value });
+            themeStore.setTheme(item.value);
+          },
+        };
+      }),
+    },
+    {
       separator: true,
     },
-    ...(import.meta.env.DEV
-      ? [
-        {
-          label: "图标(仅开发)",
-          icon: "base/rx_ic_outlink",
-          command: () => {
-            window.open("/figma-icons");
-          },
-        },
-        {
-          label: "多语言(仅开发)",
-          icon: "base/rx_ic_outlink",
-          command: () => {
-            window.open("/__language-localization__");
-          },
-        },
-        {
-          label: "实验室(仅开发)",
-          icon: "base/rx_ic_doc_api",
-          command: () => {
-            router.push({ name: "cattle-slaughter" });
-          },
-        },
-      ]
-      : []),
+    {
+      label: "图标(仅开发)",
+      icon: "base/rx_ic_outlink",
+      vIf: () => import.meta.hot,
+      command: () => {
+        window.open("/figma-icons");
+      },
+    },
+    {
+      label: "多语言(仅开发)",
+      icon: "base/rx_ic_outlink",
+      vIf: () => import.meta.hot,
+      command: () => {
+        window.open("/__language-localization__");
+      },
+    },
+    {
+      label: "实验室(仅开发)",
+      icon: "base/rx_ic_doc_api",
+      vIf: () => import.meta.hot,
+      command: () => {
+        router.push({ name: "cattle-slaughter" });
+      },
+    },
     {
       label: $t("退出登录"),
       icon: "base/rx_ic_logout",
@@ -179,7 +196,7 @@ function toggle(event: Event) {
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span class="menu-label">{{ item.label }}</span>
           <RxSvgIcon v-if="hasSubmenu" class="ml-auto" name="base/rx_ic_chevron_right" />
-          <RxSvgIcon v-if="simpleLocale.currentLocale === item.locale" class="ml-auto" name="base/rx_ic_check" />
+          <RxSvgIcon v-if="item.isCheck?.()" class="ml-auto" name="base/rx_ic_check" />
         </template>
       </a>
     </template>

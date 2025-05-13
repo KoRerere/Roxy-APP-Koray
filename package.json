@@ -2,7 +2,7 @@
   "name": "electron-vite-monorepo",
   "version": "0.0.0",
   "private": false,
-  "packageManager": "pnpm@10.6.2",
+  "packageManager": "pnpm@10.8.1",
   "author": {
     "name": "buqiyuan",
     "email": "1743369777@qq.com",
@@ -19,7 +19,7 @@
   },
   "volta": {
     "node": "22.14.0",
-    "pnpm": "10.6.2"
+    "pnpm": "10.10.0"
   },
   "scripts": {
     "dev": "tsx scripts/watch.ts",
@@ -31,6 +31,8 @@
     "compile": "pnpm build && turbo run compile",
     "pack:dev": "pnpm run build && pnpm -F web run build:dev && pnpm -F roxybrowserdev run pack:dev",
     "pack:prod": "pnpm run build && pnpm -F web run build:prod && pnpm -F roxybrowserdev run pack:prod",
+    "pack:dev:only": "pnpm -F roxybrowserdev run pack:dev",
+    "pack:prod:only": "pnpm -F roxybrowserdev run pack:prod",
     "publish:app:dev": "pnpm run pack:dev && cross-env NODE_ENV=development tsx scripts/publish.ts",
     "publish:app:prod": "pnpm run pack:prod && cross-env NODE_ENV=production tsx scripts/publish.ts",
     "publish:app:dev:only": "cross-env NODE_ENV=development tsx scripts/publish.ts",
@@ -55,27 +57,27 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.12.0",
-    "@dotenvx/dotenvx": "^1.38.4",
+    "@antfu/eslint-config": "^4.13.0",
+    "@dotenvx/dotenvx": "^1.41.0",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",
-    "@unocss/eslint-plugin": "^66.0.0",
+    "@unocss/eslint-plugin": "^66.1.0",
     "adm-zip": "^0.5.16",
     "ali-oss": "^6.22.0",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "cross-env": "^7.0.3",
-    "eslint": "9.24.0",
+    "eslint": "9.26.0",
     "eslint-plugin-format": "^1.0.1",
     "js-yaml": "^4.1.0",
     "lint-staged": "^15.5.1",
     "rimraf": "^6.0.1",
-    "simple-git-hooks": "^2.12.1",
-    "tsx": "^4.19.3",
-    "turbo": "^2.5.0",
+    "simple-git-hooks": "^2.13.0",
+    "tsx": "^4.19.4",
+    "turbo": "^2.5.2",
     "typescript": "^5.8.3",
-    "vite": "^6.2.6",
+    "vite": "^6.3.5",
     "vite-plugin-dts": "^4.5.3"
   },
   "pnpm": {

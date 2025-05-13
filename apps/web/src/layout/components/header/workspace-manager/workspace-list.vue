@@ -19,7 +19,7 @@ const { list = [] } = defineProps<{
 
 const emit = defineEmits(['enterWorkspace'])
 
-const [dialogInstance] = useDialog()
+const [showModal] = useDialog()
 const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const roleLabelMap = getRoleLabelMap()
@@ -30,21 +30,27 @@ function getAvatarStyle(workspacePicture: string) {
   return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
 }
 
-function handleLeaveWorkspace({ isCurrentWorkspace }: { isCurrentWorkspace: boolean }) {
-  dialogInstance.handleCancel()
-  // 如何离开的是当前空间，则需要进入其他空间
-  if (isCurrentWorkspace) {
-    emit('enterWorkspace')
-  }
-}
-
-async function showEditWorkspaceDialog(workspaceInfo: Data) {
-  dialogInstance.showModal({
+function showEditWorkspaceDialog(workspaceInfo: Data) {
+  showModal({
     header: $t('编辑工作空间'),
     class: 'w-[520px]',
     innerDialog: true,
     slots: {
-      default: () => <WorkspaceSetting workspaceInfo={workspaceInfo} onDelete={dialogInstance.handleCancel} onSave={dialogInstance.handleCancel} onLeave={handleLeaveWorkspace} />,
+      default: ({ handleCancel }) => {
+        function handleLeaveWorkspace({ isCurrentWorkspace }: { isCurrentWorkspace: boolean }) {
+          // 如何离开的是当前空间，则需要进入其他空间
+          handleCancel()
+          if (isCurrentWorkspace) {
+            emit('enterWorkspace')
+          }
+        }
+
+        return <WorkspaceSetting
+          workspaceInfo={workspaceInfo}
+          onDelete={handleCancel}
+          onSave={handleCancel}
+          onLeave={handleLeaveWorkspace} />
+      },
       footer: undefined
     },
   })
@@ -83,7 +89,8 @@ function onConfig(event: MouseEvent, item: Data) {
     <template v-for="item in list" :key="item.id">
       <div class="workspace-item">
         <div class="workspace-item-info">
-          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
+          <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
+            :style="getAvatarStyle(item.workspacePicture)"
             :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
           <div class="workspace-item-detail">
             <div class="detail-header">
@@ -106,7 +113,8 @@ function onConfig(event: MouseEvent, item: Data) {
           </div>
         </div>
         <div class="workspace-item-actions">
-          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id" @click="enterWorkspace(item)">
+          <RxButton severity="secondary" outlined size="md" :disabled="item.id === currentWorkspace?.id"
+            @click="enterWorkspace(item)">
             {{ item.id === currentWorkspace?.id ? $t('当前空间') : $t('进入空间') }}
           </RxButton>
           <RxButton severity="secondary" outlined size="md" icon="base/rx_ic_gear" @click="onConfig($event, item)">

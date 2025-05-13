@@ -103,11 +103,7 @@ export async function getPluginMeta(pluginDir: string) {
       /** 插件图标所在路径 */
       const pluginIconPath = iconPathExist ? path.join(targetPluginDir, iconPath) : ossObject.defaultPluginIconPath
       await access(pluginIconPath)
-      pluginIcon = url.format({
-        protocol: mediaProtocolName,
-        slashes: true,
-        pathname: pluginIconPath,
-      })
+      pluginIcon = `${mediaProtocolName}:${pluginIconPath}`
     }
     catch (error) {
       console.log('pluginIcon error', error)

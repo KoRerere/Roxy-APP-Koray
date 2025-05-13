@@ -52,7 +52,7 @@ export function loadLocaleMessages(language: string) {
       ? resolve(appConfig.unpackedFilePath, `./dist/web/locales/${language}.json`)
       : resolve(__dirname, `../../web/src/locales/langs/${language}.json`)
 
-    console.log('targetLanguageFilePath', targetLanguageFilePath)
+    console.debug('targetLanguageFilePath', targetLanguageFilePath)
 
     messages[language] = require(targetLanguageFilePath)
     return true

@@ -21,20 +21,20 @@ const { openProcessing } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 
 const nextBillText = ref()
 
 const other = computed(() => {
   return [
     {
-      type: 'member',
+      type: 'staff',
       title: $t('团队成员'),
       used: userPayInfo.value?.useMemberCount,
       total: userPayInfo.value?.maxMemberCount,
     },
     {
-      type: 'space',
+      type: 'workspace',
       title: $t('工作空间'),
       used: userPayInfo.value?.useWorkspaceCount,
       total: userPayInfo.value?.maxWorkspaceCount,
@@ -76,7 +76,7 @@ const planActions = computed(() => [
     label: $t('管理订阅'),
     visible: !!userPayInfo.value.isAuto,
     command: () => {
-      dialogInstance.showModal({
+      showModal({
         showHeader: false,
         modal: true,
         blockScroll: true,
@@ -85,7 +85,7 @@ const planActions = computed(() => [
           content: '!pa-0'
         },
         slots: {
-          container: () => <ManageModal onClose={() => dialogInstance.hideModal()} />,
+          container: ({ hideModal }) => <ManageModal onClose={hideModal} />,
         },
       })
     }
@@ -143,8 +143,9 @@ function onCharge() {
   })
 }
 
-function onExpand() {
+function onExpand(defaultType?: 'workspace' | 'staff') {
   emitter.emit('showExpandDialog', {
+    defaultType,
     paySuccess: () => {
       emitter.emit('updateBillList')
     }
@@ -154,7 +155,8 @@ function onExpand() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="($route.meta.title as string)"></ViewsHeader>
+    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="($route.meta.title as string)">
+    </ViewsHeader>
     <div class="rx-container ml-0 h-auto">
       <div class="flex gap-2 px-6 pt-6">
         <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden balance">
@@ -180,12 +182,24 @@ function onExpand() {
                 <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
                 <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12"></SvgIcon>
               </div>
-              <div v-else class="plan-expired">{{ $t('到期时间: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</div>
+              <div v-else class="plan-expired">{{ $t('到期时间: {value}', {
+                value: format(userPayInfo.subEndDate,
+                  'yyyy/MM/dd')
+              }) }}</div>
             </template>
           </div>
           <div class="flex flex-col gap-1.5">
-            <div class="plan-value">{{ $t('{count} 窗口', { count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format() }) }}</div>
-            <div class="balance-desc" v-if="!!userPayInfo.isAuto">{{ $t('每月 {price} (自动续费)', { price: currency(userPayInfo.realAmount).format() }) }}</div>
+            <div class="plan-value">{{ $t('{count} 窗口', {
+              count: currency(userPayInfo?.maxWindowCount, {
+                symbol: '',
+                precision:
+                  0
+              }).format()
+            }) }}</div>
+            <div class="balance-desc" v-if="!!userPayInfo.isAuto">{{ $t('每月 {price} (自动续费)', {
+              price:
+                currency(userPayInfo.realAmount).format()
+            }) }}</div>
           </div>
           <div class="flex justify-end items-center gap-2.5">
             <div class="flex-1">
@@ -201,7 +215,7 @@ function onExpand() {
           <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[#C7CDD1] other" v-for="item in other" :key="item.type">
             <div class="flex justify-between items-center gap-6">
               <span class="other-title">{{ item.title }}</span>
-              <span class="cursor-pointer other-more" @click="onExpand">{{ $t('新增') }}</span>
+              <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增') }}</span>
             </div>
             <div>
               <span class="other-used">{{ item.used }}</span>

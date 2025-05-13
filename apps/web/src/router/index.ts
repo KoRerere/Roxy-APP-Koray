@@ -6,6 +6,7 @@ import { isEqual } from 'es-toolkit'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import type { App } from 'vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -33,7 +34,8 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  await softConfigPromise.promise
   const userStore = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
   const simpleLocale = useSimpleLocale()
@@ -61,6 +63,28 @@ router.beforeEach((to, from, next) => {
 
 if (import.meta.hot) {
   window.router = router
+}
+
+const softConfigPromise = Promise.withResolvers<void>()
+
+async function getSoftConfig() {
+  return electronAPI.send("app:getSoftConfig").then((softConfig) => {
+    const { language, token } = softConfig;
+    const simpleLocale = useSimpleLocale();
+    const userStore = useUserStore()
+    simpleLocale.currentLocale = language;
+    userStore.setToken(token || '')
+    // console.log('getSoftConfig userStore.token', userStore.token)
+    setTimeout(softConfigPromise.resolve)
+    return softConfig
+  })
+
+}
+
+export async function setupRouter(app: App) {
+  app.use(router);
+
+  return getSoftConfig()
 }
 
 export default router

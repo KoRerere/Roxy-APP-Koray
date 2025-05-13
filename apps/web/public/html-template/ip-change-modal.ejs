@@ -1,0 +1,320 @@
+<div id="roxy-modal-container">
+  <style>
+
+    /** Inter */
+    @font-face {
+      font-family: 'Inter';
+      src: url('<%= baseUrl %>fonts/Inter/Inter-Regular.ttf');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Inter';
+      src: url('<%= baseUrl %>fonts/Inter/Inter-Medium.ttf');
+      font-weight: 500;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Inter';
+      src: url('<%= baseUrl %>fonts/Inter/Inter-SemiBold.ttf');
+      font-weight: 600;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Inter';
+      src: url('<%= baseUrl %>fonts/Inter/Inter-Bold.ttf');
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    /** JetBrains Mono */
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('<%= baseUrl %>fonts/JetBrains Mono/JetBrainsMono-Regular.ttf');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('<%= baseUrl %>fonts/JetBrains Mono/JetBrainsMono-Medium.ttf');
+      font-weight: 500;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('<%= baseUrl %>fonts/JetBrains Mono/JetBrainsMono-Bold.ttf');
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('<%= baseUrl %>fonts/JetBrains Mono/JetBrainsMono-ExtraBold.ttf');
+      font-weight: 800;
+      font-style: normal;
+    }
+
+    /** Archivo */
+    @font-face {
+      font-family: 'Archivo';
+      src: url('<%= baseUrl %>fonts/Archivo/Archivo-Bold.ttf');
+    }
+
+    /** DM Mono */
+    @font-face {
+      font-family: 'DM Mono';
+      src: url('<%= baseUrl %>fonts/DM Mono/DMMono-Light.ttf');
+      font-style: normal;
+      font-weight: 300;
+    }
+
+    @font-face {
+      font-family: 'DM Mono';
+      src: url('<%= baseUrl %>fonts/DM Mono/DMMono-Regular.ttf');
+      font-style: normal;
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: 'DM Mono';
+      src: url('<%= baseUrl %>fonts/DM Mono/DMMono-Medium.ttf');
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    dialog#roxy-modal div,
+    dialog#roxy-modal div span {
+       all: initial;
+       display: block;
+       font-family: 'Inter', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+       box-sizing: border-box;
+    }
+
+    dialog#roxy-modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(8px);
+      background: white;
+      animation: roxy-modal-fadeIn 0.3s ease;
+      z-index: 99999999999;
+      display: flex;
+      width: 450px;
+      padding: 16px 24px 24px 24px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-2xl, 16px);
+      border-radius: 8px;
+      border: 1px solid var(--colors-border-border-base, #AFB7BB);
+      background: var(--colors-background-bg-page, #FFF);
+      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12);
+    }
+
+    #roxy-modal-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 999999;
+    }
+
+    @keyframes roxy-modal-fadeIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    #roxy-modal {
+      max-width: 80vw;
+    }
+
+    #roxy-modal .modal-title {
+      color: #111213;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+      margin-bottom: 16px;
+    }
+
+    #roxy-modal .modal-body {
+      width: 100%;
+      font-size: 16px;
+      color: #555;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #roxy-modal .diff {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 8px;
+    }
+
+    @media (max-width: 450px) {
+      #roxy-modal .diff {
+        flex-direction: column;
+      }
+      #roxy-modal .diff-item {
+        width: 100%;
+      }
+      #roxy-modal svg {
+        transform: rotate(0.25turn);
+      }
+    }
+
+    #roxy-modal .diff-item {
+      display: flex;
+      padding: 12px 16px;
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 0 0;
+      border-radius: 6px;
+      background: #F1F5F8;
+    }
+
+    #roxy-modal .diff-item.before {
+      background: var(--colors-background-bg-block, #F1F5F8);
+    }
+
+    #roxy-modal .diff-item.before .city {
+      color: var(--colors-text-text-inactive, #7D8387);
+      font-family: Inter;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 24px;
+    }
+
+    #roxy-modal .diff-item.before .ip {
+      color: var(--colors-text-text-inactive, #7D8387);
+      font-family: Inter;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+    }
+
+    #roxy-modal .diff-item.after {
+      background: var(--colors-background-bg-info, #DEF3FF);
+    }
+
+    #roxy-modal .diff-item.after .city {
+      color: var(--colors-text-text-primary, #111213);
+      font-family: Inter;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 24px;  /* 150% */
+    }
+
+    #roxy-modal .diff-item.after .ip {
+      color: var(--colors-text-text-brand, #11A3FD);
+      font-family: Inter;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+    }
+
+    #roxy-modal .description {
+      color: var(--colors-text-text-primary, #111213);
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 20.8px;
+    }
+
+    #roxy-modal .description.ask {
+      margin-top: 16px;
+    }
+
+    #roxy-modal .modal-footer {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    #roxy-modal .modal-footer button {
+      display: inline-flex;
+      min-width: 80px;
+      padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
+      justify-content: center;
+      align-items: center;
+      gap: var(--spacing-lg, 8px);
+      border-radius: var(--radius-md, 6px);
+      border: 1px solid var(--colors-border-border-base, #AFB7BB);
+      background: var(--colors-background-bg-action, #FFF);
+
+      /* shadow-sm */
+      box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+      color: var(--colors-text-text-primary, #111213);
+      text-align: center;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: var(--Line-Height-text-lg, 20px); /* 153.846% */
+      cursor: pointer;
+    }
+
+    #roxy-modal .modal-footer button.primary {
+      border: 1px solid var(--component-button-primary-border, #0282D4);
+      background: var(--component-button-primary-bg, #11A3FD);
+      color: var(--component-button-primary-text, #FFF);
+    }
+  </style>
+  <div id="roxy-modal-mask"></div>
+  <dialog id="roxy-modal" open>
+    <div class="modal-title"><%= title %></div>
+    <div class="modal-body">
+      <div class="diff">
+        <div class="before diff-item">
+          <div class="city">
+            <%= beforeProxyInfo.country_code %>/<%= beforeProxyInfo.city %>
+          </div>
+          <div class="ip">IP: <%= beforeProxyInfo.ip %></div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M8.86193 3.52876C9.12228 3.26841 9.54439 3.26841 9.80474 3.52876L13.8047 7.52876C14.0651 7.78911 14.0651 8.21122 13.8047 8.47157L9.80474 12.4716C9.54439 12.7319 9.12228 12.7319 8.86193 12.4716C8.60158 12.2112 8.60158 11.7891 8.86193 11.5288L11.7239 8.66683H2.66667C2.29848 8.66683 2 8.36835 2 8.00016C2 7.63197 2.29848 7.3335 2.66667 7.3335H11.7239L8.86193 4.47157C8.60158 4.21122 8.60158 3.78911 8.86193 3.52876Z" fill="#7D8387"/>
+        </svg>
+        <div class="after diff-item">
+          <div class="city">
+            <%= latestProxyInfo.country_code %>/<%= latestProxyInfo.city %>
+          </div>
+          <div class="ip">IP: <%= latestProxyInfo.ip %></div>
+        </div>
+      </div>
+      <div class="description">
+        <%= description %>
+      </div>
+      <div class="description ask">
+        <%= ask %>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="cancelBtn" class="default"><%= cancelBtnText %></button>
+      <button id="confirmBtn" class="primary"><%= confirmBtnText %></button>
+    </div>
+  </dialog>
+</div>

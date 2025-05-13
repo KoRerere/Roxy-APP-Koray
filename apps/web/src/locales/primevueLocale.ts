@@ -5,5 +5,10 @@ import { $t } from "/@/locales"
 export function updatePrimeVueLocale() {
   const primevue = usePrimeVue()
 
-  primevue.config.locale!.selectionMessage = $t('已选择{count}项', { count: '{0}' })
+  if (!primevue.config.locale) {
+    return
+  }
+
+  primevue.config.locale.selectionMessage = $t('已选择{count}项', { count: '{0}' })
+  primevue.config.locale.emptyMessage = $t('暂无数据')
 }

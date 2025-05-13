@@ -1,8 +1,9 @@
 import { BrowserWindow, } from 'electron'
-import { appConfig, ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
+import { ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { isPackaged } from '/@/utils'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
+import { createWindow } from '/@/utils/browser-window'
 
 export function getSyncingWindowListWindow() {
   return BrowserWindow.getAllWindows().find((win) => win[ROXY_WINDOW_ID_KEY] === ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID)
@@ -16,7 +17,8 @@ export async function openSyncingWindowList() {
     return
   }
 
-  const win = new BrowserWindow({
+  const win = createWindow({
+    roxyWindowId: ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID,
     width: 480,
     height: 350,
     frame: false,
@@ -25,11 +27,7 @@ export async function openSyncingWindowList() {
     resizable: false,
     skipTaskbar: true,
     hasShadow: true,
-    webPreferences: {
-      preload: appConfig.preloadFilePath
-    },
   })
-  win[ROXY_WINDOW_ID_KEY] = ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID
   win.loadURL(await getWebEntryUrl('#/syncing-window-list-dialog'))
   if (!isPackaged) {
     win.webContents.openDevTools()

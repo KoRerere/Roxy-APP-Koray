@@ -9,12 +9,12 @@ import type {
 import { useUserStore } from "/@/stores/user";
 
 export function useCommonUtil() {
-  const [formDialog] = useFormDialog();
+  const [showFormDialog] = useFormDialog();
   const [showToast] = useResponseToast();
   const userStore = useUserStore();
   const { fetchUserInfo, updateUserConfig } = userStore;
 
-  const dialogRef = inject<DynamicDialogInstance>("dialogRef");
+  const dialogRef = inject<ComputedRef<DynamicDialogInstance>>("dialogRef");
 
   async function updateUserName(item: Items) {
     if (item.oldValue === item.value) return;
@@ -72,7 +72,7 @@ export function useCommonUtil() {
 
   return {
     dialogRef,
-    formDialog,
+    showFormDialog,
     showToast,
     userStore,
     updateUserName,

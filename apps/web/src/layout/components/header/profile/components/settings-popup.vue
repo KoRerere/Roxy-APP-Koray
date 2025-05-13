@@ -5,16 +5,14 @@ import { RxSvgIcon, type SvgNames } from "/@/components/rx-icon/";
 import { $t } from "/@/locales";
 import { useSettingsPopup } from "./settings-popup/";
 
-const dialogRef = inject<any>("dialogRef");
-
-const { activePanel, panels, initPanels } = useSettingsPopup();
+const { dialogRef, activePanel, panels, initPanels } = useSettingsPopup();
 
 function closePopup() {
-  dialogRef.value.close();
+  dialogRef?.value.close();
 }
 
 onBeforeMount(() => {
-  activePanel.key = dialogRef.value.data.props.activeKey;
+  activePanel.key = dialogRef?.value?.data?.props?.activeKey;
   initPanels();
 });
 </script>

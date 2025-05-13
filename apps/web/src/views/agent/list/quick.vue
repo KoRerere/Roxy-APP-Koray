@@ -12,7 +12,6 @@ import CustomFilter from '/@/views/browser/list/profiles/components/custom-filte
 import { getRawColumns } from './columns'
 import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
 
-
 interface Boundeds {
   [id: number]: {
     value: number
@@ -20,20 +19,13 @@ interface Boundeds {
   }
 }
 
-const props = defineProps({
-  data: {
-    type: [Object, Array] as PropType<any>,
-    default: undefined,
-  },
-  isBatch: {
-    type: Boolean,
-    default: false,
-  },
-  createCount: {
-    type: Number,
-    default: 1,
-  },
-})
+interface Props {
+  data?: any
+  isBatch?: boolean
+  createCount?: number
+}
+
+const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>()
 
 const emit = defineEmits(['confirm'])
 
@@ -43,14 +35,14 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const tableRef = useTemplateRef('agent')
 
 const columns = getRawColumns({
-  inserts: props.isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
+  inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['ipChecker'],
 })
 
 const warnMessage = $t('当前选择绑定的代理数量已超过创建窗口数。')
 
 const operation = ref(tableOperation().filter(item => item.name === 'test'))
-const selection = ref(props.data)
+const selection = ref(outerData)
 const filtersMenu = ref()
 const dataList = ref()
 const boundeds = ref<Boundeds>({})
@@ -60,7 +52,7 @@ const tableProps = {
   showGridlines: false,
   contextMenu: false,
   multipleOperation: false,
-  ...(!props.isBatch
+  ...(!isBatch
     ? {}
     : {
       onRowSelect({ data }: any) {
@@ -91,21 +83,20 @@ function onRefreshTable() {
 }
 
 async function getTableList(params: any) {
-  const data = await tableRequest(params)
-  dataList.value = data.data.rows
-  if (props.isBatch) {
+  const result = await tableRequest(params)
+  dataList.value = result.data.rows
+  if (isBatch) {
     boundeds.value = Object.fromEntries(
-      data.data.rows.map((item) => {
-        const _data = props.data.find((it: any) => item.id === it.id)
+      result.data.rows.map(item => {
+        const _data = outerData?.find((it: any) => item.id === it.id)
         return [item.id, {
           value: _data?._proxyCount ?? 1,
           disabled: !_data,
         }]
-      },
-      ),
+      })
     )
   }
-  return data
+  return result
 }
 
 function operationHandler(operate: any, data: ProxyItem) {
@@ -151,29 +142,26 @@ async function testAllProxy() {
 }
 
 function saveSelected() {
-  const _selection = !props.isBatch
+  const _selection = !isBatch
     ? selection.value
-    : selection.value.map((item: any) => ({ ...item, _proxyCount: boundeds.value[item.id].value }))
+    : selection.value?.map((item: any) => ({ ...item, _proxyCount: boundeds.value[item.id].value }))
 
   emit('confirm', _selection)
 }
 </script>
 
 <template>
-  <div class="flex flex-col h-full proxy-content">
+  <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
-        @click.stop="testAllProxy" />
+      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"
-      :closable="false" />
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })" :closable="false" />
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList"
-        :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"
-        :show-table-header="false">
+      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
+        :show-actions="false" :show-table-header="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
@@ -192,9 +180,7 @@ function saveSelected() {
           </div>
         </template>
         <template #remark="{ data: row }">
-          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }"
-            :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-            :class="{ 'color-[#12A3FC]': row.remark }" />
+          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
           <div class="bounded">
@@ -203,8 +189,7 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
-            @quick-click="operationHandler($event, row)" />
+          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>
@@ -216,8 +201,7 @@ function saveSelected() {
 
 <style lang="scss" scoped>
 .proxy-content {
-  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
-  width: var(--width-xl, 768px);
+  min-width: var(--width-xl, 768px);
 }
 
 .proxy-header,

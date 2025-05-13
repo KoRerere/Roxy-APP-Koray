@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
 import { API } from '/@/api'
 import { $t } from '/@/locales';
+import { debounce } from 'es-toolkit'
 import { SpaceType } from '/@/views/browser/list/transfer/type.ts'
 import { useWorkspaceStore } from "/@/stores/workspace";
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
+import type { UserGetTransferWorkspaceListListData } from '@roxy/backend-api';
 
 type Data = UserGetTransferWorkspaceListListData['data'][number]
 
@@ -14,7 +15,7 @@ const { ids: windowIds } = defineProps<{
 }>()
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
-const [dialogInstance] = RxUseDialog()
+const [showModal] = RxUseDialog()
 
 const selectedWorkspace = defineModel<Data>('modelValue')
 
@@ -70,7 +71,7 @@ async function getTransferHistory(event: MouseEvent) {
 
 async function howToGetHelp() {
   chooseRef.value?.hide()
-  dialogInstance.showModal({
+  showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -79,12 +80,12 @@ async function howToGetHelp() {
       content: '!pa-0'
     },
     slots: {
-      container: () => h(TransferHelp, {
+      container: ({ hideModal }) => h(TransferHelp, {
         onClose: () => {
-          dialogInstance.hideModal()
+          hideModal()
         },
         onConfirm: () => {
-          dialogInstance.hideModal()
+          hideModal()
         },
       })
     }
@@ -96,8 +97,10 @@ function clearSearch() {
   spaceList.value = historyList.value
 }
 
+const onInput = debounce(onSearch, 300)
+
 async function onSearch() {
-  if (!search.value || searchLoading.value) return
+  if (!search.value || search.value.length < 10 || searchLoading.value) return
   searchLoading.value = true
   const { data } = await API.window.userGetTransferWorkspaceListList({
     windowIds: windowIds.join(','),
@@ -133,13 +136,14 @@ function getAvatarStyle(workspacePicture: string) {
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose" @click="getTransferHistory">
+  <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose"
+    @click="getTransferHistory">
     <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
     <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />
     <div v-else class="relative px-3">
       <RxLoading :size="16" v-model="openLoading" />
     </div>
-    <RyPopover ref="choose">
+    <RyPopover ref="choose" @hide="clearSearch">
       <div class="w-125 relative flex flex-col gap-3 pa-3">
         <div class="flex justify-between items-center">
           <div class="header">{{ $t('选择空间') }}</div>
@@ -149,9 +153,11 @@ function getAvatarStyle(workspacePicture: string) {
             </template>
           </i18n-t>
         </div>
-        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch">
+        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')"
+          :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch" @input="onInput">
           <template #icon>
-            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
+            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete"
+              @click="clearSearch"></SvgIcon>
           </template>
         </RxInputText>
         <div class="relative flex flex-col gap-6 max-h-100 overflow-y-auto">
@@ -159,14 +165,18 @@ function getAvatarStyle(workspacePicture: string) {
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
               <div>{{ space.title }}</div>
-              <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer" @click="clearHistory(space)">
+              <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer"
+                @click="clearHistory(space)">
                 <SvgIcon name="base/rx_ic_bin_1"></SvgIcon>
                 <span>{{ $t('清除历史') }}</span>
               </div>
             </div>
-            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
-              :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }" @click="handleChoose(item)">
-              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
+            <div v-for="item of space.items" :key="item.id"
+              class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
+              :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }"
+              @click="handleChoose(item)">
+              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
+                :style="getAvatarStyle(item.workspacePicture)"
                 :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
               <div>
                 <div class="workspace-name">{{ item.workspaceName }}</div>
@@ -178,7 +188,8 @@ function getAvatarStyle(workspacePicture: string) {
               </div>
             </div>
           </div>
-          <div v-if="search && !spaceList[0]?.items?.length" class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
+          <div v-if="search && !spaceList[0]?.items?.length"
+            class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
             <div>{{ $t('空间不存在') }}</div>
             <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
               <template #link>

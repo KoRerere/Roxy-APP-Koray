@@ -84,7 +84,7 @@ export interface RenderMessage {
   "proxy:refreshUrl": (refreshUrl: string) => Promise<boolean>;
 
   /** 保存用户信息 */
-  "user:setUserInfo": (userInfo: { token: string; userId: number }) => void;
+  "user:setUserInfo": (userInfo: { token: string; userId: number, workspaceId: number }) => void;
   /** 用户退出登录 */
   "user:logout": () => void;
   /** 切换空间时设置当前空间 ID  */
@@ -109,8 +109,10 @@ export interface RenderMessage {
   "app:reGetUpdateInfo": <T extends keyof ReGetUpdateInfoType>(
     type: T,
   ) => ReGetUpdateInfoType[T];
-  /** 检测更新 */
-  "app:checkForUpdates": () => void;
+  /** 检测 APP 更新 */
+  "app:checkForUpdates": () => Promise<UpdateInfo | undefined>;
+  /** 检测 WEB 更新 */
+  "app:checkWebForUpdates": () => Promise<void>;
   /** 检测是否有更新 */
   "app:hasUpdate": () => Promise<boolean>;
   /** 获取应用版本号 */
@@ -148,11 +150,15 @@ export interface RenderMessage {
   "app:getGPUFeatureStatus": () => GPUFeatureStatus;
   /** 动态设置窗口大小 */
   "app:resizeWindow": (payload: { width?: number; height?: number }) => void;
+  /** 获取新功能提示，不为空数组表示有新功能提示 */
+  "app:getNewFeatureTips": () => string[];
+  /** 用户已读新功能提示 */
+  "app:hideNewFeatureTips": () => void;
 
   /** 下载指定插件 */
   "extension:download": (
     extensions: UnwrapRowsType<UserGetSystemPluginListData>,
-  ) => void;
+  ) => PromiseSettledResult<string>[];
   /** 删除指定插件 */
   "extension:remove": (extIDs: string[]) => void;
   /** 获取并解析用户本地选择的插件信息 */
@@ -212,6 +218,11 @@ export interface RenderMessage {
   "util:getDeviceInfo": () => Promise<DeviceInfo>;
   /** 检测某个快捷键是否被占用 */
   "util:checkShortcutKeysIsOccupied": (payload: string) => Promise<boolean>;
+  /** 获取系统信息 */
+  "util:getSystemInfo": () => {
+    language: string;
+    UTCOffsetHours: number;
+  };
 
   /** 前端已准备就绪 */
   "web:ready": () => void;

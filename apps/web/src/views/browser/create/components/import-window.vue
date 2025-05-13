@@ -39,7 +39,7 @@ const fileData = reactive({
   size: '',
   successCount: 0,
 })
-const maxWindowCount = computed(() => userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount)
+const maxWindowCount = computed(() => Math.min(userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount, 500))
 
 function fileDragover(event: Event) {
   event.preventDefault()
@@ -120,7 +120,7 @@ function openTemplates(event: Event) {
 <template>
   <div>
     <div class="upload-title">
-      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入{maxCreateWindowCount}个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })" scope="global">
+      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入 {maxCreateWindowCount} 个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })" scope="global">
         <template #templateFile>
           <span class="upload-title-link" @click="openTemplates">{{ $t('窗口导入模板') }}</span>
         </template>

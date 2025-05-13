@@ -24,12 +24,15 @@ export interface LastMessage {
   warningMessages: string[]
 }
 
+interface LaunchTask { handler: () => Promise<void>, start: number, end: number }
+
+
 /** 浏览器启动时要做的事情 */
 export class BeforeLaunchTask {
   browser: Browser | null = null
   wsEndpoint: string | null = null
   /** 代理检测结果 */
-  private proxyInfo = {} as Awaited<ReturnType<typeof proxyDetection>>
+  proxyInfo = {} as Awaited<ReturnType<typeof proxyDetection>>
   /** 不影响浏览器打开的警告信息 */
   warningMessages: string[] = []
   /** 内核执行程序路径 */
@@ -38,16 +41,15 @@ export class BeforeLaunchTask {
   lastMessage?: LastMessage
   /** 启动浏览器超时 */
   launchTimer?: NodeJS.Timeout
-  /** 总任务数 */
-  private totalTasks = 0
-  /** 已完成任务数 */
-  private completedTasks = 0
+  /** 当前任务 */
+  private currentTask: LaunchTask | null = null
   /** 任务队列 */
-  private taskMap = new Map<(() => Promise<void>), string>()
+  private taskMap = new Map<string, LaunchTask>()
   /** 任务进度 */
-  get progress() {
-    return ~~((this.completedTasks / this.totalTasks) * 100)
-  }
+  private progress = 0
+  // get progress() {
+  //   return ~~((this.completedTasks / this.totalTasks) * 100)
+  // }
   /** 是否是移动端 */
   get isMobile() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
@@ -61,21 +63,22 @@ export class BeforeLaunchTask {
 
   /** 开始执行任务 */
   async run() {
-    this.taskMap.set(this.memoryDetection, $t('内存检测中'))
-    this.taskMap.set(this.handleProxyDetection, $t('代理检测中'))
-    this.taskMap.set(this.clearBrowserCache, $t('判断是否需要清理浏览器缓存'))
-    this.taskMap.set(this.pullRemoteCacheFiles, $t('同步远程缓存文件'))
-    this.taskMap.set(this.createFingerprintConfigFile, $t('生成指纹配置文件'))
-    this.taskMap.set(this.launch, $t('准备启动浏览器'))
-
-    this.totalTasks = this.taskMap.size
+    this.taskMap.set($t('内存检测中'), { handler: this.memoryDetection, start: 0, end: 5 })
+    this.taskMap.set($t('代理检测中'), { handler: this.handleProxyDetection, start: 5, end: 10 })
+    this.taskMap.set($t('判断是否需要清理浏览器缓存'), { handler: this.clearBrowserCache, start: 10, end: 15 })
+    this.taskMap.set($t('同步远程缓存文件'), { handler: this.pullRemoteCacheFiles, start: 15, end: 25 })
+    this.taskMap.set($t('生成指纹配置文件'), { handler: this.createFingerprintConfigFile, start: 25, end: 30 })
+    this.taskMap.set($t('检测内核是否可用'), { handler: this.checkKernelAvailability, start: 30, end: 80 })
+    this.taskMap.set($t('准备启动浏览器'), { handler: this.launch, start: 80, end: 100 })
 
     // 不通过的任务会抛出异常，中断任务队列
-    for (const [task, message] of this.taskMap) {
+    for (const [message, task] of this.taskMap) {
       try {
+        this.currentTask = task
+        this.progress = task.start
         this.sendSuccessMessage(message)
-        await task.call(this)
-        this.completedTasks++
+        await task.handler.call(this)
+        this.progress = task.end
       }
       catch (error) {
         console.error('BeforeLaunchTask run error:', error)
@@ -86,14 +89,9 @@ export class BeforeLaunchTask {
     }
     // 清空任务队列
     this.taskMap.clear()
+    this.currentTask = null
     this.sendSuccessMessage($t('浏览器启动成功'))
-    // 同步窗口状态
-    API.window.userMdfWindowSyncV2Create([{
-      id: this.browserItem.winInfo.id,
-      openStatus: true,
-    }], { headers: this.browserItem.requestHeaders }).then(() => {
-      console.log('启动前同步窗口状态成功')
-    })
+
     if (this.proxyInfo?.ip) {
       API.window.userMdfWindowInfoSingleV2Create({
         id: this.browserItem.winInfo.id!,
@@ -107,26 +105,9 @@ export class BeforeLaunchTask {
 
   /** 启动浏览器 */
   async launch() {
-    const { coreVersion } = this.browserItem.winInfo
-
-    if (!coreVersion) {
-      this.sendErrorMessage($t('没有指定内核版本'))
-      throw new Error($t('没有指定内核版本'))
-    }
-
     const { promise, resolve, reject } = Promise.withResolvers<void>()
 
     clearTimeout(this.launchTimer)
-
-    let initCount = 1
-    // 获取内核执行程序路径
-    this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (msg: string) => {
-      this.sendSuccessMessage(msg, this.progress + initCount++)
-    })
-      .catch((error) => {
-        this.sendErrorMessage(error.message, error)
-        return Promise.reject(error)
-      })
 
     // 生成内核启动的命令行参数
     const launchArgs = await this.genLaunchCLIArgs()
@@ -141,12 +122,12 @@ export class BeforeLaunchTask {
       console.error('导入书签失败', error)
     })
 
-    this.sendSuccessMessage($t('正在启动浏览器'), this.progress + initCount++)
+    this.sendSuccessMessage($t('正在启动浏览器'), this.progress)
 
     this.launchTimer = setTimeout(() => {
       this.sendErrorMessage($t('浏览器启动超时'))
       reject(new Error($t('浏览器启动超时')))
-    }, 10000)
+    }, 30.1 * 1000)
 
     this.makeBrowserActive = async () => {
 
@@ -156,10 +137,21 @@ export class BeforeLaunchTask {
         headless: false,
         ignoreDefaultArgs: true,
         defaultViewport: null,
-        timeout: 10500,
       }
       console.log('launchOptions', launchOptions)
-      this.browser = await puppeteer.launch(launchOptions)
+      let timer
+
+      if (!this.browser) {
+        let acc = 0
+        timer = setInterval(() => {
+          acc += 0.2
+          this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
+        }, 60)
+      }
+
+      this.browser = await puppeteer.launch(launchOptions).finally(() => {
+        clearInterval(timer)
+      })
 
       // 临时解决移动端全屏问题
       if (this.isMobile) {
@@ -206,6 +198,30 @@ export class BeforeLaunchTask {
     }
   }
 
+  /** 检测内核是否可用 */
+  private async checkKernelAvailability() {
+    const { coreVersion } = this.browserItem.winInfo
+
+    if (!coreVersion) {
+      this.sendErrorMessage($t('没有指定内核版本'))
+      throw new Error($t('没有指定内核版本'))
+    }
+
+    // 获取内核执行程序路径
+    this.exePath = await chromeCoreManager.getCoreExePath(coreVersion, (payload) => {
+      if (payload.description && this.currentTask) {
+        if (payload.percent) {
+          this.progress = this.currentTask.start + ((this.currentTask.end - this.currentTask.start) * (payload.percent / 100))
+        }
+        this.sendSuccessMessage(payload.description)
+      }
+    })
+      .catch((error) => {
+        this.sendErrorMessage(error.message, error)
+        return Promise.reject(error)
+      })
+  }
+
   /** 生成内核启动的命令行参数 */
   private async genLaunchCLIArgs(): Promise<string[]> {
     const {
@@ -237,15 +253,23 @@ export class BeforeLaunchTask {
     }
 
     // 如果用户开启了插件
-    if (usePluginList.length) {
-      let acc = 1
+    if (usePluginList?.length) {
+      let acc = 0
+      let timer
       const extensionManager = new ExtensionManager({ workspaceId })
       const plugins = await extensionManager.getTargetExtensions(usePluginList, (msg: string) => {
-        this.sendSuccessMessage(msg, this.progress + acc++)
+        clearInterval(timer)
+        timer = setInterval(() => {
+          acc += 0.2
+          this.progress = Math.min(this.progress + acc, 90)
+          this.sendSuccessMessage(msg)
+        }, 60)
       }).catch((error) => {
         this.warningMessages.push($t('获取扩展失败'))
         console.log('获取扩展失败', error)
         return []
+      }).finally(() => {
+        clearInterval(timer)
       })
       if (plugins.length) {
         await this.updateBrowserPreferences()
@@ -331,7 +355,7 @@ export class BeforeLaunchTask {
     const { preferencesPath, winInfo } = this.browserItem
     const { usePluginList, workspaceId } = winInfo
 
-    if (!usePluginList.length) {
+    if (!usePluginList?.length) {
       return
     }
 

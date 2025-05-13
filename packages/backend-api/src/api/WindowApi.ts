@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -68,6 +69,8 @@ import {
   UserImportWindowInfoV2CreatePayload,
   UserMdfLabelInfoCreateData,
   UserMdfLabelInfoCreatePayload,
+  UserMdfWindowDataBatchCreateData,
+  UserMdfWindowDataBatchCreatePayload,
   UserMdfWindowInfoBatchV2CreateData,
   UserMdfWindowInfoBatchV2CreatePayload,
   UserMdfWindowInfoSingleV2CreateData,
@@ -87,6 +90,7 @@ import {
   UserTransferWindowCreateData,
   UserTransferWindowCreatePayload,
   UserTransferWindowVerifyCodeListData,
+  UserTransferWindowVerifyCodeListParams,
   UserUpdateWindowFilterNameCreateData,
   UserUpdateWindowFilterNameCreatePayload,
   UserUpdateWindowFilterSortCreateData,
@@ -110,7 +114,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_window_info_v2
    * @response `200` `UserGetWindowInfoV2ListData`
    */
-  userGetWindowInfoV2List = (query: UserGetWindowInfoV2ListParams, params: RequestParams = {}) =>
+  userGetWindowInfoV2List = (
+    query: UserGetWindowInfoV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetWindowInfoV2ListData, any>({
       path: `/user_get_window_info_v2`,
       method: "GET",
@@ -127,7 +134,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_add_window_info_v2
    * @response `200` `UserAddWindowInfoV2CreateData`
    */
-  userAddWindowInfoV2Create = (data: UserAddWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+  userAddWindowInfoV2Create = (
+    data: UserAddWindowInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddWindowInfoV2CreateData, any>({
       path: `/user_add_window_info_v2`,
       method: "POST",
@@ -145,7 +155,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_window_info_single_v2
    * @response `200` `UserMdfWindowInfoSingleV2CreateData`
    */
-  userMdfWindowInfoSingleV2Create = (data: UserMdfWindowInfoSingleV2CreatePayload, params: RequestParams = {}) =>
+  userMdfWindowInfoSingleV2Create = (
+    data: UserMdfWindowInfoSingleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWindowInfoSingleV2CreateData, any>({
       path: `/user_mdf_window_info_single_v2`,
       method: "POST",
@@ -163,7 +176,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_modify_window_report_time
    * @response `200` `UserModifyWindowReportTimeCreateData`
    */
-  userModifyWindowReportTimeCreate = (data: UserModifyWindowReportTimeCreatePayload, params: RequestParams = {}) =>
+  userModifyWindowReportTimeCreate = (
+    data: UserModifyWindowReportTimeCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserModifyWindowReportTimeCreateData, any>({
       path: `/user_modify_window_report_time`,
       method: "POST",
@@ -181,7 +197,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_clear_window_cache
    * @response `200` `UserClearWindowCacheCreateData`
    */
-  userClearWindowCacheCreate = (data: UserClearWindowCacheCreatePayload, params: RequestParams = {}) =>
+  userClearWindowCacheCreate = (
+    data: UserClearWindowCacheCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserClearWindowCacheCreateData, any>({
       path: `/user_clear_window_cache`,
       method: "POST",
@@ -198,7 +217,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_del_window_info
    * @response `200` `UserDelWindowInfoCreateData`
    */
-  userDelWindowInfoCreate = (data: UserDelWindowInfoCreatePayload, params: RequestParams = {}) =>
+  userDelWindowInfoCreate = (
+    data: UserDelWindowInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelWindowInfoCreateData, any>({
       path: `/user_del_window_info`,
       method: "POST",
@@ -215,7 +237,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_window_sync_v2
    * @response `200` `UserMdfWindowSyncV2CreateData`
    */
-  userMdfWindowSyncV2Create = (data: UserMdfWindowSyncV2CreatePayload, params: RequestParams = {}) =>
+  userMdfWindowSyncV2Create = (
+    data: UserMdfWindowSyncV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWindowSyncV2CreateData, any>({
       path: `/user_mdf_window_sync_v2`,
       method: "POST",
@@ -233,7 +258,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_ua_webgl_v2
    * @response `200` `UserGetUaWebglV2ListData`
    */
-  userGetUaWebglV2List = (query: UserGetUaWebglV2ListParams, params: RequestParams = {}) =>
+  userGetUaWebglV2List = (
+    query: UserGetUaWebglV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetUaWebglV2ListData, any>({
       path: `/user_get_ua_webgl_v2`,
       method: "GET",
@@ -250,7 +278,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_device_name_v2
    * @response `200` `UserGetDeviceNameV2ListData`
    */
-  userGetDeviceNameV2List = (query: UserGetDeviceNameV2ListParams, params: RequestParams = {}) =>
+  userGetDeviceNameV2List = (
+    query: UserGetDeviceNameV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetDeviceNameV2ListData, any>({
       path: `/user_get_device_name_v2`,
       method: "GET",
@@ -267,7 +298,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_mac_addr_v2
    * @response `200` `UserGetMacAddrV2ListData`
    */
-  userGetMacAddrV2List = (query: UserGetMacAddrV2ListParams, params: RequestParams = {}) =>
+  userGetMacAddrV2List = (
+    query: UserGetMacAddrV2ListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetMacAddrV2ListData, any>({
       path: `/user_get_mac_addr_v2`,
       method: "GET",
@@ -284,7 +318,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_label_info
    * @response `200` `UserGetLabelInfoListData`
    */
-  userGetLabelInfoList = (query: UserGetLabelInfoListParams, params: RequestParams = {}) =>
+  userGetLabelInfoList = (
+    query: UserGetLabelInfoListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetLabelInfoListData, any>({
       path: `/user_get_label_info`,
       method: "GET",
@@ -301,7 +338,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_add_label_info
    * @response `200` `UserAddLabelInfoCreateData`
    */
-  userAddLabelInfoCreate = (data: UserAddLabelInfoCreatePayload, params: RequestParams = {}) =>
+  userAddLabelInfoCreate = (
+    data: UserAddLabelInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddLabelInfoCreateData, any>({
       path: `/user_add_label_info`,
       method: "POST",
@@ -319,7 +359,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_label_info
    * @response `200` `UserMdfLabelInfoCreateData`
    */
-  userMdfLabelInfoCreate = (data: UserMdfLabelInfoCreatePayload, params: RequestParams = {}) =>
+  userMdfLabelInfoCreate = (
+    data: UserMdfLabelInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfLabelInfoCreateData, any>({
       path: `/user_mdf_label_info`,
       method: "POST",
@@ -337,7 +380,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_del_label_info
    * @response `200` `UserDelLabelInfoCreateData`
    */
-  userDelLabelInfoCreate = (data: UserDelLabelInfoCreatePayload, params: RequestParams = {}) =>
+  userDelLabelInfoCreate = (
+    data: UserDelLabelInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelLabelInfoCreateData, any>({
       path: `/user_del_label_info`,
       method: "POST",
@@ -355,7 +401,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_update_window_filter_name
    * @response `200` `UserUpdateWindowFilterNameCreateData`
    */
-  userUpdateWindowFilterNameCreate = (data: UserUpdateWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+  userUpdateWindowFilterNameCreate = (
+    data: UserUpdateWindowFilterNameCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpdateWindowFilterNameCreateData, any>({
       path: `/user_update_window_filter_name`,
       method: "POST",
@@ -373,7 +422,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_delete_window_filter_name
    * @response `200` `UserDeleteWindowFilterNameCreateData`
    */
-  userDeleteWindowFilterNameCreate = (data: UserDeleteWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+  userDeleteWindowFilterNameCreate = (
+    data: UserDeleteWindowFilterNameCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDeleteWindowFilterNameCreateData, any>({
       path: `/user_delete_window_filter_name`,
       method: "POST",
@@ -391,7 +443,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_add_window_filter_name
    * @response `200` `UserAddWindowFilterNameCreateData`
    */
-  userAddWindowFilterNameCreate = (data: UserAddWindowFilterNameCreatePayload, params: RequestParams = {}) =>
+  userAddWindowFilterNameCreate = (
+    data: UserAddWindowFilterNameCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddWindowFilterNameCreateData, any>({
       path: `/user_add_window_filter_name`,
       method: "POST",
@@ -425,7 +480,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_save_window_table_sort_order
    * @response `200` `UserSaveWindowTableSortOrderCreateData`
    */
-  userSaveWindowTableSortOrderCreate = (data: UserSaveWindowTableSortOrderCreatePayload, params: RequestParams = {}) =>
+  userSaveWindowTableSortOrderCreate = (
+    data: UserSaveWindowTableSortOrderCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSaveWindowTableSortOrderCreateData, any>({
       path: `/user_save_window_table_sort_order`,
       method: "POST",
@@ -459,7 +517,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_batch_window_info_v2
    * @response `200` `UserBatchWindowInfoV2CreateData`
    */
-  userBatchWindowInfoV2Create = (data: UserBatchWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+  userBatchWindowInfoV2Create = (
+    data: UserBatchWindowInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserBatchWindowInfoV2CreateData, any>({
       path: `/user_batch_window_info_v2`,
       method: "POST",
@@ -493,7 +554,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_import_window_info_v2
    * @response `200` `UserImportWindowInfoV2CreateData`
    */
-  userImportWindowInfoV2Create = (data: UserImportWindowInfoV2CreatePayload, params: RequestParams = {}) =>
+  userImportWindowInfoV2Create = (
+    data: UserImportWindowInfoV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserImportWindowInfoV2CreateData, any>({
       path: `/user_import_window_info_v2`,
       method: "POST",
@@ -511,7 +575,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_update_window_filter_sort
    * @response `200` `UserUpdateWindowFilterSortCreateData`
    */
-  userUpdateWindowFilterSortCreate = (data: UserUpdateWindowFilterSortCreatePayload, params: RequestParams = {}) =>
+  userUpdateWindowFilterSortCreate = (
+    data: UserUpdateWindowFilterSortCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpdateWindowFilterSortCreateData, any>({
       path: `/user_update_window_filter_sort`,
       method: "POST",
@@ -529,7 +596,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_window_info_batch_v2
    * @response `200` `UserMdfWindowInfoBatchV2CreateData`
    */
-  userMdfWindowInfoBatchV2Create = (data: UserMdfWindowInfoBatchV2CreatePayload, params: RequestParams = {}) =>
+  userMdfWindowInfoBatchV2Create = (
+    data: UserMdfWindowInfoBatchV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWindowInfoBatchV2CreateData, any>({
       path: `/user_mdf_window_info_batch_v2`,
       method: "POST",
@@ -563,7 +633,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_add_window_template_info
    * @response `200` `UserAddWindowTemplateInfoCreateData`
    */
-  userAddWindowTemplateInfoCreate = (data: UserAddWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+  userAddWindowTemplateInfoCreate = (
+    data: UserAddWindowTemplateInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAddWindowTemplateInfoCreateData, any>({
       path: `/user_add_window_template_info`,
       method: "POST",
@@ -581,7 +654,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_mdf_window_template_info
    * @response `200` `UserMdfWindowTemplateInfoCreateData`
    */
-  userMdfWindowTemplateInfoCreate = (data: UserMdfWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+  userMdfWindowTemplateInfoCreate = (
+    data: UserMdfWindowTemplateInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserMdfWindowTemplateInfoCreateData, any>({
       path: `/user_mdf_window_template_info`,
       method: "POST",
@@ -599,7 +675,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_delete_window_template_info
    * @response `200` `UserDeleteWindowTemplateInfoCreateData`
    */
-  userDeleteWindowTemplateInfoCreate = (data: UserDeleteWindowTemplateInfoCreatePayload, params: RequestParams = {}) =>
+  userDeleteWindowTemplateInfoCreate = (
+    data: UserDeleteWindowTemplateInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDeleteWindowTemplateInfoCreateData, any>({
       path: `/user_delete_window_template_info`,
       method: "POST",
@@ -616,7 +695,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_window_info_list
    * @response `200` `UserGetWindowInfoListListData`
    */
-  userGetWindowInfoListList = (query: UserGetWindowInfoListListParams, params: RequestParams = {}) =>
+  userGetWindowInfoListList = (
+    query: UserGetWindowInfoListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetWindowInfoListListData, any>({
       path: `/user_get_window_info_list`,
       method: "GET",
@@ -633,7 +715,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_get_window_status_info
    * @response `200` `UserGetWindowStatusInfoCreateData`
    */
-  userGetWindowStatusInfoCreate = (data: UserGetWindowStatusInfoCreatePayload, params: RequestParams = {}) =>
+  userGetWindowStatusInfoCreate = (
+    data: UserGetWindowStatusInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetWindowStatusInfoCreateData, any>({
       path: `/user_get_window_status_info`,
       method: "POST",
@@ -651,7 +736,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_analysis_window_info
    * @response `200` `UserAnalysisWindowInfoCreateData`
    */
-  userAnalysisWindowInfoCreate = (data: UserAnalysisWindowInfoCreatePayload, params: RequestParams = {}) =>
+  userAnalysisWindowInfoCreate = (
+    data: UserAnalysisWindowInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAnalysisWindowInfoCreateData, any>({
       path: `/user_analysis_window_info`,
       method: "POST",
@@ -669,7 +757,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_browserVersion_info
    * @response `200` `UserGetBrowserVersionInfoListData`
    */
-  userGetBrowserVersionInfoList = (query: UserGetBrowserVersionInfoListParams, params: RequestParams = {}) =>
+  userGetBrowserVersionInfoList = (
+    query: UserGetBrowserVersionInfoListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetBrowserVersionInfoListData, any>({
       path: `/user_get_browserVersion_info`,
       method: "GET",
@@ -686,7 +777,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_save_window_rows_sort
    * @response `200` `UserSaveWindowRowsSortCreateData`
    */
-  userSaveWindowRowsSortCreate = (data: UserSaveWindowRowsSortCreatePayload, params: RequestParams = {}) =>
+  userSaveWindowRowsSortCreate = (
+    data: UserSaveWindowRowsSortCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSaveWindowRowsSortCreateData, any>({
       path: `/user_save_window_rows_sort`,
       method: "POST",
@@ -737,7 +831,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_del_window_info_recycle
    * @response `200` `UserDelWindowInfoRecycleCreateData`
    */
-  userDelWindowInfoRecycleCreate = (data: UserDelWindowInfoRecycleCreatePayload, params: RequestParams = {}) =>
+  userDelWindowInfoRecycleCreate = (
+    data: UserDelWindowInfoRecycleCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDelWindowInfoRecycleCreateData, any>({
       path: `/user_del_window_info_recycle`,
       method: "POST",
@@ -754,10 +851,14 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_transfer_window_verify_code
    * @response `200` `UserTransferWindowVerifyCodeListData`
    */
-  userTransferWindowVerifyCodeList = (params: RequestParams = {}) =>
+  userTransferWindowVerifyCodeList = (
+    query: UserTransferWindowVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserTransferWindowVerifyCodeListData, any>({
       path: `/user_transfer_window_verify_code`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -770,7 +871,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_transfer_window
    * @response `200` `UserTransferWindowCreateData`
    */
-  userTransferWindowCreate = (data: UserTransferWindowCreatePayload, params: RequestParams = {}) =>
+  userTransferWindowCreate = (
+    data: UserTransferWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserTransferWindowCreateData, any>({
       path: `/user_transfer_window`,
       method: "POST",
@@ -788,7 +892,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request GET:/user_get_transfer_workspace_list
    * @response `200` `UserGetTransferWorkspaceListListData`
    */
-  userGetTransferWorkspaceListList = (query: UserGetTransferWorkspaceListListParams, params: RequestParams = {}) =>
+  userGetTransferWorkspaceListList = (
+    query: UserGetTransferWorkspaceListListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetTransferWorkspaceListListData, any>({
       path: `/user_get_transfer_workspace_list`,
       method: "GET",
@@ -825,7 +932,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_agree_transfer_window
    * @response `200` `UserAgreeTransferWindowCreateData`
    */
-  userAgreeTransferWindowCreate = (data: UserAgreeTransferWindowCreatePayload, params: RequestParams = {}) =>
+  userAgreeTransferWindowCreate = (
+    data: UserAgreeTransferWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAgreeTransferWindowCreateData, any>({
       path: `/user_agree_transfer_window`,
       method: "POST",
@@ -843,7 +953,10 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_reject_transfer_window
    * @response `200` `UserRejectTransferWindowCreateData`
    */
-  userRejectTransferWindowCreate = (data: UserRejectTransferWindowCreatePayload, params: RequestParams = {}) =>
+  userRejectTransferWindowCreate = (
+    data: UserRejectTransferWindowCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserRejectTransferWindowCreateData, any>({
       path: `/user_reject_transfer_window`,
       method: "POST",
@@ -861,9 +974,33 @@ export class WindowApi<SecurityDataType = unknown> {
    * @request POST:/user_clear_transfer_workspace
    * @response `200` `UserClearTransferWorkspaceCreateData`
    */
-  userClearTransferWorkspaceCreate = (data: UserClearTransferWorkspaceCreatePayload, params: RequestParams = {}) =>
+  userClearTransferWorkspaceCreate = (
+    data: UserClearTransferWorkspaceCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserClearTransferWorkspaceCreateData, any>({
       path: `/user_clear_transfer_workspace`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name UserMdfWindowDataBatchCreate
+   * @summary 批量修改窗口数据（代理/平台/cookies）
+   * @request POST:/user_mdf_window_data_batch
+   * @response `200` `UserMdfWindowDataBatchCreateData`
+   */
+  userMdfWindowDataBatchCreate = (
+    data: UserMdfWindowDataBatchCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfWindowDataBatchCreateData, any>({
+      path: `/user_mdf_window_data_batch`,
       method: "POST",
       body: data,
       type: ContentType.Json,

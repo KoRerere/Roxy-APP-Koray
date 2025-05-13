@@ -18,6 +18,7 @@ module.exports = {
     __filename: false,
   },
   optimization: {
+    // moduleIds: 'named',  // 避免模块变成数字
     minimize: true, // 启用代码压缩和混淆
     minimizer: [
       new TerserPlugin({

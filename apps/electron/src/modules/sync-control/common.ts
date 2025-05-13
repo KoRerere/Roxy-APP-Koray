@@ -4,11 +4,12 @@ import { closeCustomLayoutsDialogWindow } from "/@/modules/sync-control/dialog/c
 import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
 import { closePreferencesDialogWindowWindow } from "/@/modules/sync-control/dialog/preferences"
 import { closeSyncingWindowListWindow } from "/@/modules/sync-control/dialog/syncing-window-list"
+import { closeSynchronizerWindow } from "/@/modules/sync-control/synchronizer"
 
 
 /** 关闭所有同步相关的弹窗 */
 export function closeAllSyncDialogs() {
-  closeSynchronizerActionBarWindow()
+  closeSynchronizerWindow()
   closePreferencesDialogWindowWindow()
   closeCustomLayoutsDialogWindow()
   closeBatchInputsDialogWindow()

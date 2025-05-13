@@ -3,7 +3,7 @@ import Dialog, { type DialogProps, type DialogSlots } from 'primevue/dialog'
 import { createVNode, render } from 'vue'
 import RxButton from '/@/components/rx-button/'
 import { $t } from '/@/locales'
-import { isEqualWith } from 'es-toolkit'
+import { isEqualWith, isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
@@ -13,13 +13,20 @@ export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes
   handleOk?: () => any
   okText?: string
   cancelText?: string
-  slots?: {[key in keyof DialogSlots]?: (...args: any[]) => JSX.Element}
+  slots?: {[key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element}
+}
+
+export interface UseDialogInstance {
+  hideModal: () => void
+  handleOk: () => void
+  handleCancel: () => void
 }
 
 // 弹窗队列，避免一次性显示多个弹窗
 const dialogQueue:UseDialogProps[] =  []
+// 根据 header 来判断是否是同一个弹窗
+const dialogMap = new Map<string, UseDialogInstance>()
 let appContext: AppContext | null = null
-let lastProps: UseDialogProps | null = null
 
 const customizer = (a: any, b: any) => {
   if (typeof a === 'function' && typeof b === 'function') {
@@ -27,94 +34,84 @@ const customizer = (a: any, b: any) => {
   }
 };
 
-export function useDialog(comp?: VNode | DefineComponent) {
-  let _modalInstance: any
+export function useDialog( ) {
   appContext ||= getCurrentInstance()!.appContext
-  let innerDialog = false
-  const innerProps = ref<UseDialogProps>({})
 
-  const visible = ref(false)
+    function showModal(props: UseDialogProps) {
+      const dialog = dialogMap.get(props.header || '')
+      if (dialog) {
+        return dialog
+      }
 
-  const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
-    const { handleCancel, handleOk, okText, cancelText, slots, ...dialogProps } = innerProps.value
+      const div = document.createElement('div')
 
-    const __dialogSlots = {
-      footer: () => (
-        <div class="flex justify-end gap-2">
-          {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
-          <RxButton type="button" label={okText || $t('保存')} onClick={handleOk}></RxButton>
-        </div>
-      ),
-      default: slots?.default || comp,
-      ...slots,
-    }
+      function hideModal() {
+        visible.value = false
+        if (props.header) {
+          dialogMap.delete(props.header)
+        }
+      }
 
-    return (
-      <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
-      </Dialog>
-    )
-  }
+      function onAfterHide() {
+        div.remove()
+      }
 
-  const renderDialog = async () => {
-    if (_modalInstance) {
-      return _modalInstance
-    }
-    const div = document.createElement('div')
+      const innerProps = ref<UseDialogProps>({
+        ...props,
+        handleCancel: () => {
+          hideModal()
+          props?.handleCancel?.()
+        },
+        handleOk: async () => {
+          await props?.handleOk?.()
+          hideModal()
+        },
+      })
+
+      const visible = ref(false)
+      const instance = {
+        hideModal,
+        handleOk: () => innerProps.value.handleOk?.(),
+        handleCancel: () => innerProps.value.handleCancel?.(),
+      }
+
+      if (props.header) {
+        dialogMap.set(props.header, instance)
+      }
+
+      const DialogComponent: FunctionalComponent<UseDialogProps> = () => {
+        const { handleCancel, handleOk, okText, cancelText, slots, ...dialogProps } = innerProps.value
+
+        const __dialogSlots = {
+          footer: () => (
+            <div class="flex justify-end gap-2">
+              {cancelText === '' ? null : <RxButton type="button" label={$t('取消')} outlined severity="secondary" onClick={handleCancel}></RxButton>}
+              <RxButton type="button" label={okText || $t('保存')} onClick={handleOk}></RxButton>
+            </div>
+          ),
+          ...Object.entries(slots || {}).reduce((acc, [key, value]) => {
+            acc[key] = isFunction(value) ? new Proxy(value, {
+              apply: (target, thisArg, argArray) => {
+                return Reflect.apply(target, thisArg, [instance, ...argArray])
+              }
+            }) : value
+            return acc
+          }, {} as Record<string, (instance: UseDialogInstance) => JSX.Element>)
+        }
+
+        return (
+          <Dialog v-slots={__dialogSlots} onAfterHide={onAfterHide} onHide={handleCancel} modal {...dialogProps} v-model:visible={visible.value}>
+          </Dialog>
+        )
+      }
+
     const vnode = createVNode(DialogComponent )
     vnode.appContext = appContext
     render(vnode, div)
-    _modalInstance = vnode.component!
-    await nextTick()
-    return _modalInstance
+    visible.value = true
+
+      return instance
   }
 
-  const rewriteProps = (props?: UseDialogProps) => {
-    return {
-      ...props,
-      handleCancel: () => {
-        hideModal()
-        props?.handleCancel?.()
-      },
-      handleOk: async () => {
-        await props?.handleOk?.()
-        hideModal()
-      },
-    }
-  }
-
-
-  async function showModal(props: UseDialogProps) {
-    if (!props.innerDialog && lastProps) {
-      if (isEqualWith(lastProps, props, customizer) || dialogQueue.some(item => isEqualWith(item, props, customizer))) {
-        return
-      }
-      dialogQueue.push(props)
-    } else {
-      innerDialog = Boolean(props.innerDialog)
-      lastProps = props
-      innerProps.value = rewriteProps(props)
-      await renderDialog()
-      visible.value = true
-    }
-  }
-
-  function hideModal() {
-    visible.value = false
-  }
-
-  function onAfterHide() {
-    lastProps = null
-    if (dialogQueue.length > 0) {
-      showModal(dialogQueue.shift()!)
-    }
-  }
-
-  const instance = {
-    showModal,
-    hideModal,
-    handleOk: () => innerProps.value.handleOk?.(),
-    handleCancel: () => innerProps.value.handleCancel?.(),
-  }
-
-  return [instance]
+  return [showModal]
 }

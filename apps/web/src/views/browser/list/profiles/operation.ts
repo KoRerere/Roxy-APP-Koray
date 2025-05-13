@@ -247,7 +247,7 @@ export async function getSorts() {
   }
 }
 
-export function getOperation(_params: any = {}) {
+export function getOperation(row: any = {}) {
 
   return [
     {
@@ -283,7 +283,7 @@ export function getOperation(_params: any = {}) {
     },
     {
       name: 'open',
-      label: $t('打开'),
+      label: $t('打开窗口'),
       icon: 'base/rx_ic_chrome',
       multiple: true,
       multipleProps: {
@@ -295,15 +295,10 @@ export function getOperation(_params: any = {}) {
       },
     },
     {
-      name: 'view',
-      label: $t('查看窗口'),
-      icon: 'base/rx_ic_browser',
-    },
-    {
-      name: 'restart',
-      label: $t('重启窗口'),
-      icon: 'base/rx_ic_refresh',
-      tooltip: $t('重启窗口'),
+      name: 'close',
+      label: $t('关闭窗口'),
+      icon: 'base/rx_ic_shut_down',
+      tooltip: $t('关闭窗口'),
       multiple: true,
       multipleProps: {
         name: 'G2',
@@ -311,11 +306,86 @@ export function getOperation(_params: any = {}) {
       },
     },
     {
-      name: 'close',
-      label: $t('关闭窗口'),
-      icon: 'base/rx_ic_shut_down',
-      tooltip: $t('关闭窗口'),
+      separator: true,
       multiple: true,
+    },
+    {
+      name: 'profileActions',
+      label: $t('窗口操作'),
+      icon: 'base/rx_ic_browser',
+      multiple: true,
+      items: [
+        {
+          name: 'view',
+          label: $t('查看窗口'),
+          icon: 'base/rx_ic_browser',
+          multiple: false
+        },
+        {
+          name: 'restart',
+          label: $t('重启窗口'),
+          icon: 'base/rx_ic_refresh',
+          tooltip: $t('重启窗口'),
+        },
+
+        {
+          name: 'copyId',
+          label: $t('复制窗口 ID'),
+          power: !role.isViewer,
+          icon: 'base/rx_ic_copy',
+          multiple: false
+        },
+        {
+          name: 'exportProfile',
+          label: $t('导出窗口'),
+          icon: 'base/rx_ic_export',
+          power: !role.isViewer,
+        },
+      ]
+    },
+    {
+      name: 'proxyActions',
+      label: $t('代理操作'),
+      icon: 'base/rx_ic_internet',
+      multiple: true,
+      power: !role.isViewer,
+      items: [
+        {
+          name: 'addProxy',
+          label: $t('添加代理'),
+          icon: 'base/rx_ic_plus',
+        },
+        {
+          name: 'chooseProxy',
+          label: $t('选择已有代理'),
+          icon: 'base/rx_ic_exchange',
+        },
+        {
+          name: 'deleteProxy',
+          label: $t('删除代理'),
+          icon: 'base/rx_ic_bin_1',
+          disabled: !([].concat(row).some((item: any) => item.proxyCategory !== 'noproxy')),
+        },
+      ],
+    },
+    {
+      name: 'platformAccountActions',
+      label: $t('平台账号操作'),
+      icon: 'base/rx_ic_keys',
+      multiple: true,
+      power: !role.isViewer,
+      items: [
+        {
+          name: 'addPlatformAccount',
+          label: $t('添加平台账号'),
+          icon: 'base/rx_ic_plus',
+        },
+        {
+          name: 'choosePlatformAccount',
+          label: $t('选择已有平台账号'),
+          icon: 'base/rx_ic_exchange',
+        }
+      ],
     },
     {
       separator: true,
@@ -337,18 +407,14 @@ export function getOperation(_params: any = {}) {
     {
       power: !role.isViewer,
       separator: true,
+      multiple: true,
     },
     {
       name: 'editCookies',
       label: $t('编辑 Cookies'),
       icon: 'base/rx_ic_cookies',
       power: !role.isViewer,
-    },
-    {
-      name: 'copyId',
-      label: $t('复制窗口 ID'),
-      power: !role.isViewer,
-      icon: 'base/rx_ic_copy',
+      multiple: true,
     },
     {
       power: !role.isViewer,
@@ -359,13 +425,6 @@ export function getOperation(_params: any = {}) {
       label: $t('清除缓存'),
       icon: 'base/rx_ic_brush',
       power: !role.isViewer,
-    },
-    {
-      name: 'exportProfile',
-      label: $t('导出窗口'),
-      icon: 'base/rx_ic_export',
-      power: !role.isViewer,
-      multiple: true,
     },
     {
       power: !role.isViewer,

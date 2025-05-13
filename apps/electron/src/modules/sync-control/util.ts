@@ -8,6 +8,8 @@ import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-
 import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
 import axios from "axios"
 import { Page } from "puppeteer-core"
+import { safeParseJSON } from "/@/utils"
+import { setTimeout } from "timers/promises"
 
 /** 同步控制工具 */
 export class SyncControlUtil {
@@ -38,9 +40,8 @@ export class SyncControlUtil {
     console.log('停止同步窗口', isShowSyncingWindowListDialog)
     stopRoxySync()
     if (isShowSyncingWindowListDialog) {
-      setTimeout(() => {
-        createSynchronizerWindow()
-      }, 1000)
+      await setTimeout(100)
+      createSynchronizerWindow()
     }
   }
 
@@ -54,17 +55,19 @@ export class SyncControlUtil {
     const mainControlBrowser = getMainControlBrowser()
     const controlledBrowsers = getControlledBrowsers()
     if (mainControlBrowser) {
-      const mainControlPages = await mainControlBrowser.getBrowser()?.pages()
-      const mainControlPageCount = mainControlPages?.length
+      const { tabs } = await mainControlBrowser.cdpSession?.send("Browser.getTabs")
+      console.debug('tabs', typeof tabs, tabs)
+      const mainBrowserPages = safeParseJSON(tabs)
+      console.debug('mainBrowserPages', mainBrowserPages)
       // 关闭被控窗口的所有标签页
       const controlledBrowserPages = await Promise.all(controlledBrowsers.map(async browser => {
         const pages = await browser.getBrowser()?.pages() || []
-        await Promise.all(pages.slice(mainControlPageCount).map(page => page.close()))
+        await Promise.all(pages.slice(1).map(page => page.close()))
         return browser.getBrowser()?.pages()
       }))
 
-      mainControlPages?.forEach((page, pageIndex) => {
-        const pageURL = page.url()
+      mainBrowserPages.forEach((tab, pageIndex) => {
+        const pageURL = tab.url
 
         controlledBrowsers.forEach(async (item, browserIndex) => {
           const browser = item.getBrowser()
@@ -193,12 +196,19 @@ export class SyncControlUtil {
 
   /** 获取浏览器当前被激活的标签页的 targetId */
   static getActivePageTargetId = async (browser: BrowserItem) => {
+    // 过滤掉 devtools:// 开头的标签页（针对移动端）
+    const currentActivePage = await this.getCurrentActivePage(browser)
+    return currentActivePage.webSocketDebuggerUrl.split('/').at(-1)
+  }
+
+  /** 获取浏览器当前被激活的标签页 */
+  static getCurrentActivePage = async (browser: BrowserItem) => {
     const baseUrl = browser?.launchInfo?.http
     const result = await axios.get(`http://${baseUrl}/json/list`)
     if (result.status === 200) {
       // 过滤掉 devtools:// 开头的标签页（针对移动端）
       const currentActivePage = result.data.filter(n => !n.url.startsWith('devtools://'))[0]
-      return currentActivePage.webSocketDebuggerUrl.split('/').at(-1)
+      return currentActivePage
     } else {
       console.log(`${browser.winInfo.dirId} === 获取浏览器当前被激活的标签页的失败:`, result)
     }

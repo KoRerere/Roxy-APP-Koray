@@ -5,37 +5,28 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { checkCookieFormat, isEmptyValue } from '/@/utils'
 
-const props = defineProps({
-  workspaceName: {
-    type: String,
-  },
-  data: {
-    type: Object,
-    default: () => ({}),
-  },
-  title: {
-    type: String,
-    default: '',
-  },
-})
+const props = defineProps<{
+  data?: any
+}>()
 
 const emit = defineEmits(['confirm'])
 const [_, onlyErrorToast] = useResponseToast()
 
-const cookies = ref()
+const cookies = ref<string>('')
 const loading = ref(false)
 
 onBeforeMount(() => {
-  getCookie()
+  getCookie()//获取最新 cookie 信息
 })
 
 async function getCookie() {
-  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id as string, isDelete: 0, page_index: 1, page_size: 1 })
+  if (!props.data?.id) return
+  const { data: { rows: [data] } } = await API.window.userGetWindowInfoV2List({ windowIds: props.data.id, isDelete: 0, page_index: 1, page_size: 1 })
   cookies.value = isEmptyValue(data.cookie) ? '' : JSON.stringify(data.cookie, null, 2)
 }
 
 function onConfirm() {
-  const cookieStr = cookies.value?.trim?.() || ''
+  const cookieStr = cookies.value?.trim() || ''
   if (cookieStr && checkCookieFormat(cookieStr)) {
     loading.value = true
     emit('confirm', JSON.parse(cookieStr))
@@ -51,7 +42,7 @@ function onConfirm() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full proxy-content">
+  <div class="flex flex-col pt-4 px-4 proxy-content">
     <div class="flex-1">
       <RxInputTextarea v-model="cookies" :placeholder="$t('请以 JSON 格式输入 Cookies')" cols="40" :auto-resize="false" />
     </div>
@@ -63,8 +54,7 @@ function onConfirm() {
 
 <style lang="scss" scoped>
 .proxy-content {
-  padding: var(--spacing-2xl, 16px) var(--spacing-2xl, 16px) 0;
-  width: var(--width-xs, 384px);
+  min-width: var(--width-xs, 496px);
 }
 
 :deep(.p-iconfield) {

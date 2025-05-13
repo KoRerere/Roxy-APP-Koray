@@ -84,7 +84,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           <div class="upgrade-header">
             <div class="upgrade-title">
               <RxSvgIcon name="base/logo" size="32px" class="mr-[6px] flex-shrink-0" />
-              <span>{{ item.version }} {{ item.title }} </span>
+              <span> {{ item.title }} {{ item.version }}</span>
             </div>
             <span class="release-time">{{ item.releaseTime?.split(' ')[0] }}</span>
           </div>

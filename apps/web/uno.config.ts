@@ -3,9 +3,9 @@ import {
   defineConfig,
   presetAttributify,
   presetMini,
-  presetUno,
   transformerDirectives,
   transformerVariantGroup,
+  presetWind3
 } from 'unocss'
 
 // https://github.com/unocss/unocss#readme
@@ -14,7 +14,7 @@ export default defineConfig({
     presetMini({ dark: 'class' }),
     // https://unocss.dev/presets/attributify#properties-conflicts
     presetAttributify({ prefix: 'un-', prefixedOnly: true }),
-    presetUno(),
+    presetWind3({ important: 'body' })
   ],
   rules: [['loading-circle', {
     animation: 'loadingCircle 1s infinite linear',

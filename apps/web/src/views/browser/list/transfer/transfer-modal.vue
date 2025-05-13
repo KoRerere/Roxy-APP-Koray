@@ -79,7 +79,7 @@ async function sendCode() {
     return
   }
 
-  const { code, msg } = await API.window.userTransferWindowVerifyCodeList()
+  const { code, msg } = await API.window.userTransferWindowVerifyCodeList({ targetWorkspaceId: selectedWorkspace.value.workspaceId })
   if (code !== 0) return onlyErrorToast(code, msg)
   step2.value = true
   stopCountdown.value = startCountdown(Date.now() + 1000 * 60, (time) => {

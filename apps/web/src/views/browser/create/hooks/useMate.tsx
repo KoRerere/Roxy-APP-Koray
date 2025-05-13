@@ -16,6 +16,7 @@ export function useMateGroup() {
       name: item.name,
       label: item.name,
       value: `${item.id}`,
+      _origin: item,
       render: () => (
         <div class="flex items-center flex-1 overflow-hidden">
           <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -29,13 +30,14 @@ export function useMateGroup() {
 
   async function getProjects(): Promise<Operation[]> {
     const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-    return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}`, projectDefault: item.projectDefault }))
+    return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}`, projectDefault: item.projectDefault, _origin: item }))
   }
 
   async function getProjectMember(projectId: number): Promise<Operation[]> {
     const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId })
     return data.rows.map(item => ({
       value: `u_${item.userId}`,
+      _origin: item,
       render: () => {
         return (
           <div class="flex items-center gap-1">

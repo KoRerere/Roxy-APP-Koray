@@ -2,44 +2,49 @@
 import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
+type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
 
-interface Props extends /* @vue-ignore */ Omit<SelectProps, 'size'> {
-  size?: Size
+interface Props extends Omit<SelectProps, 'size' | 'filter' | 'optionLabel' | 'optionValue'> {
+  name: string
   icon?: SvgNames
   iconColor?: string
-  name: string
+  size?: Size
+  filter?: boolean
+  optionLabel?: string
+  optionValue?: string
 }
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'sm', icon, iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)', name, ...props } = defineProps<Props>()
+const {
+  name,
+  icon,
+  iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)',
+  size = 'sm',
+  filter = true,
+  optionLabel = 'label',
+  optionValue,
+  ...props
+} = defineProps<Props>()
 
 defineEmits(['change'])
 
-const defaultProps: SelectProps = {
-  inputId: name,
-  filter: true,
-  optionLabel: 'label',
-}
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
-    <template v-if="!$attrs.optionValue && !defaultProps.optionValue" #value="{ value: option, placeholder }">
-      <div v-if="option" class="select-item">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
-        <img v-if="option.image" class="select-item__image" :src="option.image">
-        <div>{{ option.label }}</div>
+    <template v-if="!optionValue" #value="{ value, placeholder }">
+      <div v-if="value" class="select-item">
+        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <img v-if="value.image" class="select-item__image" :src="value.image">
+        <div>{{ value.label }}</div>
       </div>
-      <div v-else>
-        {{ placeholder }}
-      </div>
+      <div v-else>{{ placeholder }}</div>
     </template>
     <template #option="{ option }">
       <div class="select-item">

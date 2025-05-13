@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -94,7 +95,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request POST:/user_pay_settlement
    * @response `200` `UserPaySettlementCreateData`
    */
-  userPaySettlementCreate = (data: UserPaySettlementCreatePayload, params: RequestParams = {}) =>
+  userPaySettlementCreate = (
+    data: UserPaySettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserPaySettlementCreateData, any>({
       path: `/user_pay_settlement`,
       method: "POST",
@@ -112,7 +116,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_get_purchase_records_info
    * @response `200` `UserGetPurchaseRecordsInfoListData`
    */
-  userGetPurchaseRecordsInfoList = (query: UserGetPurchaseRecordsInfoListParams, params: RequestParams = {}) =>
+  userGetPurchaseRecordsInfoList = (
+    query: UserGetPurchaseRecordsInfoListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPurchaseRecordsInfoListData, any>({
       path: `/user_get_purchase_records_info`,
       method: "GET",
@@ -145,7 +152,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request POST:/user_recharge_settlement
    * @response `200` `UserRechargeSettlementCreateData`
    */
-  userRechargeSettlementCreate = (data: UserRechargeSettlementCreatePayload, params: RequestParams = {}) =>
+  userRechargeSettlementCreate = (
+    data: UserRechargeSettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserRechargeSettlementCreateData, any>({
       path: `/user_recharge_settlement`,
       method: "POST",
@@ -163,7 +173,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request POST:/user_seven_day_trial
    * @response `200` `UserSevenDayTrialCreateData`
    */
-  userSevenDayTrialCreate = (data: UserSevenDayTrialCreatePayload, params: RequestParams = {}) =>
+  userSevenDayTrialCreate = (
+    data: UserSevenDayTrialCreatePayload,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserSevenDayTrialCreateData, any>({
       path: `/user_seven_day_trial`,
       method: "POST",
@@ -181,7 +194,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_get_support_pay_type
    * @response `200` `UserGetSupportPayTypeListData`
    */
-  userGetSupportPayTypeList = (query: UserGetSupportPayTypeListParams, params: RequestParams = {}) =>
+  userGetSupportPayTypeList = (
+    query: UserGetSupportPayTypeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetSupportPayTypeListData, any>({
       path: `/user_get_support_pay_type`,
       method: "GET",
@@ -198,7 +214,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_query_order_status
    * @response `200` `UserQueryOrderStatusListData`
    */
-  userQueryOrderStatusList = (query: UserQueryOrderStatusListParams, params: RequestParams = {}) =>
+  userQueryOrderStatusList = (
+    query: UserQueryOrderStatusListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserQueryOrderStatusListData, any>({
       path: `/user_query_order_status`,
       method: "GET",
@@ -215,7 +234,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_get_pay_link
    * @response `200` `UserGetPayLinkListData`
    */
-  userGetPayLinkList = (query: UserGetPayLinkListParams, params: RequestParams = {}) =>
+  userGetPayLinkList = (
+    query: UserGetPayLinkListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetPayLinkListData, any>({
       path: `/user_get_pay_link`,
       method: "GET",
@@ -232,7 +254,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_calculate_price_difference
    * @response `200` `UserCalculatePriceDifferenceListData`
    */
-  userCalculatePriceDifferenceList = (query: UserCalculatePriceDifferenceListParams, params: RequestParams = {}) =>
+  userCalculatePriceDifferenceList = (
+    query: UserCalculatePriceDifferenceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserCalculatePriceDifferenceListData, any>({
       path: `/user_calculate_price_difference`,
       method: "GET",
@@ -249,7 +274,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_manage_subscription
    * @response `200` `UserManageSubscriptionListData`
    */
-  userManageSubscriptionList = (query: UserManageSubscriptionListParams, params: RequestParams = {}) =>
+  userManageSubscriptionList = (
+    query: UserManageSubscriptionListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserManageSubscriptionListData, any>({
       path: `/user_manage_subscription`,
       method: "GET",
@@ -266,7 +294,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_update_pay_tips
    * @response `200` `UserUpdatePayTipsListData`
    */
-  userUpdatePayTipsList = (query: UserUpdatePayTipsListParams, params: RequestParams = {}) =>
+  userUpdatePayTipsList = (
+    query: UserUpdatePayTipsListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserUpdatePayTipsListData, any>({
       path: `/user_update_pay_tips`,
       method: "GET",
@@ -283,7 +314,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_calculate_window_months_price
    * @response `200` `UserCalculateWindowMonthsPriceListData`
    */
-  userCalculateWindowMonthsPriceList = (query: UserCalculateWindowMonthsPriceListParams, params: RequestParams = {}) =>
+  userCalculateWindowMonthsPriceList = (
+    query: UserCalculateWindowMonthsPriceListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserCalculateWindowMonthsPriceListData, any>({
       path: `/user_calculate_window_months_price`,
       method: "GET",
@@ -300,7 +334,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_cancel_subscription
    * @response `200` `UserCancelSubscriptionListData`
    */
-  userCancelSubscriptionList = (query: UserCancelSubscriptionListParams, params: RequestParams = {}) =>
+  userCancelSubscriptionList = (
+    query: UserCancelSubscriptionListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserCancelSubscriptionListData, any>({
       path: `/user_cancel_subscription`,
       method: "GET",
@@ -317,7 +354,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_downgrade_subscription
    * @response `200` `UserDowngradeSubscriptionListData`
    */
-  userDowngradeSubscriptionList = (query: UserDowngradeSubscriptionListParams, params: RequestParams = {}) =>
+  userDowngradeSubscriptionList = (
+    query: UserDowngradeSubscriptionListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserDowngradeSubscriptionListData, any>({
       path: `/user_downgrade_subscription`,
       method: "GET",
@@ -334,7 +374,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_auto_renew_upgrade
    * @response `200` `UserAutoRenewUpgradeListData`
    */
-  userAutoRenewUpgradeList = (query: UserAutoRenewUpgradeListParams, params: RequestParams = {}) =>
+  userAutoRenewUpgradeList = (
+    query: UserAutoRenewUpgradeListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserAutoRenewUpgradeListData, any>({
       path: `/user_auto_renew_upgrade`,
       method: "GET",
