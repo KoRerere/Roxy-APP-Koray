@@ -54,7 +54,7 @@ const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
-const { userInfo, userPayInfo } = storeToRefs(userStore)
+const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
@@ -135,7 +135,6 @@ const profileTemplate = reactive<ProfileTemplate>({
 const isOwner = computed(() => currentWorkspace.value?.role === Role.OWNER)
 
 watch(() => tabsValue.value, (value: any) => {
-  setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
   onUpdateFinger()
@@ -226,6 +225,7 @@ async function createProfile(openBrowser: boolean) {
 async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     const { path, query } = backRoute
     console.log('onBack', path, query)
@@ -243,7 +243,6 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
-  showToast(code, msg)
   loading.value = false
 }
 
@@ -256,12 +255,12 @@ async function batchCreateProfile(params: any) {
   }
 
   loading.value = true
-  const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: createCount.value, preview: false })
+  const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     router.back()
     workspaceStore.getWorkspaceList()
@@ -284,6 +283,7 @@ async function importProfile(params: any) {
   const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
   loading.value = false
   if (code === 0) {
+    showToast(0, msg)
     router.back()
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
@@ -362,8 +362,8 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
   const { code, msg } = id
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-
   if (code === 0) {
+    showToast(code, msg)
     getTemplateList()
   } else {
     handleBusinessCode(code, () => {
@@ -387,7 +387,7 @@ async function deleteTemplate(data: any) {
     },
     accept: async () => {
       const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         getTemplateList()
       }

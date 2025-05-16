@@ -102,7 +102,7 @@ async function onInstall(plugin: PluginItem) {
           onlyErrorToast(code, msg)
           if (code === 0) {
             const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
-            showToast(code, msg)
+            onlyErrorToast(code, msg)
           }
         }
         catch (error) {

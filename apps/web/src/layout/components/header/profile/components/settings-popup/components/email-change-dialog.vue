@@ -107,7 +107,7 @@ async function onFormSubmit({ valid }) {
         email: formInstance.value?.getFieldState('email')?.value,
         ver_code: formInstance.value?.getFieldState('ver_code')?.value,
       })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         onSuccess()
       }

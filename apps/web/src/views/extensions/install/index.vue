@@ -26,7 +26,7 @@ const toast = useToast()
 const role = useRoleStore()
 
 const [dialogOpen] = useSimpleDialog()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useCustomDialog()
 const { showMenu: showPopupMenu } = usePopupMenu()
 
@@ -287,7 +287,7 @@ async function onInstall(data: Data) {
           if (code === 0) {
             window.electronAPI.send('extension:download', [toRaw(data) as any])
           }
-          showToast(code, msg)
+          onlyErrorToast(code, msg)
           tableRef.value?.refresh({ pluginSwitchType: filters.value })
         }
         catch (error) {

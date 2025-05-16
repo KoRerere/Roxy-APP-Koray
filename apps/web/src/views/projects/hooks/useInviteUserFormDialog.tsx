@@ -65,14 +65,13 @@ export function useInviteUserFormDialog() {
       },
       async handleOk(formModel) {
         const { code, msg } = originl.user_id
-          ? await API.team.userMdfTeamInfoV2Create({
-            ...formModel,
-            userId: originl.user_id,
-          } as UserMdfTeamInfoV2CreateData)
-          : await API.limit.userInviteCreate(formModel);
+          ? await API.team.userMdfTeamInfoV2Create({ ...formModel, userId: originl.user_id } as any)
+          : await API.limit.userInviteCreate(formModel as any);
         if (code === 0) {
           tableRef?.value?.refresh()
-          toast.add({ severity: "success", summary: $t("操作成功"), detail: msg, life: 3000 });
+          if (!originl.user_id) {
+            toast.add({ severity: "success", summary: $t("操作成功"), detail: $t("发送邀请成功"), life: 3000 });
+          }
         } else {
           handleBusinessCode(code, () => {
             toast.add({ severity: "error", summary: $t("发生错误"), detail: msg || $t("发送邀请失败"), life: 3000 });
