@@ -3,13 +3,10 @@ import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { isLikeFunction } from '/@/utils'
 
-
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
-
 interface Props extends Omit<SelectProps, 'size' | 'optionLabel' | 'optionValue'> {
   icon?: SvgNames
   iconColor?: string
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
   options?: any[]
   optionLabel?: string
   optionValue?: string

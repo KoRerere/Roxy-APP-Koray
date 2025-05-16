@@ -20,7 +20,7 @@ const confirm = useConfirm()
 const [columns] = useColumns(getColumnsConfig())
 
 const userStore = useUserStore()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 const [showModal] = useDialog()
 
@@ -58,7 +58,9 @@ async function recoverHandler(datas: any) {
   const onConfirm = async (isRemind: boolean) => {
     const ids = datas.map((item: any) => item.id)
     const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+
     tableRef.value?.refresh()
     if (isRemind) {
       localStorage.setItem(RESTORE_WINDOW_NOT_REMIND, 'true')
@@ -102,10 +104,10 @@ async function deleteHandler(datas: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.window.userDelWindowInfoRecycleCreate({ ids })
-      showToast(code, msg)
-      tableRef.value?.refresh()
-      userStore.fetchUserInfo()
+      onlyErrorToast(code, msg)
       if (code === 0) {
+        tableRef.value?.refresh()
+        userStore.fetchUserInfo()
         electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }
     },
@@ -115,16 +117,13 @@ async function deleteHandler(datas: any) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns"
-    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-    :show-actions="false" :show-table-header="false">
+  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')"
-        :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
+      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>
     <template #profile="{ data }">
-      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()"
-        :data="data" disabled />
+      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
     </template>
     <template #note="{ data }">
       <RemarkIcon :value="data.windowRemark" disabled />

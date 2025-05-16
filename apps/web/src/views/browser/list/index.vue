@@ -25,7 +25,7 @@ const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const { isNoPayUser } = storeToRefs(useUserStore())
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 type TabType = {
   id: string
@@ -205,7 +205,8 @@ async function deleteFilterItem(item: any) {
     accept: async () => {
       try {
         const { code, msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name: item.label })
-        showToast(code, msg)
+        onlyErrorToast(code, msg)
+        if (code !== 0) return
 
         if (currentFilter.value?.label === item.label) {
           active.value = tabs.value[tabs.value.length - 2].id

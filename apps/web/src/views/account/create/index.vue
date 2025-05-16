@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import TForm from '/@/views/lab/components/form/index.vue';
+import TsForm from '/@/views/lab/components/form/index.vue';
 import RemarkIcon from '/@/components/remark-icon'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
@@ -100,7 +100,7 @@ function onFormSubmit(values: Record<string, any>) {
 
 <template>
   <div class="flex flex-col h-full account-content">
-    <TForm ref="wcisman" id="account" :inputs="inputs" @submit="onFormSubmit"></TForm>
+    <TsForm ref="wcisman" id="account" :inputs="inputs" @submit="onFormSubmit"></TsForm>
     <div class="flex flex-1 items-end">
       <div class="w-full flex justify-end gap-3 button-group">
         <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />

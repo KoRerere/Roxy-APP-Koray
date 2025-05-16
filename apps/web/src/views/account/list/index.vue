@@ -19,7 +19,7 @@ const tableRef = useTemplateRef('accountTable')
 
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const columns = getColumns()
 const role = useRoleStore()
 const dialog = useDialog()
@@ -124,7 +124,7 @@ function onRemark(data: Data) {
       onConfirm: async (formData: any) => {
         const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
         const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
-        showToast(code, msg)
+        onlyErrorToast(code, msg)
         tableRef.value?.refresh()
       },
     },
@@ -148,7 +148,7 @@ function deletePopup(data: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         tableRef.value?.refresh()
       }

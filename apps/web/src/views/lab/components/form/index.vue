@@ -10,6 +10,7 @@ import mInputNumber from './m-input-number.vue'
 import mInputPassword from './m-input-password.vue'
 import mInputTextarea from './m-input-textarea.vue'
 import mInputSelect from './m-input-select.vue'
+import mInputMultiSelect from './m-input-multi-select.vue'
 import mCustom from './m-custom.vue';
 
 const INPUT_TYPE_MAP = {
@@ -18,6 +19,7 @@ const INPUT_TYPE_MAP = {
   password: mInputPassword,
   textarea: mInputTextarea,
   select: mInputSelect,
+  mselect: mInputMultiSelect,
   // 'checkbox': 'checkbox',
   // 'radio': 'radio',
   // 'date': 'date',

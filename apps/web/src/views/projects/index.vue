@@ -1,7 +1,6 @@
 <script setup lang="tsx">
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums/project'
@@ -24,12 +23,11 @@ type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
 const tableRef = useTemplateRef('accountTable')
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
-const toast = useToast()
 const confirm = useConfirm()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const [projectModfiyDialog] = useProjectActions()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
@@ -143,9 +141,8 @@ async function pinProject(data: Project) {
   if (code === 0) {
     tableRef.value?.refresh()
     showToast(code, isPinned ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
-  }
-  else {
-    showToast(code, msg)
+  } else {
+    onlyErrorToast(code, msg)
   }
 }
 
@@ -166,12 +163,9 @@ function deletePopup(item: Project) {
       // 先删除本地项目
       await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id as number, projectId: item.project_id as number })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
+      onlyErrorToast(code, msg || $t('删除失败'))
       if (code === 0) {
         tableRef.value?.refresh()
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除成功'), life: 3000 })
-      }
-      else {
-        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg || $t('删除失败'), life: 3000 })
       }
     },
   })

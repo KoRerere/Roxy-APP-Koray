@@ -53,7 +53,7 @@ const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const [checkProxy] = useCheckProxy()
 
 const defaultWindowName = getDefaultWindowName()
@@ -249,7 +249,7 @@ function getAccountModel() {
                   }
                 })
                 drawerInstance.hideDrawer()
-                showToast(code, msg)
+                onlyErrorToast(code, msg)
                 if (code === 0) {
                   silentUpdateAccount(data, windowPlatformList)
                 }
@@ -369,7 +369,7 @@ function chooseProxy(proxyData: Record<string, any>) {
 async function updateProfile(params: any, options?: Record<string, any>) {
   const { isRefresh, fallback, success } = { isRefresh: false, success: () => { }, fallback: () => { }, ...options }
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     isLikeFunction(success) && success()
     if (isRefresh) {

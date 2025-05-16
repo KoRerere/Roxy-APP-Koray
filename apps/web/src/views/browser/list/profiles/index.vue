@@ -62,7 +62,7 @@ const [showModal] = RxUseDialog()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { getProjects } = useMateGroup()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [addTag] = useTagsActions({ toast: false })
+const [addTag] = useTagsActions()
 const [show] = useContextMenu()
 const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
@@ -138,7 +138,7 @@ async function saveFilters(formData: any) {
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
 }
 
 // async function coverDefaultDisplay() {
@@ -560,7 +560,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       }
     })
     drawerInstance.hideDrawer()
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
     if (code !== 0) return
 
     const { protocol, proxyCategory, ...rest } = formData
@@ -583,7 +583,7 @@ function multipleProxyDelete(data: Data | Data[]) {
     accept: async () => {
       const ids = datas.map(item => item.id!)
       const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       resolve()
       if (code === 0) {
         const params = {
@@ -639,7 +639,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
       ? await multiConfirm(formData)
       : await singleConfirm(formData)
     drawerInstance.hideDrawer()
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
   }
 
   async function multiConfirm(dataList: any | any[]) {
@@ -843,7 +843,7 @@ async function deleteProfile(datas: any, ids: number[]) {
 
 async function singleModifyWindow(params: any, silent = false) {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     if (!silent) {
       onRefreshTable()
@@ -856,7 +856,7 @@ async function singleModifyWindow(params: any, silent = false) {
 
 async function batchModifyWindow(params: any, silent = false) {
   const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     if (!silent) {
       onRefreshTable()

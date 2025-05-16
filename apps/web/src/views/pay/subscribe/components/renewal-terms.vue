@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import currency from 'currency.js'
+import { useSimpleLocale } from '/@/stores/locale';
 
 interface Props {
   discountAmount: number
@@ -9,6 +10,7 @@ defineProps<Props>()
 
 const isAuto = defineModel<boolean>('modelValue', { required: false })
 
+const { getOfficialWebsite } = useSimpleLocale()
 </script>
 
 <template>
@@ -23,7 +25,7 @@ const isAuto = defineModel<boolean>('modelValue', { required: false })
     </label>
     <i18n-t tag="div" class="mt-2.5 pl-7 terms" :keypath="$t('选择即代表您接受 RoxyBrowser {terms}', { terms: '{terms}' })" scope="global">
       <template #terms>
-        <span class="cursor-pointer terms-link">{{ $t('自动续订协议') }}</span>
+        <a class="terms-link" :href="getOfficialWebsite('copyright/renewal')" target="_blank">{{ $t('自动续订协议') }}</a>
       </template>
     </i18n-t>
   </div>

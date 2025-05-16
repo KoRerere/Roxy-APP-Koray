@@ -1,20 +1,20 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RelatedInfo from '/@/components/related-info.vue'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
 
 const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
 
 const confirm = useConfirm()
-const toast = useToast()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
 
 const [onEdit] = useTagsActions()
+const [_, onlyErrorToast] = useResponseToast()
 
 const columns = ref([
   {
@@ -99,9 +99,11 @@ async function deleteTag(data: any) {
     },
     accept: async () => {
       const ids = data.map((item: any) => item.id)
-      await API.window.userDelLabelInfoCreate({ ids })
-      tableRef.value?.refresh()
-      toast.add({ severity: 'success', summary: '成功', detail: $t('标签修改成功'), life: 2500 })
+      const { code, msg } = await API.window.userDelLabelInfoCreate({ ids })
+      onlyErrorToast(code, msg)
+      if (code === 0) {
+        tableRef.value?.refresh()
+      }
     },
   })
 }

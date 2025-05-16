@@ -1350,7 +1350,7 @@
   "选择续费时长": "Select Renewal Duration",
   "选项中包含其他人的插件": "Selections include plugins that belongs to other member",
   "通知": "Messages",
-  "通过 Google 账号登录": "Sign in with Google",
+  "通过 {value} 账号登录": "Sign in with {value}",
   "通过升级 {member} 解锁窗口模板功能\n\n窗口模板功能支持保存配置环境的{bold}中的各种参数": "Unlock profile template by upgrading to {member}\n\nProfile template feature supports saving various parameters from {bold}",
   "通过升级至 {member} 解锁窗口同步器功能\n\n窗口同步器模块同时包括{bold}等细分功能": "Unlock profile synchronizer feature by upgrading to {member}\n\nWindow synchronizer module includes sub-functions like {bold}",
   "通过构建新的工作空间，您可以与更多互联网上的用户进行协作并灵活切换。": "By creating new workspaces, you can collaborate with more users across the internet and switch between them flexibly.",

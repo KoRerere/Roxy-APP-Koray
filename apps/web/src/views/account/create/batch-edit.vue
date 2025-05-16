@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import TForm from '/@/views/lab/components/form/index.vue';
+import TsForm from '/@/views/lab/components/form/index.vue';
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { deepClone, validateURL } from '/@/utils'
@@ -181,7 +181,7 @@ function onConfirm() {
             <span>{{ $t('移除') }}</span>
           </div>
         </div>
-        <TForm ref="account" :inputs="inputs"></TForm>
+        <TsForm ref="account" :inputs="inputs"></TsForm>
       </div>
     </div>
     <div class="flex items-end">

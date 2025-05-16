@@ -19,7 +19,7 @@ const { labels, projectId, disabled = false, showCreateTag = true } = defineProp
 
 const emit = defineEmits(['update'])
 
-const [addTag] = useTagsActions({ toast: false })
+const [addTag] = useTagsActions()
 const role = useRoleStore()
 const { getTags, getProjectMember } = useMateGroup()
 const { showMenu: showPopupMenu } = usePopupMenu()
