@@ -153,19 +153,6 @@ export class BeforeLaunchTask {
         clearInterval(timer)
       })
 
-      // 临时解决移动端全屏问题
-      if (this.isMobile) {
-        setTimeout(async () => {
-          const pages = await this.browser?.pages()
-          setTimeout(() => {
-            const dashboardPage = pages?.find(page => page.url().startsWith(`http://127.0.0.1:${store.appPort}/dashboard`))
-            if (dashboardPage) {
-              dashboardPage.bringToFront()
-            }
-          }, pages?.length * 100 + 200)
-        })
-      }
-
       this.wsEndpoint = this.browser.wsEndpoint()
       console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       resolve()
@@ -246,6 +233,7 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
+      // '--custom-devtools-frontend=file://D:\\work\\devtools-frontend\\out\\Default\\gen\\front_end',
     ]
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {

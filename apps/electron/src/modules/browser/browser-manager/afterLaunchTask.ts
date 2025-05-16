@@ -158,19 +158,16 @@ export class AfterLaunchTask {
 
     this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
-    }, isPackaged ? 1000 * 60 : 1000 * 5)
+    }, 1000 * 8)
 
+    const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '' }))
     const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
     const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))
 
-    if (activePage) {
-      // 在网页里面发送检测 IP 请求
-      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '' }))
-
+    if (activePage && latestProxyInfo.ip && this.browserItem.beforeLaunchTask.proxyInfo.ip) {
       console.debug('当前 IP', latestProxyInfo.ip)
       console.debug('上次 IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
-      if (latestProxyInfo.ip && this.browserItem.beforeLaunchTask.proxyInfo.ip && latestProxyInfo.ip !== this.browserItem.beforeLaunchTask.proxyInfo.ip) {
-
+      if (latestProxyInfo.ip !== this.browserItem.beforeLaunchTask.proxyInfo.ip) {
         const dialogHtmlString = await ejs.renderFile(join(appConfig.htmlTemplateDir, 'ip-change-modal.ejs'), {
           latestProxyInfo,
           beforeProxyInfo: this.browserItem.beforeLaunchTask.proxyInfo,

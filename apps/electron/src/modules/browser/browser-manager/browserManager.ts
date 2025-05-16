@@ -136,7 +136,7 @@ export class BrowserManager {
   }
 
   /** 关闭浏览器 */
-  async close(dirId: string) {
+  private async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
       return browserItem.close().finally(() => {

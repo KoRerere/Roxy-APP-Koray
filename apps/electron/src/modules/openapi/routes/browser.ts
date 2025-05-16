@@ -214,7 +214,7 @@ router.post('/close', async (req, res) => {
   }
 
   try {
-    await browserManager.close(dirId)
+    await browserManager.batchClose([dirId])
     res.success()
   }
   catch (error) {
