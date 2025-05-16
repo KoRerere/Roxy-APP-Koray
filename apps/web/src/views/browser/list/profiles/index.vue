@@ -69,7 +69,7 @@ const { columns, updateColumns } = useColumns(getColumns(), props.isProjectProfi
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
 const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
-const { getUserInfo } = useUserStore()
+const { fetchUserInfo } = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
@@ -804,7 +804,7 @@ async function saveRemarkDisplayStatus() {
     })
     onlyErrorToast(code, msg)
     if (code !== 0) return
-    getUserInfo()
+    fetchUserInfo()
   }
 }
 
