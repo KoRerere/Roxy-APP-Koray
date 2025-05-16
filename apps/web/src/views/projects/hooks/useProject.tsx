@@ -19,8 +19,6 @@ const defaultOptions: TagActionsOptions = {
 export function useProjectActions(options: TagActionsOptions = defaultOptions) {
   const [showFormDialog] = useFormDialog();
   const [showToast] = useResponseToast();
-  const toast = useToast();
-  const router = useRouter();
   const { handleBusinessCode } = useHandleBusinessCode()
 
   async function addDialog(props?: any) {

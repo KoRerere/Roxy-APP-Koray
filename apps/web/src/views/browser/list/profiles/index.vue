@@ -64,17 +64,19 @@ const { getProjects } = useMateGroup()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
-const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { columns, updateColumns } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
 const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
-
+const { getUserInfo } = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+
+const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
 watch(() => props.currentFilter, (value: any) => {
   if (value) {
@@ -95,7 +97,44 @@ watch(
   },
 )
 
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
+let canceOpenlListener: any
+let canceCloselListener: any
+
+onBeforeMount(() => {
+  canceOpenlListener = listenOpenMessage()
+  canceCloselListener = listenCloseMessage()
+
+  // 列表备注显示状态现在保存到后台
+  updateColumns((columns) => {
+    const column = columns.find(column => column.key === 'note')
+    if (column) {
+      Reflect.set(column._cache, 'extend', userInfo.value.remarkDisplayStatus!)
+    }
+  })
+
+  window.electronAPI
+    .send('browser:getOpenedBrowserMessage')
+    .then((state) => {
+      console.log('browser:getOpenedBrowserMessage state', state)
+      state.forEach((item: any) => {
+        Reflect.set(openMessage, item.dirId, { data: item })
+      })
+    })
+
+  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
+
+  getCustomFilters(customFilterParams).then((data) => {
+    filtersMenu.value ??= data
+  }).finally(() => {
+    onRefreshTable(customFilterParams, false)
+  })
+})
+
+onBeforeUnmount(() => {
+  canceOpenlListener?.()
+  canceCloselListener?.()
+  saveRemarkDisplayStatus()// 保存备注显示状态
+})
 
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
@@ -757,6 +796,18 @@ async function onRemark(data: Data | Data[]) {
   })
 }
 
+async function saveRemarkDisplayStatus() {
+  const column = columns.value.find(column => column.key === 'note')
+  if (column && userInfo.value.remarkDisplayStatus !== column._cache.extend) {
+    const { code, msg } = await API.base.userModifyRemarkDisplayStatusCreate({
+      remarkDisplayStatus: column._cache.extend
+    })
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+    getUserInfo()
+  }
+}
+
 async function onClearCache(data: any) {
   dialog.open(ClearCache, {
     props: {
@@ -891,36 +942,6 @@ async function toCreateBrowser() {
     })
   }
 }
-
-let canceOpenlListener: any
-let canceCloselListener: any
-
-onBeforeMount(() => {
-  canceOpenlListener = listenOpenMessage()
-  canceCloselListener = listenCloseMessage()
-
-  window.electronAPI
-    .send('browser:getOpenedBrowserMessage')
-    .then((state) => {
-      console.log('browser:getOpenedBrowserMessage state', state)
-      state.forEach((item: any) => {
-        Reflect.set(openMessage, item.dirId, { data: item })
-      })
-    })
-
-  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
-
-  getCustomFilters(customFilterParams).then((data) => {
-    filtersMenu.value ??= data
-  }).finally(() => {
-    onRefreshTable(customFilterParams, false)
-  })
-})
-
-onBeforeUnmount(() => {
-  canceOpenlListener?.()
-  canceCloselListener?.()
-})
 
 defineExpose({
   tableRef,

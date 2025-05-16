@@ -10,7 +10,7 @@ import { useUserStore } from "/@/stores/user";
 
 export function useCommonUtil() {
   const [showFormDialog] = useFormDialog();
-  const [showToast] = useResponseToast();
+  const [showToast, onlyErrorToast] = useResponseToast();
   const userStore = useUserStore();
   const { fetchUserInfo, updateUserConfig } = userStore;
 
@@ -22,7 +22,7 @@ export function useCommonUtil() {
     const { code, msg } = await API.base.userChangeUsernameCreate({
       userName: item.value,
     });
-    showToast(code, msg);
+    onlyErrorToast(code, msg);
     if (code === 0) {
       fetchUserInfo();
       item.oldValue = item.value;
@@ -38,7 +38,7 @@ export function useCommonUtil() {
       const { code, msg } = await API.base.userSetUserConfigCreate({
         [item.name as any]: value,
       });
-      showToast(code, msg);
+      onlyErrorToast(code, msg);
       if (code === 0) {
         electronAPI.send("app:saveSoftConfig", { [item.name as any]: isProxy(value) ? toRaw(value) : value });
         updateUserConfig();
@@ -54,7 +54,7 @@ export function useCommonUtil() {
       );
     } catch (error) {
       item.value = null;
-      showToast(-1, error);
+      onlyErrorToast(-1, error as string);
     }
   }
 
@@ -66,7 +66,7 @@ export function useCommonUtil() {
       );
     } catch (error) {
       item.value = null;
-      showToast(-1, error);
+      onlyErrorToast(-1, error as string);
     }
   }
 

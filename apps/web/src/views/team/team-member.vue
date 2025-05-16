@@ -3,9 +3,7 @@ import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
-// import { RxSvgIcon } from '/@/components/rx-icon/'
 import { Membership, Role, getRoleLabelMap } from '/@/enums'
-import useColumns from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -13,6 +11,8 @@ import { useInviteUserFormDialog } from '/@/views/projects/hooks/useInviteUserFo
 import { useUserStore } from '/@/stores/user'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import useColumns from '/@/hooks/useColumns'
 
 const roleLabelMap = getRoleLabelMap()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
@@ -22,12 +22,13 @@ const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
+const [_, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('team')
 
 type TableRow = UnwrapRowType<UserGetMemberInfoByWorkspaceListData>
 
-const [columns] = useColumns({
+const { columns } = useColumns({
   key: 'team.list',
   data: [
     {
@@ -145,15 +146,11 @@ async function deleteMember(data: TableRow) {
       severity: 'danger',
     },
     accept: async () => {
-      try {
-        const projectIds = data.project_info.map(item => item.project_id)
-        const { msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: msg, life: 2500 })
-        filters.onChange()
-      }
-      catch (error) {
-        console.log(error)
-      }
+      const projectIds = data.project_info.map(item => item.project_id)
+      const { code, msg } = await API.team.userDelTeamInfoCreate({ userId: data.user_id, role: data.role, projectIds })
+      onlyErrorToast(code, msg)
+      if (code !== 0) return
+      filters.onChange()
     },
   })
 }
@@ -171,7 +168,7 @@ function handleShowInviteUserFormDialog(data?: TableRow) {
   const { email, project_info, role, user_id } = data || {}
   const projectIds = project_info?.map(item => item.project_id)
   const disableds = email ? ['email'] : []
-  showInviteUserFormDialog({ tableRef, email, projectIds, role, user_id, disableds })
+  showInviteUserFormDialog({ tableRef: tableRef as any, email, projectIds, role, user_id, disableds })
 }
 </script>
 

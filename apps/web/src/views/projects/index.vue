@@ -1,39 +1,59 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
+import RxAvatar from '/@/components/rx-avatar'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums/project'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
-import columnsRow from './columns'
 import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
-const tableRef = useTemplateRef('accountTable')
-const [showInviteUserFormDialog] = useInviteUserFormDialog()
+const tableRef = useTemplateRef('account')
 const confirm = useConfirm()
+const [showToast, onlyErrorToast] = useResponseToast()
+const [showInviteUserFormDialog] = useInviteUserFormDialog()
+const [projectModfiyDialog] = useProjectActions({ toast: false })
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
-const [projectModfiyDialog] = useProjectActions()
-const [showToast, onlyErrorToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
 
-
-const [columns] = useColumns(columnsRow)
+const columns = [
+  {
+    title: $t('项目信息'),
+    key: 'projectName',
+    slot: 'projectName',
+  },
+  {
+    title: $t('成员'),
+    render: ({ data }: any) => {
+      const list = data.user_info.map((item: any) => ({
+        avatar: item.avatar,
+        name: item.userName.slice(0, 2),
+        color: item.avatarColor,
+      }))
+      return <RxAvatar list={list} size={28} font-size={14} />
+    },
+  },
+  {
+    title: $t('其他'),
+    style: 'width: 9rem',
+    slot: 'actions',
+  },
+]
 
 const role = useRoleStore()
 
@@ -184,9 +204,8 @@ function showOperationMenu({ event, operation }: { event: MouseEvent, operation:
       <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="account-content">
-      <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-gridlines="false" :show-actions-menu="false"
-        :show-actions="false" data-key="project_id">
+      <RyTable ref="account" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
+        :show-gridlines="false" :show-actions-menu="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>

@@ -2,23 +2,50 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-import { getColumnsConfig } from './columns'
 import { getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { useDialog } from '/@/hooks/useDialog'
 import RestoreReminderDialog from './restore-reminder-dialog.vue'
 import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
 
+const columns = [
+  {
+    title: $t('窗口信息'),
+    key: 'profile',
+    slot: 'profile',
+    style: {
+      width: '40%'
+    }
+  },
+  {
+    title: $t('备注'),
+    key: 'note',
+    slot: 'note',
+    style: {
+      width: '10%',
+    },
+  },
+  {
+    title: $t('标签'),
+    slot: 'tags',
+  },
+  {
+    title: $t('删除记录'),
+    key: 'group',
+    slot: 'log',
+  },
+  {
+    title: $t('操作'),
+    slot: 'actions',
+  },
+]
+
 const confirm = useConfirm()
-
-const [columns] = useColumns(getColumnsConfig())
-
 const userStore = useUserStore()
 const [showToast, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()

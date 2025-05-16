@@ -1,12 +1,11 @@
 <script setup lang="tsx">
+import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -15,9 +14,8 @@ import { copyText } from '/@/utils/'
 import { useSimpleLocale } from '/@/stores/locale'
 
 const role = useRoleStore()
-const toast = useToast()
 const confirm = useConfirm()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialFaqWebsite } = useSimpleLocale()
 
 const original = ref()
@@ -63,13 +61,12 @@ const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
   if (hasChange) {
     const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
     if (code === 0) {
       // 开关或端口改变时 重启 API 服务
       if (original.value.open !== apiConfig.value.open || original.value.port !== apiConfig.value.port) {
         electronAPI.send('app:restartAPIServer')
       }
-
       original.value = { ...apiConfig.value }
     }
   }
@@ -143,7 +140,7 @@ async function resetApiKey() {
 
 async function onCopy() {
   copyText(apiConfig.value.apiKey)
-  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
+  showToast(0, $t('复制成功'))
 }
 
 onBeforeMount(() => {
@@ -158,15 +155,13 @@ onBeforeMount(() => {
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')"
-            @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')"
-                @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
@@ -193,8 +188,7 @@ onBeforeMount(() => {
               </div>
               <inputNumberGroup :inputs="inputs" />
             </div>
-            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false"
-              :title="$t('端口已被占用')"
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
               :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>

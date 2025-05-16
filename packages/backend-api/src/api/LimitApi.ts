@@ -11,6 +11,8 @@
  */
 
 import {
+  CheckAddUserByProjectInfoCreateData,
+  CheckAddUserByProjectInfoCreatePayload,
   UserAddProjectInfoCreateData,
   UserAddProjectInfoCreatePayload,
   UserAddUserByProjectInfoCreateData,
@@ -339,6 +341,27 @@ export class LimitApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserShowInvitationLinkStatusCreateData, any>({
       path: `/user_show_invitation_link_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name CheckAddUserByProjectInfoCreate
+   * @summary 校验绑定用户关联的项目
+   * @request POST:/check_add_user_by_project_info
+   * @response `200` `CheckAddUserByProjectInfoCreateData`
+   */
+  checkAddUserByProjectInfoCreate = (
+    data: CheckAddUserByProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckAddUserByProjectInfoCreateData, any>({
+      path: `/check_add_user_by_project_info`,
       method: "POST",
       body: data,
       type: ContentType.Json,

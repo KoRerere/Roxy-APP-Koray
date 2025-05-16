@@ -1653,51 +1653,119 @@ export interface UserChangeEmailCreateData {
 export interface UserGetUserInfoListData {
   code: number;
   data: {
-    /** 用户ID */
+    /**
+     * 用户ID
+     * 用户ID
+     */
     id: number;
-    /** 用户名 */
+    /**
+     * 用户名
+     * 用户名
+     */
     userName: string;
-    /** 真实姓名 */
+    /**
+     * 真实姓名
+     * 真实姓名
+     */
     realName: string;
-    /** 手机号 */
+    /**
+     * 手机号
+     * 手机号
+     */
     phone: string;
-    /** 邮箱 */
+    /**
+     * 邮箱
+     * 邮箱
+     */
     email: string;
-    /** 用户身份：创始用户:old,特邀用户:invited,普通用户:new */
+    /**
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     * 用户身份：创始用户:old,特邀用户:invited,普通用户:new
+     */
     userIdentity: string;
-    /** 名下用户：true:有,false：没有 */
+    /**
+     * 名下用户：true:有,false：没有
+     * 名下用户：true:有,false：没有
+     */
     underName: boolean;
-    /** 推荐用户：true:是,false：不是 */
+    /**
+     * 推荐用户：true:是,false：不是
+     * 推荐用户：true:是,false：不是
+     */
     recommendUser: boolean;
-    /** 头像 */
+    /**
+     * 头像
+     * 头像
+     */
     avatar: string;
-    /** 头像颜色 */
+    /**
+     * 头像颜色
+     * 头像颜色
+     */
     avatarColor: string;
-    /** 最大打开数量 */
+    /**
+     * 最大打开数量
+     * 最大打开数量
+     */
     maxOpenCount: number;
-    /** 创建时间 */
+    /**
+     * 创建时间
+     * 创建时间
+     */
     createTime: string;
-    /** 修改时间 */
+    /**
+     * 修改时间
+     * 修改时间
+     */
     updateTime: string;
-    /** 已打开次数 */
+    /**
+     * 已打开次数
+     * 已打开次数
+     */
     useOpenCount: number;
-    /** 工作空间ID */
+    /**
+     * 工作空间ID
+     * 工作空间ID
+     */
     workspaceId: number;
-    /** 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink */
+    /**
+     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
+     * 用户身份,老用户:old 新用户:new 特邀用户:invited 邀请用户:inviteLink
+     */
     identity: string;
-    /** 最大窗口数量 */
+    /**
+     * 最大窗口数量
+     * 最大窗口数量
+     */
     maxWindowCount: number;
-    /** 已使用窗口数量 */
+    /**
+     * 已使用窗口数量
+     * 已使用窗口数量
+     */
     useWindowCount: number;
-    /** 已使用空间数量 */
+    /**
+     * 已使用空间数量
+     * 已使用空间数量
+     */
     useWorkspaceCount: number;
-    /** 获取用户总空间数量 */
+    /**
+     * 获取用户总空间数量
+     * 获取用户总空间数量
+     */
     maxWorkspaceCount: number;
-    /** 邀请链接 */
+    /**
+     * 邀请链接
+     * 邀请链接
+     */
     inviteLink: string;
-    /** 首次创建空间提示 */
+    /**
+     * 首次创建空间提示
+     * 首次创建空间提示
+     */
     firstCreateTip: boolean;
     clientId: string;
+    /** 列表备注状态 */
+    remarkDisplayStatus: boolean;
   };
   msg: string;
 }
@@ -2754,6 +2822,16 @@ export interface UserSendAccountPasswordVerifyCodeListParams {
 }
 
 export interface UserSendAccountPasswordVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserModifyRemarkDisplayStatusCreatePayload {
+  /** 备注显示状态：true: 显示，false：不显示 */
+  remarkDisplayStatus: boolean;
+}
+
+export interface UserModifyRemarkDisplayStatusCreateData {
   code: number;
   msg: string;
 }
@@ -5477,6 +5555,16 @@ export interface UserShowInvitationLinkStatusCreateData {
   code: number;
   /** 已失效 */
   data: string;
+  msg: string;
+}
+
+export interface CheckAddUserByProjectInfoCreatePayload {
+  /** 加密数据 */
+  data: string;
+}
+
+export interface CheckAddUserByProjectInfoCreateData {
+  code: number;
   msg: string;
 }
 

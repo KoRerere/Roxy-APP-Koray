@@ -22,7 +22,7 @@ const dialog = useDialog()
 
 const needsync = defineModel('needsync')
 
-const categories = ref()
+const categories = ref<CategoryItem[]>([])
 const activeCategory = ref()
 const pluginList = ref()
 const fuse = ref()
@@ -30,6 +30,29 @@ const search = ref('')
 const searchResult = ref()
 
 const extensionList = computed(() => searchResult.value?.length > 0 ? searchResult.value : pluginList.value)
+
+onBeforeMount(async () => {
+  await getCategoryList()
+  getPluginList()
+})
+
+const searchPlugins = useDebounceFn(() => {
+  const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
+  searchResult.value = formatPluginList(list)
+}, 700)
+
+function formatPluginList(list: PluginItem[]) {
+  return Object.values(list.reduce((map: PluginMap, item) => {
+    item.categoryName = categories.value.find(n => n.id === item.category)?.categoryName || item.categoryName
+    map[item.categoryName] ??= {
+      categoryId: item.category,
+      categoryName: item.categoryName,
+      items: [],
+    }
+    map[item.categoryName].items.push(item)
+    return map
+  }, {}))
+}
 
 async function getCategoryList() {
   const { data } = await API.plugins.userGetPluginCategoryList()
@@ -45,23 +68,6 @@ async function getPluginList() {
     threshold: 0.3,
     keys: ['pluginName'],
   })
-}
-
-const searchPlugins = useDebounceFn(() => {
-  const list = fuse.value?.search(search.value).map((res: any) => toRaw(res.item))
-  searchResult.value = formatPluginList(list)
-}, 700)
-
-function formatPluginList(list: PluginItem[]) {
-  return Object.values(list.reduce((map: PluginMap, item) => {
-    item.categoryName = categories.value.find(n => n.id === item.category)?.categoryName || item.categoryName;
-    ; (map[item.categoryName] || (map[item.categoryName] = {
-      categoryId: item.category,
-      categoryName: item.categoryName,
-      items: [],
-    })).items.push(item)
-    return map
-  }, {}))
 }
 
 function jumpToCategory(item: CategoryItem) {
@@ -96,9 +102,7 @@ async function onInstall(plugin: PluginItem) {
           onlyErrorToast(code, msg)
           if (code === 0) {
             const { code, msg } = await API.plugins.userAddPluginToWindowCreate({ ...params, pluginId: data.plugin_id })
-            if (code === 0) {
-              showToast(code, msg)
-            }
+            showToast(code, msg)
           }
         }
         catch (error) {
@@ -108,11 +112,6 @@ async function onInstall(plugin: PluginItem) {
     },
   })
 }
-
-onBeforeMount(async () => {
-  await getCategoryList()
-  getPluginList()
-})
 
 defineExpose({
   refresh: () => {
@@ -127,8 +126,7 @@ defineExpose({
   <div class="flex flex-1 justify-between flex-row-reverse hub">
     <div>
       <div class="hub-categories">
-        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
-          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item" :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
           {{ item.categoryName }}
         </div>
       </div>
@@ -163,10 +161,8 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line"
-                  :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud"
-                  :label="$t('下载')" @click="onInstall(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>

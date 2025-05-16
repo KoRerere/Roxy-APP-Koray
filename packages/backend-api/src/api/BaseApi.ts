@@ -85,6 +85,8 @@ import {
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
   UserMigrateDataListData,
+  UserModifyRemarkDisplayStatusCreateData,
+  UserModifyRemarkDisplayStatusCreatePayload,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
@@ -1242,6 +1244,27 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/user_send_account_password_verify_code`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserModifyRemarkDisplayStatusCreate
+   * @summary 修改备注显示状态
+   * @request POST:/user_modify_remark_display_status
+   * @response `200` `UserModifyRemarkDisplayStatusCreateData`
+   */
+  userModifyRemarkDisplayStatusCreate = (
+    data: UserModifyRemarkDisplayStatusCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserModifyRemarkDisplayStatusCreateData, any>({
+      path: `/user_modify_remark_display_status`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

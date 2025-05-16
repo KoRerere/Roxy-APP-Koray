@@ -2,7 +2,6 @@ import type { UserMdfTeamInfoV2CreateData } from "@roxy/backend-api";
 import Checkbox from "primevue/checkbox";
 import { useToast } from "primevue/usetoast";
 import type { Ref } from "vue";
-import { I18nT } from "vue-i18n";
 import { API } from "/@/api";
 import RxButton from "/@/components/rx-button";
 import type RyTable from "/@/components/ry-table";
@@ -25,9 +24,7 @@ export function useInviteUserFormDialog() {
   const [showFormDialog] = useFormDialog();
   const isInviteMore = ref(false);
   const toast = useToast();
-  const router = useRouter();
   const { handleBusinessCode } = useHandleBusinessCode()
-
 
   const showDialog = async ({ tableRef, disableds, ...data }: PropsType) => {
     const originl = data;
@@ -73,8 +70,8 @@ export function useInviteUserFormDialog() {
             userId: originl.user_id,
           } as UserMdfTeamInfoV2CreateData)
           : await API.limit.userInviteCreate(formModel);
-        tableRef?.value?.refresh();
         if (code === 0) {
+          tableRef?.value?.refresh()
           toast.add({ severity: "success", summary: $t("操作成功"), detail: msg, life: 3000 });
         } else {
           handleBusinessCode(code, () => {
