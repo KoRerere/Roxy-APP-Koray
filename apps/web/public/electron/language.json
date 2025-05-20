@@ -1,0 +1,878 @@
+[
+  {
+    "key": "US",
+    "code": "en-US",
+    "nation": "美国",
+    "lang": "英语(美国)"
+  },
+  {
+    "key": "CN",
+    "code": "zh-CN",
+    "nation": "中国",
+    "lang": "中文(简体)"
+  },
+  {
+    "key": "TW",
+    "code": "zh-TW",
+    "nation": "台湾",
+    "lang": "中文(繁体)"
+  },
+  {
+    "key": "HK",
+    "code": "zh-HK",
+    "nation": "香港",
+    "lang": "中文(香港)"
+  },
+  {
+    "key": "JP",
+    "code": "ja-JP",
+    "nation": "日本",
+    "lang": "日语(日本)"
+  },
+  {
+    "key": "KR",
+    "code": "ko-KR",
+    "nation": "韩国",
+    "lang": "韩语(韩国)"
+  },
+  {
+    "key": "GB",
+    "code": "en-GB",
+    "nation": "英国",
+    "lang": "英语(英国)"
+  },
+  {
+    "key": "CA",
+    "code": "en-CA",
+    "nation": "加拿大",
+    "lang": "英语(加拿大)"
+  },
+  {
+    "key": "FR",
+    "code": "fr-FR",
+    "nation": "法国",
+    "lang": "法语(法国)"
+  },
+  {
+    "key": "DE",
+    "code": "de-DE",
+    "nation": "德国",
+    "lang": "德语(德国)"
+  },
+  {
+    "key": "IT",
+    "code": "it-IT",
+    "nation": "意大利",
+    "lang": "意大利语(意大利)"
+  },
+  {
+    "key": "ES",
+    "code": "es-ES",
+    "nation": "西班牙",
+    "lang": "西班牙语(西班牙)"
+  },
+  {
+    "key": "MX",
+    "code": "es-MX",
+    "nation": "墨西哥",
+    "lang": "西班牙语(墨西哥)"
+  },
+  {
+    "key": "BR",
+    "code": "pt-BR",
+    "nation": "巴西",
+    "lang": "葡萄牙语(巴西)"
+  },
+  {
+    "key": "PT",
+    "code": "pt-PT",
+    "nation": "葡萄牙",
+    "lang": "葡萄牙语(葡萄牙)"
+  },
+  {
+    "key": "RU",
+    "code": "ru-RU",
+    "nation": "俄罗斯",
+    "lang": "俄语(俄罗斯)"
+  },
+  {
+    "key": "IN",
+    "code": "hi-IN",
+    "nation": "印度",
+    "lang": "印地语(印度)"
+  },
+  {
+    "key": "AR",
+    "code": "es-AR",
+    "nation": "阿根廷",
+    "lang": "西班牙语(阿根廷)"
+  },
+  {
+    "key": "AU",
+    "code": "en-AU",
+    "nation": "澳大利亚",
+    "lang": "英语(澳大利亚)"
+  },
+  {
+    "key": "AT",
+    "code": "de-AT",
+    "nation": "奥地利",
+    "lang": "德语(奥地利)"
+  },
+  {
+    "key": "BE",
+    "code": "nl-BE",
+    "nation": "比利时",
+    "lang": "荷兰语(比利时)"
+  },
+  {
+    "key": "CH",
+    "code": "de-CH",
+    "nation": "瑞士",
+    "lang": "德语(瑞士)"
+  },
+  {
+    "key": "DK",
+    "code": "da-DK",
+    "nation": "丹麦",
+    "lang": "丹麦语(丹麦)"
+  },
+  {
+    "key": "NL",
+    "code": "nl-NL",
+    "nation": "荷兰",
+    "lang": "荷兰语(荷兰)"
+  },
+  {
+    "key": "FI",
+    "code": "fi-FI",
+    "nation": "芬兰",
+    "lang": "芬兰语(芬兰)"
+  },
+  {
+    "key": "GR",
+    "code": "el-GR",
+    "nation": "希腊",
+    "lang": "希腊语(希腊)"
+  },
+  {
+    "key": "IL",
+    "code": "he-IL",
+    "nation": "以色列",
+    "lang": "希伯来语(以色列)"
+  },
+  {
+    "key": "IE",
+    "code": "en-IE",
+    "nation": "爱尔兰",
+    "lang": "英语(爱尔兰)"
+  },
+  {
+    "key": "NO",
+    "code": "no-NO",
+    "nation": "挪威",
+    "lang": "挪威语(挪威)"
+  },
+  {
+    "key": "PL",
+    "code": "pl-PL",
+    "nation": "波兰",
+    "lang": "波兰语(波兰)"
+  },
+  {
+    "key": "SE",
+    "code": "sv-SE",
+    "nation": "瑞典",
+    "lang": "瑞典语(瑞典)"
+  },
+  {
+    "key": "TR",
+    "code": "tr-TR",
+    "nation": "土耳其",
+    "lang": "土耳其语(土耳其)"
+  },
+  {
+    "key": "ZA",
+    "code": "en-ZA",
+    "nation": "南非",
+    "lang": "英语(南非)"
+  },
+  {
+    "key": "SA",
+    "code": "ar-SA",
+    "nation": "沙特阿拉伯",
+    "lang": "阿拉伯语(沙特阿拉伯)"
+  },
+  {
+    "key": "EG",
+    "code": "ar-EG",
+    "nation": "埃及",
+    "lang": "阿拉伯语(埃及)"
+  },
+  {
+    "key": "AE",
+    "code": "ar-AE",
+    "nation": "阿拉伯联合酋长国",
+    "lang": "阿拉伯语(阿联酋)"
+  },
+  {
+    "key": "TH",
+    "code": "th-TH",
+    "nation": "泰国",
+    "lang": "泰语(泰国)"
+  },
+  {
+    "key": "VN",
+    "code": "vi-VN",
+    "nation": "越南",
+    "lang": "越南语(越南)"
+  },
+  {
+    "key": "ID",
+    "code": "id-ID",
+    "nation": "印度尼西亚",
+    "lang": "印度尼西亚语(印尼)"
+  },
+  {
+    "key": "MY",
+    "code": "ms-MY",
+    "nation": "马来西亚",
+    "lang": "马来语(马来西亚)"
+  },
+  {
+    "key": "PH",
+    "code": "en-PH",
+    "nation": "菲律宾",
+    "lang": "英语(菲律宾)"
+  },
+  {
+    "key": "MN",
+    "code": "mn-MN",
+    "nation": "蒙古",
+    "lang": "蒙古语(蒙古)"
+  },
+  {
+    "key": "NZ",
+    "code": "en-NZ",
+    "nation": "新西兰",
+    "lang": "英语(新西兰)"
+  },
+  {
+    "key": "SG",
+    "code": "en-SG",
+    "nation": "新加坡",
+    "lang": "英语(新加坡)"
+  },
+  {
+    "key": "UA",
+    "code": "uk-UA",
+    "nation": "乌克兰",
+    "lang": "乌克兰语(乌克兰)"
+  },
+  {
+    "key": "BY",
+    "code": "be-BY",
+    "nation": "白俄罗斯",
+    "lang": "白俄罗斯语(白俄罗斯)"
+  },
+  {
+    "key": "CZ",
+    "code": "cs-CZ",
+    "nation": "捷克",
+    "lang": "捷克语(捷克)"
+  },
+  {
+    "key": "HU",
+    "code": "hu-HU",
+    "nation": "匈牙利",
+    "lang": "匈牙利语(匈牙利)"
+  },
+  {
+    "key": "RO",
+    "code": "ro-RO",
+    "nation": "罗马尼亚",
+    "lang": "罗马尼亚语(罗马尼亚)"
+  },
+  {
+    "key": "SK",
+    "code": "sk-SK",
+    "nation": "斯洛伐克",
+    "lang": "斯洛伐克语(斯洛伐克)"
+  },
+  {
+    "key": "BG",
+    "code": "bg-BG",
+    "nation": "保加利亚",
+    "lang": "保加利亚语(保加利亚)"
+  },
+  {
+    "key": "HR",
+    "code": "hr-HR",
+    "nation": "克罗地亚",
+    "lang": "克罗地亚语(克罗地亚)"
+  },
+  {
+    "key": "LT",
+    "code": "lt-LT",
+    "nation": "立陶宛",
+    "lang": "立陶宛语(立陶宛)"
+  },
+  {
+    "key": "LV",
+    "code": "lv-LV",
+    "nation": "拉脱维亚",
+    "lang": "拉脱维亚语(拉脱维亚)"
+  },
+  {
+    "key": "SI",
+    "code": "sl-SI",
+    "nation": "斯洛文尼亚",
+    "lang": "斯洛文尼亚语(斯洛文尼亚)"
+  },
+  {
+    "key": "EE",
+    "code": "et-EE",
+    "nation": "爱沙尼亚",
+    "lang": "爱沙尼亚语(爱沙尼亚)"
+  },
+  {
+    "key": "IS",
+    "code": "is-IS",
+    "nation": "冰岛",
+    "lang": "冰岛语(冰岛)"
+  },
+  {
+    "key": "AL",
+    "code": "sq-AL",
+    "nation": "阿尔巴尼亚",
+    "lang": "阿尔巴尼亚语(阿尔巴尼亚)"
+  },
+  {
+    "key": "MT",
+    "code": "mt-MT",
+    "nation": "马耳他",
+    "lang": "马耳他语(马耳他)"
+  },
+  {
+    "key": "CY",
+    "code": "el-CY",
+    "nation": "塞浦路斯",
+    "lang": "希腊语(塞浦路斯)"
+  },
+  {
+    "key": "RS",
+    "code": "sr-RS",
+    "nation": "塞尔维亚",
+    "lang": "塞尔维亚语(塞尔维亚)"
+  },
+  {
+    "key": "MK",
+    "code": "mk-MK",
+    "nation": "北马其顿",
+    "lang": "马其顿语(北马其顿)"
+  },
+  {
+    "key": "ME",
+    "code": "sr-ME",
+    "nation": "黑山",
+    "lang": "塞尔维亚语(黑山)"
+  },
+  {
+    "key": "BA",
+    "code": "bs-BA",
+    "nation": "波斯尼亚和黑塞哥维那",
+    "lang": "波斯尼亚语(波黑)"
+  },
+  {
+    "key": "GE",
+    "code": "ka-GE",
+    "nation": "格鲁吉亚",
+    "lang": "格鲁吉亚语(格鲁吉亚)"
+  },
+  {
+    "key": "AM",
+    "code": "hy-AM",
+    "nation": "亚美尼亚",
+    "lang": "亚美尼亚语(亚美尼亚)"
+  },
+  {
+    "key": "MD",
+    "code": "ro-MD",
+    "nation": "摩尔多瓦",
+    "lang": "罗马尼亚语(摩尔多瓦)"
+  },
+  {
+    "key": "IR",
+    "code": "fa-IR",
+    "nation": "伊朗",
+    "lang": "波斯语(伊朗)"
+  },
+  {
+    "key": "IQ",
+    "code": "ar-IQ",
+    "nation": "伊拉克",
+    "lang": "阿拉伯语(伊拉克)"
+  },
+  {
+    "key": "JO",
+    "code": "ar-JO",
+    "nation": "约旦",
+    "lang": "阿拉伯语(约旦)"
+  },
+  {
+    "key": "KW",
+    "code": "ar-KW",
+    "nation": "科威特",
+    "lang": "阿拉伯语(科威特)"
+  },
+  {
+    "key": "LB",
+    "code": "ar-LB",
+    "nation": "黎巴嫩",
+    "lang": "阿拉伯语(黎巴嫩)"
+  },
+  {
+    "key": "OM",
+    "code": "ar-OM",
+    "nation": "阿曼",
+    "lang": "阿拉伯语(阿曼)"
+  },
+  {
+    "key": "QA",
+    "code": "ar-QA",
+    "nation": "卡塔尔",
+    "lang": "阿拉伯语(卡塔尔)"
+  },
+  {
+    "key": "SY",
+    "code": "ar-SY",
+    "nation": "叙利亚",
+    "lang": "阿拉伯语(叙利亚)"
+  },
+  {
+    "key": "YE",
+    "code": "ar-YE",
+    "nation": "也门",
+    "lang": "阿拉伯语(也门)"
+  },
+  {
+    "key": "KZ",
+    "code": "kk-KZ",
+    "nation": "哈萨克斯坦",
+    "lang": "哈萨克语(哈萨克斯坦)"
+  },
+  {
+    "key": "UZ",
+    "code": "uz-Latn-UZ",
+    "nation": "乌兹别克斯坦",
+    "lang": "乌兹别克语(乌兹别克斯坦)"
+  },
+  {
+    "key": "TJ",
+    "code": "tg-TJ",
+    "nation": "塔吉克斯坦",
+    "lang": "塔吉克语(塔吉克斯坦)"
+  },
+  {
+    "key": "TM",
+    "code": "tk-TM",
+    "nation": "土库曼斯坦",
+    "lang": "土库曼语(土库曼斯坦)"
+  },
+  {
+    "key": "KG",
+    "code": "ky-KG",
+    "nation": "吉尔吉斯斯坦",
+    "lang": "吉尔吉斯语(吉尔吉斯斯坦)"
+  },
+  {
+    "key": "AF",
+    "code": "prs-AF",
+    "nation": "阿富汗",
+    "lang": "普什图语(阿富汗)"
+  },
+  {
+    "key": "PK",
+    "code": "ur-PK",
+    "nation": "巴基斯坦",
+    "lang": "乌尔都语(巴基斯坦)"
+  },
+  {
+    "key": "BD",
+    "code": "bn-BD",
+    "nation": "孟加拉国",
+    "lang": "孟加拉语(孟加拉国)"
+  },
+  {
+    "key": "LK",
+    "code": "si-LK",
+    "nation": "斯里兰卡",
+    "lang": "僧伽罗语(斯里兰卡)"
+  },
+  {
+    "key": "NP",
+    "code": "ne-NP",
+    "nation": "尼泊尔",
+    "lang": "尼泊尔语(尼泊尔)"
+  },
+  {
+    "key": "BT",
+    "code": "dz-BT",
+    "nation": "不丹",
+    "lang": "宗喀语(不丹)"
+  },
+  {
+    "key": "MM",
+    "code": "my-MM",
+    "nation": "缅甸",
+    "lang": "缅甸语(缅甸)"
+  },
+  {
+    "key": "LA",
+    "code": "lo-LA",
+    "nation": "老挝",
+    "lang": "老挝语(老挝)"
+  },
+  {
+    "key": "KH",
+    "code": "km-KH",
+    "nation": "柬埔寨",
+    "lang": "高棉语(柬埔寨)"
+  },
+  {
+    "key": "MO",
+    "code": "zh-MO",
+    "nation": "澳门",
+    "lang": "中文(澳门)"
+  },
+  {
+    "key": "MG",
+    "code": "mg-MG",
+    "nation": "马达加斯加",
+    "lang": "马尔加什语(马达加斯加)"
+  },
+  {
+    "key": "MU",
+    "code": "en-MU",
+    "nation": "毛里求斯",
+    "lang": "英语(毛里求斯)"
+  },
+  {
+    "key": "DZ",
+    "code": "ar-DZ",
+    "nation": "阿尔及利亚",
+    "lang": "阿拉伯语(阿尔及利亚)"
+  },
+  {
+    "key": "MA",
+    "code": "ar-MA",
+    "nation": "摩洛哥",
+    "lang": "阿拉伯语(摩洛哥)"
+  },
+  {
+    "key": "TN",
+    "code": "ar-TN",
+    "nation": "突尼斯",
+    "lang": "阿拉伯语(突尼斯)"
+  },
+  {
+    "key": "LY",
+    "code": "ar-LY",
+    "nation": "利比亚",
+    "lang": "阿拉伯语(利比亚)"
+  },
+  {
+    "key": "GM",
+    "code": "en-GM",
+    "nation": "冈比亚",
+    "lang": "英语(冈比亚)"
+  },
+  {
+    "key": "SN",
+    "code": "fr-SN",
+    "nation": "塞内加尔",
+    "lang": "法语(塞内加尔)"
+  },
+  {
+    "key": "ML",
+    "code": "fr-ML",
+    "nation": "马里",
+    "lang": "法语(马里)"
+  },
+  {
+    "key": "NG",
+    "code": "en-NG",
+    "nation": "尼日利亚",
+    "lang": "英语(尼日利亚)"
+  },
+  {
+    "key": "GH",
+    "code": "en-GH",
+    "nation": "加纳",
+    "lang": "英语(加纳)"
+  },
+  {
+    "key": "CD",
+    "code": "fr-CD",
+    "nation": "刚果民主共和国",
+    "lang": "法语(刚果民主共和国)"
+  },
+  {
+    "key": "AO",
+    "code": "pt-AO",
+    "nation": "安哥拉",
+    "lang": "葡萄牙语(安哥拉)"
+  },
+  {
+    "key": "NA",
+    "code": "en-NA",
+    "nation": "纳米比亚",
+    "lang": "英语(纳米比亚)"
+  },
+  {
+    "key": "ZW",
+    "code": "en-ZW",
+    "nation": "津巴布韦",
+    "lang": "英语(津巴布韦)"
+  },
+  {
+    "key": "MZ",
+    "code": "pt-MZ",
+    "nation": "莫桑比克",
+    "lang": "葡萄牙语(莫桑比克)"
+  },
+  {
+    "key": "KE",
+    "code": "en-KE",
+    "nation": "肯尼亚",
+    "lang": "英语(肯尼亚)"
+  },
+  {
+    "key": "TZ",
+    "code": "sw-TZ",
+    "nation": "坦桑尼亚",
+    "lang": "斯瓦希里语(坦桑尼亚)"
+  },
+  {
+    "key": "ET",
+    "code": "am-ET",
+    "nation": "埃塞俄比亚",
+    "lang": "阿姆哈拉语(埃塞俄比亚)"
+  },
+  {
+    "key": "CL",
+    "code": "es-CL",
+    "nation": "智利",
+    "lang": "西班牙语(智利)"
+  },
+  {
+    "key": "CO",
+    "code": "es-CO",
+    "nation": "哥伦比亚",
+    "lang": "西班牙语(哥伦比亚)"
+  },
+  {
+    "key": "PE",
+    "code": "es-PE",
+    "nation": "秘鲁",
+    "lang": "西班牙语(秘鲁)"
+  },
+  {
+    "key": "VE",
+    "code": "es-VE",
+    "nation": "委内瑞拉",
+    "lang": "西班牙语(委内瑞拉)"
+  },
+  {
+    "key": "BO",
+    "code": "es-BO",
+    "nation": "玻利维亚",
+    "lang": "西班牙语(玻利维亚)"
+  },
+  {
+    "key": "EC",
+    "code": "es-EC",
+    "nation": "厄瓜多尔",
+    "lang": "西班牙语(厄瓜多尔)"
+  },
+  {
+    "key": "PY",
+    "code": "es-PY",
+    "nation": "巴拉圭",
+    "lang": "西班牙语(巴拉圭)"
+  },
+  {
+    "key": "UY",
+    "code": "es-UY",
+    "nation": "乌拉圭",
+    "lang": "西班牙语(乌拉圭)"
+  },
+  {
+    "key": "CR",
+    "code": "es-CR",
+    "nation": "哥斯达黎加",
+    "lang": "西班牙语(哥斯达黎加)"
+  },
+  {
+    "key": "DO",
+    "code": "es-DO",
+    "nation": "多米尼加共和国",
+    "lang": "西班牙语(多米尼加)"
+  },
+  {
+    "key": "GT",
+    "code": "es-GT",
+    "nation": "危地马拉",
+    "lang": "西班牙语(危地马拉)"
+  },
+  {
+    "key": "HN",
+    "code": "es-HN",
+    "nation": "洪都拉斯",
+    "lang": "西班牙语(洪都拉斯)"
+  },
+  {
+    "key": "NI",
+    "code": "es-NI",
+    "nation": "尼加拉瓜",
+    "lang": "西班牙语(尼加拉瓜)"
+  },
+  {
+    "key": "PA",
+    "code": "es-PA",
+    "nation": "巴拿马",
+    "lang": "西班牙语(巴拿马)"
+  },
+  {
+    "key": "SV",
+    "code": "es-SV",
+    "nation": "萨尔瓦多",
+    "lang": "西班牙语(萨尔瓦多)"
+  },
+  {
+    "key": "PR",
+    "code": "es-PR",
+    "nation": "波多黎各",
+    "lang": "西班牙语(波多黎各)"
+  },
+  {
+    "key": "CU",
+    "code": "es-CU",
+    "nation": "古巴",
+    "lang": "西班牙语(古巴)"
+  },
+  {
+    "key": "LU",
+    "code": "fr-LU",
+    "nation": "卢森堡",
+    "lang": "法语(卢森堡)"
+  },
+  {
+    "key": "LI",
+    "code": "de-LI",
+    "nation": "列支敦士登",
+    "lang": "德语(列支敦士登)"
+  },
+  {
+    "key": "MC",
+    "code": "fr-MC",
+    "nation": "摩纳哥",
+    "lang": "法语(摩纳哥)"
+  },
+  {
+    "key": "SM",
+    "code": "it-SM",
+    "nation": "圣马力诺",
+    "lang": "意大利语(圣马力诺)"
+  },
+  {
+    "key": "VA",
+    "code": "it-VA",
+    "nation": "梵蒂冈",
+    "lang": "意大利语(梵蒂冈)"
+  },
+  {
+    "key": "AD",
+    "code": "ca-AD",
+    "nation": "安道尔",
+    "lang": "加泰罗尼亚语(安道尔)"
+  },
+  {
+    "key": "GI",
+    "code": "en-GI",
+    "nation": "直布罗陀",
+    "lang": "英语(直布罗陀)"
+  },
+  {
+    "key": "GG",
+    "code": "en-GG",
+    "nation": "根西岛",
+    "lang": "英语(根西岛)"
+  },
+  {
+    "key": "IM",
+    "code": "en-IM",
+    "nation": "马恩岛",
+    "lang": "英语(马恩岛)"
+  },
+  {
+    "key": "JE",
+    "code": "en-JE",
+    "nation": "泽西岛",
+    "lang": "英语(泽西岛)"
+  },
+  {
+    "key": "FO",
+    "code": "fo-FO",
+    "nation": "法罗群岛",
+    "lang": "法罗语(法罗群岛)"
+  },
+  {
+    "key": "GL",
+    "code": "kl-GL",
+    "nation": "格陵兰",
+    "lang": "格陵兰语(格陵兰)"
+  },
+  {
+    "key": "AZ",
+    "code": "az-Cyrl-AZ",
+    "nation": "阿塞拜疆",
+    "lang": "阿塞拜疆语(阿塞拜疆)"
+  },
+  {
+    "key": "BH",
+    "code": "ar-BH",
+    "nation": "巴林",
+    "lang": "阿拉伯语(巴林)"
+  },
+  {
+    "key": "BN",
+    "code": "ms-BN",
+    "nation": "马来西亚",
+    "lang": "马来语(文莱)"
+  },
+  {
+    "key": "BZ",
+    "code": "en-BZ",
+    "nation": "伯利兹",
+    "lang": "英语(伯利兹)"
+  },
+  {
+    "key": "JM",
+    "code": "en-JM",
+    "nation": "牙买加",
+    "lang": "英语(牙买加)"
+  },
+  {
+    "key": "MV",
+    "code": "dv-MV",
+    "nation": "马尔代夫",
+    "lang": "迪维希语(马尔代夫)"
+  },
+  {
+    "key": "RW",
+    "code": "rw-RW",
+    "nation": "卢旺达",
+    "lang": "卢旺达语(卢旺达)"
+  }
+]

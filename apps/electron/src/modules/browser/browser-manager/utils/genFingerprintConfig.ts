@@ -3,13 +3,15 @@ import crypto from 'node:crypto'
 import { join } from 'node:path'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
-import language from '/@/constants/language.json'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
-import { getSystemProxyAddress, isPackaged } from '/@/utils'
+import { getSystemProxyAddress, isPackaged, safeParseJSON } from '/@/utils'
 import { readFileSync } from 'node:fs'
 
+let language: any[]
+
 function getCityCode(key: string) {
+  language ||= safeParseJSON(readFileSync(join(appConfig.currentWebDir, 'electron', 'language.json'), 'utf-8'))
   return language.find(item => item.key === key)?.code
 }
 
