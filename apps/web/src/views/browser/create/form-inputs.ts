@@ -71,6 +71,13 @@ export async function ceateRandomFinger(inupts: any, options?: { count?: number,
   return fingerDetail
 }
 
+function getResolutionBySystem(os: string, $dict_map: Record<string, any[]>) {
+  const isMobile = ['ios', 'android'].includes(os.toLocaleLowerCase())
+  const options = isMobile ? $dict_map.mobileResolution : $dict_map.resolution
+  const defaultValue = isMobile ? options[0] : options.find(item => item.value === '1280 x 720')
+  return { isMobile, options, defaultValue }
+}
+
 export async function getInputsGroup(data: any = {}, showToast: any = () => { }) {
   const [$dict_map, userConfig, searchEngine] = await Promise.all([
     getDictMap(),
@@ -125,7 +132,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     }]
     : []
 
-  const inputsGroup: any = []
+  const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(osValue?.value, $dict_map)
+  const resolutionValue = resolutionOptions.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
+  const inputsGroup = [] as any[]
 
   const original = reactive({
     ...getDefaultValue(),
@@ -157,11 +166,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
           },
           class: 'items-center',
           change: async (item: any) => {
-            const osVersionInput = findInputByName(windowInputs, 'osVersion')
             if (item.value) {
+              const osVersionInput = findInputByName(windowInputs, 'osVersion')
               osVersionInput.options = item.value._versionOptions
               osVersionInput.value = item.value._versionOptions[0]
               osVersionInput.change?.(osVersionInput)
+
+              const { isMobile, options: resolutionOptions, defaultValue } = getResolutionBySystem(item.value.value, $dict_map)
+              const resolutionInput = findInputByName(highLevelInputs, 'resolution')
+              if (resolutionInput._isMobile !== isMobile) {
+                resolutionInput._isMobile = isMobile
+                resolutionInput.value = defaultValue
+                resolutionInput.options = resolutionOptions
+              }
             }
           },
           preview: {
@@ -646,10 +663,11 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('分辨率值'),
       placeholder: $t('请选择分辨率'),
       name: 'resolution',
-      value: $dict_map.resolution.find((item: any) => item.value === `${data.resolutionX || 1280} x ${data.resolutionY || 720}`) || $dict_map.resolution[3],
-      options: $dict_map.resolution,
+      value: resolutionValue,
+      options: resolutionOptions,
       virtualScrollerOptions: { itemSize: 38 },
       filter: false,
+      _isMobile: isMobile,
       formatValue: (input: any, _inputs: any, formData: any) => {
         const [resolutionX, resolutionY] = input.value.value.split('x')
         Object.assign(formData, {

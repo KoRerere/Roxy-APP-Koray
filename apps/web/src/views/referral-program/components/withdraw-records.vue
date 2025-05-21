@@ -17,12 +17,14 @@ const withdrawStatusMap = {
   'Pending': $t('处理中...'),
   'Success': $t('已到账'),
   'Fail': $t('提现失败'),
+  'Reject': $t('未通过'),
 }
 
 const withdrawStatusColorMap = {
   'Pending': '#171C1F',
   'Success': '#1CC94D',
   'Fail': '#F53838',
+  'Reject': '#F53838',
 }
 
 const columns = ref([
@@ -38,14 +40,14 @@ const columns = ref([
   {
     title: $t('提现类型'),
     key: 'withdrawType',
-    getText: (data: Data) => withdrawTypeMap[data.withdrawType],
+    getText: (data: Data) => withdrawTypeMap[data.withdrawType as keyof typeof withdrawTypeMap],
   },
   {
     title: $t('状态'),
     key: 'withdrawStatus',
     render: ({ data }: { data: Data }) => (
-      <span style={{ color: withdrawStatusColorMap[data.withdrawStatus] }}>
-        {withdrawStatusMap[data.withdrawStatus]}
+      <span style={{ color: withdrawStatusColorMap[data.withdrawStatus as keyof typeof withdrawStatusColorMap] }}>
+        {withdrawStatusMap[data.withdrawStatus as keyof typeof withdrawStatusMap]}
       </span>
     ),
   },
@@ -94,8 +96,7 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest"
-    :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无提现记录')" />
     </template>
