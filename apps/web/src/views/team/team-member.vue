@@ -1,7 +1,7 @@
-<script setup lang="ts">
+<script setup lang="tsx">
+import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import type { UnwrapRowType, UserGetMemberInfoByWorkspaceListData } from '@roxy/backend-api'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { Membership, Role, getRoleLabelMap } from '/@/enums'
 import { $t } from '/@/locales'
@@ -12,12 +12,13 @@ import { useUserStore } from '/@/stores/user'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useDialog } from '/@/hooks/useDialog'
 import useColumns from '/@/hooks/useColumns'
 
 const roleLabelMap = getRoleLabelMap()
 const [showInviteUserFormDialog] = useInviteUserFormDialog()
+const [showModal] = useDialog()
 const confirm = useConfirm()
-const toast = useToast()
 const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -87,8 +88,15 @@ const filters = reactive({
   },
 })
 
+const members = ref()
+const memberCount = ref(0)
+const allProjects = ref()
+
 async function tableRequest(params: any) {
-  return API.team.userGetMemberInfoByWorkspaceList(params)
+  const data = await API.team.userGetMemberInfoByWorkspaceList(params)
+  members.value = data.data.rows
+  memberCount.value = members.value.length
+  return data
 }
 
 function tableOperation(data: TableRow) {
@@ -124,12 +132,19 @@ function tableOperation(data: TableRow) {
 function operationHandler(operate: any, data: TableRow) {
   switch (operate.name) {
     case 'edit':
-      handleShowInviteUserFormDialog(data)
+      editMember(data)
       break
     case 'delete':
       deleteMember(data)
       break
   }
+}
+
+function editMember(data: TableRow) {
+  const { email, project_info, role, user_id } = data || {}
+  const projectIds = project_info?.map(item => item.project_id)
+  const disableds = email ? ['email'] : []
+  showInviteUserFormDialog({ tableRef: tableRef as any, email, projectIds, role, user_id, disableds })
 }
 
 async function deleteMember(data: TableRow) {
@@ -155,20 +170,48 @@ async function deleteMember(data: TableRow) {
   })
 }
 
-function handleShowInviteUserFormDialog(data?: TableRow) {
-  const { maxMemberCount, useMemberCount } = userPayInfo.value
+async function getAllProjects() {
+  if (allProjects.value) return allProjects.value
+  const { code, data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+  if (code === 0) {
+    allProjects.value = data.rows
+  }
+  return allProjects.value
+}
 
-  if (!data?.user_id) {
-    if (useMemberCount >= maxMemberCount) {
-      handleBusinessCode(BUSINESS_CODE.MEMBER_MAX_LIMIT)
-      return
-    }
+async function handleShowInviteUserFormDialog() {
+  const { maxMemberCount, useMemberCount } = userPayInfo.value
+  if (useMemberCount >= maxMemberCount) {
+    handleBusinessCode(BUSINESS_CODE.MEMBER_MAX_LIMIT)
+    return
   }
 
-  const { email, project_info, role, user_id } = data || {}
-  const projectIds = project_info?.map(item => item.project_id)
-  const disableds = email ? ['email'] : []
-  showInviteUserFormDialog({ tableRef: tableRef as any, email, projectIds, role, user_id, disableds })
+  const projects: any[] = await getAllProjects().then(res => res.map((item: any) => ({ ...item, label: item.projectName, value: item.project_id })))
+  const projectValues = [projects.find(item => item.projectDefault && !item.isTransfer)!.value]
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    innerDialog: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: ({ hideModal }) => <InviteUserModal
+        v-model:members={members.value}
+        projects={projects}
+        projectValues={projectValues}
+        disabledSuggestions={true}
+        onClose={hideModal}
+      />
+    },
+    handleCancel: () => {
+      if (members.value.length !== memberCount.value) {
+        filters.onChange()
+      }
+    }
+  })
 }
 </script>
 

@@ -1,34 +1,17 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { getRoleLabelMap } from '/@/enums/'
 
-const props = defineProps({
-  projectId: {
-    type: Number,
-    required: true,
-  },
-})
+const { members = [] } = defineProps<{
+  members: any[]
+}>()
 
 const roleLabelMap = getRoleLabelMap()
-const op = ref()
-const members = ref()
+const opRef = useTemplateRef('op')
 
 function toggle(event: Event) {
-  op.value.toggle(event)
+  opRef.value?.toggle(event)
 }
-
-async function getMembers() {
-  const { code, data } = await API.limit.userGetMemberInfoByProjectIdList({
-    projectId: props.projectId,
-  })
-  if (code === 0) {
-    members.value = data.rows
-  }
-}
-
-getMembers()
 </script>
 
 <template>
@@ -42,8 +25,7 @@ getMembers()
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
-            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor"
-              :size="32" :font-size="16" />
+            <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor" :size="32" :font-size="16" />
             <div>
               <span class="font-medium">{{ member.userName }}</span>
               <div class="text-sm text-surface-500 dark:text-surface-400">
@@ -51,16 +33,14 @@ getMembers()
               </div>
             </div>
             <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm flex-shrink-0">
-              <span>{{ roleLabelMap[member.role] }}</span>
+              <span>{{ roleLabelMap[member.role as keyof typeof roleLabelMap] }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div class="manage-users">
-      <RouterLink :to="{ name: 'teams' }">
-        {{ $t('管理成员') }}
-      </RouterLink>
+      <RouterLink :to="{ name: 'teams' }">{{ $t('管理成员') }}</RouterLink>
     </div>
   </Popover>
 </template>

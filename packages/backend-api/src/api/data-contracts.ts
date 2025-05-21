@@ -5144,18 +5144,18 @@ export interface UserGetMemberInfoByWorkspaceListData {
       /** 激活状态 0:没有激活,1:激活 */
       status: number;
       /** 用户邮箱 */
-      email?: string;
-      /** 项目信息 */
+      email: string;
+      /** 用户名 */
+      userName: string;
+      /** 用户头像 */
+      avatar: string;
       project_info: {
         /** 项目ID */
         project_id: number;
         /** 项目名称 */
         projectName: string;
       }[];
-      /** 用户名 */
-      userName?: string;
-      /** 用户头像 */
-      avatar: string;
+      userId?: number;
     }[];
   };
   msg: string;
@@ -5513,6 +5513,11 @@ export interface UserGetMemberInfoByProjectIdListParams {
    * @example 1
    */
   projectId: number;
+  /**
+   * 类型
+   * @example "show_list"
+   */
+  type?: string;
 }
 
 export interface UserGetMemberInfoByProjectIdListData {

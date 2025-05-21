@@ -326,7 +326,7 @@ const search = (event: AutoCompleteCompleteEvent) => {
       <!-- <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm> -->
       <!-- <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" /> -->
       <!-- <RxButton label="test submit" @click="noFormIdSubmit"></RxButton> -->
-      <RxAutoComplete v-model="value" optionLabel="email" :suggestions="filteredMembers" @complete="search">
+      <RxAutoComplete v-model="value" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="search">
         <template #option="{ option }">
           <div class="flex items-center gap-2">
             <img :src="option.avatar" class="block w-8 h-8 rounded-full" />

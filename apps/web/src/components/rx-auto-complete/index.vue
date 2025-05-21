@@ -59,6 +59,7 @@ const { size = 'sm', ...props } = defineProps<Props>()
 }
 
 :deep(.p-inputtext) {
+  width: 100%;
   padding: var(--input-padding);
   border-radius: var(--input-radius);
   border-width: var(--input-border-width);
