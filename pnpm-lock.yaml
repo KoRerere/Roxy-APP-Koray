@@ -24,7 +24,7 @@ overrides:
 
 patchedDependencies:
   rebrowser-puppeteer-core@24.8.1:
-    hash: 2415b495d7ecd4e935b12d25a836e795a67c1e7f551505250a255fbacccb3bf5
+    hash: eb4fb0fc36b3a10550a5db4572333840cb9212a0cf82ec27af8017248bbfde57
     path: patches/rebrowser-puppeteer-core@24.8.1.patch
 
 importers:
@@ -208,7 +208,7 @@ importers:
         version: 1.0.37
       puppeteer-core:
         specifier: npm:rebrowser-puppeteer-core
-        version: rebrowser-puppeteer-core@24.8.1(patch_hash=2415b495d7ecd4e935b12d25a836e795a67c1e7f551505250a255fbacccb3bf5)
+        version: rebrowser-puppeteer-core@24.8.1(patch_hash=eb4fb0fc36b3a10550a5db4572333840cb9212a0cf82ec27af8017248bbfde57)
       socks-proxy-agent:
         specifier: ^8.0.5
         version: 8.0.5
@@ -539,7 +539,7 @@ importers:
         version: 1.1.2
       puppeteer-core:
         specifier: npm:rebrowser-puppeteer-core
-        version: rebrowser-puppeteer-core@24.8.1(patch_hash=2415b495d7ecd4e935b12d25a836e795a67c1e7f551505250a255fbacccb3bf5)
+        version: rebrowser-puppeteer-core@24.8.1(patch_hash=eb4fb0fc36b3a10550a5db4572333840cb9212a0cf82ec27af8017248bbfde57)
     devDependencies:
       tsup:
         specifier: ^8.3.5
@@ -13053,7 +13053,7 @@ snapshots:
 
   readdirp@4.1.2: {}
 
-  rebrowser-puppeteer-core@24.8.1(patch_hash=2415b495d7ecd4e935b12d25a836e795a67c1e7f551505250a255fbacccb3bf5):
+  rebrowser-puppeteer-core@24.8.1(patch_hash=eb4fb0fc36b3a10550a5db4572333840cb9212a0cf82ec27af8017248bbfde57):
     dependencies:
       '@puppeteer/browsers': 2.10.3
       chromium-bidi: 5.1.0(devtools-protocol@0.0.1439962)

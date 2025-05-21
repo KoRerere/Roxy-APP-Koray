@@ -1,3 +1,34 @@
+diff --git a/lib/cjs/puppeteer/cdp/Connection.js b/lib/cjs/puppeteer/cdp/Connection.js
+index cce7b96f55ba7ff70afb90297e6da5342f316bc2..be4d7ea1f440d8a3b4b56171aa72ab7101d5b35e 100644
+--- a/lib/cjs/puppeteer/cdp/Connection.js
++++ b/lib/cjs/puppeteer/cdp/Connection.js
+@@ -97,14 +97,18 @@ class Connection extends EventEmitter_js_1.EventEmitter {
+             return Promise.reject(new Error('Protocol error: Connection closed.'));
+         }
+         return callbacks.create(method, options?.timeout ?? this.#timeout, id => {
+-            const stringifiedMessage = JSON.stringify({
+-                method,
+-                params,
+-                id,
+-                sessionId,
+-            });
+-            debugProtocolSend(stringifiedMessage);
+-            this.#transport.send(stringifiedMessage);
++          const message = {
++            method,
++            params,
++            id,
++            sessionId,
++          }
++         if (message.method === "Target.setAutoAttach") {
++            message.params.filter = undefined
++         }
++         const stringifiedMessage = JSON.stringify(message);
++         debugProtocolSend(stringifiedMessage);
++         this.#transport.send(stringifiedMessage);
+         });
+     }
+     /**
 diff --git a/lib/cjs/puppeteer/cdp/TargetManager.js b/lib/cjs/puppeteer/cdp/TargetManager.js
 index 716b3267a491385aed01f330dda012ff2ee71012..05416d01bdfc4f47cee9ca9309319b8e6a969fc4 100644
 --- a/lib/cjs/puppeteer/cdp/TargetManager.js
