@@ -15,7 +15,7 @@ const defaultWindowName = getDefaultWindowName()
 
 const router = useRouter()
 const route = useRoute()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { path, query } = useBackRoute()
 
 createTableContext({ isBatch: ref(false), createCount: ref(0) })
@@ -36,7 +36,7 @@ onBeforeMount(async () => {
   const { code, data: { rows: [data] }, msg } = await API.window.userGetWindowInfoV2List({ windowIds: route.query.id as string, isDelete: 0, page_index: 1, page_size: 1 })
 
   if (code !== 0) {
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
     return
   }
 
@@ -67,11 +67,9 @@ async function createProfile(formData: any) {
     windowName: windowName.value?.startsWith(defaultWindowName) ? '' : windowName.value,
   }
   loading.value = true
-  console.log('createProfile', params)
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
-    console.log('onBack', path, query)
     router.replace({ path, query })
   }
   loading.value = false
