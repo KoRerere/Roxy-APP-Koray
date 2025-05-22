@@ -59,13 +59,12 @@ function handleShowDialog() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
     slots: {
       container: ({ hideModal }) => <InviteUserModal
-        v-model:members={members.value}
+        v-model:currentMembers={members.value}
         allMembers={allMembers.value}
         project={{
           projectName: projectName.value,

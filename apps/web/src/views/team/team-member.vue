@@ -89,13 +89,11 @@ const filters = reactive({
 })
 
 const members = ref()
-const memberCount = ref(0)
 const allProjects = ref()
 
 async function tableRequest(params: any) {
   const data = await API.team.userGetMemberInfoByWorkspaceList(params)
-  members.value = data.data.rows
-  memberCount.value = members.value.length
+  members.value = data.data.rows.filter((item: any) => item.role !== Role.OWNER)
   return data
 }
 
@@ -187,29 +185,28 @@ async function handleShowInviteUserFormDialog() {
   }
 
   const projects: any[] = await getAllProjects().then(res => res.map((item: any) => ({ ...item, label: item.projectName, value: item.project_id })))
-  const projectValues = [projects.find(item => item.projectDefault && !item.isTransfer)!.value]
+  const projectValues = [projects.find(item => item.projectDefault && !item.isTransfer)?.value || projects[0].value]
 
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
     slots: {
       container: ({ hideModal }) => <InviteUserModal
-        v-model:members={members.value}
+        v-model:currentMembers={members.value}
         projects={projects}
         projectValues={projectValues}
-        disabledSuggestions={true}
+        multiple={true}
         onClose={hideModal}
+        onBeforeClose={(refresh) => {
+          if (refresh) {
+            filters.onChange()
+          }
+        }}
       />
-    },
-    handleCancel: () => {
-      if (members.value.length !== memberCount.value) {
-        filters.onChange()
-      }
     }
   })
 }

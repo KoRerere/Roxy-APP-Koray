@@ -14,36 +14,51 @@ interface Props {
   projects?: any[]
   projectValues?: number[]
   allMembers?: any[]
-  disabledSuggestions?: boolean
+  multiple?: boolean
+  onBeforeClose?: (refresh?: boolean) => void
 }
 
-const { project, projects, projectValues, allMembers = [], disabledSuggestions = false } = defineProps<Props>()
+const { project, projects, projectValues, allMembers = [], multiple = false, onBeforeClose } = defineProps<Props>()
 const emit = defineEmits(['close'])
 
 const roleLabelMap = getRoleLabelMap()
 const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 
-const currentMembers = defineModel<any[]>('members', { default: [] })
+const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
+const needRefresh = ref(false)
 const filteredMembers = ref()
 const roleValue = ref(Role.VIEWER)
 const selectedProjects = ref(projectValues)
 const memberValue = ref()
 
 const isNewMember = computed(() => typeof memberValue.value === 'string')
-const otherMembers = computed(() => allMembers.filter(member => !!member.status && !currentMembers.value.some(m => m.userId === member.userId)))
+const otherMembers = computed(() => multiple
+  ? currentMembers.value
+  : allMembers.filter(member => !!member.status && !currentMembers.value.some(m => m.userId === member.userId))
+)
+
 const fuse = computed(() => new Fuse(otherMembers.value, {
   threshold: 0.3,
-  keys: ['email', 'userName'],
+  keys: ['email'],
 }))
 
+watch(() => memberValue.value, (value) => {
+  if (typeof value === 'string') {
+    const member = otherMembers.value.find(item => item.email === value.trim())
+    if (member) {
+      roleValue.value = member.role
+      memberValue.value = member
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  onBeforeClose?.(needRefresh.value)
+})
 
 function onSearch(event: AutoCompleteCompleteEvent) {
-  if (disabledSuggestions) {
-    filteredMembers.value = []
-    return
-  }
   setTimeout(() => {
     if (!event.query.trim().length) {
       filteredMembers.value = [...otherMembers.value]
@@ -59,7 +74,8 @@ function onOptionSelect({ value }: AutoCompleteOptionSelectEvent) {
 
 async function joinProject() {
   const { userId, role, project_info } = memberValue.value
-  const projectIds = project_info.map((item: any) => item.project_id).concat(project!.projectId)
+  const memberProjectIds = project_info.map((item: any) => item.project_id).concat(project?.projectId).filter(Boolean)
+  const projectIds = [...new Set([...memberProjectIds, ...(selectedProjects.value ?? [])])]
 
   const { code, msg } = await API.team.userMdfTeamInfoV2Create({ userId, role, projectIds })
   showToast(code, msg)
@@ -68,17 +84,17 @@ async function joinProject() {
 }
 
 async function inviteNewMember() {
+  if (multiple && !selectedProjects.value?.length) {
+    showToast(-1, $t('请选择至少一个项目'))
+    return
+  }
+
   if (!isNewMember.value) {
     await joinProject()
     return
   }
 
   const projectIds = (selectedProjects.value ?? []).concat(project?.projectId).filter(Boolean)
-  if (!projectIds.length) {
-    showToast(-1, $t('请选择至少一个项目'))
-    return
-  }
-
   const { code, msg } = await API.limit.userInviteCreate({
     email: memberValue.value,
     role: roleValue.value,
@@ -98,8 +114,9 @@ async function inviteNewMember() {
 }
 
 function updateCurrentMembers(member: Record<string, any>) {
-  currentMembers.value.push(member)
+  currentMembers.value.unshift(member)
   memberValue.value = undefined
+  needRefresh.value = true
 }
 </script>
 
@@ -139,7 +156,7 @@ function updateCurrentMembers(member: Record<string, any>) {
         <RxButton size="lg" :label="$t('邀请')" :disabled="!memberValue" @click="inviteNewMember" />
       </div>
     </div>
-    <div class="flex flex-col gap-2" v-if="currentMembers?.length">
+    <div class="flex flex-col gap-2" v-if="!multiple && currentMembers?.length">
       <div class="title">{{ $t('当前项目成员列表') }}</div>
       <div class="member-list">
         <div class="flex items-center gap-2 member-item" v-for="member in currentMembers" :key="member.id">

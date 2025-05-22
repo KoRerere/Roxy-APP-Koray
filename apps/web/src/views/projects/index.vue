@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
+import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -10,12 +11,12 @@ import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
-import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useDialog } from '/@/hooks/useDialog'
 import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
@@ -23,8 +24,8 @@ type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 const tableRef = useTemplateRef('account')
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [showInviteUserFormDialog] = useInviteUserFormDialog()
 const [projectModfiyDialog] = useProjectActions({ toast: false })
+const [showModal] = useDialog()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -132,7 +133,7 @@ function operationHandler(operate: any, data?: any) {
       pinProject(data)
       break
     case 'invite':
-      showInviteUserFormDialog({ projectIds: [data.project_id], tableRef: tableRef as any })
+      inviteUserInProject(data)
       break
     case 'edit':
       projectModfiyDialog({
@@ -194,6 +195,28 @@ function deletePopup(item: Project) {
 function showOperationMenu({ event, operation }: { event: MouseEvent, operation: any }) {
   showPopupMenu(event, {
     model: operation,
+  })
+}
+
+async function inviteUserInProject(project: Project) {
+  const { user_info, projectName, project_id } = project
+  const { data: { rows: allMembers } } = await API.team.userGetMemberInfoByWorkspaceList({})
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: ({ hideModal }) => <InviteUserModal
+        v-model:currentMembers={user_info}
+        allMembers={allMembers}
+        project={{ projectName, projectId: project_id }}
+        onClose={hideModal}
+      />
+    },
   })
 }
 </script>
