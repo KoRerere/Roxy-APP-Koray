@@ -1,0 +1,22 @@
+{
+  "Mode1": {
+    "oversize": {
+      "spacing-2rem": "{Spacing.8}",
+      "spacing-3rem": "{Spacing.12}",
+      "spacing-4rem": "{Spacing.16}",
+      "spacing-5rem": "{Spacing.20}",
+      "spacing-6rem": "{Spacing.24}",
+      "spacing-8rem": "{Spacing.32}",
+      "spacing-10rem": "{Spacing.40}"
+    },
+    "spacing-none": "{Spacing.0}",
+    "spacing-xs": "{Spacing.0_5}",
+    "spacing-sm": "{Spacing.1}",
+    "spacing-md": "{Spacing.1_5}",
+    "spacing-lg": "{Spacing.2}",
+    "spacing-xl": "{Spacing.3}",
+    "spacing-2xl": "{Spacing.4}",
+    "spacing-3xl": "{Spacing.5}",
+    "spacing-4xl": "{Spacing.6}"
+  }
+}

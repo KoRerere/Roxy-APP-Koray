@@ -21,7 +21,7 @@ defineOptions({
 const {
   name,
   icon,
-  iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)',
+  iconColor = 'var(--colors-text-text-placeholder, #575D60);',
   size = 'sm',
   filter = true,
   optionLabel = 'label',
@@ -34,13 +34,15 @@ defineEmits(['change'])
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name"
+    :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="select-item">
-        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor"
+          fallback="base/rx_ic_earth" />
         <img v-if="value.image" class="select-item__image" :src="value.image">
         <div>{{ value.label }}</div>
       </div>
@@ -48,7 +50,8 @@ defineEmits(['change'])
     </template>
     <template #option="{ option }">
       <div class="select-item">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor"
+          fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
         <slot name="option-extra" :option="option" />
@@ -83,7 +86,6 @@ defineEmits(['change'])
 }
 
 :deep(.p-select-label) {
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
   font-family: Inter;
 }
 

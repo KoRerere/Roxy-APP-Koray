@@ -232,9 +232,11 @@ async function exportToJSON() {
   figma.ui.postMessage({ type: 'EXPORT_RESULT', files })
 }
 
-async function processCollection({ name, modes, variableIds }: VariableCollection) {
+async function processCollection({ name, modes, variableIds }) {
+  const file = { fileName: `${name}.tokens`, body: {} }
   const filesPromises = modes.map(async (mode) => {
-    const file = { fileName: `${name}.${mode.name}.tokens`, body: {} }
+    const modeName = mode.name.replace(/\s/g, '')
+    file.body[modeName] = file.body[modeName] || {}
     const promiseArr = variableIds.map(async (variableId) => {
       const { name, resolvedType, valuesByMode } = (await figma.variables.getVariableByIdAsync(variableId))!
       const value = valuesByMode[mode.modeId]
@@ -244,7 +246,7 @@ async function processCollection({ name, modes, variableIds }: VariableCollectio
         const obj = namePath.reduce((acc, groupName) => {
           acc[groupName] = acc[groupName] || {}
           return acc[groupName]
-        }, file.body)
+        }, file.body[modeName])
 
         if (value.type === 'VARIABLE_ALIAS') {
           const variable = await figma.variables.getVariableByIdAsync(value.id)
@@ -256,9 +258,9 @@ async function processCollection({ name, modes, variableIds }: VariableCollectio
       }
     })
     await Promise.all(promiseArr)
-    return file
   })
-  return Promise.all(filesPromises)
+  await Promise.all(filesPromises)
+  return [file]
 }
 
 figma.ui.onmessage = (e) => {
