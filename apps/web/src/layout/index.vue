@@ -11,12 +11,14 @@ import { MENU_COLLAPSED } from '../constants/storage-key'
 import { SubLevelEnum } from '/@/enums/pay'
 import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
 import { useRoleStore } from '/@/stores/role'
+import { useThemeStore } from '../stores/theme'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const userStore = useUserStore()
 const roleStore = useRoleStore()
+const themeStore = useThemeStore()
 const { userPayInfo } = storeToRefs(userStore)
 const router = useRouter()
 
@@ -25,6 +27,10 @@ const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
 const collapsed = ref<boolean>(Boolean(~~(localStorage.getItem(MENU_COLLAPSED) as string)))
 const anntList = ref<AnntData>()
+
+const indicatorColor = computed(() => {
+  return themeStore.theme === 'dark' ? '#FFFFFF33' : 'rgba(0, 0, 0, 0.1)'
+})
 
 /** 订阅到期时间 */
 const subEndDate = computed(() => {
@@ -112,8 +118,11 @@ function onRenewal() {
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
-      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')"
-        @click="collapsed = !collapsed">
+      <div class="indicator" @click="collapsed = !collapsed" :title="collapsed ? $t('展开') : $t('收起')">
+        <SvgIcon name="indicator/indicator_default" class="default" />
+        <SvgIcon name="indicator/indicator_expand" class="expand" />
+        <SvgIcon name="indicator/indicator_fold" class="fold" />
+      </div>
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
@@ -199,7 +208,13 @@ function onRenewal() {
       left: 100%;
 
       &:hover {
-        content: url('/images/indicator/indicator_expand.svg');
+        .expand {
+          display: block;
+        }
+
+        .fold {
+          display: none;
+        }
       }
     }
   }
@@ -212,13 +227,30 @@ function onRenewal() {
     cursor: pointer;
     z-index: 10;
     padding: 10px;
+    color: v-bind(indicatorColor);
 
-    &:hover {
-      content: url('/images/indicator/indicator_fold.svg');
+    svg {
+      width: 11px;
+      height: 38px;
     }
 
-    &:invalid {
+    .default {
+      width: 6px;
+    }
+
+    .fold,
+    .expand {
       display: none;
+    }
+
+    &:hover {
+      .fold {
+        display: block;
+      }
+
+      .default {
+        display: none;
+      }
     }
   }
 
