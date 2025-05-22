@@ -2,6 +2,7 @@
   font-size: 14px;
   line-height: normal;
   font-weight: 400;
+  color: var(--colors-text-text-primary);
 }
 
 :root.fullscreen,

@@ -3,24 +3,18 @@ import '/@/styles/theme/'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
-import { definePreset } from '@primevue/themes'
-import Aura from '@primevue/themes/aura'
+
 // import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
 // import { init as initSentryVue } from '@sentry/vue'
 import mixpanel from "mixpanel-browser";
-import PrimeVue from "primevue/config";
-import ConfirmationService from "primevue/confirmationservice";
-import DialogService from "primevue/dialogservice";
-import Ripple from "primevue/ripple";
-import ToastService from "primevue/toastservice";
-import Tooltip from "primevue/tooltip";
+
 import { createApp } from "vue";
 import { setupI18n, type SupportedLanguagesType } from "/@/locales";
 import { setupStore } from "/@/stores";
-import { useSimpleLocale } from "/@/stores/locale";
-import myPreset from "/@/styles/primevuePresets";
+
 import App from "./App.vue";
 import { setupRouter } from '/@/router'
+import { setupPrimeVue } from '/@/primevue'
 
 const app = createApp(App);
 
@@ -53,79 +47,7 @@ mixpanel.init(import.meta.env.VITE_MIXPANEL_TOKEN, {
 globalThis.mixpanel = mixpanel;
 
 setupStore(app);
-app.use(ToastService);
-app.use(DialogService);
-app.use(ConfirmationService);
-app.use(PrimeVue, {
-  ripple: true,
-  theme: {
-    options: {
-      darkModeSelector: ".my-app-dark",
-    },
-    preset: definePreset(Aura, {
-      primitive: myPreset,
-      semantic: {
-        primary: {
-          100: "{Color.blue.100}",
-          200: "{Color.blue.100}",
-          300: "{Color.blue.100}",
-          400: "{Color.blue.200}",
-          500: "{Color.blue.300}",
-          600: "{Color.blue.400}",
-          700: "{Color.blue.500}",
-          800: "{Color.blue.600}",
-          900: "{Color.blue.600}",
-          950: "{Color.blue.600}",
-        },
-      },
-      components: {
-        toast: {
-          colorScheme: {
-            light: {
-              blur: "3px",
-            },
-          },
-        },
-        dialog: {
-          color: "#000",
-          root: {
-            background: "{overlay.modal.background}",
-            borderColor: "#A3A9AD",
-            color: "{overlay.modal.color}",
-            borderRadius: "6px",
-            shadow:
-              "0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 8px 0px rgba(0, 0, 0, 0.04), 0px 3px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 30px 0px rgba(0, 0, 0, 0.12)",
-          },
-          header: {
-            padding: "12px 18px 6px 24px",
-            gap: "0.5rem",
-          },
-          title: {
-            fontSize: "16px",
-            fontWeight: "600",
-          },
-          content: {
-            padding: "0 24px {overlay.modal.padding} 24px",
-          },
-          footer: {
-            padding: "0 24px {overlay.modal.padding} 24px",
-            gap: "0.5rem",
-          },
-        },
-        datatable: {
-          row: {
-            hover: {
-              // background: '#fff'
-            },
-          },
-        },
-      },
-    }),
-  },
-});
-
-app.directive("ripple", Ripple);
-app.directive("tooltip", Tooltip);
+setupPrimeVue(app);
 
 setupRouter(app).then((softConfig) => {
   const { language, } = softConfig;
