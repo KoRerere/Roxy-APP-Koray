@@ -34,7 +34,6 @@ function showEditWorkspaceDialog(workspaceInfo: Data) {
   showModal({
     header: $t('编辑工作空间'),
     class: 'w-[520px]',
-    innerDialog: true,
     slots: {
       default: ({ handleCancel }) => {
         function handleLeaveWorkspace({ isCurrentWorkspace }: { isCurrentWorkspace: boolean }) {

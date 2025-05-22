@@ -27,7 +27,6 @@ export function usePay() {
       modal: true,
       blockScroll: true,
       closeOnEscape: false,
-      innerDialog: true,
       pt: {
         content: '!pa-0'
       },

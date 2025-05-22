@@ -67,7 +67,6 @@ function tableRequest() {
 
 async function cancelSubscribe() {
   const dialogInstance = showModal({
-    innerDialog: true,
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -127,7 +126,6 @@ async function onRepay(row: any) {
   window.open(row.failAddress)
 
   const dialogInstance = showModal({
-    innerDialog: true,
     showHeader: false,
     modal: true,
     blockScroll: true,

@@ -1,6 +1,12 @@
 import { format, min } from 'date-fns'
 import { $t } from '/@/locales'
 
+const skeleton = {
+  width: '120px',
+  height: '24px',
+  borderRadius: '4px',
+}
+
 export function getColumns() {
   return {
     key: 'browser.list',
@@ -59,6 +65,7 @@ export function getColumns() {
         title: $t('创建时间'),
         key: 'createTime',
         _visible: false,
+        skeleton,
         getText: (row: any) => row.createTime ? format(new Date(row.createTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',
@@ -69,6 +76,7 @@ export function getColumns() {
         title: $t('更新时间'),
         key: 'updateTime',
         _visible: false,
+        skeleton,
         getText: (row: any) => row.updateTime ? format(new Date(row.updateTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',
@@ -78,6 +86,7 @@ export function getColumns() {
       {
         title: $t('最后打开'),
         key: 'openTime',
+        skeleton,
         getText: (row: any) => row.openTime ? format(new Date(row.openTime), 'yyyy/MM/dd HH:mm:ss') : '--',
         style: {
           width: '13%',

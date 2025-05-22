@@ -80,7 +80,6 @@ const planActions = computed(() => [
         showHeader: false,
         modal: true,
         blockScroll: true,
-        innerDialog: true,
         pt: {
           content: '!pa-0'
         },
@@ -159,11 +158,13 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     </ViewsHeader>
     <div class="rx-container ml-0 h-auto">
       <div class="flex gap-2 px-6 pt-6">
-        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden balance">
+        <div
+          class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden balance">
           <div class="balance-title">{{ $t('Roxy 钱包余额') }}</div>
           <div>
             <div class="balance-balance">{{ currency(userPayInfo.balance).format() }}</div>
-            <i18n-t class="mt-1.5 balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
+            <i18n-t class="mt-1.5 balance-desc" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })"
+              scope="global">
               <template #invite>
                 <span class="cursor-pointer balance-desc-link" @click="router.push({ name: 'referral-program' })">{{
                   $t('推广计划') }}</span>
@@ -174,13 +175,16 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             <RxButton :label="$t('充值')" size="md" @click="onCharge"></RxButton>
           </div>
         </div>
-        <div class="flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden plan">
+        <div
+          class="flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden plan">
           <div class="flex justify-between items-center">
             <div class="plan-title">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
             <template v-if="userPayInfo?.subEndDate">
               <div v-if="userPayInfo.isAuto" class="flex items-center gap-1 plan-expired">
                 <span>{{ $t('下次扣费: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
-                <SvgIcon v-if="nextBillText" v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14" name="base/rx_ic_info" color="#FC9D12"></SvgIcon>
+                <SvgIcon v-if="nextBillText"
+                  v-tooltip="{ value: nextBillText, showDelay: 300, pt: { root: '!max-w-60' } }" size="14"
+                  name="base/rx_ic_info" color="#FC9D12"></SvgIcon>
               </div>
               <div v-else class="plan-expired">{{ $t('到期时间: {value}', {
                 value: format(userPayInfo.subEndDate,
@@ -203,19 +207,24 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
           </div>
           <div class="flex justify-end items-center gap-2.5">
             <div class="flex-1">
-              <span v-tooltip.top="{ value: infoValue, showDelay: 300 }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
+              <span v-tooltip.top="{ value: infoValue, showDelay: 300 }"
+                class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
                 <span>{{ $t('详情') }}</span>
                 <SvgIcon size="14" name="base/rx_ic_info" color="#C7CDD1"></SvgIcon>
               </span>
             </div>
-            <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" outlined severity="secondary" :label="item.label" size="md" @click="item.command"></RxButton>
+            <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" outlined severity="secondary"
+              :label="item.label" size="md" @click="item.command"></RxButton>
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[#C7CDD1] other" v-for="item in other" :key="item.type">
+          <div
+            class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[#C7CDD1] other"
+            v-for="item in other" :key="item.type">
             <div class="flex justify-between items-center gap-6">
               <span class="other-title">{{ item.title }}</span>
-              <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增') }}</span>
+              <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增')
+                }}</span>
             </div>
             <div>
               <span class="other-used">{{ item.used }}</span>

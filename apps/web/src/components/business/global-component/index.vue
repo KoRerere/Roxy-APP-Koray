@@ -7,7 +7,6 @@ import { useSubscribe } from './useSubscribe'
 import { isMainWindow } from '/@/utils'
 
 const LiveChat = defineAsyncComponent(() => import('../live-chat/live-chat.vue'))
-const InviteIntoWorkspace = defineAsyncComponent(() => import('./invite-into-workspace.vue'))
 const PayWall = defineAsyncComponent(() => import('./pay-wall.vue'))
 const Help = defineAsyncComponent(() => import('./help.vue'))
 
@@ -59,8 +58,6 @@ setTimeout(() => {
   <DynamicDialog />
   <!-- 只有在主窗口中显示的全局组件 -->
   <template v-if="isMainWindow">
-    <!-- 通过邮箱邀请链接拉起弹窗 -->
-    <InviteIntoWorkspace />
     <!-- 帮助 -->
     <Help v-if="$route.name !== 'login'" />
     <PayWall />
