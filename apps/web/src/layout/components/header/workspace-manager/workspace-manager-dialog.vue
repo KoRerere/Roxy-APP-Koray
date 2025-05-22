@@ -51,7 +51,6 @@ function showFirstCreateTipsDialog() {
 
   const dialogInstance = showModal({
     class: 'w-[480px]',
-    innerDialog: true,
     slots: {
       container: ( ) => <WorkspaceGuide hide-fn={hideFn} />,
     },
@@ -80,7 +79,6 @@ async function showCreateWorkspaceDialog() {
   return showWorkspaceFormDialog({
     header: $t('创建新的工作空间'),
     class: 'w-[500px]',
-    innerDialog: true,
     slots: {
       default: () => <WorkspaceForm ref={workspaceFormRef} v-model:workspaceInfo={workspaceForm.value}  />,
     },

@@ -53,27 +53,25 @@ export async function startRoxySync(pIds: number[] = []) {
   const remotePreferenceSettings = data.preferenceSettings as PreferenceSettings
 
   if (code === 0 && remotePreferenceSettings?.simulate) {
-    const { enableClickDelay, enableInputDelay } = remotePreferenceSettings.simulate
-
-    // 是否启用了点击延迟
-    if (!enableClickDelay) {
-      remotePreferenceSettings.simulate.clickIntervalMinMs = 0
-      remotePreferenceSettings.simulate.clickIntervalMaxMs = 0
-    }
-
-
-    // 是否启用了输入延迟
-    if (!enableInputDelay) {
-      remotePreferenceSettings.simulate.inputIntervalMinMs = 0
-      remotePreferenceSettings.simulate.inputIntervalMaxMs = 0
-    }
-
     Object.assign(syncSettings, {
       ...remotePreferenceSettings.base,
       ...remotePreferenceSettings.simulate,
     })
     syncControlSettings = { ...syncSettings }
   }
+  const { enableClickDelay, enableInputDelay } = syncSettings
+  // 是否启用了点击延迟
+  if (!enableClickDelay) {
+    syncSettings.clickIntervalMinMs = 0
+    syncSettings.clickIntervalMaxMs = 0
+  }
+
+  // 是否启用了输入延迟
+  if (!enableInputDelay) {
+    syncSettings.inputIntervalMinMs = 0
+    syncSettings.inputIntervalMaxMs = 0
+  }
+
   console.log('startRoxySync syncSettings:', syncSettings)
   // 1. 启动同步
   // 命令：

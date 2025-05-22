@@ -5,7 +5,6 @@ import type { ToastMessageOptions } from "primevue/toast";
 export type PayWallType = "synchronizer" | "createProfileTemplates" | "transfer";
 
 export type MittEvents = {
-  viewInviteDetail: UserAddUserByProjectInfoCreatePayload;
   notifyUpdateData: UserGetNotifyListData;
   maxWindowCountChange?: number;
   /** 显示 toast */

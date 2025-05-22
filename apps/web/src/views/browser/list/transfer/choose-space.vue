@@ -75,7 +75,6 @@ async function howToGetHelp() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },

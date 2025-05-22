@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script lang="tsx" setup>
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
@@ -6,6 +6,8 @@ import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
+
+const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -39,7 +41,13 @@ const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 
 const readSet = ref<Set<number>>(new Set())
 
 onBeforeMount(() => {
-  getMessageList().finally(() => {
+  getMessageList().then(() => {
+    const [_, teamsTab] = tabs.value
+    const target = teamsTab.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType !== 'new')
+    if (target) {
+      showAcceptInvitationDialog(target)
+    }
+  }).finally(() => {
     emitter.on('notifyUpdateData', getMessageList)
   })
 })
@@ -114,7 +122,7 @@ async function markAllAsRead() {
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    emitter.emit('viewInviteDetail', item.paramData!)
+    showAcceptInvitationDialog(item)
   }
 }
 
@@ -123,7 +131,6 @@ function checkTransfer(item: Message) {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -132,6 +139,25 @@ function checkTransfer(item: Message) {
         windowTransferNo: item.windowTransferNo,
         onClose: hideModal,
       })
+    }
+  })
+}
+
+function showAcceptInvitationDialog(item: Message) {
+  function handleClose() {
+    hideModal()
+    onRead(item)
+  }
+
+  const { hideModal } = showModal({
+    showHeader: false,
+    modal: true,
+    class: '!w-[380px] pa-6',
+    blockScroll: true,
+    slots: {
+      container: () => {
+        return <InviteIntoWorkspace inviteInfo={item.paramData} onClose={handleClose} />
+      }
     }
   })
 }
