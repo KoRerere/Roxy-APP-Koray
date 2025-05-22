@@ -32,6 +32,7 @@ const inputs = [
       placeholder: $t('请输入或选择平台网址'),
       optionValue: 'value',
       editable: true,
+      filter: true,
       getOptions: async () => {
         const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
         return rows.map(item => ({
