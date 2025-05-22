@@ -233,7 +233,7 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
-      // '--custom-devtools-frontend=file://D:\\work\\devtools-frontend\\out\\Default\\gen\\front_end',
+      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {

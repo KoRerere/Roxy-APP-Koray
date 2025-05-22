@@ -43,7 +43,7 @@ const readSet = ref<Set<number>>(new Set())
 onBeforeMount(() => {
   getMessageList().then(() => {
     const [_, teamsTab] = tabs.value
-    const target = teamsTab.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new')
+    const target = teamsTab.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new' && item.status === NotifyStatus.unread)
     if (target) {
       showAcceptInvitationDialog(target)
     }
