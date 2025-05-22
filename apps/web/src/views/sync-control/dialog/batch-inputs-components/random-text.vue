@@ -87,7 +87,7 @@ defineExpose({
   .form-item-label {
     flex-shrink: 0;
     width: 120px;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
 
     font-size: 14px;
     font-style: normal;

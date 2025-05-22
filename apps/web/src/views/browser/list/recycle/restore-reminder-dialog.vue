@@ -34,7 +34,7 @@ function handleConfirm() {
 
 <style lang="scss" scoped>
 .description {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 14px;
   font-style: normal;
   font-weight: 400;

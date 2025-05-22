@@ -68,7 +68,7 @@ setTimeout(detectNetwork, 2000)
 
 <style lang="scss" scoped>
 .city {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -76,7 +76,7 @@ setTimeout(detectNetwork, 2000)
 }
 
 .ip {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;

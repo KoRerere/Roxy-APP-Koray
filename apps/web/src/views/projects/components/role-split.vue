@@ -72,7 +72,7 @@ const selectedRoleLabel = computed(() => {
 
   .label {
     align-self: stretch;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-weight: 600;

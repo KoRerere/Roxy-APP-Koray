@@ -37,7 +37,8 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white overflow-hidden card">
+      <div
+        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white overflow-hidden card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('总余额') }}
@@ -45,7 +46,8 @@ function close() {
         </div>
         <div>
           <span class="card-symbol">$</span>
-          <NumberFlow class="card-balance" :format="{ minimumFractionDigits: 2 }" :value="userPayInfo?.balance || 0"></NumberFlow>
+          <NumberFlow class="card-balance" :format="{ minimumFractionDigits: 2 }" :value="userPayInfo?.balance || 0">
+          </NumberFlow>
         </div>
         <div class="flex justify-end card-desc">{{ userInfo?.email }}</div>
       </div>
@@ -54,7 +56,9 @@ function close() {
           <SvgIcon name="base/rx_ic_check_fill" color="#1CC94D" size="24" />
           <span>{{ $t('充值成功！') }}</span>
         </div>
-        <i18n-t class="feat-desc" tag="div" :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })" scope="global">
+        <i18n-t class="feat-desc" tag="div"
+          :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })"
+          scope="global">
           <template #amount>
             <span class="feat-desc-link">{{ diffAmount }}</span>
           </template>
@@ -128,7 +132,7 @@ function close() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
     font-size: 14px;
     line-height: normal;

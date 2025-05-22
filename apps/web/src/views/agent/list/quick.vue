@@ -154,14 +154,17 @@ function saveSelected() {
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
+        @click.stop="testAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })" :closable="false" />
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"
+      :closable="false" />
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-        :show-actions="false" :show-table-header="false">
+      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList"
+        :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"
+        :show-table-header="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
@@ -180,7 +183,9 @@ function saveSelected() {
           </div>
         </template>
         <template #remark="{ data: row }">
-          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
+          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }"
+            :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
           <div class="bounded">
@@ -189,7 +194,8 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
+          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
+            @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>
@@ -216,7 +222,7 @@ function saveSelected() {
 }
 
 .proxy-host {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: 'JetBrains Mono';
   font-size: 12px;
   font-weight: 500;

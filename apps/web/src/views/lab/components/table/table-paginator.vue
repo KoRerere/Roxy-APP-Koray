@@ -37,12 +37,13 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
 </script>
 
 <template>
-  <Paginator class="paginator" v-model:first="paginatorFirst" :rows="paginatorRows" :total-records="totalRecords" :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-    @page="onChangePage">
+  <Paginator class="paginator" v-model:first="paginatorFirst" :rows="paginatorRows" :total-records="totalRecords"
+    :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" @page="onChangePage">
     <template #start>
       <div class="flex flex-1 items-center paginator-jump">
         <div>{{ $t('总计 {total} 个', { total: totalRecords }) }}</div>
-        <RxInputSelect class="!w-fit" name="rowsPerPage" v-model="paginatorRows" :options="paginatorRowOptions" optionValue="value" size="xxs" :filter="false" @change="onChangeRows" />
+        <RxInputSelect class="!w-fit" name="rowsPerPage" v-model="paginatorRows" :options="paginatorRowOptions"
+          optionValue="value" size="xxs" :filter="false" @change="onChangeRows" />
         <div class="flex-1 flex items-center gap-2 justify-end">{{ $t('跳转页数至') }}</div>
       </div>
     </template>
@@ -54,7 +55,7 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
   &-jump {
     display: flex;
     gap: var(--spacing-lg, 8px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);

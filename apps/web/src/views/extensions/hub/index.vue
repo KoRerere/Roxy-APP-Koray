@@ -126,7 +126,8 @@ defineExpose({
   <div class="flex flex-1 justify-between flex-row-reverse hub">
     <div>
       <div class="hub-categories">
-        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item" :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
+          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
           {{ item.categoryName }}
         </div>
       </div>
@@ -161,8 +162,10 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line"
+                  :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud"
+                  :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>
@@ -198,7 +201,7 @@ defineExpose({
     &-item {
       position: relative;
       padding-left: var(--spacing-2xl, 16px);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       line-height: 16px;
@@ -217,7 +220,7 @@ defineExpose({
       }
 
       &.active {
-        color: var(--Colors-Text-text-primary, #171c1f);
+        color: var(--colors-text-text-primary, #fafafa);
         font-weight: 500;
 
         &::after {
@@ -288,7 +291,7 @@ defineExpose({
 
   &-name {
     margin-top: var(--spacing-lg, 8px);
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 13px;
     font-weight: 500;
@@ -308,7 +311,7 @@ defineExpose({
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: 16px;

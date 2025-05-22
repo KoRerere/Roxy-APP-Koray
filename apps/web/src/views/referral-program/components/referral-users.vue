@@ -127,7 +127,7 @@ async function tableFilters() {
 }
 
 .locationip {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

@@ -56,7 +56,7 @@ async function saveProxies(proxies: any) {
 
     .p-tab {
       padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: var(--Font-Size-text-sm, 12px);
       font-weight: 500;

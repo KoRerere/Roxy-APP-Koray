@@ -45,7 +45,7 @@ onBeforeMount(() => {
             </div>
           </div>
           <div v-for="item in activePanel.panel.list" :key="item.subtitle">
-            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-black">
+            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-[color:--colors-text-text-primary]">
               {{ item.subtitle }}
             </div>
             <template v-for="subItem in item.items" :key="subItem.label">
@@ -173,7 +173,7 @@ onBeforeMount(() => {
     }
 
     &-label {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-weight: 500;
@@ -189,7 +189,7 @@ onBeforeMount(() => {
     }
 
     &-value {
-      color: var(--colors-text-text-tertiary, #8A9093);
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-size: 12px;
       line-height: var(--Line-Height-text-lg, 20px);
     }

@@ -3,14 +3,16 @@
     <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }">
       <template #item="{ item, props }">
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
+          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
+            v-bind="props.action">
             <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
               {{ item.label }}
             </span>
           </a>
         </ShinyButton>
-        <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
+        <a v-else v-ripple class="menu-item"
+          :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
           <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
             {{ item.label }}
@@ -110,7 +112,7 @@ const items = computed(() => {
   .menu-item {
     display: flex;
     gap: var(--spacing-xl, 12px);
-    color: var(--Component-Colors-SideNav-link-text, #575D61);
+    color: var(--colors-text-text-primary, #FAFAFA);
     padding: var(--spacing-lg, 9px) var(--spacing-xl, 12px);
     align-items: center;
     align-self: stretch;
@@ -119,8 +121,8 @@ const items = computed(() => {
     white-space: nowrap;
 
     &:hover {
-      color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-      background: rgba(0, 0, 0, 0.05);
+      color: var(--colors-text-text-primary-hover, #FFF);
+      background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
 
       .menu-icon {
         color: currentColor;
@@ -128,8 +130,8 @@ const items = computed(() => {
     }
 
     &.active {
-      color: #0085EB;
-      background: #D6ECFA;
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
+      background: var(--pattern-sidenav-bg-active, #013D65);
 
       .menu-icon {
         color: currentColor;
@@ -137,7 +139,6 @@ const items = computed(() => {
 
       .menu-title {
         font-weight: bold;
-        color: currentColor;
       }
     }
 
@@ -152,7 +153,6 @@ const items = computed(() => {
       font-style: normal;
       font-weight: 500;
       line-height: var(--Line-Height-text-md, 16px);
-      color: var(--Component-Colors-SideNav-link-text, #252A2E);
     }
 
     .new-badge {

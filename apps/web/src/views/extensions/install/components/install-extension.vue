@@ -107,8 +107,9 @@ onMounted(() => {
         {{ $t('扩展将被安装至所选项目中的所有窗口') }}
       </div>
       <div class="project-table mt-2.5 h-60">
-        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
-          :multiple-operation="false" selection-mode="multiple" size="small">
+        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList"
+          :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+          selection-mode="multiple" size="small">
           <template #project="{ data }">
             <div class="flex items-center gap-2">
               <RxSvgIcon name="base/rx_ic_stack" color="var(--Colors-Icon-icon-secondary, #575D61)" />
@@ -174,7 +175,7 @@ onMounted(() => {
 
   &-name {
     grid-area: right-top;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 13px;
     font-weight: 500;
@@ -214,7 +215,7 @@ onMounted(() => {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;

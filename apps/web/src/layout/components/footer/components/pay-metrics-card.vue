@@ -16,6 +16,6 @@
   align-items: flex-start;
   gap: 12px;
   border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-  background: var(--Colors-Alpha-alpha-white-60, rgba(255, 255, 255, 0.6));
+  background: var(--pattern-sidenav-metrics, rgba(255, 255, 255, 0.05));
 }
 </style>

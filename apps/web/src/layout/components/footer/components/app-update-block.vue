@@ -23,7 +23,7 @@
   gap: var(--spacing-md, 6px);
 
   .app-update-block__title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

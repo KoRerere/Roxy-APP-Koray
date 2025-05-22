@@ -151,7 +151,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
 .upgrade-title {
   display: flex;
   align-items: center;
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;

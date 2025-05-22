@@ -494,7 +494,7 @@ const slots: any = useSlots()
   &-jump {
     display: flex;
     gap: var(--spacing-lg, 8px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);

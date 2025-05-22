@@ -65,7 +65,7 @@ const passThrough = {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 14px;
   font-weight: 600;
   line-height: var(--Line-Height-text-sm, 18px);

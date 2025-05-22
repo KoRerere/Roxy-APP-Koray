@@ -113,6 +113,7 @@ function remindMeLater() {
       gap: var(--spacing-xl, 12px);
       align-self: stretch;
     }
+
     .detail-content {
       display: flex;
       padding: var(--spacing-xl, 12px);
@@ -144,13 +145,15 @@ function remindMeLater() {
 
       .content,
       .tips {
-        color: var(--Colors-Text-text-secondary, #575d61);
+        color: var(--colors-text-text-secondary, #b2b6b8);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
         font-weight: 400;
-        line-height: 18px; /* 150% */
+        line-height: 18px;
+        /* 150% */
       }
+
       .tips {
         margin-top: 16px;
       }

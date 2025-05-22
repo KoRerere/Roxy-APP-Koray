@@ -69,8 +69,10 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
+        @click="toggleDrawer('list')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')"
+        @click="toggleDrawer('create')" />
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
@@ -108,7 +110,7 @@ function replaceData(data: any) {
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-weight: 500;
   }
 

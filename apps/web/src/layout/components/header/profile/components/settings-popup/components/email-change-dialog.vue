@@ -144,7 +144,8 @@ onMounted(() => {
           {{ $t('邮箱') }}
           <span class="required">*</span>
         </label>
-        <InputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'" :placeholder="$t('请输入您的邮箱地址')" />
+        <InputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'"
+          :placeholder="$t('请输入您的邮箱地址')" />
         <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{
           $form.email.error?.message }}
         </Message>
@@ -187,8 +188,8 @@ onMounted(() => {
           $t('使用密码验证') }}</a>
       </div>
 
-      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')" class="continue-btn w-full" :loading="submitLoading"
-        :disabled="submitLoading || formInstance?.invalid" />
+      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')"
+        class="continue-btn w-full" :loading="submitLoading" :disabled="submitLoading || formInstance?.invalid" />
     </Form>
   </div>
 </template>
@@ -240,7 +241,7 @@ onMounted(() => {
         }
 
         .step-label {
-          color: var(--Colors-Text-text-primary, #171c1f);
+          color: var(--colors-text-text-primary, #fafafa);
           text-align: center;
           font-family: Inter;
           font-size: 12px;

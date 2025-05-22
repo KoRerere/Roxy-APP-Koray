@@ -48,7 +48,8 @@ const visible = ref(true)
 <template>
   <div class="flex flex-col items-start preview" :class="[visible ? '' : 'hide']">
     <div class="flex flex-row-reverse items-center justify-between self-stretch preview-header">
-      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61" name="base/rx_ic_fold_right" @click="visible = !visible" />
+      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61"
+        name="base/rx_ic_fold_right" @click="visible = !visible" />
       <span v-if="visible">{{ $t('概要') }}</span>
     </div>
     <div v-if="visible" class="w-full preview-content">
@@ -96,7 +97,7 @@ $spacing-x: var(--spacing-xl, 12px);
 
   &-header {
     padding: 0 $spacing-x;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-weight: 600;

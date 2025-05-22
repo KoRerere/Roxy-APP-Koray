@@ -171,7 +171,6 @@ function onRenewal() {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #f7fbfd;
 }
 
 .rx-side {
@@ -229,7 +228,7 @@ function onRenewal() {
     align-items: center;
     gap: var(--spacing-md, 6px);
     flex-wrap: nowrap;
-    color: var(--Color-neutrals-950, #0e1214);
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: Archivo;
     font-size: 18px;

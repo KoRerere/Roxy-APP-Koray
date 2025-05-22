@@ -264,9 +264,8 @@ function onExpand() {
   border-radius: 8px;
 }
 
-.extend {
-  :deep(.pay-metrics-item-usage) {
-    color: #12A3FC;
-  }
-}
-</style>
+// .extend {
+//   :deep(.pay-metrics-item-usage) {
+//     color: #12A3FC;
+//   }
+// }</style>

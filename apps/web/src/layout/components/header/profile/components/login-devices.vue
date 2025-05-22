@@ -34,8 +34,8 @@ const deviceList = computed(() => {
       </div>
       <div class="device-item__info">
         <div class="device-item__name">
-          <span>{{ item.deviceName }}</span>
-          <span>{{ item.createTime }}</span>
+          <span class="text-[color:--colors-text-text-primary]">{{ item.deviceName }}</span>
+          <span class="text-[color:--colors-text-text-tertiary]">{{ item.createTime }}</span>
         </div>
         <div class="device-item__ip">
           {{ item.address }}

@@ -414,14 +414,19 @@ function handleClickInplace(e: MouseEvent) {
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
-      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" @click.stop="onClick($event, item.key)">
+      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
+        @click.stop="onClick($event, item.key)">
         <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
           <img v-if="item.image" :src="item.image" class="block w-5 h-5 pointer-events-none">
-          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+            :color="item.svgColor" />
         </div>
-        <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
+        <div v-if="item.showSub"
+          class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
+          :class="item.classes">
           <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none">
-          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
+          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h"
+            :color="item.svgColor" />
         </div>
       </div>
       <div v-if="list.length > 1" class="state-line">
@@ -434,7 +439,8 @@ function handleClickInplace(e: MouseEvent) {
         <div class="profile-name-content">{{ windowName }}</div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
+          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
           @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
@@ -451,7 +457,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .profile {
   gap: var(--spacing-xl, 12px);
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);

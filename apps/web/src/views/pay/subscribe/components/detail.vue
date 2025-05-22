@@ -46,7 +46,7 @@ const { list } = defineProps<{
   background: var(--Color-neutrals-50, #fafbfc);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -54,7 +54,7 @@ const { list } = defineProps<{
   }
 
   &-value {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

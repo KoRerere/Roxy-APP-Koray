@@ -62,7 +62,7 @@ async function removeAvatar() {
   margin-top: 8px;
   height: 200px;
   border-radius: var(--radius-md, 6px);
-  background: var(--Color-neutrals-100, #f0f3f5);
+  background: var(--colors-background-bg-block, #293038);
 
   &-avatar {
     width: 100px;

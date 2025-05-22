@@ -167,7 +167,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     justify-content: space-between;
     align-items: center;
     align-self: stretch;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;

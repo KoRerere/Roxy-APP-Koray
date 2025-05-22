@@ -147,7 +147,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 }
 
 .updater-title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;

@@ -30,7 +30,7 @@ export function useNetworkPanel() {
               text: () => (
                 <div>
                   <div>{$t("关闭后使用本地网络连接")}</div>
-                  <div class="w-[370px] text-red line-height-normal">
+                  <div class="w-[370px] text-[color:--colors-text-text-error] line-height-normal">
                     {$t("改变此开关状态后，请重启窗口以确保生效")}
                   </div>
                 </div>
@@ -90,12 +90,12 @@ export function useNetworkPanel() {
                         item.value = null;
                       }}
                     >
-                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
+                      <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
+                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
                         {$t("位置")}:{item.value.country_code}/
                         {item.value.country}
                       </div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
+                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
                         IP:
                         {item.value.ip}
                       </div>
@@ -131,12 +131,12 @@ export function useNetworkPanel() {
                         item.value = null;
                       }}
                     >
-                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
+                      <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
+                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
                         {$t("位置")}:{item.value.country_code}/
                         {item.value.country}
                       </div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
+                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
                         IP:
                         {item.value.ip}
                       </div>

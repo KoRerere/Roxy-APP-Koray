@@ -3,6 +3,7 @@
   line-height: normal;
   font-weight: 400;
   color: var(--colors-text-text-primary);
+  background: var(--colors-background-bg-app, #000c14);
 }
 
 :root.fullscreen,

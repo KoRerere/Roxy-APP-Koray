@@ -29,7 +29,7 @@ defineProps<Props>()
     border-radius: 4px !important;
     background: var(--Colors-Alpha-alpha-white-0, rgba(255, 255, 255, 0));
 
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -39,7 +39,7 @@ defineProps<Props>()
     }
 
     &.p-togglebutton-checked {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       border-color: var(--Colors-Border-border-container, #c7cdd1);
       background: var(--Colors-Background-bg-body, #fff);
       box-shadow:

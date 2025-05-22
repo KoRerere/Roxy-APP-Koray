@@ -181,7 +181,7 @@ initTwoFactorCodeList()
 
       .platform-url {
         flex: 1 0 0;
-        color: var(--Colors-Text-text-primary, #171c1f);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -193,7 +193,7 @@ initTwoFactorCodeList()
 
       .account-text {
         align-self: stretch;
-        color: var(--Colors-Text-text-primary, #171c1f);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -212,7 +212,7 @@ initTwoFactorCodeList()
 
     .code {
       flex: 1 0 0;
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 24px;
       font-style: normal;

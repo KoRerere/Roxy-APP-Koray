@@ -54,7 +54,7 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
   text-align: left;
 
   &-title {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 16px;
     font-weight: bold;

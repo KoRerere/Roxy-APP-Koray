@@ -29,7 +29,8 @@ onMounted(() => {
 <template>
   <div class="textarea">
     <textarea ref="lineRef" v-model="lineValue" class="textarea-line" wrap="off" cols="2" disabled />
-    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')" @scroll="syncScroll" @input="handleTextareaInput" />
+    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')"
+      @scroll="syncScroll" @input="handleTextareaInput" />
   </div>
 </template>
 
@@ -63,7 +64,7 @@ onMounted(() => {
     border: none;
     outline: none;
     resize: none;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     font-style: normal;

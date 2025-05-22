@@ -43,7 +43,7 @@ const featureList = computed(() => {
   align-self: stretch;
 
   .feature-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -54,7 +54,7 @@ const featureList = computed(() => {
   .feature-content {
     margin-top: 0;
     padding-left: 16px;
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

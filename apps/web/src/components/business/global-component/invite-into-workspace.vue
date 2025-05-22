@@ -142,7 +142,7 @@ function skipInvitation() {
 
     .detail-content {
       align-self: stretch;
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

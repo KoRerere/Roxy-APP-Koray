@@ -25,7 +25,8 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
+      <div
+        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}
@@ -38,7 +39,11 @@ function close() {
           </div>
         </div>
         <div class="card-plan">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-        <div class="flex justify-end card-desc">{{ $t('{count} 窗口', { count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format() }) }}</div>
+        <div class="flex justify-end card-desc">{{ $t('{count} 窗口', {
+          count: currency(userPayInfo?.maxWindowCount, {
+            symbol: '', precision: 0
+          }).format()
+        }) }}</div>
       </div>
       <CardItem as="div" :translate-z="1" class="flex flex-col gap-5 feat">
         <div class="flex items-center gap-2.5 feat-title">
@@ -80,7 +85,7 @@ function close() {
   }
 
   &-expired {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     line-height: normal;
@@ -104,7 +109,7 @@ function close() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
     font-size: 14px;
     line-height: normal;
@@ -121,7 +126,7 @@ function close() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

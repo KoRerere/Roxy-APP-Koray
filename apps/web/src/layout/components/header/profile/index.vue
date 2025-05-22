@@ -211,7 +211,7 @@ function toggle(event: Event) {
 }
 
 .user-name {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -221,7 +221,7 @@ function toggle(event: Event) {
 
 .user-email {
   margin-top: var(--spacing-sm, 4px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -258,24 +258,24 @@ function toggle(event: Event) {
   align-items: center;
   gap: var(--spacing-md, 6px);
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  border: 0.5px solid var(--Common-Buttons-Secondary-border, #48555B);
+  background: var(--Common-Buttons-Secondary-bg, #293038);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   &:not(:disabled):hover {
-    color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-    background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+    color: var(--colors-text-text-primary, #111213);
+    background: var(--colors-background-bg-action-hover, #F1F5F8);
 
     svg {
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
+      color: var(--colors-text-text-primary, #111213);
     }
   }
 }
 
 .menu-label {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 13px;
   font-style: normal;

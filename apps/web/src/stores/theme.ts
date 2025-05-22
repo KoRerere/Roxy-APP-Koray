@@ -35,7 +35,8 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   watch(() => userStore.userConfig?.colorScheme, () => {
-    setTheme(userStore.userInfo.colorScheme)
+    const colorScheme = userStore.userConfig?.colorScheme
+    colorScheme && setTheme(colorScheme)
   })
 
   watch(theme, toggleTheme, {

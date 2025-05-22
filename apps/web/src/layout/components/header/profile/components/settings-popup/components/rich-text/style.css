@@ -2,7 +2,7 @@
 }
 p {
   margin: 0;
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -19,7 +19,7 @@ ul {
 .editor-content-view p,
 .editor-content-view li {
   white-space: pre-wrap; /* 保留空格 */
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -66,11 +66,11 @@ ul {
 }
 
 .editor-content-view p {
-  color: var(--Colors-Text-text-secondary, #575d61) !important;
+  color: var(--colors-text-text-secondary, #b2b6b8) !important;
 }
 
 .editor-content-view span {
-  color: var(--Colors-Text-text-secondary, #575d61) !important;
+  color: var(--colors-text-text-secondary, #b2b6b8) !important;
 }
 
 .editor-content-view h1,
@@ -79,7 +79,7 @@ ul {
 .editor-content-view h4,
 .editor-content-view h5,
 .editor-content-view h6 {
-  color: var(--Colors-Text-text-primary, #171c1f) !important;
+  color: var(--colors-text-text-primary, #fafafa) !important;
   font-family: Inter !important;
   font-size: 14px !important;
   font-style: normal !important;

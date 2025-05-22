@@ -32,7 +32,8 @@ getProxiesList()
           <a class="site-name" :href="item.proxyJumpAddress" target="_blank">
             {{ formatProxyJumpAddressText(item) }}
           </a>
-          <RxButton as="a" label="Visit website" size="sm" icon="base/rx_ic_attachment" outlined class="visit-website" :href="item.proxyVisitAddress" target="_blank" />
+          <RxButton as="a" label="Visit website" size="sm" icon="base/rx_ic_attachment" outlined class="visit-website"
+            :href="item.proxyVisitAddress" target="_blank" />
         </div>
       </div>
     </template>
@@ -74,7 +75,7 @@ getProxiesList()
 
   .title {
     overflow: hidden;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     text-overflow: ellipsis;
     font-family: Inter;
     font-size: 13px;
@@ -91,7 +92,7 @@ getProxiesList()
   -webkit-line-clamp: 6;
   align-self: stretch;
   overflow: hidden;
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   text-overflow: ellipsis;
   font-family: Inter;
   font-size: 12px;

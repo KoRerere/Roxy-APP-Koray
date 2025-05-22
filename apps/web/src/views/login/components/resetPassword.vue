@@ -125,7 +125,7 @@ function receiveEmailCode(code: string) {
     align-self: stretch;
 
     .message-title {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -134,7 +134,7 @@ function receiveEmailCode(code: string) {
     }
 
     .message-desc {
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

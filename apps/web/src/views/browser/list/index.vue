@@ -266,12 +266,13 @@ async function hidePopover() {
           <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
             <div class="flex items-center text-inherit font-[Inter]">{{ item.label }}</div>
           </Tab>
-          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id"></Tab>
+          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id">
+          </Tab>
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1 suffix">
-        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
-          @click="switchTab(suffixItem.id, $event)">
+        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs"
+          :key="suffixItem.id" :class="{ active: suffixItem.id === active }" @click="switchTab(suffixItem.id, $event)">
           <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
           <span>{{ suffixItem.label }}</span>
         </div>
@@ -280,7 +281,8 @@ async function hidePopover() {
       <div v-if="!role.isViewer">
         <Divider layout="vertical" class="!mx-[4px] h-[16px]" />
       </div>
-      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
+      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs"
+        icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
@@ -337,7 +339,7 @@ async function hidePopover() {
 
     .p-tab {
       padding: var(--tab-padding);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-size: var(--tab-font-size);
       font-weight: 400;
       line-height: var(--Line-Height-text-xs, 16px);
@@ -380,7 +382,7 @@ async function hidePopover() {
   &-tab {
     padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);

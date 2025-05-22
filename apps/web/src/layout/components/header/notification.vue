@@ -235,7 +235,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-weight: 600;
 }
 
@@ -288,7 +288,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .value {
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   font-size: 14px;
   line-height: var(--Line-Height-text-md, 20px);
 }
