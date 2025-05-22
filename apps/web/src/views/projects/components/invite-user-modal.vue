@@ -3,8 +3,9 @@ import Fuse from 'fuse.js'
 import RoleSplit from './role-split.vue'
 import TsFormMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue';
 import { API } from '/@/api';
-import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
+import { useResponseToast } from "/@/hooks/useResponseToast";
+import { useHandleBusinessCode } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { getRoleLabelMap, Role } from '/@/enums/'
 import type { AutoCompleteCompleteEvent, AutoCompleteOptionSelectEvent } from 'primevue/autocomplete';
 
@@ -21,6 +22,7 @@ const emit = defineEmits(['close'])
 
 const roleLabelMap = getRoleLabelMap()
 const [showToast] = useResponseToast()
+const { handleBusinessCode } = useHandleBusinessCode()
 
 const currentMembers = defineModel<any[]>('members', { default: [] })
 
@@ -83,7 +85,9 @@ async function inviteNewMember() {
     projectIds,
   })
 
-  showToast(code, msg)
+  handleBusinessCode(code, () => {
+    showToast(code, msg)
+  })
   if (code !== 0) return
   updateCurrentMembers({
     userName: '--',
@@ -140,7 +144,7 @@ function updateCurrentMembers(member: Record<string, any>) {
       <div class="member-list">
         <div class="flex items-center gap-2 member-item" v-for="member in currentMembers" :key="member.id">
           <RxAvatar :avatar="member.avatar" :name="member.userName.slice(0, 2)" :color="member.avatarColor" :size="28" :font-size="14" />
-          <div class="w-60">
+          <div class="min-w-60 pr-4">
             <div class="member-item-name">{{ member.email }}</div>
             <div class="member-item-email">{{ member.userName }}</div>
           </div>
