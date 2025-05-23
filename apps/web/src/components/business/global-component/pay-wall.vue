@@ -144,7 +144,8 @@ function handleImageLoad() {
           <component :is="currentText.description"></component>
         </div>
         <div class="pay-wall-footer">
-          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
+          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined
+            @click="toDocument($event)">
             {{ currentText.about }}
           </RxButton>
           <RxButton class="pay-wall-footer-button" @click="toUpgrade($event)">
@@ -183,7 +184,7 @@ function handleImageLoad() {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;

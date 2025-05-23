@@ -364,7 +364,7 @@ function onRenewal() {
     margin-bottom: var(--spacing-2xl, 16px);
     border-radius: var(--radius-sm, 4px);
     border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background-color: #ffffff;
+    background: var(--colors-background-bg-page, #05101A);
     overflow: hidden;
   }
 }

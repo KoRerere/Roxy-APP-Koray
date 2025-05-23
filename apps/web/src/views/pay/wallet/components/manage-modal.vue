@@ -211,14 +211,14 @@ function onClose() {
 
 <style lang="scss" module="popup">
 .header {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: 24px;
 }
 
 .content {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
@@ -236,13 +236,13 @@ function onClose() {
 }
 
 .content {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 14px;
   line-height: 25.6px;
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
@@ -269,7 +269,7 @@ function onClose() {
 }
 
 .amount {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 24px;
   font-weight: 600;
@@ -282,7 +282,7 @@ function onClose() {
 }
 
 .desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 16px;
   line-height: normal;
 }
@@ -290,7 +290,7 @@ function onClose() {
 .record {
   border-top: 1px solid var(--Colors-Border-border-inactive, #E4E8EB);
 
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 700;

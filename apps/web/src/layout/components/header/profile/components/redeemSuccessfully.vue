@@ -114,7 +114,7 @@ onBeforeMount(() => {
 }
 
 .username {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;

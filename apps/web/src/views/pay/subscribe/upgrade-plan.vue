@@ -406,7 +406,7 @@ function jumpToProfile() {
 }
 
 .content {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 400;
   line-height: 25.6px;
@@ -434,7 +434,7 @@ function jumpToProfile() {
 
 .details {
   &-label {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -442,7 +442,7 @@ function jumpToProfile() {
   }
 
   &-oldprice {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
@@ -469,7 +469,7 @@ function jumpToProfile() {
 }
 
 .terms {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;

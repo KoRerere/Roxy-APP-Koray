@@ -81,7 +81,8 @@ function close(isCancel: boolean) {
     <div class="flex flex-col">
       <div class="title">{{ $t('正在处理支付...') }}</div>
       <div class="mt-6 desc">{{ $t('请在 30 分钟内完成支付，确认前请保持此窗口开启。') }}</div>
-      <i18n-t class="mt-2 desc" tag="div" :keypath="$t('若支付页面未加载，请 {link} 并在浏览器中打开。', { link: '{link}' })" scope="global">
+      <i18n-t class="mt-2 desc" tag="div" :keypath="$t('若支付页面未加载，请 {link} 并在浏览器中打开。', { link: '{link}' })"
+        scope="global">
         <template #link>
           <span class="cursor-pointer desc-link" @click="copyLink">{{ $t('复制链接') }}</span>
         </template>
@@ -112,7 +113,7 @@ function close(isCancel: boolean) {
 }
 
 .desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 14px;
   line-height: 20px;
 
@@ -128,7 +129,7 @@ function close(isCancel: boolean) {
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 12px;
   line-height: 20px;
 

@@ -273,7 +273,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
@@ -311,14 +311,14 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-value {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: "DingTalk JinBuTi", Inter, sans-serif;
     font-size: 32px;
     line-height: normal;
   }
 
   &-detail {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

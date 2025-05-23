@@ -87,7 +87,7 @@ const deviceList = computed(() => {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

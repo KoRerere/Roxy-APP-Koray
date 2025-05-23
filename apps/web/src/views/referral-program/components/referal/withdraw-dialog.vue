@@ -242,7 +242,7 @@ function handleBlur(event: InputNumberBlurEvent) {
     gap: 16px;
 
     .desc {
-      color: var(--Colors-Text-text-tertiary, #7C8387);
+      color: var(--colors-text-text-tertiary, #8A9093);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

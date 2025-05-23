@@ -124,7 +124,8 @@ async function onSubscribe() {
           <div class="flex flex-col items-center pt-4 pb-6 current" v-if="selectedPlan">
             <div>
               <span class="current-unit">$</span>
-              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
+              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange
+                class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
             <div class="mt-1 current-desc">{{ $t('窗口单价（{value} 数量区间）', {
@@ -141,7 +142,8 @@ async function onSubscribe() {
             </div>
             <div class="period">{{ $t('截止 {value}', { value: format(addDays(Date.now(), 7), 'yyyy/MM/dd') }) }}</div>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]"></AdvancedFeat>
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          </AdvancedFeat>
         </div>
         <Detail class="w-88" :list="details">
           <template #oldprice="{ item }">
@@ -175,7 +177,7 @@ async function onSubscribe() {
 }
 
 .slider {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -213,7 +215,7 @@ async function onSubscribe() {
   }
 
   &-text {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
@@ -231,7 +233,7 @@ async function onSubscribe() {
 
 .details {
   &-label {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -246,7 +248,7 @@ async function onSubscribe() {
   }
 
   &-oldprice {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;

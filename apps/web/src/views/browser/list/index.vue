@@ -353,7 +353,7 @@ async function hidePopover() {
     .p-tab-active {
       font-weight: 700;
       font-size: 14px;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
     }
 
     .p-tablist-active-bar {
@@ -391,7 +391,7 @@ async function hidePopover() {
       position: relative;
       font-weight: 700;
       font-size: 14px;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
 
       &::before {
         content: '';

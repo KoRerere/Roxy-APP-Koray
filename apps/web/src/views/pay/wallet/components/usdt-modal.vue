@@ -107,7 +107,8 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none popup">
     <div class="relative flex items-center h-10 header">
       <span>{{ $t('USDT 支付') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)"></SvgIcon>
+      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)">
+      </SvgIcon>
     </div>
 
     <div class="flex flex-col gap-3">
@@ -135,7 +136,8 @@ function close(isCancel: boolean) {
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress-value" cx="18" cy="18" r="14" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+              <circle class="progress-value" cx="18" cy="18" r="14"
+                :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </div>
           <div>
@@ -178,7 +180,7 @@ function close(isCancel: boolean) {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
@@ -202,13 +204,13 @@ function close(isCancel: boolean) {
 }
 
 .qrcode-desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 12px;
   line-height: normal;
 }
 
 .chain {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: "JetBrains Mono";
   font-size: 14px;
   font-weight: 500;
@@ -216,7 +218,7 @@ function close(isCancel: boolean) {
 }
 
 .remaining {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 12px;
   line-height: normal;
 }
@@ -229,20 +231,20 @@ function close(isCancel: boolean) {
 }
 
 .status {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   line-height: normal;
 }
 
 .note {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   font-weight: 500;
   line-height: 19.2px;
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-size: 12px;
   line-height: 20px;
 

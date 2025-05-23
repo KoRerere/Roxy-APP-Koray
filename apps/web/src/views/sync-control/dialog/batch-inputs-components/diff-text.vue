@@ -64,7 +64,7 @@ defineExpose({
   padding-right: 12px;
 
   .tips {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: "PingFang SC";
     font-size: 12px;
     font-style: normal;

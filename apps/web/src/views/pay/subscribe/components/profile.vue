@@ -71,15 +71,20 @@ function showIllustrate(event: Event) {
     <SubscribePlans :list="list" v-model="selectedPlan" @change="onChangePlan"></SubscribePlans>
     <div class="flex flex-col gap-3 mt-6 pb-18">
       <div class="title">{{ $t('滑动以选择窗口数量') }}</div>
-      <TierSlider v-model="selectedCount" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :tiers="tiersList" @change="onChangeCount">
+      <TierSlider v-model="selectedCount" :min="min ?? tiersList[1].start"
+        :max="max ?? tiersList[tiersList.length - 1].end" :tiers="tiersList" @change="onChangeCount">
         <template #thumb-extra>
           <div ref="current" class="flex flex-col gap-1 items-center whitespace-nowrap current" v-if="selectedPlan">
             <div>
               <span class="current-unit">$</span>
-              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
+              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange
+                class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
-            <div class="current-desc">{{ $t('窗口单价（{value} 数量区间）', { value: `${selectedPlan.minWindows + 1}~${selectedPlan.maxWindows}` }) }}</div>
+            <div class="current-desc">{{ $t('窗口单价（{value} 数量区间）', {
+              value: `${selectedPlan.minWindows +
+                1}~${selectedPlan.maxWindows}`
+            }) }}</div>
           </div>
         </template>
       </TierSlider>
@@ -89,7 +94,8 @@ function showIllustrate(event: Event) {
         <span class="sub-title">{{ $t('窗口数量') }}</span>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="#C7CDD1" @click="showIllustrate"></SvgIcon>
       </div>
-      <RxStep size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
+      <RxStep size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start"
+        :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
         :beforeMinus="onBeforeMinus" @change="onChangeCount" @update:modelValue="onUpdate"></RxStep>
     </div>
     <RyPopover ref="popover">
@@ -112,7 +118,7 @@ function showIllustrate(event: Event) {
 }
 
 .title {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -136,7 +142,7 @@ function showIllustrate(event: Event) {
   }
 
   &-text {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;

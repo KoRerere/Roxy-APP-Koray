@@ -181,7 +181,7 @@ onBeforeMount(() => {
     line-height: var(--Line-Height-text-lg, 20px);
 
     .description-item {
-      color: var(--Colors-Text-text-tertiary, #7C8387);
+      color: var(--colors-text-text-tertiary, #8A9093);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

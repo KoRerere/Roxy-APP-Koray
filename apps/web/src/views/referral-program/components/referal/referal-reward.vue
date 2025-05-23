@@ -163,7 +163,7 @@ function showWithdrawDialog() {
     .referal-reward-money-title {
       display: flex;
       flex-direction: column;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 40px;
       font-style: normal;
@@ -180,7 +180,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: center;
         gap: 4px;
-        color: var(--Colors-Text-text-tertiary, #7C8387);
+        color: var(--colors-text-text-tertiary, #8A9093);
         font-family: Inter;
         font-size: 16px;
         font-style: normal;
@@ -235,7 +235,7 @@ function showWithdrawDialog() {
         gap: 5px;
 
         .total {
-          color: #000;
+          color: var(--colors-text-text-primary, #FAFAFA);
           font-family: Inter;
           font-size: 32px;
           font-style: normal;
@@ -258,7 +258,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: end;
         gap: 4px;
-        color: var(--Colors-Text-text-tertiary, #7C8387);
+        color: var(--colors-text-text-tertiary, #8A9093);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;

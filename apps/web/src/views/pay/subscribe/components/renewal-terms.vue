@@ -19,11 +19,16 @@ const { getOfficialWebsite } = useSimpleLocale()
       <Checkbox inputId="auto" v-model="isAuto" binary />
       <i18n-t tag="div" class="discount" :keypath="$t('允许自动续订 {discount}', { discount: '{discount}' })" scope="global">
         <template #discount>
-          <span class="discount-value"> {{ $t('{amount} /月', { amount: currency(discountAmount, { symbol: '-$' }).format() }) }}</span>
+          <span class="discount-value"> {{ $t('{amount} /月', {
+            amount: currency(discountAmount, {
+              symbol: '-$'
+            }).format()
+          }) }}</span>
         </template>
       </i18n-t>
     </label>
-    <i18n-t tag="div" class="mt-2.5 pl-7 terms" :keypath="$t('选择即代表您接受 RoxyBrowser {terms}', { terms: '{terms}' })" scope="global">
+    <i18n-t tag="div" class="mt-2.5 pl-7 terms" :keypath="$t('选择即代表您接受 RoxyBrowser {terms}', { terms: '{terms}' })"
+      scope="global">
       <template #terms>
         <a class="terms-link" :href="getOfficialWebsite('copyright/renewal')" target="_blank">{{ $t('自动续订协议') }}</a>
       </template>
@@ -34,7 +39,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 
 <style scoped lang="scss">
 .discount {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -48,7 +53,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 }
 
 .terms {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;
