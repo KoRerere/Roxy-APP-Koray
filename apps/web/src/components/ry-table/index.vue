@@ -403,7 +403,7 @@ const slots: any = useSlots()
 
 <style lang="scss" scoped>
 .rx-header {
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
+  padding: 12px 24px;
   border-bottom: 0.5px solid var(--colors-border-border-inactive, #C7D1D6);
 }
 
@@ -494,7 +494,6 @@ const slots: any = useSlots()
 
 <style lang="scss" module="ColumnCss_Module">
 .columntitle {
-  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
@@ -504,55 +503,14 @@ const slots: any = useSlots()
 .headerrow {
   .headercell {
     padding: 8px 12px;
-    background: var(--component-table-header, #F1F5F8);
-    border-color: var(--component-table-border, #48555B);
     user-select: none;
 
     &:first-of-type {
-      padding-left: var(--spacing-4xl, 24px);
+      padding-left: 24px;
     }
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      background: var(--component-table-header, #F1F5F8);
-    }
-  }
-}
-
-.tableroot {
-  .table {
-    .tbody {
-      .bodyrow {
-        &[data-p-selected='true'] {
-          background: var(--component-table-bg-selected, #DEF3FF);
-
-          .bodycell {
-            border-color: var(--component-table-border-selected, #9ADBFE);
-
-            &:global(.p-datatable-frozen-column) {
-              background: var(--component-table-bg-selected, #DEF3FF);
-            }
-          }
-        }
-
-        &:not([data-p-selected='true']):hover {
-          background: var(--component-table-bg-hover, #F1F5F8);
-
-          .bodycell {
-            border-color: var(--component-table-border, #48555B);
-
-            &:global(.p-datatable-frozen-column) {
-              background: var(--component-table-bg-hover, #F1F5F8);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  &:global(.p-datatable-sm) {
-    .bodycell {
-      height: 40px;
     }
   }
 }
@@ -561,22 +519,53 @@ const slots: any = useSlots()
   .bodycell {
     padding: 0 12px;
     height: 60px;
-    border-color: var(--colors-border-border-inactive, #C7D1D6);
     border-bottom-width: 0.5px;
-    color: var(--colors-text-text-primary, #111213);
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
 
     &:first-of-type {
-      padding-left: var(--spacing-4xl, 24px);
+      padding-left: 24px;
     }
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
+      background: var(--colors-background-bg-page, #FFF);
       border-left: 1px solid var(--colors-border-border-inactive, #C7D1D6);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
       transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
+    }
+  }
+}
+
+.tableroot {
+  &:global(.p-datatable-sm) .bodycell {
+    height: 40px;
+  }
+
+  .table .tbody .bodyrow {
+    &[data-p-selected='true'] {
+      background: var(--component-table-bg-selected, #DEF3FF);
+
+      .bodycell {
+        border-color: var(--component-table-bg-selected-border, #9ADBFE);
+
+        &:global(.p-datatable-frozen-column) {
+          background: var(--component-table-bg-selected, #DEF3FF);
+        }
+      }
+    }
+
+    &:not([data-p-selected='true']):hover {
+      background: var(--component-table-bg-hover, #F1F5F8);
+
+      .bodycell {
+        border-color: var(--component-table-border, #48555B);
+
+        &:global(.p-datatable-frozen-column) {
+          background: var(--component-table-bg-hover, #F1F5F8);
+        }
+      }
     }
   }
 }

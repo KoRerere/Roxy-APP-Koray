@@ -1380,11 +1380,11 @@ export const components = {
       },
     },
     headerCell: {
-      background: '{colors.background.bg-page}',
-      hoverBackground: '{component.table.bg-hover}',
-      selectedBackground: '{component.table.bg-selected}',
-      borderColor: '{datatable.border.color}',
-      color: '{content.color}',
+      background: '{component.table.header}',
+      hoverBackground: '{content.hover.background}',
+      selectedBackground: '{highlight.background}',
+      borderColor: '{colors.border.border-inactive}',
+      color: '{colors.text.text-primary}',
       hoverColor: '{content.hover.color}',
       selectedColor: '{highlight.color}',
       gap: '0.5rem',
@@ -1408,9 +1408,9 @@ export const components = {
     },
     row: {
       background: '{colors.background.bg-page}',
-      hoverBackground: '{component.table.bg-hover}',
-      selectedBackground: '{component.table.bg-selected}',
-      color: '{content.color}',
+      hoverBackground: '{content.hover.background}',
+      selectedBackground: '{highlight.background}',
+      color: '{colors.text.text-primary}',
       hoverColor: '{content.hover.color}',
       selectedColor: '{highlight.color}',
       focusRing: {
@@ -1422,7 +1422,7 @@ export const components = {
       },
     },
     bodyCell: {
-      borderColor: '{datatable.border.color}',
+      borderColor: '{colors.border.border-inactive}',
       padding: '0.75rem 1rem',
       sm: {
         padding: '0.375rem 0.5rem',
