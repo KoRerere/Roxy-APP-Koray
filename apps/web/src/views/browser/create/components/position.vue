@@ -101,15 +101,15 @@ function handlePointClick(point: Point) {
 .box {
   position: relative;
   flex-shrink: 0;
-  border: 1px dashed var(--Colors-border-border-subtle, #C7D1D6);
-  background: var(--Colors-background-bg-block, #F1F5F8);
+  border: 1px dashed var(--colors-border-border-subtle, #C7D1D6);
+  background: var(--colors-background-bg-block, #F1F5F8);
 
   &::before {
     content: '';
     position: absolute;
     left: 50%;
     height: 100%;
-    border-left: 1px dashed var(--Colors-border-border-subtle, #C7D1D6);
+    border-left: 1px dashed var(--colors-border-border-subtle, #C7D1D6);
   }
 
   &::after {
@@ -117,7 +117,7 @@ function handlePointClick(point: Point) {
     position: absolute;
     top: 50%;
     width: 100%;
-    border-top: 1px dashed var(--Colors-border-border-subtle, #C7D1D6);
+    border-top: 1px dashed var(--colors-border-border-subtle, #C7D1D6);
   }
 }
 
@@ -131,8 +131,8 @@ function handlePointClick(point: Point) {
 
   &:hover {
     .point-mark:not(.active) {
-      background: var(--Colors-border-border-inactive, #C7D1D6);
-      box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px var(--Colors-border-border-subtle, #C7D1D6);
+      background: var(--colors-border-border-inactive, #C7D1D6);
+      box-shadow: 0px 0px 0px 2px var(--colors-background-bg-page, #FFF), 0px 0px 0px 3px var(--colors-border-border-subtle, #C7D1D6);
     }
   }
 
@@ -141,11 +141,11 @@ function handlePointClick(point: Point) {
     height: 6px;
     border-radius: 1px;
     background: #E9EEF2;
-    box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px #E3E9EC;
+    box-shadow: 0px 0px 0px 2px var(--colors-background-bg-page, #FFF), 0px 0px 0px 3px #E3E9EC;
 
     &.active {
-      background: var(--Colors-background-bg-brand, #11A3FD);
-      box-shadow: 0px 0px 0px 2px var(--Colors-background-bg-page, #FFF), 0px 0px 0px 3px rgba(17, 163, 253, 0.40);
+      background: var(--colors-background-bg-brand, #11A3FD);
+      box-shadow: 0px 0px 0px 2px var(--colors-background-bg-page, #FFF), 0px 0px 0px 3px rgba(17, 163, 253, 0.40);
     }
   }
 }

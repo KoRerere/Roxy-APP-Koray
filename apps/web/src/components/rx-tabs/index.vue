@@ -48,7 +48,7 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 :deep(.p-tablist-tab-list) {
   gap: var(--spacing-2xl, 16px);
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   .p-tab {
     padding: 14px 8px;

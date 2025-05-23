@@ -52,7 +52,7 @@ watch(() => currentLocale.value, (val) => {
     justify-content: center;
     align-items: center;
     gap: var(--spacing-md, 6px);
-    color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+    color: var(--colors-text-text-primary, #171C1F);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

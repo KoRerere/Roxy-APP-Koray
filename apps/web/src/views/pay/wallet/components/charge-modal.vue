@@ -126,9 +126,9 @@ function close(isCancel: boolean) {
 }
 
 .preset {
-  border: 0.5px solid var(--Component-Colors-Tag-border, #E4E8EB);
-  background: var(--Component-Colors-Tag-bg, #F0F3F5);
-  color: var(--Component-Colors-Tag-text, #575D61);
+  border: 0.5px solid var(--component-tag-border, #E4E8EB);
+  background: var(--component-tag-bg, #F0F3F5);
+  color: var(--component-tag-text, #575D61);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -137,7 +137,7 @@ function close(isCancel: boolean) {
 
 .total {
   &-label {
-    color: var(--Colors-Text-text-secondary, #171C1F);
+    color: var(--colors-text-text-secondary, #171C1F);
     font-size: 16px;
     font-weight: 700;
     line-height: 20px;

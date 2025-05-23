@@ -62,7 +62,7 @@ function toggle(event: Event) {
   cursor: pointer;
 
   .text {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     text-align: center;
     font-family: Inter;
     font-size: var(--Font-Size-text-sm, 12px);
@@ -81,8 +81,8 @@ function toggle(event: Event) {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  background: var(--colors-background-bg-app, #fff);
+  color: var(--colors-text-text-brand, #12a3fc);
   text-align: center;
   font-family: Inter;
   font-size: 13px;
@@ -99,7 +99,7 @@ function toggle(event: Event) {
   align-items: flex-start;
   gap: var(--spacing-none, 0px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 }
 
 .member-item {
@@ -110,6 +110,6 @@ function toggle(event: Event) {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
+  background: var(--colors-background-bg-app, #fff);
 }
 </style>

@@ -264,7 +264,7 @@ function onRefreshTable() {
 
 <style lang="scss" scoped>
 .proxies-header {
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 }
 
 .proxy-host {
@@ -276,7 +276,7 @@ function onRefreshTable() {
 }
 
 .ip-type {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;

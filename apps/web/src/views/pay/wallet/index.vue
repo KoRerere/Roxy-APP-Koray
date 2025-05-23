@@ -350,7 +350,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-text {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;

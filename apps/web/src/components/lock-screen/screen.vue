@@ -183,7 +183,7 @@ onMounted(() => {
 }
 
 .locker-message {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
@@ -202,7 +202,7 @@ onMounted(() => {
 }
 
 .logout-button-text {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   text-align: center;
   font-family: Inter;
   font-size: 13px;

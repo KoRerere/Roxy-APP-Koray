@@ -92,7 +92,7 @@ defineExpose({
 
     .textarea {
       width: 100%;
-      color: var(--Component-Colors-TextInput-text-text-placeholder, #7C8387);
+      color: var(--colors-text-text-placeholder, #7C8387);
       font-family: "PingFang SC";
       font-size: 14px;
       font-style: normal;

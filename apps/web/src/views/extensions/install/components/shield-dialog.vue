@@ -138,8 +138,8 @@ checkExtensionInfo()
     align-items: center;
     gap: 13.333px;
     border-radius: 8px;
-    border: 1px solid var(--Colors-Border-border-container, #C7CDD1);
-    background: var(--Colors-Background-bg-body, #FFF);
+    border: 1px solid var(--colors-border-border-base, #C7CDD1);
+    background: var(--colors-background-bg-app, #FFF);
 
     img {
       display: flex;
@@ -244,7 +244,7 @@ checkExtensionInfo()
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: var(--Colors-Text-text-link, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

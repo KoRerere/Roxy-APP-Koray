@@ -16,8 +16,8 @@ defineEmits(['close'])
   position: relative;
   padding: 10px 8px;
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Colors-Background-bg-body, #fff);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-app, #fff);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
   &-close {

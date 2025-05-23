@@ -51,8 +51,8 @@ async function onCopy() {
   padding: var(--spacing-xl, 12px);
   gap: var(--spacing-xl, 12px);
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Color-neutrals-900, #171C1F);
-  background: var(--Color-neutrals-800, #252A2E);
+  border: 1px solid var(--primitives-neutrals-900, #171C1F);
+  background: var(--primitives-neutrals-800, #252A2E);
   min-height: 30px;
   overflow: hidden;
 

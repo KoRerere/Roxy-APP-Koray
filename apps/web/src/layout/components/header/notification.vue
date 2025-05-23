@@ -240,7 +240,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .read {
-  color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-size: var(--Font-Size-text-sm, 12px);
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -251,8 +251,8 @@ function showAcceptInvitationDialog(item: Message) {
   padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
   align-items: flex-start;
   gap: 10px;
-  border-bottom: 1px solid var(--Colors-Border-border-subtle, #e4e8eb);
-  background: var(--Colors-Background-bg-body, #fff);
+  border-bottom: 1px solid var(--colors-border-border-subtle, #e4e8eb);
+  background: var(--colors-background-bg-app, #fff);
 
   &:last-of-type {
     border-bottom: none;
@@ -260,7 +260,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .noRead {
-  background: var(--Color-blue-100, #e8f5fc);
+  background: var(--primitives-blue-100, #e8f5fc);
 }
 
 .no-message {
@@ -281,7 +281,7 @@ function showAcceptInvitationDialog(item: Message) {
       right: 0;
       width: 8px;
       height: 8px;
-      background-color: var(--Color-Rainbow-Red, #f53838);
+      background-color: var(--component-rainbow-Red, #f53838);
       border-radius: 50%;
     }
   }
@@ -294,7 +294,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .check-detail {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -305,13 +305,13 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .check-detail.disabled {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   cursor: not-allowed;
 }
 
 .time {
   margin-top: 4px;
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }

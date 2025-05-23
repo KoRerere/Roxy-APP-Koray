@@ -260,7 +260,7 @@ async function handleShowInviteUserFormDialog() {
 .header {
   &-guide {
     gap: var(--spacing-sm, 4px);
-    color: var(--Colors-Text-text-brand, #12a3fc);
+    color: var(--colors-text-text-brand, #12a3fc);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
@@ -274,7 +274,7 @@ async function handleShowInviteUserFormDialog() {
   gap: var(--spacing-xl, 12px);
 
   .no-avatar {
-    border: 1px dashed var(--Component-Colors-Tag-border-hover, #C7CDD1);
+    border: 1px dashed var(--component-tag-border-hover, #C7CDD1);
     border-radius: 50%;
   }
 

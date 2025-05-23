@@ -189,7 +189,7 @@ function deletePopup(data: any) {
           <div class="flex gap-2 account">
             <div>
               <img v-if="data.platformIcon" class="w-4 h-4" :src="data.platformIcon">
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
               <div class="flex items-center account-title">
@@ -215,7 +215,7 @@ function deletePopup(data: any) {
 
 <style lang="scss" scoped>
 .account-header {
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 }
 
 .account {
@@ -229,7 +229,7 @@ function deletePopup(data: any) {
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
   }
 }
 </style>

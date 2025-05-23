@@ -60,7 +60,7 @@ const passThrough = {
 .header {
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px) var(--spacing-lg, 8px) var(--spacing-2xl, 16px);
   gap: var(--spacing-xl, 12px);
-  border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
+  border-bottom: 0.5px solid var(--primitives-neutrals-300, #c7cdd1);
 }
 
 .title {

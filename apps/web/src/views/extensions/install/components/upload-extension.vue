@@ -148,7 +148,7 @@ onMounted(() => {
 
 .upload {
   &-title {
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--primitives-neutrals-600, #575d61);
     font-family: Inter;
     font-size: 12px;
     font-weight: 400;
@@ -192,8 +192,8 @@ onMounted(() => {
     width: 60px;
     height: 60px;
     border-radius: var(--radius-lg, 8px);
-    border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 1px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
 
     &-image {
       width: 100%;
@@ -203,11 +203,11 @@ onMounted(() => {
 
   &-name {
     grid-area: right-top;
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-weight: 500;
 
     &-length {
-      color: var(--Colors-Text-text-inactive, #a3a9ad);
+      color: var(--colors-text-text-inactive, #a3a9ad);
       font-weight: 400;
     }
   }
@@ -221,14 +221,14 @@ onMounted(() => {
 }
 
 .description {
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-lg, 20px);
 
   &-length {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-weight: 400;
   }
 
@@ -240,7 +240,7 @@ onMounted(() => {
 }
 
 .guide {
-  color: var(--Color-neutrals-600, #575d61);
+  color: var(--primitives-neutrals-600, #575d61);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;

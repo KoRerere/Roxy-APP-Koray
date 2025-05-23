@@ -192,7 +192,7 @@ defineExpose({
       width: 2px;
       height: 100%;
       border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-      background: var(--Color-blue-100, #e8f5fc);
+      background: var(--primitives-blue-100, #e8f5fc);
     }
 
     &-item {
@@ -212,7 +212,7 @@ defineExpose({
         width: 2px;
         height: 16px;
         border-radius: var(--Component-Colors-TextInput-radius-radius-sm, 4px);
-        background: var(--Colors-Icon-icon-brand, #12a3fc);
+        background: var(--colors-icon-icon-brand, #12a3fc);
         transition: all 0.2s linear;
       }
 
@@ -271,8 +271,8 @@ defineExpose({
   padding: var(--spacing-xl, 12px);
   min-height: 204px;
   border-radius: var(--radius-md, 6px);
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--primitives-neutrals-50, #fafbfc);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
@@ -282,8 +282,8 @@ defineExpose({
     width: 56px;
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-sm, 4px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
   }
 
   &-name {

@@ -16,7 +16,7 @@ interface Props extends Omit<SelectProps, 'size' | 'optionLabel' | 'optionValue'
 
 const {
   icon,
-  iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)',
+  iconColor = 'var(--colors-text-text-primary, #171c1f)',
   size = 'sm',
   options,
   optionLabel = 'label',
@@ -80,7 +80,7 @@ function _onChange(event: any) {
   font-size: 13px;
 
   &[data-p-selected='true']:not([data-p-focused='true']) {
-    color: var(--Colors-Text-text-brand, #12a3fc) !important;
+    color: var(--colors-text-text-brand, #12a3fc) !important;
     background: #e8f5fc !important;
   }
 }

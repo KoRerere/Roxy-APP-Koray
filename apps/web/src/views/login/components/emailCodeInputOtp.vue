@@ -243,7 +243,7 @@ onBeforeMount(() => {
 }
 
 .re-enter-text {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

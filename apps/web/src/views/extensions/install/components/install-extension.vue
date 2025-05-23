@@ -111,7 +111,7 @@ onMounted(() => {
           :multiple-operation="false" selection-mode="multiple" size="small">
           <template #project="{ data }">
             <div class="flex items-center gap-2">
-              <RxSvgIcon name="base/rx_ic_stack" color="var(--Colors-Icon-icon-secondary, #575D61)" />
+              <RxSvgIcon name="base/rx_ic_stack" color="var(--colors-icon-icon-secondary, #575D61)" />
               <span class="project-name">{{ data.projectName }}</span>
             </div>
           </template>
@@ -163,8 +163,8 @@ onMounted(() => {
     width: 36px;
     height: 36px;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
 
     &-image {
       width: 100%;
@@ -193,8 +193,8 @@ onMounted(() => {
 
 .project-table {
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Component-Colors-TextInput-bg-bg, #fff);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-action, #fff);
   overflow: hidden;
 }
 
@@ -210,7 +210,7 @@ onMounted(() => {
   margin: var(--spacing-4xl, 24px) 0;
   height: 0.5px;
   width: 100%;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 
 .title {

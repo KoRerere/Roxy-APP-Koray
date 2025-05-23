@@ -125,9 +125,9 @@ defineExpose({
   overflow: auto;
   line-height: 22px;
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #C7CDD1);
+  border: 1px solid var(--colors-border-border-base, #C7CDD1);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  background: var(--Colors-Background-bg-page, #FAFBFC);
+  background: var(--colors-background-bg-page, #FAFBFC);
 
   textarea {
     line-height: 22px;
@@ -140,7 +140,7 @@ defineExpose({
     bottom: 0;
     left: 110px;
     width: 1px;
-    background: var(--Colors-Border-border-container, #C7CDD1);
+    background: var(--colors-border-border-base, #C7CDD1);
   }
 
   .textarea-all {

@@ -63,11 +63,11 @@ function onBlur() {
   border-radius: var(--radius-md, 6px);
 
   &:hover {
-    background: var(--Color-neutrals-100, #f0f3f5);
+    background: var(--primitives-neutrals-100, #f0f3f5);
   }
 
   &:has([contenteditable='true']) {
-    background: var(--Color-neutrals-100, #f0f3f5);
+    background: var(--primitives-neutrals-100, #f0f3f5);
 
     .editdiv-icon {
       display: none;
@@ -76,7 +76,7 @@ function onBlur() {
 
   &-text {
     position: relative;
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--primitives-neutrals-600, #575d61);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;

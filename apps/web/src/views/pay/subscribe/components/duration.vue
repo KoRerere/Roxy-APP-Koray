@@ -85,17 +85,17 @@ function onSelected(item: Duration) {
 <style lang="scss" scoped>
 .duration {
   border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
+  box-shadow: inset 0px 0px 0px 1px var(#C7CDD1, #C7CDD1);
 
   &:last-child {
     .duration-discount {
       font-size: 14px;
-      background: var(--Color-red-300, #F53838);
+      background: var(--primitives-red-500, #F53838);
     }
   }
 
   &.active {
-    border: 2px solid var(--Color-blue-300, #12A3FC);
+    border: 2px solid var(--primitives-blue-500, #12A3FC);
     background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
     box-shadow: none;
   }
@@ -116,7 +116,7 @@ function onSelected(item: Duration) {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;

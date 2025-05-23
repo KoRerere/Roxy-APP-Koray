@@ -86,7 +86,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
     left: 20px;
     width: 0.5px;
     height: 100%;
-    background: var(--Colors-Border-border-container, #c7cdd1);
+    background: var(--colors-border-border-base, #c7cdd1);
   }
 }
 
@@ -108,6 +108,6 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   margin: 16px auto;
   width: 20px;
   height: 1px;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 </style>

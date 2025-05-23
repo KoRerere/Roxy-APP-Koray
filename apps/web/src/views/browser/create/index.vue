@@ -462,7 +462,7 @@ function handleWindowNameStartEdit() {
 <style lang="scss" scoped>
 .profile-tabs {
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);
@@ -483,7 +483,7 @@ function handleWindowNameStartEdit() {
     }
 
     .p-tab-active {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
 
     .p-tablist-active-bar {
@@ -500,7 +500,7 @@ function handleWindowNameStartEdit() {
 }
 
 .multi-block {
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
@@ -512,7 +512,7 @@ function handleWindowNameStartEdit() {
     font-size: 12px;
 
     &-jump {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
       cursor: pointer;
       user-select: none;
     }
@@ -525,7 +525,7 @@ function handleWindowNameStartEdit() {
     font-size: var(--Font-Size-text-sm, 12px);
     line-height: var(--Line-Height-text-lg, 20px);
     border-width: 1px;
-    // border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
+    // border-color: var(#0881cc, #0881cc);
 
     &:not(:disabled):hover {
       border-width: 1px;

@@ -76,6 +76,6 @@ function onMore(event: Event) {
 }
 
 :where(.quick-icon) {
-  color: var(--Colors-icon-icon-secondary, #575D60);
+  color: var(--colors-icon-icon-secondary, #575D60);
 }
 </style>

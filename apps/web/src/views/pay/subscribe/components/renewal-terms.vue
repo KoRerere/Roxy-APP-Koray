@@ -44,7 +44,7 @@ const { getOfficialWebsite } = useSimpleLocale()
   line-height: normal;
 
   &-value {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: "DingTalk JinBuTi", sans-serif;
     font-size: 14px;
     line-height: normal;
@@ -59,7 +59,7 @@ const { getOfficialWebsite } = useSimpleLocale()
 
   /* 150% */
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;

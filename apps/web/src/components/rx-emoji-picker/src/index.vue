@@ -88,7 +88,7 @@ function handleClose(e: MouseEvent) {
   align-items: center;
   gap: 10px;
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
 
   /* shadow-sm */
   box-shadow:
@@ -102,10 +102,10 @@ function handleClose(e: MouseEvent) {
     justify-content: center;
     align-items: center;
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-100, #f0f3f5);
+    background: var(--primitives-neutrals-100, #f0f3f5);
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-100, #f0f3f5);
-    color: var(--Colors-Text-text-subtle, #c7cdd1);
+    background: var(--primitives-neutrals-100, #f0f3f5);
+    color: var(--colors-text-text-inactive, #c7cdd1);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 34px;

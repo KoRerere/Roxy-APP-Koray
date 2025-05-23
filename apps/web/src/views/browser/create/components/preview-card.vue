@@ -82,8 +82,8 @@ $spacing-x: var(--spacing-xl, 12px);
   width: 340px;
   height: calc(100% - 24px);
   border-radius: 8px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Colors-Background-bg-body, #fff);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-app, #fff);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -137,7 +137,7 @@ $spacing-x: var(--spacing-xl, 12px);
       align-items: flex-start;
       align-self: stretch;
       gap: var(--spacing-sm, 4px);
-      color: var(--Color-neutrals-800, #252a2e);
+      color: var(--primitives-neutrals-800, #252a2e);
       font-family: 'DM Mono';
       font-size: 12px;
       font-weight: 500;

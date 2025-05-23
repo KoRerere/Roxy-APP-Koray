@@ -57,8 +57,8 @@ getProxiesList()
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   border-radius: var(--radius-md, 6px);
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   /* shadow-sm */
   box-shadow:
@@ -119,8 +119,8 @@ getProxiesList()
   }
 
   .visit-website {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     text-align: center;
     font-family: Inter;
     font-size: var(--Font-Size-text-sm, 12px);

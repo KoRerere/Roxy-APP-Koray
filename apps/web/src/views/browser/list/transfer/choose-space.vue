@@ -211,39 +211,39 @@ function getAvatarStyle(workspacePicture: string) {
 
 .choose {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Colors-border-border-base, #AFB7BB);
+  border: 1px solid var(--colors-border-border-base, #AFB7BB);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  color: var(--Colors-text-text-placeholder, #575D60);
+  color: var(--colors-text-text-placeholder, #575D60);
   font-size: 14px;
   line-height: var(--Line-Height-text-lg, 20px);
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
 
 .help {
-  color: var(--Colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive, #7D8387);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-text-text-link, #11A3FD);
+    color: var(--colors-text-text-brand, #11A3FD);
   }
 }
 
 .title {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 12px;
   font-weight: 500;
   line-height: 20px;
 }
 
 .workspace {
-  border-bottom: 1px dashed var(--Colors-border-border-inactive, #C7D1D6);
+  border-bottom: 1px dashed var(--colors-border-border-inactive, #C7D1D6);
 
   &.disabled {
     cursor: not-allowed;
@@ -251,7 +251,7 @@ function getAvatarStyle(workspacePicture: string) {
 
     .workspace-name,
     .workspace-id {
-      color: var(--Colors-text-text-inactive, #7D8387);
+      color: var(--colors-text-text-inactive, #7D8387);
     }
 
     .workspace-icon {
@@ -264,7 +264,7 @@ function getAvatarStyle(workspacePicture: string) {
   }
 
   &-name {
-    color: var(--Colors-text-text-primary, #111213);
+    color: var(--component-button-primary-text, #111213);
     font-size: 14px;
     font-weight: 600;
     line-height: normal;
@@ -279,7 +279,7 @@ function getAvatarStyle(workspacePicture: string) {
 }
 
 .search-empty {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-style: normal;
   line-height: 20px;

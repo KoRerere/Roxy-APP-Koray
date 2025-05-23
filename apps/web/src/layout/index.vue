@@ -275,7 +275,7 @@ function onRenewal() {
       justify-content: center;
       align-items: center;
       gap: 10px;
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
       text-align: center;
       font-family: Archivo;
       font-size: 10px;
@@ -284,7 +284,7 @@ function onRenewal() {
       line-height: normal;
       letter-spacing: 0.1px;
       border-radius: var(--radius-full, 9999px);
-      background: var(--Color-blue-100, #e8f5fc);
+      background: var(--primitives-blue-100, #e8f5fc);
     }
   }
 }
@@ -316,11 +316,11 @@ function onRenewal() {
       }
 
       &.subscription-expired {
-        border: 1px solid var(--Color-yellow-200, #ffcb80);
-        background: var(--Color-yellow-100, #fff5e6);
+        border: 1px solid var(--primitives-yellow-400, #ffcb80);
+        background: var(--primitives-yellow-100, #fff5e6);
 
         :deep(.p-message-text) {
-          color: var(--Color-yellow-400, #db8d1a);
+          color: var(--primitives-yellow-800, #db8d1a);
           font-family: Inter;
           font-size: 14px;
           font-style: normal;

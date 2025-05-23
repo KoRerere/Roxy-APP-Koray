@@ -58,11 +58,11 @@ function onSwitchPlan(plan: Partial<Plan>) {
 <style scoped lang="scss">
 .plans {
   border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
+  box-shadow: inset 0px 0px 0px 1px var(#C7CDD1, #C7CDD1);
 
   &.disabled {
-    background: var(--Color-neutrals-100, #F0F3F5);
-    border-color: var(--Color-neutrals-100, #F0F3F5);
+    background: var(--primitives-neutrals-100, #F0F3F5);
+    border-color: var(--primitives-neutrals-100, #F0F3F5);
     box-shadow: none;
   }
 
@@ -75,7 +75,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
     box-shadow: none;
 
     .plans-text {
-      color: var(--Color-blue-400, #0881CC);
+      color: var(--primitives-blue-600, #0881CC);
     }
 
     .plans-price {

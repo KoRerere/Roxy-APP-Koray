@@ -263,8 +263,8 @@ onMounted(() => {
 
 .table-container {
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
-  background: var(--Component-Colors-TextInput-bg-bg, #FFF);
+  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
+  background: var(--colors-background-bg-action, #FFF);
 }
 
 .footer {

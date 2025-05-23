@@ -71,7 +71,7 @@ async function onCommand(event: Event, item: any) {
   padding: var(--spacing-sm, 4px);
   gap: 4px;
   border-radius: 8px;
-  background: var(--Business-ActionBar-bg, #111213);
+  background: var(--pattern-actionbar-bg, #111213);
   box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
 }
 
@@ -79,30 +79,30 @@ async function onCommand(event: Event, item: any) {
   padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   gap: 6px;
   border-radius: 5px;
-  border: 1px solid var(--Business-ActionBar-btn-border, #34393D);
-  background: var(--Business-ActionBar-btn, #2C2E30);
+  border: 1px solid var(--pattern-actionbar-btn-border, #34393D);
+  background: var(--pattern-actionbar-btn, #2C2E30);
 
-  color: var(--Business-ActionBar-text-subtle, #AFB7BB);
+  color: var(--pattern-actionbar-text-subtle, #AFB7BB);
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
   user-select: none;
 
   &-light {
-    color: var(--Business-ActionBar-text, #FAFAFA);
+    color: var(--pattern-actionbar-text, #FAFAFA);
     font-weight: 600;
   }
 }
 
 .icons {
   border-radius: 5px;
-  border: 1px solid var(--Business-ActionBar-btn-border, #34393D);
-  background: var(--Business-ActionBar-btn, #2C2E30);
+  border: 1px solid var(--pattern-actionbar-btn-border, #34393D);
+  background: var(--pattern-actionbar-btn, #2C2E30);
 
   :deep(.p-button-text.p-button-secondary) {
-    color: var(--Business-ActionBar-text, #FAFAFA);
+    color: var(--pattern-actionbar-text, #FAFAFA);
 
     svg {
-      color: var(--Business-ActionBar-text, #FAFAFA);
+      color: var(--pattern-actionbar-text, #FAFAFA);
     }
   }
 }

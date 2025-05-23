@@ -365,7 +365,7 @@ electronAPI.on('syncControl:start', startSync)
 
     th.p-datatable-header-cell {
       border-top-width: 0.5px;
-      border-top-color: var(--Colors-Border-border-subtle, #E4E8EB);
+      border-top-color: var(--colors-border-border-subtle, #E4E8EB);
     }
 
     th.p-datatable-header-cell:first-of-type {
@@ -396,7 +396,7 @@ electronAPI.on('syncControl:start', startSync)
 <style lang="scss" scoped>
 .sync-control-table {
   overflow: hidden;
-  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
+  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
   border-radius: var(--radius-sm, 6px);
 
 
@@ -426,8 +426,8 @@ electronAPI.on('syncControl:start', startSync)
   align-items: center;
   gap: 10px;
   border-radius: 4px;
-  background: var(--Color-blue-200, #7ECCFC);
-  color: var(--Color-blue-500, #015C94);
+  background: var(--primitives-blue-400, #7ECCFC);
+  color: var(--primitives-blue-700, #015C94);
   font-size: 12px;
   font-weight: bold;
   line-height: var(--Line-Height-text-xs, 16px);

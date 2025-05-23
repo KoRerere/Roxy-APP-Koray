@@ -48,7 +48,7 @@ async function saveProxies(proxies: any) {
 <style lang="scss" scoped>
 .proxies-tabs {
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);
@@ -69,7 +69,7 @@ async function saveProxies(proxies: any) {
     }
 
     .p-tab-active {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
 
     .p-tablist-active-bar {

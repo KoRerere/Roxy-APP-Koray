@@ -416,12 +416,12 @@ onMounted(() => {
     transform: translateX(-50%);
     padding: var(--spacing-sm, 4px) var(--spacing-lg, 8px);
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-900, #171c1f);
+    background: var(--primitives-neutrals-900, #171c1f);
     box-shadow:
       0px 3px 8px 0px rgba(0, 0, 0, 0.07),
       0px 2px 5px 0px rgba(0, 0, 0, 0.07),
       0px 1px 1px 0px rgba(0, 0, 0, 0.07);
-    color: var(--Color-neutrals-0, #fff);
+    color: var(--primitives-neutrals-0, #fff);
     text-align: center;
     font-size: 12px;
     font-weight: 600;

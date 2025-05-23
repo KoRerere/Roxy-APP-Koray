@@ -89,7 +89,7 @@ function hideDialog() {
       align-items: center;
       gap: var(--spacing-xl, 12px);
       align-self: stretch;
-      color: var(--Color-red-300, #F53838);
+      color: var(--primitives-red-500, #F53838);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

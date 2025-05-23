@@ -119,7 +119,7 @@ function skipInvitation() {
       flex-direction: column;
       justify-content: center;
       flex-shrink: 0;
-      color: var(--Colors-Text-text-subtle, #c7cdd1);
+      color: var(--colors-text-text-inactive, #c7cdd1);
       text-align: center;
       font-family: 'JetBrains Mono';
       font-size: 32px;

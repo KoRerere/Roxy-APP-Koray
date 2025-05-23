@@ -19,8 +19,8 @@ defineProps<Props>()
   padding: var(--spacing-xs, 2px);
   gap: var(--spacing-xs, 2px);
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   :deep(.p-togglebutton) {
     min-width: 64px;
@@ -40,8 +40,8 @@ defineProps<Props>()
 
     &.p-togglebutton-checked {
       color: var(--colors-text-text-primary, #fafafa);
-      border-color: var(--Colors-Border-border-container, #c7cdd1);
-      background: var(--Colors-Background-bg-body, #fff);
+      border-color: var(--colors-border-border-base, #c7cdd1);
+      background: var(--colors-background-bg-app, #fff);
       box-shadow:
         0px 4px 4px -1px rgba(0, 0, 0, 0.02),
         0px 1px 1px 0px rgba(0, 0, 0, 0.06);

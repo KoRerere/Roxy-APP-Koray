@@ -142,7 +142,7 @@ defineExpose({
     align-items: flex-start;
     gap: var(--spacing-2xl, 16px);
     align-self: stretch;
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
     .title {
       align-self: stretch;

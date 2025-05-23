@@ -15,7 +15,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const { size = 'sm', icon, iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)', name, ...props } = defineProps<Props>()
+const { size = 'sm', icon, iconColor = 'var(--colors-text-text-primary, #171c1f)', name, ...props } = defineProps<Props>()
 
 defineEmits(['change'])
 
@@ -55,7 +55,7 @@ const defaultProps: SelectProps = {
   font-size: 13px;
 
   // &[data-p-selected='true']:not([data-p-focused='true']) {
-  //   color: var(--Colors-Text-text-brand, #12a3fc) !important;
+  //   color: var(--colors-text-text-brand, #12a3fc) !important;
   //   background: #e8f5fc !important;
   // }
 }

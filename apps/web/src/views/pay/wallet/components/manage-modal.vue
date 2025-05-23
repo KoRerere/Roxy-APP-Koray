@@ -284,7 +284,7 @@ function onClose() {
 }
 
 .record {
-  border-top: 1px solid var(--Colors-Border-border-inactive, #E4E8EB);
+  border-top: 1px solid var(--colors-border-border-inactive, #E4E8EB);
 
   color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
@@ -294,13 +294,13 @@ function onClose() {
 }
 
 .status {
-  color: var(--Color-green-400, #2E994C);
+  color: var(--primitives-green-400, #2E994C);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 
   &.red {
-    color: var(--Color-red-300, #F53838);
+    color: var(--primitives-red-500, #F53838);
   }
 }
 </style>

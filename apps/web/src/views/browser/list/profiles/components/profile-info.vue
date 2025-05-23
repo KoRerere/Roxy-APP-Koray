@@ -90,7 +90,7 @@ const list = computed(() => {
       key: 'account',
       image: windowPlatformList[0]?.platformIcon,
       svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
-      svgColor: windowPlatformList[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
+      svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary, #7C8387)' : 'var(--colors-icon-icon-secondary, #575D61)',
       showSub: windowPlatformList.length > 1,
       subImage: windowPlatformList.length > 2 ? undefined : windowPlatformList[1]?.platformIcon,
       // tooltip: windowPlatformList?.map((item: any) => item.platformUserName).filter(Boolean).join('\n')
@@ -488,8 +488,8 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
   &-icons {
     border-radius: 4px;
-    border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-    background: var(--Colors-Background-bg-action-secondary, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-action, #fff);
     box-shadow: $box-shadow;
     transition: all 0.15s ease;
   }

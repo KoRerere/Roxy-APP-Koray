@@ -178,7 +178,7 @@ function receiveEmailCode(code: string) {
   }
 
   .label {
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

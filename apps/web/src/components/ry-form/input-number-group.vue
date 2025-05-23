@@ -50,8 +50,8 @@ function parseInput(input: any) {
   gap: 6px;
   min-height: 38px;
   border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-  background: var(--Component-Colors-TextInput-bg-bg, #fff);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-action, #fff);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
   &-item,
@@ -77,7 +77,7 @@ function parseInput(input: any) {
       position: absolute;
       left: -8px;
       top: 170%;
-      color: var(--Component-Colors-TextInput-error-error, #ff4d4f);
+      color: var(--colors-text-text-error, #ff4d4f);
       z-index: 1;
     }
   }

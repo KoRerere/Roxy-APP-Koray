@@ -132,11 +132,11 @@ async function toCreateBrowser() {
 <style lang="scss" scoped>
 .project-header {
   color: var(--colors-text-text-secondary, #b2b6b8);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   &-title {
     &:hover {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
   }
 

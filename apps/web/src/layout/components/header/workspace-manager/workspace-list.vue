@@ -143,7 +143,7 @@ function onConfig(event: MouseEvent, item: Data) {
     justify-content: space-between;
     align-items: center;
     align-self: stretch;
-    border-bottom: 1px solid var(--Colors-Border-border-subtle, #e4e8eb);
+    border-bottom: 1px solid var(--colors-border-border-subtle, #e4e8eb);
 
     &:last-of-type {
       border-bottom: none;
@@ -175,9 +175,9 @@ function onConfig(event: MouseEvent, item: Data) {
           align-items: center;
           gap: var(--spacing-none, 0px);
           border-radius: 40px;
-          border: 0.5px solid var(--Component-Colors-Tag-border, #E4E8EB);
-          background: var(--Component-Colors-Tag-bg, #F0F3F5);
-          color: var(--Component-Colors-Tag-text, #575D61);
+          border: 0.5px solid var(--component-tag-border, #E4E8EB);
+          background: var(--component-tag-bg, #F0F3F5);
+          color: var(--component-tag-text, #575D61);
           font-family: Inter;
           font-size: 12px;
           font-style: normal;
@@ -214,7 +214,7 @@ function onConfig(event: MouseEvent, item: Data) {
         padding: var(--spacing-xs, 2px) var(--spacing-none, 0px);
         align-items: center;
         gap: var(--spacing-sm, 4px);
-        color: var(--Color-yellow-400, #db8d1a);
+        color: var(--primitives-yellow-800, #db8d1a);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -225,14 +225,14 @@ function onConfig(event: MouseEvent, item: Data) {
       .divide {
         width: 1px;
         height: 12px;
-        background: var(--Colors-Border-border-container, #c7cdd1);
+        background: var(--colors-border-border-base, #c7cdd1);
       }
 
       .detail-footer {
         display: flex;
         align-items: center;
         gap: var(--spacing-lg, 8px);
-        color: var(--Colors-Text-text-inactive, #A3A9AD);
+        color: var(--colors-text-text-inactive, #A3A9AD);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -255,7 +255,7 @@ function onConfig(event: MouseEvent, item: Data) {
   justify-content: center;
   align-items: center;
   align-self: stretch;
-  color: var(--Colors-Text-text-inactive, #A3A9AD);
+  color: var(--colors-text-text-inactive, #A3A9AD);
   text-align: center;
   font-size: 14px;
   font-style: normal;

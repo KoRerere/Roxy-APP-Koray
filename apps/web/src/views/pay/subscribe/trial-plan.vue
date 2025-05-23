@@ -198,7 +198,7 @@ async function onSubscribe() {
 
 .current {
   &-price {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 36px;
     font-weight: 600;
@@ -206,7 +206,7 @@ async function onSubscribe() {
   }
 
   &-unit {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 24px;
     font-weight: 600;
@@ -222,7 +222,7 @@ async function onSubscribe() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

@@ -30,14 +30,14 @@ const emit = defineEmits(['close'])
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
 }
 
 .description {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   line-height: 22.4px;
 }

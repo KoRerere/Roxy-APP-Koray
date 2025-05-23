@@ -196,7 +196,7 @@ function showWithdrawDialog() {
       .referal-reward-money-button-text {
         padding-left: 16px;
         cursor: pointer;
-        color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+        color: var(--colors-text-text-primary, #171C1F);
         font-family: Inter;
         font-size: var(--Font-Size-text-lg, 14px);
         font-style: normal;
@@ -242,7 +242,7 @@ function showWithdrawDialog() {
         }
 
         .increase {
-          color: var(--Color-green-300, #1CC94D);
+          color: var(--primitives-green-500, #1CC94D);
           font-family: Inter;
           font-size: 16px;
           font-style: normal;

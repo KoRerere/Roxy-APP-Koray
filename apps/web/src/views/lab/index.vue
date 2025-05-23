@@ -40,7 +40,7 @@ watch(who, () => {
 <style lang="scss" scoped>
 :deep(.p-tabpanels) {
   flex: 1;
-  background: var(--Colors-background-bg-page, #FFF);
+  background: var(--colors-background-bg-page, #FFF);
 
   .p-tabpanel {
     height: 100%;
@@ -48,6 +48,6 @@ watch(who, () => {
 }
 
 .lab-container {
-  background: var(--Colors-background-bg-page, #FFF);
+  background: var(--colors-background-bg-page, #FFF);
 }
 </style>

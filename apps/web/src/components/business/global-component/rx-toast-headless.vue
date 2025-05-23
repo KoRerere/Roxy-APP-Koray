@@ -110,8 +110,8 @@ function cacheToast(slotData: Recordable) {
   align-items: flex-start;
   gap: 10px;
   border-radius: 4px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Colors-Background-bg-body, #fff);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-app, #fff);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -120,41 +120,41 @@ function cacheToast(slotData: Recordable) {
 
 .badge.success {
   :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-success, #1cc94d);
+    background-color: var(--colors-text-text-success, #1cc94d);
   }
 
   .alert-icon {
-    color: var(--Colors-Text-text-success, #1cc94d);
+    color: var(--colors-text-text-success, #1cc94d);
   }
 }
 
 .badge.warn {
   :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-warning, #fc9d12);
+    background-color: var(--colors-text-text-warning, #fc9d12);
   }
 
   .alert-icon {
-    color: var(--Colors-Text-text-warning, #fc9d12);
+    color: var(--colors-text-text-warning, #fc9d12);
   }
 }
 
 .badge.error {
   :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-error, #f53838);
+    background-color: var(--colors-text-text-error, #f53838);
   }
 
   .alert-icon {
-    color: var(--Colors-Text-text-error, #f53838);
+    color: var(--colors-text-text-error, #f53838);
   }
 }
 
 .badge.info {
   :deep(.p-badge) {
-    background-color: var(--Colors-Text-text-info, #12a3fc);
+    background-color: var(--colors-text-text-brand, #12a3fc);
   }
 
   .alert-icon {
-    color: var(--Colors-Text-text-info, #12a3fc);
+    color: var(--colors-text-text-brand, #12a3fc);
   }
 }
 

@@ -58,7 +58,7 @@ function handleSave() {
           <div class="flex gap-2 account">
             <div>
               <img v-if="row.platformIcon" class="w-4 h-4" :src="row.platformIcon">
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
               <div class="flex items-center account-title">
@@ -104,7 +104,7 @@ function handleSave() {
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
   }
 }
 

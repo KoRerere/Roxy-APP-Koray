@@ -456,7 +456,7 @@ function onSave() {
 
   .information {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Colors-Border-border-inactive, #e4e8eb);
+    border: 1px solid var(--colors-border-border-inactive, #e4e8eb);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     overflow: hidden;
 
@@ -466,7 +466,7 @@ function onSave() {
       justify-content: space-between;
       align-items: center;
       align-self: stretch;
-      border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+      border-top: 0.5px solid var(--colors-border-border-base, #c7cdd1);
     }
   }
 
@@ -475,11 +475,11 @@ function onSave() {
     gap: var(--spacing-md, 6px);
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Colors-Border-border-inactive, #e4e8eb);
-    background: var(--Color-neutrals-50, #fafbfc);
+    border: 1px solid var(--colors-border-border-inactive, #e4e8eb);
+    background: var(--primitives-neutrals-50, #fafbfc);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    color: var(--colors-text-text-placeholder, #7c8387);
     font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
@@ -488,7 +488,7 @@ function onSave() {
 
 .panel {
   &-title {
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

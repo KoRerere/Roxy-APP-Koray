@@ -144,7 +144,7 @@ onBeforeMount(() => {
   flex-direction: column;
   gap: 10px;
   align-self: stretch;
-  color: var(--Color-neutrals-600, #575D61);
+  color: var(--primitives-neutrals-600, #575D61);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

@@ -36,7 +36,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
   }
 
   .title {
-    color: var(--Color-neutrals-950, #0e1214);
+    color: var(--primitives-neutrals-500, #0e1214);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;

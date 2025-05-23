@@ -353,14 +353,14 @@ function cancelBookmarks() {
 
 <style lang="scss" scoped>
 .upload-desc-text {
-  color: var(--Colors-text-text-inactive, #7d8387);
+  color: var(--colors-text-text-inactive, #7d8387);
   font-family: Inter;
   font-size: 12px;
   line-height: 20px;
 }
 
 .upload-file-name {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-family: Inter;
   font-size: 14px;
 }
@@ -373,7 +373,7 @@ function cancelBookmarks() {
   gap: var(--spacing-4xl, 24px);
   align-self: stretch;
   border-radius: 8px;
-  background: var(--Colors-background-bg-block, #F1F5F8);
+  background: var(--colors-background-bg-block, #F1F5F8);
   overflow-y: auto;
 
   :deep(.p-tree) {
@@ -397,7 +397,7 @@ function cancelBookmarks() {
   }
 
   :deep(.p-tree-node-children) {
-    border-left: 1px solid var(--Colors-border-border-subtle, #C7D1D6);
+    border-left: 1px solid var(--colors-border-border-subtle, #C7D1D6);
     margin-left: 12px;
     gap: 2px;
     padding-left: 20px;
@@ -408,7 +408,7 @@ function cancelBookmarks() {
   }
 
   :deep(.p-tree-node-toggle-button) {
-    color: var(--Colors-icon-icon-primary, #2C2E30);
+    color: var(--colors-icon-icon-primary, #2C2E30);
   }
 }
 
@@ -420,7 +420,7 @@ function cancelBookmarks() {
 }
 
 .bookmark-label {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 400;
 }

@@ -53,7 +53,7 @@ function onUpdate() {
   align-items: center;
   gap: var(--spacing-sm, 4px);
   padding: var(--spacing-sm, 4px) 0;
-  color: var(--Color-neutrals-700, #343a3d);
+  color: var(--primitives-neutrals-700, #343a3d);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
@@ -68,9 +68,9 @@ function onUpdate() {
   align-items: center;
   width: 30px;
   height: 30px;
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   border-radius: var(--radius-sm, 4px);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  background: var(--colors-background-bg-action, #fff);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);

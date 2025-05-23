@@ -226,7 +226,7 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -235,10 +235,10 @@ async function onTransfer(isSelf: boolean) {
 
 .illustrate {
   border-radius: 4px;
-  background: var(--Colors-background-bg-block, #F1F5F8);
+  background: var(--colors-background-bg-block, #F1F5F8);
 
   &-title {
-    color: var(--Colors-text-text-primary, #111213);
+    color: var(--component-button-primary-text, #111213);
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
@@ -246,7 +246,7 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .title {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
@@ -259,13 +259,13 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .description {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   line-height: 20px;
 }
 
 .back {
-  color: var(--Colors-text-text-link, #11A3FD);
+  color: var(--colors-text-text-brand, #11A3FD);
   font-size: 14px;
   line-height: 20px;
 }

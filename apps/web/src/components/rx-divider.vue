@@ -27,6 +27,6 @@
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 </style>

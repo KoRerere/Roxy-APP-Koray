@@ -1078,12 +1078,12 @@ defineExpose({
 
 .remark-light {
   :deep(svg) {
-    color: var(--Colors-text-text-brand, #11A3FD) !important;
+    color: var(--colors-text-text-brand, #11A3FD) !important;
   }
 }
 
 .quick-icon {
-  color: var(--Colors-icon-icon-secondary, #575D60);
+  color: var(--colors-icon-icon-secondary, #575D60);
 
   &:active:not(.disabled) {
     color: orange;

@@ -321,7 +321,7 @@ async function hidePopover() {
   padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
   gap: var(--spacing-lg, 8px);
   min-width: 260px;
-  color: var(--Color-neutrals-900, #171c1f);
+  color: var(--primitives-neutrals-900, #171c1f);
   font-size: 13px;
   line-height: normal;
 }
@@ -331,7 +331,7 @@ async function hidePopover() {
   --tab-font-size: 12px;
 
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);

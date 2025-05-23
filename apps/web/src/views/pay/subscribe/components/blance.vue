@@ -81,7 +81,7 @@ function onCharge() {
 
 <style scoped lang="scss">
 .message {
-  color: var(--Color-neutrals-950, #0E1214);
+  color: var(--primitives-neutrals-500, #0E1214);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -101,7 +101,7 @@ function onCharge() {
     line-height: normal;
 
     &.amount-warning {
-      color: var(--Colors-Text-text-inactive, #A3A9AD);
+      color: var(--colors-text-text-inactive, #A3A9AD);
     }
   }
 }

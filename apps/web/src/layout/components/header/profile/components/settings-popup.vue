@@ -164,7 +164,7 @@ onBeforeMount(() => {
 
   &-item {
     padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
     &:last-of-type {
       border-bottom: none;

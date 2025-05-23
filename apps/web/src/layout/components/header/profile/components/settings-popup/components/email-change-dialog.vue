@@ -219,13 +219,13 @@ onMounted(() => {
         align-items: center;
         gap: 10px;
         border-radius: 4px;
-        background: var(--Color-neutrals-100, #f0f3f5);
+        background: var(--primitives-neutrals-100, #f0f3f5);
         color: #a3a9ad;
       }
 
       .step-label {
         margin-left: 8px;
-        color: var(--Colors-Text-text-inactive, #a3a9ad);
+        color: var(--colors-text-text-inactive, #a3a9ad);
         text-align: center;
         font-family: Inter;
         font-size: 12px;

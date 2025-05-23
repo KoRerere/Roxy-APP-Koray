@@ -125,8 +125,8 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
-  background: var(--Color-neutrals-0, #fff);
+  border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
+  background: var(--primitives-neutrals-0, #fff);
 }
 
 .updater-header {

@@ -168,7 +168,7 @@ const items = computed(() => {
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.60);
     backdrop-filter: blur(5px);
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

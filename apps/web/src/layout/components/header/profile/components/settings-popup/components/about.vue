@@ -151,7 +151,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
+  border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
 }
 
 .upgrade-header {
@@ -173,7 +173,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
   line-height: normal;
 
   .version {
-    color: var(--Colors-text-text-inactive, #7D8387);
+    color: var(--colors-text-text-inactive, #7D8387);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -189,8 +189,8 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
     align-items: center;
     gap: 10px;
     border-radius: var(--radius-full, 9999px);
-    background: var(--Color-red-300, #F53838);
-    color: var(--Colors-text-text-action-primary, #FFF);
+    background: var(--primitives-red-500, #F53838);
+    color: var(--component-button-primary-text, #FFF);
     font-family: Inter;
     font-size: 10px;
     font-style: normal;

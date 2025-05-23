@@ -142,7 +142,7 @@ async function toProject() {
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -164,7 +164,7 @@ async function toProject() {
 }
 
 .space-name {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);

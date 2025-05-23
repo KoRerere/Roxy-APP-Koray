@@ -79,7 +79,7 @@ function replaceData(data: any) {
       <RxCard class="flex gap-2" @click="onEdit(item)" @close="deleteAccount(item)">
         <div>
           <img v-if="item.platformIcon" class="w-4 h-4" :src="item.platformIcon">
-          <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+          <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
         </div>
         <div class="flex flex-col flex-1 gap-1">
           <div class="flex items-center account-title">
@@ -115,7 +115,7 @@ function replaceData(data: any) {
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
   }
 }
 </style>

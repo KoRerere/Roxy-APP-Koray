@@ -211,7 +211,7 @@ onBeforeMount(() => {
 <style lang="scss" scoped>
 .api {
   &-header {
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   }
 
   &-body::-webkit-scrollbar {
@@ -230,12 +230,12 @@ onBeforeMount(() => {
     font-weight: 500;
     line-height: 24px;
 
-    border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+    border-bottom: 0.5px solid var(--colors-border-border-subtle, #e4e8eb);
   }
 
   &-content {
     padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+    border-bottom: 0.5px solid var(--colors-border-border-subtle, #e4e8eb);
 
     &-reset {
       display: flex;
@@ -256,7 +256,7 @@ onBeforeMount(() => {
       padding: 12px;
       gap: 8px;
       border-radius: var(--radius-md, 6px);
-      background: var(--Color-yellow-100, #fff5e6);
+      background: var(--primitives-yellow-100, #fff5e6);
       color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
@@ -271,8 +271,8 @@ onBeforeMount(() => {
       padding: var(--spacing-xl, 12px);
       gap: var(--spacing-xl, 12px);
       border-radius: var(--radius-md, 6px);
-      border: 1px solid var(--Color-neutrals-900, #171c1f);
-      background: var(--Color-neutrals-800, #252a2e);
+      border: 1px solid var(--primitives-neutrals-900, #171c1f);
+      background: var(--primitives-neutrals-800, #252a2e);
 
       &-value {
         color: #fff;
@@ -283,7 +283,7 @@ onBeforeMount(() => {
       }
 
       &-desc {
-        color: var(--Color-neutrals-300, #c7cdd1);
+        color: var(--primitives-neutrals-300, #c7cdd1);
         font-family: Inter;
         font-size: 12px;
         line-height: 16px;

@@ -264,7 +264,7 @@ provideLoginContext({
   transform: translateX(-50%);
   bottom: 20px;
   z-index: 10;
-  color: var(--Colors-Text-text-action-primary, #FFF);
+  color: var(--component-button-primary-text, #FFF);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -301,7 +301,7 @@ provideLoginContext({
   align-items: center;
   gap: var(--spacing-2xl, 16px);
   border-radius: 8px;
-  border: 0.5px solid var(--Color-neutrals-0, #FFF);
+  border: 0.5px solid var(--primitives-neutrals-0, #FFF);
   background: #FFF;
 }
 

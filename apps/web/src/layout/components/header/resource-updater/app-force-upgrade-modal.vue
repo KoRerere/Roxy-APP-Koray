@@ -121,8 +121,8 @@ function remindMeLater() {
       gap: 10px;
       align-self: stretch;
       border-radius: var(--radius-md, 6px);
-      background: var(--Color-yellow-100, #fff5e6);
-      color: var(--Color-neutrals-950, #0e1214);
+      background: var(--primitives-yellow-100, #fff5e6);
+      color: var(--primitives-neutrals-500, #0e1214);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -134,7 +134,7 @@ function remindMeLater() {
       }
 
       .title {
-        color: var(--Color-neutrals-950, #0e1214);
+        color: var(--primitives-neutrals-500, #0e1214);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;

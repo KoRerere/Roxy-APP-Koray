@@ -110,7 +110,7 @@ async function toCreateBrowser() {
   align-items: flex-start;
   gap: var(--spacing-md, 6px);
   align-self: stretch;
-  color: var(--Color-neutrals-600, #575D61);
+  color: var(--primitives-neutrals-600, #575D61);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -120,7 +120,7 @@ async function toCreateBrowser() {
 
 .contact-us {
   display: inline;
-  color: var(--Colors-Text-text-link, #12A3FC);
+  color: var(--colors-text-text-brand, #12A3FC);
   vertical-align: middle;
 }
 </style>

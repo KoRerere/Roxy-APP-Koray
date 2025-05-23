@@ -226,7 +226,7 @@ function leaveWorkspace() {
 }
 
 .delete-confirm-content {
-  color: var(--Color-neutrals-600, #575d61);
+  color: var(--primitives-neutrals-600, #575d61);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -247,7 +247,7 @@ function leaveWorkspace() {
 }
 
 .input-limit-text {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   text-align: right;
   font-family: Inter;
   font-size: 14px;
@@ -288,11 +288,11 @@ function leaveWorkspace() {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
+  background: var(--colors-background-bg-app, #fff);
   cursor: pointer;
 
   &.danger {
-    color: var(--Color-red-300, #f53838);
+    color: var(--primitives-red-500, #f53838);
     font-family: Inter;
     font-size: 13px;
     font-style: normal;

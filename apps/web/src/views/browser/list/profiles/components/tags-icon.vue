@@ -132,10 +132,10 @@ defineExpose({ openMenu })
   max-width: 100px;
   min-width: 24px;
   border-radius: 40px;
-  border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);
-  background: var(--Component-Colors-Tag-bg, #f0f3f5);
+  border: 0.5px solid var(--component-tag-border, #e4e8eb);
+  background: var(--component-tag-bg, #f0f3f5);
 
-  color: var(--Component-Colors-Tag-text, #575d61);
+  color: var(--component-tag-text, #575d61);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

@@ -307,8 +307,8 @@ onBeforeMount(() => {
       align-items: center;
       gap: 10px;
       border-radius: var(--radius-2xl, 12px);
-      background: var(--Colors-Background-bg-brand, #12a3fc);
-      color: var(--Colors-Text-text-action-primary, #fff);
+      background: var(--colors-background-bg-brand, #12a3fc);
+      color: var(--component-button-primary-text, #fff);
       font-family: 'JetBrains Mono';
       font-size: 12px;
       font-style: normal;
@@ -328,7 +328,7 @@ onBeforeMount(() => {
   }
 
   .time {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #7c8387);
     text-align: right;
     font-family: Inter;
     font-size: 12px;
@@ -337,7 +337,7 @@ onBeforeMount(() => {
     line-height: normal;
 
     .now {
-      color: var(--Chrome-Light-Active, #36373a);
+      color: var(#36373a, #36373a);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -349,7 +349,7 @@ onBeforeMount(() => {
 
 .card {
   border-radius: var(--radius-2xl, 12px);
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   background: #fff;
   padding: var(--spacing-4xl, 24px);
   /* shadow-xs */
@@ -399,7 +399,7 @@ onBeforeMount(() => {
 
       .value {
         flex: 1 0 0;
-        color: var(--Colors-Text-text-tertiary, #7c8387);
+        color: var(--colors-text-text-tertiary, #7c8387);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -423,8 +423,8 @@ onBeforeMount(() => {
             align-items: center;
             gap: var(--spacing-none, 0px);
             border-radius: 40px;
-            border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);
-            background: var(--Component-Colors-Tag-bg, #f0f3f5);
+            border: 0.5px solid var(--component-tag-border, #e4e8eb);
+            background: var(--component-tag-bg, #f0f3f5);
 
             .dot {
               width: 8px;
@@ -489,8 +489,8 @@ onBeforeMount(() => {
       align-items: center;
       gap: var(--spacing-md, 6px);
       border-radius: var(--radius-md, 6px);
-      border: 1px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-      background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+      border: 1px solid var(--colors-border-border-base, #c7cdd1);
+      background: var(--colors-background-bg-action, #fff);
       /* shadow-sm */
       box-shadow:
         0px 4px 4px -1px rgba(0, 0, 0, 0.02),
@@ -551,7 +551,7 @@ onBeforeMount(() => {
 }
 
 .ip {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 32px;
   font-style: normal;
@@ -560,7 +560,7 @@ onBeforeMount(() => {
   /* 118.75% */
 
   .is-ip-changed {
-    color: var(--Color-yellow-300, #fc9d12);
+    color: var(--primitives-yellow-500, #fc9d12);
   }
 }
 
@@ -572,7 +572,7 @@ onBeforeMount(() => {
   align-self: stretch;
 
   .info {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #7c8387);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -582,7 +582,7 @@ onBeforeMount(() => {
   }
 
   .version {
-    color: var(--Colors-Text-text-subtle, #c7cdd1);
+    color: var(--colors-text-text-inactive, #c7cdd1);
     text-align: right;
     font-family: Inter;
     font-size: 12px;

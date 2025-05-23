@@ -182,7 +182,7 @@ function updateCurrentMembers(member: Record<string, any>) {
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;

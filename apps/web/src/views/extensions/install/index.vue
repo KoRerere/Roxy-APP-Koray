@@ -472,8 +472,8 @@ defineExpose({
     width: 36px;
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
   }
 
   &-info {
@@ -503,12 +503,12 @@ defineExpose({
   line-height: 16px;
 
   // &:hover {
-  //   color: var(--Colors-Text-text-brand, #12a3fc);
+  //   color: var(--colors-text-text-brand, #12a3fc);
   // }
 }
 
 .not-installed {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -516,6 +516,6 @@ defineExpose({
 }
 
 .pinned {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
 }
 </style>

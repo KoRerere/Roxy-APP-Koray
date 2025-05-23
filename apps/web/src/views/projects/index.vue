@@ -256,7 +256,7 @@ async function inviteUserInProject(project: Project) {
 <style lang="scss" scoped>
 .account {
   &-header {
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   }
 
   &-content {

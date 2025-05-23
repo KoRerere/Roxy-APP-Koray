@@ -169,7 +169,7 @@ function openTemplates(event: Event) {
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12a3fc);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-decoration-line: underline;
     cursor: pointer;
     user-select: none;
@@ -195,8 +195,8 @@ function openTemplates(event: Event) {
   padding: var(--oversize-spacing-2rem, 32px) var(--spacing-none, 0px);
   gap: var(--spacing-2xl, 16px);
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-  border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 1px dashed var(--colors-border-border-base, #c7cdd1);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;

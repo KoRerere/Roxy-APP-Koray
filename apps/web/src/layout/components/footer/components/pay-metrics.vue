@@ -182,7 +182,7 @@ function onExpand() {
 
   .pay-metrics-divider {
     margin: 0 10px;
-    border-top: 1px dashed var(--Colors-Border-border-container, #C7CDD1);
+    border-top: 1px dashed var(--colors-border-border-base, #C7CDD1);
   }
 
   .pay-metrics-title {
@@ -210,7 +210,7 @@ function onExpand() {
       padding: 2px 0px 2px 4px;
       align-items: center;
       gap: 4px;
-      color: var(--Colors-Text-text-brand, #12A3FC);
+      color: var(--colors-text-text-brand, #12A3FC);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -230,10 +230,10 @@ function onExpand() {
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #C7CDD1);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #FFF);
+  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
+  background: var(--colors-background-bg-action, #FFF);
   box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-  color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+  color: var(--colors-text-text-primary, #171C1F);
   text-align: center;
   font-family: Inter;
   font-size: var(--Font-Size-text-sm, 12px);

@@ -223,7 +223,7 @@ function handleBlur(event: InputNumberBlurEvent) {
   }
 
   .available-withdrawal-amount {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 20px;
     font-style: normal;

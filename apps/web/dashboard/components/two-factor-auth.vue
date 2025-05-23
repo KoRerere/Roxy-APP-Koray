@@ -163,8 +163,8 @@ initTwoFactorCodeList()
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-lg, 8px);
-  border: 0.5px solid var(--Color-neutrals-100, #f0f3f5);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--primitives-neutrals-100, #f0f3f5);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   .platform-info {
     display: flex;
@@ -230,7 +230,7 @@ initTwoFactorCodeList()
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
 
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

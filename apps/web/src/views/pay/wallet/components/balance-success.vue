@@ -155,7 +155,7 @@ function close() {
     line-height: 20px;
 
     &-link {
-      color: var(--Colors-Text-text-brand, #12A3FC);
+      color: var(--colors-text-text-brand, #12A3FC);
       font-weight: 600;
     }
   }

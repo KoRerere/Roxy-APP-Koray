@@ -308,13 +308,13 @@ async function modifyFilter() {
     padding: var(--spacing-sm, 4px) 8px var(--spacing-sm, 4px) 10px;
     gap: var(--spacing-sm, 4px);
     height: 24px;
-    color: var(--Colors-Text-text-action-secondary, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
     border-radius: var(--radius-full, 9999px);
-    border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   }
 
   &-actions {
@@ -322,7 +322,7 @@ async function modifyFilter() {
     align-items: center;
     margin-right: var(--spacing-md, 6px);
     gap: var(--spacing-md, 6px);
-    color: var(--Colors-Border-border-container, #c7cdd1);
+    color: var(--colors-border-border-base, #c7cdd1);
   }
 }
 

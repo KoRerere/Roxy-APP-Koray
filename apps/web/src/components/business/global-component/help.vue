@@ -119,12 +119,12 @@ const toggle = (event: Event) => {
     align-items: center;
     gap: 10px;
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-900, #171C1F);
+    background: var(--primitives-neutrals-900, #171C1F);
 
     /* shadow-md */
     box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
     white-space: nowrap;
-    color: var(--Color-neutrals-0, #FFF);
+    color: var(--primitives-neutrals-0, #FFF);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

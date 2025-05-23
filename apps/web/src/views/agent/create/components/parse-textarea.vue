@@ -46,10 +46,10 @@ onMounted(() => {
     outline: none;
     resize: none;
     overflow: hidden;
-    border-right: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-page, #fafbfc);
+    border-right: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-page, #fafbfc);
 
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     text-align: right;
     font-family: 'JetBrains Mono';
     font-size: 12px;

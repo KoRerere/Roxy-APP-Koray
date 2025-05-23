@@ -195,7 +195,7 @@ function close(isCancel: boolean) {
 .tag {
   border-radius: 4px;
   background: #26A17B;
-  color: var(--Color-neutrals-0, #FFF);
+  color: var(--primitives-neutrals-0, #FFF);
   font-family: "JetBrains Mono";
   font-size: 20px;
   font-weight: 700;
@@ -248,7 +248,7 @@ function close(isCancel: boolean) {
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;

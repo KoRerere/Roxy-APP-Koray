@@ -183,7 +183,7 @@ function close(isCancel: boolean) {
   }
 
   &-original {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-size: 16px;
     line-height: normal;
     text-decoration: line-through;
@@ -198,7 +198,7 @@ function close(isCancel: boolean) {
   }
 
   &-diff {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-size: 12px;
     font-weight: 500;
     line-height: normal;

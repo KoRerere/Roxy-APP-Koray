@@ -179,18 +179,18 @@ defineExpose({
   line-height: normal;
 
   &.inc {
-    color: var(--Color-green-300, #1CC94D);
+    color: var(--primitives-green-500, #1CC94D);
   }
 }
 
 .status {
-  color: var(--Color-neutrals-950, #0E1214);
+  color: var(--primitives-neutrals-500, #0E1214);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 
   &.red {
-    color: var(--Color-red-300, #F53838);
+    color: var(--primitives-red-500, #F53838);
   }
 }
 </style>

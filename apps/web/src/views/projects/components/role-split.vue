@@ -59,7 +59,7 @@ const selectedRoleLabel = computed(() => {
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
+  background: var(--colors-background-bg-app, #fff);
 
   .detail {
     display: flex;

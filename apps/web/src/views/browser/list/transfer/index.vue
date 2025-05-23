@@ -132,7 +132,7 @@ async function howToGetHelp() {
 }
 
 .space-name {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -146,12 +146,12 @@ async function howToGetHelp() {
 }
 
 .help {
-  color: var(--Colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive, #7D8387);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-text-text-link, #11A3FD);
+    color: var(--colors-text-text-brand, #11A3FD);
   }
 }
 </style>

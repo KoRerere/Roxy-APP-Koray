@@ -106,7 +106,7 @@ function onMore(event: Event) {
   align-items: center;
   gap: var(--spacing-sm, 4px);
   border-radius: 8px;
-  background: var(--Color-neutrals-950, #0e1214);
+  background: var(--primitives-neutrals-500, #0e1214);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -118,8 +118,8 @@ function onMore(event: Event) {
     align-items: center;
     padding: 8px 12px;
     border-radius: 5px;
-    border: 0.5px solid var(--Color-neutrals-600, #575d61);
-    background: var(--Color-neutrals-800, #252a2e);
+    border: 0.5px solid var(--primitives-neutrals-600, #575d61);
+    background: var(--primitives-neutrals-800, #252a2e);
     white-space: nowrap;
   }
 

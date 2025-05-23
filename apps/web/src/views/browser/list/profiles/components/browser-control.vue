@@ -79,13 +79,13 @@ async function openBrowser() {
   gap: var(--spacing-sm, 4px);
 
   border-radius: 4px;
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-background-bg-action, #fff);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
-  color: var(--Color-neutrals-950, #0e1214);
+  color: var(--primitives-neutrals-500, #0e1214);
   text-align: center;
   font-family: Inter;
   font-size: var(--Font-Size-text-sm, 12px);

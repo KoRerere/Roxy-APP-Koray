@@ -97,7 +97,7 @@ function showPreferences() {
     .split-line {
       width: 1px;
       height: 16px;
-      background: var(--Colors-Border-border-strong-hover, #7C8387);
+      background: var(--colors-border-border-strong-hover, #7C8387);
     }
   }
 }

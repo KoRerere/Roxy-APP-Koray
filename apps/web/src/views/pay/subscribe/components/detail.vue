@@ -42,8 +42,8 @@ const { list } = defineProps<{
 
 <style scoped lang="scss">
 .subscribe {
-  border: 1px solid var(--Color-neutrals-200, #e4e8eb);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 1px solid var(--primitives-neutrals-200, #e4e8eb);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   &-title {
     color: var(--colors-text-text-primary, #fafafa);

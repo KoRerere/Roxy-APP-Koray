@@ -224,7 +224,7 @@ function isLocked(linkStatus: number) {
       line-height: 20px;
 
       .ratio {
-        color: var(--Color-yellow-300, #FC9D12);
+        color: var(--primitives-yellow-500, #FC9D12);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -273,7 +273,7 @@ function isLocked(linkStatus: number) {
       flex: 1;
       height: 100%;
       border-radius: 4px;
-      background: var(--Color-neutrals-100, #F0F3F5);
+      background: var(--primitives-neutrals-100, #F0F3F5);
 
       :deep(.p-image) {
         width: 100%;

@@ -272,7 +272,7 @@ function replaceData(data: any) {
   }
 
   &-time {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

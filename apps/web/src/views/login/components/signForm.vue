@@ -130,7 +130,7 @@ defineExpose({
 
   .forget-pwd {
     cursor: pointer;
-    color: var(--Color-blue-300, #12a3fc);
+    color: var(--primitives-blue-500, #12a3fc);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -168,7 +168,7 @@ defineExpose({
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 
 .login-ways {
