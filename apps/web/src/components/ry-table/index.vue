@@ -332,15 +332,12 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width:0rem; min-width: 45px"
-          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
+        <Column v-if="selectionMode" header-style="width:0rem; min-width: 45px" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
           :selection-mode="selectionMode" />
-        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key"
-          v-bind="fmtColumnProps(column)">
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
-              <component v-if="headerRender" :is="headerRender" :column="column"
-                :class="ColumnCss_Module.columntitle" />
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
@@ -352,8 +349,7 @@ const slots: any = useSlots()
                   <Skeleton v-bind="column.skeleton"></Skeleton>
                 </template>
                 <template v-else>
-                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes"
-                    :title="column.getText?.(data) || data[column.key]">
+                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
                     {{ column.getText?.(data) || data[column.key] }}
                   </div>
                 </template>
@@ -361,19 +357,16 @@ const slots: any = useSlots()
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
-          header-style="width: 0rem; min-width: 120px" :pt="{
-            columntitle: ColumnCss_Module.columntitle,
-            headercell: ColumnCss_Module.headercell,
-            bodycell: ColumnCss_Module.bodycell,
-          }">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0rem; min-width: 120px" :pt="{
+          columntitle: ColumnCss_Module.columntitle,
+          headercell: ColumnCss_Module.headercell,
+          bodycell: ColumnCss_Module.bodycell,
+        }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data, 'single')"
-                  @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -382,14 +375,12 @@ const slots: any = useSlots()
       <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
-        @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
-              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -400,9 +391,8 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -414,7 +404,7 @@ const slots: any = useSlots()
 <style lang="scss" scoped>
 .rx-header {
   padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+  border-bottom: 0.5px solid var(--colors-border-border-inactive, #C7D1D6);
 }
 
 :deep(.p-checkbox-box) {
@@ -441,19 +431,18 @@ const slots: any = useSlots()
   }
 
   :deep(.p-paginator-page) {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
-    font-size: var(--Font-Size-text-sm, 12px);
+    font-size: 12px;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 
   :deep(.p-paginator-page-selected) {
-    background: none;
-    color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+    color: var(--colors-text-text-brand, #11A3FD);
+    border: 0.5px solid var(--colors-border-border-brand, #11A3FD);
+    background: var(--component-button-ghost-bg, #FFF);
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
-    background: var(--Component-Colors-Buttons-Ghost-bg, #fff);
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),
       0px 1px 1px 0px rgba(0, 0, 0, 0.06);
@@ -463,14 +452,8 @@ const slots: any = useSlots()
     padding: 4px 4px 4px 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 
   :deep(.p-select) {
@@ -478,9 +461,6 @@ const slots: any = useSlots()
     gap: 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
     .p-select-label {
       padding: 0;
@@ -493,11 +473,11 @@ const slots: any = useSlots()
 
   &-jump {
     display: flex;
-    gap: var(--spacing-lg, 8px);
-    color: var(--colors-text-text-secondary, #b2b6b8);
+    gap: 8px;
+    color: var(--colors-text-text-secondary, #34393D);
     font-family: Inter;
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 }
 
@@ -514,7 +494,7 @@ const slots: any = useSlots()
 
 <style lang="scss" module="ColumnCss_Module">
 .columntitle {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
@@ -524,8 +504,8 @@ const slots: any = useSlots()
 .headerrow {
   .headercell {
     padding: 8px 12px;
-    background: var(--Colors-Background-bg-page, #fafbfc);
-    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+    background: var(--component-table-header, #F1F5F8);
+    border-color: var(--colors-border-border-inactive, #C7D1D6);
     user-select: none;
 
     &:first-of-type {
@@ -534,7 +514,7 @@ const slots: any = useSlots()
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      background: var(--Colors-Background-bg-page, #fafbfc);
+      background: var(--component-table-header, #F1F5F8);
     }
   }
 }
@@ -544,25 +524,25 @@ const slots: any = useSlots()
     .tbody {
       .bodyrow {
         &[data-p-selected='true'] {
-          background: var(--Colors-Background-bg-secondary, #e8f5fc);
+          background: var(--component-table-bg-selected, #DEF3FF);
 
           .bodycell {
-            border-color: var(--Color-blue-200, #7eccfc);
+            border-color: var(--component-table-border-selected, #9ADBFE);
 
             &:global(.p-datatable-frozen-column) {
-              background: var(--Colors-Background-bg-secondary, #e8f5fc);
+              background: var(--component-table-bg-selected, #DEF3FF);
             }
           }
         }
 
         &:not([data-p-selected='true']):hover {
-          background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+          background: var(--component-table-bg-hover, #F1F5F8);
 
           .bodycell {
-            border-color: var(--Colors-Border-border-container, #c7cdd1);
+            border-color: var(--colors-border-border-subtle-hover, #AFB7BB);
 
             &:global(.p-datatable-frozen-column) {
-              background: var(--Colors-Background-bg-body-hover, #f0f3f5);
+              background: var(--component-table-bg-hover, #F1F5F8);
             }
           }
         }
@@ -581,9 +561,9 @@ const slots: any = useSlots()
   .bodycell {
     padding: 0 12px;
     height: 60px;
-    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
+    border-color: var(--colors-border-border-inactive, #C7D1D6);
     border-bottom-width: 0.5px;
-    color: var(--Color-neutrals-950, #0E1214);
+    color: var(--colors-text-text-primary, #111213);
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
@@ -594,7 +574,7 @@ const slots: any = useSlots()
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+      border-left: 1px solid var(--colors-border-border-inactive, #C7D1D6);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
       transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
     }
