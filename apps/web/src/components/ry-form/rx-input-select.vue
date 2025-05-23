@@ -34,15 +34,13 @@ defineEmits(['change'])
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name"
-    :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="select-item">
-        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor"
-          fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="value.image" class="select-item__image" :src="value.image">
         <div>{{ value.label }}</div>
       </div>
@@ -50,11 +48,10 @@ defineEmits(['change'])
     </template>
     <template #option="{ option }">
       <div class="select-item">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor"
-          fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
-        <slot name="option-extra" :option="option" />
+        <slot name="option-extra" :option="option"></slot>
       </div>
     </template>
   </Select>
@@ -63,11 +60,6 @@ defineEmits(['change'])
 <style lang="scss" module="classes">
 .option {
   font-size: 13px;
-
-  &[data-p-selected='true']:not([data-p-focused='true']) {
-    color: var(--Colors-Text-text-brand, #12a3fc) !important;
-    background: #e8f5fc !important;
-  }
 }
 </style>
 
@@ -91,7 +83,7 @@ defineEmits(['change'])
 
 .lg {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
@@ -106,7 +98,7 @@ defineEmits(['change'])
 
 .md {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 8px 8px 8px 10px;
@@ -117,7 +109,7 @@ defineEmits(['change'])
 
 .sm {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
@@ -128,7 +120,7 @@ defineEmits(['change'])
 
 .xs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px);
@@ -139,7 +131,7 @@ defineEmits(['change'])
 
 .xxs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

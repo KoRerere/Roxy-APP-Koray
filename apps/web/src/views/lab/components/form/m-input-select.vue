@@ -101,13 +101,12 @@ function _onChange(event: any) {
 }
 
 :deep(.p-select-label) {
-  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
 }
 
 .lg {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
@@ -122,7 +121,7 @@ function _onChange(event: any) {
 
 .md {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 8px 8px 8px 10px;
@@ -133,7 +132,7 @@ function _onChange(event: any) {
 
 .sm {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
@@ -144,7 +143,7 @@ function _onChange(event: any) {
 
 .xs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px);
@@ -155,7 +154,7 @@ function _onChange(event: any) {
 
 .xxs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

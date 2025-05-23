@@ -93,11 +93,9 @@ const slots = useSlots()
 // 统一的样式规则
 .p-inputtext {
   font-family: Inter;
-  color: var(--colors-text-text-primary, #111213);
   padding: var(--input-padding);
   border-width: var(--input-border-width);
   border-radius: var(--input-radius);
-  border-color: var(--colors-border-border-base, #AFB7BB);
   font-size: var(--input-font-size);
   line-height: var(--input-line-height);
 

@@ -40,7 +40,7 @@ const stopWatch = watch(height, () => {
   margin-right: var(--spacing-lg, 8px);
   width: v-bind(labelWidth);
   min-width: 130px;
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
