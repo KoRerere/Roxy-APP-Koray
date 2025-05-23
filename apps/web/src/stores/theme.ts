@@ -30,8 +30,9 @@ export const useThemeStore = defineStore('theme', () => {
 
   async function setTheme(value: ColorScheme) {
     theme.value = value ?? 'system'
-    console.log('设置主题为:', value)
-    API.base.userSetUserConfigCreate({ colorScheme: theme.value });
+    if (userStore.token) {
+      API.base.userSetUserConfigCreate({ colorScheme: theme.value });
+    }
   }
 
   watch(() => userStore.userConfig?.colorScheme, () => {
