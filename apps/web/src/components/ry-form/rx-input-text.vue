@@ -51,7 +51,6 @@ const slots = useSlots()
     padding: $pt $pr $pb $pl;
     border-width: $borderWidth;
     border-radius: $radius;
-    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: $fontSize;
     line-height: $lineHeight;

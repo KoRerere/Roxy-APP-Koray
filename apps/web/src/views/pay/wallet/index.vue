@@ -202,7 +202,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
           </div>
           <div class="flex justify-end items-center gap-2.5">
             <div class="flex-1">
-              <span v-tooltip.top="{ value: infoValue, showDelay: 300 }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
+              <span v-tooltip.top="{ value: infoValue, showDelay: 300, pt: { root: '!max-w-60' } }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
                 <span>{{ $t('详情') }}</span>
                 <SvgIcon size="14" name="base/rx_ic_info" color="#C7CDD1"></SvgIcon>
               </span>

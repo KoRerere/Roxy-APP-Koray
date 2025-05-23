@@ -394,18 +394,6 @@ async function deleteTemplate(data: any) {
     },
   })
 }
-
-function handleWindowNameInputBlur() {
-  if (windowName.value.trim() === '') {
-    windowName.value = defaultWindowName
-  }
-}
-
-function handleWindowNameStartEdit() {
-  if (windowName.value === defaultWindowName) {
-    windowName.value = ''
-  }
-}
 </script>
 
 <template>

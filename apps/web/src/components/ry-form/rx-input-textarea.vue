@@ -36,12 +36,11 @@ defineEmits(['iconClick', 'change'])
 <style lang="scss" scoped>
 :deep(.p-textarea) {
   resize: vertical;
-  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
 
-  &:disabled {
-    color: var(--colors-text-text-placeholder, #7c8387);
-  }
+  // &:disabled {
+  //   color: var(--colors-text-text-placeholder, #7c8387);
+  // }
 }
 
 @mixin input-styles($pt, $pr, $pb, $pl, $gap, $borderWidth, $radius, $fontSize, $lineHeight) {

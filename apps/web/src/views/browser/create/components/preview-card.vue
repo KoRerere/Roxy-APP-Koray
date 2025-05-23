@@ -48,8 +48,7 @@ const visible = ref(true)
 <template>
   <div class="flex flex-col items-start preview" :class="[visible ? '' : 'hide']">
     <div class="flex flex-row-reverse items-center justify-between self-stretch preview-header">
-      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="#575D61"
-        name="base/rx_ic_fold_right" @click="visible = !visible" />
+      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="var(--colors-icon-primary)" name="base/rx_ic_fold_right" @click="visible = !visible" />
       <span v-if="visible">{{ $t('概要') }}</span>
     </div>
     <div v-if="visible" class="w-full preview-content">
@@ -83,7 +82,7 @@ $spacing-x: var(--spacing-xl, 12px);
   height: calc(100% - 24px);
   border-radius: 8px;
   border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-app, #fff);
+  background: var(--colors-background-bg-overlay, #fff);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -97,7 +96,7 @@ $spacing-x: var(--spacing-xl, 12px);
 
   &-header {
     padding: 0 $spacing-x;
-    color: var(--colors-text-text-primary, #fafafa);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 12px;
     font-weight: 600;
@@ -137,7 +136,7 @@ $spacing-x: var(--spacing-xl, 12px);
       align-items: flex-start;
       align-self: stretch;
       gap: var(--spacing-sm, 4px);
-      color: var(--primitives-neutrals-800, #252a2e);
+      color: var(--colors-text-text-primary, #111213);
       font-family: 'DM Mono';
       font-size: 12px;
       font-weight: 500;

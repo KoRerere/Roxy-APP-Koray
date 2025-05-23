@@ -64,7 +64,7 @@ onMounted(() => {
   }
 
   &-content {
-    color: var(--primitives-neutrals-600, #575d61);
+    color: var(--colors-text-text-secondary, #575d61);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

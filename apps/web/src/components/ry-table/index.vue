@@ -505,7 +505,7 @@ const slots: any = useSlots()
   .headercell {
     padding: 8px 12px;
     background: var(--component-table-header, #F1F5F8);
-    border-color: var(--colors-border-border-inactive, #C7D1D6);
+    border-color: var(--component-table-border, #48555B);
     user-select: none;
 
     &:first-of-type {
@@ -539,7 +539,7 @@ const slots: any = useSlots()
           background: var(--component-table-bg-hover, #F1F5F8);
 
           .bodycell {
-            border-color: var(--colors-border-border-subtle-hover, #AFB7BB);
+            border-color: var(--component-table-border, #48555B);
 
             &:global(.p-datatable-frozen-column) {
               background: var(--component-table-bg-hover, #F1F5F8);

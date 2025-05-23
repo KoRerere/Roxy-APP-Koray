@@ -2,13 +2,11 @@
 import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
-
 interface Props extends Omit<SelectProps, 'size' | 'filter' | 'optionLabel' | 'optionValue'> {
   name: string
   icon?: SvgNames
   iconColor?: string
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
   filter?: boolean
   optionLabel?: string
   optionValue?: string

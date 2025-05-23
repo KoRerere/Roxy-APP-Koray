@@ -12,17 +12,18 @@ export const semantic = {
   iconSize: '1rem',
   anchorGutter: '2px',
   primary: {
-    50: '{emerald.50}',
-    100: '{emerald.100}',
-    200: '{emerald.200}',
-    300: '{emerald.300}',
-    400: '{emerald.400}',
-    500: '{emerald.500}',
-    600: '{emerald.600}',
-    700: '{emerald.700}',
-    800: '{emerald.800}',
-    900: '{emerald.900}',
-    950: '{emerald.950}',
+    25: '{light.primitives.blue.25}',
+    50: '{light.primitives.blue.50}',
+    100: '{light.primitives.blue.100}',
+    200: '{light.primitives.blue.200}',
+    300: '{light.primitives.blue.300}',
+    400: '{light.primitives.blue.400}',
+    500: '{light.primitives.blue.500}',
+    600: '{light.primitives.blue.600}',
+    700: '{light.primitives.blue.700}',
+    800: '{light.primitives.blue.800}',
+    900: '{light.primitives.blue.900}',
+    950: '{light.primitives.blue.950}',
   },
   formField: {
     paddingX: '0.75rem',
@@ -106,8 +107,22 @@ export const semantic = {
     },
   },
   colorScheme: {
-    light,
-    dark
+    light: {
+      ...light,
+      primary: {
+        color: '{primary.500}',
+        hoverColor: '{primary.600}',
+        activeColor: '{primary.600}',
+      },
+    },
+    dark: {
+      ...dark,
+      primary: {
+        color: '{primary.500}',
+        hoverColor: '{primary.400}',
+        activeColor: '{primary.400}',
+      },
+    }
     // light: {
     //   surface: {
     //     0: '#ffffff',
