@@ -1059,7 +1059,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .note-header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;

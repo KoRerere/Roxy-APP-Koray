@@ -67,7 +67,8 @@ function handleClick(method: PayWay) {
   <div class="rx-payment-methods">
     <RxLoading v-model="loading" :opacity="0.6"></RxLoading>
     <template v-for="item in paymentMethods" :key="item.value">
-      <div class="rx-payment-methods-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }" @click="handleClick(item.value!)">
+      <div class="rx-payment-methods-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }"
+        @click="handleClick(item.value!)">
         <div class="rx-payment-methods-item-discount" v-if="!loading && item.discount">{{ item.discount }}</div>
         <img class="h-10" :src="item.icon">
         <div>{{ item.label }}</div>
@@ -97,7 +98,7 @@ function handleClick(method: PayWay) {
     box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
     border-radius: 8px;
     cursor: pointer;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 14px;
     line-height: normal;
 
@@ -109,7 +110,7 @@ function handleClick(method: PayWay) {
     &:not(.disabled).active {
       border: 2px solid var(--Color-blue-300, #12A3FC);
       background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
       font-weight: 600;
       box-shadow: none;
     }

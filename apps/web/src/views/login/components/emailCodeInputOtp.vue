@@ -206,7 +206,7 @@ onBeforeMount(() => {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;
@@ -256,7 +256,7 @@ onBeforeMount(() => {
 }
 
 .divider-text {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-family: Inter;
   font-size: 10px;

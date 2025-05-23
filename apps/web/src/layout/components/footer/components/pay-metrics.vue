@@ -247,7 +247,7 @@ function onExpand() {
   cursor: pointer;
 
   .pay-metrics-collapsed-text {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

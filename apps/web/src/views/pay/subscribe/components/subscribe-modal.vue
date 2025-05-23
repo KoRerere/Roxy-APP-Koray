@@ -167,7 +167,7 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 20px;
   font-weight: 600;
@@ -190,7 +190,7 @@ function close(isCancel: boolean) {
   }
 
   &-amount {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     text-align: right;
     font-size: 24px;
     font-weight: 600;

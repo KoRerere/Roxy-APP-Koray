@@ -85,7 +85,8 @@ function onCopy(dirId: string) {
         <template #expandicon>
           <RxSvgIcon name="base/rx_ic_chevron_up" />
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value"
+          :pt="{ root: '!border-none' }">
           <AccordionHeader as="div" class="accordion-header">
             {{ panels.title }}
           </AccordionHeader>
@@ -104,10 +105,13 @@ function onCopy(dirId: string) {
                   <div class="flex-1 flex flex-col gap-2">
                     <div class="flex-1 flex gap-2">
                       <InputGroup>
-                        <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
-                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
+                        <Os v-bind="input.items[0]" v-model="input.items[0].value"
+                          @change="input.items[0].change?.(input.items[0], input.items)" />
+                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value"
+                          @change="input.items[1].change?.(input.items[1], input.items)" />
                       </InputGroup>
-                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value"
+                        @change="input.items[2].change?.(input.items[2], input.items)" />
                     </div>
                     <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
                       {{ input.items[2].help }}
@@ -171,7 +175,8 @@ function onCopy(dirId: string) {
                   <inputLabel v-bind="input" />
                   <div class="flex-1 flex gap-2">
                     <div class="flex-1">
-                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
+                      <RxInputSelect v-bind="input" v-model="input.value"
+                        @change="input.change?.(input, input.items)" />
                     </div>
                     <div class="flex-1"></div>
                   </div>
@@ -210,7 +215,7 @@ $spacing-x: 66px;
   padding: var(--spacing-md, 6px) 8px;
   background: var(--Color-neutrals-100, #f0f3f5) !important;
   border-radius: 4px;
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;

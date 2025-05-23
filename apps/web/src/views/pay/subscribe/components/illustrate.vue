@@ -86,14 +86,14 @@ const tierPrice = computed(() => tierCalculate(data, SAMPLE))
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: Inter;
     font-size: 12px;
     line-height: 20px;
   }
 
   &-example {
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: Inter;
     font-size: 12px;
     line-height: 20px;
@@ -101,7 +101,7 @@ const tierPrice = computed(() => tierCalculate(data, SAMPLE))
 }
 
 :where(.cell-th) {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;

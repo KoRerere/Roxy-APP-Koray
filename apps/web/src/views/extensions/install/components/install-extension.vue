@@ -200,7 +200,7 @@ onMounted(() => {
 }
 
 .project-name {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;

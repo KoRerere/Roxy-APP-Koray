@@ -173,7 +173,7 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
@@ -224,7 +224,7 @@ function close(isCancel: boolean) {
 }
 
 .countdown {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 500;
   line-height: normal;

@@ -224,7 +224,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             <div class="flex justify-between items-center gap-6">
               <span class="other-title">{{ item.title }}</span>
               <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增')
-                }}</span>
+              }}</span>
             </div>
             <div>
               <span class="other-used">{{ item.used }}</span>
@@ -252,7 +252,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo, Inter;
     font-size: 20px;
     font-weight: 700;
@@ -260,7 +260,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-balance {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 40px;
     font-style: normal;
@@ -279,7 +279,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     line-height: normal;
 
     &-link {
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
       text-decoration-line: underline;
       text-decoration-style: solid;
       text-decoration-skip-ink: auto;
@@ -304,7 +304,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-expired {
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: "JetBrains Mono";
     font-size: 12px;
     line-height: normal;
@@ -328,7 +328,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 
 .other {
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo, Inter, sans-serif;
     font-size: 16px;
     font-weight: 700;
@@ -336,14 +336,14 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-more {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
   }
 
   &-used {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 32px;
     font-weight: 700;
@@ -351,7 +351,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-total {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 20px;
     font-weight: 700;

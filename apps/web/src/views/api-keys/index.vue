@@ -227,7 +227,7 @@ onBeforeMount(() => {
     align-items: center;
     padding: var(--spacing-2xl, 16px) var(--spacing-xl, 12px);
 
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
@@ -246,7 +246,7 @@ onBeforeMount(() => {
       align-items: center;
       padding: 0px var(--spacing-xl, 12px);
 
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 12px;
       font-weight: 500;
@@ -315,7 +315,7 @@ onBeforeMount(() => {
       padding: 0px var(--spacing-xl, 12px);
       gap: 30px;
 
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 12px;
       font-weight: 500;

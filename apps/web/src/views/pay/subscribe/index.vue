@@ -215,7 +215,7 @@ async function onSubscribe() {
                   scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                      }}</a>
+                    }}</a>
                   </template>
                 </i18n-t>
               </div>
@@ -229,7 +229,7 @@ async function onSubscribe() {
 
 <style lang="scss" scoped>
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;

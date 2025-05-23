@@ -53,7 +53,7 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
   .p-tab {
     padding: 14px 8px;
     border-color: transparent;
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-size: 12px;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);

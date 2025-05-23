@@ -125,7 +125,7 @@ async function tableFilters() {
 
 <style lang="scss" module>
 .user-email {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;

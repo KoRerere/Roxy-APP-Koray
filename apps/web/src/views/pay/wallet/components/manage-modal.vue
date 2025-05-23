@@ -227,7 +227,7 @@ function onClose() {
 
 <style lang="scss" module="repay">
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-size: 16px;
   font-style: normal;
@@ -249,7 +249,7 @@ function onClose() {
 }
 
 .link {
-  color: var(--Color-blue-300, #12A3FC);
+  color: var(--pattern-sidenav-text-active, #3FB6FD);
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-skip-ink: auto;
@@ -261,7 +261,7 @@ function onClose() {
 
 <style lang="scss" scoped>
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 20px;
   font-weight: 600;

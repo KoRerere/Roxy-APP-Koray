@@ -39,12 +39,14 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
 <template>
   <div class="flex gap-2">
-    <div v-for="item in subscribePlans" :key="item.subLevel" class="relative flex-1 flex flex-col gap-1.5 pt-3 pb-2 px-4 rounded-lg select-none cursor-pointer plans" :class="{
-      active: item.subLevel === selectedPlan?.subLevel,
-      'cursor-not-allowed disabled': item.disabled
-    }" @click="onSwitchPlan(item)">
-      <div class="absolute top-0 right-1.5 -translate-y-1/2 py-0.5 px-2 rounded-full plans-current" :class="{ 'free': item.subLevel === 'Free' }" v-if="item.subLevel === userPayInfo?.subLevel">{{
-        $t('当前套餐') }}</div>
+    <div v-for="item in subscribePlans" :key="item.subLevel"
+      class="relative flex-1 flex flex-col gap-1.5 pt-3 pb-2 px-4 rounded-lg select-none cursor-pointer plans" :class="{
+        active: item.subLevel === selectedPlan?.subLevel,
+        'cursor-not-allowed disabled': item.disabled
+      }" @click="onSwitchPlan(item)">
+      <div class="absolute top-0 right-1.5 -translate-y-1/2 py-0.5 px-2 rounded-full plans-current"
+        :class="{ 'free': item.subLevel === 'Free' }" v-if="item.subLevel === userPayInfo?.subLevel">{{
+          $t('当前套餐') }}</div>
       <div class="plans-text">
         {{ SubLevelEnumStr[item.subLevel as SubLevelEnum] }}
       </div>
@@ -79,7 +81,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
     }
 
     .plans-price {
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
     }
   }
 
@@ -96,7 +98,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
   }
 
   &-text {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;

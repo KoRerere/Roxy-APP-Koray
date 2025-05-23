@@ -369,14 +369,14 @@ electronAPI.on('syncControl:start', startSync)
     }
 
     th.p-datatable-header-cell:first-of-type {
-      border: 0.5px solid var(--Colors-Border-border-subtle, #E4E8EB);
+      border: 0.5px solid var(--colors-border-border-inactive, #293038);
       border-right-width: 0;
       border-top-left-radius: var(--radius-sm, 4px);
       border-bottom-left-radius: var(--radius-sm, 4px);
     }
 
     th.p-datatable-header-cell:last-of-type {
-      border: 0.5px solid var(--Colors-Border-border-subtle, #E4E8EB);
+      border: 0.5px solid var(--colors-border-border-inactive, #293038);
       border-left-width: 0;
       border-top-right-radius: var(--radius-sm, 4px);
       border-bottom-right-radius: var(--radius-sm, 4px);

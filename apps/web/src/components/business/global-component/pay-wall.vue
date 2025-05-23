@@ -193,7 +193,7 @@ function handleImageLoad() {
 }
 
 .description {
-  color: var(--Colors-Text-text-secondary, #575D61);
+  color: var(--colors-text-text-secondary, #B2B6B8);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

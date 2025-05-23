@@ -164,7 +164,7 @@ checkExtensionInfo()
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -233,7 +233,7 @@ checkExtensionInfo()
   .extension-info-step-item-name {
     display: flex;
     align-items: center;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;

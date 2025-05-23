@@ -129,7 +129,7 @@ onBeforeMount(() => {
   gap: 2px;
 
   .text {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-family: "DingTalk JinBuTi";
     font-size: 12px;
     font-style: normal;

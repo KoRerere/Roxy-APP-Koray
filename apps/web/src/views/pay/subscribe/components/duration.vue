@@ -69,11 +69,14 @@ function onSelected(item: Duration) {
   <div class="flex gap-3">
     <img v-if="loading" class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
     <template v-else>
-      <div class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration" :class="{ active: selectedDuration?.key === item.key }" v-for="(item, index) in durationList" :key="index"
+      <div class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration"
+        :class="{ active: selectedDuration?.key === item.key }" v-for="(item, index) in durationList" :key="index"
         @click="onSelected(item)">
-        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount" :class="item.labelClass">{{ item.label }}</div>
+        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount"
+          :class="item.labelClass">{{ item.label }}</div>
         <div class="duration-text">{{ item.title }}</div>
-        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{ currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
+        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{
+          currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
       </div>
     </template>
   </div>
@@ -106,7 +109,7 @@ function onSelected(item: Duration) {
   }
 
   &-text {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 16px;
     font-weight: 600;
     line-height: normal;

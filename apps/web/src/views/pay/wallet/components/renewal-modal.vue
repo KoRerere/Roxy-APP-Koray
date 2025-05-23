@@ -246,7 +246,7 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;

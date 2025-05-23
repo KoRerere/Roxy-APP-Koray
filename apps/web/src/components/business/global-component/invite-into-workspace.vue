@@ -130,7 +130,7 @@ function skipInvitation() {
     }
 
     .workspace-name {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       text-align: center;
       font-family: Inter;
       font-size: 16px;

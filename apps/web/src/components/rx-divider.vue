@@ -13,7 +13,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-family: Inter;
   font-size: 12px;

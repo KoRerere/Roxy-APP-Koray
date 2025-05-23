@@ -165,7 +165,7 @@ function openTemplates(event: Event) {
 
 <style lang="scss" scoped>
 .upload-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

@@ -510,7 +510,7 @@ defineExpose({
 
 .plugin-switch-type,
 .update-info {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

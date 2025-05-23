@@ -77,7 +77,7 @@ function close() {
   background: #ffffff url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -118,7 +118,7 @@ function close() {
 
 .feat {
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 24px;
     font-weight: 600;
@@ -133,7 +133,7 @@ function close() {
   }
 
   &-item {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

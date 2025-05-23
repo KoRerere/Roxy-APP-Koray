@@ -30,7 +30,7 @@ const { promotionInfo } = defineProps<{
     background-size: 100% 100%;
     background-repeat: no-repeat;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--Colors-Border-border-subtle, #E4E8EB);
+    border-bottom: 1px solid var(--colors-border-border-inactive, #293038);
   }
 
   .content {

@@ -317,7 +317,7 @@ onBeforeMount(() => {
     }
 
     .window-name {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -495,7 +495,7 @@ onBeforeMount(() => {
       box-shadow:
         0px 4px 4px -1px rgba(0, 0, 0, 0.02),
         0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
     }
   }
 

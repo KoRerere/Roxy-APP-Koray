@@ -33,7 +33,8 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <MultiSelect v-bind="{ filter, optionLabel, optionValue, ...props }" :options="[]" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="_onChange">
+  <MultiSelect v-bind="{ filter, optionLabel, optionValue, ...props }" :options="[]"
+    :pt="{ root: size, optionlabel: classes.optionlabel }" @change="_onChange">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -42,7 +43,7 @@ function _onChange(event: any) {
 
 <style module="classes">
 .optionlabel {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);

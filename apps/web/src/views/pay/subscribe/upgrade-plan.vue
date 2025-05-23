@@ -399,7 +399,7 @@ function jumpToProfile() {
 
 <style module="popup" lang="scss">
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: normal;
@@ -415,7 +415,7 @@ function jumpToProfile() {
 
 <style lang="scss" scoped>
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -423,7 +423,7 @@ function jumpToProfile() {
 }
 
 .due {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   line-height: normal;
 
@@ -487,7 +487,7 @@ function jumpToProfile() {
 }
 
 .next-bill {
-  color: var(--Colors-Text-text-secondary, #575D61);
+  color: var(--colors-text-text-secondary, #B2B6B8);
   font-family: Inter;
   font-size: 14px;
   line-height: 22.4px;

@@ -184,7 +184,7 @@ async function onSubscribe() {
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -192,7 +192,7 @@ async function onSubscribe() {
 }
 
 .period {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   line-height: 20px;
 }

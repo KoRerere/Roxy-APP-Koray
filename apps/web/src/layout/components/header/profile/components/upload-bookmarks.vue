@@ -292,7 +292,8 @@ function cancelBookmarks() {
     <div class="flex flex-col gap-5">
       <div>
         <div class="flex items-center gap-3">
-          <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export" @click="uploadBookmarks" />
+          <RxButton severity="secondary" outlined :label="$t('上传文件')" icon="base/rx_ic_export"
+            @click="uploadBookmarks" />
           <span class="upload-file-name">{{ upLoadFileName }}</span>
         </div>
         <div class="mt-1 upload-desc-text">{{ $t('上传您的书签文件（仅支持.html格式）') }}</div>
@@ -341,7 +342,8 @@ function cancelBookmarks() {
     </div>
     <template #footer>
       <div class="w-full flex justify-between">
-        <RxButton icon="base/rx_ic_bin_1" severity="secondary" outlined @click="deleteBookmarks" :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
+        <RxButton icon="base/rx_ic_bin_1" severity="secondary" outlined @click="deleteBookmarks"
+          :style="{ visibility: tree.length > 0 ? 'visible' : 'hidden' }"></RxButton>
         <div class="flex items-center gap-2">
           <RxButton :label="$t('取消')" severity="secondary" outlined @click="cancelBookmarks" />
           <RxButton :label="$t('保存书签')" severity="primary" @click="saveBookmarks" />
@@ -414,7 +416,7 @@ function cancelBookmarks() {
 
 .bookmark-options-title,
 .bookmark-preview-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 600;
 }

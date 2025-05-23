@@ -86,12 +86,14 @@ function close(isCancel: boolean) {
     <div class="flex flex-col gap-4">
       <div class="sub-title">{{ $t('请输入充值金额') }}</div>
       <div class="flex items-center gap-2">
-        <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
+        <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step"
+          @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
         <rx-amount-quick-check @select="quickSelect" />
       </div>
     </div>
     <ItemBlock :title="$t('支付方式')">
-      <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways" :disabledMethods="disabledMethods"></RxPaymentMethods>
+      <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways"
+        :disabledMethods="disabledMethods"></RxPaymentMethods>
     </ItemBlock>
     <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[#C7CDD1]">
       <div class="py-6 flex justify-between items-center total">
@@ -109,14 +111,14 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 24px;
   font-weight: 600;
   line-height: 20px;
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 700;
@@ -142,7 +144,7 @@ function close(isCancel: boolean) {
   }
 
   &-price {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-size: 24px;
     font-weight: 600;
     line-height: normal;

@@ -105,7 +105,7 @@ function close(isCancel: boolean) {
 }
 
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-size: 16px;
   font-weight: 600;

@@ -137,7 +137,7 @@ function hide() {
     gap: var(--spacing-xl, 12px);
     align-self: stretch;
     overflow: auto;
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -145,7 +145,7 @@ function hide() {
     line-height: 20px;
 
     .title {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

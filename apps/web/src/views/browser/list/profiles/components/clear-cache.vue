@@ -125,7 +125,7 @@ onMounted(() => {
   gap: var(--spacing-xl, 12px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;

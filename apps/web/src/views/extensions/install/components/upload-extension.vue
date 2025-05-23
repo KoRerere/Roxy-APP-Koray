@@ -79,9 +79,11 @@ onMounted(() => {
         {{ $t('请选择上传方式') }}
       </div>
       <div class="flex items-center gap-4 mt-1">
-        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
+        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')"
+          @click="selectExtension('file')" />
         <span class="upload-or">{{ $t('或') }}</span>
-        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
+        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')"
+          @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
@@ -115,14 +117,15 @@ onMounted(() => {
     <div class="guide">
       <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
-          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
-            class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
+          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins"
+            target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" :label="$t('上传')" severity="info" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('上传')" severity="info" :disabled="!extension?.isSuccess" autofocus
+        @click="confirm" />
     </div>
   </div>
 </template>
@@ -138,7 +141,7 @@ onMounted(() => {
   gap: var(--spacing-2xl, 16px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;
@@ -156,7 +159,7 @@ onMounted(() => {
   }
 
   &-or {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: Inter;
     font-size: 13px;

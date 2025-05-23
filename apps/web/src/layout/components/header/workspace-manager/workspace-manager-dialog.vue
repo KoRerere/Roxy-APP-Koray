@@ -136,7 +136,7 @@ async function showCreateWorkspaceDialog() {
   padding-top: 12px;
 
   .title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -146,7 +146,7 @@ async function showCreateWorkspaceDialog() {
 
   .description {
     margin-top: 6px;
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;

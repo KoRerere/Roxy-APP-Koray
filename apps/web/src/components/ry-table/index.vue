@@ -514,7 +514,7 @@ const slots: any = useSlots()
 
 <style lang="scss" module="ColumnCss_Module">
 .columntitle {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

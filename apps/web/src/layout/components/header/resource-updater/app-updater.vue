@@ -197,7 +197,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
       align-self: stretch;
 
       .version {
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         text-align: center;
         font-family: 'JetBrains Mono';
         font-size: 14px;

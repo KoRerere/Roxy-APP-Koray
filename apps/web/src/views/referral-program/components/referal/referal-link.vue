@@ -166,8 +166,8 @@ function isLocked(linkStatus: number) {
         transition: all 0.2s ease;
 
         &:is(:hover, .active) {
-          color: var(--Color-blue-300, #12A3FC);
-          background: #D6ECFA;
+          color: var(--pattern-sidenav-text-active, #3FB6FD);
+          background: var(--pattern-sidenav-bg-active, #013D65);
         }
       }
     }
@@ -191,7 +191,7 @@ function isLocked(linkStatus: number) {
       align-self: stretch;
 
       .title {
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -216,7 +216,7 @@ function isLocked(linkStatus: number) {
       align-items: center;
       gap: var(--spacing-lg, 8px);
       align-self: stretch;
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

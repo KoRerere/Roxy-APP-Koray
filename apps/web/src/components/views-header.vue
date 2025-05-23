@@ -36,7 +36,7 @@ function onBack() {
 .views-header {
   padding: 9px var(--spacing-4xl, 24px);
   gap: 10px;
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 600;
   line-height: 26px;

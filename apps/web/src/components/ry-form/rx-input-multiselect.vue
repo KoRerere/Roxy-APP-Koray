@@ -24,7 +24,8 @@ const defaultProps: MultiSelectProps = {
 </script>
 
 <template>
-  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="$emit('change')">
+  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel }"
+    @change="$emit('change')">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -33,7 +34,7 @@ const defaultProps: MultiSelectProps = {
 
 <style module="classes">
 .optionlabel {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);

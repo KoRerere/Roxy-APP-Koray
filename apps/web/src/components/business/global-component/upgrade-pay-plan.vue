@@ -164,7 +164,7 @@ onUnmounted(() => {
     gap: 22px;
 
     .upgrade-pay-plan-header {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Archivo, Inter, sans-serif;
       font-size: 24px;
       font-style: normal;
@@ -192,7 +192,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -211,7 +211,7 @@ onUnmounted(() => {
         align-items: center;
         gap: var(--spacing-xl, 12px);
         align-self: stretch;
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -273,7 +273,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

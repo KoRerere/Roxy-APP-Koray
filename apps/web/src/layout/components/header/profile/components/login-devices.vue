@@ -98,7 +98,7 @@ const deviceList = computed(() => {
     .device-item__ip {
       width: 100%;
       display: flex;
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

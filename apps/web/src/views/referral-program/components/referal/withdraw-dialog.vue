@@ -218,7 +218,7 @@ function handleBlur(event: InputNumberBlurEvent) {
   }
 
   .label {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -260,7 +260,7 @@ function handleBlur(event: InputNumberBlurEvent) {
     align-self: stretch;
 
     .label {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

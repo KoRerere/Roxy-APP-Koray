@@ -100,7 +100,7 @@ function close() {
 
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -108,7 +108,7 @@ function close() {
   }
 
   &-symbol {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 32px;
     font-weight: 600;
@@ -116,7 +116,7 @@ function close() {
   }
 
   &-balance {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 40px;
     font-weight: 600;
@@ -124,7 +124,7 @@ function close() {
   }
 
   &-new {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-family: Inter;
     font-size: 16px;
     font-weight: 600;
@@ -141,7 +141,7 @@ function close() {
 
 .feat {
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 24px;
     font-weight: 600;
@@ -149,7 +149,7 @@ function close() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

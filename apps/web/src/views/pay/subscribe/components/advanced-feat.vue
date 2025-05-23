@@ -45,7 +45,7 @@ const advanced = computed(() => [
 <style scoped lang="scss">
 .advanced {
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-weight: 600;
@@ -54,7 +54,7 @@ const advanced = computed(() => [
 
   &-value {
     min-width: 150px;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;

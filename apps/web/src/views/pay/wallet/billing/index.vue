@@ -164,7 +164,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
