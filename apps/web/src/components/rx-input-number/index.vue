@@ -25,7 +25,7 @@ const number = defineModel<number>()
     .p-inputnumber-input {
       padding: 0;
       border: none;
-      color: var(--Component-Colors-TextInput-text-text, #171c1f);
+      color: var(--colors-text-text-primary, #111213);
       text-align: center;
       font-family: Inter;
       font-size: 12px;

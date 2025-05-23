@@ -214,7 +214,7 @@ onMounted(() => {
 
   &-input {
     grid-area: right-bottom;
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
@@ -233,7 +233,7 @@ onMounted(() => {
   }
 
   &-input {
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }

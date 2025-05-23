@@ -96,7 +96,7 @@ $size: 16px;
     border-color: var(--Component-Colors-TextInput-border-border, #c7cdd1);
     background: var(--Component-Colors-TextInput-bg-bg, #fff);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
   }
 }

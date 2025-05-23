@@ -48,8 +48,7 @@ const passThrough = {
 .root {
   &:global(.p-drawer) {
     border-radius: var(--radius-lg, 8px);
-    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad);
-    background: var(--Colors-Background-bg-body, #fff);
+    border-width: 0.5px;
     box-shadow:
       0px 1px 1px 0px rgba(0, 0, 0, 0.04),
       0px 2px 8px 0px rgba(0, 0, 0, 0.04),

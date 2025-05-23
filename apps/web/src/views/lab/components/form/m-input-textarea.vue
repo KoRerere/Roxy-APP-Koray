@@ -40,7 +40,7 @@ const attrs = useAttrs()
 <style lang="scss" scoped>
 :deep(.p-textarea) {
   resize: vertical;
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   border-color: var(--colors-border-border-base, #AFB7BB);
 

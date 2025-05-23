@@ -24,7 +24,7 @@ const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props
     padding: 10px 10px 10px var(--spacing-xl, 12px);
     border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
     border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 14px;
     line-height: var(--Line-Height-text-lg, 20px);
@@ -36,7 +36,7 @@ const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props
     padding: 8px 8px 8px 10px;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
@@ -48,7 +48,7 @@ const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-lg, 20px);
@@ -60,7 +60,7 @@ const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props
     padding: var(--spacing-md, 6px);
     border-radius: var(--radius-sm, 4px);
     border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -72,7 +72,7 @@ const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
     border-radius: var(--radius-sm, 4px);
     border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);

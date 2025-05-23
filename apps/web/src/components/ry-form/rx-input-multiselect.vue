@@ -42,7 +42,7 @@ const defaultProps: MultiSelectProps = {
 
 <style lang="scss" scoped>
 :deep(.p-multiselect-label) {
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
 }
 

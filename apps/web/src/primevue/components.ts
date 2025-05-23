@@ -1568,9 +1568,9 @@ export const components = {
   },
   dialog: {
     root: {
-      background: 'var(--colors-background-bg-page)',
-      borderColor: '{overlay.modal.border.color}',
-      color: '{overlay.modal.color}',
+      background: '{colors.background.bg-page}',
+      borderColor: '{colors.border.border-base}',
+      color: '{colors.text.text-primary}',
       borderRadius: '{overlay.modal.border.radius}',
       shadow: '{overlay.modal.shadow}',
     },
@@ -1635,9 +1635,9 @@ export const components = {
   },
   drawer: {
     root: {
-      background: '{overlay.modal.background}',
-      borderColor: '{overlay.modal.border.color}',
-      color: '{overlay.modal.color}',
+      background: '{colors.background.bg-page}',
+      borderColor: '{colors.border.border-base}',
+      color: '{colors.text.text-primary}',
       shadow: '{overlay.modal.shadow}',
     },
     header: {
