@@ -4,7 +4,7 @@
 
 import './polyfill'
 
-import { contextBridge } from 'electron'
+import { contextBridge, webUtils } from 'electron'
 
 import type { MainMessage, RenderMessage } from './types/'
 
@@ -18,6 +18,9 @@ const electronAPI = {
   versions: process.versions,
   send: ipcRenderer.send,
   on: ipcRenderer.on,
+  getPathForFile: (file: File) => {
+    return webUtils.getPathForFile(file)
+  },
 } as const
 
 export type ElectronAPI = typeof electronAPI
