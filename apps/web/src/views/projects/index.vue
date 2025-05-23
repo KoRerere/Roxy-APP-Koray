@@ -161,7 +161,6 @@ async function pinProject(data: Project) {
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus: pinStatus as number })
   if (code === 0) {
     tableRef.value?.refresh()
-    showToast(code, isPinned ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
   } else {
     onlyErrorToast(code, msg)
   }
@@ -224,29 +223,35 @@ async function inviteUserInProject(project: Project) {
 <template>
   <div class="flex flex-col h-full account">
     <ViewsHeader class="account-header" :title="$t('项目管理')">
-      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus"
+        :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="account-content">
-      <RyTable ref="account" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
-        :show-gridlines="false" :show-actions-menu="false" :show-actions="false">
+      <RyTable ref="account" data-key="project_id" cache-key="project-list" v-model:columns="columns"
+        :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false" :show-gridlines="false"
+        :show-actions-menu="false" :show-actions="false">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
+          <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')"
+            :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')"
+                  @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('项目文档')" /> -->
               </div>
             </template>
           </CustomEmpty>
         </template>
         <template #projectName="{ data }">
-          <router-link class="flex items-center gap-2 project-name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
+          <router-link class="flex items-center gap-2 project-name"
+            :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
             <RxSvgIcon name="base/rx_ic_stack" />
             <span>{{ data.projectName }}</span>
           </router-link>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu" />
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)"
+            @more="showOperationMenu" />
         </template>
       </RyTable>
     </div>

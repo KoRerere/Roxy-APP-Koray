@@ -70,7 +70,7 @@ function parseInput(input: any) {
       width: 100%;
       padding: 0;
       border: none;
-      background-color: #fff;
+      background-color: var(--colors-background-bg-action, #293038);
     }
 
     &-error {

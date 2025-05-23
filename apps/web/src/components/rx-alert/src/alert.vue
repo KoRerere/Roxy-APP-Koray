@@ -133,7 +133,7 @@ function handleClose() {
 
     .rx-alert__content {
       width: 100%;
-      color: var(--colors-text-text-secondary, #34393D);
+      color: var(--colors-text-text-primary, #34393D);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

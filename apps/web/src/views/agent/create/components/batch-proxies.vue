@@ -346,7 +346,9 @@ function onSave() {
               <div class="flex items-center">
                 <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap"
                   binary />
-                <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer">{{ $t('自动去重') }}</label>
+                <label for="wrap"
+                  class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
+                  $t('自动去重') }}</label>
                 <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }"
                   name="base/rx_ic_info" :size="12" />
               </div>
@@ -362,19 +364,29 @@ function onSave() {
         </div>
         <div class="rules">
           <i18n-t
-            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })"
+            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}{example}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', example: '{example}' })"
             scope="global">
             <template #br>
               <br>
             </template>
-            <template #refreshurl>
-              <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-            </template>
-            <template #remark>
-              <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-            </template>
-            <template #ipv6>
-              <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
+            <template #example>
+              <span class="text-[var(--colors-text-text-primary)]">
+                <i18n-t
+                  :keypath="$t('http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
+                  <template #br>
+                    <br>
+                  </template>
+                  <template #refreshurl>
+                    <span class="text-green">[{{ $t('刷新 URL') }}]</span>
+                  </template>
+                  <template #remark>
+                    <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+                  </template>
+                  <template #ipv6>
+                    <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
+                  </template>
+                </i18n-t>
+              </span>
             </template>
           </i18n-t>
         </div>
@@ -397,7 +409,7 @@ function onSave() {
           :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
           closable @close="messageClose">
         </RxAlert>
-        <div v-if="showMessage" class="h-[10px] w-full bg-white"></div>
+        <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
       </div>
       <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
         :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
@@ -424,14 +436,14 @@ function onSave() {
     position: sticky;
     top: -30px;
     z-index: 100;
-    background-color: white;
+    background-color: var(--colors-background-bg-page);
   }
 
   .parse-result-message {
     position: sticky;
     top: calc(-30px + 58px);
     z-index: 100;
-    background-color: white;
+    background-color: var(--colors-background-bg-page);
   }
 
   :deep(.table-wrapper) {
@@ -456,7 +468,7 @@ function onSave() {
 
   .information {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-inactive, #e4e8eb);
+    border: 1px solid var(--colors-border-border-base, #48555B);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     overflow: hidden;
 
@@ -466,7 +478,8 @@ function onSave() {
       justify-content: space-between;
       align-items: center;
       align-self: stretch;
-      border-top: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+      border-top: 0.5px solid var(--colors-border-border-base, #34393D);
+      background: var(--colors-background-bg-overlay, #2C2E30);
     }
   }
 
@@ -475,8 +488,9 @@ function onSave() {
     gap: var(--spacing-md, 6px);
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-inactive, #e4e8eb);
-    background: var(--primitives-neutrals-50, #fafbfc);
+    border: 1px solid var(--colors-border-border-base, #48555B);
+    // background: var(--primitives-neutrals-50, #fafbfc);
+    background: var(--colors-background-bg-overlay, #2C2E30);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
     color: var(--colors-text-text-placeholder, #7c8387);
@@ -501,7 +515,7 @@ function onSave() {
   position: sticky;
   bottom: 0;
   right: 0;
-  background-color: white;
+  background-color: var(--colors-background-bg-page);
   width: 100%;
   padding: 12px 0;
   z-index: 10;

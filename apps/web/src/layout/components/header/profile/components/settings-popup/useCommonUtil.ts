@@ -79,5 +79,6 @@ export function useCommonUtil() {
     saveUserConfig,
     detectLocalNetwork,
     detectSystemNetwork,
+    onlyErrorToast
   };
 }

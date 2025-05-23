@@ -889,6 +889,13 @@ onMounted(() => {
   background-size: 100% 100%;
 }
 
+[data-theme="dark"] #gradient-canvas {
+  --gradient-color-1: #091a25;
+  --gradient-color-2: #001e3d;
+  --gradient-color-3: #003566;
+  --gradient-color-4: #006894;
+}
+
 .auth {
   width: 100%;
   height: 100%;

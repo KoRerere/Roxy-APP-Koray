@@ -336,7 +336,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       name: 'cookie',
       value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
       icon: 'base/rx_ic_attachment',
-      errorMsg: 'Invalid cookie format',
+      errorMsg: $t('Cookie 格式有误'),
       autoResize: false,
       rows: 4,
       formatValue: (input: any) => {

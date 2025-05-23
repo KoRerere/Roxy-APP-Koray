@@ -66,7 +66,6 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
       try {
         await window.electronAPI.send('app:delete-chrome-core', item.coreVersion)
         item.status = 'uninstalled'
-        toast.add({ severity: 'success', summary: $t('删除成功'), life: 2500 });
       } catch (error) {
         console.error('error', error)
         toast.add({ severity: 'error', summary: error || $t('删除失败'), life: 2500 });

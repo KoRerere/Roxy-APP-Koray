@@ -301,8 +301,8 @@ provideLoginContext({
   align-items: center;
   gap: var(--spacing-2xl, 16px);
   border-radius: 8px;
-  border: 0.5px solid var(--primitives-neutrals-0, #FFF);
-  background: #FFF;
+  border: 0.5px solid var(--colors-border-border-base, #48555B);
+  background: var(--colors-background-bg-page, #05101A);
 }
 
 .sign-card-header {

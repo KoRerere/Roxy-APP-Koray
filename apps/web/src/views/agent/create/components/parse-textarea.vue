@@ -46,10 +46,10 @@ onMounted(() => {
     outline: none;
     resize: none;
     overflow: hidden;
-    border-right: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-    background: var(--colors-background-bg-page, #fafbfc);
+    border-right: 0.5px solid var(--colors-border-border-base, #34393d);
+    background-color: var(--colors-background-bg-action, #293038);
 
-    color: var(--colors-text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary, #7d8387);
     text-align: right;
     font-family: 'JetBrains Mono';
     font-size: 12px;
@@ -64,13 +64,13 @@ onMounted(() => {
     border: none;
     outline: none;
     resize: none;
-    color: var(--colors-text-text-primary, #fafafa);
+    color: var(--colors-text-text-tertiary, #7d8387);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-lg, 20px);
-    background-color: #ffffff;
+    background-color: var(--colors-background-bg-action, #293038);
   }
 }
 </style>
