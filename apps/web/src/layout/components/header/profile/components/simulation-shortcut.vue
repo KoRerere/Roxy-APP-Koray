@@ -1,12 +1,10 @@
 <template>
   <div class="flex items-center gap-2 relative flex-1">
-    <InputText type="text" :placeholder="$t('设置快捷键')" :invalid="invalid" @keydown="handleKeydown" v-model="shortcutKey"
-      @blur="handleBlur" @change="handleChange" class="w-[186px]" />
+    <InputText type="text" :placeholder="$t('设置快捷键')" :invalid="invalid" @keydown="handleKeydown" v-model="shortcutKey" @blur="handleBlur" @change="handleChange" class="w-[186px]" />
 
     <RxButton v-tooltip.top="$t('重置')" class="w-[48px] !min-w-auto" icon="base/rx_ic_refresh" severity="secondary" outlined @click="onReset" />
 
-    <Message v-if="invalid" severity="error" size="small" variant="simple"
-      class="absolute top-[calc(100%+4px)] left-[6px]">
+    <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-[6px]">
       {{ $t('快捷键已被占用') }}
     </Message>
   </div>
@@ -127,7 +125,7 @@ onMounted(async () => {
 }
 
 .description {
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: 20px;
   /* 166.667% */

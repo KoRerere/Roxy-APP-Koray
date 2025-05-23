@@ -70,7 +70,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .identity-verification {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

@@ -135,8 +135,7 @@ function getAvatarStyle(workspacePicture: string) {
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose"
-    @click="getTransferHistory">
+  <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose" @click="getTransferHistory">
     <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
     <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />
     <div v-else class="relative px-3">
@@ -152,11 +151,9 @@ function getAvatarStyle(workspacePicture: string) {
             </template>
           </i18n-t>
         </div>
-        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')"
-          :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch" @input="onInput">
+        <RxInputText v-model="search" left-icon="base/rx_ic_magnify" :placeholder="$t('搜索空间 ID')" :disabled="searchLoading" @keyup.enter="onSearch" @left-icon-click="onSearch" @input="onInput">
           <template #icon>
-            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete"
-              @click="clearSearch"></SvgIcon>
+            <SvgIcon v-show="search && !searchLoading" class="cursor-pointer" name="base/rx_ic_delete" @click="clearSearch"></SvgIcon>
           </template>
         </RxInputText>
         <div class="relative flex flex-col gap-6 max-h-100 overflow-y-auto">
@@ -164,18 +161,14 @@ function getAvatarStyle(workspacePicture: string) {
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
               <div>{{ space.title }}</div>
-              <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer"
-                @click="clearHistory(space)">
+              <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer" @click="clearHistory(space)">
                 <SvgIcon name="base/rx_ic_bin_1"></SvgIcon>
                 <span>{{ $t('清除历史') }}</span>
               </div>
             </div>
-            <div v-for="item of space.items" :key="item.id"
-              class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
-              :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }"
-              @click="handleChoose(item)">
-              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon"
-                :style="getAvatarStyle(item.workspacePicture)"
+            <div v-for="item of space.items" :key="item.id" class="flex items-center gap-3 pa-1.5 cursor-pointer workspace"
+              :class="{ 'disabled': !item.isWindowCountEnough || item.workspaceNo === currentWorkspace!.workspaceNo }" @click="handleChoose(item)">
+              <Avatar :label="item.workspacePicture || item.workspaceName?.slice(0, 2)" class="workspace-icon" :style="getAvatarStyle(item.workspacePicture)"
                 :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
               <div>
                 <div class="workspace-name">{{ item.workspaceName }}</div>
@@ -187,8 +180,7 @@ function getAvatarStyle(workspacePicture: string) {
               </div>
             </div>
           </div>
-          <div v-if="search && !spaceList[0]?.items?.length"
-            class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
+          <div v-if="search && !spaceList[0]?.items?.length" class="flex flex-col items-center justify-center py-12 gap-1.5 search-empty">
             <div>{{ $t('空间不存在') }}</div>
             <i18n-t class="help" tag="div" :keypath="$t('如何获取{link}?', { link: '{link}' })" scope="global">
               <template #link>
@@ -279,7 +271,7 @@ function getAvatarStyle(workspacePicture: string) {
   }
 
   &-id {
-    color: var(--Colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: "JetBrains Mono";
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);

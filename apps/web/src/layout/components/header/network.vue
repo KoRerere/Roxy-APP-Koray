@@ -49,8 +49,7 @@ setTimeout(detectNetwork, 2000)
 
 <template>
   <div class="flex items-center gap-1">
-    <RxButton class="shrink-0" :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" severity="secondary" outlined
-      size="xs" @click="detectNetwork" />
+    <RxButton class="shrink-0" :icon="`base/rx_ic_route${proxyInfo.ip ? '' : '_error'}`" severity="secondary" outlined size="xs" @click="detectNetwork" />
     <template v-if="loading">
       <Skeleton width="4rem" height="12px" />
       <Skeleton width="3rem" height="10px" />
@@ -76,7 +75,7 @@ setTimeout(detectNetwork, 2000)
 }
 
 .ip {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;

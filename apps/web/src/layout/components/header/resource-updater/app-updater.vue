@@ -90,8 +90,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           </div>
           <div class="pl-[56px] pr-[16px]">
             <rich-text :html="item.originUpgradeData?.upgradeContent" />
-            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
               :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
           </div>
         </div>
@@ -160,7 +159,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
 }
 
 .release-time {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   text-align: right;
   font-family: Inter;
   font-size: 12px;
@@ -207,7 +206,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
       }
 
       .tips {
-        color: var(--Colors-Text-text-tertiary, #7c8387);
+        color: var(--colors-text-text-tertiary, #575D60);
         text-align: center;
         font-family: Inter;
         font-size: 12px;

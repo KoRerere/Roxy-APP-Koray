@@ -126,8 +126,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
         </div>
         <div v-if="item.version !== item.currentVersion">
           <rich-text :html="item?.upgradeContent" class="feature-content" />
-          <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
-            :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+          <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
             :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
         </div>
       </div>
@@ -201,7 +200,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
 }
 
 .release-time {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   text-align: right;
   font-family: Inter;
   font-size: 12px;
@@ -211,7 +210,7 @@ async function handleCheckUpdate(item: ResourceUpdateMessage) {
 }
 
 .feature-content {
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

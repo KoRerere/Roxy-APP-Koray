@@ -93,8 +93,7 @@ defineExpose({
         </div>
       </div>
       <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
-          :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
         </div>
@@ -112,8 +111,7 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage"
-            :maxlength="20" class="w-full" @input="onInput" />
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage" :maxlength="20" class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/20
           </InputIcon>
@@ -159,7 +157,7 @@ defineExpose({
     .description {
       margin-top: var(--spacing-xs, 4px);
       align-self: stretch;
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: Inter;
       font-size: 12px;
       line-height: var(--Line-Height-text-xs, 16px);
@@ -167,7 +165,7 @@ defineExpose({
     }
 
     .choose-icon-desc {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       text-align: center;
       font-family: Inter;
       font-size: 12px;

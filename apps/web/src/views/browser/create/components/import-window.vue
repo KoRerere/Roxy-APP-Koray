@@ -120,9 +120,7 @@ function openTemplates(event: Event) {
 <template>
   <div>
     <div class="upload-title">
-      <i18n-t
-        :keypath="$t('请点击下载 {templateFile}，一次性最多导入 {maxCreateWindowCount} 个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })"
-        scope="global">
+      <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入 {maxCreateWindowCount} 个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })" scope="global">
         <template #templateFile>
           <span class="upload-title-link" @click="openTemplates">{{ $t('窗口导入模板') }}</span>
         </template>
@@ -141,11 +139,9 @@ function openTemplates(event: Event) {
           {{ fileData.size || $t('请将编辑好的文件在此处上传，仅支持 {type} 类型文件, 最大不超过 5MB.', { type: '.xlsx .txt' }) }}
         </div>
       </div>
-      <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined
-        severity="secondary" @click="chooseFile" />
+      <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
     </div>
-    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full mt-2" type="success" :title="$t('上传成功')"
-      :closable="false" />
+    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full mt-2" type="success" :title="$t('上传成功')" :closable="false" />
     <RxAlert v-if="fileAnalyzeError" class="w-full mt-2" type="error" @close="fileAnalyzeError = null">
       <template #content>
         <div class="whitespace-pre-wrap">
@@ -182,7 +178,7 @@ function openTemplates(event: Event) {
 
 .upload-notice {
   margin-top: var(--spacing-4xl, 24px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -202,7 +198,7 @@ function openTemplates(event: Event) {
   border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
   background: var(--Color-neutrals-50, #fafbfc);
 
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;

@@ -151,7 +151,7 @@ function handlePointClick(point: Point) {
 }
 
 .text {
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: normal;
 }

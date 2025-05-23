@@ -62,7 +62,7 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
   }
 
   &-desc {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     line-height: 20px;

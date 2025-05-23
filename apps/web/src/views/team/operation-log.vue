@@ -140,20 +140,16 @@ function upgradePlan() {
   <div class="flex flex-col w-full h-full operation-logs">
 
     <div class="flex flex-1 overflow-hidden">
-      <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns"
-        :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+      <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无匹配结果')"
-            :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')" />
+          <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无匹配结果')" :desc="$t('在当前条件下没有匹配结果。请使用其他过滤器再试一次。')" />
         </template>
 
         <template #location="{ data }">
           <div class="flex items-center gap-1 locationip ">
             <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
-            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
-              :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1"
-              :size="14" />
+            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" :size="14" />
           </div>
         </template>
       </RyTable>
@@ -171,7 +167,7 @@ function upgradePlan() {
 }
 
 .user-name {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -181,7 +177,7 @@ function upgradePlan() {
 <style lang="scss" scoped>
 .description {
   width: 100%;
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

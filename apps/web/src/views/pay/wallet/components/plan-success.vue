@@ -25,8 +25,7 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div
-        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
+      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}
@@ -102,7 +101,7 @@ function close() {
   }
 
   &-renew {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;

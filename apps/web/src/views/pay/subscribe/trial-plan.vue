@@ -124,8 +124,7 @@ async function onSubscribe() {
           <div class="flex flex-col items-center pt-4 pb-6 current" v-if="selectedPlan">
             <div>
               <span class="current-unit">$</span>
-              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange
-                class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
+              <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
             <div class="mt-1 current-desc">{{ $t('窗口单价（{value} 数量区间）', {
@@ -177,7 +176,7 @@ async function onSubscribe() {
 }
 
 .slider {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -248,7 +247,7 @@ async function onSubscribe() {
   }
 
   &-oldprice {
-    color: var(--colors-text-text-tertiary, #8A9093);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;

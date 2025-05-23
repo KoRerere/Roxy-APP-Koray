@@ -136,8 +136,7 @@ function close(isCancel: boolean) {
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress-value" cx="18" cy="18" r="14"
-                :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+              <circle class="progress-value" cx="18" cy="18" r="14" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </div>
           <div>
@@ -204,7 +203,7 @@ function close(isCancel: boolean) {
 }
 
 .qrcode-desc {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: normal;
 }
@@ -218,7 +217,7 @@ function close(isCancel: boolean) {
 }
 
 .remaining {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: normal;
 }
@@ -244,7 +243,7 @@ function close(isCancel: boolean) {
 }
 
 .help {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: 20px;
 

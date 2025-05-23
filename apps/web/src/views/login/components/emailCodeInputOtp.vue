@@ -114,8 +114,7 @@ onBeforeMount(() => {
 <template>
   <div class="container">
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
-    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')"
-      @click="toReEnter"></RxButton>
+    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter"></RxButton>
     <SignCardHeader :subTitle="$t('请检查您的邮箱')">
       <template #description>
         <div class="description">
@@ -139,8 +138,7 @@ onBeforeMount(() => {
       {{ countdown > 0 ? $t('{time} 秒后可重新获取', { time: `${countdown}` }) : $t('重新发送') }}
     </RxButton>
     <div class="tips">
-      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })"
-        scope="global">
+      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global">
         <template #tryAgain>
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>
@@ -173,7 +171,7 @@ onBeforeMount(() => {
 
   .description {
     align-self: stretch;
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -181,7 +179,7 @@ onBeforeMount(() => {
     line-height: var(--Line-Height-text-lg, 20px);
 
     .description-item {
-      color: var(--colors-text-text-tertiary, #8A9093);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -218,7 +216,7 @@ onBeforeMount(() => {
 }
 
 .email-text {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -235,7 +233,7 @@ onBeforeMount(() => {
 
 .tips {
   align-self: stretch;
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

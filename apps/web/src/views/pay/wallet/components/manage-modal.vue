@@ -169,8 +169,7 @@ function onClose() {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 w-185">
     <div class="relative flex items-center h-9 header">
       <span>{{ $t('管理订阅') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete"
-        @click="onClose">
+      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete" @click="onClose">
       </SvgIcon>
     </div>
     <div>
@@ -192,14 +191,11 @@ function onClose() {
     <div>
       <div class="py-4 record">{{ $t('账单记录') }}</div>
       <div class="flex h-80">
-        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false"
-          :show-table-header="false" :context-menu="false" :paginator="false">
+        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
           <template #status="{ data }">
-            <div class="flex items-center gap-2.5 status"
-              :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
+            <div class="flex items-center gap-2.5 status" :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
               <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined
-                severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
+              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
                 @click="onRepay(data)"></RxButton>
             </div>
           </template>
@@ -236,13 +232,13 @@ function onClose() {
 }
 
 .content {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 14px;
   line-height: 25.6px;
 }
 
 .help {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
@@ -282,7 +278,7 @@ function onClose() {
 }
 
 .desc {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 16px;
   line-height: normal;
 }

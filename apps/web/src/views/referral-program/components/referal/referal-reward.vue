@@ -121,12 +121,10 @@ function showWithdrawDialog() {
         <div class="referal-reward-overview-item">
           <div class="title">
             <span class="total" :style="item.style">
-              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0"
-                v-bind="item.totalNumberFlowProps" />
+              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0" v-bind="item.totalNumberFlowProps" />
             </span>
             <span v-if="item.todayCount" class="increase">
-              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0"
-                v-bind="item.todayNumberFlowProps" />
+              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0" v-bind="item.todayNumberFlowProps" />
             </span>
           </div>
           <div class="desc">
@@ -180,7 +178,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: center;
         gap: 4px;
-        color: var(--colors-text-text-tertiary, #8A9093);
+        color: var(--colors-text-text-tertiary, #575D60);
         font-family: Inter;
         font-size: 16px;
         font-style: normal;
@@ -258,7 +256,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: end;
         gap: 4px;
-        color: var(--colors-text-text-tertiary, #8A9093);
+        color: var(--colors-text-text-tertiary, #575D60);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;

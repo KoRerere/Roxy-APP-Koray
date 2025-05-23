@@ -87,13 +87,10 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'"
-              @click="handleKernelItemClick(item)" />
+            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
             <div class="flex-cc" @click="handleRemove($event, item)">
-              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon"
-                :class="{ 'disabled': item.status !== 'downloaded' }" />
+              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon" :class="{ 'disabled': item.status !== 'downloaded' }" />
             </div>
           </div>
         </div>
@@ -158,7 +155,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 .updater-content {
   padding-left: 3px;
   overflow: hidden;
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   text-overflow: ellipsis;
   font-family: Inter;
   font-size: 12px;

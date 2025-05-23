@@ -174,8 +174,7 @@ async function onSubscribe() {
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan"
-            v-model:count="selectedCount"></Profile>
+          <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
           <div class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
             <div class="title">{{ $t('订阅时长') }}</div>
             <Duration class="mt-4" v-model="selectedDuration" :price="subscribeOriginalPrice"></Duration>
@@ -211,8 +210,7 @@ async function onSubscribe() {
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe"></RxButton>
-                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
-                  scope="global">
+                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
                     }}</a>
@@ -253,7 +251,7 @@ async function onSubscribe() {
   }
 
   &-oldprice {
-    color: var(--colors-text-text-tertiary, #8A9093);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
@@ -284,7 +282,7 @@ async function onSubscribe() {
 }
 
 .terms {
-  color: var(--colors-text-text-tertiary, #8A9093);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;
