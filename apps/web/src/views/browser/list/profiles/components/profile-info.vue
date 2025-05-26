@@ -536,18 +536,15 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
   &:hover {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    background-color: rgba(255, 255, 255, 0.7);
+    background: var(--colors-background-bg-action-hover);
   }
 }
 
 .window-name-input {
   font-size: 12px;
-  border: 1px solid #12a3fc;
   border-radius: 4px;
   box-shadow: none !important;
-  background-color: #fff !important;
   line-height: 16px;
-  color: #171c1f;
   padding: 4px 8px;
   width: 160px;
 }

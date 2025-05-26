@@ -252,7 +252,7 @@ export const components = {
           color: '{surface.0}',
         },
         danger: {
-          background: '{red.500}',
+          background: '{dark.primitives.red.500}',
           color: '{surface.0}',
         },
         contrast: {
@@ -282,8 +282,8 @@ export const components = {
           color: '{orange.950}',
         },
         danger: {
-          background: '{red.400}',
-          color: '{red.950}',
+          background: '{dark.primitives.red.500}',
+          color: '{dark.primitives.netural.0}',
         },
         contrast: {
           background: '{surface.0}',
@@ -2992,7 +2992,7 @@ export const components = {
   },
   popover: {
     root: {
-      background: '{overlay.popover.background}',
+      background: '{colors.background.bg-overlay}',
       borderColor: '{overlay.popover.border.color}',
       color: '{overlay.popover.color}',
       borderRadius: '{overlay.popover.border.radius}',
