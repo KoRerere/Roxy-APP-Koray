@@ -142,7 +142,8 @@ watch(tableFilterData, (val) => {
   if (val.length > 1) {
     disabledRows()
     if (!props.mainControlWindowDirId) {
-      mainControlWindowDirId.value = val.find(n => n.$canUseSyncControl)?.dirId
+      const canUseWindows = val.filter(n => n.$canUseSyncControl)
+      mainControlWindowDirId.value = canUseWindows.some(n => n.dirId === mainControlWindowDirId.value) ? mainControlWindowDirId.value : canUseWindows[0].dirId
     }
   }
 })
