@@ -105,9 +105,7 @@ function handleClose(e: MouseEvent) {
     align-items: center;
     border-radius: var(--radius-sm, 4px);
     background: var(--primitives-neutrals-100, #f0f3f5);
-    border-radius: var(--radius-sm, 4px);
-    background: var(--primitives-neutrals-100, #f0f3f5);
-    color: var(--colors-text-text-inactive, #c7cdd1);
+    color: var(--colors-text-text-tertiary, #8A9093);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 34px;
@@ -115,6 +113,13 @@ function handleClose(e: MouseEvent) {
     font-weight: 700;
     line-height: 28px;
     /* 70% */
+  }
+}
+
+[data-theme="dark"] {
+  .emoji-preview {
+    background: var(--primitives-neutrals-100, #293038);
+    color: var(--colors-text-text-inactive, #c7cdd1);
   }
 }
 </style>

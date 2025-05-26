@@ -155,17 +155,19 @@ onBeforeMount(() => {
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')"
+            @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')"
+                @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
-              <div class="flex-1">
+              <div class="flex-1 text-[var(--colors-text-text-secondary)]">
                 {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
               </div>
             </div>
@@ -188,7 +190,8 @@ onBeforeMount(() => {
               </div>
               <inputNumberGroup :inputs="inputs" />
             </div>
-            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false"
+              :title="$t('端口已被占用')"
               :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
@@ -256,7 +259,7 @@ onBeforeMount(() => {
       padding: 12px;
       gap: 8px;
       border-radius: var(--radius-md, 6px);
-      background: var(--primitives-yellow-100, #fff5e6);
+      background: var(--component-alert-bg-warn, #653B01);
       color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
@@ -283,7 +286,7 @@ onBeforeMount(() => {
       }
 
       &-desc {
-        color: var(--primitives-neutrals-300, #c7cdd1);
+        color: var(--colors-text-text-inactive, #48555B);
         font-family: Inter;
         font-size: 12px;
         line-height: 16px;
@@ -343,7 +346,7 @@ onBeforeMount(() => {
 
     &-content {
       margin-top: var(--spacing-xl, 12px);
-      color: var(--colors-text-text-secondary, #b2b6b8);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
