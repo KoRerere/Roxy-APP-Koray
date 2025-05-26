@@ -224,7 +224,7 @@ function saveSelected() {
 }
 
 .ip-type {
-  color: var(--colors-text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-tertiary, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;

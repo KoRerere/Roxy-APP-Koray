@@ -362,9 +362,11 @@ onMounted(() => {
   <!-- 滑动条容器 -->
   <div class="relative w-full select-none">
     <!-- 滑动轨道 -->
-    <div ref="slider" class="relative h-5 rounded-full cursor-pointer bg-gradient-to-r from-[#12A3FC] to-[#EC51F7]" @mousedown="handleMouseDown">
+    <div ref="slider" class="relative h-5 rounded-full cursor-pointer bg-gradient-to-r from-[#12A3FC] to-[#EC51F7]"
+      @mousedown="handleMouseDown">
       <!-- 未选中部分的轨道 -->
-      <div class="absolute top-0 right-0 h-full rounded-r-full bg-[#F0F3F5]" :style="{ width: `calc(${100 - currentPosition}% - 9px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
+      <div class="absolute top-0 right-0 h-full rounded-r-full bg-[#F0F3F5]"
+        :style="{ width: `calc(${100 - currentPosition}% - 9px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
 
       <!-- 刻度标记和标签 -->
       <template v-for="{ value, position } in labelPositions" :key="value">
@@ -382,7 +384,8 @@ onMounted(() => {
       }" :data-count="$t('{count} 个窗口', { count: currentCount })">
         <div class="cursor-grab active:cursor-grabbing thumb-tooltip" />
         <!-- Thumb Extra -->
-        <div ref="thumbex" class="absolute top-15" :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">
+        <div ref="thumbex" class="absolute top-15"
+          :style="[thumbExtraPosition, { transition: isDragging ? 'none' : 'all 0.3s ease' }]">
           <slot name="thumb-extra" />
         </div>
       </div>
@@ -390,8 +393,10 @@ onMounted(() => {
 
     <!-- 底部数值标签 -->
     <div class="relative h-5 mt-2">
-      <div v-for="{ value, position } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer text-[#7C8387] hover:text-[#EC51F7]"
-        :class="{ 'text-[#EC51F7] font-semibold': value === selectedValue }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">
+      <div v-for="{ value, position } in labelPositions" :key="value"
+        class="absolute text-sm transform -translate-x-1/2 cursor-pointer text-[#7C8387] hover:text-[#EC51F7]"
+        :class="{ 'text-[var(--colors-text-text-tertiary)] font-semibold': value === selectedValue }"
+        :style="{ left: `${position}%` }" @click="handleLabelClick(value)">
         {{ formatNumber(value) }}
       </div>
     </div>

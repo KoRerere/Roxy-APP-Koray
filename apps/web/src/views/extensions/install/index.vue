@@ -411,7 +411,7 @@ defineExpose({
         <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
         <span v-else>
           <span>{{ $t('团队') }}</span>
-          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
         </span>
       </div>
     </template>
@@ -436,7 +436,7 @@ defineExpose({
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
         <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
       </div>
       <div v-else class="update-info">
         --
@@ -482,13 +482,13 @@ defineExpose({
     font-weight: 500;
 
     &-name {
-      color: var(--colors-text-text-primary, #fafafa);
+      color: var(--colors-text-text-primary);
       font-family: Inter;
       font-size: 13px;
     }
 
     &-version {
-      color: var(--colors-text-text-tertiary, #575D60);
+      color: var(--colors-text-text-tertiary);
       font-family: 'JetBrains Mono';
       font-size: 12px;
     }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useThemeStore } from '/@/stores/theme'
+
 interface Props {
   title: string
   icon?: string
@@ -7,7 +9,11 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, import.meta.url).href)
+const themeStore = useThemeStore()
+
+const imgSrc = computed(() => {
+  return new URL(`../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/${props.icon}`, import.meta.url).href
+})
 </script>
 
 <template>

@@ -21,20 +21,16 @@ function toggle(event: Event) {
   </div>
 
   <Popover ref="op" :pt="{ content: { class: $style['popper-content'] } }">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 min-w-80">
       <div>
         <div class="member-list">
           <div v-for="member in members" :key="member.email" class="member-item">
             <RxAvatar :avatar="member.avatar" :name="member.userName?.slice(0, 2)" :color="member.avatarColor" :size="32" :font-size="16" />
-            <div>
-              <span class="font-medium">{{ member.userName }}</span>
-              <div class="text-sm text-surface-500 dark:text-surface-400">
-                {{ member.email }}
-              </div>
+            <div class="flex flex-col gap-1">
+              <div class="member-name">{{ member.userName }}</div>
+              <div class="member-email">{{ member.email }}</div>
             </div>
-            <div class="flex items-center gap-2 text-surface-500 dark:text-surface-400 ml-auto text-sm flex-shrink-0">
-              <span>{{ roleLabelMap[member.role as keyof typeof roleLabelMap] }}</span>
-            </div>
+            <div class="flex items-center gap-2 ml-auto text-sm flex-shrink-0 member-role">{{ roleLabelMap[member.role as keyof typeof roleLabelMap] }}</div>
           </div>
         </div>
       </div>
@@ -81,7 +77,6 @@ function toggle(event: Event) {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--colors-background-bg-app, #fff);
   color: var(--colors-text-text-brand, #12a3fc);
   text-align: center;
   font-family: Inter;
@@ -110,6 +105,19 @@ function toggle(event: Event) {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--colors-background-bg-app, #fff);
+}
+
+.member-name {
+  color: var(--colors-text-text-primary, #FAFAFA);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.member-email,
+.member-role {
+  color: var(--colors-text-text-secondary, #B2B6B8);
+  font-size: 12px;
+  line-height: 16px;
 }
 </style>

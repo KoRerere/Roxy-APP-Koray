@@ -91,4 +91,19 @@ emitter.on('kickedOut', (params) => {
   font-weight: 600;
   line-height: var(--Line-Height-text-xs, 16px);
 }
+
+.p-dialog-mask.p-overlay-mask {
+  background: var(--colors-background-bg-mask);
+  animation: dialog-mask-animation 0.15s forwards;
+}
+
+@keyframes dialog-mask-animation {
+  0% {
+    background: transparent;
+  }
+
+  100% {
+    background: var(--colors-background-bg-mask);
+  }
+}
 </style>

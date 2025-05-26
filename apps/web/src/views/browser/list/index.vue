@@ -271,8 +271,8 @@ async function hidePopover() {
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1 suffix">
-        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs"
-          :key="suffixItem.id" :class="{ active: suffixItem.id === active }" @click="switchTab(suffixItem.id, $event)">
+        <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
+          @click="switchTab(suffixItem.id, $event)">
           <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
           <span>{{ suffixItem.label }}</span>
         </div>
@@ -281,8 +281,7 @@ async function hidePopover() {
       <div v-if="!role.isViewer">
         <Divider layout="vertical" class="!mx-[4px] h-[16px]" />
       </div>
-      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs"
-        icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
+      <RxButton v-if="!role.isViewer" v-tooltip.top="{ value: $t('标签管理') }" text severity="secondary" size="xs" icon="base/rx_ic_tag" @click="openManageCategory"></RxButton>
     </div>
     <div class="flex flex-1 overflow-hidden">
       <component v-if="currentSuffixTab.visible" :is="currentSuffixTab.component" />
@@ -321,7 +320,7 @@ async function hidePopover() {
   padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
   gap: var(--spacing-lg, 8px);
   min-width: 260px;
-  color: var(--primitives-neutrals-900, #171c1f);
+  color: var(--colors-text-text-primary);
   font-size: 13px;
   line-height: normal;
 }
