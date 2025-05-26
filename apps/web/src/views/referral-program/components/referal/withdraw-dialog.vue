@@ -163,14 +163,17 @@ function handleBlur(event: InputNumberBlurEvent) {
       <div class="withdrawal-input">
         <IconField>
           <InputIcon class="text-[14px]">$</InputIcon>
-          <InputNumber v-model="form.amount" :minFractionDigits="0" :maxFractionDigits="5" :min="0" :max="promotionInfo.withdrawAmount" fluid :useGrouping="false" input-class="!w-[150px]"
+          <InputNumber v-model="form.amount" :minFractionDigits="0" :maxFractionDigits="5" :min="0"
+            :max="promotionInfo.withdrawAmount" fluid :useGrouping="false" input-class="!w-[150px]"
             @blur="handleBlur" />
         </IconField>
         <template v-if="form.withdraw_method === PayWay.Balance">
-          <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
+          <RxButton size="xs" :label="$t('全部提现')" :disabled="!promotionInfo.withdrawAmount" outlined
+            severity="secondary" @click="form.amount = promotionInfo.withdrawAmount" />
         </template>
         <template v-else>
-          <rx-amount-quick-check :presets="[50, 100, 200, 300]" :disabled="isAmountLessThan50" @select="handleAmountQuickCheck($event)" />
+          <rx-amount-quick-check :presets="[50, 100, 200, 300]" :disabled="isAmountLessThan50"
+            @select="handleAmountQuickCheck($event)" />
         </template>
       </div>
     </div>
@@ -192,7 +195,8 @@ function handleBlur(event: InputNumberBlurEvent) {
         </div>
       </template>
     </div>
-    <RxButton severity="secondary" size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled" @click="handleConfirmWithdrawal" />
+    <RxButton severity="secondary" size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled"
+      @click="handleConfirmWithdrawal" />
   </div>
 </template>
 
@@ -237,14 +241,7 @@ function handleBlur(event: InputNumberBlurEvent) {
     align-items: center;
     gap: 16px;
 
-    .desc {
-      color: var(--colors-text-text-tertiary, #575D60);
-      font-family: Inter;
-      font-size: 14px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: normal;
-    }
+
   }
 
   .usdt-info {
@@ -263,6 +260,15 @@ function handleBlur(event: InputNumberBlurEvent) {
       font-weight: 400;
       line-height: normal;
     }
+  }
+
+  .desc {
+    color: var(--colors-text-text-tertiary, #575D60);
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
   }
 }
 </style>

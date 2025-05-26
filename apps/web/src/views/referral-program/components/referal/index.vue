@@ -39,4 +39,8 @@ const { promotionInfo } = defineProps<{
     margin: 20px auto 0 auto;
   }
 }
+
+[data-theme="dark"] .reward {
+  background-image: url('/images/referral-program/referal-reward-bg-dark.png');
+}
 </style>

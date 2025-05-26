@@ -181,7 +181,7 @@ function isLocked(linkStatus: number) {
     align-self: stretch;
     flex: 3;
     padding-left: 27px;
-    border-left: 1px solid #E0E0E0;
+    border-left: 1px solid var(--colors-border-border-inactive, #293038);
 
     .row {
       display: flex;

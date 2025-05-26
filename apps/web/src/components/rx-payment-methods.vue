@@ -95,7 +95,7 @@ function handleClick(method: PayWay) {
     gap: 6px;
     height: 86px;
     border: 2px solid transparent;
-    box-shadow: inset 0px 0px 0px 1px var(#C7CDD1, #C7CDD1);
+    box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base, #48555B);
     border-radius: 8px;
     cursor: pointer;
     color: var(--colors-text-text-primary, #FAFAFA);
@@ -108,11 +108,15 @@ function handleClick(method: PayWay) {
     }
 
     &:not(.disabled).active {
-      border: 2px solid var(--primitives-blue-500, #12A3FC);
+      border: 2px solid var(--colors-border-border-brand, #11A3FD);
       background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
       color: var(--pattern-sidenav-text-active, #3FB6FD);
       font-weight: 600;
       box-shadow: none;
+    }
+
+    [data-theme="dark"] &:not(.disabled).active {
+      background: linear-gradient(180deg, var(--pattern-pay-gradient-selected-start, #013D65) 0%, var(--pattern-pay-gradient-selected-end, #293038) 100%);
     }
 
     &-discount {

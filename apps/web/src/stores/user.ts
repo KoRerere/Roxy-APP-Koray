@@ -74,7 +74,7 @@ export const useUserStore = defineStore(
       }
       return {
         text: $t("普通用户"),
-        color: "#171C1F",
+        color: "var(--colors-text-text-primary)",
       };
     });
 
