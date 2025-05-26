@@ -52,6 +52,7 @@ const allowedKeys = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 
 
 function handleKeydown(event: KeyboardEvent) {
   event.preventDefault();
+  invalid.value = false;
 
   if (event.metaKey || (event.ctrlKey && isWindows)) {
     const keyCombination: string[] = [];
@@ -62,7 +63,6 @@ function handleKeydown(event: KeyboardEvent) {
     // if (event.altKey) keyCombination.push('Alt');
 
     const keyName = event.key
-    console.log('keyName', keyName);
     if (!modifierKeys.includes(keyName) && allowedKeys.includes(upperFirst(keyName))) {
       keyCombination.push(upperFirst(keyName));
     };
@@ -107,12 +107,18 @@ function handleBlur() {
 }
 
 function handleChange() {
-  invalid.value = true;
+  invalid.value = false;
 }
 
 onMounted(async () => {
+  // 接口可能无法判断这些快捷键是否可用。这里加一个黑名单
+  const blacklist = ['A'].map(k => 'CommandOrControl+' + k)
   try {
     const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+    if (blacklist.includes(keyboard)) {
+      invalid.value = true;
+      return;
+    }
     const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
     invalid.value = !isKeyboard
   } catch (error) {
