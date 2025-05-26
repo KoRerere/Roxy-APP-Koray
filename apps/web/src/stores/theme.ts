@@ -5,22 +5,23 @@ import { API } from '/@/api'
 import { isMainWindow, isProd } from '/@/utils'
 import { SWITCH_THEME_CHANNEL_NAME } from '/@/constants/channel'
 import { debounce } from 'es-toolkit'
+import { $t } from '/@/locales'
 
 type ColorScheme = 'light' | 'dark' | 'system'
 
 export const colorSchemeList = [
   {
-    label: '跟随系统',
+    label: $t('跟随系统'),
     value: 'system',
     icon: "base/rx_ic_doc_api",
   },
   {
-    label: '浅色模式',
+    label: $t('浅色模式'),
     value: 'light',
     icon: "base/rx_ic_doc_api",
   },
   {
-    label: '深色模式',
+    label: $t('深色模式'),
     value: 'dark',
     icon: "base/rx_ic_doc_api",
   }

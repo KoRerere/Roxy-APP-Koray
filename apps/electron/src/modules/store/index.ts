@@ -67,6 +67,8 @@ export interface StoreType {
   ipChangeModal?: boolean
   /** 是否显示新功能提示 */
   showNewFeatureTips?: boolean
+  /** 浏览器主题 */
+  browserColorScheme?: 'light' | 'dark' | 'system'
 }
 
 /** 全局书签 */
@@ -105,6 +107,7 @@ const defaultValues: StoreType = {
   googleLoginEnable: false,
   ipChangeModal: false,
   showNewFeatureTips: true,
+  browserColorScheme: 'system',
 }
 
 const _store: StoreType = {

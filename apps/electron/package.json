@@ -65,7 +65,7 @@
     "node-2fa": "^2.0.3",
     "node-machine-id": "^1.1.12",
     "portfinder": "^1.0.37",
-    "puppeteer-core": "24.8.1",
+    "rebrowser-puppeteer-core": "24.8.1",
     "socks-proxy-agent": "^8.0.5",
     "systeminformation": "^5.27.1",
     "terser-webpack-plugin": "^5.3.14",

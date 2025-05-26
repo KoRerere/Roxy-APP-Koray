@@ -1,8 +1,8 @@
-import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from 'rebrowser-puppeteer-core'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import puppeteer from 'puppeteer-core'
+import puppeteer from 'rebrowser-puppeteer-core'
 import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
 import { chromeCoreManager } from '/@/modules/browser'
@@ -113,6 +113,8 @@ export class BeforeLaunchTask {
     const launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', launchArgs)
 
+    // 更新浏览器偏好设置
+    await this.updateBrowserPreferences()
     // 写入登录信息
     await this.writeLoginData()
     // 修改浏览器 Local State 文件
@@ -260,7 +262,6 @@ export class BeforeLaunchTask {
         clearInterval(timer)
       })
       if (plugins.length) {
-        await this.updateBrowserPreferences()
         args.push(`--load-extension=${plugins.join(',')}`)
       }
     }
@@ -343,12 +344,6 @@ export class BeforeLaunchTask {
     const { preferencesPath, winInfo } = this.browserItem
     const { usePluginList, workspaceId } = winInfo
 
-    if (!usePluginList?.length) {
-      return
-    }
-
-    console.log('usePluginList', usePluginList)
-
     try {
       const isExist = await fileExists(preferencesPath)
 
@@ -358,23 +353,37 @@ export class BeforeLaunchTask {
       }
 
       const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
-      const pinnedExtensions = preferences.extensions?.pinned_extensions || []
-      console.log('old pinnedExtensions', pinnedExtensions)
-      const extensionManager = new ExtensionManager({ workspaceId })
-      console.log('extensionManager.extensionDir', workspaceId, extensionManager.extensionDir)
-      for (const extItem of usePluginList) {
-        const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
-        if (extItem.fixedPlugin === 'unpin') {
-          const index = pinnedExtensions.findIndex(item => item === extID)
-          if (index !== -1) {
-            pinnedExtensions.splice(index, 1)
+
+      if (usePluginList?.length) {
+        console.log('usePluginList', usePluginList)
+
+        const pinnedExtensions = preferences.extensions?.pinned_extensions || []
+        console.log('old pinnedExtensions', pinnedExtensions)
+        const extensionManager = new ExtensionManager({ workspaceId })
+        console.log('extensionManager.extensionDir', workspaceId, extensionManager.extensionDir)
+        for (const extItem of usePluginList) {
+          const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
+          if (extItem.fixedPlugin === 'unpin') {
+            const index = pinnedExtensions.findIndex(item => item === extID)
+            if (index !== -1) {
+              pinnedExtensions.splice(index, 1)
+            }
+          } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
+            pinnedExtensions.push(extID)
           }
-        } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
-          pinnedExtensions.push(extID)
         }
+        console.log('new pinnedExtensions', pinnedExtensions)
+        preferences.extensions.pinned_extensions = pinnedExtensions
       }
-      console.log('new pinnedExtensions', pinnedExtensions)
-      preferences.extensions.pinned_extensions = pinnedExtensions
+
+      preferences.browser ??= {}
+      preferences.browser.theme ??= {}
+      // 0: 自动, 1: 浅色, 2: 深色
+      preferences.browser.theme.color_scheme2 = {
+        system: 0,
+        light: 1,
+        dark: 2,
+      }[store.browserColorScheme || 'system']
       await writeFile(preferencesPath, JSON.stringify(preferences))
     } catch (error) {
       console.error('更新浏览器偏好设置失败', error)

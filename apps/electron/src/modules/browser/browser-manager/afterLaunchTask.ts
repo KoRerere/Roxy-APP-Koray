@@ -1,4 +1,4 @@
-import type { Browser, Protocol } from 'puppeteer-core'
+import type { Browser, Protocol } from 'rebrowser-puppeteer-core'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 import { SyncControlUtil } from '/@/modules/sync-control/util'

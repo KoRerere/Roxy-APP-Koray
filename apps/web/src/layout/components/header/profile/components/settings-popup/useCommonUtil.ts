@@ -41,6 +41,7 @@ export function useCommonUtil() {
       onlyErrorToast(code, msg);
       if (code === 0) {
         electronAPI.send("app:saveSoftConfig", { [item.name as any]: isProxy(value) ? toRaw(value) : value });
+        console.log('saveUserConfig', item.name, value)
         updateUserConfig();
       }
     }
