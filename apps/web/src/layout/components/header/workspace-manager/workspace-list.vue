@@ -214,7 +214,7 @@ function onConfig(event: MouseEvent, item: Data) {
         padding: var(--spacing-xs, 2px) var(--spacing-none, 0px);
         align-items: center;
         gap: var(--spacing-sm, 4px);
-        color: var(--primitives-yellow-800, #db8d1a);
+        color: var(--color-yellow-400, #DB8D1A);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -232,7 +232,7 @@ function onConfig(event: MouseEvent, item: Data) {
         display: flex;
         align-items: center;
         gap: var(--spacing-lg, 8px);
-        color: var(--colors-text-text-inactive, #A3A9AD);
+        color: var(--colors-text-text-tertiary, #A3A9AD);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
