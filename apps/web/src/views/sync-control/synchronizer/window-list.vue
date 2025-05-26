@@ -342,7 +342,7 @@ electronAPI.on('syncControl:start', startSync)
 .p-datatable-table-container {
   border-radius: 8px;
   overflow: hidden;
-  background-color: white;
+  background: var(--colors-background-bg-page, #05101A);
 
   td[data-pc-section="emptymessagecell"] {
     border: none;
@@ -359,7 +359,7 @@ electronAPI.on('syncControl:start', startSync)
       position: absolute;
       width: 100%;
       height: 20px;
-      background-color: white;
+      background: var(--colors-background-bg-page, #05101A);
       top: -20px;
     }
 
@@ -410,7 +410,7 @@ electronAPI.on('syncControl:start', startSync)
     padding: 12px;
     padding-bottom: 0;
     border-bottom: 0;
-    background-color: white;
+    background-color: var(--colors-background-bg-page, #05101A);
 
     .p-multiselect-label {
       height: 100%;

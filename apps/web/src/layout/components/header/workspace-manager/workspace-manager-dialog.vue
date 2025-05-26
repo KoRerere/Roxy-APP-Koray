@@ -91,7 +91,7 @@ async function showCreateWorkspaceDialog() {
       Reflect.deleteProperty(workspaceForm.value, 'maxWindowCount')
       const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate(workspaceForm.value)
       if (code === 0) {
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('创建成功') })
+        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('创建成功') })
         userStore.fetchUserInfo()
         resetWorkspaceForm()
         await workspaceStore.getWorkspaceList()
