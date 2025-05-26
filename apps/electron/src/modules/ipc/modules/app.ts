@@ -1,4 +1,4 @@
-import { BrowserWindow, type Config, app, screen, shell } from "electron";
+import { BrowserWindow, type Config, app, nativeTheme, shell } from "electron";
 import { appConfig } from "/@/constants";
 import { getMainWindow } from "/@/modules/app/mainWindow";
 import { chromeCoreManager } from "/@/modules/browser";
@@ -17,6 +17,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取应用版本号 */
   ipcMain.on("app:getAppVersion", (event) => {
     return app.getVersion();
+  });
+
+  /** 设置系统主题 */
+  ipcMain.on("app:setSystemTheme", (event, theme) => {
+    nativeTheme.themeSource = theme
   });
 
   /** openapi 端口或开关变的时候，需要重启服务 */

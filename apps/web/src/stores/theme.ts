@@ -38,6 +38,9 @@ export const useThemeStore = defineStore('theme', () => {
     if (userStore.token) {
       API.base.userSetUserConfigCreate({ colorScheme: theme.value });
     }
+    if (isMainWindow) {
+      electronAPI.send('app:setSystemTheme', theme.value)
+    }
   }
 
   watch(() => userStore.userConfig?.colorScheme, () => {
