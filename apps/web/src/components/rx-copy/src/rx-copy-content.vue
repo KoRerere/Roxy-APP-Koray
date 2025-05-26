@@ -35,8 +35,7 @@ async function onCopy() {
         https://roxybrowser.com/invite?code=13122341233
       </template>
     </div>
-    <RxButton v-if="!mask" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')"
-      @click.stop="onCopy" />
+    <RxButton v-if="!mask" class="flex-shrink-0 copy-btn" text size="xxs" icon="base/rx_ic_copy" :label="$t('复制')" @click.stop="onCopy" />
   </div>
 </template>
 
@@ -52,7 +51,7 @@ async function onCopy() {
   gap: var(--spacing-xl, 12px);
   border-radius: var(--radius-md, 6px);
   border: 1px solid var(--primitives-neutrals-900, #171C1F);
-  background: var(--primitives-neutrals-800, #252A2E);
+  background: var(--pattern-editor-bg, #293038);
   min-height: 30px;
   overflow: hidden;
 

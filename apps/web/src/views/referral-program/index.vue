@@ -33,7 +33,7 @@ const tabs = [
 const defaultTab = tabs.at(0)!
 const activeTabValue = ref(defaultTab.value)
 
-const promotionInfo = ref<UserGetPromotionInfoListData['data']>({})
+const promotionInfo = ref<UserGetPromotionInfoListData['data']>({} as any)
 
 const activeTab = computed(() => {
   return tabs.find(n => n.value === activeTabValue.value)

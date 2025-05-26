@@ -61,7 +61,7 @@ function onBeforeMinus(value: number) {
 }
 
 function showIllustrate(event: Event) {
-  popoverRef.value!.getRef().toggle(event)
+  popoverRef.value!.getRef()?.toggle(event)
 }
 
 </script>
@@ -90,7 +90,7 @@ function showIllustrate(event: Event) {
     <div class="flex items-center justify-between py-8">
       <div class="flex items-center gap-1.5">
         <span class="sub-title">{{ $t('窗口数量') }}</span>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="#C7CDD1" @click="showIllustrate"></SvgIcon>
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate"></SvgIcon>
       </div>
       <RxStep size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
         :beforeMinus="onBeforeMinus" @change="onChangeCount" @update:modelValue="onUpdate"></RxStep>
@@ -115,7 +115,7 @@ function showIllustrate(event: Event) {
 }
 
 .title {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-secondary);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -147,7 +147,7 @@ function showIllustrate(event: Event) {
   }
 
   &-desc {
-    color: var(--colors-text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-secondary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

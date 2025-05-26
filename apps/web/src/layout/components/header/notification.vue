@@ -174,13 +174,11 @@ function showAcceptInvitationDialog(item: Message) {
           <div :class="message.title">
             {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')"
-            @click="markAllAsRead" />
+          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-              class="flex flex-1 justify-center items-center gap-1.5">
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
@@ -188,11 +186,9 @@ function showAcceptInvitationDialog(item: Message) {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex"
-                  :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
+                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2"
-                      :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
                       :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div class="w-full">
@@ -201,8 +197,7 @@ function showAcceptInvitationDialog(item: Message) {
                       <span>{{ item.createTime }}</span>
                       <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{
                         $t('查看详情') }}</span>
-                      <span v-if="item.windowTransferNo" :class="message['check-detail']"
-                        @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
+                      <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
                   </div>
                 </div>
@@ -252,7 +247,7 @@ function showAcceptInvitationDialog(item: Message) {
   align-items: flex-start;
   gap: 10px;
   border-bottom: 1px solid var(--colors-border-border-subtle, #e4e8eb);
-  background: var(--colors-background-bg-app, #fff);
+  background: var(--colors-background-bg-overlay, #293038);
 
   &:last-of-type {
     border-bottom: none;
@@ -260,7 +255,8 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .noRead {
-  background: var(--primitives-blue-100, #e8f5fc);
+  background: var(--component-table-bg-selected, #002742);
+  border-color: var(--component-table-border-selected);
 }
 
 .no-message {
@@ -288,7 +284,7 @@ function showAcceptInvitationDialog(item: Message) {
 }
 
 .value {
-  color: var(--colors-text-text-secondary, #b2b6b8);
+  color: var(--colors-text-text-primary, #b2b6b8);
   font-size: 14px;
   line-height: var(--Line-Height-text-md, 20px);
 }
@@ -311,7 +307,7 @@ function showAcceptInvitationDialog(item: Message) {
 
 .time {
   margin-top: 4px;
-  color: var(--colors-text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-secondary, #a3a9ad);
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }

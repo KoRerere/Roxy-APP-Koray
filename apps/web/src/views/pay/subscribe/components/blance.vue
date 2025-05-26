@@ -66,8 +66,7 @@ function onCharge() {
       <template #content>
         <div class="w-full flex items-center justify-between">
           <div class="message">{{ $t('余额不足，无法完成此订单') }}</div>
-          <RxButton size="xxs" severity="secondary" outlined icon="base/rx_ic_credit_card" :label="$t('充值金额')"
-            @click="onCharge"></RxButton>
+          <RxButton size="xxs" severity="secondary" outlined icon="base/rx_ic_credit_card" :label="$t('充值金额')" @click="onCharge"></RxButton>
         </div>
       </template>
     </RxAlert>
@@ -89,19 +88,19 @@ function onCharge() {
 }
 
 .amount {
-  color: var(--colors-text-text-primary, #FAFAFA);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 16px;
   line-height: 20px;
 
   &-value {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary);
     font-size: 16px;
     font-weight: 600;
     line-height: normal;
 
     &.amount-warning {
-      color: var(--colors-text-text-inactive, #A3A9AD);
+      color: var(--colors-text-text-tertiary);
     }
   }
 }

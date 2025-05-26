@@ -17,7 +17,7 @@ const { promotionInfo } = defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .referal {
   width: 100%;
   display: flex;
@@ -26,7 +26,7 @@ const { promotionInfo } = defineProps<{
 
   .reward {
     background-image: url('/images/referral-program/referal-reward-bg.png');
-    background-position: right -320px bottom -50px;
+    background-position: right -260px bottom -20px;
     background-size: 100% 100%;
     background-repeat: no-repeat;
     padding-bottom: 20px;

@@ -77,9 +77,7 @@ function isLocked(linkStatus: number) {
     </aside>
     <div class="content">
       <div class="row">
-        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn"
-          :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false"
-          class="w-full" />
+        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn" :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false" class="w-full" />
         <div class="title">{{ $t('推广链接') }}</div>
         <RxCopyContent :text="referralLink" :mask="isLocked(activeMenu.linkStatus)" />
         <div class="benefit">
@@ -110,12 +108,10 @@ function isLocked(linkStatus: number) {
         </div>
         <div class="banner-preview-container">
           <div class="banner-preview">
-            <Image :src="currentBannerImage.image_1x" alt="Image" preview
-              :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
+            <Image :src="currentBannerImage.image_1x" alt="Image" preview :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
               <template #original="slotProps">
-                <img :src="currentBannerImage.image_1x"
-                  :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
-                  :style="slotProps.style" @click.stop="slotProps.previewCallback" />
+                <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" :style="slotProps.style"
+                  @click.stop="slotProps.previewCallback" />
               </template>
             </Image>
           </div>
@@ -273,7 +269,7 @@ function isLocked(linkStatus: number) {
       flex: 1;
       height: 100%;
       border-radius: 4px;
-      background: var(--primitives-neutrals-100, #F0F3F5);
+      background: var(--colors-background-bg-block, #293038);
 
       :deep(.p-image) {
         width: 100%;

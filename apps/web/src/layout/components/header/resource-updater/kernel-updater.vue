@@ -87,13 +87,10 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)"
-              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
-              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'"
-              @click="handleKernelItemClick(item)" />
+            <RxButton severity="secondary" outlined size="xxs" :label="formatKernelBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_check' : 'rx_ic_download'}`"
+              :loading="item.status === 'downloading'" :disabled="item.status === 'downloaded'" @click="handleKernelItemClick(item)" />
             <div class="flex-cc cursor-pointer" @click="handleRemove($event, item)">
-              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon"
-                :class="{ 'disabled': item.status !== 'downloaded' }" />
+              <RxSvgIcon name="base/rx_ic_bin_1" class="remove-icon" :class="{ 'disabled': item.status !== 'downloaded' }" />
             </div>
           </div>
         </div>
@@ -125,7 +122,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
+  border-bottom: 0.5px solid var(--colors-border-border-base);
 
   &.collapsed {
     gap: var(--spacing-xl, 12px);

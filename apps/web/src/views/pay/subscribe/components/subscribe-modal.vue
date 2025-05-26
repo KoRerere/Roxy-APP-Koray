@@ -6,7 +6,7 @@ import { discountCalculate } from '../util'
 import { useUserStore } from '/@/stores/user';
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import RenewalTerms from '/@/views/pay/subscribe/components/renewal-terms.vue'
-import Blance from '/@/views/pay/subscribe/components/blance.vue'
+import Balance from '/@/views/pay/subscribe/components/blance.vue'
 
 const dialogRef = inject<any>('dialogRef')
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -137,9 +137,8 @@ function close(isCancel: boolean) {
     <ItemBlock v-if="showAutoRebuy" :title="$t('订阅选项')">
       <RenewalTerms v-model="isAuto" :discount-amount="autoRenewAmount"></RenewalTerms>
     </ItemBlock>
-    <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="calcResult.amount"
-      @recharge:failed="close(true)"></Blance>
-    <div class="w-full border-0 border-t-0.5 border-dashed border-[#C7CDD1]"></div>
+    <Balance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="calcResult.amount" @recharge:failed="close(true)"></Balance>
+    <div class="w-full border-0 border-t-0.5 border-dashed border-[var(--colors-border-border-base)]"></div>
     <div class="flex flex-col gap-3 total">
       <div class="flex justify-between items-center" v-if="calcResult.diffAmount > 0">
         <div class="flex-1 total-label">{{ $t('订阅原价') }}</div>
@@ -151,8 +150,7 @@ function close(isCancel: boolean) {
           <div class="total-amount">{{ currency(calcResult.amount).format() }}</div>
           <div class="flex items-center justify-end gap-1 total-diff" v-if="calcResult.diffAmount > 0">
             <span>{{ $t('节省 {value}', { value: currency(calcResult.diffAmount).format() }) }}</span>
-            <SvgIcon v-tooltip="{ value: discountTooltip, showDelay: 300 }" class="cursor-pointer"
-              name="base/rx_ic_question" size="14" color="#C7CDD1"></SvgIcon>
+            <SvgIcon v-tooltip="{ value: discountTooltip, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_question" size="14" color="#C7CDD1"></SvgIcon>
           </div>
         </div>
       </div>
@@ -183,7 +181,7 @@ function close(isCancel: boolean) {
   }
 
   &-original {
-    color: var(--colors-text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-tertiary, #A3A9AD);
     font-size: 16px;
     line-height: normal;
     text-decoration: line-through;

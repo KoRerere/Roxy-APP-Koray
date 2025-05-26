@@ -69,11 +69,9 @@ function onSelected(item: Duration) {
   <div class="flex gap-3">
     <img v-if="loading" class="block mx-auto w-8 h-8 loading-circle" src="/@/assets/images/status/loading.png">
     <template v-else>
-      <div class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration"
-        :class="{ active: selectedDuration?.key === item.key }" v-for="(item, index) in durationList" :key="index"
+      <div class="relative flex-1 py-2.5 px-3 rounded-lg select-none cursor-pointer duration" :class="{ active: selectedDuration?.key === item.key }" v-for="(item, index) in durationList" :key="index"
         @click="onSelected(item)">
-        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount"
-          :class="item.labelClass">{{ item.label }}</div>
+        <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount" :class="item.labelClass">{{ item.label }}</div>
         <div class="duration-text">{{ item.title }}</div>
         <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{
           currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
@@ -85,7 +83,8 @@ function onSelected(item: Duration) {
 <style lang="scss" scoped>
 .duration {
   border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(#C7CDD1, #C7CDD1);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
 
   &:last-child {
     .duration-discount {
@@ -95,9 +94,13 @@ function onSelected(item: Duration) {
   }
 
   &.active {
-    border: 2px solid var(--primitives-blue-500, #12A3FC);
-    background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
+    border: 2px solid var(--colors-border-border-brand);
+    background: linear-gradient(180deg, var(--pattern-pay-gradient-selected-start, #013D65) 0%, var(--pattern-pay-gradient-selected-end, #293038) 100%);
     box-shadow: none;
+
+    .duration-text {
+      color: var(--pattern-pay-plan-text-plan-selected);
+    }
   }
 
   &-discount {

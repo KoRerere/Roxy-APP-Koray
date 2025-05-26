@@ -67,8 +67,7 @@ function handleClick(method: PayWay) {
   <div class="rx-payment-methods">
     <RxLoading v-model="loading" :opacity="0.6"></RxLoading>
     <template v-for="item in paymentMethods" :key="item.value">
-      <div class="rx-payment-methods-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }"
-        @click="handleClick(item.value!)">
+      <div class="rx-payment-methods-item" :class="{ 'active': modelValue === item.value, 'disabled': item.disabled }" @click="handleClick(item.value!)">
         <div class="rx-payment-methods-item-discount" v-if="!loading && item.discount">{{ item.discount }}</div>
         <img class="h-10" :src="item.icon">
         <div>{{ item.label }}</div>
@@ -95,6 +94,7 @@ function handleClick(method: PayWay) {
     gap: 6px;
     height: 86px;
     border: 2px solid transparent;
+    background: var(--colors-background-bg-action);
     box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base, #48555B);
     border-radius: 8px;
     cursor: pointer;

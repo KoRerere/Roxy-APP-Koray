@@ -86,16 +86,14 @@ function close(isCancel: boolean) {
     <div class="flex flex-col gap-4">
       <div class="sub-title">{{ $t('请输入充值金额') }}</div>
       <div class="flex items-center gap-2">
-        <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step"
-          @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
+        <RxStep class="!w-35" size="sm" v-model="amount" :min="min" :max="max" :step="step" @update:modelValue="onUpdate" @change="delayQuery"></RxStep>
         <rx-amount-quick-check @select="quickSelect" />
       </div>
     </div>
     <ItemBlock :title="$t('支付方式')">
-      <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways"
-        :disabledMethods="disabledMethods"></RxPaymentMethods>
+      <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways" :disabledMethods="disabledMethods"></RxPaymentMethods>
     </ItemBlock>
-    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[#C7CDD1]">
+    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[var(--colors-border-border-base)]">
       <div class="py-6 flex justify-between items-center total">
         <span class="flex-1 total-label">{{ $t('总金额') }}</span>
         <span class="total-price">{{ currency(amount).format() }}</span>

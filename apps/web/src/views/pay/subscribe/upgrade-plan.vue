@@ -326,12 +326,12 @@ function jumpToProfile() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="$route.meta.title" />
+    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[var(--colors-border-border-base)]" :title="$route.meta.title" />
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
           <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :min="sliderMin"></Profile>
-          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[#C7CDD1]" v-if="dataList?.length">
+          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[var(--colors-border-border-base)]" v-if="dataList?.length">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
             <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
             <div v-else class="due">
@@ -341,7 +341,7 @@ function jumpToProfile() {
               }) }}</span>
             </div>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-border-base)]">
           </AdvancedFeat>
         </div>
         <div class="relative w-88">
@@ -374,7 +374,7 @@ function jumpToProfile() {
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                    }}</a>
+                      }}</a>
                   </template>
                 </i18n-t>
               </div>

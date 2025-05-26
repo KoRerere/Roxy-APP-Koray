@@ -3,8 +3,46 @@ import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
 import Fuse from 'fuse.js'
+import PlanModal from '../pay/wallet/components/plan-success.vue'
+import BalanceModal from '../pay/wallet/components/balance-success.vue'
+import { useDialog } from '/@/hooks/useDialog'
 
+
+const [showModal] = useDialog()
 const [showToast] = useResponseToast()
+
+
+function open1() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      root: "!bg-transparent !border-none !shadow-none",
+      content: "!pa-20",
+      mask: "!backdrop-blur-md",
+    },
+    slots: {
+      container: () => <PlanModal />,
+    },
+  })
+}
+
+function open2() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      root: "!bg-transparent !border-none !shadow-none",
+      content: "!pa-20",
+      mask: "!backdrop-blur-md",
+    },
+    slots: {
+      container: () => <BalanceModal />,
+    },
+  })
+}
 
 //===============================
 import wcisTable from './components/table/table.vue'
@@ -321,6 +359,8 @@ const search = (event: AutoCompleteCompleteEvent) => {
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <RxButton label="open1" @click="open1"></RxButton>
+    <RxButton label="open2" @click="open2"></RxButton>
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <!-- <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm> -->

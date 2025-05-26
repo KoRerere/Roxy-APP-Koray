@@ -25,7 +25,7 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
+      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] bg-white card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}
@@ -69,11 +69,11 @@ function close() {
 .popup {
   width: 480px;
   border-radius: 12px;
-  background: #ffffff url('/images/payments/vega.svg') no-repeat -450px -920px/1600px 1430px;
+  background: var(--colors-background-bg-page) url('/images/payments/vega.svg') no-repeat -450px -920px/1600px 1430px;
 }
 
 .card {
-  background: #ffffff url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
+  background: var(--colors-background-bg-action) url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
 
   &-title {
     color: var(--colors-text-text-primary, #FAFAFA);

@@ -3643,7 +3643,7 @@ export const components = {
     },
     tablist: {
       borderWidth: '0 0 1px 0',
-      background: '{colors.background.bg-page}',
+      background: 'transparent',
       borderColor: '{colors.border.border-base}',
     },
     tab: {

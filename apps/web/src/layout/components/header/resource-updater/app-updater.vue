@@ -123,7 +123,8 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-self: stretch;
 
   &:not(:has(.client-no-data)) {
-    background: var(--primitives-blue-100, #e8f5fc);
+    background: var(--component-table-bg-selected);
+    border-color: var(--component-table-border-selected);
   }
 }
 
@@ -135,7 +136,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
+  border-bottom: 0.5px solid var(--colors-border-border-base);
 }
 
 .upgrade-header {

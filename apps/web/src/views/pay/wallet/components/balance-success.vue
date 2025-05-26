@@ -37,8 +37,7 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div
-        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white overflow-hidden card">
+      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] bg-white overflow-hidden card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('总余额') }}
@@ -56,9 +55,7 @@ function close() {
           <SvgIcon name="base/rx_ic_check_fill" color="#1CC94D" size="24" />
           <span>{{ $t('充值成功！') }}</span>
         </div>
-        <i18n-t class="feat-desc" tag="div"
-          :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })"
-          scope="global">
+        <i18n-t class="feat-desc" tag="div" :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })" scope="global">
           <template #amount>
             <span class="feat-desc-link">{{ diffAmount }}</span>
           </template>
@@ -75,18 +72,20 @@ function close() {
 .popup {
   width: 480px;
   border-radius: 12px;
-  background-color: #ffffff;
+  background: var(--colors-background-bg-page);
 }
 
 .card {
   position: relative;
   z-index: 1;
+  border: 0.5px solid var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
+    background: url('/images/payments/ripple_light.svg') no-repeat 86px -174px/380px 380px;
     z-index: -1;
   }
 
@@ -94,10 +93,9 @@ function close() {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/images/payments/blob_blur.svg') no-repeat -300px -370px/960px 620px;
+    background: url('/images/payments/gradient_light.svg') no-repeat -300px -370px/960px 620px;
     z-index: -2;
   }
-
 
   &-title {
     color: var(--colors-text-text-primary, #FAFAFA);
@@ -136,6 +134,18 @@ function close() {
     font-family: 'JetBrains Mono';
     font-size: 14px;
     line-height: normal;
+  }
+}
+
+[data-theme="dark"] {
+  .card {
+    &::before {
+      background-image: url('/images/payments/ripple_dark.svg');
+    }
+
+    &:after {
+      background-image: url('/images/payments/gradient_dark.svg');
+    }
   }
 }
 

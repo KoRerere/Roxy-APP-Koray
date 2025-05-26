@@ -58,28 +58,26 @@ function onSwitchPlan(plan: Partial<Plan>) {
 <style scoped lang="scss">
 .plans {
   border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(#C7CDD1, #C7CDD1);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
 
   &.disabled {
-    background: var(--primitives-neutrals-100, #F0F3F5);
-    border-color: var(--primitives-neutrals-100, #F0F3F5);
+    border: 1px solid var(--pattern-pay-plan-border-plan-inactive, #293038);
+    background: var(--pattern-pay-plan-bg-plan-inactive, #05101A);
     box-shadow: none;
   }
 
   &:not(.disabled).active {
     border: 2px solid transparent;
     background:
-      linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(var(--colors-background-bg-action), var(--colors-background-bg-action)) padding-box,
       linear-gradient(var(--angle), #12a3fc, #ec51f7) border-box;
     animation: 8s rotate linear infinite;
     box-shadow: none;
 
-    .plans-text {
-      color: var(--primitives-blue-600, #0881CC);
-    }
-
+    .plans-text,
     .plans-price {
-      color: var(--pattern-sidenav-text-active, #3FB6FD);
+      color: var(--pattern-pay-plan-text-plan-selected, #3FB6FD);
     }
   }
 
@@ -104,7 +102,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
   }
 
   &-price {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

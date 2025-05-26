@@ -224,7 +224,7 @@ function showWithdrawDialog() {
       gap: 6px;
       flex: 1 0 0;
       border-radius: 8px;
-      background: rgba(0, 0, 0, 0.02);
+      background: var(--pattern-dashboard-card-bg);
       backdrop-filter: blur(5px);
 
       .title {

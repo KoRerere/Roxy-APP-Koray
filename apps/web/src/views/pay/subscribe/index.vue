@@ -170,16 +170,16 @@ async function onSubscribe() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="$route.meta.title" />
+    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[var(--colors-border-border-base)]" :title="$route.meta.title" />
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
           <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
-          <div class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          <div class="py-8 border-0 border-t border-dashed border-[var(--colors-border-border-base)]">
             <div class="title">{{ $t('订阅时长') }}</div>
             <Duration class="mt-4" v-model="selectedDuration" :price="subscribeOriginalPrice"></Duration>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-border-base)]">
           </AdvancedFeat>
         </div>
         <div class="flex flex-col gap-3 w-88">
@@ -213,7 +213,7 @@ async function onSubscribe() {
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                    }}</a>
+                      }}</a>
                   </template>
                 </i18n-t>
               </div>
