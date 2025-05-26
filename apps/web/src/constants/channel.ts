@@ -2,3 +2,5 @@
 export const KICKED_OUT_CHANNEL_NAME = 'kickedOut'
 /** 切换工作空间通知 */
 export const SWITCH_WORKSPACE_CHANNEL_NAME = 'switchWorkspace'
+/** 切换主题 */
+export const SWITCH_THEME_CHANNEL_NAME = 'switchTheme'

@@ -349,8 +349,7 @@ onBeforeMount(() => {
 
 .card {
   border-radius: var(--radius-2xl, 12px);
-  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: #fff;
+  border: 0.5px solid var(--colors-border-border-base, #48555B);
   padding: var(--spacing-4xl, 24px);
   /* shadow-xs */
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
@@ -490,12 +489,10 @@ onBeforeMount(() => {
       gap: var(--spacing-md, 6px);
       border-radius: var(--radius-md, 6px);
       border: 1px solid var(--colors-border-border-base, #c7cdd1);
-      background: var(--colors-background-bg-action, #fff);
       /* shadow-sm */
       box-shadow:
         0px 4px 4px -1px rgba(0, 0, 0, 0.02),
         0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-      color: var(--colors-text-text-primary, #FAFAFA);
     }
   }
 

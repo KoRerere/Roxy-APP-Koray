@@ -2,22 +2,15 @@ import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
 import '/@/styles/index.scss'
-import Aura from '@primevue/themes/aura'
-import PrimeVue from 'primevue/config'
-import ToastService from 'primevue/toastservice'
+import '/@/styles/theme/'
+import { setupPrimeVue } from '/@/primevue'
 import { createApp } from 'vue'
-import { $t, setupI18n } from '/@/locales'
+import { setupI18n } from '/@/locales'
 import App from './App.vue'
 
 const app = createApp(App)
 
-app.use(PrimeVue, {
-  theme: {
-    preset: Aura,
-  },
-})
-
-app.use(ToastService)
+setupPrimeVue(app)
 
 fetch(`/api/app/config`)
   .then(res => res.json())
