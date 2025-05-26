@@ -22,8 +22,7 @@ export const customPreset = {
   // },
   primitive: {
     ...primitive,
-    dark: { ...dark },
-    light: { ...light }
+    ...light
   },
   semantic,
   components
