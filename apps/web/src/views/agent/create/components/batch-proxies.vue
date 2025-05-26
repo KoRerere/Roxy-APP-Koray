@@ -340,21 +340,16 @@ function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props"
-                  @change="ipCheckerConfig.onChange" />
+                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center">
-                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap"
-                  binary />
-                <label for="wrap"
-                  class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
+                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
+                <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }"
-                  name="base/rx_ic_info" :size="12" />
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
               </div>
             </div>
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
-              @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
           </div>
         </div>
       </div>
@@ -398,27 +393,23 @@ function onSave() {
           {{ $t('已解析代理') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1"
-            :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test"
-            :disabled="!dataList?.length" @click.stop="testAllProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click.stop="testAllProxy" />
         </div>
       </div>
       <div class="parse-result-message">
-        <RxAlert v-model:visible="showMessage" type="success" class="w-full"
-          :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
-          closable @close="messageClose">
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
+          @close="messageClose">
         </RxAlert>
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
       </div>
-      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
-        :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false"
+        :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
         </template>
         <template #actions="{ data }">
-          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
-            :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
         </template>
       </RyTable>
     </div>
@@ -489,11 +480,10 @@ function onSave() {
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
     border: 1px solid var(--colors-border-border-base, #48555B);
-    // background: var(--primitives-neutrals-50, #fafbfc);
     background: var(--colors-background-bg-overlay, #2C2E30);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
-    color: var(--colors-text-text-placeholder, #7c8387);
+    color: var(--colors-text-text-tertiary, #7c8387);
     font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);

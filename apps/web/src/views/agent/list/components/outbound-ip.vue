@@ -52,7 +52,7 @@ defineProps({
   }
 
   &-subtitle {
-    color: var(--colors-text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary, #a3a9ad);
   }
 }
 </style>

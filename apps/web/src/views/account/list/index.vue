@@ -219,12 +219,12 @@ function deletePopup(data: any) {
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--colors-text-text-primary, #fafafa);
+    color: var(--colors-text-text-primary);
     font-weight: 500;
   }
 
   &-subtitle {
-    color: var(--colors-text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary);
   }
 }
 </style>

@@ -161,7 +161,7 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check_line" :label="$t('已下载')" disabled />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check" :label="$t('已下载')" disabled />
                 <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
@@ -272,7 +272,7 @@ defineExpose({
   min-height: 204px;
   border-radius: var(--radius-md, 6px);
   border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--primitives-neutrals-50, #fafbfc);
+  background: var(--colors-background-bg-overlay);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);

@@ -194,7 +194,6 @@ onMounted(() => {
 .project-table {
   border-radius: 6px;
   border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-action, #fff);
   overflow: hidden;
 }
 

@@ -149,7 +149,8 @@ function upgradePlan() {
           <div class="flex items-center gap-1 locationip ">
             <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div>{{ data.countryCode }}</div>
-            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" :size="14" />
+            <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info"
+              color="var(--colors-icon-icon-note)" :size="14" />
           </div>
         </template>
       </RyTable>

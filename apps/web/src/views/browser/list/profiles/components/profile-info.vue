@@ -503,6 +503,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   border: none;
   box-shadow: none;
   color: #a3a9ad;
+  background: var(--colors-background-bg-page);
   transition: all 0.2s;
 
   &:hover {

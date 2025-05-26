@@ -104,7 +104,7 @@ onMounted(() => {
       <InputText v-model="extension.pluginName" class="extension-input" maxlength="50" type="text" />
     </div>
 
-    <div v-if="extension?.isSuccess" class="description">
+    <div v-if="extension?.isSuccess" class="flex flex-col gap-1.5 description">
       <div class="flex justify-between items-center">
         <span>{{ $t('扩展描述') }}</span>
         <span class="description-length">{{ extension.pluginDesc?.length || 0 }}/500</span>
@@ -148,7 +148,7 @@ onMounted(() => {
 
 .upload {
   &-title {
-    color: var(--primitives-neutrals-600, #575d61);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 400;
@@ -240,7 +240,7 @@ onMounted(() => {
 }
 
 .guide {
-  color: var(--primitives-neutrals-600, #575d61);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;

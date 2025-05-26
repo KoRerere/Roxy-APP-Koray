@@ -3670,7 +3670,7 @@ export const components = {
       },
     },
     tabpanel: {
-      background: '{content.background}',
+      background: 'transparent',
       color: '{content.color}',
       padding: '0.875rem 1.125rem 1.125rem 1.125rem',
       focusRing: {
@@ -3802,8 +3802,8 @@ export const components = {
       gap: '{navigation.list.gap}',
     },
     item: {
-      focusBackground: '{navigation.item.focus.background}',
-      activeBackground: '{navigation.item.active.background}',
+      focusBackground: '{component.dropdown.bg-hover}',
+      activeBackground: '{component.dropdown.bg-hover}',
       color: '{navigation.item.color}',
       focusColor: '{navigation.item.focus.color}',
       activeColor: '{navigation.item.active.color}',
