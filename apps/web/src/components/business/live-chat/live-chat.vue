@@ -2,8 +2,11 @@
 import { LiveChatWidget, } from '@livechat/widget-vue'
 import { useUserStore } from '/@/stores/user'
 import { emitter, type MittEvents } from '/@/utils/eventBus'
+import { useThemeStore } from '/@/stores/theme'
 
 const userStore = useUserStore()
+const router = useRouter()
+const themeStore = useThemeStore()
 const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
 
 const sessionVariables = computed(() => {
@@ -25,6 +28,12 @@ function handleVisibilityChanged(data) {
   visibility.value = data.visibility
 }
 
+watch(() => themeStore.realTheme, (newVal) => {
+  console.log('newVal', newVal)
+  // LiveChatWidget?.call?.("destroy");
+  router.replace({ ...router.currentRoute.value, query: { theme: newVal } })
+}, { immediate: true })
+
 emitter.on('toggleChatVisible', (_visibility) => {
   visibility.value = _visibility
 })
@@ -35,8 +44,8 @@ onErrorCaptured((err) => {
 </script>
 
 <template>
-  <LiveChatWidget license="18087441" :customer-name="customerName" :session-variables="sessionVariables"
-    :visibility="visibility" @visibility-changed="handleVisibilityChanged" />
+  <LiveChatWidget :key="themeStore.realTheme" license="18087441" :customer-name="customerName"
+    :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged" />
 </template>
 
 <style></style>

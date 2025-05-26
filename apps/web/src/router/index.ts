@@ -40,7 +40,6 @@ router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const { currentWorkspace } = useWorkspaceStore()
   const simpleLocale = useSimpleLocale()
-  const themeStore = useThemeStore()
 
   if (to.meta?.title) {
     // document.title = to.meta.title as string
@@ -48,11 +47,6 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
   const query = { ...to.query, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' };
-  if (themeStore.theme === 'dark') {
-    query["theme"] = 'dark'
-  } else {
-    delete query["theme"]
-  }
 
   // 禁止当前用户访问非当前角色权限的页面
   if (currentWorkspace?.role && to.meta?.roles && !to.meta?.roles?.includes(currentWorkspace?.role)) {

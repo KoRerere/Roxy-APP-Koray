@@ -120,7 +120,7 @@ export function usePreferencesPanel() {
               label: $t("主题模式"),
               name: "browserColorScheme",
               text: $t('窗口主题模式'),
-              value: data?.browserColorScheme ?? colorSchemeList.find(item => item.value === 'system'),
+              value: colorSchemeList.find(item => item.value === (data?.browserColorScheme || 'system')),
               props: {
                 filter: false,
                 // optionValue: "value",
