@@ -274,7 +274,7 @@ export function useSubscribe() {
       },
       handleOk: async (params: any) => {
         const res = await API.base.userSettingAccountPasswordCreate({ ...params });
-        showResToast(res.code, res.msg);
+        onlyErrorToast(res.code, res.msg);
         if (res.code === 0 && params.password) {
           userStore.setPassword(params.password);
           showResToast(0, $t("邮箱和密码设置成功"));

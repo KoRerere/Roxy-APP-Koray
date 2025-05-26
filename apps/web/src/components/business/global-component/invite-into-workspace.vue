@@ -48,7 +48,7 @@ async function acceptInvitation() {
   const { code, msg, data } = await API.limit.userAddUserByProjectInfoCreate(props.inviteInfo.data)
 
   if (code === 0) {
-    toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('加入成功'), life: 3000 })
+    // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('加入成功'), life: 3000 })
     await getWorkspaceList()
     setCurrentWorkspace(Number(data))
     skipInvitation()
