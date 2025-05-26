@@ -332,15 +332,12 @@ const slots: any = useSlots()
         <template #empty v-if="_firstLoad">
           <slot name="table-empty" />
         </template>
-        <Column v-if="selectionMode" header-style="width:0rem; min-width: 45px"
-          :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
+        <Column v-if="selectionMode" header-style="width:0rem; min-width: 45px" :pt="{ headercell: ColumnCss_Module.headercell, bodycell: ColumnCss_Module.bodycell }"
           :selection-mode="selectionMode" />
-        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key"
-          v-bind="fmtColumnProps(column)">
+        <Column v-for="{ headerSlot, slot, render, headerRender, ...column } in _columns" :key="column.key" v-bind="fmtColumnProps(column)">
           <template #header>
             <slot :name="headerSlot" :column="column">
-              <component v-if="headerRender" :is="headerRender" :column="column"
-                :class="ColumnCss_Module.columntitle" />
+              <component v-if="headerRender" :is="headerRender" :column="column" :class="ColumnCss_Module.columntitle" />
               <span v-else :class="ColumnCss_Module.columntitle">{{ column.title }}</span>
             </slot>
           </template>
@@ -352,8 +349,7 @@ const slots: any = useSlots()
                   <Skeleton v-bind="column.skeleton"></Skeleton>
                 </template>
                 <template v-else>
-                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes"
-                    :title="column.getText?.(data) || data[column.key]">
+                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
                     {{ column.getText?.(data) || data[column.key] }}
                   </div>
                 </template>
@@ -361,19 +357,16 @@ const slots: any = useSlots()
             </slot>
           </template>
         </Column>
-        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen
-          header-style="width: 0rem; min-width: 120px" :pt="{
-            columntitle: ColumnCss_Module.columntitle,
-            headercell: ColumnCss_Module.headercell,
-            bodycell: ColumnCss_Module.bodycell,
-          }">
+        <Column v-if="showActions" field="actions" :header="$t('操作')" align-frozen="right" frozen header-style="width: 0rem; min-width: 120px" :pt="{
+          columntitle: ColumnCss_Module.columntitle,
+          headercell: ColumnCss_Module.headercell,
+          bodycell: ColumnCss_Module.bodycell,
+        }">
           <template #body="{ data }">
             <div class="flex items-center">
               <slot name="actions-extra" :data="data" />
               <slot name="actions" :data="data">
-                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)"
-                  @quick-click="operationHandler($event, data, 'single')"
-                  @more="showOperationMenu($event, data, 'single')" />
+                <Actions :show-menu="showActionsMenu" :operation="_getOperation(data)" @quick-click="operationHandler($event, data, 'single')" @more="showOperationMenu($event, data, 'single')" />
               </slot>
             </div>
           </template>
@@ -382,14 +375,12 @@ const slots: any = useSlots()
       <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
-      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-        :page-link-size="5" :rows="paginatorConfig.rows" :total-records="paginatorConfig.totalRecords"
-        @page="paginatorConfig.onPage">
+      <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
+        :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage">
         <template #start>
           <div class="flex flex-1 items-center rx-paginator-jump">
             <div>{{ paginatorInfo }}</div>
-            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;"
-              v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
+            <RxInputSelect v-model="paginatorConfig.rows" name="rowsPerPage" style="width: fit-content;" v-bind="{ size: 'xxs', optionValue: 'value', filter: false }" option-value="value"
               :options="paginatorConfig.rowsPerPageOptions" @change="paginatorConfig.onRowsChange" />
             <div class="flex flex-1 items-center gap-2 justify-end">
               <div>{{ $t('跳转页数至') }}</div>
@@ -400,9 +391,8 @@ const slots: any = useSlots()
     </div>
 
     <Transition>
-      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0"
-        v-model:selection="selectionData" :total="tableList.length" :operation="_getOperation(selectionData)"
-        @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
+      <SelectionOperation v-if="multipleOperation && selectionMode === 'multiple' && selectionData?.length > 0" v-model:selection="selectionData" :total="tableList.length"
+        :operation="_getOperation(selectionData)" @batch-operation="batchOperation" @batch-more="showOperationMenu($event, selectionData, 'batch')">
         <template #custom-operation>
           <slot name="multiple-operation" :selection="selectionData" :clear-selection="_clearSelection" />
         </template>
@@ -513,8 +503,6 @@ const slots: any = useSlots()
 .headerrow {
   .headercell {
     padding: 8px 12px;
-    background: var(--component-table-header, #F1F5F8);
-    border-color: var(--component-table-border, #48555B) !important;
     user-select: none;
 
     &:first-of-type {
