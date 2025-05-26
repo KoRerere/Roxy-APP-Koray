@@ -19,17 +19,14 @@ defineProps<Props>()
   padding: var(--spacing-xs, 2px);
   gap: var(--spacing-xs, 2px);
   border-radius: 6px;
-  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--primitives-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base, #AFB7BB);
+  background: var(--p-component-segment-bg-tab, #F1F5F8);
 
   :deep(.p-togglebutton) {
     min-width: 64px;
     padding: 2px var(--spacing-xl, 12px);
     border: 0.5px solid transparent;
     border-radius: 4px !important;
-    background: var(--Colors-Alpha-alpha-white-0, rgba(255, 255, 255, 0));
-
-    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -48,6 +45,7 @@ defineProps<Props>()
     }
 
     .p-togglebutton-content {
+      background: transparent;
       padding: 0;
       box-shadow: none;
     }
