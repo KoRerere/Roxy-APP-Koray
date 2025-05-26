@@ -48,7 +48,6 @@ watch(isShowTrafficLight, (val) => {
 .launch {
   width: 100vw;
   height: 100vh;
-  border-radius: var(--radius-3xl, 16px);
   background: radial-gradient(circle at top, #bbe1ed, #fff);
   background-size: 100% 100%;
 

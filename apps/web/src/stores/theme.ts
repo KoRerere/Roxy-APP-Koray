@@ -45,13 +45,6 @@ export const useThemeStore = defineStore('theme', () => {
   })
 
   function toggleTheme() {
-
-    // TODO 生产环境暂时屏蔽
-    if (isProd) {
-      document.documentElement.setAttribute('data-theme', 'light')
-      return
-    }
-
     if (theme.value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', systemTheme)

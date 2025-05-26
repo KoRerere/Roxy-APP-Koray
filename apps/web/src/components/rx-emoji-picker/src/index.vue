@@ -2,10 +2,12 @@
 import data from '@emoji-mart/data'
 import { Picker } from 'emoji-mart'
 import { RxSvgIcon } from '../../rx-icon'
+import { useThemeStore } from '/@/stores/theme';
 
 const props = defineProps<{ disabled?: boolean, fallbackText?: string }>()
 const modelValue = defineModel<string>()
 
+const themeStore = useThemeStore()
 const op = useTemplateRef('op')
 const emojiContainerRef = useTemplateRef('emojiContainer')
 
@@ -18,7 +20,7 @@ function onEmojiSelect(emoji: any) {
 async function showEmojiPicker(event: MouseEvent) {
   if (props.disabled)
     return
-  const emojiInstance = new Picker({ data, onEmojiSelect, theme: 'light' })
+  const emojiInstance = new Picker({ data, onEmojiSelect, theme: themeStore.theme === 'system' ? 'auto' : themeStore.theme })
   op.value?.toggle(event)
   await nextTick()
   emojiContainerRef.value?.appendChild(emojiInstance)

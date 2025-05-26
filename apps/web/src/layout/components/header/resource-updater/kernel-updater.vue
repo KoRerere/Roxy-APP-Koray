@@ -126,7 +126,6 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   flex-direction: column;
   align-items: flex-start;
   border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
-  background: var(--primitives-neutrals-0, #fff);
 
   &.collapsed {
     gap: var(--spacing-xl, 12px);

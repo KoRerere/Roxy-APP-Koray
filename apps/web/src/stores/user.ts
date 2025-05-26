@@ -190,10 +190,6 @@ export const useUserStore = defineStore(
           if (data.showPayWallDlg) {
             emitter.emit('showUpgradePlanDialog')
           }
-          // 旧用户首次登录，显示礼包弹窗
-          if (data.showGiftDlg) {
-            emitter.emit('showOldUserGiftDialog')
-          }
         }
 
         electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })

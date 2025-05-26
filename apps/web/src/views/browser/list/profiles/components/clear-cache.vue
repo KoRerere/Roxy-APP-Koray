@@ -56,7 +56,7 @@ const options = [
     ),
   },
   {
-    label: $t('清除云端缓存'),
+    label: $t('清除本地及云端缓存'),
     value: ClearType.cloud,
     visible: role.isOwner || role.isManager,
     afterRender: () => (
