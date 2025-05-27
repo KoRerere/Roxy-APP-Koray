@@ -39,6 +39,14 @@
         }
       }
     </style>
+    <script>
+      try {
+        const theme = JSON.parse(localStorage.getItem('theme') || '{}')
+        if (theme.realTheme) {
+          document.documentElement.setAttribute('data-theme', theme.realTheme)
+        }
+      } catch (error) {}
+    </script>
   </head>
 
   <body>

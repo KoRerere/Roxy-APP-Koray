@@ -12,7 +12,9 @@ import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useThemeStore } from '/@/stores/theme'
 
+const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
@@ -224,7 +226,7 @@ provideLoginContext({
         </template>
       </i18n-t>
     </div>
-    <BgCanvas v-if="isSupportGPU" />
+    <BgCanvas v-if="isSupportGPU" :key="themeStore.realTheme" />
   </div>
 </template>
 

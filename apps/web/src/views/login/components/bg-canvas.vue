@@ -859,7 +859,7 @@ class Gradient {
  * Gradient.toggleColor(index)
  * Gradient.updateFrequency(freq)
  */
-onMounted(() => {
+setTimeout(() => {
   var gradient = new Gradient();
   gradient.initGradient("#gradient-canvas");
 })
