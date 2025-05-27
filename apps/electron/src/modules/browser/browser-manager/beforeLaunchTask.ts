@@ -235,7 +235,7 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
-      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-117\devtools-frontend\out\Default\gen\front_end`}`,
+      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-109\devtools-frontend\out\Default\gen\front_end`}`,
     ]
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
@@ -384,6 +384,7 @@ export class BeforeLaunchTask {
         light: 1,
         dark: 2,
       }[store.browserColorScheme || 'system']
+      preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
       await writeFile(preferencesPath, JSON.stringify(preferences))
     } catch (error) {
       console.error('更新浏览器偏好设置失败', error)
