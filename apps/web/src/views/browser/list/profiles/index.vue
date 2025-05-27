@@ -109,7 +109,7 @@ onBeforeMount(() => {
   updateColumns((columns) => {
     const column = columns.find(column => column.key === 'note')
     if (column) {
-      Reflect.set(column._cache, 'extend', userInfo.value.remarkDisplayStatus!)
+      Reflect.set(column._cache, 'extend', userConfig.value.remarkDisplayStatus!)
     }
   })
 

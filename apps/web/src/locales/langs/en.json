@@ -1404,8 +1404,8 @@
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
   "默认项目": "Default project",
-  "主题模式设置": "",
-  "前往": "",
-  "您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题": "",
-  "未找到已有成员": ""
+  "主题模式设置": "Theme Mode Settings",
+  "前往": "Go to",
+  "您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题": "You have adjusted the client theme. You can further customize the profile‘s theme in [Preferences Settings].",
+  "未找到已有成员": "No existing members found"
 }

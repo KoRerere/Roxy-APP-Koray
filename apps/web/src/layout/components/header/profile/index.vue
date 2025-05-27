@@ -95,7 +95,7 @@ const items = computed(() => {
             await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
             // 如果用户是第一次切换主题，则弹出提示框
-            if (!userStore.userConfig?.isFirstSwitchTheme) {
+            if (userStore.userConfig?.isFirstSwitchTheme) {
               showModal({
                 header: $t('主题模式设置'),
                 okText: $t('前往'),
