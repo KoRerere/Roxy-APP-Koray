@@ -93,7 +93,7 @@ function onConfig(event: MouseEvent, item: Data) {
             :pt="{ label: item.workspacePicture ? 'text-[32px]' : 'text-[34px]' }" />
           <div class="workspace-item-detail">
             <div class="detail-header">
-              <div class="workspace-name">
+              <div class="workspace-name" v-tooltip.top="item.workspaceName">
                 {{ item.workspaceName }}
               </div>
               <div v-if="item.workspaceDefault && item.role === Role.OWNER" class="default-workspace">
@@ -207,6 +207,10 @@ function onConfig(event: MouseEvent, item: Data) {
         font-style: normal;
         font-weight: 600;
         line-height: normal;
+        max-width: 256px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .default-workspace {
