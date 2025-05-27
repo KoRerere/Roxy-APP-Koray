@@ -306,10 +306,10 @@ const items = computed(() => [
 ])
 
 async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  if (!isOwner.value) {
-    handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
-    return
-  }
+  // if (!isOwner.value) {
+  //   handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
+  //   return
+  // }
 
   // 没有付费过的用户则提示付费墙
   if (userPayInfo.value?.subLevel === SubLevelEnum.Free) {
@@ -434,9 +434,11 @@ async function deleteTemplate(data: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
+          :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
+              @click.stop="saveTemplatePopup($event)" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

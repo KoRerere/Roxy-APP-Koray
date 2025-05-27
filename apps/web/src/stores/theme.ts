@@ -11,21 +11,21 @@ import { $t } from '/@/locales'
 
 type ColorScheme = 'light' | 'dark' | 'system'
 
-export const colorSchemeList = [
+export const getColorSchemeList = () => [
   {
     label: $t('跟随系统'),
     value: 'system',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_laptop",
   },
   {
     label: $t('浅色模式'),
     value: 'light',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_sun",
   },
   {
     label: $t('深色模式'),
     value: 'dark',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_moon",
   }
 ]
 

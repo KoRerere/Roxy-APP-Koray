@@ -12,7 +12,7 @@ import { useUserStore } from "/@/stores/user";
 import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
-import { colorSchemeList, useThemeStore } from "/@/stores/theme";
+import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
 
 const router = useRouter();
 const dialog = useDialog();
@@ -84,8 +84,8 @@ const items = computed(() => {
     },
     {
       label: $t("主题模式"),
-      icon: "base/rx_ic_language",
-      items: colorSchemeList.map((item) => {
+      icon: "base/rx_ic_contrast",
+      items: getColorSchemeList().map((item) => {
         return {
           ...item,
           isCheck: () => themeStore.theme === item.value,
