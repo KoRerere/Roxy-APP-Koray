@@ -163,8 +163,8 @@ initTwoFactorCodeList()
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-lg, 8px);
-  border: 0.5px solid var(--primitives-neutrals-100, #f0f3f5);
-  background: var(--primitives-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-overlay, #f0f3f5);
+  background: var(--colors-background-bg-page, #fafbfc);
 
   .platform-info {
     display: flex;

@@ -348,8 +348,9 @@ onBeforeMount(() => {
 }
 
 .card {
+  background-color: var(--colors-background-bg-overlay);
   border-radius: var(--radius-2xl, 12px);
-  border: 0.5px solid var(--colors-border-border-base, #48555B);
+  border: 0.5px solid var(--colors-border-border-overlay, #48555B);
   padding: var(--spacing-4xl, 24px);
   /* shadow-xs */
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
@@ -447,6 +448,7 @@ onBeforeMount(() => {
   align-self: stretch;
   overflow: hidden;
   position: relative;
+  background-color: var(--colors-background-bg-overlay);
 
   @media (max-width: 428px) {
     & {
