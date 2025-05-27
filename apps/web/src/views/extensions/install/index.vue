@@ -472,7 +472,7 @@ defineExpose({
     width: 36px;
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    border: 0.5px solid var(--colors-border-border-subtle, #c7cdd1);
     background: var(--colors-background-bg-app, #fff);
   }
 

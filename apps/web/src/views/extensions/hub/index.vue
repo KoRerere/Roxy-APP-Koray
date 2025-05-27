@@ -271,7 +271,7 @@ defineExpose({
   padding: var(--spacing-xl, 12px);
   min-height: 204px;
   border-radius: var(--radius-md, 6px);
-  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  border: 0.5px solid var(--colors-border-border-overlay, #c7cdd1);
   background: var(--colors-background-bg-overlay);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
@@ -282,8 +282,8 @@ defineExpose({
     width: 56px;
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-sm, 4px);
-    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-    background: var(--colors-background-bg-app, #fff);
+    border: 0.5px solid var(--colors-border-border-subtle, #c7cdd1);
+    background: var(--colors-background-bg-block, #fff);
   }
 
   &-name {

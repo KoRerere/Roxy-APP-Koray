@@ -134,7 +134,9 @@ onBeforeMount(() => {
 onBeforeUnmount(() => {
   canceOpenlListener?.()
   canceCloselListener?.()
-  saveRemarkDisplayStatus()// 保存备注显示状态
+  if (!props.isProjectProfile) {
+    saveRemarkDisplayStatus()// 保存备注显示状态
+  }
 })
 
 function onRefreshTable(tabParams = {}, force = false) {
