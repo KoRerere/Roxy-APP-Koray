@@ -522,17 +522,28 @@ export class BeforeLaunchTask {
   /** 修改浏览器 Local State 文件 */
   async modifyLocalStateFile() {
     const { roxyLocalStatePath } = this.browserItem
+    let localState: Record<string, any> = {}
     try {
       const isExist = await fileExists(roxyLocalStatePath)
+
       if (isExist) {
         const content = await readFile(roxyLocalStatePath, 'utf-8')
-        const localState = JSON.parse(content)
-        localState.background_mode = { enabled: false }
-        await writeFile(roxyLocalStatePath, JSON.stringify(localState))
+        localState = JSON.parse(content)
       } else {
         await fileExists(dirname(roxyLocalStatePath), true)
-        await writeFile(roxyLocalStatePath, JSON.stringify({ background_mode: { enabled: false } }))
       }
+      // 不允许 Chrome 在窗口全部关闭后仍保持后台运行（比如某些扩展或服务）
+      localState.background_mode = { enabled: false }
+      // 是否强制网页使用暗色模式
+      const experiments = store.browserColorScheme === 'dark' ? ['enable-force-dark@1'] : []
+      localState.browser = {
+        ...localState.browser,
+        enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments]
+      }
+      if (store.browserColorScheme !== 'dark') {
+        localState.browser.enabled_labs_experiments = localState.browser.enabled_labs_experiments?.filter(item => item !== 'enable-force-dark@1')
+      }
+      await writeFile(roxyLocalStatePath, JSON.stringify(localState))
     } catch (error) {
       console.error('修改 Local State 文件失败', error)
     }
