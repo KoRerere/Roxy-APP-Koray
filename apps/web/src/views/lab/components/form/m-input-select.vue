@@ -26,15 +26,17 @@ const {
   ...props
 } = defineProps<Props>()
 
+watch(() => options, (value) => {
+  _options.value = value
+})
 
-const _options = ref(options)
+const _options = ref()
 
 onBeforeMount(async () => {
   if (getOptions && isLikeFunction(getOptions)) {
     _options.value = await getOptions()
   }
 })
-
 
 function _onChange(event: any) {
   if (onChange && isLikeFunction(onChange)) {

@@ -91,6 +91,6 @@ function onFilterChange() {
   border-top-right-radius: 0;
   border-bottom-left-radius: var(--p-inputtext-border-radius);
   border-bottom-right-radius: 0;
-  background: #fff;
+  background: var(--colors-background-bg-action);
 }
 </style>

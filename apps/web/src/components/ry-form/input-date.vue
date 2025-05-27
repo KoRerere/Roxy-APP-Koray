@@ -3,13 +3,7 @@
 </script>
 
 <template>
-  <DatePicker v-bind="$attrs" :pt="{ daycell: picker.mannnnnnnnnnnnnnnn }" />
+  <DatePicker />
 </template>
 
-<style lang="scss" module="picker">
-.mannnnnnnnnnnnnnnn {
-  :global(.p-datepicker-day-selected-range) {
-    // color: red !important;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

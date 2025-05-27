@@ -12,6 +12,7 @@ import { SubLevelEnum } from '/@/enums/pay'
 import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
 import { useRoleStore } from '/@/stores/role'
 import { useThemeStore } from '../stores/theme'
+import { RxAlert } from '/@/components/rx-alert/'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
@@ -143,9 +144,8 @@ function onRenewal() {
             <SvgIcon name="base/rx_ic_delete" />
           </template>
         </Message>
-        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success" class="w-full rx-main-announcement__content subscription-expired" closable
-          @close="handleCloseSubscriptionExpired">
-          <template #default>
+        <RxAlert v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" class="w-full expired-alert" type="warn" announcement @close="handleCloseSubscriptionExpired">
+          <template #title>
             <i18n-t v-if="roleStore.isOwner" :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
               <template #link>
                 <span class="font-bold underline cursor-pointer" @click="onRenewal">
@@ -156,10 +156,7 @@ function onRenewal() {
             <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global">
             </i18n-t>
           </template>
-          <template #closeicon>
-            <SvgIcon name="base/rx_ic_delete" color="#575D61" />
-          </template>
-        </Message>
+        </RxAlert>
       </div>
       <div class="rx-main-content">
         <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
@@ -360,6 +357,15 @@ function onRenewal() {
     border: 0.5px solid var(--colors-border-border-inactive);
     background: var(--colors-background-bg-page);
     overflow: hidden;
+  }
+}
+
+.expired-alert {
+  padding: 8px 12px;
+
+  :deep(.rx-alert__title) {
+    font-size: 13px;
+    font-weight: normal;
   }
 }
 </style>

@@ -120,6 +120,16 @@
     "component": {
       "0": "#ffffff",
       "alert": {
+        "announcement": {
+          "border-warning": "{primitives.yellow.500}",
+          "border-error": "{primitives.red.300}",
+          "border-success": "{primitives.green.500}",
+          "border-info": "{primitives.blue.400}",
+          "text-warning": "{primitives.yellow.600}",
+          "text-error": "{primitives.red.500}",
+          "text-success": "{primitives.green.600}",
+          "text-info": "{primitives.blue.600}"
+        },
         "bg-success": "{primitives.green.100}",
         "bg-error": "{primitives.red.100}",
         "bg-info": "{primitives.blue.100}",
@@ -150,20 +160,20 @@
         "bg-hover": "{primitives.netural.100}",
         "divider": "{colors.border.border-subtle}"
       },
+      "scrollbar": {
+        "bg": "{primitives.netural.50}",
+        "border": "{colors.border.border-inactive}",
+        "indicator": "{primitives.netural.200}"
+      },
+      "collapse": {
+        "bg": "{primitives.netural.100}"
+      },
       "marquee": {
         "indicator": "{primitives.netural.100}",
         "indicator-active": "{colors.background.bg-brand}"
       },
       "skeleton": {
         "bg": "#ebf1f5"
-      },
-      "collapse": {
-        "bg": "{primitives.netural.100}"
-      },
-      "scrollbar": {
-        "bg": "{primitives.netural.50}",
-        "border": "{colors.border.border-inactive}",
-        "indicator": "{primitives.netural.200}"
       },
       "tag": {
         "bg": "{primitives.netural.100}",
@@ -207,6 +217,12 @@
           "border-inactive": "{primitives.red.400}"
         }
       },
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}"
+      },
       "table": {
         "bg-header": "{primitives.netural.50}",
         "border-header": "{component.table.border-cell}",
@@ -221,12 +237,6 @@
         "bg-updated-hover": "{primitives.green.100}",
         "border-updated": "{primitives.green.300}",
         "border-updated-hover": "{primitives.green.400}"
-      },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}"
       },
       "tooltip": {
         "bg": "{primitives.netural.900}",
@@ -267,14 +277,6 @@
           "bg": "rgba(0, 0, 0, 0.0200)"
         }
       },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.100}",
-          "avatar-bg": "{primitives.netural.900}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.100}"
-        }
-      },
       "drawer": {
         "bg-create-btn": "{colors.alpha.alpha-black-10}",
         "bg-create-btn-active": "{component.button.primary.bg}",
@@ -283,10 +285,18 @@
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
       },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.100}",
+          "avatar-bg": "{primitives.netural.900}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.100}"
+        }
+      },
       "syncbar": {
         "btn": {
-          "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
           "border": "{primitives.netural.600}",
           "border-hover": "{primitives.netural.500}",
           "text": "{primitives.netural.25}",
@@ -487,6 +497,16 @@
     "component": {
       "0": "#ffffff",
       "alert": {
+        "announcement": {
+          "border-warning": "{primitives.yellow.600}",
+          "border-error": "{primitives.red.700}",
+          "border-success": "{primitives.green.600}",
+          "border-info": "{primitives.blue.600}",
+          "text-warning": "{primitives.yellow.300}",
+          "text-error": "{primitives.red.300}",
+          "text-success": "{primitives.green.300}",
+          "text-info": "{primitives.blue.300}"
+        },
         "bg-success": "{primitives.green.800}",
         "bg-error": "{primitives.red.900}",
         "bg-info": "{primitives.blue.800}",
@@ -517,20 +537,20 @@
         "bg-hover": "{primitives.netural.700}",
         "divider": "{colors.border.border-base}"
       },
+      "scrollbar": {
+        "bg": "{primitives.netural.800}",
+        "border": "{colors.border.border-subtle}",
+        "indicator": "{primitives.netural.600}"
+      },
+      "collapse": {
+        "bg": "{primitives.netural.800}"
+      },
       "marquee": {
         "indicator": "{primitives.netural.700}",
         "indicator-active": "{colors.background.bg-brand}"
       },
       "skeleton": {
         "bg": "{primitives.netural.800}"
-      },
-      "collapse": {
-        "bg": "{primitives.netural.800}"
-      },
-      "scrollbar": {
-        "bg": "{primitives.netural.800}",
-        "border": "{colors.border.border-subtle}",
-        "indicator": "{primitives.netural.600}"
       },
       "tag": {
         "bg": "{colors.background.bg-action}",
@@ -574,6 +594,12 @@
           "border-inactive": "{primitives.red.950}"
         }
       },
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.500}"
+      },
       "table": {
         "bg-header": "{primitives.netural.800}",
         "border-header": "{colors.border.border-subtle}",
@@ -588,12 +614,6 @@
         "bg-updated-hover": "{primitives.green.800}",
         "border-updated": "{primitives.green.700}",
         "border-updated-hover": "{primitives.green.600}"
-      },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.500}"
       },
       "tooltip": {
         "bg": "{primitives.netural.700}",
@@ -634,14 +654,6 @@
           "bg": "{colors.alpha.alpha-white-5}"
         }
       },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.800}",
-          "avatar-bg": "{primitives.netural.700}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.800}"
-        }
-      },
       "drawer": {
         "bg-create-btn": "{colors.alpha.alpha-white-10}",
         "bg-create-btn-active": "{colors.background.bg-brand}",
@@ -650,10 +662,18 @@
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
       },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.800}",
+          "avatar-bg": "{primitives.netural.700}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.800}"
+        }
+      },
       "syncbar": {
         "btn": {
-          "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
           "border": "{primitives.netural.600}",
           "border-hover": "{primitives.netural.500}",
           "text": "{primitives.netural.25}",

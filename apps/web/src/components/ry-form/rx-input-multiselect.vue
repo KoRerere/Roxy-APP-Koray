@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { MultiSelectProps } from 'primevue/multiselect'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
@@ -24,10 +24,12 @@ const defaultProps: MultiSelectProps = {
 </script>
 
 <template>
-  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel }"
-    @change="$emit('change')">
+  <MultiSelect v-bind="{ ...defaultProps, ...props, ...$attrs }" :pt="{ root: size, optionlabel: classes.optionlabel }" @change="$emit('change')">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
+    </template>
+    <template #chipicon>
+      <RxSvgIcon name="base/rx_ic_delete" />
     </template>
   </MultiSelect>
 </template>

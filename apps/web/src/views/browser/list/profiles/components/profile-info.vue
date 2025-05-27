@@ -488,8 +488,8 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
   &-icons {
     border-radius: 4px;
-    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-    background: var(--colors-background-bg-action, #fff);
+    border: 0.5px solid var(--colors-border-border-action);
+    background: var(--colors-background-bg-action);
     box-shadow: $box-shadow;
     transition: all 0.15s ease;
   }

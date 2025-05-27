@@ -2853,17 +2853,17 @@ export const components = {
   },
   multiselect: {
     root: {
-      background: '{form.field.background}',
-      disabledBackground: '{form.field.disabled.background}',
+      background: '{colors.background.bg-action}',
+      disabledBackground: '{colors.background.bg-action-inactive}',
       filledBackground: '{form.field.filled.background}',
       filledHoverBackground: '{form.field.filled.hover.background}',
       filledFocusBackground: '{form.field.filled.focus.background}',
-      borderColor: '{form.field.border.color}',
-      hoverBorderColor: '{form.field.hover.border.color}',
-      focusBorderColor: '{form.field.focus.border.color}',
-      invalidBorderColor: '{form.field.invalid.border.color}',
-      color: '{form.field.color}',
-      disabledColor: '{form.field.disabled.color}',
+      borderColor: '{colors.border.border-action}',
+      hoverBorderColor: '{colors.border.border-action-hover}',
+      focusBorderColor: '{colors.border.border-brand}',
+      invalidBorderColor: '{colors.border.border-error}',
+      color: '{colors.text.text-primary}',
+      disabledColor: '{colors.text.text-inactive}',
       placeholderColor: '{form.field.placeholder.color}',
       invalidPlaceholderColor: '{form.field.invalid.placeholder.color}',
       shadow: '{form.field.shadow}',
@@ -2894,8 +2894,8 @@ export const components = {
       color: '{form.field.icon.color}',
     },
     overlay: {
-      background: '{overlay.select.background}',
-      borderColor: '{overlay.select.border.color}',
+      background: '{colors.background.bg-overlay}',
+      borderColor: '{colors.border.border-overlay}',
       borderRadius: '{overlay.select.border.radius}',
       color: '{overlay.select.color}',
       shadow: '{overlay.select.shadow}',
@@ -2908,7 +2908,7 @@ export const components = {
       },
     },
     option: {
-      focusBackground: '{list.option.focus.background}',
+      focusBackground: '{component.dropdown.bg-hover}',
       selectedBackground: '{list.option.selected.background}',
       selectedFocusBackground: '{list.option.selected.focus.background}',
       color: '{list.option.color}',
@@ -3339,8 +3339,8 @@ export const components = {
       color: '{form.field.icon.color}',
     },
     overlay: {
-      background: '{overlay.select.background}',
-      borderColor: '{overlay.select.border.color}',
+      background: '{colors.background.bg-overlay}',
+      borderColor: '{colors.border.border-overlay}',
       borderRadius: '{overlay.select.border.radius}',
       color: '{overlay.select.color}',
       shadow: '{overlay.select.shadow}',
@@ -3353,7 +3353,7 @@ export const components = {
       },
     },
     option: {
-      focusBackground: '{list.option.focus.background}',
+      focusBackground: '{component.dropdown.bg-hover}',
       selectedBackground: '{list.option.selected.background}',
       selectedFocusBackground: '{list.option.selected.focus.background}',
       color: '{list.option.color}',
@@ -3405,13 +3405,13 @@ export const components = {
     colorScheme: {
       light: {
         root: {
-          background: '{surface.200}',
+          background: '{component.skeleton.bg}',
           animationBackground: 'rgba(255,255,255,0.4)',
         },
       },
       dark: {
         root: {
-          background: 'rgba(255, 255, 255, 0.06)',
+          background: '{component.skeleton.bg}',
           animationBackground: 'rgba(255, 255, 255, 0.04)',
         },
       },

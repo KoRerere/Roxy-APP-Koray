@@ -93,7 +93,7 @@ async function _onPlus() {
 
 <style scoped lang="scss">
 .step {
-  border: 1px solid var(--colors-border-border-base, #C7CDD1);
+  border: 1px solid var(--colors-border-border-action, #C7CDD1);
   background: var(--colors-background-bg-action, #FFF);
 
   &.lg {

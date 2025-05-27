@@ -128,7 +128,7 @@ function handleImageLoad() {
 
 <template>
   <RyPopover ref="popover">
-    <AnimationBorder>
+    <AnimationBorder bgColor="var(--colors-background-bg-overlay)">
       <div class="pay-wall-content">
         <div class="badge">
           {{ $t('Roxy 会员') }}
@@ -144,8 +144,7 @@ function handleImageLoad() {
           <component :is="currentText.description"></component>
         </div>
         <div class="pay-wall-footer">
-          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined
-            @click="toDocument($event)">
+          <RxButton v-if="currentText.about" class="pay-wall-footer-button" severity="secondary" outlined @click="toDocument($event)">
             {{ currentText.about }}
           </RxButton>
           <RxButton class="pay-wall-footer-button" @click="toUpgrade($event)">
