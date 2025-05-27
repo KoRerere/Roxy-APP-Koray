@@ -7,6 +7,8 @@ import { $t } from "/@/locales"
 import { I18nT } from "vue-i18n"
 import { BUSINESS_CODE } from "/@/constants/business-code"
 import { useRoleStore } from "/@/stores/role"
+import { useWorkspaceStore } from "/@/stores/workspace"
+import { Role } from '/@/enums';
 
 export const toUpgradePlan = () => {
   const { userPayInfo } = useUserStore()
@@ -15,6 +17,17 @@ export const toUpgradePlan = () => {
     router.push({ name: 'subscribe-plan' })
   } else if (!userPayInfo?.isAuto && !isFree) {
     emitter.emit('showRenewalDialog')
+  }
+}
+
+export const switchWorkspaceAndToUpgradePlan = async () => {
+  const workspaceStore = useWorkspaceStore()
+  if (workspaceStore.workspaceList.length === 0) {
+    await workspaceStore.getWorkspaceList()
+  }
+  const ownerWorkspace = workspaceStore.workspaceList.find(item => item.workspaceDefault && item.role === Role.OWNER)
+  if (ownerWorkspace) {
+    workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).then(toUpgradePlan)
   }
 }
 
@@ -130,8 +143,10 @@ export function useHandleBusinessCode() {
       if (!isOwner.value) {
         return showToast({
           severity: 'warn',
-          summary: $t('无法创建模板'),
-          detail: $t('当前空间下无法创建窗口模板，请联系空间的拥有者进行升级。'),
+          summary: $t('请升级您的套餐'),
+          detail: <I18nT keypath={$t('模板功能仅限 Roxy 会员使用，{link}', { link: '{link}' })} >
+            {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
+          </I18nT>,
           life: 5000
         })
       }

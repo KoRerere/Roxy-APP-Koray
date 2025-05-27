@@ -29,7 +29,7 @@ const toast = useToast();
 const currentMembers = defineModel<any[]>('currentMembers', { default: [] })
 
 const needRefresh = ref(false)
-const filteredMembers = ref()
+const filteredMembers = ref([])
 const roleValue = ref(Role.VIEWER)
 const selectedProjects = ref(projectValues)
 const memberValue = ref()
@@ -95,13 +95,17 @@ async function inviteNewMember() {
 
   const projectIds = (selectedProjects.value ?? []).concat(project?.projectId).filter(Boolean)
   const { code, msg } = await API.limit.userInviteCreate({
-    email: memberValue.value,
+    email: memberValue.value.trim(),
     role: roleValue.value,
     projectIds,
   })
 
   handleBusinessCode(code, () => {
-    toast.add({ severity: 'success', summary: $t("邀请已发送"), life: 2500 });
+    if (code == 0) {
+      toast.add({ severity: 'success', summary: $t("邀请已发送"), life: 2500 });
+    } else {
+      toast.add({ severity: 'error', summary: msg, life: 2500 });
+    }
   })
   if (code !== 0) return
   updateCurrentMembers({
@@ -138,7 +142,8 @@ function updateCurrentMembers(member: Record<string, any>) {
           <RoleSplit v-model="roleValue" :disabled="!isNewMember"
             class="absolute right-2 top-1/2 -translate-y-1/2 z-1" />
           <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email"
-            :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect">
+            :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
+            :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }">
             <template #option="{ option }">
               <div class="flex items-center gap-2">
                 <RxAvatar :avatar="option.avatar" :name="option.userName.slice(0, 2)" :color="option.avatarColor"
@@ -150,9 +155,10 @@ function updateCurrentMembers(member: Record<string, any>) {
               </div>
             </template>
             <template #empty>
-              <div class="flex flex-row items-center gap-2">
+              <span></span>
+              <!-- <div class="flex flex-row items-center gap-2">
                 <div class="text-sm">{{ $t('未找到已有成员') }}</div>
-              </div>
+              </div> -->
             </template>
           </RxAutoComplete>
         </div>

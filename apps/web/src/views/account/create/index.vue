@@ -4,7 +4,7 @@ import RemarkIcon from '/@/components/remark-icon'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { deepClone, validateURL } from '/@/utils'
-// import { SimpleCache } from '/@/utils/cache'
+import { useThemeStore } from '/@/stores/theme'
 
 interface Props {
   data?: Record<string, any>
@@ -21,6 +21,8 @@ const {
 const emit = defineEmits(['confirm', 'close'])
 
 // const cache = SimpleCache.getInstance()
+const platformRow = ref<any[]>([])
+const themeStore = useThemeStore()
 
 const inputs = [
   {
@@ -33,14 +35,7 @@ const inputs = [
       optionValue: 'value',
       editable: true,
       filter: true,
-      getOptions: async () => {
-        const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
-        return rows.map(item => ({
-          image: item.platformIcon,
-          label: item.platformUrl,
-          value: item.platformUrl,
-        }))
-      },
+      options: [],
       onChange: ({ value, props }: any) => {
         const platformIcon = props.options.find((item: any) => item.value === value)?.image ?? ''
         Reflect.set(original.value, 'platformIcon', platformIcon)
@@ -97,6 +92,37 @@ function onFormSubmit(values: Record<string, any>) {
   formRef.value?.reset()
   emit('confirm', formData)
 }
+
+watch(() => themeStore.realTheme, () => {
+  console.log("platformList watch", platformRow.value.map(item => ({
+    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+    label: item.platformUrl,
+    value: item.platformUrl,
+  })))
+  formRef.value?.setInputsProps({
+    platformUrl: {
+      options: platformRow.value.map(item => ({
+        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        label: item.platformUrl,
+        value: item.platformUrl,
+      }))
+    }
+  })
+})
+
+onMounted(async () => {
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({});
+  platformRow.value = rows;
+  formRef.value?.setInputsProps({
+    platformUrl: {
+      options: rows.map(item => ({
+        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        label: item.platformUrl,
+        value: item.platformUrl,
+      }))
+    }
+  })
+})
 </script>
 
 <template>
@@ -104,8 +130,10 @@ function onFormSubmit(values: Record<string, any>) {
     <TsForm ref="wcisman" id="account" :inputs="inputs" @submit="onFormSubmit"></TsForm>
     <div class="flex flex-1 items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
-        <RxButton v-if="!data.id && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
+        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')"
+          :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RxButton v-if="!data.id && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined
+          @click="onConfirm(true)" />
         <RxButton size="sm" :label="$t('保存')" @click="onConfirm(false)" />
       </div>
     </div>

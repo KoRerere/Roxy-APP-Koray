@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import { useDialog } from "primevue/usedialog";
+import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import { useToast } from "primevue/usetoast";
 import { useTemplateRef, withModifiers } from "vue";
 import { API } from "/@/api";
@@ -12,8 +13,7 @@ import { useUserStore } from "/@/stores/user";
 import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
-import { colorSchemeList, useThemeStore } from "/@/stores/theme";
-import { useDialog as useDialogHook } from '/@/hooks/useDialog'
+import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
 
 const router = useRouter();
 const dialog = useDialog();
@@ -86,8 +86,8 @@ const items = computed(() => {
     },
     {
       label: $t("主题模式"),
-      icon: "base/rx_ic_language",
-      items: colorSchemeList.map((item) => {
+      icon: "base/rx_ic_contrast",
+      items: getColorSchemeList().map((item) => {
         return {
           ...item,
           isCheck: () => themeStore.theme === item.value,
@@ -95,16 +95,17 @@ const items = computed(() => {
             await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
             // 如果用户是第一次切换主题，则弹出提示框
-            if (userStore.userConfig?.isFirstSwitchTheme) {
+            if (!userStore.userConfig?.isFirstSwitchTheme) {
               showModal({
                 header: $t('主题模式设置'),
                 okText: $t('前往'),
                 slots: {
                   default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>
                 },
-                handleOk() {
+                async handleOk() {
                   openSettings('preferences')
-                  API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
+                  await API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
+                  userStore.updateUserConfig()
                 }
               })
             }

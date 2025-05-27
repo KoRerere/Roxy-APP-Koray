@@ -11,21 +11,21 @@ import { $t } from '/@/locales'
 
 type ColorScheme = 'light' | 'dark' | 'system'
 
-export const colorSchemeList = [
+export const getColorSchemeList = () => [
   {
     label: $t('跟随系统'),
     value: 'system',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_laptop",
   },
   {
     label: $t('浅色模式'),
     value: 'light',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_sun",
   },
   {
     label: $t('深色模式'),
     value: 'dark',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_moon",
   }
 ]
 
@@ -37,10 +37,10 @@ export const useThemeStore = defineStore('theme', () => {
   const realTheme = ref<Omit<ColorScheme, 'system'>>('light')
 
   async function setTheme(value: ColorScheme) {
-    theme.value = value ?? 'system'
-    if (userStore.token && isMainWindow) {
-      API.base.userSetUserConfigCreate({ colorScheme: theme.value });
+    if (userStore.token && isMainWindow && theme.value !== value) {
+      API.base.userSetUserConfigCreate({ colorScheme: value });
     }
+    theme.value = value
     if (isMainWindow) {
       electronAPI.send('app:setSystemTheme', theme.value)
     }

@@ -68,7 +68,8 @@ const { columns, updateColumns } = useColumns(getColumns(), props.isProjectProfi
 
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, userConfig, isNoPayUser } = storeToRefs(useUserStore())
+const userStore = useUserStore()
+const { userInfo, userConfig, isNoPayUser } = storeToRefs(userStore)
 const { fetchUserInfo } = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
@@ -798,12 +799,13 @@ async function onRemark(data: Data | Data[]) {
 async function saveRemarkDisplayStatus() {
   const column = columns.value.find(column => column.key === 'note')
   if (column && userConfig.value.remarkDisplayStatus !== column._cache.extend) {
-    const { code, msg } = await API.base.userModifyRemarkDisplayStatusCreate({
+    const { code, msg } = await API.base.userSetUserConfigCreate({
       remarkDisplayStatus: column._cache.extend
     })
     onlyErrorToast(code, msg)
     if (code !== 0) return
     fetchUserInfo()
+    userStore.updateUserConfig()
   }
 }
 

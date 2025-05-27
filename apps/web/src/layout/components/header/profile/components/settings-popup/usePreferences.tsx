@@ -18,7 +18,7 @@ import SimulationShortcut from "../simulation-shortcut.vue";
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 import { MaximumLimitExceeded } from './index'
-import { colorSchemeList } from "/@/stores/theme";
+import { getColorSchemeList } from "/@/stores/theme";
 // import { useLock } from '/@/stores/lock'
 // import LockAppComponent from "../lock-app.vue";
 // import LockAppLabel from "../lock-app-label.vue";
@@ -120,12 +120,12 @@ export function usePreferencesPanel() {
               label: $t("主题模式"),
               name: "browserColorScheme",
               text: $t('窗口主题模式'),
-              value: colorSchemeList.find(item => item.value === (data?.browserColorScheme || 'system')),
+              value: getColorSchemeList().find(item => item.value === (data?.browserColorScheme || 'system')),
               props: {
                 filter: false,
                 // optionValue: "value",
                 // optionLabel: "label",
-                options: colorSchemeList
+                options: getColorSchemeList()
               },
               formatValue: (item: Items) => {
                 return item.value.value;
