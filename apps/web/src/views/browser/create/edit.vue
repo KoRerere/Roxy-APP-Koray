@@ -87,7 +87,7 @@ function oldFieldsFormat() {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :title="$t('编辑窗口')" />
+      <ViewsHeader show-back :divider="false" :title="$t('编辑窗口')" />
       <div class="flex-ovh-1 flex-col">
         <div class="profile-basic">
           <WindowNameEdit v-model="windowName" />

@@ -150,20 +150,18 @@ onBeforeMount(() => {
 
 <template>
   <div class="flex flex-col w-full h-full api">
-    <ViewsHeader class="api-header" :title="($route.meta.title as string)" />
+    <ViewsHeader :title="($route.meta.title as string)" />
     <div class="flex-1 w-full overflow-auto api-body">
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')"
-            @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')"
-                @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
@@ -188,10 +186,9 @@ onBeforeMount(() => {
                   {{ $t('端口设置') }}
                 </div>
               </div>
-              <inputNumberGroup :inputs="inputs" />
+              <inputNumberGroup class="api-content-port" :inputs="inputs" />
             </div>
-            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false"
-              :title="$t('端口已被占用')"
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
               :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
@@ -213,9 +210,6 @@ onBeforeMount(() => {
 
 <style lang="scss" scoped>
 .api {
-  &-header {
-    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  }
 
   &-body::-webkit-scrollbar {
     display: none;
@@ -225,20 +219,20 @@ onBeforeMount(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-2xl, 16px) var(--spacing-xl, 12px);
+    padding: 16px 12px;
 
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
     line-height: 24px;
 
-    border-bottom: 0.5px solid var(--colors-border-border-subtle, #e4e8eb);
+    border-bottom: 1px solid var(--colors-border-divider);
   }
 
   &-content {
-    padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--colors-border-border-subtle, #e4e8eb);
+    padding: 16px 0px;
+    border-bottom: 1px solid var(--colors-border-divider);
 
     &-reset {
       display: flex;
@@ -270,12 +264,11 @@ onBeforeMount(() => {
       position: relative;
       display: flex;
       flex-direction: column;
-      margin-top: var(--spacing-md, 6px);
-      padding: var(--spacing-xl, 12px);
-      gap: var(--spacing-xl, 12px);
-      border-radius: var(--radius-md, 6px);
-      border: 1px solid var(--primitives-neutrals-900, #171c1f);
-      background: var(--primitives-neutrals-800, #252a2e);
+      margin-top: 6px;
+      padding: 12px;
+      gap: 12px;
+      border-radius: 6px;
+      background: var(--pattern-editor-bg);
 
       &-value {
         color: #fff;
@@ -326,6 +319,11 @@ onBeforeMount(() => {
         font-weight: 400;
         line-height: var(--Line-Height-text-xs, 16px);
       }
+    }
+
+    &-port {
+      max-width: 240px;
+      font-family: "JetBrains Mono";
     }
   }
 

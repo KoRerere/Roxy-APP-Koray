@@ -1,61 +1,4 @@
-import c_token from '/@/styles/primevuePresets/_1_Colors_tokens.json'
-import p_tokens from '/@/styles/primevuePresets/_Primitives_tokens.json'
-
-function resolveTokenReference(
-  value: string,
-  colorsTokens: any,
-  primitivesTokens: any,
-  theme: 'light' | 'dark' = 'light'
-): string {
-  // 如果不是引用格式，直接返回原值
-  if (!value.startsWith('{') || !value.endsWith('}')) {
-    return value;
-  }
-
-  // 移除花括号
-  const path = value.slice(1, -1);
-  const parts = path.split('.');
-
-  // 如果是直接引用 primitives，直接返回
-  if (parts[0] === 'primitives') {
-    return value;
-  }
-
-  // 递归解析引用
-  let currentValue = colorsTokens[theme];
-  for (const part of parts) {
-    if (!currentValue) break;
-    currentValue = currentValue[part];
-  }
-
-  // 如果解析出的值仍然是引用，继续解析
-  if (typeof currentValue === 'string' && currentValue.startsWith('{') && currentValue.endsWith('}')) {
-    return resolveTokenReference(currentValue, colorsTokens, primitivesTokens, theme);
-  }
-
-  return currentValue;
-}
-
-function transformColorTokens(colorsTokens: any, primitivesTokens: any, theme: 'light' | 'dark' = 'light') {
-  const result = {};
-  function traverse(obj: any, result: any) {
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        result[key] = {};
-        traverse(obj[key], result[key]);
-      } else if (typeof obj[key] === 'string') {
-        result[key] = resolveTokenReference(obj[key], colorsTokens, primitivesTokens, theme);
-      } else {
-        result[key] = obj[key];
-      }
-    }
-  }
-  traverse(colorsTokens[theme], result);
-  return result;
-}
-
-const light = transformColorTokens(c_token, p_tokens, 'light');
-const dark = transformColorTokens(c_token, p_tokens, 'dark');
+import { light, dark } from '/@/styles/primevuePresets/_1_Colors_tokens.json'
 
 export const semantic = {
   transitionDuration: '0.2s',
@@ -172,6 +115,9 @@ export const semantic = {
         hoverColor: '{primary.600}',
         activeColor: '{primary.600}',
       },
+      mask: {
+        background: '{colors.background.bg-mask}',
+      },
     },
     dark: {
       ...dark,
@@ -179,6 +125,9 @@ export const semantic = {
         color: '{primary.500}',
         hoverColor: '{primary.400}',
         activeColor: '{primary.400}',
+      },
+      mask: {
+        background: '{colors.background.bg-mask}',
       },
     }
     // light: {

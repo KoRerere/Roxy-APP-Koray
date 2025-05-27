@@ -38,7 +38,7 @@ onBeforeMount(async () => {
     </div>
     <div class="flex items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" severity="info" @click="_onConfirm" />
+        <RxButton class="mx-auto mr-0" size="sm" :label="$t('保存')" @click="_onConfirm" />
       </div>
     </div>
   </div>

@@ -47,7 +47,7 @@
   --colors-border-border-base-hover: var(--primitives-netural-400);
   --colors-border-border-subtle: var(--primitives-netural-200);
   --colors-border-border-subtle-hover: var(--primitives-netural-300);
-  --colors-border-border-inactive: var(--primitives-netural-200);
+  --colors-border-border-inactive: var(--primitives-netural-100);
   --colors-text-text-secondary: var(--primitives-netural-700);
   --colors-text-text-secondary-hover: var(--primitives-netural-800);
   --colors-text-text-tertiary: var(--primitives-netural-600);
@@ -111,13 +111,16 @@
   --component-dropdown-bg: var(--primitives-netural-0);
   --component-dropdown-bg-hover: var(--primitives-netural-100);
   --component-dropdown-divider: var(--colors-border-border-subtle);
-  --component-collapse-bg: var(--primitives-netural-100);
   --component-marquee-indicator: var(--primitives-netural-100);
   --component-skeleton-bg: rgba(235, 241, 245, 1);
+  --component-collapse-bg: var(--primitives-netural-100);
+  --component-scrollbar-bg: var(--primitives-netural-50);
+  --component-scrollbar-border: var(--colors-border-border-inactive);
   --component-marquee-indicator-active: var(--colors-background-bg-brand);
-  --component-button-primary-bg: var(--primitives-blue-500);
+  --component-scrollbar-indicator: var(--primitives-netural-200);
   --pattern-color: rgba(255, 255, 255, 1);
   --component-tag-bg: var(--primitives-netural-100);
+  --component-button-primary-bg: var(--primitives-blue-500);
   --pattern-editor-bg: var(--primitives-netural-800);
   --pattern-editor-code: var(--primitives-netural-0);
   --pattern-editor-btn-bg: var(--primitives-netural-600);
@@ -130,9 +133,9 @@
   --pattern-editor-btn-text-inactive: var(--primitives-netural-500);
   --pattern-editor-btn-border-inactive: var(--primitives-netural-600);
   --pattern-dashboard-card-bg: rgba(0, 0, 0, 0.019999999552965164);
-  --pattern-drawer-bg-create-btn: var(--colors-alpha-alpha-black-10);
-  --component-button-primary-bg-hover: var(--primitives-blue-600);
   --pattern-topnav-space-bg-hover: var(--primitives-netural-100);
+  --component-button-primary-bg-hover: var(--primitives-blue-600);
+  --pattern-drawer-bg-create-btn: var(--colors-alpha-alpha-black-10);
   --pattern-drawer-bg-create-btn-active: var(--component-button-primary-bg);
   --pattern-drawer-bg-create-icon: var(--primitives-netural-500);
   --pattern-drawer-bg-create-icon-active: var(--primitives-netural-0);
@@ -144,9 +147,10 @@
   --component-button-primary-text-hover: var(--primitives-netural-0);
   --component-button-primary-border: var(--primitives-blue-600);
   --component-button-primary-border-hover: var(--primitives-blue-700);
-  --component-tooltip-bg: var(--primitives-netural-900);
+  --component-table-bg-header: var(--primitives-netural-50);
   --component-segment-bg-tab: var(--primitives-netural-50);
-  --component-table-header: var(--primitives-netural-50);
+  --component-tooltip-bg: var(--primitives-netural-900);
+  --component-table-border-header: var(--component-table-border-cell);
   --component-rainbow-red: var(--primitives-red-500);
   --component-rainbow-orange: var(--primitives-yellow-500);
   --component-rainbow-yellow: rgba(255, 221, 25, 1);
@@ -156,8 +160,8 @@
   --component-rainbow-violet: rgba(151, 71, 255, 1);
   --component-rainbow-netural: var(--primitives-netural-300);
   --component-table-bg-hover: var(--primitives-netural-50);
-  --component-table-border: var(--colors-border-border-subtle);
-  --component-table-border-hover: var(--colors-border-border-subtle-hover);
+  --component-table-border-cell: var(--colors-border-border-inactive);
+  --component-table-border-hover: var(--colors-border-border-subtle);
   --component-table-bg-selected: var(--primitives-blue-50);
   --component-table-bg-selected-hover: var(--primitives-blue-100);
   --component-table-border-selected: var(--primitives-blue-200);
@@ -198,8 +202,8 @@
   --component-button-error-border-inactive: var(--primitives-red-400);
   --pattern-syncbar-bg: var(--primitives-netural-950);
   --pattern-syncbar-btn-bg-hover: var(--primitives-netural-700);
-  --pattern-syncbar-btn-bg: var(--primitives-netural-800);
   --pattern-syncbar-dropdown-bg: var(--pattern-syncbar-bg);
+  --pattern-syncbar-btn-bg: var(--primitives-netural-800);
   --pattern-syncbar-dropdown-bg-hover: var(--primitives-netural-700);
   --pattern-syncbar-dropdown-text: var(--primitives-netural-25);
   --pattern-syncbar-dropdown-text-hover: var(--primitives-netural-0);
@@ -211,8 +215,8 @@
   --pattern-syncbar-btn-text-hover: var(--primitives-netural-0);
   --pattern-syncbar-btn-icon: var(--primitives-netural-25);
   --pattern-syncbar-btn-icon-hover: var(--primitives-netural-0);
-  --pattern-syncbar-title: rgba(12, 239, 76, 1);
   --pattern-actionbar-bg: var(--primitives-netural-900);
+  --pattern-syncbar-title: rgba(12, 239, 76, 1);
   --pattern-sidenav-bg-hover: var(--colors-alpha-alpha-black-5);
   --pattern-sidenav-bg-active: var(--primitives-blue-100);
   --pattern-sidenav-text-active: var(--primitives-blue-600);
@@ -264,4 +268,13 @@
   --pattern-syncbar-tag-bg: var(--primitives-blue-300);
   --pattern-syncbar-tag-text: var(--primitives-blue-700);
   --primitives-netural-0: rgba(255, 255, 255, 1);
+  --colors-border-border-action: var(--colors-border-border-subtle);
+  --colors-border-border-action-hover: var(--colors-border-border-subtle-hover);
+  --colors-border-border-action-inactive: var(--colors-border-border-inactive);
+  --colors-border-border-container: var(--colors-border-border-base);
+  --colors-border-border-overlay: var(--colors-border-border-subtle);
+  --colors-border-divider: var(--colors-border-border-inactive);
+  --colors-border-divider-dashed: var(--colors-border-border-base);
+  --colors-background-bg-mode: rgba(255, 255, 255, 1);
+  --colors-background-bg-mode-reverse: rgba(0, 0, 0, 1);
 }

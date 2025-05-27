@@ -76,13 +76,13 @@ $spacing-x: var(--spacing-xl, 12px);
 .preview {
   margin: 12px;
   margin-left: 0;
-  padding: var(--spacing-lg, 8px) 0;
-  gap: var(--spacing-md, 6px);
+  padding: 8px 0;
+  gap: 6px;
   width: 340px;
   height: calc(100% - 24px);
   border-radius: 8px;
-  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-overlay, #fff);
+  border: 0.5px solid var(--colors-border-border-overlay);
+  background: var(--colors-background-bg-overlay);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -96,7 +96,7 @@ $spacing-x: var(--spacing-xl, 12px);
 
   &-header {
     padding: 0 $spacing-x;
-    color: var(--colors-text-text-primary, #111213);
+    color: var(--colors-text-text-primary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 600;
@@ -116,7 +116,9 @@ $spacing-x: var(--spacing-xl, 12px);
       bottom: 0;
       width: 100%;
       height: 44px;
-      background: linear-gradient(0deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
+      background: linear-gradient(180deg,
+          transparent 0%,
+          var(--colors-background-bg-overlay) 100%);
     }
 
     &-list {

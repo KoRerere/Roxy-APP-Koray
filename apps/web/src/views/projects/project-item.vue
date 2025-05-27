@@ -113,14 +113,11 @@ async function toCreateBrowser() {
         <div class="project-header-subproject">
           {{ projectName }}
         </div>
-        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer"
-          @click="editProject" />
+        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer" @click="editProject" />
       </template>
       <MemberDropdownList :members="members" />
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
-        :label="$t('邀请')" @click="handleShowDialog" />
-      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')"
-        @click="toCreateBrowser" />
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
+      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="toCreateBrowser" />
     </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-1 overflow-hidden">
@@ -132,7 +129,6 @@ async function toCreateBrowser() {
 <style lang="scss" scoped>
 .project-header {
   color: var(--colors-text-text-secondary, #b2b6b8);
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   &-title {
     &:hover {

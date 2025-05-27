@@ -8,7 +8,7 @@ import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { useNetworkStore } from '/@/stores/network'
-import { deepClone, isEmptyValue, strConcat } from '/@/utils'
+import { deepClone, isEmptyValue, strConcat, formatProxyTime } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
@@ -149,7 +149,7 @@ function modifyProxyCount(item: any) {
 
 function tooltipValue(item: any) {
   const value = [
-    $t(`代理信息`),
+    $t('代理信息'),
     item.ipType,
     `${strConcat(item.protocol, '://')}${item.host}${strConcat(':', item.port)}`,
     `${$t('刷新 URL')}: ${item.refreshUrl}`,
@@ -159,6 +159,7 @@ function tooltipValue(item: any) {
   return {
     value: value.join('\n').replace(/(\/|:)?undefined/g, '--'),
     showDelay: 500,
+    pt: { root: '!max-w-80' }
   }
 }
 
@@ -174,8 +175,7 @@ function replaceData(data: any) {
 <template>
   <div class="w-full">
     <div class="proxy-switch">
-      <RxInputRadio v-model="proxySwitch" size="xs" name="proxySwitch"
-        :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
+      <RxInputRadio v-model="proxySwitch" size="xs" name="proxySwitch" :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
     </div>
     <div v-if="!proxySwitch" class="direct">
       {{ $t('* 不使用代理则默认通过本地直连 ({value})', {
@@ -185,41 +185,31 @@ function replaceData(data: any) {
     </div>
     <template v-else>
       <div class="button-group">
-        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
-          @click="toggleDrawer('list', proxyInfo)" />
-        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus"
-          :label="$t('添加')" @click="toggleDrawer('create', proxyInfo)" />
+        <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list', proxyInfo)" />
+        <RxButton v-if="isBatch || !proxyList?.length" size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create', proxyInfo)" />
       </div>
       <div>
         <template v-if="isBatch">
           <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn"
-            :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })"
-            :closable="false" />
-          <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)"
-            @close="deleteProxy(index)">
+            :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false" />
+          <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)" @close="deleteProxy(index)">
             <div class="multiple-region">
-              <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
-                fallback="base/rx_ic_earth" />
+              <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
               <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
               <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" :size="12" />
             </div>
-            <RxTag class="cursor-pointer" icon="base/rx_ic_browser" :label="item._proxyCount"
-              @click.stop="modifyProxyCount(item)" />
+            <RxTag class="cursor-pointer" icon="base/rx_ic_browser" :label="item._proxyCount" @click.stop="modifyProxyCount(item)" />
             <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkIndex === index && checkResult.loading }"
-              :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-              @click.stop="testProxy(item, index)" />
+              :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" @click.stop="testProxy(item, index)" />
           </RxCard>
         </template>
 
         <template v-else>
-          <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @click="onEdit(item)"
-            @close="deleteProxy(index)">
-            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)"
-              fallback="base/rx_ic_earth" />
+          <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @click="onEdit(item)" @close="deleteProxy(index)">
+            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
             <div class="flex justify-between single-region ">
               <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
-              <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }"
-                :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
+              <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
                 @click.stop="testProxy(item, index)" />
             </div>
             <div class="flex justify-between single-time">

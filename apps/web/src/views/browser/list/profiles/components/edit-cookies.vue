@@ -47,7 +47,7 @@ function onConfirm() {
       <RxInputTextarea v-model="cookies" :placeholder="$t('请以 JSON 格式输入 Cookies')" cols="40" :auto-resize="false" />
     </div>
     <div class="flex justify-end button-group">
-      <RxButton :label="$t('保存')" :loading="loading" severity="info" @click="onConfirm" />
+      <RxButton :label="$t('保存')" :loading="loading" @click="onConfirm" />
     </div>
   </div>
 </template>

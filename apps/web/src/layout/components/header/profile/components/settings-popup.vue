@@ -24,8 +24,7 @@ onBeforeMount(() => {
         <span>{{ $t('客户端设置') }}</span>
       </div>
       <div class="settings-menu-list">
-        <div v-for="item in panels" :key="item.name" class="settings-menu-list-item select-none cursor-pointer"
-          :class="{ active: item.name === activePanel.key }" @click="item.command">
+        <div v-for="item in panels" :key="item.name" class="settings-menu-list-item select-none cursor-pointer" :class="{ active: item.name === activePanel.key }" @click="item.command">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </div>
@@ -60,8 +59,7 @@ onBeforeMount(() => {
                     </div>
                   </div>
                   <div v-if="subItem.component" class="flex-1 flex justify-end w-full">
-                    <component :is="subItem.component" v-model="subItem.value" :item="subItem"
-                      class="panel-item-value" />
+                    <component :is="subItem.component" v-model="subItem.value" :item="subItem" class="panel-item-value" />
                   </div>
                 </div>
                 <component :is="subItem.afterComponent" v-if="subItem.afterComponent" :item="subItem" />
@@ -170,14 +168,14 @@ onBeforeMount(() => {
 
   &-item {
     padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-divider);
 
     &:last-of-type {
       border-bottom: none;
     }
 
     &-label {
-      color: var(--colors-text-text-secondary, #B2B6B8);
+      color: var(--colors-text-text-primary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-weight: 500;

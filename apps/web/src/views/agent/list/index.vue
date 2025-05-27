@@ -205,8 +205,8 @@ function onRefreshTable() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="proxies-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" severity="info" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
+    <ViewsHeader :title="($route.meta.title as string)">
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
       <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
@@ -256,10 +256,6 @@ function onRefreshTable() {
 </template>
 
 <style lang="scss" scoped>
-.proxies-header {
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-}
-
 .proxy-host {
   color: var(--colors-text-text-primary, #fafafa);
   font-family: 'JetBrains Mono';

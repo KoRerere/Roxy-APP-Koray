@@ -43,8 +43,7 @@ onMounted(() => {
     <div class="colors">
       <template v-for="color in defaultColors" :key="color">
         <RxSvgIcon v-if="color === selectdColor" name="base/rx_ic_check_line" :size="20" :color="color" />
-        <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }"
-          @click="selectdColor = color" />
+        <div v-else class="colors-item cursor-pointer" :style="{ backgroundColor: color }" @click="selectdColor = color" />
       </template>
     </div>
 
@@ -52,7 +51,7 @@ onMounted(() => {
     <InputText v-model="tagName" type="text" :placeholder="$t('请输入标签名')" />
     <div class="footer">
       <RxButton :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton :label="$t('保存')" severity="info" @click="onConfirm" />
+      <RxButton :label="$t('保存')" @click="onConfirm" />
     </div>
   </div>
 </template>

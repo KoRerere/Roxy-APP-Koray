@@ -531,7 +531,7 @@ const slots: any = useSlots()
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
       background: var(--colors-background-bg-page, #FFF);
-      border-left: 1px solid var(--colors-border-border-inactive, #C7D1D6);
+      border-left: 1px solid var(--component-table-border-cell);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
       transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
     }
@@ -545,25 +545,25 @@ const slots: any = useSlots()
 
   .table .tbody .bodyrow {
     &[data-p-selected='true'] {
-      background: var(--component-table-bg-selected, #DEF3FF);
+      background: var(--component-table-bg-selected);
 
       .bodycell {
-        border-color: var(--component-table-bg-selected-border, #9ADBFE);
+        border-color: var(--component-table-border-selected);
 
         &:global(.p-datatable-frozen-column) {
-          background: var(--component-table-bg-selected, #DEF3FF);
+          background: var(--component-table-bg-selected);
         }
       }
     }
 
     &:not([data-p-selected='true']):hover {
-      background: var(--component-table-bg-hover, #F1F5F8);
+      background: var(--component-table-bg-hover);
 
       .bodycell {
-        border-color: var(--component-table-border, #48555B);
+        border-color: var(--component-table-border-hover);
 
         &:global(.p-datatable-frozen-column) {
-          background: var(--component-table-bg-hover, #F1F5F8);
+          background: var(--component-table-bg-hover);
         }
       }
     }

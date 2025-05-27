@@ -49,17 +49,16 @@ function parseInput(input: any) {
   padding: 8px 8px 8px 10px;
   gap: 6px;
   min-height: 38px;
-  border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-  border: 1px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-action, #fff);
+  border-radius: 6px;
+  border: 1px solid var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
   &-item,
   &-separator {
-    color: var(--colors-text-text-primary, #111213);
-    font-family: 'JetBrains Mono';
+    color: var(--colors-text-text-primary);
     font-size: 13px;
-    line-height: var(--Line-Height-text-lg, 20px);
+    line-height: 20px;
   }
 
   &-item {
@@ -67,17 +66,18 @@ function parseInput(input: any) {
     flex: 1;
 
     &-input {
+      font-family: inherit;
       width: 100%;
       padding: 0;
       border: none;
-      background-color: var(--colors-background-bg-action, #293038);
+      background-color: var(--colors-background-bg-action);
     }
 
     &-error {
       position: absolute;
       left: -8px;
       top: 170%;
-      color: var(--colors-text-text-error, #ff4d4f);
+      color: var(--colors-text-text-error);
       z-index: 1;
     }
   }

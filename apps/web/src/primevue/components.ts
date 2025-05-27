@@ -361,15 +361,15 @@ export const components = {
       light: {
         root: {
           primary: {
-            background: '{primary.color}',
-            hoverBackground: '{primary.hover.color}',
+            background: '{component.button.primary.bg}',
+            hoverBackground: '{component.button.primary.bg-hover}',
             activeBackground: '{primary.active.color}',
-            borderColor: '{primary.color}',
-            hoverBorderColor: '{primary.hover.color}',
+            borderColor: '{component.button.primary.border}',
+            hoverBorderColor: '{component.button.primary.border-hover}',
             activeBorderColor: '{primary.active.color}',
-            color: '{primary.contrast.color}',
-            hoverColor: '{primary.contrast.color}',
-            activeColor: '{primary.contrast.color}',
+            color: '{component.button.primary.text}',
+            hoverColor: '{component.button.primary.text}',
+            activeColor: '{component.button.primary.text}',
             focusRing: {
               color: '{primary.color}',
               shadow: 'none',
@@ -451,15 +451,15 @@ export const components = {
             },
           },
           danger: {
-            background: '{red.500}',
-            hoverBackground: '{red.600}',
+            background: '{colors.background.bg-error}',
+            hoverBackground: '{colors.background.bg-error-hover}',
             activeBackground: '{red.700}',
-            borderColor: '{red.500}',
-            hoverBorderColor: '{red.600}',
+            borderColor: '{colors.border.border-error}',
+            hoverBorderColor: '{colors.border.border-error-hover}',
             activeBorderColor: '{red.700}',
-            color: '#ffffff',
-            hoverColor: '#ffffff',
-            activeColor: '#ffffff',
+            color: '{component.button.primary.text}',
+            hoverColor: '{component.button.primary.text}',
+            activeColor: '{component.button.primary.text}',
             focusRing: {
               color: '{red.500}',
               shadow: 'none',
@@ -483,16 +483,16 @@ export const components = {
         },
         outlined: {
           primary: {
-            hoverBackground: '{primary.50}',
+            hoverBackground: '{component.button.ghost.bg-hover}',
             activeBackground: '{primary.100}',
-            borderColor: '{primary.200}',
-            color: '{primary.color}',
+            borderColor: '{colors.border.border-brand}',
+            color: '{colors.text.text-brand}',
           },
           secondary: {
-            hoverBackground: '{surface.50}',
+            hoverBackground: '{colors.background.bg-action-hover}',
             activeBackground: '{surface.100}',
-            borderColor: '{surface.200}',
-            color: '{surface.500}',
+            borderColor: '{colors.border.border-action}',
+            color: '{colors.text.text-primary}',
           },
           success: {
             hoverBackground: '{green.50}',
@@ -544,9 +544,9 @@ export const components = {
             color: '{primary.color}',
           },
           secondary: {
-            hoverBackground: '{surface.50}',
+            hoverBackground: '{component.button.tertiary.bg-hover}',
             activeBackground: '{surface.100}',
-            color: '{surface.500}',
+            color: '{colors.text.text-primary}',
           },
           success: {
             hoverBackground: '{green.50}',
@@ -593,15 +593,15 @@ export const components = {
       dark: {
         root: {
           primary: {
-            background: '{primary.color}',
-            hoverBackground: '{primary.hover.color}',
+            background: '{component.button.primary.bg}',
+            hoverBackground: '{component.button.primary.bg-hover}',
             activeBackground: '{primary.active.color}',
-            borderColor: '{primary.color}',
-            hoverBorderColor: '{primary.hover.color}',
+            borderColor: '{component.button.primary.border}',
+            hoverBorderColor: '{component.button.primary.border-hover}',
             activeBorderColor: '{primary.active.color}',
-            color: '{primary.contrast.color}',
-            hoverColor: '{primary.contrast.color}',
-            activeColor: '{primary.contrast.color}',
+            color: '{component.button.primary.text}',
+            hoverColor: '{component.button.primary.text}',
+            activeColor: '{component.button.primary.text}',
             focusRing: {
               color: '{primary.color}',
               shadow: 'none',
@@ -683,15 +683,15 @@ export const components = {
             },
           },
           danger: {
-            background: '{red.400}',
-            hoverBackground: '{red.300}',
+            background: '{colors.background.bg-error}',
+            hoverBackground: '{colors.background.bg-error-hover}',
             activeBackground: '{red.200}',
-            borderColor: '{red.400}',
-            hoverBorderColor: '{red.300}',
+            borderColor: '{colors.border.border-error}',
+            hoverBorderColor: '{colors.border.border-error-hover}',
             activeBorderColor: '{red.200}',
-            color: '{red.950}',
-            hoverColor: '{red.950}',
-            activeColor: '{red.950}',
+            color: '{component.button.primary.text}',
+            hoverColor: '{component.button.primary.text}',
+            activeColor: '{component.button.primary.text}',
             focusRing: {
               color: '{red.400}',
               shadow: 'none',
@@ -715,16 +715,16 @@ export const components = {
         },
         outlined: {
           primary: {
-            hoverBackground: 'color-mix(in srgb, {primary.color}, transparent 96%)',
+            hoverBackground: '{component.button.ghost.bg-hover}',
             activeBackground: 'color-mix(in srgb, {primary.color}, transparent 84%)',
-            borderColor: '{primary.700}',
-            color: '{primary.color}',
+            borderColor: '{colors.border.border-brand}',
+            color: '{colors.text.text-brand}',
           },
           secondary: {
-            hoverBackground: 'rgba(255,255,255,0.04)',
+            hoverBackground: '{colors.background.bg-action-hover}',
             activeBackground: 'rgba(255,255,255,0.16)',
-            borderColor: '{surface.700}',
-            color: '{surface.400}',
+            borderColor: '{colors.border.border-action}',
+            color: '{colors.text.text-primary}',
           },
           success: {
             hoverBackground: 'color-mix(in srgb, {green.400}, transparent 96%)',
@@ -776,9 +776,9 @@ export const components = {
             color: '{primary.color}',
           },
           secondary: {
-            hoverBackground: '{surface.800}',
+            hoverBackground: '{component.button.tertiary.bg-hover}',
             activeBackground: '{surface.700}',
-            color: '{surface.400}',
+            color: '{colors.text.text-primary}',
           },
           success: {
             hoverBackground: 'color-mix(in srgb, {green.400}, transparent 96%)',
@@ -1283,8 +1283,8 @@ export const components = {
   },
   contextmenu: {
     root: {
-      background: '{content.background}',
-      borderColor: '{content.border.color}',
+      background: '{colors.background.bg-overlay}',
+      borderColor: '{colors.border.border-overlay}',
       color: '{content.color}',
       borderRadius: '{content.border.radius}',
       shadow: '{overlay.navigation.shadow}',
@@ -1295,8 +1295,8 @@ export const components = {
       gap: '{navigation.list.gap}',
     },
     item: {
-      focusBackground: '{navigation.item.focus.background}',
-      activeBackground: '{navigation.item.active.background}',
+      focusBackground: '{component.dropdown.bg-hover}',
+      activeBackground: '{component.dropdown.bg-hover}',
       color: '{navigation.item.color}',
       focusColor: '{navigation.item.focus.color}',
       activeColor: '{navigation.item.active.color}',
@@ -1380,10 +1380,10 @@ export const components = {
       },
     },
     headerCell: {
-      background: '{component.table.header}',
+      background: '{component.table.bg-header}',
       hoverBackground: '{content.hover.background}',
       selectedBackground: '{highlight.background}',
-      borderColor: '{colors.border.border-inactive}',
+      borderColor: '{component.table.border-header}',
       color: '{colors.text.text-primary}',
       hoverColor: '{content.hover.color}',
       selectedColor: '{highlight.color}',
@@ -1422,7 +1422,7 @@ export const components = {
       },
     },
     bodyCell: {
-      borderColor: '{colors.border.border-inactive}',
+      borderColor: '{component.table.border-cell}',
       padding: '0.75rem 1rem',
       sm: {
         padding: '0.375rem 0.5rem',
@@ -1569,7 +1569,7 @@ export const components = {
   dialog: {
     root: {
       background: '{colors.background.bg-page}',
-      borderColor: '{colors.border.border-base}',
+      borderColor: '{colors.border.border-container}',
       color: '{colors.text.text-primary}',
       borderRadius: '{overlay.modal.border.radius}',
       shadow: '{overlay.modal.shadow}',
@@ -1636,7 +1636,7 @@ export const components = {
   drawer: {
     root: {
       background: '{colors.background.bg-page}',
-      borderColor: '{colors.border.border-base}',
+      borderColor: '{colors.border.border-container}',
       color: '{colors.text.text-primary}',
       shadow: '{overlay.modal.shadow}',
     },
@@ -2231,8 +2231,8 @@ export const components = {
       filledBackground: '{form.field.filled.background}',
       filledHoverBackground: '{form.field.filled.hover.background}',
       filledFocusBackground: '{form.field.filled.focus.background}',
-      borderColor: '{colors.border.border-base}',
-      hoverBorderColor: '{form.field.hover.border.color}',
+      borderColor: '{colors.border.border-action}',
+      hoverBorderColor: '{colors.border.border-action-hover}',
       focusBorderColor: '{colors.border.border-brand}',
       invalidBorderColor: '{colors.border.border-error}',
       color: '{colors.text.text-primary}',
@@ -3299,18 +3299,18 @@ export const components = {
   select: {
     root: {
       background: '{colors.background.bg-action}',
-      disabledBackground: '{form.field.disabled.background}',
+      disabledBackground: '{colors.background.bg-action-inactive}',
       filledBackground: '{form.field.filled.background}',
       filledHoverBackground: '{form.field.filled.hover.background}',
       filledFocusBackground: '{form.field.filled.focus.background}',
-      borderColor: '{form.field.border.color}',
-      hoverBorderColor: '{form.field.hover.border.color}',
+      borderColor: '{colors.border.border-action}',
+      hoverBorderColor: '{colors.border.border-action-hover}',
       focusBorderColor: '{colors.border.border-brand}',
       invalidBorderColor: '{colors.border.border-error}',
       color: '{colors.text.text-primary}',
       disabledColor: '{colors.text.text-inactive}',
-      placeholderColor: '{colors.text.text-placeholder}',
-      invalidPlaceholderColor: '{colors.text.text-placeholder}',
+      placeholderColor: '{form.field.placeholder.color}',
+      invalidPlaceholderColor: '{form.field.invalid.placeholder.color}',
       shadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.05)',
       paddingX: '{form.field.padding.x}',
       paddingY: '{form.field.padding.y}',
@@ -3644,7 +3644,7 @@ export const components = {
     tablist: {
       borderWidth: '0 0 1px 0',
       background: 'transparent',
-      borderColor: '{colors.border.border-base}',
+      borderColor: '{colors.border.divider}',
     },
     tab: {
       background: 'transparent',
@@ -3654,7 +3654,7 @@ export const components = {
       borderColor: '{content.border.color}',
       hoverBorderColor: '{content.border.color}',
       activeBorderColor: '{primary.color}',
-      color: '{text.muted.color}',
+      color: '{colors.text.text-secondary}',
       hoverColor: '{text.color}',
       activeColor: '{primary.color}',
       padding: '1rem 1.125rem',
@@ -3756,8 +3756,8 @@ export const components = {
       filledBackground: '{form.field.filled.background}',
       filledHoverBackground: '{form.field.filled.hover.background}',
       filledFocusBackground: '{form.field.filled.focus.background}',
-      borderColor: '{colors.border.border-base}',
-      hoverBorderColor: '{form.field.hover.border.color}',
+      borderColor: '{colors.border.border-action}',
+      hoverBorderColor: '{colors.border.border-action-hover}',
       focusBorderColor: '{colors.border.border-brand}',
       invalidBorderColor: '{colors.border.border-error}',
       color: '{colors.text.text-primary}',
@@ -3791,7 +3791,7 @@ export const components = {
   tieredmenu: {
     root: {
       background: '{colors.background.bg-overlay}',
-      borderColor: '{content.border.color}',
+      borderColor: '{colors.border.border-overlay}',
       color: '{content.color}',
       borderRadius: '{content.border.radius}',
       shadow: '{overlay.navigation.shadow}',

@@ -106,7 +106,7 @@ function onFormSubmit(values: Record<string, any>) {
       <div class="w-full flex justify-end gap-3 button-group">
         <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
         <RxButton v-if="!data.id && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
-        <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm(false)" />
+        <RxButton size="sm" :label="$t('保存')" @click="onConfirm(false)" />
       </div>
     </div>
   </div>

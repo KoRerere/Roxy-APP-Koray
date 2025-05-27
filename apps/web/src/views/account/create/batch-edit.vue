@@ -187,7 +187,7 @@ function onConfirm() {
     </div>
     <div class="flex items-end">
       <div class="w-full flex justify-end gap-3 button-group">
-        <RxButton size="sm" :label="$t('保存')" severity="info" @click="onConfirm" />
+        <RxButton size="sm" :label="$t('保存')" @click="onConfirm" />
       </div>
     </div>
   </div>

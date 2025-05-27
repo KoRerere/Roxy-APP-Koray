@@ -346,7 +346,7 @@ function onSave() {
                 <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
                 <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
                   $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" :size="12" />
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
               </div>
             </div>
             <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
@@ -414,7 +414,7 @@ function onSave() {
       </RyTable>
     </div>
     <div class="flex justify-end footer">
-      <RxButton severity="info" :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
+      <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
     </div>
   </div>
 </template>
@@ -459,7 +459,7 @@ function onSave() {
 
   .information {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-base, #48555B);
+    border: 1px solid var(--colors-border-border-action);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     overflow: hidden;
 
@@ -479,7 +479,7 @@ function onSave() {
     gap: var(--spacing-md, 6px);
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-base, #48555B);
+    border: 1px solid var(--colors-border-border-action);
     background: var(--colors-background-bg-overlay, #2C2E30);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 

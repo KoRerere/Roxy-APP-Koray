@@ -399,7 +399,7 @@ async function deleteTemplate(data: any) {
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :title="$t('创建窗口')" />
+      <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">
           <TabList>
@@ -450,7 +450,7 @@ async function deleteTemplate(data: any) {
 <style lang="scss" scoped>
 .profile-tabs {
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);

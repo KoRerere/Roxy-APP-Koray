@@ -154,11 +154,11 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[var(--colors-border-border-base)]" :title="($route.meta.title as string)">
+    <ViewsHeader :title="($route.meta.title as string)">
     </ViewsHeader>
     <div class="rx-container ml-0 h-auto">
       <div class="flex gap-2 px-6 pt-6">
-        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] overflow-hidden balance">
+        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden balance">
           <div class="balance-title">{{ $t('Roxy 钱包余额') }}</div>
           <div>
             <div class="balance-balance">{{ currency(userPayInfo.balance).format() }}</div>
@@ -173,7 +173,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             <RxButton :label="$t('充值')" size="md" @click="onCharge"></RxButton>
           </div>
         </div>
-        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] overflow-hidden plan">
+        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden plan">
           <div class="flex justify-between items-center">
             <div class="plan-title">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
             <template v-if="userPayInfo?.subEndDate">
@@ -211,12 +211,12 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] other" v-for="item in other"
+          <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] other" v-for="item in other"
             :key="item.type">
             <div class="flex justify-between items-center gap-6">
               <span class="other-title">{{ item.title }}</span>
               <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增')
-                }}</span>
+              }}</span>
             </div>
             <div>
               <span class="other-used">{{ item.used }}</span>

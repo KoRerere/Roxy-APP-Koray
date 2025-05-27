@@ -3,7 +3,7 @@ import { primitive } from "./primitive";
 import { semantic } from "./semantic";
 import { components } from "./components";
 
-import { light, dark } from '/@/styles/primevuePresets/_Primitives_tokens.json'
+import { light } from '/@/styles/primevuePresets/_Primitives_tokens.json'
 export const customPreset = {
   // primitive: myPreset,
   // semantic: {

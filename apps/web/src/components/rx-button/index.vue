@@ -37,14 +37,13 @@ async function handleClick(e: MouseEvent) {
 
 defineExpose({
   get btnEl() {
-    return btnElRef.value?.$el
+    return (btnElRef.value as any)?.$el
   },
 })
 </script>
 
 <template>
-  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }"
-    :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :class="['rx_button', size]">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :class="['rx_button', size]">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />
@@ -179,88 +178,65 @@ defineExpose({
 
 .p-button {
   font-weight: 500;
-  background: var(--component-button-primary-bg, #11A3FD);
-  border-color: var(--component-button-primary-border, #0282D4);
-  color: var(--component-button-primary-text, #FFF);
   box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   svg {
     transition: color var(--p-button-transition-duration);
   }
 
-  &:not(:disabled):hover {
-    background: var(--component-button-primary-bg-hover, #0282D4);
-    border-color: var(--component-button-primary-border-hover, #025F9C);
-    color: var(--component-button-primary-text, #FFF);
-  }
-
   &:disabled {
-    background: var(--component-button-primary-bg-inactive, #6CC9FE);
-    border-color: var(--component-button-primary-border-inactive, #3FB6FD);
-    color: var(--component-button-primary-text-inactive, #C8EBFE);
+    background: var(--component-button-primary-bg-inactive);
+    border-color: var(--component-button-primary-border-inactive);
+    color: var(--component-button-primary-text-inactive);
     opacity: 1;
   }
 
   &-danger {
-    background: var(--colors-background-bg-error, #F53838);
-    border-color: var(--colors-border-border-error, #E90C10);
-
-    &:not(:disabled):hover {
-      background: var(--colors-background-bg-error-hover, #E90C10);
-      border-color: var(--colors-border-border-error-hover, #B3090C);
-    }
-
     &:disabled {
-      background: var(--component-button-error-bg-inactive, #F98A86);
-      border-color: var(--component-button-error-border-inactive, #F7625F);
-      color: var(--component-button-error-text-inactive, #FDD6D3);
+      background: var(--component-button-error-bg-inactive);
+      border-color: var(--component-button-error-border-inactive);
+      color: var(--component-button-error-text-inactive);
     }
   }
 }
 
 .p-button-outlined {
-  background: var(--component-button-ghost-bg, #FFF);
-  border-color: var(--colors-border-border-brand, #11A3FD);
-  color: var(--colors-text-text-brand, #11A3FD);
+  background: var(--component-button-ghost-bg);
 
   &:not(:disabled):hover {
-    background: var(--component-button-ghost-bg-hover, #DEF3FF);
-    border-color: var(--component-button-ghost-border-hover, #0282D4);
-    color: var(--component-button-ghost-text-hover, #0282D4);
+    border-color: var(--component-button-ghost-border-hover);
+    color: var(--component-button-ghost-text-hover);
   }
 
   &:disabled {
-    background: var(--component-button-ghost-bg-inactive, #FFF);
-    border-color: var(--component-button-ghost-border-inactive, #9ADBFE);
-    color: var(--component-button-ghost-text-inactive, #6CC9FE);
+    background: var(--component-button-ghost-bg-inactive);
+    border-color: var(--component-button-ghost-border-inactive);
+    color: var(--component-button-ghost-text-inactive);
   }
 
   &.p-button-secondary {
     background: var(--colors-background-bg-action, #FFF);
-    border-color: var(--colors-border-border-base, #AFB7BB);
-    color: var(--colors-text-text-primary, #111213);
 
     svg {
-      color: var(--colors-icon-icon-secondary, #575D60);
+      color: var(--colors-icon-icon-secondary);
     }
 
     &:not(:disabled):hover {
-      background: var(--colors-background-bg-action-hover, #F1F5F8);
-      border-color: var(--colors-border-border-base-hover, #989CA0);
-      color: var(--colors-text-text-primary-hover, #050505);
+      border-color: var(--colors-border-border-action-hover);
+      color: var(--colors-text-text-primary-hover);
 
       svg {
-        color: var(--colors-icon-icon-secondary-hover, #34393D);
+        color: var(--colors-icon-icon-secondary-hover);
       }
     }
 
     &:disabled {
-      background: var(--colors-background-bg-action-inactive, #E2E9EE);
-      border-color: var(--colors-border-border-subtle, #C7D1D6);
-      color: var(--colors-text-text-inactive, #7D8387);
+      background: var(--colors-background-bg-action-inactive);
+      border-color: var(--colors-border-border-subtle);
+      color: var(--colors-text-text-inactive);
 
       svg {
-        color: var(--colors-icon-icon-inactive, #989CA0);
+        color: var(--colors-icon-icon-inactive);
       }
     }
   }
@@ -274,27 +250,16 @@ defineExpose({
   }
 
   &.p-button-secondary {
-    color: var(--colors-text-text-primary, #111213);
-
     svg {
-      color: var(--colors-icon-icon-secondary, #575D60);
-    }
-
-    &:not(:disabled):hover {
-      color: var(--colors-text-text-primary, #111213);
-      background: var(--component-button-tertiary-bg-hover, #F1F5F8);
-
-      svg {
-        color: var(--colors-icon-icon-secondary, #575D60);
-      }
+      color: var(--colors-icon-icon-secondary);
     }
 
     &:disabled {
-      color: var(--colors-text-text-inactive, #7D8387);
-      background: var(--colors-background-bg-action-inactive, #E2E9EE);
+      color: var(--colors-text-text-inactive);
+      background: var(--colors-background-bg-action-inactive);
 
       svg {
-        color: var(--colors-icon-icon-inactive, #989CA0);
+        color: var(--colors-icon-icon-inactive);
       }
     }
   }

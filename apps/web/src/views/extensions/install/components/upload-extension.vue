@@ -79,7 +79,7 @@ onMounted(() => {
         {{ $t('请选择上传方式') }}
       </div>
       <div class="flex items-center gap-4 mt-1">
-        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
+        <RxButton outlined icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
         <span class="upload-or">{{ $t('或') }}</span>
         <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
       </div>
@@ -122,7 +122,7 @@ onMounted(() => {
     </div>
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" :label="$t('上传')" severity="info" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
+      <RxButton size="sm" :label="$t('上传')" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
     </div>
   </div>
 </template>

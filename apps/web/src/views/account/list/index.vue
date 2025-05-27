@@ -159,8 +159,8 @@ function deletePopup(data: any) {
 
 <template>
   <div class="flex flex-col w-full h-full account">
-    <ViewsHeader class="account-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+    <ViewsHeader :title="($route.meta.title as string)">
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
@@ -209,10 +209,6 @@ function deletePopup(data: any) {
 </template>
 
 <style lang="scss" scoped>
-.account-header {
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-}
-
 .account {
   font-family: Inter;
   font-size: 12px;

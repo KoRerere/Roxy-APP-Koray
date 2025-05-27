@@ -2,11 +2,10 @@
 import { $t } from '/@/locales'
 import { sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast';
-import Fuse from 'fuse.js'
 import PlanModal from '../pay/wallet/components/plan-success.vue'
 import BalanceModal from '../pay/wallet/components/balance-success.vue'
 import { useDialog } from '/@/hooks/useDialog'
-
+import { RxAlert } from '/@/components/rx-alert/'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
@@ -250,154 +249,44 @@ const formRef = useTemplateRef<any>('wcisman')
 function noFormIdSubmit() {
   formRef.value?.instance.submit()
 }
-//============================================================
+//==================================
+import TsSelectButton from './components/ts-select-button.vue'
 
-const slaveMembers = ref([
-  {
-    "avatar": "https://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/groupdata/useravatar/19312/19312.png?OSSAccessKeyId=LTAI5tSaKFtCTNLfh4zmcqKp&Expires=1776406259&Signature=%2FS%2BsDC56SGOJ49u13kmEULo1MuE%3D",
-    "avatarColor": "#7ECCFC",
-    "email": "930898543@qq.com",
-    "project_info": [
-      {
-        "projectDefault": 1,
-        "projectName": "默认项目",
-        "project_id": 88
-      },
-      {
-        "projectDefault": 0,
-        "projectName": "man!",
-        "project_id": 326
-      },
-      {
-        "projectDefault": 1,
-        "projectName": "窗口投送",
-        "project_id": 12689
-      },
-      {
-        "projectDefault": 0,
-        "projectName": "wcis",
-        "project_id": 12983
-      }
-    ],
-    "role": 3,
-    "status": 1,
-    "userName": "q123456",
-    "user_id": 19312
+const filters = reactive({
+  value: 0,
+  options: [
+    {
+      name: $t('全部'),
+      value: 0,
+    },
+    {
+      name: $t('团队'),
+      value: 1,
+    },
+    {
+      name: $t('个人'),
+      value: 2,
+    },
+  ],
+  onChange() {
   },
-  {
-    "avatar": "https://lumibrowser-test.oss-cn-shenzhen.aliyuncs.com/groupdata/useravatar/15708/15708.jpg?OSSAccessKeyId=LTAI5tSaKFtCTNLfh4zmcqKp&Expires=1770707593&Signature=RvkncdqoujuDSZBbJVsOdJNQlww%3D",
-    "avatarColor": "#FF9191",
-    "email": "1876019890@qq.com",
-    "project_info": [
-      {
-        "projectDefault": 1,
-        "projectName": "默认项目",
-        "project_id": 88
-      },
-      {
-        "projectDefault": 0,
-        "projectName": "man!",
-        "project_id": 326
-      },
-      {
-        "projectDefault": 1,
-        "projectName": "窗口投送",
-        "project_id": 12689
-      },
-      {
-        "projectDefault": 0,
-        "projectName": "wcis",
-        "project_id": 12983
-      }
-    ],
-    "role": 0,
-    "status": 1,
-    "userName": "feihairui",
-    "user_id": 15708
+  resetFilters() {
   },
-  {
-    "avatar": "",
-    "avatarColor": "#C7CDD1",
-    "email": "thorn@gmail.com",
-    "project_info": [
-      {
-        "projectDefault": 1,
-        "projectName": "默认项目",
-        "project_id": 88
-      },
-      {
-        "projectDefault": 0,
-        "projectName": "man!",
-        "project_id": 326
-      }
-    ],
-    "role": 1,
-    "status": 1,
-    "userName": "Thorn",
-    "user_id": 14079
-  }
-])
-
-const fuse = ref(new Fuse(slaveMembers.value, {
-  threshold: 0.3,
-  keys: ['email', 'userName'],
-}))
-
-const value = ref('')
-const filteredMembers = ref()
-
-const search = (event: AutoCompleteCompleteEvent) => {
-  setTimeout(() => {
-    if (!event.query.trim().length) {
-      filteredMembers.value = [...slaveMembers.value]
-    } else {
-      filteredMembers.value = fuse.value.search(event.query).map(member => member.item)
-    }
-  }, 250)
-}
+})
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <RxButton label="open1" @click="open1"></RxButton>
-    <RxButton label="open2" @click="open2"></RxButton>
+    <div class="mt-20 ma-auto">
+      <TsSelectButton class="scale-100" v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+    </div>
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <!-- <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm> -->
       <!-- <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" /> -->
       <!-- <RxButton label="test submit" @click="noFormIdSubmit"></RxButton> -->
-      <RxAutoComplete v-model="value" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="search">
-        <template #option="{ option }">
-          <div class="flex items-center gap-2">
-            <img :src="option.avatar" class="block w-8 h-8 rounded-full" />
-            <div>
-              <div class="member-name">{{ option.email }}</div>
-              <div class="member-email">{{ option.userName }}</div>
-            </div>
-          </div>
-        </template>
-        <template #empty>
-          <div class="flex flex-row items-center gap-2">
-            <div class="text-sm">未找到已有成员</div>
-          </div>
-        </template>
-      </RxAutoComplete>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-.member {
-  &-name {
-    color: var(--colors-text-text-primary, #111213);
-    font-size: 12px;
-    line-height: 16px;
-  }
-
-  &-email {
-    color: var(--colors-text-text-tertiary, #575D60);
-    font-size: 12px;
-    line-height: 16px;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

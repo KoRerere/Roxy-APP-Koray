@@ -376,7 +376,7 @@ defineExpose({
       <div class="flex items-center justify-between w-full">
         <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />
+          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />
           <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click.stop="onUploadExtension()" />
         </div>
       </div>

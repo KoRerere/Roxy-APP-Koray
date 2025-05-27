@@ -54,7 +54,7 @@ function onSubmit(event: any) {
   &-line {
     width: 100%;
     height: 0.5px;
-    background: var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-border-divider);
   }
 }
 </style>

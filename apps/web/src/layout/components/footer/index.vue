@@ -3,16 +3,14 @@
     <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }">
       <template #item="{ item, props }">
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }"
-            v-bind="props.action">
+          <a v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
             <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
               {{ item.label }}
             </span>
           </a>
         </ShinyButton>
-        <a v-else v-ripple class="menu-item"
-          :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
+        <a v-else v-ripple class="menu-item" :class="{ 'root-menu': item.rootMenu, active: item.routeName === $route.name }" v-bind="props.action">
           <RxSvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
           <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title" :title="(item.label as string)">
             {{ item.label }}
@@ -166,7 +164,7 @@ const items = computed(() => {
     padding: 10px;
     gap: 8px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.60);
+    background: var(--pattern-sidenav-metrics);
     backdrop-filter: blur(5px);
     color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;

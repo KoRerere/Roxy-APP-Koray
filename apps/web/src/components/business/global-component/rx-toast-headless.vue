@@ -73,8 +73,7 @@ function cacheToast(slotData: Recordable) {
   <Toast position="top-center" unstyled :pt="{ root: 'translate-x-[-50%] z-10' }">
     <template #container="{ message, closeCallback }">
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
-        <section class="alert" :data-life="cacheToast({ message, closeCallback })"
-          @mouseenter="handleMouseenter({ message, closeCallback })"
+        <section class="alert" :data-life="cacheToast({ message, closeCallback })" @mouseenter="handleMouseenter({ message, closeCallback })"
           @mouseleave="handleMouseleave({ message, closeCallback })">
           <div class="alert-icon">
             <SvgIcon :name="iconMap[message.severity]" size="16" />
@@ -110,8 +109,8 @@ function cacheToast(slotData: Recordable) {
   align-items: flex-start;
   gap: 10px;
   border-radius: 4px;
-  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-app, #fff);
+  border: 0.5px solid var(--colors-border-border-overlay);
+  background: var(--colors-background-bg-overlay);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),

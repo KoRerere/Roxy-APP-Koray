@@ -80,7 +80,7 @@ function handleSave() {
       </RyTable>
     </div>
     <div class="w-full flex justify-end gap-3 button-group">
-      <RxButton severity="info" size="sm" :label="$t('保存')" @click.stop="handleSave" />
+      <RxButton size="sm" :label="$t('保存')" @click.stop="handleSave" />
     </div>
   </div>
 </template>

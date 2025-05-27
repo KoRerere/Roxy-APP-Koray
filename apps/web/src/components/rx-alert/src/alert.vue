@@ -29,18 +29,18 @@ const visibleModel = defineModel('visible', { default: true })
 
 
 const iconMap: Record<string, [string, SvgNames]> = {
-  success: ['var(--colors-icon-icon-success, #1DC94D)', 'status/rx_ic_check_fill'],
-  error: ['var(--colors-icon-icon-error, #F53838)', 'base/rx_ic_delete_fill'],
-  info: ['var(--colors-icon-icon-info, #12A3FC)', 'base/rx_ic_info_fill'],
-  warn: ['var(--colors-icon-icon-warn, #FC9D12)', 'base/rx_ic_warn_fill'],
+  success: ['var(--colors-icon-icon-success)', 'status/rx_ic_check_fill'],
+  error: ['var(--colors-icon-icon-error)', 'base/rx_ic_delete_fill'],
+  info: ['var(--colors-icon-icon-info)', 'base/rx_ic_info_fill'],
+  warn: ['var(--colors-icon-icon-warning)', 'base/rx_ic_warn_fill'],
 }
 
 const bgColor = computed(() => {
   return {
-    success: 'var(--component-alert-bg-success, #CEF8D4)',
-    error: 'var(--component-alert-bg-error, #FDD6D3)',
-    info: 'var(--colors-background-bg-info, #DEF3FF)',
-    warn: 'var(--component-alert-bg-warn, #FEEAC7)',
+    success: 'var(--component-alert-bg-success)',
+    error: 'var(--component-alert-bg-error)',
+    info: 'var(--colors-background-bg-info)',
+    warn: 'var(--component-alert-bg-warn)',
   }[props.type]
 })
 
@@ -123,23 +123,19 @@ function handleClose() {
 
     .rx-alert__title {
       width: 100%;
-      color: var(--colors-text-text-primary, #111213);
+      color: var(--colors-text-text-primary);
       font-family: Inter;
       font-size: 12px;
-      font-style: normal;
       font-weight: 600;
       line-height: normal;
     }
 
     .rx-alert__content {
       width: 100%;
-      color: var(--colors-text-text-primary, #34393D);
+      color: var(--colors-text-text-secondary);
       font-family: Inter;
       font-size: 12px;
-      font-style: normal;
-      font-weight: 400;
       line-height: 18px;
-      /* 150% */
     }
   }
 
@@ -147,11 +143,11 @@ function handleClose() {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--colors-icon-icon-tertiary);
     transition: color 0.2s;
 
     &:hover {
-      color: rgba(0, 0, 0, 0.88);
+      color: var(--colors-icon-icon-tertiary-hover);
     }
   }
 }

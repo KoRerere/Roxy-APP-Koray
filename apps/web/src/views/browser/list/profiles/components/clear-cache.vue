@@ -113,7 +113,7 @@ onMounted(() => {
     <RxInputRadio v-model="value" name="clearType" :options="options" />
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton size="sm" :label="$t('保存')" severity="info" @click="confirm" />
+      <RxButton size="sm" :label="$t('保存')" @click="confirm" />
     </div>
   </div>
 </template>

@@ -13,7 +13,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: '',
+    default: 'inherit',
   },
   fallback: {
     type: String,

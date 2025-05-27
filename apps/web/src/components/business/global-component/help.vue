@@ -106,7 +106,6 @@ const toggle = (event: Event) => {
     height: 48px;
     background-color: #12A3FC;
     border-radius: 50%;
-    border: 1px solid #FFF;
   }
 
   .tooltip {

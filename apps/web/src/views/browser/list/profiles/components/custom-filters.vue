@@ -249,8 +249,8 @@ async function modifyFilter() {
       <div class="labels-actions">
         <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
         <template v-if="labels.length">
-          <RxButton v-if="isAllProfiles" severity="info" size="xxs" :label="$t('保存')" @click="saveFilters" />
-          <SplitButton v-else severity="info" :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
+          <RxButton v-if="isAllProfiles" size="xxs" :label="$t('保存')" @click="saveFilters" />
+          <SplitButton v-else :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
         </template>
         <div>|</div>
       </div>

@@ -29,8 +29,7 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
     </slot>
     <slot name="tabpanels" v-if="!onlyTabs">
       <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
-        <TabPanel class="flex flex-1" v-for="{ slot, render, panelProps, ...tab } in tabs" :key="tab.title"
-          :value="tab.value" v-bind="panelProps">
+        <TabPanel class="flex flex-1" v-for="{ slot, render, panelProps, ...tab } in tabs" :key="tab.title" :value="tab.value" v-bind="panelProps">
           <slot :name="slot || tab.title" :tab="tab">
             <component v-if="render" :is="render" />
             <template v-else>{{ tab.content }}</template>
@@ -48,12 +47,10 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 :deep(.p-tablist-tab-list) {
   gap: var(--spacing-2xl, 16px);
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   .p-tab {
     padding: 14px 8px;
     border-color: transparent;
-    color: var(--colors-text-text-secondary, #B2B6B8);
     font-size: 12px;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);

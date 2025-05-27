@@ -95,7 +95,7 @@ function handleClick(method: PayWay) {
     height: 86px;
     border: 2px solid transparent;
     background: var(--colors-background-bg-action);
-    box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base, #48555B);
+    box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action, #48555B);
     border-radius: 8px;
     cursor: pointer;
     color: var(--colors-text-text-primary, #FAFAFA);

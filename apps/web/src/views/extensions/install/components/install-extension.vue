@@ -133,7 +133,7 @@ onMounted(() => {
     </div>
     <div class="flex justify-end items-center gap-3">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click.stop="close" />
-      <RxButton size="sm" :label="$t('保存')" severity="info" autofocus @click.stop="confirm" />
+      <RxButton size="sm" :label="$t('保存')" autofocus @click.stop="confirm" />
     </div>
   </div>
 </template>

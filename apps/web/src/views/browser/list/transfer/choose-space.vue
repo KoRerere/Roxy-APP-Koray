@@ -210,10 +210,11 @@ function getAvatarStyle(workspacePicture: string) {
 }
 
 .choose {
-  border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--colors-border-border-base, #AFB7BB);
+  border-radius: 8px;
+  background: var(--colors-background-bg-action);
+  border: 1px solid var(--colors-border-border-action);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  color: var(--colors-text-text-placeholder, #575D60);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
   line-height: var(--Line-Height-text-lg, 20px);
 }

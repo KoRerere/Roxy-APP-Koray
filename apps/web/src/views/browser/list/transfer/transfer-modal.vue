@@ -108,7 +108,7 @@ async function onTransfer(isSelf: boolean) {
   <div class="flex flex-col pa-6 pt-4 gap-5 max-h-[80vh] overflow-y-auto popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
       <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口')
-        }}</span>
+      }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">
@@ -253,7 +253,7 @@ async function onTransfer(isSelf: boolean) {
 }
 
 .checkboxitem {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-secondary, #575D60);
   font-size: 12px;
   line-height: 19.2px;
 }
@@ -272,7 +272,7 @@ async function onTransfer(isSelf: boolean) {
 
 .emailcode {
   align-self: stretch;
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-secondary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -280,7 +280,7 @@ async function onTransfer(isSelf: boolean) {
   line-height: var(--Line-Height-text-lg, 20px);
 
   .emailcode-item {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-secondary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

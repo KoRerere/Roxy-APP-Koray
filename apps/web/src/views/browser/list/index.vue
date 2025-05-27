@@ -330,7 +330,7 @@ async function hidePopover() {
   --tab-font-size: 12px;
 
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);

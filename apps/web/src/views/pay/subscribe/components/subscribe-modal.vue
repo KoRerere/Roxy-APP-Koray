@@ -138,7 +138,7 @@ function close(isCancel: boolean) {
       <RenewalTerms v-model="isAuto" :discount-amount="autoRenewAmount"></RenewalTerms>
     </ItemBlock>
     <Balance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="calcResult.amount" @recharge:failed="close(true)"></Balance>
-    <div class="w-full border-0 border-t-0.5 border-dashed border-[var(--colors-border-border-base)]"></div>
+    <div class="w-full border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]"></div>
     <div class="flex flex-col gap-3 total">
       <div class="flex justify-between items-center" v-if="calcResult.diffAmount > 0">
         <div class="flex-1 total-label">{{ $t('订阅原价') }}</div>

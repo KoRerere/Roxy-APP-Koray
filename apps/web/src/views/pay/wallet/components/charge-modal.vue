@@ -93,7 +93,7 @@ function close(isCancel: boolean) {
     <ItemBlock :title="$t('支付方式')">
       <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways" :disabledMethods="disabledMethods"></RxPaymentMethods>
     </ItemBlock>
-    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[var(--colors-border-border-base)]">
+    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]">
       <div class="py-6 flex justify-between items-center total">
         <span class="flex-1 total-label">{{ $t('总金额') }}</span>
         <span class="total-price">{{ currency(amount).format() }}</span>

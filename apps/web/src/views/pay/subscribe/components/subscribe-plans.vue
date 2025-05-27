@@ -58,13 +58,18 @@ function onSwitchPlan(plan: Partial<Plan>) {
 <style scoped lang="scss">
 .plans {
   border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action);
   background: var(--colors-background-bg-action);
 
   &.disabled {
     border: 1px solid var(--pattern-pay-plan-border-plan-inactive, #293038);
     background: var(--pattern-pay-plan-bg-plan-inactive, #05101A);
     box-shadow: none;
+
+    .plans-text,
+    .plans-price {
+      color: var(--pattern-pay-plan-text-plan-inactive);
+    }
   }
 
   &:not(.disabled).active {
