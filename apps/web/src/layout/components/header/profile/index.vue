@@ -128,8 +128,9 @@ const items = computed(() => {
       icon: "base/rx_ic_logout",
       command: () => {
         showPageLoading()
-        userStore.clearUserInfo();
-        router.push({ name: "login" });
+        router.push({ name: "login" }).finally(() => {
+          userStore.clearUserInfo()
+        });
       },
     },
   ].filter((item) => !item.vIf || item.vIf());

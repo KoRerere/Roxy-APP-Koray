@@ -121,7 +121,7 @@ const searchList = computed(() => {
       placeholder: $t('全部系统'),
       options: tableData.value.reduce((acc, curr) => {
         if (!acc.find((n: any) => n.value === curr.os)) {
-          acc.push({ label: curr.os, value: curr.os })
+          acc.push({ label: curr.os === 'IOS' ? 'iOS' : curr.os, value: curr.os })
         }
         return acc
       }, [])

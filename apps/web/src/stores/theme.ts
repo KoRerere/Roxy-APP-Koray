@@ -47,7 +47,7 @@ export const useThemeStore = defineStore('theme', () => {
     })
 
     theme.value = value ?? 'system'
-    if (userStore.token) {
+    if (userStore.token && isMainWindow) {
       API.base.userSetUserConfigCreate({ colorScheme: theme.value });
     }
     if (isMainWindow) {
@@ -61,7 +61,6 @@ export const useThemeStore = defineStore('theme', () => {
   })
 
   const toggleTheme = debounce(() => {
-    console.trace('toggleTheme', theme.value)
     if (theme.value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', systemTheme)
