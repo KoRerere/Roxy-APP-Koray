@@ -60,11 +60,8 @@ export const useThemeStore = defineStore('theme', () => {
     colorScheme && setTheme(colorScheme)
   })
 
-  watch(theme, toggleTheme, {
-    immediate: true
-  })
-
-  function toggleTheme() {
+  const toggleTheme = debounce(() => {
+    console.trace('toggleTheme', theme.value)
     if (theme.value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', systemTheme)
@@ -74,9 +71,14 @@ export const useThemeStore = defineStore('theme', () => {
       realTheme.value = theme.value
     }
     channel.postMessage({ theme: theme.value })
-  }
+  }, 0)
 
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', toggleTheme);
+
+  watch(theme, toggleTheme, {
+    immediate: true
+  })
+
   // 监听其他窗口/标签页发来的消息
   channel.onmessage = debounce((event) => {
     if (!isMainWindow && event.data.theme !== theme.value) {

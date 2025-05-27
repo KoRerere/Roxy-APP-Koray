@@ -7,13 +7,10 @@ import { emitter, type MittEvents } from './utils/eventBus';
 import GlobalComponent from '/@/components/business/global-component/index.vue'
 import { useUserStore } from '/@/stores/user'
 import LockScreen from '/@/components/lock-screen/index.vue'
-import { initStore } from '/@/stores'
 
 const channel = new BroadcastChannel(KICKED_OUT_CHANNEL_NAME);
 const [showModal] = useDialog()
 const router = useRouter()
-
-initStore()
 
 console.log('__WEB_VERSION__', __WEB_VERSION__)
 
