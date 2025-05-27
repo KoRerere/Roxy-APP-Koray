@@ -71,19 +71,13 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
     margin-bottom: 0;
   }
 
-  // &.collapsedChildren {
-  //   // height: calc-size(auto);
-  //   max-height: 0;
-  //   overflow: hidden;
-  // }
-
   &.level-1::before {
     content: '';
     position: absolute;
     left: 20px;
     width: 0.5px;
     height: 100%;
-    background: var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-border-border-inactive);
   }
 }
 

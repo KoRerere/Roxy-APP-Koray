@@ -95,8 +95,7 @@ onUnmounted(() => {
       <div class="upgrade-pay-plan-header">
         {{ $t('升级到') }} <span class="upgrade-pay-plan-header-plus">{{ $t('Roxy 会员') }}</span>
       </div>
-      <RxAlert v-if="alertInfo" class="w-full" :type="(alertInfo.type as any)" :content="alertInfo.content"
-        :closable="false">
+      <RxAlert v-if="alertInfo" class="w-full" :type="(alertInfo.type as any)" :content="alertInfo.content" :closable="false">
       </RxAlert>
       <div class="upgrade-pay-plan-content">
         <div class="description">
@@ -115,8 +114,7 @@ onUnmounted(() => {
       </div>
       <div class="upgrade-pay-plan-btn-group">
         <RxButton :label="$t('升级')" class="w-full" @click="toUpgrade" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" />
-        <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full"
-          @click="toFreeTrial">
+        <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">
           🎁 {{ $t('7 天免费试用') }}
         </RxButton>
       </div>
@@ -136,8 +134,7 @@ onUnmounted(() => {
       </div>
       <div class="indicator-list">
         <template v-for="(image, index) in images" :key="image.itemImageSrc">
-          <div class="indicator-item" :class="{ active: image.itemImageSrc === currentImage.itemImageSrc }"
-            @click="onIndicatorClick(index)"></div>
+          <div class="indicator-item" :class="{ active: image.itemImageSrc === currentImage.itemImageSrc }" @click="onIndicatorClick(index)"></div>
         </template>
       </div>
       <div class="picture-item">
@@ -153,6 +150,8 @@ onUnmounted(() => {
 .upgrade-pay-plan {
   display: flex;
   gap: 29px;
+  overflow: hidden;
+  border-radius: var(--p-dialog-border-radius);
   overflow: hidden;
 
   .left {
@@ -235,6 +234,7 @@ onUnmounted(() => {
     padding: 24px 32px 32px 32px;
     background-image: url('/images/payments/sirio.svg');
     background-position: center;
+    background-color: #fff;
 
     .upgrade-pay-plan-right-content {
       display: flex;
@@ -256,6 +256,7 @@ onUnmounted(() => {
         border-radius: 50%;
         cursor: pointer;
         transition: background 0.15s;
+        color: #575D60;
 
         &:hover {
           background: #e3dcdc;
@@ -264,7 +265,7 @@ onUnmounted(() => {
     }
 
     .title {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: #111213;
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -273,7 +274,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: var(--colors-text-text-secondary, #B2B6B8);
+      color: #575D60;
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

@@ -277,8 +277,11 @@ const filters = reactive({
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <div class="mt-20 ma-auto">
-      <TsSelectButton class="scale-100" v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+    <div class="flex flex-col gap-2">
+      <RxAlert announcement title="wcis man!" type="success"></RxAlert>
+      <RxAlert title="wcis man!" type="info"></RxAlert>
+      <RxAlert title="wcis man!" type="warn"></RxAlert>
+      <RxAlert title="wcis man!" type="error"></RxAlert>
     </div>
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <div class="flex flex-col justify-center items-center gap-2 w-full h-full">

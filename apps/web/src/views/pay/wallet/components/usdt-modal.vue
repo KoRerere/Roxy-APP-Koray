@@ -121,7 +121,7 @@ function close(isCancel: boolean) {
 
     <div class="flex flex-col gap-3">
       <div class="title">{{ $t('支付地址') }}</div>
-      <div class="flex gap-2.5 pa-3 bg-[#F0F3F5] rounded-lg">
+      <div class="flex gap-2.5 pa-3 bg-[var(--colors-background-bg-block)] rounded-lg">
         <img :src="qrcode" class="pointer-events-none w-26 h-26" />
         <div class="flex flex-col justify-center gap-2.5">
           <div class="qrcode-desc">{{ $t('复制地址或扫描二维码进行支付') }}</div>
@@ -132,7 +132,7 @@ function close(isCancel: boolean) {
         </div>
       </div>
       <div class="flex gap-2">
-        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg border-1 border-solid border-[#E4E8EB]">
+        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
@@ -144,7 +144,7 @@ function close(isCancel: boolean) {
             <div class="countdown">{{ countdownText }}</div>
           </div>
         </div>
-        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg border-1 border-solid border-[#E4E8EB]">
+        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
           <img class="block loading-circle w-8 h-8" src="/@/assets/images/status/loading.png">
           <div class="status">{{ $t('检查支付状态中...') }}</div>
         </div>
@@ -214,6 +214,11 @@ function close(isCancel: boolean) {
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
+}
+
+.other-block {
+  border: 1px solid var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
 }
 
 .remaining {
