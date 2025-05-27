@@ -13,9 +13,11 @@ import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
 import { colorSchemeList, useThemeStore } from "/@/stores/theme";
+import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 
 const router = useRouter();
 const dialog = useDialog();
+const [showModal] = useDialogHook()
 const userStore = useUserStore();
 const simpleLocale = useSimpleLocale();
 const themeStore = useThemeStore()
@@ -92,6 +94,20 @@ const items = computed(() => {
           command: async () => {
             await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
+            // 如果用户是第一次切换主题，则弹出提示框
+            if (userStore.userConfig?.isFirstSwitchTheme) {
+              showModal({
+                header: $t('主题模式设置'),
+                okText: $t('前往'),
+                slots: {
+                  default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>
+                },
+                handleOk() {
+                  openSettings('preferences')
+                  API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
+                }
+              })
+            }
           },
         };
       }),

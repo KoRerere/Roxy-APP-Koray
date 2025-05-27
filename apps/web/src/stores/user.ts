@@ -30,7 +30,7 @@ export const useUserStore = defineStore(
     const userInfo = ref<UserInfo>({});
     /** 用户付费详情 */
     const userPayInfo = ref<UserGetUserPayInfoListData["data"]>({} as UserGetUserPayInfoListData["data"]);
-    const userConfig = ref<UserConfig>();
+    const userConfig = ref<UserConfig>({});
     const token = ref('');
     const appVersion = ref("");
     const rememberMe = ref(false);
