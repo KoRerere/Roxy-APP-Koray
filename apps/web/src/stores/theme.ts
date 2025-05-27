@@ -37,10 +37,10 @@ export const useThemeStore = defineStore('theme', () => {
   const realTheme = ref<Omit<ColorScheme, 'system'>>('light')
 
   async function setTheme(value: ColorScheme) {
-    theme.value = value ?? 'system'
-    if (userStore.token && isMainWindow) {
-      API.base.userSetUserConfigCreate({ colorScheme: theme.value });
+    if (userStore.token && isMainWindow && theme.value !== value) {
+      API.base.userSetUserConfigCreate({ colorScheme: value });
     }
+    theme.value = value
     if (isMainWindow) {
       electronAPI.send('app:setSystemTheme', theme.value)
     }
