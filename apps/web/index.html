@@ -18,7 +18,7 @@
         justify-content: center;
         gap: 16px;
         z-index: 900;
-        background: var(--colors-background-bg-app, #fff);
+        background: var(--colors-background-bg-app, var(--default-bg-color, #fff));
         user-select: none;
 
         .logo {
@@ -39,14 +39,6 @@
         }
       }
     </style>
-    <script>
-      try {
-        const theme = JSON.parse(localStorage.getItem('theme') || '{}')
-        if (theme.realTheme) {
-          document.documentElement.setAttribute('data-theme', theme.realTheme)
-        }
-      } catch (error) {}
-    </script>
   </head>
 
   <body>
@@ -54,6 +46,17 @@
       <img src="/images/logo.svg" class="logo" />
       <img class="loading-img" src="/images/loading.png" />
     </div>
+    <script>
+      try {
+        const theme = JSON.parse(localStorage.getItem('theme') || '{}')
+        if (theme.realTheme) {
+          document.documentElement.setAttribute('data-theme', theme.realTheme)
+          const pageLoading = document.getElementById('page-loading')
+          console.log('pageLoading', pageLoading)
+          pageLoading?.style?.setProperty('--default-bg-color', theme.realTheme === 'dark' ? '#000' : '#fff')
+        }
+      } catch (error) {}
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
