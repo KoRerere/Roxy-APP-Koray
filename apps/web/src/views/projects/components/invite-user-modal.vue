@@ -60,13 +60,11 @@ onBeforeUnmount(() => {
 })
 
 function onSearch(event: AutoCompleteCompleteEvent) {
-  setTimeout(() => {
-    if (!event.query.trim().length) {
-      filteredMembers.value = [...otherMembers.value]
-    } else {
-      filteredMembers.value = fuse.value.search(event.query).map(member => member.item)
-    }
-  }, 250)
+  if (!event.query.trim().length) {
+    filteredMembers.value = [...otherMembers.value]
+  } else {
+    filteredMembers.value = fuse.value.search(event.query).map(member => member.item)
+  }
 }
 
 function onOptionSelect({ value }: AutoCompleteOptionSelectEvent) {
@@ -188,7 +186,7 @@ function updateCurrentMembers(member: Record<string, any>) {
 }
 
 .header {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
