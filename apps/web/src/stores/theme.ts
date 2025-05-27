@@ -1,3 +1,5 @@
+import primitivesTokens from '/@/styles/primevuePresets/_Primitives_tokens.json'
+import { updatePreset } from '@primevue/themes'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useUserStore } from '/@/stores/user'
@@ -6,11 +8,6 @@ import { isMainWindow, isProd } from '/@/utils'
 import { SWITCH_THEME_CHANNEL_NAME } from '/@/constants/channel'
 import { debounce } from 'es-toolkit'
 import { $t } from '/@/locales'
-
-import primitivesTokens from '/@/styles/primevuePresets/_Primitives_tokens.json'
-import { primitive } from '/@/primevue/primitive'
-import { updatePreset } from '@primevue/themes'
-
 
 type ColorScheme = 'light' | 'dark' | 'system'
 
@@ -40,12 +37,6 @@ export const useThemeStore = defineStore('theme', () => {
   const realTheme = ref<Omit<ColorScheme, 'system'>>('light')
 
   async function setTheme(value: ColorScheme) {
-    const wcisKey = (!value || value === 'system') ? 'light' : value
-    const wcisthem = primitivesTokens[wcisKey]
-    updatePreset({
-      primitive: { ...primitive, ...wcisthem }
-    })
-
     theme.value = value ?? 'system'
     if (userStore.token) {
       API.base.userSetUserConfigCreate({ colorScheme: theme.value });
@@ -61,7 +52,6 @@ export const useThemeStore = defineStore('theme', () => {
   })
 
   const toggleTheme = debounce(() => {
-    console.trace('toggleTheme', theme.value)
     if (theme.value === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', systemTheme)
@@ -70,6 +60,10 @@ export const useThemeStore = defineStore('theme', () => {
       document.documentElement.setAttribute('data-theme', theme.value)
       realTheme.value = theme.value
     }
+    // 更新 primevue 的 primitive 以适应不同风格 theme
+    updatePreset({
+      primitive: primitivesTokens[realTheme.value as keyof typeof primitivesTokens]
+    })
     channel.postMessage({ theme: theme.value })
   }, 0)
 
