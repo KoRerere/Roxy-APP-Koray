@@ -220,7 +220,7 @@ onMounted(() => {
         gap: 10px;
         border-radius: 4px;
         background: var(--primitives-neutrals-100, #f0f3f5);
-        color: #a3a9ad;
+        color: var(--colors-text-text-inactive);
       }
 
       .step-label {
@@ -273,7 +273,7 @@ onMounted(() => {
     label {
       font-size: 14px;
       font-weight: 500;
-      color: #333;
+      color: var(--colors-text-text-primary);
 
       .required {
         color: #ff4d4f;

@@ -6,7 +6,7 @@
     </div>
     <Menu ref="menu" :model="items" :popup="true">
       <template #item="{ item, props }">
-        <a v-ripple class="flex items-center" v-bind="props.action">
+        <a v-ripple class="flex items-center whitespace-nowrap" v-bind="props.action">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </a>

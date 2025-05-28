@@ -62,13 +62,16 @@ async function openBrowser() {
 
 <template>
   <div class="flex items-center gap-2">
-    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
-      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5" :value="browser.percent" />
+    <RxButton class="control" :class="browser.classes" :disabled="!data.openLimitStatus" size="xxs" outlined
+      severity="secondary" @click.stop="openBrowser">
+      <circle-progress v-if="browser.percent && !browser.complted" size="16" stroke-width="5"
+        :value="browser.percent" />
       <RxSvgIcon class="control-icon" v-if="!browser.percent && !browser.pending" name="base/rx_ic_chrome" />
       <span class="select-none">{{ browser.complted ? $t('查看') : browser?.msg }}</span>
     </RxButton>
     <RxSvgIcon v-if="browser?.error" v-tooltip.top="browser.error" name="base/rx_ic_info_fill" class="text-red" />
-    <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill" class="text-orange" />
+    <RxSvgIcon v-if="browser?.warning" v-tooltip.top="browser.warning" name="base/rx_ic_info_fill"
+      class="text-orange" />
     <RxSvgIcon v-if="usePeoples" v-tooltip.top="usePeoples" name="base/rx_ic_user_group" class="text-orange" />
   </div>
 </template>
@@ -80,12 +83,10 @@ async function openBrowser() {
 
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  background: var(--colors-background-bg-action, #fff);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
-  color: var(--primitives-neutrals-500, #0e1214);
   text-align: center;
   font-family: Inter;
   font-size: var(--Font-Size-text-sm, 12px);
