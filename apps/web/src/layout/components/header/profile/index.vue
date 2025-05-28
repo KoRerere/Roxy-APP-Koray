@@ -104,9 +104,11 @@ const items = computed(() => {
                 },
                 async handleOk() {
                   openSettings('preferences')
+                },
+                async handleCancel() {
                   await API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
                   userStore.updateUserConfig()
-                }
+                },
               })
             }
           },
