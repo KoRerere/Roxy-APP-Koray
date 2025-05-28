@@ -290,7 +290,7 @@ export function getOperation(row: any = {}) {
         name: 'G1',
         showLabel: true,
         iconProps: {
-          color: '#12A3FC',
+          color: 'var(--pattern-actionbar-icon-open)',
         },
       },
     },

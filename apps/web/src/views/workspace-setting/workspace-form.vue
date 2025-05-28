@@ -93,7 +93,8 @@ defineExpose({
         </div>
       </div>
       <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled" :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
+        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
+          :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)" />
         <div class="choose-icon-desc">
           {{ $t('选择图标') }}
         </div>
@@ -111,7 +112,8 @@ defineExpose({
       </div>
       <div class="w-full">
         <IconField>
-          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage" :maxlength="20" class="w-full" @input="onInput" />
+          <InputText v-model="workspaceInfo.workspaceName" :disabled="disabled" :invalid="!!errorMessage"
+            :maxlength="20" class="w-full" @input="onInput" />
           <InputIcon class="input-limit-text">
             {{ workspaceInfo.workspaceName?.length }}/20
           </InputIcon>
@@ -142,7 +144,11 @@ defineExpose({
     align-items: flex-start;
     gap: var(--spacing-2xl, 16px);
     align-self: stretch;
-    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    border-bottom: 0.5px solid var(--component-dropdown-divider, #c7cdd1);
+
+    &:last-child {
+      border-bottom: none;
+    }
 
     .title {
       align-self: stretch;

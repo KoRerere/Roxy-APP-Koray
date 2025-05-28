@@ -90,7 +90,7 @@ const list = computed(() => {
     },
     {
       key: 'account',
-      image: windowPlatformList[0]?.platformIcon,
+      // image: windowPlatformList[0]?.platformIcon,
       svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
       svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary)' : 'var(--colors-icon-icon-secondary)',
       showSub: windowPlatformList.length > 1,
@@ -418,21 +418,30 @@ function handleClickInplace(e: MouseEvent) {
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
-      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" @click.stop="onClick($event, item.key)">
+      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
+        @click.stop="onClick($event, item.key)">
         <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-          <PlatformIcon v-if="item.platformAccount" :platformIcon="item.platformAccount.platformIcon" :platformIconDark="item.platformAccount.platformIconDark"
-            class="block w-5 h-5 pointer-events-none" />
-          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+          <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon"
+            :platformIconDark="item.platformAccount.platformIconDark" class="block w-5 h-5 pointer-events-none" />
+          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+            :color="item.svgColor" />
         </div>
-        <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
-          <PlatformIcon v-if="item.subPlatformAccount" :platformIcon="item.subPlatformAccount.platformIcon" :platformIconDark="item.subPlatformAccount.platformIconDark"
-            class="block w-3 h-3 pointer-events-none"></PlatformIcon>
-          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
+        <div v-if="item.showSub"
+          class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
+          :class="item.classes">
+          <PlatformIcon v-if="item.subPlatformAccount?.platformIcon"
+            :platformIcon="item.subPlatformAccount.platformIcon"
+            :platformIconDark="item.subPlatformAccount.platformIconDark" class="block w-3 h-3 pointer-events-none">
+          </PlatformIcon>
+          <!-- <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none"> -->
+          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h"
+            :color="item.svgColor" />
         </div>
       </div>
       <div v-if="list.length > 1" class="state-line">
         <CanvasLine v-if="isOpenBrowser" :waveWidth="1.2" :blur="0" speed="fast" :waveOpacity="1"></CanvasLine>
-        <div v-else class="w-[100px] border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]"></div>
+        <div v-else class="w-[100px] border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]">
+        </div>
       </div>
     </div>
     <Inplace v-focustrap :disabled="disabled || readonly" @click="handleClickInplace">
@@ -440,7 +449,8 @@ function handleClickInplace(e: MouseEvent) {
         <div class="profile-name-content">{{ windowName }}</div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
+          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
           @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
