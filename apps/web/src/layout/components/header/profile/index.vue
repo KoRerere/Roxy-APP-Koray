@@ -98,6 +98,7 @@ const items = computed(() => {
             if (userStore.userConfig?.isFirstSwitchTheme) {
               showModal({
                 header: $t('主题模式设置'),
+                class: '!w-[480px]',
                 okText: $t('前往'),
                 slots: {
                   default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>
