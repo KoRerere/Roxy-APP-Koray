@@ -195,7 +195,7 @@ function handleBlur(event: InputNumberBlurEvent) {
         </div>
       </template>
     </div>
-    <RxButton severity="secondary" size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled"
+    <RxButton size="lg" class="w-full" :label="$t('确认')" :disabled="withdrawDisabled"
       @click="handleConfirmWithdrawal" />
   </div>
 </template>

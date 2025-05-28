@@ -21,10 +21,10 @@ const withdrawStatusMap = {
 }
 
 const withdrawStatusColorMap = {
-  'Pending': '#171C1F',
-  'Success': '#1CC94D',
-  'Fail': '#F53838',
-  'Reject': '#F53838',
+  'Pending': 'var(--colors-text-text-primary)',
+  'Success': 'var(--colors-text-text-success)',
+  'Fail': 'var(--colors-text-text-error)',
+  'Reject': 'var(--colors-text-text-error)',
 }
 
 const columns = ref([
@@ -96,7 +96,8 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest"
+    :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无提现记录')" />
     </template>
