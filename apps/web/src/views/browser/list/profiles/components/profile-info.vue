@@ -542,8 +542,8 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   border-radius: 4px;
 
   &:hover {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: var(--colors-background-bg-action-hover);
+    border: 1px solid var(--pattern-profiles-input-border);
+    background: var(--pattern-profiles-input-bg);
   }
 }
 
