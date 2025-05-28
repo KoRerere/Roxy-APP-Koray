@@ -90,7 +90,8 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
           </div>
           <div class="pl-[56px] pr-[16px]">
             <rich-text :html="item.originUpgradeData?.upgradeContent" />
-            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)" :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
+            <RxButton type="button" size="sm" :label="formatClientBtnLabel(item)"
+              :icon="`base/${item.status === 'downloaded' ? 'rx_ic_renew' : 'rx_ic_download'}`"
               :loading="item.status === 'downloading'" class="mt-[6px]" @click="handleClientItemClick(item)" />
           </div>
         </div>
@@ -136,7 +137,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--colors-border-border-base);
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid var(--colors-border-border-base);
+  }
 }
 
 .upgrade-header {

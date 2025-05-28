@@ -125,7 +125,10 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  border-bottom: 0.5px solid var(--component-dropdown-divider, #6A757C);
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid var(--component-dropdown-divider, #6A757C);
+  }
 
   &.collapsed {
     gap: var(--spacing-xl, 12px);
