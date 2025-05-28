@@ -52,7 +52,6 @@
         if (theme.realTheme) {
           document.documentElement.setAttribute('data-theme', theme.realTheme)
           const pageLoading = document.getElementById('page-loading')
-          console.log('pageLoading', pageLoading)
           pageLoading?.style?.setProperty('--default-bg-color', theme.realTheme === 'dark' ? '#000' : '#fff')
         }
       } catch (error) {}

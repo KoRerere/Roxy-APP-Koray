@@ -119,12 +119,10 @@ export function usePreferencesPanel() {
             {
               label: $t("主题模式"),
               name: "browserColorScheme",
-              text: $t('窗口主题模式'),
+              text: $t('支持 Roxychrome 125 及更高版本'),
               value: getColorSchemeList().find(item => item.value === (data?.browserColorScheme || 'system')),
               props: {
                 filter: false,
-                // optionValue: "value",
-                // optionLabel: "label",
                 options: getColorSchemeList()
               },
               formatValue: (item: Items) => {

@@ -28,5 +28,5 @@ export function setupPrimeVue(app: App) {
   });
 }
 
-console.log('Aura', Aura)
+// console.log('Aura', Aura)
 

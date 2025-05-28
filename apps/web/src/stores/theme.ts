@@ -41,9 +41,6 @@ export const useThemeStore = defineStore('theme', () => {
       API.base.userSetUserConfigCreate({ colorScheme: value });
     }
     theme.value = value
-    if (isMainWindow) {
-      electronAPI.send('app:setSystemTheme', theme.value)
-    }
   }
 
   watch(() => userStore.userConfig?.colorScheme, () => {
@@ -65,6 +62,10 @@ export const useThemeStore = defineStore('theme', () => {
       primitive: primitivesTokens[realTheme.value as keyof typeof primitivesTokens]
     })
     channel.postMessage({ theme: theme.value })
+
+    if (isMainWindow) {
+      electronAPI.send('app:setSystemTheme', theme.value)
+    }
   }, 0)
 
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', toggleTheme);

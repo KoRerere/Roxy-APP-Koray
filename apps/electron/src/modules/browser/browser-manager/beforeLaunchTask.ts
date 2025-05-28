@@ -534,14 +534,18 @@ export class BeforeLaunchTask {
       }
       // 不允许 Chrome 在窗口全部关闭后仍保持后台运行（比如某些扩展或服务）
       localState.background_mode = { enabled: false }
-      // 是否强制网页使用暗色模式
-      const experiments = store.browserColorScheme === 'dark' ? ['enable-force-dark@1'] : []
-      localState.browser = {
-        ...localState.browser,
-        enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments]
-      }
-      if (store.browserColorScheme !== 'dark') {
-        localState.browser.enabled_labs_experiments = localState.browser.enabled_labs_experiments?.filter(item => item !== 'enable-force-dark@1')
+      // 136 版本之前，支持强制网页使用暗色模式
+      if (Number(this.browserItem.winInfo.coreVersion) < 136) {
+        const isDark = store.browserColorScheme === 'dark'
+        // 是否强制网页使用暗色模式
+        const experiments = isDark ? ['enable-force-dark@1'] : []
+        localState.browser = {
+          ...localState.browser,
+          enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments]
+        }
+        if (!isDark) {
+          localState.browser.enabled_labs_experiments = localState.browser.enabled_labs_experiments?.filter(item => item !== 'enable-force-dark@1')
+        }
       }
       await writeFile(roxyLocalStatePath, JSON.stringify(localState))
     } catch (error) {
