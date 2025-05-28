@@ -10,7 +10,11 @@ const workspaceStore = useWorkspaceStore()
 const { currentWorkspace } = storeToRefs(workspaceStore)
 
 const avatarStyle = computed(() => {
-  return currentWorkspace.value?.workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
+  return currentWorkspace.value?.workspacePicture ? {} : {
+    backgroundColor: 'var(--pattern-topnav-space-avatar-bg)',
+    color: '#fff',
+    fontSize: '14px'
+  }
 })
 
 async function showWorkspaceManager() {

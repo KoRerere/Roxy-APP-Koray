@@ -176,7 +176,7 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
-  profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
+  // profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
@@ -314,17 +314,18 @@ async function saveTemplatePopup(event: Event, option?: TemplateOption) {
   // }
 
   // 没有付费过的用户则提示付费墙
-  if (userPayInfo.value?.subLevel === SubLevelEnum.Free) {
-    if (isOwner.value) {
-      return emitter.emit("showPayWall", {
-        event,
-        params: {
-          type: "createProfileTemplates",
-        },
-      });
-    } else {
-      return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
-    }
+  if (isOwner.value && userPayInfo.value?.subLevel === SubLevelEnum.Free) {
+    return emitter.emit("showPayWall", {
+      event,
+      params: {
+        type: "createProfileTemplates",
+      },
+    });
+    // if (isOwner.value) {
+
+    // } else {
+    //   return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
+    // }
   }
 
   dialog.open(simplePopup, {
