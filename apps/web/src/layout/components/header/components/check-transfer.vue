@@ -115,14 +115,16 @@ async function toProject() {
         </template>
         <template #transfer="{ data }">
           <div class="flex items-center">
-            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+            <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon"
+              :class="{ '!bg-black': !data.workspacePicture }"
               :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
             <div class="ml-3 space-name">{{ data.workspaceName }}</div>
           </div>
         </template>
         <template #from="{ data }">
           <div class="flex items-center gap-2">
-            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)" :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
+            <RxAvatar :avatar="data.operatorUserAvatar" :name="data.operatorUserName?.slice(0, 2)"
+              :color="data.operatorUserAvatarColor" :size="24" :font-size="14"></RxAvatar>
             <span class="space-name">{{ data.operatorUserName }}</span>
           </div>
         </template>
@@ -142,7 +144,7 @@ async function toProject() {
 }
 
 .header {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;

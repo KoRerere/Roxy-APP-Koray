@@ -10,7 +10,7 @@ import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
-import { encryptAESGCM, isWindows, type OauthLoginType } from "/@/utils";
+import { encryptAESGCM, hidePageLoading, isWindows, type OauthLoginType } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -84,6 +84,9 @@ export const useUserStore = defineStore(
       if (code === 0) {
         setUserInfo(data);
         workspaceStore.setCurrentWorkspace(data.workspaceId);
+        setTimeout(() => {
+          hidePageLoading()
+        }, 7000)
       } else {
         // 如果获取用户信息失败，则清除用户信息
         clearUserInfo();
