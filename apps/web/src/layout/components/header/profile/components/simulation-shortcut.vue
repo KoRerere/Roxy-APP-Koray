@@ -82,7 +82,7 @@ function onReset() {
   emit('change', modelValue.value)
 }
 
-function handleBlur() {
+async function handleBlur() {
   const keys = modelValue.value.split(' ');
   if (!keys.length) {
     toast.add({
@@ -103,28 +103,34 @@ function handleBlur() {
     })
     return
   }
-  emit('change', modelValue.value)
+  const result = await checkShortcutKey()
+  if (result) {
+    emit('change', modelValue.value)
+  }
 }
 
 function handleChange() {
   invalid.value = false;
 }
 
-onMounted(async () => {
+const checkShortcutKey = async () => {
   // 接口可能无法判断这些快捷键是否可用。这里加一个黑名单
   const blacklist = ['A'].map(k => 'CommandOrControl+' + k)
   try {
     const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
     if (blacklist.includes(keyboard)) {
       invalid.value = true;
-      return;
+      return false
     }
     const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
     invalid.value = !isKeyboard
+    return isKeyboard
   } catch (error) {
-
+    return false
   }
-})
+}
+
+onMounted(checkShortcutKey)
 </script>
 
 <style lang="scss" scoped>
