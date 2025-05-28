@@ -47,7 +47,7 @@ defineExpose({
   padding: var(--spacing-lg, 8px) 10px;
   align-items: center;
   gap: var(--spacing-lg, 8px);
-  border-top: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  border-top: 0.5px solid var(--component-dropdown-divider, #6A757C);
 
   &:empty {
     display: none;

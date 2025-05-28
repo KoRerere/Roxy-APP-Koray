@@ -277,7 +277,7 @@ function toggle(event: Event) {
   align-items: center;
   gap: var(--spacing-md, 6px);
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--colors-border-border-base, #AFB7BB);
+  border: 1px solid var(--colors-border-border-action, #AFB7BB);
   background: var(--colors-background-bg-action, #FFF);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),

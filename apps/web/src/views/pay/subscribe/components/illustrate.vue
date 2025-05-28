@@ -49,18 +49,24 @@ const tierPrice = computed(() => tierCalculate(data, SAMPLE))
       <div class="illustrate-title">{{ $t('窗口价格') }}</div>
       <div class="mt-2 illustrate-desc">{{ $t('窗口总价将通过各个区间的 数量×对应单价 进行累加计算') }}</div>
     </div>
-    <div class="flex flex-col border-0.5 border-solid border-[var(--colors-border-border-base)] rounded-md overflow-hidden">
+    <div
+      class="flex flex-col border-0.5 border-solid border-[var(--colors-border-border-base)] rounded-md overflow-hidden">
       <div class="flex">
-        <div class="flex-1 py-2 text-center bg-[#FAFBFC] cell-th" v-for="col in columns" :key="col.key">
+        <div class="flex-1 py-2 text-center bg-[var(--component-table-bg-header)] cell-th" v-for="col in columns"
+          :key="col.key">
           {{ col.title }}
         </div>
       </div>
-      <div class="flex border-0 border-t-0.5 border-solid border-[var(--colors-border-border-base)]" v-for="item in list" :key="item.title">
-        <div class="flex justify-center items-center w-1/3 border-0 border-r-0.5 border-solid border-[var(--colors-border-border-base)] cell-th">
+      <div class="flex border-0 border-t-0.5 border-solid border-[var(--colors-border-border-base)]"
+        v-for="item in list" :key="item.title">
+        <div
+          class="flex justify-center items-center w-1/3 border-0 border-r-0.5 border-solid border-[var(--colors-border-border-base)] cell-th">
           {{ item.title }}
         </div>
         <div class="flex-auto">
-          <div class="flex gap-3 py-2 px-3 border-0 first-of-type:border-t-0 border-t-0.5 border-solid border-[var(--colors-border-border-base)]" v-for="(it, idx) in item.items" :key="idx">
+          <div
+            class="flex gap-3 py-2 px-3 border-0 first-of-type:border-t-0 border-t-0.5 border-solid border-[var(--colors-border-border-base)]"
+            v-for="(it, idx) in item.items" :key="idx">
             <div class="flex-1 text-center cell-td">{{ columns[1].render?.(it) }}</div>
             <div class="flex-1 color-[#FC9D12] text-center cell-td">{{ columns[2].render?.(it) }}</div>
           </div>

@@ -25,7 +25,8 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] bg-white card">
+      <div
+        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] bg-white card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}

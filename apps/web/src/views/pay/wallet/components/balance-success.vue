@@ -37,7 +37,7 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-base)] bg-white overflow-hidden card">
+      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl bg-white overflow-hidden card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('总余额') }}
@@ -55,7 +55,9 @@ function close() {
           <SvgIcon name="base/rx_ic_check_fill" color="#1CC94D" size="24" />
           <span>{{ $t('充值成功！') }}</span>
         </div>
-        <i18n-t class="feat-desc" tag="div" :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })" scope="global">
+        <i18n-t class="feat-desc" tag="div"
+          :keypath="$t('您已成功充值 {amount}，当前钱包余额为 {balance}', { amount: '{amount}', balance: currency(userPayInfo?.balance).format() })"
+          scope="global">
           <template #amount>
             <span class="feat-desc-link">{{ diffAmount }}</span>
           </template>
@@ -78,7 +80,7 @@ function close() {
 .card {
   position: relative;
   z-index: 1;
-  border: 0.5px solid var(--colors-border-border-base);
+  border: 0.5px solid var(--colors-border-border-overlay);
   background: var(--colors-background-bg-action);
 
   &::before {

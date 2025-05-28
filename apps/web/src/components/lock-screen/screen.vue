@@ -193,7 +193,7 @@ onMounted(() => {
 }
 
 .logout-button-text {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary, #111213);
   text-align: center;
   font-family: Inter;
   font-size: 13px;

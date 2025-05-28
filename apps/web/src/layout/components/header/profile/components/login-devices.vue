@@ -60,7 +60,7 @@ const deviceList = computed(() => {
 
   &.line {
     padding-bottom: var(--spacing-2xl, 16px);
-    border-bottom: 1px solid var(--colors-border-border-base, #C7CDD1);
+    border-bottom: 1px solid var(--colors-border-divider, #C7CDD1);
 
     &:not(:first-of-type) {
       padding-top: var(--spacing-2xl, 16px);

@@ -10,6 +10,7 @@ import type {
 } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import { getDictMap } from "/@/utils";
+import { RxSvgIcon } from "/@/components/rx-icon";
 
 export function useNetworkPanel() {
   const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } =
@@ -82,7 +83,6 @@ export function useNetworkPanel() {
                 return (
                   item.value && (
                     <Message
-                      icon="pi pi-check-circle"
                       severity="success"
                       closable={true}
                       pt={{ content: "!items-start" }}
@@ -90,15 +90,20 @@ export function useNetworkPanel() {
                         item.value = null;
                       }}
                     >
-                      <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-                        {$t("位置")}:{item.value.country_code}/
-                        {item.value.country}
-                      </div>
-                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-                        IP:
-                        {item.value.ip}
-                      </div>
+                      {{
+                        icon: () => <RxSvgIcon name="status/rx_ic_check_fill" />,
+                        default: () => <>
+                          <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
+                          <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+                            {$t("位置")}:{item.value.country_code}/
+                            {item.value.country}
+                          </div>
+                          <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+                            IP:
+                            {item.value.ip}
+                          </div>
+                        </>
+                      }}
                     </Message>
                   )
                 );
@@ -123,7 +128,6 @@ export function useNetworkPanel() {
                 return (
                   item.value && (
                     <Message
-                      icon="pi pi-check-circle"
                       severity="success"
                       closable={true}
                       pt={{ content: "!items-start" }}
@@ -131,15 +135,20 @@ export function useNetworkPanel() {
                         item.value = null;
                       }}
                     >
-                      <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-                        {$t("位置")}:{item.value.country_code}/
-                        {item.value.country}
-                      </div>
-                      <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
-                        IP:
-                        {item.value.ip}
-                      </div>
+                      {{
+                        icon: () => <RxSvgIcon name="status/rx_ic_check_fill" />,
+                        default: () => <>
+                          <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
+                          <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+                            {$t("位置")}:{item.value.country_code}/
+                            {item.value.country}
+                          </div>
+                          <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+                            IP:
+                            {item.value.ip}
+                          </div>
+                        </>
+                      }}
                     </Message>
                   )
                 );

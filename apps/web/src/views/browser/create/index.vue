@@ -26,6 +26,7 @@ import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
+import { useToast } from 'primevue/usetoast'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -60,6 +61,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const backRoute = useBackRoute()
 const { handleBusinessCode } = useHandleBusinessCode()
+const toast = useToast()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -313,12 +315,16 @@ async function saveTemplatePopup(event: Event, option?: TemplateOption) {
 
   // 没有付费过的用户则提示付费墙
   if (userPayInfo.value?.subLevel === SubLevelEnum.Free) {
-    return emitter.emit("showPayWall", {
-      event,
-      params: {
-        type: "createProfileTemplates",
-      },
-    });
+    if (isOwner.value) {
+      return emitter.emit("showPayWall", {
+        event,
+        params: {
+          type: "createProfileTemplates",
+        },
+      });
+    } else {
+      return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
+    }
   }
 
   dialog.open(simplePopup, {

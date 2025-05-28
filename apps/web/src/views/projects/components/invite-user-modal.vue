@@ -172,8 +172,8 @@ function updateCurrentMembers(member: Record<string, any>) {
           <RxAvatar :avatar="member.avatar" :name="member.userName.slice(0, 2)" :color="member.avatarColor" :size="28"
             :font-size="14" />
           <div class="flex-1">
-            <div class="member-item-name">{{ member.email }}</div>
-            <div class="member-item-email">{{ member.userName }}</div>
+            <div class="member-item-email">{{ member.email }}</div>
+            <div class="member-item-name">{{ member.userName }}</div>
           </div>
           <RxTag disabled :label="roleLabelMap[member.role as keyof typeof roleLabelMap]" />
         </div>
