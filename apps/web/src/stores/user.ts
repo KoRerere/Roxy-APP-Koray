@@ -86,7 +86,7 @@ export const useUserStore = defineStore(
         workspaceStore.setCurrentWorkspace(data.workspaceId);
         setTimeout(() => {
           hidePageLoading()
-        }, 7000)
+        }, 10000)
       } else {
         // 如果获取用户信息失败，则清除用户信息
         clearUserInfo();
@@ -222,7 +222,7 @@ export const useUserStore = defineStore(
 
     const initUserInfo = async () => {
       if (token.value) {
-        getUserInfo();
+        await getUserInfo();
         getUserConfig(true);
       }
     };
