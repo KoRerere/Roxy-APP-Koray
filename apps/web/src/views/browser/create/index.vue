@@ -362,7 +362,7 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
   const { code, msg } = id
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-  onlyErrorToast(code, msg)
+  // onlyErrorToast(code, msg)
   if (code === 0) {
     getTemplateList()
   } else {

@@ -27,7 +27,11 @@ export const switchWorkspaceAndToUpgradePlan = async () => {
   }
   const ownerWorkspace = workspaceStore.workspaceList.find(item => item.workspaceDefault && item.role === Role.OWNER)
   if (ownerWorkspace) {
-    workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).then(toUpgradePlan)
+    workspaceStore.setCurrentWorkspace(ownerWorkspace.id!).finally(() => {
+      setTimeout(() => {
+        toUpgradePlan()
+      }, 1500)
+    })
   }
 }
 

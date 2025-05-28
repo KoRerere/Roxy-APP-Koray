@@ -30,7 +30,7 @@ watch(() => options, (value) => {
   _options.value = value
 })
 
-const _options = ref()
+const _options = computed(() => options)
 
 onBeforeMount(async () => {
   if (getOptions && isLikeFunction(getOptions)) {
@@ -54,13 +54,15 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ optionLabel, optionValue, ...props }" :options="_options" :pt="{ root: size, option: classes.option }" @change="_onChange">
+  <Select class="w-full" v-bind="{ optionLabel, optionValue, ...props }" :options="_options"
+    :pt="{ root: size, option: classes.option }" @change="_onChange">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="selectitem">
-        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor"
+          fallback="base/rx_ic_earth" />
         <img v-if="value.image" class="selectitem__image" :src="value.image">
         <div>{{ value.label }}</div>
       </div>
@@ -68,7 +70,8 @@ function _onChange(event: any) {
     </template>
     <template #option="{ option }">
       <div class="selectitem">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor"
+          fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="selectitem__image" :src="option.image">
         <div>{{ option.label }}</div>
         <slot name="option-extra" :option="option"></slot>

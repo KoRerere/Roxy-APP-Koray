@@ -56,7 +56,13 @@ function handleSave() {
         <template #platform="{ data: row }">
           <div class="flex gap-2 account">
             <div>
-              <img v-if="row.platformIcon" class="w-4 h-4" :src="row.platformIcon">
+              <platformIcon 
+                v-if="row.platformIcon"
+                :platformIcon="row.platformIcon"
+                :platformIconDark="row.platformIconDark"
+                class="w-4 h-4"
+              />
+              <!-- <img v-if="row.platformIcon" class="w-4 h-4" :src="row.platformIcon"> -->
               <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">

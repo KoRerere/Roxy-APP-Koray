@@ -24,7 +24,7 @@ const emit = defineEmits(['confirm', 'close'])
 const platformRow = ref<any[]>([])
 const themeStore = useThemeStore()
 
-const inputs = [
+const inputs = reactive([
   {
     type: 'select',
     label: $t('平台'),
@@ -37,8 +37,9 @@ const inputs = [
       filter: true,
       options: [],
       onChange: ({ value, props }: any) => {
-        const platformIcon = props.options.find((item: any) => item.value === value)?.image ?? ''
-        Reflect.set(original.value, 'platformIcon', platformIcon)
+        const platform = props.options.find((item: any) => item.value === value)
+        Reflect.set(original.value, 'platformIcon', platform?.platformIcon || "")
+        Reflect.set(original.value, 'platformIconDark', platform?.platformIconDark || "")
       }
     },
     resolver: (zod: any) => zod.string().refine(validateURL, $t('请输入正确的平台网址'))
@@ -70,7 +71,7 @@ const inputs = [
       placeholder: $t('请输入 2FA 密钥'),
     }
   }
-]
+])
 const original = ref(deepClone(data))
 const needMore = ref(false)
 const formRef = useTemplateRef<any>('wcisman')
@@ -94,15 +95,12 @@ function onFormSubmit(values: Record<string, any>) {
 }
 
 watch(() => themeStore.realTheme, () => {
-  console.log("platformList watch", platformRow.value.map(item => ({
-    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
-    label: item.platformUrl,
-    value: item.platformUrl,
-  })))
   formRef.value?.setInputsProps({
     platformUrl: {
       options: platformRow.value.map(item => ({
         image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        platformIconDark: item.platformIconDark,
+        platformIcon: item.platformIcon,
         label: item.platformUrl,
         value: item.platformUrl,
       }))
@@ -117,6 +115,8 @@ onMounted(async () => {
     platformUrl: {
       options: rows.map(item => ({
         image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        platformIconDark: item.platformIconDark,
+        platformIcon: item.platformIcon,
         label: item.platformUrl,
         value: item.platformUrl,
       }))

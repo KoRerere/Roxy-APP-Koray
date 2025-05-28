@@ -92,10 +92,11 @@ function onFormSubmit(event: FormSubmitEvent) {
 defineExpose({
   instance: formRef,
   setInputsProps: (map: Record<string, any>) => {
-    _inputs.value.forEach(item => {
+    _inputs.value = _inputs.value.map(item => {
       if (map.hasOwnProperty(item.name)) {
         item.props = { ...item.props, ...map[item.name] }
       }
+      return item
     })
     console.log("inputs", _inputs.value)
   },

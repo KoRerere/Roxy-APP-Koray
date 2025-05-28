@@ -5,6 +5,8 @@ import { $t } from '/@/locales'
 import { deepClone, validateURL } from '/@/utils'
 import { isEqual } from 'es-toolkit';
 import { useConfirm } from 'primevue/useconfirm'
+import { useThemeStore } from '/@/stores/theme'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 
 interface Props {
   datas?: Record<string, any>[]
@@ -21,6 +23,9 @@ const activeBar = ref(_datalist.value[0])
 const platformUrlIds = ref<any[]>([])// 需要解绑的账号库账号 ids
 
 const formRef = useTemplateRef<any>('account')
+
+const platformRow = ref<any[]>([])
+const themeStore = useThemeStore()
 
 const inputs = [
   {
@@ -41,8 +46,9 @@ const inputs = [
         }))
       },
       onChange: ({ value, props }: any) => {
-        const platformIcon = props.options.find((item: any) => item.value === value)?.image ?? ''
-        Reflect.set(activeBar.value, 'platformIcon', platformIcon)
+        const platform = props.options.find((item: any) => item.value === value)
+        Reflect.set(activeBar.value, 'platformIcon', platform.platformIcon)
+        Reflect.set(activeBar.value, 'platformIconDark', platform.platformIconDark)
         Reflect.set(activeBar.value, 'invalid', !value)
       }
     },
@@ -74,8 +80,35 @@ const inputs = [
   }
 ]
 
-onMounted(() => {
+watch(() => themeStore.realTheme, () => {
+  formRef.value?.setInputsProps({
+    platformUrl: {
+      options: platformRow.value.map(item => ({
+        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        platformIconDark: item.platformIconDark,
+        platformIcon: item.platformIcon,
+        label: item.platformUrl,
+        value: item.platformUrl,
+      }))
+    }
+  })
+})
+
+onMounted(async () => {
   setFormValues(activeBar.value)
+  const { data: { rows } } = await API.platform.userGetPlatformInfoList({});
+  platformRow.value = rows;
+  formRef.value?.setInputsProps({
+    platformUrl: {
+      options: rows.map(item => ({
+        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+        platformIconDark: item.platformIconDark,
+        platformIcon: item.platformIcon,
+        label: item.platformUrl,
+        value: item.platformUrl,
+      }))
+    }
+  })
 })
 
 function setFormValues(data: any = {}) {
@@ -163,10 +196,15 @@ function onConfirm() {
   <div class="flex flex-col h-full content">
     <div class="flex flex-1 overflow-y-auto">
       <div class="flex flex-col select-none sidebar">
-        <div class="relative flex items-center justify-center sidebar-item" :class="{ 'active': activeBar.tid === item.tid }" v-for="item in _datalist" :key="item.tid" @click="switchPlatform(item)">
-          <img v-if="item.platformIcon" class="sidebar-item-icon" :src="item.platformIcon" />
+        <div class="relative flex items-center justify-center sidebar-item"
+          :class="{ 'active': activeBar.tid === item.tid }" v-for="item in _datalist" :key="item.tid"
+          @click="switchPlatform(item)">
+          <PlatformIcon v-if="item.platformIcon" :platform-icon-dark="item.platformIconDark"
+            :platform-icon="item.platformIcon" class="sidebar-item-icon" />
+          <!-- <img v-if="item.platformIcon" class="sidebar-item-icon" :src="item.platformIcon" /> -->
           <SvgIcon v-else name="base/rx_ic_user_key" size="24"></SvgIcon>
-          <SvgIcon v-if="item.invalid" class="absolute top-2 right-4" name="base/rx_ic_warn_fill" color="var(--colors-icon-icon-error, #F53838)"></SvgIcon>
+          <SvgIcon v-if="item.invalid" class="absolute top-2 right-4" name="base/rx_ic_warn_fill"
+            color="var(--colors-icon-icon-error, #F53838)"></SvgIcon>
         </div>
         <div class="flex-1 flex justify-center sidebar-item">
           <div v-tooltip="$t('添加新账号')" class="flex justify-center items-center sidebar-add" @click="addPlatform">

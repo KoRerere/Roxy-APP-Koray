@@ -127,7 +127,8 @@ function updateCurrentMembers(member: Record<string, any>) {
   <div class="flex flex-col pa-6 pt-4 gap-6 max-h-[80vh] overflow-y-auto popup">
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('邀请用户加入{project}', { project: project?.projectName }) }}</span>
-      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary, #575D60)" @click="$emit('close')" />
+      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20"
+        color="var(--colors-icon-icon-secondary, #575D60)" @click="$emit('close')" />
     </div>
     <div class="flex flex-col gap-2" v-if="projects?.length">
       <div class="title">{{ $t('选择项目') }}</div>
@@ -138,12 +139,15 @@ function updateCurrentMembers(member: Record<string, any>) {
       <div class="title">{{ $t('成员邮箱') }}</div>
       <div class="w-full flex items-center gap-2">
         <div class="flex-1 relative">
-          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="absolute right-2 top-1/2 -translate-y-1/2 z-1" />
-          <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
+          <RoleSplit v-model="roleValue" :disabled="!isNewMember"
+            class="absolute right-2 top-1/2 -translate-y-1/2 z-1" />
+          <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email"
+            :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
             :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }">
             <template #option="{ option }">
               <div class="flex items-center gap-2">
-                <RxAvatar :avatar="option.avatar" :name="option.userName.slice(0, 2)" :color="option.avatarColor" :size="28" :font-size="14" />
+                <RxAvatar :avatar="option.avatar" :name="option.userName.slice(0, 2)" :color="option.avatarColor"
+                  :size="28" :font-size="14" />
                 <div>
                   <div class="member-name">{{ option.email }}</div>
                   <div class="member-email">{{ option.userName }}</div>
@@ -165,7 +169,8 @@ function updateCurrentMembers(member: Record<string, any>) {
       <div class="title">{{ $t('当前项目成员列表') }}</div>
       <div class="member-list">
         <div class="flex items-center gap-2 member-item" v-for="member in currentMembers" :key="member.id">
-          <RxAvatar :avatar="member.avatar" :name="member.userName.slice(0, 2)" :color="member.avatarColor" :size="28" :font-size="14" />
+          <RxAvatar :avatar="member.avatar" :name="member.userName.slice(0, 2)" :color="member.avatarColor" :size="28"
+            :font-size="14" />
           <div class="flex-1">
             <div class="member-item-name">{{ member.email }}</div>
             <div class="member-item-email">{{ member.userName }}</div>
