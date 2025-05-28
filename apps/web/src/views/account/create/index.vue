@@ -74,7 +74,7 @@ const inputs = reactive([
 ])
 const original = ref(deepClone(data))
 const needMore = ref(false)
-const formRef = useTemplateRef<any>('wcisman')
+const formRef = useTemplateRef<any>('tsform')
 
 function addRemark(platformRemarks: string) {
   Reflect.set(original.value, 'platformRemarks', platformRemarks)
@@ -126,14 +126,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full account-content">
-    <TsForm ref="wcisman" id="account" :inputs="inputs" @submit="onFormSubmit"></TsForm>
+  <div class="flex flex-col h-full pt-4 px-4 content">
+    <TsForm ref="tsform" id="account" :inputs="inputs" @submit="onFormSubmit"></TsForm>
     <div class="flex flex-1 items-end">
-      <div class="w-full flex justify-end gap-3 button-group">
-        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')"
-          :value="original?.platformRemarks" :on-confirm="addRemark" />
-        <RxButton v-if="!data.id && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined
-          @click="onConfirm(true)" />
+      <div class="w-full flex justify-end gap-3 pt-4 pb-5">
+        <RemarkIcon v-if="showRemark" class="ma-auto ml-0" mode="button" :title="$t('请为账号添加备注')" :value="original?.platformRemarks" :on-confirm="addRemark" />
+        <RxButton v-if="!data.id && showCreateMore" size="sm" :label="$t('保存 & 继续添加')" severity="secondary" outlined @click="onConfirm(true)" />
         <RxButton size="sm" :label="$t('保存')" @click="onConfirm(false)" />
       </div>
     </div>
@@ -141,12 +139,7 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
-.account-content {
-  padding: 16px 16px 0;
+.content {
   min-width: 384px;
-}
-
-.button-group {
-  padding: 16px 0 20px;
 }
 </style>

@@ -1254,6 +1254,7 @@ export class BaseApi<SecurityDataType = unknown> {
    * @name UserModifyRemarkDisplayStatusCreate
    * @summary 修改备注显示状态
    * @request POST:/user_modify_remark_display_status
+   * @deprecated
    * @response `200` `UserModifyRemarkDisplayStatusCreateData`
    */
   userModifyRemarkDisplayStatusCreate = (

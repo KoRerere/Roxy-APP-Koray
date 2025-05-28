@@ -41,6 +41,7 @@ import { emitter } from '/@/utils/eventBus'
 import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
+import { debounce } from 'es-toolkit'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -134,9 +135,6 @@ onBeforeMount(() => {
 onBeforeUnmount(() => {
   canceOpenlListener?.()
   canceCloselListener?.()
-  if (!props.isProjectProfile) {
-    saveRemarkDisplayStatus()// 保存备注显示状态
-  }
 })
 
 function onRefreshTable(tabParams = {}, force = false) {
@@ -798,16 +796,20 @@ async function onRemark(data: Data | Data[]) {
   })
 }
 
-async function saveRemarkDisplayStatus() {
-  const column = columns.value.find(column => column.key === 'note')
-  if (column && userConfig.value.remarkDisplayStatus !== column._cache.extend) {
-    const { code, msg } = await API.base.userSetUserConfigCreate({
-      remarkDisplayStatus: column._cache.extend
-    })
-    onlyErrorToast(code, msg)
-    if (code !== 0) return
-    fetchUserInfo()
-    userStore.updateUserConfig()
+const saveRemarkDisplayStatus = debounce(async function (cache: Record<string, any>) {
+  const { code, msg } = await API.base.userSetUserConfigCreate({
+    remarkDisplayStatus: cache.extend
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+  fetchUserInfo()
+  userStore.updateUserConfig()
+}, 500)
+
+async function toggleRemarkDisplayStatus(cache: Record<string, any>) {
+  cache.extend = !cache.extend
+  if (userConfig.value.remarkDisplayStatus !== cache.extend) {
+    saveRemarkDisplayStatus(cache)
   }
 }
 
@@ -993,7 +995,7 @@ defineExpose({
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
         <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-          @click.stop="_cache.extend = !_cache.extend" />
+          @click.stop="toggleRemarkDisplayStatus(_cache)" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">

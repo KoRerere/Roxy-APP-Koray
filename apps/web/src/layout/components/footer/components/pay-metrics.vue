@@ -20,7 +20,7 @@ const opRef = useTemplateRef('op')
 
 const badgeBgColor = computed(() => {
   if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value?.subLevel as SubLevelEnum)) {
-    return '#90AFC2'
+    return 'var(--pattern-pay-plan-bg-tag-current)'
   }
   return 'linear-gradient(90deg, #8780FE 0%, #C491F1 100%)'
 })

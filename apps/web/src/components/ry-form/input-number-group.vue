@@ -50,7 +50,7 @@ function parseInput(input: any) {
   gap: 6px;
   min-height: 38px;
   border-radius: 6px;
-  border: 1px solid var(--colors-border-border-base);
+  border: 1px solid var(--colors-border-border-action);
   background: var(--colors-background-bg-action);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 

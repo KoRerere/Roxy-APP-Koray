@@ -150,7 +150,7 @@ function close(isCancel: boolean) {
           <div class="total-amount">{{ currency(calcResult.amount).format() }}</div>
           <div class="flex items-center justify-end gap-1 total-diff" v-if="calcResult.diffAmount > 0">
             <span>{{ $t('节省 {value}', { value: currency(calcResult.diffAmount).format() }) }}</span>
-            <SvgIcon v-tooltip="{ value: discountTooltip, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_question" size="14" color="#C7CDD1"></SvgIcon>
+            <SvgIcon v-tooltip="{ value: discountTooltip, showDelay: 300 }" class="cursor-pointer" name="base/rx_ic_question" size="14" color="var(--colors-icon-icon-note)"></SvgIcon>
           </div>
         </div>
       </div>

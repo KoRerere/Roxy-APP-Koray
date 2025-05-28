@@ -93,7 +93,7 @@ function handleClick(method: PayWay) {
     justify-content: center;
     gap: 6px;
     height: 86px;
-    border: 2px solid transparent;
+    border: 2px solid var(--colors-background-bg-page);
     background: var(--colors-background-bg-action);
     box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action, #48555B);
     border-radius: 8px;

@@ -74,7 +74,7 @@ async function openMenu(event: MouseEvent) {
     slots: {
       end: showCreateTag ? () => {
         return (
-          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
+          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-[var(--component-dropdown-divider)]" onClick={onAddTag}>
             <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
             <div>{$t('新增标签')}</div>
           </div>

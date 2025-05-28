@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { isLikeFunction } from '/@/utils'
 
-interface Props extends Omit<SelectProps, 'size' | 'optionLabel' | 'optionValue'> {
+interface Props {
   icon?: SvgNames
   iconColor?: string
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
@@ -23,15 +22,13 @@ const {
   optionValue,
   getOptions,
   onChange,
-  ...props
 } = defineProps<Props>()
 
-watch(() => options, (value) => {
-  _options.value = value
-})
+const _options = ref(options)
+const attrs = useAttrs()
+console.log("🚀 ~ attrs:", attrs)
 
-const _options = computed(() => options)
-
+// !todo getOptions 需要优化
 onBeforeMount(async () => {
   if (getOptions && isLikeFunction(getOptions)) {
     _options.value = await getOptions()
@@ -43,10 +40,10 @@ function _onChange(event: any) {
     onChange({
       ...event,
       props: {
-        options: _options.value,
+        options: options || _options.value,
         optionLabel,
         optionValue,
-        ...props
+        ...Object.fromEntries(Object.entries(attrs).filter(([_, value]) => !isLikeFunction(value)))
       }
     })
   }
@@ -54,15 +51,13 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ optionLabel, optionValue, ...props }" :options="_options"
-    :pt="{ root: size, option: classes.option }" @change="_onChange">
+  <Select class="w-full" :optionLabel="optionLabel" :optionValue="optionValue" :options="options || _options" :pt="{ root: size, option: classes.option }" @change="_onChange">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
     <template v-if="!optionValue" #value="{ value, placeholder }">
       <div v-if="value" class="selectitem">
-        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor"
-          fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="value.icon || icon" :name="value.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="value.image" class="selectitem__image" :src="value.image">
         <div>{{ value.label }}</div>
       </div>
@@ -70,8 +65,7 @@ function _onChange(event: any) {
     </template>
     <template #option="{ option }">
       <div class="selectitem">
-        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor"
-          fallback="base/rx_ic_earth" />
+        <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="selectitem__image" :src="option.image">
         <div>{{ option.label }}</div>
         <slot name="option-extra" :option="option"></slot>
@@ -83,11 +77,6 @@ function _onChange(event: any) {
 <style lang="scss" module="classes">
 .option {
   font-size: 13px;
-
-  &[data-p-selected='true']:not([data-p-focused='true']) {
-    color: var(--colors-text-text-brand, #12a3fc) !important;
-    background: #e8f5fc !important;
-  }
 }
 </style>
 

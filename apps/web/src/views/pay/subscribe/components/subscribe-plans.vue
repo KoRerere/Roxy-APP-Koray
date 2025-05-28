@@ -57,7 +57,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
 <style scoped lang="scss">
 .plans {
-  border: 2px solid transparent;
+  border: 2px solid var(--colors-background-bg-page);
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action);
   background: var(--colors-background-bg-action);
 
@@ -94,12 +94,12 @@ function onSwitchPlan(plan: Partial<Plan>) {
     line-height: normal;
 
     &.free {
-      background: #90AFC2;
+      background: var(--pattern-pay-plan-bg-tag-current);
     }
   }
 
   &-text {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;

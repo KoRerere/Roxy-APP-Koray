@@ -98,7 +98,6 @@ defineExpose({
       }
       return item
     })
-    console.log("inputs", _inputs.value)
   },
   getFieldState: (name: string) => {
     return formRef.value?.getFieldState(name)
@@ -117,8 +116,7 @@ defineExpose({
 
 <template>
   <Form ref="wcisform" :id="id" @submit="onFormSubmit" class="flex flex-col gap-6 w-full">
-    <FormField class="flex flex-col gap-1" v-slot="$field" v-for="input in _inputs" :key="input.name"
-      v-bind="genFormFieldProps(input)">
+    <FormField class="flex flex-col gap-1" v-slot="$field" v-for="input in _inputs" :key="input.name" v-bind="genFormFieldProps(input)">
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type!]" v-bind="input.props" />

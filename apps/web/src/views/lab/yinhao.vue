@@ -205,19 +205,18 @@ const inputs = [
       ],
     },
   },
-  // {
-  //   type: 'select',
-  //   name: 'eddp',
-  //   label: 'Scvr2',
-  //   value: { label: '1', value: 1 },
-  //   props: {
-  //     options: [
-  //       { label: '1', value: 1 },
-  //       { label: '2', value: 2 },
-  //       { label: '3', value: 3 },
-  //     ],
-  //   },
-  // },
+  {
+    type: 'select',
+    name: 'eddp',
+    value: { label: '1', value: 1 },
+    props: {
+      options: [
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+        { label: '3', value: 3 },
+      ],
+    },
+  },
   // {
   //   type: 'textarea',
   //   name: 'lastname',
@@ -277,15 +276,15 @@ const filters = reactive({
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <div class="flex flex-col gap-2">
+    <!-- <div class="flex flex-col gap-2">
       <RxAlert announcement title="wcis man!" type="success"></RxAlert>
       <RxAlert title="wcis man!" type="info"></RxAlert>
       <RxAlert title="wcis man!" type="warn"></RxAlert>
       <RxAlert title="wcis man!" type="error"></RxAlert>
-    </div>
+    </div> -->
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
-      <!-- <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm> -->
+      <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
       <!-- <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" /> -->
       <!-- <RxButton label="test submit" @click="noFormIdSubmit"></RxButton> -->
     </div>

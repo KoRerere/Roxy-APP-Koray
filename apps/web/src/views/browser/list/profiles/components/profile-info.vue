@@ -80,6 +80,7 @@ const list = computed(() => {
       key: 'proxy',
       classes: proxyClass,
       svg: hasProxy.value ? `country-code/${data.lastCountry}` : data.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
+      svgColor: 'var(--colors-icon-icon-tertiary)',
       tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
         lastCountry: data.lastCountry || '--',
         lastCity: strConcat('/', data.lastCity) || '',
@@ -91,7 +92,7 @@ const list = computed(() => {
       key: 'account',
       image: windowPlatformList[0]?.platformIcon,
       svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
-      svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary, #7C8387)' : 'var(--colors-icon-icon-secondary, #575D61)',
+      svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary)' : 'var(--colors-icon-icon-secondary)',
       showSub: windowPlatformList.length > 1,
       // subImage: windowPlatformList.length > 2 ? undefined : windowPlatformList[1]?.platformIcon,
       // tooltip: windowPlatformList?.map((item: any) => item.platformUserName).filter(Boolean).join('\n')
@@ -419,22 +420,13 @@ function handleClickInplace(e: MouseEvent) {
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
       <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" @click.stop="onClick($event, item.key)">
         <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-          <PlatformIcon 
-            v-if="item.platformAccount" 
-            :platformIcon="item.platformAccount.platformIcon" 
-            :platformIconDark="item.platformAccount.platformIconDark"
-            class="block w-5 h-5 pointer-events-none"
-          />
+          <PlatformIcon v-if="item.platformAccount" :platformIcon="item.platformAccount.platformIcon" :platformIconDark="item.platformAccount.platformIconDark"
+            class="block w-5 h-5 pointer-events-none" />
           <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
         </div>
         <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
-          <PlatformIcon
-            v-if="item.subPlatformAccount"
-            :platformIcon="item.subPlatformAccount.platformIcon"
-            :platformIconDark="item.subPlatformAccount.platformIconDark"
-            class="block w-3 h-3 pointer-events-none"
-          ></PlatformIcon>
-          <!-- <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none"> -->
+          <PlatformIcon v-if="item.subPlatformAccount" :platformIcon="item.subPlatformAccount.platformIcon" :platformIconDark="item.subPlatformAccount.platformIconDark"
+            class="block w-3 h-3 pointer-events-none"></PlatformIcon>
           <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
         </div>
       </div>

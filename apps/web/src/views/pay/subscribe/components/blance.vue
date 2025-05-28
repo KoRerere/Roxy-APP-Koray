@@ -66,22 +66,20 @@ function onCharge() {
       <template #content>
         <div class="w-full flex items-center justify-between">
           <div class="message">{{ $t('余额不足，无法完成此订单') }}</div>
-          <RxButton size="xxs" severity="secondary" outlined icon="base/rx_ic_credit_card" :label="$t('充值金额')"
-            @click="onCharge"></RxButton>
+          <RxButton size="xxs" severity="secondary" outlined icon="base/rx_ic_credit_card" :label="$t('充值金额')" @click="onCharge"></RxButton>
         </div>
       </template>
     </RxAlert>
     <div class="flex gap-2.5 items-center amount">
       <span>{{ $t('Roxy 钱包余额: ') }}</span>
       <span class="amount-value" :class="{ 'amount-warning': warning }">{{ currency(userPayInfo.balance).format()
-      }}</span>
+        }}</span>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .message {
-  font-family: Inter;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;

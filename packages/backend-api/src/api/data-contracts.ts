@@ -1949,6 +1949,8 @@ export interface UserGetUserConfigListData {
     ipChangeModal: boolean;
     /** 默认搜索引擎 */
     searchEngine: string;
+    /** 列表备注详情切换 */
+    remarkDisplayStatus: boolean;
   };
   msg: string;
 }
@@ -2003,14 +2005,15 @@ export interface UserSetUserConfigCreatePayload {
   systemProxySwitch?: boolean;
   v2raySwitch?: boolean;
   ipChecker?: string;
+  ipBlackList?: string[];
+  apiToken?: string;
+  remarkDisplayStatus?: boolean;
   /** 偏好设置 */
   preferenceSettings?: object;
   /** 快捷键设置 */
   keySettings?: object;
   /** 同步设置 */
   syncSettings?: object;
-  ipBlackList?: string[];
-  apiToken?: string;
 }
 
 export interface UserSetUserConfigCreateData {
@@ -4353,11 +4356,13 @@ export interface UserGetPlatformInfoListData {
   code: number;
   data: {
     rows: {
+      createTime?: string;
       id?: number;
-      /** 业务平台icon */
       platformIcon?: string;
-      /** url */
+      platformIconDark?: string;
       platformUrl?: string;
+      sort?: number;
+      updateTime?: string;
     }[];
   };
   msg: string;

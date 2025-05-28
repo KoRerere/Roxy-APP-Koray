@@ -273,7 +273,7 @@ async function hidePopover() {
       <div class="inline-flex justify-start flex-1 suffix">
         <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
           @click="switchTab(suffixItem.id, $event)">
-          <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
+          <RxSvgIcon :name="(suffixItem.icon as SvgNames)" color="var(--colors-icon-icon-note)" />
           <span>{{ suffixItem.label }}</span>
         </div>
       </div>
@@ -403,10 +403,6 @@ async function hidePopover() {
         transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
         z-index: 1;
       }
-    }
-
-    svg {
-      color: #C7CDD1;
     }
   }
 }

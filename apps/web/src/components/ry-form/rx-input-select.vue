@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-interface Props extends Omit<SelectProps, 'size' | 'filter' | 'optionLabel' | 'optionValue'> {
+interface Props {
   name: string
   icon?: SvgNames
   iconColor?: string
@@ -24,15 +23,16 @@ const {
   filter = true,
   optionLabel = 'label',
   optionValue,
-  ...props
 } = defineProps<Props>()
 
 defineEmits(['change'])
 
+const attrs = useAttrs()
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="attrs" :optionLabel="optionLabel" :optionValue="optionValue" :filter="filter" :inputId="name" :pt="{ root: size, option: classes.option }"
+    @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>

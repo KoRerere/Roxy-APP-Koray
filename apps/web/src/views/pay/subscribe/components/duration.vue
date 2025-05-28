@@ -82,7 +82,7 @@ function onSelected(item: Duration) {
 
 <style lang="scss" scoped>
 .duration {
-  border: 2px solid transparent;
+  border: 2px solid var(--colors-background-bg-page);
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action);
   background: var(--colors-background-bg-action);
 

@@ -22,7 +22,7 @@ const passThrough = {
   <Drawer :position="position" :pt="passThrough" v-bind="$attrs">
     <template #container="{ closeCallback }">
       <slot name="header" :closeCallback="closeCallback">
-        <div class="flex justify-between items-center self-stretch" :class="cssModule.header">
+        <div class="flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3" :class="cssModule.header">
           <div :class="cssModule.title">{{ title }}</div>
           <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeCallback" />
         </div>
@@ -58,8 +58,6 @@ const passThrough = {
 }
 
 .header {
-  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px) var(--spacing-lg, 8px) var(--spacing-2xl, 16px);
-  gap: var(--spacing-xl, 12px);
   border-bottom: 0.5px solid var(--colors-border-divider);
 }
 

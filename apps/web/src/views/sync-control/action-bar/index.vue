@@ -168,8 +168,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave"
-    @mousedown="handleMousedown">
+  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave" @mousedown="handleMousedown">
     <div class="top-bar">
       <div class="sync-text" @mouseenter="handleMouseenterSyncText">
         {{ $t('{count} 个窗口正在同步中', { count: syncWindowCount }) }}
@@ -202,9 +201,7 @@ onUnmounted(() => {
           </template>
         </Menubar>
         <div class="split-line"></div>
-        <div class="other-item"
-          v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }"
-          @click="showSyncingWindowListDialog">
+        <div class="other-item" v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }" @click="showSyncingWindowListDialog">
           <RxSvgIcon name="base/rx_ic_list_2" />
         </div>
         <div class="other-item" v-tooltip.top="settingsTooltip" @click="showPreferences">
@@ -348,7 +345,7 @@ body {
 
     .shortcut-key {
       margin-left: 12px;
-      color: var(--colors-text-text-inactive, #A3A9AD);
+      color: var(--colors-text-text-tertiary);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
