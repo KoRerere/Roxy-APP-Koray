@@ -17,7 +17,7 @@ defineProps<Props>()
 
 <style scoped>
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: normal;

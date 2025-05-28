@@ -5,6 +5,7 @@ import RemarkIcon from '/@/components/remark-icon'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getRawColumns } from './columns'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 
 const props = defineProps({
   data: {
@@ -51,13 +52,15 @@ function handleSave() {
   <div class="flex flex-col h-full account-content">
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-ovh-1">
-      <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :table-filters="tableFilters" :columns="columns"
-        :show-table-header="false" :show-display="false" :context-menu="false" :show-actions="false">
+      <RyTable ref="account" v-model:selection="selection" :multiple-operation="false" selection-mode="multiple"
+        :table-request="tableRequest" :table-filters="tableFilters" :columns="columns" :show-table-header="false"
+        :show-display="false" :context-menu="false" :show-actions="false">
         <template #platform="{ data: row }">
           <div class="flex gap-2 account">
             <div>
-              <img v-if="row.platformIcon" class="w-4 h-4" :src="row.platformIcon">
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+              <platformIcon v-if="row.platformIcon" :platformIcon="row.platformIcon"
+                :platformIconDark="row.platformIconDark" class="w-4 h-4" />
+              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
               <div class="flex items-center account-title">
@@ -71,7 +74,8 @@ function handleSave() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }"
+            :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
             :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
         </template>
         <template #actions="{ data: row }">
@@ -80,7 +84,7 @@ function handleSave() {
       </RyTable>
     </div>
     <div class="w-full flex justify-end gap-3 button-group">
-      <RxButton severity="info" size="sm" :label="$t('保存')" @click.stop="handleSave" />
+      <RxButton size="sm" :label="$t('保存')" @click.stop="handleSave" />
     </div>
   </div>
 </template>
@@ -97,12 +101,12 @@ function handleSave() {
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-weight: 500;
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary);
   }
 }
 

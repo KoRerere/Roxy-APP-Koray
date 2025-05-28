@@ -2,25 +2,52 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
-import { getColumnsConfig } from './columns'
 import { getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
 import { useDialog } from '/@/hooks/useDialog'
 import RestoreReminderDialog from './restore-reminder-dialog.vue'
 import { RESTORE_WINDOW_NOT_REMIND } from '/@/constants/storage-key'
 
+const columns = [
+  {
+    title: $t('窗口信息'),
+    key: 'profile',
+    slot: 'profile',
+    style: {
+      width: '40%'
+    }
+  },
+  {
+    title: $t('备注'),
+    key: 'note',
+    slot: 'note',
+    style: {
+      width: '10%',
+    },
+  },
+  {
+    title: $t('标签'),
+    slot: 'tags',
+  },
+  {
+    title: $t('删除记录'),
+    key: 'group',
+    slot: 'log',
+  },
+  {
+    title: $t('操作'),
+    slot: 'actions',
+  },
+]
+
 const confirm = useConfirm()
-
-const [columns] = useColumns(getColumnsConfig())
-
 const userStore = useUserStore()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 const [showModal] = useDialog()
 
@@ -58,7 +85,9 @@ async function recoverHandler(datas: any) {
   const onConfirm = async (isRemind: boolean) => {
     const ids = datas.map((item: any) => item.id)
     const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create({ ids, isDelete: false } as any)
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+
     tableRef.value?.refresh()
     if (isRemind) {
       localStorage.setItem(RESTORE_WINDOW_NOT_REMIND, 'true')
@@ -102,10 +131,10 @@ async function deleteHandler(datas: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.window.userDelWindowInfoRecycleCreate({ ids })
-      showToast(code, msg)
-      tableRef.value?.refresh()
-      userStore.fetchUserInfo()
+      onlyErrorToast(code, msg)
       if (code === 0) {
+        tableRef.value?.refresh()
+        userStore.fetchUserInfo()
         electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }
     },
@@ -115,16 +144,13 @@ async function deleteHandler(datas: any) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns"
-    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
-    :show-actions="false" :show-table-header="false">
+  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+    :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')"
-        :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
+      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>
     <template #profile="{ data }">
-      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()"
-        :data="data" disabled />
+      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
     </template>
     <template #note="{ data }">
       <RemarkIcon :value="data.windowRemark" disabled />
@@ -148,7 +174,7 @@ async function deleteHandler(datas: any) {
 
 <style lang="scss" scoped>
 .delete-name {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -156,7 +182,7 @@ async function deleteHandler(datas: any) {
 
 .delete-time {
   margin-top: 4px;
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);

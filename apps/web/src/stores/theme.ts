@@ -1,67 +1,88 @@
+import primitivesTokens from '/@/styles/primevuePresets/_Primitives_tokens.json'
+import { updatePreset } from '@primevue/themes'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useUserStore } from '/@/stores/user'
 import { API } from '/@/api'
-import { isProd } from '/@/utils'
+import { isMainWindow, isProd } from '/@/utils'
+import { SWITCH_THEME_CHANNEL_NAME } from '/@/constants/channel'
+import { debounce } from 'es-toolkit'
+import { $t } from '/@/locales'
 
 type ColorScheme = 'light' | 'dark' | 'system'
 
-export const colorSchemeList = [
+export const getColorSchemeList = () => [
   {
-    label: '跟随系统',
+    label: $t('跟随系统'),
     value: 'system',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_laptop",
   },
   {
-    label: '浅色模式',
+    label: $t('浅色模式'),
     value: 'light',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_sun",
   },
   {
-    label: '深色模式',
+    label: $t('深色模式'),
     value: 'dark',
-    icon: "base/rx_ic_doc_api",
+    icon: "base/rx_ic_moon",
   }
 ]
+
+const channel = new BroadcastChannel(SWITCH_THEME_CHANNEL_NAME);
 
 export const useThemeStore = defineStore('theme', () => {
   const userStore = useUserStore()
   const theme = ref<ColorScheme>('system')
+  const realTheme = ref<Omit<ColorScheme, 'system'>>('light')
 
   async function setTheme(value: ColorScheme) {
-    theme.value = value ?? 'system'
-    console.log('设置主题为:', value)
-    API.base.userSetUserConfigCreate({ colorScheme: theme.value });
+    if (userStore.token && isMainWindow && theme.value !== value) {
+      API.base.userSetUserConfigCreate({ colorScheme: value });
+    }
+    theme.value = value
   }
 
   watch(() => userStore.userConfig?.colorScheme, () => {
-    setTheme(userStore.userInfo.colorScheme)
+    const colorScheme = userStore.userConfig?.colorScheme
+    colorScheme && setTheme(colorScheme)
   })
+
+  const toggleTheme = debounce(() => {
+    if (theme.value === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      document.documentElement.setAttribute('data-theme', systemTheme)
+      realTheme.value = systemTheme
+    } else {
+      document.documentElement.setAttribute('data-theme', theme.value)
+      realTheme.value = theme.value
+    }
+    // 更新 primevue 的 primitive 以适应不同风格 theme
+    updatePreset({
+      primitive: primitivesTokens[realTheme.value as keyof typeof primitivesTokens]
+    })
+    channel.postMessage({ theme: theme.value })
+
+    if (isMainWindow) {
+      electronAPI.send('app:setSystemTheme', theme.value)
+    }
+  }, 0)
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', toggleTheme);
 
   watch(theme, toggleTheme, {
     immediate: true
   })
 
-  function toggleTheme() {
-
-    // TODO 生产环境暂时屏蔽
-    if (isProd) {
-      document.documentElement.setAttribute('data-theme', 'light')
-      return
+  // 监听其他窗口/标签页发来的消息
+  channel.onmessage = debounce((event) => {
+    if (!isMainWindow && event.data.theme !== theme.value) {
+      console.log('Received message:', event.data);
+      theme.value = event.data.theme
     }
+  }, 60);
 
-    if (theme.value === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      document.documentElement.setAttribute('data-theme', systemTheme)
-    } else {
-      document.documentElement.setAttribute('data-theme', theme.value)
-    }
-  }
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', toggleTheme);
-
-
-  return { theme, setTheme }
+  return { theme, realTheme, setTheme }
 }, {
   persist: true
 })

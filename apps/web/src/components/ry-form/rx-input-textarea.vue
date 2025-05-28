@@ -36,12 +36,11 @@ defineEmits(['iconClick', 'change'])
 <style lang="scss" scoped>
 :deep(.p-textarea) {
   resize: vertical;
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
   font-family: Inter;
 
-  &:disabled {
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-  }
+  // &:disabled {
+  //   color: var(--colors-text-text-placeholder, #7c8387);
+  // }
 }
 
 @mixin input-styles($pt, $pr, $pb, $pl, $gap, $borderWidth, $radius, $fontSize, $lineHeight) {
@@ -75,8 +74,7 @@ defineEmits(['iconClick', 'change'])
 }
 
 .lg {
-  @include input-styles(
-    10px,
+  @include input-styles(10px,
     10px,
     10px,
     var(--spacing-xl, 12px),
@@ -84,13 +82,11 @@ defineEmits(['iconClick', 'change'])
     1px,
     var(--Component-Colors-TextInput-radius-radius-lg, 8px),
     14px,
-    var(--Line-Height-text-lg, 20px)
-  );
+    var(--Line-Height-text-lg, 20px));
 }
 
 .md {
-  @include input-styles(
-    8px,
+  @include input-styles(8px,
     8px,
     8px,
     10px,
@@ -98,13 +94,11 @@ defineEmits(['iconClick', 'change'])
     1px,
     var(--Component-Colors-TextInput-radius-radius-md, 6px),
     13px,
-    var(--Line-Height-text-lg, 20px)
-  );
+    var(--Line-Height-text-lg, 20px));
 }
 
 .sm {
-  @include input-styles(
-    var(--spacing-md, 6px),
+  @include input-styles(var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     8px,
@@ -112,13 +106,11 @@ defineEmits(['iconClick', 'change'])
     1px,
     var(--Component-Colors-TextInput-radius-radius-md, 6px),
     12px,
-    var(--Line-Height-text-lg, 20px)
-  );
+    var(--Line-Height-text-lg, 20px));
 }
 
 .xs {
-  @include input-styles(
-    var(--spacing-md, 6px),
+  @include input-styles(var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
     var(--spacing-md, 6px),
@@ -126,13 +118,11 @@ defineEmits(['iconClick', 'change'])
     0.5px,
     var(--radius-sm, 4px),
     12px,
-    var(--Line-Height-text-xs, 16px)
-  );
+    var(--Line-Height-text-xs, 16px));
 }
 
 .xxs {
-  @include input-styles(
-    var(--spacing-sm, 4px),
+  @include input-styles(var(--spacing-sm, 4px),
     var(--spacing-sm, 4px),
     var(--spacing-sm, 4px),
     var(--spacing-md, 6px),
@@ -140,7 +130,6 @@ defineEmits(['iconClick', 'change'])
     0.5px,
     var(--radius-sm, 4px),
     12px,
-    var(--Line-Height-text-xs, 16px)
-  );
+    var(--Line-Height-text-xs, 16px));
 }
 </style>

@@ -7,7 +7,7 @@ import type {
   UserGetSystemPluginListData,
   UserGetUserConfigListData,
 } from "@roxy/backend-api";
-import type { FileFilter, GPUFeatureStatus } from "electron";
+import type { FileFilter, GPUFeatureStatus, NativeTheme } from "electron";
 import type { OsConfig } from "#roxybrowser/constants";
 import type { LastMessage } from "#roxybrowser/modules/browser/browser-manager/beforeLaunchTask";
 import type { WindowItemType } from "#roxybrowser/modules/browser/browser-manager/types";
@@ -154,6 +154,8 @@ export interface RenderMessage {
   "app:getNewFeatureTips": () => string[];
   /** 用户已读新功能提示 */
   "app:hideNewFeatureTips": () => void;
+  /** 设置系统主题 */
+  "app:setSystemTheme": (theme: NativeTheme['themeSource']) => void;
 
   /** 下载指定插件 */
   "extension:download": (

@@ -104,7 +104,7 @@ function close(isCancel: boolean) {
 }
 
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-size: 16px;
   font-weight: 600;
@@ -112,12 +112,12 @@ function close(isCancel: boolean) {
 }
 
 .desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 14px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;
@@ -128,12 +128,12 @@ function close(isCancel: boolean) {
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;

@@ -859,7 +859,7 @@ class Gradient {
  * Gradient.toggleColor(index)
  * Gradient.updateFrequency(freq)
  */
-onMounted(() => {
+setTimeout(() => {
   var gradient = new Gradient();
   gradient.initGradient("#gradient-canvas");
 })
@@ -887,6 +887,13 @@ onMounted(() => {
   background-image: url('/login_bg_2x.jpg');
   background-position: center;
   background-size: 100% 100%;
+}
+
+[data-theme="dark"] #gradient-canvas {
+  --gradient-color-1: #091a25;
+  --gradient-color-2: #001e3d;
+  --gradient-color-3: #003566;
+  --gradient-color-4: #006894;
 }
 
 .auth {

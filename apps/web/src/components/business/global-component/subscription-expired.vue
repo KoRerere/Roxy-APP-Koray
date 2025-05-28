@@ -70,7 +70,7 @@ function hideDialog() {
   gap: 20px;
 
   .subscription-expired-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -89,7 +89,7 @@ function hideDialog() {
       align-items: center;
       gap: var(--spacing-xl, 12px);
       align-self: stretch;
-      color: var(--Color-red-300, #F53838);
+      color: var(--primitives-red-500, #F53838);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -99,7 +99,7 @@ function hideDialog() {
   }
 
   .subscription-expired-description {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -140,7 +140,7 @@ function hideDialog() {
       top: 40px;
       right: 50%;
       transform: translateX(50%);
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       text-align: center;
       font-family: Inter;
       font-size: 14px;

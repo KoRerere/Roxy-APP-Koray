@@ -22,7 +22,7 @@ const passThrough = {
   <Drawer :position="position" :pt="passThrough" v-bind="$attrs">
     <template #container="{ closeCallback }">
       <slot name="header" :closeCallback="closeCallback">
-        <div class="flex justify-between items-center self-stretch" :class="cssModule.header">
+        <div class="flex justify-between items-center self-stretch gap-3 py-2 pl-4 pr-3" :class="cssModule.header">
           <div :class="cssModule.title">{{ title }}</div>
           <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_delete" @click="closeCallback" />
         </div>
@@ -48,8 +48,7 @@ const passThrough = {
 .root {
   &:global(.p-drawer) {
     border-radius: var(--radius-lg, 8px);
-    border: 0.5px solid var(--Colors-Border-border-strong, #a3a9ad);
-    background: var(--Colors-Background-bg-body, #fff);
+    border-width: 0.5px;
     box-shadow:
       0px 1px 1px 0px rgba(0, 0, 0, 0.04),
       0px 2px 8px 0px rgba(0, 0, 0, 0.04),
@@ -59,13 +58,11 @@ const passThrough = {
 }
 
 .header {
-  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px) var(--spacing-lg, 8px) var(--spacing-2xl, 16px);
-  gap: var(--spacing-xl, 12px);
-  border-bottom: 0.5px solid var(--Color-neutrals-300, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 14px;
   font-weight: 600;
   line-height: var(--Line-Height-text-sm, 18px);

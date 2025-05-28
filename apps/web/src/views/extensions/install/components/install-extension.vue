@@ -107,11 +107,12 @@ onMounted(() => {
         {{ $t('扩展将被安装至所选项目中的所有窗口') }}
       </div>
       <div class="project-table mt-2.5 h-60">
-        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList" :show-table-header="false" :show-actions="false" :paginator="false"
-          :multiple-operation="false" selection-mode="multiple" size="small">
+        <RyTable v-model:selection="selection" data-key="project_id" :columns="columns" :data-list="dataList"
+          :show-table-header="false" :show-actions="false" :paginator="false" :multiple-operation="false"
+          selection-mode="multiple" size="small">
           <template #project="{ data }">
             <div class="flex items-center gap-2">
-              <RxSvgIcon name="base/rx_ic_stack" color="var(--Colors-Icon-icon-secondary, #575D61)" />
+              <RxSvgIcon name="base/rx_ic_stack" color="var(--colors-icon-icon-secondary, #575D61)" />
               <span class="project-name">{{ data.projectName }}</span>
             </div>
           </template>
@@ -133,7 +134,7 @@ onMounted(() => {
     </div>
     <div class="flex justify-end items-center gap-3">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click.stop="close" />
-      <RxButton size="sm" :label="$t('保存')" severity="info" autofocus @click.stop="confirm" />
+      <RxButton size="sm" :label="$t('保存')" autofocus @click.stop="confirm" />
     </div>
   </div>
 </template>
@@ -163,8 +164,8 @@ onMounted(() => {
     width: 36px;
     height: 36px;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
 
     &-image {
       width: 100%;
@@ -174,7 +175,7 @@ onMounted(() => {
 
   &-name {
     grid-area: right-top;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 13px;
     font-weight: 500;
@@ -183,7 +184,7 @@ onMounted(() => {
 
   &-version {
     grid-area: right-bottom;
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     font-weight: 500;
@@ -193,13 +194,12 @@ onMounted(() => {
 
 .project-table {
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Component-Colors-TextInput-bg-bg, #fff);
+  border: 0.5px solid var(--colors-border-border-subtle, #c7cdd1);
   overflow: hidden;
 }
 
 .project-name {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -210,11 +210,11 @@ onMounted(() => {
   margin: var(--spacing-4xl, 24px) 0;
   height: 0.5px;
   width: 100%;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--component-dropdown-divider, #c7cdd1);
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
@@ -223,7 +223,7 @@ onMounted(() => {
 
 .description {
   margin-top: var(--spacing-sm, 4px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;

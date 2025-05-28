@@ -44,7 +44,7 @@ onBeforeMount(() => {
             </div>
           </div>
           <div v-for="item in activePanel.panel.list" :key="item.subtitle">
-            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-black">
+            <div v-if="item.subtitle" class="mb-3 text-[16px] font-bold text-[color:--colors-text-text-primary]">
               {{ item.subtitle }}
             </div>
             <template v-for="subItem in item.items" :key="subItem.label">
@@ -96,7 +96,6 @@ onBeforeMount(() => {
       padding-left: 24px;
       align-items: center;
       gap: var(--spacing-xl, 12px);
-      color: #000;
       font-size: 16px;
       font-weight: 600;
       line-height: 24px;
@@ -114,18 +113,21 @@ onBeforeMount(() => {
         align-items: center;
         padding: 6px 8px;
         gap: var(--spacing-xl, 12px);
-        color: var(--Component-Colors-SideNav-link-text, #575d61);
+        color: var(--colors-text-text-primary, #FAFAFA);
         font-size: var(--Font-Size-text-md, 14px);
         font-weight: 500;
         line-height: var(--Line-Height-text-lg, 20px);
         border-radius: 4px;
+        transition: all 0.15s ease;
 
         &:hover {
-          background: var(--Component-Colors-SideNav-link-bg-active, #f2f3f5);
+          color: var(--colors-text-text-primary-hover, #FFF);
+          background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
         }
 
         &.active {
-          background: var(--Component-Colors-SideNav-link-bg-active, #e4e8eb);
+          color: var(--pattern-sidenav-text-active, #3FB6FD);
+          background: var(--pattern-sidenav-bg-active, #013D65);
         }
       }
     }
@@ -152,28 +154,28 @@ onBeforeMount(() => {
   gap: var(--oversize-spacing-3rem, 48px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 18px;
     font-weight: 600;
     line-height: var(--Line-Height-text-xl, 24px);
   }
 
   &-description {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-size: 12px;
     line-height: normal;
   }
 
   &-item {
     padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-divider);
 
     &:last-of-type {
       border-bottom: none;
     }
 
     &-label {
-      color: #000;
+      color: var(--colors-text-text-primary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-weight: 500;
@@ -182,14 +184,14 @@ onBeforeMount(() => {
     }
 
     &-text {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-size: 12px;
       font-family: Inter;
       line-height: var(--Line-Height-text-xs, 20px);
     }
 
     &-value {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-size: 12px;
       line-height: var(--Line-Height-text-lg, 20px);
     }

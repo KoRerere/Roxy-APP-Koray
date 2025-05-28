@@ -8,7 +8,7 @@ import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
 import simplePopup from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { useNetworkStore } from '/@/stores/network'
-import { deepClone, isEmptyValue, strConcat } from '/@/utils'
+import { deepClone, isEmptyValue, strConcat, formatProxyTime } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
@@ -149,16 +149,17 @@ function modifyProxyCount(item: any) {
 
 function tooltipValue(item: any) {
   const value = [
-    `Proxy Info`,
+    $t('代理信息'),
     item.ipType,
     `${strConcat(item.protocol, '://')}${item.host}${strConcat(':', item.port)}`,
-    `Refresh URL: ${item.refreshUrl}`,
-    `Country: ${item.lastCountry}${strConcat('/', item.lastCity) || ''}`,
-    `Check Time: ${item.checkTime}`,
+    `${$t('刷新 URL')}: ${item.refreshUrl}`,
+    `${$t('位置')}: ${item.lastCountry}${strConcat('/', item.lastCity) || ''}`,
+    `${$t('检测时间')}: ${item.checkTime}`,
   ]
   return {
     value: value.join('\n').replace(/(\/|:)?undefined/g, '--'),
     showDelay: 500,
+    pt: { root: '!max-w-80' }
   }
 }
 
@@ -177,7 +178,10 @@ function replaceData(data: any) {
       <RxInputRadio v-model="proxySwitch" size="xs" name="proxySwitch" :options="[{ label: $t('直连'), value: false }, { label: $t('使用代理'), value: true }]" />
     </div>
     <div v-if="!proxySwitch" class="direct">
-      {{ $t('* 不使用代理则默认通过本地直连 ({value})', { value: `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}` }) }}
+      {{ $t('* 不使用代理则默认通过本地直连 ({value})', {
+        value: `${strConcat(network.info?.country_code, strConcat('/',
+          network.info?.city))}`
+      }) }}
     </div>
     <template v-else>
       <div class="button-group">
@@ -210,7 +214,8 @@ function replaceData(data: any) {
             </div>
             <div class="flex justify-between single-time">
               <span>
-                {{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{ item.host }}{{ strConcat(':', item.port) }}
+                {{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{ item.host }}{{ strConcat(':', item.port)
+                }}
               </span>
             </div>
           </RxCard>
@@ -229,7 +234,7 @@ function replaceData(data: any) {
 
 .direct {
   margin-top: var(--spacing-xl, 12px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -259,7 +264,7 @@ function replaceData(data: any) {
   }
 
   &-region {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -268,7 +273,7 @@ function replaceData(data: any) {
   }
 
   &-time {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -289,7 +294,7 @@ function replaceData(data: any) {
     flex: 1;
     gap: var(--spacing-md, 6px);
 
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

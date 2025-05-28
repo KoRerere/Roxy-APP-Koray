@@ -124,7 +124,8 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-self: stretch;
 
   &:not(:has(.client-no-data)) {
-    background: var(--Color-blue-100, #e8f5fc);
+    background: var(--component-table-bg-selected);
+    border-color: var(--component-table-border-selected);
   }
 }
 
@@ -136,7 +137,10 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   align-self: stretch;
-  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid var(--colors-border-border-base);
+  }
 }
 
 .upgrade-header {
@@ -151,7 +155,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
 .upgrade-title {
   display: flex;
   align-items: center;
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;
@@ -160,7 +164,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
 }
 
 .release-time {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   text-align: right;
   font-family: Inter;
   font-size: 12px;
@@ -197,7 +201,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
       align-self: stretch;
 
       .version {
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         text-align: center;
         font-family: 'JetBrains Mono';
         font-size: 14px;
@@ -207,7 +211,7 @@ function handleClientItemClick(item: ResourceUpdateMessage) {
       }
 
       .tips {
-        color: var(--Colors-Text-text-tertiary, #7c8387);
+        color: var(--colors-text-text-tertiary, #575D60);
         text-align: center;
         font-family: Inter;
         font-size: 12px;

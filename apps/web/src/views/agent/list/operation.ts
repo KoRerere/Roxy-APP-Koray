@@ -76,7 +76,7 @@ export async function getCustomFilters() {
   const inputs = [
     {
       type: 'Checkbox',
-      label: $t('国家 / 地区'),
+      label: $t('国家/地区'),
       name: 'lastCountry',
       getOptions: () => {
         return ($dict_map.country || []).map((item: any) => ({

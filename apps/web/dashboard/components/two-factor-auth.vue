@@ -163,8 +163,8 @@ initTwoFactorCodeList()
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-lg, 8px);
-  border: 0.5px solid var(--Color-neutrals-100, #f0f3f5);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-overlay, #f0f3f5);
+  background: var(--colors-background-bg-page, #fafbfc);
 
   .platform-info {
     display: flex;
@@ -181,7 +181,7 @@ initTwoFactorCodeList()
 
       .platform-url {
         flex: 1 0 0;
-        color: var(--Colors-Text-text-primary, #171c1f);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -193,7 +193,7 @@ initTwoFactorCodeList()
 
       .account-text {
         align-self: stretch;
-        color: var(--Colors-Text-text-primary, #171c1f);
+        color: var(--colors-text-text-primary, #fafafa);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;
@@ -212,7 +212,7 @@ initTwoFactorCodeList()
 
     .code {
       flex: 1 0 0;
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 24px;
       font-style: normal;
@@ -230,7 +230,7 @@ initTwoFactorCodeList()
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
 
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

@@ -128,7 +128,7 @@ function handleImageLoad() {
 
 <template>
   <RyPopover ref="popover">
-    <AnimationBorder>
+    <AnimationBorder bgColor="var(--colors-background-bg-overlay)">
       <div class="pay-wall-content">
         <div class="badge">
           {{ $t('Roxy 会员') }}
@@ -183,7 +183,7 @@ function handleImageLoad() {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
@@ -192,7 +192,7 @@ function handleImageLoad() {
 }
 
 .description {
-  color: var(--Colors-Text-text-secondary, #575D61);
+  color: var(--colors-text-text-secondary, #B2B6B8);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

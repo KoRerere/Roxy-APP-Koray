@@ -29,7 +29,8 @@ const stopWatch = watch(height, () => {
     <div class="rx-label__content">
       <div>
         <span>{{ label }}</span>
-        <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" class="align-middle ml-1" name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+        <RxSvgIcon v-if="tooltip" v-tooltip.top="{ value: tooltip, showDelay: 500 }" class="align-middle ml-1"
+          name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
       </div>
     </div>
   </label>
@@ -40,7 +41,7 @@ const stopWatch = watch(height, () => {
   margin-right: var(--spacing-lg, 8px);
   width: v-bind(labelWidth);
   min-width: 130px;
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;

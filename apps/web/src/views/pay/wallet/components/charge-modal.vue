@@ -93,7 +93,7 @@ function close(isCancel: boolean) {
     <ItemBlock :title="$t('支付方式')">
       <RxPaymentMethods :loading="loading" v-model="selectedPayway" :methods="payways" :disabledMethods="disabledMethods"></RxPaymentMethods>
     </ItemBlock>
-    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[#C7CDD1]">
+    <div class="flex flex-col border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]">
       <div class="py-6 flex justify-between items-center total">
         <span class="flex-1 total-label">{{ $t('总金额') }}</span>
         <span class="total-price">{{ currency(amount).format() }}</span>
@@ -109,14 +109,14 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 24px;
   font-weight: 600;
   line-height: 20px;
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 700;
@@ -124,9 +124,9 @@ function close(isCancel: boolean) {
 }
 
 .preset {
-  border: 0.5px solid var(--Component-Colors-Tag-border, #E4E8EB);
-  background: var(--Component-Colors-Tag-bg, #F0F3F5);
-  color: var(--Component-Colors-Tag-text, #575D61);
+  border: 0.5px solid var(--component-tag-border, #E4E8EB);
+  background: var(--component-tag-bg, #F0F3F5);
+  color: var(--component-tag-text, #575D61);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -135,14 +135,14 @@ function close(isCancel: boolean) {
 
 .total {
   &-label {
-    color: var(--Colors-Text-text-secondary, #171C1F);
+    color: var(--colors-text-text-secondary, #171C1F);
     font-size: 16px;
     font-weight: 700;
     line-height: 20px;
   }
 
   &-price {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-size: 24px;
     font-weight: 600;
     line-height: normal;

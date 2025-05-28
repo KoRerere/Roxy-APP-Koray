@@ -1,56 +1,58 @@
 <script setup lang="ts">
-import type { SelectButtonProps } from 'primevue/selectbutton'
+import SelectButton, { type SelectButtonProps } from 'primevue/selectbutton';
 
-interface Props extends SelectButtonProps {
-
-}
-
+interface Props extends /* @vue-ignore */ SelectButtonProps { }
 defineProps<Props>()
+
 </script>
 
 <template>
-  <SelectButton v-bind="{ ...$props, ...$attrs }" />
+  <SelectButton v-bind="$props">
+    <template v-for="(_, slotName) in $slots" v-slot:[slotName]="slotProps">
+      <slot :name="slotName" v-bind="slotProps ?? {}"></slot>
+    </template>
+  </SelectButton>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .p-selectbutton {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-xs, 2px);
-  gap: var(--spacing-xs, 2px);
+  padding: 2px;
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base);
+  background: var(--component-segment-bg-tab);
 
   :deep(.p-togglebutton) {
     min-width: 64px;
-    padding: 2px var(--spacing-xl, 12px);
-    border: 0.5px solid transparent;
-    border-radius: 4px !important;
-    background: var(--Colors-Alpha-alpha-white-0, rgba(255, 255, 255, 0));
-
-    color: var(--Colors-Text-text-secondary, #575d61);
-    font-family: Inter;
+    padding: 0;
+    color: var(--colors-text-text-secondary);
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    border: none;
+    border-radius: 4px;
 
-    &::before {
-      content: none;
+    &:first-child {
+      border-radius: 4px;
+    }
+
+    &:last-child {
+      border-radius: 4px;
     }
 
     &.p-togglebutton-checked {
-      color: var(--Colors-Text-text-primary, #171c1f);
-      border-color: var(--Colors-Border-border-container, #c7cdd1);
-      background: var(--Colors-Background-bg-body, #fff);
-      box-shadow:
-        0px 4px 4px -1px rgba(0, 0, 0, 0.02),
-        0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-    }
-
-    .p-togglebutton-content {
-      padding: 0;
-      box-shadow: none;
+      box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+      color: var(--colors-text-text-primary);
     }
   }
+}
+
+:deep(.p-togglebutton-checked .p-togglebutton-content) {
+  border-color: var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
+  box-shadow: none;
+}
+
+:deep(.p-togglebutton-content) {
+  padding: 2px 0;
+  border: 0.5px solid transparent;
+  border-radius: 4px;
 }
 </style>

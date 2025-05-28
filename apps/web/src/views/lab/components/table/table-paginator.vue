@@ -37,12 +37,13 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
 </script>
 
 <template>
-  <Paginator class="paginator" v-model:first="paginatorFirst" :rows="paginatorRows" :total-records="totalRecords" :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink"
-    @page="onChangePage">
+  <Paginator class="paginator" v-model:first="paginatorFirst" :rows="paginatorRows" :total-records="totalRecords"
+    :page-link-size="5" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" @page="onChangePage">
     <template #start>
       <div class="flex flex-1 items-center paginator-jump">
         <div>{{ $t('总计 {total} 个', { total: totalRecords }) }}</div>
-        <RxInputSelect class="!w-fit" name="rowsPerPage" v-model="paginatorRows" :options="paginatorRowOptions" optionValue="value" size="xxs" :filter="false" @change="onChangeRows" />
+        <RxInputSelect class="!w-fit" name="rowsPerPage" v-model="paginatorRows" :options="paginatorRowOptions"
+          optionValue="value" size="xxs" :filter="false" @change="onChangeRows" />
         <div class="flex-1 flex items-center gap-2 justify-end">{{ $t('跳转页数至') }}</div>
       </div>
     </template>
@@ -54,7 +55,7 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
   &-jump {
     display: flex;
     gap: var(--spacing-lg, 8px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -74,7 +75,7 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
   }
 
   :deep(.p-paginator-page) {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;
     font-size: var(--Font-Size-text-sm, 12px);
     font-weight: 500;
@@ -87,10 +88,10 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
 
   :deep(.p-paginator-page-selected) {
     background: none;
-    color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+    color: var(--colors-text-text-brand, #12a3fc);
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
-    background: var(--Component-Colors-Buttons-Ghost-bg, #fff);
+    border: 0.5px solid var(#12a3fc, #12a3fc);
+    background: var(--component-button-ghost-bg, #fff);
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),
       0px 1px 1px 0px rgba(0, 0, 0, 0.06);
@@ -100,11 +101,11 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
     padding: 4px 4px 4px 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-action, #fff);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    color: var(--colors-text-text-placeholder, #7c8387);
     font-family: Inter;
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -115,8 +116,8 @@ function onChangeRows(selectEvent: SelectChangeEvent) {
     gap: 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+    border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-action, #fff);
     box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
     .p-select-label {

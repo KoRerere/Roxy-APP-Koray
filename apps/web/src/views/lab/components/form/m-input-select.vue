@@ -1,15 +1,11 @@
 <script lang="ts" setup>
-import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { isLikeFunction } from '/@/utils'
 
-
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
-
-interface Props extends Omit<SelectProps, 'size' | 'optionLabel' | 'optionValue'> {
+interface Props {
   icon?: SvgNames
   iconColor?: string
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
   options?: any[]
   optionLabel?: string
   optionValue?: string
@@ -19,35 +15,35 @@ interface Props extends Omit<SelectProps, 'size' | 'optionLabel' | 'optionValue'
 
 const {
   icon,
-  iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)',
+  iconColor = 'var(--colors-text-text-primary, #171c1f)',
   size = 'sm',
   options,
   optionLabel = 'label',
   optionValue,
   getOptions,
   onChange,
-  ...props
 } = defineProps<Props>()
 
-
 const _options = ref(options)
+const attrs = useAttrs()
+console.log("🚀 ~ attrs:", attrs)
 
+// !todo getOptions 需要优化
 onBeforeMount(async () => {
   if (getOptions && isLikeFunction(getOptions)) {
     _options.value = await getOptions()
   }
 })
 
-
 function _onChange(event: any) {
   if (onChange && isLikeFunction(onChange)) {
     onChange({
       ...event,
       props: {
-        options: _options.value,
+        options: options || _options.value,
         optionLabel,
         optionValue,
-        ...props
+        ...Object.fromEntries(Object.entries(attrs).filter(([_, value]) => !isLikeFunction(value)))
       }
     })
   }
@@ -55,7 +51,7 @@ function _onChange(event: any) {
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ optionLabel, optionValue, ...props }" :options="_options" :pt="{ root: size, option: classes.option }" @change="_onChange">
+  <Select class="w-full" :optionLabel="optionLabel" :optionValue="optionValue" :options="options || _options" :pt="{ root: size, option: classes.option }" @change="_onChange">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -81,11 +77,6 @@ function _onChange(event: any) {
 <style lang="scss" module="classes">
 .option {
   font-size: 13px;
-
-  &[data-p-selected='true']:not([data-p-focused='true']) {
-    color: var(--Colors-Text-text-brand, #12a3fc) !important;
-    background: #e8f5fc !important;
-  }
 }
 </style>
 
@@ -104,13 +95,12 @@ function _onChange(event: any) {
 }
 
 :deep(.p-select-label) {
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
   font-family: Inter;
 }
 
 .lg {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
@@ -125,7 +115,7 @@ function _onChange(event: any) {
 
 .md {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 8px 8px 8px 10px;
@@ -136,7 +126,7 @@ function _onChange(event: any) {
 
 .sm {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
@@ -147,7 +137,7 @@ function _onChange(event: any) {
 
 .xs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px);
@@ -158,7 +148,7 @@ function _onChange(event: any) {
 
 .xxs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

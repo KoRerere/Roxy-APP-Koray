@@ -47,8 +47,6 @@ function onMore(event: Event) {
       </div>
     </div>
   </div>
-  <!-- <RxButton v-else v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : item.tooltip, showDelay: 500, pt: { root: '!max-w-sm' } }" text severity="secondary" size="xxs"
-  :icon="loadingOperationMap?.[item.name as string] ? 'base/rx_ic_progress_bar' : item.icon" :loading="loadingOperationMap?.[item.name as string]" @click.stop="quickClick(item)"></RxButton> -->
 </template>
 
 <style lang="scss" scoped>
@@ -63,19 +61,19 @@ function onMore(event: Event) {
   transition: all 0.15s ease-in-out;
 
   &:hover:not(.disabled) {
-    background-color: rgba(0, 0, 0, 0.05);
+    background: var(--component-button-text-secondary-hover);
   }
 
   &.disabled {
     cursor: not-allowed;
 
     :deep(svg) {
-      color: #d1d5db;
+      color: var(--colors-icon-icon-inactive);
     }
   }
 }
 
 :where(.quick-icon) {
-  color: var(--Colors-icon-icon-secondary, #575D60);
+  color: var(--colors-icon-icon-secondary);
 }
 </style>

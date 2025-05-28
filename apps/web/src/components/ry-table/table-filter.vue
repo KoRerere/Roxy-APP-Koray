@@ -49,19 +49,15 @@ function onFilterChange() {
 
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
-    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label"
-      option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item" @change="onMultiChange"
-      @hide="onMultiHide">
+    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item"
+      @change="onMultiChange" @hide="onMultiHide">
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>
     </MultiSelect>
-    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false"
-      v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
-    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse"
-      selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
-      :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange"
-      @clear-click="onDateClear" />
+    <RxInputSelect v-else-if="item.type === 'select'" v-model="item.value" checkmark :highlight-on-select="false" v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange" />
+    <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="mw-150 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
+      :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange" @clear-click="onDateClear" />
   </div>
 </template>
 
@@ -70,7 +66,7 @@ function onFilterChange() {
 :deep(.p-multiselect-label),
 :deep(.p-inputtext) {
   padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -95,6 +91,6 @@ function onFilterChange() {
   border-top-right-radius: 0;
   border-bottom-left-radius: var(--p-inputtext-border-radius);
   border-bottom-right-radius: 0;
-  background: #fff;
+  background: var(--colors-background-bg-action);
 }
 </style>

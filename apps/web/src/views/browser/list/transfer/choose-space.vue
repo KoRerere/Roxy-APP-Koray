@@ -75,7 +75,6 @@ async function howToGetHelp() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -131,7 +130,7 @@ function handleChoose(item: Data) {
 }
 
 function getAvatarStyle(workspacePicture: string) {
-  return workspacePicture ? {} : { backgroundColor: '#000', color: '#fff', fontSize: '14px' }
+  return workspacePicture ? {} : { backgroundColor: 'var(--pattern-topnav-space-avatar-bg)', color: '#fff', fontSize: '14px' }
 }
 </script>
 
@@ -164,7 +163,7 @@ function getAvatarStyle(workspacePicture: string) {
           <RxLoading :opacity="0.9" v-model="searchLoading" />
           <div v-for="space of spaceList" :key="space.title">
             <div class="flex justify-between items-center mb-2 title">
-              <div>{{ space.title }}</div>
+              <div class="text-[var(--colors-text-text-primary)]">{{ space.title }}</div>
               <div v-if="space.key === SpaceType.History" class="flex items-center gap-1 cursor-pointer"
                 @click="clearHistory(space)">
                 <SvgIcon name="base/rx_ic_bin_1"></SvgIcon>
@@ -219,40 +218,41 @@ function getAvatarStyle(workspacePicture: string) {
 }
 
 .choose {
-  border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Colors-border-border-base, #AFB7BB);
+  border-radius: 8px;
+  background: var(--colors-background-bg-action);
+  border: 1px solid var(--colors-border-border-action);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  color: var(--Colors-text-text-placeholder, #575D60);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
   line-height: var(--Line-Height-text-lg, 20px);
 }
 
 .header {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
 
 .help {
-  color: var(--Colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive, #7D8387);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-text-text-link, #11A3FD);
+    color: var(--colors-text-text-brand, #11A3FD);
   }
 }
 
 .title {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 12px;
   font-weight: 500;
   line-height: 20px;
 }
 
 .workspace {
-  border-bottom: 1px dashed var(--Colors-border-border-inactive, #C7D1D6);
+  border-bottom: 1px dashed var(--colors-border-border-inactive, #C7D1D6);
 
   &.disabled {
     cursor: not-allowed;
@@ -260,7 +260,7 @@ function getAvatarStyle(workspacePicture: string) {
 
     .workspace-name,
     .workspace-id {
-      color: var(--Colors-text-text-inactive, #7D8387);
+      color: var(--colors-text-text-inactive, #7D8387);
     }
 
     .workspace-icon {
@@ -273,14 +273,14 @@ function getAvatarStyle(workspacePicture: string) {
   }
 
   &-name {
-    color: var(--Colors-text-text-primary, #111213);
+    color: var(--colors-text-text-primary);
     font-size: 14px;
     font-weight: 600;
     line-height: normal;
   }
 
   &-id {
-    color: var(--Colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: "JetBrains Mono";
     font-size: 12px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -288,7 +288,7 @@ function getAvatarStyle(workspacePicture: string) {
 }
 
 .search-empty {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-style: normal;
   line-height: 20px;

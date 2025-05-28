@@ -93,8 +93,8 @@ async function _onPlus() {
 
 <style scoped lang="scss">
 .step {
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #C7CDD1);
-  background: var(--Component-Colors-TextInput-bg-bg, #FFF);
+  border: 1px solid var(--colors-border-border-action, #C7CDD1);
+  background: var(--colors-background-bg-action, #FFF);
 
   &.lg {
     border-radius: var(--radius-lg, 8px);

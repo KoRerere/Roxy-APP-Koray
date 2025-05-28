@@ -73,7 +73,8 @@ function onSelected(item: Duration) {
         @click="onSelected(item)">
         <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 duration-discount" :class="item.labelClass">{{ item.label }}</div>
         <div class="duration-text">{{ item.title }}</div>
-        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{ currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
+        <div class="mt-2 duration-desc opacity-0" :class="{ 'opacity-0': item.discount === 0 }">{{
+          currency(durationsDiscountPrice[item.key], { symbol: '-$' }).format() }}</div>
       </div>
     </template>
   </div>
@@ -81,20 +82,25 @@ function onSelected(item: Duration) {
 
 <style lang="scss" scoped>
 .duration {
-  border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
+  border: 2px solid var(--colors-background-bg-page);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
 
   &:last-child {
     .duration-discount {
       font-size: 14px;
-      background: var(--Color-red-300, #F53838);
+      background: var(--primitives-red-500, #F53838);
     }
   }
 
   &.active {
-    border: 2px solid var(--Color-blue-300, #12A3FC);
-    background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
+    border: 2px solid var(--colors-border-border-brand);
+    background: linear-gradient(180deg, var(--pattern-pay-gradient-selected-start, #013D65) 0%, var(--pattern-pay-gradient-selected-end, #293038) 100%);
     box-shadow: none;
+
+    .duration-text {
+      color: var(--pattern-pay-plan-text-plan-selected);
+    }
   }
 
   &-discount {
@@ -106,14 +112,14 @@ function onSelected(item: Duration) {
   }
 
   &-text {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 16px;
     font-weight: 600;
     line-height: normal;
   }
 
   &-desc {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;

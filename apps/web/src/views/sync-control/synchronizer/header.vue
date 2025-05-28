@@ -52,6 +52,7 @@ function showPreferences() {
 
   .title {
     .production-name {
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Archivo;
       font-size: 16px;
       font-style: normal;
@@ -61,6 +62,7 @@ function showPreferences() {
     }
 
     .sub-title {
+      color: var(--colors-text-text-tertiary, #8A9093);
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -91,13 +93,14 @@ function showPreferences() {
         font-style: normal;
         font-weight: 500;
         line-height: var(--Line-Height-text-xs, 16px);
+        color: var(--colors-text-text-primary, #FAFAFA);
       }
     }
 
     .split-line {
       width: 1px;
       height: 16px;
-      background: var(--Colors-Border-border-strong-hover, #7C8387);
+      background: var(--colors-border-border-inactive, #293038);
     }
   }
 }

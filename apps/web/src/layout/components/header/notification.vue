@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script lang="tsx" setup>
 import type { UserGetNotifyListData } from '@roxy/backend-api'
 import { API } from '/@/api'
 import { NotifyModule, NotifyStatus } from '/@/enums'
@@ -6,6 +6,8 @@ import { $t } from '/@/locales'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import CheckTransfer from '/@/layout/components/header/components/check-transfer.vue';
+
+const InviteIntoWorkspace = defineAsyncComponent(() => import('/@/components/business/global-component/invite-into-workspace.vue'))
 
 type Message = UserGetNotifyListData['data'][0] & { isInWorkspace?: boolean }
 
@@ -39,7 +41,13 @@ const noRead = computed(() => tabs.value.reduce((acc, tab) => acc + tab.noRead, 
 const readSet = ref<Set<number>>(new Set())
 
 onBeforeMount(() => {
-  getMessageList().finally(() => {
+  getMessageList().then(() => {
+    const [_, teamsTab] = tabs.value
+    const target = teamsTab.list.find(item => item.type === '邀请用户通知' && item.paramData?.identityType === 'new' && item.status === NotifyStatus.unread)
+    if (target) {
+      showAcceptInvitationDialog(target)
+    }
+  }).finally(() => {
     emitter.on('notifyUpdateData', getMessageList)
   })
 })
@@ -114,7 +122,7 @@ async function markAllAsRead() {
 
 function checkDetail(item: Message) {
   if (item.type === '邀请用户通知') {
-    emitter.emit('viewInviteDetail', item.paramData!)
+    showAcceptInvitationDialog(item)
   }
 }
 
@@ -123,7 +131,6 @@ function checkTransfer(item: Message) {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -132,6 +139,25 @@ function checkTransfer(item: Message) {
         windowTransferNo: item.windowTransferNo,
         onClose: hideModal,
       })
+    }
+  })
+}
+
+function showAcceptInvitationDialog(item: Message) {
+  function handleClose() {
+    hideModal()
+    onRead(item)
+  }
+
+  const { hideModal } = showModal({
+    showHeader: false,
+    modal: true,
+    class: '!w-[380px] pa-6',
+    blockScroll: true,
+    slots: {
+      container: () => {
+        return <InviteIntoWorkspace inviteInfo={item.paramData} onClose={handleClose} />
+      }
     }
   })
 }
@@ -209,12 +235,12 @@ function checkTransfer(item: Message) {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-weight: 600;
 }
 
 .read {
-  color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-size: var(--Font-Size-text-sm, 12px);
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -225,8 +251,8 @@ function checkTransfer(item: Message) {
   padding: var(--spacing-xl, 12px) var(--spacing-2xl, 16px);
   align-items: flex-start;
   gap: 10px;
-  border-bottom: 1px solid var(--Colors-Border-border-subtle, #e4e8eb);
-  background: var(--Colors-Background-bg-body, #fff);
+  border-bottom: 1px solid var(--component-dropdown-divider, #6A757C);
+  background: var(--colors-background-bg-overlay, #293038);
 
   &:last-of-type {
     border-bottom: none;
@@ -234,7 +260,8 @@ function checkTransfer(item: Message) {
 }
 
 .noRead {
-  background: var(--Color-blue-100, #e8f5fc);
+  background: var(--component-table-bg-selected, #002742);
+  border-color: var(--component-table-border-selected);
 }
 
 .no-message {
@@ -255,20 +282,20 @@ function checkTransfer(item: Message) {
       right: 0;
       width: 8px;
       height: 8px;
-      background-color: var(--Color-Rainbow-Red, #f53838);
+      background-color: var(--component-rainbow-Red, #f53838);
       border-radius: 50%;
     }
   }
 }
 
 .value {
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-primary, #b2b6b8);
   font-size: 14px;
   line-height: var(--Line-Height-text-md, 20px);
 }
 
 .check-detail {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -279,13 +306,13 @@ function checkTransfer(item: Message) {
 }
 
 .check-detail.disabled {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   cursor: not-allowed;
 }
 
 .time {
   margin-top: 4px;
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-secondary, #a3a9ad);
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }

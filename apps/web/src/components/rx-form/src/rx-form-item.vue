@@ -173,7 +173,7 @@ onMounted(async () => {
   flex-direction: column;
 
   .p-inputtext::placeholder {
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
+    color: var(--colors-text-text-placeholder, #7c8387);
   }
 
   .error-message {

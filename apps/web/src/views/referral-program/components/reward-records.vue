@@ -105,8 +105,7 @@ async function tableFilters() {
 </script>
 
 <template>
-  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest"
-    :show-actions="false" :show-display="false" :context-menu="false">
+  <RyTable cacheKey="history-log-list" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_filter.svg" :title="$t('暂无奖励明细')" />
     </template>
@@ -115,9 +114,7 @@ async function tableFilters() {
       <div class="flex items-center gap-1 locationip ">
         <RxSvgIcon :name="(`country-code/${data.code}` as SvgNames)" fallback="base/rx_ic_earth" />
         <div>{{ data.countryCode }}</div>
-        <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }"
-          :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1"
-          :size="14" />
+        <RxSvgIcon v-tooltip.top="{ value: data.location.replace(';', '\n') }" :tooltip-options="{ placement: 'bottom', showDelay: 500 }" name="base/rx_ic_info" color="#C7CDD1" :size="14" />
       </div>
     </template>
   </RyTable>
@@ -125,7 +122,7 @@ async function tableFilters() {
 
 <style lang="scss" module>
 .user-email {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;
@@ -133,7 +130,7 @@ async function tableFilters() {
 }
 
 .user-name {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -142,7 +139,7 @@ async function tableFilters() {
 
 <style lang="scss" scoped>
 .description {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -151,7 +148,7 @@ async function tableFilters() {
 }
 
 .locationip {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

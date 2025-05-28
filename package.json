@@ -37,9 +37,9 @@
     "publish:app:prod": "pnpm run pack:prod && cross-env NODE_ENV=production tsx scripts/publish.ts",
     "publish:app:dev:only": "cross-env NODE_ENV=development tsx scripts/publish.ts",
     "publish:app:prod:only": "cross-env NODE_ENV=production tsx scripts/publish.ts",
-    "publish:web:dev": "pnpm -F web run build:dev && cross-env NODE_ENV=development npx tsx ./scripts/upload-web-source.ts",
-    "publish:web:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production npx tsx ./scripts/upload-web-source.ts",
-    "publish:web:win:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production PLATFORM=win npx tsx ./scripts/upload-web-source.ts",
+    "publish:web:dev": "pnpm -F web run build:dev && cross-env NODE_ENV=development pnpx tsx ./scripts/upload-web-source.ts",
+    "publish:web:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production pnpx tsx ./scripts/upload-web-source.ts",
+    "publish:web:win:prod": "pnpm -F web run build:prod && cross-env NODE_ENV=production PLATFORM=win pnpx tsx ./scripts/upload-web-source.ts",
     "publish:app:dev:noPack": "cross-env NODE_ENV=development tsx scripts/publish.ts",
     "publish:app:prod:noPack": "cross-env NODE_ENV=production tsx scripts/publish.ts",
     "openapi": "pnpm -F @roxy/backend-api run openapi",
@@ -47,9 +47,9 @@
     "postinstall": "npm run build:pkg & npm run install:electron",
     "lint": "turbo run lint",
     "lint:fix": "eslint . --fix",
-    "clean:cache": "npx rimraf node_modules/.cache/ && npx rimraf node_modules/.vite",
-    "clean:lib": "npx rimraf --glob node_modules **/node_modules",
-    "reinstall": "npx rimraf pnpm-lock.yaml && pnpm clean:lib",
+    "clean:cache": "pnpx rimraf node_modules/.cache/ && pnpx rimraf node_modules/.vite",
+    "clean:lib": "pnpx rimraf --glob node_modules **/node_modules",
+    "reinstall": "pnpx rimraf pnpm-lock.yaml && pnpm clean:lib",
     "test": "cross-env NODE_ENV=development tsx scripts/test.ts",
     "install:electron": "cd apps/electron && cross-env ELECTRON_GET_USE_PROXY=true node node_modules/electron/install.js"
   },
@@ -57,33 +57,35 @@
     "minidump": "^0.26.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.13.0",
-    "@dotenvx/dotenvx": "^1.41.0",
+    "@antfu/eslint-config": "^4.13.2",
+    "@dotenvx/dotenvx": "^1.44.1",
     "@types/adm-zip": "^0.5.7",
     "@types/ali-oss": "^6.16.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",
-    "@unocss/eslint-plugin": "^66.1.0",
+    "@unocss/eslint-plugin": "^66.1.2",
     "adm-zip": "^0.5.16",
-    "ali-oss": "^6.22.0",
+    "ali-oss": "^6.23.0",
     "axios": "^1.9.0",
     "cross-env": "^7.0.3",
-    "eslint": "9.26.0",
+    "eslint": "9.27.0",
     "eslint-plugin-format": "^1.0.1",
     "js-yaml": "^4.1.0",
-    "lint-staged": "^15.5.1",
+    "lint-staged": "^16.1.0",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.13.0",
     "tsx": "^4.19.4",
-    "turbo": "^2.5.2",
+    "turbo": "^2.5.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vite-plugin-dts": "^4.5.3"
+    "vite-plugin-dts": "^4.5.4"
   },
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {}
     },
-    "overrides": {}
+    "patchedDependencies": {
+      "rebrowser-puppeteer-core@24.8.1": "patches/rebrowser-puppeteer-core@24.8.1.patch"
+    }
   }
 }

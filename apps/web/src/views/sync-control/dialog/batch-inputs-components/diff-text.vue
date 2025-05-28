@@ -46,8 +46,7 @@ defineExpose({
           </label>
         </div>
         <div class="form-item-content">
-          <Textarea v-model="textMap[window.dirId!]" class="textarea" rows="1" autoResize
-            :placeholder="$t('请在此输入内容，支持换行')" />
+          <Textarea v-model="textMap[window.dirId!]" class="textarea" rows="1" autoResize :placeholder="$t('请在此输入内容，支持换行')" />
         </div>
       </div>
     </template>
@@ -64,7 +63,7 @@ defineExpose({
   padding-right: 12px;
 
   .tips {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: "PingFang SC";
     font-size: 12px;
     font-style: normal;
@@ -80,7 +79,7 @@ defineExpose({
 
   .form-item-label {
     flex-shrink: 0;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
 
     font-size: 14px;
     font-style: normal;
@@ -93,7 +92,7 @@ defineExpose({
 
     .textarea {
       width: 100%;
-      color: var(--Component-Colors-TextInput-text-text-placeholder, #7C8387);
+      color: var(--colors-text-text-placeholder, #7C8387);
       font-family: "PingFang SC";
       font-size: 14px;
       font-style: normal;

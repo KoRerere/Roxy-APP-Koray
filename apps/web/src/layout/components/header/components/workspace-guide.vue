@@ -32,7 +32,7 @@ const props = defineProps({
   padding: 24px;
 
   .title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -45,7 +45,7 @@ const props = defineProps({
     display: flex;
     flex-direction: column;
     gap: 12px;
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -54,7 +54,7 @@ const props = defineProps({
     /* 150% */
 
     .bold {
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

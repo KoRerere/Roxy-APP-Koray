@@ -15,13 +15,12 @@ import { useFormDialog } from "/@/hooks/useFormDialog";
 import { getAccountSetupFormSchemas } from "/@/components/business/global-component/schemas";
 import { RxAlert } from "/@/components/rx-alert";
 import RxButton from "/@/components/rx-button";
-import { RouterLink } from "vue-router";
 import styles from './schemas.module.css'
+
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
-const OldUserGiftDialog = defineAsyncComponent(() => import('./old-user-gift-dialog.vue'))
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
 
 let isSubscribe = false
@@ -46,13 +45,23 @@ export function useSubscribe() {
   const userStore = useUserStore()
   const { getUserPayInfo, clearUserInfo } = userStore
 
+  watchEffect(() => {
+    if (userStore.token) {
+      // 检查是否显示新功能提示
+      electronAPI.send('app:getNewFeatureTips').then((result) => {
+        console.log('app:getNewFeatureTips', result)
+        const newFeatureTips = result?.filter(item => item.content?.length)
+        if (newFeatureTips?.length) {
+          showAppUpgradeDialog(newFeatureTips)
+        }
+      })
+    }
+  })
+
   // 显示toast
   emitter.on('showToast', showToast)
-  // showSubscriptionExpiredDialog
   // showSubscriptionExpiredDialog()
   // showUpgradePlanDialog()
-  // // showBusinessPopup({})
-  // showOldUserGiftDialog()
 
 
   /** 初始化事件监听 */
@@ -66,8 +75,6 @@ export function useSubscribe() {
     emitter.on('showRenewalDialog', onRenewal)
     // 显示扩容弹窗
     emitter.on('showExpandDialog', onExpand)
-    // 显示老用户福利弹窗
-    emitter.on('showOldUserGiftDialog', showOldUserGiftDialog)
     // 显示账号设置弹窗
     emitter.on('showAccountSetupDialog', showAccountSetupDialog)
 
@@ -91,26 +98,8 @@ export function useSubscribe() {
     electronAPI.send('web:ready')
     console.log('web:ready')
     initListener()
-    // 检查是否显示新功能提示
-    electronAPI.send('app:getNewFeatureTips').then((result) => {
-      console.log('app:getNewFeatureTips', result)
-      const newFeatureTips = result?.filter(item => item.content?.length)
-      if (newFeatureTips?.length) {
-        showAppUpgradeDialog(newFeatureTips)
-      }
-    })
   })
 
-
-  /** 显示老用户福利弹窗 */
-  function showOldUserGiftDialog() {
-    showModal({
-      header: 'showOldUserGiftDialog',
-      slots: {
-        container: ({ hideModal }) => <OldUserGiftDialog hideFn={hideModal} />,
-      }
-    })
-  }
   /** 显示升级套餐弹窗 */
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
 
@@ -274,7 +263,7 @@ export function useSubscribe() {
       },
       handleOk: async (params: any) => {
         const res = await API.base.userSettingAccountPasswordCreate({ ...params });
-        showResToast(res.code, res.msg);
+        onlyErrorToast(res.code, res.msg);
         if (res.code === 0 && params.password) {
           userStore.setPassword(params.password);
           showResToast(0, $t("邮箱和密码设置成功"));

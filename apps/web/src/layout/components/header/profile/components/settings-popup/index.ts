@@ -12,8 +12,8 @@ import type { DynamicDialogInstance } from "primevue/dynamicdialogoptions";
 export type PanelKeyType = ReturnType<typeof getSettings>[number]["name"];
 
 export interface Active {
-  key: PanelKeyType;
-  panel: SettingsModule | null;
+  key: PanelKeyType
+  panel: SettingsModule | null
 }
 
 export const getSettings = () =>
@@ -48,19 +48,19 @@ export const getSettings = () =>
     //   name: "about",
     //   icon: "base/rx_ic_info_line",
     // },
-  ] as const;
+  ] as const
 
 export function useSettingsPopup() {
-  const dialogRef = inject<ComputedRef<DynamicDialogInstance>>("dialogRef");
+  const dialogRef = inject<ComputedRef<DynamicDialogInstance>>("dialogRef")
 
-  const userStore = useUserStore();
+  const userStore = useUserStore()
 
-  const { getNetworkPanels } = useNetworkPanel();
-  const { getPreferencesPanels } = usePreferencesPanel();
-  const { getLoginActivityPanels } = useLoginActive();
-  const { getUserProfilePanels } = useUserProfilePanel();
-  // const { getKernelPanels } = useKernel();
-  // const { getAboutPanels } = useAbout();
+  const { getNetworkPanels } = useNetworkPanel()
+  const { getPreferencesPanels } = usePreferencesPanel()
+  const { getLoginActivityPanels } = useLoginActive()
+  const { getUserProfilePanels } = useUserProfilePanel()
+  // const { getKernelPanels } = useKernel()
+  // const { getAboutPanels } = useAbout()
 
   const promiseMap = {
     preferences: getPreferencesPanels,
@@ -68,34 +68,47 @@ export function useSettingsPopup() {
     loginActivity: getLoginActivityPanels,
     // kernel: getKernelPanels,
     // about: getAboutPanels,
-  };
+  }
 
   const activePanel = reactive<Active>({
     key: "profiles",
     panel: null,
-  });
+  })
 
-  const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({});
+  const settingsPanel = reactive<Partial<Record<PanelKeyType, any>>>({})
 
   const settings = getSettings().map((item) => ({
     ...item,
     command: async () => {
-      activePanel.key = item.name;
-      activePanel.panel = await settingsPanel[activePanel.key];
+      activePanel.key = item.name
+      activePanel.panel = await (settingsPanel[activePanel.key].value ?? settingsPanel[activePanel.key].get())
     },
-  }));
+  }))
 
   async function initPanels() {
-    const data = toRaw(await userStore.getUserConfig());
+    const data = toRaw(await userStore.getUserConfig())
 
-    Object.entries(promiseMap).forEach(async ([key, value]) => {
-      settingsPanel[key as PanelKeyType] = value(data);
-    });
+    Object.entries(promiseMap).forEach(([key, getSettingPanel]) => {
+      settingsPanel[key as PanelKeyType] = {
+        value: null,
+        get: async () => {
+          const value = await getSettingPanel(data)
+          settingsPanel[key as PanelKeyType].value = value
+          return value
+        }
+      }
+    })
 
-    settingsPanel.profiles = await getUserProfilePanels(
-      toRaw(userStore.userInfo),
-    );
-    activePanel.panel = await settingsPanel[activePanel.key];
+    settingsPanel.profiles = {
+      value: null,
+      get: async () => {
+        const value = await getUserProfilePanels(toRaw(userStore.userInfo))
+        settingsPanel.profiles.value = value
+        return value
+      }
+    }
+
+    activePanel.panel = await settingsPanel[activePanel.key].get()
   }
 
   return {
@@ -103,12 +116,12 @@ export function useSettingsPopup() {
     activePanel,
     initPanels,
     panels: ref(settings),
-  };
+  }
 }
 
 // 显示书签只能上传500个url
 export class MaximumLimitExceeded extends Error {
-  static MAX_BOOKMARK_COUNT = 500;
+  static MAX_BOOKMARK_COUNT = 500
   constructor() {
     super($t('URL 数量超过{count}，请检查文件', { count: MaximumLimitExceeded.MAX_BOOKMARK_COUNT }))
   }

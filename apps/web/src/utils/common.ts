@@ -13,9 +13,9 @@ console.log('isProd', isProd)
 console.log('isMainWindow', isMainWindow)
 
 export function showPageLoading() {
-  document.querySelector('#page-loading')?.setAttribute('style', 'display: flex')
+  document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'flex')
 }
 
 export function hidePageLoading() {
-  document.querySelector('#page-loading')?.setAttribute('style', 'display: none')
+  document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'none')
 }

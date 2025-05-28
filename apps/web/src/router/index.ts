@@ -7,6 +7,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import type { App } from 'vue'
+import { useThemeStore } from '/@/stores/theme'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -46,6 +47,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置全局查询参数，保持语言和标题，客服插件需要用到
   const query = { ...to.query, language: simpleLocale.currentLocale || 'en', _title: 'roxybrowser' };
+
   // 禁止当前用户访问非当前角色权限的页面
   if (currentWorkspace?.role && to.meta?.roles && !to.meta?.roles?.includes(currentWorkspace?.role)) {
     return next({ name: 'home', query })

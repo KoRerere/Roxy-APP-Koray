@@ -19,8 +19,10 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
       return cacheMap
     }, {})
 
-  const _list = ref(
-    data
+  const _list = ref(genColumns())
+
+  function genColumns() {
+    return data
       .filter(item => !filterColumnKeys || !filterColumnKeys.includes(item.key))
       .map((item, index) => {
         const { sort, visible, cache } = cacheMap[item.key] ?? {}
@@ -38,14 +40,21 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
         return column
       })
       .toSorted((a, b) => a._sort - b._sort)
-  )
+  }
+
+  function updateColumns(update: (columns: any[]) => void) {
+    update(_list.value)
+  }
 
   onUnmounted(() => {
     const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, cache: item._cache }])
     localStorage.setItem(key, JSON.stringify(_cache))
   })
 
-  return [_list]
+  return {
+    columns: _list,
+    updateColumns
+  }
 }
 
 // 表头存储数据格式

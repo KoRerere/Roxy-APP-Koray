@@ -56,7 +56,7 @@ const options = [
     ),
   },
   {
-    label: $t('清除云端缓存'),
+    label: $t('清除所有缓存'),
     value: ClearType.cloud,
     visible: role.isOwner || role.isManager,
     afterRender: () => (
@@ -113,7 +113,7 @@ onMounted(() => {
     <RxInputRadio v-model="value" name="clearType" :options="options" />
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton size="sm" :label="$t('保存')" severity="info" @click="confirm" />
+      <RxButton size="sm" :label="$t('保存')" @click="confirm" />
     </div>
   </div>
 </template>
@@ -125,7 +125,7 @@ onMounted(() => {
   gap: var(--spacing-xl, 12px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -134,7 +134,7 @@ onMounted(() => {
   }
 
   &-content {
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--primitives-neutrals-600, #575d61);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

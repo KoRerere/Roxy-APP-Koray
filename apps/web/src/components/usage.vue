@@ -4,7 +4,13 @@ interface ColorLevel {
   weak: string
 }
 
-const { colorLevel: colorLevelProp, ratio, blockCount, defaultColor = '#e4e8eb', shape = 'rect' } = defineProps<{
+const {
+  colorLevel: colorLevelProp,
+  ratio,
+  blockCount,
+  defaultColor = 'var(--pattern-sidenav-metrics-progress)',
+  shape = 'rect'
+} = defineProps<{
   /** 比值 */
   ratio: number
   /** 块数 */
@@ -89,7 +95,7 @@ const colorLevel = computed(() => {
 
 svg {
   path {
-    stroke: white;
+    stroke: v-bind('defaultColor');
   }
 
   .color-level {

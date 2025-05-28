@@ -19,13 +19,13 @@ const number = defineModel<number>()
 .rx-input-number {
   &.p-inputnumber {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
+    border: 1px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-action, #fff);
 
     .p-inputnumber-input {
       padding: 0;
       border: none;
-      color: var(--Component-Colors-TextInput-text-text, #171c1f);
+      color: var(--colors-text-text-primary, #111213);
       text-align: center;
       font-family: Inter;
       font-size: 12px;

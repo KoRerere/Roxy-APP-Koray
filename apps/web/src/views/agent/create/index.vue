@@ -27,7 +27,7 @@ async function saveProxies(proxies: any) {
 
 <template>
   <div class="flex flex-col h-full w-full overflow-hidden">
-    <ViewsHeader show-back :title="$t('添加代理')" />
+    <ViewsHeader show-back :divider="false" :title="$t('添加代理')" />
     <div class="proxies-tabs">
       <Tabs v-model:value="tabsValue">
         <TabList>
@@ -48,7 +48,7 @@ async function saveProxies(proxies: any) {
 <style lang="scss" scoped>
 .proxies-tabs {
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);
@@ -56,7 +56,7 @@ async function saveProxies(proxies: any) {
 
     .p-tab {
       padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: var(--Font-Size-text-sm, 12px);
       font-weight: 500;
@@ -69,7 +69,7 @@ async function saveProxies(proxies: any) {
     }
 
     .p-tab-active {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
 
     .p-tablist-active-bar {

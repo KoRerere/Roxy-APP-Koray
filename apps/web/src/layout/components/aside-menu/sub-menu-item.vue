@@ -24,13 +24,11 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
 
 <template>
   <AnimatePresence :initial="false">
-    <motion.div v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }"
-      :animate="{ height: 'auto', opacity: 1, y: 0 }" :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
-        duration: 0.6,
-        ease: [0, 0.71, 0.2, 1.01],
-        opacity: { duration: 0.3, ease: 'backOut' },
-      }" v-if="items.length && !collapsedChildren" class="sub-menu" :class="[`level-${level}`, { collapsed }]"
-      :style="{ '--child-count': items.length }">
+    <motion.div v-bind="$attrs" :initial="{ height: '0px', opacity: 0, y: -40 }" :animate="{ height: 'auto', opacity: 1, y: 0 }" :exit="{ height: '0px', opacity: 0, y: -40 }" :transition="{
+      duration: 0.6,
+      ease: [0, 0.71, 0.2, 1.01],
+      opacity: { duration: 0.3, ease: 'backOut' },
+    }" v-if="items.length && !collapsedChildren" class="sub-menu" :class="[`level-${level}`, { collapsed }]" :style="{ '--child-count': items.length }">
       <template v-for="item in items" :key="item.name">
         <!-- 分组 -->
         <template v-if="isGroup(item)">
@@ -45,8 +43,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
         </template>
         <!-- 递归生成子菜单 -->
         <template v-if="item.children?.length">
-          <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed
-            :collapsedChildren="collapsedMap[item.name!]" />
+          <SubMenuItem :items="item.children" :level="isGroup(item) ? level : level + 1" :collapsed :collapsedChildren="collapsedMap[item.name!]" />
         </template>
       </template>
     </motion.div>
@@ -74,19 +71,13 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
     margin-bottom: 0;
   }
 
-  // &.collapsedChildren {
-  //   // height: calc-size(auto);
-  //   max-height: 0;
-  //   overflow: hidden;
-  // }
-
   &.level-1::before {
     content: '';
     position: absolute;
     left: 20px;
     width: 0.5px;
     height: 100%;
-    background: var(--Colors-Border-border-container, #c7cdd1);
+    background: var(--colors-border-border-inactive);
   }
 }
 
@@ -95,7 +86,7 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   height: 16px;
   align-items: center;
   align-self: stretch;
-  color: rgba(4, 33, 68, 0.3);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -108,6 +99,6 @@ const isGroup = (item: RouteRecordRaw) => item.meta?.type === 'group'
   margin: 16px auto;
   width: 20px;
   height: 1px;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 </style>

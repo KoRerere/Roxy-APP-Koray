@@ -244,34 +244,34 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 24px;
   font-weight: 600;
   line-height: 20px;
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: normal;
 }
 
 .label {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   line-height: normal;
 }
 
 .desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 }
 
 .total {
-  color: var(--Colors-Text-text-secondary, #575D61);
+  color: var(--colors-text-text-secondary, #B2B6B8);
   font-family: Inter;
   font-size: 14px;
   line-height: 20px;
@@ -285,7 +285,7 @@ function close(isCancel: boolean) {
 
 .details {
   &-label {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -293,7 +293,7 @@ function close(isCancel: boolean) {
   }
 
   &-oldprice {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
@@ -310,7 +310,7 @@ function close(isCancel: boolean) {
   }
 
   &-diffprice {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     text-align: right;
     font-family: Inter;
     font-size: 12px;
@@ -320,14 +320,14 @@ function close(isCancel: boolean) {
 }
 
 .terms {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;
 
   /* 150% */
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;

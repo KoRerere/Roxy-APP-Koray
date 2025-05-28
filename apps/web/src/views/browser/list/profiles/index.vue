@@ -41,6 +41,7 @@ import { emitter } from '/@/utils/eventBus'
 import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
+import { debounce } from 'es-toolkit'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -62,19 +63,22 @@ const [showModal] = RxUseDialog()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { getProjects } = useMateGroup()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [addTag] = useTagsActions({ toast: false })
+const [addTag] = useTagsActions()
 const [show] = useContextMenu()
-const [columns] = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { columns, updateColumns } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, isNoPayUser } = storeToRefs(useUserStore())
-
+const userStore = useUserStore()
+const { userInfo, userConfig, isNoPayUser } = storeToRefs(userStore)
+const { fetchUserInfo } = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
 const openMessage = reactive<any>({})
 const hasFiltered = ref(false)
+
+const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
 
 watch(() => props.currentFilter, (value: any) => {
   if (value) {
@@ -95,7 +99,43 @@ watch(
   },
 )
 
-const workspaceName = computed(() => workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase())
+let canceOpenlListener: any
+let canceCloselListener: any
+
+onBeforeMount(() => {
+  canceOpenlListener = listenOpenMessage()
+  canceCloselListener = listenCloseMessage()
+
+  // 列表备注显示状态现在保存到后台
+  updateColumns((columns) => {
+    const column = columns.find(column => column.key === 'note')
+    if (column) {
+      Reflect.set(column._cache, 'extend', userConfig.value.remarkDisplayStatus!)
+    }
+  })
+
+  window.electronAPI
+    .send('browser:getOpenedBrowserMessage')
+    .then((state) => {
+      console.log('browser:getOpenedBrowserMessage state', state)
+      state.forEach((item: any) => {
+        Reflect.set(openMessage, item.dirId, { data: item })
+      })
+    })
+
+  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
+
+  getCustomFilters(customFilterParams).then((data) => {
+    filtersMenu.value ??= data
+  }).finally(() => {
+    onRefreshTable(customFilterParams, false)
+  })
+})
+
+onBeforeUnmount(() => {
+  canceOpenlListener?.()
+  canceCloselListener?.()
+})
 
 function onRefreshTable(tabParams = {}, force = false) {
   const params = {
@@ -138,7 +178,7 @@ async function saveFilters(formData: any) {
   if (code === 0) {
     emit('updateFilterTabs', isEdit)
   }
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
 }
 
 // async function coverDefaultDisplay() {
@@ -427,7 +467,6 @@ async function onTransfer(datas: Data[], operate?: any) {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -560,7 +599,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       }
     })
     drawerInstance.hideDrawer()
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
     if (code !== 0) return
 
     const { protocol, proxyCategory, ...rest } = formData
@@ -583,7 +622,7 @@ function multipleProxyDelete(data: Data | Data[]) {
     accept: async () => {
       const ids = datas.map(item => item.id!)
       const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       resolve()
       if (code === 0) {
         const params = {
@@ -639,7 +678,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
       ? await multiConfirm(formData)
       : await singleConfirm(formData)
     drawerInstance.hideDrawer()
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
   }
 
   async function multiConfirm(dataList: any | any[]) {
@@ -757,6 +796,23 @@ async function onRemark(data: Data | Data[]) {
   })
 }
 
+const saveRemarkDisplayStatus = debounce(async function (cache: Record<string, any>) {
+  const { code, msg } = await API.base.userSetUserConfigCreate({
+    remarkDisplayStatus: cache.extend
+  })
+  onlyErrorToast(code, msg)
+  if (code !== 0) return
+  fetchUserInfo()
+  userStore.updateUserConfig()
+}, 500)
+
+async function toggleRemarkDisplayStatus(cache: Record<string, any>) {
+  cache.extend = !cache.extend
+  if (userConfig.value.remarkDisplayStatus !== cache.extend) {
+    saveRemarkDisplayStatus(cache)
+  }
+}
+
 async function onClearCache(data: any) {
   dialog.open(ClearCache, {
     props: {
@@ -843,7 +899,7 @@ async function deleteProfile(datas: any, ids: number[]) {
 
 async function singleModifyWindow(params: any, silent = false) {
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     if (!silent) {
       onRefreshTable()
@@ -856,7 +912,7 @@ async function singleModifyWindow(params: any, silent = false) {
 
 async function batchModifyWindow(params: any, silent = false) {
   const { code, msg } = await API.window.userMdfWindowInfoBatchV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     if (!silent) {
       onRefreshTable()
@@ -892,43 +948,13 @@ async function toCreateBrowser() {
   }
 }
 
-let canceOpenlListener: any
-let canceCloselListener: any
-
-onBeforeMount(() => {
-  canceOpenlListener = listenOpenMessage()
-  canceCloselListener = listenCloseMessage()
-
-  window.electronAPI
-    .send('browser:getOpenedBrowserMessage')
-    .then((state) => {
-      console.log('browser:getOpenedBrowserMessage state', state)
-      state.forEach((item: any) => {
-        Reflect.set(openMessage, item.dirId, { data: item })
-      })
-    })
-
-  const customFilterParams = safeParseJSON(route.query.customFilterParams, {})
-
-  getCustomFilters(customFilterParams).then((data) => {
-    filtersMenu.value ??= data
-  }).finally(() => {
-    onRefreshTable(customFilterParams, false)
-  })
-})
-
-onBeforeUnmount(() => {
-  canceOpenlListener?.()
-  canceCloselListener?.()
-})
-
 defineExpose({
   tableRef,
 })
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
     :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
     <template #filter-after>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
@@ -944,40 +970,78 @@ defineExpose({
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
+      <template v-if="data.id">
+        <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
+      </template>
+      <div v-else class="flex items-center gap-[16px]">
+        <Skeleton width="44px" height="16px"></Skeleton>
+        <div class="flex items-center gap-[1px]">
+          <template v-for="i in 3" :key="i">
+            <div v-if="i > 1" class="dotted-line"></div>
+            <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+          </template>
+        </div>
+      </div>
     </template>
     <template #open="{ data }">
-      <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
+      <template v-if="data.id">
+        <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
+      </template>
+      <template v-else>
+        <Skeleton width="70px" height="24px" borderRadius="4px"></Skeleton>
+      </template>
     </template>
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
         <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-          @click.stop="_cache.extend = !_cache.extend" />
+          @click.stop="toggleRemarkDisplayStatus(_cache)" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
-      <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
-        <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
-          :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
-        <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
-          data.windowRemark }}</div>
-      </div>
+      <template v-if="data.id">
+        <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
+          <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+          <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
+            data.windowRemark }}</div>
+        </div>
+      </template>
+      <template v-else>
+        <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+      </template>
     </template>
     <template #project="{ data }">
-      <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
+      <template v-if="data.id">
+        <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
+      </template>
+      <template v-else>
+        <Skeleton width="100px" height="20px" borderRadius="4px"></Skeleton>
+      </template>
     </template>
     <template #tags="{ data }">
-      <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
+      <template v-if="data.id">
+        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
+      </template>
+      <template v-else>
+        <Skeleton width="70px" height="24px" borderRadius="12px"></Skeleton>
+      </template>
     </template>
     <template #actions="{ data }">
       <div class="flex items-center gap-2">
-        <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
-          class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
-          @click.stop="operationHandler({ name: 'fav' }, data)">
-          <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
-        </div>
-        <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+        <template v-if="!data.id">
+          <template v-for="i in 3" :key="i">
+            <Skeleton width="24px" height="24px" borderRadius="4px"></Skeleton>
+          </template>
+        </template>
+        <template v-else>
+          <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
+            class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
+            @click.stop="operationHandler({ name: 'fav' }, data)">
+            <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
+          </div>
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
+        </template>
       </div>
     </template>
   </RyTable>
@@ -986,7 +1050,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .note-header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   line-height: 16px;
   font-weight: 600;
@@ -1005,12 +1069,12 @@ defineExpose({
 
 .remark-light {
   :deep(svg) {
-    color: var(--Colors-text-text-brand, #11A3FD) !important;
+    color: var(--colors-text-text-brand, #11A3FD) !important;
   }
 }
 
 .quick-icon {
-  color: var(--Colors-icon-icon-secondary, #575D60);
+  color: var(--colors-icon-icon-secondary, #575D60);
 
   &:active:not(.disabled) {
     color: orange;
@@ -1023,11 +1087,17 @@ defineExpose({
 
 :deep(.window-table) {
   tr:not([data-p-selected=true]):hover .direct-info {
-    background-color: var(--Colors-Background-bg-body-hover, #f0f3f5);
+    background-color: var(--component-table-bg-hover);
   }
 
   tr:not([data-p-selected=true]):hover .edit-window-name-icon {
     visibility: visible;
   }
+}
+
+.dotted-line {
+  width: 30px;
+  height: 1px;
+  border-top: 1px dashed var(--colors-border-border-inactive, #C7D1D6);
 }
 </style>

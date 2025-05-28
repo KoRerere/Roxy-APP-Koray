@@ -1,20 +1,20 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import RelatedInfo from '/@/components/related-info.vue'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useTagsActions } from './hook'
 
 const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
 
 const confirm = useConfirm()
-const toast = useToast()
 const tableRef = useTemplateRef('tagTable')
 const totalNum = ref(0)
 
 const [onEdit] = useTagsActions()
+const [_, onlyErrorToast] = useResponseToast()
 
 const columns = ref([
   {
@@ -99,9 +99,11 @@ async function deleteTag(data: any) {
     },
     accept: async () => {
       const ids = data.map((item: any) => item.id)
-      await API.window.userDelLabelInfoCreate({ ids })
-      tableRef.value?.refresh()
-      toast.add({ severity: 'success', summary: '成功', detail: $t('标签修改成功'), life: 2500 })
+      const { code, msg } = await API.window.userDelLabelInfoCreate({ ids })
+      onlyErrorToast(code, msg)
+      if (code === 0) {
+        tableRef.value?.refresh()
+      }
     },
   })
 }
@@ -113,25 +115,29 @@ async function deleteTag(data: any) {
       <div class="flex-1 total-tags">
         {{ $t('新增标签') }} ({{ totalNum }})
       </div>
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')" @click.stop="editTag()" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_plus" :label="$t('新增标签')"
+        @click.stop="editTag()" />
     </div>
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler" :table-request="tableRequest" :paginator="false" :show-table-header="false"
-        selection-mode="multiple" :show-actions="false">
+      <RyTable ref="tagTable" :columns="columns" :operation="operation" :operation-handler="operationHandler"
+        :table-request="tableRequest" :paginator="false" :show-table-header="false" selection-mode="multiple"
+        :show-actions="false">
         <template #table-empty>
           <CustomEmpty :title="$t('暂无标签')" />
         </template>
         <template #tag="{ data }">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path :fill="data.color" d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
+              <path :fill="data.color"
+                d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" />
             </svg>
             <span>{{ data.name }}</span>
           </div>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <Actions :operation="operation" :loading-operation-map="data.loadingOperationMap" :show-menu="false"
+            @quick-click="operationHandler($event, data)" />
         </template>
       </RyTable>
     </div>
@@ -140,7 +146,7 @@ async function deleteTag(data: any) {
 
 <style lang="scss" scoped>
 .total-tags {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 13px;
   font-style: normal;

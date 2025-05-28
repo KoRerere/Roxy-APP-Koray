@@ -34,8 +34,8 @@ const deviceList = computed(() => {
       </div>
       <div class="device-item__info">
         <div class="device-item__name">
-          <span>{{ item.deviceName }}</span>
-          <span>{{ item.createTime }}</span>
+          <span class="text-[color:--colors-text-text-primary]">{{ item.deviceName }}</span>
+          <span class="text-[color:--colors-text-text-tertiary]">{{ item.createTime }}</span>
         </div>
         <div class="device-item__ip">
           {{ item.address }}
@@ -60,7 +60,7 @@ const deviceList = computed(() => {
 
   &.line {
     padding-bottom: var(--spacing-2xl, 16px);
-    border-bottom: 1px solid var(--Colors-Border-border-container, #C7CDD1);
+    border-bottom: 1px solid var(--colors-border-divider, #C7CDD1);
 
     &:not(:first-of-type) {
       padding-top: var(--spacing-2xl, 16px);
@@ -73,7 +73,7 @@ const deviceList = computed(() => {
     align-items: center;
     gap: 10px;
     border-radius: 8px;
-    border: 1px solid var(--Colors-Border-border-container, #C7CDD1);
+    border: 1px solid var(--colors-border-border-base, #C7CDD1);
   }
 
   .device-item__info {
@@ -87,7 +87,7 @@ const deviceList = computed(() => {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -98,7 +98,7 @@ const deviceList = computed(() => {
     .device-item__ip {
       width: 100%;
       display: flex;
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

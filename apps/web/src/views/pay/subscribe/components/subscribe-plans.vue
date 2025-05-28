@@ -57,29 +57,32 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
 <style scoped lang="scss">
 .plans {
-  border: 2px solid transparent;
-  box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
+  border: 2px solid var(--colors-background-bg-page);
+  box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
 
   &.disabled {
-    background: var(--Color-neutrals-100, #F0F3F5);
-    border-color: var(--Color-neutrals-100, #F0F3F5);
+    border: 1px solid var(--pattern-pay-plan-border-plan-inactive, #293038);
+    background: var(--pattern-pay-plan-bg-plan-inactive, #05101A);
     box-shadow: none;
+
+    .plans-text,
+    .plans-price {
+      color: var(--pattern-pay-plan-text-plan-inactive);
+    }
   }
 
   &:not(.disabled).active {
     border: 2px solid transparent;
     background:
-      linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(var(--colors-background-bg-action), var(--colors-background-bg-action)) padding-box,
       linear-gradient(var(--angle), #12a3fc, #ec51f7) border-box;
     animation: 8s rotate linear infinite;
     box-shadow: none;
 
-    .plans-text {
-      color: var(--Color-blue-400, #0881CC);
-    }
-
+    .plans-text,
     .plans-price {
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-pay-plan-text-plan-selected, #3FB6FD);
     }
   }
 
@@ -91,12 +94,12 @@ function onSwitchPlan(plan: Partial<Plan>) {
     line-height: normal;
 
     &.free {
-      background: #90AFC2;
+      background: var(--pattern-pay-plan-bg-tag-current);
     }
   }
 
   &-text {
-    color: #000;
+    color: var(--colors-text-text-primary);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -104,7 +107,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
   }
 
   &-price {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

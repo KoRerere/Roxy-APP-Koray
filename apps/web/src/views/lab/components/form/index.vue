@@ -10,6 +10,7 @@ import mInputNumber from './m-input-number.vue'
 import mInputPassword from './m-input-password.vue'
 import mInputTextarea from './m-input-textarea.vue'
 import mInputSelect from './m-input-select.vue'
+import mInputMultiSelect from './m-input-multi-select.vue'
 import mCustom from './m-custom.vue';
 
 const INPUT_TYPE_MAP = {
@@ -18,6 +19,7 @@ const INPUT_TYPE_MAP = {
   password: mInputPassword,
   textarea: mInputTextarea,
   select: mInputSelect,
+  mselect: mInputMultiSelect,
   // 'checkbox': 'checkbox',
   // 'radio': 'radio',
   // 'date': 'date',
@@ -90,11 +92,11 @@ function onFormSubmit(event: FormSubmitEvent) {
 defineExpose({
   instance: formRef,
   setInputsProps: (map: Record<string, any>) => {
-    _inputs.value.forEach(item => {
-      item.props = {
-        ...item.props,
-        ...map[item.name]
+    _inputs.value = _inputs.value.map(item => {
+      if (map.hasOwnProperty(item.name)) {
+        item.props = { ...item.props, ...map[item.name] }
       }
+      return item
     })
   },
   getFieldState: (name: string) => {
@@ -118,7 +120,8 @@ defineExpose({
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type!]" v-bind="input.props" />
-      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
+      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}
+      </Message>
     </FormField>
   </Form>
 </template>

@@ -25,7 +25,7 @@ const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const { isNoPayUser } = storeToRefs(useUserStore())
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 
 type TabType = {
   id: string
@@ -205,7 +205,8 @@ async function deleteFilterItem(item: any) {
     accept: async () => {
       try {
         const { code, msg } = await API.window.userDeleteWindowFilterNameCreate({ filter_name: item.label })
-        showToast(code, msg)
+        onlyErrorToast(code, msg)
+        if (code !== 0) return
 
         if (currentFilter.value?.label === item.label) {
           active.value = tabs.value[tabs.value.length - 2].id
@@ -265,13 +266,14 @@ async function hidePopover() {
           <Tab v-for="item in tabs" :key="item.id || item.label" :value="item.id">
             <div class="flex items-center text-inherit font-[Inter]">{{ item.label }}</div>
           </Tab>
-          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id"></Tab>
+          <Tab class="!pa-0 opacity-0" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :value="suffixItem.id">
+          </Tab>
         </TabList>
       </Tabs>
       <div class="inline-flex justify-start flex-1 suffix">
         <div class="flex items-center cursor-pointer break-keep suffix-tab" v-for="suffixItem in suffixTabs" :key="suffixItem.id" :class="{ active: suffixItem.id === active }"
           @click="switchTab(suffixItem.id, $event)">
-          <RxSvgIcon :name="(suffixItem.icon as SvgNames)" />
+          <RxSvgIcon :name="(suffixItem.icon as SvgNames)" color="var(--colors-icon-icon-note)" />
           <span>{{ suffixItem.label }}</span>
         </div>
       </div>
@@ -318,7 +320,7 @@ async function hidePopover() {
   padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
   gap: var(--spacing-lg, 8px);
   min-width: 260px;
-  color: var(--Color-neutrals-900, #171c1f);
+  color: var(--colors-text-text-primary);
   font-size: 13px;
   line-height: normal;
 }
@@ -328,7 +330,7 @@ async function hidePopover() {
   --tab-font-size: 12px;
 
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);
@@ -336,7 +338,7 @@ async function hidePopover() {
 
     .p-tab {
       padding: var(--tab-padding);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-size: var(--tab-font-size);
       font-weight: 400;
       line-height: var(--Line-Height-text-xs, 16px);
@@ -350,7 +352,7 @@ async function hidePopover() {
     .p-tab-active {
       font-weight: 700;
       font-size: 14px;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
     }
 
     .p-tablist-active-bar {
@@ -379,7 +381,7 @@ async function hidePopover() {
   &-tab {
     padding: var(--tab-padding);
     gap: var(--spacing-md, 6px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-size: var(--tab-font-size);
     font-weight: 500;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -388,7 +390,7 @@ async function hidePopover() {
       position: relative;
       font-weight: 700;
       font-size: 14px;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
 
       &::before {
         content: '';
@@ -401,10 +403,6 @@ async function hidePopover() {
         transition: 250ms cubic-bezier(0.35, 0, 0.25, 1);
         z-index: 1;
       }
-    }
-
-    svg {
-      color: #C7CDD1;
     }
   }
 }

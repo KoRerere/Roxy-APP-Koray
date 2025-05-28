@@ -216,7 +216,7 @@ function saveSelected() {
 }
 
 .proxy-host {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: 'JetBrains Mono';
   font-size: 12px;
   font-weight: 500;
@@ -224,7 +224,7 @@ function saveSelected() {
 }
 
 .ip-type {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-tertiary, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;
@@ -240,7 +240,7 @@ function saveSelected() {
 
   :deep(.p-inputnumber) {
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+    border: 1px solid var(--colors-border-border-base, #c7cdd1);
 
     .p-inputnumber-input {
       padding: 0;
@@ -251,7 +251,7 @@ function saveSelected() {
       line-height: var(--Line-Height-text-lg, 20px);
 
       &:not([disabled]) {
-        color: var(--Component-Colors-TextInput-text-text, #171c1f);
+        color: var(--colors-text-text-primary, #111213);
       }
     }
 
@@ -259,7 +259,7 @@ function saveSelected() {
       padding: var(--spacing-md, 6px);
       width: auto;
       border: none;
-      background: var(--Component-Colors-TextInput-bg-bg, #fff);
+      background: var(--colors-background-bg-action, #fff);
 
       &[disabled] {
         background: var(--p-inputtext-disabled-background);

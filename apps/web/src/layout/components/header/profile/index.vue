@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import { useDialog } from "primevue/usedialog";
+import { useDialog as useDialogHook } from '/@/hooks/useDialog'
 import { useToast } from "primevue/usetoast";
 import { useTemplateRef, withModifiers } from "vue";
 import { API } from "/@/api";
@@ -12,10 +13,11 @@ import { useUserStore } from "/@/stores/user";
 import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
-import { colorSchemeList, useThemeStore } from "/@/stores/theme";
+import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
 
 const router = useRouter();
 const dialog = useDialog();
+const [showModal] = useDialogHook()
 const userStore = useUserStore();
 const simpleLocale = useSimpleLocale();
 const themeStore = useThemeStore()
@@ -84,15 +86,32 @@ const items = computed(() => {
     },
     {
       label: $t("主题模式"),
-      icon: "base/rx_ic_language",
-      vIf: () => import.meta.hot,
-      items: colorSchemeList.map((item) => {
+      icon: "base/rx_ic_contrast",
+      items: getColorSchemeList().map((item) => {
         return {
           ...item,
           isCheck: () => themeStore.theme === item.value,
           command: async () => {
             await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
+            // 如果用户是第一次切换主题，则弹出提示框
+            if (userStore.userConfig?.isFirstSwitchTheme) {
+              showModal({
+                header: $t('主题模式设置'),
+                class: '!w-[480px]',
+                okText: $t('前往'),
+                slots: {
+                  default: () => <>{$t('您已调整客户端主题，可在【软件设置】中进一步设置浏览器窗口主题')}</>
+                },
+                async handleOk() {
+                  openSettings('preferences')
+                },
+                async handleCancel() {
+                  await API.base.userSetUserConfigCreate({ isFirstSwitchTheme: false });
+                  userStore.updateUserConfig()
+                },
+              })
+            }
           },
         };
       }),
@@ -129,8 +148,9 @@ const items = computed(() => {
       icon: "base/rx_ic_logout",
       command: () => {
         showPageLoading()
-        userStore.clearUserInfo();
-        router.push({ name: "login" });
+        router.push({ name: "login" }).finally(() => {
+          userStore.clearUserInfo()
+        });
       },
     },
   ].filter((item) => !item.vIf || item.vIf());
@@ -211,7 +231,7 @@ function toggle(event: Event) {
 }
 
 .user-name {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -221,7 +241,7 @@ function toggle(event: Event) {
 
 .user-email {
   margin-top: var(--spacing-sm, 4px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -258,24 +278,24 @@ function toggle(event: Event) {
   align-items: center;
   gap: var(--spacing-md, 6px);
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #c7cdd1);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #fff);
+  border: 1px solid var(--colors-border-border-action, #AFB7BB);
+  background: var(--colors-background-bg-action, #FFF);
   box-shadow:
     0px 4px 4px -1px rgba(0, 0, 0, 0.02),
     0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   &:not(:disabled):hover {
-    color: var(--Component-Colors-Buttons-Secondary-text-hover, #0e1214);
-    background: var(--Component-Colors-Buttons-Secondary-bg-inactive, #f0f3f5);
+    color: var(--colors-text-text-primary, #111213);
+    background: var(--colors-background-bg-action-hover, #F1F5F8);
 
     svg {
-      color: var(--Component-Colors-Buttons-Secondary-text-hover, #343a3d);
+      color: var(--colors-text-text-primary, #111213);
     }
   }
 }
 
 .menu-label {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 13px;
   font-style: normal;

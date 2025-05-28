@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { MultiSelectProps } from 'primevue/multiselect'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
 
 type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | undefined
 
@@ -28,12 +28,15 @@ const defaultProps: MultiSelectProps = {
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
+    <template #chipicon>
+      <RxSvgIcon name="base/rx_ic_delete" />
+    </template>
   </MultiSelect>
 </template>
 
 <style module="classes">
 .optionlabel {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -42,13 +45,13 @@ const defaultProps: MultiSelectProps = {
 
 <style lang="scss" scoped>
 :deep(.p-multiselect-label) {
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
 }
 
 .lg {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-multiselect-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
@@ -63,7 +66,7 @@ const defaultProps: MultiSelectProps = {
 
 .md {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-multiselect-label) {
     padding: 8px 8px 8px 10px;
@@ -74,7 +77,7 @@ const defaultProps: MultiSelectProps = {
 
 .sm {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border: 1px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-multiselect-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
@@ -85,7 +88,7 @@ const defaultProps: MultiSelectProps = {
 
 .xs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-multiselect-label) {
     padding: var(--spacing-md, 6px);
@@ -96,7 +99,7 @@ const defaultProps: MultiSelectProps = {
 
 .xxs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
 
   :deep(.p-multiselect-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

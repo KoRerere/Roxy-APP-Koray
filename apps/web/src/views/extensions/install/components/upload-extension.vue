@@ -26,7 +26,7 @@ async function selectExtension(selectType: 'dir' | 'file') {
       }
     }
     else {
-      toast.add({ severity: type, summary: msg || data, life: 2500 })
+      toast.add({ severity: type, summary: (msg || data as any), life: 2500 })
     }
   }
   catch (error) {
@@ -79,11 +79,9 @@ onMounted(() => {
         {{ $t('请选择上传方式') }}
       </div>
       <div class="flex items-center gap-4 mt-1">
-        <RxButton outlined severity="info" icon="base/rx_ic_export" :label="$t('选择压缩包')"
-          @click="selectExtension('file')" />
+        <RxButton outlined icon="base/rx_ic_export" :label="$t('选择压缩包')" @click="selectExtension('file')" />
         <span class="upload-or">{{ $t('或') }}</span>
-        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')"
-          @click="selectExtension('dir')" />
+        <RxButton outlined severity="secondary" icon="base/rx_ic_folder" :label="$t('选择文件夹')" @click="selectExtension('dir')" />
       </div>
       <div class="flex items-center gap-1 mt-1">
         <RxSvgIcon name="base/rx_ic_info_fill" :size="12" color="#A3A9AD" />
@@ -106,7 +104,7 @@ onMounted(() => {
       <InputText v-model="extension.pluginName" class="extension-input" maxlength="50" type="text" />
     </div>
 
-    <div v-if="extension?.isSuccess" class="description">
+    <div v-if="extension?.isSuccess" class="flex flex-col gap-1.5 description">
       <div class="flex justify-between items-center">
         <span>{{ $t('扩展描述') }}</span>
         <span class="description-length">{{ extension.pluginDesc?.length || 0 }}/500</span>
@@ -117,15 +115,14 @@ onMounted(() => {
     <div class="guide">
       <i18n-t :keypath="$t('请注意您的扩展需要满足{guide}以确保能正常运行', { guide: '{guide}' })" scope="global">
         <template #guide>
-          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins"
-            target="_blank" class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
+          <a href="https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline#june_3_2024_the_manifest_v2_phase-out_begins" target="_blank"
+            class="text-blue decoration-underline cursor-pointer">{{ $t('Google 扩展协议') }}</a>
         </template>
       </i18n-t>
     </div>
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" autofocus @click="close" />
-      <RxButton size="sm" :label="$t('上传')" severity="info" :disabled="!extension?.isSuccess" autofocus
-        @click="confirm" />
+      <RxButton size="sm" :label="$t('上传')" :disabled="!extension?.isSuccess" autofocus @click="confirm" />
     </div>
   </div>
 </template>
@@ -141,7 +138,7 @@ onMounted(() => {
   gap: var(--spacing-2xl, 16px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;
@@ -151,7 +148,7 @@ onMounted(() => {
 
 .upload {
   &-title {
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 400;
@@ -159,7 +156,7 @@ onMounted(() => {
   }
 
   &-or {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: Inter;
     font-size: 13px;
@@ -169,7 +166,7 @@ onMounted(() => {
 
   &-tip {
     margin-top: 4px;
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-weight: 400;
@@ -195,8 +192,8 @@ onMounted(() => {
     width: 60px;
     height: 60px;
     border-radius: var(--radius-lg, 8px);
-    border: 1px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 1px solid var(--colors-border-border-base, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
 
     &-image {
       width: 100%;
@@ -206,44 +203,44 @@ onMounted(() => {
 
   &-name {
     grid-area: right-top;
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-weight: 500;
 
     &-length {
-      color: var(--Colors-Text-text-inactive, #a3a9ad);
+      color: var(--colors-text-text-inactive, #a3a9ad);
       font-weight: 400;
     }
   }
 
   &-input {
     grid-area: right-bottom;
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
 }
 
 .description {
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-lg, 20px);
 
   &-length {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
     font-weight: 400;
   }
 
   &-input {
-    color: var(--Component-Colors-TextInput-text-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-size: 13px;
     line-height: var(--Line-Height-text-lg, 20px);
   }
 }
 
 .guide {
-  color: var(--Color-neutrals-600, #575d61);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;

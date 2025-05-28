@@ -110,7 +110,7 @@ const items = computed(() => {
   .menu-item {
     display: flex;
     gap: var(--spacing-xl, 12px);
-    color: var(--Component-Colors-SideNav-link-text, #575D61);
+    color: var(--colors-text-text-primary, #FAFAFA);
     padding: var(--spacing-lg, 9px) var(--spacing-xl, 12px);
     align-items: center;
     align-self: stretch;
@@ -119,8 +119,8 @@ const items = computed(() => {
     white-space: nowrap;
 
     &:hover {
-      color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-      background: rgba(0, 0, 0, 0.05);
+      color: var(--colors-text-text-primary-hover, #FFF);
+      background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
 
       .menu-icon {
         color: currentColor;
@@ -128,8 +128,8 @@ const items = computed(() => {
     }
 
     &.active {
-      color: #0085EB;
-      background: #D6ECFA;
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
+      background: var(--pattern-sidenav-bg-active, #013D65);
 
       .menu-icon {
         color: currentColor;
@@ -137,7 +137,6 @@ const items = computed(() => {
 
       .menu-title {
         font-weight: bold;
-        color: currentColor;
       }
     }
 
@@ -152,7 +151,6 @@ const items = computed(() => {
       font-style: normal;
       font-weight: 500;
       line-height: var(--Line-Height-text-md, 16px);
-      color: var(--Component-Colors-SideNav-link-text, #252A2E);
     }
 
     .new-badge {
@@ -166,9 +164,9 @@ const items = computed(() => {
     padding: 10px;
     gap: 8px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.60);
+    background: var(--pattern-sidenav-metrics);
     backdrop-filter: blur(5px);
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -178,7 +176,7 @@ const items = computed(() => {
     overflow: hidden;
 
     .role-label {
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

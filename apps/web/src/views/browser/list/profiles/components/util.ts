@@ -13,7 +13,7 @@ export function silentUpdateAccount(
   targetKey = 'windowPlatformList',
 ) {
   Reflect.set(origin, targetKey, list.map((item) => {
-    return ['id', '_tempId', 'platformEfa', 'platformIcon', 'platformPassword', 'platformUrl', 'platformUserName', 'platformRemarks']
+    return ['id', '_tempId', 'platformEfa', 'platformIcon', 'platformIconDark', 'platformPassword', 'platformUrl', 'platformUserName', 'platformRemarks']
       .reduce((acc, key) => {
         if (Object.prototype.hasOwnProperty.call(item, key)) {
           acc[key] = item[key]

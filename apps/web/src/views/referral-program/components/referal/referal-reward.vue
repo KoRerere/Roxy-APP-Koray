@@ -121,12 +121,10 @@ function showWithdrawDialog() {
         <div class="referal-reward-overview-item">
           <div class="title">
             <span class="total" :style="item.style">
-              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0"
-                v-bind="item.totalNumberFlowProps" />
+              <NumberFlow locales="en-US" will-change :value="item.total" :last-value="0" v-bind="item.totalNumberFlowProps" />
             </span>
             <span v-if="item.todayCount" class="increase">
-              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0"
-                v-bind="item.todayNumberFlowProps" />
+              <RxNumberFlow locales="en-US" prefix="+" will-change :value="item.todayCount" :last-value="0" v-bind="item.todayNumberFlowProps" />
             </span>
           </div>
           <div class="desc">
@@ -163,7 +161,7 @@ function showWithdrawDialog() {
     .referal-reward-money-title {
       display: flex;
       flex-direction: column;
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 40px;
       font-style: normal;
@@ -180,7 +178,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: center;
         gap: 4px;
-        color: var(--Colors-Text-text-tertiary, #7C8387);
+        color: var(--colors-text-text-tertiary, #575D60);
         font-family: Inter;
         font-size: 16px;
         font-style: normal;
@@ -198,7 +196,7 @@ function showWithdrawDialog() {
       .referal-reward-money-button-text {
         padding-left: 16px;
         cursor: pointer;
-        color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+        color: var(--colors-text-text-primary, #171C1F);
         font-family: Inter;
         font-size: var(--Font-Size-text-lg, 14px);
         font-style: normal;
@@ -226,7 +224,7 @@ function showWithdrawDialog() {
       gap: 6px;
       flex: 1 0 0;
       border-radius: 8px;
-      background: rgba(0, 0, 0, 0.02);
+      background: var(--pattern-dashboard-card-bg);
       backdrop-filter: blur(5px);
 
       .title {
@@ -235,7 +233,7 @@ function showWithdrawDialog() {
         gap: 5px;
 
         .total {
-          color: #000;
+          color: var(--colors-text-text-primary, #FAFAFA);
           font-family: Inter;
           font-size: 32px;
           font-style: normal;
@@ -244,7 +242,7 @@ function showWithdrawDialog() {
         }
 
         .increase {
-          color: var(--Color-green-300, #1CC94D);
+          color: var(--primitives-green-500, #1CC94D);
           font-family: Inter;
           font-size: 16px;
           font-style: normal;
@@ -258,7 +256,7 @@ function showWithdrawDialog() {
         display: flex;
         align-items: end;
         gap: 4px;
-        color: var(--Colors-Text-text-tertiary, #7C8387);
+        color: var(--colors-text-text-tertiary, #575D60);
         font-family: Inter;
         font-size: 12px;
         font-style: normal;

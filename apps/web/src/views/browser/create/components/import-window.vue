@@ -130,7 +130,7 @@ function openTemplates(event: Event) {
       </i18n-t>
     </div>
     <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
-      <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="#E4E8EB" />
+      <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="var(--colors-icon-icon-note)" />
       <div class="text-center">
         <div class="upload-area-title">
           {{ fileData.name || $t('请拖拽到此处或点击上传') }}
@@ -161,7 +161,7 @@ function openTemplates(event: Event) {
 
 <style lang="scss" scoped>
 .upload-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -169,7 +169,7 @@ function openTemplates(event: Event) {
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12a3fc);
+    color: var(--colors-text-text-brand, #12a3fc);
     text-decoration-line: underline;
     cursor: pointer;
     user-select: none;
@@ -178,7 +178,7 @@ function openTemplates(event: Event) {
 
 .upload-notice {
   margin-top: var(--spacing-4xl, 24px);
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -195,10 +195,10 @@ function openTemplates(event: Event) {
   padding: var(--oversize-spacing-2rem, 32px) var(--spacing-none, 0px);
   gap: var(--spacing-2xl, 16px);
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-  border: 1px dashed var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 1px dashed var(--colors-border-border-base);
+  background: var(--colors-background-bg-block);
 
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary);
   font-family: Inter;
   font-size: 12px;
   font-weight: 400;
@@ -207,7 +207,7 @@ function openTemplates(event: Event) {
   &-title {
     margin-bottom: 6px;
     font-size: 13px;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary);
     font-weight: 500;
   }
 }

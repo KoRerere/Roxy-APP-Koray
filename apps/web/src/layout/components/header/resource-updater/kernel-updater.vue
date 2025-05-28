@@ -66,7 +66,6 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
       try {
         await window.electronAPI.send('app:delete-chrome-core', item.coreVersion)
         item.status = 'uninstalled'
-        toast.add({ severity: 'success', summary: $t('删除成功'), life: 2500 });
       } catch (error) {
         console.error('error', error)
         toast.add({ severity: 'error', summary: error || $t('删除失败'), life: 2500 });
@@ -126,13 +125,15 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
-  background: var(--Color-neutrals-0, #fff);
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid var(--component-dropdown-divider, #6A757C);
+  }
 
   &.collapsed {
     gap: var(--spacing-xl, 12px);
-    border-bottom: 0.5px solid var(--Color-blue-200, #7eccfc);
-    background: var(--Color-blue-100, #e8f5fc);
+    border-bottom: 0.5px solid var(--primitives-blue-400, #7eccfc);
+    background: var(--primitives-blue-100, #e8f5fc);
 
     &:last-of-type {
       border-bottom: 0;
@@ -160,7 +161,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 }
 
 .updater-title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;

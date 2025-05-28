@@ -77,7 +77,7 @@ function handleDeleteConfirm() {
         getWorkspaceList()
         userStore.fetchUserInfo()
         dialogRef.value.close()
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
+        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除工作空间成功'), life: 3000 })
         emit('delete')
       }
       else {
@@ -158,7 +158,7 @@ function leaveWorkspace() {
       const isCurrentWorkspace = workspaceInfo.value.id === currentWorkspace?.id
       const { code, msg } = await API.limit.userLeaveWorkspaceList({ workspaceId: workspaceInfo.value.id })
       if (code === 0) {
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开工作空间'), life: 3000 })
+        // toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('您已成功离开工作空间'), life: 3000 })
         if (isCurrentWorkspace) {
           showPageLoading()
         }
@@ -216,7 +216,7 @@ function leaveWorkspace() {
 }
 
 .delete-confirm-title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;
@@ -226,7 +226,7 @@ function leaveWorkspace() {
 }
 
 .delete-confirm-content {
-  color: var(--Color-neutrals-600, #575d61);
+  color: var(--colors-text-text-tertiary, #8A9093);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -246,14 +246,14 @@ function leaveWorkspace() {
   height: 100%;
 }
 
-.input-limit-text {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
-  text-align: right;
-  font-family: Inter;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-}
+// .input-limit-text {
+//   color: var(--colors-text-text-inactive, #a3a9ad);
+//   text-align: right;
+//   font-family: Inter;
+//   font-size: 14px;
+//   font-style: normal;
+//   font-weight: 400;
+// }
 
 .emoji-picker-box {
   display: flex;
@@ -288,11 +288,11 @@ function leaveWorkspace() {
   gap: var(--spacing-md, 6px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--Colors-Background-bg-body, #fff);
+  background: var(--colors-background-bg-app, #fff);
   cursor: pointer;
 
   &.danger {
-    color: var(--Color-red-300, #f53838);
+    color: var(--primitives-red-500, #f53838);
     font-family: Inter;
     font-size: 13px;
     font-style: normal;

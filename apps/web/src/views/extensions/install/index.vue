@@ -26,7 +26,7 @@ const toast = useToast()
 const role = useRoleStore()
 
 const [dialogOpen] = useSimpleDialog()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useCustomDialog()
 const { showMenu: showPopupMenu } = usePopupMenu()
 
@@ -201,12 +201,7 @@ async function operationHandler(operate: any, data: any) {
 
 async function uploadRecordCheck() {
   const { data } = await API.plugins.userRecordPluginUploadV2List()
-  if (data) {
-    return Promise.resolve()
-  }
-  else {
-    throw new Error($t('您当日的扩展上传数量已达上限'))
-  }
+  if (!data) throw $t('您当日的扩展上传数量已达上限')
 }
 
 function installViaUrl() {
@@ -267,7 +262,7 @@ function onUploadExtension(data = ({} as any)) {
           }
         }
         catch (error) {
-          console.log(error)
+          onlyErrorToast(-1, error as string)
         }
       },
     },
@@ -292,7 +287,7 @@ async function onInstall(data: Data) {
           if (code === 0) {
             window.electronAPI.send('extension:download', [toRaw(data) as any])
           }
-          showToast(code, msg)
+          onlyErrorToast(code, msg)
           tableRef.value?.refresh({ pluginSwitchType: filters.value })
         }
         catch (error) {
@@ -375,18 +370,14 @@ defineExpose({
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple"
-    :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
+  <RyTable ref="extable" cacheKey="extension-list" scrollable selection-mode="multiple" :table-operation="tableOperation" :table-request="tableRequest" :columns="columns" :show-display="false"
     :show-gridlines="false" :show-actions="false" :operation-handler="operationHandler">
     <template #filter-after>
       <div class="flex items-center justify-between w-full">
-        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value"
-          data-key="value" @change="filters.onChange" />
+        <RxSelectButton v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
         <div class="group-button">
-          <RxButton severity="info" size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')"
-            @click.stop="installViaUrl" />
-          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')"
-            @click.stop="onUploadExtension()" />
+          <RxButton size="xxs" icon="base/rx_ic_download_cloud" :label="$t('添加 Google 扩展')" @click.stop="installViaUrl" />
+          <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_export" :label="$t('本地上传')" @click.stop="onUploadExtension()" />
         </div>
       </div>
     </template>
@@ -395,8 +386,7 @@ defineExpose({
       <CustomEmpty icon="rx_illustration_extension.svg" :title="$t('暂无扩展')" :desc="$t('在此添加扩展以管理，并更方便地与窗口或项目进行绑定。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs"
-              icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
+            <RxButton v-if="role.isOwner || role.isManager" outlined severity="secondary" size="xs" icon="base/rx_ic_magnify" :label="$t('搜索扩展')" @click.stop="$emit('search')" />
             <!-- <RxButton text severity="secondary" size="xs" :label="$t('扩展文档')" /> -->
           </div>
         </template>
@@ -421,15 +411,13 @@ defineExpose({
         <span v-if="data.pluginSwitchType === PluginSwitchType.personal">{{ $t('个人') }}</span>
         <span v-else>
           <span>{{ $t('团队') }}</span>
-          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1"
-            name="base/rx_ic_info" :size="12" color="#C7CDD1" />
+          <RxSvgIcon v-tooltip.top="{ value: `${data.userName}\n${data.email}`, showDelay: 500 }" class="ml-1" name="base/rx_ic_info" :size="12" color="var(--colors-icon-icon-note)" />
         </span>
       </div>
     </template>
 
     <template #related="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
-        @click.stop="operationHandler({ name: 'install' }, data)">
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" @click.stop="operationHandler({ name: 'install' }, data)">
         <!-- <RxTag v-if="Number(data.installType) === ExtensionsInstallType.all" icon="base/rx_ic_stack_full" :label="$t('全部安装')" /> -->
         <RelatedInfo class="cursor-pointer" icon="base/rx_ic_stack" :list="data.bindPlugin">
           <template #empty>
@@ -447,10 +435,8 @@ defineExpose({
 
     <template #update="{ data }">
       <div v-if="data.pluginUpdateState === ExtensionsStatus.update" class="flex items-center gap-3">
-        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs"
-          @click.stop="updateExtension(data)" />
-        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info"
-          color="#C7CDD1" />
+        <RxButton severity="success" icon="base/rx_ic_renew" :label="$t('更新')" size="xxs" @click.stop="updateExtension(data)" />
+        <RxSvgIcon v-tooltip.top="{ value: `latest: ${data.pluginNewVersion}`, showDelay: 500 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
       </div>
       <div v-else class="update-info">
         --
@@ -458,16 +444,12 @@ defineExpose({
     </template>
 
     <template #actions="{ data }">
-      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager"
-        class="flex items-center">
-        <div v-tooltip.top="{ value: $t('固定'), showDelay: 500 }"
-          class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
+      <div v-if="data.pluginSwitchType === PluginSwitchType.personal || role.isOwner || role.isManager" class="flex items-center">
+        <div v-tooltip.top="{ value: $t('固定'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
           @click.stop="showPinMenu($event, data)">
-          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'"
-            :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
+          <RxSvgIcon :name="data.fixedPlugin === 'pin' ? 'base/rx_ic_pin_solid_02' : 'base/rx_ic_pin_line_02'" :class="{ pinned: data.fixedPlugin === 'pin' }" class="block pointer-events-none" />
         </div>
-        <div v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }"
-          class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
+        <div v-tooltip.top="{ value: $t('安全检查'), showDelay: 500 }" class="flex items-center justify-center w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 cursor-pointer"
           @click.stop="showShieldDialog(data)">
           <RxSvgIcon name="base/rx_ic_shield" />
         </div>
@@ -490,8 +472,8 @@ defineExpose({
     width: 36px;
     aspect-ratio: 1;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-body, #fff);
+    border: 0.5px solid var(--colors-border-border-subtle, #c7cdd1);
+    background: var(--colors-background-bg-app, #fff);
   }
 
   &-info {
@@ -500,13 +482,13 @@ defineExpose({
     font-weight: 500;
 
     &-name {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary);
       font-family: Inter;
       font-size: 13px;
     }
 
     &-version {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary);
       font-family: 'JetBrains Mono';
       font-size: 12px;
     }
@@ -515,18 +497,18 @@ defineExpose({
 
 .plugin-switch-type,
 .update-info {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
 
   // &:hover {
-  //   color: var(--Colors-Text-text-brand, #12a3fc);
+  //   color: var(--colors-text-text-brand, #12a3fc);
   // }
 }
 
 .not-installed {
-  color: var(--Colors-Text-text-inactive, #a3a9ad);
+  color: var(--colors-text-text-inactive, #a3a9ad);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
@@ -534,6 +516,6 @@ defineExpose({
 }
 
 .pinned {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
 }
 </style>

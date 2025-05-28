@@ -17,12 +17,14 @@ const withdrawStatusMap = {
   'Pending': $t('处理中...'),
   'Success': $t('已到账'),
   'Fail': $t('提现失败'),
+  'Reject': $t('未通过'),
 }
 
 const withdrawStatusColorMap = {
-  'Pending': '#171C1F',
-  'Success': '#1CC94D',
-  'Fail': '#F53838',
+  'Pending': 'var(--colors-text-text-primary)',
+  'Success': 'var(--colors-text-text-success)',
+  'Fail': 'var(--colors-text-text-error)',
+  'Reject': 'var(--colors-text-text-error)',
 }
 
 const columns = ref([
@@ -38,14 +40,14 @@ const columns = ref([
   {
     title: $t('提现类型'),
     key: 'withdrawType',
-    getText: (data: Data) => withdrawTypeMap[data.withdrawType],
+    getText: (data: Data) => withdrawTypeMap[data.withdrawType as keyof typeof withdrawTypeMap],
   },
   {
     title: $t('状态'),
     key: 'withdrawStatus',
     render: ({ data }: { data: Data }) => (
-      <span style={{ color: withdrawStatusColorMap[data.withdrawStatus] }}>
-        {withdrawStatusMap[data.withdrawStatus]}
+      <span style={{ color: withdrawStatusColorMap[data.withdrawStatus as keyof typeof withdrawStatusColorMap] }}>
+        {withdrawStatusMap[data.withdrawStatus as keyof typeof withdrawStatusMap]}
       </span>
     ),
   },
@@ -104,7 +106,7 @@ async function tableFilters() {
 
 <style lang="scss" module>
 .user-email {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;
@@ -112,7 +114,7 @@ async function tableFilters() {
 }
 
 .user-name {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -121,7 +123,7 @@ async function tableFilters() {
 
 <style lang="scss" scoped>
 .description {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -130,7 +132,7 @@ async function tableFilters() {
 }
 
 .locationip {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;

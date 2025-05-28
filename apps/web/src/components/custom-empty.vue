@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useThemeStore } from '/@/stores/theme'
+
 interface Props {
   title: string
   icon?: string
@@ -7,7 +9,11 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, import.meta.url).href)
+const themeStore = useThemeStore()
+
+const imgSrc = computed(() => {
+  return new URL(`../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/${props.icon}`, import.meta.url).href
+})
 </script>
 
 <template>
@@ -54,7 +60,7 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
   text-align: left;
 
   &-title {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 16px;
     font-weight: bold;
@@ -62,7 +68,7 @@ const imgSrc = computed(() => new URL(`../assets/images/empty/${props.icon}`, im
   }
 
   &-desc {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     line-height: 20px;

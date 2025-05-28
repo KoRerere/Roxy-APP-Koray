@@ -36,7 +36,7 @@ export function getRawColumns(options?: any) {
 
 export function getColumns(options?: any) {
   const rawColumns = getRawColumns(options)
-  const [columns] = useColumns({
+  const { columns } = useColumns({
     key: 'account.list',
     data: rawColumns,
   })

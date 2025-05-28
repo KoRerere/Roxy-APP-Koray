@@ -107,7 +107,8 @@ function close(isCancel: boolean) {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none popup">
     <div class="relative flex items-center h-10 header">
       <span>{{ $t('USDT 支付') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)"></SvgIcon>
+      <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)">
+      </SvgIcon>
     </div>
 
     <div class="flex flex-col gap-3">
@@ -120,7 +121,7 @@ function close(isCancel: boolean) {
 
     <div class="flex flex-col gap-3">
       <div class="title">{{ $t('支付地址') }}</div>
-      <div class="flex gap-2.5 pa-3 bg-[#F0F3F5] rounded-lg">
+      <div class="flex gap-2.5 pa-3 bg-[var(--colors-background-bg-block)] rounded-lg">
         <img :src="qrcode" class="pointer-events-none w-26 h-26" />
         <div class="flex flex-col justify-center gap-2.5">
           <div class="qrcode-desc">{{ $t('复制地址或扫描二维码进行支付') }}</div>
@@ -131,7 +132,7 @@ function close(isCancel: boolean) {
         </div>
       </div>
       <div class="flex gap-2">
-        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg border-1 border-solid border-[#E4E8EB]">
+        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
@@ -143,7 +144,7 @@ function close(isCancel: boolean) {
             <div class="countdown">{{ countdownText }}</div>
           </div>
         </div>
-        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg border-1 border-solid border-[#E4E8EB]">
+        <div class="flex-1 flex items-center pa-3 gap-3 min-h-18 rounded-lg other-block">
           <img class="block loading-circle w-8 h-8" src="/@/assets/images/status/loading.png">
           <div class="status">{{ $t('检查支付状态中...') }}</div>
         </div>
@@ -171,14 +172,14 @@ function close(isCancel: boolean) {
 }
 
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
@@ -194,7 +195,7 @@ function close(isCancel: boolean) {
 .tag {
   border-radius: 4px;
   background: #26A17B;
-  color: var(--Color-neutrals-0, #FFF);
+  color: var(--primitives-neutrals-0, #FFF);
   font-family: "JetBrains Mono";
   font-size: 20px;
   font-weight: 700;
@@ -202,52 +203,57 @@ function close(isCancel: boolean) {
 }
 
 .qrcode-desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: normal;
 }
 
 .chain {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: "JetBrains Mono";
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
 }
 
+.other-block {
+  border: 1px solid var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
+}
+
 .remaining {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: normal;
 }
 
 .countdown {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 500;
   line-height: normal;
 }
 
 .status {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   line-height: normal;
 }
 
 .note {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 12px;
   font-weight: 500;
   line-height: 19.2px;
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: auto;

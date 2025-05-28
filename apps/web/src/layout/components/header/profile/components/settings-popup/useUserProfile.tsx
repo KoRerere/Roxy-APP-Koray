@@ -32,7 +32,7 @@ const EmailChangeDialog = defineAsyncComponent(() => import("./components/email-
 
 export function useUserProfilePanel() {
   const toast = useToast()
-  const { userStore, updateUserName, dialogRef, showToast, showFormDialog } = useCommonUtil();
+  const { userStore, updateUserName, dialogRef, showToast, showFormDialog, onlyErrorToast } = useCommonUtil();
   const router = useRouter();
   const [showModal] = useDialog()
   const { fetchUserInfo } = userStore;
@@ -136,7 +136,7 @@ export function useUserProfilePanel() {
     const { code, msg } = await API.base.userUploadAvatarCreate({
       avatar: item.value,
     });
-    showToast(code, msg);
+    onlyErrorToast(code, msg)
     if (code === 0) {
       fetchUserInfo();
     }

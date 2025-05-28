@@ -11,12 +11,15 @@ import { MENU_COLLAPSED } from '../constants/storage-key'
 import { SubLevelEnum } from '/@/enums/pay'
 import type { UserGetAnntListListData, UnwrapRowsType } from '@roxy/backend-api'
 import { useRoleStore } from '/@/stores/role'
+import { useThemeStore } from '../stores/theme'
+import { RxAlert } from '/@/components/rx-alert/'
 
 type AnntData = UnwrapRowsType<UserGetAnntListListData>
 
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const userStore = useUserStore()
 const roleStore = useRoleStore()
+const themeStore = useThemeStore()
 const { userPayInfo } = storeToRefs(userStore)
 const router = useRouter()
 
@@ -25,6 +28,10 @@ const remainTime = ref(0)
 const isShowSubscriptionExpired = ref(true)
 const collapsed = ref<boolean>(Boolean(~~(localStorage.getItem(MENU_COLLAPSED) as string)))
 const anntList = ref<AnntData>()
+
+const indicatorColor = computed(() => {
+  return themeStore.theme === 'dark' ? '#FFFFFF33' : 'rgba(0, 0, 0, 0.1)'
+})
 
 /** 订阅到期时间 */
 const subEndDate = computed(() => {
@@ -112,8 +119,11 @@ function onRenewal() {
 <template>
   <div class="rx-layout">
     <div class="rx-side" :class="{ collapsed }">
-      <img class="indicator" src="/images/indicator/indicator_default.svg" :title="collapsed ? $t('展开') : $t('收起')"
-        @click="collapsed = !collapsed">
+      <div class="indicator" @click="collapsed = !collapsed" :title="collapsed ? $t('展开') : $t('收起')">
+        <SvgIcon name="indicator/indicator_default" class="default" />
+        <SvgIcon name="indicator/indicator_expand" class="expand" />
+        <SvgIcon name="indicator/indicator_fold" class="fold" />
+      </div>
       <div class="logo">
         <SvgIcon name="base/logo" size="36" />
         <template v-if="!collapsed">
@@ -126,8 +136,7 @@ function onRenewal() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content"
-          closable @close="handleCloseAnnt(annt.id!)">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -135,28 +144,19 @@ function onRenewal() {
             <SvgIcon name="base/rx_ic_delete" />
           </template>
         </Message>
-        <Message v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" severity="success"
-          class="w-full rx-main-announcement__content subscription-expired" closable
-          @close="handleCloseSubscriptionExpired">
-          <template #default>
-            <i18n-t v-if="roleStore.isOwner"
-              :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
-              scope="global">
+        <RxAlert v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" class="w-full expired-alert" type="warn" announcement @close="handleCloseSubscriptionExpired">
+          <template #title>
+            <i18n-t v-if="roleStore.isOwner" :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
               <template #link>
                 <span class="font-bold underline cursor-pointer" @click="onRenewal">
                   {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}
                 </span>
               </template>
             </i18n-t>
-            <i18n-t v-else
-              :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })"
-              scope="global">
+            <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global">
             </i18n-t>
           </template>
-          <template #closeicon>
-            <SvgIcon name="base/rx_ic_delete" color="#575D61" />
-          </template>
-        </Message>
+        </RxAlert>
       </div>
       <div class="rx-main-content">
         <RouterView v-if="currentWorkspace?.id && userPayInfo?.subLevel" :key="currentWorkspace?.id" />
@@ -171,7 +171,6 @@ function onRenewal() {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #f7fbfd;
 }
 
 .rx-side {
@@ -200,7 +199,13 @@ function onRenewal() {
       left: 100%;
 
       &:hover {
-        content: url('/images/indicator/indicator_expand.svg');
+        .expand {
+          display: block;
+        }
+
+        .fold {
+          display: none;
+        }
       }
     }
   }
@@ -213,13 +218,30 @@ function onRenewal() {
     cursor: pointer;
     z-index: 10;
     padding: 10px;
+    color: v-bind(indicatorColor);
 
-    &:hover {
-      content: url('/images/indicator/indicator_fold.svg');
+    svg {
+      width: 11px;
+      height: 38px;
     }
 
-    &:invalid {
+    .default {
+      width: 6px;
+    }
+
+    .fold,
+    .expand {
       display: none;
+    }
+
+    &:hover {
+      .fold {
+        display: block;
+      }
+
+      .default {
+        display: none;
+      }
     }
   }
 
@@ -229,7 +251,7 @@ function onRenewal() {
     align-items: center;
     gap: var(--spacing-md, 6px);
     flex-wrap: nowrap;
-    color: var(--Color-neutrals-950, #0e1214);
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: Archivo;
     font-size: 18px;
@@ -244,7 +266,7 @@ function onRenewal() {
       justify-content: center;
       align-items: center;
       gap: 10px;
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
       text-align: center;
       font-family: Archivo;
       font-size: 10px;
@@ -253,7 +275,7 @@ function onRenewal() {
       line-height: normal;
       letter-spacing: 0.1px;
       border-radius: var(--radius-full, 9999px);
-      background: var(--Color-blue-100, #e8f5fc);
+      background: var(--primitives-blue-100, #e8f5fc);
     }
   }
 }
@@ -285,11 +307,11 @@ function onRenewal() {
       }
 
       &.subscription-expired {
-        border: 1px solid var(--Color-yellow-200, #ffcb80);
-        background: var(--Color-yellow-100, #fff5e6);
+        border: 1px solid var(--primitives-yellow-400, #ffcb80);
+        background: var(--primitives-yellow-100, #fff5e6);
 
         :deep(.p-message-text) {
-          color: var(--Color-yellow-400, #db8d1a);
+          color: var(--primitives-yellow-800, #db8d1a);
           font-family: Inter;
           font-size: 14px;
           font-style: normal;
@@ -332,9 +354,18 @@ function onRenewal() {
     margin-right: var(--spacing-2xl, 16px);
     margin-bottom: var(--spacing-2xl, 16px);
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background-color: #ffffff;
+    border: 0.5px solid var(--colors-border-border-inactive);
+    background: var(--colors-background-bg-page);
     overflow: hidden;
+  }
+}
+
+.expired-alert {
+  padding: 8px 12px;
+
+  :deep(.rx-alert__title) {
+    font-size: 13px;
+    font-weight: normal;
   }
 }
 </style>

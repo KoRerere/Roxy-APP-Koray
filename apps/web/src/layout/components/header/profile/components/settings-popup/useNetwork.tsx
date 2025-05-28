@@ -10,6 +10,37 @@ import type {
 } from "/@/layout/components/header/profile/type";
 import { $t } from "/@/locales";
 import { getDictMap } from "/@/utils";
+import { RxSvgIcon } from "/@/components/rx-icon";
+
+const ProxySuccessMessage = ({ item }: any) => {
+  return (
+    item.value && (
+      <Message
+        severity="success"
+        closable={true}
+        pt={{ content: "!items-start" }}
+        onClose={() => {
+          item.value = null;
+        }}
+      >
+        {{
+          icon: () => <RxSvgIcon name="status/rx_ic_check_fill" />,
+          default: () => <>
+            <div class="text-3 color-[color:--colors-text-text-primary]">{$t("检测成功")}</div>
+            <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+              {$t("位置")}:{item.value.country_code}/
+              {item.value.country}
+            </div>
+            <div class="text-3 line-height-normal color-[color:--colors-text-text-tertiary]">
+              IP:
+              {item.value.ip}
+            </div>
+          </>
+        }}
+      </Message>
+    )
+  );
+}
 
 export function useNetworkPanel() {
   const { saveUserConfig, detectLocalNetwork, detectSystemNetwork } =
@@ -30,7 +61,7 @@ export function useNetworkPanel() {
               text: () => (
                 <div>
                   <div>{$t("关闭后使用本地网络连接")}</div>
-                  <div class="w-[370px] text-red line-height-normal">
+                  <div class="w-[370px] text-[color:--colors-text-text-error] line-height-normal">
                     {$t("改变此开关状态后，请重启窗口以确保生效")}
                   </div>
                 </div>
@@ -78,31 +109,7 @@ export function useNetworkPanel() {
                   />
                 );
               },
-              afterComponent: ({ item }: any) => {
-                return (
-                  item.value && (
-                    <Message
-                      icon="pi pi-check-circle"
-                      severity="success"
-                      closable={true}
-                      pt={{ content: "!items-start" }}
-                      onClose={() => {
-                        item.value = null;
-                      }}
-                    >
-                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
-                        {$t("位置")}:{item.value.country_code}/
-                        {item.value.country}
-                      </div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
-                        IP:
-                        {item.value.ip}
-                      </div>
-                    </Message>
-                  )
-                );
-              },
+              afterComponent: ProxySuccessMessage,
             },
             {
               label: $t("检测本地网络"),
@@ -119,31 +126,7 @@ export function useNetworkPanel() {
                   />
                 );
               },
-              afterComponent: ({ item }: any) => {
-                return (
-                  item.value && (
-                    <Message
-                      icon="pi pi-check-circle"
-                      severity="success"
-                      closable={true}
-                      pt={{ content: "!items-start" }}
-                      onClose={() => {
-                        item.value = null;
-                      }}
-                    >
-                      <div class="text-3 color-[#171C1F]">{$t("检测成功")}</div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
-                        {$t("位置")}:{item.value.country_code}/
-                        {item.value.country}
-                      </div>
-                      <div class="text-3 line-height-normal color-[#575D61]">
-                        IP:
-                        {item.value.ip}
-                      </div>
-                    </Message>
-                  )
-                );
-              },
+              afterComponent: ProxySuccessMessage,
             },
           ],
         },

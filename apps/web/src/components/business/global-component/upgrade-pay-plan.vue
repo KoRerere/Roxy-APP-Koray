@@ -151,6 +151,8 @@ onUnmounted(() => {
   display: flex;
   gap: 29px;
   overflow: hidden;
+  border-radius: var(--p-dialog-border-radius);
+  overflow: hidden;
 
   .left {
     display: flex;
@@ -161,7 +163,7 @@ onUnmounted(() => {
     gap: 22px;
 
     .upgrade-pay-plan-header {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Archivo, Inter, sans-serif;
       font-size: 24px;
       font-style: normal;
@@ -189,7 +191,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -208,7 +210,7 @@ onUnmounted(() => {
         align-items: center;
         gap: var(--spacing-xl, 12px);
         align-self: stretch;
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -232,6 +234,7 @@ onUnmounted(() => {
     padding: 24px 32px 32px 32px;
     background-image: url('/images/payments/sirio.svg');
     background-position: center;
+    background-color: #fff;
 
     .upgrade-pay-plan-right-content {
       display: flex;
@@ -253,6 +256,7 @@ onUnmounted(() => {
         border-radius: 50%;
         cursor: pointer;
         transition: background 0.15s;
+        color: #575D60;
 
         &:hover {
           background: #e3dcdc;
@@ -261,7 +265,7 @@ onUnmounted(() => {
     }
 
     .title {
-      color: var(--Colors-Text-text-primary, #171C1F);
+      color: #111213;
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -270,7 +274,7 @@ onUnmounted(() => {
     }
 
     .description {
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: #575D60;
       font-family: Inter;
       font-size: 14px;
       font-style: normal;

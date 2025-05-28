@@ -80,7 +80,6 @@ const planActions = computed(() => [
         showHeader: false,
         modal: true,
         blockScroll: true,
-        innerDialog: true,
         pt: {
           content: '!pa-0'
         },
@@ -155,11 +154,11 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="($route.meta.title as string)">
+    <ViewsHeader :title="($route.meta.title as string)">
     </ViewsHeader>
     <div class="rx-container ml-0 h-auto">
       <div class="flex gap-2 px-6 pt-6">
-        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden balance">
+        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden balance">
           <div class="balance-title">{{ $t('Roxy 钱包余额') }}</div>
           <div>
             <div class="balance-balance">{{ currency(userPayInfo.balance).format() }}</div>
@@ -174,7 +173,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             <RxButton :label="$t('充值')" size="md" @click="onCharge"></RxButton>
           </div>
         </div>
-        <div class="flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[#C7CDD1] overflow-hidden plan">
+        <div class="relative flex flex-col justify-between pa-4 w-110 h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] overflow-hidden plan">
           <div class="flex justify-between items-center">
             <div class="plan-title">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
             <template v-if="userPayInfo?.subEndDate">
@@ -203,7 +202,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
           </div>
           <div class="flex justify-end items-center gap-2.5">
             <div class="flex-1">
-              <span v-tooltip.top="{ value: infoValue, showDelay: 300 }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
+              <span v-tooltip.top="{ value: infoValue, showDelay: 300, pt: { root: '!max-w-60' } }" class="inline-flex items-center gap-1.5 cursor-pointer plan-detail">
                 <span>{{ $t('详情') }}</span>
                 <SvgIcon size="14" name="base/rx_ic_info" color="#C7CDD1"></SvgIcon>
               </span>
@@ -212,10 +211,12 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[#C7CDD1] other" v-for="item in other" :key="item.type">
+          <div class="flex flex-col flex-1 justify-between pa-4 min-w-55 max-w-90 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] other" v-for="item in other"
+            :key="item.type">
             <div class="flex justify-between items-center gap-6">
               <span class="other-title">{{ item.title }}</span>
-              <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增') }}</span>
+              <span class="cursor-pointer other-more" @click="onExpand(item.type as 'workspace' | 'staff')">{{ $t('新增')
+              }}</span>
             </div>
             <div>
               <span class="other-used">{{ item.used }}</span>
@@ -233,17 +234,18 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 <style scoped lang="scss">
 .balance {
   z-index: 1;
+  background: var(--colors-background-bg-overlay);
 
   &:after {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/images/payments/blob_blur.svg') no-repeat -300px -370px/960px 620px;
+    background: url('/images/payments/gradient_light.svg') no-repeat -300px -370px/960px 620px;
     z-index: -2;
   }
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo, Inter;
     font-size: 20px;
     font-weight: 700;
@@ -251,7 +253,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-balance {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 40px;
     font-style: normal;
@@ -264,13 +266,13 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
 
     &-link {
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
       text-decoration-line: underline;
       text-decoration-style: solid;
       text-decoration-skip-ink: auto;
@@ -281,8 +283,23 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 }
 
+[data-theme="dark"] {
+  .balance::after {
+    background-image: url('/images/payments/gradient_dark.svg');
+  }
+}
+
 .plan {
-  background: url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
+  z-index: 1;
+  background: var(--colors-background-bg-overlay);
+
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/payments/ripple_light.svg') no-repeat 86px -174px/380px 380px;
+    z-index: -2;
+  }
 
   &-title {
     font-family: "DingTalk JinBuTi";
@@ -295,21 +312,21 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-expired {
-    color: var(--Colors-Text-text-secondary, #575D61);
+    color: var(--colors-text-text-secondary, #B2B6B8);
     font-family: "JetBrains Mono";
     font-size: 12px;
     line-height: normal;
   }
 
   &-value {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: "DingTalk JinBuTi", Inter, sans-serif;
     font-size: 32px;
     line-height: normal;
   }
 
   &-detail {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
@@ -317,9 +334,17 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 }
 
+[data-theme="dark"] {
+  .plan::after {
+    background-image: url('/images/payments/ripple_dark.svg');
+  }
+}
+
 .other {
+  background: var(--colors-background-bg-overlay);
+
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo, Inter, sans-serif;
     font-size: 16px;
     font-weight: 700;
@@ -327,14 +352,14 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-more {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
   }
 
   &-used {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 32px;
     font-weight: 700;
@@ -342,7 +367,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-total {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 20px;
     font-weight: 700;
@@ -350,7 +375,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
   }
 
   &-text {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 14px;
     font-weight: 500;

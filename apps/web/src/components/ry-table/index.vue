@@ -38,6 +38,7 @@ interface Props {
   showDisplay?: boolean
   showActions?: boolean
   showActionsMenu?: boolean
+  skeleton?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -212,9 +213,11 @@ function _getParams() {
 }
 
 async function _request() {
+  if (props.skeleton) {
+    _dataList.value = Array.from({ length: 6 }, () => ({}))
+  }
   await _getConditionPromise
   const requestParams = _getParams()
-  _loading.value = true
   const { data } = await props.tableRequest(requestParams)
   paginatorConfig.totalRecords = data?.total ?? 0
   _dataList.value = data?.rows || []
@@ -341,9 +344,16 @@ const slots: any = useSlots()
           <template #body="{ data }">
             <slot :name="slot" :data="data" :column="column">
               <component :is="render" v-if="render" :data="data" :class="column.classes" />
-              <div v-else :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
-                {{ column.getText?.(data) || data[column.key] }}
-              </div>
+              <template v-else>
+                <template v-if="column.skeleton && !data.id">
+                  <Skeleton v-bind="column.skeleton"></Skeleton>
+                </template>
+                <template v-else>
+                  <div :style="{ width: `${column.width}px` || 'auto' }" :class="column.classes" :title="column.getText?.(data) || data[column.key]">
+                    {{ column.getText?.(data) || data[column.key] }}
+                  </div>
+                </template>
+              </template>
             </slot>
           </template>
         </Column>
@@ -362,7 +372,7 @@ const slots: any = useSlots()
           </template>
         </Column>
       </DataTable>
-      <RxLoading v-model="_loading" :opacity="0.9"></RxLoading>
+      <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9"></RxLoading>
     </div>
     <div v-if="paginator" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
@@ -393,8 +403,11 @@ const slots: any = useSlots()
 
 <style lang="scss" scoped>
 .rx-header {
-  padding: var(--spacing-xl, 12px) var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+  padding: 12px 24px;
+}
+
+.table-wrapper {
+  border-top: 0.5px solid var(--component-table-border-header);
 }
 
 :deep(.p-checkbox-box) {
@@ -421,19 +434,18 @@ const slots: any = useSlots()
   }
 
   :deep(.p-paginator-page) {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
-    font-size: var(--Font-Size-text-sm, 12px);
+    font-size: 12px;
     font-weight: 500;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 
   :deep(.p-paginator-page-selected) {
-    background: none;
-    color: var(--Component-Colors-Buttons-Ghost-text, #12a3fc);
+    color: var(--colors-text-text-brand, #11A3FD);
+    border: 0.5px solid var(--colors-border-border-brand, #11A3FD);
+    background: var(--component-button-ghost-bg, #FFF);
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-Buttons-Tertiary-border, #12a3fc);
-    background: var(--Component-Colors-Buttons-Ghost-bg, #fff);
     box-shadow:
       0px 4px 4px -1px rgba(0, 0, 0, 0.02),
       0px 1px 1px 0px rgba(0, 0, 0, 0.06);
@@ -443,14 +455,8 @@ const slots: any = useSlots()
     padding: 4px 4px 4px 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-
-    color: var(--Component-Colors-TextInput-text-text-placeholder, #7c8387);
-    font-family: Inter;
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 
   :deep(.p-select) {
@@ -458,9 +464,6 @@ const slots: any = useSlots()
     gap: 6px;
     width: 60px;
     border-radius: var(--radius-sm, 4px);
-    border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
-    background: var(--Component-Colors-TextInput-bg-bg, #fff);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
     .p-select-label {
       padding: 0;
@@ -473,11 +476,11 @@ const slots: any = useSlots()
 
   &-jump {
     display: flex;
-    gap: var(--spacing-lg, 8px);
-    color: var(--Colors-Text-text-secondary, #575d61);
+    gap: 8px;
+    color: var(--colors-text-text-secondary, #34393D);
     font-family: Inter;
     font-size: 12px;
-    line-height: var(--Line-Height-text-xs, 16px);
+    line-height: 16px;
   }
 }
 
@@ -494,7 +497,6 @@ const slots: any = useSlots()
 
 <style lang="scss" module="ColumnCss_Module">
 .columntitle {
-  color: #000;
   font-family: Inter;
   font-size: 12px;
   line-height: 16px;
@@ -504,55 +506,14 @@ const slots: any = useSlots()
 .headerrow {
   .headercell {
     padding: 8px 12px;
-    background: var(--Colors-Background-bg-page, #fafbfc);
-    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     user-select: none;
 
     &:first-of-type {
-      padding-left: var(--spacing-4xl, 24px);
+      padding-left: 24px;
     }
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      background: var(--Colors-Background-bg-page, #fafbfc);
-    }
-  }
-}
-
-.tableroot {
-  .table {
-    .tbody {
-      .bodyrow {
-        &[data-p-selected='true'] {
-          background: var(--Colors-Background-bg-secondary, #e8f5fc);
-
-          .bodycell {
-            border-color: var(--Color-blue-200, #7eccfc);
-
-            &:global(.p-datatable-frozen-column) {
-              background: var(--Colors-Background-bg-secondary, #e8f5fc);
-            }
-          }
-        }
-
-        &:not([data-p-selected='true']):hover {
-          background: var(--Colors-Background-bg-body-hover, #f0f3f5);
-
-          .bodycell {
-            border-color: var(--Colors-Border-border-container, #c7cdd1);
-
-            &:global(.p-datatable-frozen-column) {
-              background: var(--Colors-Background-bg-body-hover, #f0f3f5);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  &:global(.p-datatable-sm) {
-    .bodycell {
-      height: 40px;
     }
   }
 }
@@ -561,22 +522,53 @@ const slots: any = useSlots()
   .bodycell {
     padding: 0 12px;
     height: 60px;
-    border-color: var(--Colors-Border-border-subtle, #e4e8eb);
     border-bottom-width: 0.5px;
-    color: var(--Color-neutrals-950, #0E1214);
     font-size: 12px;
     font-weight: 500;
     line-height: normal;
 
     &:first-of-type {
-      padding-left: var(--spacing-4xl, 24px);
+      padding-left: 24px;
     }
 
     &:global(.p-datatable-frozen-column) {
       padding-left: 16px;
-      border-left: 1px solid var(--Colors-border-border-subtle, #e4e8eb);
+      background: var(--colors-background-bg-page, #FFF);
+      border-left: 1px solid var(--component-table-border-cell);
       box-shadow: -2px 0px 4px 0px rgba(0, 0, 0, 0.05);
       transition: background var(--p-datatable-transition-duration), color var(--p-datatable-transition-duration), border-color var(--p-datatable-transition-duration), outline-color var(--p-datatable-transition-duration), box-shadow var(--p-datatable-transition-duration)
+    }
+  }
+}
+
+.tableroot {
+  &:global(.p-datatable-sm) .bodycell {
+    height: 40px;
+  }
+
+  .table .tbody .bodyrow {
+    &[data-p-selected='true'] {
+      background: var(--component-table-bg-selected);
+
+      .bodycell {
+        border-color: var(--component-table-border-selected);
+
+        &:global(.p-datatable-frozen-column) {
+          background: var(--component-table-bg-selected);
+        }
+      }
+    }
+
+    &:not([data-p-selected='true']):hover {
+      background: var(--component-table-bg-hover);
+
+      .bodycell {
+        border-color: var(--component-table-border-hover);
+
+        &:global(.p-datatable-frozen-column) {
+          background: var(--component-table-bg-hover);
+        }
+      }
     }
   }
 }

@@ -93,6 +93,7 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   align-self: stretch;
   border-radius: 4px;
   cursor: pointer;
+  color: var(--colors-text-text-primary, #FAFAFA);
   transition: all 0.15s ease-in-out;
 
   .menu-title {
@@ -106,18 +107,17 @@ function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
     text-overflow: ellipsis;
     overflow: hidden;
     line-height: 20px;
-    color: var(--Component-Colors-SideNav-link-text, #252A2E);
   }
 
 
   &:hover {
-    color: var(--Component-Colors-SideNav-link-text-hover, #171c1f);
-    background: #eaeef0;
+    color: var(--colors-text-text-primary-hover, #FFF);
+    background: var(--pattern-sidenav-bg-hover, rgba(255, 255, 255, 0.05));
   }
 
   &.active {
-    color: #0085EB;
-    background: #D6ECFA;
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
+    background: var(--pattern-sidenav-bg-active, #013D65);
     font-weight: bold;
 
     .menu-title {

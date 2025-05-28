@@ -81,19 +81,15 @@ function receiveEmailCode(code: string) {
 <template>
   <template v-if="currentStep !== 'step2'">
     <div class="reset-password">
-      <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')"
-        class="w-full" />
-      <SignCardHeader :subTitle="$t('重置密码')"
-        :description="currentStep === 'step1' ? $t('请输入您的邮箱，我们将向您发送验证码') : $t('请在下方设置您的新密码')" />
+      <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('该邮件尚未注册')" :content="$t('请检查您的邮箱并重试')" class="w-full" />
+      <SignCardHeader :subTitle="$t('重置密码')" :description="currentStep === 'step1' ? $t('请输入您的邮箱，我们将向您发送验证码') : $t('请在下方设置您的新密码')" />
       <div class="box">
         <div class="flex flex-col gap-2 w-full">
           <template v-if="currentStep === 'step1'">
-            <RxForm ref="rxForm" v-model="emailFormData" :schemas="getEmailSchemas()" :colon="false" :footer="false"
-              layout="vertical" @keydown.enter="handleSubmit" />
+            <RxForm ref="rxForm" v-model="emailFormData" :schemas="getEmailSchemas()" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
           </template>
           <template v-else>
-            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :colon="false"
-              :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
+            <RxForm ref="rxForm" v-model="resetPwdFormData" :schemas="getResetPasswordSchemas()" :colon="false" :footer="false" layout="vertical" @keydown.enter="handleSubmit" />
           </template>
         </div>
       </div>
@@ -106,8 +102,7 @@ function receiveEmailCode(code: string) {
     </div>
   </template>
   <template v-else>
-    <EmailCodeInputOtp type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode"
-      @back="currentStep = 'step1'" />
+    <EmailCodeInputOtp type="resetPassword" :email="emailFormData.user_name" @ok="receiveEmailCode" @back="currentStep = 'step1'" />
   </template>
 </template>
 
@@ -125,7 +120,7 @@ function receiveEmailCode(code: string) {
     align-self: stretch;
 
     .message-title {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -134,7 +129,7 @@ function receiveEmailCode(code: string) {
     }
 
     .message-desc {
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -173,7 +168,7 @@ function receiveEmailCode(code: string) {
   }
 
   .description {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -183,7 +178,7 @@ function receiveEmailCode(code: string) {
   }
 
   .label {
-    color: var(--Component-Colors-TextInput-label-label, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

@@ -1,14 +1,11 @@
 <script lang="ts" setup>
-import type { SelectProps } from 'primevue/select'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
-
-interface Props extends Omit<SelectProps, 'size' | 'filter' | 'optionLabel' | 'optionValue'> {
+interface Props {
   name: string
   icon?: SvgNames
   iconColor?: string
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
   filter?: boolean
   optionLabel?: string
   optionValue?: string
@@ -21,20 +18,21 @@ defineOptions({
 const {
   name,
   icon,
-  iconColor = 'var(--Component-Colors-TextInput-text-text, #171c1f)',
+  iconColor = 'var(--colors-text-text-placeholder, #575D60);',
   size = 'sm',
   filter = true,
   optionLabel = 'label',
   optionValue,
-  ...props
 } = defineProps<Props>()
 
 defineEmits(['change'])
 
+const attrs = useAttrs()
 </script>
 
 <template>
-  <Select class="w-full" v-bind="{ filter, optionLabel, optionValue, ...props, ...$attrs }" :inputId="name" :pt="{ root: size, option: classes.option }" @change="$emit('change', $event)">
+  <Select class="w-full" v-bind="attrs" :optionLabel="optionLabel" :optionValue="optionValue" :filter="filter" :inputId="name" :pt="{ root: size, option: classes.option }"
+    @change="$emit('change', $event)">
     <template #dropdownicon>
       <RxSvgIcon name="base/rx_ic_chevron_down" />
     </template>
@@ -51,7 +49,7 @@ defineEmits(['change'])
         <RxSvgIcon v-if="option.icon || icon" :name="option.icon || icon" :color="iconColor" fallback="base/rx_ic_earth" />
         <img v-if="option.image" class="select-item__image" :src="option.image">
         <div>{{ option.label }}</div>
-        <slot name="option-extra" :option="option" />
+        <slot name="option-extra" :option="option"></slot>
       </div>
     </template>
   </Select>
@@ -60,11 +58,6 @@ defineEmits(['change'])
 <style lang="scss" module="classes">
 .option {
   font-size: 13px;
-
-  &[data-p-selected='true']:not([data-p-focused='true']) {
-    color: var(--Colors-Text-text-brand, #12a3fc) !important;
-    background: #e8f5fc !important;
-  }
 }
 </style>
 
@@ -83,13 +76,12 @@ defineEmits(['change'])
 }
 
 :deep(.p-select-label) {
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
   font-family: Inter;
 }
 
 .lg {
   border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 10px 10px 10px var(--spacing-xl, 12px);
@@ -104,7 +96,7 @@ defineEmits(['change'])
 
 .md {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: 8px 8px 8px 10px;
@@ -115,7 +107,7 @@ defineEmits(['change'])
 
 .sm {
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 1px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px) var(--spacing-md, 6px) var(--spacing-md, 6px) 8px;
@@ -126,7 +118,7 @@ defineEmits(['change'])
 
 .xs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-md, 6px);
@@ -137,7 +129,7 @@ defineEmits(['change'])
 
 .xxs {
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-TextInput-border-border, #c7cdd1);
+  border-width: 0.5px;
 
   :deep(.p-select-label) {
     padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);

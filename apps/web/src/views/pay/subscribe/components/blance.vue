@@ -72,34 +72,33 @@ function onCharge() {
     </RxAlert>
     <div class="flex gap-2.5 items-center amount">
       <span>{{ $t('Roxy 钱包余额: ') }}</span>
-      <span class="amount-value" :class="{ 'amount-warning': warning }">{{ currency(userPayInfo.balance).format() }}</span>
+      <span class="amount-value" :class="{ 'amount-warning': warning }">{{ currency(userPayInfo.balance).format()
+        }}</span>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .message {
-  color: var(--Color-neutrals-950, #0E1214);
-  font-family: Inter;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
 }
 
 .amount {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 16px;
   line-height: 20px;
 
   &-value {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary);
     font-size: 16px;
     font-weight: 600;
     line-height: normal;
 
     &.amount-warning {
-      color: var(--Colors-Text-text-inactive, #A3A9AD);
+      color: var(--colors-text-text-tertiary);
     }
   }
 }

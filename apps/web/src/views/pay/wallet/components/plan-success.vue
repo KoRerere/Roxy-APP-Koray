@@ -25,7 +25,8 @@ function close() {
 <template>
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
-      <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[#C7CDD1] bg-white card">
+      <div
+        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] bg-white card">
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}
@@ -38,7 +39,11 @@ function close() {
           </div>
         </div>
         <div class="card-plan">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-        <div class="flex justify-end card-desc">{{ $t('{count} 窗口', { count: currency(userPayInfo?.maxWindowCount, { symbol: '', precision: 0 }).format() }) }}</div>
+        <div class="flex justify-end card-desc">{{ $t('{count} 窗口', {
+          count: currency(userPayInfo?.maxWindowCount, {
+            symbol: '', precision: 0
+          }).format()
+        }) }}</div>
       </div>
       <CardItem as="div" :translate-z="1" class="flex flex-col gap-5 feat">
         <div class="flex items-center gap-2.5 feat-title">
@@ -65,14 +70,14 @@ function close() {
 .popup {
   width: 480px;
   border-radius: 12px;
-  background: #ffffff url('/images/payments/vega.svg') no-repeat -450px -920px/1600px 1430px;
+  background: var(--colors-background-bg-page) url('/images/payments/vega.svg') no-repeat -450px -920px/1600px 1430px;
 }
 
 .card {
-  background: #ffffff url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
+  background: var(--colors-background-bg-action) url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -80,7 +85,7 @@ function close() {
   }
 
   &-expired {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     line-height: normal;
@@ -97,14 +102,14 @@ function close() {
   }
 
   &-renew {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: 'JetBrains Mono';
     font-size: 14px;
     line-height: normal;
@@ -113,7 +118,7 @@ function close() {
 
 .feat {
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Archivo;
     font-size: 24px;
     font-weight: 600;
@@ -121,14 +126,14 @@ function close() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;
   }
 
   &-item {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

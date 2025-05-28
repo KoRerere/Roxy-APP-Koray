@@ -218,7 +218,7 @@ onMounted(() => {
     </div>
     <div class="footer">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click.stop="close" />
-      <RxButton size="sm" :label="$t('导出数据')" severity="info" @click.stop="confirm" />
+      <RxButton size="sm" :label="$t('导出数据')" @click.stop="confirm" />
     </div>
   </div>
 </template>
@@ -237,7 +237,7 @@ onMounted(() => {
     gap: var(--spacing-lg, 8px);
 
     &__title {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-weight: 600;
@@ -245,7 +245,7 @@ onMounted(() => {
     }
 
     &__description {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: Inter;
       font-size: 13px;
       font-weight: 500;
@@ -253,7 +253,7 @@ onMounted(() => {
     }
 
     &__tip {
-      color: var(--Colors-Text-text-tertiary, #7c8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: Inter;
       font-size: 12px;
       line-height: 16px;
@@ -263,8 +263,8 @@ onMounted(() => {
 
 .table-container {
   border-radius: 6px;
-  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
-  background: var(--Component-Colors-TextInput-bg-bg, #FFF);
+  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
+  background: var(--colors-background-bg-action, #FFF);
 }
 
 .footer {

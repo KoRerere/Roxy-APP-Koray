@@ -207,14 +207,12 @@ $spacing-x: 66px;
 }
 
 :deep(.p-accordionheader) {
-  padding: var(--spacing-md, 6px) 8px;
-  background: var(--Color-neutrals-100, #f0f3f5) !important;
+  padding: 6px 8px;
   border-radius: 4px;
-  color: #000;
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
 }
 
 :deep(.p-inputgroup) {
@@ -228,10 +226,10 @@ $spacing-x: 66px;
 .footer {
   display: flex;
   align-items: center;
-  padding: var(--spacing-2xl, 16px) $spacing-x;
-  gap: var(--spacing-lg, 8px);
+  padding: 16px $spacing-x;
+  gap: 8px;
   max-height: 64px;
-  border-top: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-top: 1px solid var(--colors-border-border-subtle, #C7D1D6);
 
   :deep(.p-button) {
     max-width: 150px;
@@ -249,17 +247,9 @@ $spacing-x: 66px;
 }
 
 .tip-text {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
   line-height: 16px;
-}
-
-.divider {
-  width: 10px;
-  height: 1px;
-  background: var(--Colors-Border-border-container, #C7CDD1);
 }
 </style>

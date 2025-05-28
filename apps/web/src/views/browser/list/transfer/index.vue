@@ -65,7 +65,6 @@ async function howToGetHelp() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -85,8 +84,7 @@ async function howToGetHelp() {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false"
-    :show-actions="false" :show-table-header="false">
+  <RyTable cache-key="browser-transfer-list" :columns="columns" :table-request="tableRequest" :show-gridlines="false" :show-actions="false" :show-table-header="false">
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无投送窗口数据')">
         <template #extra>
@@ -109,8 +107,7 @@ async function howToGetHelp() {
     </template>
     <template #transfer="{ data }">
       <div class="flex items-center">
-        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon"
-          :class="{ '!bg-black': !data.workspacePicture }"
+        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
           :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
         <div class="ml-3 space-name">{{ data.workspaceName }}</div>
         <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
@@ -135,26 +132,26 @@ async function howToGetHelp() {
 }
 
 .space-name {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--component-button-primary-text, #111213);
   font-size: 14px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .space-id {
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: "JetBrains Mono";
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 }
 
 .help {
-  color: var(--Colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive, #7D8387);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--Colors-text-text-link, #11A3FD);
+    color: var(--colors-text-text-brand, #11A3FD);
   }
 }
 </style>

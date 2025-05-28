@@ -77,9 +77,7 @@ function isLocked(linkStatus: number) {
     </aside>
     <div class="content">
       <div class="row">
-        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn"
-          :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false"
-          class="w-full" />
+        <RxAlert v-if="isLocked(activeMenu.linkStatus)" type="warn" :title="$t('近 30 天名下用户消费金额达到${amount}时永久解锁', { amount: activeMenu.purchaseTotalAmount })" :closable="false" class="w-full" />
         <div class="title">{{ $t('推广链接') }}</div>
         <RxCopyContent :text="referralLink" :mask="isLocked(activeMenu.linkStatus)" />
         <div class="benefit">
@@ -110,12 +108,10 @@ function isLocked(linkStatus: number) {
         </div>
         <div class="banner-preview-container">
           <div class="banner-preview">
-            <Image :src="currentBannerImage.image_1x" alt="Image" preview
-              :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
+            <Image :src="currentBannerImage.image_1x" alt="Image" preview :pt="{ toolbar: { class: '!hidden' }, previewMask: { class: 'rounded-[4px]' } }">
               <template #original="slotProps">
-                <img :src="currentBannerImage.image_1x"
-                  :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview"
-                  :style="slotProps.style" @click.stop="slotProps.previewCallback" />
+                <img :src="currentBannerImage.image_1x" :srcset="`${currentBannerImage.image_1x} 1x, ${currentBannerImage.image_2x} 2x`" alt="preview" :style="slotProps.style"
+                  @click.stop="slotProps.previewCallback" />
               </template>
             </Image>
           </div>
@@ -140,7 +136,7 @@ function isLocked(linkStatus: number) {
     padding-right: 27px;
 
     .title {
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -166,8 +162,8 @@ function isLocked(linkStatus: number) {
         transition: all 0.2s ease;
 
         &:is(:hover, .active) {
-          color: var(--Color-blue-300, #12A3FC);
-          background: #D6ECFA;
+          color: var(--pattern-sidenav-text-active, #3FB6FD);
+          background: var(--pattern-sidenav-bg-active, #013D65);
         }
       }
     }
@@ -181,7 +177,7 @@ function isLocked(linkStatus: number) {
     align-self: stretch;
     flex: 3;
     padding-left: 27px;
-    border-left: 1px solid #E0E0E0;
+    border-left: 1px solid var(--colors-border-border-inactive, #293038);
 
     .row {
       display: flex;
@@ -191,7 +187,7 @@ function isLocked(linkStatus: number) {
       align-self: stretch;
 
       .title {
-        color: #000;
+        color: var(--colors-text-text-primary, #FAFAFA);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -216,7 +212,7 @@ function isLocked(linkStatus: number) {
       align-items: center;
       gap: var(--spacing-lg, 8px);
       align-self: stretch;
-      color: var(--Colors-Text-text-secondary, #575D61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -224,7 +220,7 @@ function isLocked(linkStatus: number) {
       line-height: 20px;
 
       .ratio {
-        color: var(--Color-yellow-300, #FC9D12);
+        color: var(--primitives-yellow-500, #FC9D12);
         font-family: Inter;
         font-size: 14px;
         font-style: normal;
@@ -254,7 +250,7 @@ function isLocked(linkStatus: number) {
     }
 
     .banner-size-label {
-      color: var(--Component-Colors-TextInput-text-text, #171C1F);
+      color: var(--colors-text-text-primary, #111213);
       font-family: Inter;
       font-size: 13px;
       font-style: normal;
@@ -273,7 +269,7 @@ function isLocked(linkStatus: number) {
       flex: 1;
       height: 100%;
       border-radius: 4px;
-      background: var(--Color-neutrals-100, #F0F3F5);
+      background: var(--colors-background-bg-block, #293038);
 
       :deep(.p-image) {
         width: 100%;

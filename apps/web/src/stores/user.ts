@@ -10,7 +10,7 @@ import { emitter } from "/@/utils/eventBus";
 import { useRoleStore } from "/@/stores/role";
 import { useToast } from "primevue/usetoast";
 import { SubLevelEnum } from "/@/enums/pay";
-import { encryptAESGCM, isWindows, type OauthLoginType } from "/@/utils";
+import { encryptAESGCM, hidePageLoading, isWindows, type OauthLoginType } from "/@/utils";
 
 type UserInfo = Partial<UserGetUserInfoListData["data"]>;
 type UserConfig = Partial<UserGetUserConfigListData["data"]>;
@@ -30,7 +30,7 @@ export const useUserStore = defineStore(
     const userInfo = ref<UserInfo>({});
     /** 用户付费详情 */
     const userPayInfo = ref<UserGetUserPayInfoListData["data"]>({} as UserGetUserPayInfoListData["data"]);
-    const userConfig = ref<UserConfig>();
+    const userConfig = ref<UserConfig>({});
     const token = ref('');
     const appVersion = ref("");
     const rememberMe = ref(false);
@@ -74,7 +74,7 @@ export const useUserStore = defineStore(
       }
       return {
         text: $t("普通用户"),
-        color: "#171C1F",
+        color: "var(--colors-text-text-primary)",
       };
     });
 
@@ -84,6 +84,9 @@ export const useUserStore = defineStore(
       if (code === 0) {
         setUserInfo(data);
         workspaceStore.setCurrentWorkspace(data.workspaceId);
+        setTimeout(() => {
+          hidePageLoading()
+        }, 10000)
       } else {
         // 如果获取用户信息失败，则清除用户信息
         clearUserInfo();
@@ -190,10 +193,6 @@ export const useUserStore = defineStore(
           if (data.showPayWallDlg) {
             emitter.emit('showUpgradePlanDialog')
           }
-          // 旧用户首次登录，显示礼包弹窗
-          if (data.showGiftDlg) {
-            emitter.emit('showOldUserGiftDialog')
-          }
         }
 
         electronAPI.send('app:saveSoftConfig', { subLevel: data.subLevel })
@@ -223,7 +222,7 @@ export const useUserStore = defineStore(
 
     const initUserInfo = async () => {
       if (token.value) {
-        getUserInfo();
+        await getUserInfo();
         getUserConfig(true);
       }
     };

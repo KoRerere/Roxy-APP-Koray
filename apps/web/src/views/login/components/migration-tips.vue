@@ -96,7 +96,7 @@ async function handleMigration() {
 }
 
 .title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;
@@ -110,7 +110,7 @@ async function handleMigration() {
   align-items: flex-start;
   gap: var(--spacing-md, 12px);
   align-self: stretch;
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

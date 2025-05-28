@@ -233,7 +233,7 @@ defineExpose({
 }
 
 .error-message {
-  color: var(--Colors-Text-text-error, #F53838);
+  color: var(--colors-text-text-error, #F53838);
   font-family: "PingFang SC";
   font-size: 12px;
   font-style: normal;

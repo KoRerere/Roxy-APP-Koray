@@ -57,8 +57,8 @@ getProxiesList()
   align-items: flex-start;
   gap: var(--spacing-xl, 12px);
   border-radius: var(--radius-md, 6px);
-  border: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 0.5px solid var(--colors-border-border-base, #c7cdd1);
+  background: var(--primitives-neutrals-50, #fafbfc);
 
   /* shadow-sm */
   box-shadow:
@@ -74,7 +74,7 @@ getProxiesList()
 
   .title {
     overflow: hidden;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     text-overflow: ellipsis;
     font-family: Inter;
     font-size: 13px;
@@ -91,7 +91,7 @@ getProxiesList()
   -webkit-line-clamp: 6;
   align-self: stretch;
   overflow: hidden;
-  color: var(--Colors-Text-text-secondary, #575d61);
+  color: var(--colors-text-text-secondary, #b2b6b8);
   text-overflow: ellipsis;
   font-family: Inter;
   font-size: 12px;
@@ -108,7 +108,7 @@ getProxiesList()
   align-self: stretch;
 
   .site-name {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -119,8 +119,8 @@ getProxiesList()
   }
 
   .visit-website {
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
-    color: var(--Component-Colors-Buttons-Secondary-text, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #171c1f);
     text-align: center;
     font-family: Inter;
     font-size: var(--Font-Size-text-sm, 12px);

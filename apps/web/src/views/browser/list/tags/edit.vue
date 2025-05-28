@@ -51,7 +51,7 @@ onMounted(() => {
     <InputText v-model="tagName" type="text" :placeholder="$t('请输入标签名')" />
     <div class="footer">
       <RxButton :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton :label="$t('保存')" severity="info" @click="onConfirm" />
+      <RxButton :label="$t('保存')" @click="onConfirm" />
     </div>
   </div>
 </template>
@@ -63,7 +63,7 @@ onMounted(() => {
   gap: var(--spacing-xl, 12px);
 
   &-title {
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -72,7 +72,7 @@ onMounted(() => {
   }
 
   &-content {
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--primitives-neutrals-600, #575d61);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

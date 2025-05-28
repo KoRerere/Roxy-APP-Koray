@@ -84,7 +84,7 @@ const colorLevelFn = (percent: number) => {
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

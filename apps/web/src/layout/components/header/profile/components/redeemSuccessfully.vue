@@ -114,7 +114,7 @@ onBeforeMount(() => {
 }
 
 .username {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
@@ -129,7 +129,7 @@ onBeforeMount(() => {
   gap: 2px;
 
   .text {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     font-family: "DingTalk JinBuTi";
     font-size: 12px;
     font-style: normal;
@@ -144,7 +144,7 @@ onBeforeMount(() => {
   flex-direction: column;
   gap: 10px;
   align-self: stretch;
-  color: var(--Color-neutrals-600, #575D61);
+  color: var(--primitives-neutrals-600, #575D61);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

@@ -7,8 +7,6 @@ import { isEqualWith, isFunction } from 'es-toolkit'
 import type { JSX } from 'vue/jsx-runtime'
 
 export interface UseDialogProps extends DialogProps, Partial<Omit<HTMLAttributes, keyof DialogProps>> {
-  /** 嵌套弹窗时，需要设置为 true */
-  innerDialog?: boolean
   handleCancel?: () => any
   handleOk?: () => any
   okText?: string

@@ -12,7 +12,9 @@ import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
+import { useThemeStore } from '/@/stores/theme'
 
+const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
 const isSupportGPU = ref(false)
 const simpleLocaleStore = useSimpleLocale()
@@ -224,7 +226,7 @@ provideLoginContext({
         </template>
       </i18n-t>
     </div>
-    <BgCanvas v-if="isSupportGPU" />
+    <BgCanvas v-if="isSupportGPU" :key="themeStore.realTheme" />
   </div>
 </template>
 
@@ -264,7 +266,7 @@ provideLoginContext({
   transform: translateX(-50%);
   bottom: 20px;
   z-index: 10;
-  color: var(--Colors-Text-text-action-primary, #FFF);
+  color: var(--component-button-primary-text, #FFF);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -301,8 +303,8 @@ provideLoginContext({
   align-items: center;
   gap: var(--spacing-2xl, 16px);
   border-radius: 8px;
-  border: 0.5px solid var(--Color-neutrals-0, #FFF);
-  background: #FFF;
+  border: 0.5px solid var(--colors-border-border-base, #48555B);
+  background: var(--colors-background-bg-page, #05101A);
 }
 
 .sign-card-header {

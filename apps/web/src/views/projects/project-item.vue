@@ -1,39 +1,78 @@
-<script setup lang="ts">
+<script setup lang="tsx">
+import Profiles from '/@/views/browser/list/profiles/index.vue'
+import MemberDropdownList from '/@/views/projects/components/member-dropdown-list.vue'
+import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
-import Profiles from '/@/views/browser/list/profiles/index.vue'
-import MemberDropdownList from '/@/views/projects/components/member-dropdown-list.vue'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
-import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
+import { useDialog } from '/@/hooks/useDialog'
 
 const role = useRoleStore()
 const route = useRoute()
 const router = useRouter()
 const { getProjects } = useProjectStore()
-const [showInviteUserFormDialog] = useInviteUserFormDialog()
+const [showModal] = useDialog()
 const [projectModfiyDialog] = useProjectActions()
-const profilesRef = useTemplateRef('profiles')
 const { handleBusinessCode } = useHandleBusinessCode()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [showToast] = useResponseToast()
 
 const projectId = ref(Number(route.params.id))
 const projectName = ref(route.query.title)
+const members = ref()
+const allMembers = ref()
 
 watch(() => route.params.id, (value) => {
   projectId.value = Number(value)
   projectName.value = route.query.title
+  getMemberByCurrentProject()
 })
 
-function handleShowInviteUserFormDialog() {
-  showInviteUserFormDialog({
-    tableRef: profilesRef.value?.tableRef as any,
-    projectIds: [projectId.value],
-    disableds: ['projectIds'],
+onBeforeMount(() => {
+  getMemberByCurrentProject()
+  getMemberByCurrentWorkspace()
+})
+
+async function getMemberByCurrentProject() {
+  const { code, data } = await API.limit.userGetMemberInfoByProjectIdList({
+    projectId: projectId.value,
+    type: 'show_list'
+  })
+  if (code === 0) {
+    members.value = data.rows
+  }
+}
+
+async function getMemberByCurrentWorkspace() {
+  const { code, data } = await API.team.userGetMemberInfoByWorkspaceList({})
+  if (code === 0) {
+    allMembers.value = data.rows
+  }
+}
+
+function handleShowDialog() {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: ({ hideModal }) => <InviteUserModal
+        v-model:currentMembers={members.value}
+        allMembers={allMembers.value}
+        project={{
+          projectName: projectName.value,
+          projectId: projectId.value,
+        }}
+        onClose={hideModal}
+      />
+    }
   })
 }
 
@@ -74,14 +113,11 @@ async function toCreateBrowser() {
         <div class="project-header-subproject">
           {{ projectName }}
         </div>
-        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer"
-          @click="editProject" />
+        <RxSvgIcon v-if="role.isOwner || role.isManager" name="base/rx_ic_edit" class="cursor-pointer" @click="editProject" />
       </template>
-      <MemberDropdownList :project-id="projectId" />
-      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add"
-        :label="$t('邀请')" @click="handleShowInviteUserFormDialog" />
-      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')"
-        @click="toCreateBrowser" />
+      <MemberDropdownList :members="members" />
+      <RxButton v-if="!role.isViewer" severity="secondary" outlined size="xxs" icon="base/rx_ic_user_add" :label="$t('邀请')" @click="handleShowDialog" />
+      <RxButton v-if="!role.isViewer" size="xxs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click="toCreateBrowser" />
     </ViewsHeader>
     <!-- eslint-disable-next-line vue/no-unused-refs -->
     <div class="flex-1 overflow-hidden">
@@ -92,17 +128,16 @@ async function toCreateBrowser() {
 
 <style lang="scss" scoped>
 .project-header {
-  color: var(--Colors-Text-text-secondary, #575d61);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  color: var(--colors-text-text-secondary, #b2b6b8);
 
   &-title {
     &:hover {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
   }
 
   &-subproject {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
   }
 }
 </style>

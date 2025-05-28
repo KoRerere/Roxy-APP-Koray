@@ -359,22 +359,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- 滑动条容器 -->
   <div class="relative w-full select-none">
     <!-- 滑动轨道 -->
     <div ref="slider" class="relative h-5 rounded-full cursor-pointer bg-gradient-to-r from-[#12A3FC] to-[#EC51F7]" @mousedown="handleMouseDown">
       <!-- 未选中部分的轨道 -->
-      <div class="absolute top-0 right-0 h-full rounded-r-full bg-[#F0F3F5]" :style="{ width: `calc(${100 - currentPosition}% - 9px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
-
+      <div class="absolute top-0 right-0 h-full rounded-r-full bg-orange track-slider" :style="{ width: `calc(${100 - currentPosition}% - 9px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
       <!-- 刻度标记和标签 -->
       <template v-for="{ value, position } in labelPositions" :key="value">
         <div class="absolute top-1/2 -translate-1/2 w-2.5 h-2.5 rounded-full" :class="[
           position < currentPosition
             ? 'bg-white opacity-30'
-            : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'bg-black opacity-10',
+            : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'track-dot',
         ]" :style="{ left: `${position}%` }" />
       </template>
-
       <!-- 滑块 -->
       <div class="absolute top-1/2 -translate-1/2 thumb" :class="[isDragging ? 'thumb-dragging' : '']" :style="{
         left: `${currentPosition}%`,
@@ -387,11 +384,10 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
     <!-- 底部数值标签 -->
     <div class="relative h-5 mt-2">
-      <div v-for="{ value, position } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer text-[#7C8387] hover:text-[#EC51F7]"
-        :class="{ 'text-[#EC51F7] font-semibold': value === selectedValue }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">
+      <div v-for="{ value, position } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer track-marker"
+        :class="{ 'foucs font-semibold': value === selectedValue }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)">
         {{ formatNumber(value) }}
       </div>
     </div>
@@ -399,6 +395,27 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+.track-slider {
+  background: var(--pattern-pay-plan-bg-slider);
+}
+
+.track-dot {
+  background: var(--pattern-pay-plan-bg-slider-dot);
+}
+
+.track-marker {
+  color: var(--colors-text-text-tertiary);
+
+  &:not(:hover).foucs {
+    color: var(--colors-text-text-primary);
+  }
+
+  &:hover {
+    color: #EC51F7;
+  }
+}
+
+
 .thumb {
   &.thumb-dragging::before {
     opacity: 1;
@@ -416,12 +433,12 @@ onMounted(() => {
     transform: translateX(-50%);
     padding: var(--spacing-sm, 4px) var(--spacing-lg, 8px);
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-900, #171c1f);
+    background: var(--primitives-neutrals-900, #171c1f);
     box-shadow:
       0px 3px 8px 0px rgba(0, 0, 0, 0.07),
       0px 2px 5px 0px rgba(0, 0, 0, 0.07),
       0px 1px 1px 0px rgba(0, 0, 0, 0.07);
-    color: var(--Color-neutrals-0, #fff);
+    color: var(--primitives-neutrals-0, #fff);
     text-align: center;
     font-size: 12px;
     font-weight: 600;

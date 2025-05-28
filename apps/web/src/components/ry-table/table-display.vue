@@ -15,8 +15,7 @@ function toggle(event: Event) {
 <template>
   <slot name="before"></slot>
   <div class="position-relative flex">
-    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')"
-      @click="toggle" />
+    <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')" @click="toggle" />
     <!-- <div class="changed" /> -->
   </div>
   <RyPopover ref="popRef">
@@ -37,7 +36,7 @@ function toggle(event: Event) {
 
 <style lang="scss" module="display">
 .content {
-  padding: var(--spacing-md, 6px) var(--spacing-sm, 4px);
+  padding: 6px 4px;
 }
 
 .label {
@@ -45,10 +44,10 @@ function toggle(event: Event) {
 }
 
 .column {
-  padding: var(--spacing-lg, 8px) var(--spacing-md, 6px);
-  gap: var(--spacing-sm, 4px);
+  padding: 8px 6px;
+  gap: 4px;
   min-width: 260px;
-  color: var(--Color-neutrals-900, #171c1f);
+  color: var(--colors-text-text-primary);
   font-family: Inter;
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);

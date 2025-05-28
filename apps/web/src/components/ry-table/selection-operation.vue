@@ -106,7 +106,7 @@ function onMore(event: Event) {
   align-items: center;
   gap: var(--spacing-sm, 4px);
   border-radius: 8px;
-  background: var(--Color-neutrals-950, #0e1214);
+  background: var(--pattern-actionbar-bg, #111213);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -118,14 +118,14 @@ function onMore(event: Event) {
     align-items: center;
     padding: 8px 12px;
     border-radius: 5px;
-    border: 0.5px solid var(--Color-neutrals-600, #575d61);
-    background: var(--Color-neutrals-800, #252a2e);
+    border: 0.5px solid var(--pattern-actionbar-btn-border, #34393D);
+    background: var(--pattern-actionbar-btn, #2C2E30);
     white-space: nowrap;
   }
 
   &-selected {
     gap: var(--spacing-md, 6px);
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--pattern-actionbar-text-subtle, #AFB7BB);
     font-family: Inter;
     font-size: 13px;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -133,7 +133,7 @@ function onMore(event: Event) {
 
   &-group {
     gap: 12px;
-    color: #ffffff;
+    color: var(--pattern-actionbar-text, #FAFAFA);
 
     &:has(.icon-label) {
       padding: 0;

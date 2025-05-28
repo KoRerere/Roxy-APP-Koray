@@ -17,7 +17,7 @@ const { promotionInfo } = defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .referal {
   width: 100%;
   display: flex;
@@ -26,11 +26,11 @@ const { promotionInfo } = defineProps<{
 
   .reward {
     background-image: url('/images/referral-program/referal-reward-bg.png');
-    background-position: right -320px bottom -50px;
+    background-position: right -260px bottom -20px;
     background-size: 100% 100%;
     background-repeat: no-repeat;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--Colors-Border-border-subtle, #E4E8EB);
+    border-bottom: 1px solid var(--colors-border-border-inactive, #293038);
   }
 
   .content {
@@ -38,5 +38,9 @@ const { promotionInfo } = defineProps<{
     width: min(1000px, 100%);
     margin: 20px auto 0 auto;
   }
+}
+
+[data-theme="dark"] .reward {
+  background-image: url('/images/referral-program/referal-reward-bg-dark.png');
 }
 </style>

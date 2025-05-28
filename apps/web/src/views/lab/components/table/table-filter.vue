@@ -69,7 +69,7 @@ function onFilterChange() {
 :deep(.p-multiselect-label),
 :deep(.p-inputtext) {
   padding: var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-sm, 4px) var(--spacing-md, 6px);
-  color: var(--Component-Colors-TextInput-text-text, #171c1f);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
@@ -90,6 +90,6 @@ function onFilterChange() {
   border-top-right-radius: 0;
   border-bottom-left-radius: var(--p-inputtext-border-radius);
   border-bottom-right-radius: 0;
-  background: #fff;
+  background: var(--colors-background-bg-action);
 }
 </style>

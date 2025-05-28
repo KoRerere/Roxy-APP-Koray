@@ -79,11 +79,11 @@ function onRemark() {
 
 <style lang="scss" scoped>
 .light {
-  color: var(--Colors-Icon-icon-brand, #12a3fc);
+  color: var(--colors-icon-icon-brand, #12a3fc);
 }
 
 .disabled:not(.light) {
-  color: var(--Colors-icon-icon-inactive, #989CA0);
+  color: var(--colors-icon-icon-inactive, #989CA0);
   cursor: not-allowed;
 }
 </style>

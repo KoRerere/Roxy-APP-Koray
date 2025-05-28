@@ -246,7 +246,6 @@ function subscribeUpgrade() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -286,7 +285,6 @@ async function subscribeDowngrade() {
     showHeader: false,
     modal: true,
     blockScroll: true,
-    innerDialog: true,
     pt: {
       content: '!pa-0'
     },
@@ -328,14 +326,12 @@ function jumpToProfile() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="$route.meta.title" />
+    <ViewsHeader :title="$route.meta.title" />
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount"
-            :list="dataList" :min="sliderMin"></Profile>
-          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[#C7CDD1]"
-            v-if="dataList?.length">
+          <Profile class="w-full" v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" :list="dataList" :min="sliderMin"></Profile>
+          <div class="flex items-center justify-between py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]" v-if="dataList?.length">
             <div class="sub-title">{{ $t('订阅时长') }}</div>
             <div v-if="userPayInfo.isAuto" class="due">{{ $t('自动续订') }}</div>
             <div v-else class="due">
@@ -345,7 +341,7 @@ function jumpToProfile() {
               }) }}</span>
             </div>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
         </div>
         <div class="relative w-88">
@@ -374,10 +370,8 @@ function jumpToProfile() {
             </template>
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
-                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0"
-                  :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
-                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
-                  scope="global">
+                <RxButton size="lg" :disabled="isUpgrade && needPayAmount === 0" :label="userPayInfo.isAuto && !isUpgrade ? $t('确认') : $t('前往支付')" @click="onSubscribe"></RxButton>
+                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
                     }}</a>
@@ -386,12 +380,11 @@ function jumpToProfile() {
               </div>
             </template>
           </Detail>
-          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount"
-            class="mt2.5 whitespace-pre-wrap next-bill">{{
-              $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
-                bill: currency(nextBill.amount).format(),
-                date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
-              }) }}
+          <div v-if="!loading && needPayAmount && isUpgrade && nextBill.amount" class="mt2.5 whitespace-pre-wrap next-bill">{{
+            $t('* 下个账单费用: {bill}\n* 下个账单生效日期: {date}', {
+              bill: currency(nextBill.amount).format(),
+              date: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
+            }) }}
           </div>
         </div>
       </div>
@@ -401,14 +394,14 @@ function jumpToProfile() {
 
 <style module="popup" lang="scss">
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: normal;
 }
 
 .content {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 400;
   line-height: 25.6px;
@@ -417,7 +410,7 @@ function jumpToProfile() {
 
 <style lang="scss" scoped>
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -425,18 +418,18 @@ function jumpToProfile() {
 }
 
 .due {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   line-height: normal;
 
   &-day {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
   }
 }
 
 .details {
   &-label {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -444,7 +437,7 @@ function jumpToProfile() {
   }
 
   &-oldprice {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;
@@ -461,7 +454,7 @@ function jumpToProfile() {
   }
 
   &-diffprice {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     text-align: right;
     font-family: Inter;
     font-size: 12px;
@@ -471,14 +464,14 @@ function jumpToProfile() {
 }
 
 .terms {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: 18px;
 
   /* 150% */
   &-link {
-    color: var(--Colors-Text-text-brand, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
@@ -489,7 +482,7 @@ function jumpToProfile() {
 }
 
 .next-bill {
-  color: var(--Colors-Text-text-secondary, #575D61);
+  color: var(--colors-text-text-secondary, #B2B6B8);
   font-family: Inter;
   font-size: 14px;
   line-height: 22.4px;

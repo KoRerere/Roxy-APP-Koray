@@ -36,7 +36,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
   }
 
   .title {
-    color: var(--Color-neutrals-950, #0e1214);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -45,7 +45,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
   }
 
   .description {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-tertiary, #8A9093);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

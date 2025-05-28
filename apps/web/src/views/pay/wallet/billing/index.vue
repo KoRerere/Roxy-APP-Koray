@@ -135,23 +135,28 @@ defineExpose({
   <div>
     <div class="px-6 title">{{ $t('账单列表') }}</div>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="rxtable" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+      <RyTable ref="rxtable" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest"
+        :show-actions="false" :show-display="false" :context-menu="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_coin.svg" :title="$t('暂无帐单记录')" :desc="$t('您的付款记录和订阅订单将在此显示')">
           </CustomEmpty>
         </template>
         <template #amount="{ data }">
-          <div class="amount inc " :class="{ '!color-[#C7CDD1]': data.payStatus === PaymentStatus.Closed }" v-if="[OrderType.Recharge, OrderType.Withdraw, OrderType.Refund].includes(data.orderType)">
+          <div class="amount inc "
+            :class="{ '!color-[var(--colors-text-text-inactive)]': data.payStatus === PaymentStatus.Closed }"
+            v-if="[OrderType.Recharge, OrderType.Withdraw, OrderType.Refund].includes(data.orderType)">
             {{ currency(data.actualAmount, { symbol: '+$' }).format() }}
           </div>
-          <div class="amount " :class="{ '!color-[#C7CDD1]': data.payStatus === PaymentStatus.Closed }" v-else>
+          <div class="amount "
+            :class="{ '!color-[var(--colors-text-text-inactive)]': data.payStatus === PaymentStatus.Closed }" v-else>
             {{ currency(data.actualAmount, { symbol: '-$' }).format() }}
           </div>
         </template>
         <template #status="{ data }">
           <div class="flex items-center gap-2.5 status" :class="{ 'red': data.payStatus === PaymentStatus.Wait }">
             <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-            <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
+            <RxButton v-if="data.payStatus === PaymentStatus.Wait" outlined severity="secondary" :label="$t('立即支付')"
+              icon="base/rx_ic_credit_card" size="xxs" @click="onRepay(data)"></RxButton>
           </div>
         </template>
       </RyTable>
@@ -161,7 +166,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -169,25 +174,25 @@ defineExpose({
 }
 
 .amount {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
 
   &.inc {
-    color: var(--Color-green-300, #1CC94D);
+    color: var(--primitives-green-500, #1CC94D);
   }
 }
 
 .status {
-  color: var(--Color-neutrals-950, #0E1214);
+  color: var(--colors-text-text-primary, #111213);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 
   &.red {
-    color: var(--Color-red-300, #F53838);
+    color: var(--primitives-red-500, #F53838);
   }
 }
 </style>

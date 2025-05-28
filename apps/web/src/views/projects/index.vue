@@ -1,41 +1,60 @@
 <script setup lang="tsx">
-import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
+import RxAvatar from '/@/components/rx-avatar'
+import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { ProjectPin } from '/@/enums/project'
-import useColumns from '/@/hooks/useColumns'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
 import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useProjectActions } from '/@/views/projects/hooks/useProject'
-import columnsRow from './columns'
-import { useInviteUserFormDialog } from './hooks/useInviteUserFormDialog'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useUserStore } from '/@/stores/user'
 import { BUSINESS_CODE } from '/@/constants/business-code'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useDialog } from '/@/hooks/useDialog'
+import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy/backend-api'
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
-const tableRef = useTemplateRef('accountTable')
-const [showInviteUserFormDialog] = useInviteUserFormDialog()
-const toast = useToast()
+const tableRef = useTemplateRef('account')
 const confirm = useConfirm()
+const [showToast, onlyErrorToast] = useResponseToast()
+const [projectModfiyDialog] = useProjectActions({ toast: false })
+const [showModal] = useDialog()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
-const [projectModfiyDialog] = useProjectActions()
-const [showToast] = useResponseToast()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
 
-
-const [columns] = useColumns(columnsRow)
+const columns = [
+  {
+    title: $t('项目信息'),
+    key: 'projectName',
+    slot: 'projectName',
+  },
+  {
+    title: $t('成员'),
+    render: ({ data }: any) => {
+      const list = data.user_info.map((item: any) => ({
+        avatar: item.avatar,
+        name: item.userName.slice(0, 2),
+        color: item.avatarColor,
+      }))
+      return <RxAvatar list={list} size={28} font-size={14} />
+    },
+  },
+  {
+    title: $t('其他'),
+    style: 'width: 9rem',
+    slot: 'actions',
+  },
+]
 
 const role = useRoleStore()
 
@@ -114,7 +133,7 @@ function operationHandler(operate: any, data?: any) {
       pinProject(data)
       break
     case 'invite':
-      showInviteUserFormDialog({ projectIds: [data.project_id], tableRef: tableRef as any })
+      inviteUserInProject(data)
       break
     case 'edit':
       projectModfiyDialog({
@@ -142,10 +161,8 @@ async function pinProject(data: Project) {
   const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus: pinStatus as number })
   if (code === 0) {
     tableRef.value?.refresh()
-    showToast(code, isPinned ? $t('取消固定到侧边栏') : $t('成功固定到侧边栏'))
-  }
-  else {
-    showToast(code, msg)
+  } else {
+    onlyErrorToast(code, msg)
   }
 }
 
@@ -166,12 +183,9 @@ function deletePopup(item: Project) {
       // 先删除本地项目
       await electronAPI.send('util:removeProject', { workspaceId: currentWorkspace?.id as number, projectId: item.project_id as number })
       const { code, msg } = await API.limit.userDelProjectInfoCreate({ projectId: item.project_id! })
+      onlyErrorToast(code, msg || $t('删除失败'))
       if (code === 0) {
         tableRef.value?.refresh()
-        toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('删除成功'), life: 3000 })
-      }
-      else {
-        toast.add({ severity: 'error', summary: $t('发生错误'), detail: msg || $t('删除失败'), life: 3000 })
       }
     },
   })
@@ -182,17 +196,38 @@ function showOperationMenu({ event, operation }: { event: MouseEvent, operation:
     model: operation,
   })
 }
+
+async function inviteUserInProject(project: Project) {
+  const { user_info, projectName, project_id } = project
+  const { data: { rows: allMembers } } = await API.team.userGetMemberInfoByWorkspaceList({})
+
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    pt: {
+      content: '!pa-0'
+    },
+    slots: {
+      container: ({ hideModal }) => <InviteUserModal
+        v-model:currentMembers={user_info}
+        allMembers={allMembers}
+        project={{ projectName, projectId: project_id }}
+        onClose={hideModal}
+      />
+    },
+  })
+}
 </script>
 
 <template>
   <div class="flex flex-col h-full account">
-    <ViewsHeader class="account-header" :title="$t('项目管理')">
-      <RxButton v-if="role.isOwner || role.isManager" size="xxs" severity="info" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
+    <ViewsHeader :divider="false" :title="$t('项目管理')">
+      <RxButton v-if="role.isOwner || role.isManager" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="account-content">
-      <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-gridlines="false" :show-actions-menu="false"
-        :show-actions="false" data-key="project_id">
+      <RyTable ref="account" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
+        :show-gridlines="false" :show-actions-menu="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
@@ -220,7 +255,7 @@ function showOperationMenu({ event, operation }: { event: MouseEvent, operation:
 <style lang="scss" scoped>
 .account {
   &-header {
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
   }
 
   &-content {

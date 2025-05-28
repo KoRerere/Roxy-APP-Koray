@@ -9,14 +9,10 @@ interface TagActionsOptions {
   toast?: boolean
 }
 
-const defaultOptions: TagActionsOptions = {
-  toast: true,
-}
-
-export function useTagsActions(options: TagActionsOptions = defaultOptions) {
+export function useTagsActions() {
   const dialog = useDialog()
 
-  const [showToast] = useResponseToast()
+  const [_, onlyErrorToast] = useResponseToast()
 
   function editDialog(props?: any) {
     const { confirmNext, ...data } = props || {}
@@ -34,12 +30,9 @@ export function useTagsActions(options: TagActionsOptions = defaultOptions) {
             ? await API.window.userMdfLabelInfoCreate({ ...params, id: data.id })
             : await API.window.userAddLabelInfoCreate(params)
 
+          onlyErrorToast(res.code, res.msg)
           if (res.code === 0) {
             isLikeFunction(confirmNext) && await confirmNext({ params, res })
-          }
-
-          if (options.toast || res.code !== 0) {
-            showToast(res.code, res.msg)
           }
         },
         onCancel: () => { },

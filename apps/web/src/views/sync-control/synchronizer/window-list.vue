@@ -121,7 +121,7 @@ const searchList = computed(() => {
       placeholder: $t('全部系统'),
       options: tableData.value.reduce((acc, curr) => {
         if (!acc.find((n: any) => n.value === curr.os)) {
-          acc.push({ label: curr.os, value: curr.os })
+          acc.push({ label: curr.os === 'IOS' ? 'iOS' : curr.os, value: curr.os })
         }
         return acc
       }, [])
@@ -142,7 +142,8 @@ watch(tableFilterData, (val) => {
   if (val.length > 1) {
     disabledRows()
     if (!props.mainControlWindowDirId) {
-      mainControlWindowDirId.value = val.find(n => n.$canUseSyncControl)?.dirId
+      const canUseWindows = val.filter(n => n.$canUseSyncControl)
+      mainControlWindowDirId.value = canUseWindows.some(n => n.dirId === mainControlWindowDirId.value) ? mainControlWindowDirId.value : canUseWindows[0].dirId
     }
   }
 })
@@ -227,29 +228,23 @@ electronAPI.on('syncControl:start', startSync)
 </script>
 
 <template>
-  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false"
-    :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
-    :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table"
-    :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }" @row-select-all="handleRowSelectAll"
-    v-bind="$attrs">
+  <RyTable ref="syncControlTable" v-model:selection="selectedRows" :multipleOperation="false" :data-list="tableFilterData" :columns="columns" :selection-mode="selectionMode" :paginator="false"
+    :show-actions="false" :show-display="false" :context-menu="false" class="sync-control-table" :class="{ syncing: isSyncing, 'no-data': tableFilterData.length === 0 }"
+    @row-select-all="handleRowSelectAll" v-bind="$attrs">
     <template v-if="!isSyncing && tableData.length" #table-header>
       <div class="w-full flex justify-between">
         <template v-for="item in searchList" :key="item.name">
-          <MultiSelect v-model="searchParams[item.name]" :options="item.options" :showToggleAll="false"
-            optionLabel="label" optionValue="value" :placeholder="item.placeholder" :maxSelectedLabels="1" size="small">
+          <MultiSelect v-model="searchParams[item.name]" :options="item.options" :showToggleAll="false" optionLabel="label" optionValue="value" :placeholder="item.placeholder" :maxSelectedLabels="1"
+            size="small">
             <template #option="slotProps">
               <template v-if="item.name === 'labelIds'">
                 <div v-if="slotProps.option.value.startsWith?.('u_')" class="flex items-center gap-2">
-                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)"
-                    :color="slotProps.option.labelColor" :size="18" :font-size="10" />
+                  <RxAvatar :avatar="slotProps.option.avatar" :name="slotProps.option.label?.slice(0, 2)" :color="slotProps.option.labelColor" :size="18" :font-size="10" />
                   <span>{{ slotProps.option.label }}</span>
                 </div>
                 <div v-else class="flex items-center">
-                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
-                    fill="none">
-                    <path
-                      d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z"
-                      :fill="slotProps.option.labelColor" />
+                  <svg class="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M5 8C5 6.34315 6.34315 5 8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8Z" :fill="slotProps.option.labelColor" />
                   </svg>
                   <div class="ellipsis-1">
                     {{ slotProps.option.labelName }}
@@ -269,8 +264,7 @@ electronAPI.on('syncControl:start', startSync)
       </div>
     </template>
     <template #table-empty>
-      <CustomEmpty v-if="tableData.length && tableFilterData.length === 0" icon="rx_illustration_filter.svg"
-        :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
+      <CustomEmpty v-if="tableData.length && tableFilterData.length === 0" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
       <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('请先打开至少两个窗口')">
         <template #desc>
           <div class="whitespace-pre-wrap">
@@ -290,8 +284,7 @@ electronAPI.on('syncControl:start', startSync)
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
-      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data"
-        :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
+      <ProfileInfo :workspace-name="data?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" :filter-keys="['os']" readonly :class="{ 'can-use-sync-control': data.$canUseSyncControl }" />
     </template>
     <template #status="{ data }">
       <div v-if="data.dirId === mainControlWindowDirId" class="main-control-status">
@@ -305,8 +298,7 @@ electronAPI.on('syncControl:start', startSync)
       <div class="flex gap-2 cursor-pointer">
         <RxSvgIcon v-tooltip="$t('预览')" name="base/rx_ic_show_profile" @click.stop="viewBrowser(data.dirId)" />
         <span v-tooltip="$t('设为主控')">
-          <RxSvgIcon name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }"
-            @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
+          <RxSvgIcon name="base/rx_ic_cursor" :class="{ 'disable-set-main': isSyncing }" @click.stop="isSyncing || (mainControlWindowDirId = data.dirId)" />
         </span>
       </div>
     </template>
@@ -342,7 +334,7 @@ electronAPI.on('syncControl:start', startSync)
 .p-datatable-table-container {
   border-radius: 8px;
   overflow: hidden;
-  background-color: white;
+  background: var(--colors-background-bg-page, #05101A);
 
   td[data-pc-section="emptymessagecell"] {
     border: none;
@@ -359,24 +351,24 @@ electronAPI.on('syncControl:start', startSync)
       position: absolute;
       width: 100%;
       height: 20px;
-      background-color: white;
+      background: var(--colors-background-bg-page, #05101A);
       top: -20px;
     }
 
     th.p-datatable-header-cell {
       border-top-width: 0.5px;
-      border-top-color: var(--Colors-Border-border-subtle, #E4E8EB);
+      border-top-color: var(--colors-border-border-subtle, #E4E8EB);
     }
 
     th.p-datatable-header-cell:first-of-type {
-      border: 0.5px solid var(--Colors-Border-border-subtle, #E4E8EB);
+      border: 0.5px solid var(--colors-border-border-inactive, #293038);
       border-right-width: 0;
       border-top-left-radius: var(--radius-sm, 4px);
       border-bottom-left-radius: var(--radius-sm, 4px);
     }
 
     th.p-datatable-header-cell:last-of-type {
-      border: 0.5px solid var(--Colors-Border-border-subtle, #E4E8EB);
+      border: 0.5px solid var(--colors-border-border-inactive, #293038);
       border-left-width: 0;
       border-top-right-radius: var(--radius-sm, 4px);
       border-bottom-right-radius: var(--radius-sm, 4px);
@@ -396,7 +388,7 @@ electronAPI.on('syncControl:start', startSync)
 <style lang="scss" scoped>
 .sync-control-table {
   overflow: hidden;
-  border: 0.5px solid var(--Colors-Border-border-container, #C7CDD1);
+  border: 0.5px solid var(--colors-border-border-inactive, #C7CDD1);
   border-radius: var(--radius-sm, 6px);
 
 
@@ -410,7 +402,7 @@ electronAPI.on('syncControl:start', startSync)
     padding: 12px;
     padding-bottom: 0;
     border-bottom: 0;
-    background-color: white;
+    background-color: var(--colors-background-bg-page, #05101A);
 
     .p-multiselect-label {
       height: 100%;
@@ -426,8 +418,8 @@ electronAPI.on('syncControl:start', startSync)
   align-items: center;
   gap: 10px;
   border-radius: 4px;
-  background: var(--Color-blue-200, #7ECCFC);
-  color: var(--Color-blue-500, #015C94);
+  background: var(--primitives-blue-400, #7ECCFC);
+  color: var(--primitives-blue-700, #015C94);
   font-size: 12px;
   font-weight: bold;
   line-height: var(--Line-Height-text-xs, 16px);

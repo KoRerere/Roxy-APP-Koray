@@ -6,7 +6,7 @@
     </div>
     <Menu ref="menu" :model="items" :popup="true">
       <template #item="{ item, props }">
-        <a v-ripple class="flex items-center" v-bind="props.action">
+        <a v-ripple class="flex items-center whitespace-nowrap" v-bind="props.action">
           <RxSvgIcon :name="(item.icon as SvgNames)" />
           <span>{{ item.label }}</span>
         </a>
@@ -106,7 +106,6 @@ const toggle = (event: Event) => {
     height: 48px;
     background-color: #12A3FC;
     border-radius: 50%;
-    border: 1px solid #FFF;
   }
 
   .tooltip {
@@ -119,12 +118,12 @@ const toggle = (event: Event) => {
     align-items: center;
     gap: 10px;
     border-radius: var(--radius-sm, 4px);
-    background: var(--Color-neutrals-900, #171C1F);
+    background: var(--primitives-neutrals-900, #171C1F);
 
     /* shadow-md */
     box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
     white-space: nowrap;
-    color: var(--Color-neutrals-0, #FFF);
+    color: var(--primitives-neutrals-0, #FFF);
     text-align: center;
     font-family: Inter;
     font-size: 12px;

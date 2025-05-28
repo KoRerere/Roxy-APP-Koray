@@ -1,55 +1,50 @@
 <script lang="ts" setup>
-import type { CSSProperties } from 'vue'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-// import { hexToRgba } from '/@/utils'
 
-const props = defineProps({
-  type: {
-    type: String as PropType<'success' | 'info' | 'warn' | 'error'>,
-    default: 'success',
-  },
-  title: {
-    type: String,
-    default: '',
-  },
-  content: {
-    type: String,
-    default: '',
-  },
-  closable: {
-    type: Boolean,
-    default: true,
-  },
-})
+interface Props {
+  type?: 'success' | 'info' | 'warn' | 'error'
+  title?: string
+  content?: string
+  closable?: boolean
+  announcement?: boolean
+}
+
+const { type = 'success', announcement = false, closable = true } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
 const visibleModel = defineModel('visible', { default: true })
 
-
-
 const iconMap: Record<string, [string, SvgNames]> = {
-  success: ['var(--colors-icon-icon-success, #1DC94D)', 'status/rx_ic_check_fill'],
-  error: ['var(--colors-icon-icon-error, #F53838)', 'base/rx_ic_delete_fill'],
-  info: ['var(--colors-icon-icon-info, #12A3FC)', 'base/rx_ic_info_fill'],
-  warn: ['var(--colors-icon-icon-warn, #FC9D12)', 'base/rx_ic_warn_fill'],
+  success: ['var(--colors-icon-icon-success)', 'status/rx_ic_check_fill'],
+  error: ['var(--colors-icon-icon-error)', 'base/rx_ic_delete_fill'],
+  info: ['var(--colors-icon-icon-info)', 'base/rx_ic_info_fill'],
+  warn: ['var(--colors-icon-icon-warning)', 'base/rx_ic_warn_fill'],
 }
 
-const bgColor = computed(() => {
+const colorType = computed(() => {
+  const [titleColor, borderColor, bgColor] = {
+    success: ['var(--component-alert-announcement-text-success)', 'var(--component-alert-announcement-border-success)', 'var(--component-alert-bg-success)'],
+    error: ['var(--component-alert-announcement-text-error)', 'var(--component-alert-announcement-border-error)', 'var(--component-alert-bg-error)'],
+    info: ['var(--component-alert-announcement-text-info)', 'var(--component-alert-announcement-border-info)', 'var(--component-alert-bg-info)'],
+    warn: ['var(--component-alert-announcement-text-warning)', 'var(--component-alert-announcement-border-warning)', 'var(--component-alert-bg-warn)'],
+  }
+  [type]
   return {
-    success: 'var(--component-alert-bg-success, #CEF8D4)',
-    error: 'var(--component-alert-bg-error, #FDD6D3)',
-    info: 'var(--colors-background-bg-info, #DEF3FF)',
-    warn: 'var(--component-alert-bg-warn, #FEEAC7)',
-  }[props.type]
+    titleColor: announcement ? titleColor : 'var(--colors-text-text-primary)',
+    borderColor: announcement ? borderColor : bgColor,
+    bgColor
+  }
 })
 
+const alignItems = computed(() => announcement ? 'center' : 'flex-start')
+const titleColor = computed(() => colorType.value.titleColor)
+const borderColor = computed(() => colorType.value.borderColor)
+const bgColor = computed(() => colorType.value.bgColor)
+
 const iconProps = computed(() => {
-  const [color, name] = iconMap[props.type]
-  return {
-    color,
-    name,
-  }
+  const [color, name] = iconMap[type]
+  return { color, name }
 })
 
 function handleClose() {
@@ -99,13 +94,16 @@ function handleClose() {
 :where(.rx-alert) {
   display: flex;
   width: 360px;
-  padding: var(--spacing-xl, 12px);
-  align-items: flex-start;
+  padding: 10px 12px;
+  align-items: v-bind(alignItems);
   gap: 10px;
-  border-radius: var(--radius-md, 6px);
+  border-radius: 6px;
   background: v-bind(bgColor);
   overflow: hidden;
   transition: height 0.2s;
+  border-width: 1px;
+  border-style: solid;
+  border-color: v-bind(borderColor);
 
   &.hide {
     height: 0 !important;
@@ -123,23 +121,19 @@ function handleClose() {
 
     .rx-alert__title {
       width: 100%;
-      color: var(--colors-text-text-primary, #111213);
+      color: v-bind(titleColor);
       font-family: Inter;
       font-size: 12px;
-      font-style: normal;
       font-weight: 600;
       line-height: normal;
     }
 
     .rx-alert__content {
       width: 100%;
-      color: var(--colors-text-text-secondary, #34393D);
+      color: var(--colors-text-text-secondary);
       font-family: Inter;
       font-size: 12px;
-      font-style: normal;
-      font-weight: 400;
       line-height: 18px;
-      /* 150% */
     }
   }
 
@@ -147,11 +141,11 @@ function handleClose() {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--colors-icon-icon-tertiary);
     transition: color 0.2s;
 
     &:hover {
-      color: rgba(0, 0, 0, 0.88);
+      color: var(--colors-icon-icon-tertiary-hover);
     }
   }
 }

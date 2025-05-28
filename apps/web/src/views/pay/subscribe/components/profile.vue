@@ -61,7 +61,7 @@ function onBeforeMinus(value: number) {
 }
 
 function showIllustrate(event: Event) {
-  popoverRef.value!.getRef().toggle(event)
+  popoverRef.value!.getRef()?.toggle(event)
 }
 
 </script>
@@ -79,7 +79,10 @@ function showIllustrate(event: Event) {
               <NumberFlow :spinTiming="{ duration: 550 }" :opacityTiming="{ duration: 250 }" willChange class="ml-1 current-price" :value="selectedPlan.windowPrice"></NumberFlow>
               <span class="ml-2.5 current-text">/{{ $t('窗口') }}</span>
             </div>
-            <div class="current-desc">{{ $t('窗口单价（{value} 数量区间）', { value: `${selectedPlan.minWindows + 1}~${selectedPlan.maxWindows}` }) }}</div>
+            <div class="current-desc">{{ $t('窗口单价（{value} 数量区间）', {
+              value: `${selectedPlan.minWindows +
+                1}~${selectedPlan.maxWindows}`
+            }) }}</div>
           </div>
         </template>
       </TierSlider>
@@ -87,7 +90,7 @@ function showIllustrate(event: Event) {
     <div class="flex items-center justify-between py-8">
       <div class="flex items-center gap-1.5">
         <span class="sub-title">{{ $t('窗口数量') }}</span>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="#C7CDD1" @click="showIllustrate"></SvgIcon>
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate"></SvgIcon>
       </div>
       <RxStep size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
         :beforeMinus="onBeforeMinus" @change="onChangeCount" @update:modelValue="onUpdate"></RxStep>
@@ -112,7 +115,7 @@ function showIllustrate(event: Event) {
 }
 
 .title {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-secondary);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
@@ -120,7 +123,7 @@ function showIllustrate(event: Event) {
 
 .current {
   &-price {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 36px;
     font-weight: 600;
@@ -128,7 +131,7 @@ function showIllustrate(event: Event) {
   }
 
   &-unit {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 24px;
     font-weight: 600;
@@ -136,7 +139,7 @@ function showIllustrate(event: Event) {
   }
 
   &-text {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
@@ -144,7 +147,7 @@ function showIllustrate(event: Event) {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-secondary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
@@ -153,7 +156,7 @@ function showIllustrate(event: Event) {
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;

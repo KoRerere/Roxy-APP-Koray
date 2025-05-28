@@ -82,7 +82,7 @@ emitter.on('kickedOut', (params) => {
 }
 
 .p-tooltip-text {
-  color: var(--Color-neutrals-0, #FFF);
+  color: var(--primitives-neutrals-0, #FFF);
   font-family: Inter;
   font-size: 12px;
   font-weight: 600;

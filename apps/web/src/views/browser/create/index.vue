@@ -26,6 +26,7 @@ import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { BUSINESS_CODE } from '/@/constants/business-code'
+import { useToast } from 'primevue/usetoast'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -54,12 +55,13 @@ const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
-const { userInfo, userPayInfo } = storeToRefs(userStore)
+const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const backRoute = useBackRoute()
 const { handleBusinessCode } = useHandleBusinessCode()
+const toast = useToast()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -135,7 +137,6 @@ const profileTemplate = reactive<ProfileTemplate>({
 const isOwner = computed(() => currentWorkspace.value?.role === Role.OWNER)
 
 watch(() => tabsValue.value, (value: any) => {
-  setInputVisible(inputsGroup.value[0], 'windowPlatformList', value === 'single')
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
   onUpdateFinger()
@@ -175,7 +176,7 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
-  profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
+  // profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
@@ -226,6 +227,7 @@ async function createProfile(openBrowser: boolean) {
 async function singleCreateProfile(params: any, openBrowser: boolean) {
   loading.value = true
   const { code, data, msg } = await API.window.userAddWindowInfoV2Create(params)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     const { path, query } = backRoute
     console.log('onBack', path, query)
@@ -243,7 +245,6 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
   }
-  showToast(code, msg)
   loading.value = false
 }
 
@@ -256,12 +257,12 @@ async function batchCreateProfile(params: any) {
   }
 
   loading.value = true
-  const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: createCount.value, preview: false })
+  const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
   params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     router.back()
     workspaceStore.getWorkspaceList()
@@ -284,6 +285,7 @@ async function importProfile(params: any) {
   const { code, msg } = await API.window.userImportWindowInfoV2Create({ ...params, ...fileAnalyzeData.value, fingerDetail, workspaceId: currentWorkspace.value?.id })
   loading.value = false
   if (code === 0) {
+    showToast(0, msg)
     router.back()
     workspaceStore.getWorkspaceList()
     userStore.fetchUserInfo()
@@ -306,19 +308,24 @@ const items = computed(() => [
 ])
 
 async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  if (!isOwner.value) {
-    handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
-    return
-  }
+  // if (!isOwner.value) {
+  //   handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
+  //   return
+  // }
 
   // 没有付费过的用户则提示付费墙
-  if (userPayInfo.value?.subLevel === SubLevelEnum.Free) {
+  if (isOwner.value && userPayInfo.value?.subLevel === SubLevelEnum.Free) {
     return emitter.emit("showPayWall", {
       event,
       params: {
         type: "createProfileTemplates",
       },
     });
+    // if (isOwner.value) {
+
+    // } else {
+    //   return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
+    // }
   }
 
   dialog.open(simplePopup, {
@@ -362,7 +369,7 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
   const { code, msg } = id
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-
+  // onlyErrorToast(code, msg)
   if (code === 0) {
     getTemplateList()
   } else {
@@ -387,31 +394,19 @@ async function deleteTemplate(data: any) {
     },
     accept: async () => {
       const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         getTemplateList()
       }
     },
   })
 }
-
-function handleWindowNameInputBlur() {
-  if (windowName.value.trim() === '') {
-    windowName.value = defaultWindowName
-  }
-}
-
-function handleWindowNameStartEdit() {
-  if (windowName.value === defaultWindowName) {
-    windowName.value = ''
-  }
-}
 </script>
 
 <template>
   <div class="flex justify-between h-full">
     <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :title="$t('创建窗口')" />
+      <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
       <div class="profile-tabs">
         <Tabs v-model:value="tabsValue">
           <TabList>
@@ -446,9 +441,11 @@ function handleWindowNameStartEdit() {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
+          :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
+              @click.stop="saveTemplatePopup($event)" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>
@@ -462,7 +459,7 @@ function handleWindowNameStartEdit() {
 <style lang="scss" scoped>
 .profile-tabs {
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
+  border-bottom: 0.5px solid var(--colors-border-divider);
 
   :deep(.p-tablist-tab-list) {
     gap: var(--spacing-2xl, 16px);
@@ -470,7 +467,7 @@ function handleWindowNameStartEdit() {
 
     .p-tab {
       padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: var(--Font-Size-text-sm, 12px);
       font-weight: 500;
@@ -483,7 +480,7 @@ function handleWindowNameStartEdit() {
     }
 
     .p-tab-active {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
     }
 
     .p-tablist-active-bar {
@@ -500,19 +497,19 @@ function handleWindowNameStartEdit() {
 }
 
 .multi-block {
-  color: var(--Component-Colors-TextInput-label-label, #171c1f);
+  color: var(--colors-text-text-primary, #171c1f);
   font-family: Inter;
   font-size: 13px;
   font-weight: 500;
 
   &-info {
     margin-top: var(--spacing-xs, 4px);
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     text-align: right;
     font-size: 12px;
 
     &-jump {
-      color: var(--Colors-Text-text-brand, #12a3fc);
+      color: var(--colors-text-text-brand, #12a3fc);
       cursor: pointer;
       user-select: none;
     }
@@ -525,7 +522,7 @@ function handleWindowNameStartEdit() {
     font-size: var(--Font-Size-text-sm, 12px);
     line-height: var(--Line-Height-text-lg, 20px);
     border-width: 1px;
-    // border-color: var(--Component-Colors-Buttons-Primary-border, #0881cc);
+    // border-color: var(#0881cc, #0881cc);
 
     &:not(:disabled):hover {
       border-width: 1px;

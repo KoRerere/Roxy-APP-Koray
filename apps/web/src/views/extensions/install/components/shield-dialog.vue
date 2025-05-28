@@ -138,8 +138,8 @@ checkExtensionInfo()
     align-items: center;
     gap: 13.333px;
     border-radius: 8px;
-    border: 1px solid var(--Colors-Border-border-container, #C7CDD1);
-    background: var(--Colors-Background-bg-body, #FFF);
+    border: 1px solid var(--colors-border-border-base, #C7CDD1);
+    background: var(--colors-background-bg-app, #FFF);
 
     img {
       display: flex;
@@ -162,7 +162,7 @@ checkExtensionInfo()
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 16px;
       font-style: normal;
@@ -171,7 +171,7 @@ checkExtensionInfo()
     }
 
     .extension-info-version {
-      color: var(--Colors-Text-text-tertiary, #7C8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: "JetBrains Mono";
       font-size: 14px;
       font-style: normal;
@@ -191,7 +191,7 @@ checkExtensionInfo()
 }
 
 .extension-info-step-title {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -231,7 +231,7 @@ checkExtensionInfo()
   .extension-info-step-item-name {
     display: flex;
     align-items: center;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-style: normal;
@@ -244,7 +244,7 @@ checkExtensionInfo()
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: var(--Colors-Text-text-link, #12A3FC);
+    color: var(--colors-text-text-brand, #12A3FC);
     text-align: center;
     font-family: Inter;
     font-size: 12px;
@@ -254,7 +254,7 @@ checkExtensionInfo()
   }
 
   .extension-info-step-item-desc {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-size: 12px;
     font-style: normal;
     font-weight: 400;

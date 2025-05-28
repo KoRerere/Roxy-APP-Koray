@@ -13,9 +13,9 @@ const router = express.Router()
 
 /** 获取账号列表 */
 router.get('/account', async (req, res) => {
-  const { workspaceId, ...rest } = req.query as Record<string, any>
+  const { workspaceId, accountId: id, ...rest } = req.query as Record<string, any>
   try {
-    const result = await API.platform.userGetPlatformInfoV2List({ ...rest }, { headers: { workspaceId, ...openAPICommonHeaders } })
+    const result = await API.platform.userGetPlatformInfoV2List({ id, ...rest }, { headers: { workspaceId, ...openAPICommonHeaders } })
     if (result.code === 0 && result.data?.rows) {
       result.data.rows = mappingKeys(accountMapping, result.data.rows)
     }
@@ -214,7 +214,7 @@ router.post('/close', async (req, res) => {
   }
 
   try {
-    await browserManager.close(dirId)
+    await browserManager.batchClose([dirId])
     res.success()
   }
   catch (error) {

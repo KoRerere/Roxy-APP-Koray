@@ -118,7 +118,7 @@ watch(() => formData.value.clickIntervalMaxMs, () => {
 .divider {
   width: 10px;
   height: 1px;
-  background: var(--Colors-Border-border-container, #C7CDD1);
+  background: var(--colors-border-border-base, #C7CDD1);
 }
 
 .input-number-row {

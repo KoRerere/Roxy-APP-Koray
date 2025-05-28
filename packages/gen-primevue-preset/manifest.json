@@ -3,7 +3,11 @@
   "id": "1225458390710809705",
   "api": "1.0.0",
   "editorType": [
-    "figma"
+    "dev"
+  ],
+  "capabilities": [
+    "inspect",
+    "vscode"
   ],
   "permissions": [],
   "documentAccess": "dynamic-page",

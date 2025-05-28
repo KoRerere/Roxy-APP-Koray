@@ -3,6 +3,8 @@ import RxAvatar from '/@/components/rx-avatar'
 import { getRandomInt } from '/@/utils'
 import { defaultColors } from '/@/utils/constants'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useFileDialog } from '@vueuse/core'
+import { $t } from '/@/locales'
 
 defineProps({
   userName: String,
@@ -13,11 +15,22 @@ const emit = defineEmits(['change'])
 const modelValue = defineModel<string>()
 const previewUrl = ref(modelValue.value)
 const [showToast] = useResponseToast()
+const { open, onChange } = useFileDialog({
+  accept: 'image/png, image/jpeg, image/jpg, image/bmp', // Set to accept only image files
+  directory: false, // Select directories instead of files if set true
+})
 
 const color = defaultColors[getRandomInt(0, defaultColors.length - 1)]
 
-async function uploadAvatar() {
-  const localPath = await electronAPI.send('dialog:selectFile', [{ name: 'Images', extensions: ['jpg', 'png', 'jpeg', 'bmp'] }])
+onChange(async (files) => {
+  if (!files?.length) return
+
+  if (files[0].size > 2 * 1024 * 1024) {
+    showToast(-1, $t('推荐尺寸为 64*64，最大不超过 2MB'))
+    return
+  }
+
+  const localPath = await electronAPI.getPathForFile(files[0])
   if (localPath) {
     previewUrl.value = await electronAPI.send('util:toMediaPath', localPath)
     if (previewUrl.value) {
@@ -31,7 +44,7 @@ async function uploadAvatar() {
       }
     }
   }
-}
+})
 
 async function removeAvatar() {
   previewUrl.value = ''
@@ -47,8 +60,7 @@ async function removeAvatar() {
     <div class="upload-area-buttons">
       <RxButton v-if="previewUrl" outlined severity="secondary" size="sm" icon="base/rx_ic_delete" :label="$t('移除')"
         @click="removeAvatar" />
-      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')"
-        @click="uploadAvatar" />
+      <RxButton outlined severity="secondary" size="sm" icon="base/rx_ic_export" :label="$t('上传')" @click="open" />
     </div>
   </div>
 </template>
@@ -62,7 +74,7 @@ async function removeAvatar() {
   margin-top: 8px;
   height: 200px;
   border-radius: var(--radius-md, 6px);
-  background: var(--Color-neutrals-100, #f0f3f5);
+  background: var(--colors-background-bg-block, #293038);
 
   &-avatar {
     width: 100px;

@@ -5,6 +5,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { deepClone } from '/@/utils'
 import { useDrawer } from '/@/hooks/useDrawer'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 
 const drawerInstance = useDrawer()
 
@@ -69,15 +70,23 @@ function replaceData(data: any) {
 <template>
   <div>
     <div class="button-group">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')"
+        @click="toggleDrawer('list')" />
+      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')"
+        @click="toggleDrawer('create')" />
     </div>
 
     <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
       <RxCard class="flex gap-2" @click="onEdit(item)" @close="deleteAccount(item)">
         <div>
-          <img v-if="item.platformIcon" class="w-4 h-4" :src="item.platformIcon">
-          <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+          <PlatformIcon 
+            v-if="item.platformIcon"
+            :platformIcon="item.platformIcon"
+            :platformIconDark="item.platformIconDark"
+            class="w-4 h-4"
+          />
+          <!-- <img v-if="item.platformIcon" class="w-4 h-4" :src="item.platformIcon"> -->
+          <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
         </div>
         <div class="flex flex-col flex-1 gap-1">
           <div class="flex items-center account-title">
@@ -108,12 +117,12 @@ function replaceData(data: any) {
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-weight: 500;
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-inactive, #a3a9ad);
   }
 }
 </style>

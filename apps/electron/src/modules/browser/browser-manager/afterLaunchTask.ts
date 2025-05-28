@@ -1,4 +1,4 @@
-import type { Browser, Protocol } from 'puppeteer-core'
+import type { Browser, Protocol } from 'rebrowser-puppeteer-core'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
@@ -158,7 +158,7 @@ export class AfterLaunchTask {
 
     this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
-    }, isPackaged ? 1000 * 60 : 1000 * 5)
+    }, 1000 * 8)
 
     const activePageTargetId = await SyncControlUtil.getActivePageTargetId(this.browserItem)
     const activePage = await this.browser?.pages().then(pages => pages.find(page => page.target()._targetId === activePageTargetId))

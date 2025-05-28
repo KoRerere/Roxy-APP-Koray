@@ -47,12 +47,10 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 :deep(.p-tablist-tab-list) {
   gap: var(--spacing-2xl, 16px);
   padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
 
   .p-tab {
     padding: 14px 8px;
     border-color: transparent;
-    color: var(--Colors-Text-text-secondary, #575D61);
     font-size: 12px;
     font-weight: 400;
     line-height: var(--Line-Height-text-xs, 16px);
@@ -65,7 +63,7 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
   .p-tab-active {
     font-size: 14px;
     font-weight: 700;
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
   }
 
   .p-tablist-active-bar {

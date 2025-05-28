@@ -93,11 +93,12 @@ function handleClick(method: PayWay) {
     justify-content: center;
     gap: 6px;
     height: 86px;
-    border: 2px solid transparent;
-    box-shadow: inset 0px 0px 0px 1px var(--Component-Colors-TextInput-border-border-hover, #C7CDD1);
+    border: 2px solid var(--colors-background-bg-page);
+    background: var(--colors-background-bg-action);
+    box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-action, #48555B);
     border-radius: 8px;
     cursor: pointer;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-size: 14px;
     line-height: normal;
 
@@ -107,11 +108,15 @@ function handleClick(method: PayWay) {
     }
 
     &:not(.disabled).active {
-      border: 2px solid var(--Color-blue-300, #12A3FC);
+      border: 2px solid var(--colors-border-border-brand, #11A3FD);
       background: linear-gradient(180deg, #E8F5FC 0%, #FFF 100%);
-      color: var(--Color-blue-300, #12A3FC);
+      color: var(--pattern-sidenav-text-active, #3FB6FD);
       font-weight: 600;
       box-shadow: none;
+    }
+
+    [data-theme="dark"] &:not(.disabled).active {
+      background: linear-gradient(180deg, var(--pattern-pay-gradient-selected-start, #013D65) 0%, var(--pattern-pay-gradient-selected-end, #293038) 100%);
     }
 
     &-discount {

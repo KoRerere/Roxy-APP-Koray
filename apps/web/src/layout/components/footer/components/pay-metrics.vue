@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import currency from 'currency.js'
 import { createReusableTemplate } from '@vueuse/core';
 import { RxSvgIcon } from '/@/components/rx-icon';
 import Usage from '/@/components/usage.vue'
@@ -21,7 +20,7 @@ const opRef = useTemplateRef('op')
 
 const badgeBgColor = computed(() => {
   if ([SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value?.subLevel as SubLevelEnum)) {
-    return '#90AFC2'
+    return 'var(--pattern-pay-plan-bg-tag-current)'
   }
   return 'linear-gradient(90deg, #8780FE 0%, #C491F1 100%)'
 })
@@ -128,16 +127,14 @@ function onExpand() {
             <RxSvgIcon name="base/rx_ic_arrow_right_2" size="12" />
           </div>
         </div>
-        <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, blockCount)"
-          :block-count="blockCount" />
+        <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, blockCount)" :block-count="blockCount" />
         <div class="inline-flex items-center self-stretch gap-1">
           <PayMetricsList :items="payMetricsItems" />
-          <SvgIcon v-tooltip="{ value: infoValue, pt: { root: '!max-w-[fit-content]', text: '!whitespace-pre' } }"
-            class="cursor-pointer" size="14" name="base/rx_ic_info" color="#C7CDD1"></SvgIcon>
+          <SvgIcon v-tooltip="{ value: infoValue, pt: { root: '!max-w-[fit-content]', text: '!whitespace-pre' } }" class="cursor-pointer" size="14" name="base/rx_ic_info"
+            color="var(--colors-icon-icon-note)"></SvgIcon>
         </div>
         <!-- 七天免费使用 -->
-        <div v-if="userPayInfo?.isTrial === 0" class="pay-metrics-free-usage"
-          @click.stop="$router.push({ name: 'trial-plan' })">
+        <div v-if="userPayInfo?.isTrial === 0" class="pay-metrics-free-usage" @click.stop="$router.push({ name: 'trial-plan' })">
           🎁
           {{ $t('{day} 天免费试用', { day: 7 }) }}
         </div>
@@ -154,15 +151,14 @@ function onExpand() {
   </template>
 
   <div v-else class="pay-metrics-collapsed" @click="toggle">
-    <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, 5)" :block-count="5"
-      shape="circle" />
+    <Usage :ratio="ratio" :color-level="(percent: number) => getColorLevel(percent, 5)" :block-count="5" shape="circle" />
     <!-- <div class="pay-metrics-collapsed-text" v-for="item in actions" :key="item.label" @click.stop="item.command">
       {{ item.label }}
     </div> -->
   </div>
 
   <Popover ref="op" unstyled appendTo="self">
-    <animation-border class="pay-metrics-popover">
+    <animation-border class="pay-metrics-popover" bgColor="var(--colors-background-bg-overlay)">
       <ReuseTemplate />
     </animation-border>
   </Popover>
@@ -182,7 +178,7 @@ function onExpand() {
 
   .pay-metrics-divider {
     margin: 0 10px;
-    border-top: 1px dashed var(--Colors-Border-border-container, #C7CDD1);
+    border-top: 1px dashed var(--colors-border-border-base, #C7CDD1);
   }
 
   .pay-metrics-title {
@@ -210,7 +206,7 @@ function onExpand() {
       padding: 2px 0px 2px 4px;
       align-items: center;
       gap: 4px;
-      color: var(--Colors-Text-text-brand, #12A3FC);
+      color: var(--colors-text-text-brand, #12A3FC);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -230,10 +226,10 @@ function onExpand() {
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  border: 0.5px solid var(--Component-Colors-Buttons-Secondary-border, #C7CDD1);
-  background: var(--Component-Colors-Buttons-Secondary-bg, #FFF);
+  border: 0.5px solid var(--colors-border-border-base, #C7CDD1);
+  background: var(--colors-background-bg-action, #FFF);
   box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
-  color: var(--Component-Colors-Buttons-Secondary-text, #171C1F);
+  color: var(--colors-text-text-primary, #171C1F);
   text-align: center;
   font-family: Inter;
   font-size: var(--Font-Size-text-sm, 12px);
@@ -247,7 +243,7 @@ function onExpand() {
   cursor: pointer;
 
   .pay-metrics-collapsed-text {
-    color: var(--Color-blue-300, #12A3FC);
+    color: var(--pattern-sidenav-text-active, #3FB6FD);
     text-align: center;
     font-family: Inter;
     font-size: 12px;
@@ -260,13 +256,15 @@ function onExpand() {
 .pay-metrics-popover {
   width: 226px;
   padding: 6px;
-  background-color: white;
   border-radius: 8px;
-}
 
-.extend {
-  :deep(.pay-metrics-item-usage) {
-    color: #12A3FC;
+  :deep(.pay-metrics-card) {
+    background: transparent;
   }
 }
-</style>
+
+// .extend {
+//   :deep(.pay-metrics-item-usage) {
+//     color: #12A3FC;
+//   }
+// }</style>

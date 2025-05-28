@@ -128,8 +128,10 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
   padding: var(--spacing-xl, 12px) 0px;
   flex-direction: column;
   align-items: flex-start;
-  border-bottom: 0.5px solid var(--Colors-Border-border-inactive, #e4e8eb);
-  background: var(--Color-neutrals-0, #fff);
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid var(--colors-border-border-inactive, #e4e8eb);
+  }
 }
 
 .updater-header {
@@ -147,7 +149,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 }
 
 .updater-title {
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 14px;
   font-style: normal;
@@ -158,7 +160,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
 .updater-content {
   padding-left: 3px;
   overflow: hidden;
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   text-overflow: ellipsis;
   font-family: Inter;
   font-size: 12px;

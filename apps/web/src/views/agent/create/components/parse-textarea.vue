@@ -29,7 +29,8 @@ onMounted(() => {
 <template>
   <div class="textarea">
     <textarea ref="lineRef" v-model="lineValue" class="textarea-line" wrap="off" cols="2" disabled />
-    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')" @scroll="syncScroll" @input="handleTextareaInput" />
+    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')"
+      @scroll="syncScroll" @input="handleTextareaInput" />
   </div>
 </template>
 
@@ -45,10 +46,10 @@ onMounted(() => {
     outline: none;
     resize: none;
     overflow: hidden;
-    border-right: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-    background: var(--Colors-Background-bg-page, #fafbfc);
+    border-right: 0.5px solid var(--colors-border-border-overlay, #34393d);
+    background-color: var(--colors-background-bg-action, #293038);
 
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary);
     text-align: right;
     font-family: 'JetBrains Mono';
     font-size: 12px;
@@ -63,13 +64,13 @@ onMounted(() => {
     border: none;
     outline: none;
     resize: none;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary);
     font-family: 'JetBrains Mono';
     font-size: 12px;
     font-style: normal;
     font-weight: 400;
     line-height: var(--Line-Height-text-lg, 20px);
-    background-color: #ffffff;
+    background-color: var(--colors-background-bg-action, #293038);
   }
 }
 </style>

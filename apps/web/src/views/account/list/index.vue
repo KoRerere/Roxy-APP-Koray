@@ -12,6 +12,7 @@ import { useRoleStore } from '/@/stores/role'
 import AccountCreate from '/@/views/account/create'
 import { getColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
+import PlatformIcon from './platform-icon.vue'
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
@@ -19,7 +20,7 @@ const tableRef = useTemplateRef('accountTable')
 
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const columns = getColumns()
 const role = useRoleStore()
 const dialog = useDialog()
@@ -124,7 +125,7 @@ function onRemark(data: Data) {
       onConfirm: async (formData: any) => {
         const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
         const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
-        showToast(code, msg)
+        onlyErrorToast(code, msg)
         tableRef.value?.refresh()
       },
     },
@@ -148,7 +149,7 @@ function deletePopup(data: any) {
     accept: async () => {
       const ids = datas.map((item: any) => item.id)
       const { code, msg } = await API.platform.userDelPlatformInfoCreate({ ids })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         tableRef.value?.refresh()
       }
@@ -159,33 +160,38 @@ function deletePopup(data: any) {
 
 <template>
   <div class="flex flex-col w-full h-full account">
-    <ViewsHeader class="account-header" :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" severity="info" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+    <ViewsHeader :title="($route.meta.title as string)">
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_keys" :label="$t('添加账号')"
+        @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="accountTable" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+      <RyTable ref="accountTable" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple"
+        :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')"
-                  @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs"
+                  icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
           </CustomEmpty>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-            :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }"
+            :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': data.platformRemarks }" class="cursor-pointer"
+            @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #platform="{ data }">
           <div class="flex gap-2 account">
             <div>
-              <img v-if="data.platformIcon" class="w-4 h-4" :src="data.platformIcon">
-              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--Colors-Icon-icon-tertiary, #7C8387)" />
+              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark"
+                :platform-icon="data.platformIcon" class="w-4 h-4" />
+              <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
               <div class="flex items-center account-title">
@@ -200,7 +206,8 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">
-            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <Actions :operation="operation" :show-menu="false"
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </RyTable>
@@ -209,22 +216,18 @@ function deletePopup(data: any) {
 </template>
 
 <style lang="scss" scoped>
-.account-header {
-  border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-}
-
 .account {
   font-family: Inter;
   font-size: 12px;
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary);
     font-weight: 500;
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary);
   }
 }
 </style>

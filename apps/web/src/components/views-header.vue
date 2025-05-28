@@ -2,15 +2,16 @@
 import { useBackRoute } from '/@/router/utils';
 import { RxSvgIcon } from '/@/components/rx-icon/'
 
-defineProps<Props>()
-
-const router = useRouter()
-const { path, query } = useBackRoute()
-
 interface Props {
   title?: string
   showBack?: boolean
+  divider?: boolean
 }
+
+const { divider = true } = defineProps<Props>()
+
+const router = useRouter()
+const { path, query } = useBackRoute()
 
 function onBack() {
   console.log('onBack', path, query)
@@ -20,7 +21,7 @@ function onBack() {
 </script>
 
 <template>
-  <div class="flex views-header">
+  <div class="flex views-header" :class="{ divider }">
     <div class="flex items-center flex-1 gap-2.5">
       <RxSvgIcon v-if="showBack" class="cursor-pointer" name="base/rx_ic_chevron_left" :size="24" @click="onBack" />
       <slot name="title">
@@ -36,9 +37,13 @@ function onBack() {
 .views-header {
   padding: 9px var(--spacing-4xl, 24px);
   gap: 10px;
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 600;
   line-height: 26px;
+}
+
+.divider {
+  border-bottom: 0.5px solid var(--colors-border-divider);
 }
 </style>

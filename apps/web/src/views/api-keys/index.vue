@@ -1,12 +1,11 @@
 <script setup lang="tsx">
+import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
 import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import inputNumberGroup from '/@/components/ry-form/input-number-group.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -15,9 +14,8 @@ import { copyText } from '/@/utils/'
 import { useSimpleLocale } from '/@/stores/locale'
 
 const role = useRoleStore()
-const toast = useToast()
 const confirm = useConfirm()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { getOfficialFaqWebsite } = useSimpleLocale()
 
 const original = ref()
@@ -63,13 +61,12 @@ const updateApiKeys = useDebounceFn(async () => {
   const hasChange = Object.entries(apiConfig.value).some(([key, value]) => original.value[key] !== value)
   if (hasChange) {
     const { code, msg } = await API.base.userSetUserApiCreate(apiConfig.value)
-    showToast(code, msg)
+    onlyErrorToast(code, msg)
     if (code === 0) {
       // 开关或端口改变时 重启 API 服务
       if (original.value.open !== apiConfig.value.open || original.value.port !== apiConfig.value.port) {
         electronAPI.send('app:restartAPIServer')
       }
-
       original.value = { ...apiConfig.value }
     }
   }
@@ -143,7 +140,7 @@ async function resetApiKey() {
 
 async function onCopy() {
   copyText(apiConfig.value.apiKey)
-  toast.add({ severity: 'success', summary: $t('操作成功'), detail: $t('复制成功'), life: 2500 })
+  showToast(0, $t('复制成功'))
 }
 
 onBeforeMount(() => {
@@ -153,24 +150,22 @@ onBeforeMount(() => {
 
 <template>
   <div class="flex flex-col w-full h-full api">
-    <ViewsHeader class="api-header" :title="($route.meta.title as string)" />
+    <ViewsHeader :title="($route.meta.title as string)" />
     <div class="flex-1 w-full overflow-auto api-body">
       <div class="w-1/2 mx-auto">
         <div class="api-usage">
           <div>{{ $t('API 启用状态') }}</div>
-          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')"
-            @change="updateApiKeys" />
+          <rxToggleSwitch v-model="apiConfig.open" :label="apiConfig.open ? $t('启用') : $t('关闭')" @change="updateApiKeys" />
         </div>
         <template v-if="apiConfig.open">
           <div class="api-content">
             <div class="api-content-reset">
               <div>{{ $t('API 密钥') }}</div>
-              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')"
-                @click="resetApiKey" />
+              <RxButton severity="secondary" outlined size="xxs" icon="base/rx_ic_refresh" :label="$t('重置 API 密钥')" @click="resetApiKey" />
             </div>
             <div v-if="!role.isOwner" class="api-content-desc">
               <RxSvgIcon name="base/rx_ic_info_fill" color="#FC9D12" />
-              <div class="flex-1">
+              <div class="flex-1 text-[var(--colors-text-text-secondary)]">
                 {{ $t('重要提示: 使用此 API 密钥可执行的操作与您当前在该工作空间内的操作权限相关。') }}
               </div>
             </div>
@@ -191,10 +186,9 @@ onBeforeMount(() => {
                   {{ $t('端口设置') }}
                 </div>
               </div>
-              <inputNumberGroup :inputs="inputs" />
+              <inputNumberGroup class="api-content-port" :inputs="inputs" />
             </div>
-            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false"
-              :title="$t('端口已被占用')"
+            <RxAlert v-model:visible="hasOccupy" class="!w-full mt-4" type="error" :closable="false" :title="$t('端口已被占用')"
               :content="$t('我们检测到你当前设置的端口 {port} 已被占用，请修改端口以正常使用 API 服务', { port: apiConfig.port })" />
           </div>
         </template>
@@ -216,9 +210,6 @@ onBeforeMount(() => {
 
 <style lang="scss" scoped>
 .api {
-  &-header {
-    border-bottom: 0.5px solid var(--Colors-Border-border-container, #c7cdd1);
-  }
 
   &-body::-webkit-scrollbar {
     display: none;
@@ -228,20 +219,20 @@ onBeforeMount(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-2xl, 16px) var(--spacing-xl, 12px);
+    padding: 16px 12px;
 
-    color: #000;
+    color: var(--colors-text-text-primary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
     line-height: 24px;
 
-    border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+    border-bottom: 1px solid var(--colors-border-divider);
   }
 
   &-content {
-    padding: var(--spacing-2xl, 16px) 0px;
-    border-bottom: 0.5px solid var(--Colors-Border-border-subtle, #e4e8eb);
+    padding: 16px 0px;
+    border-bottom: 1px solid var(--colors-border-divider);
 
     &-reset {
       display: flex;
@@ -249,7 +240,7 @@ onBeforeMount(() => {
       align-items: center;
       padding: 0px var(--spacing-xl, 12px);
 
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 12px;
       font-weight: 500;
@@ -262,8 +253,8 @@ onBeforeMount(() => {
       padding: 12px;
       gap: 8px;
       border-radius: var(--radius-md, 6px);
-      background: var(--Color-yellow-100, #fff5e6);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      background: var(--component-alert-bg-warn, #653B01);
+      color: var(--colors-text-text-secondary, #b2b6b8);
       font-family: Inter;
       font-size: 12px;
       line-height: 18px;
@@ -273,12 +264,11 @@ onBeforeMount(() => {
       position: relative;
       display: flex;
       flex-direction: column;
-      margin-top: var(--spacing-md, 6px);
-      padding: var(--spacing-xl, 12px);
-      gap: var(--spacing-xl, 12px);
-      border-radius: var(--radius-md, 6px);
-      border: 1px solid var(--Color-neutrals-900, #171c1f);
-      background: var(--Color-neutrals-800, #252a2e);
+      margin-top: 6px;
+      padding: 12px;
+      gap: 12px;
+      border-radius: 6px;
+      background: var(--pattern-editor-bg);
 
       &-value {
         color: #fff;
@@ -289,7 +279,7 @@ onBeforeMount(() => {
       }
 
       &-desc {
-        color: var(--Color-neutrals-300, #c7cdd1);
+        color: var(--colors-text-text-inactive, #48555B);
         font-family: Inter;
         font-size: 12px;
         line-height: 16px;
@@ -318,17 +308,22 @@ onBeforeMount(() => {
       padding: 0px var(--spacing-xl, 12px);
       gap: 30px;
 
-      color: #000;
+      color: var(--colors-text-text-primary, #FAFAFA);
       font-family: Inter;
       font-size: 12px;
       font-weight: 500;
       line-height: 24px;
 
       &-desc {
-        color: var(--Colors-Text-text-tertiary, #7c8387);
+        color: var(--colors-text-text-tertiary, #575D60);
         font-weight: 400;
         line-height: var(--Line-Height-text-xs, 16px);
       }
+    }
+
+    &-port {
+      max-width: 240px;
+      font-family: "JetBrains Mono";
     }
   }
 
@@ -339,7 +334,7 @@ onBeforeMount(() => {
     gap: var(--spacing-4xl, 24px);
 
     &-title {
-      color: var(--Colors-Text-text-primary, #171c1f);
+      color: var(--colors-text-text-primary, #fafafa);
       font-family: Inter;
       font-size: 14px;
       font-style: normal;
@@ -349,7 +344,7 @@ onBeforeMount(() => {
 
     &-content {
       margin-top: var(--spacing-xl, 12px);
-      color: var(--Colors-Text-text-secondary, #575d61);
+      color: var(--colors-text-text-secondary, #B2B6B8);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;

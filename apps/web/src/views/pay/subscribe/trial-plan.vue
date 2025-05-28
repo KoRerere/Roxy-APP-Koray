@@ -112,7 +112,7 @@ async function onSubscribe() {
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <ViewsHeader class="border-0 border-b-0.5 border-solid border-[#C7CDD1]" :title="$route.meta.title" />
+    <ViewsHeader :title="$route.meta.title" />
     <div class="rx-container">
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
@@ -135,13 +135,14 @@ async function onSubscribe() {
             <div class="flex items-center sub-title">{{ $t('窗口数量') }}</div>
             <RxStep readonly size="lg" class="!w-40" v-model="selectedCount" :min="10" :max="10" />
           </div>
-          <div class="flex justify-between items-center py-8 border-0 border-t border-dashed border-[#C7CDD1]">
+          <div class="flex justify-between items-center py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
             <div class="flex items-center gap-2 sub-title">
               <span>{{ $t('试用时长') }}</span>
             </div>
             <div class="period">{{ $t('截止 {value}', { value: format(addDays(Date.now(), 7), 'yyyy/MM/dd') }) }}</div>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[#C7CDD1]"></AdvancedFeat>
+          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+          </AdvancedFeat>
         </div>
         <Detail class="w-88" :list="details">
           <template #oldprice="{ item }">
@@ -175,14 +176,14 @@ async function onSubscribe() {
 }
 
 .slider {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 14px;
   line-height: normal;
 }
 
 .sub-title {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 600;
@@ -190,14 +191,14 @@ async function onSubscribe() {
 }
 
 .period {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   line-height: 20px;
 }
 
 .current {
   &-price {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 36px;
     font-weight: 600;
@@ -205,7 +206,7 @@ async function onSubscribe() {
   }
 
   &-unit {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-family: Inter;
     font-size: 24px;
     font-weight: 600;
@@ -213,7 +214,7 @@ async function onSubscribe() {
   }
 
   &-text {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
@@ -221,7 +222,7 @@ async function onSubscribe() {
   }
 
   &-desc {
-    color: var(--Colors-Text-text-inactive, #A3A9AD);
+    color: var(--colors-text-text-inactive, #A3A9AD);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;
@@ -231,7 +232,7 @@ async function onSubscribe() {
 
 .details {
   &-label {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -246,7 +247,7 @@ async function onSubscribe() {
   }
 
   &-oldprice {
-    color: var(--Colors-Text-text-tertiary, #7C8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 16px;
     line-height: 20px;

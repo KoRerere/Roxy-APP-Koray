@@ -1,0 +1,61 @@
+diff --git a/lib/cjs/puppeteer/cdp/Connection.js b/lib/cjs/puppeteer/cdp/Connection.js
+index cce7b96f55ba7ff70afb90297e6da5342f316bc2..be4d7ea1f440d8a3b4b56171aa72ab7101d5b35e 100644
+--- a/lib/cjs/puppeteer/cdp/Connection.js
++++ b/lib/cjs/puppeteer/cdp/Connection.js
+@@ -97,14 +97,18 @@ class Connection extends EventEmitter_js_1.EventEmitter {
+             return Promise.reject(new Error('Protocol error: Connection closed.'));
+         }
+         return callbacks.create(method, options?.timeout ?? this.#timeout, id => {
+-            const stringifiedMessage = JSON.stringify({
+-                method,
+-                params,
+-                id,
+-                sessionId,
+-            });
+-            debugProtocolSend(stringifiedMessage);
+-            this.#transport.send(stringifiedMessage);
++          const message = {
++            method,
++            params,
++            id,
++            sessionId,
++          }
++         if (message.method === "Target.setAutoAttach") {
++            message.params.filter = undefined
++         }
++         const stringifiedMessage = JSON.stringify(message);
++         debugProtocolSend(stringifiedMessage);
++         this.#transport.send(stringifiedMessage);
+         });
+     }
+     /**
+diff --git a/lib/cjs/puppeteer/cdp/TargetManager.js b/lib/cjs/puppeteer/cdp/TargetManager.js
+index 716b3267a491385aed01f330dda012ff2ee71012..05416d01bdfc4f47cee9ca9309319b8e6a969fc4 100644
+--- a/lib/cjs/puppeteer/cdp/TargetManager.js
++++ b/lib/cjs/puppeteer/cdp/TargetManager.js
+@@ -112,7 +112,8 @@ class TargetManager extends EventEmitter_js_1.EventEmitter {
+             ],
+         });
+         this.#finishInitializationIfReady();
+-        await this.#initializeDeferred.valueOrThrow();
++        this.#initializeDeferred.valueOrThrow();
++	await new Promise(resolve => setTimeout(resolve));
+     }
+     getChildTargets(target) {
+         return target._childTargets();
+diff --git a/lib/cjs/puppeteer/node/BrowserLauncher.js b/lib/cjs/puppeteer/node/BrowserLauncher.js
+index 0e78815cff402e53b6915360a9d2607e4045cec7..91eebc765c6ca573525fe2df37833690f98eb2e0 100644
+--- a/lib/cjs/puppeteer/node/BrowserLauncher.js
++++ b/lib/cjs/puppeteer/node/BrowserLauncher.js
+@@ -173,8 +173,10 @@ class BrowserLauncher {
+                 }),
+             ]);
+         }
+-        if (waitForInitialPage) {
++        if (waitForInitialPage && !launchArgs.executablePath.includes(node_path_1.join('chrome-bin/109'))) {
+             await this.waitForPageTarget(browser, timeout);
++        } else {
++            await new Promise(resolve => setTimeout(resolve, 200));
+         }
+         return browser;
+     }

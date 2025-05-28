@@ -168,8 +168,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave"
-    @mousedown="handleMousedown">
+  <div ref="actionBar" class="action-bar" @mouseenter="handleMouseenter" @mouseleave="handleMouseleave" @mousedown="handleMousedown">
     <div class="top-bar">
       <div class="sync-text" @mouseenter="handleMouseenterSyncText">
         {{ $t('{count} 个窗口正在同步中', { count: syncWindowCount }) }}
@@ -202,9 +201,7 @@ onUnmounted(() => {
           </template>
         </Menubar>
         <div class="split-line"></div>
-        <div class="other-item"
-          v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }"
-          @click="showSyncingWindowListDialog">
+        <div class="other-item" v-tooltip.top="{ value: syncWindowListTooltip, pt: { text: '!whitespace-nowrap !break-keep' } }" @click="showSyncingWindowListDialog">
           <RxSvgIcon name="base/rx_ic_list_2" />
         </div>
         <div class="other-item" v-tooltip.top="settingsTooltip" @click="showPreferences">
@@ -253,7 +250,7 @@ body {
   border-radius: 8px;
   word-break: keep-all;
   white-space: nowrap;
-  background: var(--Color-neutrals-950, #0e1214);
+  background: var(--primitives-neutrals-500, #0e1214);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
@@ -306,9 +303,9 @@ body {
       align-items: flex-start;
       gap: 4px;
       border-radius: 5px;
-      border: 0.5px solid var(--Color-neutrals-600, #575d61);
-      background: var(--Color-neutrals-800, #252a2e);
-      color: var(--Component-Colors-0, #fff);
+      border: 0.5px solid var(--primitives-neutrals-600, #575d61);
+      background: var(--primitives-neutrals-800, #252a2e);
+      color: var(--primitives-neutrals-0, #fff);
       text-align: center;
       font-size: 13px;
       font-weight: 500;
@@ -317,11 +314,11 @@ body {
       transition: all 0.15s ease-in-out;
 
       &:hover {
-        background: var(--Color-neutrals-700, #343A3D);
+        background: var(--primitives-neutrals-700, #343A3D);
       }
 
       &.stop {
-        color: var(--Colors-Text-text-error, #F53838);
+        color: var(--colors-text-text-error, #F53838);
         text-align: center;
         font-size: 13px;
         font-style: normal;
@@ -348,7 +345,7 @@ body {
 
     .shortcut-key {
       margin-left: 12px;
-      color: var(--Colors-Text-text-inactive, #A3A9AD);
+      color: var(--colors-text-text-tertiary);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -365,8 +362,8 @@ body {
     flex-wrap: nowrap;
 
     >.p-menubar-item>.p-menubar-item-content {
-      --p-menubar-item-active-background: var(--Color-neutrals-800, #252A2E);
-      --p-menubar-item-focus-background: var(--Color-neutrals-800, #252A2E);
+      --p-menubar-item-active-background: var(--primitives-neutrals-800, #252A2E);
+      --p-menubar-item-focus-background: var(--primitives-neutrals-800, #252A2E);
       color: var(--Colors-Alpha-alpha-white-90, rgba(255, 255, 255, 0.90));
 
       .p-menubar-item-link {
@@ -407,13 +404,13 @@ body {
     border-radius: 6px;
 
     &:hover {
-      background-color: var(--Color-neutrals-800, #252A2E);
+      background-color: var(--primitives-neutrals-800, #252A2E);
     }
   }
 
 
   .tips {
-    color: var(--Color-yellow-300, #FC9D12);
+    color: var(--primitives-yellow-500, #FC9D12);
     font-size: 12px;
     font-style: normal;
     font-weight: 400;

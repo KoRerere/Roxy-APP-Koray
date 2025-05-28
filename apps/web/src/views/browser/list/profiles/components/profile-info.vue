@@ -19,6 +19,7 @@ import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
 import { ProfileModifyType, ProxyCheckStatus } from '/@/enums'
 import { silentUpdateProxy, silentUpdateAccount } from './util';
+import PlatformIcon from '/@/views/account/list/platform-icon.vue';
 
 interface Props {
   workspaceName?: string
@@ -53,7 +54,7 @@ const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
-const [showToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const [checkProxy] = useCheckProxy()
 
 const defaultWindowName = getDefaultWindowName()
@@ -79,6 +80,7 @@ const list = computed(() => {
       key: 'proxy',
       classes: proxyClass,
       svg: hasProxy.value ? `country-code/${data.lastCountry}` : data.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
+      svgColor: 'var(--colors-icon-icon-tertiary)',
       tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
         lastCountry: data.lastCountry || '--',
         lastCity: strConcat('/', data.lastCity) || '',
@@ -88,12 +90,14 @@ const list = computed(() => {
     },
     {
       key: 'account',
-      image: windowPlatformList[0]?.platformIcon,
+      // image: windowPlatformList[0]?.platformIcon,
       svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
-      svgColor: windowPlatformList[0] ? 'var(--Colors-Icon-icon-tertiary, #7C8387)' : 'var(--Colors-Icon-icon-secondary, #575D61)',
+      svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary)' : 'var(--colors-icon-icon-secondary)',
       showSub: windowPlatformList.length > 1,
-      subImage: windowPlatformList.length > 2 ? undefined : windowPlatformList[1]?.platformIcon,
+      // subImage: windowPlatformList.length > 2 ? undefined : windowPlatformList[1]?.platformIcon,
       // tooltip: windowPlatformList?.map((item: any) => item.platformUserName).filter(Boolean).join('\n')
+      platformAccount: windowPlatformList[0],
+      subPlatformAccount: windowPlatformList.length > 2 ? undefined : windowPlatformList[1],
     },
   ].filter(item => filterKeys.includes(item.key))
 })
@@ -249,7 +253,7 @@ function getAccountModel() {
                   }
                 })
                 drawerInstance.hideDrawer()
-                showToast(code, msg)
+                onlyErrorToast(code, msg)
                 if (code === 0) {
                   silentUpdateAccount(data, windowPlatformList)
                 }
@@ -369,7 +373,7 @@ function chooseProxy(proxyData: Record<string, any>) {
 async function updateProfile(params: any, options?: Record<string, any>) {
   const { isRefresh, fallback, success } = { isRefresh: false, success: () => { }, fallback: () => { }, ...options }
   const { code, msg } = await API.window.userMdfWindowInfoSingleV2Create(params)
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     isLikeFunction(success) && success()
     if (isRefresh) {
@@ -414,19 +418,30 @@ function handleClickInplace(e: MouseEvent) {
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
-      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }" @click.stop="onClick($event, item.key)">
+      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
+        @click.stop="onClick($event, item.key)">
         <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-          <img v-if="item.image" :src="item.image" class="block w-5 h-5 pointer-events-none">
-          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
+          <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon"
+            :platformIconDark="item.platformAccount.platformIconDark" class="block w-5 h-5 pointer-events-none" />
+          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+            :color="item.svgColor" />
         </div>
-        <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
-          <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none">
-          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
+        <div v-if="item.showSub"
+          class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
+          :class="item.classes">
+          <PlatformIcon v-if="item.subPlatformAccount?.platformIcon"
+            :platformIcon="item.subPlatformAccount.platformIcon"
+            :platformIconDark="item.subPlatformAccount.platformIconDark" class="block w-3 h-3 pointer-events-none">
+          </PlatformIcon>
+          <!-- <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none"> -->
+          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h"
+            :color="item.svgColor" />
         </div>
       </div>
       <div v-if="list.length > 1" class="state-line">
         <CanvasLine v-if="isOpenBrowser" :waveWidth="1.2" :blur="0" speed="fast" :waveOpacity="1"></CanvasLine>
-        <div v-else class="w-[100px] border-0 border-t-0.5 border-dashed border-[#C7CDD1]"></div>
+        <div v-else class="w-[100px] border-0 border-t-0.5 border-dashed border-[var(--colors-border-divider-dashed)]">
+        </div>
       </div>
     </div>
     <Inplace v-focustrap :disabled="disabled || readonly" @click="handleClickInplace">
@@ -434,7 +449,8 @@ function handleClickInplace(e: MouseEvent) {
         <div class="profile-name-content">{{ windowName }}</div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
+          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
           @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
@@ -451,13 +467,13 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
 .profile {
   gap: var(--spacing-xl, 12px);
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-name {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: 'JetBrains Mono';
   }
 
@@ -488,8 +504,8 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
 
   &-icons {
     border-radius: 4px;
-    border: 0.5px solid var(--Colors-Border-border-action-secondary, #c7cdd1);
-    background: var(--Colors-Background-bg-action-secondary, #fff);
+    border: 0.5px solid var(--colors-border-border-action);
+    background: var(--colors-background-bg-action);
     box-shadow: $box-shadow;
     transition: all 0.15s ease;
   }
@@ -503,6 +519,7 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   border: none;
   box-shadow: none;
   color: #a3a9ad;
+  background: var(--colors-background-bg-page);
   transition: all 0.2s;
 
   &:hover {
@@ -535,19 +552,16 @@ $box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02),
   border-radius: 4px;
 
   &:hover {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--pattern-profiles-input-border);
+    background: var(--pattern-profiles-input-bg);
   }
 }
 
 .window-name-input {
   font-size: 12px;
-  border: 1px solid #12a3fc;
   border-radius: 4px;
   box-shadow: none !important;
-  background-color: #fff !important;
   line-height: 16px;
-  color: #171c1f;
   padding: 4px 8px;
   width: 160px;
 }

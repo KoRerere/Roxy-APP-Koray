@@ -96,14 +96,15 @@ defineExpose({
       <span class="mx-2">{{ $t('或') }}</span>
     </div>
     <RxButton class="w-full" outlined severity="secondary" size="md" icon="websites/rx_site_google"
-      :label="$t('通过 Google 账号登录')" @click="oauth2LoginMap.google"></RxButton>
+      :label="$t('通过 {value} 账号登录', { value: 'Google' })" @click="oauth2LoginMap.google"></RxButton>
     <div class="w-full flex gap-2">
-      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_facebook"
-        @click="oauth2LoginMap.facebook"></RxButton>
-      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_github"
-        @click="oauth2LoginMap.github"></RxButton>
-      <RxButton class="flex-1 !aspect-auto" outlined severity="secondary" size="md" icon="websites/rx_site_vk"
-        @click="oauth2LoginMap.vk"></RxButton>
+      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="flex-1 !aspect-auto" outlined
+        severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
+      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="flex-1 !aspect-auto" outlined
+        severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
+      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'VK' })" class="flex-1 !aspect-auto" outlined
+        severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
+      </RxButton>
     </div>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
@@ -129,7 +130,7 @@ defineExpose({
 
   .forget-pwd {
     cursor: pointer;
-    color: var(--Color-blue-300, #12a3fc);
+    color: var(--primitives-blue-500, #12a3fc);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -153,7 +154,7 @@ defineExpose({
   width: 100%;
   display: flex;
   align-items: center;
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -167,7 +168,7 @@ defineExpose({
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--Colors-Border-border-container, #c7cdd1);
+  background: var(--colors-border-border-base, #c7cdd1);
 }
 
 .login-ways {
@@ -179,7 +180,7 @@ defineExpose({
 }
 
 .signup-tips {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-family: Inter;
   font-size: 12px;

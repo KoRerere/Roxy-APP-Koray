@@ -21,12 +21,12 @@ const { list } = defineProps<{
   <div class="flex flex-col gap-3 pa-4 rounded-md subscribe">
     <slot name="before" />
     <template v-for="(detail, index) in list" :key="detail.title">
-      <div v-if="index > 0" class="w-full border-0 border-b border-dashed border-[#E4E8EB]" />
+      <div v-if="index > 0" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
       <div v-if="detail.title" class="subscribe-title">
         {{ detail.title }}
       </div>
       <template v-for="item in detail.items" :key="item.label">
-        <div v-if="item.separator" class="w-full border-0 border-b border-dashed border-[#E4E8EB]" />
+        <div v-if="item.separator" class="w-full border-0 border-b border-dashed border-[var(--colors-border-divider-dashed)]" />
         <component :is="item.render" v-else-if="item.render" class="subscribe-value" />
         <slot v-else :name="item.slot" :item="item">
           <div class="flex justify-between subscribe-value" :class="item.class">
@@ -42,11 +42,11 @@ const { list } = defineProps<{
 
 <style scoped lang="scss">
 .subscribe {
-  border: 1px solid var(--Color-neutrals-200, #e4e8eb);
-  background: var(--Color-neutrals-50, #fafbfc);
+  border: 1px solid var(--colors-border-border-overlay);
+  background: var(--pattern-pay-plan-bg-bill);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;
@@ -54,7 +54,7 @@ const { list } = defineProps<{
   }
 
   &-value {
-    color: var(--Colors-Text-text-secondary, #575d61);
+    color: var(--colors-text-text-secondary);
     font-family: Inter;
     font-size: 14px;
     line-height: 20px;

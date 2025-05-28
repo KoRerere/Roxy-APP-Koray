@@ -1,8 +1,8 @@
-import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from 'rebrowser-puppeteer-core'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import puppeteer from 'puppeteer-core'
+import puppeteer from 'rebrowser-puppeteer-core'
 import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
 import { chromeCoreManager } from '/@/modules/browser'
@@ -113,6 +113,8 @@ export class BeforeLaunchTask {
     const launchArgs = await this.genLaunchCLIArgs()
     console.log('launchArgs', launchArgs)
 
+    // 更新浏览器偏好设置
+    await this.updateBrowserPreferences()
     // 写入登录信息
     await this.writeLoginData()
     // 修改浏览器 Local State 文件
@@ -152,19 +154,6 @@ export class BeforeLaunchTask {
       this.browser = await puppeteer.launch(launchOptions).finally(() => {
         clearInterval(timer)
       })
-
-      // 临时解决移动端全屏问题
-      if (this.isMobile) {
-        setTimeout(async () => {
-          const pages = await this.browser?.pages()
-          setTimeout(() => {
-            const dashboardPage = pages?.find(page => page.url().startsWith(`http://127.0.0.1:${store.appPort}/dashboard`))
-            if (dashboardPage) {
-              dashboardPage.bringToFront()
-            }
-          }, pages?.length * 100 + 200)
-        })
-      }
 
       this.wsEndpoint = this.browser.wsEndpoint()
       console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
@@ -246,6 +235,7 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
+      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-109\devtools-frontend\out\Default\gen\front_end`}`,
     ]
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {
@@ -272,7 +262,6 @@ export class BeforeLaunchTask {
         clearInterval(timer)
       })
       if (plugins.length) {
-        await this.updateBrowserPreferences()
         args.push(`--load-extension=${plugins.join(',')}`)
       }
     }
@@ -355,12 +344,6 @@ export class BeforeLaunchTask {
     const { preferencesPath, winInfo } = this.browserItem
     const { usePluginList, workspaceId } = winInfo
 
-    if (!usePluginList?.length) {
-      return
-    }
-
-    console.log('usePluginList', usePluginList)
-
     try {
       const isExist = await fileExists(preferencesPath)
 
@@ -370,23 +353,38 @@ export class BeforeLaunchTask {
       }
 
       const preferences = JSON.parse(await readFile(preferencesPath, 'utf-8'))
-      const pinnedExtensions = preferences.extensions?.pinned_extensions || []
-      console.log('old pinnedExtensions', pinnedExtensions)
-      const extensionManager = new ExtensionManager({ workspaceId })
-      console.log('extensionManager.extensionDir', workspaceId, extensionManager.extensionDir)
-      for (const extItem of usePluginList) {
-        const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
-        if (extItem.fixedPlugin === 'unpin') {
-          const index = pinnedExtensions.findIndex(item => item === extID)
-          if (index !== -1) {
-            pinnedExtensions.splice(index, 1)
+
+      if (usePluginList?.length) {
+        console.log('usePluginList', usePluginList)
+
+        const pinnedExtensions = preferences.extensions?.pinned_extensions || []
+        console.log('old pinnedExtensions', pinnedExtensions)
+        const extensionManager = new ExtensionManager({ workspaceId })
+        console.log('extensionManager.extensionDir', workspaceId, extensionManager.extensionDir)
+        for (const extItem of usePluginList) {
+          const extID = await getExtensionIDByPath(join(extensionManager.extensionDir, extItem.pluginDir))
+          if (extItem.fixedPlugin === 'unpin') {
+            const index = pinnedExtensions.findIndex(item => item === extID)
+            if (index !== -1) {
+              pinnedExtensions.splice(index, 1)
+            }
+          } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
+            pinnedExtensions.push(extID)
           }
-        } else if (extItem.fixedPlugin === 'pin' && !pinnedExtensions.includes(extID)) {
-          pinnedExtensions.push(extID)
         }
+        console.log('new pinnedExtensions', pinnedExtensions)
+        preferences.extensions.pinned_extensions = pinnedExtensions
       }
-      console.log('new pinnedExtensions', pinnedExtensions)
-      preferences.extensions.pinned_extensions = pinnedExtensions
+
+      preferences.browser ??= {}
+      preferences.browser.theme ??= {}
+      // 0: 自动, 1: 浅色, 2: 深色
+      preferences.browser.theme.color_scheme2 = {
+        system: 0,
+        light: 1,
+        dark: 2,
+      }[store.browserColorScheme || 'system']
+      preferences.browser.theme.color_scheme = preferences.browser.theme.color_scheme2
       await writeFile(preferencesPath, JSON.stringify(preferences))
     } catch (error) {
       console.error('更新浏览器偏好设置失败', error)
@@ -524,17 +522,32 @@ export class BeforeLaunchTask {
   /** 修改浏览器 Local State 文件 */
   async modifyLocalStateFile() {
     const { roxyLocalStatePath } = this.browserItem
+    let localState: Record<string, any> = {}
     try {
       const isExist = await fileExists(roxyLocalStatePath)
+
       if (isExist) {
         const content = await readFile(roxyLocalStatePath, 'utf-8')
-        const localState = JSON.parse(content)
-        localState.background_mode = { enabled: false }
-        await writeFile(roxyLocalStatePath, JSON.stringify(localState))
+        localState = JSON.parse(content)
       } else {
         await fileExists(dirname(roxyLocalStatePath), true)
-        await writeFile(roxyLocalStatePath, JSON.stringify({ background_mode: { enabled: false } }))
       }
+      // 不允许 Chrome 在窗口全部关闭后仍保持后台运行（比如某些扩展或服务）
+      localState.background_mode = { enabled: false }
+      // 136 版本之前，支持强制网页使用暗色模式
+      if (Number(this.browserItem.winInfo.coreVersion) < 136) {
+        const isDark = store.browserColorScheme === 'dark'
+        // 是否强制网页使用暗色模式
+        const experiments = isDark ? ['enable-force-dark@1'] : []
+        localState.browser = {
+          ...localState.browser,
+          enabled_labs_experiments: [...(localState.browser?.enabled_labs_experiments || []), ...experiments]
+        }
+        if (!isDark) {
+          localState.browser.enabled_labs_experiments = localState.browser.enabled_labs_experiments?.filter(item => item !== 'enable-force-dark@1')
+        }
+      }
+      await writeFile(roxyLocalStatePath, JSON.stringify(localState))
     } catch (error) {
       console.error('修改 Local State 文件失败', error)
     }

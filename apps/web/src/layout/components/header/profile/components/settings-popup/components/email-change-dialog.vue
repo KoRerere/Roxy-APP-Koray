@@ -107,7 +107,7 @@ async function onFormSubmit({ valid }) {
         email: formInstance.value?.getFieldState('email')?.value,
         ver_code: formInstance.value?.getFieldState('ver_code')?.value,
       })
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
       if (code === 0) {
         onSuccess()
       }
@@ -144,7 +144,8 @@ onMounted(() => {
           {{ $t('邮箱') }}
           <span class="required">*</span>
         </label>
-        <InputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'" :placeholder="$t('请输入您的邮箱地址')" />
+        <InputText id="email" name="email" class="w-full" :disabled="currentStep === 'current'"
+          :placeholder="$t('请输入您的邮箱地址')" />
         <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{
           $form.email.error?.message }}
         </Message>
@@ -187,8 +188,8 @@ onMounted(() => {
           $t('使用密码验证') }}</a>
       </div>
 
-      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')" class="continue-btn w-full" :loading="submitLoading"
-        :disabled="submitLoading || formInstance?.invalid" />
+      <RxButton type="submit" size="md" :label="currentStep === 'current' ? $t('继续') : $t('确认')"
+        class="continue-btn w-full" :loading="submitLoading" :disabled="submitLoading || formInstance?.invalid" />
     </Form>
   </div>
 </template>
@@ -218,13 +219,13 @@ onMounted(() => {
         align-items: center;
         gap: 10px;
         border-radius: 4px;
-        background: var(--Color-neutrals-100, #f0f3f5);
-        color: #a3a9ad;
+        background: var(--primitives-neutrals-100, #f0f3f5);
+        color: var(--colors-text-text-inactive);
       }
 
       .step-label {
         margin-left: 8px;
-        color: var(--Colors-Text-text-inactive, #a3a9ad);
+        color: var(--colors-text-text-inactive, #a3a9ad);
         text-align: center;
         font-family: Inter;
         font-size: 12px;
@@ -240,7 +241,7 @@ onMounted(() => {
         }
 
         .step-label {
-          color: var(--Colors-Text-text-primary, #171c1f);
+          color: var(--colors-text-text-primary, #fafafa);
           text-align: center;
           font-family: Inter;
           font-size: 12px;
@@ -272,7 +273,7 @@ onMounted(() => {
     label {
       font-size: 14px;
       font-weight: 500;
-      color: #333;
+      color: var(--colors-text-text-primary);
 
       .required {
         color: #ff4d4f;

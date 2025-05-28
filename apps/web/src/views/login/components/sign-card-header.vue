@@ -30,7 +30,7 @@ defineProps<{
   gap: 4px;
 
   .title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Archivo;
     font-size: 24px;
     font-style: normal;
@@ -39,7 +39,7 @@ defineProps<{
   }
 
   .sub-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -49,7 +49,7 @@ defineProps<{
   }
 
   .description {
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

@@ -19,7 +19,7 @@ const { labels, projectId, disabled = false, showCreateTag = true } = defineProp
 
 const emit = defineEmits(['update'])
 
-const [addTag] = useTagsActions({ toast: false })
+const [addTag] = useTagsActions()
 const role = useRoleStore()
 const { getTags, getProjectMember } = useMateGroup()
 const { showMenu: showPopupMenu } = usePopupMenu()
@@ -74,7 +74,7 @@ async function openMenu(event: MouseEvent) {
     slots: {
       end: showCreateTag ? () => {
         return (
-          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-gray-200" onClick={onAddTag}>
+          <div class="flex items-center gap-1.5 py-3 px-3.5 cursor-pointer border-0 border-t-1 border-solid border-[var(--component-dropdown-divider)]" onClick={onAddTag}>
             <RxSvgIcon name="base/rx_ic_plus"></RxSvgIcon>
             <div>{$t('新增标签')}</div>
           </div>
@@ -132,10 +132,10 @@ defineExpose({ openMenu })
   max-width: 100px;
   min-width: 24px;
   border-radius: 40px;
-  border: 0.5px solid var(--Component-Colors-Tag-border, #e4e8eb);
-  background: var(--Component-Colors-Tag-bg, #f0f3f5);
+  border: 0.5px solid var(--component-tag-border, #e4e8eb);
+  background: var(--component-tag-bg, #f0f3f5);
 
-  color: var(--Component-Colors-Tag-text, #575d61);
+  color: var(--component-tag-text, #575d61);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

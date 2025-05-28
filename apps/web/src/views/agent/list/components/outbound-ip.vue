@@ -47,12 +47,12 @@ defineProps({
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-weight: 500;
   }
 
   &-subtitle {
-    color: var(--Colors-Text-text-inactive, #a3a9ad);
+    color: var(--colors-text-text-tertiary, #a3a9ad);
   }
 }
 </style>

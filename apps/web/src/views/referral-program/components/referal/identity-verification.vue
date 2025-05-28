@@ -70,7 +70,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .identity-verification {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -78,7 +78,7 @@ onUnmounted(() => {
   line-height: var(--Line-Height-text-lg, 20px);
 
   .official-email {
-    color: var(--Colors-Text-text-primary, #171C1F);
+    color: var(--colors-text-text-primary, #FAFAFA);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;

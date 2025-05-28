@@ -3,7 +3,8 @@
     <InputText type="text" :placeholder="$t('设置快捷键')" :invalid="invalid" @keydown="handleKeydown" v-model="shortcutKey"
       @blur="handleBlur" @change="handleChange" class="w-[186px]" />
 
-    <RxButton v-tooltip.top="$t('重置')" class="w-[48px] !min-w-auto" icon="base/rx_ic_refresh" severity="secondary" outlined @click="onReset" />
+    <RxButton v-tooltip.top="$t('重置')" class="w-[48px] !min-w-auto" icon="base/rx_ic_refresh" severity="secondary"
+      outlined @click="onReset" />
 
     <Message v-if="invalid" severity="error" size="small" variant="simple"
       class="absolute top-[calc(100%+4px)] left-[6px]">
@@ -51,6 +52,7 @@ const allowedKeys = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 
 
 function handleKeydown(event: KeyboardEvent) {
   event.preventDefault();
+  invalid.value = false;
 
   if (event.metaKey || (event.ctrlKey && isWindows)) {
     const keyCombination: string[] = [];
@@ -61,7 +63,6 @@ function handleKeydown(event: KeyboardEvent) {
     // if (event.altKey) keyCombination.push('Alt');
 
     const keyName = event.key
-    console.log('keyName', keyName);
     if (!modifierKeys.includes(keyName) && allowedKeys.includes(upperFirst(keyName))) {
       keyCombination.push(upperFirst(keyName));
     };
@@ -81,7 +82,7 @@ function onReset() {
   emit('change', modelValue.value)
 }
 
-function handleBlur() {
+async function handleBlur() {
   const keys = modelValue.value.split(' ');
   if (!keys.length) {
     toast.add({
@@ -102,22 +103,34 @@ function handleBlur() {
     })
     return
   }
-  emit('change', modelValue.value)
+  const result = await checkShortcutKey()
+  if (result) {
+    emit('change', modelValue.value)
+  }
 }
 
 function handleChange() {
-  invalid.value = true;
+  invalid.value = false;
 }
 
-onMounted(async () => {
+const checkShortcutKey = async () => {
+  // 接口可能无法判断这些快捷键是否可用。这里加一个黑名单
+  const blacklist = ['A'].map(k => 'CommandOrControl+' + k)
   try {
     const keyboard = 'CommandOrControl+' + modelValue.value.replace(' ', '+')
+    if (blacklist.includes(keyboard)) {
+      invalid.value = true;
+      return false
+    }
     const isKeyboard = await electronAPI.send('util:checkShortcutKeysIsOccupied', keyboard)
     invalid.value = !isKeyboard
+    return isKeyboard
   } catch (error) {
-
+    return false
   }
-})
+}
+
+onMounted(checkShortcutKey)
 </script>
 
 <style lang="scss" scoped>
@@ -127,7 +140,7 @@ onMounted(async () => {
 }
 
 .description {
-  color: var(--Colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 12px;
   line-height: 20px;
   /* 166.667% */

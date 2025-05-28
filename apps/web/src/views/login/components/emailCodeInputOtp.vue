@@ -160,7 +160,7 @@ onBeforeMount(() => {
 
   .title {
     align-self: stretch;
-    color: var(--Colors-Text-text-primary, #171c1f);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 16px;
     font-style: normal;
@@ -171,7 +171,7 @@ onBeforeMount(() => {
 
   .description {
     align-self: stretch;
-    color: var(--Colors-Text-text-tertiary, #7c8387);
+    color: var(--colors-text-text-tertiary, #575D60);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -179,7 +179,7 @@ onBeforeMount(() => {
     line-height: var(--Line-Height-text-lg, 20px);
 
     .description-item {
-      color: var(--Colors-Text-text-tertiary, #7C8387);
+      color: var(--colors-text-text-tertiary, #575D60);
       font-family: Inter;
       font-size: 12px;
       font-style: normal;
@@ -204,7 +204,7 @@ onBeforeMount(() => {
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;
-    color: #000;
+    color: var(--colors-text-text-primary, #FAFAFA);
     text-align: center;
     font-family: 'JetBrains Mono';
     font-size: 24px;
@@ -216,14 +216,14 @@ onBeforeMount(() => {
 }
 
 .email-text {
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: var(--Line-Height-text-lg, 20px);
   /* 166.667% */
-  color: var(--Colors-Text-text-primary, #171c1f);
+  color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -233,7 +233,7 @@ onBeforeMount(() => {
 
 .tips {
   align-self: stretch;
-  color: var(--Colors-Text-text-tertiary, #7c8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -243,7 +243,7 @@ onBeforeMount(() => {
 }
 
 .re-enter-text {
-  color: var(--Colors-Text-text-brand, #12a3fc);
+  color: var(--colors-text-text-brand, #12a3fc);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;
@@ -254,7 +254,7 @@ onBeforeMount(() => {
 }
 
 .divider-text {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-family: Inter;
   font-size: 10px;

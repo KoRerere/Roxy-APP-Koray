@@ -18,6 +18,7 @@ import SimulationShortcut from "../simulation-shortcut.vue";
 import { DEFAULT_SIMULATION_SHORTCUT_KEYS, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_DELAY } from '/@/constants/simulation-default';
 import { isWindows } from '/@/utils/common';
 import { MaximumLimitExceeded } from './index'
+import { getColorSchemeList } from "/@/stores/theme";
 // import { useLock } from '/@/stores/lock'
 // import LockAppComponent from "../lock-app.vue";
 // import LockAppLabel from "../lock-app-label.vue";
@@ -115,6 +116,31 @@ export function usePreferencesPanel() {
         {
           subtitle: $t("窗口"),
           items: [
+            {
+              label: $t("主题模式"),
+              name: "browserColorScheme",
+              text: $t('支持 Roxychrome 125 及更高版本'),
+              value: getColorSchemeList().find(item => item.value === (data?.browserColorScheme || 'system')),
+              props: {
+                filter: false,
+                options: getColorSchemeList()
+              },
+              formatValue: (item: Items) => {
+                return item.value.value;
+              },
+              component: ({ item, ...props }: { item: Items; props: any }) => {
+                return (
+                  <RxInputSelect
+                    {...item.props}
+                    {...props}
+                    name={item.name}
+                    onChange={() => {
+                      saveUserConfig(item)
+                    }}
+                  />
+                );
+              },
+            },
             {
               label: $t("UA 严格模式"),
               text: () => (

@@ -67,7 +67,6 @@ function tableRequest() {
 
 async function cancelSubscribe() {
   const dialogInstance = showModal({
-    innerDialog: true,
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -127,7 +126,6 @@ async function onRepay(row: any) {
   window.open(row.failAddress)
 
   const dialogInstance = showModal({
-    innerDialog: true,
     showHeader: false,
     modal: true,
     blockScroll: true,
@@ -171,8 +169,7 @@ function onClose() {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 w-185">
     <div class="relative flex items-center h-9 header">
       <span>{{ $t('管理订阅') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete"
-        @click="onClose">
+      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete" @click="onClose">
       </SvgIcon>
     </div>
     <div>
@@ -194,14 +191,11 @@ function onClose() {
     <div>
       <div class="py-4 record">{{ $t('账单记录') }}</div>
       <div class="flex h-80">
-        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false"
-          :show-table-header="false" :context-menu="false" :paginator="false">
+        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
           <template #status="{ data }">
-            <div class="flex items-center gap-2.5 status"
-              :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
+            <div class="flex items-center gap-2.5 status" :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
               <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined
-                severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
+              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
                 @click="onRepay(data)"></RxButton>
             </div>
           </template>
@@ -213,14 +207,14 @@ function onClose() {
 
 <style lang="scss" module="popup">
 .header {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 16px;
   font-weight: 700;
   line-height: 24px;
 }
 
 .content {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
@@ -229,7 +223,7 @@ function onClose() {
 
 <style lang="scss" module="repay">
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   text-align: center;
   font-size: 16px;
   font-style: normal;
@@ -238,20 +232,20 @@ function onClose() {
 }
 
 .content {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 14px;
   line-height: 25.6px;
 }
 
 .help {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 }
 
 .link {
-  color: var(--Color-blue-300, #12A3FC);
+  color: var(--pattern-sidenav-text-active, #3FB6FD);
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-skip-ink: auto;
@@ -263,7 +257,7 @@ function onClose() {
 
 <style lang="scss" scoped>
 .header {
-  color: #000;
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 20px;
   font-weight: 600;
@@ -271,7 +265,7 @@ function onClose() {
 }
 
 .amount {
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 24px;
   font-weight: 600;
@@ -284,15 +278,15 @@ function onClose() {
 }
 
 .desc {
-  color: var(--Colors-Text-text-tertiary, #7C8387);
+  color: var(--colors-text-text-tertiary, #575D60);
   font-size: 16px;
   line-height: normal;
 }
 
 .record {
-  border-top: 1px solid var(--Colors-Border-border-inactive, #E4E8EB);
+  border-top: 1px solid var(--colors-border-border-inactive, #E4E8EB);
 
-  color: var(--Colors-Text-text-primary, #171C1F);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-weight: 700;
@@ -300,13 +294,13 @@ function onClose() {
 }
 
 .status {
-  color: var(--Color-green-400, #2E994C);
+  color: var(--primitives-green-400, #2E994C);
   font-family: Inter;
   font-size: 12px;
   line-height: normal;
 
   &.red {
-    color: var(--Color-red-300, #F53838);
+    color: var(--primitives-red-500, #F53838);
   }
 }
 </style>

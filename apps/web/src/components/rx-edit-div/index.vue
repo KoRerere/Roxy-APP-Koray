@@ -45,8 +45,7 @@ function onBlur() {
 
 <template>
   <div class="flex cursor-pointer editdiv" @click="focusEditableDiv">
-    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder"
-      @input="divInput" @blur="onBlur">
+    <div ref="divRef" class="editdiv-text" :contenteditable="contenteditable" :data-placeholder="placeholder" @input="divInput" @blur="onBlur">
       {{ myTitle }}
     </div>
     <RxSvgIcon class="editdiv-icon" name="base/rx_ic_edit" color="#A3A9AD" />
@@ -63,11 +62,11 @@ function onBlur() {
   border-radius: var(--radius-md, 6px);
 
   &:hover {
-    background: var(--Color-neutrals-100, #f0f3f5);
+    background: var(--colors-background-bg-action, #FFF);
   }
 
   &:has([contenteditable='true']) {
-    background: var(--Color-neutrals-100, #f0f3f5);
+    background: var(--colors-background-bg-action, #FFF);
 
     .editdiv-icon {
       display: none;
@@ -76,7 +75,7 @@ function onBlur() {
 
   &-text {
     position: relative;
-    color: var(--Color-neutrals-600, #575d61);
+    color: var(--colors-text-text-primary, #111213);
     font-family: Inter;
     font-size: 14px;
     font-weight: 600;

@@ -1,13 +1,10 @@
 <template>
   <AnimatePresence>
-    <motion.div 
-      v-if="lockStore.isLocked" 
-      class="lock-screen-overlay"
-      :initial="{ opacity: 0, scale: 0.98, backdropFilter: 'blur(0px)' }" 
+    <motion.div v-if="lockStore.isLocked" class="lock-screen-overlay"
+      :initial="{ opacity: 0, scale: 0.98, backdropFilter: 'blur(0px)' }"
       :animate="{ opacity: 1, scale: 1, backdropFilter: 'blur(20px)' }"
       :exit="{ opacity: 0, scale: 0.98, backdropFilter: 'blur(0px)' }"
-      :transition="{ duration: 0.25, ease: 'easeInOut' }"
-    >
+      :transition="{ duration: 0.25, ease: 'easeInOut' }">
       <div class="lock-screen-container">
         <div class="flex flex-col gap-12 content">
           <div class="flex flex-col items-center">
@@ -15,17 +12,8 @@
             <span class="locker-message">{{ $t('RoxyBrowser 已被锁定') }}</span>
           </div>
           <div class="flex gap-2 relative">
-            <Password 
-              v-model="password" 
-              :placeholder="$t('请输入密码')" 
-              @keydown.enter="handleUnlock" 
-              :invalid="invalid"
-              autofocus
-              @change="handleChange"
-              ref="inputRef"
-              :feedback="false"
-              toggleMask 
-              :pt="{
+            <Password v-model="password" :placeholder="$t('请输入密码')" @keydown.enter="handleUnlock" :invalid="invalid"
+              autofocus @change="handleChange" ref="inputRef" :feedback="false" toggleMask :pt="{
                 root: {
                   class: 'flex-1'
                 },
@@ -34,16 +22,17 @@
                     class: '!w-full'
                   }
                 }
-              }"
-            />
+              }" />
 
-            <RxButton class="step-plus" icon="base/rx_ic_arrow_right_2" outlined severity="secondary" @click="handleUnlock" />
+            <RxButton class="step-plus" icon="base/rx_ic_arrow_right_2" outlined severity="secondary"
+              @click="handleUnlock" />
 
-            <Message v-if="invalid" severity="error" size="small" variant="simple" class="absolute top-[calc(100%+4px)] left-[10px]">
+            <Message v-if="invalid" severity="error" size="small" variant="simple"
+              class="absolute top-[calc(100%+4px)] left-[10px]">
               {{ $t('密码错误') }}
             </Message>
           </div>
-          
+
         </div>
 
         <div class="absolute top-[24px] right-[24px]">
@@ -152,14 +141,15 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .lock-screen-overlay {
-  background-color: rgba(255, 255, 255, 0.5);
+  background: var(--colors-background-bg-blur, rgba(0, 0, 0, 0.40));
+  // background-color: rgba(255, 255, 255, 0.5);
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
   z-index: 2147483647 !important;
-  visibility: visible !important;  
+  visibility: visible !important;
   display: flex !important;
   justify-content: center;
   align-items: center;
@@ -183,12 +173,13 @@ onMounted(() => {
 }
 
 .locker-message {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--colors-text-text-primary, #FAFAFA);
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 20px; /* 125% */
+  line-height: 20px;
+  /* 125% */
 }
 
 .logout-button {
@@ -202,12 +193,13 @@ onMounted(() => {
 }
 
 .logout-button-text {
-  color: var(--Colors-text-text-primary, #111213);
+  color: var(--colors-text-text-primary, #111213);
   text-align: center;
   font-family: Inter;
   font-size: 13px;
   font-style: normal;
   font-weight: 500;
-  line-height: var(--Line-Height-text-lg, 20px); /* 153.846% */
+  line-height: var(--Line-Height-text-lg, 20px);
+  /* 153.846% */
 }
 </style>
