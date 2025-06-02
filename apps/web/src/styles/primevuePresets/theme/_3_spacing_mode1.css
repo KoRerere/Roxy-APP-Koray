@@ -1,0 +1,18 @@
+:root {
+	--oversize-spacing-2rem: var(--Spacing-8);
+	--oversize-spacing-3rem: var(--Spacing-12);
+	--oversize-spacing-4rem: var(--Spacing-16);
+	--oversize-spacing-5rem: var(--Spacing-20);
+	--oversize-spacing-6rem: var(--Spacing-24);
+	--oversize-spacing-8rem: var(--Spacing-32);
+	--oversize-spacing-10rem: var(--Spacing-40);
+	--spacing-none: var(--Spacing-0);
+	--spacing-xs: var(--Spacing-0_5);
+	--spacing-sm: var(--Spacing-1);
+	--spacing-md: var(--Spacing-1_5);
+	--spacing-lg: var(--Spacing-2);
+	--spacing-xl: var(--Spacing-3);
+	--spacing-2xl: var(--Spacing-4);
+	--spacing-3xl: var(--Spacing-5);
+	--spacing-4xl: var(--Spacing-6)
+}

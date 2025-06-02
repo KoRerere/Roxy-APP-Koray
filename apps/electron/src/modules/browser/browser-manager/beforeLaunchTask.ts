@@ -1,8 +1,8 @@
-import type { Browser, PuppeteerLaunchOptions } from 'rebrowser-puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import puppeteer from 'rebrowser-puppeteer-core'
+import puppeteer from 'puppeteer-core'
 import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
 import { chromeCoreManager } from '/@/modules/browser'
@@ -235,7 +235,7 @@ export class BeforeLaunchTask {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-backgrounding-occluded-windows',
-      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-109\devtools-frontend\out\Default\gen\front_end`}`,
+      // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]
 
     if (openWorkbench === 1 || (openWorkbench === 2 && store.openWorkbench)) {

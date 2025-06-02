@@ -132,9 +132,10 @@ export function useSubscribe() {
   }
 
   /** 显示 APP 新特性升级弹窗 */
-  function showAppUpgradeDialog(newFeatureTips: string[]) {
+  async function showAppUpgradeDialog(newFeatureTips: string[]) {
+    const appVersion = await electronAPI.send("app:getAppVersion")
     showModal({
-      header: $t('v{appVersion} 更新概览', { appVersion: userStore.appVersion }),
+      header: $t('v{appVersion} 更新概览', { appVersion }),
       class: 'w-[500px] max-h-[90vh]',
       draggable: false,
       handleCancel: () => {

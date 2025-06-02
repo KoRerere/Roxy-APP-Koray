@@ -56,10 +56,13 @@ const totalAmount = computed(() => currency(monthAmount.value).multiply(discount
 const disabled = computed(() => loading.value || !selectedDuration.value || (selectedPayway.value === PayWay.Balance && totalAmount.value > userPayInfo.value?.balance))
 
 const detail = computed(() => {
-  const { purchaseWindowCount } = userPayInfo.value!
+  const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
   const { discount, walletDiscount, durationDiscount } = allDiscount.value
 
   const originalAmount = currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value
+
+  const profileCount = currency(purchaseWindowCount, { precision: 0, symbol: '' })
+  const freeCount = currency(freeWindowCount, { precision: 0, symbol: '' })
 
   return [
     {
@@ -67,15 +70,15 @@ const detail = computed(() => {
       items: [
         {
           label: $t('窗口数量'),
-          value: purchaseWindowCount
+          value: `${profileCount.format()} + ${freeCount.format()}`
         },
         {
           label: $t('每日可创建数'),
-          value: currency(purchaseWindowCount, { precision: 0, symbol: '' }).multiply(30).format()
+          value: profileCount.add(freeCount.value).multiply(30).format()
         },
         {
           label: $t('每日可打开数'),
-          value: currency(purchaseWindowCount, { precision: 0, symbol: '' }).multiply(100).format()
+          value: profileCount.add(freeCount.value).multiply(100).format()
         },
         {
           label: $t('续费时长'),

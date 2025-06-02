@@ -83,9 +83,6 @@
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {}
-    },
-    "patchedDependencies": {
-      "rebrowser-puppeteer-core@24.8.1": "patches/rebrowser-puppeteer-core@24.8.1.patch"
     }
   }
 }

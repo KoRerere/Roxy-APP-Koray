@@ -1,8 +1,9 @@
 import RelatedInfo from '/@/components/related-info.vue'
 import RxTag from '/@/components/rx-tag.vue'
-import { setColumns, useColumns } from '/@/hooks/useColumns'
+import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useUserStore } from '/@/stores/user'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
 export function getRawColumns(options?: any) {
@@ -25,7 +26,14 @@ export function getRawColumns(options?: any) {
     {
       title: $t('备注'),
       key: 'remark',
+      headerSlot: 'remarkHeader',
       slot: 'remark',
+      style: {
+        minWidth: '75px',
+      },
+      _cache: {
+        extend: false,
+      }
     },
     {
       title: $t('IP 查询渠道'),
@@ -53,11 +61,22 @@ export function getRawColumns(options?: any) {
   ], options)
 }
 
-export function getColumns(options?: any) {
-  const rawColumns = getRawColumns(options)
-  const { columns } = useColumns({
+export function useColumns(options?: any) {
+  const { userConfig } = storeToRefs(useUserStore())
+
+  const { columns, updateColumns, updateRemarkDisplayStatus } = _useColumns({
     key: 'agent.list',
-    data: rawColumns,
+    data: getRawColumns(options),
   })
-  return columns
+
+  onBeforeMount(() => {
+    updateColumns((columns) => {
+      const column = columns.find(column => column.key === 'remark')
+      if (column?._cache) {
+        Reflect.set(column._cache, 'extend', userConfig.value.remarkDisplayStatus!)
+      }
+    })
+  })
+
+  return { columns, updateRemarkDisplayStatus }
 }

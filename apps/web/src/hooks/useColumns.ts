@@ -1,4 +1,8 @@
+import { debounce } from 'es-toolkit'
+import { API } from '/@/api'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import { deepClone, safeParseJSON } from '/@/utils'
+import { useUserStore } from '/@/stores/user'
 
 interface Columns {
   key: string
@@ -11,6 +15,8 @@ interface Options {
 }
 
 export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) {
+  const { fetchUserInfo, updateUserConfig } = useUserStore()
+  const [_, onlyErrorToast] = useResponseToast()
   const rawCache = safeParseJSON(localStorage.getItem(key))
   const cacheMap = (Array.isArray(rawCache) ? rawCache : [])
     .reduce((cacheMap: Record<string, any>, item: [string, Record<string, any>]) => {
@@ -46,6 +52,17 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
     update(_list.value)
   }
 
+  const updateRemarkDisplayStatus = debounce(async function (remarkDisplayStatus: boolean) {
+    const { code, msg } = await API.base.userSetUserConfigCreate({
+      remarkDisplayStatus
+    })
+    onlyErrorToast(code, msg)
+    if (code !== 0) return
+    fetchUserInfo()
+    updateUserConfig()
+  }, 500)
+
+
   onUnmounted(() => {
     const _cache = _list.value.map((item, index) => [item.key, { visible: item._visible, sort: index, cache: item._cache }])
     localStorage.setItem(key, JSON.stringify(_cache))
@@ -53,7 +70,8 @@ export function useColumns({ key, data }: Columns, filterColumnKeys?: string[]) 
 
   return {
     columns: _list,
-    updateColumns
+    updateColumns,
+    updateRemarkDisplayStatus
   }
 }
 

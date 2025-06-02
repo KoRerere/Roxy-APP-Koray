@@ -3,6 +3,8 @@ import { useUserStore } from '/@/stores/user';
 import type { Plan } from '../type';
 import currency from 'currency.js';
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
+import { $t } from '/@/locales';
+import { formatNumberToKMB } from '/@/utils/basic';
 
 interface Props {
   list?: Plan[]
@@ -23,8 +25,12 @@ const subscribePlans = computed(() => {
     acc[item.subLevel].minWindows = Math.min(acc[item.subLevel].minWindows!, item.minWindows)
     acc[item.subLevel].maxWindows = Math.max(acc[item.subLevel].maxWindows!, item.maxWindows)
     acc[item.subLevel].disabled = !userPayInfo.value.isAuto && currentWindowCount > acc[item.subLevel].maxWindows!
+    acc[item.subLevel].tierCount = $t('{min}-{max} 窗口', {
+      min: formatNumberToKMB(Math.max(list![0].maxWindows, acc[item.subLevel].minWindows!)),
+      max: formatNumberToKMB(acc[item.subLevel].maxWindows!)
+    })
     return acc
-  }, { free: { subLevel: 'Free', logDays: 3, apiRate: 50, disabled: true } } as Record<string, Partial<Plan>>))
+  }, { free: { subLevel: 'Free', tierCount: $t('{count} 个窗口', { count: userPayInfo.value.freeWindowCount }), logDays: 3, apiRate: 50, disabled: true } } as Record<string, Partial<Plan>>))
 })
 
 function onSwitchPlan(plan: Partial<Plan>) {
@@ -48,9 +54,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
       <div class="plans-text">
         {{ SubLevelEnumStr[item.subLevel as SubLevelEnum] }}
       </div>
-      <div class="plans-price" v-if="item.windowPrice">
-        {{ $t('≥ {value}/窗口', { value: currency(item.windowPrice).format() }) }}
-      </div>
+      <div class="plans-price" :class="{ 'opacity-0': item.subLevel === SubLevelEnum.Trial }" v-if="item.windowPrice">{{ item.tierCount }}</div>
     </div>
   </div>
 </template>

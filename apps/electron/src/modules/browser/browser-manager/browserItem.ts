@@ -18,7 +18,7 @@ import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
 import { setTimeout } from 'node:timers/promises'
-import { CDPSession } from 'rebrowser-puppeteer-core'
+import { CDPSession } from 'puppeteer-core'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -181,9 +181,6 @@ export class BrowserItem {
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
-      this.#browser?.target().createCDPSession().then((cdpSession) => {
-        this.cdpSession = cdpSession
-      })
     }
 
     // 浏览器关闭时，需要上传本地数据和状态

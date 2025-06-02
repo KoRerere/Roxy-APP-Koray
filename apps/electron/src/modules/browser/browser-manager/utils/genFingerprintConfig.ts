@@ -352,7 +352,7 @@ export function genFingerprintConfig(winInfo: WindowItemType, proxyInfo: Record<
     },
     /** 选填 屏幕分辨率 */
     get screen() {
-      const availHeight = toNumber(winInfo.resolutionY - (isMobile ? 0 : 38)) || 0
+      const availHeight = toNumber(winInfo.resolutionY - 38) || 0
       return {
         pixelDepth: 24,
         colorDepth: 24,

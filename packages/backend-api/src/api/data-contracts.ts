@@ -5597,16 +5597,33 @@ export interface UserGetTopProjectInfoListData {
   code: number;
   data: {
     rows: {
-      /** 项目ID */
+      /**
+       * 项目ID
+       * 项目ID
+       */
       project_id?: number;
-      /** 用户信息 */
+      /**
+       * 用户信息
+       * 用户信息
+       */
       user_info?: string[];
-      /** 项目名字 */
+      /**
+       * 项目名字
+       * 项目名字
+       */
       projectName?: string;
-      /** 置顶时间 */
+      /**
+       * 置顶时间
+       * 置顶时间
+       */
       topTime?: string;
-      /** 置顶状态 */
+      /**
+       * 置顶状态
+       * 置顶状态
+       */
       pinStatus?: number;
+      /** 窗口投送 */
+      isTransfer?: number;
     }[];
   };
   msg: string;

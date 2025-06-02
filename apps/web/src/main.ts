@@ -1,5 +1,5 @@
 import '/@/styles/index.scss'
-import '/@/styles/theme/'
+import '/@/styles/primevuePresets/theme/'
 import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'

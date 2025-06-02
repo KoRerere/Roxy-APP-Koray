@@ -42,6 +42,7 @@ const finalAmount = computed(() => currency(subscribeOriginalPrice.value).multip
 const details = computed(() => {
 
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
+  const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
   const totalAmount = currency(subscribeOriginalPrice.value).multiply(finalDiscount.value).value
   const discountAmount = currency(subscribeOriginalPrice.value).subtract(totalAmount).value
 
@@ -51,15 +52,15 @@ const details = computed(() => {
       items: [
         {
           label: $t('窗口数量'),
-          value: profileCount.format()
+          value: `${profileCount.format()} + ${freeWindowCount.format()}`
         },
         {
           label: $t('每日可创建数'),
-          value: profileCount.multiply(30).format()
+          value: profileCount.add(freeWindowCount.value).multiply(30).format()
         },
         {
           label: $t('每日可打开数'),
-          value: profileCount.multiply(100).format()
+          value: profileCount.add(freeWindowCount.value).multiply(100).format()
         },
         {
           label: $t('订阅时长'),
@@ -213,7 +214,7 @@ async function onSubscribe() {
                 <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                    }}</a>
+                      }}</a>
                   </template>
                 </i18n-t>
               </div>

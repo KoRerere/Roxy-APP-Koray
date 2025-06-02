@@ -13,21 +13,23 @@ import { filterFieldByValue, getFormData } from '/@/utils/index'
 import EditProxy from '/@/views/agent/create/quick.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
-import { getColumns } from './columns'
+import { useColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
+import { useUserStore } from '/@/stores/user'
 
 const router = useRouter()
-const tableRef = useTemplateRef('proxyTable')
 const dialog = useDialog()
 
-const columns = getColumns()
 const role = useRoleStore()
+const { userConfig } = storeToRefs(useUserStore())
+const { columns, updateRemarkDisplayStatus } = useColumns()
 const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
 
+const tableRef = useTemplateRef('proxyTable')
 const filtersMenu = ref()
 const dataList = ref()
 
@@ -162,6 +164,13 @@ async function addRemark(remark: string, data: any) {
   tableRef.value?.refresh()
 }
 
+function toggleRemarkDisplayStatus(cache: Record<string, any>) {
+  cache.extend = !cache.extend
+  if (userConfig.value.remarkDisplayStatus !== cache.extend) {
+    updateRemarkDisplayStatus(cache.extend)
+  }
+}
+
 async function onEdit(data: any) {
   return API.proxy.userMdfProxyModuleCreate(data)
 }
@@ -241,9 +250,19 @@ function onRefreshTable() {
             </div>
           </div>
         </template>
-        <template #remark="{ data }">
-          <RxSvgIcon v-tooltip.top="{ value: data.remark, showDelay: 500 }" :name="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': data.remark }"
-            class="cursor-pointer" @click.stop="operationHandler({ name: 'remark' }, data)" />
+        <template #remarkHeader="{ column: { title, _cache } }">
+          <div class="flex items-center gap-2 note-header">
+            <span>{{ title }}</span>
+            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
+              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+          </div>
+        </template>
+        <template #remark="{ data, column: { _cache } }">
+          <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
+            <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
+              :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.remark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{ data.remark }}</div>
+          </div>
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
@@ -262,6 +281,32 @@ function onRefreshTable() {
   font-size: 12px;
   font-weight: 500;
   line-height: var(--Line-Height-text-xs, 16px);
+}
+
+.note {
+  &-header {
+    color: var(--colors-text-text-primary, #FAFAFA);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+  }
+
+  &-content {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  &-light {
+    :deep(svg) {
+      color: var(--colors-text-text-brand, #11A3FD) !important;
+    }
+  }
 }
 
 .ip-type {

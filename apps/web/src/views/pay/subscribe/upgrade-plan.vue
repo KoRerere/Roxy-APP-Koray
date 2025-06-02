@@ -57,7 +57,7 @@ const details = computed(() => {
   const { discount } = userPayInfo.value
 
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
-
+  const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
 
   const { original: nextBillOriginal, amount: nextBillAmount, discount: nextBillDiscount } = nextBill.value
 
@@ -67,15 +67,15 @@ const details = computed(() => {
       items: [
         {
           label: $t('窗口数量'),
-          value: profileCount.format()
+          value: `${profileCount.format()} + ${freeWindowCount.format()}`
         },
         {
           label: $t('每日可创建数'),
-          value: profileCount.multiply(30).format()
+          value: `${profileCount.add(freeWindowCount.value).multiply(30).format()}`
         },
         {
           label: $t('每日可打开数'),
-          value: profileCount.multiply(100).format()
+          value: `${profileCount.add(freeWindowCount.value).multiply(100).format()}`
         },
         {
           label: $t('专属折扣'),

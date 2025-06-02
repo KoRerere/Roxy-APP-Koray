@@ -1,4 +1,5 @@
 import { $t } from '/@/locales'
+import currency from 'currency.js'
 
 export function getRawType(data: any) {
   return Object.prototype.toString.call(data).slice(8, -1).toLowerCase()
@@ -345,4 +346,21 @@ export function safeParseJSON(data: any, fallback?: any) {
   catch (error) {
     return fallback ?? data
   }
+}
+
+export function formatNumberToKMB(num: number, precision = 0): string {
+  const formats = [
+    { threshold: 1e9, suffix: 'B' },
+    { threshold: 1e6, suffix: 'M' },
+    { threshold: 1e3, suffix: 'K' },
+  ]
+
+  if (num >= formats[formats.length - 1].threshold) {
+    for (const { threshold, suffix } of formats) {
+      if (num >= threshold) {
+        return `${currency(num, { symbol: '', precision }).divide(threshold).format()}${suffix}`
+      }
+    }
+  }
+  return num?.toLocaleString('en-US')
 }

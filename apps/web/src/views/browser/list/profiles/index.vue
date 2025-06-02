@@ -59,19 +59,17 @@ const router = useRouter()
 const confirm = useConfirm()
 const dialog = useDialog()
 const drawerInstance = useDrawer()
-const [showModal] = RxUseDialog()
+const role = useRoleStore()
+const workspaceStore = useWorkspaceStore()
+const { userInfo, userConfig, isNoPayUser } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { getProjects } = useMateGroup()
+const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
-const { columns, updateColumns } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
+const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
-const role = useRoleStore()
-const workspaceStore = useWorkspaceStore()
-const userStore = useUserStore()
-const { userInfo, userConfig, isNoPayUser } = storeToRefs(userStore)
-const { fetchUserInfo } = useUserStore()
 const tableRef = useTemplateRef('windownTable')
 const tagsIconRef = useTemplateRef('tagsIcon')
 const filtersMenu = ref()
@@ -796,20 +794,10 @@ async function onRemark(data: Data | Data[]) {
   })
 }
 
-const saveRemarkDisplayStatus = debounce(async function (cache: Record<string, any>) {
-  const { code, msg } = await API.base.userSetUserConfigCreate({
-    remarkDisplayStatus: cache.extend
-  })
-  onlyErrorToast(code, msg)
-  if (code !== 0) return
-  fetchUserInfo()
-  userStore.updateUserConfig()
-}, 500)
-
-async function toggleRemarkDisplayStatus(cache: Record<string, any>) {
+function toggleRemarkDisplayStatus(cache: Record<string, any>) {
   cache.extend = !cache.extend
   if (userConfig.value.remarkDisplayStatus !== cache.extend) {
-    saveRemarkDisplayStatus(cache)
+    updateRemarkDisplayStatus(cache.extend)
   }
 }
 
@@ -1001,7 +989,7 @@ defineExpose({
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
         <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
-          <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'remark-light': data.windowRemark }" text severity="secondary" size="xxs"
+          <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
             :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
           <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
             data.windowRemark }}</div>
@@ -1067,7 +1055,7 @@ defineExpose({
   line-height: 1.4;
 }
 
-.remark-light {
+.note-light {
   :deep(svg) {
     color: var(--colors-text-text-brand, #11A3FD) !important;
   }

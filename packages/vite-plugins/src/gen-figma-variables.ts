@@ -1,5 +1,6 @@
 import type { PluginOption, ResolvedConfig } from 'vite'
 import { access, mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import bodyParser from 'body-parser'
 
 interface OptionsType {
@@ -34,7 +35,8 @@ export function genFigmaVariables(options: OptionsType): PluginOption {
           // console.log('req.body338', req.body)
           if (Array.isArray(req.body)) {
             // 生成 CSS 变量文件
-            genVariables(req.body, targetDir)
+            await genVariables(req.body, targetDir)
+            genCssVariable(req.body, targetDir)
           }
           res.end(JSON.stringify(req.body))
         }
@@ -77,4 +79,50 @@ ${files.map(file => `  ...${file.fileName},`).join('\n')}
 }
   `
   await writeFile(`${targetDir}/index.ts`, indexContent)
+}
+
+async function genCssVariable(files: { fileName: string, body: Record<string, any> }[], targetDir: string) {
+  const dirPath = join(targetDir, 'theme')
+  try {
+    await access(dirPath)
+  }
+  catch (error) {
+    await mkdir(dirPath, { recursive: true })
+  }
+
+  const genPromises = files.map(async (item) => {
+    const { fileName, body } = item
+    const bodyPromise = Object.entries(body).map(async ([subname, data]) => {
+      const cssVariable = `:root {\n\t--${flattenObject(data).join(';\n\t--')}\n}`
+      const name = `${fileName.toLocaleLowerCase().replace(/tokens/g, '').replace(/\./g, '_')}${subname.toLocaleLowerCase()}`
+      await writeFile(`${dirPath}/${name}.css`, cssVariable)
+      return name
+    })
+    return await Promise.all(bodyPromise)
+  })
+  const fileNames = (await Promise.all(genPromises)).flat().filter(name => ['dark', 'light'].some(subname => name.includes(subname)))
+  const indexContent = `/** 此文件自动生成，请勿修改！ */\n${fileNames.map(name => `import './${name}.css';`).join('\n')}`
+  await writeFile(`${dirPath}/index.ts`, indexContent)
+}
+
+function flattenObject(obj: Record<string, any>, prefix = '') {
+  function processValue(value: any) {
+    if (typeof value !== 'string') return value;
+    const varMatch = value.match(/^\{(.*)\}$/);
+    if (varMatch) {
+      return `var(--${varMatch[1].replace(/\./g, '-')})`;
+    }
+    return value;
+  }
+
+  return Object.keys(obj).reduce((acc, key) => {
+    const newPrefix = prefix ? `${prefix}-${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      acc.push(...flattenObject(obj[key], newPrefix));
+    } else {
+      const processedValue = processValue(obj[key]);
+      acc.push(`${newPrefix}: ${processedValue}`);
+    }
+    return acc;
+  }, [] as string[]);
 }

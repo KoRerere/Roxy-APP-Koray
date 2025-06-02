@@ -10,9 +10,12 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import TierSlider from '/@/views/pay/subscribe/components/tier-slider.vue'
 import { getStep } from './util'
+import { useUserStore } from '/@/stores/user';
 import { type Plan } from './type'
+import { SubLevelEnum } from '/@/enums/pay';
 
 const [showToast, onlyErrorToast] = useResponseToast()
+const { userPayInfo } = storeToRefs(useUserStore())
 const router = useRouter()
 
 const dataList = ref<Plan[]>()
@@ -24,6 +27,7 @@ const selectedCount = ref()
 
 const details = computed(() => {
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
+  const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
 
   return [
     {
@@ -31,7 +35,7 @@ const details = computed(() => {
       items: [
         {
           label: $t('窗口数量'),
-          value: profileCount.format()
+          value: `${profileCount.format()} + ${freeWindowCount.format()}`
         },
         {
           label: $t('单价'),
@@ -39,11 +43,11 @@ const details = computed(() => {
         },
         {
           label: $t('每日可创建数'),
-          value: profileCount.multiply(30).format()
+          value: profileCount.add(freeWindowCount.value).multiply(30).format()
         },
         {
           label: $t('每日可打开数'),
-          value: profileCount.multiply(100).format()
+          value: profileCount.add(freeWindowCount.value).multiply(100).format()
         },
         {
           label: $t('订阅时长'),
@@ -76,7 +80,7 @@ async function getTierPricingList() {
   try {
     const { code, data, msg } = await API.pay.userGetWindowPricingRulesListList()
     if (code === 0) {
-      dataList.value = data.rows.slice(0, 1).map(({ subLevel, ...item }) => ({ ...item, subLevel: 'Trial' }))
+      dataList.value = data.rows.slice(0, 1).map(({ subLevel, ...item }) => ({ ...item, subLevel: SubLevelEnum.Trial }))
       selectedPlan.value = dataList.value[0]
       selectedCount.value = selectedPlan.value.maxWindows
     } else {

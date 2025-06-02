@@ -1,4 +1,4 @@
-import type { Browser, Protocol } from 'rebrowser-puppeteer-core'
+import type { Browser, Protocol } from 'puppeteer-core'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
@@ -93,13 +93,37 @@ export class AfterLaunchTask {
     }
 
     const createCDPSession = async () => {
-      return this.browser.target().createCDPSession()
+      // 添加重试机制，确保浏览器目标已经准备好
+      let retries = 0;
+      const maxRetries = 5;
+      const retryDelay = 500; // 500ms
+
+      while (retries < maxRetries) {
+        try {
+          const target = this.browser.target();
+          if (!target) {
+            throw new Error('Browser target not available yet');
+          }
+          return await target.createCDPSession();
+        } catch (error) {
+          retries++;
+          if (retries >= maxRetries) {
+            throw error;
+          }
+          console.log(`创建 CDP Session 失败，第 ${retries} 次重试...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
+      throw new Error('Failed to create CDP Session after maximum retries');
     }
 
     const cdpSession = await createCDPSession().catch((err) => {
       console.log('创建cdpSession失败', err)
       return Promise.reject(err)
     })
+
+    // 将 CDP Session 保存到 browserItem 中，供其他地方使用
+    this.browserItem.cdpSession = cdpSession
 
     const saveCookies = async () => {
       const { cookies } = await cdpSession.send('Storage.getCookies')
