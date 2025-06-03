@@ -62,6 +62,15 @@ genFormContext({
 
 const formRef = useTemplateRef<any>('wcisform')
 
+function genFormFieldProps(input: Input) {
+  const { name, resolver } = input
+  return {
+    name,
+    resolver: isFunction(resolver) ? zodResolver(resolver(z)) : undefined,
+    initialValue: initialValue(input)
+  }
+}
+
 function initialValue(input: Input) {
   if (input.value) return input.value
 
@@ -70,15 +79,6 @@ function initialValue(input: Input) {
       return 0
     default:
       return ''
-  }
-}
-
-function genFormFieldProps(input: Input) {
-  const { name, resolver } = input
-  return {
-    name,
-    resolver: isFunction(resolver) ? zodResolver(resolver(z)) : undefined,
-    initialValue: initialValue(input)
   }
 }
 
@@ -120,8 +120,7 @@ defineExpose({
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type!]" v-bind="input.props" />
-      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}
-      </Message>
+      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>
   </Form>
 </template>

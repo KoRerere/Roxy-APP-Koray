@@ -25,7 +25,7 @@ const dialog = useDialog()
 const toast = useToast()
 const role = useRoleStore()
 
-const [dialogOpen] = useSimpleDialog()
+const { showSimpleDialog } = useSimpleDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useCustomDialog()
 const { showMenu: showPopupMenu } = usePopupMenu()
@@ -205,19 +205,19 @@ async function uploadRecordCheck() {
 }
 
 function installViaUrl() {
-  dialogOpen({
-    props: {
-      title: $t('添加 Google 扩展'),
-      content: $t('每日总扩展添加数量限制为 5 个。'),
-      inputs: [
-        {
-          type: 'text',
+  showSimpleDialog({
+    title: $t('添加 Google 扩展'),
+    content: $t('每日总扩展添加数量限制为 5 个。'),
+    inputs: [
+      {
+        name: 'url',
+        type: 'text',
+        props: {
           placeholder: $t('请输入 Google Store 中扩展的 URL'),
-          name: 'url',
-          leftIcon: 'base/rx_ic_link',
-        },
-      ],
-    },
+          preIcon: 'base/rx_ic_link',
+        }
+      },
+    ],
     onConfirm: async (formData: any) => {
       try {
         await uploadRecordCheck()
@@ -235,6 +235,7 @@ function installViaUrl() {
     },
   })
 }
+
 
 function onUploadExtension(data = ({} as any)) {
   const { pluginDir, localKey } = data

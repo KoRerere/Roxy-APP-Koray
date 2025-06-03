@@ -11,7 +11,7 @@ import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyList from '/@/views/agent/list/quick.vue'
 import AccountCreate from '/@/views/account/create'
 import AccountList from '/@/views/account/list/quick.vue'
-import Popup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
 import { ClearType, ProfileModifyType, ProfileOpenStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
@@ -35,13 +35,12 @@ import TagsIcon from './components/tags-icon.vue'
 import { silentUpdateProxy, silentUpdateAccount } from './components/util'
 import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
 import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
-import { debounce } from 'es-toolkit'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -68,6 +67,7 @@ const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
+const { showSimpleDialog } = useSimpleDialog()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const tableRef = useTemplateRef('windownTable')
@@ -507,50 +507,45 @@ async function onMoveToProject(data: any) {
     const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
     const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
 
-    dialog.open(Popup, {
-      props: {
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-      },
-      data: {
-        props: {
-          title: $t('移动项目'),
-          content: $t('将移动 {names} 到所选项目', { names: namesStr }),
-          inputs: [
-            {
-              type: 'select',
-              name: 'projectId',
-              placeholder: $t('请选择项目'),
-              options,
-              filter: false,
-              optionsValue: 'value',
-            },
-          ],
+    showSimpleDialog({
+      title: $t('移动项目'),
+      content: $t('将移动 {names} 到所选项目', { names: namesStr }),
+      inputs: [
+        {
+          type: 'select',
+          name: 'projectId',
+          props: {
+            placeholder: $t('请选择项目'),
+            options,
+            optionValue: 'value',
+          },
+          resolver: (z: any) => z.string({
+            invalid_type_error: $t('请选择项目'),
+          }).min(1, $t('请选择项目'))
         },
-        onConfirm: async (formData: any) => {
-          if (formData.projectId) {
-            const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
-            if (!ids.length) {
-              onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
-              return
-            }
-            await batchModifyWindow({ ids, projectId: formData.projectId }, true)
-              .then(() => {
-                const projectName = options.find(item => item.value === formData.projectId)!.label
-                datas.forEach(item => {
-                  item.projectName = projectName
-                  item.projectId = Number(formData.projectId)
-                  item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
-                  item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
-                })
-              })
+      ],
+      onConfirm: async (formData: any) => {
+        if (formData.projectId) {
+          const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+          if (!ids.length) {
+            onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
+            return
           }
-          resolve(true)
-        },
-        onCancel: () => {
-          reject($t('取消'))
-        },
+          await batchModifyWindow({ ids, projectId: formData.projectId }, true)
+            .then(() => {
+              const projectName = options.find(item => item.value === formData.projectId)!.label
+              datas.forEach(item => {
+                item.projectName = projectName
+                item.projectId = Number(formData.projectId)
+                item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+                item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
+              })
+            })
+        }
+        resolve(true)
+      },
+      onCancel: () => {
+        reject($t('取消'))
       },
     })
   })
@@ -756,39 +751,32 @@ async function onEditCookies(data: Data | Data[]) {
 async function onRemark(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
   return new Promise((resolve, reject) => {
-    dialog.open(Popup, {
-      props: {
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-      },
-      data: {
-        props: {
-          title: $t('为所选窗口添加备注'),
-          inputs: [
-            {
-              type: 'textarea',
-              name: 'windowRemark',
-              placeholder: $t('请输入备注'),
-              value: datas[0].windowRemark,
-              rows: 5
-            },
-          ],
-        },
-        onConfirm: async (formData: any) => {
-          try {
-            const ids = datas.map(item => item.id)
-            await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
-            datas.forEach(item => {
-              item.windowRemark = formData.windowRemark
-            })
-          } finally {
-            resolve(true)
+    showSimpleDialog({
+      title: $t('为所选窗口添加备注'),
+      inputs: [
+        {
+          type: 'textarea',
+          name: 'windowRemark',
+          value: datas[0].windowRemark,
+          props: {
+            placeholder: $t('请输入备注'),
+            rows: 5,
           }
         },
-        onCancel: () => {
-          reject($t('取消'))
-        },
+      ],
+      onConfirm: async (formData: any) => {
+        try {
+          const ids = datas.map(item => item.id)
+          await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
+          datas.forEach(item => {
+            item.windowRemark = formData.windowRemark
+          })
+        } finally {
+          resolve(true)
+        }
+      },
+      onCancel: () => {
+        reject($t('取消'))
       },
     })
   })

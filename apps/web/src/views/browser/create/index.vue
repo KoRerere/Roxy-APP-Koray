@@ -1,11 +1,10 @@
 <script lang="tsx" setup>
 import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import simplePopup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { Role } from '/@/enums'
 import { SubLevelEnum } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -13,7 +12,7 @@ import { $t } from '/@/locales'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
@@ -25,8 +24,7 @@ import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { BUSINESS_CODE } from '/@/constants/business-code'
-import { useToast } from 'primevue/usetoast'
+// import { BUSINESS_CODE } from '/@/constants/business-code'
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -51,7 +49,6 @@ interface ProfileTemplate {
 }
 
 const confirm = useConfirm()
-const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
@@ -61,7 +58,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const backRoute = useBackRoute()
 const { handleBusinessCode } = useHandleBusinessCode()
-const toast = useToast()
+const { showSimpleDialog } = useSimpleDialog()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -328,33 +325,28 @@ async function saveTemplatePopup(event: Event, option?: TemplateOption) {
     // }
   }
 
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: option?.value ? $t('编辑模板') : $t('保存模板'),
-        content: $t('请在以下文本框输入模板名称:'),
-        inputs: [
-          {
-            type: 'text',
-            name: 'templateName',
-            placeholder: $t('模板名称'),
-            value: option?.label,
-            required: true,
-          },
-        ],
-        render: () => <ol class="pl-[14px] m-0">
-          <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
-          <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
-        </ol>,
+  showSimpleDialog({
+    title: option?.value ? $t('编辑模板') : $t('保存模板'),
+    content: $t('请在以下文本框输入模板名称:'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'templateName',
+        value: option?.label,
+        props: {
+          placeholder: $t('模板名称'),
+        },
+        resolver: (z: any) => z.string({
+          invalid_type_error: $t('请输入模板名称'),
+        }).min(1, $t('请输入模板名称'))
       },
-      onConfirm: async (data: any) => {
-        onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
-      },
+    ],
+    afterRender: () => <ol class="pl-[14px] m-0">
+      <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
+      <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+    </ol>,
+    onConfirm: async (data: any) => {
+      onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
     },
   })
 }
@@ -441,11 +433,9 @@ async function deleteTemplate(data: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
-          :inputs-group="inputsGroup">
+        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
           <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
-              @click.stop="saveTemplatePopup($event)" />
+            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
             <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
             <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
           </template>

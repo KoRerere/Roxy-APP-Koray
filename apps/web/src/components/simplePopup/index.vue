@@ -1,83 +1,61 @@
 <script setup lang="ts">
-import { getFormData } from '/@/utils/index'
+import TsForm from '/@/views/lab/components/form/index.vue'
 
-const dialogRef = inject<any>('dialogRef')
+interface Props {
+  title?: string
+  content?: string
+  inputs: any[]
+  afterRender?: any
+  onConfirm?: (formData: any) => Promise<void> | void
+  onCancel?: () => void
+}
 
-const _props = ref()
-const _onConfirm = ref()
-const _onCancel = ref()
+const { title, content, inputs, onConfirm, onCancel } = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
+const loading = ref(false)
 
 function close() {
-  dialogRef.value.close()
-  _onCancel.value?.()
+  onCancel?.()
+  emit('close')
 }
 
-async function confirm() {
-  try {
-    const formData = getFormData(_props.value.inputs)
-    await _onConfirm.value?.(formData)
-    close()
-  }
-  catch (error) {
-    console.warn(error)
-  }
+async function onSubmit(formData: any) {
+  loading.value = true
+  await onConfirm?.(formData)
+  loading.value = false
+  emit('close')
 }
 
-onMounted(() => {
-  const { props, onConfirm, onCancel } = dialogRef.value.data
-  _props.value = props
-  _onConfirm.value = onConfirm
-  _onCancel.value = onCancel
-})
 </script>
 
 <template>
-  <div v-if="_props" class="flex flex-col popup">
-    <div v-if="_props.title" class="popup-title">
-      {{ _props.title }}
-    </div>
-    <div v-if="_props.content" class="popup-content">
-      {{ _props.content }}
-    </div>
-    <RyForm class="form" :inputs="_props.inputs" />
-    <component :is="_props.render" v-if="_props.render" />
-    <div class="footer">
+  <div class="flex flex-col gap-3 pt-4 pb-6 px-6 w-120">
+    <div v-if="title" class="title">{{ title }}</div>
+    <div v-if="content" class="content">{{ content }}</div>
+    <TsForm id="simpleform" :inputs="inputs" @submit="onSubmit" />
+    <component v-if="afterRender" :is="afterRender" />
+    <div class="flex justify-end items-center self-stretch gap-3">
       <RxButton size="sm" :label="$t('取消')" text severity="secondary" @click="close" />
-      <RxButton size="sm" :label="$t('保存')" @click="confirm" />
+      <RxButton size="sm" :label="$t('保存')" type="submit" form="simpleform" :loading="loading" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.popup {
-  width: 400px;
-  padding-top: 1.25rem;
-  gap: var(--spacing-xl, 12px);
-
-  &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
-    font-family: Inter;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: normal;
-  }
-
-  &-content {
-    color: var(--colors-text-text-secondary, #575d61);
-    font-family: Inter;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 18px;
-  }
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
 }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-xl, 12px);
-  align-self: stretch;
+.content {
+  color: var(--colors-text-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
 }
 </style>

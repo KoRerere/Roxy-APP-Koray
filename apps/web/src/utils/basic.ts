@@ -133,8 +133,8 @@ export function copyText(text: string) {
 }
 
 export function getUserAgentOs() {
-  if (navigator.userAgentData) {
-    return navigator.userAgentData.platform
+  if ((navigator as any).userAgentData) {
+    return (navigator as any).userAgentData.platform
   }
   else {
     const userAgent = navigator.userAgent
@@ -234,7 +234,7 @@ export function parseUrl(url: string) {
   return match && { protocol: match[1], domain: match[2] }
 }
 
-export function concurrentControl(tasks: (() => Promise<any>)[], limit: number, notify?: (result: any) => void): Promise<any[]> {
+export function concurrentControl(tasks: (() => Promise<any>)[], limit: number = 5, notify?: (result: any) => void): Promise<any[]> {
   let activeCount = 0
   let taskIndex = 0
   const results: any[] = []
@@ -297,7 +297,6 @@ export function formatProxyTime(time: string) {
     return $t('刚刚')
   }
 }
-
 
 export function getExtname(filename: string) {
   const parts = filename.split('.');
@@ -363,4 +362,11 @@ export function formatNumberToKMB(num: number, precision = 0): string {
     }
   }
   return num?.toLocaleString('en-US')
+}
+
+export function hexToRgba(hex: string, alpha: number): string {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }

@@ -4,7 +4,7 @@ import { useDialog } from 'primevue/usedialog'
 import { VueDraggable } from 'vue-draggable-plus'
 import { API } from '/@/api'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import simplePopup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import tags from '/@/views/browser/list/tags'
@@ -26,6 +26,7 @@ const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
 const { isNoPayUser } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
+const { showSimpleDialog } = useSimpleDialog()
 
 type TabType = {
   id: string
@@ -154,37 +155,33 @@ async function updateFilterTabs(isEdit: boolean = false) {
 }
 
 async function onEditFilter(item: any) {
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('编辑筛选器名称'),
-        inputs: [
-          {
-            type: 'text',
-            placeholder: $t('请输入筛选器名称'),
-            name: 'filter_name',
-            required: true,
-            value: item.label,
-          },
-        ],
+
+  showSimpleDialog({
+    title: $t('编辑筛选器名称'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'filter_name',
+        value: item.label,
+        props: {
+          placeholder: $t('请输入筛选器名称'),
+        },
+        resolver: (z: any) => z.string({
+          invalid_type_error: $t('请输入筛选器名称'),
+        }).min(1, $t('请输入筛选器名称'))
       },
-      onConfirm: async (formData: any) => {
-        const { code, msg } = await API.window.userUpdateWindowFilterNameCreate({
-          ...item,
-          old_filter_name: item.filter_name,
-          new_filter_name: formData.filter_name,
-        })
-        if (code === 0) {
-          item.name = formData.filter_name
-          item.label = formData.filter_name
-        }
-        onlyErrorToast(code, msg)
-      },
+    ],
+    onConfirm: async (formData: any) => {
+      const { code, msg } = await API.window.userUpdateWindowFilterNameCreate({
+        ...item,
+        old_filter_name: item.filter_name,
+        new_filter_name: formData.filter_name,
+      })
+      if (code === 0) {
+        item.name = formData.filter_name
+        item.label = formData.filter_name
+      }
+      onlyErrorToast(code, msg)
     },
   })
 }

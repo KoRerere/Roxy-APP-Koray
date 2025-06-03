@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { useDialog } from 'primevue/usedialog'
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import simplePopup from '/@/components/simplePopup'
+import simplePopup, { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 
@@ -29,7 +29,7 @@ const _props = defineProps({
 
 const emit = defineEmits(['filterChange'])
 const dialog = useDialog()
-
+const { showSimpleDialog } = useSimpleDialog()
 const isAllProfiles = ref(true)
 const isChanged = ref(false)
 
@@ -201,27 +201,22 @@ function onFilterChange() {
 }
 
 function saveFilters() {
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('保存筛选器'),
-        inputs: [
-          {
-            type: 'text',
-            placeholder: $t('请输入筛选器名称'),
-            name: 'filter_name',
-            required: true,
-          },
-        ],
+  showSimpleDialog({
+    title: $t('保存筛选器'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'filter_name',
+        props: {
+          placeholder: $t('请输入筛选器名称'),
+        },
+        resolver: (z: any) => z.string({
+          invalid_type_error: $t('请输入筛选器名称'),
+        }).min(1, $t('请输入筛选器名称'))
       },
-      onConfirm: (formData: any) => {
-        _props.saveFilters(formData)
-      },
+    ],
+    onConfirm: (formData: any) => {
+      _props.saveFilters(formData)
     },
   })
 }

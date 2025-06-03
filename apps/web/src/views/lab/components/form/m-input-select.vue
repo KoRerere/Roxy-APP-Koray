@@ -26,7 +26,6 @@ const {
 
 const _options = ref(options)
 const attrs = useAttrs()
-console.log("🚀 ~ attrs:", attrs)
 
 // !todo getOptions 需要优化
 onBeforeMount(async () => {

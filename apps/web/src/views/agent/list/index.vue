@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import popup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -19,8 +17,6 @@ import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
 
 const router = useRouter()
-const dialog = useDialog()
-
 const role = useRoleStore()
 const { userConfig } = storeToRefs(useUserStore())
 const { columns, updateRemarkDisplayStatus } = useColumns()
@@ -28,6 +24,7 @@ const [checkProxy] = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
+const { showSimpleDialog } = useSimpleDialog()
 
 const tableRef = useTemplateRef('proxyTable')
 const filtersMenu = ref()
@@ -133,27 +130,20 @@ async function testAllProxy() {
 }
 
 function onRemark(data: any) {
-  dialog.open(popup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('为所选代理添加备注'),
-        inputs: [
-          {
-            type: 'textarea',
-            name: 'remark',
-            placeholder: $t('请输入备注'),
-            value: data.remark,
-          },
-        ],
+  showSimpleDialog({
+    title: $t('为所选代理添加备注'),
+    inputs: [
+      {
+        type: 'textarea',
+        name: 'remark',
+        value: data.remark,
+        props: {
+          placeholder: $t('请输入备注'),
+        }
       },
-      onConfirm: async (formData: any) => {
-        addRemark(formData.remark, data)
-      },
+    ],
+    onConfirm: async (formData: any) => {
+      addRemark(formData.remark, data)
     },
   })
 }

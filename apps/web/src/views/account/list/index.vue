@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import PlatformIcon from './platform-icon.vue'
 import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import popup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -18,12 +16,12 @@ import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
 const confirm = useConfirm()
-const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { userConfig } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
+const { showSimpleDialog } = useSimpleDialog()
 
 const tableRef = useTemplateRef('account')
 const operation = ref([
@@ -105,30 +103,23 @@ function createAccount(data?: Data) {
 }
 
 function onRemark(data: Data) {
-  dialog.open(popup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('为所选账号添加备注'),
-        inputs: [
-          {
-            type: 'textarea',
-            name: 'platformRemarks',
-            placeholder: $t('请输入备注'),
-            value: data?.platformRemarks,
-          },
-        ],
+  showSimpleDialog({
+    title: $t('为所选账号添加备注'),
+    inputs: [
+      {
+        type: 'textarea',
+        name: 'platformRemarks',
+        value: data?.platformRemarks,
+        props: {
+          placeholder: $t('请输入备注'),
+        }
       },
-      onConfirm: async (formData: any) => {
-        const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
-        const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
-        onlyErrorToast(code, msg)
-        tableRef.value?.refresh()
-      },
+    ],
+    onConfirm: async (formData: any) => {
+      const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
+      const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
+      onlyErrorToast(code, msg)
+      tableRef.value?.refresh()
     },
   })
 }

@@ -5,11 +5,9 @@ import { useResponseToast } from '/@/hooks/useResponseToast';
 import PlanModal from '../pay/wallet/components/plan-success.vue'
 import BalanceModal from '../pay/wallet/components/balance-success.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { RxAlert } from '/@/components/rx-alert/'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
-
 
 function open1() {
   showModal({
@@ -272,6 +270,7 @@ const filters = reactive({
   resetFilters() {
   },
 })
+
 </script>
 
 <template>
@@ -283,11 +282,11 @@ const filters = reactive({
       <RxAlert title="wcis man!" type="error"></RxAlert>
     </div> -->
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
+    <!-- <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
-      <!-- <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" /> -->
-      <!-- <RxButton label="test submit" @click="noFormIdSubmit"></RxButton> -->
-    </div>
+      <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
+      <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
+    </div> -->
   </div>
 </template>
 

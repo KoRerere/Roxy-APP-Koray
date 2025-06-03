@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyTable from '/@/views/agent/list/quick.vue'
-import { useDialog } from 'primevue/usedialog'
 import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
-import simplePopup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { useNetworkStore } from '/@/stores/network'
-import { deepClone, isEmptyValue, strConcat, formatProxyTime } from '/@/utils'
+import { deepClone, isEmptyValue, strConcat } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useTableContext } from '../hooks/useContext'
@@ -23,9 +22,9 @@ const props = withDefaults(defineProps<{
   windowInfo: () => ({}),
 })
 
-const dialog = useDialog()
 const network = useNetworkStore()
 const drawerInstance = useDrawer()
+const { showSimpleDialog } = useSimpleDialog()
 
 const [checkProxy, checkResult] = useCheckProxy()
 const { isBatch, createCount } = useTableContext()
@@ -121,28 +120,23 @@ async function testProxy(data: any, index: number) {
 }
 
 function modifyProxyCount(item: any) {
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        content: $t('设置绑定的窗口数量'),
-        inputs: [
-          {
-            type: 'number',
-            placeholder: $t('请输入数字'),
-            name: 'proxyCount',
-            value: item._proxyCount,
-            required: true,
-          },
-        ],
+  showSimpleDialog({
+    content: $t('设置绑定的窗口数量'),
+    inputs: [
+      {
+        type: 'number',
+        name: 'proxyCount',
+        value: item._proxyCount,
+        props: {
+          placeholder: $t('请输入数量'),
+        },
+        resolver: (z: any) => z.number({
+          invalid_type_error: $t('数量必须大于{min}', { min: 1 }),
+        }).min(1, $t('数量必须大于{min}', { min: 1 }))
       },
-      onConfirm: (formData: any) => {
-        item._proxyCount = Number.parseInt(formData.proxyCount)// 创建时补全代理数量需要用到
-      },
+    ],
+    onConfirm: (formData: any) => {
+      item._proxyCount = Number.parseInt(formData.proxyCount)// 创建时补全代理数量需要用到
     },
   })
 }
