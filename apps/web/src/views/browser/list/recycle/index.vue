@@ -5,7 +5,7 @@ import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import profileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import profileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TagsIcon from '/@/views/browser/list/profiles/components/tags-icon.vue'
 import { getOperation } from './operation'
 import { useUserStore } from '/@/stores/user'
@@ -144,13 +144,16 @@ async function deleteHandler(datas: any) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
-    :show-gridlines="false" :show-actions="false" :show-table-header="false">
+  <RyTable ref="recycleTable" cache-key="browser-recycle-list" selection-mode="multiple" :columns="columns"
+    :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler" :show-gridlines="false"
+    :show-actions="false" :show-table-header="false">
     <template #table-empty>
-      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')" :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
+      <CustomEmpty icon="rx_illustration_bin.svg" :title="$t('回收站暂无数据')"
+        :desc="$t('删除的窗口将展示在此处。如在回收站继续清除，窗口将无法再恢复。')" />
     </template>
     <template #profile="{ data }">
-      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()" :data="data" disabled />
+      <profileInfo :workspace-name="workspaceStore.currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()"
+        :data="data" disabled />
     </template>
     <template #note="{ data }">
       <RemarkIcon :value="data.windowRemark" disabled />

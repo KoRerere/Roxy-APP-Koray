@@ -1,11 +1,151 @@
 <script setup lang="ts">
+import domAlign from 'dom-align';
+import { motion, AnimatePresence } from 'motion-v';
 
+type Trigger = 'click' | 'hover' | 'focus'
+type Placement = 'top' | 'bottom' | 'left' | 'right'
+
+const props = defineProps({
+  trigger: {
+    type: String as PropType<Trigger>,
+    default: 'hover',
+  },
+  placement: {
+    type: String as PropType<Placement>,
+    default: 'top',
+  },
+  offset: {
+    type: Number,
+    default: 4,
+  },
+  delay: {
+    type: Number,
+    default: 200
+  }
+})
+
+const sourceRef = useTemplateRef<HTMLElement>('sourceRef')
+const targetRef = useTemplateRef<HTMLElement>('targetRef')
+
+const slots = useSlots();
+
+const show = defineModel<boolean>('show', {
+  default: false,
+})
+
+const configs = computed(() => {
+  const __configs: {
+    points?: string[],
+    offset?: number[],
+    y?: number,
+    x?: number,
+  } = {};
+  const motionOffset = 8
+  if (props.placement === 'top') {
+    __configs.points = ['bc', 'tc']
+    __configs.offset = [0, -props.offset]
+    __configs.y = motionOffset
+  } else if (props.placement === 'bottom') {
+    __configs.points = ['tc', 'bc']
+    __configs.offset = [0, props.offset]
+    __configs.y = -motionOffset
+  } else if (props.placement === 'left') {
+    __configs.points = ['cr', 'cl']
+    __configs.offset = [-props.offset, 0]
+    __configs.x = motionOffset
+  } else if (props.placement === 'right') {
+    __configs.points = ['cl', 'cr']
+    __configs.offset = [props.offset, 0]
+    __configs.x = -motionOffset
+  }
+  return __configs
+})
+
+const align = () => {
+  nextTick(() => {
+    domAlign(sourceRef.value, targetRef.value, {
+      points: configs.value.points,
+      offset: configs.value.offset,
+      overflow: {
+        adjustX: true,
+        adjustY: true,
+      },
+    })
+  })
+}
+
+let delayTimer: NodeJS.Timeout | null = null
+const open = () => {
+  // 如果没有传递 slot content 则不显示了
+  if (!slots.content) return;
+  show.value = true;
+  delayTimer = setTimeout(() => {
+    align()
+  }, props.delay)
+}
+
+const clickToOpen = () => {
+  if (!slots.content) return;
+  show.value = !show.value
+  align()
+}
+
+const hide = () => {
+  show.value = false
+  delayTimer && clearTimeout(delayTimer)
+}
+
+onMounted(() => {
+  const action = props.trigger
+  if (action === 'click') {
+    targetRef.value?.addEventListener('click', clickToOpen)
+  } else if (action === 'hover') {
+    targetRef.value?.addEventListener('mouseenter', open)
+    targetRef.value?.addEventListener('mouseleave', hide)
+  } else if (action === 'focus') {
+    targetRef.value?.addEventListener('focus', open)
+    targetRef.value?.addEventListener('blur', hide)
+  }
+
+  onUnmounted(() => {
+    if (action === 'click') {
+      targetRef.value?.removeEventListener('click', clickToOpen)
+    } else if (action === 'hover') {
+      targetRef.value?.removeEventListener('mouseenter', open)
+      targetRef.value?.removeEventListener('mouseleave', hide)
+    } else if (action === 'focus') {
+      targetRef.value?.removeEventListener('focus', open)
+      targetRef.value?.removeEventListener('blur', hide)
+    }
+  })
+})
 </script>
 
 <template>
-  <div class="rx-tooltip">
-    123
+  <div ref="targetRef" class="inline-block">
+    <slot />
   </div>
+  <Teleport to="body">
+    <div ref="sourceRef" class="!absolute inline-block z-4000">
+      <AnimatePresence>
+        <motion.div class="rx-tooltip-content" v-if="show" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
+          :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"
+          :transition="{ duration: 0.15 }">
+          <slot name="content" />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  </Teleport>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.rx-tooltip-content {
+  white-space: pre-line;
+  word-break: break-word;
+  padding: var(--spacing-xl, 12px);
+  border-radius: var(--radius-md, 6px);
+  background: var(--component-tooltip-bg, #111213);
+  /* shadow-md */
+  box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+}
+</style>
