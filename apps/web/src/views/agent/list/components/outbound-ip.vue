@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 import { formatProxyTime, strConcat } from '/@/utils'
-
-defineProps({
+import { ProxyCheckStatus } from '/@/enums'
+const props = defineProps({
   country: {
     type: String,
     default: '',
@@ -19,20 +19,35 @@ defineProps({
     type: String,
     default: '',
   },
+  status: {
+    type: Number as PropType<ProxyCheckStatus>,
+    default: ProxyCheckStatus.none,
+  },
+})
+
+const { status } = toRefs(props)
+
+const color = computed(() => {
+  if (status?.value === ProxyCheckStatus.success) {
+    return 'var(--colors-text-text-success)'
+  } else if (status?.value === ProxyCheckStatus.failure) {
+    return 'var(--colors-text-text-error)'
+  }
+  return ''
 })
 </script>
 
 <template>
   <div class="flex gap-2 proxycard">
     <div>
-      <RxSvgIcon :name="(`country-code/${country}` as SvgNames)" fallback="base/rx_ic_earth" />
+      <RxSvgIcon :name="(`country-code/${country}` as SvgNames)" fallback="base/rx_ic_earth" :color="color" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
-      <div class="flex items-center proxycard-title">
+      <div class="flex items-center proxycard-title" :style="{ color }">
         <span>{{ country || '--' }}{{ strConcat('/', city) }}</span>
       </div>
-      <div v-if="lastIp" class="flex items-center gap-1.5 proxycard-subtitle">
-        <span>{{ lastIp }}</span>
+      <div class="flex items-center gap-1.5 proxycard-subtitle">
+        <span>{{ lastIp || '--' }}</span>
         <Divider class="!ma-0" layout="vertical" />
         <span>{{ formatProxyTime(time) }}</span>
       </div>

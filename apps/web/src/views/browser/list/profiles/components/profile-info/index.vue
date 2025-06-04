@@ -95,7 +95,7 @@ const list = computed(() => {
         beforeCountry: data.beforeProxyInfo?.beforeCountry || '--',
         beforeCity: strConcat('/', data.beforeProxyInfo?.beforeCity) || '',
         beforeIp: data.beforeProxyInfo?.beforeIp || '--',
-        beforeCheckTime: data.beforeProxyInfo?.beforeCheckTime ? formatProxyTime(data.beforeProxyInfo?.beforeCheckTime) : '--',
+        beforeTime: data.beforeProxyInfo?.beforeTime ? formatProxyTime(data.beforeProxyInfo?.beforeTime) : '--',
       }
       // tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
       //   lastCountry: data.lastCountry || '--',

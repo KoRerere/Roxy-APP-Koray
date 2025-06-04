@@ -29,9 +29,10 @@ interface ProxyCheckParams {
 
 interface Options {
   silence?: boolean
+  silenceError?: boolean
 }
 
-export function useCheckProxy(options: Options = { silence: false }): [(data: any) => Promise<CheckResult>, CheckResult] {
+export function useCheckProxy(options: Options = { silence: false, silenceError: false }): [(data: any) => Promise<CheckResult>, CheckResult] {
   const [showToast, onlyErrorToast] = useResponseToast()
   const checkeResult: CheckResult = reactive({
     loading: false,
@@ -66,7 +67,9 @@ export function useCheckProxy(options: Options = { silence: false }): [(data: an
       ['lastIp', 'lastCity', 'lastCountry', 'timezone'].forEach((key) => {
         checkeResult[key as keyof CheckResult] = ''
       })
-      onlyErrorToast(-1, error)
+      if (!options.silenceError) {
+        onlyErrorToast(-1, error)
+      }
     }
     finally {
       checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
