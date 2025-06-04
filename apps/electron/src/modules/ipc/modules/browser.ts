@@ -71,12 +71,12 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
     if (clearType === 'all') {
       // 清除本地缓存
       console.log('清除本地缓存', dirIds)
-      return Promise.all(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
+      return Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
     }
     else if (clearType === 'partial') {
       // 清除本地缓存，保留插件
       console.log('清除本地缓存，保留插件', dirIds)
-      return Promise.all(dirIds.map(dirId => browserManager.removeLocalDataExcludeExtension(dirId)))
+      return Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalDataExcludeExtension(dirId)))
     }
   })
 }

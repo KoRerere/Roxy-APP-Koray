@@ -17,7 +17,7 @@ export interface PuppeteerLaunchOptions {
 /**
  * 启动浏览器
  */
-export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBrowser> {
+export async function launch(options: PuppeteerLaunchOptions, relaunch = false): Promise<ChromeBrowser> {
   const {
     executablePath,
     args = [],
@@ -28,6 +28,14 @@ export async function launch(options: PuppeteerLaunchOptions): Promise<ChromeBro
 
   if (!executablePath) {
     throw new Error('executablePath is required')
+  }
+
+  if (relaunch) {
+    spawn(executablePath, args, {
+      detached: false,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+    return
   }
 
   // 确保包含远程调试端口

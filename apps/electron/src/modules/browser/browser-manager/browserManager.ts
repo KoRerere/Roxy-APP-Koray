@@ -157,7 +157,7 @@ export class BrowserManager {
     })
 
     return Promise.allSettled(uploadParamsList)
-  }, 100)
+  }, 500)
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {

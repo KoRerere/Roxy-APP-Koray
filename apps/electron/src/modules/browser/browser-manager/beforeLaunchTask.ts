@@ -149,14 +149,20 @@ export class BeforeLaunchTask {
           acc += 0.2
           this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
         }, 60)
+
+        this.browser = await puppeteer.launch(launchOptions).finally(() => {
+          clearInterval(timer)
+        })
+
+        this.wsEndpoint = this.browser.wsEndpoint()
+        console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
+      } else {
+        await puppeteer.launch(launchOptions, true).finally(() => {
+          clearInterval(timer)
+        })
       }
 
-      this.browser = await puppeteer.launch(launchOptions).finally(() => {
-        clearInterval(timer)
-      })
 
-      this.wsEndpoint = this.browser.wsEndpoint()
-      console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       resolve()
       return this.browser
     }

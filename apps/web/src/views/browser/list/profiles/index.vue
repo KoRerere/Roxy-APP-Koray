@@ -259,7 +259,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       }
       break
     case 'close':
-      window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
+      window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
+        console.log('browser:batchClose res', res)
+      })
       break
     case 'addTag':
       if (operationType === 'batch') {

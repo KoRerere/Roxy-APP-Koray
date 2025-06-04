@@ -38,7 +38,25 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   /** 能够被当前系统使用的内核列表 */
   private availableCoreList: UnwrapRowsType<UserGetCoreUpgradeCreateData> = [];
 
-  constructor() { }
+  constructor() {
+    queueMicrotask(() => {
+      this.fetchAvailableCoreList().then(async () => {
+        // 本地是否存在内核，不存在时静默下载最新内核
+        const exeExistsList = await Promise.all(this.availableCoreList.map(async (core) => {
+          return fileExists(this.genCoreExePath(core.coreVersion!))
+        }))
+        const isNotExistsCore = exeExistsList.every((exists) => !exists)
+        console.log("isNotExistsCore", isNotExistsCore)
+        // 如果本地不存在内核，则下载最新内核
+        if (isNotExistsCore) {
+          const [latestCore] = this.availableCoreList.toSorted((a, b) => b.coreVersion - a.coreVersion)
+          if (latestCore?.coreVersion) {
+            this.downloadCore(latestCore.coreVersion, undefined, true)
+          }
+        }
+      })
+    })
+  }
 
   /** 获取内核列表（供前端展示用） */
   async getCoreList(): Promise<ResourceUpdateMessage[]> {
@@ -115,6 +133,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   async getCoreExePath(
     coreVersion: string,
     msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void,
+    silent = false
   ) {
     if (!this.availableCoreList.length) {
       await this.fetchAvailableCoreList().catch((error) => {
@@ -143,7 +162,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     // 如果本地不存在该内核或版本文件不存在，则下载
     if (!isExeExists || !isVersionFileExists) {
       // 等待下载完成
-      await this.downloadCore(coreVersion, msgCallback);
+      await this.downloadCore(coreVersion, msgCallback, silent);
     }
 
     try {
@@ -168,7 +187,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
   }
 
   /** 下载内核 */
-  async downloadCore(coreVersion: string, msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void) {
+  async downloadCore(coreVersion: string, msgCallback?: (payload: Partial<ResourceUpdateMessage>) => void, silent = false) {
     if (this.downloadingMap.has(coreVersion)) {
       if (msgCallback) {
         if (this.msgCallbackTaskMap.has(coreVersion)) {
@@ -177,7 +196,9 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           this.msgCallbackTaskMap.set(coreVersion, [msgCallback]);
         }
       }
-      return this.downloadingMap.get(coreVersion);
+      const promise = this.downloadingMap.get(coreVersion)
+      promise && Reflect.set(promise, 'silent', silent)
+      return promise
     }
 
     const availableCore = this.getAvailableCore(coreVersion);
@@ -187,7 +208,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
     }
 
     const outputZipPath = join(appConfig.chromeBinDir, `${coreVersion}.zip`);
-
+    const that = this
     const payload: ResourceUpdateMessage = {
       type: "kernel",
       status: "downloading",
@@ -195,6 +216,9 @@ export const chromeCoreManager = new (class ChromeCoreManager {
       description: $t("正在下载 {coreVersion} 内核", { coreVersion }),
       version: availableCore.version,
       coreVersion,
+      get silent() {
+        return Reflect.get(that.downloadingMap.get(coreVersion) || {}, 'silent') ?? silent
+      },
     };
 
     const doMsgCallbacks = () => {

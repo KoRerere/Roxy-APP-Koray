@@ -13,7 +13,7 @@ import type { BrowserEvents } from './types'
  * 提供类似 puppeteer-core 的 API
  */
 export class ChromeBrowser extends EventEmitter {
-  private client: Client
+  client: Client
   private browserProcess: ChildProcess | null = null
   private _wsEndpoint: string
   private targetsMap: Map<string, ChromeTarget> = new Map()
@@ -97,11 +97,14 @@ export class ChromeBrowser extends EventEmitter {
 
     this.closed = true
     // 调用 Browser.close 关闭浏览器
-    await this.client.Browser.close()
-
-    // if (this.browserProcess) {
-    //   this.browserProcess.kill()
-    // }
+    await this.client.Browser.close().finally(() => {
+      this.closed = true
+      setTimeout(() => {
+        if (this.browserProcess) {
+          this.browserProcess.kill()
+        }
+      }, 2000)
+    })
   }
 
   async pages(): Promise<ChromePage[]> {

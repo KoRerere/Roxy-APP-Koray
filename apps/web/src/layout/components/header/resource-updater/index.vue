@@ -99,7 +99,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
-    isDownloadingKernel.value = data.status === 'downloading'
+    isDownloadingKernel.value = data.status === 'downloading' && !data.silent
     kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
   // 客户端升级(app、web、patch)

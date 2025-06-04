@@ -44,6 +44,8 @@ export interface ResourceUpdateMessage {
   newFeatureTips?: string[]
   /** 原始的更新数据 */
   originUpgradeData?: any
+  /** 是否静默下载 */
+  silent?: boolean
 }
 
 export interface MainMessage {

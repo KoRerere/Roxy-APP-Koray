@@ -163,7 +163,6 @@ export class BrowserItem {
   async launch() {
     // 如果浏览器已经存在，直接激活
     if (this.#browser) {
-      this.#browser.off('process-close', this.handleOnDisconnected)
       await this.beforeLaunchTask.makeBrowserActive().catch((error) => {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
@@ -179,12 +178,11 @@ export class BrowserItem {
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
+      // 浏览器关闭时，需要上传本地数据和状态
+      this.#browser!.on('process-close', this.handleOnDisconnected)
+      // 记录浏览器进程 ID
+      this.browserPid = this.#browser!.process()?.pid
     }
-
-    // 浏览器关闭时，需要上传本地数据和状态
-    this.#browser?.on('process-close', this.handleOnDisconnected)
-    // 记录浏览器进程 ID
-    this.browserPid = this.#browser?.process()?.pid || this.browserPid
   }
 
   /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
