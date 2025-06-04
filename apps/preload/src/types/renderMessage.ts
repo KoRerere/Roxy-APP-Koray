@@ -67,7 +67,7 @@ export interface RenderMessage {
   /** 清除浏览器缓存， */
   "browser:clearCache": (payload: {
     clearType: "partial" | "all";
-    dirId: string;
+    dirIds: string[];
   }) => void;
   /** 根据进程 PID 判断进程是否存在 */
   "browser:isProcessExists": (dirIds: string[]) => Promise<boolean[]>;

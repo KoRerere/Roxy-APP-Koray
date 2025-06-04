@@ -124,7 +124,7 @@ export async function startRoxySync(pIds: number[] = []) {
           createSynchronizerWindow()
           stopRoxySync()
         })
-        browser?.getBrowser()?.on('disconnected', Reflect.get(browser!, 'disconnectedListener'))
+        browser?.getBrowser()?.on('process-close', Reflect.get(browser!, 'disconnectedListener'))
       } catch (error) {
         console.error('roxySync Start Result parse error:', error)
         resolve(false)
@@ -151,7 +151,7 @@ export function removeSyncWindowByPid(pIds: number) {
 export function stopRoxySync() {
   console.log('stopRoxySync')
   const browser = getMainControlBrowser()
-  browser?.getBrowser()?.off('disconnected', Reflect.get(browser!, 'disconnectedListener'))
+  browser?.getBrowser()?.off('process-close', Reflect.get(browser!, 'disconnectedListener'))
   // 停止同步的时候，主窗口主题颜色要恢复
   setMainControlColor(defaultMainControlWindowColor)
   closeAllSyncDialogs()

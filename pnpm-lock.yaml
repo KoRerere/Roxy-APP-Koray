@@ -117,6 +117,9 @@ importers:
       '@types/ali-oss':
         specifier: ^6.16.11
         version: 6.16.11
+      '@types/chrome-remote-interface':
+        specifier: ^0.31.14
+        version: 0.31.14
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -1571,6 +1574,9 @@ packages:
 
   '@types/cacheable-request@6.0.3':
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
+
+  '@types/chrome-remote-interface@0.31.14':
+    resolution: {integrity: sha512-H9hTcLu1y+Ms6GDPXXeGhgxaOSD69yEo674vjJw5EeW1tTwYo8fEkf7A9nWlnO6ArJsS7c41iZeX6mRDQ1LhEw==}
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
@@ -3077,6 +3083,9 @@ packages:
 
   devtools-protocol@0.0.1439962:
     resolution: {integrity: sha512-jJF48UdryzKiWhJ1bLKr7BFWUQCEIT5uCNbDLqkQJBtkFxYzILJH44WN0PDKMIlGDN7Utb8vyUY85C3w4R/t2g==}
+
+  devtools-protocol@0.0.927104:
+    resolution: {integrity: sha512-5jfffjSuTOv0Lz53wTNNTcCUV8rv7d82AhYcapj28bC2B5tDxEZzVb7k51cNxZP2KHw24QE+sW7ZuSeD9NfMpA==}
 
   dezalgo@1.0.4:
     resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
@@ -7886,6 +7895,10 @@ snapshots:
       '@types/node': 22.15.26
       '@types/responselike': 1.0.3
 
+  '@types/chrome-remote-interface@0.31.14':
+    dependencies:
+      devtools-protocol: 0.0.927104
+
   '@types/connect@3.4.38':
     dependencies:
       '@types/node': 22.15.26
@@ -9634,6 +9647,8 @@ snapshots:
   devtools-protocol@0.0.1179426: {}
 
   devtools-protocol@0.0.1439962: {}
+
+  devtools-protocol@0.0.927104: {}
 
   dezalgo@1.0.4:
     dependencies:

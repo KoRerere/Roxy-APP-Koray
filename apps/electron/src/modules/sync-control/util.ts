@@ -7,7 +7,7 @@ import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constant
 import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
 import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
 import axios from "axios"
-import { Page } from "puppeteer-core"
+import type { Page } from "/@/modules/browser/browser-manager/chrome-wrapper"
 import { safeParseJSON } from "/@/utils"
 import { setTimeout } from "timers/promises"
 

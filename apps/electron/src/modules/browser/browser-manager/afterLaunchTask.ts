@@ -1,4 +1,4 @@
-import type { Browser, Protocol } from 'puppeteer-core'
+import type { Browser, Protocol } from './chrome-wrapper/'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
@@ -26,7 +26,7 @@ export class AfterLaunchTask {
 
   async run() {
     this.handleBrowserEvent()
-    setTimeout(() => {
+    this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
     }, 5000)
   }
@@ -92,32 +92,7 @@ export class AfterLaunchTask {
       return
     }
 
-    const createCDPSession = async () => {
-      // 添加重试机制，确保浏览器目标已经准备好
-      let retries = 0;
-      const maxRetries = 5;
-      const retryDelay = 500; // 500ms
-
-      while (retries < maxRetries) {
-        try {
-          const target = this.browser.target();
-          if (!target) {
-            throw new Error('Browser target not available yet');
-          }
-          return await target.createCDPSession();
-        } catch (error) {
-          retries++;
-          if (retries >= maxRetries) {
-            throw error;
-          }
-          console.log(`创建 CDP Session 失败，第 ${retries} 次重试...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-        }
-      }
-      throw new Error('Failed to create CDP Session after maximum retries');
-    }
-
-    const cdpSession = await createCDPSession().catch((err) => {
+    const cdpSession = await this.browser.createBrowserCDPSession().catch((err) => {
       console.log('创建cdpSession失败', err)
       return Promise.reject(err)
     })
@@ -165,9 +140,12 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
-      this.browser.on('disconnected', () => {
+      this.browser.on('process-close', () => {
+        console.log('process-close')
         this.continueAccess = true
-        clearTimeout(this.checkIpChangeTimer)
+        if (this.checkIpChangeTimer) {
+          clearTimeout(this.checkIpChangeTimer)
+        }
       })
     }
 
@@ -180,6 +158,7 @@ export class AfterLaunchTask {
       return
     }
 
+    clearTimeout(this.checkIpChangeTimer!)
     this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
     }, 1000 * 8)
@@ -189,7 +168,7 @@ export class AfterLaunchTask {
 
     if (activePage) {
       // 在网页里面发送检测 IP 请求
-      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '' }))
+      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '', city: '' }))
 
       console.debug('当前 IP', latestProxyInfo.ip)
       console.debug('上次 IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
@@ -217,8 +196,8 @@ export class AfterLaunchTask {
               resolve = res;
               reject = rej;
             });
-            const escapeHTMLPolicy = trustedTypes.createPolicy("myEscapePolicy", {
-              createHTML: (string) => string,
+            const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.("myEscapePolicy", {
+              createHTML: (string: string) => string,
             });
 
             const escaped = escapeHTMLPolicy.createHTML(html);

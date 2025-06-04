@@ -18,7 +18,7 @@ import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
 import { setTimeout } from 'node:timers/promises'
-import { CDPSession } from 'puppeteer-core'
+import type { CDPSession } from './chrome-wrapper/'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -40,8 +40,6 @@ export class BrowserItem {
   }
   /** 启动后是否已经同步过窗口打开状态 */
   isSyncedWindowOpenStatus = false
-  /** 是否通过程序关闭 */
-  isClosedByProgram = false
   /** 通过哪种方式启动的浏览器 */
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
@@ -165,7 +163,7 @@ export class BrowserItem {
   async launch() {
     // 如果浏览器已经存在，直接激活
     if (this.#browser) {
-      this.#browser.off('disconnected', this.handleOnDisconnected)
+      this.#browser.off('process-close', this.handleOnDisconnected)
       await this.beforeLaunchTask.makeBrowserActive().catch((error) => {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
@@ -184,7 +182,7 @@ export class BrowserItem {
     }
 
     // 浏览器关闭时，需要上传本地数据和状态
-    this.#browser?.on('disconnected', this.handleOnDisconnected)
+    this.#browser?.on('process-close', this.handleOnDisconnected)
     // 记录浏览器进程 ID
     this.browserPid = this.#browser?.process()?.pid || this.browserPid
   }
@@ -194,7 +192,7 @@ export class BrowserItem {
     const dirId = this.winInfo.dirId!
     try {
       const uploadDataPromise = this.uploadData()
-      emitter.emit(`close-${dirId}`, this.isClosedByProgram ? undefined : uploadDataPromise)
+      emitter.emit(`close-${dirId}`, uploadDataPromise)
       removeSyncWindowByPid(this.browserPid!)
       const { requestHeaders, uploadParams } = await uploadDataPromise
       this.uploadDataPromiser.resolve({ requestHeaders, uploadParams })
@@ -209,17 +207,8 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
-      this.isClosedByProgram = true
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
-      await this.#browser.close().finally(async () => {
-        await setTimeout()
-        try {
-          process.kill(this.browserPid!)
-        }
-        catch (error) {
-          // $console.error(`kill browser process`, error);
-        }
-      })
+      await this.#browser.close()
       this.beforeLaunchTask.browser = null
 
       return this.uploadDataPromiser.promise

@@ -8,6 +8,7 @@ import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
+import { asyncDebounce } from '/@/utils'
 
 export class BrowserManager {
   /** 正在打开中的浏览器集合 */
@@ -16,6 +17,8 @@ export class BrowserManager {
   openedBrowserMap = new Map<string, BrowserItem>()
   /** 同步窗口打开状态控制器 */
   syncWindowOpenStatusController?: AbortController
+  /** 频繁关闭窗口时，等待的上传数据队列 */
+  uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
 
   constructor() {
     this.#syncWindowStatus()
@@ -70,34 +73,10 @@ export class BrowserManager {
       this.openedBrowserMap.delete(dirId)
       ipcMain.send('browser:on-close', dirId)
       browserItem.off(`close-${dirId}`, onCloseHandler)
-
-      setTimeout(10000).then(async () => {
-        if (this.openedBrowserMap.has(dirId)) {
-          return
-        }
-        // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
-        const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
-        // 如果可以连接，则重新加入已打开的浏览器集合
-        if (canConnect) {
-          this.openedBrowserMap.set(dirId, browserItem)
-          browserItem.on(`close-${dirId}`, onCloseHandler)
-          this.launch(winInfo)
-        } else {
-          const pid = browserItem.launchInfo?.pid
-          if (pid) {
-            try {
-              process.kill(pid)
-            }
-            catch (error) {
-            }
-          }
-        }
-      })
-
       if (uploadDataPromise) {
-        const { requestHeaders, uploadParams } = await uploadDataPromise
-        await this.syncWindowData([uploadParams], requestHeaders)
+        this.uploadDataQueue.set(dirId, uploadDataPromise)
       }
+      await this.#batchUploadData()
     }
     // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
     browserItem.on(`close-${dirId}`, onCloseHandler)
@@ -146,9 +125,20 @@ export class BrowserManager {
   }
 
   /** 批量关闭浏览器 */
-  async batchClose(dirIds: string[]) {
-    const closePromises = dirIds.map(dirId => this.close(dirId))
-    const results = await Promise.allSettled(closePromises)
+  batchClose(dirIds: string[]) {
+    dirIds.forEach(dirId => this.uploadDataQueue.set(dirId, this.close(dirId)))
+    return this.#batchUploadData()
+  }
+
+  #batchUploadData = asyncDebounce(async () => {
+    if (this.uploadDataQueue.size === 0) {
+      return Promise.resolve([])
+    }
+
+    const uploadDataQueue = [...this.uploadDataQueue.values()]
+    this.uploadDataQueue.clear()
+
+    const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
     const uploadParamsObj = Object.groupBy(results, item => {
       if (item.status === 'fulfilled' && item.value?.requestHeaders) {
@@ -167,7 +157,7 @@ export class BrowserManager {
     })
 
     return Promise.allSettled(uploadParamsList)
-  }
+  }, 100)
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {

@@ -162,9 +162,48 @@ export async function calculateFileHash(filePath: string) {
   return hashSum.digest('hex');
 }
 
-
-
 export function getUTCOffsetHours() {
   const offsetMinutes = -new Date().getTimezoneOffset(); // 负号，转换为正偏移
   return offsetMinutes / 60;
+}
+
+/** 异步的 debounce */
+export function asyncDebounce<T extends (...args: any[]) => Promise<any>>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => Promise<ReturnType<T>> {
+  let timer: NodeJS.Timeout | null = null;
+  let pendingResolvers: Array<{
+    resolve: (value: ReturnType<T>) => void;
+    reject: (error: any) => void;
+    args: Parameters<T>;
+  }> = [];
+
+  return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
+    return new Promise<ReturnType<T>>((resolve, reject) => {
+      // 添加到待处理列表
+      pendingResolvers.push({ resolve, reject, args });
+
+      // 清除之前的 timer
+      if (timer) {
+        clearTimeout(timer);
+      }
+
+      // 设置新的 timer，使用最后一次调用的参数
+      timer = setTimeout(async () => {
+        const lastCall = pendingResolvers[pendingResolvers.length - 1];
+        const allResolvers = [...pendingResolvers];
+        pendingResolvers = []; // 清空列表
+
+        try {
+          const result = await fn(...lastCall.args);
+          // 所有等待的调用者都收到相同结果（使用最后的参数）
+          allResolvers.forEach(({ resolve }) => resolve(result));
+        } catch (error) {
+          // 所有等待的调用者都收到相同错误
+          allResolvers.forEach(({ reject }) => reject(error));
+        }
+      }, delay);
+    });
+  };
 }
