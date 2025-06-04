@@ -59,6 +59,8 @@ export class BrowserItem {
   browserCacheFileName = 'browser-cache.zip'
   /** 浏览器进程 ID */
   private browserPid?: number | null = null
+  /** 是否首次通过工作台检测代理 */
+  isFirstDetectProxyByDashboard = true
   /** 浏览器实例 */
   get #browser() {
     return this.beforeLaunchTask?.browser
@@ -289,10 +291,18 @@ export class BrowserItem {
   }
 
   /** 代理检测 */
-  async proxyDetection() {
+  async proxyDetection(isDetectWithOpenapi = false) {
+    if (this.isFirstDetectProxyByDashboard && isDetectWithOpenapi && this.beforeLaunchTask.proxyInfo?.ip) {
+      this.isFirstDetectProxyByDashboard = false
+      return this.beforeLaunchTask.proxyInfo
+    }
+
     const res = await proxyDetection(this.winInfo)
     if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
       this.beforeLaunchTask.proxyInfo = res
+    }
+    if (isDetectWithOpenapi) {
+      this.isFirstDetectProxyByDashboard = false
     }
     return res
   }

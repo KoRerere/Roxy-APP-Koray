@@ -77,7 +77,6 @@ const items = computed(() => {
           ...item,
           isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
-            await API.base.userSetUserConfigCreate({ language: item.locale });
             simpleLocale.setSimpleLocale(item.locale);
             electronAPI.send("app:saveSoftConfig", { language: item.locale });
           },
@@ -92,7 +91,6 @@ const items = computed(() => {
           ...item,
           isCheck: () => themeStore.theme === item.value,
           command: async () => {
-            await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
             // 如果用户是第一次切换主题，则弹出提示框
             if (userStore.userConfig?.isFirstSwitchTheme) {

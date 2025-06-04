@@ -68,7 +68,7 @@ export async function setupDashboardServer(app: express.Application) {
     }
 
     try {
-      const proxyInfo = await browserItem.proxyDetection()
+      const proxyInfo = await browserItem.proxyDetection(true)
       res.success(proxyInfo)
     }
     catch (error) {
