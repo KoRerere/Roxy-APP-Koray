@@ -141,7 +141,8 @@ defineExpose({
           </CustomEmpty>
         </template>
         <template #amount="{ data }">
-          <div class="amount inc" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }" v-if="[OrderType.Recharge, OrderType.Withdraw, OrderType.Refund].includes(data.orderType)">
+          <div class="amount inc" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }"
+            v-if="[OrderType.Recharge, OrderType.Gift, OrderType.Withdraw, OrderType.Exchange].includes(data.orderType)">
             {{ currency(data.actualAmount, { symbol: '+$' }).format() }}
           </div>
           <div class="amount" :class="{ 'gray': data.payStatus === PaymentStatus.Closed }" v-else>
