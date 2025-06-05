@@ -1,4 +1,13 @@
 export function silentUpdateProxy(origin: Record<string, any>, params: Record<string, any>) {
+  const beforeProxyInfo: Record<string, any> = {};
+  const beforeProxyInfoKeys = ['beforeIp', 'beforeCity', 'beforeCountry', 'beforeTime'];
+  ['lastIp', 'lastCity', 'lastCountry', 'checkTime'].forEach((key, index) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      beforeProxyInfo[beforeProxyInfoKeys[index]] = origin[key]
+    }
+  });
+  origin.beforeProxyInfo = beforeProxyInfo;
+
   ['moduleId', 'proxyMethod', 'checkChannel', 'checkStatus', 'checkTime', 'country', 'createTime', 'host', 'ipType', 'lastCity', 'lastCountry', 'lastIp', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'updateTime', 'timezone', 'proxyNetwork']
     .forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(params, key)) {

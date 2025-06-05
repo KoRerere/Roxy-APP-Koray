@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon/'
-const props = defineProps({
+defineProps({
   hasProxy: {
     type: Boolean,
   },
@@ -25,13 +25,9 @@ const props = defineProps({
   beforeIp: {
     type: String,
   },
-  beforeCheckTime: {
+  beforeTime: {
     type: String,
   },
-})
-
-onMounted(() => {
-  console.log('props', props)
 })
 </script>
 
@@ -41,14 +37,14 @@ onMounted(() => {
       <div class="flex flex-col gap-4px">
         <div class="flex gap-8px items-center">
           <RxSvgIcon class="size-16px" fallback="base/rx_ic_earth" :name="`country-code/${beforeCountry}`" />
-          <div class="flex-1 text-12px text-[var(--component-tooltip-text-primary)] font-600">
+          <div class="flex-1 text-12px text-[var(--component-tooltip-text-secondary)] font-600">
             {{ beforeCountry }}/{{ beforeCity }}
           </div>
           <div class="text-12px text-[var(--component-tooltip-text-secondary)] font-400">
-            {{ beforeCheckTime }}
+            {{ beforeTime }}
           </div>
         </div>
-        <div class="pl-24px text-12px text-[var(--component-tooltip-text-primary)] font-600">
+        <div class="pl-24px text-12px text-[var(--component-tooltip-text-secondary)] font-600">
           IP: {{ beforeIp }}
         </div>
       </div>

@@ -15,12 +15,14 @@ import { useColumns } from './columns'
 import { getCustomFilters, type ProxyItem, tableOperation, tableRequest } from './operation'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
+import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import { ProxyCheckStatus } from '/@/enums'
 
 const router = useRouter()
 const role = useRoleStore()
 const { userConfig } = storeToRefs(useUserStore())
 const { columns, updateRemarkDisplayStatus } = useColumns()
-const [checkProxy] = useCheckProxy()
+const [checkProxy] = useCheckProxy({ silence: true, silenceError: true })
 const [showToast, onlyErrorToast] = useResponseToast()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
@@ -29,6 +31,8 @@ const { showSimpleDialog } = useSimpleDialog()
 const tableRef = useTemplateRef('proxyTable')
 const filtersMenu = ref()
 const dataList = ref()
+
+const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 
 onBeforeMount(async () => {
   filtersMenu.value = await getCustomFilters()
@@ -118,6 +122,22 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
   })
 
   const results = await concurrentControl(tasks, 5)
+
+  results.forEach(item => {
+    testStatus.value[item.id] = item.checkStatus;
+  })
+
+  if (results.length === 1) {
+    const checkRes = results[0]
+    const [code, msg] = checkRes.checkStatus == ProxyCheckStatus.failure ? [-1, $t('测试代理失败')]
+      : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp })]
+    showToast(code, msg)
+  } else {
+    const success = results.filter(item => item.checkStatus == ProxyCheckStatus.success);
+    const error = results.filter(item => item.checkStatus == ProxyCheckStatus.failure);
+    showToast(0, $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length }))
+  }
+
   await onEdit(results)
 }
 
@@ -205,13 +225,16 @@ function onRefreshTable() {
 <template>
   <div class="flex flex-col w-full h-full">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
-      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_internet" :label="$t('添加代理')"
+        @click.stop="createProxy" />
+      <RxButton size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
+        @click.stop="testAllProxy" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple" :table-request="getTableList" :table-operation="tableOperation"
-        :operation-handler="operationHandler" :show-gridlines="false" :show-actions="false">
+      <RyTable ref="proxyTable" v-model:columns="columns" cacheKey="agent-list" selection-mode="multiple"
+        :table-request="getTableList" :table-operation="tableOperation" :operation-handler="operationHandler"
+        :show-gridlines="false" :show-actions="false">
         <template #filter-after>
           <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
         </template>
@@ -219,7 +242,8 @@ function onRefreshTable() {
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" :desc="$t('在此添加代理信息以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs"
+                  icon="base/rx_ic_internet" :label="$t('添加代理')" @click.stop="createProxy" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('代理文档')" /> -->
               </div>
             </template>
@@ -240,23 +264,32 @@ function onRefreshTable() {
             </div>
           </div>
         </template>
+        <template #outbound="{ data }">
+          <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+            :status="testStatus[data.id]" />
+        </template>
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
-            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }"
+              class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+              @click.stop="toggleRemarkDisplayStatus(_cache)" />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
-              :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.remark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
-            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{ data.remark }}</div>
+            <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0"
+              :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
+              :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+              :label="data.remark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">{{
+              data.remark }}</div>
           </div>
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2">
-            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, data)" />
+            <Actions :operation="tableOperation(data)" :loading-operation-map="data.loadingOperationMap"
+              :show-menu="false" @quick-click="operationHandler($event, data)" />
           </div>
         </template>
       </RyTable>

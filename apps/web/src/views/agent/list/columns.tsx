@@ -4,7 +4,6 @@ import { setColumns, useColumns as _useColumns } from '/@/hooks/useColumns'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useUserStore } from '/@/stores/user'
-import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 
 export function getRawColumns(options?: any) {
   const workspaceName = useWorkspaceStore().currentWorkspace?.workspaceName?.slice(0, 3).toLocaleUpperCase()
@@ -17,11 +16,7 @@ export function getRawColumns(options?: any) {
     {
       title: $t('出口 IP'),
       key: 'outbound',
-      render: ({ data }: any) => {
-        return (
-          <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
-        )
-      },
+      slot: 'outbound'
     },
     {
       title: $t('备注'),
