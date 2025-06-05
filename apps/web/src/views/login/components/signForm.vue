@@ -26,6 +26,7 @@ const submitLoading = ref(false)
 const formSchemas = ref(getFormSchemas())
 const isRegister = ref(props.type === 'signUp')
 const formInstance = useTemplateRef('formInstance')
+const emit = defineEmits(['register'])
 
 watch(isRegister, (val) => {
   switchFormMode(val)
@@ -65,6 +66,7 @@ function switchFormMode(val: boolean) {
   formSchemas.value = getFormSchemas(val)
   formInstance.value?.updateSchema(getFormSchemas(val))
   formInstance.value?.clearValidateMessages()
+  emit('register', val)
 }
 
 defineExpose({
