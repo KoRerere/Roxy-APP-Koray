@@ -24,14 +24,14 @@ const props = defineProps({
   }
 })
 
-const sourceRef = useTemplateRef<HTMLElement>('sourceRef')
-const targetRef = useTemplateRef<HTMLElement>('targetRef')
+const sourceRef = useTemplateRef<HTMLDivElement>('sourceRef')
+const targetRef = useTemplateRef<HTMLDivElement>('targetRef')
 
 const slots = useSlots();
 
-const show = defineModel<boolean>('show', {
-  default: false,
-})
+const show = ref(false)
+
+const motionShow = ref(false)
 
 const configs = computed(() => {
   const __configs: {
@@ -70,6 +70,7 @@ const align = () => {
         adjustX: true,
         adjustY: true,
       },
+      useCssTransform: true
     })
   })
 }
@@ -80,6 +81,7 @@ const open = () => {
   if (!slots.content) return;
   show.value = true;
   delayTimer = setTimeout(() => {
+    motionShow.value = true
     align()
   }, props.delay)
 }
@@ -90,9 +92,14 @@ const clickToOpen = () => {
   align()
 }
 
+let hideTimer: NodeJS.Timeout | null = null
 const hide = () => {
-  show.value = false
   delayTimer && clearTimeout(delayTimer)
+  hideTimer && clearTimeout(hideTimer)
+  hideTimer = setTimeout(() => {
+    motionShow.value = false
+    nextTick(() => show.value = false)
+  }, 100)
 }
 
 onMounted(() => {
@@ -125,10 +132,10 @@ onMounted(() => {
   <div ref="targetRef" class="inline-block">
     <slot />
   </div>
-  <Teleport to="body">
-    <div ref="sourceRef" class="!absolute inline-block z-4000">
+  <Teleport to="body" v-if="show">
+    <div ref="sourceRef" class="absolute inline-block z-4000">
       <AnimatePresence>
-        <motion.div class="rx-tooltip-content" v-if="show" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
+        <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
           :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"
           :transition="{ duration: 0.15 }">
           <slot name="content" />

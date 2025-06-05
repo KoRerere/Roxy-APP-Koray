@@ -57,7 +57,7 @@ const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [checkProxy] = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 
 const defaultWindowName = getDefaultWindowName()
 const windowName = ref(data.windowName)
@@ -168,6 +168,7 @@ function getProxyModel() {
       visible: hasProxy.value,
       command: async () => {
         const checkRes = await checkProxy(toRaw(data))
+        batchTestShowToast(checkRes)
         if (data.moduleId) {
           API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
         }
@@ -447,7 +448,7 @@ function handleClickInplace(e: MouseEvent) {
               <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
                 :color="item.svgColor" />
             </div>
-            <template #content>
+            <template #content v-if="item.data?.lastIp !== '--'">
               <ProxyTooltip v-bind="item.data" />
             </template>
           </RxTooltip>

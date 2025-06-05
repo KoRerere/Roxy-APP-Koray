@@ -14,11 +14,11 @@ const props = defineProps({
   },
 })
 
-const [checkProxy, checkeResult] = useCheckProxy({ silence: true })
+const { testProxy: checkProxy, checkResult } = useCheckProxy()
 const rxAlertRef = useTemplateRef('rxalert')
 const original = defineModel<any>('original')
 
-original.value = { ...toRaw(checkeResult), ...original.value }
+original.value = { ...toRaw(checkResult), ...original.value }
 
 const visible = ref(false)
 
@@ -80,14 +80,15 @@ defineExpose({ testProxy, visible })
               scope="global">
               <template #location>
                 <span>{{ $t('位置: {location}', {
-                  location: `${checkeResult.lastCountry}${strConcat('/',
-                    checkeResult.lastCity as string)}` }) }}</span>
+                  location: `${checkResult.lastCountry}${strConcat('/',
+                    checkResult.lastCity as string)}`
+                }) }}</span>
               </template>
               <template #ip>
-                <br><span>{{ $t('IP: {ip}', { ip: checkeResult.lastIp }) }}</span>
+                <br><span>{{ $t('IP: {ip}', { ip: checkResult.lastIp }) }}</span>
               </template>
               <template #timezone>
-                <br><span>{{ $t('时区: {timezone}', { timezone: checkeResult.timezone }) }}</span>
+                <br><span>{{ $t('时区: {timezone}', { timezone: checkResult.timezone }) }}</span>
               </template>
             </i18n-t>
           </template>

@@ -27,57 +27,71 @@ interface ProxyCheckParams {
   proxyNetwork?: string
 }
 
-interface Options {
-  silence?: boolean
-  silenceError?: boolean
-}
-
-export function useCheckProxy(options: Options = { silence: false, silenceError: false }): [(data: any) => Promise<CheckResult>, CheckResult] {
+export function useCheckProxy(): {
+  testProxy: (data: any) => Promise<CheckResult>
+  checkResult: CheckResult
+  batchTestShowToast: (results: CheckResult[]) => void
+} {
   const [showToast, onlyErrorToast] = useResponseToast()
-  const checkeResult: CheckResult = reactive({
+  const checkResult: CheckResult = reactive({
     loading: false,
     checkStatus: ProxyCheckStatus.failure,
   })
 
   async function testProxy(data: ProxyCheckParams) {
-    checkeResult.loading = true
-    checkeResult.error = null
+    checkResult.loading = true
+    checkResult.error = null
     const dirId = data.dirId || Math.random().toString(36).slice(2)
     data.dirId = dirId
 
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
-      const [code, msg] = !checkRes.ip
-        ? [-1, $t('测试代理失败')]
-        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.city)}`, ip: checkRes.ip })]
+      // const [code, msg] = !checkRes.ip
+      //   ? [-1, $t('测试代理失败')]
+      //   : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.city)}`, ip: checkRes.ip })]
 
-      if (!options.silence) {
-        showToast(code, msg)
-      }
+      // if (!options.silence) {
+      //   showToast(code, msg)
+      // }
 
-      checkeResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
-      checkeResult.lastIp = checkRes.ip ?? ''
-      checkeResult.lastCity = checkRes.city ?? ''
-      checkeResult.lastCountry = checkRes.country_code ?? ''
-      checkeResult.timezone = checkRes.timezone ?? ''
+      checkResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
+      checkResult.lastIp = checkRes.ip ?? ''
+      checkResult.lastCity = checkRes.city ?? ''
+      checkResult.lastCountry = checkRes.country_code ?? ''
+      checkResult.timezone = checkRes.timezone ?? ''
     }
     catch (error: any) {
-      checkeResult.error = error
-      checkeResult.checkStatus = ProxyCheckStatus.failure;
+      checkResult.error = error
+      checkResult.checkStatus = ProxyCheckStatus.failure;
       ['lastIp', 'lastCity', 'lastCountry', 'timezone'].forEach((key) => {
-        checkeResult[key as keyof CheckResult] = ''
+        checkResult[key as keyof CheckResult] = ''
       })
-      if (!options.silenceError) {
-        onlyErrorToast(-1, error)
-      }
     }
     finally {
-      checkeResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
-      checkeResult.loading = false
+      checkResult.checkTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+      checkResult.loading = false
       dirId && window.electronAPI.send('proxy:delRoxynetProxy', dirId)
     }
-    return toRaw(checkeResult)
+    return toRaw(checkResult)
   }
 
-  return [testProxy, checkeResult]
+  function batchTestShowToast(__results: CheckResult | CheckResult[]) {
+    const results = Array.isArray(__results) ? __results : [__results]
+    if (results.length === 1) {
+      const checkRes = results[0]
+      const [code, msg] = checkRes.checkStatus == ProxyCheckStatus.failure ? [-1, $t('测试代理失败')]
+        : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp })]
+      showToast(code, msg)
+    } else {
+      const success = results.filter(item => item.checkStatus == ProxyCheckStatus.success);
+      const error = results.filter(item => item.checkStatus == ProxyCheckStatus.failure);
+      showToast(0, $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length }))
+    }
+  }
+
+  return {
+    testProxy,
+    checkResult,
+    batchTestShowToast,
+  }
 }

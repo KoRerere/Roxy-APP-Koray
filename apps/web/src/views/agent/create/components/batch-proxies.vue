@@ -15,7 +15,7 @@ import ParseTextarea from './parse-textarea.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
-const [checkProxy] = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
 
@@ -103,9 +103,7 @@ const columns = ref([
     title: $t('出口 IP'),
     render: ({ data }: any) => {
       return (
-        data.checkTime
-          ? <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
-          : <div class="text-3">{$t('未检测')}</div>
+        <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} isLoading={data.loadingOperationMap?.test} />
       )
     },
   },
@@ -250,10 +248,12 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
       const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
       Object.assign(item, checkResult)
       setOperationLoading(item, operateName, false)
+      return checkResult
     }
   })
 
-  await concurrentControl(tasks, 5)
+  const results = await concurrentControl(tasks, 5)
+  batchTestShowToast(results)
 }
 
 async function testAllProxy() {
