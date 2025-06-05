@@ -31,8 +31,10 @@ function onRemark() {
       {
         type: 'textarea',
         name: 'remark',
-        placeholder: props.placeholder || $t('请输入备注'),
         value: props.value,
+        props: {
+          placeholder: props.placeholder || $t('请输入备注'),
+        }
       },
     ],
     onConfirm: async (formData: any) => {

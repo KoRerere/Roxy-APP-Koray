@@ -89,6 +89,7 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex flex-col gap-2.5">
       <RxButton v-model:loading="loading" size="lg" :label="$t('支付成功')" @click="checkStatus(true)" />
+      <RxButton size="lg" outlined severity="secondary" :label="$t('取消')" @click="close(true)" />
       <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
         <template #link>
           <span class="cursor-pointer help-link" @click="openLiveChat">{{ $t('联系我们') }}</span>

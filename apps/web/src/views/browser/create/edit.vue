@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import MateGroup from './components/mate-group.vue'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
@@ -10,6 +11,7 @@ import { createTableContext } from './hooks/useContext'
 import { useBackRoute } from '/@/router/utils'
 import WindowNameEdit from './components/window-name-edit.vue'
 import { getDefaultWindowName } from './utils'
+import { getFormDataByList } from '/@/utils'
 
 const defaultWindowName = getDefaultWindowName()
 
@@ -60,7 +62,8 @@ async function onShuffle() {
   showToast(0, $t('指纹刷新成功'))
 }
 
-async function createProfile(formData: any) {
+async function createProfile() {
+  const formData = getFormDataByList(inputsGroup.value, toRaw(metaData.value))
   const params = {
     ...original.value,
     ...formData,
@@ -85,25 +88,44 @@ function oldFieldsFormat() {
 </script>
 
 <template>
-  <div class="flex justify-between h-full">
-    <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :divider="false" :title="$t('编辑窗口')" />
-      <div class="flex-ovh-1 flex-col">
+  <div class="flex flex-col h-full">
+    <ViewsHeader show-back :divider="false" :title="$t('编辑窗口')" />
+    <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 flex flex-col">
         <div class="profile-basic">
           <WindowNameEdit v-model="windowName" />
         </div>
         <div class="flex-ovh-1">
-          <accordionInputs v-model:metadata="metaData" v-model:loading="loading" :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" :open-browser="false" is-edit
-            @create="createProfile" />
+          <accordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" />
         </div>
       </div>
+      <previewCard :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
     </div>
-    <previewCard :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
+    <div class="flex items-center gap-2 footer">
+      <MateGroup v-model="metaData" class="flex-1" />
+      <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .profile-basic {
-  padding: var(--spacing-md, 16px) 66px;
+  padding: 16px 48px 16px 124px;
+}
+
+.footer {
+  padding: 16px 124px;
+  max-height: 64px;
+  border-top: 1px solid var(--colors-border-border-subtle);
+
+  :deep(.p-button) {
+    max-width: 150px;
+  }
+
+  :deep(.p-button-label) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>

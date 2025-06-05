@@ -48,7 +48,7 @@ function onSearch() {
 
 <template>
   <div class="flex flex-col h-full w-full extensions">
-    <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" @update:value="onChange">
+    <RxTabs class="flex-1 overflow-hidden" v-model:value="tabsValue" :tabs="tabs" head-tabs @update:value="onChange">
       <template #installed>
         <list ref="listref" v-model:needsync="syncHub" @search="onSearch" />
       </template>

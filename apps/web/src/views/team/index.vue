@@ -21,7 +21,7 @@ const activeTab = computed(() => {
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <RxTabs v-model:value="activeTabValue" :tabs="tabs" only-tabs></RxTabs>
+    <RxTabs v-model:value="activeTabValue" :tabs="tabs" head-tabs only-tabs></RxTabs>
     <div class="flex-1 overflow-hidden">
       <component :is="activeTab?.component" />
     </div>

@@ -3,6 +3,7 @@ import type { FormSubmitEvent } from '@primevue/forms';
 import { z, type ZodFirstPartySchemaTypes } from 'zod';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { isFunction } from 'es-toolkit';
+import { $t } from '/@/locales';
 import { genFormContext } from './useContext';
 import mInputLabel from './m-input-label.vue'
 import mInputText from './m-input-text.vue'
@@ -63,11 +64,15 @@ genFormContext({
 const formRef = useTemplateRef<any>('wcisform')
 
 function genFormFieldProps(input: Input) {
-  const { name, resolver } = input
+  const { name, label, required, props, resolver } = input
   return {
     name,
-    resolver: isFunction(resolver) ? zodResolver(resolver(z)) : undefined,
-    initialValue: initialValue(input)
+    initialValue: initialValue(input),
+    resolver: isFunction(resolver)
+      ? zodResolver(resolver(z))
+      : required
+        ? zodResolver(z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder })))
+        : undefined,
   }
 }
 

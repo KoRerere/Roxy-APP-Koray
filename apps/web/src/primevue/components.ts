@@ -3651,14 +3651,14 @@ export const components = {
       hoverBackground: 'transparent',
       activeBackground: 'transparent',
       borderWidth: '0 0 1px 0',
-      borderColor: '{content.border.color}',
-      hoverBorderColor: '{content.border.color}',
-      activeBorderColor: '{primary.color}',
-      color: '{colors.text.text-secondary}',
-      hoverColor: '{text.color}',
-      activeColor: '{primary.color}',
+      borderColor: 'transparent',
+      hoverBorderColor: 'transparent',
+      activeBorderColor: 'transparent',
+      color: '{colors.text.text-tertiary}',
+      hoverColor: '{colors.text.text-primary}',
+      activeColor: '{colors.text.text-brand}',
       padding: '1rem 1.125rem',
-      fontWeight: '600',
+      fontWeight: '400',
       margin: '0 0 -1px 0',
       gap: '0.5rem',
       focusRing: {
@@ -3695,9 +3695,9 @@ export const components = {
       },
     },
     activeBar: {
-      height: '1px',
+      height: '2px',
       bottom: '-1px',
-      background: '{primary.color}',
+      background: '{colors.border.border-brand}',
     },
     colorScheme: {
       light: {

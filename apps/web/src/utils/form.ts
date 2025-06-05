@@ -21,7 +21,7 @@ export function findInputByName(inputs: any[], name: string): any {
 
 export function filterInputsByNames(inputs: any[], names: string[]) {
   const list: any[] = []
-  inputs.forEach((input: any) => {
+  inputs?.forEach((input: any) => {
     if (Array.isArray(input)) {
       list.push(...filterInputsByNames(input, names))
     }

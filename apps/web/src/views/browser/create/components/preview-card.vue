@@ -1,87 +1,109 @@
 <script setup lang="ts">
-const props = defineProps({
-  inputsGroup: {
-    type: Array,
-    default: () => [],
-  },
-  onShuffle: {
-    type: Function as PropType<() => void>,
-    default: () => () => { },
-  },
-})
+import { filterInputsByNames } from '/@/utils';
+import { useThemeStore } from '/@/stores/theme'
+import type { SvgNames } from '/@/components/rx-icon';
 
-const previewData = computed(() => {
-  return getPreview(props.inputsGroup.flat())
-})
+interface Props {
+  inputsGroup?: any[]
+  onShuffle: () => void
+}
+const { inputsGroup = [], onShuffle } = defineProps<Props>()
+
+const themeStore = useThemeStore()
+
+const collapsed = ref(false)
+const previewData = computed(() => getPreview(inputsGroup.flat()))
 
 function getPreview(list: any[]) {
-  const _list: any = []
-
-  list.forEach((item) => {
-    if (item.preview) {
-      _list.push(item)
-    }
-    else if (item.items && Array.isArray(item.items)) {
-      item.items.forEach((subItem: any) => {
-        if (subItem.preview) {
-          _list.push(subItem)
-        }
-      })
-    }
-  })
-
-  return _list.map(({ options, value, preview }: any) => {
-    const _value = (value?.value || value)
-    const pvalue = Array.isArray(options)
-      ? options.find((option: any) => option.value === _value)?.label
-      : _value
+  return list.flatMap((item) => {
+    if (item.preview)
+      return [item]
+    if (item.items?.length)
+      return item.items.filter((subItem: any) => subItem.preview)
+    return []
+  }).map(({ options, value, preview }) => {
+    const actualValue = value?.value ?? value
+    const displayValue = options?.find((option: any) => option.value === actualValue)?.label ?? actualValue
     return {
       ...preview,
-      value: pvalue,
+      value: displayValue,
     }
   })
 }
 
-const visible = ref(true)
+const mamba = computed(() => {
+  const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
+
+  const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
+    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+    icon: 'base/rx_ic_user_key'
+  }))
+
+  return [
+    {
+      icon: os?.value?.icon || 'base/rx_ic_plus',
+    },
+    {
+      icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
+    },
+    {
+      icon: aItem1?.icon || 'base/rx_ic_plus',
+      image: aItem1?.image,
+      subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
+      subImage: account?.value?.length > 2 ? '' : aItem2?.image,
+    },
+  ]
+})
 </script>
 
 <template>
-  <div class="flex flex-col items-start preview" :class="[visible ? '' : 'hide']">
-    <div class="flex flex-row-reverse items-center justify-between self-stretch preview-header">
-      <SvgIcon class="ma-1 cursor-pointer" :class="{ 'rotate-180': visible }" color="var(--colors-icon-primary)" name="base/rx_ic_fold_right" @click="visible = !visible" />
-      <span v-if="visible">{{ $t('概要') }}</span>
+  <div class="flex flex-col items-start preview" :class="[!collapsed ? '' : 'hide']">
+    <div class="flex flex-row-reverse items-center justify-between self-stretch header">
+      <SvgIcon class="shrink-0 ma-1 cursor-pointer" :class="{ 'rotate-180': !collapsed }" color="var(--colors-icon-primary)" name="base/rx_ic_fold_right" @click="collapsed = !collapsed" />
+      <span v-if="!collapsed">{{ $t('概要') }}</span>
     </div>
-    <div v-if="visible" class="w-full preview-content">
-      <div class="preview-content-list">
-        <div v-for="(item, key) in previewData" :key="key" class="preview-content-item">
-          <div class="preview-content-item-label">
+    <div v-if="!collapsed" class="flex flex-col gap-5 justify-center items-center overview">
+      <div class="w-34 flex items-center justify-between relative">
+        <div class="line"></div>
+        <template v-for="item in mamba" :key="item.icon">
+          <div v-if="item.icon" class="relative icon">
+            <img v-if="item.image" class="w-full h-full" :src="item.image" />
+            <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" />
+            <div v-if="item.subIcon || item.subImage" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
+              <img v-if="item.subImage" class="w-full h-full" :src="item.subImage" />
+              <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" />
+            </div>
+          </div>
+        </template>
+      </div>
+      <img src="https://primefaces.org/cdn/primevue/images/galleria/galleria10.jpg" class="block w-40 object-cover">
+    </div>
+    <div v-if="!collapsed" class="w-full content">
+      <div class="list">
+        <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-2 px-3 gap-1">
+          <div class="label">
             {{ item.label }}
           </div>
-          <div class="preview-content-item-value">
+          <div class="value">
             {{ item.value }}
           </div>
         </div>
         <div class="h-6 w-full invisible" />
       </div>
     </div>
-    <div v-if="visible" class="preview-footer">
-      <RxButton :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle" />
-    </div>
+    <RxButton v-if="!collapsed" class="w-full" size="lg" :label="$t('一键随机指纹')" icon="base/rx_ic_shuffle" outlined @click="onShuffle" />
   </div>
 </template>
 
 <style lang="scss" scoped>
-$spacing-x: var(--spacing-xl, 12px);
-
 .preview {
-  margin: 12px;
-  margin-left: 0;
-  padding: 8px 0;
-  gap: 6px;
-  width: 340px;
+  margin: 12px 12px 12px 0;
+  padding: 16px;
+  gap: 12px;
+  width: 375px;
   height: calc(100% - 24px);
-  border-radius: 8px;
-  border: 0.5px solid var(--colors-border-border-overlay);
+  border-radius: 12px;
+  border: 1px solid var(--colors-border-border-subtle);
   background: var(--colors-background-bg-overlay);
   box-shadow:
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
@@ -90,78 +112,88 @@ $spacing-x: var(--spacing-xl, 12px);
   transition: all 0.3s ease-in;
 
   &.hide {
-    width: 49px;
-    height: 41px;
+    width: 56px;
+    height: 56px;
   }
+}
 
-  &-header {
-    padding: 0 $spacing-x;
-    color: var(--colors-text-text-primary);
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: normal;
+.header {
+  color: var(--colors-text-text-primary);
+  font-family: Inter;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.overview {
+  width: 100%;
+  height: 180px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ebf7ff 0%, #f6f6fd 100%);
+}
+
+.icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  border: 0.5px solid var(--colors-border-border-subtle, #C7D1D6);
+  background: var(--colors-background-bg-action, #FFF);
+  z-index: 1;
+}
+
+.line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: #C7E3F2;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  word-break: break-all;
+
+  &::after {
+    content: ' ';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 44px;
+    background: linear-gradient(180deg, transparent 0%, var(--colors-background-bg-overlay) 100%);
   }
+}
 
-  &-content {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-    word-break: break-all;
+.list {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
 
-    &::after {
-      content: ' ';
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      height: 44px;
-      background: linear-gradient(180deg,
-          transparent 0%,
-          var(--colors-background-bg-overlay) 100%);
-    }
-
-    &-list {
-      padding: 0 $spacing-x;
-      width: 100%;
-      height: 100%;
-      overflow-y: auto;
-
-      &::-webkit-scrollbar {
-        display: none;
-      }
-    }
-
-    &-item {
-      display: flex;
-      padding: var(--spacing-md, 6px) 10px;
-      align-items: flex-start;
-      align-self: stretch;
-      gap: var(--spacing-sm, 4px);
-      color: var(--colors-text-text-primary, #111213);
-      font-family: 'DM Mono';
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1.3;
-
-      &-label {
-        width: 120px;
-        word-wrap: break-word;
-      }
-
-      &-value {
-        flex: 1;
-      }
-    }
+  &::-webkit-scrollbar {
+    display: none;
   }
+}
 
-  &-footer {
-    display: flex;
-    align-self: stretch;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 $spacing-x;
-    height: 40px;
-  }
+.label {
+  width: 90px;
+  color: var(--editor-key, #005cc5);
+  font-family: 'DM Mono';
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.12px;
+}
+
+.value {
+  flex: 1;
+  color: var(--editor-value, #032f62);
+  font-family: 'DM Mono';
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.12px;
 }
 </style>

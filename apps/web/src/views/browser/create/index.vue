@@ -1,4 +1,5 @@
 <script lang="tsx" setup>
+import MateGroup from './components/mate-group.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -18,7 +19,7 @@ import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
-import previewCard from './components/preview-card.vue'
+import PreviewCard from './components/preview-card.vue'
 import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
@@ -52,11 +53,11 @@ const confirm = useConfirm()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
+const backRoute = useBackRoute()
 const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
-const backRoute = useBackRoute()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
 
@@ -333,12 +334,10 @@ async function saveTemplatePopup(event: Event, option?: TemplateOption) {
         type: 'text',
         name: 'templateName',
         value: option?.label,
+        required: true,
         props: {
           placeholder: $t('模板名称'),
         },
-        resolver: (z: any) => z.string({
-          invalid_type_error: $t('请输入模板名称'),
-        }).min(1, $t('请输入模板名称'))
       },
     ],
     afterRender: () => <ol class="pl-[14px] m-0">
@@ -396,19 +395,11 @@ async function deleteTemplate(data: any) {
 </script>
 
 <template>
-  <div class="flex justify-between h-full">
-    <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-      <div class="profile-tabs">
-        <Tabs v-model:value="tabsValue">
-          <TabList>
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
-              {{ tab.title }}
-            </Tab>
-          </TabList>
-        </Tabs>
-      </div>
-      <div class="flex-ovh-1 flex-col">
+  <div class="flex flex-col h-full">
+    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
+    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+    <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 flex flex-col">
         <div class="profile-basic">
           <div v-show="tabsValue !== 'import'" class="flex gap-2">
             <WindowNameEdit v-model="windowName" class="flex-1" />
@@ -433,57 +424,49 @@ async function deleteTemplate(data: any) {
           </div>
           <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions" :inputs-group="inputsGroup">
-          <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-            <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
-            <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
-          </template>
-        </accordionInputs>
+        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
       </div>
+      <PreviewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
     </div>
-    <previewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
+    <div class="flex items-center gap-2 footer">
+      <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
+      <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+      <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.profile-tabs {
-  padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--colors-border-divider);
+:deep(.p-splitbutton) {
+  .p-button {
+    padding: var(--spacing-md, 6px) 10px;
+    font-size: var(--Font-Size-text-sm, 12px);
+    line-height: var(--Line-Height-text-lg, 20px);
+    border-width: 1px;
 
-  :deep(.p-tablist-tab-list) {
-    gap: var(--spacing-2xl, 16px);
-    border-color: transparent;
-
-    .p-tab {
-      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-      color: var(--colors-text-text-secondary, #b2b6b8);
-      font-family: Inter;
-      font-size: var(--Font-Size-text-sm, 12px);
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-      border-color: transparent;
-
-      &:not(.p-tab-active):not(.p-disabled):hover {
-        border-color: transparent;
-      }
+    &:not(:disabled):hover {
+      border-width: 1px;
     }
+  }
 
-    .p-tab-active {
-      color: var(--colors-text-text-brand, #12a3fc);
-    }
+  .p-splitbutton-button {
+    border-top-left-radius: var(--radius-md, 6px);
+    border-bottom-left-radius: var(--radius-md, 6px);
+    border-right-width: 0;
+  }
 
-    .p-tablist-active-bar {
-      height: 2px;
-    }
+  .p-splitbutton-dropdown {
+    border-top-right-radius: var(--radius-md, 6px);
+    border-bottom-right-radius: var(--radius-md, 6px);
+    border-left-width: 0;
   }
 }
 
 .profile-basic {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md, 16px);
-  padding: var(--spacing-md, 16px) 66px;
+  gap: 16px;
+  padding: 16px 48px 16px 124px;
 }
 
 .multi-block {
@@ -506,29 +489,19 @@ async function deleteTemplate(data: any) {
   }
 }
 
-:deep(.p-splitbutton) {
-  .p-button {
-    padding: var(--spacing-md, 6px) 10px;
-    font-size: var(--Font-Size-text-sm, 12px);
-    line-height: var(--Line-Height-text-lg, 20px);
-    border-width: 1px;
-    // border-color: var(#0881cc, #0881cc);
+.footer {
+  padding: 16px 124px;
+  max-height: 64px;
+  border-top: 1px solid var(--colors-border-border-subtle);
 
-    &:not(:disabled):hover {
-      border-width: 1px;
-    }
+  :deep(.p-button) {
+    max-width: 150px;
   }
 
-  .p-splitbutton-button {
-    border-top-left-radius: var(--radius-md, 6px);
-    border-bottom-left-radius: var(--radius-md, 6px);
-    border-right-width: 0;
-  }
-
-  .p-splitbutton-dropdown {
-    border-top-right-radius: var(--radius-md, 6px);
-    border-bottom-right-radius: var(--radius-md, 6px);
-    border-left-width: 0;
+  :deep(.p-button-label) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>

@@ -293,7 +293,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('代理'),
       name: 'proxyInfoList',
       value: proxyInfoList,
-      switch: !!proxyInfoList.length,
+      switch: !!proxyInfoList.length,//是否启用代理开关
       formatValue: (input: any, _inputs: any, formData: any) => {
         const { id, ...value } = (input.switch && input.value[0]) || {
           ...createDefaultObject(proxyInfoKeys, ''),

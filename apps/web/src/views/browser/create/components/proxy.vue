@@ -44,6 +44,15 @@ const proxyInfo = computed(() => {
   }, {} as Record<string, any>)
 })
 
+function onEdit(item: any) {
+  if (item.id) {
+    toggleDrawer('list')
+  }
+  else {
+    toggleDrawer('create', item)
+  }
+}
+
 function toggleDrawer(type: 'create' | 'list', item?: any) {
   const dismissable = type === 'list'
   const title = dismissable ? $t('代理列表') : $t('添加代理')
@@ -70,27 +79,22 @@ function toggleDrawer(type: 'create' | 'list', item?: any) {
   })
 }
 
-function onEdit(item: any) {
-  if (item.id) {
-    toggleDrawer('list')
-  }
-  else {
-    toggleDrawer('create', item)
-  }
-}
-
 function deleteProxy(index: number) {
   proxyList.value.splice(index, 1)
 }
 
 function addProxy(data: any) {
   if (data._tempId) {
-    replaceData(data)
+    const index = proxyList.value.findIndex((item: any) => item._tempId === data._tempId)
+    if (index > -1) {
+      const old = proxyList.value[index]
+      Reflect.set(proxyList.value, index, { ...old, ...data })
+    }
     return
   }
 
   if (!data.id) {
-    data._tempId = (new Date().getTime()).toString(32)
+    data._tempId = Date.now().toString(32)
   }
 
   if (isBatch.value) {
@@ -157,13 +161,6 @@ function tooltipValue(item: any) {
   }
 }
 
-function replaceData(data: any) {
-  const index = proxyList.value.findIndex((item: any) => item._tempId === data._tempId)
-  if (index > -1) {
-    const old = proxyList.value[index]
-    Reflect.set(proxyList.value, index, { ...old, ...data })
-  }
-}
 </script>
 
 <template>
@@ -173,8 +170,7 @@ function replaceData(data: any) {
     </div>
     <div v-if="!proxySwitch" class="direct">
       {{ $t('* 不使用代理则默认通过本地直连 ({value})', {
-        value: `${strConcat(network.info?.country_code, strConcat('/',
-          network.info?.city))}`
+        value: `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}`
       }) }}
     </div>
     <template v-else>
@@ -186,7 +182,7 @@ function replaceData(data: any) {
         <template v-if="isBatch">
           <RxAlert v-if="sumProxyCount > createCount" class="w-full multiple" type="warn"
             :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false" />
-          <RxCard v-for="(item, index) in proxyList" :key="index" class="multiple" @click="onEdit(item)" @close="deleteProxy(index)">
+          <RxCard class="multiple" v-for="(item, index) in proxyList" :key="index" @click="onEdit(item)" @close="deleteProxy(index)">
             <div class="multiple-region">
               <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
               <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
@@ -206,12 +202,7 @@ function replaceData(data: any) {
               <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
                 @click.stop="testProxy(item, index)" />
             </div>
-            <div class="flex justify-between single-time">
-              <span>
-                {{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{ item.host }}{{ strConcat(':', item.port)
-                }}
-              </span>
-            </div>
+            <div class="flex justify-between single-time">{{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{ item.host }}{{ strConcat(':', item.port) }}</div>
           </RxCard>
         </template>
       </div>
