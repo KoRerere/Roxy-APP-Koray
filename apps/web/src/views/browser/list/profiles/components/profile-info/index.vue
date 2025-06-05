@@ -68,7 +68,6 @@ const isOpenBrowser = computed(() => openMessage?.[data.dirId]?.data?.percent ==
 const list = computed(() => {
   const proxyClass = hasProxy.value ? '' : data.lastIp ? 'direct-info' : 'direct'
   const windowPlatformList = data.windowPlatformList || []
-  console.log('data', data, data.checkTime ? formatProxyTime(data.checkTime) : '--')
   return [
     {
       key: 'os',

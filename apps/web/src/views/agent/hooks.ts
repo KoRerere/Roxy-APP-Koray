@@ -46,14 +46,6 @@ export function useCheckProxy(): {
 
     try {
       const checkRes = await window.electronAPI.send('proxy:detect', data)
-      // const [code, msg] = !checkRes.ip
-      //   ? [-1, $t('测试代理失败')]
-      //   : [0, $t('位置: {location} IP: {ip}', { location: `${checkRes.country_code}${strConcat('/', checkRes.city)}`, ip: checkRes.ip })]
-
-      // if (!options.silence) {
-      //   showToast(code, msg)
-      // }
-
       checkResult.checkStatus = !checkRes.ip ? ProxyCheckStatus.failure : ProxyCheckStatus.success
       checkResult.lastIp = checkRes.ip ?? ''
       checkResult.lastCity = checkRes.city ?? ''
@@ -72,7 +64,7 @@ export function useCheckProxy(): {
       checkResult.loading = false
       dirId && window.electronAPI.send('proxy:delRoxynetProxy', dirId)
     }
-    return toRaw(checkResult)
+    return { ...toRaw(checkResult) }
   }
 
   function batchTestShowToast(__results: CheckResult | CheckResult[]) {

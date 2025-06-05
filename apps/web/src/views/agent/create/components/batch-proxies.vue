@@ -52,6 +52,8 @@ const isDuplicate = ref(true)
 const showMessage = ref(false)
 const filterCount = ref(0)
 
+const testStatus = ref<Record<string, ProxyCheckStatus>>({})
+
 const columns = ref([
   {
     key: 'protocol',
@@ -101,11 +103,7 @@ const columns = ref([
   },
   {
     title: $t('出口 IP'),
-    render: ({ data }: any) => {
-      return (
-        <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} isLoading={data.loadingOperationMap?.test} />
-      )
-    },
+    slot: 'outbound'
   },
   {
     title: $t('操作'),
@@ -190,6 +188,7 @@ function parseValue() {
         remark,
         _missField,
         _missIndex: _missField.length ? index + 1 : 0,
+        _id: index
       }
     })
 
@@ -247,6 +246,7 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
     return async () => {
       const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
       Object.assign(item, checkResult)
+      testStatus.value[item._id] = checkResult.checkStatus;
       setOperationLoading(item, operateName, false)
       return checkResult
     }
@@ -415,6 +415,10 @@ function onSave() {
         :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
+        </template>
+        <template #outbound="{ data }">
+          <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+            :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
         </template>
         <template #actions="{ data }">
           <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
