@@ -20,7 +20,6 @@ import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { isMainWindow } from '/@/utils'
-import router from '/@/router'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -78,6 +77,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
     closeOtherWindow()
     // 未登录
     useUserStore().clearUserInfo()
+    const { default: router } = await import('/@/router')
     router.push({ name: 'login' })
     return response
   }
