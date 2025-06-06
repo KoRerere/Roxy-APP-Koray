@@ -163,15 +163,15 @@ const disabledRows = debounce(() => {
   })
 }, 100)
 
-window.electronAPI.on('browser:launch-process-message', (event) => {
-  if (event.code === 0 && event.data.percent === 100) {
-    getOpenedBrowser()
-  }
-})
-
 window.electronAPI.on('browser:on-close', (dirId) => {
   selectedRows.value = selectedRows.value?.filter((n: any) => n.dirId !== dirId)
   getOpenedBrowser()
+})
+window.electronAPI.on('browser:opened-browser-list-change', (data) => {
+  console.log('browser:opened-browser-list-change', data)
+  if (!isSyncing.value) {
+    tableData.value = data
+  }
 })
 
 async function getOpenedBrowser() {
