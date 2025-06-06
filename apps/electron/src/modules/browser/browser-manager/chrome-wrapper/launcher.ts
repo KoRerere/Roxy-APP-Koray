@@ -63,6 +63,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
 
     chromeProcess.stderr.on('data', (data: Buffer) => {
       const output = data.toString()
+      // console.debug('chromeProcess.stderr.on', output)
       const match = output.match(/DevTools listening on ws:\/\/[^:]+:(\d+)/)
       if (match) {
         clearTimeout(timeout)
@@ -72,6 +73,7 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
 
     chromeProcess.on('error', (error) => {
       clearTimeout(timeout)
+      console.error('chromeProcess.on error', error)
       reject(error)
     })
   })
@@ -79,9 +81,8 @@ export async function launch(options: PuppeteerLaunchOptions, relaunch = false):
   // 获取 WebSocket 端点
   const version = await CDP.Version({ port: actualPort })
   const wsEndpoint = version.webSocketDebuggerUrl
-
   // 连接到 Chrome
-  const client = await CDP({ port: actualPort }) as Client
+  const client = await CDP({ target: wsEndpoint }) as Client
 
   // 启用必要的域
   await client.Target.setDiscoverTargets({ discover: true })
