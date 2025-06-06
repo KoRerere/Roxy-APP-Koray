@@ -18,7 +18,6 @@ export class ChromeBrowser extends EventEmitter {
   private browserProcess: ChildProcess | null = null
   private _wsEndpoint: string
   private targetsMap: Map<string, ChromeTarget> = new Map()
-  private closed = false
   private disconnectedEmitted = false
 
   constructor(client: Client, wsEndpoint: string, browserProcess?: ChildProcess) {
@@ -55,7 +54,6 @@ export class ChromeBrowser extends EventEmitter {
 
     // 监听断开连接事件
     this.client.on('disconnect', () => {
-      this.closed = true
       this.emitDisconnected()
     })
 
@@ -63,14 +61,12 @@ export class ChromeBrowser extends EventEmitter {
     if (this.browserProcess) {
       // 进程退出事件
       this.browserProcess.on('exit', (code, signal) => {
-        this.closed = true
         this.emitDisconnected()
         this.emit('process-exit', { code, signal })
       })
 
       // 进程关闭事件
       this.browserProcess.on('close', (code, signal) => {
-        this.closed = true
         this.emitDisconnected()
         this.emit('process-close', { code, signal })
       })
@@ -94,17 +90,11 @@ export class ChromeBrowser extends EventEmitter {
   }
 
   async close(): Promise<void> {
-    if (this.closed) return
-
-    this.closed = true
     // 调用 Browser.close 关闭浏览器
     await this.client.Browser.close().finally(() => {
-      this.closed = true
-      setTimeout(() => {
-        if (this.browserProcess) {
-          this.browserProcess.kill('SIGTERM')
-        }
-      }, 2000)
+      if (this.browserProcess) {
+        this.browserProcess.kill('SIGTERM')
+      }
     })
   }
 

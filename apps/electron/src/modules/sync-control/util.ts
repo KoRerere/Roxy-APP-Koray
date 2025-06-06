@@ -55,7 +55,10 @@ export class SyncControlUtil {
     const mainControlBrowser = getMainControlBrowser()
     const controlledBrowsers = getControlledBrowsers()
     if (mainControlBrowser) {
-      const { tabs } = await mainControlBrowser.getBrowser()?.client.Browser.getTabs()
+      const { tabs } = await mainControlBrowser.getBrowser()?.client.Browser.getTabs().catch((err) => {
+        console.error('mainControlBrowser Browser.getTabs() error: ', err)
+        return Promise.reject(err)
+      })
       console.debug('tabs', typeof tabs, tabs)
       const mainBrowserPages = safeParseJSON(tabs)
       console.debug('mainBrowserPages', mainBrowserPages)
@@ -64,7 +67,10 @@ export class SyncControlUtil {
         const pages = await browser.getBrowser()?.pages() || []
         pages.slice(mainBrowserPages.length).forEach(page => page.close())
         return pages.slice(0, mainBrowserPages.length)
-      }))
+      })).catch((err) => {
+        console.error('controlledBrowsers.map error: ', err)
+        return Promise.reject(err)
+      })
       mainBrowserPages.forEach((tab, pageIndex) => {
         const pageURL = tab.url
 

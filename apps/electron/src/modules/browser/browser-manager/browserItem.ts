@@ -176,12 +176,12 @@ export class BrowserItem {
       await this.beforeLaunchTask.run()
       // 创建启动后任务
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
-      // 异步执行启动后的任务, 不需要等待
-      this.afterLaunchTask.run()
       // 浏览器关闭时，需要上传本地数据和状态
       this.#browser!.on('process-close', this.handleOnDisconnected)
       // 记录浏览器进程 ID
       this.browserPid = this.#browser!.process()?.pid
+      // 异步执行启动后的任务, 不需要等待
+      this.afterLaunchTask.run()
     }
   }
 

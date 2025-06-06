@@ -70,7 +70,6 @@ export class BrowserManager {
 
     const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
       console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
-      this.openedBrowserMap.delete(dirId)
       ipcMain.send('browser:on-close', dirId)
       browserItem.off(`close-${dirId}`, onCloseHandler)
       if (uploadDataPromise) {
@@ -118,9 +117,7 @@ export class BrowserManager {
   private async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
-      return browserItem.close().finally(() => {
-        this.openedBrowserMap.delete(dirId)
-      })
+      return browserItem.close()
     }
   }
 
@@ -135,6 +132,7 @@ export class BrowserManager {
       return Promise.resolve([])
     }
 
+    const dirIds = [...this.uploadDataQueue.keys()]
     const uploadDataQueue = [...this.uploadDataQueue.values()]
     this.uploadDataQueue.clear()
 
@@ -156,7 +154,11 @@ export class BrowserManager {
       }
     })
 
-    return Promise.allSettled(uploadParamsList)
+    return Promise.allSettled(uploadParamsList).finally(() => {
+      dirIds.forEach(dirId => {
+        this.openedBrowserMap.delete(dirId)
+      })
+    })
   }, 500)
 
   /** 关闭所有已打开的浏览器 */
@@ -182,6 +184,7 @@ export class BrowserManager {
 
     if (browserItem) {
       await this.close(dirId)
+      await this.#batchUploadData()
     }
 
     try {

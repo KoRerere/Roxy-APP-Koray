@@ -203,7 +203,8 @@ function close(isCancel: boolean) {
           <Duration v-model="selectedDuration" :price="monthAmount" @change="onChange"></Duration>
         </ItemBlock>
         <ItemBlock :title="$t('选择支付方式')">
-          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="paywayList" :disabledMethods="disabledMethods"></RxPaymentMethods>
+          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="paywayList"
+            :disabledMethods="disabledMethods"></RxPaymentMethods>
         </ItemBlock>
         <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="totalAmount"></Blance>
       </div>
@@ -229,7 +230,8 @@ function close(isCancel: boolean) {
         <template #after>
           <div class="flex-1 flex flex-col justify-end mt-4">
             <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm"></RxButton>
-            <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+            <i18n-t tag="div" class="mt-3 select-none terms"
+              :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>
                 <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
               </template>
@@ -243,7 +245,7 @@ function close(isCancel: boolean) {
 
 <style scoped lang="scss">
 .popup {
-  width: 1024px;
+  width: clamp(960px, 72.5vw, 1024px);
 }
 
 .header {

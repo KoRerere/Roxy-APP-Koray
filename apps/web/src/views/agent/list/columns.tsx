@@ -52,6 +52,7 @@ export function getRawColumns(options?: any) {
       title: $t('操作'),
       style: 'width: 9rem',
       slot: 'actions',
+      alignFrozen: 'right',
     },
   ], options)
 }

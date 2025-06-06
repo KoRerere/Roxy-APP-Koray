@@ -25,10 +25,17 @@ export class AfterLaunchTask {
   constructor(private browserItem: BrowserItem, public browser: Browser) { }
 
   async run() {
-    this.handleBrowserEvent()
     this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
     }, 5000)
+    this.browser.on('process-close', () => {
+      console.log('process-close')
+      this.continueAccess = true
+      if (this.checkIpChangeTimer) {
+        clearTimeout(this.checkIpChangeTimer)
+      }
+    })
+    await this.handleBrowserEvent()
   }
 
   /** 获取标签页 */
@@ -97,8 +104,6 @@ export class AfterLaunchTask {
       this.cookies = cookies
     }
 
-    console.log('createCDPSession success')
-
     const startTime = Date.now()
 
     // 是否同步 cookie
@@ -110,7 +115,6 @@ export class AfterLaunchTask {
         })
         console.log('Storage.setCookies success')
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
-
         const pages = await this.browser?.pages()
         // cookie导入成功后，把打开的tab页重新加载一次
         pages.map(async (e) => {
@@ -120,11 +124,6 @@ export class AfterLaunchTask {
             await e.goto(url).catch((err) => {
               console.log(`goto ${url} 失败`, err)
             })
-            if (!this.isPhone) {
-              e.evaluate(() => {
-                window.console.debug = function (_) { }
-              })
-            }
           }
         })
       }
@@ -132,13 +131,6 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
-      this.browser.on('process-close', () => {
-        console.log('process-close')
-        this.continueAccess = true
-        if (this.checkIpChangeTimer) {
-          clearTimeout(this.checkIpChangeTimer)
-        }
-      })
     }
 
   }

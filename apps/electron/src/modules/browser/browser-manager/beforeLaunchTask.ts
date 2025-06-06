@@ -162,7 +162,6 @@ export class BeforeLaunchTask {
         })
       }
 
-
       resolve()
       return this.browser
     }
@@ -326,13 +325,6 @@ export class BeforeLaunchTask {
       args.push('--auto-open-devtools-for-tabs')
     }
 
-    // 开启同步标签页后，同步标签页
-    (allOpenUrl || []).forEach((item) => {
-      if (item && this.browserItem.isValidURL(item)) {
-        args.push(item)
-      }
-    })
-
     // // console.log(`exe_strs`, exe_strs);
     // if (exe_strs.indexOf(data.platformUrl) == -1) {
     //   exe_strs.push(data.platformUrl);
@@ -341,6 +333,13 @@ export class BeforeLaunchTask {
     if (!useGpu) {
       args.push('--disable-gpu')
     };
+
+    // 开启同步标签页后，同步标签页
+    void (allOpenUrl || []).forEach((item) => {
+      if (item && this.browserItem.isValidURL(item)) {
+        args.push(item)
+      }
+    })
 
     return args.filter(item => item.trim() !== '')
   }
