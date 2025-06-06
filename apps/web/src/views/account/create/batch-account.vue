@@ -6,10 +6,11 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
+import { validateURL } from '/@/utils'
 
 const router = useRouter()
 const themeStore = useThemeStore()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 
 const columns = [
@@ -78,7 +79,7 @@ function formatPlatformOptions(dataList: any[]) {
   }))
 }
 
-function tableOperation(data: any) {
+function tableOperation() {
   return [
     {
       name: 'delete',
@@ -98,6 +99,17 @@ function operationHandler(operate: any, data: any) {
       onRemark(data)
       break
   }
+}
+
+function onBlur(event: any) {
+  if (!validateURL(event.target.value)) {
+    input.value.props.invalid = true
+    onlyErrorToast(-1, $t('请输入正确的平台网址'))
+  }
+}
+
+function onChange() {
+  input.value.props.invalid = false
 }
 
 function parseValue() {
@@ -150,7 +162,7 @@ function onRemark(data: any) {
 
 async function onSave() {
   const { code, msg } = await API.platform.userAddPlatformInfoBatchCreate(toRaw(dataList.value))
-  showToast(code, msg)
+  onlyErrorToast(code, msg)
   if (code === 0) {
     router.replace({ name: 'account-list' })
   }
@@ -163,7 +175,7 @@ async function onSave() {
       <div class="flex flex-1 flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
-          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" />
+          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" @change="onChange" @blur="onBlur" />
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
@@ -200,7 +212,7 @@ async function onSave() {
           </div>
         </template>
         <template #actions="{ data }">
-          <Actions :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <Actions :operation="tableOperation()" :show-menu="false" @quick-click="operationHandler($event, data)" />
         </template>
       </RyTable>
     </div>

@@ -397,36 +397,38 @@ async function deleteTemplate(data: any) {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
     <div class="flex-1 flex overflow-hidden">
       <div class="flex-1 flex flex-col">
-        <div class="profile-basic">
-          <div v-show="tabsValue !== 'import'" class="flex gap-2">
-            <WindowNameEdit v-model="windowName" class="flex-1" />
-            <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
-              <template #option-extra="{ option }">
-                <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
-                  <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
-                </div>
-              </template>
-            </RxInputSelect>
-          </div>
-          <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
-            <div class="flex items-center justify-between">
-              <div>{{ $t('窗口数量') }}</div>
-              <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
-              </RxInputNumber>
+        <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="profile-basic">
+            <div v-show="tabsValue !== 'import'" class="flex gap-2">
+              <WindowNameEdit v-model="windowName" class="flex-1" />
+              <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
+                <template #option-extra="{ option }">
+                  <div v-if="option.action" class="flex flex-1 justify-end gap-2">
+                    <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
+                    <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
+                  </div>
+                </template>
+              </RxInputSelect>
             </div>
-            <div class="multi-block-info">
-              {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+            <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
+              <div class="flex items-center justify-between">
+                <div>{{ $t('窗口数量') }}</div>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
+                </RxInputNumber>
+              </div>
+              <div class="select-none multi-block-info">
+                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+              </div>
             </div>
+            <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
           </div>
-          <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
+          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
         </div>
-        <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
       </div>
-      <PreviewCard :inputs-group="previewInputs" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
+      <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
     </div>
     <div class="flex items-center gap-2 footer">
       <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
