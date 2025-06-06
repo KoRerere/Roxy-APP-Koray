@@ -1,28 +1,28 @@
 :root {
-  --FontSize-text-xs: 10;
-  --FontSize-text-sm: 12;
-  --FontSize-text-md: 13;
-  --FontSize-text-lg: 14;
-  --FontSize-text-xl: 16;
-  --FontSize-text-2xl: 18;
-  --FontSize-text-3xl: 20;
-  --FontSize-display-xs: 24;
-  --FontSize-display-sm: 30;
-  --FontSize-display-md: 36;
-  --FontSize-display-lg: 48;
-  --FontSize-display-xl: 60;
-  --FontSize-display-2xl: 72;
-  --LineHeight-text-xs: 16;
-  --LineHeight-text-sm: 18;
-  --LineHeight-text-md: 19;
-  --LineHeight-text-lg: 20;
-  --LineHeight-text-xl: 24;
-  --LineHeight-text-2xl: 28;
-  --LineHeight-text-3xl: 30;
-  --LineHeight-display-xs: 32;
-  --LineHeight-display-sm: 38;
-  --LineHeight-display-md: 44;
-  --LineHeight-display-lg: 60;
-  --LineHeight-display-xl: 72;
-  --LineHeight-display-2xl: 90
+	--Font Size-text-xs: 10;
+	--Font Size-text-sm: 12;
+	--Font Size-text-md: 13;
+	--Font Size-text-lg: 14;
+	--Font Size-text-xl: 16;
+	--Font Size-text-2xl: 18;
+	--Font Size-text-3xl: 20;
+	--Font Size-display-xs: 24;
+	--Font Size-display-sm: 30;
+	--Font Size-display-md: 36;
+	--Font Size-display-lg: 48;
+	--Font Size-display-xl: 60;
+	--Font Size-display-2xl: 72;
+	--Line Height-text-xs: 16;
+	--Line Height-text-sm: 18;
+	--Line Height-text-md: 19;
+	--Line Height-text-lg: 20;
+	--Line Height-text-xl: 24;
+	--Line Height-text-2xl: 28;
+	--Line Height-text-3xl: 30;
+	--Line Height-display-xs: 32;
+	--Line Height-display-sm: 38;
+	--Line Height-display-md: 44;
+	--Line Height-display-lg: 60;
+	--Line Height-display-xl: 72;
+	--Line Height-display-2xl: 90
 }

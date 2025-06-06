@@ -30,6 +30,7 @@
       "background": {
         "bg-mode": "#ffffff",
         "bg-mode-reverse": "#000000",
+        "bg-example": "#f7fafc",
         "bg-app": "{primitives.blue.25}",
         "bg-page": "{primitives.netural.0}",
         "bg-mask": "{colors.alpha.alpha-black-20}",
@@ -163,6 +164,13 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "marquee": {
+        "indicator": "{primitives.netural.100}",
+        "indicator-active": "{colors.background.bg-brand}"
+      },
+      "skeleton": {
+        "bg": "#ebf1f5"
+      },
       "collapse": {
         "bg": "{primitives.netural.100}"
       },
@@ -170,24 +178,6 @@
         "bg": "{primitives.netural.50}",
         "border": "{colors.border.border-inactive}",
         "indicator": "{primitives.netural.200}"
-      },
-      "skeleton": {
-        "bg": "#ebf1f5"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.100}",
-        "indicator-active": "{colors.background.bg-brand}"
-      },
-      "tag": {
-        "bg": "{primitives.netural.100}",
-        "bg-hover": "{primitives.netural.200}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{component.tag.bg}"
       },
       "button": {
         "primary": {
@@ -220,11 +210,28 @@
           "border-inactive": "{primitives.red.400}"
         }
       },
+      "tag": {
+        "bg": "{primitives.netural.100}",
+        "bg-hover": "{primitives.netural.200}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
+        "border": "{colors.border.border-subtle}",
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{component.tag.bg}"
+      },
       "tooltip": {
         "bg": "{primitives.netural.900}",
         "text-primary": "{primitives.netural.0}",
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
+      },
+      "segment": {
+        "bg-selection": "#ebf1f5",
+        "bg-tab": "{primitives.netural.50}",
+        "bg-selection-active": "{colors.background.bg-action}",
+        "border-selection-active": "{colors.border.border-base}"
       },
       "table": {
         "bg-header": "{primitives.netural.50}",
@@ -240,12 +247,6 @@
         "bg-updated-hover": "{primitives.green.100}",
         "border-updated": "{primitives.green.300}",
         "border-updated-hover": "{primitives.green.400}"
-      },
-      "segment": {
-        "bg-selection": "#ebf1f5",
-        "bg-tab": "{primitives.netural.50}",
-        "bg-selection-active": "{colors.background.bg-action}",
-        "border-selection-active": "{colors.border.border-base}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -272,12 +273,22 @@
           "text-inactive": "{primitives.netural.500}",
           "border-inactive": "{primitives.netural.600}"
         },
+        "key": "#005cc5",
+        "value": "#032f62",
         "bg": "{primitives.netural.800}",
         "code": "{primitives.netural.0}"
       },
       "dashboard": {
         "card": {
           "bg": "rgba(0, 0, 0, 0.0200)"
+        }
+      },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.100}",
+          "avatar-bg": "{primitives.netural.900}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.100}"
         }
       },
       "drawer": {
@@ -287,14 +298,6 @@
         "bg-create-icon-active": "{primitives.netural.0}",
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
-      },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.100}",
-          "avatar-bg": "{primitives.netural.900}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.100}"
-        }
       },
       "profiles": {
         "input": {
@@ -417,6 +420,7 @@
         "bg-mask": "rgba(36, 38, 41, 0.8000)",
         "bg-mode": "#000000",
         "bg-mode-reverse": "#ffffff",
+        "bg-example": "#20262c",
         "bg-app": "{primitives.netural.950}",
         "bg-page": "{primitives.netural.900}",
         "bg-overlay": "{primitives.netural.800}",
@@ -549,6 +553,13 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "marquee": {
+        "indicator": "{primitives.netural.700}",
+        "indicator-active": "{colors.background.bg-brand}"
+      },
+      "skeleton": {
+        "bg": "{primitives.netural.800}"
+      },
       "collapse": {
         "bg": "{primitives.netural.800}"
       },
@@ -556,24 +567,6 @@
         "bg": "{primitives.netural.800}",
         "border": "{colors.border.border-subtle}",
         "indicator": "{primitives.netural.600}"
-      },
-      "skeleton": {
-        "bg": "{primitives.netural.800}"
-      },
-      "marquee": {
-        "indicator": "{primitives.netural.700}",
-        "indicator-active": "{colors.background.bg-brand}"
-      },
-      "tag": {
-        "bg": "{colors.background.bg-action}",
-        "bg-hover": "{colors.background.bg-action-hover}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{primitives.netural.700}"
       },
       "button": {
         "primary": {
@@ -606,11 +599,28 @@
           "border-inactive": "{primitives.red.950}"
         }
       },
+      "tag": {
+        "bg": "{colors.background.bg-action}",
+        "bg-hover": "{colors.background.bg-action-hover}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
+        "border": "{colors.border.border-subtle}",
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{primitives.netural.700}"
+      },
       "tooltip": {
         "bg": "{primitives.netural.700}",
         "text-primary": "{primitives.netural.0}",
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
+      },
+      "segment": {
+        "bg-tab": "{primitives.netural.900}",
+        "bg-selection": "{primitives.netural.800}",
+        "bg-selection-active": "{primitives.netural.700}",
+        "border-selection-active": "{primitives.netural.500}"
       },
       "table": {
         "bg-header": "{primitives.netural.800}",
@@ -626,12 +636,6 @@
         "bg-updated-hover": "{primitives.green.800}",
         "border-updated": "{primitives.green.700}",
         "border-updated-hover": "{primitives.green.600}"
-      },
-      "segment": {
-        "bg-tab": "{primitives.netural.900}",
-        "bg-selection": "{primitives.netural.800}",
-        "bg-selection-active": "{primitives.netural.700}",
-        "border-selection-active": "{primitives.netural.500}"
       },
       "rainbow": {
         "Yellow": "#ffdd19",
@@ -658,12 +662,22 @@
           "text-inactive": "{primitives.netural.600}",
           "border-inactive": "{primitives.netural.700}"
         },
+        "key": "#79c0ff",
+        "value": "#a5d6ff",
         "bg": "{primitives.netural.800}",
         "code": "{primitives.netural.0}"
       },
       "dashboard": {
         "card": {
           "bg": "{colors.alpha.alpha-white-5}"
+        }
+      },
+      "topnav": {
+        "space": {
+          "bg-hover": "{primitives.netural.800}",
+          "avatar-bg": "{primitives.netural.700}",
+          "avatar-text": "{primitives.netural.0}",
+          "emoji-bg": "{primitives.netural.800}"
         }
       },
       "drawer": {
@@ -673,14 +687,6 @@
         "bg-create-icon-active": "{primitives.netural.0}",
         "bg": "{colors.background.bg-app}",
         "border": "{colors.border.border-inactive}"
-      },
-      "topnav": {
-        "space": {
-          "bg-hover": "{primitives.netural.800}",
-          "avatar-bg": "{primitives.netural.700}",
-          "avatar-text": "{primitives.netural.0}",
-          "emoji-bg": "{primitives.netural.800}"
-        }
       },
       "profiles": {
         "input": {

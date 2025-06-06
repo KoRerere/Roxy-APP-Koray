@@ -94,7 +94,7 @@ async function sendCode() {
 async function onTransfer(isSelf: boolean) {
   const _transferParam = isDelete.value
     ? transferParam.value
-    : transferParam.value.filter(item => ['name', 'notes'].includes(item))// 取消彻底删除时过滤依赖项
+    : transferParam.value.filter(item => !['platform', 'proxy'].includes(item))// 未勾选删除，需要过滤掉删除的子项(解决勾选子项后，父项取消勾选导致的问题)
 
   const { code, msg } = await API.window.userTransferWindowCreate({
     windowIds,
@@ -112,7 +112,7 @@ async function onTransfer(isSelf: boolean) {
   <div class="flex flex-col pa-6 pt-4 gap-5 max-h-[80vh] overflow-y-auto popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
       <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口')
-        }}</span>
+      }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">

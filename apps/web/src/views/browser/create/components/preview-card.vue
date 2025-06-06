@@ -167,7 +167,9 @@ const systeam = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px;
+  padding: 3px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-subtle, #C7D1D6);
   background: var(--colors-background-bg-action, #FFF);
@@ -210,7 +212,7 @@ const systeam = computed(() => {
 
 .label {
   width: 90px;
-  color: var(--editor-key, #005cc5);
+  color: var(--pattern-editor-key, #79C0FF);
   font-family: 'DM Mono';
   font-size: 12px;
   font-weight: 500;
@@ -220,7 +222,7 @@ const systeam = computed(() => {
 
 .value {
   flex: 1;
-  color: var(--editor-value, #032f62);
+  color: var(--pattern-editor-value, #A5D6FF);
   font-family: 'DM Mono';
   font-size: 12px;
   font-weight: 500;
