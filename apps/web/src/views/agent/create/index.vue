@@ -30,10 +30,12 @@ async function saveProxies(__proxies: any) {
     const okText = isAllExist ? $t('知道了') : $t('继续并保存')
     const columnKeys = ['protocol', 'host', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'remark']
     const columns = getColumns().filter(item => columnKeys.includes(item.key as string))
-    const dataList = (isAllExist ? proxies : proxies.filter((_item: any, index: number) => !data.some((d: any) => d.index === index))).reverse()
+    const dataList = (isAllExist ? proxies : proxies.filter((_item: any, index: number) => data.some((d: any) => d.index === index))).reverse()
     const onConfirm = async () => {
       if (!isAllExist) {
-        await saveProxies(dataList)
+        // 保存不重复的项
+        const noRepetitiveProxies = proxies.filter((_item: any, index: number) => !data.some((d: any) => d.index === index)).reverse()
+        await saveProxies(noRepetitiveProxies)
       }
       modal.hideModal()
     }

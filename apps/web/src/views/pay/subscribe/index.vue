@@ -170,17 +170,19 @@ async function onSubscribe() {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full">
-    <ViewsHeader :title="$route.meta.title" />
+  <div class="overflow-auto wh-full">
     <div class="rx-container">
+      <ViewsHeader :title="$route.meta.title" />
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 overflow-y-auto">
         <div class="flex-1">
-          <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan" v-model:count="selectedCount"></Profile>
+          <Profile class="w-full" v-if="dataList?.length" :list="dataList" v-model:plan="selectedPlan"
+            v-model:count="selectedCount"></Profile>
           <div class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
             <div class="title">{{ $t('订阅时长') }}</div>
             <Duration class="mt-4" v-model="selectedDuration" :price="subscribeOriginalPrice"></Duration>
           </div>
-          <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
+          <AdvancedFeat :plan="selectedPlan"
+            class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
         </div>
         <div class="flex flex-col gap-3 w-88">
@@ -211,10 +213,11 @@ async function onSubscribe() {
             <template #after>
               <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
                 <RxButton size="lg" :label="$t('立即支付')" @click="onSubscribe"></RxButton>
-                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+                <i18n-t tag="div" class="select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })"
+                  scope="global">
                   <template #terms>
                     <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议')
-                      }}</a>
+                    }}</a>
                   </template>
                 </i18n-t>
               </div>

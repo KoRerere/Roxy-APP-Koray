@@ -13,6 +13,7 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
 import { getColumns } from './columns'
+import { Parser } from 'node_modules/date-fns/parse/_lib/Parser'
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -53,7 +54,12 @@ const showMessage = ref(false)
 const filterCount = ref(0)
 
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
-
+const protocolOptions = ref<any[]>([])
+const protocol = ref()
+const parserTypeOptions = computed(() => {
+  return [{ label: 'Host:Post@User:password', value: '@' }, { label: 'Host:Post:User:password', value: ':' }]
+})
+const parserType = ref(parserTypeOptions.value[0])
 const columns = ref(getColumns())
 
 const ipCheckerConfig = reactive<IpCheckerConfig>({
@@ -103,6 +109,8 @@ onBeforeMount(async () => {
   const userConfig = await userStore.getUserConfig()
   ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
+  protocolOptions.value = $dict_map.protocol
+  protocol.value = $dict_map.protocol[0]
 })
 
 function parseValue() {
@@ -139,6 +147,8 @@ function parseValue() {
 
   filterCount.value = list.length - dataList.value.length
   showMessage.value = true
+  // 重置掉状态
+  testStatus.value = {}
 }
 
 function messageClose() {
@@ -277,24 +287,34 @@ function onSave() {
   <div class="flex-1 overflow-auto flex-col proxies-content">
     <div class="parse-input">
       <div class="flex flex-1 flex-col gap-1">
-        <div class="panel-title">
-          {{ $t('代理信息') }}
+        <div class="panel-title flex justify-between">
+          <span>{{ $t('代理信息') }}</span>
+          <div class="flex gap-6px">
+            <RxInputSelect size="xs" v-model="protocol" :options="protocolOptions" name="protocol" :filter="false" />
+            <RxInputSelect size="xs" v-model="parserType" :options="parserTypeOptions" name="parserType"
+              :filter="false" />
+          </div>
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理信息')" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+                <RxInputSelect v-model="ipCheckerConfig.value" v-bind="ipCheckerConfig.props"
+                  @change="ipCheckerConfig.onChange" />
               </div>
               <div class="flex items-center">
-                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />
-                <label for="wrap" class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
-                  $t('自动去重') }}</label>
-                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
+                <Checkbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap"
+                  binary />
+                <label for="wrap"
+                  class="text-3 select-none mr-1.5 cursor-pointer text-[var(--colors-text-text-secondary)]">{{
+                    $t('自动去重') }}</label>
+                <RxSvgIcon v-tooltip="{ value: $t('当输入重复代理信息时不做添加'), showDelay: 500, hideDelay: 300 }"
+                  name="base/rx_ic_info" color="var(--colors-icon-icon-note)" :size="12" />
               </div>
             </div>
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
+              @click.stop="parseValue" />
           </div>
         </div>
       </div>
@@ -338,18 +358,21 @@ function onSave() {
           {{ $t('已解析代理') }}
         </div>
         <div class="flex gap-2">
-          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1" :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
-          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test" :disabled="!dataList?.length" @click.stop="testAllProxy" />
+          <RxButton text severity="secondary" size="xxs" :label="$t('删除失败')" icon="base/rx_ic_bin_1"
+            :disabled="deleteFailDisabled" @click.stop="deleteFailProxy" />
+          <RxButton outlined severity="secondary" size="xxs" :label="$t('测试全部')" icon="base/rx_ic_speed_test"
+            :disabled="!dataList?.length" @click.stop="testAllProxy" />
         </div>
       </div>
       <div class="parse-result-message">
-        <RxAlert v-model:visible="showMessage" type="success" class="w-full" :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage" closable
-          @close="messageClose">
+        <RxAlert v-model:visible="showMessage" type="success" class="w-full"
+          :content="$t('已成功解析 {count} 代理。{filterCount} 重复代理已过滤。', { count: dataList.length, filterCount }) + missMessage"
+          closable @close="messageClose">
         </RxAlert>
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
       </div>
-      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false"
-        :show-actions="false">
+      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
+        :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
         </template>
@@ -358,7 +381,8 @@ function onSave() {
             :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
         </template>
         <template #actions="{ data }">
-          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)" :show-menu="false" @quick-click="operationHandler($event, data)" />
+          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
+            :show-menu="false" @quick-click="operationHandler($event, data)" />
         </template>
       </RyTable>
     </div>
