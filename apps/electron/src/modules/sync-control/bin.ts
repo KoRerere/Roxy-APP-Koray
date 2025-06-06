@@ -208,9 +208,7 @@ export async function setMainControlColor(color = syncControlSettings.mainContro
   // 还原背景颜色： await cdpSesssion.send('Browser.setColor',{rgb:""});
   const mainWindow = getMainControlBrowser()
   if (mainWindow) {
-    const cdpSession = await mainWindow.getBrowser()?.target().createCDPSession()
-    console.log('setMainControlColor cdpSession:', cdpSession)
-    await cdpSession?.send('Browser.setColor', { rgb }).catch((err) => {
+    await mainWindow.getBrowser()?.client.Browser.setColor({ rgb }).catch((err) => {
       console.error('设置主控窗口颜色失败', err)
     })
     console.log('设置主控窗口颜色成功', rgb)

@@ -65,8 +65,6 @@ export class BrowserItem {
   get #browser() {
     return this.beforeLaunchTask?.browser
   }
-  /** 浏览器 CDP 会话 */
-  cdpSession?: CDPSession
 
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {

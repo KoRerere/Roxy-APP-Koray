@@ -92,16 +92,8 @@ export class AfterLaunchTask {
       return
     }
 
-    const cdpSession = await this.browser.createBrowserCDPSession().catch((err) => {
-      console.log('创建cdpSession失败', err)
-      return Promise.reject(err)
-    })
-
-    // 将 CDP Session 保存到 browserItem 中，供其他地方使用
-    this.browserItem.cdpSession = cdpSession
-
     const saveCookies = async () => {
-      const { cookies } = await cdpSession.send('Storage.getCookies')
+      const { cookies } = await this.browser.client.Storage.getCookies()
       this.cookies = cookies
     }
 
@@ -113,7 +105,7 @@ export class AfterLaunchTask {
     if (syncCookie) {
       // 导入 cookie
       if (cookie) {
-        await cdpSession.send('Storage.setCookies', { cookies: cookie }).catch((err) => {
+        await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
           console.log('导入cookie失败', err)
         })
         console.log('Storage.setCookies success')

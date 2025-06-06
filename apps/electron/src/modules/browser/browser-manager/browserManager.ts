@@ -92,7 +92,7 @@ export class BrowserManager {
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
 
-    const winInfoList = await this.getWindowList(firstBatch)
+    const winInfoList = await this.getWindowList(firstBatch).catch(() => [])
     const secondPromise = secondBatch.length ? this.getWindowList(secondBatch) : []
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
     for (const winInfo of winInfoList) {
@@ -239,6 +239,13 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
+
+        res.data.rows.forEach(item => {
+          if (!dirIds.includes(item.dirId!)) {
+            sendErrorMessage($t('窗口不存在'), item.dirId!)
+          }
+        })
+
         return res.data.rows.sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {

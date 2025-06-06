@@ -7,6 +7,7 @@ import { ChromePage } from './page'
 import type { Protocol } from 'puppeteer-core'
 import { ChromeCDPSession } from './cdp-session'
 import type { BrowserEvents } from './types'
+import { safeParseJSON } from '/@/utils'
 
 /**
  * 基于 chrome-remote-interface 的浏览器封装
@@ -101,31 +102,20 @@ export class ChromeBrowser extends EventEmitter {
       this.closed = true
       setTimeout(() => {
         if (this.browserProcess) {
-          this.browserProcess.kill()
+          this.browserProcess.kill('SIGTERM')
         }
       }, 2000)
     })
   }
 
   async pages(): Promise<ChromePage[]> {
-    const { targetInfos } = await this.client.Target.getTargets()
+    const { tabs } = await this.client.Browser.getTabs()
+    const allTabs = safeParseJSON(tabs)
     const pages: ChromePage[] = []
-
-    for (const info of targetInfos) {
-      // 在 Chrome DevTools Protocol 中：
-      // - attached: false 表示这个 target 还没有被任何调试客户端附加
-      // - attached: true 表示这个 target 已经被附加（可能是被我们自己或其他客户端）
-      //
-      // 我们只想获取可以操作的页面，所以：
-      // 1. 类型必须是 'page'
-      // 2. 排除内部页面（chrome:// 和 devtools://）
-      if (info.type === 'page' &&
-        info.url &&
-        !info.url.startsWith('chrome://') &&
-        !info.url.startsWith('devtools://')) {
-        const page = new ChromePage(this.client, info, this)
-        pages.push(page)
-      }
+    for (const tab of allTabs) {
+      const { targetInfo } = await this.client.Target.getTargetInfo({ targetId: tab.target_id })
+      const page = new ChromePage(this.client, targetInfo, this)
+      pages.push(page)
     }
 
     return pages
@@ -151,8 +141,8 @@ export class ChromeBrowser extends EventEmitter {
     return this.browserProcess
   }
 
-  async newPage(): Promise<ChromePage> {
-    const { targetId } = await this.client.Target.createTarget({ url: 'about:blank' })
+  async newPage(url = 'about:blank'): Promise<ChromePage> {
+    const { targetId } = await this.client.Target.createTarget({ url, })
     const { targetInfo } = await this.client.Target.getTargetInfo({ targetId })
     return new ChromePage(this.client, targetInfo, this)
   }

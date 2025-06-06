@@ -5,11 +5,6 @@ import type { ChromeBrowser } from './browser'
 import type { Client } from 'chrome-remote-interface'
 import type { Protocol } from 'puppeteer-core'
 
-interface GotoOptions {
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2'
-  timeout?: number
-}
-
 /**
  * Page 封装
  */
@@ -48,80 +43,15 @@ export class ChromePage extends EventEmitter {
     }
   }
 
-  async goto(url: string, options?: GotoOptions): Promise<Protocol.Page.NavigateResponse | null> {
-    let retries = 0;
-    const maxRetries = 3;
-
-    while (retries < maxRetries) {
-      try {
-        await this.ensureSession()
-
-        // 启用 Page 域
-        await this.client.send('Page.enable', undefined, this.sessionId).catch(() => {
-          // 忽略已启用的错误
-        })
-
-        const response = await this.client.send('Page.navigate', { url }, this.sessionId)
-
-        if (options?.waitUntil === 'domcontentloaded') {
-          await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error('Navigation timeout'))
-            }, options.timeout || 30000)
-
-            const handler = () => {
-              clearTimeout(timeout)
-              resolve()
-            }
-
-            // 注册事件处理器
-            this.client.Page.domContentEventFired(handler)
-
-            // 清理函数
-            const cleanup = () => {
-              clearTimeout(timeout)
-              // chrome-remote-interface 的事件是一次性的，不需要手动移除
-            }
-
-            // 确保清理
-            resolve = ((originalResolve) => {
-              return () => {
-                cleanup()
-                originalResolve()
-              }
-            })(resolve)
-
-            reject = ((originalReject) => {
-              return (error: Error) => {
-                cleanup()
-                originalReject(error)
-              }
-            })(reject)
-          })
-        }
-
-        return response
-      } catch (error: any) {
-        retries++;
-
-        // 如果是 session 相关的错误，重置 session
-        if (error.message?.includes('Session with given id not found') ||
-          error.message?.includes('No target with given id found')) {
-          this.sessionId = undefined;
-
-          if (retries < maxRetries) {
-            // 等待一下再重试
-            await new Promise(resolve => setTimeout(resolve, 500 * retries));
-            continue;
-          }
-        }
-
-        // 如果达到最大重试次数或者是其他错误，抛出异常
-        throw error;
-      }
+  async goto(params: string | Protocol.Page.NavigateRequest, sessionId?: string | undefined) {
+    if (!sessionId) {
+      const session = await this.client.Target.attachToTarget({ targetId: this.targetInfo.targetId, flatten: true })
+      sessionId = session.sessionId
     }
-
-    throw new Error(`Failed to navigate to ${url} after ${maxRetries} retries`);
+    if (typeof params === 'string') {
+      return this.client.Page.navigate({ url: params }, sessionId)
+    }
+    return this.client.Page.navigate(params, sessionId)
   }
 
   async evaluate<T = unknown>(pageFunction: Function | string, ...args: unknown[]): Promise<T> {
