@@ -12,7 +12,7 @@ import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setR
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
-
+import { getColumns } from './columns'
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -54,62 +54,7 @@ const filterCount = ref(0)
 
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 
-const columns = ref([
-  {
-    key: 'protocol',
-    title: $t('代理类型'),
-    getText: (data: any) => data.protocol || '--',
-  },
-  {
-    key: 'host',
-    title: $t('主机'),
-    getText: (data: any) => data.host || '--',
-  },
-  {
-    key: 'port',
-    title: $t('端口'),
-    getText: (data: any) => data.port || '--',
-  },
-  {
-    key: 'proxyUserName',
-    title: $t('用户名'),
-    getText: (data: any) => data.proxyUserName || '--',
-  },
-  {
-    key: 'proxyPassword',
-    title: $t('密码'),
-    getText: (data: any) => data.proxyPassword || '--',
-  },
-  {
-    key: 'refreshUrl',
-    title: $t('刷新 URL'),
-    width: 100,
-    getText: (data: any) => data.refreshUrl || '--',
-  },
-  {
-    key: 'remark',
-    title: $t('备注'),
-    width: 100,
-    getText: (data: any) => data.remark || '--',
-  },
-  {
-    title: $t('IP 查询渠道'),
-    key: 'ipChecker',
-    render: ({ data }: any) => {
-      return (
-        <RxTag icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>
-      )
-    },
-  },
-  {
-    title: $t('出口 IP'),
-    slot: 'outbound'
-  },
-  {
-    title: $t('操作'),
-    slot: 'actions',
-  },
-])
+const columns = ref(getColumns())
 
 const ipCheckerConfig = reactive<IpCheckerConfig>({
   value: undefined,
