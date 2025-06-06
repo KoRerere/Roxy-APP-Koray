@@ -71,6 +71,12 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
         component: () => import("/@/views/account/list"),
       },
       {
+        path: "accountcreate",
+        name: "account-create",
+        meta: { title: $t("新建账号"), hideInMenu: true },
+        component: () => import("/@/views/account/create"),
+      },
+      {
         path: "agent",
         name: "agent-list",
         meta: {

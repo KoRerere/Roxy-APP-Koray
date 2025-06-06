@@ -110,11 +110,11 @@ function oldFieldsFormat() {
 
 <style lang="scss" scoped>
 .profile-basic {
-  padding: 16px 48px 16px 124px;
+  padding: 16px 48px 16px 64px;
 }
 
 .footer {
-  padding: 16px 124px;
+  padding: 16px 64px;
   max-height: 64px;
   border-top: 1px solid var(--colors-border-border-subtle);
 

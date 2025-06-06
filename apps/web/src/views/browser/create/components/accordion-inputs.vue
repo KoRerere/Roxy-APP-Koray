@@ -152,7 +152,7 @@ function onCopy(dirId: string) {
 }
 
 .content {
-  padding: 0 36px 40px 124px;
+  padding: 0 36px 40px 64px;
 
   &::-webkit-scrollbar {
     display: none;

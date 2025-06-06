@@ -5,7 +5,7 @@ import { isLikeFunction } from '/@/utils'
 interface Props {
   icon?: SvgNames
   iconColor?: string
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | string
   options?: any[]
   optionLabel?: string
   optionValue?: string

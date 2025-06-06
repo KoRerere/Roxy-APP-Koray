@@ -7,7 +7,7 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import AccountCreate from '/@/views/account/create'
+import AccountEdit from '/@/views/account/create/quick.vue'
 import { useColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
@@ -15,6 +15,7 @@ import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
+const router = useRouter()
 const confirm = useConfirm()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
@@ -62,9 +63,8 @@ const operation = ref([
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
-    case 'create':
     case 'edit':
-      createAccount(data)
+      editAccount(data)
       break
     case 'remark':
       onRemark(data)
@@ -79,19 +79,21 @@ function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-function createAccount(data?: Data) {
+function createAccount() {
+  router.push({ name: 'account-create' })
+}
+
+function editAccount(data?: Data) {
   drawerInstance.showDrawer({
-    title: data?.id ? $t('编辑平台账号') : $t('添加平台账号'),
+    title: $t('编辑平台账号'),
     slots: {
-      container: () => h(AccountCreate, {
+      container: () => h(AccountEdit, {
         data,
         onClose: () => {
           drawerInstance.hideDrawer()
         },
         onConfirm: async (formData: any) => {
-          const { code, msg } = data?.id
-            ? await API.platform.userMdfPlatformInfoCreate([formData])
-            : await API.platform.userAddPlatformInfoCreate(formData)
+          const { code, msg } = await API.platform.userMdfPlatformInfoCreate([formData])
           onlyErrorToast(code, msg)
           if (code === 0) {
             tableRef.value?.refresh()
@@ -160,7 +162,7 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
       <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"

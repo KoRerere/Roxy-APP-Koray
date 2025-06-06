@@ -4483,6 +4483,22 @@ export interface UserGetPlatformTableSortOrderListData {
   msg: string;
 }
 
+export type UserAddPlatformInfoBatchCreatePayload = {
+  platformIcon: string;
+  platformIconDark: string;
+  platformUrl: string;
+  platformUserName: string;
+  platformPassword: string;
+  platformEfa: string;
+  platformRemarks: string;
+}[];
+
+export interface UserAddPlatformInfoBatchCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -4643,7 +4659,10 @@ export interface UserAddProxyModuleCreatePayload {
   remark?: string;
 }
 
-export type UserAddProxyModuleCreateData = object;
+export interface UserAddProxyModuleCreateData {
+  code: number;
+  msg: string;
+}
 
 export type UserMdfProxyModuleCreatePayload = {
   /** 代理ID */

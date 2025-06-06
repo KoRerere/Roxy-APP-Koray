@@ -5,9 +5,10 @@ import type { SvgNames } from '/@/components/rx-icon';
 
 interface Props {
   inputsGroup?: any[]
+  showOverview?: boolean
   onShuffle: () => void
 }
-const { inputsGroup = [], onShuffle } = defineProps<Props>()
+const { inputsGroup = [], onShuffle, showOverview = true } = defineProps<Props>()
 
 const themeStore = useThemeStore()
 
@@ -62,7 +63,7 @@ const mamba = computed(() => {
       <SvgIcon class="shrink-0 ma-1 cursor-pointer" :class="{ 'rotate-180': !collapsed }" color="var(--colors-icon-primary)" name="base/rx_ic_fold_right" @click="collapsed = !collapsed" />
       <span v-if="!collapsed">{{ $t('概要') }}</span>
     </div>
-    <div v-if="!collapsed" class="flex flex-col gap-5 justify-center items-center overview">
+    <div v-if="!collapsed && showOverview" class="flex flex-col gap-5 justify-center items-center overview">
       <div class="w-34 flex items-center justify-between relative">
         <div class="line"></div>
         <template v-for="item in mamba" :key="item.icon">
@@ -97,7 +98,7 @@ const mamba = computed(() => {
 
 <style lang="scss" scoped>
 .preview {
-  margin: 12px 12px 12px 0;
+  margin: 12px 64px 12px 0;
   padding: 16px;
   gap: 12px;
   width: 375px;

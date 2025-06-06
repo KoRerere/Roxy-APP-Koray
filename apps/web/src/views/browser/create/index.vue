@@ -426,7 +426,7 @@ async function deleteTemplate(data: any) {
         </div>
         <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
       </div>
-      <PreviewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
+      <PreviewCard :inputs-group="previewInputs" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
     </div>
     <div class="flex items-center gap-2 footer">
       <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
@@ -466,7 +466,7 @@ async function deleteTemplate(data: any) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 48px 16px 124px;
+  padding: 16px 42px 16px 64px;
 }
 
 .multi-block {
@@ -490,7 +490,7 @@ async function deleteTemplate(data: any) {
 }
 
 .footer {
-  padding: 16px 124px;
+  padding: 16px 64px;
   max-height: 64px;
   border-top: 1px solid var(--colors-border-border-subtle);
 

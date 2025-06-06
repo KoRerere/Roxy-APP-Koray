@@ -11,6 +11,8 @@
  */
 
 import {
+  UserAddPlatformInfoBatchCreateData,
+  UserAddPlatformInfoBatchCreatePayload,
   UserAddPlatformInfoCreateData,
   UserAddPlatformInfoCreatePayload,
   UserDelPlatformInfoCreateData,
@@ -228,6 +230,27 @@ export class PlatformApi<SecurityDataType = unknown> {
     this.http.request<UserGetPlatformTableSortOrderListData, any>({
       path: `/user_get_platform_table_sort_order`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Platform
+   * @name UserAddPlatformInfoBatchCreate
+   * @summary 业务平台批量新增
+   * @request POST:/user_add_platform_info_batch
+   * @response `200` `UserAddPlatformInfoBatchCreateData`
+   */
+  userAddPlatformInfoBatchCreate = (
+    data: UserAddPlatformInfoBatchCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddPlatformInfoBatchCreateData, any>({
+      path: `/user_add_platform_info_batch`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

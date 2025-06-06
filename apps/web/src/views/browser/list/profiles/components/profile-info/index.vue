@@ -13,7 +13,7 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyList from '/@/views/agent/list/quick.vue'
-import AccountCreate from '/@/views/account/create'
+import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
@@ -434,18 +434,15 @@ function handleClickInplace(e: MouseEvent) {
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
       <div class="relative" v-for="item in list" :key="item.key" @click.stop="onClick($event, item.key)">
         <template v-if="item.key === 'os'">
-          <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes"
-            v-tooltip.top="{ value: item.tooltip, showDelay: 500 }">
-            <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
-              :color="item.svgColor" />
+          <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }">
+            <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
           </div>
         </template>
 
         <template v-else-if="item.key === 'proxy'">
           <RxTooltip>
             <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-              <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
-                :color="item.svgColor" />
+              <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
             </div>
             <template #content v-if="item.data?.lastIp !== '--'">
               <ProxyTooltip v-bind="item.data" />
@@ -456,20 +453,15 @@ function handleClickInplace(e: MouseEvent) {
         <template v-else-if="item.key === 'account'">
           <RxTooltip>
             <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-              <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon"
-                :platformIconDark="item.platformAccount.platformIconDark" class="block w-5 h-5 pointer-events-none" />
-              <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
-                :color="item.svgColor" />
+              <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon" :platformIconDark="item.platformAccount.platformIconDark"
+                class="block w-5 h-5 pointer-events-none" />
+              <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg" :color="item.svgColor" />
             </div>
-            <div v-if="item.showSub"
-              class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
-              :class="item.classes">
-              <PlatformIcon v-if="item.subPlatformAccount?.platformIcon"
-                :platformIcon="item.subPlatformAccount.platformIcon"
-                :platformIconDark="item.subPlatformAccount.platformIconDark" class="block w-3 h-3 pointer-events-none">
+            <div v-if="item.showSub" class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons" :class="item.classes">
+              <PlatformIcon v-if="item.subPlatformAccount?.platformIcon" :platformIcon="item.subPlatformAccount.platformIcon" :platformIconDark="item.subPlatformAccount.platformIconDark"
+                class="block w-3 h-3 pointer-events-none">
               </PlatformIcon>
-              <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h"
-                :color="item.svgColor" />
+              <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h" :color="item.svgColor" />
             </div>
             <template #content v-if="item.data?.length > 0">
               <AccountTooltip :platform-list="item.data" />
@@ -488,8 +480,7 @@ function handleClickInplace(e: MouseEvent) {
         <div class="profile-name-content">{{ windowName }}</div>
       </template>
       <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
-          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
+        <InputText v-model="windowName" autofocus size="small" class="window-name-input" @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
           @keydown.enter="saveWindowName(closeCallback)" />
       </template>
     </Inplace>
