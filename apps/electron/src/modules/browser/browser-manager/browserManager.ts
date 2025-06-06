@@ -9,19 +9,33 @@ import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { asyncDebounce } from '/@/utils'
+import { shallowReactive, watch } from '@vue/reactivity';
 
 export class BrowserManager {
   /** 正在打开中的浏览器集合 */
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
-  openedBrowserMap = new Map<string, BrowserItem>()
+  openedBrowserMap = shallowReactive(new Map<string, BrowserItem>())
   /** 同步窗口打开状态控制器 */
   syncWindowOpenStatusController?: AbortController
   /** 频繁关闭窗口时，等待的上传数据队列 */
   uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
+  /** 获取已打开的浏览器列表 */
+  get openedBrowserList() {
+    return Array.from(this.openedBrowserMap.values()).map(browserItem => {
+      return {
+        ...browserItem.winInfo,
+        $pId: browserItem.launchInfo?.pid,
+      }
+    })
+  }
 
   constructor() {
     this.#syncWindowStatus()
+
+    watch(this.openedBrowserMap, () => {
+      ipcMain.send('browser:opened-browser-list-change', this.openedBrowserList)
+    })
   }
 
   /** 根据 dirId 获取已经打开的浏览器 */

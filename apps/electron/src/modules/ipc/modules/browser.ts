@@ -44,12 +44,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
 
   /** 获取所有已打开的窗口 */
   ipcMain.on('browser:getOpenedBrowser', (event,) => {
-    return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => {
-      return {
-        ...browserItem.winInfo,
-        $pId: browserItem.launchInfo?.pid,
-      }
-    })
+    return browserManager.openedBrowserList
   })
 
   /** 获取所有已打开的窗口的消息 */
