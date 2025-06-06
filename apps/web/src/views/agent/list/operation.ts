@@ -50,6 +50,7 @@ export function tableOperation(data?: ProxyItem) {
     },
     {
       separator: true,
+      power: role.isManager || role.isOwner,
     },
     {
       name: 'delete',

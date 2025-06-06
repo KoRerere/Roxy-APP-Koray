@@ -32,6 +32,10 @@ const optionsGroup = computed(() => [
         value: 'notes'
       },
       {
+        label: $t('隐藏被投送窗口代理信息'),
+        value: 'hideProxy'
+      },
+      {
         label: $t('投送后彻底删除窗口（该操作无法撤销）'),
         value: 'delete'
       }
@@ -108,15 +112,14 @@ async function onTransfer(isSelf: boolean) {
   <div class="flex flex-col pa-6 pt-4 gap-5 max-h-[80vh] overflow-y-auto popup" :class="[step2 ? 'popup2' : 'popup1']">
     <div class="flex justify-between items-center">
       <span class="header">{{ windowIds.length > 1 ? $t('投送 {count} 个窗口', { count: windowIds.length }) : $t('投送窗口')
-      }}</span>
+        }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
     </div>
     <div v-if="!step2" class="flex flex-col gap-6">
       <div class="flex flex-col gap-2">
         <RxAlert class="w-full" type="info" :closable="false">
           <template #content>
-            <i18n-t scope="global"
-              :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
+            <i18n-t scope="global" :keypath="$t('窗口投送将发送您所选窗口{bold}，但无法发送{bold2}。', { bold: '{bold}', bold2: '{bold2}' })">
               <template #bold>
                 <span class="font-bold"> {{ $t('已同步过的云端数据、代理信息、平台账号、Cookies 和指纹参数等') }} </span>
               </template>
@@ -135,10 +138,8 @@ async function onTransfer(isSelf: boolean) {
         <div class="flex flex-col gap-3" v-for="group of optionsGroup" :key="group.title">
           <div class="title">{{ group.title }}</div>
           <div class="flex flex-col gap-3">
-            <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options"
-              :key="option.value">
-              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value"
-                :value="option.value" />
+            <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
+              <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
               <label :for="option.value">{{ option.label }}</label>
             </div>
           </div>
@@ -162,8 +163,7 @@ async function onTransfer(isSelf: boolean) {
     <div v-if="step2" class="flex flex-col gap-6">
       <RxAlert class="w-full" type="warn" :closable="false">
         <template #content>
-          <i18n-t scope="global"
-            :keypath="$t('投送无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
+          <i18n-t scope="global" :keypath="$t('投送无法撤销，若{bold1}或{bold2}，则所有窗口自动退回。{bold3}', { bold1: '{bold1}', bold2: '{bold2}', bold3: '{bold3}' })">
             <template #bold1>
               <span class="font-bold"> {{ $t('对方拒绝接收') }} </span>
             </template>

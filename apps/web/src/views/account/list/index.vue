@@ -30,7 +30,7 @@ const operation = ref([
     name: 'edit',
     label: $t('编辑'),
     icon: 'base/rx_ic_edit',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     tooltip: $t('编辑'),
     quick: true,
   },
@@ -38,7 +38,7 @@ const operation = ref([
     name: 'remark',
     label: $t('添加备注'),
     icon: 'base/rx_ic_doc_add',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     multiple: true,
     multipleProps: {
       name: 'G1',
@@ -46,12 +46,13 @@ const operation = ref([
   },
   {
     separator: true,
+    power: !role.isViewer && !role.isEditor,
   },
   {
     name: 'delete',
     label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     quick: true,
     tooltip: $t('删除'),
     multiple: true,
@@ -105,6 +106,7 @@ function editAccount(data?: Data) {
 }
 
 function onRemark(data: Data) {
+  if (role.isViewer || role.isEditor) return
   showSimpleDialog({
     title: $t('为所选账号添加备注'),
     inputs: [

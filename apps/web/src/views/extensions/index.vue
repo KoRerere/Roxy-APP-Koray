@@ -16,9 +16,8 @@ const tabs = ref([
     title: $t('扩展推荐'),
     value: 'hub',
     slot: 'hub',
-    visible: role.isOwner || role.isManager
   },
-].filter(tab => tab.visible !== false),
+]
 )
 
 const tabsValue = ref('installed')

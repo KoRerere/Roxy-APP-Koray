@@ -77,7 +77,6 @@ function getOperation(data: Project) {
       label: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       icon: isPinned ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
       iconClass: isPinned ? 'text-orange' : '',
-      power: role.isOwner || role.isManager,
       tooltip: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       quick: true,
       command: ({ item }: any) => {
