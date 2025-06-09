@@ -5,6 +5,8 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 import { copyText } from '/@/utils/'
 import defaultPlatformIcon from '/@/assets/images/base/rx_ic_user_key.svg?url'
 
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+
 const winInfo = defineModel<UnwrapRowType<UserGetWindowInfoV2ListData>>('winInfo', { default: {} })
 
 const toast = useToast()
@@ -77,7 +79,7 @@ initTwoFactorCodeList()
     <template v-for="item in winInfo.windowPlatformList" :key="item.id">
       <div class="box">
         <div class="platform-info">
-          <img :src="item.platformIcon || defaultPlatformIcon" class="platform-icon">
+          <img :src="(isDark ? item.platformIconDark : item.platformIcon) || defaultPlatformIcon" class="platform-icon">
           <div class="platform-account">
             <a :href="item.platformUrl" target="_blank" class="platform-url">
               {{ item.platformUrl }}

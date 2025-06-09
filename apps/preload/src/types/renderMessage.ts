@@ -91,6 +91,8 @@ export interface RenderMessage {
   "user:setWorkspaceId": (workspaceId: number) => void;
   /** 用户上传头像  */
   "user:uploadAvatar": (avatarPath: string) => Promise<string>;
+  /** 设置所有空间 ID */
+  "user:setAllWorkspaceId": (workspaceIds: number[]) => void;
 
   /** 选择文件夹 */
   "dialog:selectDir": (defaultPath?: string) => Promise<string>;
@@ -99,7 +101,7 @@ export interface RenderMessage {
 
   /** 保存软件设置 */
   "app:saveSoftConfig": (
-    config: Partial<UserGetUserConfigListData["data"]>,
+    config: Partial<UserGetUserConfigListData["data"] & StoreType>,
   ) => void;
   /** 获取软件设置 */
   "app:getSoftConfig": () => StoreType;

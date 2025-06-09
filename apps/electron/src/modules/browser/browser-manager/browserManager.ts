@@ -10,8 +10,15 @@ import { ipcMain } from '/@/modules/ipc'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { asyncDebounce } from '/@/utils'
 import { shallowReactive, watch } from '@vue/reactivity';
+import { store } from '/@/modules/store'
 
 export class BrowserManager {
+  /** 已经打开过的空间 ID */
+  #openedWorkspaceIds = new Set<number>()
+  /** 需要定时同步窗口打开状态的空间 ID */
+  get #needSyncWindowOpenStatusWorkspaceIds() {
+    return Array.from(this.#openedWorkspaceIds).filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
+  }
   /** 正在打开中的浏览器集合 */
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
@@ -84,6 +91,7 @@ export class BrowserManager {
       await this.openingBrowserMap.get(dirId)?.launchPromise
       const browserItem = this.openingBrowserMap.get(dirId)!.browserItem
       this.openedBrowserMap.set(dirId, browserItem)
+      this.#openedWorkspaceIds.add(winInfo.workspaceId!)
       this.syncWindowOpenStatus()
 
       const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
@@ -305,6 +313,12 @@ export class BrowserManager {
   async #syncWindowStatus() {
     setInterval(() => {
       const groupByWorkspaceId = Object.groupBy([...this.openedBrowserMap.values()], item => item.winInfo.workspaceId!)
+      // 没有打开任何窗口，也做同步。只是参数ids为 空数组。
+      this.#needSyncWindowOpenStatusWorkspaceIds.forEach(wId => {
+        if (!groupByWorkspaceId[wId]) {
+          groupByWorkspaceId[wId] = []
+        }
+      })
 
       Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
         const ids = browserItems!.map(item => item.winInfo.id!)
