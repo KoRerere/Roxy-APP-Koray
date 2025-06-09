@@ -21,6 +21,7 @@ import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { isMainWindow } from '/@/utils'
+import { AxiosError } from 'axios'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
@@ -97,7 +98,7 @@ httpClient.instance.interceptors.response.use(async (response) => {
   return response
 }, (error) => {
   const handleError = useHandleError()
-  if (error.message == "Network Error") {
+  if (error.code === AxiosError.ERR_NETWORK) {
     // 请求发送失败
     handleError('network')
   }
