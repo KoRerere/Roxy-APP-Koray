@@ -197,6 +197,10 @@ function getProxyModel() {
       icon: 'base/rx_ic_edit',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
+        if (data.isEncryptProxy) {
+          showToast(-1, $t('该代理已加密无法编辑，如需更换，请先删除此代理或选择其他代理'))
+          return
+        }
         createProxy(proxyData)
       },
     },

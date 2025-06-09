@@ -122,7 +122,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
-  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
+  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp', 'isEncryptProxy', 'proxyEncryptInfo']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
       id: data.moduleId,
