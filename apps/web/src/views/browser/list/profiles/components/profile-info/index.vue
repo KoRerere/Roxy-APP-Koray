@@ -18,7 +18,7 @@ import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
 import { ProfileModifyType, ProxyCheckStatus } from '/@/enums'
-import { silentUpdateProxy, silentUpdateAccount } from '../util';
+import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from '../util';
 import PlatformIcon from '/@/views/account/list/platform-icon.vue';
 import ProxyTooltip from './proxy-tooltip.vue';
 import AccountTooltip from './account-tooltip.vue';
@@ -233,7 +233,7 @@ function getProxyModel() {
               moduleId: 0, // 为 0 表示解除关联
               proxyCategory: 'noproxy',
               proxyMethod: 'custom',
-              ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+              ...createDefaultObject(clearProxyKeys, ''),
             }
             updateProfile(params, {
               success: () => {
@@ -360,7 +360,7 @@ function createProxy(proxyData?: Record<string, any>) {
           const { id, dirId } = data
           const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom' }
           updateProfile(params, {
-            success: () => silentUpdateProxy(data, params)
+            success: () => silentUpdateProxy(data, { ...params, isEncryptProxy: '', proxyEncryptInfo: '' })
           })
           drawerInstance.hideDrawer()
         }
@@ -379,7 +379,15 @@ function chooseProxy(proxyData: Record<string, any>) {
         onConfirm: ({ id: moduleId, proxyCategory, protocol, ...formData }: any) => {
           const { id, dirId } = data
           updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
-            success: () => silentUpdateProxy(data, { ...formData, moduleId, protocol, proxyCategory: proxyCategory || protocol, proxyMethod: 'choose' })
+            success: () => silentUpdateProxy(data, {
+              ...formData,
+              moduleId,
+              protocol,
+              proxyCategory: proxyCategory || protocol,
+              proxyMethod: 'choose',
+              isEncryptProxy: '',
+              proxyEncryptInfo: ''
+            })
           })
           drawerInstance.hideDrawer()
         }

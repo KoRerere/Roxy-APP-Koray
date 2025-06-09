@@ -32,7 +32,7 @@ import ExportProfiles from './components/export-profiles.vue'
 import ProfileInfo from './components/profile-info/index.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
-import { silentUpdateProxy, silentUpdateAccount } from './components/util'
+import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from './components/util'
 import { getCustomFilters, getOperation, getSorts } from './operation'
 import { useHandleBusinessCode, toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
@@ -595,7 +595,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     if (code !== 0) return
 
     const { protocol, proxyCategory, ...rest } = formData
-    const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol }
+    const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol, isEncryptProxy: '', proxyEncryptInfo: '' }
     datas.forEach(item => {
       silentUpdateProxy(item, params)
     })
@@ -621,7 +621,7 @@ function multipleProxyDelete(data: Data | Data[]) {
           moduleId: 0, // 为 0 表示解除关联
           proxyCategory: 'noproxy',
           proxyMethod: 'custom',
-          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+          ...createDefaultObject(clearProxyKeys, ''),
         }
         datas.forEach(item => {
           if (!item.openTime) {
