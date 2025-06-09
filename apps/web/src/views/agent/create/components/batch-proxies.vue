@@ -8,12 +8,12 @@ import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
+import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep, IPType, ParseMode } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
 import { getColumns } from './columns'
-import { Parser } from 'node_modules/date-fns/parse/_lib/Parser'
+import ShadowDotGrid from '/@/components/shadow-dot-grid.vue'
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -55,11 +55,16 @@ const filterCount = ref(0)
 
 const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 const protocolOptions = ref<any[]>([])
-const protocol = ref()
+const protocolValue = ref()
 const parserTypeOptions = computed(() => {
-  return [{ label: 'Host:Post@User:password', value: '@' }, { label: 'Host:Post:User:password', value: ':' }]
+  return [
+    { label: $t('Host:Post:User:password'), value: ParseMode.one },
+    { label: $t('User:password@Host:Post'), value: ParseMode.two },
+  ]
 })
 const parserType = ref(parserTypeOptions.value[0])
+const ipTypeOptions = ref<any[]>([])
+const ipType = ref()
 const columns = ref(getColumns())
 
 const ipCheckerConfig = reactive<IpCheckerConfig>({
@@ -110,7 +115,9 @@ onBeforeMount(async () => {
   ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
   protocolOptions.value = $dict_map.protocol
-  protocol.value = $dict_map.protocol[0]
+  protocolValue.value = $dict_map.protocol[0]
+  ipTypeOptions.value = $dict_map.ipType
+  ipType.value = $dict_map.ipType[0]
 })
 
 function parseValue() {
@@ -123,8 +130,9 @@ function parseValue() {
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
-      const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
-      const { protocol = 'http', host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
+      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, ipType.value.value, parserType.value.value)
+
+      const protocol = __protocol || protocolValue.value.value;
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
@@ -286,11 +294,13 @@ function onSave() {
 <template>
   <div class="flex-1 overflow-auto flex-col proxies-content">
     <div class="parse-input">
-      <div class="flex flex-1 flex-col gap-1">
-        <div class="panel-title flex justify-between">
+      <div class="flex flex-1 flex-col gap-6px">
+        <div class="panel-title flex justify-between items-center">
           <span>{{ $t('代理信息') }}</span>
           <div class="flex gap-6px">
-            <RxInputSelect size="xs" v-model="protocol" :options="protocolOptions" name="protocol" :filter="false" />
+            <RxInputSelect size="xs" v-model="ipType" :options="ipTypeOptions" name="ipType" :filter="false" />
+            <RxInputSelect size="xs" v-model="protocolValue" :options="protocolOptions" name="protocol"
+              :filter="false" />
             <RxInputSelect size="xs" v-model="parserType" :options="parserTypeOptions" name="parserType"
               :filter="false" />
           </div>
@@ -318,37 +328,40 @@ function onSave() {
           </div>
         </div>
       </div>
-      <div class="flex flex-1 flex-col gap-1">
-        <div class="panel-title">
+      <div class="flex flex-1 flex-col gap-6px">
+        <div class="panel-title h-30px flex items-center">
           {{ $t('导入规则') }}
         </div>
-        <div class="rules">
-          <i18n-t
-            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}{example}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', example: '{example}' })"
-            scope="global">
-            <template #br>
-              <br>
-            </template>
-            <template #example>
-              <span class="text-[var(--colors-text-text-primary)]">
-                <i18n-t
-                  :keypath="$t('http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
-                  <template #br>
-                    <br>
-                  </template>
-                  <template #refreshurl>
-                    <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-                  </template>
-                  <template #remark>
-                    <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-                  </template>
-                  <template #ipv6>
-                    <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
-                  </template>
-                </i18n-t>
-              </span>
-            </template>
-          </i18n-t>
+        <div class="rules flex-1">
+          <div class="relative z-10">
+            <i18n-t
+              :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}{example}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', example: '{example}' })"
+              scope="global">
+              <template #br>
+                <br>
+              </template>
+              <template #example>
+                <span class="text-[var(--colors-text-text-primary)]">
+                  <i18n-t
+                    :keypath="$t('http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
+                    <template #br>
+                      <br>
+                    </template>
+                    <template #refreshurl>
+                      <span class="text-green">[{{ $t('刷新 URL') }}]</span>
+                    </template>
+                    <template #remark>
+                      <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+                    </template>
+                    <template #ipv6>
+                      <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
+                    </template>
+                  </i18n-t>
+                </span>
+              </template>
+            </i18n-t>
+          </div>
+          <ShadowDotGrid class="z-9" />
         </div>
       </div>
     </div>
@@ -452,9 +465,11 @@ function onSave() {
     gap: var(--spacing-md, 6px);
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-action);
+    // border: 1px solid var(--colors-border-border-action);
     background: var(--colors-background-bg-overlay, #2C2E30);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    // box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    position: relative;
+    overflow: hidden;
 
     color: var(--colors-text-text-tertiary, #7c8387);
     font-family: Inter;

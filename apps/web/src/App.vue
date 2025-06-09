@@ -67,17 +67,6 @@ emitter.on('kickedOut', (params) => {
   }
 })
 
-onMounted(() => {
-  const handleError = (event: ErrorEvent) => {
-    const tag = event.target;
-    // 过滤非资源错误（如脚本执行错误）
-    if (tag?.tagName === 'SCRIPT' && !(event instanceof ErrorEvent)) {
-      router.push({ name: '500' })
-    }
-  }
-  window.addEventListener('error', handleError, true); // 使用捕获阶段监听（因为资源加载错误不会冒泡）
-})
-
 </script>
 
 <template>

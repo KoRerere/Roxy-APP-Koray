@@ -183,7 +183,7 @@ export function validateURL(url: string): boolean {
 }
 
 interface ProxyObject {
-  protocol: string | undefined
+  protocol?: string | undefined
   host: string | undefined
   port: string | undefined
   proxyUserName: string | undefined
@@ -192,18 +192,57 @@ interface ProxyObject {
   remark?: string
 }
 
-export function parseProxyUrl(url: string): ProxyObject {
-  return url.startsWith('*')
-    ? parseProxyUrlIPv6(url.slice(1))
-    : parseProxyUrlIPv4(url)
+export enum IPType {
+  IPV4 = 'IPV4',
+  IPV6 = 'IPV6',
 }
 
-function parseProxyUrlIPv4(url: string): ProxyObject {
+export enum ParseMode {
+  one,  // 主机:端口:账号:密码
+  two,  // 账号:密码@主机:端口
+}
+
+export function parseProxyUrl(url: string, type?: IPType, mode?: ParseMode): ProxyObject {
+  type = type ?? IPType.IPV4
+  mode = mode ?? ParseMode.one
+
+  console.log('🚀 ~ parseProxyUrl ~ url:', url)
+  console.log('🚀 ~ parseProxyUrl ~ type:', type)
+  console.log('🚀 ~ parseProxyUrl ~ mode:', mode)
+  if (type === IPType.IPV4) {
+    if (mode === ParseMode.one) {
+      return parseProxyUrlIPv4One(url)
+    }
+    else {
+      return parseProxyUrlIPv4Two(url)
+    }
+  }
+  else {
+    return parseProxyUrlIPv6(url)
+  }
+}
+
+function parseProxyUrlIPv4One(url: string): ProxyObject {
   const [_, protocol, host, port, proxyUserName, proxyPassword] = url.match(/^\*?(?:(?<protocol>\w+):\/\/)?(?<host>[^:]+):(?<port>\d+)(?::(?<proxyUserName>[^:]*)(?::(?<proxyPassword>[^[{]*))?)?/) || []
   const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
   const remark = url.match(/\{(.*?)\}/)?.[1]
   return {
     protocol,
+    host,
+    port,
+    proxyUserName,
+    proxyPassword,
+    refreshUrl,
+    remark,
+  }
+}
+
+function parseProxyUrlIPv4Two(url: string): ProxyObject {
+  const arr = url.match(/^(?:(?<user>[^:@]+)(?::(?<pass>[^@]*))?@)?(?<host>[^:]+):(?<port>\d+)$/) || []
+  const [_, proxyUserName, proxyPassword, host, port] = arr;
+  const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
+  const remark = url.match(/\{(.*?)\}/)?.[1]
+  return {
     host,
     port,
     proxyUserName,

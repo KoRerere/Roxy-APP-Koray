@@ -101,13 +101,6 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-function onBlur(event: any) {
-  if (!validateURL(event.target.value)) {
-    input.value.props.invalid = true
-    onlyErrorToast(-1, $t('请输入正确的平台网址'))
-  }
-}
-
 function onChange() {
   input.value.props.invalid = false
 }
@@ -175,40 +168,49 @@ async function onSave() {
       <div class="flex flex-1 flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
-          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" @change="onChange" @blur="onBlur" />
+          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" @change="onChange" />
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
           <div class="flex justify-end information-actions">
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
+              @click.stop="parseValue" />
           </div>
         </div>
       </div>
-      <div class="flex flex-1 flex-col gap-1">
+
+      <div class="flex flex-1 flex-col gap-1 relative z-10">
         <div class="subtitle">
           {{ $t('导入规则') }}
         </div>
-        <div class="rules">
-          <div class="rules-example">USERNAME1:PASSWORD1:2FA<span class="text-blue">{{ `\{${$t('备注')}\}` }}</span></div>
-          <div class="rules-example">USERNAME2:PASSWORD2:2FA</div>
-          <div class="rules-example">USERNAME3:PASSWORD3</div>
-          <br></br>
-          <div class="rules-help">{{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}</div>
-          <div class="rules-help">{{ $t('2.每行一个账号，一次最多添加{count}个账号。', { count: 500 }) }}</div>
+        <div class="relative overflow-hidden flex-1">
+          <div class="rules relative z-10">
+            <div class="rules-example">USERNAME1:PASSWORD1:2FA<span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+            </div>
+            <div class="rules-example">USERNAME2:PASSWORD2:2FA</div>
+            <div class="rules-example">USERNAME3:PASSWORD3</div>
+            <br></br>
+            <div class="rules-help">{{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}</div>
+            <div class="rules-help">{{ $t('2.每行一个账号，一次最多添加{count}个账号。', { count: 500 }) }}</div>
+          </div>
+          <ShadowDotGrid class="z-9" />
         </div>
       </div>
     </div>
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar subtitle">{{ $t('已解析账号') }}</div>
-      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
+        :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" />
         </template>
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
+              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks }}</div>
+            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
+              }}</div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -267,8 +269,8 @@ async function onSave() {
   gap: var(--spacing-md, 6px);
   height: 100%;
   border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-  border: 1px solid var(--colors-border-border-action);
-  background: var(--colors-background-bg-overlay, #2C2E30);
+  // border: 1px solid var(--colors-border-border-action);
+  // background: var(--colors-background-bg-overlay, #2C2E30);
   box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
 
 
