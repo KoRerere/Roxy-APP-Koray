@@ -24,8 +24,8 @@ import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-// import { BUSINESS_CODE } from '/@/constants/business-code'
+import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { I18nT } from "vue-i18n"
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -306,24 +306,26 @@ const items = computed(() => [
 ])
 
 async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  // if (!isOwner.value) {
-  //   handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
-  //   return
-  // }
-
-  // 没有付费过的用户则提示付费墙
-  if (isOwner.value && userPayInfo.value?.subLevel === SubLevelEnum.Free) {
-    return emitter.emit("showPayWall", {
-      event,
-      params: {
-        type: "createProfileTemplates",
-      },
-    });
-    // if (isOwner.value) {
-
-    // } else {
-    //   return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
-    // }
+  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+  if (code !== 0) {
+    if (!isOwner.value) {
+      emitter.emit('showToast', {
+        severity: 'warn',
+        life: 5000,
+        summary: $t('窗口模板不可用'),
+        detail: <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+        </I18nT>
+      })
+    } else {
+      emitter.emit("showPayWall", {
+        event,
+        params: {
+          type: "createProfileTemplates",
+        },
+      })
+    }
+    return
   }
 
   showSimpleDialog({

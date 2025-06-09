@@ -267,7 +267,8 @@ export function getOperation(row: any = {}) {
         name: 'G3',
         showLabel: true,
       },
-      power: role.isOwner || role.isManager,
+      disabled: !(role.isOwner || role.isManager),
+      disabledTooltip: $t('权限不足'),
     },
     {
       name: 'moveToProject',

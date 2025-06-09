@@ -19,6 +19,8 @@ import {
   UserCalculateWindowMonthsPriceListParams,
   UserCancelSubscriptionListData,
   UserCancelSubscriptionListParams,
+  UserCheckTeamUserRightsListData,
+  UserCheckTeamUserRightsListParams,
   UserDowngradeSubscriptionListData,
   UserDowngradeSubscriptionListParams,
   UserGetDowngradeSubscriptionInfoListData,
@@ -414,6 +416,26 @@ export class PayApi<SecurityDataType = unknown> {
     this.http.request<UserUpdateGiftTipsListData, any>({
       path: `/user_update_gift_tips`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserCheckTeamUserRightsList
+   * @summary 团队用户权益校验
+   * @request GET:/user_check_team_user_rights
+   * @response `200` `UserCheckTeamUserRightsListData`
+   */
+  userCheckTeamUserRightsList = (
+    query: UserCheckTeamUserRightsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCheckTeamUserRightsListData, any>({
+      path: `/user_check_team_user_rights`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

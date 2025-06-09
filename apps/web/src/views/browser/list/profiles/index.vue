@@ -34,10 +34,9 @@ import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
 import { silentUpdateProxy, silentUpdateAccount } from './components/util'
 import { getCustomFilters, getOperation, getSorts } from './operation'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useHandleBusinessCode, toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
-import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
@@ -60,7 +59,7 @@ const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, userConfig, isNoPayUser } = storeToRefs(useUserStore())
+const { userInfo, userConfig } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { getProjects } = useMateGroup()
 const [showModal] = RxUseDialog()
@@ -420,13 +419,16 @@ async function getNotUsedProfiles(datas: Data[]) {
 }
 
 async function onTransfer(datas: Data[], operate?: any) {
-  if (isNoPayUser.value) {
+  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_delivery' })
+  if (code !== 0) {
     if (!role.isOwner) {
-      wcisToast({
+      emitter.emit('showToast', {
         severity: 'warn',
+        life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: $t('请联系空间的拥有者进行升级。'),
-        life: 5000
+        detail: <I18nT keypath={$t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+        </I18nT>
       })
       return
     }
@@ -439,18 +441,13 @@ async function onTransfer(datas: Data[], operate?: any) {
         },
       })
     } else {
-      wcisToast({
+      emitter.emit('showToast', {
         severity: 'warn',
+        life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: h(I18nT, {
-          keypath: $t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' }),
-        }, {
-          link: () => h('a', {
-            class: 'cursor-pointer',
-            onClick: () => router.push({ name: 'subscribe-plan' }),
-          }, $t('升级'))
-        }),
-        life: 5000
+        detail: <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
+        </I18nT>
       })
     }
     return
@@ -934,31 +931,24 @@ defineExpose({
 </script>
 
 <template>
-  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton
-    :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
-    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false"
-    :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
+  <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
+    :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false" :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
     <template #filter-after>
-      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
-        :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
+      <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />
     </template>
     <template #table-empty>
-      <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')"
-        :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
-      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')"
-        :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
+      <CustomEmpty v-if="hasFiltered" icon="rx_illustration_filter.svg" :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
+      <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('暂无窗口')" :desc="$t('窗口是 RoxyBrowser 的核心功能，可以帮助您管理多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等，以方便您更好地执行业务操作。')">
         <template #extra>
           <div class="flex items-center gap-3">
-            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add"
-              :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
+            <RxButton v-if="!role.isViewer" outlined severity="secondary" size="xs" icon="base/rx_ic_browser_add" :label="$t('创建窗口')" @click.stop="toCreateBrowser" />
           </div>
         </template>
       </CustomEmpty>
     </template>
     <template #profile="{ data }">
       <template v-if="data.id">
-        <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage"
-          @refresh="onRefreshTable" />
+        <ProfileInfo ref="pfi" :workspace-name="workspaceName!" :data="data" :open-message="openMessage" @refresh="onRefreshTable" />
       </template>
       <div v-else class="flex items-center gap-[16px]">
         <Skeleton width="44px" height="16px"></Skeleton>
@@ -981,16 +971,14 @@ defineExpose({
     <template #noteHeader="{ column: { title, _cache } }">
       <div class="flex items-center gap-2 note-header">
         <span>{{ title }}</span>
-        <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }"
-          class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+        <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
           @click.stop="toggleRemarkDisplayStatus(_cache)" />
       </div>
     </template>
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
         <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
-          <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0"
-            :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
+          <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
             :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
           <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
             data.windowRemark }}</div>
@@ -1002,8 +990,7 @@ defineExpose({
     </template>
     <template #project="{ data }">
       <template v-if="data.id">
-        <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName"
-          @update="updateProfileMeta($event, data)" />
+        <ProjectIcon :labels="data.labelInfo" :project-id="data.projectId" :project-name="data.projectName" @update="updateProfileMeta($event, data)" />
       </template>
       <template v-else>
         <Skeleton width="100px" height="20px" borderRadius="4px"></Skeleton>
@@ -1011,8 +998,7 @@ defineExpose({
     </template>
     <template #tags="{ data }">
       <template v-if="data.id">
-        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId"
-          @update="updateProfileMeta($event, data, 'single')" />
+        <TagsIcon :labels="data.labelInfo" :project-id="data.projectId" @update="updateProfileMeta($event, data, 'single')" />
       </template>
       <template v-else>
         <Skeleton width="70px" height="24px" borderRadius="12px"></Skeleton>
@@ -1029,17 +1015,14 @@ defineExpose({
           <div v-tooltip.top="{ value: $t('收藏'), showDelay: 500 }"
             class="flex justify-center items-center rounded cursor-pointer w-7 h-7 transition-all duration-150 hover:bg-black hover:bg-opacity-5 quick-icon"
             @click.stop="operationHandler({ name: 'fav' }, data)">
-            <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'"
-              :class="{ 'color-[#FC9D12]': data.isOften }" />
+            <RxSvgIcon :name="data.isOften ? 'base/rx_ic_bookmark_fill' : 'base/rx_ic_bookmark'" :class="{ 'color-[#FC9D12]': data.isOften }" />
           </div>
-          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)"
-            @more="showOperationMenu($event, data)" />
+          <Actions :operation="getOperation(data)" @quick-click="operationHandler($event, data)" @more="showOperationMenu($event, data)" />
         </template>
       </div>
     </template>
   </RyTable>
-  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false"
-    @update="updateProfileMeta($event, tableRef?.selectionData)" />
+  <TagsIcon ref="tagsIcon" :labels="[]" :showCreateTag="false" @update="updateProfileMeta($event, tableRef?.selectionData)" />
 </template>
 
 <style lang="scss" scoped>

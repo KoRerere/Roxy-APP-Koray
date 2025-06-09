@@ -1,12 +1,12 @@
 import type { RouteRecordRaw } from "vue-router";
 import { Role } from "/@/enums";
-import { SubLevelEnum } from "/@/enums/pay";
 import { $t } from "/@/locales";
-import { useUserStore } from "/@/stores/user";
 import { isWindows } from "/@/utils";
 import { emitter } from "/@/utils/eventBus";
+import { API } from "/@/api";
+import { I18nT } from "vue-i18n"
 import { useRoleStore } from "/@/stores/role";
-import { showToast } from "/@/hooks/useResponseToast/handleBusinessCode";
+import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 export const getMenuRoutes = (): RouteRecordRaw[] => [
   {
@@ -129,25 +129,33 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
           type: "button",
           icon: "base/rx_ic_frame_stack",
           hideInMenu: !isWindows,
-          onClick: (event: Event) => {
-            const { userPayInfo } = useUserStore();
+          onClick: async (event: Event) => {
             const { isOwner } = useRoleStore();
-            if (userPayInfo?.subLevel === SubLevelEnum.Free || userPayInfo?.subLevel === SubLevelEnum.Expired) {
-              if (isOwner) {
-                return emitter.emit("showPayWall", {
+            const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+            if (code !== 0) {
+              if (!isOwner) {
+                emitter.emit('showToast', {
+                  severity: 'warn',
+                  summary: $t('窗口同步不可用'),
+                  detail: h(I18nT, {
+                    keypath: $t('窗口同步不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
+                  }, {
+                    link: () => h('a', {
+                      class: 'cursor-pointer',
+                      onClick: switchWorkspaceAndToUpgradePlan,
+                    }, $t('前往升级您的权益'))
+                  }),
+                  life: 5000
+                })
+              } else {
+                emitter.emit("showPayWall", {
                   event,
                   params: {
                     type: "synchronizer",
                   },
                 });
-              } else {
-                return showToast({
-                  severity: 'warn',
-                  summary: $t('同步器不可用'),
-                  detail: $t('请联系空间的拥有者进行升级。'),
-                  life: 5000
-                })
               }
+              return
             }
             console.log("sync-control");
             electronAPI.send("syncControl:open");

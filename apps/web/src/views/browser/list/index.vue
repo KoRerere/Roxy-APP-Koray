@@ -12,19 +12,18 @@ import Profiles from './profiles'
 import Recycle from './recycle'
 import Transfer from './transfer'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { useUserStore } from '/@/stores/user'
 import { useRoleStore } from '/@/stores/role'
 import { sleep } from '/@/utils'
 import { debounce } from 'es-toolkit'
 import { emitter } from '/@/utils/eventBus'
-import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
+import { I18nT } from "vue-i18n"
+import { switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 
 const confirm = useConfirm()
 const dialog = useDialog()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const role = useRoleStore()
-const { isNoPayUser } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 
@@ -124,24 +123,34 @@ function switchActiveTabByQuery(list: TabType[]) {
   }
 }
 
-function switchTab(tabId: string, event?: Event) {
-  if (isNoPayUser.value && tabId === 'rx_1004') {
-    if (!role.isOwner) {
-      wcisToast({
-        severity: 'warn',
-        summary: $t('窗口投送不可用'),
-        detail: $t('请联系空间的拥有者进行升级。'),
-        life: 5000
-      })
+async function switchTab(tabId: string, event?: Event) {
+  if (tabId === 'rx_1004') {
+    const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_delivery' })
+    if (code !== 0) {
+      if (!role.isOwner) {
+        emitter.emit('showToast', {
+          severity: 'warn',
+          summary: $t('窗口投送不可用'),
+          detail: h(I18nT, {
+            keypath: $t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' }),
+          }, {
+            link: () => h('a', {
+              class: 'cursor-pointer',
+              onClick: switchWorkspaceAndToUpgradePlan,
+            }, $t('前往升级您的权益'))
+          }),
+          life: 5000
+        })
+      } else {
+        emitter.emit('showPayWall', {
+          event: event as Event,
+          params: {
+            type: 'transfer',
+          },
+        })
+      }
       return
     }
-    emitter.emit('showPayWall', {
-      event: event as Event,
-      params: {
-        type: 'transfer',
-      },
-    })
-    return
   }
   active.value = tabId
 }

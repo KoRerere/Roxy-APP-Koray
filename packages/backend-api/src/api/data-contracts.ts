@@ -4147,17 +4147,11 @@ export interface UserTransferWindowVerifyCodeListData {
 
 export interface UserTransferWindowCreatePayload {
   windowIds: number[];
-  /**
-   * 目标空间ID
-   * 目标空间ID
-   */
+  /** 目标空间ID */
   targetWorkspaceId: number;
   /** 是否删除,true：删除, false: 不删除 */
   isDelete: boolean;
-  /**
-   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
-   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
-   */
+  /** 邮箱验证码（如果当前是自己空间转自己空间可以不用传入） */
   emailCode: string;
   transferParam: string[];
 }
@@ -5519,6 +5513,7 @@ export interface UserGetProjectInfoByWorkspaceListData {
          * 邮箱
          */
         email: string;
+        pinStatus: number;
       }[];
       /**
        * 项目名称
@@ -6212,6 +6207,19 @@ export interface UserGetDowngradeSubscriptionInfoListData {
 }
 
 export interface UserUpdateGiftTipsListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCheckTeamUserRightsListParams {
+  /**
+   * 类型
+   * @example ""window_template", "window_delivery", "infinite_project_number", "window_sync""
+   */
+  type: string;
+}
+
+export interface UserCheckTeamUserRightsListData {
   code: number;
   msg: string;
 }

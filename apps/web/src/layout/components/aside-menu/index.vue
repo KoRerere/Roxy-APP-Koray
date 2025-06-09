@@ -1,9 +1,7 @@
 <script setup lang="tsx">
 import { cloneDeep } from 'es-toolkit'
-import Tooltip from 'primevue/tooltip'
 import type { RouteRecordRaw } from 'vue-router'
 import { API } from '/@/api'
-import { RxSvgIcon } from "/@/components/rx-icon";
 import { $t } from '/@/locales'
 import { getMenuRoutes } from '/@/router/menu'
 import { useProjectStore } from '/@/stores/project'
@@ -12,6 +10,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import SubMenuItem from './sub-menu-item.vue'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { ProjectPin } from '/@/enums'
 
 defineProps({
   collapsed: {
@@ -30,7 +29,7 @@ const menuRoutes = getMenuRoutes()
 
 
 const projectList = computed(() => {
-  return projectStore.projects.filter(item => !!item.topTime).slice(0, 5).map((item) => {
+  return projectStore.projects.filter(item => item.pinStatus === ProjectPin.pinned).slice(0, 5).map((item) => {
     return {
       path: ':id',
       name: 'project-item',
