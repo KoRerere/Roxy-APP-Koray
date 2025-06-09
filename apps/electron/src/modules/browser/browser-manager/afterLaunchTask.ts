@@ -41,7 +41,7 @@ export class AfterLaunchTask {
   /** 获取标签页 */
   async getDefaultOpenUrl() {
     // 同步 浏览器已经打开tabs标签
-    let defaultOpenUrl = []
+    let defaultOpenUrl: string[] = []
     try {
       const roxyTabs = await readFile(this.browserItem.roxyTabsPath, 'utf8')
       defaultOpenUrl = JSON.parse(roxyTabs).filter(url => this.browserItem.isValidURL(url))
@@ -49,6 +49,7 @@ export class AfterLaunchTask {
       // 如果浏览器是由于关闭最后一个标签页而导致关闭的，这个时候龙哥会检测不到，所以每次读完 roxy_tabs，都要删除
       rm(this.browserItem.roxyTabsPath)
     } catch (error) {
+      defaultOpenUrl = this.browserItem.winInfo.defaultOpenUrl || []
       console.log(`roxy_tabs 文件不存在 跳过`, error)
     }
     return defaultOpenUrl

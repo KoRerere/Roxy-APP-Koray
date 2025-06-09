@@ -1,13 +1,14 @@
 import CDP from 'chrome-remote-interface'
 import type { Client } from 'chrome-remote-interface'
-import { ChildProcess } from 'node:child_process'
+import { ChildProcess, execSync } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { ChromeTarget } from './target'
 import { ChromePage } from './page'
 import type { Protocol } from 'puppeteer-core'
 import { ChromeCDPSession } from './cdp-session'
 import type { BrowserEvents } from './types'
-import { safeParseJSON } from '/@/utils'
+import { isErrorLike, pidExists, safeParseJSON } from '/@/utils'
+import { setTimeout } from 'node:timers/promises'
 
 /**
  * 基于 chrome-remote-interface 的浏览器封装
@@ -19,6 +20,8 @@ export class ChromeBrowser extends EventEmitter {
   private _wsEndpoint: string
   private targetsMap: Map<string, ChromeTarget> = new Map()
   private disconnectedEmitted = false
+  #browserProcessExiting: Promise<void> | null = null
+  #exited = false;
 
   constructor(client: Client, wsEndpoint: string, browserProcess?: ChildProcess) {
     super()
@@ -26,6 +29,13 @@ export class ChromeBrowser extends EventEmitter {
     this._wsEndpoint = wsEndpoint
     this.browserProcess = browserProcess || null
     this.setupEventListeners()
+    this.#browserProcessExiting = new Promise<void>((resolve) => {
+      this.browserProcess?.once('exit', () => {
+        console.debug(`Browser process ${this.browserProcess?.pid} onExit`);
+        this.#exited = true;
+        resolve();
+      });
+    });
   }
 
   private setupEventListeners() {
@@ -91,11 +101,66 @@ export class ChromeBrowser extends EventEmitter {
 
   async close(): Promise<void> {
     // 调用 Browser.close 关闭浏览器
-    await this.client.Browser.close().finally(() => {
-      if (this.browserProcess) {
-        this.browserProcess.kill('SIGTERM')
+    await this.client.Browser.close()
+    await setTimeout()
+    if (!this.#exited) {
+      this.kill();
+    }
+    return this.#browserProcessExiting!;
+  }
+
+  kill(): void {
+    console.debug(`Trying to kill ${this.browserProcess?.pid}`);
+    // If the process failed to launch (for example if the browser executable path
+    // is invalid), then the process does not get a pid assigned. A call to
+    // `proc.kill` would error, as the `pid` to-be-killed can not be found.
+    if (
+      this.browserProcess &&
+      this.browserProcess.pid &&
+      pidExists(this.browserProcess.pid)
+    ) {
+      try {
+        console.debug(`Browser process ${this.browserProcess.pid} exists`);
+        if (process.platform === 'win32') {
+          try {
+            execSync(
+              `taskkill /pid ${this.browserProcess.pid} /T /F`,
+            );
+          } catch (error) {
+            console.debug(
+              `Killing ${this.browserProcess.pid} using taskkill failed`,
+              error,
+            );
+            // taskkill can fail to kill the process e.g. due to missing permissions.
+            // Let's kill the process via Node API. This delays killing of all child
+            // processes of `this.proc` until the main Node.js process dies.
+            this.browserProcess.kill();
+          }
+        } else {
+          // on linux the process group can be killed with the group id prefixed with
+          // a minus sign. The process group id is the group leader's pid.
+          const processGroupId = -this.browserProcess.pid;
+
+          try {
+            process.kill(processGroupId, 'SIGKILL');
+          } catch (error) {
+            console.debug(
+              `Killing ${this.browserProcess.pid} using process.kill failed`,
+              error,
+            );
+            // Killing the process group can fail due e.g. to missing permissions.
+            // Let's kill the process via Node API. This delays killing of all child
+            // processes of `this.proc` until the main Node.js process dies.
+            this.browserProcess.kill('SIGKILL');
+          }
+        }
+      } catch (error) {
+        throw new Error(
+          `Browser process ${this.browserProcess?.pid} kill failed\nError cause: ${isErrorLike(error) ? error.stack : error
+          }`,
+        );
       }
-    })
+    }
   }
 
   async pages(): Promise<ChromePage[]> {
