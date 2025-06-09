@@ -13,7 +13,7 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
 import { getColumns } from './columns'
-import Bg from './bg.vue'
+import ShadowDotGrid from '/@/components/shadow-dot-grid.vue'
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -361,7 +361,7 @@ function onSave() {
               </template>
             </i18n-t>
           </div>
-          <Bg class="z-9" />
+          <ShadowDotGrid class="z-9" />
         </div>
       </div>
     </div>
