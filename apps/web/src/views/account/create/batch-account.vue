@@ -6,11 +6,10 @@ import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
-import { validateURL } from '/@/utils'
 
 const router = useRouter()
 const themeStore = useThemeStore()
-const [_, onlyErrorToast] = useResponseToast()
+const [showToast, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 
 const columns = [
@@ -153,11 +152,18 @@ function onRemark(data: any) {
   })
 }
 
-async function onSave() {
+async function onSave(needMore: boolean) {
   const { code, msg } = await API.platform.userAddPlatformInfoBatchCreate(toRaw(dataList.value))
   onlyErrorToast(code, msg)
   if (code === 0) {
-    router.replace({ name: 'account-list' })
+    if (!needMore) {
+      router.replace({ name: 'account-list' })
+    } else {
+      showToast(0, msg)
+      proxiesText.value = ''
+      input.value.value = ''
+      dataList.value = []
+    }
   }
 }
 </script>
@@ -173,8 +179,7 @@ async function onSave() {
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
           <div class="flex justify-end information-actions">
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
-              @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
           </div>
         </div>
       </div>
@@ -199,18 +204,16 @@ async function onSave() {
     </div>
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar subtitle">{{ $t('已解析账号') }}</div>
-      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
-        :show-table-header="false" :show-actions="false">
+      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" />
         </template>
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
-              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
-              }}</div>
+            }}</div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -218,8 +221,9 @@ async function onSave() {
         </template>
       </RyTable>
     </div>
-    <div class="flex justify-end footer">
-      <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
+    <div class="flex justify-end gap-3 footer">
+      <RxButton :label="$t('保存 & 继续添加')" :disabled="!dataList?.length" severity="secondary" outlined @click.stop="onSave(true)" />
+      <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave(false)" />
     </div>
   </div>
 </template>
