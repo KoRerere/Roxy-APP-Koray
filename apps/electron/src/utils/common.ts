@@ -1,7 +1,7 @@
 import { app, } from 'electron'
 import { osConfig, } from '/@/constants'
 import { hostname } from 'node:os'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { UserGetLoginInfoListData } from '@roxy/backend-api'
 import { detectNetwork } from '/@/utils'
 import { format } from 'date-fns'
@@ -108,7 +108,7 @@ export const getDeviceId = (() => {
     if (!store.deviceId) {
       // 如果 15s 内没有获取到设备 ID，则生成一个随机 ID
       const timer = setTimeout(() => {
-        store.deviceId ||= crypto.randomUUID()
+        store.deviceId ||= randomUUID()
         console.debug('15s 内没有获取到设备 ID，随机生成：', store.deviceId)
         resolve(store.deviceId)
       }, 1000 * 15)
