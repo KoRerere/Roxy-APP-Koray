@@ -7,6 +7,10 @@ const router = useRouter()
 const desc = computed(() => {
   return $t('当前页面已超时。请检查您的网络连接，或按 Ctrl+R（macOS 上为 Cmd+R）刷新页面。<br /><br />如果此问题仍然存在，请联系客服或访问以下页面获取自助解决方案：<a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">文档</a>。')
 })
+
+const reload = () => {
+  window.location.href = '/'
+}
 </script>
 
 <template>
@@ -15,7 +19,7 @@ const desc = computed(() => {
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('出现问题了')" :desc="desc">
         <template #extra>
           <div class="flex">
-            <RxButton severity="secondary" outlined class="w-full" @click="() => router.push({ name: 'home' })">
+            <RxButton severity="secondary" outlined class="w-full" @click="reload">
               {{ $t('刷新页面') }}
             </RxButton>
           </div>

@@ -8,7 +8,6 @@ import { useRoleStore } from '/@/stores/role'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import type { App } from 'vue'
 import { useThemeStore } from '/@/stores/theme'
-import ErrorPage from '/@/views/500.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -26,11 +25,6 @@ const router = createRouter({
           path: 'referral-program',
           meta: { title: '推广计划', icon: 'base/rc_ic_user_referral' },
           component: () => import('/@/views/referral-program/index.vue'),
-        },
-        {
-          name: '500',
-          path: '/500',
-          component: ErrorPage
         },
       ],
     },

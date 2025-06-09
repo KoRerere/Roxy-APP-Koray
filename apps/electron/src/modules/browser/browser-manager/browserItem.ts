@@ -9,7 +9,7 @@ import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
 import { delRoxynetProxy } from '/@/modules/roxynet'
-import { aliOSS, proxyDetection } from '/@/utils'
+import { aliOSS, decryptAESGCM, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
@@ -295,7 +295,15 @@ export class BrowserItem {
       return this.beforeLaunchTask.proxyInfo
     }
 
-    const res = await proxyDetection(this.winInfo)
+    const { isEncryptProxy, proxyEncryptInfo } = this.winInfo
+    const proxyInfo = { ...this.winInfo }
+
+    if (isEncryptProxy && proxyEncryptInfo) {
+      const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
+      Object.assign(proxyInfo, decryptedProxyEncryptInfo)
+    }
+
+    const res = await proxyDetection(proxyInfo)
     if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
       this.beforeLaunchTask.proxyInfo = res
     }
