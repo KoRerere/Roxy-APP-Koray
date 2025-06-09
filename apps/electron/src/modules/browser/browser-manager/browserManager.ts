@@ -66,35 +66,44 @@ export class BrowserManager {
       return
     }
 
-    const browserItem = new BrowserItem(winInfo, launchBy)
-    // 如果浏览器没有打开
-    if (!this.openingBrowserMap.has(dirId)) {
+    // 如果浏览器正在打开中，则等待浏览器启动完成
+    if (this.openingBrowserMap.has(dirId)) {
+      await this.openingBrowserMap.get(dirId)?.launchPromise
+      return this.openedBrowserMap.get(dirId)?.launchInfo
+    } else {
+      const browserItem = new BrowserItem(winInfo, launchBy)
       // 则加入打开中的浏览器集合
       this.openingBrowserMap.set(dirId, {
         browserItem,
         launchPromise: browserItem.launch()
       })
     }
-    // 等待浏览器启动完成
-    await this.openingBrowserMap.get(dirId)?.launchPromise.finally(() => {
-      this.openingBrowserMap.delete(dirId)
-    })
-    this.openedBrowserMap.set(dirId, browserItem)
-    this.syncWindowOpenStatus()
 
-    const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
-      console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
-      ipcMain.send('browser:on-close', dirId)
-      browserItem.off(`close-${dirId}`, onCloseHandler)
-      if (uploadDataPromise) {
-        this.uploadDataQueue.set(dirId, uploadDataPromise)
+    try {
+      // 等待浏览器启动完成
+      await this.openingBrowserMap.get(dirId)?.launchPromise
+      const browserItem = this.openingBrowserMap.get(dirId)!.browserItem
+      this.openedBrowserMap.set(dirId, browserItem)
+      this.syncWindowOpenStatus()
+
+      const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
+        console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
+        ipcMain.send('browser:on-close', dirId)
+        browserItem.off(`close-${dirId}`, onCloseHandler)
+        if (uploadDataPromise) {
+          this.uploadDataQueue.set(dirId, uploadDataPromise)
+        }
+        await this.#batchUploadData()
       }
-      await this.#batchUploadData()
-    }
-    // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
-    browserItem.on(`close-${dirId}`, onCloseHandler)
+      // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
+      browserItem.on(`close-${dirId}`, onCloseHandler)
 
-    return browserItem.launchInfo
+      return browserItem.launchInfo
+    } catch (error) {
+      console.error(`BrowserManager ${dirId} === 启动失败`, error)
+    } finally {
+      this.openingBrowserMap.delete(dirId)
+    }
   }
 
 
@@ -137,8 +146,14 @@ export class BrowserManager {
 
   /** 批量关闭浏览器 */
   batchClose(dirIds: string[]) {
-    dirIds.forEach(dirId => this.uploadDataQueue.set(dirId, this.close(dirId)))
-    return this.#batchUploadData()
+    dirIds.forEach(dirId => {
+      if (this.openedBrowserMap.has(dirId)) {
+        this.uploadDataQueue.set(dirId, this.close(dirId))
+      }
+    })
+    if (this.uploadDataQueue.size > 0) {
+      return this.#batchUploadData()
+    }
   }
 
   #batchUploadData = asyncDebounce(async () => {

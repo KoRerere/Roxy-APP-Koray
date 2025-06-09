@@ -111,9 +111,8 @@ export class ChromeBrowser extends EventEmitter {
 
   kill(): void {
     console.debug(`Trying to kill ${this.browserProcess?.pid}`);
-    // If the process failed to launch (for example if the browser executable path
-    // is invalid), then the process does not get a pid assigned. A call to
-    // `proc.kill` would error, as the `pid` to-be-killed can not be found.
+    // 如果进程启动失败（例如浏览器可执行路径无效），则进程不会获得pid
+    // 调用`proc.kill`会出错，因为找不到要杀死的`pid`
     if (
       this.browserProcess &&
       this.browserProcess.pid &&
@@ -131,14 +130,14 @@ export class ChromeBrowser extends EventEmitter {
               `Killing ${this.browserProcess.pid} using taskkill failed`,
               error,
             );
-            // taskkill can fail to kill the process e.g. due to missing permissions.
-            // Let's kill the process via Node API. This delays killing of all child
-            // processes of `this.proc` until the main Node.js process dies.
+            // taskkill可能由于权限不足等原因无法杀死进程
+            // 让我们通过Node API杀死进程。这会延迟杀死`this.proc`的所有子进程
+            // 直到主Node.js进程死亡
             this.browserProcess.kill();
           }
         } else {
-          // on linux the process group can be killed with the group id prefixed with
-          // a minus sign. The process group id is the group leader's pid.
+          // 在linux上，进程组可以通过前缀为负号的组ID来杀死
+          // 进程组ID是组领导者的pid
           const processGroupId = -this.browserProcess.pid;
 
           try {
@@ -148,9 +147,9 @@ export class ChromeBrowser extends EventEmitter {
               `Killing ${this.browserProcess.pid} using process.kill failed`,
               error,
             );
-            // Killing the process group can fail due e.g. to missing permissions.
-            // Let's kill the process via Node API. This delays killing of all child
-            // processes of `this.proc` until the main Node.js process dies.
+            // 由于权限不足等原因，杀死进程组可能会失败
+            // 让我们通过Node API杀死进程。这会延迟杀死`this.proc`的所有子进程
+            // 直到主Node.js进程死亡
             this.browserProcess.kill('SIGKILL');
           }
         }
@@ -164,6 +163,7 @@ export class ChromeBrowser extends EventEmitter {
   }
 
   async pages(): Promise<ChromePage[]> {
+    // @ts-ignore Chrome DevTools Protocol 类型定义中缺少 getTabs 方法
     const { tabs } = await this.client.Browser.getTabs()
     const allTabs = safeParseJSON(tabs)
     const pages: ChromePage[] = []
