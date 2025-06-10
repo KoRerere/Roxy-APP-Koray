@@ -238,7 +238,7 @@ function getProxyModel() {
             updateProfile(params, {
               success: () => {
                 if (!data.openTime) Reflect.set(params, 'lastIp', '')
-                silentUpdateProxy(data, params)
+                silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
               }
             })
           }
@@ -360,7 +360,7 @@ function createProxy(proxyData?: Record<string, any>) {
           const { id, dirId } = data
           const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom' }
           updateProfile(params, {
-            success: () => silentUpdateProxy(data, { ...params, isEncryptProxy: '', proxyEncryptInfo: '' })
+            success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()
         }
@@ -385,9 +385,7 @@ function chooseProxy(proxyData: Record<string, any>) {
               protocol,
               proxyCategory: proxyCategory || protocol,
               proxyMethod: 'choose',
-              isEncryptProxy: '',
-              proxyEncryptInfo: ''
-            })
+            }, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()
         }

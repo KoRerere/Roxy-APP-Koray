@@ -122,13 +122,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
-  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp', 'isEncryptProxy', 'proxyEncryptInfo']
+  const encryptProxyKeys = ['isEncryptProxy', 'proxyEncryptInfo']// 代理加密相关字段
+  const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
       id: data.moduleId,
       proxyCategory: data.proxyCategory,
       checkChannel: data.checkChannel,
-      ...Object.fromEntries(proxyInfoKeys.map(key => [key, data[key]])),
+      ...Object.fromEntries([...encryptProxyKeys, ...proxyInfoKeys].map(key => [key, data[key]])),
     }]
     : []
 
@@ -136,9 +137,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const resolutionValue = resolutionOptions.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
   const inputsGroup = [] as any[]
 
-  const original = reactive({
+  const original = reactive<Record<string, any>>({
     ...getDefaultValue(),
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))),// 过滤掉加密字段
   })
 
   const windowInputs = reactive([

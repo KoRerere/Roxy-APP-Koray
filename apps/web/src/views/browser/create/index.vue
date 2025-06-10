@@ -7,7 +7,6 @@ import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { Role } from '/@/enums'
-import { SubLevelEnum } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useBackRoute } from '/@/router/utils'
@@ -87,9 +86,18 @@ const metaData = ref<WindowMetaData>({
 })
 const loading = ref(false)
 
-const maxWindowCount = computed(() => {
-  return Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100)
-})
+const items = computed(() => [
+  {
+    label: $t('覆盖当前模板'),
+    disabled: !!profileTemplate.value && profileTemplate.value === 'default',
+    command: () => {
+      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
+      onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
+    },
+  },
+])
+
+const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100))
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -174,7 +182,6 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
-  // profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
@@ -197,6 +204,95 @@ async function onUpdateFinger() {
   Object.assign(original.value, data[0])
 }
 
+async function saveTemplatePopup(event: Event, option?: TemplateOption) {
+  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+  if (code !== 0) {
+    if (!isOwner.value) {
+      emitter.emit('showToast', {
+        severity: 'warn',
+        life: 5000,
+        summary: $t('窗口模板不可用'),
+        detail: <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+        </I18nT>
+      })
+    } else {
+      emitter.emit("showPayWall", {
+        event,
+        params: {
+          type: "createProfileTemplates",
+        },
+      })
+    }
+    return
+  }
+
+  showSimpleDialog({
+    title: option?.value ? $t('编辑模板') : $t('保存模板'),
+    content: $t('请在以下文本框输入模板名称:'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'templateName',
+        value: option?.label,
+        required: true,
+        props: {
+          placeholder: $t('模板名称'),
+        },
+      },
+    ],
+    afterRender: () => <ol class="pl-[14px] m-0">
+      <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
+      <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+    </ol>,
+    onConfirm: async (data: any) => {
+      onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
+    },
+  })
+}
+
+async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
+  const formData = getFormDataByList(inputsGroup.value)
+  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
+    acc[cur] = formData[cur]
+    return acc
+  }, {} as any)
+
+  const { code, msg } = id
+    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
+    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
+  // onlyErrorToast(code, msg)
+  if (code === 0) {
+    getTemplateList()
+  } else {
+    handleBusinessCode(code, () => {
+      showToast(code, msg)
+    })
+  }
+}
+
+async function deleteTemplate(data: any) {
+  confirm.require({
+    header: $t('删除模板'),
+    message: $t('您确认要删除 ({name}) 模板吗？', { name: data.label }),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: async () => {
+      const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
+      onlyErrorToast(code, msg)
+      if (code === 0) {
+        getTemplateList()
+      }
+    },
+  })
+}
 
 function importSuccess(data: any) {
   fileAnalyzeData.value = data
@@ -291,108 +387,6 @@ async function importProfile(params: any) {
   else {
     fileAnalyzeError.value = Array.isArray(msg) ? msg.join('\n') : msg
   }
-}
-// ===========================================
-
-const items = computed(() => [
-  {
-    label: $t('覆盖当前模板'),
-    disabled: !!profileTemplate.value && profileTemplate.value === 'default',
-    command: () => {
-      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
-      onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
-    },
-  },
-])
-
-async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
-  if (code !== 0) {
-    if (!isOwner.value) {
-      emitter.emit('showToast', {
-        severity: 'warn',
-        life: 5000,
-        summary: $t('窗口模板不可用'),
-        detail: <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
-        </I18nT>
-      })
-    } else {
-      emitter.emit("showPayWall", {
-        event,
-        params: {
-          type: "createProfileTemplates",
-        },
-      })
-    }
-    return
-  }
-
-  showSimpleDialog({
-    title: option?.value ? $t('编辑模板') : $t('保存模板'),
-    content: $t('请在以下文本框输入模板名称:'),
-    inputs: [
-      {
-        type: 'text',
-        name: 'templateName',
-        value: option?.label,
-        required: true,
-        props: {
-          placeholder: $t('模板名称'),
-        },
-      },
-    ],
-    afterRender: () => <ol class="pl-[14px] m-0">
-      <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
-      <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
-    </ol>,
-    onConfirm: async (data: any) => {
-      onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
-    },
-  })
-}
-
-async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
-  const formData = getFormDataByList(inputsGroup.value)
-  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
-    acc[cur] = formData[cur]
-    return acc
-  }, {} as any)
-
-  const { code, msg } = id
-    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
-    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-  // onlyErrorToast(code, msg)
-  if (code === 0) {
-    getTemplateList()
-  } else {
-    handleBusinessCode(code, () => {
-      showToast(code, msg)
-    })
-  }
-}
-
-async function deleteTemplate(data: any) {
-  confirm.require({
-    header: $t('删除模板'),
-    message: $t('您确认要删除 ({name}) 模板吗？', { name: data.label }),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'danger',
-    },
-    accept: async () => {
-      const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
-      onlyErrorToast(code, msg)
-      if (code === 0) {
-        getTemplateList()
-      }
-    },
-  })
 }
 </script>
 

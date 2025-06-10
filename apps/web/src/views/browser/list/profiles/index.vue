@@ -595,9 +595,9 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     if (code !== 0) return
 
     const { protocol, proxyCategory, ...rest } = formData
-    const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol, isEncryptProxy: '', proxyEncryptInfo: '' }
+    const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol }
     datas.forEach(item => {
-      silentUpdateProxy(item, params)
+      silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
     })
   }
 }
@@ -629,7 +629,7 @@ function multipleProxyDelete(data: Data | Data[]) {
           } else {
             Reflect.deleteProperty(params, 'lastIp')
           }
-          silentUpdateProxy(item, params)
+          silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
         })
       }
     },

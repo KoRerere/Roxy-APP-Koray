@@ -112,8 +112,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
   &-price {
     color: var(--colors-text-text-tertiary);
-    font-family: Inter;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 20px;
   }
 }
