@@ -30,7 +30,7 @@ export async function getInputs(data: any = {}) {
 
         if (value) {
           input!.invalid = false
-          const ipType = value.startsWith('*') ? 'IPV6' : 'IPV4'
+
           const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(value)
           const formData = {
             proxyCategory: protocol?.toLocaleUpperCase(),
@@ -40,6 +40,8 @@ export async function getInputs(data: any = {}) {
             proxyPassword,
             refreshUrl,
           }
+
+          const ipType = host?.startsWith('[') ? 'IPV6' : 'IPV4'
 
           if (isEmptyValue(Object.values(formData).filter(Boolean))) {
             input!.invalid = true

@@ -58,8 +58,8 @@ const protocolOptions = ref<any[]>([])
 const protocolValue = ref()
 const parserTypeOptions = computed(() => {
   return [
-    { label: $t('服务器:端口:账号:密码'), value: ParseMode.one },
-    { label: $t('账号:密码{separator}服务器:端口', { separator: '@' }), value: ParseMode.two },
+    { label: $t('主机:端口:账号:密码'), value: ParseMode.one },
+    { label: $t('账号:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.two },
   ]
 })
 const parserType = ref(parserTypeOptions.value[0].value)
@@ -130,7 +130,7 @@ function parseValue() {
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
-      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, ipType.value, parserType.value)
+      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, parserType.value)
 
       const protocol = __protocol || protocolValue.value;
 
@@ -139,7 +139,7 @@ function parseValue() {
       return {
         checkChannel: ipCheckerConfig.value?.value,
         checkChannelValue: ipCheckerConfig.value?.label,
-        ipType: ipType.value.value,
+        ipType: ipType.value,
         protocol: protocol?.toLocaleUpperCase(),
         host,
         port,
