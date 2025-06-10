@@ -41,6 +41,10 @@ export const getColumns = () => {
       getText: (data: any) => data.remark || '--',
     },
     {
+      title: $t('出口 IP'),
+      slot: 'outbound',
+    },
+    {
       title: $t('IP 查询渠道'),
       key: 'ipChecker',
       render: ({ data }: any) => {
@@ -50,12 +54,9 @@ export const getColumns = () => {
       },
     },
     {
-      title: $t('出口 IP'),
-      slot: 'outbound'
-    },
-    {
       title: $t('操作'),
       slot: 'actions',
+      alignFrozen: 'right',
     },
   ]
 }

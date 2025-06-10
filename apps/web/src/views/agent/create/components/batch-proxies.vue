@@ -136,12 +136,14 @@ function parseValue() {
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
+      const __ipType = host?.startsWith('[') ? IPType.IPV6 : ipType.value;
+
       return {
         checkChannel: ipCheckerConfig.value?.value,
         checkChannelValue: ipCheckerConfig.value?.label,
-        ipType: ipType.value,
+        ipType: __ipType,
         protocol: protocol?.toLocaleUpperCase(),
-        host,
+        host: host?.replace(/\[|\]/g, ''),
         port,
         proxyUserName,
         proxyPassword,
@@ -293,8 +295,8 @@ function onSave() {
 
 <template>
   <div class="flex-1 overflow-auto flex-col proxies-content">
-    <div class="parse-input">
-      <div class="flex flex-1 flex-col gap-6px">
+    <div class="parse-input w-full !grid grid-cols-10">
+      <div class="col-span-6 flex flex-col gap-6px">
         <div class="panel-title flex justify-between items-center">
           <span>{{ $t('代理信息') }}</span>
           <div class="flex gap-6px">
@@ -329,7 +331,7 @@ function onSave() {
           </div>
         </div>
       </div>
-      <div class="flex flex-1 flex-col gap-6px">
+      <div class="col-span-4 flex flex-col gap-6px">
         <div class="panel-title h-30px flex items-center">
           {{ $t('导入规则') }}
         </div>
@@ -418,20 +420,22 @@ function onSave() {
         </RxAlert>
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
       </div>
-      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
-        :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
-        <template #table-empty>
-          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
-        </template>
-        <template #outbound="{ data }">
-          <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
-            :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
-        </template>
-        <template #actions="{ data }">
-          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
-            :show-menu="false" @quick-click="operationHandler($event, data)" />
-        </template>
-      </RyTable>
+      <div class="flex-1 overflow-x-auto">
+        <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
+          :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+          <template #table-empty>
+            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" class="min-h-258px" />
+          </template>
+          <template #outbound="{ data }">
+            <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+              :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
+          </template>
+          <template #actions="{ data }">
+            <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
+              :show-menu="false" @quick-click="operationHandler($event, data)" />
+          </template>
+        </RyTable>
+      </div>
     </div>
     <div class="flex justify-end footer">
       <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
@@ -465,8 +469,9 @@ function onSave() {
     }
 
     .p-datatable-thead {
-      position: sticky;
-      top: calc(-30px + 58px + var(--message-h));
+      // position: sticky;
+      // 58 需要减去2个px
+      // top: calc(-30px + 56px + var(--message-h));
       z-index: 100;
       background-color: white;
     }

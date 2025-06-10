@@ -203,64 +203,16 @@ export enum ParseMode {
 }
 
 export function parseProxyUrl(url: string, mode?: ParseMode): ProxyObject {
-  // type = type ?? IPType.IPV4
-  // mode = mode ?? ParseMode.one
-  // if (type === IPType.IPV4) {
-  //   if (mode === ParseMode.one) {
-  //     return parseProxyUrlIPv4One(url)
-  //   }
-  //   else {
-  //     return parseProxyUrlIPv4Two(url)
-  //   }
-  // }
-  // else {
-  //   if (mode === ParseMode.one) {
-  //     return parseProxyUrlIPv6One(url)
-  //   }
-  //   else {
-  //     return parseProxyUrlIPv6Two(url)
-  //   }
-  // }
   mode = mode ?? ParseMode.one
   if (mode === ParseMode.one) {
-    return parseProxyUrlIPv6One(url)
+    return parseProxyUrlOne(url)
   }
   else {
-    return parseProxyUrlIPv6Two(url)
+    return parseProxyUrlTwo(url)
   }
 }
 
-// function parseProxyUrlIPv4One(url: string): ProxyObject {
-//   const [_, protocol, host, port, proxyUserName, proxyPassword] = url.match(/^\*?(?:(?<protocol>\w+):\/\/)?(?<host>[^:]+):(?<port>\d+)(?::(?<proxyUserName>[^:]*)(?::(?<proxyPassword>[^[{]*))?)?/) || []
-//   const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
-//   const remark = url.match(/\{(.*?)\}/)?.[1]
-//   return {
-//     protocol,
-//     host,
-//     port,
-//     proxyUserName,
-//     proxyPassword,
-//     refreshUrl,
-//     remark,
-//   }
-// }
-
-// function parseProxyUrlIPv4Two(url: string): ProxyObject {
-//   const arr = url.match(/^(?:(?<user>[^:@]+)(?::(?<pass>[^@]*))?@)?(?<host>[^:]+):(?<port>\d+)$/) || []
-//   const [_, proxyUserName, proxyPassword, host, port] = arr;
-//   const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
-//   const remark = url.match(/\{(.*?)\}/)?.[1]
-//   return {
-//     host,
-//     port,
-//     proxyUserName,
-//     proxyPassword,
-//     refreshUrl,
-//     remark,
-//   }
-// }
-
-function parseProxyUrlIPv6One(url: string): ProxyObject {
+function parseProxyUrlOne(url: string): ProxyObject {
   const regex = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:\[\]\{\}]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
 
   const match = url.match(regex)
@@ -276,7 +228,7 @@ function parseProxyUrlIPv6One(url: string): ProxyObject {
   }
 }
 
-function parseProxyUrlIPv6Two(url: string): ProxyObject {
+function parseProxyUrlTwo(url: string): ProxyObject {
   const regex = /^(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
 
   const match = url.match(regex)
