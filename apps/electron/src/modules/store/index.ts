@@ -268,8 +268,21 @@ async function initLanguage() {
   }
 }
 
-
+const canUseSyncControlMap: Record<number, { canUse: boolean, lastCheckTime: number }> = {}
 /** 是否可以使用群控 */
-export function canUseSyncControl() {
-  return !['Expired', 'Free'].includes(store.subLevel!)
+export async function canUseSyncControl() {
+  if (!store.workspaceId) {
+    return false
+  }
+  const now = Date.now()
+  const lastCheckTime = canUseSyncControlMap[store.workspaceId!]?.lastCheckTime || 0
+  if (now - lastCheckTime < 1000 * 60) {
+    return canUseSyncControlMap[store.workspaceId!].canUse
+  }
+  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+  canUseSyncControlMap[store.workspaceId!] = {
+    canUse: code === 0,
+    lastCheckTime: now,
+  }
+  return canUseSyncControlMap[store.workspaceId!].canUse
 }

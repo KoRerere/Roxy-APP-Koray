@@ -149,7 +149,9 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
-    Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
+    queueMicrotask(async () => {
+      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
+    })
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
@@ -279,7 +281,7 @@ export class BrowserItem {
           if (code === 0 && data.rows[0]) {
             // console.log('获取窗口信息成功', data.rows[0])
             this.winInfo = data.rows[0]
-            Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
+            Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
           }
         }
       } catch (error) {
