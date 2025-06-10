@@ -67,7 +67,7 @@ if (import.meta.hot) {
   window.router = router
 }
 
-const softConfigPromise = Promise.withResolvers<void>()
+const softConfigPromise = Promise.withResolvers<void>?.()
 
 async function getSoftConfig() {
   return electronAPI.send("app:getSoftConfig").then((softConfig) => {

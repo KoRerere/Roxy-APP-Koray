@@ -25,7 +25,17 @@ export function showPageLoading() {
     hidePageLoading()
   }, 1000 * 10)
 }
-showPageLoading()
+
+if (isMainWindow) {
+  showPageLoading()
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept('/@/router', (newFoo) => {
+    console.log('newFoo', newFoo)
+  })
+}
+
 export function hidePageLoading() {
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'none')
   clearTimeout(pageLoadingTimer)

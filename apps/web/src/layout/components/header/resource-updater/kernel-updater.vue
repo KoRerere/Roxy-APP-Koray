@@ -68,7 +68,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
         item.status = 'uninstalled'
       } catch (error) {
         console.error('error', error)
-        toast.add({ severity: 'error', summary: error || $t('删除失败'), life: 2500 });
+        toast.add({ severity: 'error', summary: $t('删除失败'), life: 2500 });
       }
     },
   });

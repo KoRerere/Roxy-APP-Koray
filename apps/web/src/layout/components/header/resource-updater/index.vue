@@ -5,7 +5,9 @@ import { $t } from '/@/locales'
 import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
+import { useToast } from 'primevue/usetoast'
 
+const toast = useToast();
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
@@ -92,6 +94,9 @@ watch(isDownloadingKernel, () => {
 window.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
+    if (data.status === 'failed') {
+      toast.add({ severity: 'error', summary: data.description || $t('下载失败'), life: 2500 });
+    }
     const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
     if (index === -1) {
       kernelUpdates.value.push(data)
