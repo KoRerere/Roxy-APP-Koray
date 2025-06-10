@@ -49,7 +49,7 @@ export class ExtensionValidationError extends ExtensionError {
     cause?: any,
   ) {
     super(
-      $t('插件校验失败，请联系客服'),
+      $t('插件校验失败，请联系技术支持'),
       pluginId,
       pluginName,
       403,

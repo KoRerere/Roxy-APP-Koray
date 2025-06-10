@@ -200,15 +200,16 @@ export enum IPType {
 export enum ParseMode {
   one,  // 主机:端口:账号:密码
   two,  // 账号:密码@主机:端口
+  three, // 主机:端口
 }
 
 export function parseProxyUrl(url: string, mode?: ParseMode): ProxyObject {
   mode = mode ?? ParseMode.one
-  if (mode === ParseMode.one) {
+  if (mode === ParseMode.one || mode === ParseMode.two) {
     return parseProxyUrlOne(url)
   }
   else {
-    return parseProxyUrlTwo(url)
+    return parseProxyUrlThree(url)
   }
 }
 
@@ -228,7 +229,7 @@ function parseProxyUrlOne(url: string): ProxyObject {
   }
 }
 
-function parseProxyUrlTwo(url: string): ProxyObject {
+function parseProxyUrlThree(url: string): ProxyObject {
   const regex = /^(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
 
   const match = url.match(regex)

@@ -1,7 +1,6 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import RxTag from '/@/components/rx-tag.vue'
 import { RxAlert } from '/@/components/rx-alert/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
@@ -14,6 +13,8 @@ import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
 import { getColumns } from './columns'
 import ShadowDotGrid from '/@/components/shadow-dot-grid.vue'
+import Example from './example.vue'
+
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
@@ -58,11 +59,12 @@ const protocolOptions = ref<any[]>([])
 const protocolValue = ref()
 const parserTypeOptions = computed(() => {
   return [
-    { label: $t('主机:端口:账号:密码'), value: ParseMode.one },
-    { label: $t('账号:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.two },
+    { label: $t('主机:端口'), value: ParseMode.one },
+    { label: $t('主机:端口:用户名:密码'), value: ParseMode.two },
+    { label: $t('用户名:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.three },
   ]
 })
-const parserType = ref(parserTypeOptions.value[0].value)
+const parserType = ref(ParseMode.one)
 const ipTypeOptions = ref<any[]>([])
 const ipType = ref()
 const columns = ref(getColumns())
@@ -301,11 +303,11 @@ function onSave() {
           <span>{{ $t('代理信息') }}</span>
           <div class="flex gap-6px">
             <RxInputSelect size="xs" optionValue="value" v-model="ipType" :options="ipTypeOptions" name="ipType"
-              :filter="false" />
+              :filter="false" class="!flex-1" />
             <RxInputSelect size="xs" optionValue="value" v-model="protocolValue" :options="protocolOptions"
-              name="protocol" :filter="false" />
+              name="protocol" :filter="false" class="!w-100px" />
             <RxInputSelect size="xs" optionValue="value" v-model="parserType" :options="parserTypeOptions"
-              name="parserType" :filter="false" />
+              name="parserType" :filter="false" class="!w-180px" />
           </div>
         </div>
         <div class="information">
@@ -336,67 +338,7 @@ function onSave() {
           {{ $t('导入规则') }}
         </div>
         <div class="rules flex-1">
-          <div class="relative z-10">
-            <i18n-t :keypath="$t('示例: {br}{example}每一行一个代理，一次最多添加500个代理', { br: '{br}', example: '{example}' })"
-              scope="global">
-              <template #br>
-                <br>
-              </template>
-              <template #example>
-                <span class="text-[var(--colors-text-text-primary)]">
-                  <span v-if="parserType === ParseMode.one">
-                    <i18n-t
-                      :keypath="$t('192.168.0.1:8000{remark}{br}192.168.0.1:8000:用户名:密码{refreshurl}{br}192.168.0.1:8000{refreshurl}{remark}{ipv6}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
-                      <template #br>
-                        <br>
-                      </template>
-                      <template #refreshurl>
-                        <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-                      </template>
-                      <template #remark>
-                        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-                      </template>
-                      <template #ipv6>
-                        <template v-if="ipType === IPType.IPV6">
-                          <br />
-                          IPv6:
-                          <span class="text-orange">
-                            <br />
-                            {{ $t('[fe80::451f:9dc0:f1ab:90a3]:200') }}
-                          </span>
-                        </template>
-                      </template>
-                    </i18n-t>
-                  </span>
-                  <span v-else>
-                    <i18n-t
-                      :keypath="$t('192.168.0.1:8000{remark}{br}用户名:密码{separator}192.168.0.1:8000{refreshurl}{br}192.168.0.1:8000{refreshurl}{remark}{ipv6}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}', separator: '{separator}' })">
-                      <template #separator>@</template>
-                      <template #br>
-                        <br>
-                      </template>
-                      <template #refreshurl>
-                        <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-                      </template>
-                      <template #remark>
-                        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-                      </template>
-                      <template #ipv6>
-                        <template v-if="ipType === IPType.IPV6">
-                          <br />
-                          IPv6:
-                          <span class="text-orange">
-                            <br />
-                            {{ $t('[fe80::451f:9dc0:f1ab:90a3]:200') }}
-                          </span>
-                        </template>
-                      </template>
-                    </i18n-t>
-                  </span>
-                </span>
-              </template>
-            </i18n-t>
-          </div>
+          <Example :ip-type="ipType" :parser-type="parserType" class="relative z-10" />
           <ShadowDotGrid class="z-9" />
         </div>
       </div>

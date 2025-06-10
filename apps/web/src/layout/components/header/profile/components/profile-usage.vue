@@ -42,7 +42,7 @@ const colorLevelFn = (percent: number) => {
       weak: '#FFCB80'
     }
   }
-  // 用量多于 80%，红色，提醒用户如果需要提高额度 则联系客服
+  // 用量多于 80%，红色，提醒用户如果需要提高额度 则联系技术支持
   else {
     return {
       normal: '#F53838',

@@ -93,7 +93,7 @@ watch(isDownloadingKernel, () => {
 })
 
 const showDownloadError = debounce((data: ResourceUpdateMessage) => {
-  toast.add({ severity: 'error', summary: data.description || $t('下载失败'), life: 2500 });
+  toast.add({ severity: 'error', summary: data.description || $t('获取内核失败，{tech}', { tech: $t('请联系技术支持') }), life: 2500 });
 }, 100)
 
 window.electronAPI.on('app:resource-update', (data) => {

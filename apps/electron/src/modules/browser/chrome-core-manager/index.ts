@@ -304,9 +304,9 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           }
         } else if (error?.code === 'ENOENT' || error?.message?.includes('no such file or directory')) {
           payload.status = "failed";
-          payload.description = $t("内核解压失败，请检查是否被杀毒软件拦截");
+          payload.description = $t("内核解压异常，请检查是否被其他程序错误拦截");
           doMsgCallbacks()
-          error.message = $t("内核解压失败，请检查是否被杀毒软件拦截")
+          error.message = $t("内核解压异常，请检查是否被其他程序错误拦截")
           rm(this.genCoreDir(coreVersion), {
             recursive: true,
             force: true,

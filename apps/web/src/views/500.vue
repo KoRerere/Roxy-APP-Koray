@@ -5,7 +5,7 @@ import { $t } from '/@/locales/'
 const router = useRouter()
 
 const desc = computed(() => {
-  return $t('当前页面已超时。请检查您的网络连接，或按 Ctrl+R（macOS 上为 Cmd+R）刷新页面。<br /><br />如果此问题仍然存在，请联系客服或访问以下页面获取自助解决方案：<a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">文档</a>。')
+  return $t('RoxyBrowser 的响应时间过长。<br />请尝试以下方法：<br />1.检查网络连接状态<br />2.参考 <a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">常见问题</a> 解决方案<br />3.联系技术支持')
 })
 
 const reload = () => {
@@ -16,7 +16,7 @@ const reload = () => {
 <template>
   <div class="error-page">
     <div class="w-[384px]">
-      <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('出现问题了')" :desc="desc">
+      <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')" :desc="desc">
         <template #extra>
           <div class="flex">
             <RxButton severity="secondary" outlined class="w-full" @click="reload">

@@ -17,13 +17,15 @@ function handleClientItemClick() {
   <div class="app-updater-box">
     <div class="flex items-center gap-8px">
       <RxSvgIcon name="base/rx_ic_updates" color="var(--colors-icon-icon-info)" />
-      <span class="title">{{ $t('有新版本更新') }}</span>
+      <span class="title">{{ $t('有新版本可用') }}</span>
     </div>
-    <div class="flex items-center gap-8px sub-title">
+    <div class="flex items-center sub-title">
       <i18n-t
-        :keypath="$t('{click}v{version}。（当前版本：v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })">
+        :keypath="$t('{click}v{version}（当前 v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })">
         <template #click>
-          <span @click="handleClientItemClick" class="text-[var(--colors-text-text-link)]">{{ $t('点击更新至') }}</span>
+          <span @click="handleClientItemClick" class="text-[var(--colors-text-text-link)]">
+            {{ $t('点击更新') }}
+          </span>
         </template>
         <template #version>
           {{ version }}
