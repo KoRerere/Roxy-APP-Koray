@@ -14,7 +14,6 @@ import {
 import qs from 'qs'
 import { handleRequest, handleResponse } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useHandleError } from '../hooks/useResponseToast/handleError'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { handleResponseHeaders } from '/@/api/message/'
@@ -96,13 +95,6 @@ httpClient.instance.interceptors.response.use(async (response) => {
   }
   // await handleResponse(response)
   return response
-}, (error) => {
-  const handleError = useHandleError()
-  if (error.code === AxiosError.ERR_NETWORK) {
-    // 请求发送失败
-    handleError('network')
-  }
-  return Promise.reject(error);
 })
 
 export const API = {
