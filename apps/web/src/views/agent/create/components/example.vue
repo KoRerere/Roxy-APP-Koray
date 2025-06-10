@@ -19,7 +19,7 @@ defineProps<{
       <br />
       <div v-if="ipType === IPType.IPV6">
         <span class="text-orange">
-          {{ $t('[fe80::451f:9dc0:f1ab:90a3]') }}
+          [fe80::451f:9dc0:f1ab:90a3]
         </span>:8000<span class="text-green">[{{ $t("刷新 URL") }}]</span>
         <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
       </div>
@@ -55,10 +55,10 @@ defineProps<{
 
     <br />
     <div>
-      <span v-if="ipType === IPType.IPV6">1. </span>一行一个代理，一次最多添加 500 个；
+      <span v-if="ipType === IPType.IPV6">1. </span>{{$t('一行一个代理，一次最多添加 500 个；')}}
     </div>
     <div v-if="ipType === IPType.IPV6">
-      2. IPV6 的主机需填写在 [ ] 内；
+      {{$t('2. IPV6 的主机需填写在 [ ] 内；')}}
     </div>
   </div>
 </template>

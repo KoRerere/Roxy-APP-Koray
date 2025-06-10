@@ -24,11 +24,11 @@ const imgSrc = computed(() => {
         <div class="empty-info-title">
           {{ title }}
         </div>
-        <div v-if="desc" class="empty-info-desc">
-          <slot name="desc">
+        <slot name="desc">
+          <div v-if="desc" class="empty-info-desc">
             <div v-html="desc" />
-          </slot>
-        </div>
+          </div>
+        </slot>
         <slot name="extra" />
       </div>
     </div>
