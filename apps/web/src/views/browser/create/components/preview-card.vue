@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { motion, AnimatePresence } from "motion-v";
 import { filterInputsByNames } from '/@/utils';
 import { useThemeStore } from '/@/stores/theme'
 import type { SvgNames } from '/@/components/rx-icon';
@@ -23,6 +24,75 @@ const themeStore = useThemeStore()
 const collapsed = ref(false)
 const previewData = computed(() => getPreview(inputsGroup.flat()))
 
+const systeam = computed(() => {
+  const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
+  const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
+    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+    icon: 'base/rx_ic_user_key'
+  }))
+  const _os = os?.value?.value.toLowerCase()
+
+  return {
+    os: _os,
+    banner: bannerMap[_os as keyof typeof bannerMap],
+    icons: [
+      {
+        icon: os?.value?.icon || 'base/rx_ic_plus',
+      },
+      {
+        icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
+      },
+      {
+        icon: aItem1?.icon || 'base/rx_ic_plus',
+        image: aItem1?.image,
+        subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
+        subImage: account?.value?.length > 2 ? '' : aItem2?.image,
+      },
+    ]
+  }
+})
+
+const variantsLeft = {
+  visible: {
+    opacity: 0.4,
+    x: 0,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+  hidden: {
+    opacity: 0,
+    x: -60,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+}
+
+const variantsCenter = {
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+  hidden: {
+    opacity: 0,
+    x: 0,
+    y: 40,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+}
+
+const variantsRight = {
+  visible: {
+    opacity: 0.4,
+    x: 0,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+  hidden: {
+    opacity: 0,
+    x: 60,
+    transition: { duration: 0.5, ease: [0, 0.71, 0.2, 1.01] },
+  },
+}
+
 function getPreview(list: any[]) {
   return list.flatMap((item) => {
     if (item.preview)
@@ -40,31 +110,6 @@ function getPreview(list: any[]) {
   })
 }
 
-const systeam = computed(() => {
-  const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
-  const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
-    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
-    icon: 'base/rx_ic_user_key'
-  }))
-
-  return {
-    banner: bannerMap[os?.value?.value.toLowerCase() as keyof typeof bannerMap],
-    icons: [
-      {
-        icon: os?.value?.icon || 'base/rx_ic_plus',
-      },
-      {
-        icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
-      },
-      {
-        icon: aItem1?.icon || 'base/rx_ic_plus',
-        image: aItem1?.image,
-        subIcon: account?.value?.length > 2 ? 'base/rx_ic_more-h' : aItem2?.icon,
-        subImage: account?.value?.length > 2 ? '' : aItem2?.image,
-      },
-    ]
-  }
-})
 </script>
 
 <template>
@@ -90,16 +135,22 @@ const systeam = computed(() => {
           </template>
         </div>
       </div>
-      <div class="absolute top-20 left-1/2 -translate-x-1/2 flex gap-6">
-        <div v-if="isBatch" class="flex justify-end opacity-40 overview-banner">
-          <img :src="systeam.banner" class="block h-full object-contain">
-        </div>
-        <div class="overview-banner">
-          <img :src="systeam.banner" class="block h-full w-full object-contain">
-        </div>
-        <div v-if="isBatch" class="flex justify-start opacity-40 overview-banner">
-          <img :src="systeam.banner" class="block h-full object-contain">
-        </div>
+      <div v-if="systeam.os" class="absolute top-20 left-1/2 -translate-x-1/2 flex gap-6">
+        <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
+          <motion.div class="flex justify-end opacity-40 overview-banner" :key="systeam.os" :variants="variantsLeft" initial="hidden" animate="visible" exit="hidden">
+            <img :src="systeam.banner" class="block h-full object-contain" />
+          </motion.div>
+        </AnimatePresence>
+        <AnimatePresence :initial="false" mode="wait">
+          <motion.div class="overview-banner" :key="systeam.os" :variants="variantsCenter" initial="hidden" animate="visible" exit="hidden">
+            <img :src="systeam.banner" class="block h-full w-full object-contain">
+          </motion.div>
+        </AnimatePresence>
+        <AnimatePresence v-if="isBatch" :initial="false" mode="wait">
+          <motion.div class="flex justify-start opacity-40 overview-banner" :key="systeam.os" :variants="variantsRight" initial="hidden" animate="visible" exit="hidden">
+            <img :src="systeam.banner" class="block h-full object-contain" />
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
     <div v-if="!collapsed" class="w-full content">
