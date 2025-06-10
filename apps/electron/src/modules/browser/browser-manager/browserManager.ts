@@ -65,6 +65,11 @@ export class BrowserManager {
       throw new Error('dirId 不能为空')
     }
 
+    if (this.uploadDataQueue.has(dirId)) {
+      console.log(`BrowserManager ${dirId} === 浏览器数据正在上传中，终止打开`)
+      return
+    }
+
     const openedBrowser = this.openedBrowserMap.get(dirId)
     // 如果浏览器已经打开, 则直接返回
     if (openedBrowser) {
@@ -171,7 +176,6 @@ export class BrowserManager {
 
     const dirIds = [...this.uploadDataQueue.keys()]
     const uploadDataQueue = [...this.uploadDataQueue.values()]
-    this.uploadDataQueue.clear()
 
     const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
@@ -193,6 +197,7 @@ export class BrowserManager {
 
     return Promise.allSettled(uploadParamsList).finally(() => {
       dirIds.forEach(dirId => {
+        this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
       })
     })

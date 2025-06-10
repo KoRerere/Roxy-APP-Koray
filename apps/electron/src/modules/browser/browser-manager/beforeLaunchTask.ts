@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import puppeteer from './chrome-wrapper/'
 import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
-import { chromeCoreManager } from '/@/modules/browser'
+import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ExtensionManager } from '/@/modules/extension'
@@ -54,11 +54,14 @@ export class BeforeLaunchTask {
   get isMobile() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
+  /** 最后一次的 token，用于退出登录后中断浏览器打开 */
+  #lastToken = ''
 
   /** 用于重新拉起浏览器 */
   makeBrowserActive!: () => Promise<Browser>
 
   constructor(private browserItem: BrowserItem) {
+    this.#lastToken = store.token!
   }
 
   /** 开始执行任务 */
@@ -74,6 +77,11 @@ export class BeforeLaunchTask {
     // 不通过的任务会抛出异常，中断任务队列
     for (const [message, task] of this.taskMap) {
       try {
+        if (this.#lastToken !== store.token) {
+          this.taskMap.clear()
+          throw new Error('用户凭证不一样，中断浏览器打开')
+        }
+
         this.currentTask = task
         this.progress = task.start
         this.sendSuccessMessage(message)
@@ -647,13 +655,18 @@ export class BeforeLaunchTask {
 
   /** 发送成功的消息到渲染进程 */
   sendSuccessMessage(message: string, percent = this.progress) {
-    this.lastMessage = {
-      dirId: this.browserItem.winInfo.dirId!,
-      percent,
-      message,
-      warningMessages: this.warningMessages,
+    if (this.#lastToken !== store.token) {
+      browserManager.openingBrowserMap.delete(this.browserItem.winInfo.dirId!)
+      this.taskMap.clear()
+    } else {
+      this.lastMessage = {
+        dirId: this.browserItem.winInfo.dirId!,
+        percent,
+        message,
+        warningMessages: this.warningMessages,
+      }
+      sendSuccessMessage(this.lastMessage)
     }
-    sendSuccessMessage(this.lastMessage)
   }
 
   /** 发送错误的消息到渲染进程 */
