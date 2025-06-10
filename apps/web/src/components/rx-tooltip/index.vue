@@ -24,8 +24,8 @@ const props = defineProps({
   }
 })
 
-const sourceRef = useTemplateRef<HTMLDivElement>('sourceRef')
-const targetRef = useTemplateRef<HTMLDivElement>('targetRef')
+const sourceRef = useTemplateRef<HTMLDivElement>('source')
+const targetRef = useTemplateRef<HTMLDivElement>('target')
 
 const slots = useSlots();
 
@@ -129,15 +129,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="targetRef" class="inline-block">
+  <div ref="target" class="inline-block">
     <slot />
   </div>
   <Teleport to="body" v-if="show">
-    <div ref="sourceRef" class="absolute inline-block z-4000">
+    <div ref="source" class="absolute inline-block z-4000">
       <AnimatePresence>
-        <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
-          :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"
-          :transition="{ duration: 0.15 }">
+        <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }" :animate="{ opacity: 1, y: 0, x: 0 }"
+          :exit="{ opacity: 0, y: configs.y, x: configs.x }" :transition="{ duration: 0.15 }">
           <slot name="content" />
         </motion.div>
       </AnimatePresence>

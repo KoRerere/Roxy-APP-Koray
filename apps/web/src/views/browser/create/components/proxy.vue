@@ -142,7 +142,7 @@ function tooltipValue(item: any) {
   const value = [
     $t('代理信息'),
     item.ipType,
-    `${strConcat(item.protocol, '://')}${item.host}${strConcat(':', item.port)}`,
+    `${item.protocol}${strConcat('://', item.host)}${strConcat(':', item.port)}`,
     `${$t('刷新 URL')}: ${item.refreshUrl}`,
     `${$t('位置')}: ${item.lastCountry}${strConcat('/', item.lastCity) || ''}`,
     `${$t('检测时间')}: ${item.checkTime}`,
@@ -195,8 +195,7 @@ function tooltipValue(item: any) {
               <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
                 @click.stop="testProxy(item, index)" />
             </div>
-            <div class="flex justify-between single-time">{{ item.ipType }} {{ strConcat(item.proxyCategory, '://') }}{{
-              item.host }}{{ strConcat(':', item.port) }}</div>
+            <div class="flex justify-between single-time">{{ item.ipType }} {{ item.proxyCategory }}{{ strConcat('://', item.host) }}{{ strConcat(':', item.port) }}</div>
           </RxCard>
         </template>
       </div>

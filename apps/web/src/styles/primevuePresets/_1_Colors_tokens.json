@@ -159,7 +159,7 @@
       "dropdown": {
         "bg": "{primitives.netural.0}",
         "bg-hover": "{primitives.netural.100}",
-        "divider": "{colors.border.border-subtle}",
+        "divider": "{colors.border.border-inactive}",
         "bg-active": "{primitives.blue.500}",
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
@@ -262,6 +262,8 @@
     "pattern": {
       "Color": "#ffffff",
       "editor": {
+        "key": "#005cc5",
+        "value": "#032f62",
         "btn": {
           "bg": "{primitives.netural.600}",
           "text": "{primitives.netural.0}",
@@ -273,8 +275,6 @@
           "text-inactive": "{primitives.netural.500}",
           "border-inactive": "{primitives.netural.600}"
         },
-        "key": "#005cc5",
-        "value": "#032f62",
         "bg": "{primitives.netural.800}",
         "code": "{primitives.netural.0}"
       },
@@ -651,6 +651,8 @@
     "pattern": {
       "Color": "#ffffff",
       "editor": {
+        "key": "#79c0ff",
+        "value": "#a5d6ff",
         "btn": {
           "bg": "{primitives.netural.700}",
           "text": "{primitives.netural.0}",
@@ -662,8 +664,6 @@
           "text-inactive": "{primitives.netural.600}",
           "border-inactive": "{primitives.netural.700}"
         },
-        "key": "#79c0ff",
-        "value": "#a5d6ff",
         "bg": "{primitives.netural.800}",
         "code": "{primitives.netural.0}"
       },

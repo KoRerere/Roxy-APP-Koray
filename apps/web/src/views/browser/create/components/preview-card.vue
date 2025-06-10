@@ -27,7 +27,7 @@ const previewData = computed(() => getPreview(inputsGroup.flat()))
 const systeam = computed(() => {
   const [os, proxy, account] = filterInputsByNames(inputsGroup[0], ['os', 'proxyInfoList', 'windowPlatformList'])
   const [aItem1, aItem2] = (account?.value || []).map((item: any) => ({
-    image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
+    image: item.platformIcon,
     icon: 'base/rx_ic_user_key'
   }))
   const _os = os?.value?.value.toLowerCase()
@@ -114,19 +114,19 @@ function getPreview(list: any[]) {
 
 <template>
   <div class="flex flex-col items-start preview" :class="[!collapsed ? '' : 'hide']">
-    <div class="flex flex-row-reverse items-center justify-between self-stretch header">
+    <div class="flex flex-row-reverse items-center justify-between self-stretch select-none header">
       <SvgIcon class="shrink-0 ma-1 cursor-pointer" :class="{ 'rotate-180': !collapsed }" color="var(--colors-icon-primary)" name="base/rx_ic_fold_right" @click="collapsed = !collapsed" />
       <span v-if="!collapsed">{{ $t('概要') }}</span>
     </div>
-    <div v-if="!collapsed && showOverview" class="relative flex flex-col pt-6 items-center overflow-hidden overview">
+    <div v-if="!collapsed && showOverview" class="relative flex flex-col pt-6 items-center overflow-hidden pointer-events-none select-none overview">
       <div class="flex items-center gap-3">
-        <div v-if="isBatch">1/{{ createCount }}</div>
+        <div v-if="isBatch" class="overview-count">1/{{ createCount }}</div>
         <div class="w-34 flex items-center justify-between relative">
           <div class="line"></div>
           <template v-for="item in systeam.icons" :key="item.icon">
             <div v-if="item.icon" class="relative icon">
               <img v-if="item.image" class="w-full h-full" :src="item.image" />
-              <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" />
+              <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#575D60" />
               <div v-if="item.subIcon || item.subImage" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
                 <img v-if="item.subImage" class="w-full h-full" :src="item.subImage" />
                 <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" />
@@ -155,7 +155,7 @@ function getPreview(list: any[]) {
     </div>
     <div v-if="!collapsed" class="w-full content">
       <div class="list">
-        <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-2 px-3 gap-1">
+        <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-2 px-3 gap-1 select-none">
           <div class="label">
             {{ item.label }}
           </div>
@@ -208,6 +208,11 @@ function getPreview(list: any[]) {
   border-radius: 6px;
   background: linear-gradient(180deg, #ebf7ff 0%, #f6f6fd 100%);
 
+  &-count {
+    color: #575D60;
+    font-size: 13px;
+  }
+
   &-banner {
     width: 192px;
     height: 110px;
@@ -222,8 +227,8 @@ function getPreview(list: any[]) {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  border: 0.5px solid var(--colors-border-border-subtle, #C7D1D6);
-  background: var(--colors-background-bg-action, #FFF);
+  border: 0.5px solid #C7D1D6;
+  background: #FFF;
   z-index: 1;
 }
 
@@ -262,7 +267,7 @@ function getPreview(list: any[]) {
 }
 
 .label {
-  width: 90px;
+  width: 120px;
   color: var(--pattern-editor-key, #79C0FF);
   font-family: 'DM Mono';
   font-size: 12px;

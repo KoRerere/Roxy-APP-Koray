@@ -136,7 +136,7 @@
 	--component-switch-bg-off-inactive: var(--primitives-netural-100);
 	--component-dropdown-bg: var(--primitives-netural-0);
 	--component-dropdown-bg-hover: var(--primitives-netural-100);
-	--component-dropdown-divider: var(--colors-border-border-subtle);
+	--component-dropdown-divider: var(--colors-border-border-inactive);
 	--component-dropdown-bg-active: var(--primitives-blue-500);
 	--component-dropdown-text-active: var(--primitives-netural-0);
 	--component-dropdown-icon-active: var(--primitives-netural-0);
@@ -207,6 +207,8 @@
 	--component-rainbow-Blue: var(--primitives-blue-500);
 	--component-rainbow-Netural: var(--primitives-netural-300);
 	--pattern-Color: #ffffff;
+	--pattern-editor-key: #005cc5;
+	--pattern-editor-value: #032f62;
 	--pattern-editor-btn-bg: var(--primitives-netural-600);
 	--pattern-editor-btn-text: var(--primitives-netural-0);
 	--pattern-editor-btn-border: var(--primitives-netural-600);
@@ -216,8 +218,6 @@
 	--pattern-editor-btn-bg-inactive: var(--primitives-netural-800);
 	--pattern-editor-btn-text-inactive: var(--primitives-netural-500);
 	--pattern-editor-btn-border-inactive: var(--primitives-netural-600);
-	--pattern-editor-key: #005cc5;
-	--pattern-editor-value: #032f62;
 	--pattern-editor-bg: var(--primitives-netural-800);
 	--pattern-editor-code: var(--primitives-netural-0);
 	--pattern-dashboard-card-bg: rgba(0, 0, 0, 0.0200);

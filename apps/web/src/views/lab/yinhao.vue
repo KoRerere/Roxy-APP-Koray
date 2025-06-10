@@ -270,10 +270,16 @@ const filters = reactive({
   },
 })
 
+
+async function test() {
+  const xxx = await electronAPI.send('browser:getOpenedBrowser')
+  console.log("🚀 ~ test ~ xxx:", xxx)
+}
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <RxButton label="test" @click="test"></RxButton>
     <!-- <div class="flex flex-col gap-2">
       <RxAlert announcement title="wcis man!" type="success"></RxAlert>
       <RxAlert title="wcis man!" type="info"></RxAlert>
