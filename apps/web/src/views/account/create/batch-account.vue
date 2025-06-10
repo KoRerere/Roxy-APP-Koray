@@ -170,8 +170,8 @@ async function onSave(needMore: boolean) {
 
 <template>
   <div class="flex-1 overflow-auto flex-col content">
-    <div class="flex gap-3">
-      <div class="flex flex-1 flex-col gap-1">
+    <div class="grid grid-cols-10 gap-3 w-full">
+      <div class="col-span-6 flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
           <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" @change="onChange" />
@@ -185,7 +185,7 @@ async function onSave(needMore: boolean) {
         </div>
       </div>
 
-      <div class="flex flex-1 flex-col gap-1 relative z-10">
+      <div class="col-span-4 flex flex-col gap-1 relative z-10">
         <div class="subtitle">
           {{ $t('导入规则') }}
         </div>
@@ -208,7 +208,7 @@ async function onSave(needMore: boolean) {
       <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
         :show-table-header="false" :show-actions="false">
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" />
+          <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" class="min-h-262px" />
         </template>
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
@@ -216,7 +216,7 @@ async function onSave(needMore: boolean) {
               :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
-              }}</div>
+            }}</div>
           </div>
         </template>
         <template #actions="{ data }">

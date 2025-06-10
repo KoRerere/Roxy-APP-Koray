@@ -136,7 +136,8 @@ function onRenewal() {
     <main class="rx-main">
       <RxLayoutHeader />
       <div class="rx-main-announcement">
-        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content" closable @close="handleCloseAnnt(annt.id!)">
+        <Message v-for="annt in anntList" :key="annt.id" severity="success" class="w-full rx-main-announcement__content"
+          closable @close="handleCloseAnnt(annt.id!)">
           <template #default>
             <div class="ellipsis-1" v-html="annt.announcement" />
           </template>
@@ -144,16 +145,21 @@ function onRenewal() {
             <SvgIcon name="base/rx_ic_delete" />
           </template>
         </Message>
-        <RxAlert v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate" class="w-full expired-alert" type="warn" announcement @close="handleCloseSubscriptionExpired">
+        <RxAlert v-if="!userPayInfo.isAuto && isShowSubscriptionExpired && remainTime && subEndDate"
+          class="w-full expired-alert" type="warn" announcement @close="handleCloseSubscriptionExpired">
           <template #title>
-            <i18n-t v-if="roleStore.isOwner" :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })" scope="global">
+            <i18n-t v-if="roleStore.isOwner"
+              :keypath="$t('您的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时{link}。', { remainTime, subEndDate, link: '{link}' })"
+              scope="global">
               <template #link>
                 <span class="font-bold underline cursor-pointer" @click="onRenewal">
                   {{ userPayInfo.subLevel === SubLevelEnum.Trial ? $t('前往购买') : $t('前往续费') }}
                 </span>
               </template>
             </i18n-t>
-            <i18n-t v-else :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })" scope="global">
+            <i18n-t v-else
+              :keypath="$t('当前空间的订阅将于 {remainTime} 天后（{subEndDate}）到期。为避免服务中断，请及时联系空间拥有者续费。', { remainTime, subEndDate })"
+              scope="global">
             </i18n-t>
           </template>
         </RxAlert>
