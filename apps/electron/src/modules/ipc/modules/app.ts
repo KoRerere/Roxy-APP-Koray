@@ -96,11 +96,11 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   });
 
   /** 安装更新 */
-  ipcMain.on("app:quitAndInstall", (event, info) => {
+  ipcMain.on("app:quitAndInstall", async (event, info) => {
     if (info.type === "app") {
       appUpdater.upgradeNow();
     } else if (info.type === "web") {
-      webUpdater.upgradeNow();
+      await webUpdater.upgradeNow();
     }
   });
 

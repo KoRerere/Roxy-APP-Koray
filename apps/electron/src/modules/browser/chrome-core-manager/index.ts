@@ -302,6 +302,19 @@ export const chromeCoreManager = new (class ChromeCoreManager {
               }
             }
           }
+        } else if (error?.code === 'ENOENT' || error?.message?.includes('no such file or directory')) {
+          payload.status = "failed";
+          payload.description = $t("内核解压失败，请检查是否被杀毒软件拦截");
+          doMsgCallbacks()
+          error.message = $t("内核解压失败，请检查是否被杀毒软件拦截")
+          rm(this.genCoreDir(coreVersion), {
+            recursive: true,
+            force: true,
+          });
+        } else {
+          payload.status = "failed";
+          payload.description = $t("下载内核失败");
+          doMsgCallbacks()
         }
         return Promise.reject(error);
       } finally {

@@ -64,14 +64,14 @@ function showAppUpdaterDialog(item: ResourceUpdateMessage) {
   }
 }
 
-function handleClientItemClick(item: ResourceUpdateMessage) {
+async function handleClientItemClick(item: ResourceUpdateMessage) {
   const info = toRaw(item)
   console.log('handleItemClick', info)
   if (info.type === 'app') {
     showAppUpdaterDialog(info)
   }
   else if (info.type === 'web') {
-    window.electronAPI.send('app:quitAndInstall', info)
+    await window.electronAPI.send('app:quitAndInstall', info)
   }
 }
 </script>
