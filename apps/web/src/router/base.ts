@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-import ErrorPage from '/@/views/500.vue'
 
 export const baseRoutes: RouteRecordRaw[] = [
   {
@@ -11,7 +10,7 @@ export const baseRoutes: RouteRecordRaw[] = [
   {
     name: '500',
     path: '/500',
-    component: ErrorPage
+    component: () => import('/@/views/500.vue')
   },
   {
     name: 'rx-form',
