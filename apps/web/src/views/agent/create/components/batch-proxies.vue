@@ -58,11 +58,11 @@ const protocolOptions = ref<any[]>([])
 const protocolValue = ref()
 const parserTypeOptions = computed(() => {
   return [
-    { label: $t('Host:Post:User:password'), value: ParseMode.one },
-    { label: $t('User:password@Host:Post'), value: ParseMode.two },
+    { label: $t('服务器:端口:账号:密码'), value: ParseMode.one },
+    { label: $t('账号:密码{separator}服务器:端口', { separator: '@' }), value: ParseMode.two },
   ]
 })
-const parserType = ref(parserTypeOptions.value[0])
+const parserType = ref(parserTypeOptions.value[0].value)
 const ipTypeOptions = ref<any[]>([])
 const ipType = ref()
 const columns = ref(getColumns())
@@ -115,9 +115,9 @@ onBeforeMount(async () => {
   ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
   protocolOptions.value = $dict_map.protocol
-  protocolValue.value = $dict_map.protocol[0]
+  protocolValue.value = $dict_map.protocol[0].value
   ipTypeOptions.value = $dict_map.ipType
-  ipType.value = $dict_map.ipType[0]
+  ipType.value = $dict_map.ipType[0].value
 })
 
 function parseValue() {
@@ -130,16 +130,16 @@ function parseValue() {
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
-      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, ipType.value.value, parserType.value.value)
+      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, ipType.value, parserType.value)
 
-      const protocol = __protocol || protocolValue.value.value;
+      const protocol = __protocol || protocolValue.value;
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
 
       return {
         checkChannel: ipCheckerConfig.value?.value,
         checkChannelValue: ipCheckerConfig.value?.label,
-        ipType,
+        ipType: ipType.value.value,
         protocol: protocol?.toLocaleUpperCase(),
         host,
         port,
@@ -298,11 +298,12 @@ function onSave() {
         <div class="panel-title flex justify-between items-center">
           <span>{{ $t('代理信息') }}</span>
           <div class="flex gap-6px">
-            <RxInputSelect size="xs" v-model="ipType" :options="ipTypeOptions" name="ipType" :filter="false" />
-            <RxInputSelect size="xs" v-model="protocolValue" :options="protocolOptions" name="protocol"
+            <RxInputSelect size="xs" optionValue="value" v-model="ipType" :options="ipTypeOptions" name="ipType"
               :filter="false" />
-            <RxInputSelect size="xs" v-model="parserType" :options="parserTypeOptions" name="parserType"
-              :filter="false" />
+            <RxInputSelect size="xs" optionValue="value" v-model="protocolValue" :options="protocolOptions"
+              name="protocol" :filter="false" />
+            <RxInputSelect size="xs" optionValue="value" v-model="parserType" :options="parserTypeOptions"
+              name="parserType" :filter="false" />
           </div>
         </div>
         <div class="information">
@@ -334,29 +335,62 @@ function onSave() {
         </div>
         <div class="rules flex-1">
           <div class="relative z-10">
-            <i18n-t
-              :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}{example}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', example: '{example}' })"
+            <i18n-t :keypath="$t('示例: {br}{example}每一行一个代理，一次最多添加500个代理', { br: '{br}', example: '{example}' })"
               scope="global">
               <template #br>
                 <br>
               </template>
               <template #example>
                 <span class="text-[var(--colors-text-text-primary)]">
-                  <i18n-t
-                    :keypath="$t('http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
-                    <template #br>
-                      <br>
-                    </template>
-                    <template #refreshurl>
-                      <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-                    </template>
-                    <template #remark>
-                      <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-                    </template>
-                    <template #ipv6>
-                      <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
-                    </template>
-                  </i18n-t>
+                  <span v-if="parserType === ParseMode.one">
+                    <i18n-t
+                      :keypath="$t('192.168.0.1:8000{remark}{br}192.168.0.1:8000:用户名:密码{refreshurl}{br}192.168.0.1:8000{refreshurl}{remark}{ipv6}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
+                      <template #br>
+                        <br>
+                      </template>
+                      <template #refreshurl>
+                        <span class="text-green">[{{ $t('刷新 URL') }}]</span>
+                      </template>
+                      <template #remark>
+                        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+                      </template>
+                      <template #ipv6>
+                        <template v-if="ipType === IPType.IPV6">
+                          <br />
+                          IPv6:
+                          <span class="text-orange">
+                            <br />
+                            {{ $t('[fe80::451f:9dc0:f1ab:90a3]:200') }}
+                          </span>
+                        </template>
+                      </template>
+                    </i18n-t>
+                  </span>
+                  <span v-else>
+                    <i18n-t
+                      :keypath="$t('192.168.0.1:8000{remark}{br}用户名:密码{separator}192.168.0.1:8000{refreshurl}{br}192.168.0.1:8000{refreshurl}{remark}{ipv6}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}', separator: '{separator}' })">
+                      <template #separator>@</template>
+                      <template #br>
+                        <br>
+                      </template>
+                      <template #refreshurl>
+                        <span class="text-green">[{{ $t('刷新 URL') }}]</span>
+                      </template>
+                      <template #remark>
+                        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+                      </template>
+                      <template #ipv6>
+                        <template v-if="ipType === IPType.IPV6">
+                          <br />
+                          IPv6:
+                          <span class="text-orange">
+                            <br />
+                            {{ $t('[fe80::451f:9dc0:f1ab:90a3]:200') }}
+                          </span>
+                        </template>
+                      </template>
+                    </i18n-t>
+                  </span>
                 </span>
               </template>
             </i18n-t>

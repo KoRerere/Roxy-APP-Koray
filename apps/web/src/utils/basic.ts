@@ -205,10 +205,6 @@ export enum ParseMode {
 export function parseProxyUrl(url: string, type?: IPType, mode?: ParseMode): ProxyObject {
   type = type ?? IPType.IPV4
   mode = mode ?? ParseMode.one
-
-  console.log('🚀 ~ parseProxyUrl ~ url:', url)
-  console.log('🚀 ~ parseProxyUrl ~ type:', type)
-  console.log('🚀 ~ parseProxyUrl ~ mode:', mode)
   if (type === IPType.IPV4) {
     if (mode === ParseMode.one) {
       return parseProxyUrlIPv4One(url)
@@ -218,7 +214,12 @@ export function parseProxyUrl(url: string, type?: IPType, mode?: ParseMode): Pro
     }
   }
   else {
-    return parseProxyUrlIPv6(url)
+    if (mode === ParseMode.one) {
+      return parseProxyUrlIPv6One(url)
+    }
+    else {
+      return parseProxyUrlIPv6Two(url)
+    }
   }
 }
 
@@ -252,19 +253,32 @@ function parseProxyUrlIPv4Two(url: string): ProxyObject {
   }
 }
 
-export function parseProxyUrlIPv6(url: string): ProxyObject {
-  const [_, protocol, host, port, __, proxyUserName, ___, proxyPassword] = url.match(/^(https?|socks5):\/\/\((.*?)\):([^:\[\]\{\}]+)(:([^:\[\]\{\}]+))?(:([^:\[\]\{\}]+))?(?:\[[^\]]*\])?(?:\{[^\}]*\})?$/) || []
-  const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
-  const remark = url.match(/\{(.*?)\}/)?.[1]
-
+function parseProxyUrlIPv6One(url: string): ProxyObject {
+  const regex = /^(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+  const match = url.match(regex)
+  const data = match?.groups
   return {
-    protocol,
-    host,
-    port,
-    proxyUserName,
-    proxyPassword,
-    refreshUrl,
-    remark,
+    host: data?.host,
+    port: data?.port,
+    proxyUserName: data?.user,
+    proxyPassword: data?.pass,
+    refreshUrl: data?.refresh,
+    remark: data?.remark,
+  }
+}
+
+function parseProxyUrlIPv6Two(url: string): ProxyObject {
+  const regex = /^(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+
+  const match = url.match(regex)
+  const data = match?.groups
+  return {
+    host: data?.host,
+    port: data?.port,
+    proxyUserName: data?.user,
+    proxyPassword: data?.pass,
+    refreshUrl: data?.refresh,
+    remark: data?.remark,
   }
 }
 

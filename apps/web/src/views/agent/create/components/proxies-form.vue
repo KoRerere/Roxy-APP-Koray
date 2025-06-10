@@ -14,7 +14,7 @@ const props = defineProps({
   },
 })
 
-const { testProxy: checkProxy, checkResult } = useCheckProxy()
+const { testProxy: checkProxy, checkResult, batchTestShowToast } = useCheckProxy()
 const rxAlertRef = useTemplateRef('rxalert')
 const original = defineModel<any>('original')
 
@@ -27,6 +27,7 @@ async function testProxy() {
     const data = getFormData(props.inputs)
     visible.value = false
     const result = await checkProxy(toRaw(data))
+    batchTestShowToast([result])
     original.value = { ...original.value, ...result }
 
     if (!result.error) {
