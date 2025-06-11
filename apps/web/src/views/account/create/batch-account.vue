@@ -100,10 +100,6 @@ function operationHandler(operate: any, data: any) {
   }
 }
 
-function onChange() {
-  input.value.props.invalid = false
-}
-
 function parseValue() {
   if (!input.value.value) {
     onlyErrorToast(-1, $t('请输入或选择平台网址'))
@@ -118,7 +114,7 @@ function parseValue() {
   }
   const { platformIcon = '', platformIconDark = '' } = input.value._rows.find((item: any) => item.platformUrl === input.value.value) || {}
 
-  dataList.value = list.map((str, index) => {
+  dataList.value = [...new Set(list)].map((str, index) => {
     const [_, platformUserName, platformPassword, platformEfa = '', platformRemarks = ''] = str.match(/^([^:{}]+):([^:{}]+)(?::([^:{}]+))?(?:\{([^:{}]+)\})?$/) || []
     return {
       id: index,
@@ -131,6 +127,10 @@ function parseValue() {
       platformRemarks,
     }
   })
+  const filterCount = list.length - dataList.value.length
+  if (filterCount > 0) {
+    showToast(0, $t('{count} 重复账号已过滤。', { count: filterCount }))
+  }
 }
 
 function onRemark(data: any) {
@@ -174,17 +174,15 @@ async function onSave(needMore: boolean) {
       <div class="col-span-6 flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
-          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" @change="onChange" />
+          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" />
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />
           <div class="flex justify-end information-actions">
-            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play"
-              @click.stop="parseValue" />
+            <RxButton outlined severity="secondary" size="xxs" :label="$t('解析')" icon="base/rx_ic_play" @click.stop="parseValue" />
           </div>
         </div>
       </div>
-
       <div class="col-span-4 flex flex-col gap-1 relative z-10">
         <div class="subtitle">
           {{ $t('导入规则') }}
@@ -205,18 +203,15 @@ async function onSave(needMore: boolean) {
     </div>
     <div class="flex flex-col flex-1">
       <div class="flex items-center justify-between pt-6 pb-3 table-toolbar subtitle">{{ $t('已解析账号') }}</div>
-      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false"
-        :show-table-header="false" :show-actions="false">
+      <RyTable :columns="columns" :data-list="dataList" :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂未添加账号')" class="min-h-262px" />
         </template>
         <template #remark="{ data }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
-              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
-            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
-            }}</div>
+            <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks }}</div>
           </div>
         </template>
         <template #actions="{ data }">
@@ -225,8 +220,7 @@ async function onSave(needMore: boolean) {
       </RyTable>
     </div>
     <div class="flex justify-end gap-3 footer">
-      <RxButton :label="$t('保存 & 继续添加')" :disabled="!dataList?.length" severity="secondary" outlined
-        @click.stop="onSave(true)" />
+      <RxButton :label="$t('保存 & 继续添加')" :disabled="!dataList?.length" severity="secondary" outlined @click.stop="onSave(true)" />
       <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave(false)" />
     </div>
   </div>

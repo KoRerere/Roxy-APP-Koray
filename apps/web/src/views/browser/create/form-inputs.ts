@@ -137,7 +137,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const resolutionValue = resolutionOptions.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
   const inputsGroup = [] as any[]
 
-  const original = reactive<Record<string, any>>({
+  const original = reactive<any>({
     ...getDefaultValue(),
     ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))),// 过滤掉加密字段
   })
