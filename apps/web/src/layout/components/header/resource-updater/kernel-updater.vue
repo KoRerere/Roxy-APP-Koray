@@ -9,6 +9,8 @@ defineProps<{
   upgradeList: ResourceUpdateMessage[]
 }>()
 
+const emit = defineEmits(['onDownloadClick'])
+
 const toast = useToast();
 const confirm = useConfirm();
 
@@ -34,6 +36,7 @@ function handleKernelItemClick(item: ResourceUpdateMessage) {
     return $t('正在下载')
   } else if (item.coreVersion) {
     window.electronAPI.send('app:download-chrome-core', item.coreVersion)
+    emit('onDownloadClick', item)
   }
 }
 

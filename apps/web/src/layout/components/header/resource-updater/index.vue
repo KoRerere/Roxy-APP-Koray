@@ -79,19 +79,28 @@ async function getKernelList() {
   kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
 }
 
+// 5 分钟内不重复提示
+let lastTime = 0
+
 watch(isDownloadingKernel, () => {
+  if (Date.now() - lastTime < 60000 * 5) {
+    return
+  }
   console.log('isDownloadingKernel', popoverRef.value?.getRef())
   if (isDownloadingKernel.value && !popoverRef.value?.getRef().visible) {
     btnRef.value?.btnEl.click()
+    lastTime = Date.now()
     nextTick(() => {
       tabModel.value = tabs.value[1].value
-      // 5 分钟内不重复提示
-      setTimeout(() => {
-        isDownloadingKernel.value = false
-      }, 60000 * 5)
+      isDownloadingKernel.value = false
     })
   }
 })
+
+function onDownloadClick(item: ResourceUpdateMessage) {
+  console.log('onDownloadClick', item)
+  lastTime = Date.now()
+}
 
 const showDownloadError = debounce((data: ResourceUpdateMessage) => {
   toast.add({
@@ -116,6 +125,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
+    console.log('isDownloadingKernel', data)
     isDownloadingKernel.value = data.status === 'downloading' && !data.silent
     kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
@@ -157,7 +167,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
-            <component :is="tab.component" :upgrade-list="tab.list" />
+            <component :is="tab.component" :upgrade-list="tab.list" @onDownloadClick="onDownloadClick" />
           </TabPanel>
         </TabPanels>
       </Tabs>
