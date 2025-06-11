@@ -15,42 +15,44 @@ defineProps<{
     <div v-if="parserType === ParseMode.one" class="text-[var(--colors-text-text-primary)]">
       192.168.0.1:8000
       <br />
-      192.168.0.1:8000<span class="text-green">[{{ $t('刷新 URL') }}]</span><span class="text-blue">{{
-        `\{${$t('备注')}\}`
+      192.168.0.1:8000<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL') }}]</span><span
+        class="text-blue whitespace-nowrap">{{
+          `\{${$t('备注')}\}`
         }}</span>
       <div v-if="ipType === IPType.IPV6">
         <span class="text-orange">
-          [fe80::01:9dc0:f1ab:90a3]
-        </span>:8000<span class="text-green">[{{ $t("刷新 URL") }}]</span>
-        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+          [fe80::01:9dc0:f1ab:90a3]</span>:8000<span class="text-green whitespace-nowrap">[{{ $t("刷新 URL") }}]</span>
+        <span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
       </div>
     </div>
 
     <div v-else-if="parserType === ParseMode.two" class="text-[var(--colors-text-text-primary)]">
       <span>192.168.0.1:8000:{{ $t('用户名:密码') }}</span>
       <br />
-      <span>192.168.0.1:8000:{{ $t('用户名:密码') }}<span class="text-green">[{{ $t('刷新 URL') }}]</span><span
-          class="text-blue">{{ `\{${$t('备注')}\}` }}</span></span>
+      <span>192.168.0.1:8000:{{ $t('用户名:密码') }}<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL')
+      }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span></span>
 
       <div v-if="ipType === IPType.IPV6">
-        <span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000:{{ $t('用户名:密码') }}<span class="text-green">[{{
-          $t('刷新 URL')
+        <span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000:{{ $t('用户名:密码') }}<span
+          class="text-green whitespace-nowrap">[{{
+            $t('刷新 URL')
           }}]</span>
-        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+        <span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
       </div>
     </div>
 
     <div v-else class="text-[var(--colors-text-text-primary)]">
       <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000
       <br />
-      <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000<span class="text-green">[{{ $t('刷新 URL')
-      }}]</span><span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+      <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL')
+      }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
 
       <div v-if="ipType === IPType.IPV6">
-        {{ $t('用户名:密码') }}@<span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000<span class="text-green">[{{
-          $t('刷新 URL')
+        {{ $t('用户名:密码') }}@<span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000<span
+          class="text-green whitespace-nowrap">[{{
+            $t('刷新 URL')
           }}]</span>
-        <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+        <span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
       </div>
     </div>
 
@@ -68,10 +70,10 @@ defineProps<{
 .break-keep-all {
   overflow: hidden;
   /* word-break: break-word; */
-  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .break-keep-all span {
-  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

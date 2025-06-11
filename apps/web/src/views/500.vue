@@ -12,7 +12,7 @@ const reload = () => {
     <div class="w-[384px]">
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
-          <i18n-t
+          <i18n-t class="color-[var(--colors-text-text-tertiary)] leading-[1.6]"
             :keypath="$t('RoxyBrowser 的响应时间过长。{br}{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })"
             tag="div">
             <template #br><br /></template>
@@ -22,7 +22,7 @@ const reload = () => {
               </a>
             </template> -->
             <template #tech>
-              <a @click="$showLiveChat">
+              <a @click="$showLiveChat" class="cursor-pointer">
                 {{ $t('联系技术支持') }}
               </a>
             </template>

@@ -170,7 +170,7 @@ async function onSave(needMore: boolean) {
 
 <template>
   <div class="flex-1 overflow-auto flex-col content">
-    <div class="grid grid-cols-10 gap-3 w-full">
+    <div class="grid grid-cols-10 gap-3 w-full mb-[1px]">
       <div class="col-span-6 flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
@@ -191,8 +191,9 @@ async function onSave(needMore: boolean) {
         <div class="relative overflow-hidden flex-1">
           <div class="rules relative z-10">
             <div class="rules-example">USERNAME1:PASSWORD1</div>
-            <div class="rules-example">USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span class="text-blue">{{
-              `\{${$t('备注')}\}` }}</span>
+            <div class="rules-example">USERNAME2:PASSWORD2<span class="text-green">:2FA</span><span
+                class="text-blue break-all">{{
+                  `\{${$t('备注')}\}` }}</span>
             </div>
             <br></br>
             <div class="rules-help">{{ $t('1.支持已有平台和其他平台；对于其他平台，需要手动输入URL。') }}</div>
