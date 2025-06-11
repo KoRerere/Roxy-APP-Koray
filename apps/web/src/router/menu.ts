@@ -131,7 +131,7 @@ export const getMenuRoutes = (): RouteRecordRaw[] => [
           hideInMenu: !isWindows,
           onClick: async (event: Event) => {
             const { isOwner } = useRoleStore();
-            const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+            const { code } = await API.pay.userCheckTeamUserRightsList()
             if (code !== 0) {
               if (!isOwner) {
                 emitter.emit('showToast', {

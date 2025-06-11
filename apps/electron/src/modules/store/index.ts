@@ -279,7 +279,7 @@ export async function canUseSyncControl() {
   if (now - lastCheckTime < 1000 * 60) {
     return canUseSyncControlMap[store.workspaceId!].canUse
   }
-  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+  const { code } = await API.pay.userCheckTeamUserRightsList()
   canUseSyncControlMap[store.workspaceId!] = {
     canUse: code === 0,
     lastCheckTime: now,

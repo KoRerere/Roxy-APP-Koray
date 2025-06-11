@@ -205,7 +205,7 @@ async function onUpdateFinger() {
 }
 
 async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_template' })
+  const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
     if (!isOwner.value) {
       emitter.emit('showToast', {

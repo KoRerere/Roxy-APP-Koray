@@ -419,7 +419,7 @@ async function getNotUsedProfiles(datas: Data[]) {
 }
 
 async function onTransfer(datas: Data[], operate?: any) {
-  const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_delivery' })
+  const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
     if (!role.isOwner) {
       emitter.emit('showToast', {

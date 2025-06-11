@@ -125,7 +125,7 @@ function switchActiveTabByQuery(list: TabType[]) {
 
 async function switchTab(tabId: string, event?: Event) {
   if (tabId === 'rx_1004') {
-    const { code } = await API.pay.userCheckTeamUserRightsList({ type: 'window_delivery' })
+    const { code } = await API.pay.userCheckTeamUserRightsList()
     if (code !== 0) {
       if (!role.isOwner) {
         emitter.emit('showToast', {

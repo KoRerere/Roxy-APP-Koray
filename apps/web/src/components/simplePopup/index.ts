@@ -1,4 +1,3 @@
-import oldPopup from './old.vue'
 import popup from './index.vue';
 import { useDialog } from '/@/hooks/useDialog'
 interface SimpleDialogData {
@@ -38,5 +37,3 @@ export function useSimpleDialog() {
 
   return { showSimpleDialog }
 }
-
-export default oldPopup
