@@ -17,7 +17,9 @@ function showLiveChat() {
     <div class="w-[384px]">
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
-          <i18n-t :keypath="$t('RoxyBrowser 的响应时间过长。{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.参考 {link} 解决方案{br}3.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })">
+          <i18n-t
+            :keypath="$t('RoxyBrowser 的响应时间过长。{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.参考 {link} 解决方案{br}3.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })"
+            tag="div">
             <template #br><br /></template>
             <template #link>
               <a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">
