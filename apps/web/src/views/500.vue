@@ -13,14 +13,14 @@ const reload = () => {
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
           <i18n-t
-            :keypath="$t('RoxyBrowser 的响应时间过长。{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.参考 {link} 解决方案{br}3.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })"
+            :keypath="$t('RoxyBrowser 的响应时间过长。{br}{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.{tech}', { br: '{br}', link: '{link}', tech: '{tech}' })"
             tag="div">
             <template #br><br /></template>
-            <template #link>
+            <!-- <template #link>
               <a href="https://faq.roxybrowser.org/zh/guide/1-1Quickly-Create-Profile" target="_blank">
                 {{ $t('常见问题') }}
               </a>
-            </template>
+            </template> -->
             <template #tech>
               <a @click="$showLiveChat">
                 {{ $t('联系技术支持') }}
@@ -30,9 +30,8 @@ const reload = () => {
         </template>
         <template #extra>
           <div class="flex">
-            <RxButton severity="secondary" outlined class="w-full" @click="reload">
-              {{ $t('刷新页面') }}
-            </RxButton>
+            <RxButton severity="secondary" outlined class="w-full" @click="reload" :label="$t('刷新页面')"
+              icon="base/rx_ic_refresh" />
           </div>
         </template>
       </CustomEmpty>
@@ -42,12 +41,8 @@ const reload = () => {
 
 <style scoped lang="scss">
 .error-page {
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  z-index: 10000;
+  height: 100vh;
   background: var(--colors-background-bg-app, #F5FBFF);
   display: flex;
   align-items: center;
