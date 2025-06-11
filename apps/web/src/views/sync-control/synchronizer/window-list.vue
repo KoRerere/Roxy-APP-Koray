@@ -274,10 +274,10 @@ electronAPI.on('syncControl:start', startSync)
         :title="$t('暂无查询结果')" :desc="$t('当前条件下没有匹配的结果，请尝试更换其他筛选条件。')" />
       <CustomEmpty v-else icon="rx_illustration_roxybrowser.png" :title="$t('请先打开至少两个窗口')">
         <template #desc>
-          <div class="whitespace-pre-wrap">
+          <div class="whitespace-pre-wrap text-[var(--colors-text-text-tertiary)]">
             {{ $t('窗口同步：即窗口群控，可同时控制多个窗口，实现鼠标同步，键盘同步，大幅提高工作效率。') }}
           </div>
-          <div class="mt-[16px] whitespace-pre-wrap">
+          <div class="mt-[16px] whitespace-pre-wrap text-[var(--colors-text-text-tertiary)]">
             {{ $t('注意：不同操作系统的窗口无法进行同步，相同系统但内核不一致的窗口，有概率出现同步失败的情况。') }}
           </div>
           <div v-if="false" class="mt-3">

@@ -21,10 +21,10 @@ function handleClientItemClick() {
     </div>
     <div class="flex items-center sub-title">
       <i18n-t
-        :keypath="$t('{click}v{version}（当前 v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })">
+        :keypath="$t('{click} v{version}（当前 v{currentVersion}）', { click: '{click}', version: '{version}', currentVersion: '{currentVersion}' })">
         <template #click>
           <span @click="handleClientItemClick" class="text-[var(--colors-text-text-link)]">
-            {{ $t('点击更新') }}
+            {{ $t('点击更新') }}&nbsp;
           </span>
         </template>
         <template #version>

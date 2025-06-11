@@ -110,7 +110,7 @@
   "v{appVersion} 更新概览": "v{appVersion} 更新概览",
   "{amount} /月": "{amount} /月",
   "{amount}/每月": "{amount}/每月",
-  "{click}v{version}（当前 v{currentVersion}）": "{click}v{version}（当前 v{currentVersion}）",
+  "{click} v{version}（当前 v{currentVersion}）": "{click} v{version}（当前 v{currentVersion}）",
   "{count} 个窗口": "{count} 个窗口",
   "{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}": "{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}",
   "{count} 个窗口已成功导入": "{count} 个窗口已成功导入",

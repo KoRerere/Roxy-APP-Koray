@@ -108,7 +108,7 @@
   "v{appVersion} 更新概览": "Обзор обновления v{appVersion}",
   "{amount} /月": "{amount} /месяц",
   "{amount}/每月": "{amount}/месяц",
-  "{click}v{version}（当前 v{currentVersion}）": "v{version}（текущая версия v{currentVersion}）",
+  "{click} v{version}（当前 v{currentVersion}）": "{click} v{version}（текущая версия v{currentVersion}）",
   "{count} 个窗口": "{count} окон",
   "{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}": "Прокси будут привязаны к {count} окнам. Количество созданных вами окон: {max}. {message}",
   "{count} 个窗口已成功导入": "{count} окон успешно импортировано",

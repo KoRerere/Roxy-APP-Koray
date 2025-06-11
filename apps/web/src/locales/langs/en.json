@@ -108,7 +108,7 @@
   "v{appVersion} 更新概览": "v{appVersion} Update Overview",
   "{amount} /月": "{amount} /month",
   "{amount}/每月": "{amount}/month",
-  "{click}v{version}（当前 v{currentVersion}）": "{click}v{version} (Current v{currentVersion})",
+  "{click} v{version}（当前 v{currentVersion}）": "{click} v{version} (Current v{currentVersion})",
   "{count} 个窗口": "{count} profiles",
   "{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}": "{count} profiles will bind with proxies. Profiles you will create: {max}. {message}",
   "{count} 个窗口已成功导入": "{count} profiles import successful",
