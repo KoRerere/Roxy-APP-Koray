@@ -32,7 +32,7 @@ const optionsGroup = computed(() => [
         value: 'notes'
       },
       {
-        label: $t('隐藏被投送窗口代理信息'),
+        label: $t('隐藏代理信息'),
         value: 'hideProxy'
       },
       {

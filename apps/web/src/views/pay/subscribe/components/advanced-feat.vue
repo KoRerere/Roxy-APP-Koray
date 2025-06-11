@@ -46,7 +46,7 @@ const selfAdvancedFeat: Record<string, boolean> = {
     </div>
     <div class="flex items-center gap-3 advanced-tip">
       <SvgIcon name="base/rx_ic_portrait-spark" color="var(--colors-icon-icon-note)"></SvgIcon>
-      <span>{{ $t('带有此图标的功能可以在任何空间中使用。其他功能仅限在当前空间使用。') }}</span>
+      <span>{{ $t('带有此图标的功能可以在任何空间中使用，其他功能仅限在自己创建的空间使用。') }}</span>
     </div>
   </div>
 </template>

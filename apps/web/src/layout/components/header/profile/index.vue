@@ -148,7 +148,7 @@ const items = computed(() => {
       icon: "base/rx_ic_logout",
       command: async () => {
         const result = await electronAPI.send('browser:getOpenedBrowser')
-        if (result.length > 0) {
+        if (result?.length > 0) {
           showToast(-1, $t('请先关闭窗口'))
           return
         }
