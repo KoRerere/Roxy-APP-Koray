@@ -55,10 +55,10 @@ defineProps<{
     </div>
 
     <br />
-    <div>
+    <div class="font-[Inter]">
       <span v-if="ipType === IPType.IPV6">1. </span>{{ $t('一行一个代理，一次最多添加 500 个；') }}
     </div>
-    <div v-if="ipType === IPType.IPV6">
+    <div v-if="ipType === IPType.IPV6" class="font-[Inter]">
       {{ $t('2. IPV6 的主机需填写在 [ ] 内；') }}
     </div>
   </div>
@@ -66,6 +66,12 @@ defineProps<{
 
 <style>
 .break-keep-all {
-  word-break: break-all;
+  overflow: hidden;
+  /* word-break: break-word; */
+  white-space: pre-wrap;
+}
+
+.break-keep-all span {
+  white-space: pre-wrap;
 }
 </style>
