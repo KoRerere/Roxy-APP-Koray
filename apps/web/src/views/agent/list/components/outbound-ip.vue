@@ -43,6 +43,7 @@ const data = computed(() => {
     }
   } else if (status.value === ProxyCheckStatus.success) {
     return {
+      svg: `country-code/${props.country}`,
       title: text,
       color: 'var(--colors-text-text-success)',
       svgColor: 'var(--colors-icon-icon-tertiary)'
@@ -66,7 +67,7 @@ const data = computed(() => {
 <template>
   <div class="flex gap-2 proxycard">
     <div>
-      <RxSvgIcon :name="(`country-code/${country}` as SvgNames)" fallback="base/rx_ic_earth" :color="data.svgColor" />
+      <RxSvgIcon :name="data.svg as SvgNames" fallback="base/rx_ic_earth" :color="data.svgColor" />
     </div>
     <div class="flex flex-col flex-1 gap-1">
       <div class="flex items-center proxycard-title" :style="{ color: data.color }">

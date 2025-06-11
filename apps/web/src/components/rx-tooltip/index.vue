@@ -130,13 +130,14 @@ onMounted(() => {
 
 <template>
   <div ref="target" class="inline-block">
-    <slot />
+    <slot :hide="hide" />
   </div>
   <Teleport to="body" v-if="show">
     <div ref="source" class="absolute inline-block z-4000">
       <AnimatePresence>
-        <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }" :animate="{ opacity: 1, y: 0, x: 0 }"
-          :exit="{ opacity: 0, y: configs.y, x: configs.x }" :transition="{ duration: 0.15 }">
+        <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
+          :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"
+          :transition="{ duration: 0.15 }">
           <slot name="content" />
         </motion.div>
       </AnimatePresence>
