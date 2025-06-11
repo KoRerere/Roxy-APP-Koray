@@ -120,6 +120,15 @@ function inputPopup(data: any) {
       },
     },
   })
+  // // todo 新form缺少日期选择器，完善后再替换
+  // const { type, name, label, value, ...props } = deepClone(data)
+  // showSimpleDialog({
+  //   inputs: [{ type, name, label, value, props }],
+  //   onConfirm: (formData: any) => {
+  //     setInputValueByFormData(_props.filtersMenu, formData)
+  //     onFilterChange()
+  //   },
+  // })
 }
 
 function onRadioChose(item: any) {

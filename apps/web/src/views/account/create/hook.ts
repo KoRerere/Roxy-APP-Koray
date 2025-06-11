@@ -1,5 +1,4 @@
 import { $t } from "/@/locales"
-import { validateURL } from "/@/utils"
 
 export function usePlatformForm() {
   const original = ref<any>({})

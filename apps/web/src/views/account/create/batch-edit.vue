@@ -2,7 +2,7 @@
 import TsForm from '/@/views/lab/components/form/index.vue';
 import { API } from '/@/api'
 import { $t } from '/@/locales'
-import { deepClone, validateURL } from '/@/utils'
+import { deepClone } from '/@/utils'
 import { isEqual } from 'es-toolkit';
 import { useConfirm } from 'primevue/useconfirm'
 import { useThemeStore } from '/@/stores/theme'
@@ -52,7 +52,7 @@ const inputs = [
         Reflect.set(activeBar.value, 'invalid', !value)
       }
     },
-    resolver: (zod: any) => zod.string().refine(validateURL, $t('请输入正确的平台网址'))
+    resolver: (zod: any) => zod.string().url($t('请输入正确的平台网址'))
   },
   {
     type: 'text',
@@ -196,15 +196,11 @@ function onConfirm() {
   <div class="flex flex-col h-full content">
     <div class="flex flex-1 overflow-y-auto">
       <div class="flex flex-col select-none sidebar">
-        <div class="relative flex items-center justify-center sidebar-item"
-          :class="{ 'active': activeBar.tid === item.tid }" v-for="item in _datalist" :key="item.tid"
-          @click="switchPlatform(item)">
-          <PlatformIcon v-if="item.platformIcon" :platform-icon-dark="item.platformIconDark"
-            :platform-icon="item.platformIcon" class="sidebar-item-icon" />
+        <div class="relative flex items-center justify-center sidebar-item" :class="{ 'active': activeBar.tid === item.tid }" v-for="item in _datalist" :key="item.tid" @click="switchPlatform(item)">
+          <PlatformIcon v-if="item.platformIcon" :platform-icon-dark="item.platformIconDark" :platform-icon="item.platformIcon" class="sidebar-item-icon" />
           <!-- <img v-if="item.platformIcon" class="sidebar-item-icon" :src="item.platformIcon" /> -->
           <SvgIcon v-else name="base/rx_ic_user_key" size="24"></SvgIcon>
-          <SvgIcon v-if="item.invalid" class="absolute top-2 right-4" name="base/rx_ic_warn_fill"
-            color="var(--colors-icon-icon-error, #F53838)"></SvgIcon>
+          <SvgIcon v-if="item.invalid" class="absolute top-2 right-4" name="base/rx_ic_warn_fill" color="var(--colors-icon-icon-error, #F53838)"></SvgIcon>
         </div>
         <div class="flex-1 flex justify-center sidebar-item">
           <div v-tooltip="$t('添加新账号')" class="flex justify-center items-center sidebar-add" @click="addPlatform">

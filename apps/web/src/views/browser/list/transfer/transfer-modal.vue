@@ -7,6 +7,17 @@ import { $t } from '/@/locales';
 import { startCountdown } from '/@/utils';
 import { useUserStore } from '/@/stores/user'
 
+interface OptionGorup {
+  title: string
+  visible?: boolean
+  options: {
+    label: string
+    value: string
+    tooltip?: string
+  }[]
+}
+
+
 const { userInfo } = storeToRefs(useUserStore())
 const { ids: windowIds } = defineProps<{
   ids: number[]
@@ -19,7 +30,7 @@ const messageRef = useTemplateRef('message')
 const selectedWorkspace = ref()
 const transferParam = ref<string[]>([])
 const isDelete = computed(() => !!transferParam.value?.includes('delete'))
-const optionsGroup = computed(() => [
+const optionsGroup = computed<OptionGorup[]>(() => [
   {
     title: $t('投送选项'),
     options: [
@@ -32,8 +43,9 @@ const optionsGroup = computed(() => [
         value: 'notes'
       },
       {
-        label: $t('隐藏代理信息'),
-        value: 'hideProxy'
+        label: $t('窗口代理加密'),
+        value: 'hideProxy',
+        tooltip: $t('接收方仅能使用，无法查看到代理主机/端口/账密等信息')
       },
       {
         label: $t('投送后彻底删除窗口（该操作无法撤销）'),
@@ -141,6 +153,7 @@ async function onTransfer(isSelf: boolean) {
             <div class="flex items-center gap-2 select-none checkboxitem" v-for="option of group.options" :key="option.value">
               <Checkbox v-model="transferParam" size="small" name="trsparam" :input-id="option.value" :value="option.value" />
               <label :for="option.value">{{ option.label }}</label>
+              <SvgIcon v-if="option.tooltip" v-tooltip="option.tooltip" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)"></SvgIcon>
             </div>
           </div>
         </div>
