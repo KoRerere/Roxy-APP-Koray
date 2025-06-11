@@ -10,9 +10,9 @@ defineProps<{
 </script>
 
 <template>
-  <div v-bind="$attrs" class="font-[JetBrains_Mono] break-keep-all">
+  <div v-bind="$attrs" class="break-keep-all">
     <div>{{ $t('示例') }}: </div>
-    <div v-if="parserType === ParseMode.one" class="text-[var(--colors-text-text-primary)]">
+    <div v-if="parserType === ParseMode.one" class="text-[var(--colors-text-text-primary)] font-[JetBrains_Mono]">
       192.168.0.1:8000
       <br />
       192.168.0.1:8000<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL') }}]</span><span
@@ -26,13 +26,14 @@ defineProps<{
       </div>
     </div>
 
-    <div v-else-if="parserType === ParseMode.two" class="text-[var(--colors-text-text-primary)]">
+    <div v-else-if="parserType === ParseMode.two" class="text-[var(--colors-text-text-primary)] font-[JetBrains_Mono]">
       <span>192.168.0.1:8000:{{ $t('用户名:密码') }}</span>
       <br />
-      <span>192.168.0.1:8000:{{ $t('用户名:密码') }}<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL')
-      }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span></span>
+      <span>192.168.0.1:8000:{{ $t('用户名:密码') }}<span class="text-green whitespace-nowrap font-[JetBrains_Mono]">[{{
+        $t('刷新 URL')
+          }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span></span>
 
-      <div v-if="ipType === IPType.IPV6">
+      <div v-if="ipType === IPType.IPV6" class="font-[JetBrains_Mono]">
         <span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000:{{ $t('用户名:密码') }}<span
           class="text-green whitespace-nowrap">[{{
             $t('刷新 URL')
@@ -41,11 +42,11 @@ defineProps<{
       </div>
     </div>
 
-    <div v-else class="text-[var(--colors-text-text-primary)]">
+    <div v-else class="text-[var(--colors-text-text-primary)] font-[JetBrains_Mono]">
       <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000
       <br />
       <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000<span class="text-green whitespace-nowrap">[{{ $t('刷新 URL')
-      }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
+        }}]</span><span class="text-blue whitespace-nowrap">{{ `\{${$t('备注')}\}` }}</span>
 
       <div v-if="ipType === IPType.IPV6">
         {{ $t('用户名:密码') }}@<span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000<span
