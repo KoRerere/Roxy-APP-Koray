@@ -86,7 +86,6 @@ watch(isDownloadingKernel, () => {
   if (Date.now() - lastTime < 60000 * 5) {
     return
   }
-  console.log('isDownloadingKernel', popoverRef.value?.getRef())
   if (isDownloadingKernel.value && !popoverRef.value?.getRef().visible) {
     btnRef.value?.btnEl.click()
     lastTime = Date.now()
@@ -125,7 +124,6 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
-    console.log('isDownloadingKernel', data)
     isDownloadingKernel.value = data.status === 'downloading' && !data.silent
     kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
