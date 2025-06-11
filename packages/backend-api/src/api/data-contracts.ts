@@ -5373,6 +5373,7 @@ export interface UserGetWorkspaceListListData {
       useWindowCount?: number;
       /** 窗口编号 */
       workspaceNo?: number;
+      email?: string;
     }[];
   };
   msg: string;
@@ -6209,14 +6210,6 @@ export interface UserGetDowngradeSubscriptionInfoListData {
 export interface UserUpdateGiftTipsListData {
   code: number;
   msg: string;
-}
-
-export interface UserCheckTeamUserRightsListParams {
-  /**
-   * 类型
-   * @example ""window_template", "window_delivery", "infinite_project_number", "window_sync""
-   */
-  type: string;
 }
 
 export interface UserCheckTeamUserRightsListData {

@@ -186,14 +186,13 @@ function tooltipValue(item: any) {
               :name="(checkIndex === index && checkResult.loading) ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'" @click.stop="testProxy(item, index)" />
           </RxCard>
         </template>
-
         <template v-else>
           <RxCard v-for="(item, index) in proxyList" :key="index" class="single" @click="onEdit(item)" @close="deleteProxy(index)">
-            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" />
+            <RxSvgIcon class="single-img" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
             <div class="flex justify-between single-region ">
               <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
               <RxSvgIcon class="cursor-pointer" :class="{ 'pi-spin': checkResult.loading }" :name="checkResult.loading ? 'base/rx_ic_progress_bar' : 'base/rx_ic_speed_test'"
-                @click.stop="testProxy(item, index)" />
+                color="var(--colors-icon-icon-primary)" @click.stop="testProxy(item, index)" />
             </div>
             <div class="flex justify-between single-time">{{ item.ipType }} {{ item.proxyCategory }}{{ strConcat('://', item.host) }}{{ strConcat(':', item.port) }}</div>
           </RxCard>

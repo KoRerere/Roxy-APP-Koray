@@ -20,7 +20,6 @@ import {
   UserCancelSubscriptionListData,
   UserCancelSubscriptionListParams,
   UserCheckTeamUserRightsListData,
-  UserCheckTeamUserRightsListParams,
   UserDowngradeSubscriptionListData,
   UserDowngradeSubscriptionListParams,
   UserGetDowngradeSubscriptionInfoListData,
@@ -428,14 +427,10 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_check_team_user_rights
    * @response `200` `UserCheckTeamUserRightsListData`
    */
-  userCheckTeamUserRightsList = (
-    query: UserCheckTeamUserRightsListParams,
-    params: RequestParams = {},
-  ) =>
+  userCheckTeamUserRightsList = (params: RequestParams = {}) =>
     this.http.request<UserCheckTeamUserRightsListData, any>({
       path: `/user_check_team_user_rights`,
       method: "GET",
-      query: query,
       format: "json",
       ...params,
     });

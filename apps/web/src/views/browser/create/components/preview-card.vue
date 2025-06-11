@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { motion, AnimatePresence } from "motion-v";
 import { filterInputsByNames } from '/@/utils';
-import { useThemeStore } from '/@/stores/theme'
 import type { SvgNames } from '/@/components/rx-icon';
 
 interface Props {
@@ -20,7 +19,6 @@ const bannerMap = {
   windows: '/images/systeam/windows.webp',
 }
 
-const themeStore = useThemeStore()
 const collapsed = ref(false)
 const previewData = computed(() => getPreview(inputsGroup.flat()))
 
@@ -41,6 +39,7 @@ const systeam = computed(() => {
       },
       {
         icon: proxy?.value?.length && `country-code/${proxy.value[0].lastCountry}`,
+        fallback: 'base/rx_ic_earth',
       },
       {
         icon: aItem1?.icon || 'base/rx_ic_plus',
@@ -120,16 +119,15 @@ function getPreview(list: any[]) {
     </div>
     <div v-if="!collapsed && showOverview" class="relative flex flex-col pt-6 items-center overflow-hidden pointer-events-none select-none overview">
       <div class="flex items-center gap-3">
-        <div v-if="isBatch" class="overview-count">1/{{ createCount }}</div>
         <div class="w-34 flex items-center justify-between relative">
           <div class="line"></div>
           <template v-for="item in systeam.icons" :key="item.icon">
             <div v-if="item.icon" class="relative icon">
               <img v-if="item.image" class="w-full h-full" :src="item.image" />
-              <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#575D60" />
+              <SvgIcon v-else class="shrink-0" :name="(item.icon as SvgNames)" color="#7d8387" :fallback="item.fallback" />
               <div v-if="item.subIcon || item.subImage" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 scale-70 icon">
                 <img v-if="item.subImage" class="w-full h-full" :src="item.subImage" />
-                <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" />
+                <SvgIcon v-else class="shrink-0" :name="(item.subIcon as SvgNames)" color="#7d8387" />
               </div>
             </div>
           </template>

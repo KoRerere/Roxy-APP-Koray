@@ -5,7 +5,8 @@ import { API } from '/@/api';
 import { useResponseToast } from "/@/hooks/useResponseToast";
 import { $t } from '/@/locales';
 import { startCountdown } from '/@/utils';
-import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace';
+import { useRoleStore } from "/@/stores/role"
 
 interface OptionGorup {
   title: string
@@ -16,9 +17,8 @@ interface OptionGorup {
     tooltip?: string
   }[]
 }
-
-
-const { userInfo } = storeToRefs(useUserStore())
+const { isOwner } = storeToRefs(useRoleStore())
+const { currentWorkspace } = storeToRefs(useWorkspaceStore())
 const { ids: windowIds } = defineProps<{
   ids: number[]
 }>()
@@ -89,8 +89,7 @@ onBeforeUnmount(() => {
 
 async function sendCode() {
   if (!selectedWorkspace.value) return
-
-  if (selectedWorkspace.value.isWorkspace) {
+  if (isOwner.value && selectedWorkspace.value.isWorkspace) {
     await onTransfer(true)
     return
   }
@@ -193,7 +192,7 @@ async function onTransfer(isSelf: boolean) {
       <div class="flex flex-col gap-4">
         <div class="emailcode">
           <div class="emailcode-item">{{ $t('我们已经向您的邮箱发送了一个6位数字验证码：') }}</div>
-          <div class="email-text">{{ userInfo.email }} </div>
+          <div class="email-text">{{ currentWorkspace?.email }} </div>
           <div>{{ $t("验证码将在 5 分钟后过期。") }}</div>
           <div class="emailcode-item mt-[12px]">
             {{ $t('请检查邮件以获取验证码') }}
