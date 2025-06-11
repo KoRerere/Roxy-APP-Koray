@@ -251,7 +251,7 @@ function getProxyModel() {
 function getAccountModel() {
   return [
     {
-      label: $t('编辑平台账号'),
+      label: $t('编辑账号'),
       icon: 'base/rx_ic_edit',
       visible: !role.isViewer && data.windowPlatformList.length > 0,
       command: () => {
@@ -286,7 +286,7 @@ function getAccountModel() {
       visible: !role.isViewer && data.windowPlatformList.length > 0,
     },
     {
-      label: $t('添加平台账号'),
+      label: $t('添加账号'),
       icon: 'base/rx_ic_plus',
       visible: !role.isViewer,
       command: () => {
@@ -318,7 +318,7 @@ function getAccountModel() {
       },
     },
     {
-      label: $t('选择已有平台账号'),
+      label: $t('选择账号'),
       icon: 'base/rx_ic_exchange',
       visible: !role.isViewer,
       command: () => {

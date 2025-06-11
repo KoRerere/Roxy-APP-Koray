@@ -10,17 +10,17 @@ defineProps<{
 </script>
 
 <template>
-  <div v-bind="$attrs" class="font-[JetBrains_Mono]">
+  <div v-bind="$attrs" class="font-[JetBrains_Mono] break-keep-all">
     <div>{{ $t('示例') }}: </div>
     <div v-if="parserType === ParseMode.one" class="text-[var(--colors-text-text-primary)]">
       192.168.0.1:8000
       <br />
       192.168.0.1:8000<span class="text-green">[{{ $t('刷新 URL') }}]</span><span class="text-blue">{{
         `\{${$t('备注')}\}`
-      }}</span>
+        }}</span>
       <div v-if="ipType === IPType.IPV6">
         <span class="text-orange">
-          [fe80::451f:9dc0:f1ab:90a3]
+          [fe80::01:9dc0:f1ab:90a3]
         </span>:8000<span class="text-green">[{{ $t("刷新 URL") }}]</span>
         <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
       </div>
@@ -33,9 +33,9 @@ defineProps<{
           class="text-blue">{{ `\{${$t('备注')}\}` }}</span></span>
 
       <div v-if="ipType === IPType.IPV6">
-        <span class="text-orange">[fe80::451f:9dc0:f1ab:90a3]</span>:8000:{{ $t('用户名:密码') }}<span class="text-green">[{{
+        <span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000:{{ $t('用户名:密码') }}<span class="text-green">[{{
           $t('刷新 URL')
-        }}]</span>
+          }}]</span>
         <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
       </div>
     </div>
@@ -44,12 +44,12 @@ defineProps<{
       <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000
       <br />
       <span>{{ $t('用户名:密码') }}@</span>192.168.0.1:8000<span class="text-green">[{{ $t('刷新 URL')
-        }}]</span><span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
+      }}]</span><span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
 
       <div v-if="ipType === IPType.IPV6">
-        {{ $t('用户名:密码') }}@<span class="text-orange">[fe80::451f:9dc0:f1ab:90a3]</span>:8000<span class="text-green">[{{
+        {{ $t('用户名:密码') }}@<span class="text-orange">[fe80::01:9dc0:f1ab:90a3]</span>:8000<span class="text-green">[{{
           $t('刷新 URL')
-        }}]</span>
+          }}]</span>
         <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
       </div>
     </div>
@@ -63,3 +63,9 @@ defineProps<{
     </div>
   </div>
 </template>
+
+<style>
+.break-keep-all {
+  word-break: break-all;
+}
+</style>

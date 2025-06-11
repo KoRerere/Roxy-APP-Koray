@@ -174,7 +174,7 @@ async function onSave(needMore: boolean) {
       <div class="col-span-6 flex flex-col gap-1">
         <div class="flex items-center justify-between">
           <div class="subtitle">{{ $t('账号信息') }}</div>
-          <TsFormSelect class="!w-70" v-model="input.value" v-bind="input.props" />
+          <TsFormSelect class="!w-80" v-model="input.value" v-bind="input.props" />
         </div>
         <div class="information">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入账号信息')" />

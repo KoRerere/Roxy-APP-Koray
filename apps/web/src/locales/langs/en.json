@@ -79,7 +79,7 @@
   "RoxyBrowser 已被锁定": "RoxyBrowser is locked",
   "RoxyBrowser 当前有重要的优化更新，请点击以下按钮重启客户端。": "RoxyBrowser currently has an important update available. Please click the button below to restart the client. ",
   "RoxyBrowser 更新通知": "RoxyBrowser new update available",
-  "RoxyBrowser 的响应时间过长。{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.参考 {link} 解决方案{br}3.{tech}": "RoxyBrowser is taking longer than expected to respond.{br}Please try the following methods:{br}1. Check network connection status{br}2. Refer to {link} solutions{br}3. Contact support",
+  "RoxyBrowser 的响应时间过长。{br}{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.{tech}": "RoxyBrowser is taking longer than expected to respond.{br}{br}Please try the following methods:{br}1. Check network connection status{br}2. {tech}",
   "RoxyBrowser 鼓励您自行通过权威机构检查扩展的安全性，以此来减少因使用恶意扩展而导致业务资产损失的担忧。\n\n您可以根据以下推荐步骤进行扩展安全性检查。": "RoxyBrowser encourages you to verify extension security through authoritative institutions to reduce concerns about business asset losses due to malicious extensions.\n\nYou can follow these recommended steps for extension security verification.",
   "Roxy工作空间说明": "Roxy Workspace Guide",
   "SSL指纹设置": "SSL fingerprint settings",
@@ -1444,5 +1444,6 @@
   "默认图标展示工作空间名称的前两个字符": "Default icon shows the first two characters of the workspace",
   "默认窗口信息会展示为空间名称的前三个字符与序号的组合": "Default profile info combines the first three characters of the workspace name and serial number.",
   "默认项目": "Default project",
-  "RoxyBrowser 的响应时间过长。{br}{br}请尝试以下方法：{br}1.检查网络连接状态{br}2.{tech}": "RoxyBrowser is taking longer than expected to respond.{br}{br}Please try the following methods:{br}1. Check network connection status{br}2. {tech}"
+  "请联系技术支持": "Please contact support",
+  "选择账号": "Select Account"
 }
