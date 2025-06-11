@@ -77,6 +77,7 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
     filter: false,
     size: 'xxs' as any,
     icon: 'base/rx_ic_network' as any,
+    iconColor: 'var(--colors-icon-icon-secondary)',
   },
   onChange() {
     dataList.value.forEach((item: any) => {
@@ -307,7 +308,7 @@ function onSave() {
             <RxInputSelect size="xs" optionValue="value" v-model="protocolValue" :options="protocolOptions"
               name="protocol" :filter="false" class="!w-100px" />
             <RxInputSelect size="xs" optionValue="value" v-model="parserType" :options="parserTypeOptions"
-              name="parserType" :filter="false" class="!w-180px" />
+              name="parserType" :filter="false" class="!w-234px" />
           </div>
         </div>
         <div class="information">
