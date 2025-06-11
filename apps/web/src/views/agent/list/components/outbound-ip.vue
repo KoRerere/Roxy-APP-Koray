@@ -56,6 +56,7 @@ const data = computed(() => {
     }
   } else {
     return {
+      svg: `country-code/${props.country}`,
       title: text,
       color: 'var(--colors-text-text-primary)',
       svgColor: 'var(--colors-icon-icon-note)'
