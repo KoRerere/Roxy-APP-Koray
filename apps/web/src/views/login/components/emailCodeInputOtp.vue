@@ -102,10 +102,6 @@ async function handleSubmit() {
   }
 }
 
-function showLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 onBeforeMount(() => {
   startCountdown()
 })
@@ -145,7 +141,7 @@ onBeforeMount(() => {
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>
         <template #contact>
-          <a class="re-enter-text" @click="showLiveChat">{{ $t('联系技术支持人员') }}</a>
+          <a class="re-enter-text" @click="$showLiveChat">{{ $t('联系技术支持人员') }}</a>
         </template>
       </i18n-t>
     </div>

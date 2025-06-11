@@ -5,11 +5,6 @@ import { $t } from '/@/locales/'
 const reload = () => {
   window.location.href = '/'
 }
-
-function showLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 </script>
 
 <template>
@@ -27,7 +22,7 @@ function showLiveChat() {
               </a>
             </template>
             <template #tech>
-              <a @click="showLiveChat">
+              <a @click="$showLiveChat">
                 {{ $t('联系技术支持') }}
               </a>
             </template>

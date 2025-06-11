@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { onMounted, ref, useTemplateRef } from 'vue'
 import { $t } from '/@/locales'
@@ -7,6 +7,7 @@ import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
 import { useToast } from 'primevue/usetoast'
 import { debounce } from 'es-toolkit'
+import { I18nT } from 'vue-i18n'
 
 const toast = useToast();
 const popoverRef = useTemplateRef('popover')
@@ -93,7 +94,13 @@ watch(isDownloadingKernel, () => {
 })
 
 const showDownloadError = debounce((data: ResourceUpdateMessage) => {
-  toast.add({ severity: 'error', summary: data.description || $t('获取内核失败，{tech}', { tech: $t('请联系技术支持') }), life: 2500 });
+  toast.add({
+    severity: 'error',
+    summary: () =>
+      <I18nT keypath={data.description || $t('获取内核失败，{tech}', { tech: '{tech}' })}>
+        {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('请联系技术支持')}</a> }}
+      </I18nT>
+  });
 }, 100)
 
 window.electronAPI.on('app:resource-update', (data) => {

@@ -8,4 +8,12 @@ declare global {
   var electronAPI: ElectronAPI
   var mixpanel: OverridedMixpanel
   var LiveChatWidget: ExtendedWindow['LiveChatWidget']
+  var showLiveChat: () => void
+}
+
+
+declare module 'vue' {
+  interface ComponentCustomProperties {
+    $showLiveChat: () => void
+  }
 }

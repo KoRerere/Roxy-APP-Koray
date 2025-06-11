@@ -313,7 +313,7 @@ export const chromeCoreManager = new (class ChromeCoreManager {
           });
         } else {
           payload.status = "failed";
-          payload.description = $t("下载内核失败");
+          payload.description = $t('获取内核失败，{tech}', { tech: '{tech}' });
           doMsgCallbacks()
         }
         return Promise.reject(error);
