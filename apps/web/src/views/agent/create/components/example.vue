@@ -67,7 +67,7 @@ const contents = computed(() => {
 </script>
 
 <template>
-  <div v-bind="$attrs" class="font-[JetBrains_Mono] break-keep-all">
+  <div v-bind="$attrs" class="break-keep-all font-[JetBrains_Mono]">
     <div>{{ $t('示例') }}: </div>
     <div v-for="rule in contents" v-html="rule.content" class="text-[var(--colors-text-text-primary)]"></div>
     <br />

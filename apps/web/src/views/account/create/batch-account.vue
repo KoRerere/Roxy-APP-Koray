@@ -184,7 +184,7 @@ async function onSave(needMore: boolean) {
           </div>
         </div>
       </div>
-      <div class="col-span-4 flex flex-col gap-1 relative z-10 font-[JetBrains_Mono]">
+      <div class="col-span-4 flex flex-col gap-1 relative z-10">
         <div class="subtitle">
           {{ $t('导入规则') }}
         </div>
@@ -216,7 +216,7 @@ async function onSave(needMore: boolean) {
               :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
               :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
             <div :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks
-              }}</div>
+            }}</div>
           </div>
         </template>
         <template #actions="{ data }">
