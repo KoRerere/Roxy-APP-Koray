@@ -2,7 +2,7 @@
 
 import type { ChildProcess } from 'node:child_process'
 import type { LogLevel, ViteDevServer } from 'vite'
-import electronPath from 'electron'
+import electronPath from '../apps/electron/node_modules/electron'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { build, createServer } from 'vite'
@@ -57,7 +57,7 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
           /** 启动新的electron进程 */
           electronApp = spawn(String(electronPath), ['--inspect', '.', '--experimental-network-inspection'], {
             // 设置工作目录
-            cwd: path.resolve(__dirname, '../apps/electron'),
+            cwd: path.resolve(import.meta.dirname, '../apps/electron'),
           })
 
           electronApp.stdout.on('data', (data) => {
@@ -121,7 +121,7 @@ function setupPreloadPackageWatcher({ ws }: ViteDevServer) {
   const rendererWatchServer = await createServer({
     mode,
     logLevel,
-    configFile: 'apps/web/vite.config.ts',
+    configFile: 'apps/web/vite.config.mts',
   }).then(s => s.listen())
 
   await setupPreloadPackageWatcher(rendererWatchServer)

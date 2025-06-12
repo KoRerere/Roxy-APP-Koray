@@ -14,7 +14,7 @@ const shortcutName = isDev ? 'Roxy Browser Dev' : 'Roxy Browser'
 console.log('是否是测试环境：', isDev, appName)
 console.log('APP 版本号：', version)
 
-const workDir = path.join(__dirname, '../')
+const workDir = path.join(import.meta.dirname, '../')
 
 const copySyncOptions: CopySyncOptions = {
   recursive: true,

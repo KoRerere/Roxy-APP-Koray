@@ -15,14 +15,14 @@
   },
   "main": "dist-vite/index.cjs",
   "engines": {
-    "node": ">=v18.20.8",
+    "node": ">=v22.16.0",
     "npm": ">=10.1"
   },
   "scripts": {
     "bundle": "pnpx rimraf ./dist && webpack --config webpack.config.js",
     "build:dev": "vite build --mode development && pnpm bundle",
     "build:prod": "vite build && pnpm bundle",
-    "pack:app": "cross-env NODE_OPTIONS=--max_old_space_size=8192 pnpx tsx scripts/build.ts",
+    "pack:app": "cross-env NODE_OPTIONS=--max_old_space_size=8192 pnpx tsx scripts/build.mts",
     "pack:dev": "pnpm build:dev && dotenvx run -f .env.development -- pnpm pack:app",
     "pack:prod": "pnpm build:prod && dotenvx run -f .env.production -- pnpm pack:app",
     "pack:only:dev": "dotenvx run -f .env.development -- pnpm pack:app",
@@ -53,9 +53,9 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "ejs": "^3.1.10",
-    "electron": "35.5.1",
+    "electron": "35.4.0",
     "electron-builder": "25.1.8",
-    "electron-log": "^5.4.0",
+    "electron-log": "^5.4.1",
     "electron-updater": "6.6.5",
     "es-toolkit": "^1.38.0",
     "express": "^5.1.0",

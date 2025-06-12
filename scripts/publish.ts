@@ -21,7 +21,7 @@ const apiBaseUrl = `${isProd ? "https://admin.lumibrowser.com" : "https://admint
 // 懒得模拟登录获取 token 了，反正 token 是永久的
 const token = isProd ? 'ratCYB7Rf5LOp89x1744776621745' : 'UJ4UKYUU3UKGfAmo1743595549211'
 /** 安装包输出路径 */
-const outDir = join(__dirname, "../out");
+const outDir = join(import.meta.dirname, "../out");
 /** YAML 文件路径 */
 const ymlFilePath = join(outDir, `latest${isMac ? "-mac" : ""}.yml`);
 // 读取 YAML 文件

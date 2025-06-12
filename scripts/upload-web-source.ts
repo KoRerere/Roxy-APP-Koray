@@ -18,7 +18,7 @@ const zip = new Zip();
 const isProd = process.env.NODE_ENV === 'production'
 const token = isProd ? 'mjloBiRGORuGJikc1744800946396' : 'UJ4UKYUU3UKGfAmo1743595549211'
 
-const webPath = path.join(__dirname, "../apps/web/dist");
+const webPath = path.join(import.meta.dirname, "../apps/web/dist");
 
 const platformList = process.env.PLATFORM
   ? [process.env.PLATFORM === "mac" ? "macOS" : "Windows"]

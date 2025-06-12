@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "baseUrl": ".",
-    "module": "CommonJS",
+    "module": "ESNext",
     "moduleResolution": "Node",
     "types": [
       "node",
