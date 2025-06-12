@@ -99,7 +99,7 @@ export const semantic = {
       shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
     },
     modal: {
-      borderRadius: '{border.radius.xl}',
+      borderRadius: '{border.radius.lg}',
       padding: '1.25rem',
       shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
     },

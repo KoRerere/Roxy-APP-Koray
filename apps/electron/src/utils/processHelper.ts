@@ -204,3 +204,42 @@ const ignoredProcesses = [
   'defender',          // Windows Defender
   'firewall'           // 防火墙程序
 ];
+
+/**
+ * @internal
+ */
+export interface ErrorLike extends Error {
+  name: string;
+  message: string;
+}
+
+/**
+ * @internal
+ */
+export function isErrorLike(obj: unknown): obj is ErrorLike {
+  return (
+    typeof obj === 'object' && obj !== null && 'name' in obj && 'message' in obj
+  );
+}
+/**
+ * @internal
+ */
+export function isErrnoException(obj: unknown): obj is NodeJS.ErrnoException {
+  return (
+    isErrorLike(obj) &&
+    ('errno' in obj || 'code' in obj || 'path' in obj || 'syscall' in obj)
+  );
+}
+
+export function pidExists(pid: number): boolean {
+  try {
+    return process.kill(pid, 0);
+  } catch (error) {
+    if (isErrnoException(error)) {
+      if (error.code && error.code === 'ESRCH') {
+        return false;
+      }
+    }
+    throw error;
+  }
+}

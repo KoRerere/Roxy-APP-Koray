@@ -5,7 +5,7 @@ import { isLikeFunction } from '/@/utils'
 interface Props {
   icon?: SvgNames
   iconColor?: string
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | string
   options?: any[]
   optionLabel?: string
   optionValue?: string
@@ -26,7 +26,6 @@ const {
 
 const _options = ref(options)
 const attrs = useAttrs()
-console.log("🚀 ~ attrs:", attrs)
 
 // !todo getOptions 需要优化
 onBeforeMount(async () => {

@@ -124,7 +124,7 @@ export async function startRoxySync(pIds: number[] = []) {
           createSynchronizerWindow()
           stopRoxySync()
         })
-        browser?.getBrowser()?.on('disconnected', Reflect.get(browser!, 'disconnectedListener'))
+        browser?.getBrowser()?.on('process-close', Reflect.get(browser!, 'disconnectedListener'))
       } catch (error) {
         console.error('roxySync Start Result parse error:', error)
         resolve(false)
@@ -151,7 +151,7 @@ export function removeSyncWindowByPid(pIds: number) {
 export function stopRoxySync() {
   console.log('stopRoxySync')
   const browser = getMainControlBrowser()
-  browser?.getBrowser()?.off('disconnected', Reflect.get(browser!, 'disconnectedListener'))
+  browser?.getBrowser()?.off('process-close', Reflect.get(browser!, 'disconnectedListener'))
   // 停止同步的时候，主窗口主题颜色要恢复
   setMainControlColor(defaultMainControlWindowColor)
   closeAllSyncDialogs()
@@ -208,9 +208,7 @@ export async function setMainControlColor(color = syncControlSettings.mainContro
   // 还原背景颜色： await cdpSesssion.send('Browser.setColor',{rgb:""});
   const mainWindow = getMainControlBrowser()
   if (mainWindow) {
-    const cdpSession = await mainWindow.getBrowser()?.target().createCDPSession()
-    console.log('setMainControlColor cdpSession:', cdpSession)
-    await cdpSession?.send('Browser.setColor', { rgb }).catch((err) => {
+    await mainWindow.getBrowser()?.client.Browser.setColor({ rgb }).catch((err) => {
       console.error('设置主控窗口颜色失败', err)
     })
     console.log('设置主控窗口颜色成功', rgb)

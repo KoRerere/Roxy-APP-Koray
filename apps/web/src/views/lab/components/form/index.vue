@@ -3,6 +3,7 @@ import type { FormSubmitEvent } from '@primevue/forms';
 import { z, type ZodFirstPartySchemaTypes } from 'zod';
 import { zodResolver } from '@primevue/forms/resolvers/zod';
 import { isFunction } from 'es-toolkit';
+import { $t } from '/@/locales';
 import { genFormContext } from './useContext';
 import mInputLabel from './m-input-label.vue'
 import mInputText from './m-input-text.vue'
@@ -11,6 +12,7 @@ import mInputPassword from './m-input-password.vue'
 import mInputTextarea from './m-input-textarea.vue'
 import mInputSelect from './m-input-select.vue'
 import mInputMultiSelect from './m-input-multi-select.vue'
+import mInputDatePicker from './m-input-date-picker.vue'
 import mCustom from './m-custom.vue';
 
 const INPUT_TYPE_MAP = {
@@ -20,9 +22,9 @@ const INPUT_TYPE_MAP = {
   textarea: mInputTextarea,
   select: mInputSelect,
   mselect: mInputMultiSelect,
+  date: mInputDatePicker,
   // 'checkbox': 'checkbox',
   // 'radio': 'radio',
-  // 'date': 'date',
   // 'switch': 'switch',
 } as Record<string, Component>
 
@@ -62,6 +64,19 @@ genFormContext({
 
 const formRef = useTemplateRef<any>('wcisform')
 
+function genFormFieldProps(input: Input) {
+  const { name, label, required, props, resolver } = input
+  return {
+    name,
+    initialValue: initialValue(input),
+    resolver: isFunction(resolver)
+      ? zodResolver(resolver(z))
+      : required
+        ? zodResolver(z.any().refine(val => !!val, $t('"{name}" 是必填项', { name: label || props?.placeholder })))
+        : undefined,
+  }
+}
+
 function initialValue(input: Input) {
   if (input.value) return input.value
 
@@ -70,15 +85,6 @@ function initialValue(input: Input) {
       return 0
     default:
       return ''
-  }
-}
-
-function genFormFieldProps(input: Input) {
-  const { name, resolver } = input
-  return {
-    name,
-    resolver: isFunction(resolver) ? zodResolver(resolver(z)) : undefined,
-    initialValue: initialValue(input)
   }
 }
 
@@ -120,8 +126,7 @@ defineExpose({
       <mInputLabel v-if="input.label" :label="input.label" :tooltip="input.tooltip"></mInputLabel>
       <mCustom v-if="input.render" :field="$field" :input="input"></mCustom>
       <component v-else :is="INPUT_TYPE_MAP[input.type!]" v-bind="input.props" />
-      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}
-      </Message>
+      <Message v-if="$field?.invalid" severity="error" size="small" variant="simple">{{ $field.error?.message }}</Message>
     </FormField>
   </Form>
 </template>

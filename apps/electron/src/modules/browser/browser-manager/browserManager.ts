@@ -8,17 +8,41 @@ import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { ipcMain } from '/@/modules/ipc'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
+import { asyncDebounce } from '/@/utils'
+import { shallowReactive, watch } from '@vue/reactivity';
+import { store } from '/@/modules/store'
 
 export class BrowserManager {
+  /** 已经打开过的空间 ID */
+  #openedWorkspaceIds = new Set<number>()
+  /** 需要定时同步窗口打开状态的空间 ID */
+  get #needSyncWindowOpenStatusWorkspaceIds() {
+    return Array.from(this.#openedWorkspaceIds).filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
+  }
   /** 正在打开中的浏览器集合 */
   openingBrowserMap = new Map<string, { browserItem: BrowserItem, launchPromise: Promise<void> }>()
   /** 已经打开的浏览器集合 */
-  openedBrowserMap = new Map<string, BrowserItem>()
+  openedBrowserMap = shallowReactive(new Map<string, BrowserItem>())
   /** 同步窗口打开状态控制器 */
   syncWindowOpenStatusController?: AbortController
+  /** 频繁关闭窗口时，等待的上传数据队列 */
+  uploadDataQueue = new Map<string, Promise<{ requestHeaders?: any, uploadParams?: any } | undefined>>()
+  /** 获取已打开的浏览器列表 */
+  get openedBrowserList() {
+    return Array.from(this.openedBrowserMap.values()).map(browserItem => {
+      return {
+        ...browserItem.winInfo,
+        $pId: browserItem.launchInfo?.pid,
+      }
+    })
+  }
 
   constructor() {
     this.#syncWindowStatus()
+
+    watch(this.openedBrowserMap, () => {
+      ipcMain.send('browser:opened-browser-list-change', this.openedBrowserList)
+    })
   }
 
   /** 根据 dirId 获取已经打开的浏览器 */
@@ -41,6 +65,11 @@ export class BrowserManager {
       throw new Error('dirId 不能为空')
     }
 
+    if (this.uploadDataQueue.has(dirId)) {
+      console.log(`BrowserManager ${dirId} === 浏览器数据正在上传中，终止打开`)
+      return
+    }
+
     const openedBrowser = this.openedBrowserMap.get(dirId)
     // 如果浏览器已经打开, 则直接返回
     if (openedBrowser) {
@@ -49,60 +78,45 @@ export class BrowserManager {
       return
     }
 
-    const browserItem = new BrowserItem(winInfo, launchBy)
-    // 如果浏览器没有打开
-    if (!this.openingBrowserMap.has(dirId)) {
+    // 如果浏览器正在打开中，则等待浏览器启动完成
+    if (this.openingBrowserMap.has(dirId)) {
+      await this.openingBrowserMap.get(dirId)?.launchPromise
+      return this.openedBrowserMap.get(dirId)?.launchInfo
+    } else {
+      const browserItem = new BrowserItem(winInfo, launchBy)
       // 则加入打开中的浏览器集合
       this.openingBrowserMap.set(dirId, {
         browserItem,
         launchPromise: browserItem.launch()
       })
     }
-    // 等待浏览器启动完成
-    await this.openingBrowserMap.get(dirId)?.launchPromise.finally(() => {
-      this.openingBrowserMap.delete(dirId)
-    })
-    this.openedBrowserMap.set(dirId, browserItem)
-    this.syncWindowOpenStatus()
 
-    const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
-      console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
-      this.openedBrowserMap.delete(dirId)
-      ipcMain.send('browser:on-close', dirId)
-      browserItem.off(`close-${dirId}`, onCloseHandler)
+    try {
+      // 等待浏览器启动完成
+      await this.openingBrowserMap.get(dirId)?.launchPromise
+      const browserItem = this.openingBrowserMap.get(dirId)!.browserItem
+      this.openedBrowserMap.set(dirId, browserItem)
+      this.#openedWorkspaceIds.add(winInfo.workspaceId!)
+      this.syncWindowOpenStatus()
 
-      setTimeout(10000).then(async () => {
-        if (this.openedBrowserMap.has(dirId)) {
-          return
+      const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
+        console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
+        ipcMain.send('browser:on-close', dirId)
+        browserItem.off(`close-${dirId}`, onCloseHandler)
+        if (uploadDataPromise) {
+          this.uploadDataQueue.set(dirId, uploadDataPromise)
         }
-        // 因为无法保证浏览器是否真的关闭，所以这里需要尝试重新连接
-        const canConnect = await browserItem.beforeLaunchTask?.reconnectBrowser()
-        // 如果可以连接，则重新加入已打开的浏览器集合
-        if (canConnect) {
-          this.openedBrowserMap.set(dirId, browserItem)
-          browserItem.on(`close-${dirId}`, onCloseHandler)
-          this.launch(winInfo)
-        } else {
-          const pid = browserItem.launchInfo?.pid
-          if (pid) {
-            try {
-              process.kill(pid)
-            }
-            catch (error) {
-            }
-          }
-        }
-      })
-
-      if (uploadDataPromise) {
-        const { requestHeaders, uploadParams } = await uploadDataPromise
-        await this.syncWindowData([uploadParams], requestHeaders)
+        await this.#batchUploadData()
       }
-    }
-    // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
-    browserItem.on(`close-${dirId}`, onCloseHandler)
+      // 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect(), 从已打开的浏览器集合中删除
+      browserItem.on(`close-${dirId}`, onCloseHandler)
 
-    return browserItem.launchInfo
+      return browserItem.launchInfo
+    } catch (error) {
+      console.error(`BrowserManager ${dirId} === 启动失败`, error)
+    } finally {
+      this.openingBrowserMap.delete(dirId)
+    }
   }
 
 
@@ -113,7 +127,7 @@ export class BrowserManager {
     const firstBatch = isNeedBatchReq ? dirIds.slice(0, 5) : dirIds
     const secondBatch = isNeedBatchReq ? dirIds.slice(5) : []
 
-    const winInfoList = await this.getWindowList(firstBatch)
+    const winInfoList = await this.getWindowList(firstBatch).catch(() => [])
     const secondPromise = secondBatch.length ? this.getWindowList(secondBatch) : []
     console.log('batchLaunch getWinInfoList', winInfoList.map(item => item.dirId))
     for (const winInfo of winInfoList) {
@@ -139,16 +153,31 @@ export class BrowserManager {
   private async close(dirId: string) {
     const browserItem = this.openedBrowserMap.get(dirId)
     if (browserItem) {
-      return browserItem.close().finally(() => {
-        this.openedBrowserMap.delete(dirId)
-      })
+      return browserItem.close()
     }
   }
 
   /** 批量关闭浏览器 */
-  async batchClose(dirIds: string[]) {
-    const closePromises = dirIds.map(dirId => this.close(dirId))
-    const results = await Promise.allSettled(closePromises)
+  batchClose(dirIds: string[]) {
+    dirIds.forEach(dirId => {
+      if (this.openedBrowserMap.has(dirId)) {
+        this.uploadDataQueue.set(dirId, this.close(dirId))
+      }
+    })
+    if (this.uploadDataQueue.size > 0) {
+      return this.#batchUploadData()
+    }
+  }
+
+  #batchUploadData = asyncDebounce(async () => {
+    if (this.uploadDataQueue.size === 0) {
+      return Promise.resolve([])
+    }
+
+    const dirIds = [...this.uploadDataQueue.keys()]
+    const uploadDataQueue = [...this.uploadDataQueue.values()]
+
+    const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
     const uploadParamsObj = Object.groupBy(results, item => {
       if (item.status === 'fulfilled' && item.value?.requestHeaders) {
@@ -166,8 +195,13 @@ export class BrowserManager {
       }
     })
 
-    return Promise.allSettled(uploadParamsList)
-  }
+    return Promise.allSettled(uploadParamsList).finally(() => {
+      dirIds.forEach(dirId => {
+        this.uploadDataQueue.delete(dirId)
+        this.openedBrowserMap.delete(dirId)
+      })
+    })
+  }, 500)
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
@@ -192,6 +226,7 @@ export class BrowserManager {
 
     if (browserItem) {
       await this.close(dirId)
+      await this.#batchUploadData()
     }
 
     try {
@@ -249,6 +284,13 @@ export class BrowserManager {
         if (res.code !== 0) {
           throw new Error(res.msg)
         }
+
+        res.data.rows.forEach(item => {
+          if (!dirIds.includes(item.dirId!)) {
+            sendErrorMessage($t('窗口不存在'), item.dirId!)
+          }
+        })
+
         return res.data.rows.sort((a, b) => (a.windowSortNum ?? 0) - (b.windowSortNum ?? 0))
       })
       .catch((error) => {
@@ -276,6 +318,12 @@ export class BrowserManager {
   async #syncWindowStatus() {
     setInterval(() => {
       const groupByWorkspaceId = Object.groupBy([...this.openedBrowserMap.values()], item => item.winInfo.workspaceId!)
+      // 没有打开任何窗口，也做同步。只是参数ids为 空数组。
+      this.#needSyncWindowOpenStatusWorkspaceIds.forEach(wId => {
+        if (!groupByWorkspaceId[wId]) {
+          groupByWorkspaceId[wId] = []
+        }
+      })
 
       Object.entries(groupByWorkspaceId).forEach(([workspaceId, browserItems]) => {
         const ids = browserItems!.map(item => item.winInfo.id!)

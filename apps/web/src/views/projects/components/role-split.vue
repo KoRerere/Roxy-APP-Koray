@@ -41,9 +41,7 @@ const selectedRoleLabel = computed(() => {
         <RadioButton v-model="roleModelValue" :input-id="item.label + item.value" :value="item.value" />
         <div class="detail">
           <label :for="item.label + item.value" class="label">{{ item.label }}</label>
-          <div class="description">
-            {{ item.description }}
-          </div>
+          <div class="description">{{ item.description }}</div>
         </div>
       </div>
     </template>
@@ -59,7 +57,6 @@ const selectedRoleLabel = computed(() => {
   gap: var(--spacing-lg, 8px);
   align-self: stretch;
   border-radius: var(--radius-sm, 4px);
-  background: var(--colors-background-bg-app, #fff);
 
   .detail {
     display: flex;
@@ -72,15 +69,15 @@ const selectedRoleLabel = computed(() => {
 
   .label {
     align-self: stretch;
-    color: var(--colors-text-text-primary, #fafafa);
+    color: var(--colors-text-text-primary);
     font-family: Inter;
     font-size: 12px;
     font-weight: 600;
-    line-height: var(--Line-Height-text-md, 20px);
+    line-height: 20px;
   }
 
   .description {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary);
     font-family: Inter;
     font-size: 12px;
     line-height: 16px;

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-const value = defineModel({
-  type: String,
-  default: '',
-})
+interface Props {
+  placeholder?: string
+}
 
-const lineRef = ref()
+const { placeholder = '' } = defineProps<Props>()
+
+const value = defineModel<string>({ default: '' })
+const lineRef = useTemplateRef('line')
 const lineValue = ref()
 
 function handleTextareaInput() {
@@ -18,7 +20,7 @@ function handleTextareaInput() {
 }
 
 function syncScroll(event: any) {
-  lineRef.value.scrollTop = event.target.scrollTop
+  lineRef.value!.scrollTop = event.target.scrollTop
 }
 
 onMounted(() => {
@@ -28,9 +30,8 @@ onMounted(() => {
 
 <template>
   <div class="textarea">
-    <textarea ref="lineRef" v-model="lineValue" class="textarea-line" wrap="off" cols="2" disabled />
-    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="$t('请在此处输入代理信息')"
-      @scroll="syncScroll" @input="handleTextareaInput" />
+    <textarea ref="line" v-model="lineValue" class="textarea-line" wrap="off" cols="2" disabled />
+    <textarea v-model="value" spellcheck="false" class="textarea-content" :placeholder="placeholder" @scroll="syncScroll" @input="handleTextareaInput" />
   </div>
 </template>
 

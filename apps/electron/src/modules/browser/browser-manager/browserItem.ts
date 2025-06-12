@@ -9,7 +9,7 @@ import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { chromeCoreManager } from '/@/modules/browser/chrome-core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
 import { delRoxynetProxy } from '/@/modules/roxynet'
-import { aliOSS, proxyDetection } from '/@/utils'
+import { aliOSS, decryptAESGCM, proxyDetection } from '/@/utils'
 import { genRandomFingerprint } from '/@/utils/randomFingerprint'
 import { AfterLaunchTask } from './afterLaunchTask'
 import { BeforeLaunchTask } from './beforeLaunchTask'
@@ -18,7 +18,7 @@ import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
 import { setTimeout } from 'node:timers/promises'
-import { CDPSession } from 'puppeteer-core'
+import type { CDPSession } from './chrome-wrapper/'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()
@@ -40,8 +40,6 @@ export class BrowserItem {
   }
   /** 启动后是否已经同步过窗口打开状态 */
   isSyncedWindowOpenStatus = false
-  /** 是否通过程序关闭 */
-  isClosedByProgram = false
   /** 通过哪种方式启动的浏览器 */
   launchBy: LaunchBy = 'app'
   /** 公共请求头 */
@@ -61,12 +59,12 @@ export class BrowserItem {
   browserCacheFileName = 'browser-cache.zip'
   /** 浏览器进程 ID */
   private browserPid?: number | null = null
+  /** 是否首次通过工作台检测代理 */
+  isFirstDetectProxyByDashboard = true
   /** 浏览器实例 */
   get #browser() {
     return this.beforeLaunchTask?.browser
   }
-  /** 浏览器 CDP 会话 */
-  cdpSession?: CDPSession
 
   /** 指纹配置文件路径 */
   get fingerprintConfigPath() {
@@ -151,7 +149,9 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
-    Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
+    queueMicrotask(async () => {
+      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
+    })
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
@@ -165,7 +165,6 @@ export class BrowserItem {
   async launch() {
     // 如果浏览器已经存在，直接激活
     if (this.#browser) {
-      this.#browser.off('disconnected', this.handleOnDisconnected)
       await this.beforeLaunchTask.makeBrowserActive().catch((error) => {
         console.error(`make browser active ${this.winInfo.dirId} === 重新拉起`, error)
       })
@@ -179,14 +178,13 @@ export class BrowserItem {
       await this.beforeLaunchTask.run()
       // 创建启动后任务
       this.afterLaunchTask = new AfterLaunchTask(this, this.#browser!)
+      // 浏览器关闭时，需要上传本地数据和状态
+      this.#browser!.on('process-close', this.handleOnDisconnected)
+      // 记录浏览器进程 ID
+      this.browserPid = this.#browser!.process()?.pid
       // 异步执行启动后的任务, 不需要等待
       this.afterLaunchTask.run()
     }
-
-    // 浏览器关闭时，需要上传本地数据和状态
-    this.#browser?.on('disconnected', this.handleOnDisconnected)
-    // 记录浏览器进程 ID
-    this.browserPid = this.#browser?.process()?.pid || this.browserPid
   }
 
   /** 当 Puppeteer 与浏览器实例断开连接时发出。这可能是因为：浏览器关闭/崩溃或调用Browser.disconnect() */
@@ -194,7 +192,7 @@ export class BrowserItem {
     const dirId = this.winInfo.dirId!
     try {
       const uploadDataPromise = this.uploadData()
-      emitter.emit(`close-${dirId}`, this.isClosedByProgram ? undefined : uploadDataPromise)
+      emitter.emit(`close-${dirId}`, uploadDataPromise)
       removeSyncWindowByPid(this.browserPid!)
       const { requestHeaders, uploadParams } = await uploadDataPromise
       this.uploadDataPromiser.resolve({ requestHeaders, uploadParams })
@@ -209,17 +207,8 @@ export class BrowserItem {
   /** 关闭浏览器 */
   async close() {
     if (this.#browser) {
-      this.isClosedByProgram = true
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
-      await this.#browser.close().finally(async () => {
-        await setTimeout()
-        try {
-          process.kill(this.browserPid!)
-        }
-        catch (error) {
-          // $console.error(`kill browser process`, error);
-        }
-      })
+      await this.#browser.close()
       this.beforeLaunchTask.browser = null
 
       return this.uploadDataPromiser.promise
@@ -292,7 +281,7 @@ export class BrowserItem {
           if (code === 0 && data.rows[0]) {
             // console.log('获取窗口信息成功', data.rows[0])
             this.winInfo = data.rows[0]
-            Reflect.set(this.winInfo, '$canUseSyncControl', canUseSyncControl())
+            Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
           }
         }
       } catch (error) {
@@ -302,10 +291,26 @@ export class BrowserItem {
   }
 
   /** 代理检测 */
-  async proxyDetection() {
-    const res = await proxyDetection(this.winInfo)
+  async proxyDetection(isDetectWithOpenapi = false) {
+    if (this.isFirstDetectProxyByDashboard && isDetectWithOpenapi && this.beforeLaunchTask.proxyInfo?.ip) {
+      this.isFirstDetectProxyByDashboard = false
+      return this.beforeLaunchTask.proxyInfo
+    }
+
+    const { isEncryptProxy, proxyEncryptInfo } = this.winInfo
+    const proxyInfo = { ...this.winInfo }
+
+    if (isEncryptProxy && proxyEncryptInfo) {
+      const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
+      Object.assign(proxyInfo, decryptedProxyEncryptInfo)
+    }
+
+    const res = await proxyDetection(proxyInfo)
     if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
       this.beforeLaunchTask.proxyInfo = res
+    }
+    if (isDetectWithOpenapi) {
+      this.isFirstDetectProxyByDashboard = false
     }
     return res
   }

@@ -57,10 +57,6 @@ function copyLink() {
   showToast(0, $t('复制成功'))
 }
 
-function openLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 async function confirm() {
   loading.value = true
   await onConfirm?.()
@@ -81,7 +77,8 @@ function close(isCancel: boolean) {
     <div class="flex flex-col">
       <div class="title">{{ $t('正在处理支付...') }}</div>
       <div class="mt-6 desc">{{ $t('请在 30 分钟内完成支付，确认前请保持此窗口开启。') }}</div>
-      <i18n-t class="mt-2 desc" tag="div" :keypath="$t('若支付页面未加载，请 {link} 并在浏览器中打开。', { link: '{link}' })" scope="global">
+      <i18n-t class="mt-2 desc" tag="div" :keypath="$t('若支付页面未加载，请 {link} 并在浏览器中打开。', { link: '{link}' })"
+        scope="global">
         <template #link>
           <span class="cursor-pointer desc-link" @click="copyLink">{{ $t('复制链接') }}</span>
         </template>
@@ -89,9 +86,10 @@ function close(isCancel: boolean) {
     </div>
     <div class="flex flex-col gap-2.5">
       <RxButton v-model:loading="loading" size="lg" :label="$t('支付成功')" @click="checkStatus(true)" />
+      <RxButton size="lg" outlined severity="secondary" :label="$t('取消')" @click="close(true)" />
       <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
         <template #link>
-          <span class="cursor-pointer help-link" @click="openLiveChat">{{ $t('联系我们') }}</span>
+          <span class="cursor-pointer help-link" @click="$showLiveChat">{{ $t('联系我们') }}</span>
         </template>
       </i18n-t>
     </div>

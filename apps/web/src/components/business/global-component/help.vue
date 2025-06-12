@@ -65,9 +65,9 @@ const items = ref([
     }
   },
   {
-    label: $t('联系支持'),
+    label: $t('联系技术支持'),
     icon: 'base/rx_ic_headphone_2',
-    command: () => LiveChatWidget.call('maximize')
+    command: showLiveChat
   }
 ]);
 

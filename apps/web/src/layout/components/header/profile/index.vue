@@ -14,6 +14,7 @@ import { copyText, showPageLoading } from "/@/utils";
 import { getSettings } from "./components/settings-popup";
 import SettingsPopup from "./components/settings-popup.vue";
 import { getColorSchemeList, useThemeStore } from "/@/stores/theme";
+import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const router = useRouter();
 const dialog = useDialog();
@@ -23,6 +24,7 @@ const simpleLocale = useSimpleLocale();
 const themeStore = useThemeStore()
 const styles = useCssModule();
 const toast = useToast();
+const [showToast] = useResponseToast()
 
 const menuRef = useTemplateRef("menu");
 
@@ -77,7 +79,6 @@ const items = computed(() => {
           ...item,
           isCheck: () => simpleLocale.currentLocale === item.locale,
           command: async () => {
-            await API.base.userSetUserConfigCreate({ language: item.locale });
             simpleLocale.setSimpleLocale(item.locale);
             electronAPI.send("app:saveSoftConfig", { language: item.locale });
           },
@@ -92,7 +93,6 @@ const items = computed(() => {
           ...item,
           isCheck: () => themeStore.theme === item.value,
           command: async () => {
-            await API.base.userSetUserConfigCreate({ colorScheme: item.value });
             themeStore.setTheme(item.value);
             // 如果用户是第一次切换主题，则弹出提示框
             if (userStore.userConfig?.isFirstSwitchTheme) {
@@ -146,7 +146,12 @@ const items = computed(() => {
     {
       label: $t("退出登录"),
       icon: "base/rx_ic_logout",
-      command: () => {
+      command: async () => {
+        const result = await electronAPI.send('browser:getOpenedBrowser')
+        if (result?.length > 0) {
+          showToast(-1, $t('请先关闭窗口'))
+          return
+        }
         showPageLoading()
         router.push({ name: "login" }).finally(() => {
           userStore.clearUserInfo()
@@ -196,11 +201,8 @@ function toggle(event: Event) {
 <template>
   <div class="settings cursor-pointer" @click="toggle">
     <template v-if="userStore.userInfo">
-      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
-        :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
-        :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall"
-          class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
+        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
       </RxAvatar>
       <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     </template>

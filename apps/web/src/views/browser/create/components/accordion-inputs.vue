@@ -4,21 +4,15 @@ import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales/index.js'
-import { getFormDataByList, isFunction } from '/@/utils'
 import { copyText } from '/@/utils/'
-import type { Accordions, WindowMetaData } from './type.ts'
 import accountItem from './account.vue'
-import mateGroup from './mate-group.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
 import Position from '/@/views/browser/create/components/position.vue'
 import Os from './os.vue'
+import type { Accordions } from './type.ts'
 
-const props = defineProps({
-  isEdit: {
-    type: Boolean,
-    default: false,
-  },
+defineProps({
   accordions: {
     type: Object as PropType<Accordions>,
     default: undefined,
@@ -30,44 +24,10 @@ const props = defineProps({
   windowInfo: {
     type: Object as PropType<any>,
     default: () => ({}),
-  },
-  createWay: String,
+  }
 })
-
-const emits = defineEmits(['createOpen', 'create'])
-const loading = defineModel('loading', { type: Boolean, default: false })
 
 const [showToast] = useResponseToast()
-
-const { metadata: outerMetadata, 'onUpdate:metadata': onUpdateMetadata } = toRefs(reactive(useAttrs()))
-
-const hasOuterMetadata = isFunction(onUpdateMetadata?.value)
-
-const innerMetaData = ref<WindowMetaData>({
-  projectName: $t('未指定项目'),
-  projectId: undefined,
-  labelIds: [],
-  windowRemark: '',
-})
-
-const metaData = computed({
-  get() {
-    return (hasOuterMetadata ? outerMetadata.value : innerMetaData.value) as WindowMetaData
-  },
-  set(value: WindowMetaData) {
-    if (hasOuterMetadata) {
-      (onUpdateMetadata?.value as any)(value)
-    }
-    else {
-      innerMetaData.value = value
-    }
-  },
-})
-
-function getFormData() {
-  const formData = getFormDataByList(props!.inputsGroup, toRaw(metaData.value))
-  emits('create', formData)
-}
 
 function onCopy(dirId: string) {
   copyText(dirId)
@@ -115,10 +75,21 @@ function onCopy(dirId: string) {
                   </div>
                 </div>
               </template>
+              <template #searchEngine="{ input }">
+                <div class="flex">
+                  <inputLabel v-bind="input" />
+                  <div class="flex-1 flex gap-2">
+                    <div class="flex-1">
+                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
+                    </div>
+                    <div class="flex-1"></div>
+                  </div>
+                </div>
+              </template>
               <template #proxy="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
-                  <proxyItem v-model:proxy-switch="input.switch" :windowInfo v-model="input.value" class="flex-1" />
+                  <proxyItem v-model:proxy-switch="input.switch" v-model="input.value" class="flex-1" />
                 </div>
               </template>
               <template #accounts="{ input }">
@@ -166,40 +137,22 @@ function onCopy(dirId: string) {
                   </div>
                 </div>
               </template>
-              <template #searchEngine="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1 flex gap-2">
-                    <div class="flex-1">
-                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
-                    </div>
-                    <div class="flex-1"></div>
-                  </div>
-                </div>
-              </template>
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
       </Accordion>
     </div>
-    <div class="footer">
-      <mateGroup v-model="metaData" class="flex-1" :showRemark="createWay !== 'import'" />
-      <RxButton v-if="isEdit" severity="primary" :label="$t('保存')" :loading="loading" @click.stop="getFormData" />
-      <slot name="footer" />
-    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-$spacing-x: 66px;
-
 .dir-id {
   font-size: 12px;
   font-family: 'JetBrains Mono';
 }
 
 .content {
-  padding: 0 $spacing-x 40px;
+  padding: 0 36px 40px 64px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -220,25 +173,6 @@ $spacing-x: 66px;
   .p-select+.p-select,
   .p-inputtext+.p-inputtext {
     border-left: none;
-  }
-}
-
-.footer {
-  display: flex;
-  align-items: center;
-  padding: 16px $spacing-x;
-  gap: 8px;
-  max-height: 64px;
-  border-top: 1px solid var(--colors-border-border-subtle, #C7D1D6);
-
-  :deep(.p-button) {
-    max-width: 150px;
-  }
-
-  :deep(.p-button-label) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 

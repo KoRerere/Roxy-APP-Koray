@@ -12,10 +12,31 @@ console.log('isDev', isDev)
 console.log('isProd', isProd)
 console.log('isMainWindow', isMainWindow)
 
+let pageLoadingTimer: any
+
 export function showPageLoading() {
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'flex')
+  clearTimeout(pageLoadingTimer)
+  // 如果 10s 内没有加载完成，则跳转到 500 页面
+  pageLoadingTimer = setTimeout(async () => {
+    console.log('跳转到 500 页面')
+    const { default: router } = await import('/@/router')
+    router.push({ name: '500' })
+    hidePageLoading()
+  }, 1000 * 10)
+}
+
+if (isMainWindow) {
+  showPageLoading()
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept('/@/router', (newFoo) => {
+    console.log('newFoo', newFoo)
+  })
 }
 
 export function hidePageLoading() {
   document.querySelector<HTMLDivElement>('#page-loading')?.style.setProperty('display', 'none')
+  clearTimeout(pageLoadingTimer)
 }

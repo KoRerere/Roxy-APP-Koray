@@ -36,6 +36,11 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     store.workspaceId = workspaceId
   })
 
+  /** 设置所有空间 ID */
+  ipcMain.on('user:setAllWorkspaceId', (event, workspaceIds) => {
+    store.allWorkspaceId = workspaceIds
+  })
+
   /** 用户上传头像 */
   ipcMain.on('user:uploadAvatar', async (event, avatarPath) => {
     const userId = store.userId

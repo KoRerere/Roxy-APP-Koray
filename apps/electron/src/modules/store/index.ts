@@ -28,6 +28,8 @@ export interface StoreType {
   userId?: number
   /** 空间 ID */
   workspaceId?: number
+  /** 当前用户所有的空间 ID */
+  allWorkspaceId?: number[]
   /** 是否使用系统代理 */
   systemProxySwitch?: boolean
   /** roxynet 本地 http 服务端口 */
@@ -44,6 +46,8 @@ export interface StoreType {
   apiPort?: number
   /** 不走代理的地址 - google会导致代理被墙，开发环境默认加上 */
   ipBlackList: string[]
+  /** ipv6Check 检测地址 */
+  ipv6CheckUrl?: string
   /** 域名禁止访问 */
   blockDomainList: string[]
   /** Default IP checker */
@@ -69,21 +73,11 @@ export interface StoreType {
   showNewFeatureTips?: boolean
   /** 浏览器主题 */
   browserColorScheme?: 'light' | 'dark' | 'system'
+  /** 书签 */
+  bookText?: Record<string, any>
 }
 
-/** 全局书签 */
-let bookText: Record<string, any>
-
-export function getBookText() {
-  return bookText
-}
-
-export function setBookText(value: Record<string, any>) {
-  // console.log('setBookText', value)
-  bookText = value
-}
-
-const excludeKeys = ['bookText']
+const excludeKeys = ['bookText', 'allWorkspaceId']
 
 const defaultValues: StoreType = {
   language: '',
@@ -96,6 +90,7 @@ const defaultValues: StoreType = {
   ipBlackList: [],
   blockDomainList: [],
   ipChecker: '',
+  allWorkspaceId: [],
   isExternalWeb: false,
   openWorkbench: 1,
   subLevel: '',
@@ -108,6 +103,8 @@ const defaultValues: StoreType = {
   ipChangeModal: false,
   showNewFeatureTips: true,
   browserColorScheme: 'system',
+  ipv6CheckUrl: 'http://api.ip2location.io/?key=B47E6CE8266988810896AA77EED8CEA1',
+  bookText: {},
 }
 
 const _store: StoreType = {
@@ -171,8 +168,13 @@ export const forceSaveConfig = async () => {
     _store.browserCacheRootDir = defaultValues.browserCacheRootDir
   }
   try {
-    // 加密数据后再保存
-    const jsonData = JSON.stringify(_store, null, 2)
+    // 加密数据后再保存，排除 excludeKeys 中定义的 key
+    const jsonData = JSON.stringify(_store, (key, value) => {
+      if (excludeKeys.includes(key)) {
+        return undefined;
+      }
+      return value;
+    })
     const encryptedData = encryptData(jsonData)
     await writeFile(appConfig.configFile, encryptedData, 'utf-8')
   }
@@ -215,16 +217,10 @@ export async function fetchUserConfig() {
 
 export function setUserConfig(data: Record<string, any>) {
   Object.keys(data).forEach((key) => {
-    if (excludeKeys.includes(key)) {
-      return
-    }
     if (Reflect.has(store, key)) {
       Reflect.set(store, key, Reflect.get(data, key))
     }
   })
-  if (data?.bookText) {
-    setBookText(data.bookText)
-  }
 }
 
 async function initStore() {
@@ -272,8 +268,21 @@ async function initLanguage() {
   }
 }
 
-
+const canUseSyncControlMap: Record<number, { canUse: boolean, lastCheckTime: number }> = {}
 /** 是否可以使用群控 */
-export function canUseSyncControl() {
-  return !['Expired', 'Free'].includes(store.subLevel!)
+export async function canUseSyncControl() {
+  if (!store.workspaceId) {
+    return false
+  }
+  const now = Date.now()
+  const lastCheckTime = canUseSyncControlMap[store.workspaceId!]?.lastCheckTime || 0
+  if (now - lastCheckTime < 1000 * 60) {
+    return canUseSyncControlMap[store.workspaceId!].canUse
+  }
+  const { code } = await API.pay.userCheckTeamUserRightsList()
+  canUseSyncControlMap[store.workspaceId!] = {
+    canUse: code === 0,
+    lastCheckTime: now,
+  }
+  return canUseSyncControlMap[store.workspaceId!].canUse
 }

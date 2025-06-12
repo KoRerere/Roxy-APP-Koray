@@ -17,18 +17,20 @@ const imgSrc = computed(() => {
 </script>
 
 <template>
-  <div class="empty-content">
-    <img v-if="icon" class="empty-img" :src="imgSrc">
-    <div class="empty-info">
-      <div class="empty-info-title">
-        {{ title }}
-      </div>
-      <div v-if="desc" class="empty-info-desc">
+  <div v-bind="$attrs" class="flex justify-center items-center w-full">
+    <div class="empty-content">
+      <img v-if="icon" class="empty-img" :src="imgSrc">
+      <div class="empty-info">
+        <div class="empty-info-title">
+          {{ title }}
+        </div>
         <slot name="desc">
-          <div v-html="desc" />
+          <div v-if="desc" class="empty-info-desc">
+            <div v-html="desc" />
+          </div>
         </slot>
+        <slot name="extra" />
       </div>
-      <slot name="extra" />
     </div>
   </div>
 </template>

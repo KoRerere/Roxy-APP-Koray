@@ -7,7 +7,7 @@ import { isLocalWebServerURL } from "/@/modules/browser/browser-manager/constant
 import { closeOpenSitesDialogWindow } from "/@/modules/sync-control/dialog/open-sites"
 import { BrowserItem } from "/@/modules/browser/browser-manager/browserItem"
 import axios from "axios"
-import { Page } from "puppeteer-core"
+import type { Page } from "/@/modules/browser/browser-manager/chrome-wrapper"
 import { safeParseJSON } from "/@/utils"
 import { setTimeout } from "timers/promises"
 
@@ -55,33 +55,46 @@ export class SyncControlUtil {
     const mainControlBrowser = getMainControlBrowser()
     const controlledBrowsers = getControlledBrowsers()
     if (mainControlBrowser) {
-      const { tabs } = await mainControlBrowser.cdpSession?.send("Browser.getTabs")
+      const { tabs } = await mainControlBrowser.getBrowser()?.client.Browser.getTabs().catch((err) => {
+        console.error('mainControlBrowser Browser.getTabs() error: ', err)
+        return Promise.reject(err)
+      })
       console.debug('tabs', typeof tabs, tabs)
       const mainBrowserPages = safeParseJSON(tabs)
       console.debug('mainBrowserPages', mainBrowserPages)
       // 关闭被控窗口的所有标签页
       const controlledBrowserPages = await Promise.all(controlledBrowsers.map(async browser => {
         const pages = await browser.getBrowser()?.pages() || []
-        await Promise.all(pages.slice(1).map(page => page.close()))
-        return browser.getBrowser()?.pages()
-      }))
-
+        pages.slice(mainBrowserPages.length).forEach(page => page.close())
+        return pages.slice(0, mainBrowserPages.length)
+      })).catch((err) => {
+        console.error('controlledBrowsers.map error: ', err)
+        return Promise.reject(err)
+      })
       mainBrowserPages.forEach((tab, pageIndex) => {
         const pageURL = tab.url
 
         controlledBrowsers.forEach(async (item, browserIndex) => {
           const browser = item.getBrowser()
           const oldPages = controlledBrowserPages[browserIndex]
-          const page = oldPages?.[pageIndex] || await browser?.newPage()
+          console.log('oldPages', oldPages.map(n => n.url()))
+          let finalURL = pageURL
+          const page = oldPages?.[pageIndex]
 
           const isLocalWebURL = isLocalWebServerURL(pageURL)
           // 如果是本地 web 服务
           if (isLocalWebURL) {
             const url = new URL(pageURL)
             url.searchParams.set('id', item.winInfo.dirId!)
-            await page?.goto(url.toString())
+            finalURL = url.toString()
+          }
+          console.log('finalURL', finalURL)
+          if (page) {
+            if (page.url() !== finalURL) {
+              await page.goto(finalURL)
+            }
           } else {
-            await page?.goto(pageURL)
+            await browser?.newPage(finalURL)
           }
         })
       })

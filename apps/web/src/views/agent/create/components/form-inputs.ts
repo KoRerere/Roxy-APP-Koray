@@ -1,8 +1,7 @@
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { findInputByName, getDictMap, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData } from '/@/utils'
-
+import { findInputByName, getDictMap, isEmptyValue, parseProxyUrl, setInputValue, setInputValueByFormData, IPType } from '/@/utils'
 const userStore = useUserStore()
 
 export async function getInputs(data: any = {}) {
@@ -30,16 +29,18 @@ export async function getInputs(data: any = {}) {
 
         if (value) {
           input!.invalid = false
-          const ipType = value.startsWith('*') ? 'IPV6' : 'IPV4'
+
           const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = parseProxyUrl(value)
           const formData = {
             proxyCategory: protocol?.toLocaleUpperCase(),
-            host,
+            host: host?.replace(/\[|\]/g, ''),
             port,
             proxyUserName,
             proxyPassword,
             refreshUrl,
           }
+
+          const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
 
           if (isEmptyValue(Object.values(formData).filter(Boolean))) {
             input!.invalid = true

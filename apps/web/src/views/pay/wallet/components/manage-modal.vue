@@ -142,7 +142,7 @@ async function onRepay(row: any) {
             <RxButton class="flex-1" size='lg' label={$t('完成支付')} onClick={confirm}></RxButton>
             <RxButton class="flex-1" outlined severity="secondary" size='lg' label={$t('取消')} onClick={handleCancel}></RxButton>
             <I18nT tag="div" keypath={$t('* 支付遇到问题？ {link}', { link: '{link}' })} scope="global">
-              {{ link: () => <span class={`cursor-pointer ${repayCss.link}`} onClick={openLiveChat}>{$t('联系我们')}</span> }}
+              {{ link: () => <span class={`cursor-pointer ${repayCss.link}`} onClick={showLiveChat}>{$t('联系我们')}</span> }}
             </I18nT>
           </div>
         </div>
@@ -156,10 +156,6 @@ async function onRepay(row: any) {
   }
 }
 
-function openLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 function onClose() {
   emit('close')
 }
@@ -169,7 +165,8 @@ function onClose() {
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 w-185">
     <div class="relative flex items-center h-9 header">
       <span>{{ $t('管理订阅') }}</span>
-      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete" @click="onClose">
+      <SvgIcon class="absolute right-0 cursor-pointer" color="#575D61" size="20" name="base/rx_ic_delete"
+        @click="onClose">
       </SvgIcon>
     </div>
     <div>
@@ -191,11 +188,14 @@ function onClose() {
     <div>
       <div class="py-4 record">{{ $t('账单记录') }}</div>
       <div class="flex h-80">
-        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-table-header="false" :context-menu="false" :paginator="false">
+        <RyTable ref="rtable" :columns="columns" :table-request="tableRequest" :show-actions="false"
+          :show-table-header="false" :context-menu="false" :paginator="false">
           <template #status="{ data }">
-            <div class="flex items-center gap-2.5 status" :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
+            <div class="flex items-center gap-2.5 status"
+              :class="{ 'red': [PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus) }">
               <div>{{ PaymentStatusStr[data.payStatus as keyof typeof PaymentStatusStr] }}</div>
-              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
+              <RxButton v-if="[PaymentStatus.Wait, PaymentStatus.Fail].includes(data.payStatus)" outlined
+                severity="secondary" :label="$t('立即支付')" icon="base/rx_ic_credit_card" size="xxs"
                 @click="onRepay(data)"></RxButton>
             </div>
           </template>

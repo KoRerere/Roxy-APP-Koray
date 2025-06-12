@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info.vue'
+import ProfileInfo from '/@/views/browser/list/profiles/components/profile-info/index.vue'
 import TransferHelp from '/@/views/browser/list/transfer/help.vue'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 
@@ -107,7 +107,7 @@ async function howToGetHelp() {
     </template>
     <template #transfer="{ data }">
       <div class="flex items-center">
-        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-black': !data.workspacePicture }"
+        <Avatar :label="data.workspacePicture || data.workspaceName?.slice(0, 2)" class="space-icon" :class="{ '!bg-[var(--pattern-topnav-space-avatar-bg)]': !data.workspacePicture }"
           :pt="{ label: data.workspacePicture ? 'text-[12px]' : 'text-[14px]' }" />
         <div class="ml-3 space-name">{{ data.workspaceName }}</div>
         <div class="ml-1 space-id">ID: {{ data.workspaceNo }}</div>
@@ -124,7 +124,6 @@ async function howToGetHelp() {
   text-align: center;
   font-family: 'JetBrains Mono';
   font-size: 12px !important;
-  font-style: normal;
   font-weight: 700;
   line-height: 12px;
   letter-spacing: -0.4px;
@@ -132,26 +131,26 @@ async function howToGetHelp() {
 }
 
 .space-name {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
-  font-weight: 500;
-  line-height: var(--Line-Height-text-xs, 16px);
+  font-weight: 400;
+  line-height: 16px;
 }
 
 .space-id {
-  color: var(--colors-text-text-tertiary, #575D60);
+  color: var(--colors-text-text-tertiary);
   font-family: "JetBrains Mono";
   font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
+  line-height: 16px;
 }
 
 .help {
-  color: var(--colors-text-text-inactive, #7D8387);
+  color: var(--colors-text-text-inactive);
   font-size: 12px;
   line-height: 20px;
 
   &-link {
-    color: var(--colors-text-text-brand, #11A3FD);
+    color: var(--colors-text-text-brand);
   }
 }
 </style>

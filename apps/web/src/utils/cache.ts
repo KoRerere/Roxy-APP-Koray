@@ -8,22 +8,30 @@ interface CacheEntry<T> {
  */
 const CACHE_EXPIRY = 1000 * 3600 * 3
 
+const registry = new FinalizationRegistry((cleanupInterval: NodeJS.Timeout) => {
+  clearInterval(cleanupInterval)
+})
+
 export class SimpleCache<T> {
-  private static instance: SimpleCache<any>
+  private static instance: WeakRef<SimpleCache<any>> | null = null
   private cache: Map<string, CacheEntry<T>> = new Map()
   private hitCount: number = 0
   private missCount: number = 0
   private pendingRequests: Map<string, Promise<T>> = new Map()
+  private cleanupInterval: NodeJS.Timeout
 
   private constructor() {
-    setInterval(() => this.cleanup(), 60000) // 每分钟清理一次
+    this.cleanupInterval = setInterval(() => this.cleanup(), 60000)
+    registry.register(this, this.cleanupInterval)
   }
 
   public static getInstance(): SimpleCache<any> {
-    if (!SimpleCache.instance) {
-      SimpleCache.instance = new SimpleCache()
+    if (!SimpleCache.instance?.deref()) {
+      const cache = new SimpleCache()
+      SimpleCache.instance = new WeakRef(cache)
+      return cache
     }
-    return SimpleCache.instance
+    return SimpleCache.instance.deref()!
   }
 
   private generateKey(request: (params: any) => Promise<any>): string {

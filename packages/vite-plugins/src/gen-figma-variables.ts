@@ -100,8 +100,9 @@ async function genCssVariable(files: { fileName: string, body: Record<string, an
     })
     return await Promise.all(bodyPromise)
   })
+  // 其他变量文件暂时没用到，只聚合导出 dark 和 light 变量文件，后期需要用到时在添加
   const fileNames = (await Promise.all(genPromises)).flat().filter(name => ['dark', 'light'].some(subname => name.includes(subname)))
-  const indexContent = `/** 此文件自动生成，请勿修改！ */\n${fileNames.map(name => `import './${name}.css';`).join('\n')}`
+  const indexContent = `/** 此文件自动生成，请勿修改！暂时只聚合 dark 和 light 变量文件，其他文件暂未用到 */\n${fileNames.map(name => `import './${name}.css';`).join('\n')}`
   await writeFile(`${dirPath}/index.ts`, indexContent)
 }
 

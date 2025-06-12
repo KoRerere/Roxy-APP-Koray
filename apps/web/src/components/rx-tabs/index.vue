@@ -11,15 +11,16 @@ interface Props extends /* @vue-ignore */ TabProps {
     [key: string]: any
   }[],
   onlyTabs?: boolean
+  headTabs?: boolean
 }
 
-const { tabs, onlyTabs = false, ...props } = defineProps<Props>()
+const { tabs, onlyTabs = false, headTabs = false, ...props } = defineProps<Props>()
 
 const { tablist, tabpanels, ...slots }: any = useSlots()
 </script>
 
 <template>
-  <Tabs v-bind="props">
+  <Tabs :class="{ 'head-tabs': headTabs }" v-bind="props">
     <slot name="tablist">
       <TabList>
         <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
@@ -29,7 +30,8 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
     </slot>
     <slot name="tabpanels" v-if="!onlyTabs">
       <TabPanels class="flex flex-1 !pa-0 overflow-hidden">
-        <TabPanel class="flex flex-1" v-for="{ slot, render, panelProps, ...tab } in tabs" :key="tab.title" :value="tab.value" v-bind="panelProps">
+        <TabPanel class="flex flex-1 overflow-hidden" v-for="{ slot, render, panelProps, ...tab } in tabs"
+          :key="tab.title" :value="tab.value" v-bind="panelProps">
           <slot :name="slot || tab.title" :tab="tab">
             <component v-if="render" :is="render" />
             <template v-else>{{ tab.content }}</template>
@@ -45,29 +47,28 @@ const { tablist, tabpanels, ...slots }: any = useSlots()
 
 <style lang="scss" scoped>
 :deep(.p-tablist-tab-list) {
-  gap: var(--spacing-2xl, 16px);
-  padding: 0px var(--spacing-4xl, 24px);
+  gap: 16px;
+  padding: 0px 24px;
+}
 
-  .p-tab {
+:deep(.p-tab) {
+  padding: 8px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+:deep(.p-tab-active) {
+  font-weight: 600;
+}
+
+.head-tabs {
+  :deep(.p-tab) {
     padding: 14px 8px;
-    border-color: transparent;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: var(--Line-Height-text-xs, 16px);
-
-    &:not(.p-tab-active):not(.p-disabled):hover {
-      border-color: transparent;
-    }
   }
 
-  .p-tab-active {
+  :deep(.p-tab-active) {
     font-size: 14px;
-    font-weight: 700;
-    color: var(--colors-text-text-primary, #FAFAFA);
-  }
-
-  .p-tablist-active-bar {
-    height: 2px;
+    color: var(--colors-text-text-primary);
   }
 }
 </style>

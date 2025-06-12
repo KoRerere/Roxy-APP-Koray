@@ -1,4 +1,4 @@
-import type { Browser, Protocol } from 'puppeteer-core'
+import type { Browser, Protocol } from './chrome-wrapper/'
 import { readFile, rm, stat } from 'node:fs/promises'
 import type { BrowserItem } from './browserItem'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
@@ -25,16 +25,23 @@ export class AfterLaunchTask {
   constructor(private browserItem: BrowserItem, public browser: Browser) { }
 
   async run() {
-    this.handleBrowserEvent()
-    setTimeout(() => {
+    this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
     }, 5000)
+    this.browser.on('process-close', () => {
+      console.log('process-close')
+      this.continueAccess = true
+      if (this.checkIpChangeTimer) {
+        clearTimeout(this.checkIpChangeTimer)
+      }
+    })
+    await this.handleBrowserEvent()
   }
 
   /** 获取标签页 */
   async getDefaultOpenUrl() {
     // 同步 浏览器已经打开tabs标签
-    let defaultOpenUrl = []
+    let defaultOpenUrl: string[] = []
     try {
       const roxyTabs = await readFile(this.browserItem.roxyTabsPath, 'utf8')
       defaultOpenUrl = JSON.parse(roxyTabs).filter(url => this.browserItem.isValidURL(url))
@@ -42,6 +49,7 @@ export class AfterLaunchTask {
       // 如果浏览器是由于关闭最后一个标签页而导致关闭的，这个时候龙哥会检测不到，所以每次读完 roxy_tabs，都要删除
       rm(this.browserItem.roxyTabsPath)
     } catch (error) {
+      defaultOpenUrl = this.browserItem.winInfo.defaultOpenUrl || []
       console.log(`roxy_tabs 文件不存在 跳过`, error)
     }
     return defaultOpenUrl
@@ -92,45 +100,10 @@ export class AfterLaunchTask {
       return
     }
 
-    const createCDPSession = async () => {
-      // 添加重试机制，确保浏览器目标已经准备好
-      let retries = 0;
-      const maxRetries = 5;
-      const retryDelay = 500; // 500ms
-
-      while (retries < maxRetries) {
-        try {
-          const target = this.browser.target();
-          if (!target) {
-            throw new Error('Browser target not available yet');
-          }
-          return await target.createCDPSession();
-        } catch (error) {
-          retries++;
-          if (retries >= maxRetries) {
-            throw error;
-          }
-          console.log(`创建 CDP Session 失败，第 ${retries} 次重试...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-        }
-      }
-      throw new Error('Failed to create CDP Session after maximum retries');
-    }
-
-    const cdpSession = await createCDPSession().catch((err) => {
-      console.log('创建cdpSession失败', err)
-      return Promise.reject(err)
-    })
-
-    // 将 CDP Session 保存到 browserItem 中，供其他地方使用
-    this.browserItem.cdpSession = cdpSession
-
     const saveCookies = async () => {
-      const { cookies } = await cdpSession.send('Storage.getCookies')
+      const { cookies } = await this.browser.client.Storage.getCookies()
       this.cookies = cookies
     }
-
-    console.log('createCDPSession success')
 
     const startTime = Date.now()
 
@@ -138,12 +111,11 @@ export class AfterLaunchTask {
     if (syncCookie) {
       // 导入 cookie
       if (cookie) {
-        await cdpSession.send('Storage.setCookies', { cookies: cookie }).catch((err) => {
+        await this.browser.client.Storage.setCookies({ cookies: cookie }).catch((err) => {
           console.log('导入cookie失败', err)
         })
         console.log('Storage.setCookies success')
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
-
         const pages = await this.browser?.pages()
         // cookie导入成功后，把打开的tab页重新加载一次
         pages.map(async (e) => {
@@ -153,11 +125,6 @@ export class AfterLaunchTask {
             await e.goto(url).catch((err) => {
               console.log(`goto ${url} 失败`, err)
             })
-            if (!this.isPhone) {
-              e.evaluate(() => {
-                window.console.debug = function (_) { }
-              })
-            }
           }
         })
       }
@@ -165,10 +132,6 @@ export class AfterLaunchTask {
       this.browser.on('targetchanged', saveCookies)
       this.browser.on('targetcreated', saveCookies)
       this.browser.on('targetdestroyed', saveCookies)
-      this.browser.on('disconnected', () => {
-        this.continueAccess = true
-        clearTimeout(this.checkIpChangeTimer)
-      })
     }
 
   }
@@ -180,6 +143,7 @@ export class AfterLaunchTask {
       return
     }
 
+    clearTimeout(this.checkIpChangeTimer!)
     this.checkIpChangeTimer = setTimeout(() => {
       this.checkIpChange()
     }, 1000 * 8)
@@ -189,7 +153,7 @@ export class AfterLaunchTask {
 
     if (activePage) {
       // 在网页里面发送检测 IP 请求
-      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '' }))
+      const latestProxyInfo = await this.browserItem.proxyDetection().catch(() => ({ ip: '', city: '' }))
 
       console.debug('当前 IP', latestProxyInfo.ip)
       console.debug('上次 IP', this.browserItem.beforeLaunchTask.proxyInfo.ip)
@@ -217,8 +181,8 @@ export class AfterLaunchTask {
               resolve = res;
               reject = rej;
             });
-            const escapeHTMLPolicy = trustedTypes.createPolicy("myEscapePolicy", {
-              createHTML: (string) => string,
+            const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.("myEscapePolicy", {
+              createHTML: (string: string) => string,
             });
 
             const escaped = escapeHTMLPolicy.createHTML(html);

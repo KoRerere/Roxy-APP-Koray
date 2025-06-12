@@ -1,21 +1,23 @@
 <script setup lang="tsx">
 import { useConfirm } from 'primevue/useconfirm'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import RxTag from '/@/components/rx-tag.vue'
 import { RxAlert } from '/@/components/rx-alert/'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { ProxyCheckStatus } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
+import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep, IPType, ParseMode } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
 import ParseTextarea from './parse-textarea.vue'
+import { getColumns } from './columns'
+import ShadowDotGrid from '/@/components/shadow-dot-grid.vue'
+import Example from './example.vue'
 
 const emit = defineEmits(['cancel', 'save'])
 const confirm = useConfirm()
-const [checkProxy] = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
 
@@ -52,68 +54,20 @@ const isDuplicate = ref(true)
 const showMessage = ref(false)
 const filterCount = ref(0)
 
-const columns = ref([
-  {
-    key: 'protocol',
-    title: $t('代理类型'),
-    getText: (data: any) => data.protocol || '--',
-  },
-  {
-    key: 'host',
-    title: $t('主机'),
-    getText: (data: any) => data.host || '--',
-  },
-  {
-    key: 'port',
-    title: $t('端口'),
-    getText: (data: any) => data.port || '--',
-  },
-  {
-    key: 'proxyUserName',
-    title: $t('用户名'),
-    getText: (data: any) => data.proxyUserName || '--',
-  },
-  {
-    key: 'proxyPassword',
-    title: $t('密码'),
-    getText: (data: any) => data.proxyPassword || '--',
-  },
-  {
-    key: 'refreshUrl',
-    title: $t('刷新 URL'),
-    width: 100,
-    getText: (data: any) => data.refreshUrl || '--',
-  },
-  {
-    key: 'remark',
-    title: $t('备注'),
-    width: 100,
-    getText: (data: any) => data.remark || '--',
-  },
-  {
-    title: $t('IP 查询渠道'),
-    key: 'ipChecker',
-    render: ({ data }: any) => {
-      return (
-        <RxTag icon="base/rx_ic_network" label={data.checkChannelValue} disabled={true}></RxTag>
-      )
-    },
-  },
-  {
-    title: $t('出口 IP'),
-    render: ({ data }: any) => {
-      return (
-        data.checkTime
-          ? <OutboundIp country={data.lastCountry} city={data.lastCity} lastIp={data.lastIp} time={data.checkTime} />
-          : <div class="text-3">{$t('未检测')}</div>
-      )
-    },
-  },
-  {
-    title: $t('操作'),
-    slot: 'actions',
-  },
-])
+const testStatus = ref<Record<string, ProxyCheckStatus>>({})
+const protocolOptions = ref<any[]>([])
+const protocolValue = ref()
+const parserTypeOptions = computed(() => {
+  return [
+    { label: $t('主机:端口'), value: ParseMode.one },
+    { label: $t('主机:端口:用户名:密码'), value: ParseMode.two },
+    { label: $t('用户名:密码{separator}主机:端口', { separator: '@' }), value: ParseMode.three },
+  ]
+})
+const parserType = ref(ParseMode.one)
+const ipTypeOptions = ref<any[]>([])
+const ipType = ref()
+const columns = ref(getColumns())
 
 const ipCheckerConfig = reactive<IpCheckerConfig>({
   value: undefined,
@@ -123,6 +77,7 @@ const ipCheckerConfig = reactive<IpCheckerConfig>({
     filter: false,
     size: 'xxs' as any,
     icon: 'base/rx_ic_network' as any,
+    iconColor: 'var(--colors-icon-icon-secondary)',
   },
   onChange() {
     dataList.value.forEach((item: any) => {
@@ -162,6 +117,10 @@ onBeforeMount(async () => {
   const userConfig = await userStore.getUserConfig()
   ipCheckerConfig.value = $dict_map.checkChannel.find((item: any) => item.value === userConfig!.ipChecker)
   ipCheckerConfig.props.options = $dict_map.checkChannel
+  protocolOptions.value = $dict_map.protocol
+  protocolValue.value = $dict_map.protocol[0].value
+  ipTypeOptions.value = $dict_map.ipType
+  ipType.value = $dict_map.ipType[0].value
 })
 
 function parseValue() {
@@ -174,17 +133,20 @@ function parseValue() {
 
   dataList.value = (isDuplicate.value ? [...new Set(list)] : list)
     .map((url, index) => {
-      const ipType = url.startsWith('*') ? 'IPV6' : 'IPV4'
-      const { protocol = 'http', host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url)
+      const { protocol: __protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = parseProxyUrl(url, parserType.value)
+
+      const protocol = __protocol || protocolValue.value;
 
       const _missField = [['protocol', protocol], ['host', host], ['port', port]].filter(item => !item[1])
+
+      const __ipType = host?.startsWith('[') ? IPType.IPV6 : ipType.value;
 
       return {
         checkChannel: ipCheckerConfig.value?.value,
         checkChannelValue: ipCheckerConfig.value?.label,
-        ipType,
+        ipType: __ipType,
         protocol: protocol?.toLocaleUpperCase(),
-        host,
+        host: host?.replace(/\[|\]/g, ''),
         port,
         proxyUserName,
         proxyPassword,
@@ -192,11 +154,14 @@ function parseValue() {
         remark,
         _missField,
         _missIndex: _missField.length ? index + 1 : 0,
+        _id: index
       }
     })
 
   filterCount.value = list.length - dataList.value.length
   showMessage.value = true
+  // 重置掉状态
+  testStatus.value = {}
 }
 
 function messageClose() {
@@ -249,11 +214,14 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
     return async () => {
       const checkResult = await checkProxy({ ...toRaw(item), protocol: item.protocol || 'HTTP' })
       Object.assign(item, checkResult)
+      testStatus.value[item._id] = checkResult.checkStatus;
       setOperationLoading(item, operateName, false)
+      return checkResult
     }
   })
 
-  await concurrentControl(tasks, 5)
+  const results = await concurrentControl(tasks, 5)
+  batchTestShowToast(results)
 }
 
 async function testAllProxy() {
@@ -330,13 +298,21 @@ function onSave() {
 
 <template>
   <div class="flex-1 overflow-auto flex-col proxies-content">
-    <div class="parse-input">
-      <div class="flex flex-1 flex-col gap-1">
-        <div class="panel-title">
-          {{ $t('代理信息') }}
+    <div class="parse-input w-full !grid grid-cols-10">
+      <div class="col-span-6 flex flex-col gap-6px">
+        <div class="panel-title flex justify-between items-center">
+          <span>{{ $t('代理信息') }}</span>
+          <div class="flex gap-6px">
+            <RxInputSelect size="xs" optionValue="value" v-model="ipType" :options="ipTypeOptions" name="ipType"
+              :filter="false" class="!flex-1" />
+            <RxInputSelect size="xs" optionValue="value" v-model="protocolValue" :options="protocolOptions"
+              name="protocol" :filter="false" class="!w-100px" />
+            <RxInputSelect size="xs" optionValue="value" v-model="parserType" :options="parserTypeOptions"
+              name="parserType" :filter="false" class="!w-234px" />
+          </div>
         </div>
         <div class="information">
-          <ParseTextarea v-model="proxiesText" />
+          <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理信息')" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
@@ -358,37 +334,13 @@ function onSave() {
           </div>
         </div>
       </div>
-      <div class="flex flex-1 flex-col gap-1">
-        <div class="panel-title">
+      <div class="col-span-4 flex flex-col gap-6px">
+        <div class="panel-title h-30px flex items-center">
           {{ $t('导入规则') }}
         </div>
-        <div class="rules">
-          <i18n-t
-            :keypath="$t('支持 IPv4, IPv6 {br}示例: {br}{example}1. 不填写代理类型时，将默认为HTTP类型{br}2. 仅支持 HTTP, HTTPS, SOCKS5 三种类型代理{br}3. 每一行一个代理，一次最多添加500个代理{br}4. 添加IPV6代理时，请在首部添加 * ，主机部分请用小括号包裹', { br: '{br}', example: '{example}' })"
-            scope="global">
-            <template #br>
-              <br>
-            </template>
-            <template #example>
-              <span class="text-[var(--colors-text-text-primary)]">
-                <i18n-t
-                  :keypath="$t('http://192.168.0.1:8000{remark}{br}https://192.168.0.1:8000:用户名:密码{refreshurl}{br}socks5://192.168.0.1:8000{refreshurl}{remark}{br}IPv6:{br}*http://{ipv6}:8000{refreshurl}{remark}{br}{br}', { br: '{br}', refreshurl: '{refreshurl}', remark: '{remark}', ipv6: '{ipv6}' })">
-                  <template #br>
-                    <br>
-                  </template>
-                  <template #refreshurl>
-                    <span class="text-green">[{{ $t('刷新 URL') }}]</span>
-                  </template>
-                  <template #remark>
-                    <span class="text-blue">{{ `\{${$t('备注')}\}` }}</span>
-                  </template>
-                  <template #ipv6>
-                    <span class="text-orange">(2001:db8:2de:0:0:0:0:e13)</span>
-                  </template>
-                </i18n-t>
-              </span>
-            </template>
-          </i18n-t>
+        <div class="rules flex-1">
+          <Example :ip-type="ipType" :parser-type="parserType" class="relative z-10" />
+          <ShadowDotGrid class="z-9" />
         </div>
       </div>
     </div>
@@ -411,16 +363,22 @@ function onSave() {
         </RxAlert>
         <div v-if="showMessage" class="h-[10px] w-full bg-[var(--colors-background-bg-page)]"></div>
       </div>
-      <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
-        :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
-        <template #table-empty>
-          <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" />
-        </template>
-        <template #actions="{ data }">
-          <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
-            :show-menu="false" @quick-click="operationHandler($event, data)" />
-        </template>
-      </RyTable>
+      <div class="flex-1 overflow-x-auto">
+        <RyTable :style="{ '--message-h': showMessage ? '52px' : '0px' }" :columns="columns" :data-list="dataList"
+          :table-operation="tableOperation" :paginator="false" :show-table-header="false" :show-actions="false">
+          <template #table-empty>
+            <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂未添加代理')" class="min-h-258px" />
+          </template>
+          <template #outbound="{ data }">
+            <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+              :status="testStatus[data._id]" :is-loading="data.loadingOperationMap?.test" />
+          </template>
+          <template #actions="{ data }">
+            <Actions :loading-operation-map="data.loadingOperationMap" :operation="tableOperation(data)"
+              :show-menu="false" @quick-click="operationHandler($event, data)" />
+          </template>
+        </RyTable>
+      </div>
     </div>
     <div class="flex justify-end footer">
       <RxButton :label="$t('保存')" :disabled="!dataList?.length" @click.stop="onSave" />
@@ -454,8 +412,9 @@ function onSave() {
     }
 
     .p-datatable-thead {
-      position: sticky;
-      top: calc(-30px + 58px + var(--message-h));
+      // position: sticky;
+      // 58 需要减去2个px
+      // top: calc(-30px + 56px + var(--message-h));
       z-index: 100;
       background-color: white;
     }
@@ -488,9 +447,11 @@ function onSave() {
     gap: var(--spacing-md, 6px);
     height: 100%;
     border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-action);
+    // border: 1px solid var(--colors-border-border-action);
     background: var(--colors-background-bg-overlay, #2C2E30);
-    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    // box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    position: relative;
+    overflow: hidden;
 
     color: var(--colors-text-text-tertiary, #7c8387);
     font-family: Inter;

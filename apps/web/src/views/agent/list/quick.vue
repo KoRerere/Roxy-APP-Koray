@@ -11,6 +11,8 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import { getRawColumns } from './columns'
 import { type ProxyItem, getCustomFilters, tableOperation, tableRequest } from './operation'
+import OutboundIp from '/@/views/agent/list/components/outbound-ip.vue'
+import { ProxyCheckStatus } from '/@/enums'
 
 interface Boundeds {
   [id: number]: {
@@ -29,10 +31,12 @@ const { data: outerData, isBatch = false, createCount = 1 } = defineProps<Props>
 
 const emit = defineEmits(['confirm'])
 
-const [checkProxy] = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const tableRef = useTemplateRef('agent')
+
+const testStatus = ref<Record<string, ProxyCheckStatus>>({})
 
 const columns = getRawColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
@@ -125,11 +129,13 @@ async function testProxy(datas: ProxyItem[], operateName: string) {
       const checkResult = await checkProxy(toRaw(item))
       setOperationLoading(item, operateName, false)
       Object.assign(item, checkResult)
+      testStatus.value[item.id] = checkResult.checkStatus;
       return { ...checkResult, id: item.id }
     }
   })
 
   const results = await concurrentControl(tasks, 5)
+  batchTestShowToast(results)
   API.proxy.userMdfProxyModuleCreate(results)
 }
 
@@ -154,14 +160,17 @@ function saveSelected() {
   <div class="flex flex-col h-full px-4 pt-4 pb-0 proxy-content">
     <div class="flex justify-between proxy-header">
       <CustomFilter :enabled-filter-save="false" :filters-menu="filtersMenu" @filter-change="onRefreshTable" />
-      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')" @click.stop="testAllProxy" />
+      <RxButton outlined severity="secondary" size="xxs" icon="base/rx_ic_speed_test" :label="$t('测试全部')"
+        @click.stop="testAllProxy" />
     </div>
     <RxAlert :visible="isBatch" class="w-full proxy-alert" :type="sumProxyCount > createCount ? 'warn' : 'info'"
-      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })" :closable="false" />
+      :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: sumProxyCount > createCount ? warnMessage : '' })"
+      :closable="false" />
     <div class="flex-ovh-1">
       <!-- eslint-disable-next-line vue/no-unused-refs -->
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps"
-        :show-actions="false" :show-table-header="false">
+      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList"
+        :selection-mode="isBatch ? 'multiple' : 'single'" v-bind="tableProps" :show-actions="false"
+        :show-table-header="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
@@ -179,8 +188,14 @@ function saveSelected() {
             </div>
           </div>
         </template>
+        <template #outbound="{ data }">
+          <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime"
+            :status="testStatus[data.id]" :is-loading="data.loadingOperationMap?.test" />
+        </template>
         <template #remark="{ data: row }">
-          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
+          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }"
+            :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+            :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
           <div class="bounded">
@@ -189,7 +204,8 @@ function saveSelected() {
           </div>
         </template>
         <template #actions="{ data: row }">
-          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false" @quick-click="operationHandler($event, row)" />
+          <Actions :operation="operation" :loading-operation-map="row.loadingOperationMap" :show-menu="false"
+            @quick-click="operationHandler($event, row)" />
         </template>
       </RyTable>
     </div>

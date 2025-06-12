@@ -84,10 +84,6 @@ function copyLink() {
   showToast(0, $t('复制成功'))
 }
 
-function openLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 async function confirm() {
   loading.value = true
   await onConfirm?.()
@@ -136,7 +132,8 @@ function close(isCancel: boolean) {
           <div>
             <svg class="progress-circle" width="28" height="28" viewBox="0 0 36 36">
               <circle class="progress-bg" cx="18" cy="18" r="14" />
-              <circle class="progress-value" cx="18" cy="18" r="14" :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
+              <circle class="progress-value" cx="18" cy="18" r="14"
+                :style="{ '--progress': progress, '--stroke-color': -progress > 0.66 ? '#F53838' : '#12a3fc' }" />
             </svg>
           </div>
           <div>
@@ -159,7 +156,7 @@ function close(isCancel: boolean) {
       </RxAlert>
       <i18n-t class="help" tag="div" :keypath="$t('* 支付遇到问题？ {link}', { link: '{link}' })" scope="global">
         <template #link>
-          <span class="cursor-pointer help-link" @click="openLiveChat">{{ $t('联系我们') }}</span>
+          <span class="cursor-pointer help-link" @click="$showLiveChat">{{ $t('联系我们') }}</span>
         </template>
       </i18n-t>
     </div>

@@ -102,10 +102,6 @@ async function handleSubmit() {
   }
 }
 
-function showLiveChat() {
-  LiveChatWidget.call('maximize')
-}
-
 onBeforeMount(() => {
   startCountdown()
 })
@@ -114,7 +110,8 @@ onBeforeMount(() => {
 <template>
   <div class="container">
     <RxAlert v-model:visible="isShowAlert" type="error" :title="$t('无效的验证码')" class="w-full" />
-    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')" @click="toReEnter"></RxButton>
+    <RxButton class="back-first" text severity="secondary" icon="base/rx_ic_arrow_left" :label="$t('返回上一步')"
+      @click="toReEnter"></RxButton>
     <SignCardHeader :subTitle="$t('请检查您的邮箱')">
       <template #description>
         <div class="description">
@@ -138,12 +135,13 @@ onBeforeMount(() => {
       {{ countdown > 0 ? $t('{time} 秒后可重新获取', { time: `${countdown}` }) : $t('重新发送') }}
     </RxButton>
     <div class="tips">
-      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })" scope="global">
+      <i18n-t :keypath="$t('无法收到验证码？请{tryAgain}或{contact}。', { tryAgain: '{tryAgain}', contact: '{contact}' })"
+        scope="global">
         <template #tryAgain>
           <a class="re-enter-text" @click="toReEnter">{{ $t('重新尝试') }}</a>
         </template>
         <template #contact>
-          <a class="re-enter-text" @click="showLiveChat">{{ $t('联系支持人员') }}</a>
+          <a class="re-enter-text" @click="$showLiveChat">{{ $t('联系技术支持人员') }}</a>
         </template>
       </i18n-t>
     </div>

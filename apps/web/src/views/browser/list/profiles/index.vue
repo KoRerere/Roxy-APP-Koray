@@ -9,9 +9,9 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxAlert } from '/@/components/rx-alert/'
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyList from '/@/views/agent/list/quick.vue'
-import AccountCreate from '/@/views/account/create'
+import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
-import Popup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import TransferModal from '/@/views/browser/list/transfer/transfer-modal.vue'
 import { ClearType, ProfileModifyType, ProfileOpenStatus } from '/@/enums'
 import useColumns from '/@/hooks/useColumns'
@@ -29,19 +29,17 @@ import ClearCache from './components/clear-cache.vue'
 import CustomFilters from './components/custom-filters.vue'
 import EditCookies from './components/edit-cookies.vue'
 import ExportProfiles from './components/export-profiles.vue'
-import ProfileInfo from './components/profile-info.vue'
+import ProfileInfo from './components/profile-info/index.vue'
 import ProjectIcon from './components/project-icon.vue'
 import TagsIcon from './components/tags-icon.vue'
-import { silentUpdateProxy, silentUpdateAccount } from './components/util'
+import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from './components/util'
 import { getCustomFilters, getOperation, getSorts } from './operation'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import { useHandleBusinessCode, toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter } from '/@/utils/eventBus'
-import { showToast as wcisToast } from "/@/hooks/useResponseToast/handleBusinessCode";
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
-import { debounce } from 'es-toolkit'
+import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -61,13 +59,14 @@ const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const workspaceStore = useWorkspaceStore()
-const { userInfo, userConfig, isNoPayUser } = storeToRefs(useUserStore())
+const { userInfo, userConfig } = storeToRefs(useUserStore())
 const { handleBusinessCode } = useHandleBusinessCode()
 const { getProjects } = useMateGroup()
 const [showModal] = RxUseDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [addTag] = useTagsActions()
 const [show] = useContextMenu()
+const { showSimpleDialog } = useSimpleDialog()
 const { columns, updateColumns, updateRemarkDisplayStatus } = useColumns(getColumns(), props.isProjectProfile ? ['project'] : undefined)
 
 const tableRef = useTemplateRef('windownTable')
@@ -259,7 +258,9 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       }
       break
     case 'close':
-      window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId))
+      window.electronAPI.send('browser:batchClose', datas.map((item: any) => item.dirId)).then((res) => {
+        console.log('browser:batchClose res', res)
+      })
       break
     case 'addTag':
       if (operationType === 'batch') {
@@ -288,7 +289,7 @@ async function operationHandler(operate: any, data: any, operationType: 'single'
       onEditCookies(data)
       break
     case 'clearCache':
-      onClearCache(data)
+      onClearCache(datas)
       break
     case 'exportProfile':
       exportProfile(datas)
@@ -418,13 +419,16 @@ async function getNotUsedProfiles(datas: Data[]) {
 }
 
 async function onTransfer(datas: Data[], operate?: any) {
-  if (isNoPayUser.value) {
+  const { code } = await API.pay.userCheckTeamUserRightsList()
+  if (code !== 0) {
     if (!role.isOwner) {
-      wcisToast({
+      emitter.emit('showToast', {
         severity: 'warn',
+        life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: $t('请联系空间的拥有者进行升级。'),
-        life: 5000
+        detail: <I18nT keypath={$t('窗口投送不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+        </I18nT>
       })
       return
     }
@@ -437,18 +441,13 @@ async function onTransfer(datas: Data[], operate?: any) {
         },
       })
     } else {
-      wcisToast({
+      emitter.emit('showToast', {
         severity: 'warn',
+        life: 5000,
         summary: $t('窗口投送不可用'),
-        detail: h(I18nT, {
-          keypath: $t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' }),
-        }, {
-          link: () => h('a', {
-            class: 'cursor-pointer',
-            onClick: () => router.push({ name: 'subscribe-plan' }),
-          }, $t('升级'))
-        }),
-        life: 5000
+        detail: <I18nT keypath={$t('窗口投送为 Roxy 会员功能，{link}以解锁', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
+        </I18nT>
       })
     }
     return
@@ -507,50 +506,45 @@ async function onMoveToProject(data: any) {
     const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
     const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
 
-    dialog.open(Popup, {
-      props: {
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-      },
-      data: {
-        props: {
-          title: $t('移动项目'),
-          content: $t('将移动 {names} 到所选项目', { names: namesStr }),
-          inputs: [
-            {
-              type: 'select',
-              name: 'projectId',
-              placeholder: $t('请选择项目'),
-              options,
-              filter: false,
-              optionsValue: 'value',
-            },
-          ],
+    showSimpleDialog({
+      title: $t('移动项目'),
+      content: $t('将移动 {names} 到所选项目', { names: namesStr }),
+      inputs: [
+        {
+          type: 'select',
+          name: 'projectId',
+          props: {
+            placeholder: $t('请选择项目'),
+            options,
+            optionValue: 'value',
+          },
+          resolver: (z: any) => z.string({
+            invalid_type_error: $t('请选择项目'),
+          }).min(1, $t('请选择项目'))
         },
-        onConfirm: async (formData: any) => {
-          if (formData.projectId) {
-            const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
-            if (!ids.length) {
-              onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
-              return
-            }
-            await batchModifyWindow({ ids, projectId: formData.projectId }, true)
-              .then(() => {
-                const projectName = options.find(item => item.value === formData.projectId)!.label
-                datas.forEach(item => {
-                  item.projectName = projectName
-                  item.projectId = Number(formData.projectId)
-                  item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
-                  item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
-                })
-              })
+      ],
+      onConfirm: async (formData: any) => {
+        if (formData.projectId) {
+          const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+          if (!ids.length) {
+            onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
+            return
           }
-          resolve(true)
-        },
-        onCancel: () => {
-          reject($t('取消'))
-        },
+          await batchModifyWindow({ ids, projectId: formData.projectId }, true)
+            .then(() => {
+              const projectName = options.find(item => item.value === formData.projectId)!.label
+              datas.forEach(item => {
+                item.projectName = projectName
+                item.projectId = Number(formData.projectId)
+                item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+                item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
+              })
+            })
+        }
+        resolve(true)
+      },
+      onCancel: () => {
+        reject($t('取消'))
       },
     })
   })
@@ -603,7 +597,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     const { protocol, proxyCategory, ...rest } = formData
     const params = { ...rest, moduleId: id ?? 0, proxyMethod, protocol, proxyCategory: proxyCategory || protocol }
     datas.forEach(item => {
-      silentUpdateProxy(item, params)
+      silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
     })
   }
 }
@@ -627,7 +621,7 @@ function multipleProxyDelete(data: Data | Data[]) {
           moduleId: 0, // 为 0 表示解除关联
           proxyCategory: 'noproxy',
           proxyMethod: 'custom',
-          ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+          ...createDefaultObject(clearProxyKeys, ''),
         }
         datas.forEach(item => {
           if (!item.openTime) {
@@ -635,7 +629,7 @@ function multipleProxyDelete(data: Data | Data[]) {
           } else {
             Reflect.deleteProperty(params, 'lastIp')
           }
-          silentUpdateProxy(item, params)
+          silentUpdateProxy(item, params, ['isEncryptProxy', 'proxyEncryptInfo'])
         })
       }
     },
@@ -756,39 +750,32 @@ async function onEditCookies(data: Data | Data[]) {
 async function onRemark(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
   return new Promise((resolve, reject) => {
-    dialog.open(Popup, {
-      props: {
-        showHeader: false,
-        modal: true,
-        blockScroll: true,
-      },
-      data: {
-        props: {
-          title: $t('为所选窗口添加备注'),
-          inputs: [
-            {
-              type: 'textarea',
-              name: 'windowRemark',
-              placeholder: $t('请输入备注'),
-              value: datas[0].windowRemark,
-              rows: 5
-            },
-          ],
-        },
-        onConfirm: async (formData: any) => {
-          try {
-            const ids = datas.map(item => item.id)
-            await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
-            datas.forEach(item => {
-              item.windowRemark = formData.windowRemark
-            })
-          } finally {
-            resolve(true)
+    showSimpleDialog({
+      title: $t('为所选窗口添加备注'),
+      inputs: [
+        {
+          type: 'textarea',
+          name: 'windowRemark',
+          value: datas[0].windowRemark,
+          props: {
+            placeholder: $t('请输入备注'),
+            rows: 5,
           }
         },
-        onCancel: () => {
-          reject($t('取消'))
-        },
+      ],
+      onConfirm: async (formData: any) => {
+        try {
+          const ids = datas.map(item => item.id)
+          await batchModifyWindow({ ids, windowRemark: formData.windowRemark }, true)
+          datas.forEach(item => {
+            item.windowRemark = formData.windowRemark
+          })
+        } finally {
+          resolve(true)
+        }
+      },
+      onCancel: () => {
+        reject($t('取消'))
       },
     })
   })
@@ -801,7 +788,7 @@ function toggleRemarkDisplayStatus(cache: Record<string, any>) {
   }
 }
 
-async function onClearCache(data: any) {
+async function onClearCache(datas: any[]) {
   dialog.open(ClearCache, {
     props: {
       showHeader: false,
@@ -810,16 +797,18 @@ async function onClearCache(data: any) {
     },
     data: {
       props: {
-        title: $t('清空窗口 [{name}] 缓存', { name: `${workspaceName.value}-${data.windowSortNum}` }),
+        title: $t('清空窗口缓存'),
         content: $t('清除时系统会自动关闭窗口，且可能导致登录状态失效'),
       },
       onConfirm: async (result: ClearType) => {
+        const dirIds = datas.map(item => item.dirId)
         if (result === ClearType.cloud) {
-          await API.window.userClearWindowCacheCreate({ ids: [data.id] })
-          await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirId: data.dirId })
+          await electronAPI.send('browser:clearCache', { clearType: ClearType.all, dirIds }).finally(() => {
+            return API.window.userClearWindowCacheCreate({ ids: datas.map(item => item.id) })
+          })
         }
         else {
-          await electronAPI.send('browser:clearCache', { clearType: result, dirId: data.dirId })
+          await electronAPI.send('browser:clearCache', { clearType: result, dirIds })
         }
       },
     },
@@ -990,7 +979,7 @@ defineExpose({
       <template v-if="data.id">
         <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
           <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
-            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.windowRemark || !_cache.extend ? '' : $t('添加备注')"></RxButton>
+            :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
           <div v-if="_cache.extend" :title="data.windowRemark" class="min-w-50 whitespace-pre-wrap note-content">{{
             data.windowRemark }}</div>
         </div>

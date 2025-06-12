@@ -34,6 +34,8 @@ export const webUpdater = new class WebUpdater {
   webZipPath = join(appConfig.tempDir, 'web.zip')
   /** 是否在下载中 */
   isInProgress = false
+  /** 是否正在升级中 */
+  isUpgrading = false
   /** 远程 web 资源版本信息 */
   remoteVersionInfo: VersionInfo | null = null
   /** 更新信息消息体 */
@@ -168,11 +170,18 @@ export const webUpdater = new class WebUpdater {
   }
 
   async upgradeNow() {
-    if (this.remoteVersionInfo) {
-      await this.extract()
-      store.isExternalWeb = await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
-      getMainWindow()?.reload()
-      await updateMainWindowPageTitle()
+    if (this.remoteVersionInfo && !this.isUpgrading) {
+      this.isUpgrading = true
+      try {
+        await this.extract()
+        store.isExternalWeb = await fileExists(join(appConfig.externalWebDir, 'dashboard.html'))
+        getMainWindow()?.reload()
+        await updateMainWindowPageTitle()
+      } catch (error) {
+        console.error('[WebUpdater] upgradeNow error', error)
+      } finally {
+        this.isUpgrading = false
+      }
     }
   }
 

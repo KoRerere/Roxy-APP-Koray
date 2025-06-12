@@ -28,6 +28,7 @@
     "currency.js": "^2.0.4",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "dom-align": "^1.12.4",
     "emoji-mart": "^5.6.0",
     "es-toolkit": "^1.35.0",
     "exceljs": "^4.4.0",

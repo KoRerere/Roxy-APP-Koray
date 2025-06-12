@@ -37,7 +37,7 @@ defineExpose({
 </script>
 
 <template>
-  <Menu ref="menu" v-bind="props" :model="_model" popup :pt="{ root: menuClass.root, item: menuClass.item, list: '!py-1.5 !px-1 overflow-y-auto max-h-80' }" @hide="_onHide">
+  <Menu ref="menu" v-bind="props" :model="_model" popup :pt="{ root: menuClass.root, item: menuClass.item, list: 'overflow-y-auto max-h-80' }" @hide="_onHide">
     <template #item="{ item: { render, ...item }, props }">
       <a v-if="!mode" v-bind="props.action" class="max-w-80 !pa-0">
         <component v-if="render" :is="render" :item="item" :props="props"></component>

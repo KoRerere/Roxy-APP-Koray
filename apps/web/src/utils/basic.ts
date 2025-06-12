@@ -133,8 +133,8 @@ export function copyText(text: string) {
 }
 
 export function getUserAgentOs() {
-  if (navigator.userAgentData) {
-    return navigator.userAgentData.platform
+  if ((navigator as any).userAgentData) {
+    return (navigator as any).userAgentData.platform
   }
   else {
     const userAgent = navigator.userAgent
@@ -183,7 +183,7 @@ export function validateURL(url: string): boolean {
 }
 
 interface ProxyObject {
-  protocol: string | undefined
+  protocol?: string | undefined
   host: string | undefined
   port: string | undefined
   proxyUserName: string | undefined
@@ -192,40 +192,55 @@ interface ProxyObject {
   remark?: string
 }
 
-export function parseProxyUrl(url: string): ProxyObject {
-  return url.startsWith('*')
-    ? parseProxyUrlIPv6(url.slice(1))
-    : parseProxyUrlIPv4(url)
+export enum IPType {
+  IPV4 = 'IPV4',
+  IPV6 = 'IPV6',
 }
 
-function parseProxyUrlIPv4(url: string): ProxyObject {
-  const [_, protocol, host, port, proxyUserName, proxyPassword] = url.match(/^\*?(?:(?<protocol>\w+):\/\/)?(?<host>[^:]+):(?<port>\d+)(?::(?<proxyUserName>[^:]*)(?::(?<proxyPassword>[^[{]*))?)?/) || []
-  const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
-  const remark = url.match(/\{(.*?)\}/)?.[1]
-  return {
-    protocol,
-    host,
-    port,
-    proxyUserName,
-    proxyPassword,
-    refreshUrl,
-    remark,
+export enum ParseMode {
+  one,  // 主机:端口:账号:密码
+  two,  // 账号:密码@主机:端口
+  three, // 主机:端口
+}
+
+export function parseProxyUrl(url: string, mode?: ParseMode): ProxyObject {
+  mode = mode ?? ParseMode.one
+  if (mode === ParseMode.one || mode === ParseMode.two) {
+    return parseProxyUrlOne(url)
+  }
+  else {
+    return parseProxyUrlThree(url)
   }
 }
 
-export function parseProxyUrlIPv6(url: string): ProxyObject {
-  const [_, protocol, host, port, __, proxyUserName, ___, proxyPassword] = url.match(/^(https?|socks5):\/\/\((.*?)\):([^:\[\]\{\}]+)(:([^:\[\]\{\}]+))?(:([^:\[\]\{\}]+))?(?:\[[^\]]*\])?(?:\{[^\}]*\})?$/) || []
-  const refreshUrl = url.match(/\[(.*?)\]/)?.[1]
-  const remark = url.match(/\{(.*?)\}/)?.[1]
+function parseProxyUrlOne(url: string): ProxyObject {
+  const regex = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?::(?<user>[^:\[\]\{\}]*))?(?::(?<pass>[^:\[\]\{\}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
 
+  const match = url.match(regex)
+  const data = match?.groups
   return {
-    protocol,
-    host,
-    port,
-    proxyUserName,
-    proxyPassword,
-    refreshUrl,
-    remark,
+    protocol: data?.protocol,
+    host: data?.host,
+    port: data?.port,
+    proxyUserName: data?.user,
+    proxyPassword: data?.pass,
+    refreshUrl: data?.refresh,
+    remark: data?.remark,
+  }
+}
+
+function parseProxyUrlThree(url: string): ProxyObject {
+  const regex = /^(?<user>[^:@\[\]\{\}]+):(?<pass>[^:@\[\]\{\}]+)@(?<host>\[[^\]]+\]|[^:\[\]\{\}@]+):(?<port>\d+)(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^\}]*)\})?$/
+
+  const match = url.match(regex)
+  const data = match?.groups
+  return {
+    host: data?.host,
+    port: data?.port,
+    proxyUserName: data?.user,
+    proxyPassword: data?.pass,
+    refreshUrl: data?.refresh,
+    remark: data?.remark,
   }
 }
 
@@ -234,7 +249,7 @@ export function parseUrl(url: string) {
   return match && { protocol: match[1], domain: match[2] }
 }
 
-export function concurrentControl(tasks: (() => Promise<any>)[], limit: number, notify?: (result: any) => void): Promise<any[]> {
+export function concurrentControl(tasks: (() => Promise<any>)[], limit: number = 5, notify?: (result: any) => void): Promise<any[]> {
   let activeCount = 0
   let taskIndex = 0
   const results: any[] = []
@@ -297,7 +312,6 @@ export function formatProxyTime(time: string) {
     return $t('刚刚')
   }
 }
-
 
 export function getExtname(filename: string) {
   const parts = filename.split('.');
@@ -363,4 +377,11 @@ export function formatNumberToKMB(num: number, precision = 0): string {
     }
   }
   return num?.toLocaleString('en-US')
+}
+
+export function hexToRgba(hex: string, alpha: number): string {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }

@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import PlatformIcon from './platform-icon.vue'
 import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
-import { useTemplateRef } from 'vue'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import popup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
-import AccountCreate from '/@/views/account/create'
+import AccountEdit from '/@/views/account/create/quick.vue'
 import { useColumns } from './columns'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useUserStore } from '/@/stores/user'
@@ -17,13 +15,14 @@ import type { UnwrapRowType, UserGetPlatformInfoV2ListData } from '@roxy/backend
 
 type Data = UnwrapRowType<UserGetPlatformInfoV2ListData>
 
+const router = useRouter()
 const confirm = useConfirm()
-const dialog = useDialog()
 const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { userConfig } = storeToRefs(useUserStore())
 const [_, onlyErrorToast] = useResponseToast()
 const { columns, updateRemarkDisplayStatus } = useColumns()
+const { showSimpleDialog } = useSimpleDialog()
 
 const tableRef = useTemplateRef('account')
 const operation = ref([
@@ -31,7 +30,7 @@ const operation = ref([
     name: 'edit',
     label: $t('编辑'),
     icon: 'base/rx_ic_edit',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     tooltip: $t('编辑'),
     quick: true,
   },
@@ -39,7 +38,7 @@ const operation = ref([
     name: 'remark',
     label: $t('添加备注'),
     icon: 'base/rx_ic_doc_add',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     multiple: true,
     multipleProps: {
       name: 'G1',
@@ -47,12 +46,13 @@ const operation = ref([
   },
   {
     separator: true,
+    power: !role.isViewer && !role.isEditor,
   },
   {
     name: 'delete',
     label: $t('删除'),
     icon: 'base/rx_ic_bin_1',
-    power: !role.isViewer,
+    power: !role.isViewer && !role.isEditor,
     quick: true,
     tooltip: $t('删除'),
     multiple: true,
@@ -64,15 +64,17 @@ const operation = ref([
 
 function operationHandler(operate: any, data?: any) {
   switch (operate.name) {
-    case 'create':
     case 'edit':
-      createAccount(data)
+      editAccount(data)
       break
     case 'remark':
       onRemark(data)
       break
     case 'delete':
       deletePopup(data)
+      break
+    case 'create':
+      createAccount()
       break
   }
 }
@@ -81,19 +83,21 @@ function tableRequest(params: any) {
   return API.platform.userGetPlatformInfoV2List(params)
 }
 
-function createAccount(data?: Data) {
+function createAccount() {
+  router.push({ name: 'account-create' })
+}
+
+function editAccount(data?: Data) {
   drawerInstance.showDrawer({
-    title: data?.id ? $t('编辑平台账号') : $t('添加平台账号'),
+    title: $t('编辑平台账号'),
     slots: {
-      container: () => h(AccountCreate, {
+      container: () => h(AccountEdit, {
         data,
         onClose: () => {
           drawerInstance.hideDrawer()
         },
         onConfirm: async (formData: any) => {
-          const { code, msg } = data?.id
-            ? await API.platform.userMdfPlatformInfoCreate([formData])
-            : await API.platform.userAddPlatformInfoCreate(formData)
+          const { code, msg } = await API.platform.userMdfPlatformInfoCreate([formData])
           onlyErrorToast(code, msg)
           if (code === 0) {
             tableRef.value?.refresh()
@@ -105,30 +109,24 @@ function createAccount(data?: Data) {
 }
 
 function onRemark(data: Data) {
-  dialog.open(popup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('为所选账号添加备注'),
-        inputs: [
-          {
-            type: 'textarea',
-            name: 'platformRemarks',
-            placeholder: $t('请输入备注'),
-            value: data?.platformRemarks,
-          },
-        ],
+  if (role.isViewer || role.isEditor) return
+  showSimpleDialog({
+    title: $t('为所选账号添加备注'),
+    inputs: [
+      {
+        type: 'textarea',
+        name: 'platformRemarks',
+        value: data?.platformRemarks,
+        props: {
+          placeholder: $t('请输入备注'),
+        }
       },
-      onConfirm: async (formData: any) => {
-        const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
-        const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
-        onlyErrorToast(code, msg)
-        tableRef.value?.refresh()
-      },
+    ],
+    onConfirm: async (formData: any) => {
+      const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
+      const { code, msg } = await API.platform.userMdfPlatformInfoCreate(datas)
+      onlyErrorToast(code, msg)
+      tableRef.value?.refresh()
     },
   })
 }
@@ -169,17 +167,19 @@ function deletePopup(data: any) {
 <template>
   <div class="flex flex-col w-full h-full account">
     <ViewsHeader :title="($route.meta.title as string)">
-      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
+      <RxButton v-if="!role.isViewer && !role.isEditor" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')"
+        @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple" :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
+      <RyTable ref="account" cacheKey="account-list" v-model:columns="columns" selection-mode="multiple"
+        :table-request="tableRequest" :operation="operation" :operation-handler="operationHandler"
         :show-gridlines="false" :show-actions="false">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_lock.svg" :title="$t('暂无平台账号')" :desc="$t('在此添加平台账号以管理，并更方便地与窗口进行绑定。')">
             <template #extra>
               <div class="flex items-center gap-3">
-                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs" icon="base/rx_ic_keys" :label="$t('添加账号')"
-                  @click.stop="operationHandler({ name: 'create' })" />
+                <RxButton v-if="!role.isViewer && !role.isEditor" outlined severity="secondary" size="xs"
+                  icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="operationHandler({ name: 'create' })" />
                 <!-- <RxButton text severity="secondary" size="xs" :label="$t('账号文档')" /> -->
               </div>
             </template>
@@ -188,21 +188,25 @@ function deletePopup(data: any) {
         <template #remarkHeader="{ column: { title, _cache } }">
           <div class="flex items-center gap-2 note-header">
             <span>{{ title }}</span>
-            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]"
-              :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'" @click.stop="toggleRemarkDisplayStatus(_cache)" />
+            <RxSvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }"
+              class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
+              @click.stop="toggleRemarkDisplayStatus(_cache)" />
           </div>
         </template>
         <template #remark="{ data, column: { _cache } }">
           <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
-              :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :label="data.platformRemarks || !_cache.extend ? '' : $t('添加备注')"></RxButton>
-            <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{ data.platformRemarks }}</div>
+            <RxButton v-tooltip.top="{ value: data.platformRemarks, showDelay: 0 }" class="shrink-0"
+              :class="{ 'note-light': data.platformRemarks }" text severity="secondary" size="xxs"
+              :icon="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />
+            <div v-if="_cache.extend" :title="data.platformRemarks" class="min-w-50 whitespace-pre-wrap note-content">{{
+              data.platformRemarks }}</div>
           </div>
         </template>
         <template #platform="{ data }">
           <div class="flex gap-2 account">
             <div>
-              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark" :platform-icon="data.platformIcon" class="w-4 h-4" />
+              <PlatformIcon v-if="data.platformIcon" :platform-icon-dark="data.platformIconDark"
+                :platform-icon="data.platformIcon" class="w-4 h-4" />
               <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
             </div>
             <div class="flex flex-col flex-1 gap-1">
@@ -218,7 +222,8 @@ function deletePopup(data: any) {
         </template>
         <template #actions="{ data }">
           <div class="flex gap-2 items-center">
-            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
+            <Actions :operation="operation" :show-menu="false"
+              @quick-click="(operate: any) => operationHandler(operate, data)" />
           </div>
         </template>
       </RyTable>

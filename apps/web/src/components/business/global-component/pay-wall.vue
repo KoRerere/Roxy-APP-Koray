@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { debounce } from 'es-toolkit';
 import AnimationBorder from '/@/components/animation-border.vue'
-import { toUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode';
+import { toUpgradePlan, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode';
 import { $t } from '/@/locales';
 import { useSimpleLocale } from '/@/stores/locale';
 import { type MittEvents, type PayWallType, emitter } from '/@/utils/eventBus'
@@ -112,7 +112,7 @@ function handleSynchronizerClick(event: Event) {
 
 function toUpgrade(event: Event) {
   popoverRef.value?.getRef()?.toggle(event)
-  toUpgradePlan()
+  isOwner.value ? toUpgradePlan() : switchWorkspaceAndToUpgradePlan()
 }
 
 function toDocument(event: Event) {

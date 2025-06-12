@@ -5,11 +5,9 @@ import { useResponseToast } from '/@/hooks/useResponseToast';
 import PlanModal from '../pay/wallet/components/plan-success.vue'
 import BalanceModal from '../pay/wallet/components/balance-success.vue'
 import { useDialog } from '/@/hooks/useDialog'
-import { RxAlert } from '/@/components/rx-alert/'
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
-
 
 function open1() {
   showModal({
@@ -189,34 +187,34 @@ const inputs = [
   //   label: 'Age',
   //   value: 1102,
   // },
-  {
-    type: 'mselect',
-    name: 'scvr1',
-    label: 'Scvr1',
-    value: [1, 2, 3, 4],
-    props: {
-      maxSelectedLabels: 3,
-      options: [
-        { label: '1111111', value: 1 },
-        { label: '2222222', value: 2 },
-        { label: '3333333', value: 3 },
-        { label: '4444444', value: 4 },
-        { label: '5555555', value: 5 },
-      ],
-    },
-  },
-  {
-    type: 'select',
-    name: 'eddp',
-    value: { label: '1', value: 1 },
-    props: {
-      options: [
-        { label: '1', value: 1 },
-        { label: '2', value: 2 },
-        { label: '3', value: 3 },
-      ],
-    },
-  },
+  // {
+  //   type: 'mselect',
+  //   name: 'scvr1',
+  //   label: 'Scvr1',
+  //   value: [1, 2, 3, 4],
+  //   props: {
+  //     maxSelectedLabels: 3,
+  //     options: [
+  //       { label: '1111111', value: 1 },
+  //       { label: '2222222', value: 2 },
+  //       { label: '3333333', value: 3 },
+  //       { label: '4444444', value: 4 },
+  //       { label: '5555555', value: 5 },
+  //     ],
+  //   },
+  // },
+  // {
+  //   type: 'select',
+  //   name: 'eddp',
+  //   value: { label: '1', value: 1 },
+  //   props: {
+  //     options: [
+  //       { label: '1', value: 1 },
+  //       { label: '2', value: 2 },
+  //       { label: '3', value: 3 },
+  //     ],
+  //   },
+  // },
   // {
   //   type: 'textarea',
   //   name: 'lastname',
@@ -237,6 +235,13 @@ const inputs = [
   //   })
   //     .min(5, 'must 5 string man!'),
   // }
+  {
+    type: 'date',
+    name: 'date',
+    props: {
+      placeholder: $t('全部时间'),
+    }
+  }
 ]
 
 const onFormSubmit = (values: Record<string, any>) => {
@@ -249,7 +254,6 @@ function noFormIdSubmit() {
   formRef.value?.instance.submit()
 }
 //==================================
-import TsSelectButton from './components/ts-select-button.vue'
 
 const filters = reactive({
   value: 0,
@@ -272,6 +276,7 @@ const filters = reactive({
   resetFilters() {
   },
 })
+
 </script>
 
 <template>
@@ -285,8 +290,8 @@ const filters = reactive({
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
-      <!-- <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" /> -->
-      <!-- <RxButton label="test submit" @click="noFormIdSubmit"></RxButton> -->
+      <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
+      <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div>
   </div>
 </template>

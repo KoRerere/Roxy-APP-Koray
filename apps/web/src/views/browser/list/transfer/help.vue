@@ -9,7 +9,7 @@ const emit = defineEmits(['close'])
   <div class="flex flex-col pa-6 pt-4 gap-6 popup">
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('如何获取空间 ID') }}</span>
-      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="#575D60" @click="$emit('close')" />
+      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-note)" @click="$emit('close')" />
     </div>
     <div class="description">{{ $t('RoxyBrowser 允许您向任意的工作空间投送窗口：') }}</div>
     <ol class="flex flex-col gap-1 ma-0 pa-0 pl-5">
@@ -30,14 +30,14 @@ const emit = defineEmits(['close'])
 }
 
 .header {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
 }
 
 .description {
-  color: var(--component-button-primary-text, #111213);
+  color: var(--colors-text-text-primary);
   font-size: 14px;
   line-height: 22.4px;
 }

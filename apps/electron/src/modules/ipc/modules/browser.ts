@@ -44,12 +44,7 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
 
   /** 获取所有已打开的窗口 */
   ipcMain.on('browser:getOpenedBrowser', (event,) => {
-    return Array.from(browserManager.openedBrowserMap.values()).map(browserItem => {
-      return {
-        ...browserItem.winInfo,
-        $pId: browserItem.launchInfo?.pid,
-      }
-    })
+    return browserManager.openedBrowserList
   })
 
   /** 获取所有已打开的窗口的消息 */
@@ -67,16 +62,16 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
    * all 清除本地缓存
    */
   ipcMain.on('browser:clearCache', async (event, payload) => {
-    const { clearType, dirId } = payload
+    const { clearType, dirIds } = payload
     if (clearType === 'all') {
       // 清除本地缓存
-      console.log('清除本地缓存', dirId)
-      await browserManager.removeLocalData(dirId)
+      console.log('清除本地缓存', dirIds)
+      return Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalData(dirId)))
     }
     else if (clearType === 'partial') {
       // 清除本地缓存，保留插件
-      console.log('清除本地缓存，保留插件', dirId)
-      await browserManager.removeLocalDataExcludeExtension(dirId)
+      console.log('清除本地缓存，保留插件', dirIds)
+      return Promise.allSettled(dirIds.map(dirId => browserManager.removeLocalDataExcludeExtension(dirId)))
     }
   })
 }

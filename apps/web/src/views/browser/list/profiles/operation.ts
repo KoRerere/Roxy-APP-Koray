@@ -267,7 +267,8 @@ export function getOperation(row: any = {}) {
         name: 'G3',
         showLabel: true,
       },
-      power: role.isOwner || role.isManager,
+      disabled: !(role.isOwner || role.isManager),
+      disabledTooltip: $t('权限不足'),
     },
     {
       name: 'moveToProject',
@@ -425,6 +426,7 @@ export function getOperation(row: any = {}) {
       label: $t('清除缓存'),
       icon: 'base/rx_ic_brush',
       power: !role.isViewer,
+      multiple: true,
     },
     {
       power: !role.isViewer,

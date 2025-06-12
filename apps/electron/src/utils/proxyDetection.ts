@@ -80,7 +80,7 @@ function getCheckFunction(protocol: ProtocolMapType) {
 function getCheckUrl(url = getDefaultCheckChannel(), ipType: string) {
   // console.log(`transIpUrl`, url, ipType)
   if (ipType === `IPV6`) {
-    return `http://api.ip2location.io/?key=266EF4FE57093F065C2FA5C5835686AE`;
+    return store.ipv6CheckUrl
   }
   return url;
 }

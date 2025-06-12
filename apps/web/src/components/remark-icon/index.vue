@@ -1,68 +1,46 @@
 <script setup lang="ts">
-import { useDialog } from 'primevue/usedialog'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import simplePopup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 
-const props = defineProps({
-  value: String,
-  title: String,
-  content: String,
-  placeholder: String,
-  label: String,
-  mode: {
-    type: String as PropType<'icon' | 'button'>,
-    default: 'icon',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  onConfirm: {
-    type: Function,
-    default: () => { },
-  },
-  onCancel: {
-    type: Function,
-    default: () => { },
-  },
-})
+interface Props {
+  value?: string
+  title?: string
+  content?: string
+  placeholder?: string
+  label?: string
+  mode?: 'icon' | 'button'
+  disabled?: boolean
+  onConfirm?: (formData: any) => Promise<void> | void
+  onCancel?: () => void
+}
+
+const props = defineProps<Props>()
+
+const { showSimpleDialog } = useSimpleDialog()
 
 const hasRemark = computed(() => props.value)
 
-const dialog = useDialog()
-
 function onRemark() {
-  if (props.disabled) {
-    return
-  }
+  if (props.disabled) return
 
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
+  showSimpleDialog({
+    title: props.title,
+    content: props.content,
+    inputs: [
+      {
+        type: 'textarea',
+        name: 'remark',
+        value: props.value,
+        props: {
+          placeholder: props.placeholder || $t('请输入备注'),
+        }
+      },
+    ],
+    onConfirm: async (formData: any) => {
+      await props.onConfirm?.(formData.remark)
     },
-    data: {
-      props: {
-        title: props.title,
-        content: props.content,
-        inputs: [
-          {
-            type: 'textarea',
-            name: 'remark',
-            placeholder: props.placeholder || $t('请输入备注'),
-            value: props.value,
-          },
-        ],
-      },
-      onConfirm: async (formData: any) => {
-        await props.onConfirm(formData.remark)
-      },
-      onCancel: () => {
-        props.onCancel()
-      },
-    },
+    onCancel: props.onCancel,
   })
 }
 </script>
@@ -79,11 +57,11 @@ function onRemark() {
 
 <style lang="scss" scoped>
 .light {
-  color: var(--colors-icon-icon-brand, #12a3fc);
+  color: var(--colors-icon-icon-brand);
 }
 
 .disabled:not(.light) {
-  color: var(--colors-icon-icon-inactive, #989CA0);
+  color: var(--colors-icon-icon-inactive);
   cursor: not-allowed;
 }
 </style>

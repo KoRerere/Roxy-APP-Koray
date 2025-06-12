@@ -191,7 +191,6 @@ async function _onSortChange() {
 }
 
 async function _getCondition() {
-  _loading.value = true
   const [{ data, onChange }, filterList] = await Promise.all([
     props.tableSort(),
     props.tableFilters(),
@@ -216,6 +215,7 @@ async function _request() {
   if (props.skeleton) {
     _dataList.value = Array.from({ length: 6 }, () => ({}))
   }
+  _loading.value = true
   await _getConditionPromise
   const requestParams = _getParams()
   const { data } = await props.tableRequest(requestParams)

@@ -1,11 +1,11 @@
-import type { Browser, PuppeteerLaunchOptions } from 'puppeteer-core'
+import type { Browser, PuppeteerLaunchOptions } from './chrome-wrapper/'
 import { screen } from 'electron'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import puppeteer from 'puppeteer-core'
+import puppeteer from './chrome-wrapper/'
 import type { proxyDetection } from '/@/utils'
 import { API } from '/@/api'
-import { chromeCoreManager } from '/@/modules/browser'
+import { browserManager, chromeCoreManager } from '/@/modules/browser'
 import { defaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
 import { ExtensionManager } from '/@/modules/extension'
@@ -54,11 +54,14 @@ export class BeforeLaunchTask {
   get isMobile() {
     return [`Android`, `IOS`].includes(this.browserItem.winInfo.os)
   }
+  /** 最后一次的 token，用于退出登录后中断浏览器打开 */
+  #lastToken = ''
 
   /** 用于重新拉起浏览器 */
   makeBrowserActive!: () => Promise<Browser>
 
   constructor(private browserItem: BrowserItem) {
+    this.#lastToken = store.token!
   }
 
   /** 开始执行任务 */
@@ -74,6 +77,11 @@ export class BeforeLaunchTask {
     // 不通过的任务会抛出异常，中断任务队列
     for (const [message, task] of this.taskMap) {
       try {
+        if (this.#lastToken !== store.token) {
+          this.taskMap.clear()
+          throw new Error('用户凭证不一样，中断浏览器打开')
+        }
+
         this.currentTask = task
         this.progress = task.start
         this.sendSuccessMessage(message)
@@ -149,14 +157,19 @@ export class BeforeLaunchTask {
           acc += 0.2
           this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
         }, 60)
+
+        this.browser = await puppeteer.launch(launchOptions).finally(() => {
+          clearInterval(timer)
+        })
+
+        this.wsEndpoint = this.browser.wsEndpoint()
+        console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
+      } else {
+        await puppeteer.launch(launchOptions, true).finally(() => {
+          clearInterval(timer)
+        })
       }
 
-      this.browser = await puppeteer.launch(launchOptions).finally(() => {
-        clearInterval(timer)
-      })
-
-      this.wsEndpoint = this.browser.wsEndpoint()
-      console.log('Browser launched successfully, wsEndpoint:', this.wsEndpoint)
       resolve()
       return this.browser
     }
@@ -320,13 +333,6 @@ export class BeforeLaunchTask {
       args.push('--auto-open-devtools-for-tabs')
     }
 
-    // 开启同步标签页后，同步标签页
-    (allOpenUrl || []).forEach((item) => {
-      if (item && this.browserItem.isValidURL(item)) {
-        args.push(item)
-      }
-    })
-
     // // console.log(`exe_strs`, exe_strs);
     // if (exe_strs.indexOf(data.platformUrl) == -1) {
     //   exe_strs.push(data.platformUrl);
@@ -335,6 +341,13 @@ export class BeforeLaunchTask {
     if (!useGpu) {
       args.push('--disable-gpu')
     };
+
+    // 开启同步标签页后，同步标签页
+    void (allOpenUrl || []).forEach((item) => {
+      if (item && this.browserItem.isValidURL(item)) {
+        args.push(item)
+      }
+    })
 
     return args.filter(item => item.trim() !== '')
   }
@@ -642,13 +655,18 @@ export class BeforeLaunchTask {
 
   /** 发送成功的消息到渲染进程 */
   sendSuccessMessage(message: string, percent = this.progress) {
-    this.lastMessage = {
-      dirId: this.browserItem.winInfo.dirId!,
-      percent,
-      message,
-      warningMessages: this.warningMessages,
+    if (this.#lastToken !== store.token) {
+      browserManager.openingBrowserMap.delete(this.browserItem.winInfo.dirId!)
+      this.taskMap.clear()
+    } else {
+      this.lastMessage = {
+        dirId: this.browserItem.winInfo.dirId!,
+        percent,
+        message,
+        warningMessages: this.warningMessages,
+      }
+      sendSuccessMessage(this.lastMessage)
     }
-    sendSuccessMessage(this.lastMessage)
   }
 
   /** 发送错误的消息到渲染进程 */

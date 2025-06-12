@@ -1,32 +1,30 @@
 <script lang="tsx" setup>
+import MateGroup from './components/mate-group.vue'
 import { useConfirm } from 'primevue/useconfirm'
-import { useDialog } from 'primevue/usedialog'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import simplePopup from '/@/components/simplePopup'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { Role } from '/@/enums'
-import { SubLevelEnum } from '/@/enums/pay'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useBackRoute } from '/@/router/utils'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey, setInputVisible } from '/@/utils'
+import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import accordionInputs from './components/accordion-inputs.vue'
 import importWindow from './components/import-window.vue'
-import previewCard from './components/preview-card.vue'
+import PreviewCard from './components/preview-card.vue'
 import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate, getDefaultWindowName } from './utils'
-import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { BUSINESS_CODE } from '/@/constants/business-code'
-import { useToast } from 'primevue/usetoast'
+import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { I18nT } from "vue-i18n"
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -51,17 +49,16 @@ interface ProfileTemplate {
 }
 
 const confirm = useConfirm()
-const dialog = useDialog()
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const userStore = useUserStore()
+const backRoute = useBackRoute()
 const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
-const backRoute = useBackRoute()
 const { handleBusinessCode } = useHandleBusinessCode()
-const toast = useToast()
+const { showSimpleDialog } = useSimpleDialog()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -89,9 +86,18 @@ const metaData = ref<WindowMetaData>({
 })
 const loading = ref(false)
 
-const maxWindowCount = computed(() => {
-  return Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100)
-})
+const items = computed(() => [
+  {
+    label: $t('覆盖当前模板'),
+    disabled: !!profileTemplate.value && profileTemplate.value === 'default',
+    command: () => {
+      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
+      onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
+    },
+  },
+])
+
+const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount - userPayInfo.value.useWindowCount, 100))
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
@@ -176,7 +182,6 @@ async function getTemplateList() {
 
   templateMap.value = map
   profileTemplate.props.options = options
-  // profileTemplate.props.disabled = [SubLevelEnum.Expired, SubLevelEnum.Free].includes(userPayInfo.value?.subLevel as SubLevelEnum)
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
@@ -199,6 +204,95 @@ async function onUpdateFinger() {
   Object.assign(original.value, data[0])
 }
 
+async function saveTemplatePopup(event: Event, option?: TemplateOption) {
+  const { code } = await API.pay.userCheckTeamUserRightsList()
+  if (code !== 0) {
+    if (!isOwner.value) {
+      emitter.emit('showToast', {
+        severity: 'warn',
+        life: 5000,
+        summary: $t('窗口模板不可用'),
+        detail: <I18nT keypath={$t('窗口模板不可用，请联系空间的拥有者进行升级，或{link}以激活该跨空间功能。', { link: '{link}' })} >
+          {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('前往升级您的权益')}</a> }}
+        </I18nT>
+      })
+    } else {
+      emitter.emit("showPayWall", {
+        event,
+        params: {
+          type: "createProfileTemplates",
+        },
+      })
+    }
+    return
+  }
+
+  showSimpleDialog({
+    title: option?.value ? $t('编辑模板') : $t('保存模板'),
+    content: $t('请在以下文本框输入模板名称:'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'templateName',
+        value: option?.label,
+        required: true,
+        props: {
+          placeholder: $t('模板名称'),
+        },
+      },
+    ],
+    afterRender: () => <ol class="pl-[14px] m-0">
+      <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
+      <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
+    </ol>,
+    onConfirm: async (data: any) => {
+      onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
+    },
+  })
+}
+
+async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
+  const formData = getFormDataByList(inputsGroup.value)
+  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
+    acc[cur] = formData[cur]
+    return acc
+  }, {} as any)
+
+  const { code, msg } = id
+    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
+    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
+  // onlyErrorToast(code, msg)
+  if (code === 0) {
+    getTemplateList()
+  } else {
+    handleBusinessCode(code, () => {
+      showToast(code, msg)
+    })
+  }
+}
+
+async function deleteTemplate(data: any) {
+  confirm.require({
+    header: $t('删除模板'),
+    message: $t('您确认要删除 ({name}) 模板吗？', { name: data.label }),
+    rejectProps: {
+      label: $t('取消'),
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: $t('确认'),
+      severity: 'danger',
+    },
+    accept: async () => {
+      const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
+      onlyErrorToast(code, msg)
+      if (code === 0) {
+        getTemplateList()
+      }
+    },
+  })
+}
 
 function importSuccess(data: any) {
   fileAnalyzeData.value = data
@@ -294,206 +388,83 @@ async function importProfile(params: any) {
     fileAnalyzeError.value = Array.isArray(msg) ? msg.join('\n') : msg
   }
 }
-// ===========================================
-
-const items = computed(() => [
-  {
-    label: $t('覆盖当前模板'),
-    disabled: !!profileTemplate.value && profileTemplate.value === 'default',
-    command: () => {
-      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
-      onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
-    },
-  },
-])
-
-async function saveTemplatePopup(event: Event, option?: TemplateOption) {
-  // if (!isOwner.value) {
-  //   handleBusinessCode(BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT)
-  //   return
-  // }
-
-  // 没有付费过的用户则提示付费墙
-  if (isOwner.value && userPayInfo.value?.subLevel === SubLevelEnum.Free) {
-    return emitter.emit("showPayWall", {
-      event,
-      params: {
-        type: "createProfileTemplates",
-      },
-    });
-    // if (isOwner.value) {
-
-    // } else {
-    //   return toast.add({ severity: 'warn', summary: $t('窗口模板不可用'), detail: $t('请联系空间的拥有者进行升级。') })
-    // }
-  }
-
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: option?.value ? $t('编辑模板') : $t('保存模板'),
-        content: $t('请在以下文本框输入模板名称:'),
-        inputs: [
-          {
-            type: 'text',
-            name: 'templateName',
-            placeholder: $t('模板名称'),
-            value: option?.label,
-            required: true,
-          },
-        ],
-        render: () => <ol class="pl-[14px] m-0">
-          <li>{$t('模板将保存系统、内核、UA以及设置中的信息。')}</li>
-          <li>{$t('代理，平台账号以及 cookies 信息将不会被保存。项目、标签和备注等非窗口信息也将不会被保存。')}</li>
-        </ol>,
-      },
-      onConfirm: async (data: any) => {
-        onSaveTemplate({ templateName: data.templateName, id: Number(option?.value) })
-      },
-    },
-  })
-}
-
-async function onSaveTemplate({ templateName, id }: { templateName: string, id?: number }) {
-  const formData = getFormDataByList(inputsGroup.value)
-  const template = Object.keys(templateMap.value!.default).reduce((acc, cur) => {
-    acc[cur] = formData[cur]
-    return acc
-  }, {} as any)
-
-  const { code, msg } = id
-    ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
-    : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-  // onlyErrorToast(code, msg)
-  if (code === 0) {
-    getTemplateList()
-  } else {
-    handleBusinessCode(code, () => {
-      showToast(code, msg)
-    })
-  }
-}
-
-async function deleteTemplate(data: any) {
-  confirm.require({
-    header: $t('删除模板'),
-    message: $t('您确认要删除 ({name}) 模板吗？', { name: data.label }),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'danger',
-    },
-    accept: async () => {
-      const { code, msg } = await API.window.userDeleteWindowTemplateInfoCreate({ id: Number(data.value) })
-      onlyErrorToast(code, msg)
-      if (code === 0) {
-        getTemplateList()
-      }
-    },
-  })
-}
 </script>
 
 <template>
-  <div class="flex justify-between h-full">
-    <div class="flex flex-1 flex-col">
-      <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-      <div class="profile-tabs">
-        <Tabs v-model:value="tabsValue">
-          <TabList>
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value">
-              {{ tab.title }}
-            </Tab>
-          </TabList>
-        </Tabs>
-      </div>
-      <div class="flex-ovh-1 flex-col">
-        <div class="profile-basic">
-          <div v-show="tabsValue !== 'import'" class="flex gap-2">
-            <WindowNameEdit v-model="windowName" class="flex-1" />
-            <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
-              <template #option-extra="{ option }">
-                <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                  <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
-                  <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
-                </div>
-              </template>
-            </RxInputSelect>
-          </div>
-          <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
-            <div class="flex items-center justify-between">
-              <div>{{ $t('窗口数量') }}</div>
-              <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
-              </RxInputNumber>
+  <div class="flex flex-col h-full">
+    <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
+    <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 flex flex-col">
+        <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="profile-basic">
+            <div v-show="tabsValue !== 'import'" class="flex gap-2">
+              <WindowNameEdit v-model="windowName" class="flex-1" />
+              <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
+                <template #option-extra="{ option }">
+                  <div v-if="option.action" class="flex flex-1 justify-end gap-2">
+                    <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
+                    <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
+                  </div>
+                </template>
+              </RxInputSelect>
             </div>
-            <div class="multi-block-info">
-              {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+            <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
+              <div class="flex items-center justify-between">
+                <div>{{ $t('窗口数量') }}</div>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
+                </RxInputNumber>
+              </div>
+              <div class="select-none multi-block-info">
+                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
+              </div>
             </div>
+            <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
           </div>
-          <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
+          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
         </div>
-        <accordionInputs v-model:metadata="metaData" class="flex-1" :createWay="tabsValue" :accordions="accordions"
-          :inputs-group="inputsGroup">
-          <template #footer>
-            <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items"
-              @click.stop="saveTemplatePopup($event)" />
-            <!-- <RxButton v-if="tabsValue === 'single'" outlined severity="secondary" :label="$t('创建 & 打开')" @click.stop="createProfile(true)" /> -->
-            <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
-          </template>
-        </accordionInputs>
       </div>
+      <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
     </div>
-    <previewCard :inputs-group="previewInputs" :on-shuffle="onShuffle" />
+    <div class="flex items-center gap-2 footer">
+      <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
+      <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+      <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.profile-tabs {
-  padding: 0px var(--spacing-4xl, 24px);
-  border-bottom: 0.5px solid var(--colors-border-divider);
+:deep(.p-splitbutton) {
+  .p-button {
+    padding: var(--spacing-md, 6px) 10px;
+    font-size: var(--Font-Size-text-sm, 12px);
+    line-height: var(--Line-Height-text-lg, 20px);
+    border-width: 1px;
 
-  :deep(.p-tablist-tab-list) {
-    gap: var(--spacing-2xl, 16px);
-    border-color: transparent;
-
-    .p-tab {
-      padding: var(--spacing-md, 6px) var(--spacing-lg, 8px);
-      color: var(--colors-text-text-secondary, #b2b6b8);
-      font-family: Inter;
-      font-size: var(--Font-Size-text-sm, 12px);
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-      border-color: transparent;
-
-      &:not(.p-tab-active):not(.p-disabled):hover {
-        border-color: transparent;
-      }
+    &:not(:disabled):hover {
+      border-width: 1px;
     }
+  }
 
-    .p-tab-active {
-      color: var(--colors-text-text-brand, #12a3fc);
-    }
+  .p-splitbutton-button {
+    border-top-left-radius: var(--radius-md, 6px);
+    border-bottom-left-radius: var(--radius-md, 6px);
+    border-right-width: 0;
+  }
 
-    .p-tablist-active-bar {
-      height: 2px;
-    }
+  .p-splitbutton-dropdown {
+    border-top-right-radius: var(--radius-md, 6px);
+    border-bottom-right-radius: var(--radius-md, 6px);
+    border-left-width: 0;
   }
 }
 
 .profile-basic {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md, 16px);
-  padding: var(--spacing-md, 16px) 66px;
+  gap: 16px;
+  padding: 16px 42px 16px 64px;
 }
 
 .multi-block {
@@ -516,29 +487,19 @@ async function deleteTemplate(data: any) {
   }
 }
 
-:deep(.p-splitbutton) {
-  .p-button {
-    padding: var(--spacing-md, 6px) 10px;
-    font-size: var(--Font-Size-text-sm, 12px);
-    line-height: var(--Line-Height-text-lg, 20px);
-    border-width: 1px;
-    // border-color: var(#0881cc, #0881cc);
+.footer {
+  padding: 16px 64px;
+  max-height: 64px;
+  border-top: 1px solid var(--colors-border-border-subtle);
 
-    &:not(:disabled):hover {
-      border-width: 1px;
-    }
+  :deep(.p-button) {
+    max-width: 150px;
   }
 
-  .p-splitbutton-button {
-    border-top-left-radius: var(--radius-md, 6px);
-    border-bottom-left-radius: var(--radius-md, 6px);
-    border-right-width: 0;
-  }
-
-  .p-splitbutton-dropdown {
-    border-top-right-radius: var(--radius-md, 6px);
-    border-bottom-right-radius: var(--radius-md, 6px);
-    border-left-width: 0;
+  :deep(.p-button-label) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>

@@ -4,7 +4,7 @@ import InviteUserModal from '/@/views/projects/components/invite-user-modal.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { ProjectPin } from '/@/enums/project'
+import { ProjectPin } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useProjectStore } from '/@/stores/project'
@@ -29,7 +29,7 @@ const [showModal] = useDialog()
 const { getProjects } = useProjectStore()
 const { currentWorkspace } = useWorkspaceStore()
 const { handleBusinessCode } = useHandleBusinessCode()
-const { userPayInfo } = storeToRefs(useUserStore())
+const { userPayInfo, userInfo } = storeToRefs(useUserStore())
 const { showMenu: showPopupMenu } = usePopupMenu()
 
 const columns = [
@@ -59,7 +59,8 @@ const columns = [
 const role = useRoleStore()
 
 function getOperation(data: Project) {
-  const isPinned = data.pinStatus === ProjectPin.pinned
+  const pinStatus = data.user_info!.find(item=> item.userId === userInfo.value.id)?.pinStatus
+  const isPinned = pinStatus === ProjectPin.pinned
 
   return [
     {
@@ -77,7 +78,6 @@ function getOperation(data: Project) {
       label: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       icon: isPinned ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line',
       iconClass: isPinned ? 'text-orange' : '',
-      power: role.isOwner || role.isManager,
       tooltip: isPinned ? $t('取消固定到侧边栏') : $t('固定到侧边栏'),
       quick: true,
       command: ({ item }: any) => {
@@ -155,10 +155,10 @@ function tableRequest(params: any) {
 }
 
 async function pinProject(data: Project) {
-  const isPinned = data.pinStatus === ProjectPin.pinned
-  const pinStatus = isPinned ? ProjectPin.none : ProjectPin.pinned
+  const oldPinStatus = data.user_info!.find(item=> item.userId === userInfo.value.id)?.pinStatus
+  const pinStatus = oldPinStatus === ProjectPin.pinned ? ProjectPin.none : ProjectPin.pinned
 
-  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id as number, pinStatus: pinStatus as number })
+  const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })
   if (code === 0) {
     tableRef.value?.refresh()
   } else {

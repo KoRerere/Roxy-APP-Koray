@@ -13,13 +13,15 @@ import { useCheckProxy } from '/@/views/agent/hooks'
 
 import ProxyCreate from '/@/views/agent/create/quick.vue'
 import ProxyList from '/@/views/agent/list/quick.vue'
-import AccountCreate from '/@/views/account/create'
+import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountEdit from '/@/views/account/create/batch-edit.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { API } from '/@/api'
 import { ProfileModifyType, ProxyCheckStatus } from '/@/enums'
-import { silentUpdateProxy, silentUpdateAccount } from './util';
+import { silentUpdateProxy, silentUpdateAccount, clearProxyKeys } from '../util';
 import PlatformIcon from '/@/views/account/list/platform-icon.vue';
+import ProxyTooltip from './proxy-tooltip.vue';
+import AccountTooltip from './account-tooltip.vue';
 
 interface Props {
   workspaceName?: string
@@ -55,7 +57,7 @@ const drawerInstance = useDrawer()
 const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
-const [checkProxy] = useCheckProxy()
+const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
 
 const defaultWindowName = getDefaultWindowName()
 const windowName = ref(data.windowName)
@@ -81,23 +83,34 @@ const list = computed(() => {
       classes: proxyClass,
       svg: hasProxy.value ? `country-code/${data.lastCountry}` : data.lastIp ? 'base/rx_ic_route2' : 'base/rx_ic_plus',
       svgColor: 'var(--colors-icon-icon-tertiary)',
-      tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
+      data: {
+        hasProxy: hasProxy.value,
+        // 最近一次检测的代理信息
         lastCountry: data.lastCountry || '--',
         lastCity: strConcat('/', data.lastCity) || '',
         lastIp: data.lastIp || '--',
         checkTime: data.checkTime ? formatProxyTime(data.checkTime) : '--',
-      }),
+        // 上一次检测的代理信息
+        beforeCountry: data.beforeProxyInfo?.beforeCountry || '--',
+        beforeCity: strConcat('/', data.beforeProxyInfo?.beforeCity) || '',
+        beforeIp: data.beforeProxyInfo?.beforeIp || '--',
+        beforeTime: data.beforeProxyInfo?.beforeTime ? formatProxyTime(data.beforeProxyInfo?.beforeTime) : '--',
+      }
+      // tooltip: proxyClass === 'direct' ? undefined : $t('位置: {lastCountry}{lastCity}\nIP: {lastIp}\n检测时间: {checkTime}', {
+      //   lastCountry: data.lastCountry || '--',
+      //   lastCity: strConcat('/', data.lastCity) || '',
+      //   lastIp: data.lastIp || '--',
+      //   checkTime: data.checkTime ? formatProxyTime(data.checkTime) : '--',
+      // }),
     },
     {
       key: 'account',
-      // image: windowPlatformList[0]?.platformIcon,
       svg: windowPlatformList[0] ? 'base/rx_ic_user_key' : 'base/rx_ic_plus',
       svgColor: windowPlatformList[0] ? 'var(--colors-icon-icon-tertiary)' : 'var(--colors-icon-icon-secondary)',
       showSub: windowPlatformList.length > 1,
-      // subImage: windowPlatformList.length > 2 ? undefined : windowPlatformList[1]?.platformIcon,
-      // tooltip: windowPlatformList?.map((item: any) => item.platformUserName).filter(Boolean).join('\n')
       platformAccount: windowPlatformList[0],
       subPlatformAccount: windowPlatformList.length > 2 ? undefined : windowPlatformList[1],
+      data: windowPlatformList
     },
   ].filter(item => filterKeys.includes(item.key))
 })
@@ -154,6 +167,7 @@ function getProxyModel() {
       visible: hasProxy.value,
       command: async () => {
         const checkRes = await checkProxy(toRaw(data))
+        batchTestShowToast(checkRes)
         if (data.moduleId) {
           API.proxy.userMdfProxyModuleCreate([{ id: data.moduleId, ...checkRes }] as any)
         }
@@ -183,6 +197,10 @@ function getProxyModel() {
       icon: 'base/rx_ic_edit',
       visible: hasProxy.value && !role.isViewer,
       command: () => {
+        if (data.isEncryptProxy) {
+          showToast(-1, $t('该代理已加密无法编辑，如需更换，请先删除此代理或选择其他代理'))
+          return
+        }
         createProxy(proxyData)
       },
     },
@@ -215,12 +233,12 @@ function getProxyModel() {
               moduleId: 0, // 为 0 表示解除关联
               proxyCategory: 'noproxy',
               proxyMethod: 'custom',
-              ...createDefaultObject(['host', 'ipType', 'port', 'proxyPassword', 'proxyUserName', 'refreshUrl'], ''),
+              ...createDefaultObject(clearProxyKeys, ''),
             }
             updateProfile(params, {
               success: () => {
                 if (!data.openTime) Reflect.set(params, 'lastIp', '')
-                silentUpdateProxy(data, params)
+                silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
               }
             })
           }
@@ -233,7 +251,7 @@ function getProxyModel() {
 function getAccountModel() {
   return [
     {
-      label: $t('编辑平台账号'),
+      label: $t('编辑账号'),
       icon: 'base/rx_ic_edit',
       visible: !role.isViewer && data.windowPlatformList.length > 0,
       command: () => {
@@ -268,7 +286,7 @@ function getAccountModel() {
       visible: !role.isViewer && data.windowPlatformList.length > 0,
     },
     {
-      label: $t('添加平台账号'),
+      label: $t('添加账号'),
       icon: 'base/rx_ic_plus',
       visible: !role.isViewer,
       command: () => {
@@ -300,7 +318,7 @@ function getAccountModel() {
       },
     },
     {
-      label: $t('选择已有平台账号'),
+      label: $t('选择账号'),
       icon: 'base/rx_ic_exchange',
       visible: !role.isViewer,
       command: () => {
@@ -342,7 +360,7 @@ function createProxy(proxyData?: Record<string, any>) {
           const { id, dirId } = data
           const params = { ...formData, id, dirId, moduleId: 0, proxyMethod: 'custom' }
           updateProfile(params, {
-            success: () => silentUpdateProxy(data, params)
+            success: () => silentUpdateProxy(data, params, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()
         }
@@ -361,7 +379,13 @@ function chooseProxy(proxyData: Record<string, any>) {
         onConfirm: ({ id: moduleId, proxyCategory, protocol, ...formData }: any) => {
           const { id, dirId } = data
           updateProfile({ id, dirId, moduleId, proxyMethod: 'choose' }, {
-            success: () => silentUpdateProxy(data, { ...formData, moduleId, protocol, proxyCategory: proxyCategory || protocol, proxyMethod: 'choose' })
+            success: () => silentUpdateProxy(data, {
+              ...formData,
+              moduleId,
+              protocol,
+              proxyCategory: proxyCategory || protocol,
+              proxyMethod: 'choose',
+            }, ['isEncryptProxy', 'proxyEncryptInfo'])
           })
           drawerInstance.hideDrawer()
         }
@@ -418,25 +442,59 @@ function handleClickInplace(e: MouseEvent) {
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
     <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
-      <div class="relative" v-for="item in list" :key="item.key" v-tooltip.top="{ value: item.tooltip, showDelay: 500 }"
-        @click.stop="onClick($event, item.key)">
-        <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
-          <PlatformIcon v-if="item.platformAccount?.platformIcon" :platformIcon="item.platformAccount.platformIcon"
-            :platformIconDark="item.platformAccount.platformIconDark" class="block w-5 h-5 pointer-events-none" />
-          <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
-            :color="item.svgColor" />
-        </div>
-        <div v-if="item.showSub"
-          class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
-          :class="item.classes">
-          <PlatformIcon v-if="item.subPlatformAccount?.platformIcon"
-            :platformIcon="item.subPlatformAccount.platformIcon"
-            :platformIconDark="item.subPlatformAccount.platformIconDark" class="block w-3 h-3 pointer-events-none">
-          </PlatformIcon>
-          <!-- <img v-if="item.subImage" :src="item.subImage" class="block w-3 h-3 pointer-events-none"> -->
-          <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth" name="base/rx_ic_more-h"
-            :color="item.svgColor" />
-        </div>
+      <div class="relative" v-for="item in list" :key="item.key" @click.stop="onClick($event, item.key)">
+        <template v-if="item.key === 'os'">
+          <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes"
+            v-tooltip.top="{ value: item.tooltip, showDelay: 500 }">
+            <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+              :color="item.svgColor" />
+          </div>
+        </template>
+
+        <template v-else-if="item.key === 'proxy'">
+          <RxTooltip>
+            <template #default="{ hide }">
+              <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes" @click="hide">
+                <RxSvgIcon class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+                  :color="item.svgColor" />
+              </div>
+            </template>
+            <template #content v-if="item.data?.lastIp !== '--'">
+              <ProxyTooltip v-bind="item.data" />
+            </template>
+          </RxTooltip>
+        </template>
+
+        <template v-else-if="item.key === 'account'">
+          <RxTooltip>
+            <template #default="{ hide }">
+              <div @click="hide">
+                <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes">
+                  <PlatformIcon v-if="item.platformAccount?.platformIcon"
+                    :platformIcon="item.platformAccount.platformIcon"
+                    :platformIconDark="item.platformAccount.platformIconDark"
+                    class="block w-5 h-5 pointer-events-none" />
+                  <RxSvgIcon v-else class="w-5 h-5 pointer-events-none" fallback="base/rx_ic_earth" :name="item.svg"
+                    :color="item.svgColor" />
+                </div>
+                <div v-if="item.showSub"
+                  class="absolute top-0.5 right-0 -translate-y-1/2 translate-1/2 flex-cc cursor-pointer pa-0.5 state-icons"
+                  :class="item.classes">
+                  <PlatformIcon v-if="item.subPlatformAccount?.platformIcon"
+                    :platformIcon="item.subPlatformAccount.platformIcon"
+                    :platformIconDark="item.subPlatformAccount.platformIconDark"
+                    class="block w-3 h-3 pointer-events-none">
+                  </PlatformIcon>
+                  <RxSvgIcon v-else class="w-3 h-3 pointer-events-none" fallback="base/rx_ic_earth"
+                    name="base/rx_ic_more-h" :color="item.svgColor" />
+                </div>
+              </div>
+            </template>
+            <template #content v-if="item.data?.length > 0">
+              <AccountTooltip :platform-list="item.data" />
+            </template>
+          </RxTooltip>
+        </template>
       </div>
       <div v-if="list.length > 1" class="state-line">
         <CanvasLine v-if="isOpenBrowser" :waveWidth="1.2" :blur="0" speed="fast" :waveOpacity="1"></CanvasLine>

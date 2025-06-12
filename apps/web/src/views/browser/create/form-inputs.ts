@@ -122,13 +122,14 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     : []
   const browserVersionValue = data.browserVersion?.split(',').filter(Boolean) ?? browserVersionOptions.map(item => item.value)
 
+  const encryptProxyKeys = ['isEncryptProxy', 'proxyEncryptInfo']// 代理加密相关字段
   const proxyInfoKeys = ['host', 'ipType', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'lastCountry', 'lastCity', 'lastIp']
   const proxyInfoList = data.proxyCategory && data.proxyCategory !== 'noproxy'
     ? [{
       id: data.moduleId,
       proxyCategory: data.proxyCategory,
       checkChannel: data.checkChannel,
-      ...Object.fromEntries(proxyInfoKeys.map(key => [key, data[key]])),
+      ...Object.fromEntries([...encryptProxyKeys, ...proxyInfoKeys].map(key => [key, data[key]])),
     }]
     : []
 
@@ -136,9 +137,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
   const resolutionValue = resolutionOptions.find((item: any) => item.value === `${data.resolutionX} x ${data.resolutionY}`) || defaultValue
   const inputsGroup = [] as any[]
 
-  const original = reactive({
+  const original = reactive<any>({
     ...getDefaultValue(),
-    ...data,
+    ...Object.fromEntries(Object.entries(data).filter(([key]) => !encryptProxyKeys.includes(key))),// 过滤掉加密字段
   })
 
   const windowInputs = reactive([
@@ -293,15 +294,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('代理'),
       name: 'proxyInfoList',
       value: proxyInfoList,
-      switch: !!proxyInfoList.length,
+      switch: !!proxyInfoList.length,// 是否启用代理开关
       formatValue: (input: any, _inputs: any, formData: any) => {
-        const { id, ...value } = (input.switch && input.value[0]) || {
+        const { id, lastCity, lastCountry, lastIp, ...value } = (input.switch && input.value[0]) || {
           ...createDefaultObject(proxyInfoKeys, ''),
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
         }
+
         const proxyData = id ? { moduleId: id, proxyMethod: 'choose' } : { ...value, proxyMethod: 'custom' }
-        Object.assign(formData, proxyData)// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
+        Object.assign(formData, { lastCity, lastCountry, lastIp, ...proxyData })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
 
         return input.switch
           ? input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()

@@ -1,56 +1,50 @@
-<!-- eslint-disable ts/ban-ts-comment -->
 <script lang="ts" setup>
-import { format } from 'date-fns'
-import { useDialog } from 'primevue/usedialog'
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
-import simplePopup from '/@/components/simplePopup'
+import { format } from 'date-fns'
+import { useSimpleDialog } from '/@/components/simplePopup'
 import { $t } from '/@/locales'
 import { deepClone, isEmptyValue, isLikeFunction, setInputFieldByInputKey, setInputValueByFormData, sleep } from '/@/utils'
 
-const _props = defineProps({
-  currentFilter: {
-    type: Object as PropType<any>,
-    default: undefined,
-  },
-  filtersMenu: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  enabledFilterSave: {
-    type: Boolean,
-    default: true,
-  },
-  saveFilters: {
-    type: Function as PropType<(params: any) => void>,
-    default: () => { },
-  },
-})
+interface Props {
+  currentFilter?: Record<string, any>
+  filtersMenu?: any[]
+  enabledFilterSave?: boolean
+  saveFilters?: (params: any) => Promise<void> | void
+}
 
+const { currentFilter, filtersMenu = [], enabledFilterSave, saveFilters } = defineProps<Props>()
 const emit = defineEmits(['filterChange'])
-const dialog = useDialog()
 
+const { showSimpleDialog } = useSimpleDialog()
+
+const menuRef = useTemplateRef('tmenu')
 const isAllProfiles = ref(true)
 const isChanged = ref(false)
-
-watch(() => _props.currentFilter?.id, (value) => {
-  isChanged.value = false
-  isAllProfiles.value = value === 'rx_1000'
-})
+const isChildren = ref(false)
+const childrenChanged = ref(false)
+const subMenuOptions = ref()
+const selectedCategories = ref()
+const splitButtonItems = [
+  {
+    label: $t('保存为新筛选器'),
+    command: () => {
+      onSaveFilters()
+    },
+  },
+]
 
 const rawOptions = computed(() => {
-  return _props.filtersMenu
-    .map((item) => {
-      if (item.type === 'switchGroup' && Array.isArray(item.options) && item.options.length > 0) {
-        return item.options.map((it: any) => ({ ...it, parentName: item.name, type: item.type }))
-      }
-      return item
-    })
-    .flat()
+  return filtersMenu.map((item) => {
+    if (item.type === 'switchGroup' && Array.isArray(item.options) && item.options.length > 0) {
+      return item.options.map((it: any) => ({ ...it, parentName: item.name, type: item.type }))
+    }
+    return item
+  }).flat()
 })
-
+const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
 const labels = computed(() => {
-  return _props.filtersMenu.reduce((acc, item) => {
+  return filtersMenu.reduce((acc, item) => {
     if (!isEmptyValue(item.value)) {
       const value = !Array.isArray(item.value)
         ? item.value
@@ -63,20 +57,10 @@ const labels = computed(() => {
   }, [])
 })
 
-const splitButtonItems = [
-  {
-    label: $t('保存为新筛选器'),
-    command: () => {
-      saveFilters()
-    },
-  },
-]
-const menuRef = useTemplateRef('tmenu')
-const isChildren = ref(false)
-const childrenChanged = ref(false)
-const subMenuOptions = ref()
-const menuOptions = computed(() => isChildren.value ? subMenuOptions.value : rawOptions.value)
-const selectedCategories = ref()
+watch(() => currentFilter?.id, (value) => {
+  isChanged.value = false
+  isAllProfiles.value = value === 'rx_1000'
+})
 
 function showMenu(event: any) {
   menuRef.value?.show(event)
@@ -104,26 +88,18 @@ function operationHandler(item: any) {
 
 function inputPopup(data: any) {
   menuRef.value?.hide()
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        inputs: [deepClone({ ...data, icon: undefined })],
-      },
-      onConfirm: async (formData: any) => {
-        setInputValueByFormData(_props.filtersMenu, formData)
-        onFilterChange()
-      },
-    },
+  const { type, name, label, value, icon, ...props } = deepClone(data)
+  showSimpleDialog({
+    inputs: [{ type, name, label, value, props }],
+    onConfirm: (formData: any) => {
+      setInputValueByFormData(filtersMenu, formData)
+      onFilterChange()
+    }
   })
 }
 
 function onRadioChose(item: any) {
-  setInputFieldByInputKey(_props.filtersMenu, item.parentName, 'value', item.value)
+  setInputFieldByInputKey(filtersMenu, item.parentName, 'value', item.value)
   menuRef.value?.hide()
   onFilterChange()
 }
@@ -150,7 +126,7 @@ async function openCheckbox(item: any) {
 function onCheckboxChange(item: any) {
   childrenChanged.value = true
   const list = menuOptions.value.filter((item: any) => selectedCategories.value.includes(item.value)).map((item: any) => toRaw(item))
-  _props.filtersMenu.find(input => input.name === item.parentName).value = list
+  filtersMenu.find(input => input.name === item.parentName).value = list
 }
 
 function onHide() {
@@ -167,19 +143,19 @@ function onHide() {
 }
 
 function deleteFilterItem(item: any) {
-  setInputFieldByInputKey(_props.filtersMenu, item.name, 'value', null)
+  setInputFieldByInputKey(filtersMenu, item.name, 'value', null)
   onFilterChange()
 }
 
 function resetFilters() {
-  const condition = _props.currentFilter?.filter_condition || {}
+  const condition = currentFilter?.filter_condition || {}
   const params = {
     ...condition,
     createTime: Array.isArray(condition.createTime) ? [new Date(condition.createTime[0]), new Date(condition.createTime[1])] : undefined,
     modfiyTime: Array.isArray(condition.modfiyTime) ? [new Date(condition.modfiyTime[0]), new Date(condition.modfiyTime[1])] : undefined,
   }
 
-  _props.filtersMenu.forEach((item) => {
+  filtersMenu.forEach((item) => {
     item.value = params[item.name]
     if (Array.isArray(item.items)) {
       item.items.forEach((it: any) => it.value = params[item.name])
@@ -200,34 +176,29 @@ function onFilterChange() {
   emit('filterChange')
 }
 
-function saveFilters() {
-  dialog.open(simplePopup, {
-    props: {
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-    },
-    data: {
-      props: {
-        title: $t('保存筛选器'),
-        inputs: [
-          {
-            type: 'text',
-            placeholder: $t('请输入筛选器名称'),
-            name: 'filter_name',
-            required: true,
-          },
-        ],
+function onSaveFilters() {
+  showSimpleDialog({
+    title: $t('保存筛选器'),
+    inputs: [
+      {
+        type: 'text',
+        name: 'filter_name',
+        props: {
+          placeholder: $t('请输入筛选器名称'),
+        },
+        resolver: (z: any) => z.string({
+          invalid_type_error: $t('请输入筛选器名称'),
+        }).min(1, $t('请输入筛选器名称'))
       },
-      onConfirm: (formData: any) => {
-        _props.saveFilters(formData)
-      },
+    ],
+    onConfirm: (formData: any) => {
+      saveFilters?.(formData)
     },
   })
 }
 
 async function modifyFilter() {
-  await _props.saveFilters(_props.currentFilter)
+  await saveFilters?.(currentFilter)
   isChanged.value = false
 }
 </script>
@@ -249,15 +220,14 @@ async function modifyFilter() {
       <div class="labels-actions">
         <RxButton text severity="secondary" size="xxs" :label="$t('重置')" @click="resetFilters" />
         <template v-if="labels.length">
-          <RxButton v-if="isAllProfiles" size="xxs" :label="$t('保存')" @click="saveFilters" />
+          <RxButton v-if="isAllProfiles" size="xxs" :label="$t('保存')" @click="onSaveFilters" />
           <SplitButton v-else :label="$t('保存')" :model="splitButtonItems" @click="modifyFilter" />
         </template>
         <div>|</div>
       </div>
     </div>
   </div>
-  <!-- eslint-disable-next-line vue/no-unused-refs -->
-  <TieredMenu ref="tmenu" :model="menuOptions" popup :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
+  <TieredMenu ref="tmenu" popup :model="menuOptions" :pt="{ root: classes.content, separator: classes.separator, menu: { transition: classes.list } }" @hide="onHide">
     <template #item="{ item, props }">
       <a v-ripple class="max-w-60 cursor-pointer !p-0" v-bind="props.action">
         <label v-if="isChildren" class="cursor-pointer" :class="classes.item" :for="item.value" @click.stop>

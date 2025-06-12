@@ -126,7 +126,8 @@ defineExpose({
   <div class="flex flex-1 justify-between flex-row-reverse hub">
     <div>
       <div class="hub-categories">
-        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item" :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
+        <div v-for="item in categories" :key="item.id" class="cursor-pointer hub-categories-item"
+          :class="{ active: item.id === activeCategory }" @click="jumpToCategory(item)">
           {{ item.categoryName }}
         </div>
       </div>
@@ -161,8 +162,10 @@ defineExpose({
                 <div>
                   By <span class="decoration-underline">{{ plugin.provider }}</span>
                 </div>
-                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check" :label="$t('已下载')" disabled />
-                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud" :label="$t('下载')" @click="onInstall(plugin)" />
+                <RxButton v-if="plugin.addStatus" size="xxs" outlined severity="secondary" icon="base/rx_ic_check"
+                  :label="$t('已下载')" disabled />
+                <RxButton v-else size="xxs" outlined severity="secondary" icon="base/rx_ic_download_cloud"
+                  :label="$t('下载')" @click="onInstall(plugin)" />
               </div>
             </div>
           </div>
@@ -257,10 +260,34 @@ defineExpose({
 
     &-content {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(1, 1fr);
       gap: 24px var(--spacing-4xl, 24px);
       margin-top: var(--spacing-lg, 8px);
     }
+  }
+}
+
+@media (min-width: 768px) {
+  .list-group-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1400px) {
+  .list-group-content {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1920px) {
+  .list-group-content {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 9999px) {
+  .list-group-content {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 

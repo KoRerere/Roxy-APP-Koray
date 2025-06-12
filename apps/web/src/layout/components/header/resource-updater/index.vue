@@ -1,11 +1,15 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { onMounted, ref, useTemplateRef } from 'vue'
 import { $t } from '/@/locales'
 import AppForceUpgradeModal from './app-force-upgrade-modal.vue'
 import AppUpdater from './app-updater.vue'
 import KernelUpdater from './kernel-updater.vue'
+import { useToast } from 'primevue/usetoast'
+import { debounce } from 'es-toolkit'
+import { I18nT } from 'vue-i18n'
 
+const toast = useToast();
 const popoverRef = useTemplateRef('popover')
 const btnRef = useTemplateRef('btn')
 const clientUpdates = ref<ResourceUpdateMessage[]>([])
@@ -75,23 +79,44 @@ async function getKernelList() {
   kernelUpdates.value = list.sort((a, b) => b.coreVersion - a.coreVersion)
 }
 
+// 5 分钟内不重复提示
+let lastTime = 0
+
 watch(isDownloadingKernel, () => {
-  console.log('isDownloadingKernel', popoverRef.value?.getRef())
+  if (Date.now() - lastTime < 60000 * 5) {
+    return
+  }
   if (isDownloadingKernel.value && !popoverRef.value?.getRef().visible) {
     btnRef.value?.btnEl.click()
+    lastTime = Date.now()
     nextTick(() => {
       tabModel.value = tabs.value[1].value
-      // 5 分钟内不重复提示
-      setTimeout(() => {
-        isDownloadingKernel.value = false
-      }, 60000 * 5)
+      isDownloadingKernel.value = false
     })
   }
 })
 
+function onDownloadClick(item: ResourceUpdateMessage) {
+  console.log('onDownloadClick', item)
+  lastTime = Date.now()
+}
+
+const showDownloadError = debounce((data: ResourceUpdateMessage) => {
+  toast.add({
+    severity: 'error',
+    summary: () =>
+      <I18nT keypath={data.description || $t('获取内核失败，{tech}', { tech: '{tech}' })}>
+        {{ tech: () => <a class="cursor-pointer" onClick={showLiveChat}>{$t('请联系技术支持')}</a> }}
+      </I18nT>
+  });
+}, 100)
+
 window.electronAPI.on('app:resource-update', (data) => {
   // 内核升级
   if (data.type === 'kernel') {
+    if (data.status === 'failed') {
+      showDownloadError(data)
+    }
     const index = kernelUpdates.value.findIndex(item => item.coreVersion === data.coreVersion)
     if (index === -1) {
       kernelUpdates.value.push(data)
@@ -99,7 +124,7 @@ window.electronAPI.on('app:resource-update', (data) => {
     else {
       kernelUpdates.value[index] = data
     }
-    isDownloadingKernel.value = data.status === 'downloading'
+    isDownloadingKernel.value = data.status === 'downloading' && !data.silent
     kernelUpdates.value.sort((a, b) => b.coreVersion - a.coreVersion)
   }
   // 客户端升级(app、web、patch)
@@ -140,7 +165,7 @@ window.electronAPI.on('app:resource-update', (data) => {
         </TabList>
         <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
           <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" :class="classes.tabpanel">
-            <component :is="tab.component" :upgrade-list="tab.list" />
+            <component :is="tab.component" :upgrade-list="tab.list" @onDownloadClick="onDownloadClick" />
           </TabPanel>
         </TabPanels>
       </Tabs>

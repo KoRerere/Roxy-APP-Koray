@@ -1,14 +1,18 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import batchProxies from './components/batch-proxies.vue'
 // import RecommendedProxies from './components/recommended-proxies.vue'
 import singleProxies from './components/single-proxies.vue'
+import { useDialog } from '/@/hooks/useDialog'
+import RxButton from '/@/components/rx-button'
+import { getColumns } from './components/columns'
+import RyTable from '/@/components/ry-table'
 
 const router = useRouter()
 const [_, onlyErrorToast] = useResponseToast()
-
+const [showModal] = useDialog()
 const tabs = ref([
   { title: $t('单个添加'), value: 'single' },
   { title: $t('批量添加'), value: 'batch' },
@@ -16,13 +20,51 @@ const tabs = ref([
 ])
 const tabsValue = ref('single')
 
-async function saveProxies(proxies: any) {
-  const { code, msg } = await API.proxy.userAddProxyModuleCreate(proxies)
+async function saveProxies(__proxies: any) {
+  const proxies = __proxies.reverse()
+  const { code, msg, data } = await API.proxy.userAddProxyModuleCreate(proxies)
   if (code === 0) {
     router.replace({ name: 'agent-list' })
+  } else if (code === 101 && data) {
+    const isAllExist = proxies.length === data?.length;
+    const okText = isAllExist ? $t('知道了') : $t('继续并保存')
+    const columnKeys = ['protocol', 'host', 'port', 'proxyUserName', 'proxyPassword', 'refreshUrl', 'remark']
+    const columns = getColumns().filter(item => columnKeys.includes(item.key as string))
+    const dataList = (isAllExist ? proxies : proxies.filter((_item: any, index: number) => data.some((d: any) => d.index === index))).reverse()
+    const onConfirm = async () => {
+      if (!isAllExist) {
+        // 保存不重复的项
+        const noRepetitiveProxies = proxies.filter((_item: any, index: number) => !data.some((d: any) => d.index === index)).reverse()
+        await saveProxies(noRepetitiveProxies)
+      }
+      modal.hideModal()
+    }
+    const modal = showModal({
+      header: isAllExist ? $t('代理已存在') : $t('部分代理已存在'),
+      class: '!w-[960px]',
+      slots: {
+        default: () => {
+          return <div class={'flex flex-col gap-24px'}>
+            <p class={'text-[var(--colors-text-text-error)] text-14px font-400 leading-14px'}>{$t('以下代理已存在于当前代理存储库中，因此不会被添加。')}</p>
+            <RyTable columns={columns} dataList={dataList} paginator={false} showTableHeader={false} showActions={false}></RyTable>
+          </div>
+        },
+        footer: () => {
+          return <div class='flex gap-10px'>
+            {
+              !isAllExist ? <RxButton severity="secondary" outlined onClick={() => modal.hideModal()}>{$t('取消')}</RxButton> : null
+            }
+            <RxButton onClick={onConfirm}>{okText}</RxButton>
+          </div>
+        }
+      }
+    })
+  } else {
+    onlyErrorToast(code, msg)
   }
-  onlyErrorToast(code, msg)
 }
+
+
 </script>
 
 <template>

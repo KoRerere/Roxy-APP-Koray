@@ -75,6 +75,10 @@ async function fetchDictData(type: any) {
     return map
   }, {} as Record<string, DictItem[]>)
 
+  if (dictMap?.ipv6Check?.[0]?.value) {
+    window.electronAPI.send('app:saveSoftConfig', { ipv6CheckUrl: dictMap.ipv6Check?.[0]?.value })
+  }
+
   const oldDict = JSON.parse(localStorage.getItem('$dict_map') || '{}')
   localStorage.setItem('$dict_map', JSON.stringify(Object.assign(oldDict, dictMap)))
 }

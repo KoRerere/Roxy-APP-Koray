@@ -13,6 +13,9 @@ import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useThemeStore } from '/@/stores/theme'
+import AppUpdater from './components/app-updater.vue'
+import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import { motion, AnimatePresence } from 'motion-v'
 
 const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
@@ -26,6 +29,12 @@ const toast = useToast()
 const signFormData = ref<LoginCreatePayload>({
   user_name: userInfo.email || '',
   password: '',
+})
+const updateInfo = ref<ResourceUpdateMessage>()
+const signFormSwitchRegister = ref(false)
+
+const showUpdaterMessage = computed(() => {
+  return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
 })
 
 const currentComp = ref<CurrentComp>('signForm')
@@ -181,6 +190,15 @@ electronAPI.send('app:getGPUFeatureStatus').then((res) => {
   isSupportGPU.value = res['2d_canvas'] === 'enabled' && res['webgl'] === 'enabled'
 })
 
+// 如果app有更新
+window.electronAPI.on('app:resource-update', (data) => {
+  if (data.type === 'app') {
+    updateInfo.value = data
+  }
+})
+
+electronAPI.send('app:checkForUpdates')
+
 requestIdleCallback(hidePageLoading)
 let timer = setInterval(hidePageLoading, 3000)
 
@@ -212,7 +230,8 @@ provideLoginContext({
       <LanguageSelect />
     </div>
     <div class="sign-card">
-      <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" />
+      <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
+        @register="val => signFormSwitchRegister = val" />
       <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
       <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
     </div>
@@ -227,10 +246,31 @@ provideLoginContext({
       </i18n-t>
     </div>
     <BgCanvas v-if="isSupportGPU" :key="themeStore.realTheme" />
+    <AnimatePresence>
+      <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
+        :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+        :transition="{ duration: 0.2 }" class="app-updater-motion">
+        <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.app-updater-motion {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  width: 360px;
+  padding: 12px;
+  gap: 8px;
+  border-radius: 4px;
+  border: 0.5px solid var(--colors-border-border-base, #AFB7BB);
+  background: var(--colors-background-bg-action, #FFF);
+  box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+  cursor: pointer;
+}
+
 .login-container {
   width: 100vw;
   height: 100vh;

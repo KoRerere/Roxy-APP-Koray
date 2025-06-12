@@ -42,6 +42,7 @@ export function useHandleBusinessCode() {
   const { isOwner } = storeToRefs(useRoleStore())
 
   async function handleBusinessCode(code: number, next?: () => void) {
+    const privateUpgrade = isOwner.value ? toUpgradePlan : switchWorkspaceAndToUpgradePlan
     // 空间数量超出
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
       showToast({
@@ -144,22 +145,11 @@ export function useHandleBusinessCode() {
       //   life: 5000
       // })
     } else if (code === BUSINESS_CODE.WINDOW_TEMPLATE_MAX_LIMIT) {
-      if (!isOwner.value) {
-        return showToast({
-          severity: 'warn',
-          summary: $t('请升级您的套餐'),
-          detail: <I18nT keypath={$t('模板功能仅限 Roxy 会员使用，{link}', { link: '{link}' })} >
-            {{ link: () => <a class="cursor-pointer" onClick={switchWorkspaceAndToUpgradePlan}>{$t('单击此处升级')}</a> }}
-          </I18nT>,
-          life: 5000
-        })
-      }
-
       showToast({
         severity: 'warn',
         summary: $t('请升级您的套餐'),
         detail: <I18nT keypath={$t('模板功能仅限 Roxy 会员使用，{link}', { link: '{link}' })} >
-          {{ link: () => <a class="cursor-pointer" onClick={toUpgradePlan}>{$t('单击此处升级')}</a> }}
+          {{ link: () => <a class="cursor-pointer" onClick={privateUpgrade}>{$t('单击此处升级')}</a> }}
         </I18nT>,
         life: 5000
       })

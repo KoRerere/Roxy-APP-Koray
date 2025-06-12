@@ -1,5 +1,4 @@
 export * from './basic'
-export * from './color'
 export * from './common'
 export * from './crypto-aes-256-gcm'
 export * from './dict'

@@ -4147,17 +4147,11 @@ export interface UserTransferWindowVerifyCodeListData {
 
 export interface UserTransferWindowCreatePayload {
   windowIds: number[];
-  /**
-   * 目标空间ID
-   * 目标空间ID
-   */
+  /** 目标空间ID */
   targetWorkspaceId: number;
   /** 是否删除,true：删除, false: 不删除 */
   isDelete: boolean;
-  /**
-   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
-   * 邮箱验证码（如果当前是自己空间转自己空间可以不用传入）
-   */
+  /** 邮箱验证码（如果当前是自己空间转自己空间可以不用传入） */
   emailCode: string;
   transferParam: string[];
 }
@@ -4483,6 +4477,22 @@ export interface UserGetPlatformTableSortOrderListData {
   msg: string;
 }
 
+export type UserAddPlatformInfoBatchCreatePayload = {
+  platformIcon: string;
+  platformIconDark: string;
+  platformUrl: string;
+  platformUserName: string;
+  platformPassword: string;
+  platformEfa: string;
+  platformRemarks: string;
+}[];
+
+export interface UserAddPlatformInfoBatchCreateData {
+  code: number;
+  data: object;
+  msg: string;
+}
+
 export interface UserGetProxyModuleListParams {
   /**
    * 分页索引
@@ -4643,7 +4653,10 @@ export interface UserAddProxyModuleCreatePayload {
   remark?: string;
 }
 
-export type UserAddProxyModuleCreateData = object;
+export interface UserAddProxyModuleCreateData {
+  code: number;
+  msg: string;
+}
 
 export type UserMdfProxyModuleCreatePayload = {
   /** 代理ID */
@@ -5360,6 +5373,7 @@ export interface UserGetWorkspaceListListData {
       useWindowCount?: number;
       /** 窗口编号 */
       workspaceNo?: number;
+      email?: string;
     }[];
   };
   msg: string;
@@ -5500,6 +5514,7 @@ export interface UserGetProjectInfoByWorkspaceListData {
          * 邮箱
          */
         email: string;
+        pinStatus: number;
       }[];
       /**
        * 项目名称
@@ -6193,6 +6208,11 @@ export interface UserGetDowngradeSubscriptionInfoListData {
 }
 
 export interface UserUpdateGiftTipsListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCheckTeamUserRightsListData {
   code: number;
   msg: string;
 }

@@ -1,3 +1,5 @@
+import type { WindowItemType } from "#roxybrowser/modules/browser/browser-manager/types";
+
 export interface MainMessageResult<T = any> {
   code: number
   data: T
@@ -44,11 +46,15 @@ export interface ResourceUpdateMessage {
   newFeatureTips?: string[]
   /** 原始的更新数据 */
   originUpgradeData?: any
+  /** 是否静默下载 */
+  silent?: boolean
 }
 
 export interface MainMessage {
   /** 拉起内核过程中的信息 */
   'browser:launch-process-message': (payload: MainMessageResult<BrowserProcessMessage>) => void
+  /** 已打开的内核个数变化时发出 */
+  'browser:opened-browser-list-change': (winInfoList: WindowItemType[]) => void
   /** 浏览器关闭时 */
   'browser:on-close': (dirId: string) => void
   /** 达到窗口打开次数限制 */

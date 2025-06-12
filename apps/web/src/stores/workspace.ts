@@ -79,6 +79,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       })
     }
     workspaceList.value = result.data?.rows || []
+
+    if (workspaceList.value.length) {
+      window.electronAPI.send('user:setAllWorkspaceId', workspaceList.value.map(item => item.id!).filter(Boolean))
+    }
+
     return result
   }
 

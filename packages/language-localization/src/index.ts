@@ -7,6 +7,9 @@ import { join } from 'node:path'
 import serveStatic from 'serve-static'
 import { genLangFiles, scanFilesAndReplaceKey } from './utils/extract-i18n-keys'
 import { runGitCommands } from './utils/run-git-commands'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = fileURLToPath(import.meta.url)
 
 interface OptionsType {
   /** 语言文件目录 */
@@ -148,7 +151,7 @@ export default (options: OptionsType): PluginOption => {
         }
       })
       // 使用 serve-static 中间件提供静态资源服务
-      server.middlewares.use(baseUrl, serveStatic(join(import.meta.dirname, '../page'), { index: ['index.html'] }))
+      server.middlewares.use(baseUrl, serveStatic(join(__dirname, '../page'), { index: ['index.html'] }))
     },
   }
 }

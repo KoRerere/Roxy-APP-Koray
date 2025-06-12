@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileExists } from "/@/utils";
 import crypto from 'crypto'
 import { dirname } from "path";
-import { getBookText, } from "/@/modules/store";
+import { store, } from "/@/modules/store";
 
 export type BookmarkType = {
   name: string
@@ -49,7 +49,7 @@ const getDefaultBookmarks = () => ({
 
 /** 导入书签到 Chrome */
 export async function importBookmarks(bookmarkPath: string, preferencesPath: string) {
-  const bookmarks = getBookText()
+  const bookmarks = store.bookText
   if (!bookmarks) {
     return
   }
