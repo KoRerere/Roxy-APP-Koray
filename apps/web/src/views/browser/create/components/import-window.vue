@@ -6,10 +6,12 @@ import { $t } from '/@/locales'
 import { ExcelAccept, TextAccept } from '/@/utils/constants'
 import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } from '../utils';
 import { useUserStore } from '/@/stores/user'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { getExtname } from '/@/utils'
 
 const emit = defineEmits(['importSuccess'])
 
+const { showMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
 
@@ -18,27 +20,13 @@ const FILE_ACCEPT = Object.freeze({ ...ExcelAccept, ...TextAccept })
 
 const fileAnalyzeError = defineModel<any>()
 
-const timenuRef = useTemplateRef('timenu')
-const templateList = [
-  {
-    label: $t('{type} 模板', { type: 'excel' }),
-    command: () => {
-      downloadTemplate()
-    }
-  },
-  {
-    label: $t('{type} 模板', { type: 'txt' }),
-    command: () => {
-      downloadTextTemplate()
-    }
-  }
-]
 const fileData = reactive({
   status: false,
   name: '',
   size: '',
   successCount: 0,
 })
+
 const maxWindowCount = computed(() => Math.min(userStore.userPayInfo.maxWindowCount - userStore.userPayInfo.useWindowCount, 500))
 
 function fileDragover(event: Event) {
@@ -112,90 +100,76 @@ async function handleBeforeUpload(rawFile: any) {
   }
 }
 
-function openTemplates(event: Event) {
-  timenuRef.value?.toggle(event)
+function openTemplates(event: MouseEvent) {
+  showMenu(event, {
+    model: [
+      {
+        label: $t('{type} 模板', { type: 'excel' }),
+        command: () => {
+          downloadTemplate()
+        }
+      },
+      {
+        label: $t('{type} 模板', { type: 'txt' }),
+        command: () => {
+          downloadTextTemplate()
+        }
+      }
+    ]
+  })
 }
 </script>
 
 <template>
-  <div>
-    <div class="upload-title">
+  <div class="flex flex-col gap-3">
+    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full" type="success" :title="$t('上传成功')" :closable="false" />
+    <RxAlert v-if="fileAnalyzeError" class="w-full" type="error" @close="fileAnalyzeError = null">
+      <template #content>
+        <div class="whitespace-pre-wrap">{{ fileAnalyzeError }}</div>
+      </template>
+    </RxAlert>
+    <div class="content">
+      <div class="upload" @dragover="fileDragover" @drop="fileDrop">
+        <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="var(--colors-icon-icon-note)" />
+        <div class="text-center">
+          <div class="upload-title">
+            {{ fileData.name || $t('请拖拽到此处或点击上传') }}
+          </div>
+          <div class="w-60 mt-1.5 mx-auto">
+            {{ fileData.size || $t('请将编辑好的文件在此处上传，仅支持 {type} 类型文件, 最大不超过 5MB.', { type: '.xlsx .txt' }) }}
+          </div>
+        </div>
+        <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
+      </div>
+    </div>
+    <div class="help">
       <i18n-t :keypath="$t('请点击下载 {templateFile}，一次性最多导入 {maxCreateWindowCount} 个窗口。', { templateFile: '{templateFile}', maxCreateWindowCount: '{maxCreateWindowCount}' })" scope="global">
         <template #templateFile>
-          <span class="upload-title-link" @click="openTemplates">{{ $t('窗口导入模板') }}</span>
+          <span class="help-link" @click="openTemplates">{{ $t('窗口导入模板') }}</span>
         </template>
         <template #maxCreateWindowCount>
           {{ maxWindowCount }}
         </template>
       </i18n-t>
     </div>
-    <div class="upload-area" @dragover="fileDragover" @drop="fileDrop">
-      <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="var(--colors-icon-icon-note)" />
-      <div class="text-center">
-        <div class="upload-area-title">
-          {{ fileData.name || $t('请拖拽到此处或点击上传') }}
-        </div>
-        <div class="w-60 ma-auto">
-          {{ fileData.size || $t('请将编辑好的文件在此处上传，仅支持 {type} 类型文件, 最大不超过 5MB.', { type: '.xlsx .txt' }) }}
-        </div>
-      </div>
-      <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
-    </div>
-    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full mt-2" type="success" :title="$t('上传成功')" :closable="false" />
-    <RxAlert v-if="fileAnalyzeError" class="w-full mt-2" type="error" @close="fileAnalyzeError = null">
-      <template #content>
-        <div class="whitespace-pre-wrap">
-          {{ fileAnalyzeError }}
-        </div>
-      </template>
-    </RxAlert>
-    <TieredMenu ref="timenu" :model="templateList" popup>
-      <template #item="{ item, props }">
-        <a v-ripple class="flex items-center !py-2 !px-2.5 max-w-60" v-bind="props.action">
-          <div class="w-full text-4 ellipsis-1 cursor-pointer">{{ item.label }}</div>
-        </a>
-      </template>
-    </TieredMenu>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.upload-title {
-  color: var(--colors-text-text-primary, #FAFAFA);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 20px;
-
-  &-link {
-    color: var(--colors-text-text-brand, #12a3fc);
-    text-decoration-line: underline;
-    cursor: pointer;
-    user-select: none;
-  }
+.content {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--colors-border-border-inactive, #E2E9EE);
 }
 
-.upload-notice {
-  margin-top: var(--spacing-4xl, 24px);
-  color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
-}
-
-.upload-area {
+.upload {
   display: flex;
   flex-direction: column;
   align-items: center;
   align-self: stretch;
-  margin-top: var(--spacing-lg, 8px);
-  padding: var(--oversize-spacing-2rem, 32px) var(--spacing-none, 0px);
+  padding: 32px 0px;
   gap: var(--spacing-2xl, 16px);
   border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-  border: 1px dashed var(--colors-border-border-base);
   background: var(--colors-background-bg-block);
 
   color: var(--colors-text-text-tertiary);
@@ -205,10 +179,23 @@ function openTemplates(event: Event) {
   line-height: var(--Line-Height-text-xs, 16px);
 
   &-title {
-    margin-bottom: 6px;
     font-size: 13px;
     color: var(--colors-text-text-primary);
     font-weight: 500;
+  }
+}
+
+.help {
+  color: var(--colors-text-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+
+  &-link {
+    color: var(--colors-text-text-brand);
+    text-decoration-line: underline;
+    cursor: pointer;
+    user-select: none;
   }
 }
 </style>

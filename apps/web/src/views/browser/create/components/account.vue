@@ -7,8 +7,12 @@ import { deepClone } from '/@/utils'
 import { useDrawer } from '/@/hooks/useDrawer'
 import PlatformIcon from '/@/views/account/list/platform-icon.vue'
 
-const drawerInstance = useDrawer()
+defineOptions({
+  inheritAttrs: false,
+})
 
+const attrs = useAttrs()
+const drawerInstance = useDrawer()
 const windowPlatformList = defineModel<any[]>('modelValue')
 const selectedAccount = computed(() => windowPlatformList.value?.filter((item: any) => item.id))
 
@@ -68,26 +72,24 @@ function replaceData(data: any) {
 </script>
 
 <template>
-  <div>
-    <div class="button-group">
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
-      <RxButton outlined size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
+  <div class="w-full flex flex-col gap-3">
+    <div class="flex items-center self-stretch gap-2">
+      <div class="flex-1 items-center flex gap-2 title">{{ attrs.label }}</div>
+      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
+      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-
-    <div v-for="(item, index) in windowPlatformList" :key="index" class="account">
-      <RxCard class="flex gap-2" @click="onEdit(item)" @close="deleteAccount(item)">
-        <div>
-          <PlatformIcon v-if="item.platformIcon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" class="w-4 h-4" />
-          <!-- <img v-if="item.platformIcon" class="w-4 h-4" :src="item.platformIcon"> -->
+    <div class="grid gap-3 list" v-if="windowPlatformList?.length">
+      <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
+        <div class="mt-0.5">
+          <PlatformIcon v-if="item.platformIcon" class="icon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" />
           <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
         </div>
-        <div class="flex flex-col flex-1 gap-1">
-          <div class="flex items-center account-title">
-            {{ item.platformUrl }}
-          </div>
-          <div class="flex items-center gap-1.5 account-subtitle">
-            {{ item.platformUserName }}
-          </div>
+        <div class="flex-1 flex flex-col gap-1">
+          <div class="flex items-center gap-2 region">{{ item.platformUrl }}</div>
+          <div class="flex items-center gap-1.5 info" v-if="item.platformUserName">{{ item.platformUserName }}</div>
+        </div>
+        <div class="mt-0.5 flex gap-2">
+          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteAccount(item)" />
         </div>
       </RxCard>
     </div>
@@ -95,27 +97,32 @@ function replaceData(data: any) {
 </template>
 
 <style lang="scss" scoped>
-.button-group {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg, 8px);
-  align-self: stretch;
-  height: var(--Line-Height-display-xs, 32px);
+.title {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
 }
 
-.account {
-  margin-top: 10px;
-  font-family: Inter;
+.list {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+.region {
+  color: var(--colors-text-text-primary);
   font-size: 12px;
-  line-height: var(--Line-Height-text-xs, 16px);
+  font-weight: 500;
+  line-height: 20px;
+}
 
-  &-title {
-    color: var(--colors-text-text-primary, #fafafa);
-    font-weight: 500;
-  }
-
-  &-subtitle {
-    color: var(--colors-text-text-inactive, #a3a9ad);
-  }
+.info {
+  color: var(--colors-text-text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
 }
 </style>

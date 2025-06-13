@@ -3,8 +3,9 @@ import { API } from '/@/api'
 import { UaStrictMode } from '/@/enums'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
-import { checkCookieFormat, createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, readCookiesFile, setInputFieldByInputKey, setInputValueByFormData, setInputVisible } from '/@/utils'
+import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, safeParseJSON } from '/@/utils'
 import { z } from "zod";
+import { getDefaultWindowName } from './utils'
 
 const userStore = useUserStore()
 
@@ -93,6 +94,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     ios: 'platforms/rx_os_iOS',
   } as const
 
+  const defaultWindowName = getDefaultWindowName()
+
   const getCoreVersionOptions = (os: string, version: string) => {
     return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
       ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本  
@@ -150,7 +153,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'profileId',
     },
     {
-      label: $t('操作系统'),
+      label: $t('系统 & 内核'),
       items: [
         {
           type: 'select',
@@ -285,7 +288,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       options: searchEngineOptions,
       filter: false,
       required: true,
-      slot: 'searchEngine'
+    },
+    {
+      type: 'text',
+      label: $t('窗口名称'),
+      name: 'windowName',
+      value: data.windowName ?? defaultWindowName,
+      placeholder: $t('请输入窗口名称'),
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        const windowName = (!data.windowName && input.value) === defaultWindowName ? '' : input.value
+        Object.assign(formData, { windowNamePrefix: windowName })// 窗口名称前缀，批量创建时会用到
+        return windowName
+      }
     },
     {
       separator: true,
@@ -294,9 +308,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('代理'),
       name: 'proxyInfoList',
       value: proxyInfoList,
-      switch: !!proxyInfoList.length,// 是否启用代理开关
       formatValue: (input: any, _inputs: any, formData: any) => {
-        const { id, lastCity, lastCountry, lastIp, ...value } = (input.switch && input.value[0]) || {
+        const { id, lastCity, lastCountry, lastIp, ...value } = input.value[0] || {
           ...createDefaultObject(proxyInfoKeys, ''),
           moduleId: 0, // 删除代理库关联 id
           proxyCategory: 'noproxy', // 删除代理时要手动标记直连
@@ -305,9 +318,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
         const proxyData = id ? { moduleId: id, proxyMethod: 'choose' } : { ...value, proxyMethod: 'custom' }
         Object.assign(formData, { lastCity, lastCountry, lastIp, ...proxyData })// 赋值给表单，批量创建这一行创建的值会无视（以上字段为空则代表删除代理）
 
-        return input.switch
-          ? input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
-          : []
+        return input.value.map(({ _proxyCount, ...item }: any) => Array.from({ length: _proxyCount }, () => ({ ...item, proxyMethod: item.id ? 'choose' : 'custom' }))).flat()
       },
       slot: 'proxy',
     },
@@ -326,10 +337,16 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'accounts',
     },
     {
-      label: $t('自定义打开 URL'),
+      separator: true,
+    },
+    {
+      label: 'URLs',
       name: 'defaultOpenUrl',
       value: data.defaultOpenUrl ?? [],
       slot: 'urls',
+    },
+    {
+      separator: true,
     },
     {
       type: 'textarea',
@@ -337,37 +354,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       placeholder: $t('请以 JSON 格式输入 Cookies'),
       name: 'cookie',
       value: isEmptyValue(data?.cookie) ? '' : JSON.stringify(data.cookie, null, 2),
-      icon: 'base/rx_ic_attachment',
-      errorMsg: $t('Cookie 格式错误，请检查格式'),
-      autoResize: false,
-      rows: 4,
-      formatValue: (input: any) => {
-        return input.value ? JSON.parse(input.value) : []
-      },
-      iconClick: async (input: any) => {
-        const res = await readCookiesFile()
-        if (res) {
-          if (res.data) {
-            input.value = res.data
-            input.invalid = false
-          }
-          else {
-            input.invalid = true
-            input.errorMsg = res.message
-          }
-        }
-      },
-      onBlur(event: any) {
-        if (!checkCookieFormat(event.target.value)) {
-          setInputFieldByInputKey(windowInputs, 'cookie', 'invalid', true)
-        }
-      },
+      slot: 'cookies',
+      formatValue: (input: any) => safeParseJSON(input.value, []),
     },
+    {
+      separator: true
+    }
   ])
 
   const basicInputs = reactive([
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('语言'),
       name: 'isDisplayLanguageBaseIp',
       value: data.isDisplayLanguageBaseIp ?? true,
@@ -393,7 +390,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.isDisplayLanguageBaseIp, false, false),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('界面语言'),
       name: 'isLanguageBaseIp',
       value: data.isLanguageBaseIp ?? true,
@@ -416,7 +413,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.isLanguageBaseIp, false, false),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('时区'),
       name: 'isTimeZone',
       value: data.isTimeZone ?? true,
@@ -441,7 +438,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.isTimeZone, false, false),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('地理位置提示'),
       name: 'position',
       value: data.position ?? 1,
@@ -462,7 +459,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('地理位置'),
       name: 'isPositionBaseIp',
       value: data.isPositionBaseIp ?? true,
@@ -561,7 +558,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('声音'),
       name: 'forbidAudio',
       value: data.forbidAudio ?? true,
@@ -571,7 +568,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('图片'),
       name: 'forbidImage',
       value: data.forbidImage ?? true,
@@ -591,7 +588,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'forbiddenPictureSize',
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('视频'),
       name: 'forbidMedia',
       value: data.forbidMedia ?? true,
@@ -601,7 +598,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('窗口大小'),
       name: 'positionSwitch',
       value: data.positionSwitch ?? true,
@@ -645,7 +642,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const highLevelInputs = reactive([
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('分辨率'),
       name: 'resolutionType',
       value: data.resolutionType ?? false,
@@ -680,7 +677,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.resolutionType, true, false),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('字体指纹'),
       name: 'fontType',
       value: data.fontType ?? false,
@@ -705,7 +702,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'WebRTC',
       name: 'webRTC',
       value: data.webRTC ?? 2,
@@ -719,7 +716,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('WebGL 图像'),
       name: 'webGL',
       value: data.webGL ?? true,
@@ -743,7 +740,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('WebGL Info'),
       name: 'webGLInfo',
       value: data.webGLInfo ?? true,
@@ -784,7 +781,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'WebGpu',
       name: 'webGpu',
       value: data.webGpu ?? 'webgl',
@@ -795,7 +792,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'Canvas',
       name: 'canvas',
       value: data.canvas ?? true,
@@ -819,7 +816,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'AudioContext',
       name: 'audioContext',
       value: data.audioContext ?? true,
@@ -840,7 +837,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'Speech Voices',
       name: 'speechVoices',
       value: data.speechVoices ?? true,
@@ -865,7 +862,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'Do Not Track',
       name: 'doNotTrack',
       value: data.doNotTrack ?? true,
@@ -878,7 +875,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: 'Client Rects',
       name: 'clientRects',
       value: data.clientRects ?? true,
@@ -902,7 +899,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('媒体设备'),
       name: 'deviceInfo',
       value: data.deviceInfo ?? true,
@@ -915,7 +912,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('设备名称'),
       name: 'deviceNameSwitch',
       value: data.deviceNameSwitch ?? true,
@@ -943,7 +940,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('MAC地址'),
       name: 'macInfo',
       value: data.macInfo ?? true,
@@ -1002,7 +999,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('SSL指纹设置'),
       name: 'disableSsl',
       value: data.disableSsl ?? false,
@@ -1032,7 +1029,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.disableSsl, true, false),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('端口扫描保护'),
       name: 'portScanProtect',
       value: data.portScanProtect ?? true,
@@ -1056,7 +1053,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       visible: initInputVisible(data.portScanProtect, true, true),
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('硬件加速模式'),
       name: 'useGpu',
       value: data.useGpu ?? true,
@@ -1069,7 +1066,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       },
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('禁用沙盒'),
       name: 'sandboxPermission',
       value: data.sandboxPermission ?? false,
@@ -1089,7 +1086,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const otherInputs = reactive([
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('窗口名称'),
       name: 'isDisplayName',
       value: data.isDisplayName ?? false,
@@ -1099,7 +1096,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('自定义书签'),
       name: 'openBookmarks',
       value: data.openBookmarks ?? false,
@@ -1109,7 +1106,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步书签'),
       name: 'syncBookmark',
       value: data.syncBookmark ?? false,
@@ -1119,7 +1116,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步历史记录'),
       name: 'syncHistory',
       value: data.syncHistory ?? false,
@@ -1129,7 +1126,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步标签页'),
       name: 'syncTab',
       value: data.syncTab ?? true,
@@ -1139,7 +1136,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步Cookie'),
       name: 'syncCookie',
       value: data.syncCookie ?? true,
@@ -1149,7 +1146,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步扩展应用程序'),
       name: 'syncExtensions',
       value: data.syncExtensions ?? false,
@@ -1159,7 +1156,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步已保存的用户名密码'),
       name: 'syncPassword',
       value: data.syncPassword ?? true,
@@ -1169,7 +1166,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步IndexedDB'),
       name: 'syncIndexedDb',
       value: data.syncIndexedDb ?? false,
@@ -1179,7 +1176,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('同步Local Storage'),
       name: 'syncLocalStorage',
       value: data.syncLocalStorage ?? false,
@@ -1189,7 +1186,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('启动浏览器前删除缓存文件'),
       name: 'clearCacheFile',
       value: data.clearCacheFile ?? false,
@@ -1199,7 +1196,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('启动浏览器前删除Cookie'),
       name: 'clearCookie',
       value: data.clearCookie ?? false,
@@ -1209,7 +1206,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('启动浏览器前删除Local Storage'),
       name: 'clearLocalStorage',
       value: data.clearLocalStorage ?? false,
@@ -1219,7 +1216,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('启动浏览器时随机指纹'),
       name: 'randomFingerprint',
       value: data.randomFingerprint ?? false,
@@ -1229,7 +1226,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('弹出保存密码提示'),
       name: 'forbidSavePassword',
       value: data.forbidSavePassword ?? true,
@@ -1239,7 +1236,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('网络不通停止打开'),
       name: 'stopOpenNet',
       value: data.stopOpenNet ?? false,
@@ -1249,7 +1246,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('IP发生变化停止打开'),
       name: 'stopOpenIP',
       value: data.stopOpenIP ?? false,
@@ -1259,7 +1256,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       ],
     },
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('IP对应国家/地区发生改变停止打开'),
       name: 'stopOpenPosition',
       value: data.stopOpenPosition ?? false,
@@ -1270,7 +1267,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     },
     // TODO:(anbin)
     {
-      type: 'radio',
+      type: 'selectButton',
       label: $t('打开工作台'),
       name: 'openWorkbench',
       value: data.openWorkbench ?? 1,

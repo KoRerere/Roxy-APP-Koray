@@ -235,13 +235,13 @@ const inputs = [
   //   })
   //     .min(5, 'must 5 string man!'),
   // }
-  {
-    type: 'date',
-    name: 'date',
-    props: {
-      placeholder: $t('全部时间'),
-    }
-  }
+  // {
+  //   type: 'date',
+  //   name: 'date',
+  //   props: {
+  //     placeholder: $t('全部时间'),
+  //   }
+  // }
 ]
 
 const onFormSubmit = (values: Record<string, any>) => {
@@ -277,10 +277,20 @@ const filters = reactive({
   },
 })
 
+const checked1 = ref(true)
+const checked2 = ref(false)
+
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
+    <RxSelectButton class="mt-20 mx-auto scale-200" v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
+
+    <div class="flex gap-2 mt-20 mx-auto scale-300">
+      <ToggleButton v-model="checked1" onLabel="On" offLabel="On" />
+      <ToggleButton v-model="checked2" onLabel="On" offLabel="On" />
+    </div>
+
     <!-- <div class="flex flex-col gap-2">
       <RxAlert announcement title="wcis man!" type="success"></RxAlert>
       <RxAlert title="wcis man!" type="info"></RxAlert>
@@ -288,12 +298,20 @@ const filters = reactive({
       <RxAlert title="wcis man!" type="error"></RxAlert>
     </div> -->
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
-    <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
+    <!-- <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
       <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
-    </div>
+    </div> -->
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+:deep(.p-togglebutton-content) {
+  border: 0.5px solid transparent;
+}
+
+:deep(.p-togglebutton-checked .p-togglebutton-content) {
+  border: 0.5px solid var(--component-segment-border-selection-active);
+}
+</style>

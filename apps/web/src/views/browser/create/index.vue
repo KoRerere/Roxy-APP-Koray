@@ -6,7 +6,6 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { Role } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { $t } from '/@/locales'
 import { useBackRoute } from '/@/router/utils'
@@ -16,15 +15,15 @@ import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInpu
 import { emitter } from '/@/utils/eventBus'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
-import accordionInputs from './components/accordion-inputs.vue'
-import importWindow from './components/import-window.vue'
+import AccordionInputs from './components/accordion-inputs.vue'
+import ImportWindow from './components/import-window.vue'
 import PreviewCard from './components/preview-card.vue'
-import WindowNameEdit from './components/window-name-edit.vue'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
-import { getDefaultTemplate, getDefaultWindowName } from './utils'
+import { getDefaultTemplate } from './utils'
 import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { I18nT } from "vue-i18n"
+import { useRoleStore } from "/@/stores/role"
 
 interface TemplateMap {
   default: { [key: string]: any }
@@ -55,6 +54,7 @@ const userStore = useUserStore()
 const backRoute = useBackRoute()
 const { userPayInfo } = storeToRefs(userStore)
 const { currentWorkspace } = storeToRefs(workspaceStore)
+const { isOwner } = storeToRefs(useRoleStore())
 const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
@@ -70,13 +70,11 @@ const tabs = ref([
   { title: $t('窗口导入'), value: 'import' },
 ])
 const tabsValue = ref('single')
-const defaultWindowName = getDefaultWindowName()
-const windowName = ref(defaultWindowName)
 const fileAnalyzeData = ref()
 const fileAnalyzeError = ref()
-const rawMainSetting: any = ref([])
-const mainSetting: any = ref([])
-const extraSetting: any = ref([])
+const rawMainSetting = ref<any[]>([])
+const mainSetting = ref<any[]>([])
+const extraSettings = ref<any[][]>([])
 const original = ref()
 const metaData = ref<WindowMetaData>({
   projectName: $t('未指定项目'),
@@ -85,6 +83,12 @@ const metaData = ref<WindowMetaData>({
   windowRemark: '',
 })
 const loading = ref(false)
+
+const accordions = ref({
+  value: [],
+  panels: [$t('基础设置'), $t('高级指纹设置'), $t('偏好设置')]
+    .map((title, index) => ({ title, value: index.toString() })),
+})
 
 const items = computed(() => [
   {
@@ -101,22 +105,14 @@ const maxWindowCount = computed(() => Math.min(userPayInfo.value.maxWindowCount 
 
 const inputsGroup = computed(() => {
   return tabsValue.value === 'import'
-    ? [...extraSetting.value]
-    : [...mainSetting.value, ...extraSetting.value]
+    ? [[], ...extraSettings.value]
+    : [mainSetting.value, ...extraSettings.value]
 })
 
 const previewInputs = computed(() => {
   return tabsValue.value === 'import'
-    ? [rawMainSetting.value, ...inputsGroup.value]
-    : inputsGroup.value
-})
-
-const accordions = computed(() => {
-  const startIndex = tabsValue.value === 'import' ? 1 : 0
-  return {
-    value: tabsValue.value === 'import' ? [] : ['0'],
-    panels: [$t('窗口信息'), $t('基础设置'), $t('高级指纹设置'), $t('偏好设置')].slice(startIndex).map((title, index) => ({ title, value: (index + startIndex).toString() })),
-  }
+    ? [rawMainSetting.value, ...extraSettings.value]
+    : [mainSetting.value, ...extraSettings.value]
 })
 
 const templateMap = ref<TemplateMap>()
@@ -139,8 +135,6 @@ const profileTemplate = reactive<ProfileTemplate>({
     },
   },
 })
-
-const isOwner = computed(() => currentWorkspace.value?.role === Role.OWNER)
 
 watch(() => tabsValue.value, (value: any) => {
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
@@ -188,8 +182,8 @@ async function initFormInputs(template: Record<string, any> = {}) {
   const [inputsGroup, _original] = await getInputsGroup(template, showToast)
   const [windowInputs, basicInputs, highLevelInputs, otherInputs] = inputsGroup
   rawMainSetting.value = windowInputs.map((input: any) => deepClone(input))// 批量导入时 os, osVersion, coreVersion 使用默认值, 此处 copy 一份原始数据
-  mainSetting.value = [windowInputs]
-  extraSetting.value = [basicInputs, highLevelInputs, otherInputs]
+  mainSetting.value = windowInputs
+  extraSettings.value = [basicInputs, highLevelInputs, otherInputs]
   original.value = _original
   onUpdateFinger()
 }
@@ -302,8 +296,6 @@ async function createProfile(openBrowser: boolean) {
   const _metaData = filterFieldByValue(toRaw(metaData.value) as object, v => !isEmptyValue(v))
   const formData = getFormDataByList(inputsGroup.value, _metaData)
   const params = {
-    windowName: windowName.value === defaultWindowName ? '' : windowName.value,
-    windowNamePrefix: windowName.value === defaultWindowName ? '' : windowName.value,
     createCount: createCount.value,
     ...original.value,
     ...formData,
@@ -398,8 +390,16 @@ async function importProfile(params: any) {
         <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
         <div class="flex-1 flex flex-col overflow-hidden">
           <div class="profile-basic">
-            <div v-show="tabsValue !== 'import'" class="flex gap-2">
-              <WindowNameEdit v-model="windowName" class="flex-1" />
+            <div v-show="tabsValue === 'multi'" class="multiple">
+              <div class="flex items-center justify-between">
+                <div class="subtitle">{{ $t('窗口数量') }}</div>
+                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]"></RxInputNumber>
+              </div>
+              <div class="select-none multiple-info">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
+            </div>
+            <ImportWindow v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
+            <div v-show="tabsValue !== 'import'" class="flex items-center justify-between">
+              <div class="subtitle">{{ $t('窗口信息') }}</div>
               <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
                 <template #option-extra="{ option }">
                   <div v-if="option.action" class="flex flex-1 justify-end gap-2">
@@ -409,19 +409,8 @@ async function importProfile(params: any) {
                 </template>
               </RxInputSelect>
             </div>
-            <div v-show="tabsValue === 'multi'" class="pl-2 multi-block">
-              <div class="flex items-center justify-between">
-                <div>{{ $t('窗口数量') }}</div>
-                <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]">
-                </RxInputNumber>
-              </div>
-              <div class="select-none multi-block-info">
-                {{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}
-              </div>
-            </div>
-            <import-window v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
           </div>
-          <accordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
+          <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
         </div>
       </div>
       <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
@@ -467,23 +456,21 @@ async function importProfile(params: any) {
   padding: 16px 42px 16px 64px;
 }
 
-.multi-block {
-  color: var(--colors-text-text-primary, #171c1f);
-  font-family: Inter;
-  font-size: 13px;
-  font-weight: 500;
+.subtitle {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.multiple {
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--colors-border-divider-dashed, #AFB7BB);
 
   &-info {
-    margin-top: var(--spacing-xs, 4px);
-    color: var(--colors-text-text-tertiary, #575D60);
+    margin-top: 4px;
+    color: var(--colors-text-text-inactive);
     text-align: right;
     font-size: 12px;
-
-    &-jump {
-      color: var(--colors-text-text-brand, #12a3fc);
-      cursor: pointer;
-      user-select: none;
-    }
   }
 }
 

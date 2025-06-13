@@ -300,7 +300,6 @@ async function handleShowInviteUserFormDialog() {
       font-family: 'JetBrains Mono';
       font-size: 12px;
     }
-
   }
 }
 </style>

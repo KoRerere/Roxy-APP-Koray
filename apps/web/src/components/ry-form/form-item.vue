@@ -7,6 +7,7 @@ import InputRadio from './rx-input-radio.vue'
 import RxInputSelect from './rx-input-select.vue'
 import RxInputText from './rx-input-text.vue'
 import RxInputTextarea from './rx-input-textarea.vue'
+import RxSelectButton from '/@/components/rx-select-button/index.vue'
 
 interface Props {
   name: string
@@ -21,7 +22,15 @@ defineOptions({
 })
 const { name, label, tooltip, type = 'text', labelPosition = 'top' } = defineProps<Props>()
 
-defineEmits(['change'])
+const FormItemMap: Record<string, any> = {
+  multiSelect: RxInputMultiselect,
+  select: RxInputSelect,
+  radio: InputRadio,
+  date: InputDate,
+  number: RxInputNumber,
+  text: RxInputText,
+  textarea: RxInputTextarea,
+}
 </script>
 
 <template>
@@ -31,13 +40,8 @@ defineEmits(['change'])
     </slot>
     <slot name="input">
       <div class="flex-1">
-        <RxInputMultiselect v-if="type === 'multiSelect'" class="w-full" v-bind="$attrs" @change="$emit('change')" />
-        <RxInputSelect v-if="type === 'select'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <InputRadio v-if="type === 'radio'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <InputDate v-if="type === 'date'" class="w-full" v-bind="$attrs" />
-        <RxInputNumber v-if="type === 'number'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <RxInputText v-if="type === 'text'" v-bind="$attrs" :name="name" @change="$emit('change')" />
-        <RxInputTextarea v-if="type === 'textarea'" v-bind="$attrs" :name="name" @change="$emit('change')" />
+        <RxSelectButton v-if="type === 'selectButton'" class="w-full" option-label="label" option-value="value" data-key="value" v-bind="$attrs" :name="name" />
+        <component v-else class="w-full" :is="FormItemMap[type as keyof typeof FormItemMap]" v-bind="$attrs" :name="name" />
         <small v-if="$attrs.invalid" class="rx-input-help">{{ $attrs.errorMsg || $attrs.placeholder }}</small>
         <small v-if="$attrs.help" class="rx-input-help">{{ $attrs.help }}</small>
       </div>

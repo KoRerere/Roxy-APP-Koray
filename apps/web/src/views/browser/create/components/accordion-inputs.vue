@@ -8,26 +8,27 @@ import { copyText } from '/@/utils/'
 import accountItem from './account.vue'
 import proxyItem from './proxy.vue'
 import urlsItem from './urls.vue'
+import cookiesItem from './cookies.vue'
 import Position from '/@/views/browser/create/components/position.vue'
 import Os from './os.vue'
 import type { Accordions } from './type.ts'
 
-defineProps({
-  accordions: {
-    type: Object as PropType<Accordions>,
-    default: undefined,
-  },
-  inputsGroup: {
-    type: Array as PropType<any[]>,
-    default: () => [],
-  },
-  windowInfo: {
-    type: Object as PropType<any>,
-    default: () => ({}),
-  }
-})
+interface Props {
+  accordions?: Accordions
+  inputsGroup?: any[]
+}
+
+const { accordions, inputsGroup = [] } = defineProps<Props>()
 
 const [showToast] = useResponseToast()
+
+const settings = computed(() => {
+  const [basic, ...others] = inputsGroup
+  return {
+    basic,
+    others
+  }
+})
 
 function onCopy(dirId: string) {
   copyText(dirId)
@@ -38,72 +39,58 @@ function onCopy(dirId: string) {
 <template>
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto content">
-      <Accordion :value="accordions.value" multiple :pt="{ root: 'flex flex-col gap-4' }">
+      <RyForm v-if="settings.basic?.length" :inputs="settings.basic">
+        <template #profileId="{ input }">
+          <div class="flex items-center">
+            <inputLabel v-bind="input" />
+            <span class="dir-id">{{ input.value }}</span>
+            <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+          </div>
+        </template>
+        <template #system="{ input }">
+          <div>
+            <inputLabel v-bind="input" />
+            <div class="flex flex-col gap-2">
+              <div class="flex gap-2">
+                <InputGroup>
+                  <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
+                  <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
+                </InputGroup>
+                <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
+              </div>
+              <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">{{ input.items[2].help }}</Message>
+            </div>
+          </div>
+        </template>
+        <template #proxy="{ input }">
+          <proxyItem v-model="input.value" v-bind="input" />
+        </template>
+        <template #accounts="{ input }">
+          <accountItem v-model="input.value" v-bind="input" />
+        </template>
+        <template #urls="{ input }">
+          <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+        </template>
+        <template #cookies="{ input }">
+          <cookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+        </template>
+      </RyForm>
+      <Accordion :value="accordions.value" multiple>
         <template #collapseicon>
-          <RxSvgIcon name="base/rx_ic_chevron_down" />
+          <!-- <RxSvgIcon name="base/rx_ic_chevron_down" /> -->
         </template>
         <template #expandicon>
-          <RxSvgIcon name="base/rx_ic_chevron_up" />
+          <!-- <RxSvgIcon name="base/rx_ic_chevron_up" /> -->
         </template>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-none' }">
-          <AccordionHeader as="div" class="accordion-header">
-            {{ panels.title }}
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: 'border-dashed' }">
+          <AccordionHeader as="div" #default="{ active }">
+            <div class="flex items-center gap-3 header">
+              <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
+              <span>{{ panels.title }}</span>
+            </div>
           </AccordionHeader>
-          <AccordionContent :pt="{ content: '!py-4 !px-2' }">
-            <RyForm :inputs="inputsGroup[index]" label-position="left">
-              <template #profileId="{ input }">
-                <div class="flex leading-[32px]">
-                  <inputLabel v-bind="input" />
-                  <span class="dir-id">{{ input.value }}</span>
-                  <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
-                </div>
-              </template>
-              <template #system="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1 flex flex-col gap-2">
-                    <div class="flex-1 flex gap-2">
-                      <InputGroup>
-                        <Os v-bind="input.items[0]" v-model="input.items[0].value" @change="input.items[0].change?.(input.items[0], input.items)" />
-                        <RxInputSelect v-bind="input.items[1]" v-model="input.items[1].value" @change="input.items[1].change?.(input.items[1], input.items)" />
-                      </InputGroup>
-                      <RxInputSelect v-bind="input.items[2]" v-model="input.items[2].value" @change="input.items[2].change?.(input.items[2], input.items)" />
-                    </div>
-                    <Message v-if="input.items[2].help" severity="error" size="small" variant="simple">
-                      {{ input.items[2].help }}
-                    </Message>
-                  </div>
-                </div>
-              </template>
-              <template #searchEngine="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <div class="flex-1 flex gap-2">
-                    <div class="flex-1">
-                      <RxInputSelect v-bind="input" v-model="input.value" @change="input.change?.(input, input.items)" />
-                    </div>
-                    <div class="flex-1"></div>
-                  </div>
-                </div>
-              </template>
-              <template #proxy="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <proxyItem v-model:proxy-switch="input.switch" v-model="input.value" class="flex-1" />
-                </div>
-              </template>
-              <template #accounts="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <accountItem v-model="input.value" class="flex-1" />
-                </div>
-              </template>
-              <template #urls="{ input }">
-                <div class="flex">
-                  <inputLabel v-bind="input" />
-                  <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
-                </div>
-              </template>
+          <AccordionContent>
+            <RyForm :inputs="settings.others[index]" label-position="left">
               <template #windowOpenSize="{ input }">
                 <div class="flex">
                   <inputLabel v-bind="input" />
@@ -151,21 +138,26 @@ function onCopy(dirId: string) {
   font-family: 'JetBrains Mono';
 }
 
+.header {
+  color: var(--colors-text-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+
+  &-icon {
+    border: 1px solid var(--colors-border-border-base);
+    border-radius: 4px;
+    padding: 2px;
+    background: var(--colors-background-bg-action);
+  }
+}
+
 .content {
   padding: 0 36px 40px 64px;
 
   &::-webkit-scrollbar {
     display: none;
   }
-}
-
-:deep(.p-accordionheader) {
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 16px;
 }
 
 :deep(.p-inputgroup) {
@@ -182,7 +174,6 @@ function onCopy(dirId: string) {
 
 .tip-text {
   color: var(--colors-text-text-tertiary, #575D60);
-  font-family: Inter;
   font-size: 12px;
   line-height: 16px;
 }
