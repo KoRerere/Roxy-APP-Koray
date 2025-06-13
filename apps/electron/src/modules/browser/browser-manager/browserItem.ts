@@ -149,7 +149,6 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
-    this.decryptProxyInfo()
     queueMicrotask(async () => {
       Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
     })
@@ -171,6 +170,9 @@ export class BrowserItem {
       })
     }
     else {
+      await this.decryptProxyInfo().catch((error) => {
+        console.error('decryptProxyInfo error: ', error)
+      })
       // 启动时是否需要生成随机指纹
       this.handleRandomFingerprint()
       // 创建启动任务
