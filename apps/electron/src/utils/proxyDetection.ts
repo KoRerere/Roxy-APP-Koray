@@ -286,7 +286,7 @@ async function checkHttpProxy(
 
   if (host) {
     const auth = proxyUserName ? `${proxyUserName}:${proxyPassword}@` : '';
-    const httpUrl = `${protocol}://${auth}${host}:${port}`;
+    const httpUrl = encodeURI(`${protocol}://${auth}${host}:${port}`);
     const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
     proxyConfig = {
       [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
@@ -325,7 +325,7 @@ async function checkSocks5Proxy(parmes: any) {
     auth = ``;
   }
 
-  const url = `socks5h://${auth}${host}:${port}`;
+  const url = encodeURI(`socks5h://${auth}${host}:${port}`);
   console.log(`SocksProxyAgent url`, url);
   const agent = new SocksProxyAgent(url, commonAxiosConfig);
 
