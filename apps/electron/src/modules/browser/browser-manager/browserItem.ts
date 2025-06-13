@@ -170,6 +170,9 @@ export class BrowserItem {
       })
     }
     else {
+      await this.decryptProxyInfo().catch((error) => {
+        console.error('decryptProxyInfo error: ', error)
+      })
       // 启动时是否需要生成随机指纹
       this.handleRandomFingerprint()
       // 创建启动任务
@@ -212,6 +215,15 @@ export class BrowserItem {
       this.beforeLaunchTask.browser = null
 
       return this.uploadDataPromiser.promise
+    }
+  }
+
+  async decryptProxyInfo() {
+    const { isEncryptProxy, proxyEncryptInfo } = this.winInfo
+    // 如果代理信息是加密的，则解密
+    if (isEncryptProxy && proxyEncryptInfo) {
+      const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
+      Object.assign(this.winInfo, decryptedProxyEncryptInfo)
     }
   }
 
@@ -297,15 +309,7 @@ export class BrowserItem {
       return this.beforeLaunchTask.proxyInfo
     }
 
-    const { isEncryptProxy, proxyEncryptInfo } = this.winInfo
-    const proxyInfo = { ...this.winInfo }
-
-    if (isEncryptProxy && proxyEncryptInfo) {
-      const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
-      Object.assign(proxyInfo, decryptedProxyEncryptInfo)
-    }
-
-    const res = await proxyDetection(proxyInfo)
+    const res = await proxyDetection(this.winInfo)
     if (!this.beforeLaunchTask.proxyInfo?.ip && res?.ip) {
       this.beforeLaunchTask.proxyInfo = res
     }
