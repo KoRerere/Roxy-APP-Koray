@@ -101,7 +101,6 @@ export class BrowserManager {
 
       const onCloseHandler = async (uploadDataPromise?: Promise<{ requestHeaders?: any, uploadParams?: any }>) => {
         console.log(`BrowserManager ${dirId} === 浏览器已断开连接`)
-        ipcMain.send('browser:on-close', dirId)
         browserItem.off(`close-${dirId}`, onCloseHandler)
         if (uploadDataPromise) {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
@@ -200,6 +199,7 @@ export class BrowserManager {
         this.uploadDataQueue.delete(dirId)
         this.openedBrowserMap.delete(dirId)
       })
+      ipcMain.send('browser:on-close', dirIds)
     })
   }, 500)
 
@@ -303,15 +303,24 @@ export class BrowserManager {
     return winInfoList
   }
 
-  /** 同步窗口数据 */
+  /** 同步窗口数据, 限制最多 10个 作为一批 */
   async syncWindowData(uploadParams: Record<string, any>[], headers: any) {
     console.debug('syncWindowData uploadParams', uploadParams)
     console.debug('syncWindowData headers', headers)
-    await API.window.userMdfWindowSyncV2Create(uploadParams, { headers }).then((res) => {
-      console.log('user_mdf_window_sync_v2 uploadData', res)
-    }).catch((error) => {
-      console.error('user_mdf_window_sync_v2 uploadData error: ', error)
-    })
+
+    const batchSize = 10
+    const batches: Record<string, any>[][] = []
+    for (let i = 0; i < uploadParams.length; i += batchSize) {
+      batches.push(uploadParams.slice(i, i + batchSize))
+    }
+    console.debug('syncWindowData batches', batches.length)
+    for (const batch of batches) {
+      await API.window.userMdfWindowSyncV2Create(batch, { headers }).then((res) => {
+        console.log('user_mdf_window_sync_v2 uploadData', res)
+      }).catch((error) => {
+        console.error('user_mdf_window_sync_v2 uploadData error: ', error)
+      })
+    }
   }
 
   /** 每隔 30分钟 定时同步窗口状态 */

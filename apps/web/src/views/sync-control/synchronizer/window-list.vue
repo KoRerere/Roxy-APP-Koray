@@ -163,8 +163,8 @@ const disabledRows = debounce(() => {
   })
 }, 100)
 
-window.electronAPI.on('browser:on-close', (dirId) => {
-  selectedRows.value = selectedRows.value?.filter((n: any) => n.dirId !== dirId)
+window.electronAPI.on('browser:on-close', (dirIds) => {
+  selectedRows.value = selectedRows.value?.filter((n: any) => !dirIds.includes(n.dirId))
   getOpenedBrowser()
 })
 window.electronAPI.on('browser:opened-browser-list-change', (data) => {
