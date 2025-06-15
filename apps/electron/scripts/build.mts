@@ -4,7 +4,7 @@ import { build, Platform } from 'electron-builder'
 import { cpSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
-import { notarizeMac } from './notarize-mac'
+import { notarizeMac } from './notarize-mac.mts'
 
 const version = process.env.VITE_APP_VERSION
 const isDev = process.env.NODE_ENV === 'development'
