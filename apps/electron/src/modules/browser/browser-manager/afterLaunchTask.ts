@@ -116,6 +116,11 @@ export class AfterLaunchTask {
         })
         console.log('Storage.setCookies success')
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
+
+        if (this.isPhone) {
+          await this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' });
+        }
+
         const pages = await this.browser?.pages()
         // cookie导入成功后，把打开的tab页重新加载一次
         pages.map(async (e) => {
