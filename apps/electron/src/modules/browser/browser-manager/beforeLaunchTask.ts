@@ -304,31 +304,26 @@ export class BeforeLaunchTask {
       args.push('--start-maximized')
     } else {
       args.push(`--window-size=${openWidth || 1280},${openHeight || 720}`)
+
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
       const [x = 0, y = 0, direction = 'tl'] = windowRatioPosition?.split(',') || []
+      const xx = Math.floor(screenWidth * x)
+      const yy = Math.floor(screenHeight * y)
+      const winWidth = Number(openWidth)
+      const winHeight = Number(openHeight)
+      let positions = [xx, yy]
+      console.log('screenWidth', screenWidth, 'screenHeight', screenHeight)
+      console.log('windowRatioPosition', windowRatioPosition, positions)
 
-      let positions = [x, y]
-
-      if (x <= 1 && y <= 1) {
-        const primaryDisplay = screen.getPrimaryDisplay();
-        const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
-
-        const xx = Math.floor(screenWidth * x)
-        const yy = Math.floor(screenHeight * y)
-        const winWidth = Number(openWidth)
-        const winHeight = Number(openHeight)
-        positions = [xx, yy]
-        console.log('screenWidth', screenWidth, 'screenHeight', screenHeight)
-        console.log('windowRatioPosition', windowRatioPosition, positions)
-
-        if (direction === 'tr') {
-          positions = [xx - winWidth, yy]
-        } else if (direction === 'br') {
-          positions = [xx - winWidth, yy - winHeight]
-        } else if (direction === 'bl') {
-          positions = [xx, yy - winHeight]
-        }
+      if (direction === 'tr') {
+        positions = [xx - winWidth, yy]
+      } else if (direction === 'br') {
+        positions = [xx - winWidth, yy - winHeight]
+      } else if (direction === 'bl') {
+        positions = [xx, yy - winHeight]
       }
-
       console.log('positions', positions)
       args.push(`--window-position=${positions.join(',')}`)
     }
