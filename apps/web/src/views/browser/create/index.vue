@@ -131,7 +131,7 @@ onBeforeMount(() => {
 async function getTemplateList() {
   const { data } = await API.window.userGetWindowTemplateListList()
 
-  const defaultValue: any = {
+  const defaultValue: { map: Record<string, any>, options: any[] } = {
     map: {
       default: getDefaultTemplate(),
     },
@@ -150,7 +150,7 @@ async function getTemplateList() {
   }, defaultValue)
 
   templateMap.value = map
-  templateModel.value = options.map((item: any) => {
+  templateModel.value = options.map(item => {
     return {
       ...item,
       command: () => {
@@ -158,8 +158,8 @@ async function getTemplateList() {
         profileTemplate.label = item.label
         profileTemplate.select()
       },
-      render: ({ item }: any) => {
-        return <RxButton text severity="secondary" class="w-full">
+      render: ({ item, btnPt }: any) => {
+        return <RxButton text severity="secondary" class="w-full" pt={btnPt}>
           <div class="w-full flex items-center gap-2">
             <div class="flex-1 text-left">{item.label}</div>
             {
@@ -260,14 +260,16 @@ async function onSaveTemplate({ templateName, id }: { templateName: string, id?:
   const { code, msg } = id
     ? await API.window.userMdfWindowTemplateInfoCreate({ id, templateName, content: JSON.stringify(template) })
     : await API.window.userAddWindowTemplateInfoCreate({ templateName, content: JSON.stringify(template) })
-  // onlyErrorToast(code, msg)
-  if (code === 0) {
-    getTemplateList()
-  } else {
+
+  if (code !== 0) {
     handleBusinessCode(code, () => {
-      showToast(code, msg)
+      onlyErrorToast(code, msg)
     })
+    return
   }
+
+  if (id) profileTemplate.label = templateName
+  getTemplateList()
 }
 
 async function deleteTemplate(data: any) {
@@ -451,7 +453,7 @@ async function importProfile(params: any) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 42px 16px 64px;
+  padding: 16px 40px 16px 78px;
 }
 
 .subtitle {

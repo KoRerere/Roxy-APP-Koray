@@ -38,7 +38,7 @@ function onCopy(dirId: string) {
 <template>
   <div class="flex-ovh-1 flex-col">
     <div v-if="accordions" class="flex-1 overflow-auto content">
-      <RyForm v-if="settings.basic?.length" :inputs="settings.basic">
+      <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
         <template #profileId="{ input }">
           <div class="flex items-center">
             <inputLabel v-bind="input" />
@@ -47,7 +47,7 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #system="{ input }">
-          <div>
+          <div class="px-4">
             <inputLabel v-bind="input" />
             <div class="flex flex-col gap-2">
               <div class="flex gap-2">
@@ -147,6 +147,17 @@ function onCopy(dirId: string) {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+.profile-info {
+  :deep(.separator) {
+    border-style: dashed;
+  }
+
+  :deep(.rx-input) {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 

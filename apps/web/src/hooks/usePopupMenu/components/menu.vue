@@ -38,7 +38,7 @@ defineExpose({
   <Menu ref="menu" v-bind="props" :model="_model" popup :pt="{ root: menuClass.root, item: menuClass.item, list: 'overflow-y-auto max-h-80' }" @hide="_onHide">
     <template #item="{ item: { render, ...item }, props }">
       <a v-if="!mode" v-bind="props.action" class="max-w-80 !pa-0">
-        <component v-if="render" :is="render" :item="item" :props="props"></component>
+        <component v-if="render" :is="render" :item="item" :props="props" :btnPt="{ root: menuClass.button }"></component>
         <RxButton v-else class="w-full !justify-start" :disabled="(item.disabled as boolean)" :icon="(item.icon as SvgNames)" :label="(item.label as string)" severity="secondary" text
           :pt="{ root: menuClass.button }" @click.stop="onMenuCommand($event, item)" />
       </a>
@@ -71,10 +71,8 @@ defineExpose({
 }
 
 .button {
-  // font-size: 16px;
-
   &:not(:disabled):hover {
-    background: var(--component-dropdown-bg-hover, #E2E9EE) !important;
+    background: var(--component-dropdown-bg-hover) !important;
   }
 
   &:disabled {

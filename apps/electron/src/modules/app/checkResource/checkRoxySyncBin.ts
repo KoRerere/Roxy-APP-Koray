@@ -33,7 +33,7 @@ const config = {
   },
   /** roxySync 版本文件下载地址 */
   get versionUrl() {
-    return `${config.webDomain}/public/static/roxysync/${platform}/version`
+    return `${config.webDomain}/public/static/roxysync/version`
   },
   /** roxySync sha512 哈希值文件下载地址 */
   get sha512Url() {

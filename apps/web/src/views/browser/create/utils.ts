@@ -8,7 +8,7 @@ export function getDefaultTemplate() {
   return {
     os: 'Windows',
     osVersion: '11',
-    coreVersion: '130',
+    coreVersion: '136',
     browserVersion: null,
     isLanguageBaseIp: true,
     language: 'sq-AL',
