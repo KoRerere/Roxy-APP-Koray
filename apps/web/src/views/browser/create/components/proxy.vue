@@ -157,15 +157,13 @@ function tooltipValue(item: any) {
 <template>
   <div class="w-full flex flex-col gap-3">
     <div class="flex items-center self-stretch gap-2">
-      <div class="flex-1 items-center flex gap-2 title">
-        <span>{{ attrs.label }}</span>
+      <div class="flex-1 items-center flex gap-2 ">
+        <span class="title">{{ attrs.label }}</span>
         <span v-if="!proxyList.length" class="tips">{{ $t('* 不使用代理则默认通过本地直连 ({value})', { value: `${strConcat(network.info?.country_code, strConcat('/', network.info?.city))}` }) }}</span>
       </div>
       <RxButton size="xxs" text severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
       <RxButton v-if="isBatch || !proxyList?.length" size="xxs" text severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-    <!-- <RxTag class="cursor-pointer" icon="base/rx_ic_browser" :label="item._proxyCount" @click.stop="modifyProxyCount(item)" /> -->
-
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn"
       :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false"></RxAlert>
     <div class="grid gap-2 list" v-if="proxyList.length">
@@ -209,7 +207,6 @@ function tooltipValue(item: any) {
 .tips {
   color: var(--colors-text-text-tertiary);
   font-size: 12px;
-  font-weight: 400;
   line-height: 16px;
 }
 

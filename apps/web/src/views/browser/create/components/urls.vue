@@ -11,7 +11,6 @@ const attrs = useAttrs()
 const modelValue = defineModel<string[]>({ default: [] })
 const invalid = defineModel('invalid', { default: false })
 const urlsText = ref('')
-const showUrls = ref(!!modelValue.value.length)
 
 watch(modelValue, (value) => {
   urlsText.value = value.join('\n')
@@ -33,21 +32,34 @@ function onBlur() {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col gap-2">
-    <div class="flex items-center self-stretch gap-2">
-      <div class="flex-1 items-center flex gap-2 title">{{ attrs.label }}</div>
-      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('新增 URLs')" @click="showUrls = true" />
-    </div>
-    <rxInputTextarea v-show="showUrls" v-model="urlsText" rows="3" :placeholder="$t('必须以 http:// 或 https:// 开头\n每行一个 URL，换行以添加多个')" :invalid="invalid" @blur="onBlur" />
-    <Message v-if="invalid" severity="error" size="small" variant="simple">{{ $t('URL格式有误，必须以 http:// 或 https:// 开头') }}</Message>
-  </div>
+  <RxAccordion :class="attrs.class">
+    <AccordionPanel value="open" :pt="{ root: 'border-dashed' }">
+      <AccordionHeader as="div" #default="{ active }">
+        <div class="flex items-center gap-3 header">
+          <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
+          <span>{{ attrs.label }}</span>
+        </div>
+      </AccordionHeader>
+      <AccordionContent>
+        <rxInputTextarea v-model="urlsText" rows="3" :placeholder="$t('必须以 http:// 或 https:// 开头\n每行一个 URL，换行以添加多个')" :invalid="invalid" @blur="onBlur" />
+        <Message v-if="invalid" severity="error" size="small" variant="simple">{{ $t('URL格式有误，必须以 http:// 或 https:// 开头') }}</Message>
+      </AccordionContent>
+    </AccordionPanel>
+  </RxAccordion>
 </template>
 
 <style lang="scss" scoped>
-.title {
+.header {
   color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: 16px;
+
+  &-icon {
+    border: 1px solid var(--colors-border-border-base);
+    border-radius: 4px;
+    padding: 2px;
+    background: var(--colors-background-bg-action);
+  }
 }
 </style>

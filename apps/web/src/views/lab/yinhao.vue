@@ -296,14 +296,20 @@ const collapsed = ref(false)
       <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div> -->
-    <div class="mx-auto w-200 h-120 bg-bluegray select-none flex items-start overflow-hidden">
+    <!-- 24 32 40 -->
+    <RxButton size="xxs" label="wcis"></RxButton>
+    <RxSelectButton size="xxs" model-value="hello" :options="['hello', 'wcis', 'man']"></RxSelectButton>
+    <RxSelectButton size="sm" model-value="wcis" :options="['hello', 'wcis', 'man']"></RxSelectButton>
+    <RxSelectButton size="lg" model-value="man" :options="['hello', 'wcis', 'man']"></RxSelectButton>
+
+    <!-- <div class="mx-auto w-200 h-120 bg-bluegray select-none flex items-start overflow-hidden">
       <div class="h-full flex-1 bg-emerald" @click="collapsed = !collapsed"></div>
 
       <motion.div class="bg-orange" layout :style="collapsed ? { width: 'auto', height: 'auto' } : { width: '200px', height: '100%' }">
         <div v-if="collapsed">短文本</div>
         <div v-if="!collapsed">长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本</div>
       </motion.div>
-    </div>
+    </div> -->
   </div>
 </template>
 
