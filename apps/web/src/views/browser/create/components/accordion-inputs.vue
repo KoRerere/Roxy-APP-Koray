@@ -1,16 +1,15 @@
 <script lang="ts" setup>
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales/index.js'
-import { copyText } from '/@/utils/'
-import accountItem from './account.vue'
-import proxyItem from './proxy.vue'
-import urlsItem from './urls.vue'
-import cookiesItem from './cookies.vue'
 import Position from '/@/views/browser/create/components/position.vue'
+import AccountItem from './account.vue'
+import ProxyItem from './proxy.vue'
+import UrlsItem from './urls.vue'
+import CookiesItem from './cookies.vue'
 import Os from './os.vue'
+import { $t } from '/@/locales/index.js'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { copyText } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
 interface Props {
@@ -63,25 +62,23 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #proxy="{ input }">
-          <proxyItem v-model="input.value" v-bind="input" />
+          <div class="-mt-4 px-4 py-6 w-full dashed-border">
+            <ProxyItem v-model="input.value" v-bind="input" />
+          </div>
         </template>
         <template #accounts="{ input }">
-          <accountItem v-model="input.value" v-bind="input" />
+          <div class="-mt-4 px-4 py-6 w-full dashed-border">
+            <AccountItem v-model="input.value" v-bind="input" />
+          </div>
         </template>
         <template #urls="{ input }">
-          <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <UrlsItem class="-mt-4" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
         <template #cookies="{ input }">
-          <cookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <CookiesItem class="-mt-4" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
       </RyForm>
-      <Accordion :value="accordions.value" multiple>
-        <template #collapseicon>
-          <!-- <RxSvgIcon name="base/rx_ic_chevron_down" /> -->
-        </template>
-        <template #expandicon>
-          <!-- <RxSvgIcon name="base/rx_ic_chevron_up" /> -->
-        </template>
+      <RxAccordion :value="accordions.value" multiple>
         <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: 'border-dashed' }">
           <AccordionHeader as="div" #default="{ active }">
             <div class="flex items-center gap-3 header">
@@ -127,12 +124,36 @@ function onCopy(dirId: string) {
             </RyForm>
           </AccordionContent>
         </AccordionPanel>
-      </Accordion>
+      </RxAccordion>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+:deep(.p-inputgroup) {
+
+  .p-select+.p-select,
+  .p-inputtext+.p-inputtext {
+    border-left: none;
+  }
+}
+
+:deep(.rx-label) {
+  max-width: 120px;
+}
+
+.content {
+  padding: 0 36px 40px 64px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.dashed-border {
+  border-bottom: 1px dashed var(--colors-border-divider-dashed);
+}
+
 .dir-id {
   font-size: 12px;
   font-family: 'JetBrains Mono';
@@ -150,26 +171,6 @@ function onCopy(dirId: string) {
     padding: 2px;
     background: var(--colors-background-bg-action);
   }
-}
-
-.content {
-  padding: 0 36px 40px 64px;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-:deep(.p-inputgroup) {
-
-  .p-select+.p-select,
-  .p-inputtext+.p-inputtext {
-    border-left: none;
-  }
-}
-
-:deep(.rx-label) {
-  max-width: 120px;
 }
 
 .tip-text {

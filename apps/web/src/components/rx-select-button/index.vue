@@ -2,7 +2,7 @@
 import SelectButton, { type SelectButtonProps } from 'primevue/selectbutton';
 
 interface Props extends /* @vue-ignore */  Omit<SelectButtonProps, 'size' | 'allowEmpty'> {
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
+  size?: 'xxs' | 'sm' | 'lg' | (string & {})
   allowEmpty?: boolean
 }
 
@@ -19,13 +19,46 @@ const { size = 'sm', allowEmpty = false, ...props } = defineProps<Props>()
 </template>
 
 <style scoped lang="scss">
+.xxs {
+  --button-padding: 2px;
+  --padding: 2px 12px;
+  --font-size: 12px;
+  --border-width: 0.5px;
+  --border-radius: 4px;
+}
+
+.sm {
+  --button-padding: 3px;
+  --padding: 4px 12px;
+  --font-size: 13px;
+  --border-width: 1px;
+  --border-radius: 6px;
+}
+
+.lg {
+  --button-padding: 4px;
+  --padding: 6px 12px;
+  --font-size: 13px;
+  --border-width: 1px;
+  --border-radius: 6px;
+}
+
+:deep(.p-togglebutton) {
+  padding: var(--button-padding);
+  font-size: var(--font-size);
+}
+
 :deep(.p-togglebutton-content) {
   font-weight: 400;
-  border: 0.5px solid transparent;
+  padding: var(--padding);
+  border-radius: var(--border-radius);
+  border-width: var(--border-width);
+  border-style: solid;
+  border-color: transparent;
 }
 
 :deep(.p-togglebutton-checked .p-togglebutton-content) {
   font-weight: 500;
-  border: 0.5px solid var(--component-segment-border-selection-active);
+  border-color: var(--component-segment-border-selection-active);
 }
 </style>

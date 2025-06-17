@@ -1,51 +1,32 @@
 <script lang="tsx" setup>
-import MateGroup from './components/mate-group.vue'
-import { useConfirm } from 'primevue/useconfirm'
-import { API } from '/@/api'
-import { RxSvgIcon } from '/@/components/rx-icon/'
-import { RxInputNumber } from '/@/components/rx-input-number'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { useSimpleDialog } from '/@/components/simplePopup'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales'
-import { useBackRoute } from '/@/router/utils'
-import { useUserStore } from '/@/stores/user'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
-import { emitter } from '/@/utils/eventBus'
-import type { WindowMetaData } from '/@/views/browser/create/components/type'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import MateGroup from './components/mate-group.vue'
 import AccordionInputs from './components/accordion-inputs.vue'
 import ImportWindow from './components/import-window.vue'
 import PreviewCard from './components/preview-card.vue'
+import RxButton from '/@/components/rx-button';
+import { RxSvgIcon } from '/@/components/rx-icon';
+import { RxInputNumber } from '/@/components/rx-input-number'
+import { useConfirm } from 'primevue/useconfirm'
+import { I18nT } from "vue-i18n"
+import { API } from '/@/api'
+import { $t } from '/@/locales'
+import { useSimpleDialog } from '/@/components/simplePopup'
+import { usePopupMenu } from '/@/hooks/usePopupMenu';
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useBackRoute } from '/@/router/utils'
+import { useUserStore } from '/@/stores/user'
+import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRoleStore } from "/@/stores/role"
+import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { ceateRandomFinger, getInputsGroup } from './form-inputs'
 import { createTableContext } from './hooks/useContext'
 import { getDefaultTemplate } from './utils'
 import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { I18nT } from "vue-i18n"
-import { useRoleStore } from "/@/stores/role"
-
-interface TemplateMap {
-  default: { [key: string]: any }
-  [key: string]: { [key: string]: any }
-}
-interface TemplateOption {
-  label: string
-  value: string
-  action: boolean
-}
-
-interface ProfileTemplate {
-  value: string
-  oldValue: string
-  props: {
-    options: TemplateOption[]
-    optionValue: string
-    filter: boolean
-    onChange: () => void
-    [key: string]: any
-  }
-}
+import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
+import { emitter } from '/@/utils/eventBus'
+import type { WindowMetaData } from '/@/views/browser/create/components/type'
+import { withModifiers } from 'vue'
 
 const confirm = useConfirm()
 const router = useRouter()
@@ -59,6 +40,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { getProjects } = useMateGroup()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { showSimpleDialog } = useSimpleDialog()
+const { showMenu } = usePopupMenu()
 
 const isBatch = ref(false)
 const createCount = ref(1)
@@ -95,7 +77,7 @@ const items = computed(() => [
     label: $t('覆盖当前模板'),
     disabled: !!profileTemplate.value && profileTemplate.value === 'default',
     command: () => {
-      const option = profileTemplate.props.options.find(item => item.value === profileTemplate.value)
+      const option = templateModel.value.find(item => item.value === profileTemplate.value)
       onSaveTemplate({ templateName: option!.label, id: Number(option!.value) })
     },
   },
@@ -115,25 +97,18 @@ const previewInputs = computed(() => {
     : [mainSetting.value, ...extraSettings.value]
 })
 
-const templateMap = ref<TemplateMap>()
-
-const profileTemplate = reactive<ProfileTemplate>({
+const templateMap = ref<Record<string, any>>()
+const templateModel = ref<any[]>([])
+const profileTemplate = reactive({
   value: 'default',
   oldValue: 'default',
-  props: {
-    options: [
-      { label: 'No Template', value: 'default', action: false },
-    ],
-    optionValue: 'value',
-    filter: false,
-    onChange: () => {
-      if (profileTemplate.value === profileTemplate.oldValue)
-        return
-      profileTemplate.oldValue = profileTemplate.value
-      const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
-      initFormInputs(template)
-    },
-  },
+  label: $t('不使用模板'),
+  select: () => {
+    if (profileTemplate.value === profileTemplate.oldValue) return
+    profileTemplate.oldValue = profileTemplate.value
+    const template = toRaw(templateMap.value![profileTemplate.value] || templateMap.value!.default)
+    initFormInputs(template)
+  }
 })
 
 watch(() => tabsValue.value, (value: any) => {
@@ -175,7 +150,33 @@ async function getTemplateList() {
   }, defaultValue)
 
   templateMap.value = map
-  profileTemplate.props.options = options
+  templateModel.value = options.map((item: any) => {
+    return {
+      ...item,
+      command: () => {
+        profileTemplate.value = item.value
+        profileTemplate.label = item.label
+        profileTemplate.select()
+      },
+      render: ({ item }: any) => {
+        return <RxButton text severity="secondary" class="w-full">
+          <div class="w-full flex items-center gap-2">
+            <div class="flex-1 text-left">{item.label}</div>
+            {
+              item.action && <>
+                <div onClick={withModifiers((event) => saveTemplatePopup(event, item), ['stop'])}>
+                  <RxSvgIcon name="base/rx_ic_edit" />
+                </div>
+                <div onClick={withModifiers(() => deleteTemplate(item), ['stop'])}>
+                  <RxSvgIcon name="base/rx_ic_bin_1" />
+                </div>
+              </>
+            }
+          </div>
+        </RxButton>
+      }
+    }
+  })
 }
 
 async function initFormInputs(template: Record<string, any> = {}) {
@@ -198,7 +199,11 @@ async function onUpdateFinger() {
   Object.assign(original.value, data[0])
 }
 
-async function saveTemplatePopup(event: Event, option?: TemplateOption) {
+function showTemplates(event: MouseEvent) {
+  showMenu(event, { model: templateModel.value })
+}
+
+async function saveTemplatePopup(event: Event, option?: Record<string, any>) {
   const { code } = await API.pay.userCheckTeamUserRightsList()
   if (code !== 0) {
     if (!isOwner.value) {
@@ -385,10 +390,10 @@ async function importProfile(params: any) {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-    <div class="flex-1 flex overflow-hidden">
-      <div class="flex-1 flex flex-col">
-        <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
-        <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+      <div class="flex flex-1 overflow-hidden">
+        <div class="flex-1 flex flex-col">
           <div class="profile-basic">
             <div v-show="tabsValue === 'multi'" class="multiple">
               <div class="flex items-center justify-between">
@@ -397,23 +402,16 @@ async function importProfile(params: any) {
               </div>
               <div class="select-none multiple-info">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
             </div>
-            <ImportWindow v-show="tabsValue === 'import'" v-model="fileAnalyzeError" @import-success="importSuccess" />
+            <ImportWindow v-show="tabsValue === 'import'" v-model:error="fileAnalyzeError" @import-success="importSuccess" />
             <div v-show="tabsValue !== 'import'" class="flex items-center justify-between">
               <div class="subtitle">{{ $t('窗口信息') }}</div>
-              <RxInputSelect v-model="profileTemplate.value" class="!w-42" v-bind="profileTemplate.props" name="template">
-                <template #option-extra="{ option }">
-                  <div v-if="option.action" class="flex flex-1 justify-end gap-2">
-                    <RxSvgIcon name="base/rx_ic_edit" @click.stop="saveTemplatePopup($event, option)" />
-                    <RxSvgIcon name="base/rx_ic_bin_1" @click.stop="deleteTemplate(option)" />
-                  </div>
-                </template>
-              </RxInputSelect>
+              <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)"></RxButton>
             </div>
           </div>
           <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
         </div>
+        <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
       </div>
-      <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
     </div>
     <div class="flex items-center gap-2 footer">
       <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />

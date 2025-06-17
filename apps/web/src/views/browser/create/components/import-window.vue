@@ -8,20 +8,27 @@ import { downloadTemplate, downloadTextTemplate, parseTemplate, parseTextFile } 
 import { useUserStore } from '/@/stores/user'
 import { usePopupMenu } from '/@/hooks/usePopupMenu';
 import { getExtname } from '/@/utils'
+import type { SvgNames } from '/@/components/rx-icon'
 
 const emit = defineEmits(['importSuccess'])
 
 const { showMenu } = usePopupMenu()
-const [showToast, onlyErrorToast] = useResponseToast()
+const [_, onlyErrorToast] = useResponseToast()
 const userStore = useUserStore()
 
 const FILE_MAX_SIZE = 5 * 1024 * 1024
 const FILE_ACCEPT = Object.freeze({ ...ExcelAccept, ...TextAccept })
 
-const fileAnalyzeError = defineModel<any>()
+const fileAnalyzeError = defineModel<any>('error')
+
+const fileIcons = {
+  'xlsx': 'base/rx_ic_file_xls',
+  'txt': 'base/rx_ic_file_txt',
+}
 
 const fileData = reactive({
   status: false,
+  icon: '',
   name: '',
   size: '',
   successCount: 0,
@@ -84,10 +91,10 @@ async function handleBeforeUpload(rawFile: any) {
 
     if (code === 0) {
       fileData.status = true
+      fileData.icon = fileIcons[getExtname(fileName) as keyof typeof fileIcons]
       fileData.name = fileName
       fileData.size = `${(rawFile.size / 1024 / 1024).toFixed(2)} MB`
       fileData.successCount = excelData.length
-      showToast(0, $t('{count} 个窗口已成功导入', { count: fileData.successCount }))
       emit('importSuccess', fileAnalyzeData)
     }
     else {
@@ -122,21 +129,29 @@ function openTemplates(event: MouseEvent) {
 
 <template>
   <div class="flex flex-col gap-3">
-    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full" type="success" :title="$t('上传成功')" :closable="false" />
+    <RxAlert v-if="fileData.status && !fileAnalyzeError" class="w-full" type="success" :title="$t('{count} 个窗口已成功导入', { count: fileData.successCount })" :closable="false" />
     <RxAlert v-if="fileAnalyzeError" class="w-full" type="error" @close="fileAnalyzeError = null">
       <template #content>
         <div class="whitespace-pre-wrap">{{ fileAnalyzeError }}</div>
       </template>
     </RxAlert>
-    <div class="content">
-      <div class="upload" @dragover="fileDragover" @drop="fileDrop">
-        <SvgIcon name="base/rx_ic_doc_fill" :size="48" color="var(--colors-icon-icon-note)" />
+    <div v-if="fileData.name" class="pa-4 rounded-xl file">
+      <div class="flex items-center gap-3">
+        <SvgIcon class="font-size-6" :name="(fileData.icon as SvgNames)" color="var(--colors-icon-icon-success)" />
+        <span class="flex-1 file-name">{{ fileData.name }}</span>
+        <SvgIcon class="font-size-6" name="base/rx_ic_check_fill" color="var(--colors-icon-icon-success)" />
+      </div>
+      <div class="px-9 file-size">{{ fileData.size }}</div>
+    </div>
+    <div class="pa-4 rounded-xl upload">
+      <div class="flex flex-col items-center gap-4 py-8 rounded-lg upload-area" @dragover="fileDragover" @drop="fileDrop">
+        <SvgIcon v-if="!fileData.name" name="base/rx_ic_doc_fill" :size="48" color="var(--colors-icon-icon-note)" />
         <div class="text-center">
-          <div class="upload-title">
-            {{ fileData.name || $t('请拖拽到此处或点击上传') }}
+          <div v-if="!fileData.name" class="mb-1.5 upload-title">
+            {{ $t('请拖拽到此处或点击上传') }}
           </div>
-          <div class="w-60 mt-1.5 mx-auto">
-            {{ fileData.size || $t('请将编辑好的文件在此处上传，仅支持 {type} 类型文件, 最大不超过 5MB.', { type: '.xlsx .txt' }) }}
+          <div class="w-60 mx-auto upload-desc">
+            {{ $t('请将编辑好的文件在此处上传，仅支持 {type} 类型文件, 最大不超过 5MB.', { type: '.xlsx .txt' }) }}
           </div>
         </div>
         <RxButton icon="base/rx_ic_export" :label="fileData.status ? $t('重新上传') : $t('上传文件')" outlined severity="secondary" @click="chooseFile" />
@@ -156,32 +171,42 @@ function openTemplates(event: MouseEvent) {
 </template>
 
 <style lang="scss" scoped>
-.content {
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid var(--colors-border-border-inactive, #E2E9EE);
+.file {
+  border: 1px solid var(--colors-border-border-inactive);
+  background: var(--colors-background-bg-action);
+
+  &-name {
+    color: var(--colors-text-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+  }
+
+  &-size {
+    color: var(--colors-text-text-secondary);
+    font-size: 12px;
+    line-height: 20px;
+  }
 }
 
 .upload {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  align-self: stretch;
-  padding: 32px 0px;
-  gap: var(--spacing-2xl, 16px);
-  border-radius: var(--Component-Colors-TextInput-radius-radius-lg, 8px);
-  background: var(--colors-background-bg-block);
+  border: 1px solid var(--colors-border-border-inactive);
 
-  color: var(--colors-text-text-tertiary);
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: var(--Line-Height-text-xs, 16px);
+  &-area {
+    background: var(--colors-background-bg-block);
+  }
 
   &-title {
-    font-size: 13px;
     color: var(--colors-text-text-primary);
+    font-size: 12px;
     font-weight: 500;
+    line-height: 16px;
+  }
+
+  &-desc {
+    color: var(--colors-text-text-tertiary);
+    font-size: 12px;
+    line-height: 16px;
   }
 }
 

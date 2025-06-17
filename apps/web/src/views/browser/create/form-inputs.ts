@@ -323,9 +323,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'proxy',
     },
     {
-      separator: true,
-    },
-    {
       label: $t('平台账号'),
       name: 'windowPlatformList',
       value: data.windowPlatformList ?? [],
@@ -337,16 +334,10 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'accounts',
     },
     {
-      separator: true,
-    },
-    {
       label: 'URLs',
       name: 'defaultOpenUrl',
       value: data.defaultOpenUrl ?? [],
       slot: 'urls',
-    },
-    {
-      separator: true,
     },
     {
       type: 'textarea',
@@ -357,9 +348,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'cookies',
       formatValue: (input: any) => safeParseJSON(input.value, []),
     },
-    {
-      separator: true
-    }
   ])
 
   const basicInputs = reactive([

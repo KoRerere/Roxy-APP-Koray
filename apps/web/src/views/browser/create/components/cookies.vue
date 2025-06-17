@@ -12,7 +12,6 @@ const attrs = useAttrs()
 const modelValue = defineModel<string>()
 const invalid = defineModel('invalid', { default: false })
 const errorMsg = ref($t('Cookie 格式错误，请检查格式'))
-const showCookies = ref(!!modelValue.value)
 
 async function onIconClick() {
   const res = await readCookiesFile()
@@ -40,22 +39,35 @@ function onBlur(event: any) {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col gap-2">
-    <div class="flex items-center self-stretch gap-2">
-      <div class="flex-1 items-center flex gap-2 title">{{ attrs.label }}</div>
-      <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_edit" :label="$t('自定义 cookies')" @click="showCookies = true" />
-    </div>
-    <rxInputTextarea v-show="showCookies" v-model="modelValue" rows="5" icon="base/rx_ic_attachment" :placeholder="$t('请以 JSON 格式输入 Cookies')" :auto-resize="false" :invalid="invalid"
-      @iconClick="onIconClick" @blur="onBlur" />
-    <Message v-if="invalid" severity="error" size="small" variant="simple">{{ errorMsg }}</Message>
-  </div>
+  <RxAccordion :class="attrs.class">
+    <AccordionPanel value="open" :pt="{ root: 'border-dashed' }">
+      <AccordionHeader as="div" #default="{ active }">
+        <div class="flex items-center gap-3 header">
+          <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
+          <span>{{ attrs.label }}</span>
+        </div>
+      </AccordionHeader>
+      <AccordionContent>
+        <rxInputTextarea v-model="modelValue" rows="5" icon="base/rx_ic_attachment" :placeholder="$t('请以 JSON 格式输入 Cookies')" :auto-resize="false" :invalid="invalid" @iconClick="onIconClick"
+          @blur="onBlur" />
+        <Message v-if="invalid" severity="error" size="small" variant="simple">{{ errorMsg }}</Message>
+      </AccordionContent>
+    </AccordionPanel>
+  </RxAccordion>
 </template>
 
 <style lang="scss" scoped>
-.title {
+.header {
   color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: 16px;
+
+  &-icon {
+    border: 1px solid var(--colors-border-border-base);
+    border-radius: 4px;
+    padding: 2px;
+    background: var(--colors-background-bg-action);
+  }
 }
 </style>
