@@ -12,6 +12,9 @@ import { parseArgs } from 'node:util';
 
 const webReadyPromise = Promise.withResolvers<true>()
 
+/** 是否处于打包状态 */
+export const isPackaged = app.isPackaged
+
 export const appCliStartArgs = (() => {
   const options = {
     /** 日志级别 */
@@ -44,8 +47,7 @@ export const isDebugMode = appCliStartArgs['roxy-log-level'] === 'debug'
 export const isDev = appCliStartArgs['roxy-env'] === 'dev' || import.meta.env.DEV
 /** 是否处于生产环境 */
 export const isProd = appCliStartArgs['roxy-env'] === 'prod' || import.meta.env.PROD
-/** 是否处于打包状态 */
-export const isPackaged = app.isPackaged
+
 
 export const isMac = process.platform === 'darwin'
 export const isWindows = process.platform === 'win32'
