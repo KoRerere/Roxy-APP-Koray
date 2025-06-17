@@ -1,7 +1,7 @@
 import { BrowserWindow, } from 'electron'
 import { ROXY_SYNC_CONTROL_ACTION_BAR_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { isPackaged } from '/@/utils'
+import { isPackaged } from '/@/constants/common'
 import { closeCustomLayoutsDialogWindow } from '/@/modules/sync-control/dialog/custom-layout'
 import { closeBatchInputsDialogWindow } from '/@/modules/sync-control/dialog/batch-inputs'
 import { createWindow } from '/@/utils/browser-window'

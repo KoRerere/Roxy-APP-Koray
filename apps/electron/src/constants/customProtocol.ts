@@ -1,4 +1,4 @@
-import { isDev } from '/@/utils'
+import { isDev } from '/@/constants/common'
 
 /** 应用自定义协议，用于唤起应用 */
 export const appProtocolName = isDev ? 'roxybrowser-dev' : 'roxybrowser'

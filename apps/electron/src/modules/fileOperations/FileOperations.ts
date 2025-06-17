@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { app, utilityProcess, UtilityProcess } from 'electron'
 import type { TaskMap, TaskQueueItem, WorkerMessage } from './taskTypes'
-import { appCliStartArgs, isDev } from '/@/utils'
+import { appCliStartArgs, isDev } from '/@/constants/common'
 
 let inspectPort = 9230
 let workerNo = 1

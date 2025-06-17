@@ -4,7 +4,7 @@ import { readdirSync, renameSync } from 'node:fs'
 import { readdir, rm, stat } from 'node:fs/promises'
 import { join, parse } from 'node:path'
 import { appConfig } from '/@/constants'
-import { appCliStartArgs, isPackaged } from '/@/utils'
+import { appCliStartArgs, isPackaged } from '/@/constants/common'
 import { app } from 'electron'
 import { LevelOption } from 'electron-log'
 

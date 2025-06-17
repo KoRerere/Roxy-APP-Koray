@@ -3,7 +3,7 @@ import { ROXY_SYNC_CONTROL_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { closeSynchronizerActionBarWindow, getSynchronizerActionBarWindow, handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { setTimeout } from 'timers/promises'
-import { isPackaged } from '/@/utils'
+import { isPackaged } from '/@/constants/common'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
 import { createWindow } from '/@/utils/browser-window'
 

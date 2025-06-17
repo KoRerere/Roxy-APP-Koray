@@ -1,7 +1,8 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { API } from '/@/api'
 import { osConfig } from '/@/constants'
-import { decryptAESGCM, encryptAESGCM, isDev } from '/@/utils'
+import { decryptAESGCM, encryptAESGCM } from '/@/utils'
+import { isDev } from '/@/constants/common'
 
 /** 需要使用 aes-256-gcm 加解密的接口数据 */
 const requestHandleUrls = [

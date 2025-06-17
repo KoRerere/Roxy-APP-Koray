@@ -8,7 +8,7 @@ import { API } from '/@/api'
 import { osConfig } from '/@/constants'
 import { getMainWindow } from '/@/modules/app/mainWindow'
 import { ipcMain } from '/@/modules/ipc'
-import { isMac, isPackaged } from '/@/utils'
+import { isMac, isPackaged } from '/@/constants/common'
 import { CheckForUpdatesOptions } from '/@/modules/updater/webUpdater'
 import { forceSaveConfig, store } from '/@/modules/store'
 

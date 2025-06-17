@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { join } from 'node:path'
 import { store } from '/@/modules/store'
-import { isDev, isMac, isPackaged } from '/@/utils/'
+import { isDev, isMac, isPackaged } from '/@/constants/common'
 
 const sessionDir = app.getPath('sessionData')
 

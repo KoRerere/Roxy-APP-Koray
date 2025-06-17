@@ -7,8 +7,9 @@ import { join } from 'node:path'
 import { API } from '/@/api'
 import { browserManager } from '/@/modules/browser'
 import { store } from '/@/modules/store'
-import { calculateRemainingTime, fileExists, isPackaged, tryRefreshUrl } from '/@/utils'
+import { calculateRemainingTime, fileExists, tryRefreshUrl } from '/@/utils'
 import { appConfig } from '/@/constants'
+import { isPackaged } from '/@/constants/common'
 
 export async function setupDashboardServer(app: express.Application) {
   // 工作台

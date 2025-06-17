@@ -1,5 +1,5 @@
 import { BrowserManager } from './browserManager'
-import { isDev } from '/@/utils'
+import { isDev } from '/@/constants/common'
 
 export const browserManager = new BrowserManager()
 

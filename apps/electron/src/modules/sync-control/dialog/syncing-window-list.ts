@@ -1,7 +1,7 @@
 import { BrowserWindow, } from 'electron'
 import { ROXY_SYNCING_CONTROL_SYNCING_WINDOW_LIST_WINDOW_ID, ROXY_WINDOW_ID_KEY } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
-import { isPackaged } from '/@/utils'
+import { isPackaged } from '/@/constants/common'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { createWindow } from '/@/utils/browser-window'
 

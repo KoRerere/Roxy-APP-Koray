@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { isDev, isPackaged, ProxyDetectionResult } from '/@/utils'
+import { ProxyDetectionResult } from '/@/utils'
+import { isDev, isPackaged } from '/@/constants/common'
 import { ipcMain } from '/@/modules/ipc'
 
 const gateConfUrls = ['https://gw.roxyip.com/get_gate_conf', 'https://gw.roxyip.io/get_gate_conf']

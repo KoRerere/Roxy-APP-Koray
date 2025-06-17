@@ -11,7 +11,8 @@ import { osConfig } from "/@/constants";
 import { appConfig } from "/@/constants/appConfig";
 import { browserManager } from "/@/modules/browser/browser-manager";
 import { ipcMain } from "/@/modules/ipc";
-import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, isMac, unzipFile } from "/@/utils";
+import { downloadZipFile, fileExists, findProcessByHandle, getProcessIdsByExePath, unzipFile } from "/@/utils";
+import { isMac } from "/@/constants/common";
 import { setTimeout } from "node:timers/promises";
 
 export const chromeCoreManager = new (class ChromeCoreManager {
