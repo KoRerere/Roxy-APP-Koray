@@ -276,21 +276,14 @@ const filters = reactive({
   resetFilters() {
   },
 })
+//=======================================
+import { motion } from 'motion-v'
 
-const checked1 = ref(true)
-const checked2 = ref(false)
-
+const collapsed = ref(false)
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <RxSelectButton class="mt-20 mx-auto scale-200" v-model="filters.value" :options="filters.options" option-label="name" option-value="value" data-key="value" @change="filters.onChange" />
-
-    <div class="flex gap-2 mt-20 mx-auto scale-300">
-      <ToggleButton v-model="checked1" onLabel="On" offLabel="On" />
-      <ToggleButton v-model="checked2" onLabel="On" offLabel="On" />
-    </div>
-
     <!-- <div class="flex flex-col gap-2">
       <RxAlert announcement title="wcis man!" type="success"></RxAlert>
       <RxAlert title="wcis man!" type="info"></RxAlert>
@@ -303,15 +296,15 @@ const checked2 = ref(false)
       <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div> -->
+    <div class="mx-auto w-200 h-120 bg-bluegray select-none flex items-start overflow-hidden">
+      <div class="h-full flex-1 bg-emerald" @click="collapsed = !collapsed"></div>
+
+      <motion.div class="bg-orange" layout :style="collapsed ? { width: 'auto', height: 'auto' } : { width: '200px', height: '100%' }">
+        <div v-if="collapsed">短文本</div>
+        <div v-if="!collapsed">长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本</div>
+      </motion.div>
+    </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-:deep(.p-togglebutton-content) {
-  border: 0.5px solid transparent;
-}
-
-:deep(.p-togglebutton-checked .p-togglebutton-content) {
-  border: 0.5px solid var(--component-segment-border-selection-active);
-}
-</style>
+<style lang="scss" scoped></style>

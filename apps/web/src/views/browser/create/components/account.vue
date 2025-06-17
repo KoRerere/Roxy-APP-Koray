@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
@@ -14,6 +15,26 @@ defineOptions({
 const attrs = useAttrs()
 const drawerInstance = useDrawer()
 const windowPlatformList = defineModel<any[]>('modelValue')
+const input = ref<Record<string, any>>({
+  type: 'select',
+  name: 'platformUrl',
+  value: 'onetoone',
+  props: {
+    placeholder: $t('请输入或选择平台网址'),
+    optionValue: 'value',
+    options: [
+      {
+        label: $t('随机分配'),
+        value: 'onetoone'
+      },
+      {
+        label: $t('多窗口应用'),
+        value: 'manytoone'
+      }
+    ]
+  }
+})
+
 const selectedAccount = computed(() => windowPlatformList.value?.filter((item: any) => item.id))
 
 function toggleDrawer(type: 'create' | 'list', item?: any) {
@@ -78,20 +99,33 @@ function replaceData(data: any) {
       <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
       <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-    <div class="grid gap-3 list" v-if="windowPlatformList?.length">
-      <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
-        <div class="mt-0.5">
-          <PlatformIcon v-if="item.platformIcon" class="icon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" />
-          <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
+    <div v-if="windowPlatformList?.length">
+      <div class="subtitle">{{ $t('绑定方式') }}</div>
+      <div class="mt-2 flex items-center gap-2">
+        <TsFormSelect class="flex-1" v-model="input.value" v-bind="input.props" />
+        <div class="flex-1">
+          <SvgIcon v-tooltip="{ value: $t('随机分配: 账号随机分配给窗口，一个窗口应用一个账号\n多窗口应用: 将账号应用到所有窗口'), showDelay: 300, pt: { root: '!max-w-65' } }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)">
+          </SvgIcon>
         </div>
-        <div class="flex-1 flex flex-col gap-1">
-          <div class="flex items-center gap-2 region">{{ item.platformUrl }}</div>
-          <div class="flex items-center gap-1.5 info" v-if="item.platformUserName">{{ item.platformUserName }}</div>
-        </div>
-        <div class="mt-0.5 flex gap-2">
-          <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteAccount(item)" />
-        </div>
-      </RxCard>
+      </div>
+    </div>
+    <div v-if="windowPlatformList?.length">
+      <div class="subtitle">{{ $t('账号列表 ({count})', { count: windowPlatformList.length }) }}</div>
+      <div class="mt-2 grid gap-2 list">
+        <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
+          <div class="mt-0.5">
+            <PlatformIcon v-if="item.platformIcon" class="icon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" />
+            <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
+          </div>
+          <div class="flex-1 flex flex-col gap-1">
+            <div class="flex items-center gap-2 region">{{ item.platformUrl }}</div>
+            <div class="flex items-center gap-1.5 info">{{ item.platformUserName || '--' }}</div>
+          </div>
+          <div class="mt-0.5 flex gap-2">
+            <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="var(--colors-icon-icon-tertiary)" @click.stop="deleteAccount(item)" />
+          </div>
+        </RxCard>
+      </div>
     </div>
   </div>
 </template>
@@ -101,6 +135,12 @@ function replaceData(data: any) {
   color: var(--colors-text-text-primary);
   font-size: 16px;
   font-weight: 600;
+  line-height: 16px;
+}
+
+.subtitle {
+  color: var(--colors-text-text-primary);
+  font-size: 14px;
   line-height: 16px;
 }
 

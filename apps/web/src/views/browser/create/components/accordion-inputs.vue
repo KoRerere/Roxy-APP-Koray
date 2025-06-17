@@ -1,16 +1,15 @@
 <script lang="ts" setup>
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import inputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { $t } from '/@/locales/index.js'
-import { copyText } from '/@/utils/'
-import accountItem from './account.vue'
-import proxyItem from './proxy.vue'
-import urlsItem from './urls.vue'
-import cookiesItem from './cookies.vue'
 import Position from '/@/views/browser/create/components/position.vue'
+import AccountItem from './account.vue'
+import ProxyItem from './proxy.vue'
+import UrlsItem from './urls.vue'
+import CookiesItem from './cookies.vue'
 import Os from './os.vue'
+import { $t } from '/@/locales/index.js'
+import { useResponseToast } from '/@/hooks/useResponseToast'
+import { copyText } from '/@/utils/'
 import type { Accordions } from './type.ts'
 
 interface Props {
@@ -63,16 +62,16 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #proxy="{ input }">
-          <proxyItem v-model="input.value" v-bind="input" />
+          <ProxyItem v-model="input.value" v-bind="input" />
         </template>
         <template #accounts="{ input }">
-          <accountItem v-model="input.value" v-bind="input" />
+          <AccountItem v-model="input.value" v-bind="input" />
         </template>
         <template #urls="{ input }">
-          <urlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <UrlsItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
         <template #cookies="{ input }">
-          <cookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <CookiesItem v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
       </RyForm>
       <Accordion :value="accordions.value" multiple>

@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import Menu from 'primevue/menu'
-import { type SvgNames } from '/@/components/rx-icon'
+import SelectionMenuItem from './menu-selection-item.vue'
+import type { SvgNames } from '/@/components/rx-icon'
 import type { MenuProps } from '../type';
-
-import selectionMenuItem from './menu-selection-item.vue'
 
 interface Props extends Omit<MenuProps, 'slots'> { }
 
 const slots: Record<string, any> = useSlots()
-
 const { mode, model, menuProps = {} } = defineProps<Props>()
-const menuRef = useTemplateRef('menu')
 
+const menuRef = useTemplateRef('menu')
 const _model = mode?.options || model
 const _selected = ref(mode?.value)
 
@@ -44,9 +42,9 @@ defineExpose({
         <RxButton v-else class="w-full !justify-start" :disabled="(item.disabled as boolean)" :icon="(item.icon as SvgNames)" :label="(item.label as string)" severity="secondary" text
           :pt="{ root: menuClass.button }" @click.stop="onMenuCommand($event, item)" />
       </a>
-      <selectionMenuItem v-else v-ripple v-bind="props.action" v-model="_selected" :type="mode.type" :field="mode.field" :item="item" @click.stop>
+      <SelectionMenuItem v-else v-ripple v-bind="props.action" v-model="_selected" :type="mode.type" :field="mode.field" :item="item" @click.stop>
         <component v-if="render" :is="render" :item="item" :props="props"></component>
-      </selectionMenuItem>
+      </SelectionMenuItem>
     </template>
     <template v-for="(_, name) in slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps"></slot>
