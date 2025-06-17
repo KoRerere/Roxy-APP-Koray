@@ -315,6 +315,7 @@ export class BrowserManager {
     }
     console.debug('syncWindowData batches', batches.length)
     for (const batch of batches) {
+      console.debug('syncWindowData batch', batch.map(item => item.id))
       await API.window.userMdfWindowSyncV2Create(batch, { headers }).then((res) => {
         console.log('user_mdf_window_sync_v2 uploadData', res)
       }).catch((error) => {

@@ -12,10 +12,38 @@ import { parseArgs } from 'node:util';
 
 const webReadyPromise = Promise.withResolvers<true>()
 
+export const appCliStartArgs = (() => {
+  const options = {
+    /** 日志级别 */
+    'roxy-log-level': {
+      type: 'string',
+      default: isPackaged ? 'info' : 'silly',  // 默认 info
+      // default: 'info',  // 默认 info
+    },
+    /** 指定 APP 运行环境(dev, prod), 默认不指定, 则根据环境变量判断 */
+    'roxy-env': {
+      type: 'string',
+      default: '',
+    },
+  } as const
+
+  const args = parseArgs({
+    options,
+    strict: false, // 默认 true，遇到未知参数会报错
+  });
+
+  if (import.meta.env.DEV) {
+    console.log('appCliStartArgs', args)
+  }
+
+  return args.values
+})()
+/** 是否处于调试模式 */
+export const isDebugMode = appCliStartArgs['roxy-log-level'] === 'debug'
 /** 是否处于开发环境 */
-export const isDev = import.meta.env.DEV
+export const isDev = appCliStartArgs['roxy-env'] === 'dev' || import.meta.env.DEV
 /** 是否处于生产环境 */
-export const isProd = import.meta.env.PROD
+export const isProd = appCliStartArgs['roxy-env'] === 'prod' || import.meta.env.PROD
 /** 是否处于打包状态 */
 export const isPackaged = app.isPackaged
 
@@ -28,31 +56,6 @@ export const isWebReady = () => webReadyPromise.promise
 export const setWebReady = () => webReadyPromise.resolve(true)
 
 console.log('isDev', isDev)
-
-export const appCliStartArgs = (() => {
-  const options = {
-    /** 日志级别 */
-    'roxy-log-level': {
-      type: 'string',
-      default: isPackaged ? 'info' : 'silly',  // 默认 info
-      // default: 'info',  // 默认 info
-    },
-  } as const
-
-  const args = parseArgs({
-    options,
-    strict: false, // 默认 true，遇到未知参数会报错
-  });
-
-  if (isDev) {
-    console.log('appCliStartArgs', args)
-  }
-
-  return args.values
-})()
-
-/** 是否处于调试模式 */
-export const isDebugMode = appCliStartArgs['roxy-log-level'] === 'debug'
 
 export function safeStringify(obj) {
   const seen = new WeakSet()
