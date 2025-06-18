@@ -40,6 +40,7 @@ import { emitter } from '/@/utils/eventBus'
 import { I18nT } from "vue-i18n"
 import { useDrawer } from '/@/hooks/useDrawer'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import ProfileName from './components/profile-name.vue'
 
 type Data = UserGetWindowInfoListListData['data']['rows'][number]
 
@@ -969,6 +970,14 @@ defineExpose({
         </div>
       </div>
     </template>
+    <template #profileName="{ data }">
+      <template v-if="data.id">
+        <ProfileName :data="data" @refresh="onRefreshTable" />
+      </template>
+      <template v-else>
+        <Skeleton width="140px" height="24px" borderRadius="4px"></Skeleton>
+      </template>
+    </template>
     <template #open="{ data }">
       <template v-if="data.id">
         <BrowserControl :data="data" :open-message="openMessage" @open="openBrowserBefore" />
@@ -987,7 +996,7 @@ defineExpose({
     </template>
     <template #note="{ data, column: { _cache } }">
       <template v-if="data.id">
-        <div class="flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
+        <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'addNotes' }, data)">
           <RxButton v-tooltip.top="{ value: data.windowRemark, showDelay: 0 }" class="shrink-0"
             :class="{ 'note-light': data.windowRemark }" text severity="secondary" size="xxs"
             :icon="data.windowRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" />

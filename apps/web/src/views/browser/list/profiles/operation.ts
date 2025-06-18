@@ -3,6 +3,7 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { getDictMap, getFormData, setInputValueByFormData } from '/@/utils'
+import { ref, toRaw } from 'vue'
 
 const role = useRoleStore()
 
@@ -208,41 +209,46 @@ export async function getCustomFilters(params: any = {}) {
 export async function getSorts() {
   const { data } = await API.window.userGetWindowTableSortOrderList()
 
-  const list = [
-    {
-      label: $t('排序标准'),
-      name: 'orderName',
-      value: data?.orderName ?? 'windowSortNum',
-      defaultValue: 'windowSortNum',
-      options: [
-        { label: $t('序号'), value: 'windowSortNum' },
-        { label: $t('名称'), value: 'name' },
-        { label: $t('创建时间'), value: 'createTime' },
-        { label: $t('修改时间'), value: 'updateTime' },
-        { label: $t('最后打开时间'), value: 'openTime' },
-        { label: $t('最后关闭时间'), value: 'closeTime' },
-      ],
-      icon: 'base/rx_ic_sort_a2z',
-    },
-    {
-      label: $t('排序方式'),
-      name: 'orderType',
-      value: data?.orderType ?? 'desc',
-      defaultValue: 'desc',
-      options: [
-        { label: $t('倒序'), value: 'desc' },
-        { label: $t('正序'), value: 'asc' },
-      ],
-      icon: 'base/rx_ic_sort_ascending',
-    },
-  ]
+  // const list = [
+  //   {
+  //     label: $t('排序标准'),
+  //     name: 'orderName',
+  //     value: data?.orderName ?? 'windowSortNum',
+  //     defaultValue: 'windowSortNum',
+  //     options: [
+  //       { label: $t('序号'), value: 'windowSortNum' },
+  //       { label: $t('名称'), value: 'name' },
+  //       { label: $t('创建时间'), value: 'createTime' },
+  //       { label: $t('修改时间'), value: 'updateTime' },
+  //       { label: $t('最后打开时间'), value: 'openTime' },
+  //       { label: $t('最后关闭时间'), value: 'closeTime' },
+  //     ],
+  //     icon: 'base/rx_ic_sort_a2z',
+  //   },
+  //   {
+  //     label: $t('排序方式'),
+  //     name: 'orderType',
+  //     value: data?.orderType ?? 'desc',
+  //     defaultValue: 'desc',
+  //     options: [
+  //       { label: $t('倒序'), value: 'desc' },
+  //       { label: $t('正序'), value: 'asc' },
+  //     ],
+  //     icon: 'base/rx_ic_sort_ascending',
+  //   },
+  // ]
+
+  const __data = ref({
+    orderName: data?.orderName ?? 'windowSortNum',
+    orderType: data?.orderType ?? 'desc',
+  })
 
   const onChange = () => {
-    API.window.userSaveWindowTableSortOrderCreate(getFormData(list))
+    API.window.userSaveWindowTableSortOrderCreate(toRaw(__data.value))
   }
 
   return {
-    data: list,
+    data: __data,
     onChange,
   }
 }

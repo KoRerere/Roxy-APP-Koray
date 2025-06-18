@@ -298,9 +298,9 @@ function onSave() {
 
 <template>
   <div class="flex-1 overflow-auto flex-col proxies-content">
-    <div class="parse-input w-full !grid grid-cols-10">
-      <div class="col-span-6 flex flex-col gap-6px">
-        <div class="panel-title flex justify-between items-center">
+    <div class="parse-input w-full">
+      <div class="flex flex-col gap-6px xl:w-60%">
+        <div class="panel-title flex justify-between items-start xl:items-center flex-col xl:flex-row">
           <span>{{ $t('代理信息') }}</span>
           <div class="flex gap-6px">
             <RxInputSelect size="xs" optionValue="value" v-model="ipType" :options="ipTypeOptions" name="ipType"
@@ -311,7 +311,7 @@ function onSave() {
               name="parserType" :filter="false" class="!w-234px" />
           </div>
         </div>
-        <div class="information">
+        <div class="information min-w-423px">
           <ParseTextarea v-model="proxiesText" :placeholder="$t('请在此处输入代理信息')" />
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
@@ -334,11 +334,11 @@ function onSave() {
           </div>
         </div>
       </div>
-      <div class="col-span-4 flex flex-col gap-6px">
+      <div class="flex flex-col gap-6px w-40%">
         <div class="panel-title h-30px flex items-center">
           {{ $t('导入规则') }}
         </div>
-        <div class="rules flex-1">
+        <div class="rules flex-1 min-w-335px">
           <Example :ip-type="ipType" :parser-type="parserType" class="relative z-10" />
           <ShadowDotGrid class="z-9" />
         </div>

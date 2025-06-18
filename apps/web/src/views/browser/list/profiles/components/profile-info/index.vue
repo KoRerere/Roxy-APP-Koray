@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { getDefaultWindowName } from '/@/views/browser/create/utils'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
@@ -58,9 +57,6 @@ const role = useRoleStore()
 const { showMenu: showPopupMenu } = usePopupMenu()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { testProxy: checkProxy, batchTestShowToast } = useCheckProxy()
-
-const defaultWindowName = getDefaultWindowName()
-const windowName = ref(data.windowName)
 
 const hasProxy = computed(() => data.proxyCategory !== 'noproxy')
 const isOpenBrowser = computed(() => openMessage?.[data.dirId]?.data?.percent === 100)
@@ -407,32 +403,6 @@ async function updateProfile(params: any, options?: Record<string, any>) {
     isLikeFunction(fallback) && fallback()
   }
 }
-
-function saveWindowName(closeCallback: () => void) {
-  const name = windowName.value.trim()
-  const oldName = data.windowName
-  if (name !== oldName) {
-    data.windowName = name
-    updateProfile({ id: data.id, windowName: name }, {
-      fallback: () => {
-        windowName.value = oldName
-        data.windowName = oldName
-      }
-    })
-  } else {
-    windowName.value = data.windowName
-  }
-  closeCallback()
-}
-
-function handleFocusWindowName() {
-  windowName.value = windowName.value.startsWith(defaultWindowName) ? '' : windowName.value
-}
-
-function handleClickInplace(e: MouseEvent) {
-  if (disabled || readonly) return
-  e.stopPropagation()
-}
 </script>
 
 <template>
@@ -441,7 +411,7 @@ function handleClickInplace(e: MouseEvent) {
       <span class="profile-name">{{ workspaceName }}-</span>
       <span class="profile-num">{{ `${data.windowSortNum}`.padStart(`${data.maxWindowSort || 0}`.length, '0') }}</span>
     </div>
-    <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }" @click.stop>
+    <div class="position-relative flex justify-between state" :class="{ 'w-[136px]': list.length > 1 }">
       <div class="relative" v-for="item in list" :key="item.key" @click.stop="onClick($event, item.key)">
         <template v-if="item.key === 'os'">
           <div class="relative flex-cc cursor-pointer pa-1 state-icons" :class="item.classes"
@@ -502,16 +472,6 @@ function handleClickInplace(e: MouseEvent) {
         </div>
       </div>
     </div>
-    <Inplace v-focustrap :disabled="disabled || readonly" @click="handleClickInplace">
-      <template #display>
-        <div class="profile-name-content">{{ windowName }}</div>
-      </template>
-      <template #content="{ closeCallback }">
-        <InputText v-model="windowName" autofocus size="small" class="window-name-input"
-          @blur="saveWindowName(closeCallback)" @focus="handleFocusWindowName"
-          @keydown.enter="saveWindowName(closeCallback)" />
-      </template>
-    </Inplace>
   </div>
 </template>
 

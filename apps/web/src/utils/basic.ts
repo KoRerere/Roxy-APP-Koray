@@ -385,3 +385,22 @@ export function hexToRgba(hex: string, alpha: number): string {
   const b = Number.parseInt(hex.slice(5, 7), 16)
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
+
+export type SortOrder = 'asc' | 'desc';
+export type SortOrderNumber = 1 | -1;
+
+export function transformSortOrder(order: string): SortOrderNumber;
+export function transformSortOrder(order: number): SortOrder;
+export function transformSortOrder(order: undefined): undefined;
+export function transformSortOrder(order: number | string | undefined): SortOrderNumber | SortOrder | undefined {
+  if (!order) return;
+  // 1 升序，-1 降序
+  const map = {
+    '1': 'asc',
+    '-1': 'desc',
+    asc: 1,
+    desc: -1,
+  } as const;
+
+  return map[order.toString() as keyof typeof map];
+}
