@@ -68,7 +68,7 @@ function onCopy(dirId: string) {
         </template>
         <template #accounts="{ input }">
           <div class="-mt-4 px-4 py-6 w-full dashed-border">
-            <AccountItem v-model="input.value" v-bind="input" />
+            <AccountItem v-model="input.value" v-model:type="input.platformBindType" v-bind="input" />
           </div>
         </template>
         <template #urls="{ input }">

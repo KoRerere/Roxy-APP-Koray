@@ -277,9 +277,40 @@ const filters = reactive({
   },
 })
 //=======================================
-import { motion } from 'motion-v'
+import { VueDraggable } from 'vue-draggable-plus'
+import { API } from '/@/api';
+const columns2 = [
+  { title: "Tomato 🍅", key: 'id' },
+  { title: "Lettuce 🥬", key: 'name' },
+  { title: "Cheese 🧀", key: 'category' },
+  { title: "Carrot 🥕", key: 'quantity' }
+]
 
-const collapsed = ref(false)
+const datalist2 = ref(Array.from({ length: 7 }, (_, index) => ({
+  id: `${index + 1}`,
+  name: `mamba_${index}`,
+  category: `category_${index}`,
+  quantity: 'actions',
+})))
+
+const pinCount = ref(0)
+
+const onRowReorder = ({ dropIndex, value }: any) => {
+  if (dropIndex >= pinCount.value) {
+    return
+  }
+  datalist2.value = value;
+};
+
+async function getDatalist() {
+  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
+  pinCount.value = data.rows.reduce((sum, item) => sum += item.pinStatus ?? 0, 0)
+}
+
+onMounted(() => {
+  getDatalist()
+})
+
 </script>
 
 <template>
@@ -296,21 +327,30 @@ const collapsed = ref(false)
       <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div> -->
-    <!-- 24 32 40 -->
-    <RxButton size="xxs" label="wcis"></RxButton>
-    <RxSelectButton size="xxs" model-value="hello" :options="['hello', 'wcis', 'man']"></RxSelectButton>
-    <RxSelectButton size="sm" model-value="wcis" :options="['hello', 'wcis', 'man']"></RxSelectButton>
-    <RxSelectButton size="lg" model-value="man" :options="['hello', 'wcis', 'man']"></RxSelectButton>
-
-    <!-- <div class="mx-auto w-200 h-120 bg-bluegray select-none flex items-start overflow-hidden">
-      <div class="h-full flex-1 bg-emerald" @click="collapsed = !collapsed"></div>
-
-      <motion.div class="bg-orange" layout :style="collapsed ? { width: 'auto', height: 'auto' } : { width: '200px', height: '100%' }">
-        <div v-if="collapsed">短文本</div>
-        <div v-if="!collapsed">长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本</div>
-      </motion.div>
-    </div> -->
+    <div class="w-240 h-160" :class="[`drag-${pinCount}`]">
+      <RyTable :reorderableColumns="true" @rowReorder="onRowReorder" :columns="columns2" :data-list="datalist2" show-gridlines :show-table-header="false" :show-actions="false" :paginator="false">
+        <template #column-before>
+          <Column headerStyle="width:44px" rowReorder>
+            <template #rowreordericon>
+              <SvgIcon class="hidden drag-mark p-datatable-reorderable-row-handle" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots"></SvgIcon>
+            </template>
+          </Column>
+        </template>
+      </RyTable>
+    </div>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+@for $i from 1 through 5 {
+  .drag-#{$i} {
+    :deep(.p-datatable-tbody) {
+      @for $j from 0 through $i - 1 {
+        tr[data-p-index="#{$j}"] .drag-mark {
+          display: block;
+        }
+      }
+    }
+  }
+}
+</style>

@@ -21,7 +21,7 @@ import type { UnwrapRowType, UserGetProjectInfoByWorkspaceListData } from '@roxy
 
 type Project = UnwrapRowType<UserGetProjectInfoByWorkspaceListData>
 
-const tableRef = useTemplateRef('account')
+const tableRef = useTemplateRef('project')
 const confirm = useConfirm()
 const [showToast, onlyErrorToast] = useResponseToast()
 const [projectModfiyDialog] = useProjectActions({ toast: false })
@@ -57,6 +57,14 @@ const columns = [
 ]
 
 const role = useRoleStore()
+const pinCount = ref(0)
+
+async function tableRequest(params: any) {
+  getProjects()
+  const data = await API.limit.userGetProjectInfoByWorkspaceList({ ...params, default: 2 })
+  pinCount.value = data.data.rows.reduce((sum, item) => sum += item.pinStatus ?? 0, 0)
+  return data
+}
 
 function getOperation(data: Project) {
   const pinStatus = data.user_info!.find(item=> item.userId === userInfo.value.id)?.pinStatus
@@ -149,9 +157,18 @@ function operationHandler(operate: any, data?: any) {
   }
 }
 
-function tableRequest(params: any) {
-  getProjects()
-  return API.limit.userGetProjectInfoByWorkspaceList({ ...params, default: 2 })
+async function onRowReorder (event: any) {
+  const { dragIndex, dropIndex } = event
+  if (dropIndex >= pinCount.value) {
+    return
+  }
+
+  // const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })
+  // if (code === 0) {
+  //   tableRef.value?.refresh()
+  // } else {
+  //   onlyErrorToast(code, msg)
+  // }
 }
 
 async function pinProject(data: Project) {
@@ -221,25 +238,31 @@ async function inviteUserInProject(project: Project) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full account">
+  <div class="flex flex-col h-full">
     <ViewsHeader :divider="false" :title="$t('项目管理')">
       <RxButton v-if="role.isOwner || role.isManager" size="xxs" icon="base/rx_ic_plus" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
     </ViewsHeader>
-    <div class="account-content">
-      <RyTable ref="account" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
-        :show-gridlines="false" :show-actions-menu="false" :show-actions="false">
+    <div class="flex-1 flex overflow-hidden" :class="[`drag-${pinCount}`]">
+      <RyTable ref="project" data-key="project_id" cache-key="project-list" v-model:columns="columns" :table-request="tableRequest" :table-operation="getOperation" :show-table-header="false"
+        :show-gridlines="false" :show-actions-menu="false" :show-actions="false" reorderable-columns @rowReorder="onRowReorder">
         <template #table-empty>
           <CustomEmpty icon="rx_illustration_stack.svg" :title="$t('暂无项目')" :desc="$t('项目功能可以帮助您将窗口或团队成员进行分配，并更高效地管理。')">
             <template #extra>
               <div class="flex items-center gap-3">
                 <RxButton outlined severity="secondary" size="xs" icon="base/rx_ic_stack_add" :label="$t('创建项目')" @click.stop="operationHandler({ name: 'create' })" />
-                <!-- <RxButton text severity="secondary" size="xs" :label="$t('项目文档')" /> -->
               </div>
             </template>
           </CustomEmpty>
         </template>
+        <template #column-before>
+          <Column headerStyle="width:44px" rowReorder>
+            <template #rowreordericon>
+              <SvgIcon class="hidden drag-mark p-datatable-reorderable-row-handle" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots"></SvgIcon>
+            </template>
+          </Column>
+        </template>
         <template #projectName="{ data }">
-          <router-link class="flex items-center gap-2 project-name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
+          <router-link class="flex items-center gap-2 name" :to="{ name: 'project-item', params: { id: data.project_id }, query: { title: data.projectName } }">
             <RxSvgIcon name="base/rx_ic_stack" />
             <span>{{ data.projectName }}</span>
           </router-link>
@@ -253,17 +276,19 @@ async function inviteUserInProject(project: Project) {
 </template>
 
 <style lang="scss" scoped>
-.account {
-  &-header {
-    border-bottom: 0.5px solid var(--colors-border-border-base, #c7cdd1);
-  }
-
-  &-content {
-    height: calc(100% - 48px);
-  }
+.name {
+  font-size: 13px;
 }
 
-.project-name {
-  font-size: 13px;
+@for $i from 1 through 5 {
+  .drag-#{$i} {
+    :deep(.p-datatable-tbody) {
+      @for $j from 0 through $i - 1 {
+        tr[data-p-index="#{$j}"] .drag-mark {
+          display: block;
+        }
+      }
+    }
+  }
 }
 </style>

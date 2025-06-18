@@ -6,6 +6,7 @@ import { useUserStore } from '/@/stores/user'
 import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, safeParseJSON } from '/@/utils'
 import { z } from "zod";
 import { getDefaultWindowName } from './utils'
+import { AccountBindType } from '/@/enums/account'
 
 const userStore = useUserStore()
 
@@ -326,9 +327,13 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('平台账号'),
       name: 'windowPlatformList',
       value: data.windowPlatformList ?? [],
+      platformBindType: AccountBindType.Random,
       formatValue: (input: any, _inputs: any, formData: any) => {
         const platformUrlIds = input.value.map((item: any) => item.id).filter(Boolean)
-        Object.assign(formData, { platformUrlIds })// 关联账号库选择的账号id
+        Object.assign(formData, {
+          platformUrlIds, // 关联账号库选择的账号id
+          platformBindType: input.platformBindType, // 账号分配类型
+        })
         return input.value.filter((item: any) => !item.id)// 过滤需要关联的账号
       },
       slot: 'accounts',

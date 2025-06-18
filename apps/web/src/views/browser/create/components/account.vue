@@ -2,40 +2,46 @@
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
+import PlatformIcon from '/@/views/account/list/platform-icon.vue'
+import { RxAlert } from '/@/components/rx-alert'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { deepClone } from '/@/utils'
 import { useDrawer } from '/@/hooks/useDrawer'
-import PlatformIcon from '/@/views/account/list/platform-icon.vue'
+import { useTableContext } from '../hooks/useContext'
+import { AccountBindType } from '/@/enums/account'
 
 defineOptions({
   inheritAttrs: false,
 })
 
+const { isBatch, createCount } = useTableContext()
 const attrs = useAttrs()
 const drawerInstance = useDrawer()
 const windowPlatformList = defineModel<any[]>('modelValue')
+const type = defineModel<number>('type', { default: AccountBindType.Random })
+
 const input = ref<Record<string, any>>({
   type: 'select',
-  name: 'platformUrl',
-  value: 'onetoone',
+  name: 'platformBindType',
   props: {
     placeholder: $t('请输入或选择平台网址'),
     optionValue: 'value',
     options: [
       {
         label: $t('随机分配'),
-        value: 'onetoone'
+        value: AccountBindType.Random
       },
       {
         label: $t('多窗口应用'),
-        value: 'manytoone'
+        value: AccountBindType.MultiWindow
       }
     ]
   }
 })
 
 const selectedAccount = computed(() => windowPlatformList.value?.filter((item: any) => item.id))
+const sumAccountCount = computed(() => windowPlatformList.value?.length ?? 0)
 
 function toggleDrawer(type: 'create' | 'list', item?: any) {
   const dismissable = type === 'list'
@@ -99,18 +105,23 @@ function replaceData(data: any) {
       <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_exchange" :label="$t('选择')" @click="toggleDrawer('list')" />
       <RxButton text size="xxs" severity="secondary" icon="base/rx_ic_plus" :label="$t('添加')" @click="toggleDrawer('create')" />
     </div>
-    <div v-if="windowPlatformList?.length">
+
+    <RxAlert v-if="isBatch && type === AccountBindType.Random && sumAccountCount > createCount" class="w-full" type="warn"
+      :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumAccountCount, max: createCount, message: $t('当前选择绑定的账号数量已超过创建窗口数。') })" :closable="false"></RxAlert>
+
+    <div v-if="isBatch && windowPlatformList?.length">
       <div class="subtitle">{{ $t('绑定方式') }}</div>
       <div class="mt-2 flex items-center gap-2">
-        <TsFormSelect class="flex-1" v-model="input.value" v-bind="input.props" />
+        <TsFormSelect class="flex-1" v-model="type" v-bind="input.props" />
         <div class="flex-1">
           <SvgIcon v-tooltip="{ value: $t('随机分配: 账号随机分配给窗口，一个窗口应用一个账号\n多窗口应用: 将账号应用到所有窗口'), showDelay: 300, pt: { root: '!max-w-65' } }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)">
           </SvgIcon>
         </div>
       </div>
     </div>
-    <div v-if="windowPlatformList?.length">
-      <div class="subtitle">{{ $t('账号列表 ({count})', { count: windowPlatformList.length }) }}</div>
+
+    <div v-if="windowPlatformList?.length" class="pt-2">
+      <div v-if="isBatch" class="subtitle">{{ $t('账号列表 ({count})', { count: sumAccountCount }) }}</div>
       <div class="mt-2 grid gap-2 list">
         <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
           <div class="mt-0.5">
