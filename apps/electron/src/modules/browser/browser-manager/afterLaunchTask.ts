@@ -5,7 +5,6 @@ import { SyncControlUtil } from '/@/modules/sync-control/util'
 import { join } from 'node:path'
 import ejs from "ejs";
 import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/utils'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
 import { store } from '/@/modules/store'
 
@@ -118,7 +117,9 @@ export class AfterLaunchTask {
         console.log('导入 cookie 耗时：', Date.now() - startTime, 'ms')
 
         if (this.isPhone) {
-          await this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' });
+          await this.browser.client.Emulation.setTouchEmulationEnabled({ enabled: true, configuration: 'mobile' }).catch((err) => {
+            console.log('setTouchEmulationEnabled error', err)
+          })
         }
 
         const pages = await this.browser?.pages()

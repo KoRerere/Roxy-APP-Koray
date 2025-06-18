@@ -99,6 +99,7 @@ export async function startRoxynet() {
   // 监听子进程关闭事件
   roxynetProcess.on('close', (code) => {
     console.log(`roxynetProcess exited with code ${code}`)
+    roxynetProcess = null
   })
 
   // 监听子进程错误事件

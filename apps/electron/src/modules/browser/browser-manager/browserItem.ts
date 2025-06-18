@@ -17,8 +17,6 @@ import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
 import { removeSyncWindowByPid } from '/@/modules/sync-control/bin'
 import { openAPICommonHeaders } from '/@/constants/common'
 import { canUseSyncControl } from '/@/modules/store'
-import { setTimeout } from 'node:timers/promises'
-import type { CDPSession } from './chrome-wrapper/'
 
 // 创建一个事件发射器
 const emitter = new EventEmitter()

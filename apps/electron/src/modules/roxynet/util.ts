@@ -1,5 +1,5 @@
 import axios from 'axios'
-import CryptoJS from 'crypto-js'
+import { createCipheriv, createDecipheriv } from 'node:crypto'
 import { browserManager } from '/@/modules/browser'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
@@ -8,27 +8,17 @@ import { getSystemProxy } from '/@/utils'
 const key = '098otIp!'
 
 export function encryptByDESModeCBC(message: string) {
-  const keyHex = CryptoJS.enc.Utf8.parse(key)
-  const ivHex = CryptoJS.enc.Utf8.parse(key)
-  const encrypted = CryptoJS.DES.encrypt(message, keyHex, {
-    iv: ivHex,
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  })
-  return encrypted.ciphertext.toString(CryptoJS.enc.Base64)
+  const cipher = createCipheriv('des-cbc', Buffer.from(key), Buffer.from(key))
+  let encrypted = cipher.update(message, 'utf8', 'base64')
+  encrypted += cipher.final('base64')
+  return encrypted
 }
 
-export function decryptByDESModeCBC(ciphertext) {
-  const keyHex = CryptoJS.enc.Utf8.parse(key)
-  const ivHex = CryptoJS.enc.Utf8.parse(key)
-  const decrypted = CryptoJS.DES.decrypt({
-    ciphertext: CryptoJS.enc.Base64.parse(ciphertext),
-  }, keyHex, {
-    iv: ivHex,
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  })
-  return decrypted.toString(CryptoJS.enc.Utf8)
+export function decryptByDESModeCBC(ciphertext: string) {
+  const decipher = createDecipheriv('des-cbc', Buffer.from(key), Buffer.from(key))
+  let decrypted = decipher.update(ciphertext, 'base64', 'utf8')
+  decrypted += decipher.final('utf8')
+  return decrypted
 }
 
 export interface SetRoxynetProxyPayload {

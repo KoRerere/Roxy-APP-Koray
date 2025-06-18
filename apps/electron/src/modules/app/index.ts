@@ -9,7 +9,7 @@ import { ipcMain } from '/@/modules/ipc'
 import { isMac, isPackaged, isWindows } from '/@/constants/common'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
-import { pathToFileURL } from 'node:url'
+import { isWebReady } from '/@/utils'
 
 // 获取 GPU 信息
 // app.getGPUFeatureStatus()

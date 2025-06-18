@@ -5,7 +5,7 @@ import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
 import { appConfig } from '/@/constants'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
-import { getSystemProxyAddress, isPackaged, safeParseJSON } from '/@/utils'
+import { getSystemProxyAddress, safeParseJSON } from '/@/utils'
 import { readFileSync } from 'node:fs'
 
 let language: any[]
