@@ -35,6 +35,8 @@ import {
   UserLeaveWorkspaceListParams,
   UserMdfProjectInfoCreateData,
   UserMdfProjectInfoCreatePayload,
+  UserMdfProjectSortCreateData,
+  UserMdfProjectSortCreatePayload,
   UserMdfWorkspaceInfoCreateData,
   UserMdfWorkspaceInfoCreatePayload,
   UserMdfWorkspaceTipInfoListData,
@@ -362,6 +364,27 @@ export class LimitApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<CheckAddUserByProjectInfoCreateData, any>({
       path: `/check_add_user_by_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserMdfProjectSortCreate
+   * @summary 修改项目排序
+   * @request POST:/user_mdf_project_sort
+   * @response `200` `UserMdfProjectSortCreateData`
+   */
+  userMdfProjectSortCreate = (
+    data: UserMdfProjectSortCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfProjectSortCreateData, any>({
+      path: `/user_mdf_project_sort`,
       method: "POST",
       body: data,
       type: ContentType.Json,

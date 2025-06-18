@@ -5663,6 +5663,18 @@ export interface CheckAddUserByProjectInfoCreateData {
   msg: string;
 }
 
+export interface UserMdfProjectSortCreatePayload {
+  /** 项目ID */
+  projectId: number;
+  /** 项目排序 */
+  projectSortNum: number;
+}
+
+export interface UserMdfProjectSortCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetDurationDiscountsListData {
   code: number;
   data: {

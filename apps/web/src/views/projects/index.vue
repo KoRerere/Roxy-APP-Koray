@@ -158,17 +158,21 @@ function operationHandler(operate: any, data?: any) {
 }
 
 async function onRowReorder (event: any) {
-  const { dragIndex, dropIndex } = event
+  const { dropIndex, value } = event
   if (dropIndex >= pinCount.value) {
     return
   }
 
-  // const { code, msg } = await API.limit.userMdfProjectInfoCreate({ id: data.project_id!, pinStatus })
-  // if (code === 0) {
-  //   tableRef.value?.refresh()
-  // } else {
-  //   onlyErrorToast(code, msg)
-  // }
+  const { code, msg } = await API.limit.userMdfProjectSortCreate({
+    projectId: value[dropIndex].project_id,
+    projectSortNum: dropIndex + 1,
+  })
+
+  onlyErrorToast(code, msg)
+  if(code !== 0) return
+
+  tableRef.value?.updateDataList(value)
+  getProjects()
 }
 
 async function pinProject(data: Project) {
