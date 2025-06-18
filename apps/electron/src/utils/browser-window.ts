@@ -96,10 +96,21 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
 
     }
 
+    if (request.url.includes('action/upload_file') && !request.headers.has('origin')) {
+      request.headers.set('origin', request.referrer)
+    }
+
     // 其它请求原样处理
     return net.fetch(request, {
       bypassCustomProtocolHandlers: true,
       duplex: 'half',
-    });
+    }).catch(err => {
+      console.error('net.fetch error', {
+        url: request.url,
+        error: err,
+        headers: Object.fromEntries(request.headers),
+      })
+      return Promise.reject(err)
+    })
   });
 }
