@@ -58,8 +58,8 @@ function handleRequest(protocol: Protocol = session.defaultSession.protocol) {
   }
 
   let deviceId = ''
-
-  const localUrl = `https://roxybrowser.app/api`// 拦截所有 URL
+  // 原文为 https://roxybrowser.app/api
+  const localUrl = atob('aHR0cHM6Ly9yb3h5YnJvd3Nlci5hcHAvYXBp')// 拦截所有 URL
   const headers = getCommonRequestHeaders()
 
   protocol.handle(customProtocol, async (request) => {
