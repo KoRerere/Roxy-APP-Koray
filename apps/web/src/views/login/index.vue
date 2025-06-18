@@ -8,7 +8,6 @@ import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback, type OauthLoginType } from '/@/utils'
 import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
-import BgCanvas from './components/bg-canvas.vue'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -16,6 +15,7 @@ import { useThemeStore } from '/@/stores/theme'
 import AppUpdater from './components/app-updater.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { motion, AnimatePresence } from 'motion-v'
+import RightIntro from './components/right-intro/index.vue'
 
 const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
@@ -219,47 +219,56 @@ provideLoginContext({
 </script>
 
 <template>
-  <div class="login-container" :class="{ 'not-support-gpu': !isSupportGPU }">
-    <div class="flex justify-between p-5">
-      <div class="logo">
-        <SvgIcon name="base/logo" size="36" />
-        <div class="logo-text">
-          RoxyBrowser
+  <div class="flex w-full h-100vh">
+    <div class="w-45% h-full relative">
+      <div class="flex justify-between p-5">
+        <div class="logo">
+          <SvgIcon name="base/logo" size="36" />
+          <div class="logo-text">
+            RoxyBrowser
+          </div>
         </div>
+        <LanguageSelect />
       </div>
-      <LanguageSelect />
+
+      <div class="sign-card">
+        <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
+          @register="val => signFormSwitchRegister = val" />
+        <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
+        <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
+      </div>
+
+      <div class="footer">
+        <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
+          <template #terms>
+            <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+          </template>
+          <template #policy>
+            <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
+          </template>
+        </i18n-t>
+      </div>
+
+      <AnimatePresence>
+        <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
+          :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+          :transition="{ duration: 0.2 }" class="app-updater-motion">
+          <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
+        </motion.div>
+      </AnimatePresence>
     </div>
-    <div class="sign-card">
-      <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
-        @register="val => signFormSwitchRegister = val" />
-      <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
-      <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
+
+    <div class="w-55% h-full relative right-panel">
+      <RightIntro />
     </div>
-    <div class="footer">
-      <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
-        <template #terms>
-          <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
-        </template>
-        <template #policy>
-          <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
-        </template>
-      </i18n-t>
-    </div>
-    <BgCanvas v-if="isSupportGPU" :key="themeStore.realTheme" />
-    <AnimatePresence>
-      <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
-        :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-        :transition="{ duration: 0.2 }" class="app-updater-motion">
-        <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
-      </motion.div>
-    </AnimatePresence>
   </div>
+
 </template>
 
 <style lang="scss" scoped>
 .app-updater-motion {
-  position: fixed;
-  top: 24px;
+  position: absolute;
+  top: 64px;
   left: 50%;
   width: 360px;
   padding: 12px;
@@ -269,17 +278,6 @@ provideLoginContext({
   background: var(--colors-background-bg-action, #FFF);
   box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
   cursor: pointer;
-}
-
-.login-container {
-  width: 100vw;
-  height: 100vh;
-
-  &.not-support-gpu {
-    background-image: url('/login_bg_2x.jpg');
-    background-position: center;
-    background-size: 100% 100%;
-  }
 }
 
 .logo {
@@ -301,7 +299,7 @@ provideLoginContext({
 }
 
 .footer {
-  position: fixed;
+  position: absolute;
   left: 50%;
   transform: translateX(-50%);
   bottom: 20px;
@@ -331,20 +329,18 @@ provideLoginContext({
 }
 
 .sign-card {
-  position: fixed;
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
-  padding: var(--spacing-4xl, 24px) 32px;
+  padding: var(--spacing-4xl, 24px);
   display: flex;
-  width: var(--width-xs, 384px);
+  width: var(--width-sm, 480px);
   flex-direction: column;
+  gap: 16px;
   align-items: center;
-  gap: var(--spacing-2xl, 16px);
-  border-radius: 8px;
-  border: 0.5px solid var(--colors-border-border-base, #48555B);
-  background: var(--colors-background-bg-page, #05101A);
+  // border-radius: 8px;
+  // background: var(--colors-background-bg-overlay);
 }
 
 .sign-card-header {
@@ -360,6 +356,16 @@ provideLoginContext({
     flex-direction: column;
     align-items: center;
     gap: 10px;
+  }
+}
+
+.right-panel {
+  background: linear-gradient(180deg, #12A3FC 0%, #CDEBFE 100%);
+}
+
+[data-theme="dark"] {
+  .right-panel {
+    background: linear-gradient(180deg, #0A5D9D 0%, #5C8F9E 100%);
   }
 }
 </style>

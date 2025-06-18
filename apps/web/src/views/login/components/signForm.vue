@@ -99,15 +99,13 @@ defineExpose({
     </div>
     <RxButton class="w-full" outlined severity="secondary" size="md" icon="websites/rx_site_google"
       :label="$t('通过 {value} 账号登录', { value: 'Google' })" @click="oauth2LoginMap.google"></RxButton>
-    <div class="w-full flex gap-2">
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
-      <RxButton v-tooltip.top="$t('通过 {value} 账号登录', { value: 'VK' })" class="flex-1 !aspect-auto" outlined
-        severity="secondary" size="md" icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
-      </RxButton>
-    </div>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'Facebook' })" class="w-full" outlined severity="secondary"
+      size="md" icon="websites/rx_site_facebook" @click="oauth2LoginMap.facebook"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'GitHub' })" class="w-full" outlined severity="secondary" size="md"
+      icon="websites/rx_site_github" @click="oauth2LoginMap.github"></RxButton>
+    <RxButton :label="$t('通过 {value} 账号登录', { value: 'VK' })" class="w-full" outlined severity="secondary" size="md"
+      icon="websites/rx_site_vk" @click="oauth2LoginMap.vk">
+    </RxButton>
     <div v-if="isRegister" class="signup-tips">
       {{ $t('已有账号？') }}
       <a class="cursor-pointer" @click="switchFormMode(false)">
@@ -170,7 +168,7 @@ defineExpose({
   flex: 1;
   content: '';
   height: 1px;
-  background: var(--colors-border-border-base, #c7cdd1);
+  background: var(--colors-border-border-container);
 }
 
 .login-ways {
