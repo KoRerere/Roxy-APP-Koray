@@ -109,9 +109,9 @@ function replaceData(data: any) {
     <RxAlert v-if="isBatch && type === AccountBindType.Random && sumAccountCount > createCount" class="w-full" type="warn"
       :title="$t('{count} 个窗口将会绑定账号。您创建的窗口数为：{max}。{message}', { count: sumAccountCount, max: createCount, message: $t('当前选择绑定的账号数量已超过创建窗口数。') })" :closable="false"></RxAlert>
 
-    <div v-if="isBatch && windowPlatformList?.length">
-      <div class="subtitle">{{ $t('绑定方式') }}</div>
-      <div class="mt-2 flex items-center gap-2">
+    <div v-if="isBatch && windowPlatformList?.length" class="pb-2">
+      <div class="mb-2 subtitle">{{ $t('绑定方式') }}</div>
+      <div class="flex items-center gap-2">
         <TsFormSelect class="flex-1" v-model="type" v-bind="input.props" />
         <div class="flex-1">
           <SvgIcon v-tooltip="{ value: $t('随机分配: 账号随机分配给窗口，一个窗口应用一个账号\n多窗口应用: 将账号应用到所有窗口'), showDelay: 300, pt: { root: '!max-w-65' } }" name="base/rx_ic_info" color="var(--colors-icon-icon-note)">
@@ -120,9 +120,9 @@ function replaceData(data: any) {
       </div>
     </div>
 
-    <div v-if="windowPlatformList?.length" class="pt-2">
-      <div v-if="isBatch" class="subtitle">{{ $t('账号列表 ({count})', { count: sumAccountCount }) }}</div>
-      <div class="mt-2 grid gap-2 list">
+    <div v-if="windowPlatformList?.length">
+      <div v-if="isBatch" class="mb-2 subtitle">{{ $t('账号列表 ({count})', { count: sumAccountCount }) }}</div>
+      <div class="grid gap-2 list">
         <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
           <div class="mt-0.5">
             <PlatformIcon v-if="item.platformIcon" class="icon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" />

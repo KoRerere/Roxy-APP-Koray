@@ -27,6 +27,7 @@ import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInpu
 import { emitter } from '/@/utils/eventBus'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { withModifiers } from 'vue'
+import { AccountBindType } from '/@/enums/account'
 
 const confirm = useConfirm()
 const router = useRouter()
@@ -342,16 +343,22 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 async function batchCreateProfile(params: any) {
+  const { createCount, proxyInfoList, platformBindType, platformUrlIds, windowPlatformList } = params
   // 差异数量，代理总数量在 input 内的 formatValue 函数中有处理
-  const diffCount = params.createCount - params.proxyInfoList.length
-  if (diffCount < 0) {
+  const proxyDiffCount = createCount - proxyInfoList.length
+  if (proxyDiffCount < 0) {
     onlyErrorToast(-1, $t('代理数量不能大于窗口'))
+    return
+  }
+  const accountDiffCount = createCount - windowPlatformList.length - platformUrlIds.length
+  if (platformBindType === AccountBindType.Random && accountDiffCount < 0) {
+    onlyErrorToast(-1, $t('账号数量不能大于窗口'))
     return
   }
 
   loading.value = true
   const fingerDetail = await ceateRandomFinger(previewInputs.value, { count: params.createCount, preview: false })
-  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: diffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
+  params.proxyInfoList = params.proxyInfoList.concat(Array.from({ length: proxyDiffCount }, () => ({ id: 0, proxyCategory: 'noproxy' })))// 代理数量小于创建数量补充为直连
   params.fingerDetail = fingerDetail
   const { code, msg } = await API.window.userBatchWindowInfoV2Create(params)
   loading.value = false
