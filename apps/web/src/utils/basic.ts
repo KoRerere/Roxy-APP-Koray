@@ -408,8 +408,8 @@ export function transformSortOrder(order: number | string | undefined): SortOrde
 export function getSortIcon(sortOrder: SortOrderNumber) {
   const map = {
     '0': 'base/rx_ic_chevron_2',
-    '-1': 'base/rx_ic_chevron_2_up',
-    '1': 'base/rx_ic_chevron_2_down',
+    '-1': 'base/rx_ic_chevron_2_down',
+    '1': 'base/rx_ic_chevron_2_up',
   }
   return map[sortOrder.toString() as keyof typeof map] as SvgNames
 }

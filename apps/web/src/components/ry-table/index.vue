@@ -200,21 +200,26 @@ async function _getCondition() {
     props.tableFilters(),
   ])
   _filters.value = filterList
-  _sorts.sortField = data.sortField
-  _sorts.sortOrder = data.sortOrder
+  _sorts.sortField = data?.sortField ?? ''
+  _sorts.sortOrder = data?.sortOrder ?? -1
   _sorts.onChange = onChange
 }
 
 function _getParams() {
-  return {
+  const params = {
     page_index: Math.ceil(paginatorConfig.first / paginatorConfig.rows) + 1,
     page_size: paginatorConfig.rows,
     ...getFormData(_filters.value as any),
-    orderName: _sorts.sortField,
-    orderType: transformSortOrder(_sorts.sortOrder),
     ...props.tableParams,
     ..._outerParams.value,
   }
+
+  if (_sorts.sortField) {
+    params.orderName = _sorts.sortField
+    params.orderType = transformSortOrder(_sorts.sortOrder)
+  }
+
+  return params
 }
 
 async function _request() {

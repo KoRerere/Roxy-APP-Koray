@@ -3,7 +3,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import { $t } from '/@/locales'
 import { getSortIcon, type SortOrderNumber } from '/@/utils'
-const sortColumns: any[] = defineModel('columns')
+const sortColumns = defineModel<any[]>('columns')
 
 const sortField = defineModel('sortField')
 const sortOrder = defineModel('sortOrder')
@@ -13,6 +13,13 @@ const popRef = ref()
 function toggle(event: Event) {
   popRef.value.getRef().toggle(event)
 }
+
+const isBadge = computed(() => {
+  if (sortField.value && sortColumns.value) {
+    return !sortColumns.value.find(item => item.key === sortField.value)._visible
+  }
+  return false
+})
 </script>
 
 <template>
@@ -20,6 +27,9 @@ function toggle(event: Event) {
   <div class="position-relative flex">
     <RxButton severity="secondary" size="xxs" outlined icon="base/rx_ic_slider_v" :label="$t('自定义排版')"
       @click="toggle" />
+    <div v-if="isBadge"
+      class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 size-8px rounded-full bg-[var(--colors-background-bg-brand)]">
+    </div>
     <!-- <div class="changed" /> -->
   </div>
   <RyPopover ref="popRef">
@@ -27,7 +37,8 @@ function toggle(event: Event) {
       <VueDraggable v-model="sortColumns" :animation="150" handle=".handle">
         <div v-for="item in sortColumns" :key="item.key" class="flex items-center" :class="display.column">
           <RxSvgIcon name="base/rx_ic_dots" class="cursor-grab handle" />
-          <span class="flex-auto" :class="display.label">
+          <span
+            :class="['flex-auto', sortField === item.key ? 'color-[var(--colors-text-text-brand)]' : '', display.label]">
             {{ item.title }}
             <RxSvgIcon v-if="sortField === item.key" :name="getSortIcon(sortOrder as SortOrderNumber)" size="12px"
               color="var(--colors-icon-icon-note)" />
