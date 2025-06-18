@@ -10,7 +10,7 @@ const props = defineProps({
     default: undefined,
   },
 })
-const emit = defineEmits(['confirm'])
+const emit = defineEmits(['confirm', 'close'])
 
 const columns = getRawColumns({
   filters: ['actions'],
@@ -24,6 +24,7 @@ async function tableRequest(params: any) {
 
 function handleSave() {
   emit('confirm', selection.value)
+  emit('close')
 }
 </script>
 

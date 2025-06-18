@@ -257,7 +257,7 @@ async function inviteUserInProject(project: Project) {
         <template #column-before>
           <Column headerStyle="width:44px" rowReorder>
             <template #rowreordericon>
-              <SvgIcon class="hidden drag-mark p-datatable-reorderable-row-handle" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots"></SvgIcon>
+              <SvgIcon class="hidden cursor-grab drag-mark" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots_drag"></SvgIcon>
             </template>
           </Column>
         </template>

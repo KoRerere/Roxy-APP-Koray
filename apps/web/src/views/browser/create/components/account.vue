@@ -57,7 +57,6 @@ function toggleDrawer(type: 'create' | 'list', item?: any) {
         data,
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: (formData: Record<string, any>) => {
-          drawerInstance.hideDrawer()
 
           if (formData._tempId) {
             replaceData(formData)
