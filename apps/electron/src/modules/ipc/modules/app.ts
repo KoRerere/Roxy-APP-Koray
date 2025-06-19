@@ -5,7 +5,7 @@ import { chromeCoreManager } from "/@/modules/browser";
 import type { IPCMainInstance } from "/@/modules/ipc/types";
 import { startMoveWindow, stopMoveWindow } from "/@/modules/ipc/utils";
 import { openAPIServer } from "/@/modules/openapi";
-import { startRoxynet } from "/@/modules/roxynet";
+import { setSystemProxy, } from "/@/modules/roxynet";
 import { fetchUserConfig, setUserConfig, store } from "/@/modules/store";
 import { appUpdater } from "/@/modules/updater";
 import { webUpdater } from "/@/modules/updater/webUpdater";
@@ -42,14 +42,14 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     if (store.systemProxySwitch !== originSystemProxySwitch) {
       if (store.systemProxySwitch) {
         // 重新设置系统代理
-        startRoxynet();
+        setSystemProxy()
       } else {
         // 这里不需要关闭 roxynet，因为关闭 roxynet 会导致已打开的窗口的系统代理失效
         // stopRoxynet()
       }
     } else if (store.v2raySwitch !== originV2raySwitch) {
       // 重新设置系统代理
-      startRoxynet();
+      setSystemProxy();
     }
   });
 
