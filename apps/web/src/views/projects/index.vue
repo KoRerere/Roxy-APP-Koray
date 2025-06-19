@@ -163,9 +163,15 @@ async function onRowReorder (event: any) {
     return
   }
 
+  const { projectIds,projectSortNumList } = value.reduce((acc:any, item:any,index:number)=>{
+    acc.projectIds.push(item.project_id)
+    acc.projectSortNumList.push(index + 1)
+    return acc
+  },{ projectIds:[], projectSortNumList:[] } as Record<string,any[]>)
+
   const { code, msg } = await API.limit.userMdfProjectSortCreate({
-    projectId: value[dropIndex].project_id,
-    projectSortNum: dropIndex + 1,
+    projectIds,
+    projectSortNumList
   })
 
   onlyErrorToast(code, msg)

@@ -153,7 +153,7 @@ function getPreview(list: any[]) {
             </AnimatePresence>
           </div>
         </div>
-        <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-2 px-3 gap-1 select-none">
+        <div v-for="(item, key) in previewData" :key="key" class="flex items-start self-stretch py-1 px-3 gap-1 select-none">
           <div class="label">
             {{ item.label }}
           </div>
@@ -170,12 +170,13 @@ function getPreview(list: any[]) {
 
 <style lang="scss" scoped>
 .preview {
-  margin: 12px 64px 12px 0;
+  margin: 16px 0;
+  margin-right: 4px;
   padding: 16px;
   gap: 12px;
   min-width: 375px;
   width: 375px;
-  height: calc(100% - 24px);
+  height: calc(100% - 32px);
   border-radius: 12px;
   border: 1px solid var(--colors-border-border-subtle);
   background: var(--colors-background-bg-overlay);
@@ -183,7 +184,7 @@ function getPreview(list: any[]) {
     0px 3px 8px 0px rgba(0, 0, 0, 0.07),
     0px 2px 5px 0px rgba(0, 0, 0, 0.07),
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
-  transition: all 0.3s ease-in;
+  // transition: all 0.3s ease-in;
 
   &.hide {
     min-width: 48px;

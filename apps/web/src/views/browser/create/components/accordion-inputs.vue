@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import inputLabel from '/@/components/ry-form/input-label.vue'
+import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import Position from '/@/views/browser/create/components/position.vue'
 import AccountItem from './account.vue'
@@ -40,15 +40,15 @@ function onCopy(dirId: string) {
     <div v-if="accordions" class="flex-1 overflow-auto content">
       <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
         <template #profileId="{ input }">
-          <div class="flex items-center">
-            <inputLabel v-bind="input" />
+          <div class="flex flex-col items-center px-4">
+            <InputLabel v-bind="input" />
             <span class="dir-id">{{ input.value }}</span>
             <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
           </div>
         </template>
         <template #system="{ input }">
-          <div class="px-4">
-            <inputLabel v-bind="input" />
+          <div class="flex flex-col px-4">
+            <InputLabel v-bind="input" />
             <div class="flex flex-col gap-2">
               <div class="flex gap-2">
                 <InputGroup>
@@ -62,20 +62,20 @@ function onCopy(dirId: string) {
           </div>
         </template>
         <template #proxy="{ input }">
-          <div class="-mt-4 px-4 py-6 w-full dashed-border">
+          <div class="-mt-5 px-4 py-6 w-full dashed-border">
             <ProxyItem v-model="input.value" v-bind="input" />
           </div>
         </template>
         <template #accounts="{ input }">
-          <div class="-mt-4 px-4 py-6 w-full dashed-border">
+          <div class="-mt-5 px-4 py-6 w-full dashed-border">
             <AccountItem v-model="input.value" v-model:type="input.platformBindType" v-bind="input" />
           </div>
         </template>
         <template #urls="{ input }">
-          <UrlsItem class="-mt-4" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <UrlsItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
         <template #cookies="{ input }">
-          <CookiesItem class="-mt-4" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
+          <CookiesItem class="-mt-5" v-model="input.value" v-model:invalid="input.invalid" v-bind="input" />
         </template>
       </RyForm>
       <RxAccordion :value="accordions.value" multiple>
@@ -90,7 +90,7 @@ function onCopy(dirId: string) {
             <RyForm :inputs="settings.others[index]" label-position="left">
               <template #windowOpenSize="{ input }">
                 <div class="flex">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <div class="flex gap-[8px]">
                     <InputGroup v-for="(item, index) in input.items" :key="item.name">
                       <InputGroupAddon>{{ index === 0 ? $t('宽') : $t('高') }}</InputGroupAddon>
@@ -101,13 +101,13 @@ function onCopy(dirId: string) {
               </template>
               <template #windowRatioPosition="{ input }">
                 <div class="flex py-4">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <Position v-model="input.value" />
                 </div>
               </template>
               <template #forbiddenPictureSize="{ input }">
                 <div class="flex">
-                  <inputLabel v-bind="input" />
+                  <InputLabel v-bind="input" />
                   <div>
                     <div class="tip-text">
                       {{ $t('禁止加载超过以下大小的图片（如果设置为0则不加载任何图片，为避免无法显示验证码，建议填写10KB）') }}
@@ -130,6 +130,10 @@ function onCopy(dirId: string) {
 </template>
 
 <style lang="scss" scoped>
+:deep(.p-accordionheader) {
+  padding: 24px 16px;
+}
+
 :deep(.p-inputgroup) {
 
   .p-select+.p-select,
@@ -143,7 +147,6 @@ function onCopy(dirId: string) {
 }
 
 .content {
-  padding: 0 36px 40px 64px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -158,6 +161,12 @@ function onCopy(dirId: string) {
   :deep(.rx-input) {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  :deep(.rx-label) {
+    margin-bottom: 8px;
+    font-weight: 400;
+    line-height: 16px !important;
   }
 }
 

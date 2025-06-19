@@ -56,7 +56,7 @@ const totalAmount = computed(() => currency(monthAmount.value).multiply(discount
 const disabled = computed(() => loading.value || !selectedDuration.value || (selectedPayway.value === PayWay.Balance && totalAmount.value > userPayInfo.value?.balance))
 
 const detail = computed(() => {
-  const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
+  const { purchaseWindowCount, freeWindowCount, subscriptionLogDays } = userPayInfo.value!
   const { discount, walletDiscount, durationDiscount } = allDiscount.value
 
   const originalAmount = currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value
@@ -79,6 +79,10 @@ const detail = computed(() => {
         {
           label: $t('每日可打开数'),
           value: profileCount.add(freeCount.value).multiply(100).format()
+        },
+        {
+          label: $t('日志保留时长'),
+          value: $t('{day} 天', { day: subscriptionLogDays })
         },
         {
           label: $t('续费时长'),
@@ -203,8 +207,7 @@ function close(isCancel: boolean) {
           <Duration v-model="selectedDuration" :price="monthAmount" @change="onChange"></Duration>
         </ItemBlock>
         <ItemBlock :title="$t('选择支付方式')">
-          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="paywayList"
-            :disabledMethods="disabledMethods"></RxPaymentMethods>
+          <RxPaymentMethods v-model="selectedPayway" :loading="loading" :methods="paywayList" :disabledMethods="disabledMethods"></RxPaymentMethods>
         </ItemBlock>
         <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="totalAmount"></Blance>
       </div>
@@ -230,8 +233,7 @@ function close(isCancel: boolean) {
         <template #after>
           <div class="flex-1 flex flex-col justify-end mt-4">
             <RxButton :disabled="disabled" size="lg" :label="$t('确认')" @click="confirm"></RxButton>
-            <i18n-t tag="div" class="mt-3 select-none terms"
-              :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
+            <i18n-t tag="div" class="mt-3 select-none terms" :keypath="$t('继续操作即表示您同意我们的 {terms}', { terms: '{terms}' })" scope="global">
               <template #terms>
                 <a class="terms-link" :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
               </template>
