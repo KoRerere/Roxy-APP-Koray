@@ -4,6 +4,7 @@ import { browserManager } from '/@/modules/browser'
 import { getRoxynetProcess } from '/@/modules/roxynet'
 import { store } from '/@/modules/store'
 import { getSystemProxy } from '/@/utils'
+import { Buffer } from 'node:buffer'
 
 const key = '098otIp!'
 

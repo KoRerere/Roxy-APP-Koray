@@ -57,6 +57,8 @@ export interface MainMessage {
   'browser:opened-browser-list-change': (winInfoList: WindowItemType[]) => void
   /** 浏览器关闭时 */
   'browser:on-close': (dirIds: string[]) => void
+  /** 浏览器关闭时，同步数据中 */
+  'browser:on-close-syncing-data': (dirIds: string[]) => void
   /** 达到窗口打开次数限制 */
   'browser:window-open-limit': (result: { code: number, msg: string }) => void
   /** google 授权登录 */

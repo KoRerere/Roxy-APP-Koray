@@ -176,6 +176,8 @@ export class BrowserManager {
     const dirIds = [...this.uploadDataQueue.keys()]
     const uploadDataQueue = [...this.uploadDataQueue.values()]
 
+    ipcMain.send('browser:on-close-syncing-data', dirIds)
+
     const results = await Promise.allSettled(uploadDataQueue)
     console.debug('batchClose results', results)
     const uploadParamsObj = Object.groupBy(results, item => {
