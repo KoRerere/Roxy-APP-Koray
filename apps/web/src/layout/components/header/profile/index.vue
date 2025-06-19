@@ -165,10 +165,13 @@ function showLogoutConfirm() {
   const { promise, resolve, } = Promise.withResolvers<boolean>()
   showModal({
     header: $t('提示'),
-    class: '!w-[480px]',
-    okText: $t('确定'),
+    class: '!w-[380px]',
+    okText: $t('继续'),
+    okProps: {
+      severity: 'danger',
+    },
     slots: {
-      default: () => <>{$t('您确定要退出登录吗？退出将关闭所有浏览器!')}</>
+      default: () => <>{$t('点击继续退出将关闭所有窗口。')}</>
     },
     async handleOk() {
       await electronAPI.send('browser:closeAll')
