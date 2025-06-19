@@ -25,6 +25,7 @@ const accordions = ref({
 const inputsGroup = ref()
 const original = ref()
 const metaData = ref<WindowMetaData>()
+const collapsed = ref(false)
 const loading = ref(false)
 const windowInfo = ref({})
 
@@ -82,27 +83,24 @@ function oldFieldsFormat() {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('编辑窗口')" />
-    <div class="flex-1 flex overflow-hidden">
-      <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" />
-      <previewCard :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
-    </div>
-    <div class="flex items-center gap-2 footer">
-      <MateGroup v-model="metaData" class="flex-1" />
-      <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
+    <div class="flex flex-1 justify-center px-32 overflow-hidden">
+      <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
+        <div class="flex-1 flex gap-12 overflow-hidden">
+          <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup" />
+          <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :on-shuffle="onShuffle" />
+        </div>
+        <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
+          <div class="footer-separator"></div>
+          <MateGroup v-model="metaData" class="flex-1" />
+          <RxButton severity="primary" :label="$t('保存')" @click="createProfile" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.profile-basic {
-  padding: 16px 48px 16px 64px;
-}
-
 .footer {
-  padding: 16px 64px;
-  max-height: 64px;
-  border-top: 1px solid var(--colors-border-border-subtle);
-
   :deep(.p-button) {
     max-width: 150px;
   }
@@ -111,6 +109,16 @@ function oldFieldsFormat() {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &-separator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300%;
+    height: 1px;
+    background-color: var(--p-colors-border-divider);
   }
 }
 </style>

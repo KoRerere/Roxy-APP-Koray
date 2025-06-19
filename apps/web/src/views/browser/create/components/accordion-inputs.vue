@@ -37,13 +37,16 @@ function onCopy(dirId: string) {
 
 <template>
   <div class="flex-ovh-1 flex-col">
-    <div v-if="accordions" class="flex-1 overflow-auto content">
+    <div v-if="accordions" class="flex-1 overflow-auto pb-4 content">
+      <slot name="before"></slot>
       <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
         <template #profileId="{ input }">
-          <div class="flex flex-col items-center px-4">
+          <div class="flex items-center justify-between px-4">
             <InputLabel v-bind="input" />
-            <span class="dir-id">{{ input.value }}</span>
-            <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+            <div>
+              <span class="dir-id">{{ input.value }}</span>
+              <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+            </div>
           </div>
         </template>
         <template #system="{ input }">

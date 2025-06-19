@@ -66,6 +66,7 @@ const metaData = ref<WindowMetaData>({
   windowRemark: '',
 })
 const loading = ref(false)
+const collapsed = ref(false)
 
 const accordions = ref({
   value: [],
@@ -114,6 +115,7 @@ const profileTemplate = reactive({
 
 watch(() => tabsValue.value, (value: any) => {
   setInputFieldByInputKey(inputsGroup.value[0], 'proxyInfoList', 'value', [])
+  setInputFieldByInputKey(inputsGroup.value[0], 'windowPlatformList', 'value', [])
   isBatch.value = tabsValue.value === 'multi'
   onUpdateFinger()
 })
@@ -399,33 +401,37 @@ async function importProfile(params: any) {
 <template>
   <div class="flex flex-col h-full">
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
-      <div class="mx-auto flex flex-1 gap-12 overflow-hidden">
-        <div class="flex-1 flex flex-col gap-5 max-w-[640px] min-w-[610px]">
-          <div class="px-4 pt-4 profile-basic">
-            <div v-show="tabsValue === 'multi'" class="multiple">
+    <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
+    <div class="flex flex-1 justify-center px-32 overflow-hidden">
+      <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
+        <div class="flex-1 flex gap-12 overflow-hidden">
+          <div class="flex-1 flex flex-col">
+            <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">
                 <div class="subtitle">{{ $t('窗口数量') }}</div>
                 <RxInputNumber v-model="createCount" :min="1" :step="1" :max="maxWindowCount" class="!w-[120px]"></RxInputNumber>
               </div>
-              <div class="select-none multiple-info">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
+              <div class="select-none multiple-tip">{{ $t('最多一次可批量创建 {maxWindowCount} 个', { maxWindowCount }) }}</div>
             </div>
-            <ImportWindow v-show="tabsValue === 'import'" v-model:error="fileAnalyzeError" @import-success="importSuccess" />
-            <div v-show="tabsValue !== 'import'" class="flex items-center justify-between">
-              <div class="subtitle">{{ $t('窗口信息') }}</div>
-              <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)"></RxButton>
-            </div>
+            <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+              <template #before>
+                <ImportWindow v-if="tabsValue === 'import'" class="pt-4" v-model:error="fileAnalyzeError" @import-success="importSuccess" />
+                <div v-if="tabsValue !== 'import'" class="flex items-center justify-between px-4 py-4">
+                  <div class="subtitle">{{ $t('窗口信息') }}</div>
+                  <RxButton text severity="secondary" icon="base/rx_ic_template" :label="profileTemplate.label" @click.stop="showTemplates($event)"></RxButton>
+                </div>
+              </template>
+            </AccordionInputs>
           </div>
-          <AccordionInputs class="flex-1" :accordions="accordions" :inputs-group="inputsGroup" />
+          <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
         </div>
-        <PreviewCard :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :show-overview="tabsValue !== 'import'" :on-shuffle="onShuffle" />
+        <div class="relative flex items-center gap-2 py-4 min-h-16 footer">
+          <div class="footer-separator"></div>
+          <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
+          <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+          <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
+        </div>
       </div>
-    </div>
-    <div class="flex items-center gap-2 footer">
-      <MateGroup v-model="metaData" class="flex-1" :showRemark="tabsValue !== 'import'" />
-      <SplitButton v-if="tabsValue !== 'import'" severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-      <RxButton :label="$t('创建窗口')" @click.stop="createProfile(false)" />
     </div>
   </div>
 </template>
@@ -456,12 +462,6 @@ async function importProfile(params: any) {
   }
 }
 
-.profile-basic {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .subtitle {
   color: var(--colors-text-text-primary);
   font-size: 16px;
@@ -469,10 +469,9 @@ async function importProfile(params: any) {
 }
 
 .multiple {
-  padding: 12px 0;
-  border-bottom: 1px dashed var(--colors-border-divider-dashed, #AFB7BB);
+  border-bottom: 1px dashed var(--colors-border-divider-dashed);
 
-  &-info {
+  &-tip {
     margin-top: 4px;
     color: var(--colors-text-text-inactive);
     text-align: right;
@@ -481,10 +480,6 @@ async function importProfile(params: any) {
 }
 
 .footer {
-  padding: 16px 64px;
-  max-height: 64px;
-  border-top: 1px solid var(--colors-border-border-subtle);
-
   :deep(.p-button) {
     max-width: 150px;
   }
@@ -493,6 +488,16 @@ async function importProfile(params: any) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &-separator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300%;
+    height: 1px;
+    background-color: var(--p-colors-border-divider);
   }
 }
 </style>

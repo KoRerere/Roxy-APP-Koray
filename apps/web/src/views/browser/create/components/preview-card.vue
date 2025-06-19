@@ -19,7 +19,7 @@ const bannerMap = {
   windows: '/images/systeam/windows.webp',
 }
 
-const collapsed = ref(false)
+const collapsed = defineModel<Boolean>('collapsed', { default: false })
 const previewData = computed(() => getPreview(inputsGroup.flat()))
 
 const systeam = computed(() => {
