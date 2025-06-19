@@ -157,12 +157,12 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       type: 'text',
       label: $t('窗口名称'),
       name: 'windowName',
-      value: data.windowName ?? defaultWindowName,
-      placeholder: $t('请输入窗口名称'),
+      class: '!w-1/2',
+      value: data.windowName ?? '',
+      placeholder: $t('未命名窗口'),
       formatValue: (input: any, _inputs: any, formData: any) => {
-        const windowName = (!data.windowName && input.value) === defaultWindowName ? '' : input.value
-        Object.assign(formData, { windowNamePrefix: windowName })// 窗口名称前缀，批量创建时会用到
-        return windowName
+        Object.assign(formData, { windowNamePrefix: input.value })// 窗口名称前缀，批量创建时会用到
+        return input.value
       }
     },
     {
@@ -297,6 +297,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       label: $t('搜索引擎'),
       name: 'searchEngine',
       type: 'select',
+      class: '!w-1/2',
       value: searchEngineOptions.find((item: any) => item.value === searchEngineValue) ?? searchEngineOptions[0],
       options: searchEngineOptions,
       filter: false,
