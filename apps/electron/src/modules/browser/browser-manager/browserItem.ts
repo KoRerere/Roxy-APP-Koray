@@ -147,9 +147,6 @@ export class BrowserItem {
   constructor(winItem: WindowItemType, launchBy: LaunchBy = 'app') {
     this.launchBy = launchBy
     this.winInfo = winItem
-    queueMicrotask(async () => {
-      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
-    })
     // 这里不写成 getter 是因为启动时就要确定的，如果后续用户修改了缓存目录，正在运行的浏览器不会受到影响
     this.userDataDir = getUserDataDirPath(winItem.dirId!)
   }
@@ -170,6 +167,7 @@ export class BrowserItem {
     else {
       // 启动时是否需要生成随机指纹
       await this.handleRandomFingerprint()
+      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
       // 解密代理信息
       await this.decryptProxyInfo().catch((error) => {
         console.error('decryptProxyInfo error: ', error)

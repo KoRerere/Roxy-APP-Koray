@@ -263,10 +263,8 @@ electronAPI.on('syncControl:start', startSync)
             </template>
           </MultiSelect>
         </template>
-        <IconField>
-          <InputIcon class="pi pi-search" />
-          <InputText v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" class="w-[120px]" size="small" />
-        </IconField>
+        <rx-input-text v-model="searchParams.windowName" :placeholder="$t('搜索窗口')" iconFieldClass="!w-[120px]" size="sm"
+          leftIcon="base/rx_ic_magnify" />
       </div>
     </template>
     <template #table-empty>
@@ -418,6 +416,9 @@ electronAPI.on('syncControl:start', startSync)
     }
   }
 
+  :deep(.table-wrapper) {
+    border-top: none;
+  }
 }
 
 .main-control-status {

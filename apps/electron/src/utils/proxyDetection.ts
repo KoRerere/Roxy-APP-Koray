@@ -179,7 +179,8 @@ export async function proxyDetection(
   const checkMode = getCheckFunction(params.proxyCategory);
   console.log("proxyDetection params", params);
   const result = await checkMode(params, isUseSystemProxy).catch((error) => {
-    console.log("proxyDetection error", error);
+    Reflect.deleteProperty(error, 'config')
+    console.error("proxyDetection error", error);
     return Promise.reject($t("代理检测失败"));
   });
 
