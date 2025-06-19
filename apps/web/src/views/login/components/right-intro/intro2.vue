@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { motion } from 'motion-v';
+import { RxSvgIcon } from '/@/components/rx-icon'
 </script>
 
 <template>
   <div class="intro-section-2">
     <div class="profiles_sync">
-      <motion.div class="facebook_frame" :initial="{ opacity: 0, y: 300 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.8, ease: [0, 0.71, 0.2, 1.01] }">
+      <motion.div v-for="i in 4" :key="i" class="facebook_frame" :initial="{ opacity: 0, y: 300 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ duration: 0.8, ease: [0, 0.71, 0.2, 1.01], delay: (i - 1) * 0.1 }">
         <img src="/images/login/facebook_2x.webp" alt="" class="facebook_content">
-      </motion.div>
-      <motion.div class="facebook_frame" :initial="{ opacity: 0, y: 300 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.8, ease: [0, 0.71, 0.2, 1.01], delay: 0.1 }">
-        <img src="/images/login/facebook_2x.webp" alt="" class="facebook_content">
-      </motion.div>
-      <motion.div class="facebook_frame" :initial="{ opacity: 0, y: 300 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.8, ease: [0, 0.71, 0.2, 1.01], delay: 0.2 }">
-        <img src="/images/login/facebook_2x.webp" alt="" class="facebook_content">
-      </motion.div>
-      <motion.div class="facebook_frame" :initial="{ opacity: 0, y: 300 }" :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.8, ease: [0, 0.71, 0.2, 1.01], delay: 0.3 }">
-        <img src="/images/login/facebook_2x.webp" alt="" class="facebook_content">
+        <motion.div class="absolute top-20px left-20px z-10" :animate="{
+          x: [0, 50, 100, 0],
+          y: [0, 50, 0, 0],
+        }" :transition="{
+          duration: 5,
+          times: [0, 0.5, 1],
+          repeat: Infinity,
+        }">
+          <RxSvgIcon name="base/rx_ic_cursor_autoclick" color="#BC62DA" size="24" class="-rotate-15" />
+        </motion.div>
       </motion.div>
     </div>
   </div>

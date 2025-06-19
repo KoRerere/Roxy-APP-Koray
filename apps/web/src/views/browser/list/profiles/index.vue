@@ -990,7 +990,7 @@ defineExpose({
         <ProfileName :data="data" @refresh="onRefreshTable" />
       </template>
       <template v-else>
-        <Skeleton width="140px" height="24px" borderRadius="4px"></Skeleton>
+        <Skeleton width="160px" height="24px" borderRadius="4px"></Skeleton>
       </template>
     </template>
     <template #open="{ data }">
