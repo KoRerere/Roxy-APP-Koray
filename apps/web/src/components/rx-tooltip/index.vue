@@ -99,7 +99,11 @@ const hide = () => {
   hideTimer = setTimeout(() => {
     motionShow.value = false
     nextTick(() => show.value = false)
-  }, 100)
+  }, 200)
+}
+
+const enterContent = () => {
+  hideTimer && clearTimeout(hideTimer)
 }
 
 onMounted(() => {
@@ -133,7 +137,7 @@ onMounted(() => {
     <slot :hide="hide" />
   </div>
   <Teleport to="body" v-if="show">
-    <div ref="source" class="absolute inline-block z-4000">
+    <div ref="source" class="absolute inline-block z-4000" @mouseenter="enterContent" @mouseleave="hide">
       <AnimatePresence>
         <motion.div v-if="motionShow" class="rx-tooltip-content" :initial="{ opacity: 0, y: configs.y, x: configs.x }"
           :animate="{ opacity: 1, y: 0, x: 0 }" :exit="{ opacity: 0, y: configs.y, x: configs.x }"

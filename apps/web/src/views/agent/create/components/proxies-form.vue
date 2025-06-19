@@ -52,10 +52,8 @@ defineExpose({ testProxy, visible })
         <div class="flex flex-col">
           <inputLabel :label="input.label" />
           <div class="flex">
-            <div class="w-1/3">
-              <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value"
-                class="!border-r-0 !rounded-tr-none !rounded-br-none" />
-            </div>
+            <RxInputSelect v-bind="input.items[0]" v-model="input.items[0].value"
+              class="!border-r-0 !rounded-tr-none !rounded-br-none" />
             <inputNumberGroup class="!rounded-tl-none !rounded-bl-none !shadow-none" :inputs="input.items" />
           </div>
         </div>

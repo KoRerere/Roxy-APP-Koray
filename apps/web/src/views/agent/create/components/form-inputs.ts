@@ -77,6 +77,9 @@ export async function getInputs(data: any = {}) {
             Object.assign(formData, { protocol: input.value })
             return input.value
           },
+          style: {
+            width: '160px'
+          }
         },
         {
           type: 'text',

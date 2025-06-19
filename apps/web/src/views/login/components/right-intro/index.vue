@@ -33,7 +33,7 @@ const tabs = [
   }
 ]
 
-const currentTab = ref('intro4')
+const currentTab = ref('intro2')
 const progressWidth = ref(100);
 const FULL_PROGRESS = 100; // 进度条最大值（100%）
 const intervalTime = 8000; // 6秒
@@ -109,13 +109,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="indicator">
-    <ul class="indicator-bar">
-      <li v-for="tab in tabs" :class="{ active: currentTab === tab.key }" @click="switchTab(tab.key)">
-        <div class="indicator-bar-item" :style="currentTab === tab.key ? { width: progressWidth + '%' } : {}"></div>
-      </li>
-    </ul>
-
+  <div class="absolute top-10% left-15%">
     <template v-for="tab in tabs">
       <motion.div class="intro" v-if="currentTab === tab.key" :initial="{ opacity: 0, y: -30 }"
         :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
@@ -123,6 +117,11 @@ onUnmounted(() => {
         <div class="intro-desc">{{ tab.desc }}</div>
       </motion.div>
     </template>
+    <ul class="indicator-bar">
+      <li v-for="tab in tabs" :class="{ active: currentTab === tab.key }" @click="switchTab(tab.key)">
+        <div class="indicator-bar-item" :style="currentTab === tab.key ? { width: progressWidth + '%' } : {}"></div>
+      </li>
+    </ul>
   </div>
 
   <template v-for="tab in tabs">
@@ -132,33 +131,35 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .intro {
-  position: absolute;
-  top: 10%;
-  left: 15%;
-
   .intro-title {
     display: inline-block;
-    padding: 4px 16px;
-    font-size: 20px;
-    font-weight: 700;
-    color: #12A3FC;
+    padding: 8px 12px;
     background-color: #ffffff;
     border-radius: 6px;
+
+    color: var(--colors-text-text-brand, #11A3FD);
+    font-family: Archivo;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 20px;
   }
 
   .intro-desc {
-    font-size: 14px;
-    color: #ffffff;
-    width: 600px;
-    margin-top: 16px;
+    color: #FFF;
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 25.6px;
+    margin: 16px 0;
   }
 
 }
 
 .indicator-bar {
-  position: absolute;
-  top: 24%;
-  left: 15%;
+  // position: absolute;
+  // top: 24%;
+  // left: 15%;
   list-style: none;
   display: flex;
   flex-direction: row;
@@ -170,7 +171,7 @@ onUnmounted(() => {
     display: block;
     padding: 4px 4px;
     cursor: pointer;
-    width: 120px;
+    width: 104px;
     position: relative;
 
     .indicator-bar-item {
@@ -187,7 +188,7 @@ onUnmounted(() => {
     &:after {
       content: '';
       display: block;
-      width: 120px;
+      width: 104px;
       height: 6px;
       background-color: #ffffff;
       border-radius: 6px;

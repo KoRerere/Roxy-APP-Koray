@@ -35,7 +35,8 @@ onBeforeMount(async () => {
     </div>
     <div class="flex justify-between w-full">
       <div class="flex items-center gap-3">
-        <RemarkIcon class="ma-auto ml-0" :title="$t('请为代理添加备注')" :label="$t('备注')" mode="button" :value="remark" :on-confirm="addRemark" />
+        <RemarkIcon class="ma-auto ml-0" :title="$t('请为代理添加备注')" :label="$t('备注')" mode="button" :value="remark"
+          :on-confirm="addRemark" />
       </div>
       <div class="flex gap-3 py-4">
         <RxButton size="sm" :label="$t('保存')" @click="save" />
