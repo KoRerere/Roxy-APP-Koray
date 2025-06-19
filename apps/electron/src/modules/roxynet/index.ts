@@ -4,7 +4,7 @@ import { setTimeout } from 'node:timers/promises'
 import { appConfig } from '/@/constants'
 import { encryptByDESModeCBC, setSystemProxy } from '/@/modules/roxynet/util'
 import { store } from '/@/modules/store'
-import { fileExists, getSystemProxy, isProcessExists } from '/@/utils'
+import { fileExists, getSystemProxy, isProcessRunning } from '/@/utils'
 import { isMac } from '/@/constants/common'
 import { checkResource } from '/@/modules/app/checkResource'
 import { chmod } from 'node:fs/promises'
@@ -39,7 +39,7 @@ export async function startRoxynet() {
     // 重新设置系统代理
     setSystemProxy()
     console.log('Roxynet has been started')
-    const [processExists] = await isProcessExists([roxynetProcess.pid])
+    const processExists = isProcessRunning(roxynetProcess.pid)
     if (!processExists) {
       console.log('roxynetProcess is not exist')
       roxynetProcess = null

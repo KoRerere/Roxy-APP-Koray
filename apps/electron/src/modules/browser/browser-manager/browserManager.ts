@@ -104,6 +104,7 @@ export class BrowserManager {
         browserItem.off(`close-${dirId}`, onCloseHandler)
         if (uploadDataPromise) {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
+          ipcMain.send('browser:on-close-syncing-data', [dirId])
         }
         await this.#batchUploadData()
       }
@@ -203,7 +204,7 @@ export class BrowserManager {
       })
       ipcMain.send('browser:on-close', dirIds)
     })
-  }, 500)
+  }, 300)
 
   /** 关闭所有已打开的浏览器 */
   async closeAll() {
