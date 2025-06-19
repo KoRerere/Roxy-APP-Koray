@@ -134,10 +134,9 @@ onUnmounted(() => {
   .intro-title {
     display: inline-block;
     padding: 8px 12px;
-    background-color: var(--colors-alpha-alpha-black-60);
+    background-color: #FFF;
+    color: var(--colors-text-text-brand);
     border-radius: 6px;
-
-    color: var(--colors-text-text-primary);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -153,6 +152,13 @@ onUnmounted(() => {
     margin: 16px 0;
   }
 
+}
+
+[data-theme="dark"] {
+  .intro-title {
+    background-color: var(--colors-alpha-alpha-black-60);
+    color: var(--colors-text-text-primary);
+  }
 }
 
 .indicator-bar {

@@ -135,7 +135,7 @@ function getAvatarStyle(workspacePicture: string) {
 </script>
 
 <template>
-  <div class="flex items-center justify-between w-125 pa-2.5 pl-3 select-none cursor-pointer choose"
+  <div class="flex items-center justify-between w-full pa-2.5 pl-3 select-none cursor-pointer choose"
     @click="getTransferHistory">
     <span>{{ selectedWorkspace?.workspaceName || $t('选择空间') }}</span>
     <SvgIcon v-if="!openLoading" class="pointer-events-none" name="base/rx_ic_chevron_down" />

@@ -220,7 +220,7 @@ provideLoginContext({
 
 <template>
   <div class="flex w-full h-100vh">
-    <div class="w-45% h-full relative">
+    <div class="w-45% h-full relative bg-[var(--colors-background-bg-page)]">
       <div class="flex justify-between p-5">
         <div class="logo">
           <SvgIcon name="base/logo" size="36" />

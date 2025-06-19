@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="29" height="38" fill="currentColor" viewBox="0 0 29 38">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="41" fill="currentColor" viewBox="0 0 32 41">
   <g filter="url(#a)" opacity=".2">
-    <path fill="url(#b)" d="m6.834 30.867-.764-19.96a.4.4 0 0 1 .647-.33L21.902 22.48a.4.4 0 0 1-.216.714l-8.564.65a.4.4 0 0 0-.29.16L7.553 31.09a.4.4 0 0 1-.72-.224Z"/>
-    <path stroke="#4B525E" stroke-width=".4" d="M6.27 10.9a.2.2 0 0 1 .323-.166l15.186 11.903a.2.2 0 0 1-.108.356l-8.565.65a.6.6 0 0 0-.435.24l-5.277 7.089a.2.2 0 0 1-.36-.112L6.27 10.9Z"/>
+    <path fill="url(#b)" d="M7.173 33.888 6.27 12.43a.4.4 0 0 1 .632-.342L24.784 24.85a.4.4 0 0 1-.205.725l-10.117.7a.4.4 0 0 0-.282.145l-6.299 7.705a.4.4 0 0 1-.71-.236Z"/>
+    <path stroke="#4B525E" stroke-width=".4" d="M6.471 12.42a.2.2 0 0 1 .315-.17l17.882 12.763a.2.2 0 0 1-.101.362l-10.119.7a.6.6 0 0 0-.422.218l-6.3 7.705a.2.2 0 0 1-.354-.118l-.901-21.46Z"/>
   </g>
-  <path fill="#fff" stroke="#4B525E" stroke-width=".4" d="M4.41 5.155c-.076-1.87 2.07-2.974 3.547-1.825l14.892 11.576c1.602 1.246.807 3.811-1.22 3.933l-6.394.384a2.601 2.601 0 0 0-1.915 1.022l-4.178 5.498c-1.248 1.642-3.866.82-3.95-1.241L4.41 5.155Z"/>
-  <path d="M6.834 24.78 6.071 4.82a.4.4 0 0 1 .646-.33l15.186 11.9a.4.4 0 0 1-.216.714l-8.565.65a.4.4 0 0 0-.29.16l-5.277 7.088a.4.4 0 0 1-.72-.223Z"/>
+  <path fill="#fff" stroke="#4B525E" stroke-width=".4" d="M4.277 5.827C4.197 4 6.252 2.877 7.747 3.934l18.375 13.01c1.701 1.204.93 3.879-1.151 3.992l-8.241.45a2.6 2.6 0 0 0-1.855.93l-5.731 6.868c-1.287 1.542-3.798.695-3.887-1.312l-.98-22.045Z"/>
+  <path d="M7.173 27.417 6.27 5.96a.4.4 0 0 1 .632-.343L24.785 18.38a.4.4 0 0 1-.205.724l-10.117.7a.4.4 0 0 0-.282.146l-6.299 7.705a.4.4 0 0 1-.71-.237Z"/>
   <defs>
-    <linearGradient id="b" x1="14.375" x2="14.375" y1="10.045" y2="32.001" gradientUnits="userSpaceOnUse">
+    <linearGradient id="b" x1="15.964" x2="15.964" y1="11.611" y2="34.938" gradientUnits="userSpaceOnUse">
       <stop stop-color="#4A525F"/>
       <stop offset="1" stop-color="#0F1724"/>
     </linearGradient>
-    <filter id="a" width="27.986" height="32.76" x=".07" y="4.492" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+    <filter id="a" width="30.683" height="34.26" x=".271" y="6.012" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-      <feGaussianBlur result="effect1_foregroundBlur_864_11866" stdDeviation="3"/>
+      <feGaussianBlur result="effect1_foregroundBlur_1011_11011" stdDeviation="3"/>
     </filter>
   </defs>
 </svg>

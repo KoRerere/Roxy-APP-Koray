@@ -3,6 +3,7 @@ import { API } from '/@/api'
 import { $t } from '/@/locales'
 import { useRoleStore } from '/@/stores/role'
 import { getDictMap, setInputValueByFormData, transformSortOrder, type SortOrderNumber } from '/@/utils'
+import { getColumns } from './columns'
 
 const role = useRoleStore()
 
@@ -206,20 +207,24 @@ export async function getCustomFilters(params: any = {}) {
 }
 
 export async function getSorts() {
+  const columns = getColumns()
   const { data } = await API.window.userGetWindowTableSortOrderList()
 
   const onChange = (data: any) => {
     const params: Record<string, any> = {};
-    if (data.sortField) {
+    if (data.sortField && columns.data.find(item => item.key === data.sortField && item.sortable)) {
       params.orderName = data.sortField
       params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
     }
     API.window.userSaveWindowTableSortOrderCreate(params)
   }
 
+  // 需要处理旧字段，如果字段已经不在我们新版的设计中，那么这个字段就不能传到接口中去
+  const isSorField = columns.data.find(item => item.key === data?.orderName && item.sortable)
+
   return {
     data: {
-      sortField: data?.orderName,
+      sortField: isSorField ? data?.orderName : undefined,
       sortOrder: transformSortOrder(data?.orderType ?? 'desc'),
     },
     onChange,
