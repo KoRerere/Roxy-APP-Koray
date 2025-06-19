@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { motion } from 'motion-v';
 import { RxSvgIcon } from '/@/components/rx-icon'
+import { useThemeStore } from '/@/stores/theme'
+
+const themeStore = useThemeStore()
+
+const img = computed(() => {
+  return `/images/login/${themeStore.realTheme}/multi-account.png`
+})
+
 </script>
 
 <template>
   <div class="intro-section-1">
     <motion.div class="profiles" :initial="{ opacity: 0, y: 100 }" :animate="{ opacity: 1, y: 0 }"
       :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
-      <img src="/images/login/profiles_2x.webp" alt="">
+      <img :src="img" alt="" class="w-full">
     </motion.div>
     <motion.div class="facebook_logo front" :initial="{ opacity: 0, y: 300, rotate: 145 }"
       :animate="{ opacity: 1, y: 0, rotate: -15 }"
@@ -31,7 +39,7 @@ import { RxSvgIcon } from '/@/components/rx-icon'
 .intro-section-1 {
   .profiles {
     position: absolute;
-    width: 1512px;
+    width: 1520px;
     left: 15%;
     top: 40%;
     z-index: 2;

@@ -23,9 +23,10 @@ const img2 = computed(() => {
 </script>
 
 <template>
-  <div class="absolute w-707px right-0 bottom-0">
+  <motion.div class="relative w-1000px ml-156px mt-105px" :initial="{ opacity: 0, y: 100 }"
+    :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
     <img :src="img1" alt="" class="w-full">
-    <motion.div class="absolute top-20px left-40%" :animate="{
+    <motion.div class="absolute top-20px left-30%" :animate="{
       x: [0, 100, 200, 0],
       y: [0, 100, 0, 0],
     }" :transition="{
@@ -38,8 +39,10 @@ const img2 = computed(() => {
         class="absolute top-20px left-20px w-80px h-36px bg-[#BC62DA] color-white font-[Inter] text-18px text-center leading-36px rounded-6px">
         Lazar</div>
     </motion.div>
-  </div>
-  <div class="absolute w-480px left-53px bottom-0">
+  </motion.div>
+
+  <motion.div class="absolute w-480px left-53px bottom-0" :initial="{ opacity: 0, y: 100 }"
+    :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01], delay: 0.1 }">
     <img :src="img2" alt="" class="w-full">
     <motion.div class="absolute top-20px left-20%" :animate="{
       x: [0, 100, 100, 0, 0],
@@ -55,5 +58,5 @@ const img2 = computed(() => {
         Exlipso
       </div>
     </motion.div>
-  </div>
+  </motion.div>
 </template>

@@ -16,7 +16,7 @@ withDefaults(
 </script>
 
 <template>
-  <div class="group flex overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]" :class="[
+  <div class="group flex overflow-hidden p-16px [--duration:40s] [--gap:1rem] [gap:var(--gap)]" :class="[
     vertical ? 'flex-col' : 'flex-row',
     $props.class,
   ]">
@@ -24,8 +24,8 @@ withDefaults(
       vertical ? 'animate-marquee-vertical flex-col' : 'animate-marquee flex-row',
       pauseOnHover ? 'group-hover:[animation-play-state:paused]' : '',
     ]" :style="{
-        animationDirection: reverse ? 'reverse' : 'normal',
-      }">
+      animationDirection: reverse ? 'reverse' : 'normal',
+    }">
       <slot />
     </div>
   </div>

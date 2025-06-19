@@ -209,15 +209,17 @@ export async function getSorts() {
   const { data } = await API.window.userGetWindowTableSortOrderList()
 
   const onChange = (data: any) => {
-    API.window.userSaveWindowTableSortOrderCreate({
-      orderName: data.sortField,
-      orderType: transformSortOrder(data.sortOrder as SortOrderNumber),
-    })
+    const params: Record<string, any> = {};
+    if (data.sortField) {
+      params.orderName = data.sortField
+      params.orderType = transformSortOrder(data.sortOrder as SortOrderNumber)
+    }
+    API.window.userSaveWindowTableSortOrderCreate(params)
   }
 
   return {
     data: {
-      sortField: data?.orderName ?? 'windowSortNum',
+      sortField: data?.orderName,
       sortOrder: transformSortOrder(data?.orderType ?? 'desc'),
     },
     onChange,

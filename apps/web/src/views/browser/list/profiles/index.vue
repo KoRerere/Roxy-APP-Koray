@@ -952,7 +952,7 @@ defineExpose({
   <RyTable ref="windownTable" v-model:columns="columns" cacheKey="browser-list" :immediate="false" skeleton
     :table-sort="getSorts" :table-request="tableRequest" :table-operation="getOperation"
     :operation-handler="operationHandler" selection-mode="multiple" :show-actions="false"
-    :virtualScrollerOptions="{ itemSize: 60 }" class="window-table">
+    :virtualScrollerOptions="{ itemSize: 60 }" class="window-table" removableSort>
     <template #filter-after>
       <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu"
         :enabled-filter-save="!isProjectProfile" :save-filters="saveFilters" @filter-change="onRefreshTable" />

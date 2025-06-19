@@ -289,7 +289,7 @@ provideLoginContext({
   z-index: 10;
 
   .logo-text {
-    color: white;
+    color: var(--colors-text-text-primary);
     font-family: Archivo;
     font-size: 18px;
     font-style: normal;
@@ -304,7 +304,7 @@ provideLoginContext({
   transform: translateX(-50%);
   bottom: 20px;
   z-index: 10;
-  color: var(--component-button-primary-text, #FFF);
+  color: var(--colors-text-text-tertiary, #FFF);
   text-align: center;
   font-family: Inter;
   font-size: 12px;
@@ -313,7 +313,7 @@ provideLoginContext({
   line-height: var(--Line-Height-text-xs, 16px);
 
   a {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--colors-text-text-link);
     font-family: Inter;
     font-size: 12px;
     font-style: normal;
@@ -335,7 +335,8 @@ provideLoginContext({
   transform: translate(-50%, -50%);
   padding: var(--spacing-4xl, 24px);
   display: flex;
-  width: var(--width-sm, 480px);
+  max-width: var(--width-sm, 480px);
+  min-width: var(--width-sm, 424px);
   flex-direction: column;
   gap: 16px;
   align-items: center;

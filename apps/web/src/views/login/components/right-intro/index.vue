@@ -43,7 +43,7 @@ let progressStartTime: number | null = null; // 记录动画开始时间
 // 切换标签并重置倒计时
 function switchTab(tab: string) {
   currentTab.value = tab;
-  resetTimer();
+  // resetTimer();
 }
 
 function resetTimer() {
@@ -109,7 +109,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="absolute top-10% left-15%">
+  <div class="mt-100px ml-100px">
     <template v-for="tab in tabs">
       <motion.div class="intro" v-if="currentTab === tab.key" :initial="{ opacity: 0, y: -30 }"
         :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.6, ease: [0, 0.71, 0.2, 1.01] }">
@@ -134,10 +134,10 @@ onUnmounted(() => {
   .intro-title {
     display: inline-block;
     padding: 8px 12px;
-    background-color: #ffffff;
+    background-color: var(--colors-alpha-alpha-black-60);
     border-radius: 6px;
 
-    color: var(--colors-text-text-brand, #11A3FD);
+    color: var(--colors-text-text-primary);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -148,7 +148,6 @@ onUnmounted(() => {
     color: #FFF;
     font-family: Inter;
     font-size: 16px;
-    font-style: normal;
     font-weight: 400;
     line-height: 25.6px;
     margin: 16px 0;
@@ -157,9 +156,6 @@ onUnmounted(() => {
 }
 
 .indicator-bar {
-  // position: absolute;
-  // top: 24%;
-  // left: 15%;
   list-style: none;
   display: flex;
   flex-direction: row;

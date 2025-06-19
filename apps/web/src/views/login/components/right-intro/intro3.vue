@@ -23,7 +23,7 @@ const mq4 = computed(() => {
 </script>
 
 <template>
-  <div class="absolute bottom-12% left-0 w-full">
+  <div class="mt-160px w-full">
     <Marquee>
       <img v-for="i in mq1" :key="i" :src="i" alt="" class="size-100px cover">
     </Marquee>
