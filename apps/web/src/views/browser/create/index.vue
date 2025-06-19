@@ -1,5 +1,4 @@
 <script lang="tsx" setup>
-import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
 import MateGroup from './components/mate-group.vue'
 import AccordionInputs from './components/accordion-inputs.vue'
 import ImportWindow from './components/import-window.vue'
@@ -25,9 +24,9 @@ import { getDefaultTemplate } from './utils'
 import { useHandleBusinessCode, switchWorkspaceAndToUpgradePlan } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { deepClone, filterFieldByValue, getFormDataByList, isEmptyValue, setInputFieldByInputKey } from '/@/utils'
 import { emitter } from '/@/utils/eventBus'
-import type { WindowMetaData } from '/@/views/browser/create/components/type'
 import { withModifiers } from 'vue'
 import { AccountBindType } from '/@/enums/account'
+import type { WindowMetaData } from '/@/views/browser/create/components/type'
 
 const confirm = useConfirm()
 const router = useRouter()

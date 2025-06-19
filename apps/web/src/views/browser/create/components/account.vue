@@ -122,12 +122,12 @@ function replaceData(data: any) {
     <div v-if="windowPlatformList?.length">
       <div v-if="isBatch" class="mb-2 subtitle">{{ $t('账号列表 ({count})', { count: sumAccountCount }) }}</div>
       <div class="grid gap-2 list">
-        <RxCard class="flex gap-2 items-start" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
+        <RxCard class="flex gap-2 items-start overflow-hidden" v-for="(item, index) in windowPlatformList" :key="index" :closable="false" @click="onEdit(item)">
           <div class="mt-0.5">
             <PlatformIcon v-if="item.platformIcon" class="icon" :platformIcon="item.platformIcon" :platformIconDark="item.platformIconDark" />
             <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
           </div>
-          <div class="flex-1 flex flex-col gap-1">
+          <div class="flex-1 flex flex-col gap-1 overflow-hidden">
             <div class="flex items-center gap-2 region">{{ item.platformUrl }}</div>
             <div class="flex items-center gap-1.5 info">{{ item.platformUserName || '--' }}</div>
           </div>

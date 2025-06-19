@@ -81,10 +81,6 @@ const detail = computed(() => {
           value: profileCount.add(freeCount.value).multiply(100).format()
         },
         {
-          label: $t('日志保留时长'),
-          value: $t('{day} 天', { day: subscriptionLogDays })
-        },
-        {
           label: $t('续费时长'),
           value: selectedDuration.value?.title
         },

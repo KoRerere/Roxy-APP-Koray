@@ -167,9 +167,9 @@ function tooltipValue(item: any) {
     <RxAlert v-if="isBatch && sumProxyCount > createCount" class="w-full" type="warn"
       :title="$t('{count} 个窗口将会绑定代理。您创建的窗口数为：{max}。{message}', { count: sumProxyCount, max: createCount, message: $t('当前选择绑定的代理数量已超过创建窗口数。') })" :closable="false"></RxAlert>
     <div class="grid gap-2 list" v-if="proxyList.length">
-      <RxCard class="flex gap-2 items-start" v-for="(item, index) in proxyList" :key="index" :closable="false" @click="onEdit(item)">
+      <RxCard class="flex gap-2 items-start overflow-hidden" v-for="(item, index) in proxyList" :key="index" :closable="false" @click="onEdit(item)">
         <RxSvgIcon class="mt-0.5" :name="(`country-code/${item.lastCountry}` as SvgNames)" fallback="base/rx_ic_earth" color="var(--colors-icon-icon-tertiary)" />
-        <div class="flex-1 flex flex-col gap-1">
+        <div class="flex-1 flex flex-col gap-1 overflow-hidden">
           <div class="flex items-center gap-2 region">
             <span>{{ item.lastCountry || '--' }}{{ strConcat('/', item.lastCity) }}</span>
             <RxSvgIcon v-tooltip.top="tooltipValue(item)" name="base/rx_ic_info_fill" size="12" color="var(--colors-icon-icon-note)" />
@@ -180,9 +180,9 @@ function tooltipValue(item: any) {
             <span class="text-[var(--colors-text-text-link)] cursor-pointer" @click.stop="modifyProxyCount(item)">{{ $t('修改') }}</span>
           </div>
           <div class="flex items-center gap-1.5 info" v-else>
-            <span>{{ item.ipType }}</span>
-            <span class="line"></span>
-            <span>{{ item.proxyCategory || item.protocol }}{{ strConcat('://', item.host) }}{{ strConcat(':', item.port) }}</span>
+            <div>{{ item.ipType }}</div>
+            <div class="line"></div>
+            <div class="flex-1 ellipsis-1">{{ item.proxyCategory || item.protocol }}{{ strConcat('://', item.host) }}{{ strConcat(':', item.port) }}</div>
           </div>
         </div>
         <div class="mt-0.5 flex gap-2">
