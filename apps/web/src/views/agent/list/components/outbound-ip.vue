@@ -51,6 +51,7 @@ const data = computed(() => {
     };
   } else if (status.value === ProxyCheckStatus.failure) {
     return {
+      svg: 'base/rx_ic_earth',
       title: $t('测试失败'),
       color: 'var(--colors-text-text-error)',
       svgColor: 'var(--colors-icon-icon-error)'
