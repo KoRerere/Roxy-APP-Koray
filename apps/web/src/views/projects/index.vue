@@ -163,7 +163,7 @@ async function onRowReorder (event: any) {
     return
   }
 
-  const { projectIds,projectSortNumList } = value.reduce((acc:any, item:any,index:number)=>{
+  const { projectIds,projectSortNumList } = value.slice(0, pinCount.value).reduce((acc: any, item: any, index: number)=>{
     acc.projectIds.push(item.project_id)
     acc.projectSortNumList.push(index + 1)
     return acc
