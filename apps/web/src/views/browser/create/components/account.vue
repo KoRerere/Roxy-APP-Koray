@@ -150,7 +150,7 @@ function replaceData(data: any) {
 
 .subtitle {
   color: var(--colors-text-text-primary);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 16px;
 }
 

@@ -44,6 +44,5 @@ const stopWatch = watch(height, () => {
   line-height: v-bind(lineHeight);
   color: var(--colors-text-text-primary);
   font-size: 13px;
-  font-weight: 500;
 }
 </style>

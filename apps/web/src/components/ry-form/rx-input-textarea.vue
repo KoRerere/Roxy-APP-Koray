@@ -26,7 +26,7 @@ defineEmits(['iconClick', 'change'])
     <InputIcon v-if="leftIcon">
       <RxSvgIcon :name="(leftIcon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>
-    <Textarea v-bind="{ ...$attrs, ...props }" fluid :rows="rows" :cols="cols" @input="$emit('change')" />
+    <Textarea class="block" v-bind="{ ...$attrs, ...props }" fluid :rows="rows" :cols="cols" @input="$emit('change')" />
     <InputIcon v-if="icon">
       <RxSvgIcon :name="(icon as SvgNames)" class="cursor-pointer" @click="$emit('iconClick')" />
     </InputIcon>

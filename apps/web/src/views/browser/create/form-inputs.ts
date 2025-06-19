@@ -154,6 +154,18 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       slot: 'profileId',
     },
     {
+      type: 'text',
+      label: $t('窗口名称'),
+      name: 'windowName',
+      value: data.windowName ?? defaultWindowName,
+      placeholder: $t('请输入窗口名称'),
+      formatValue: (input: any, _inputs: any, formData: any) => {
+        const windowName = (!data.windowName && input.value) === defaultWindowName ? '' : input.value
+        Object.assign(formData, { windowNamePrefix: windowName })// 窗口名称前缀，批量创建时会用到
+        return windowName
+      }
+    },
+    {
       label: $t('系统 & 内核'),
       items: [
         {
@@ -289,18 +301,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
       options: searchEngineOptions,
       filter: false,
       required: true,
-    },
-    {
-      type: 'text',
-      label: $t('窗口名称'),
-      name: 'windowName',
-      value: data.windowName ?? defaultWindowName,
-      placeholder: $t('请输入窗口名称'),
-      formatValue: (input: any, _inputs: any, formData: any) => {
-        const windowName = (!data.windowName && input.value) === defaultWindowName ? '' : input.value
-        Object.assign(formData, { windowNamePrefix: windowName })// 窗口名称前缀，批量创建时会用到
-        return windowName
-      }
     },
     {
       separator: true,

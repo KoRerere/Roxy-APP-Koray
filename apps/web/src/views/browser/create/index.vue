@@ -401,9 +401,9 @@ async function importProfile(params: any) {
     <ViewsHeader show-back :divider="false" :title="$t('创建窗口')" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
-      <div class="flex flex-1 overflow-hidden">
-        <div class="flex-1 flex flex-col">
-          <div class="profile-basic">
+      <div class="mx-auto flex flex-1 gap-12 overflow-hidden">
+        <div class="flex-1 flex flex-col gap-5 max-w-[640px] min-w-[610px]">
+          <div class="px-4 pt-4 profile-basic">
             <div v-show="tabsValue === 'multi'" class="multiple">
               <div class="flex items-center justify-between">
                 <div class="subtitle">{{ $t('窗口数量') }}</div>
@@ -460,7 +460,6 @@ async function importProfile(params: any) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 40px 16px 78px;
 }
 
 .subtitle {

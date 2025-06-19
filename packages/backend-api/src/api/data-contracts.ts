@@ -5664,10 +5664,8 @@ export interface CheckAddUserByProjectInfoCreateData {
 }
 
 export interface UserMdfProjectSortCreatePayload {
-  /** 项目ID */
-  projectId: number;
-  /** 项目排序 */
-  projectSortNum: number;
+  projectIds: number[];
+  projectSortNumList: number[];
 }
 
 export interface UserMdfProjectSortCreateData {
@@ -6030,6 +6028,8 @@ export interface UserGetUserPayInfoListData {
     showGiftDlg: boolean;
     /** 服务器当前时间 */
     subCurrentDate: number;
+    /** 日志保留时长 */
+    subscriptionLogDays: number;
   };
   msg: string;
 }

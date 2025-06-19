@@ -31,7 +31,7 @@ function onSubmit(event: any) {
 </script>
 
 <template>
-  <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
+  <form class="flex flex-col gap-5" @submit.prevent="onSubmit">
     <template v-for="input in _inputs" :key="input.name">
       <slot :name="input.slot" :input="input" :label-position="labelPosition">
         <div v-if="input.separator" class="separator"></div>
