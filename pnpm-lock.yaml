@@ -16,8 +16,8 @@ catalogs:
       specifier: ^6.3.5
       version: 6.3.5
     vite-plugin-dts:
-      specifier: 4.5.4
-      version: 4.5.4
+      specifier: 4.5.3
+      version: 4.5.3
 
 importers:
 
@@ -246,7 +246,7 @@ importers:
         version: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
       vite-plugin-dts:
         specifier: 'catalog:'
-        version: 4.5.4(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
+        version: 4.5.3(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
 
   apps/web:
     dependencies:
@@ -424,14 +424,14 @@ importers:
         version: 1.10.0
     devDependencies:
       swagger-typescript-api:
-        specifier: ^13.1.3
+        specifier: ^13.2.2
         version: 13.2.2(encoding@0.1.13)
       vite:
         specifier: 'catalog:'
         version: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
       vite-plugin-dts:
         specifier: 'catalog:'
-        version: 4.5.4(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
+        version: 4.5.3(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
 
   packages/gen-primevue-preset:
     devDependencies:
@@ -507,7 +507,7 @@ importers:
         version: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
       vite-plugin-dts:
         specifier: 'catalog:'
-        version: 4.5.4(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
+        version: 4.5.3(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
       vue:
         specifier: ^3.5.13
         version: 3.5.17(typescript@5.8.3)
@@ -575,7 +575,7 @@ importers:
         version: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
       vite-plugin-dts:
         specifier: 'catalog:'
-        version: 4.5.4(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
+        version: 4.5.3(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0))
 
 packages:
 
@@ -5714,8 +5714,8 @@ packages:
     engines: {node: '>= 6'}
 
   statuses@1.5.0:
-    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==}
-    engines: {node: '>= 0.6'}
+    resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==, tarball: https://registry.npmmirror.com/statuses/-/statuses-1.5.0.tgz}
+    engines: {node: '>= 0.8'}
 
   statuses@2.0.1:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
@@ -6253,6 +6253,15 @@ packages:
     resolution: {integrity: sha512-W9LOGAyGMrbGArYJN4LBCdOC5+Zwh7dHvOHC0KmGKkJhsOzaKbpo/jEjpPKVHIW0/jBWj8RZG0NUxfgA8BxgAg==}
     peerDependencies:
       vite: ^2.6.0 || ^3.0.0 || ^4.0.0 || ^5.0.0-0 || ^6.0.0-0
+
+  vite-plugin-dts@4.5.3:
+    resolution: {integrity: sha512-P64VnD00dR+e8S26ESoFELqc17+w7pKkwlBpgXteOljFyT0zDwD8hH4zXp49M/kciy//7ZbVXIwQCekBJjfWzA==}
+    peerDependencies:
+      typescript: '*'
+      vite: '*'
+    peerDependenciesMeta:
+      vite:
+        optional: true
 
   vite-plugin-dts@4.5.4:
     resolution: {integrity: sha512-d4sOM8M/8z7vRXHHq/ebbblfaxENjogAAekcfcDCCwAyvGqnPrc7f4NZbvItS+g4WTgerW0xDwSz5qz11JT3vg==}
@@ -13200,6 +13209,25 @@ snapshots:
   vite-hot-client@2.0.4(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)):
     dependencies:
       vite: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
+
+  vite-plugin-dts@4.5.3(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)):
+    dependencies:
+      '@microsoft/api-extractor': 7.52.8(@types/node@22.15.32)
+      '@rollup/pluginutils': 5.2.0(rollup@4.44.0)
+      '@volar/typescript': 2.4.14
+      '@vue/language-core': 2.2.0(typescript@5.8.3)
+      compare-versions: 6.1.1
+      debug: 4.4.1
+      kolorist: 1.8.0
+      local-pkg: 1.1.1
+      magic-string: 0.30.17
+      typescript: 5.8.3
+    optionalDependencies:
+      vite: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
 
   vite-plugin-dts@4.5.4(@types/node@22.15.32)(rollup@4.44.0)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.32)(jiti@2.4.2)(sass-embedded@1.89.2)(terser@5.43.0)(tsx@4.20.3)(yaml@2.8.0)):
     dependencies:

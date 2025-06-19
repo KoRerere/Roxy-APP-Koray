@@ -167,7 +167,9 @@ export class BrowserItem {
     else {
       // 启动时是否需要生成随机指纹
       await this.handleRandomFingerprint()
-      Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
+      queueMicrotask(async () => {
+        Reflect.set(this.winInfo, '$canUseSyncControl', await canUseSyncControl())
+      })
       // 解密代理信息
       await this.decryptProxyInfo().catch((error) => {
         console.error('decryptProxyInfo error: ', error)
