@@ -569,7 +569,7 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
       {isMulti && <div class="px-4 pt-4">
         <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理设置，请谨慎操作。')}></RxAlert>
       </div>}
-      <ProxyList data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyList>
+      <ProxyList class="flex-1 overflow-hidden" data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyList>
     </div>
     : () => <ProxyCreate onConfirm={onConfirm}></ProxyCreate>
 
@@ -654,7 +654,7 @@ function multipleAccountChange(data: Data | Data[], { operationType, isChoose = 
       {isMulti && <div class="px-4 pt-4">
         <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将清空所选窗口中的平台账号，并将新选择的平台账号绑定至窗口，请谨慎操作。')}></RxAlert>
       </div>}
-      <AccountList data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
+      <AccountList class="flex-1 overflow-hidden" data={isMulti ? undefined : datas[0]} onConfirm={onConfirm}></AccountList>
     </div>
     : () => <AccountCreate showRemark={false} showCreateMore={false} onConfirm={onConfirm}></AccountCreate>
 
