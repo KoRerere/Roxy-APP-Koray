@@ -149,8 +149,8 @@ const items = computed(() => {
       command: async () => {
         const result = await electronAPI.send('browser:getOpenedBrowser')
         if (result?.length > 0) {
-          showToast(-1, $t('请先关闭窗口'))
-          return
+          const isConfirm = await showLogoutConfirm()
+          if (!isConfirm) return
         }
         showPageLoading()
         router.push({ name: "login" }).finally(() => {
@@ -160,6 +160,26 @@ const items = computed(() => {
     },
   ].filter((item) => !item.vIf || item.vIf());
 });
+
+function showLogoutConfirm() {
+  const { promise, resolve, } = Promise.withResolvers<boolean>()
+  showModal({
+    header: $t('提示'),
+    class: '!w-[480px]',
+    okText: $t('确定'),
+    slots: {
+      default: () => <>{$t('您确定要退出登录吗？退出将关闭所有浏览器!')}</>
+    },
+    async handleOk() {
+      await electronAPI.send('browser:closeAll')
+      resolve(true)
+    },
+    async handleCancel() {
+      resolve(false)
+    }
+  })
+  return promise
+}
 
 function copyUserInfo() {
   copyText(`${userStore.userInfo.userName}\n${userStore.userInfo.email}`);
@@ -201,8 +221,11 @@ function toggle(event: Event) {
 <template>
   <div class="settings cursor-pointer" @click="toggle">
     <template v-if="userStore.userInfo">
-      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar" :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20" :font-size="12">
-        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall" class="absolute right-[-4px] bottom-[-2px]" size="12px" />
+      <RxAvatar class="pointer-events-none" :avatar="userStore.userInfo.avatar"
+        :name="userStore.userInfo.userName?.slice(0, 2)" :color="userStore.userInfo.avatarColor" :size="20"
+        :font-size="12">
+        <RxSvgIcon v-if="userStore.identityInfo.icon" :name="userStore.identityInfo.iconSmall"
+          class="absolute right-[-4px] bottom-[-2px]" size="12px" />
       </RxAvatar>
       <span class="username" :style="{ color: userStore.identityInfo.color }">{{ userStore.userInfo.userName }}</span>
     </template>
