@@ -7,6 +7,7 @@ import { useLoginActive } from "./useLoginActivity";
 import { useNetworkPanel } from "./useNetwork";
 import { usePreferencesPanel } from "./usePreferences";
 import { useUserProfilePanel } from "./useUserProfile";
+import { useAuthentication } from './useAuthentication'
 import type { DynamicDialogInstance } from "primevue/dynamicdialogoptions";
 
 export type PanelKeyType = ReturnType<typeof getSettings>[number]["name"];
@@ -22,6 +23,11 @@ export const getSettings = () =>
       label: $t("个人信息"),
       name: "profiles",
       icon: "base/rx_ic_user_circle",
+    },
+    {
+      label: $t('验证'),
+      name: 'authentication',
+      icon: 'base/rx_ic_keys',
     },
     {
       label: $t("软件设置"),
@@ -59,6 +65,7 @@ export function useSettingsPopup() {
   const { getPreferencesPanels } = usePreferencesPanel()
   const { getLoginActivityPanels } = useLoginActive()
   const { getUserProfilePanels } = useUserProfilePanel()
+  const { getAuthentication } = useAuthentication()
   // const { getKernelPanels } = useKernel()
   // const { getAboutPanels } = useAbout()
 
@@ -66,6 +73,7 @@ export function useSettingsPopup() {
     preferences: getPreferencesPanels,
     network: getNetworkPanels,
     loginActivity: getLoginActivityPanels,
+    authentication: getAuthentication,
     // kernel: getKernelPanels,
     // about: getAboutPanels,
   }

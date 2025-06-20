@@ -54,6 +54,10 @@ import {
   UserChangePwdCreatePayload,
   UserChangeUsernameCreateData,
   UserChangeUsernameCreatePayload,
+  UserCloseValidatorCreateData,
+  UserCloseValidatorCreatePayload,
+  UserGenerateValidatorRecoverCodeListData,
+  UserGenerateValidatorRecoverCodeListParams,
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
@@ -82,17 +86,24 @@ import {
   UserGetUserApiListData,
   UserGetUserConfigListData,
   UserGetUserInfoListData,
+  UserGetValidatorBindInfoListData,
+  UserGetValidatorTokenListData,
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
   UserMigrateDataListData,
   UserModifyRemarkDisplayStatusCreateData,
   UserModifyRemarkDisplayStatusCreatePayload,
+  UserPersonalVerifyValidatorCodeListData,
+  UserPersonalVerifyValidatorCodeListParams,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
   UserSendAccountPasswordVerifyCodeListParams,
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
+  UserSendValidatorEmailVerifyCodeCreateData,
+  UserSendValidatorEmailVerifyCodeCreatePayload,
+  UserSendValidatorVerifyCodeListData,
   UserSettingAccountPasswordCreateData,
   UserSettingAccountPasswordCreatePayload,
   UserSettingPasswordCreateData,
@@ -107,8 +118,12 @@ import {
   UserUnbindEmailCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
+  UserValidatorBindCreateData,
+  UserValidatorBindCreatePayload,
   UserVerifyEmailCreateData,
   UserVerifyEmailCreatePayload,
+  UserVerifyValidatorVerifyCodeCreateData,
+  UserVerifyValidatorVerifyCodeCreatePayload,
   UserWithdrawCreateData,
   UserWithdrawCreatePayload,
   UserWithdrawVerifyCodeListData,
@@ -1266,6 +1281,178 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetValidatorTokenList
+   * @summary 获取用户验证器token
+   * @request GET:/user_get_validator_token
+   * @response `200` `UserGetValidatorTokenListData`
+   */
+  userGetValidatorTokenList = (params: RequestParams = {}) =>
+    this.http.request<UserGetValidatorTokenListData, any>({
+      path: `/user_get_validator_token`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserPersonalVerifyValidatorCodeList
+   * @summary 个人设置比对验证器code
+   * @request GET:/user_personal_verify_validator_code
+   * @response `200` `UserPersonalVerifyValidatorCodeListData`
+   */
+  userPersonalVerifyValidatorCodeList = (
+    query: UserPersonalVerifyValidatorCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserPersonalVerifyValidatorCodeListData, any>({
+      path: `/user_personal_verify_validator_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSendValidatorEmailVerifyCodeCreate
+   * @summary 发送恢复邮箱验证码
+   * @request POST:/user_send_validator_email_verify_code
+   * @response `200` `UserSendValidatorEmailVerifyCodeCreateData`
+   */
+  userSendValidatorEmailVerifyCodeCreate = (
+    data: UserSendValidatorEmailVerifyCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSendValidatorEmailVerifyCodeCreateData, any>({
+      path: `/user_send_validator_email_verify_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGenerateValidatorRecoverCodeList
+   * @summary 生成恢复验证器恢复代码
+   * @request GET:/user_generate_validator_recover_code
+   * @response `200` `UserGenerateValidatorRecoverCodeListData`
+   */
+  userGenerateValidatorRecoverCodeList = (
+    query: UserGenerateValidatorRecoverCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGenerateValidatorRecoverCodeListData, any>({
+      path: `/user_generate_validator_recover_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserValidatorBindCreate
+   * @summary 用户验证器绑定
+   * @request POST:/user_validator_bind
+   * @response `200` `UserValidatorBindCreateData`
+   */
+  userValidatorBindCreate = (
+    data: UserValidatorBindCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserValidatorBindCreateData, any>({
+      path: `/user_validator_bind`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSendValidatorVerifyCodeList
+   * @summary 发送开启验证器验证码
+   * @request GET:/user_send_validator_verify_code
+   * @response `200` `UserSendValidatorVerifyCodeListData`
+   */
+  userSendValidatorVerifyCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserSendValidatorVerifyCodeListData, any>({
+      path: `/user_send_validator_verify_code`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserVerifyValidatorVerifyCodeCreate
+   * @summary 比对开启验证器验证码
+   * @request POST:/user_verify_validator_verify_code
+   * @response `200` `UserVerifyValidatorVerifyCodeCreateData`
+   */
+  userVerifyValidatorVerifyCodeCreate = (
+    data: UserVerifyValidatorVerifyCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserVerifyValidatorVerifyCodeCreateData, any>({
+      path: `/user_verify_validator_verify_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserCloseValidatorCreate
+   * @summary 关闭验证器
+   * @request POST:/user_close_validator
+   * @response `200` `UserCloseValidatorCreateData`
+   */
+  userCloseValidatorCreate = (
+    data: UserCloseValidatorCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCloseValidatorCreateData, any>({
+      path: `/user_close_validator`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetValidatorBindInfoList
+   * @summary 获取验证器绑定信息
+   * @request GET:/user_get_validator_bind_info
+   * @response `200` `UserGetValidatorBindInfoListData`
+   */
+  userGetValidatorBindInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetValidatorBindInfoListData, any>({
+      path: `/user_get_validator_bind_info`,
+      method: "GET",
       format: "json",
       ...params,
     });

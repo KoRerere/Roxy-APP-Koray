@@ -2892,6 +2892,110 @@ export interface UserModifyRemarkDisplayStatusCreateData {
   msg: string;
 }
 
+export interface UserGetValidatorTokenListData {
+  code: number;
+  data: {
+    /** token key */
+    google_keyuri: string;
+    secret: string;
+  };
+  msg: string;
+}
+
+export interface UserPersonalVerifyValidatorCodeListParams {
+  /**
+   * 验证码
+   * @example "123456"
+   */
+  code: string;
+}
+
+export interface UserPersonalVerifyValidatorCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSendValidatorEmailVerifyCodeCreatePayload {
+  /** 恢复邮箱 */
+  email: string;
+  /** 类型：修改还是新增 */
+  type: string;
+}
+
+export interface UserSendValidatorEmailVerifyCodeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGenerateValidatorRecoverCodeListParams {
+  /**
+   * 类型：修改还是新增:"modify", "add"
+   * @example "modify"
+   */
+  type: string;
+}
+
+export interface UserGenerateValidatorRecoverCodeListData {
+  code: number;
+  data: string[];
+  msg: string;
+}
+
+export interface UserValidatorBindCreatePayload {
+  /** 恢复方式：恢复邮箱/代码 */
+  recover_type: string;
+  /** 恢复邮箱 */
+  recover_email: string;
+  /** 恢复邮箱验证码 */
+  ver_code: string;
+  recover_code: string[];
+}
+
+export interface UserValidatorBindCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSendValidatorVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeCreatePayload {
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCloseValidatorCreatePayload {
+  /** 2fa码 */
+  code: string;
+}
+
+export interface UserCloseValidatorCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetValidatorBindInfoListData {
+  code: number;
+  data: {
+    /** 绑定状态：0，未绑定，1绑定，2，异常 */
+    validatorIsBind: number;
+    /** APP状态 */
+    validatorAPP: number;
+    /** 恢复邮箱状态 */
+    recoverEmail: number;
+    /** 恢复代码状态 */
+    recoverCode: number;
+  };
+  msg: string;
+}
+
 export interface UserModifyWindowReportTimeCreatePayload {
   /**  窗口Id */
   ids: number[];
