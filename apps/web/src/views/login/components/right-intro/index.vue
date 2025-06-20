@@ -1,49 +1,50 @@
 <script setup lang="ts">
 import { $t } from '/@/locales';
 import { motion } from 'motion-v';
-import Intro1 from './intro1.vue';
-import Intro2 from './intro2.vue';
-import Intro3 from './intro3.vue';
-import Intro4 from './intro4.vue';
+import MultiAccounting from './MultiAccounting.vue';
+import ProfilesSyncing from './ProfilesSyncing.vue';
+import SupportMorePlatform from './SupportMorePlatform.vue';
+import TeamSpace from './TeamSpace.vue';
 
 const tabs = [
   {
-    key: 'intro1',
-    title: $t('Multi Accounting'),
-    desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
-    component: Intro1,
-  },
-  {
-    key: 'intro2',
-    title: $t('Profiles Syncing'),
-    desc: $t('Integer dui odio, placerat venenatis enim eu, congue hendrerit libero. Donec cursus ultrices rhoncus. Mauris ultrices ultrices eros sed ultricies.'),
-    component: Intro2
-  },
-  {
-    key: 'intro3',
+    key: 'SupportMorePlatform',
     title: $t('Support More Platform'),
     desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
-    component: Intro3
+    component: SupportMorePlatform,
   },
   {
-    key: 'intro4',
+    key: 'MultiAccounting',
+    title: $t('Multi Accounting'),
+    desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
+    component: MultiAccounting
+  },
+  {
+    key: 'ProfilesSyncing',
+    title: $t('Profiles Syncing'),
+    desc: $t('Integer dui odio, placerat venenatis enim eu, congue hendrerit libero. Donec cursus ultrices rhoncus. Mauris ultrices ultrices eros sed ultricies.'),
+    component: ProfilesSyncing
+  },
+  {
+    key: 'TeamSpace',
     title: $t('Team Space'),
     desc: $t('Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc at accumsan dui. Curabitur semper ex sed tincidunt cursus.'),
-    component: Intro4
+    component: TeamSpace
   }
 ]
 
-const currentTab = ref('intro2')
+const currentTab = ref('SupportMorePlatform')
 const progressWidth = ref(100);
 const FULL_PROGRESS = 100; // 进度条最大值（100%）
-const intervalTime = 8000; // 6秒
+const intervalTime = 8000; // 8秒
 let animationFrameId: number | null = null; // 存储 RAF ID
 let progressStartTime: number | null = null; // 记录动画开始时间
 
 // 切换标签并重置倒计时
 function switchTab(tab: string) {
+  if (currentTab.value === tab) return;
   currentTab.value = tab;
-  // resetTimer();
+  resetTimer();
 }
 
 function resetTimer() {
@@ -98,9 +99,9 @@ function clearExistingTimers() {
 }
 
 // 组件挂载时启动计时器
-// onMounted(() => {
-//   startTimers();
-// });
+onMounted(() => {
+  startTimers();
+});
 
 // 组件卸载时清除计时器
 onUnmounted(() => {
@@ -179,8 +180,8 @@ onUnmounted(() => {
     .indicator-bar-item {
       position: absolute;
       top: 4px;
-      right: -4px;
-      // left: 4px;
+      // right: -4px;
+      left: 4px;
       height: 6px;
       background-color: #ffffff;
       border-radius: 6px;

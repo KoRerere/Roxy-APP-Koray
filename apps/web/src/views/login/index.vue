@@ -16,6 +16,7 @@ import AppUpdater from './components/app-updater.vue'
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 import { motion, AnimatePresence } from 'motion-v'
 import RightIntro from './components/right-intro/index.vue'
+import { RxSvgIcon } from '/@/components/rx-icon'
 
 const themeStore = useThemeStore()
 const signFormRef = useTemplateRef('signForm')
@@ -220,42 +221,47 @@ provideLoginContext({
 
 <template>
   <div class="flex w-full h-100vh">
-    <div class="w-45% h-full relative bg-[var(--colors-background-bg-page)]">
-      <div class="flex justify-between p-5">
-        <div class="logo">
-          <SvgIcon name="base/logo" size="36" />
-          <div class="logo-text">
-            RoxyBrowser
+    <div class="w-45% h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
+      <div class="relative z-10 h-full">
+        <div class="flex justify-between p-5">
+          <div class="logo">
+            <SvgIcon name="base/logo" size="36" />
+            <div class="logo-text">
+              RoxyBrowser
+            </div>
           </div>
+          <LanguageSelect />
         </div>
-        <LanguageSelect />
+
+        <div class="sign-card">
+          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
+            @register="val => signFormSwitchRegister = val" />
+          <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
+          <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
+        </div>
+
+        <div class="footer">
+          <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
+            <template #terms>
+              <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+            </template>
+            <template #policy>
+              <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
+            </template>
+          </i18n-t>
+        </div>
+
+        <AnimatePresence>
+          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
+            :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+            :transition="{ duration: 0.2 }" class="app-updater-motion">
+            <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div class="sign-card">
-        <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
-          @register="val => signFormSwitchRegister = val" />
-        <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
-        <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
-      </div>
-
-      <div class="footer">
-        <i18n-t :keypath="$t('注册或登录即表示您同意我们的 {terms} 和 {policy} 。', { terms: '{terms}', policy: '{policy}' })">
-          <template #terms>
-            <a :href="getOfficialWebsite('copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
-          </template>
-          <template #policy>
-            <a :href="getOfficialWebsite('copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
-          </template>
-        </i18n-t>
-      </div>
-
-      <AnimatePresence>
-        <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
-          :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
-          :transition="{ duration: 0.2 }" class="app-updater-motion">
-          <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
-        </motion.div>
-      </AnimatePresence>
+      <RxSvgIcon name="login/blob1" class="text-[60vw] z-9 absolute -bottom-60% -left-60%" />
+      <RxSvgIcon name="login/blob2" class="text-[60vw] z-9 absolute -bottom-60% -right-50%" />
     </div>
 
     <div class="w-55% h-full relative right-panel">
