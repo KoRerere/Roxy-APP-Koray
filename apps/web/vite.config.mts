@@ -164,7 +164,7 @@ const config: UserConfig = {
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: tag => tag.includes('rich-text'),
+          isCustomElement: tag => tag.startsWith('rx-'),
         },
       },
     }),

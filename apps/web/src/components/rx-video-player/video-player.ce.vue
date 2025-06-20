@@ -111,32 +111,30 @@ function formatTime(time: number): string {
 
 <template>
   <div ref="videoPlayer" class="video-player" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
-    <video ref="video" class="w-full" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause"
+    <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause"
       @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay" />
 
     <!-- 控件 -->
-    <div class="controls"
-      :class="{ 'opacity-0': !showControls && isPlaying, 'opacity-100': showControls || !isPlaying }">
+    <div class="controls" :class="{ hide: !showControls && isPlaying }">
       <!-- 进度条 -->
-      <input v-model="currentTime" type="range" min="0" :max="duration" step="0.1" @input="seek">
+      <input v-model="currentTime" type="range" min="0" :max="duration" step="any" @input="seek">
 
-      <div class="w-full flex items-center justify-between space-x-4">
+      <div class="control-tools">
         <!-- 播放/暂停按钮 -->
-        <button class="text-white" @click.stop="togglePlay">
-          <span v-if="!isPlaying">⏵</span>
-          <span v-else>⏸</span>
-        </button>
+        <div :class="{ 'playing-btn': isPlaying }" class="control-btn" @click.stop="togglePlay">
+          <rx-svg-icon :name="isPlaying ? 'base/rx_ic_pause2' : 'base/rx_ic_play'" size="24" />
+        </div>
 
-        <div class="flex items-center space-x-4">
+        <div class="control-right">
           <!-- 时间显示 -->
-          <div class="text-sm min-w-[60px] text-right">
+          <div class="time-text">
             {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
           </div>
 
           <!-- 全屏 -->
-          <button @click="toggleFullscreen">
-            ⛶
-          </button>
+          <div class="control-btn" @click="toggleFullscreen">
+            <rx-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
+          </div>
         </div>
       </div>
     </div>
@@ -144,6 +142,10 @@ function formatTime(time: number): string {
 </template>
 
 <style lang="scss" scoped>
+* {
+  box-sizing: border-box;
+}
+
 input[type='range'] {
   width: 100%;
   height: 4px;
@@ -175,22 +177,73 @@ input[type='range'] {
   overflow: hidden;
   // 不知为何底部会空出6px，所以需要clip-path
   clip-path: inset(0 0 6px 0 round 0 0 8px 8px);
+  margin-bottom: -6px;
+}
+
+.video {
+  width: 100%;
 }
 
 .controls {
   position: absolute;
-  bottom: 0;
+  bottom: 6px;
   left: 0;
   width: 100%;
   display: flex;
+  gap: 8px;
   color: #fff;
   height: 72px;
-  padding: 12px 20px 20px 20px;
+  padding: 12px 20px;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
   align-self: stretch;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%);
+
+  &.hide {
+    opacity: 0;
+  }
+}
+
+.control-tools {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-btn {
+  cursor: pointer;
+  display: flex;
+  padding: 6px;
+  align-items: center;
+  gap: 10px;
+
+  rx-svg-icon {
+    display: inline-flex;
+  }
+}
+
+.playing-btn {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.time-text {
+  color: #fff;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  user-select: none;
 }
 </style>

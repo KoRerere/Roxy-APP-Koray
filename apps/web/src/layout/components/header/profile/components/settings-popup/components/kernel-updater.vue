@@ -98,7 +98,7 @@ const handleRemove = (event: MouseEvent, item: ResourceUpdateMessage) => {
           </div>
         </div>
         <div class="updater-content">
-          <rich-text :html="item?.upgradeContent" />
+          <rx-rich-text :html="item?.upgradeContent" />
         </div>
       </div>
     </template>

@@ -4,6 +4,8 @@ import '@unocss/reset/normalize.css'
 import 'primeicons/primeicons.css'
 import 'uno.css'
 import { setupGlobalMethods } from '/@/globalMethods'
+import VideoPlayer from './components/rx-video-player'
+import RxSvgIcon from './components/rx-icon'
 
 // import { browserTracingIntegration, init as initSentryElectron, replayIntegration } from '@sentry/electron/renderer'
 // import { init as initSentryVue } from '@sentry/vue'
@@ -18,6 +20,8 @@ import { setupRouter } from '/@/router'
 import { setupPrimeVue } from '/@/primevue'
 
 const app = createApp(App);
+app.use(VideoPlayer)
+app.use(RxSvgIcon)
 setupGlobalMethods(app)
 // https://docs.sentry.io/platforms/javascript/guides/electron/#configure
 // initSentryElectron({

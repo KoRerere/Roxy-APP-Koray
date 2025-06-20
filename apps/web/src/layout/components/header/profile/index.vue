@@ -171,13 +171,13 @@ function showLogoutConfirm() {
       severity: 'danger',
     },
     slots: {
-      default: () => <>{$t('点击继续退出将关闭所有窗口。')}</>
+      default: () => <>{$t('点击【继续】将关闭所有窗口并退出')}</>
     },
     async handleOk() {
       await electronAPI.send('browser:closeAll')
       resolve(true)
     },
-    async handleCancel() {
+    handleCancel() {
       resolve(false)
     }
   })
