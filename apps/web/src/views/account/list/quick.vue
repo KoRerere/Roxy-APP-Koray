@@ -34,7 +34,7 @@ function handleSave() {
       <RyTable v-model:selection="selection" :multiple-operation="false" selection-mode="multiple" :table-request="tableRequest" :columns="columns" :show-table-header="false" :show-display="false"
         :context-menu="false" :show-actions="false">
         <template #platform="{ data: row }">
-          <div class="flex gap-2 account">
+          <div class="flex gap-2 select-none account">
             <div>
               <platformIcon v-if="row.platformIcon" :platformIcon="row.platformIcon" :platformIconDark="row.platformIconDark" class="w-4 h-4" />
               <RxSvgIcon v-else name="base/rx_ic_user_key" color="var(--colors-icon-icon-tertiary, #7C8387)" />
@@ -51,7 +51,7 @@ function handleSave() {
           </div>
         </template>
         <template #remark="{ data }">
-          <RxSvgIcon v-if="data.platformRemarks" v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
+          <RxSvgIcon v-tooltip.top="{ value: data.platformRemarks, showDelay: 500 }" :name="data.platformRemarks ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
             :class="{ 'color-[#12A3FC]': data.platformRemarks }" />
         </template>
       </RyTable>

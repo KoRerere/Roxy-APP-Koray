@@ -171,7 +171,7 @@ function saveSelected() {
           <CustomEmpty icon="rx_illustration_star.svg" :title="$t('暂无代理')" />
         </template>
         <template #proxy="{ data: row }">
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 select-none">
             <div class="proxy-host">
               <span>{{ strConcat(row.protocol?.toLocaleLowerCase(), '://') }}</span>
               <span>{{ row.host }}</span>
@@ -185,15 +185,15 @@ function saveSelected() {
           </div>
         </template>
         <template #outbound="{ data }">
-          <OutboundIp :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data.id]" :is-loading="data.loadingOperationMap?.test" />
+          <OutboundIp class="select-none" :country="data.lastCountry" :city="data.lastCity" :last-ip="data.lastIp" :time="data.checkTime" :status="testStatus[data.id]"
+            :is-loading="data.loadingOperationMap?.test" />
         </template>
         <template #remark="{ data: row }">
           <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
         </template>
         <template #bounded="{ data: row }">
-          <div class="bounded">
-            <RxInputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="1" :step="1">
-            </RxInputNumber>
+          <div class="bounded" @click.stop>
+            <RxInputNumber v-model="boundeds[row.id].value" :disabled="boundeds[row.id].disabled" :min="1" :step="1"></RxInputNumber>
           </div>
         </template>
         <template #actions="{ data: row }">

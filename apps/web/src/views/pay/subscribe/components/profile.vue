@@ -92,8 +92,8 @@ function showIllustrate(event: Event) {
         <span class="sub-title">{{ $t('窗口数量') }}</span>
         <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate"></SvgIcon>
       </div>
-      <RxStep size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
-        :beforeMinus="onBeforeMinus" @change="onChangeCount" @update:modelValue="onUpdate"></RxStep>
+      <RxStepInput size="lg" class="!w-40" v-model="selectedCount!" :min="min ?? tiersList[1].start" :max="max ?? tiersList[tiersList.length - 1].end" :step="step" :beforePlus="onBeforePlus"
+        :beforeMinus="onBeforeMinus" @change="onChangeCount" @update:modelValue="onUpdate"></RxStepInput>
     </div>
     <RyPopover ref="popover">
       <Illustrate v-if="list" :data="list"></Illustrate>

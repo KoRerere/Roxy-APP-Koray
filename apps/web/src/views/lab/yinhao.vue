@@ -276,81 +276,17 @@ const filters = reactive({
   resetFilters() {
   },
 })
-//=======================================
-import { VueDraggable } from 'vue-draggable-plus'
-import { API } from '/@/api';
-const columns2 = [
-  { title: "Tomato 🍅", key: 'id' },
-  { title: "Lettuce 🥬", key: 'name' },
-  { title: "Cheese 🧀", key: 'category' },
-  { title: "Carrot 🥕", key: 'quantity' }
-]
-
-const datalist2 = ref(Array.from({ length: 7 }, (_, index) => ({
-  id: `${index + 1}`,
-  name: `mamba_${index}`,
-  category: `category_${index}`,
-  quantity: 'actions',
-})))
-
-const pinCount = ref(0)
-
-const onRowReorder = ({ dropIndex, value }: any) => {
-  if (dropIndex >= pinCount.value) {
-    return
-  }
-  datalist2.value = value;
-};
-
-async function getDatalist() {
-  const { data } = await API.limit.userGetProjectInfoByWorkspaceList({ default: 2 })
-  pinCount.value = data.rows.reduce((sum, item) => sum += item.pinStatus ?? 0, 0)
-}
-
-onMounted(() => {
-  getDatalist()
-})
-
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start gap-4 w-full h-full">
-    <!-- <div class="flex flex-col gap-2">
-      <RxAlert announcement title="wcis man!" type="success"></RxAlert>
-      <RxAlert title="wcis man!" type="info"></RxAlert>
-      <RxAlert title="wcis man!" type="warn"></RxAlert>
-      <RxAlert title="wcis man!" type="error"></RxAlert>
-    </div> -->
     <!-- <wcisTable displayKey="wcisman" :table-filters="tableFilters" v-model:columns="columns" :model="originalModel" :data-list="datalist" selection-mode="multiple"></wcisTable> -->
     <!-- <div class="flex flex-col justify-center items-center gap-2 w-full h-full">
       <TsForm class="sm:w-56" ref="wcisman" id="wcis" :inputs="inputs" @submit="onFormSubmit"></TsForm>
       <RxButton class="sm:w-56" type="submit" outlined severity="secondary" label="Submit" form="wcis" />
       <RxButton label="test submit" @click="noFormIdSubmit"></RxButton>
     </div> -->
-    <div class="w-240 h-160" :class="[`drag-${pinCount}`]">
-      <RyTable :reorderableColumns="true" @rowReorder="onRowReorder" :columns="columns2" :data-list="datalist2" show-gridlines :show-table-header="false" :show-actions="false" :paginator="false">
-        <template #column-before>
-          <Column headerStyle="width:44px" rowReorder>
-            <template #rowreordericon>
-              <SvgIcon class="hidden drag-mark p-datatable-reorderable-row-handle" data-pc-section="reorderablerowhandle" name="base/rx_ic_dots_drag"></SvgIcon>
-            </template>
-          </Column>
-        </template>
-      </RyTable>
-    </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-@for $i from 1 through 5 {
-  .drag-#{$i} {
-    :deep(.p-datatable-tbody) {
-      @for $j from 0 through $i - 1 {
-        tr[data-p-index="#{$j}"] .drag-mark {
-          display: block;
-        }
-      }
-    }
-  }
-}
-</style>
+<style lang="scss" scoped></style>

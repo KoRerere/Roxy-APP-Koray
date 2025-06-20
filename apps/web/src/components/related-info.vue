@@ -30,7 +30,7 @@ const bindData = computed(() => {
     <RxTag v-for="item in bindData.showList" :key="item" :icon="icon" :label="item" :disabled="disabled" />
     <RxTag v-if="bindData.count" v-tooltip.top="{ value: bindData.tooltip, showDelay: 500 }" :label="`+${bindData.count}`" disabled />
   </div>
-  <div v-else>
+  <div class="select-none" v-else>
     <slot name="empty">
       --
     </slot>
