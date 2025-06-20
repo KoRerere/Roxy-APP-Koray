@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { $t } from '/@/locales'
+
 interface Props {
   src: string
 }
@@ -8,10 +10,12 @@ const props = defineProps<Props>()
 const videoPlayerRef = useTemplateRef('videoPlayer')
 const videoRef = useTemplateRef('video')
 const isPlaying = ref(false)
-const showControls = ref(true)
+const showControls = ref(false)
 const duration = ref(0)
 const currentTime = ref(0)
 const isFullscreen = ref(false)
+const isPlayError = ref(false)
+const isTryReLoading = ref(false)
 
 const percentage = computed(() => {
   return `${(currentTime.value - 0) / (duration.value - 0) * 100}%`
@@ -43,6 +47,8 @@ function onPause() {
 
 function onPlay() {
   isPlaying.value = true
+  isPlayError.value = false
+  isTryReLoading.value = false
 }
 
 function onLoadedMetadata() {
@@ -107,15 +113,28 @@ function formatTime(time: number): string {
   const seconds = Math.floor(time % 60)
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 }
+
+function onPlayError() {
+  isPlayError.value = true
+  isTryReLoading.value = false
+}
+
+function reloadVideo() {
+  isTryReLoading.value = true
+  videoRef.value?.load()
+  videoRef.value?.play().catch(err => {
+    console.error('重新播放失败：', err);
+  });
+}
 </script>
 
 <template>
   <div ref="videoPlayer" class="video-player" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
     <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause"
-      @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay" />
+      @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay" @error="onPlayError" />
 
     <!-- 控件 -->
-    <div class="controls" :class="{ hide: !showControls && isPlaying }">
+    <div class="controls" :class="{ hide: !showControls || isPlayError }">
       <!-- 进度条 -->
       <input v-model="currentTime" type="range" min="0" :max="duration" step="any" @input="seek">
 
@@ -138,12 +157,32 @@ function formatTime(time: number): string {
         </div>
       </div>
     </div>
+
+    <!-- 播放错误蒙层 -->
+    <div v-if="isPlayError" class="play-error-mask">
+      <div class="play-error-mask-content">
+        <div class="play-error-mask-content-title">
+          {{ $t('糟糕！我们丢失了这个视频') }}
+        </div>
+        <div class="play-error-mask-content-text">
+          {{ $t('网络连接已断开。') }}
+        </div>
+        <div class="play-error-mask-content-btn" @click="reloadVideo">
+          <rx-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
+          {{ isTryReLoading ? $t('加载中...') : $t('重试') }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 * {
   box-sizing: border-box;
+}
+
+rx-svg-icon {
+  display: inline-flex;
 }
 
 input[type='range'] {
@@ -200,6 +239,7 @@ input[type='range'] {
   flex-shrink: 0;
   align-self: stretch;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%);
+  transition: opacity 0.15s ease-in-out;
 
   &.hide {
     opacity: 0;
@@ -226,10 +266,6 @@ input[type='range'] {
   padding: 6px;
   align-items: center;
   gap: 10px;
-
-  rx-svg-icon {
-    display: inline-flex;
-  }
 }
 
 .playing-btn {
@@ -245,5 +281,82 @@ input[type='range'] {
   font-weight: 500;
   line-height: 24px;
   user-select: none;
+}
+
+.play-error-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.6) 100%),
+    url(<path-to-image>) lightgray 0px -23.885px / 100.401% 124.178% no-repeat;
+
+  .play-error-mask-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .play-error-mask-content-title {
+    color: #FFF;
+    text-align: center;
+    font-family: Inter;
+    font-size: 24px;
+  }
+
+  .play-error-mask-content-text {
+    color: #FFF;
+    text-align: center;
+    font-family: Inter;
+    font-size: 16px;
+  }
+
+  .play-error-mask-content-btn {
+    display: flex;
+    min-width: 88px;
+    padding: 10px var(--spacing-2xl, 16px);
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-lg, 8px);
+    border-radius: var(--radius-lg, 8px);
+    border: 1px solid var(--colors-border-border-action, #C7D1D6);
+    background: var(--colors-background-bg-action, #FFF);
+    /* shadow-sm */
+    box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    color: #111213;
+    text-align: center;
+    font-family: Inter;
+    font-size: var(--Font-Size-text-lg, 14px);
+    font-style: normal;
+    font-weight: 500;
+    line-height: var(--Line-Height-text-lg, 20px);
+
+    .loading {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -3,6 +3,7 @@
 import type { ExtendedWindow } from '@livechat/widget-core'
 import type { ElectronAPI } from '@roxy/electron-preload'
 import type { OverridedMixpanel } from 'mixpanel-browser'
+import type RxSvgIcon from '@/components/rx-icon'
 
 declare global {
   var electronAPI: ElectronAPI
@@ -22,5 +23,6 @@ declare module 'vue' {
     // 自定义元素的名称中需要连字符，
     // 因此请在此处使用连字符元素名称。
     'rx-video-player': typeof VideoPlayer
+    'rx-svg-icon': typeof RxSvgIcon
   }
 }
