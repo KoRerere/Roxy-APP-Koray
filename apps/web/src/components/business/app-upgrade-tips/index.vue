@@ -2,7 +2,7 @@
 import { $t } from '/@/locales';
 
 const props = defineProps<{
-  newFeatureTips: string[]
+  newFeatureTips: Record<string, any>[]
 }>()
 
 const emit = defineEmits<{
@@ -10,7 +10,6 @@ const emit = defineEmits<{
 }>()
 const features = ref(props.newFeatureTips)
 const page = ref(0)
-const appUpgradeTipsRef = useTemplateRef<HTMLDivElement>('appUpgradeTips')
 
 const nextText = computed(() => {
   return page.value === features.value.length - 1 ? $t('完成') : $t('下一个')
@@ -42,22 +41,6 @@ function handleNext() {
 function handlePrev() {
   page.value = Math.max(page.value - 1, 0)
 }
-
-// setTimeout(() => {
-//   appUpgradeTipsRef.value?.querySelectorAll('video').forEach(video => {
-//     // 视频设置自动播放，并且静音，同时隐藏控制器，只保留全屏按钮
-//     video.muted = true
-//     video.controls = false
-//     video.disablePictureInPicture = false
-//     video.setAttribute('controls', 'false')
-//     video.setAttribute('disablePictureInPicture', 'false')
-//     video.setAttribute('muted', 'true')
-//     video.setAttribute('autoplay', 'true')
-//     video.setAttribute('loop', 'true')
-//     video.setAttribute('controlslist', 'nodownload noremoteplayback noplaybackrate nopictureinpicture')
-//     video.play()
-//   })
-// }, 100)
 
 </script>
 

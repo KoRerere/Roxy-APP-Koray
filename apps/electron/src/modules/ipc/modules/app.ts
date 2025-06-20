@@ -175,7 +175,7 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
   /** 获取新功能提示 */
   ipcMain.on("app:getNewFeatureTips", (event) => {
     const { version, newFeatureTips } = appUpdater.getUpdateMessageData()
-    // return newFeatureTips?.[store.language] || []
+    return newFeatureTips?.[store.language] || []
 
     if (store.showNewFeatureTips && version && compare(app.getVersion(), version, '>=')) {
       return newFeatureTips?.[store.language]?.[0]?.content ? newFeatureTips?.[store.language] : []

@@ -114,6 +114,11 @@ function formatTime(time: number): string {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 }
 
+// 剩余播放时间，格式为：0:15
+const remainingTime = computed(() => {
+  return formatTime(duration.value - currentTime.value)
+})
+
 function onPlayError() {
   isPlayError.value = true
   isTryReLoading.value = false
@@ -132,6 +137,11 @@ function reloadVideo() {
   <div ref="videoPlayer" class="video-player" @mouseenter="showControls = true" @mouseleave="handleMouseLeave">
     <video ref="video" class="video" :src="src" autoplay muted loop @timeupdate="updateTime" @pause="onPause"
       @play="onPlay" @loadedmetadata="onLoadedMetadata" @click="togglePlay" @error="onPlayError" />
+
+    <!-- 剩余播放时间 -->
+    <div v-if="!showControls && !isPlayError" class="remaining-time">
+      {{ remainingTime }}
+    </div>
 
     <!-- 控件 -->
     <div class="controls" :class="{ hide: !showControls || isPlayError }">
@@ -221,6 +231,24 @@ input[type='range'] {
 
 .video {
   width: 100%;
+}
+
+.remaining-time {
+  position: absolute;
+  left: 16px;
+  bottom: 18px;
+  display: flex;
+  padding: 2px 10px;
+  align-items: flex-end;
+  gap: 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.80);
+  color: #FFF;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
 }
 
 .controls {
@@ -326,7 +354,7 @@ input[type='range'] {
   .play-error-mask-content-btn {
     display: flex;
     min-width: 88px;
-    padding: 10px var(--spacing-2xl, 16px);
+    padding: 8px var(--spacing-2xl, 16px);
     justify-content: center;
     align-items: center;
     gap: var(--spacing-lg, 8px);
