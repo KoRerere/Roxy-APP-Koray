@@ -66,9 +66,9 @@ function openFile() {
 
 <template>
   <input :key="id" type="file" accept="application/zip" @change="handleFileChange">
-  <rx-button :disabled="!file" size="small" @click="uploadFile">
+  <RxButton :disabled="!file" size="small" @click="uploadFile">
     确认上传
-  </rx-button>
+  </RxButton>
   <details v-if="uploadResult.saveDir" class="flex flex-1 ml-3">
     <summary>
       解压成功： <a class="cursor-pointer" @click="openFile">{{ uploadResult.saveDir }}</a>
