@@ -6,7 +6,7 @@ const VideoPlayerElement = defineCustomElement(VideoPlayer)
 
 export default {
   install(app: App) {
-    customElements.define('rx-video-player', VideoPlayerElement)
+    customElements.define('roxy-video-player', VideoPlayerElement)
   }
 }
 

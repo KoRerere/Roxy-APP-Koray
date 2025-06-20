@@ -17,4 +17,4 @@ const MyVueElement = defineCustomElement({
 // 注册自定义元素
 // 注册之后，所有此页面中的 `<my-vue-element>` 标签
 // 都会被升级
-customElements.define("rx-rich-text", MyVueElement);
+customElements.define("roxy-rich-text", MyVueElement);

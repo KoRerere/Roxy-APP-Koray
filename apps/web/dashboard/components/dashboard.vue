@@ -173,7 +173,7 @@ onBeforeMount(() => {
             <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew"
               class="btn" :label="$t('刷新 URL')" outlined :disabled="refreshUrlLoading || testProxyLoading"
               @click="refreshURL" />
-            <RxButton v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')"
+            <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="$t('测试代理')"
               outlined :disabled="refreshUrlLoading || testProxyLoading" @click="proxyDetection" />
           </div>
         </Teleport>

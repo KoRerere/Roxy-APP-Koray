@@ -151,7 +151,7 @@ function reloadVideo() {
       <div class="control-tools">
         <!-- 播放/暂停按钮 -->
         <div :class="{ 'playing-btn': isPlaying }" class="control-btn" @click.stop="togglePlay">
-          <rx-svg-icon :name="isPlaying ? 'base/rx_ic_pause2' : 'base/rx_ic_play'" size="24" />
+          <roxy-svg-icon :name="isPlaying ? 'base/rx_ic_pause2' : 'base/rx_ic_play'" size="24" />
         </div>
 
         <div class="control-right">
@@ -162,7 +162,7 @@ function reloadVideo() {
 
           <!-- 全屏 -->
           <div class="control-btn" @click="toggleFullscreen">
-            <rx-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
+            <roxy-svg-icon :name="isFullscreen ? 'base/rx_ic_flod' : 'base/rx_ic_expand'" size="24" />
           </div>
         </div>
       </div>
@@ -178,7 +178,7 @@ function reloadVideo() {
           {{ $t('网络连接已断开。') }}
         </div>
         <div class="play-error-mask-content-btn" @click="reloadVideo">
-          <rx-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
+          <roxy-svg-icon name="base/rx_ic_refresh" size="16" :class="{ 'loading': isTryReLoading }" />
           {{ isTryReLoading ? $t('加载中...') : $t('重试') }}
         </div>
       </div>
@@ -191,7 +191,7 @@ function reloadVideo() {
   box-sizing: border-box;
 }
 
-rx-svg-icon {
+roxy-svg-icon {
   display: inline-flex;
 }
 

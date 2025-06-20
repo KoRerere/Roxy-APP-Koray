@@ -10,6 +10,6 @@ const RxSvgIconElement = defineCustomElement(RxSvgIconCE)
 
 export default {
   install(app: App) {
-    customElements.define('rx-svg-icon', RxSvgIconElement)
+    customElements.define('roxy-svg-icon', RxSvgIconElement)
   }
 }

@@ -21,7 +21,7 @@ const formatFeatures = computed(() => {
       ...item,
       content: item.content.replace(
         /<video[^>]*>\s*<source\s+src="([^"]+)"[^>]*><\/video>/gi,
-        (_, src) => `<rx-video-player src="${src}" />`
+        (_, src) => `<roxy-video-player src="${src}" />`
       )
     }
   })

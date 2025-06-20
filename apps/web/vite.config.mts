@@ -164,7 +164,7 @@ const config: UserConfig = {
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: tag => tag.startsWith('rx-'),
+          isCustomElement: tag => tag.startsWith('roxy-'),
         },
       },
     }),
