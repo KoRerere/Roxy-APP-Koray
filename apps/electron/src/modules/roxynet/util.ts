@@ -73,6 +73,9 @@ export async function delRoxynetProxy(dirId: string) {
  * 2. 检测到新的系统代理
  */
 export async function setSystemProxy() {
+  if (!getRoxynetProcess()) {
+    return
+  }
   const params = {
     addr: await getSystemProxy(true),
     protocal: 'http',

@@ -10,6 +10,7 @@ import { isMac, isPackaged, isWindows } from '/@/constants/common'
 import { intoLaunchPage, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { appUpdater } from '/@/modules/updater'
 import { isWebReady } from '/@/utils'
+import { store } from '/@/modules/store'
 
 // 获取 GPU 信息
 // app.getGPUFeatureStatus()
@@ -146,6 +147,9 @@ function initAppEvent() {
   })
 
   app.on('before-quit', async (event) => {
+    if (store.token) {
+      store.lastLoginTime = Date.now()
+    }
     if (!isSyncBrowserData) {
       event.preventDefault()
       try {
