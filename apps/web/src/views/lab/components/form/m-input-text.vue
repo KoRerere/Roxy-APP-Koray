@@ -2,10 +2,8 @@
 import type { InputTextProps } from 'primevue/inputtext'
 import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
-
 interface Props extends /* @vue-ignore */ Omit<InputTextProps, 'size'> {
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   icon?: SvgNames
   preIcon?: SvgNames
   fluid?: boolean

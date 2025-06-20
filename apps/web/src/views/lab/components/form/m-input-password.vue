@@ -1,21 +1,31 @@
 <script setup lang="ts">
 import type { PasswordProps } from 'primevue/password'
-
-type Size = 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
+import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
 
 interface Props extends /* @vue-ignore */PasswordProps {
-  size?: Size
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
+  preIcon?: SvgNames
   fluid?: boolean
+  fieldProps?: Record<string, any>,
   feedback?: boolean
   toggleMask?: boolean
 }
 
-const { size = 'sm', fluid = true, toggleMask = true, feedback = false, ...props } = defineProps<Props>()
+const { size = 'sm', preIcon, fieldProps, fluid = true, toggleMask = true, feedback = false, ...props } = defineProps<Props>()
+
+defineEmits(['preIconClick'])
+
+const attrs = useAttrs()
 
 </script>
 
 <template>
-  <Password :class="size" :fluid="fluid" :feedback="feedback" :toggle-mask="toggleMask" v-bind="props" />
+  <IconField class="w-full" :class="size" v-bind="fieldProps">
+    <InputIcon v-if="preIcon">
+      <RxSvgIcon class="cursor-pointer" :name="preIcon" @click="$emit('preIconClick')" />
+    </InputIcon>
+    <Password :fluid="fluid" :feedback="feedback" :toggle-mask="toggleMask" v-bind="{ ...attrs, ...props }" />
+  </IconField>
 </template>
 
 <style lang="scss" scoped>

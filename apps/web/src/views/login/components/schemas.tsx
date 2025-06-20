@@ -1,6 +1,8 @@
 import type { z } from 'zod'
 import { defineFormSchema } from '/@/components/rx-form/'
 import { $t } from '/@/locales'
+import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
+import TsFormInputPassword from '/@/views/lab/components/form/m-input-password.vue'
 
 export function getRegisterValidation(z: z.ZodString) {
   const tip = $t('必须包含数字和字母，6-20位')
@@ -17,9 +19,11 @@ export function getFormSchemas(isRegister = false) {
     ...getEmailSchemas(isRegister),
     {
       field: 'password',
-      component: 'Password',
-      label: () => $t('密码'),
+      component: ({ formModel }) => {
+        return <TsFormInputPassword v-model={formModel.value.password}></TsFormInputPassword>
+      },
       componentProps: {
+        preIcon: 'base/rx_ic_unlock',
         feedback: false,
         toggleMask: true,
         placeholder: () => isRegister ? $t('请设置您的密码') : $t('请输入您的密码'),
@@ -42,9 +46,11 @@ export function getEmailSchemas(isRegister = false) {
   return defineFormSchema([
     {
       field: 'user_name',
-      component: 'InputText',
-      label: $t('邮箱'),
+      component: ({ formModel }) => {
+        return <TsFormInputText v-model={formModel.value.user_name}></TsFormInputText>
+      },
       componentProps: {
+        preIcon: 'base/rx_ic_mail',
         placeholder: $t('请输入您的邮箱'),
       },
       rule: {

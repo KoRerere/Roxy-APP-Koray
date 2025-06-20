@@ -221,7 +221,7 @@ provideLoginContext({
 
 <template>
   <div class="flex w-full h-100vh">
-    <div class="w-45% h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
+    <div class="w-47% h-full relative bg-[var(--colors-background-bg-page)] overflow-hidden">
       <div class="relative z-10 h-full">
         <div class="flex justify-between p-5">
           <div class="logo">
@@ -234,8 +234,7 @@ provideLoginContext({
         </div>
 
         <div class="sign-card">
-          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
-            @register="val => signFormSwitchRegister = val" />
+          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
         </div>
@@ -252,19 +251,17 @@ provideLoginContext({
         </div>
 
         <AnimatePresence>
-          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
-            :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
             :transition="{ duration: 0.2 }" class="app-updater-motion">
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <RxSvgIcon name="login/blob1" class="text-[60vw] z-9 absolute -bottom-60% -left-60%" />
-      <RxSvgIcon name="login/blob2" class="text-[60vw] z-9 absolute -bottom-60% -right-50%" />
+      <RxSvgIcon name="login/blob1" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -left-60%" />
+      <RxSvgIcon name="login/blob2" class="opacity-40 text-[60vw] z-9 absolute -bottom-60% -right-50%" />
     </div>
-
-    <div class="w-55% h-full relative right-panel">
+    <div class="w-53% h-full relative overflow-hidden right-panel">
       <RightIntro />
     </div>
   </div>
@@ -280,8 +277,8 @@ provideLoginContext({
   padding: 12px;
   gap: 8px;
   border-radius: 4px;
-  border: 0.5px solid var(--colors-border-border-base, #AFB7BB);
-  background: var(--colors-background-bg-action, #FFF);
+  border: 0.5px solid var(--colors-border-border-base);
+  background: var(--colors-background-bg-action);
   box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
   cursor: pointer;
 }

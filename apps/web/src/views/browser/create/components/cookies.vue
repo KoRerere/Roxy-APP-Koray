@@ -40,7 +40,7 @@ function onBlur(event: any) {
 
 <template>
   <RxAccordion :class="attrs.class">
-    <AccordionPanel value="open" :pt="{ root: 'border-dashed' }">
+    <AccordionPanel value="open" :pt="{ root: '!border-dashed' }">
       <AccordionHeader as="div" #default="{ active }">
         <div class="flex items-center gap-3 header">
           <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>

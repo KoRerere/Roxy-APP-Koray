@@ -86,7 +86,7 @@ function onCopy(dirId: string) {
         </template>
       </RyForm>
       <RxAccordion :value="accordions.value" multiple>
-        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: 'border-dashed' }">
+        <AccordionPanel v-for="(panels, index) in accordions.panels" :key="panels.title" :value="panels.value" :pt="{ root: '!border-dashed' }">
           <AccordionHeader as="div" #default="{ active }">
             <div class="flex items-center gap-3 header">
               <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20"></SvgIcon>
