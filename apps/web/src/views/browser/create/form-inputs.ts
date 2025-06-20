@@ -5,7 +5,6 @@ import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { createDefaultObject, filterInputsByNames, findInputByName, getDictMap, getFormDataByList, getUserAgentOs, initInputVisible, isEmptyValue, setInputFieldByInputKey, setInputValueByFormData, setInputVisible, safeParseJSON } from '/@/utils'
 import { z } from "zod";
-import { getDefaultWindowName } from './utils'
 import { AccountBindType } from '/@/enums/account'
 
 const userStore = useUserStore()
@@ -95,8 +94,6 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
     ios: 'platforms/rx_os_iOS',
   } as const
 
-  const defaultWindowName = getDefaultWindowName()
-
   const getCoreVersionOptions = (os: string, version: string) => {
     return os?.toLocaleLowerCase() === 'windows' && ['7', '8'].includes(version?.at(0)!)
       ? $dict_map.coreVersion.filter((item: any) => item.value === '109')// win7，win8 只有 109 内核版本  
@@ -148,22 +145,17 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { })
 
   const windowInputs = reactive([
     {
-      label: $t('窗口 ID'),
-      value: data.dirId,
-      visible: !!data.dirId,
-      slot: 'profileId',
-    },
-    {
       type: 'text',
       label: $t('窗口名称'),
       name: 'windowName',
-      class: '!w-1/2',
       value: data.windowName ?? '',
+      dirId: data.dirId ?? '',
       placeholder: $t('未命名窗口'),
       formatValue: (input: any, _inputs: any, formData: any) => {
         Object.assign(formData, { windowNamePrefix: input.value })// 窗口名称前缀，批量创建时会用到
         return input.value
-      }
+      },
+      slot: 'name',
     },
     {
       label: $t('系统 & 内核'),

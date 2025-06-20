@@ -210,12 +210,6 @@ const getExportColumns = async () => {
       placeholder: $t('此处填写该浏览器窗口的备注信息! '),
       example: ''
     },
-    // {
-    //   header: $t('窗口尺寸'),
-    //   key: 'windowSize',
-    //   placeholder: $t('浏览器窗口打开时的默认窗口大小, 留空则按默认1000*1000打开。\n格式为: 长度*高度'),
-    //   example: `${exampleText}: 1000*1000`
-    // },
     {
       header: 'User-Agent',
       key: 'userAgent',
@@ -420,6 +414,8 @@ export async function parseTextFile(file: File) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const content = e.target?.result;
+      if (!content) return resolve([])
+
       getExportColumns().then(columns => {
         const keys = columns.map(column => column.key)
         const result = (content as string)!.replace(/#{4,}/g, '####').split('####').map((text, index) => {
@@ -431,7 +427,7 @@ export async function parseTextFile(file: File) {
           const { cookie, defaultOpenUrl, windowPlatformList, ...data } = Object.fromEntries(textFmt)
 
           // 历史原因特殊处理 ios
-          if (data.os.toLocaleUpperCase() === 'IOS') {
+          if (data.os?.toLocaleUpperCase() === 'IOS') {
             data.os = data.os.toLocaleUpperCase()
           }
 

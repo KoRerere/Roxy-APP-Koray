@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxInputSelect from '/@/components/ry-form/rx-input-select.vue'
+import RxInputText from '/@/components/ry-form/rx-input-text.vue'
 import Position from '/@/views/browser/create/components/position.vue'
 import AccountItem from './account.vue'
 import ProxyItem from './proxy.vue'
@@ -40,13 +41,16 @@ function onCopy(dirId: string) {
     <div v-if="accordions" class="flex-1 overflow-auto pb-4 content">
       <slot name="before"></slot>
       <RyForm class="profile-info" v-if="settings.basic?.length" :inputs="settings.basic">
-        <template #profileId="{ input }">
-          <div class="flex items-center justify-between px-4">
-            <InputLabel v-bind="input" />
-            <div>
-              <span class="dir-id">{{ input.value }}</span>
-              <span class="text-3 color-blue-500 ml-2 cursor-pointer" @click="onCopy(input.value)">Copy</span>
+        <template #name="{ input }">
+          <div class="flex flex-col px-4">
+            <div class="flex items-center justify-between">
+              <InputLabel v-bind="input" />
+              <div class="flex items-center gap-2.5 mb-2 dir-id" v-if="!!input.dirId">
+                <span>ID:{{ input.dirId }}</span>
+                <span class="color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
+              </div>
             </div>
+            <RxInputText v-model="input.value" v-bind="input" />
           </div>
         </template>
         <template #system="{ input }">
