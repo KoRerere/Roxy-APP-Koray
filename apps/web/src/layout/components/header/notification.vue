@@ -54,7 +54,7 @@ onBeforeMount(() => {
 
 function toggle(event: Event) {
   getMessageList()
-  const popIns = pop.value.getRef()
+  const popIns = pop.value?.instance
   popIns.toggle(event)
   if (popIns.visible) {
     tabs.value.some(tab => {
@@ -174,13 +174,11 @@ function showAcceptInvitationDialog(item: Message) {
           <div :class="message.title">
             {{ $t('通知') }}
           </div>
-          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')"
-            @click="markAllAsRead" />
+          <RxButton severity="secondary" :class="message.read" size="sm" text icon="base/rx_ic_done" :label="$t('全部已读')" @click="markAllAsRead" />
         </div>
         <Tabs v-model:value="tabsValue">
           <TabList :pt="{ tablist: 'px-4 gap-4 h-[40px]', activeBar: '!h-[2px]' }">
-            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value"
-              class="flex flex-1 justify-center items-center gap-1.5">
+            <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="flex flex-1 justify-center items-center gap-1.5">
               <span>{{ tab.title }}</span>
               <Badge v-if="tab.noRead" :value="tab.noRead" severity="danger" size="small" />
             </Tab>
@@ -188,11 +186,9 @@ function showAcceptInvitationDialog(item: Message) {
           <TabPanels class="!pa-0 min-h-[100px] max-h-[280px] overflow-auto">
             <TabPanel v-for="tab in tabs" :key="tab.title" :value="tab.value">
               <template v-if="tab.list?.length">
-                <div v-for="item in tab.list" :key="item.id" class="flex"
-                  :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
+                <div v-for="item in tab.list" :key="item.id" class="flex" :class="[message.item, !item.status && message.noRead]" @click="onRead(item)">
                   <div :class="[message.avatar, !item.status && message.badge]">
-                    <RxAvatar class="cursor-pointer mr-2"
-                      :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
+                    <RxAvatar class="cursor-pointer mr-2" :avatar="item.avatar || (item.messageModule === 'sys' && item.sysType === 1 ? '/images/system-notice-avatar.png' : '')"
                       :name="item.userName?.slice(0, 2)" :color="item.avatarColor" :size="32" :font-size="18" />
                   </div>
                   <div class="w-full">
@@ -201,8 +197,7 @@ function showAcceptInvitationDialog(item: Message) {
                       <span>{{ item.createTime }}</span>
                       <span v-if="item.paramData" :class="message['check-detail']" @click="checkDetail(item)">{{
                         $t('查看详情') }}</span>
-                      <span v-if="item.windowTransferNo" :class="message['check-detail']"
-                        @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
+                      <span v-if="item.windowTransferNo" :class="message['check-detail']" @click="checkTransfer(item)">{{ $t('查看详情') }}</span>
                     </div>
                   </div>
                 </div>

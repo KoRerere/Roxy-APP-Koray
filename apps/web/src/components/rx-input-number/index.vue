@@ -18,22 +18,21 @@ const number = defineModel<number>()
 <style lang="scss">
 .rx-input-number {
   &.p-inputnumber {
-    border-radius: var(--Component-Colors-TextInput-radius-radius-md, 6px);
-    border: 1px solid var(--colors-border-border-base, #c7cdd1);
-    background: var(--colors-background-bg-action, #fff);
+    border-radius: 6px;
+    border: 1px solid var(--colors-border-border-base);
+    background: var(--colors-background-bg-action);
 
     .p-inputnumber-input {
       padding: 0;
       border: none;
-      color: var(--colors-text-text-primary, #111213);
+      color: var(--colors-text-text-primary);
       text-align: center;
-      font-family: Inter;
       font-size: 12px;
-      line-height: var(--Line-Height-text-lg, 20px);
+      line-height: 20px;
     }
 
     .p-inputnumber-button {
-      padding: var(--spacing-md, 6px);
+      padding: 6px;
       width: auto;
       border: none;
     }

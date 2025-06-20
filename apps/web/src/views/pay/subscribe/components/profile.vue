@@ -61,7 +61,7 @@ function onBeforeMinus(value: number) {
 }
 
 function showIllustrate(event: Event) {
-  popoverRef.value!.getRef()?.toggle(event)
+  popoverRef.value?.instance?.toggle(event)
 }
 
 </script>

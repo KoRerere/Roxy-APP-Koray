@@ -4,15 +4,13 @@ const popoverRef = useTemplateRef('popover')
 const slots: any = useSlots()
 
 defineExpose({
-  getRef() {
-    return popoverRef.value
-  },
+  instance: popoverRef,
   show(event: Event, target?: EventTarget) {
     popoverRef.value?.show(event, target)
   },
   hide() {
     popoverRef.value?.hide()
-  }
+  },
 })
 </script>
 
@@ -47,7 +45,7 @@ defineExpose({
   padding: var(--spacing-lg, 8px) 10px;
   align-items: center;
   gap: var(--spacing-lg, 8px);
-  border-top: 0.5px solid var(--component-dropdown-divider, #6A757C);
+  border-top: 0.5px solid var(--component-dropdown-divider, #6a757c);
 
   &:empty {
     display: none;

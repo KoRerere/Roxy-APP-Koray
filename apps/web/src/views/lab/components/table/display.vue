@@ -8,7 +8,7 @@ const columns = defineModel<any[]>({ default: [] })
 const popRef = useTemplateRef('popover')
 
 function toggle(event: Event) {
-  popRef.value?.getRef()?.toggle(event)
+  popRef.value?.instance?.toggle(event)
 }
 </script>
 

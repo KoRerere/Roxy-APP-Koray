@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RxInputNumber from '/@/components/ry-form/rx-input-number.vue'
+import TsFormInputNumber from '/@/views/lab/components/form/m-input-number.vue'
 import RxButton from '/@/components/rx-button/index.vue'
 import { isLikeFunction } from '/@/utils'
 
@@ -8,7 +8,7 @@ defineOptions({
 })
 
 interface Props {
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
   minusProps?: any
   plusProps?: any
   step?: number
@@ -82,7 +82,7 @@ async function _onPlus() {
         <SvgIcon name="base/rx_ic_minus"></SvgIcon>
       </template>
     </RxButton>
-    <RxInputNumber v-model="currentValue" :disabled="disabled" :min="min" :max="max" :step="step" :size="size" v-bind="$attrs" />
+    <TsFormInputNumber v-model="currentValue" :disabled="disabled" :min="min" :max="max" :step="step" :size="size" v-bind="$attrs" />
     <RxButton class="step-plus" v-bind="plusProps" outlined severity="secondary" :size="size" :disabled="isPlusDisabled" @click="_onPlus">
       <template #icon>
         <SvgIcon name="base/rx_ic_plus"></SvgIcon>
@@ -93,8 +93,8 @@ async function _onPlus() {
 
 <style scoped lang="scss">
 .step {
-  border: 1px solid var(--colors-border-border-action, #C7CDD1);
-  background: var(--colors-background-bg-action, #FFF);
+  border: 1px solid var(--colors-border-border-action);
+  background: var(--colors-background-bg-action);
 
   &.lg {
     border-radius: var(--radius-lg, 8px);
