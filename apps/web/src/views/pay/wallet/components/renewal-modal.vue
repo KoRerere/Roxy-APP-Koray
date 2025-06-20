@@ -207,7 +207,7 @@ function close(isCancel: boolean) {
         </ItemBlock>
         <Blance v-if="selectedPayway === PayWay.Balance" :need-pay-amount="totalAmount"></Blance>
       </div>
-      <Detail class="w-90" :list="detail">
+      <Detail class="w-80" :list="detail">
         <template #oldprice="{ item }">
           <div class="flex justify-between">
             <div class="details-label">{{ item.label }}</div>

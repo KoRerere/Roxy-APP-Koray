@@ -1109,8 +1109,8 @@ export const components = {
   checkbox: {
     root: {
       borderRadius: '{border.radius.sm}',
-      width: '1.25rem',
-      height: '1.25rem',
+      width: '1rem',
+      height: '1rem',
       background: '{form.field.background}',
       checkedBackground: '{primary.color}',
       checkedHoverBackground: '{primary.hover.color}',

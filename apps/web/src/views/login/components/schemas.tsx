@@ -23,6 +23,7 @@ export function getFormSchemas(isRegister = false) {
         return <TsFormInputPassword v-model={formModel.value.password}></TsFormInputPassword>
       },
       componentProps: {
+        size: 'lg',
         preIcon: 'base/rx_ic_unlock',
         feedback: false,
         toggleMask: true,
@@ -50,6 +51,7 @@ export function getEmailSchemas(isRegister = false) {
         return <TsFormInputText v-model={formModel.value.user_name}></TsFormInputText>
       },
       componentProps: {
+        size: 'lg',
         preIcon: 'base/rx_ic_mail',
         placeholder: $t('请输入您的邮箱'),
       },

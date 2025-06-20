@@ -403,7 +403,7 @@ async function importProfile(params: any) {
     <RxTabs v-model:value="tabsValue" :tabs="tabs" only-tabs></RxTabs>
     <div class="flex flex-1 justify-center px-32 overflow-hidden">
       <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex gap-12 overflow-hidden">
+        <div class="flex-1 flex gap-8 overflow-hidden">
           <div class="flex-1 flex flex-col">
             <div v-if="tabsValue === 'multi'" class="mx-4 py-4 multiple">
               <div class="flex items-center justify-between">

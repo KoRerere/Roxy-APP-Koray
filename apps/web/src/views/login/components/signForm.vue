@@ -89,7 +89,7 @@ defineExpose({
     </div>
   </div>
   <div class="login-ways">
-    <RxButton :loading="submitLoading" type="button" size="md" class="w-full" @click="handleSubmit">
+    <RxButton :loading="submitLoading" type="button" size="lg" class="w-full" @click="handleSubmit">
       {{ isRegister ? $t('注册') : $t('登录') }}
     </RxButton>
     <div class="divider">

@@ -138,7 +138,7 @@ function updateCurrentMembers(member: Record<string, any>) {
       <div class="title">{{ $t('成员邮箱') }}</div>
       <div class="w-full flex items-center gap-2">
         <div class="flex-1 relative">
-          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="absolute right-2 top-1/2 -translate-y-1/2 z-1" />
+          <RoleSplit v-model="roleValue" :disabled="!isNewMember" class="!absolute right-2 top-1/2 -translate-y-1/2 z-1" />
           <RxAutoComplete class="w-full" v-model="memberValue" size="lg" optionLabel="email" placeholder="Email" :suggestions="filteredMembers" @complete="onSearch" @option-select="onOptionSelect"
             :pt="{ overlay: filteredMembers.length > 0 ? 'block' : 'hidden' }">
             <template #option="{ option }">

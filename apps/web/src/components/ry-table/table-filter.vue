@@ -49,8 +49,8 @@ function onFilterChange() {
 
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
-    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false" v-bind="item"
-      @change="onMultiChange" @hide="onMultiHide">
+    <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="mw-150" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false"
+      :pt="{ list: 'text-3.5' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide">
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>

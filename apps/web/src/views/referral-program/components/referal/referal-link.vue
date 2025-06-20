@@ -160,6 +160,7 @@ function isLocked(linkStatus: number) {
         border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s ease;
+        font-size: 14px;
 
         &:is(:hover, .active) {
           color: var(--pattern-sidenav-text-active, #3FB6FD);

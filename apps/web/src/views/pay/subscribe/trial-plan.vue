@@ -148,7 +148,7 @@ async function onSubscribe() {
           <AdvancedFeat :plan="selectedPlan" class="py-8 border-0 border-t border-dashed border-[var(--colors-border-divider-dashed)]">
           </AdvancedFeat>
         </div>
-        <Detail class="w-88" :list="details">
+        <Detail class="w-80" :list="details">
           <template #oldprice="{ item }">
             <div class="flex justify-between">
               <div class="details-label">{{ item.label }}</div>

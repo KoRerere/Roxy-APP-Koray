@@ -85,7 +85,7 @@ function oldFieldsFormat() {
     <ViewsHeader show-back :title="$t('编辑窗口')" />
     <div class="flex flex-1 justify-center px-32 overflow-hidden">
       <div class="w-full flex flex-col" :class="[collapsed ? ' min-w-[768px] max-w-[768px]' : ' min-w-[960px] max-w-[1140px]']">
-        <div class="flex-1 flex gap-12 overflow-hidden">
+        <div class="flex-1 flex gap-8 overflow-hidden">
           <AccordionInputs :windowInfo="windowInfo" :accordions="accordions" :inputs-group="inputsGroup">
             <template #before>
               <div class="flex items-center justify-between px-4 py-4 subtitle">{{ $t('窗口信息') }}</div>
