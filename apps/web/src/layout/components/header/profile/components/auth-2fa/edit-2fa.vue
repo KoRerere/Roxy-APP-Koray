@@ -20,11 +20,11 @@ const handleViewCode = () => {
   const dialogInstance = showAuth2FA({
     header: $t('确认访问'),
     handleOk: async () => {
-      visibleQRCode.value = true;
       const res = await API.base.userGetValidatorTokenList()
       onlyErrorToast(res.code, res.msg)
       if (res.code === 0) {
         dialogInstance.handleCancel()
+        visibleQRCode.value = true;
         code2FA.value = '';
         qrcode2FA.qrcode = res.data.google_keyuri;
         qrcode2FA.secret = res.data.secret;
@@ -34,7 +34,13 @@ const handleViewCode = () => {
 }
 
 const reset2FA = async () => {
-  visibleQRCode.value = false;
+  const res = await API.base.userUpdateValidatorTokenCreate({
+    code: qrcode2FA.code
+  })
+  onlyErrorToast(res.code, res.msg);
+  if (res.code === 0) {
+    visibleQRCode.value = false;
+  }
 }
 </script>
 

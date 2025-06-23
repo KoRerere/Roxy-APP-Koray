@@ -11,6 +11,8 @@
  */
 
 import {
+  Check2FaLoginVerifyListData,
+  Check2FaLoginVerifyListParams,
   UserAddLabelInfoCreateData,
   UserAddLabelInfoCreatePayload,
   UserAddWindowFilterNameCreateData,
@@ -1004,6 +1006,26 @@ export class WindowApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Window
+   * @name Check2FaLoginVerifyList
+   * @summary 2FA登录验证
+   * @request GET:/check_2fa_login_verify
+   * @response `200` `Check2FaLoginVerifyListData`
+   */
+  check2FaLoginVerifyList = (
+    query: Check2FaLoginVerifyListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<Check2FaLoginVerifyListData, any>({
+      path: `/check_2fa_login_verify`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

@@ -1542,7 +1542,9 @@ export interface LoginCreateData {
     user_name: string;
     user_id: number;
     role: string;
+    /** 旧字段，是否迁移数据 */
     is_migrate: boolean;
+    workspaceId: number;
   };
   msg: string;
 }
@@ -2509,7 +2511,7 @@ export interface CheckOtherDeviceLoginListParams {
    * 登录类型
    * @example "login/google/github"
    */
-  login_type: string;
+  login_type?: string;
   /**
    * 登录token：google/github token
    * @example ""
@@ -3009,6 +3011,15 @@ export interface UserGetValidatorInfoListData {
     /** 恢复代码 */
     recoverCode: string[];
   };
+  msg: string;
+}
+
+export interface UserUpdateValidatorTokenCreatePayload {
+  code: string;
+}
+
+export interface UserUpdateValidatorTokenCreateData {
+  code: number;
   msg: string;
 }
 
@@ -4455,6 +4466,33 @@ export interface UserMdfWindowDataBatchCreatePayload {
 
 export interface UserMdfWindowDataBatchCreateData {
   code: number;
+  msg: string;
+}
+
+export interface Check2FaLoginVerifyListParams {
+  /**
+   * 临时token
+   * @example "U1rTwPewi9hDCHKK1750662524108"
+   */
+  temp_token: string;
+  /**
+   * 2fa验证码
+   * @example "123434"
+   */
+  fa_code: string;
+}
+
+export interface Check2FaLoginVerifyListData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
   msg: string;
 }
 

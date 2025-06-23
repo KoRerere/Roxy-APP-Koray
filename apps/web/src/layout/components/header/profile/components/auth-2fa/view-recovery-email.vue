@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useAuth2FA } from './useAuth2FA'
 import { API } from '/@/api'
-import { RxAlert } from '/@/components/rx-alert'
-import { RxSvgIcon } from '/@/components/rx-icon'
 import { $t } from '/@/locales'
 import RecoveryEmail from './recovery-email.vue'
 import Action from './action.vue'
@@ -21,38 +19,53 @@ const visibleChangeEmail = ref(false)
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const handleViewCode = () => {
-  showAuth2FA({
+  const dialogInstance = showAuth2FA({
     header: $t('查看恢复邮箱'),
     handleOk: async () => {
-      // const res = await API.base.userPersonalVerifyValidatorCodeList({
-      //   code: code2FA.value
-      // })
-      // onlyErrorToast(res.code, res.msg)
-      // if (res.code === 0) {
-      //   email2FA.value = res.data.email;
-      //   visible.value = true;
-      // }
+      const res = await API.base.userGetValidatorInfoList({
+        code: code2FA.value
+      })
+      onlyErrorToast(res.code, res.msg)
+      if (res.code === 0) {
+        email2FA.value = res.data.recoverEmail;
+        dialogInstance.handleCancel()
+        visible.value = true;
+      }
     }
   })
 }
 
 const changeEmail = () => {
+  visible.value = false;
   visibleChangeEmail.value = true;
 };
 
 const sendCodeRequest = async () => {
   const res = await API.base.userSendValidatorEmailVerifyCodeList({
-    email: email2FA.value,
+    email: email2FACode.email,
     type: 'modify'
   })
   onlyErrorToast(res.code, res.msg)
   if (res.code === 0) {
     showToast(0, $t('验证码已发送'))
   }
+  return res;
 }
 
 const handleConfirm = () => {
+  visible.value = false;
+}
 
+const handleChangeEmail = async () => {
+  const res = await API.base.userValidatorBindCreate({
+    recover_type: 'email',
+    recover_email: email2FACode.email,
+    ver_code: email2FACode.code
+  })
+  onlyErrorToast(res.code, res.msg);
+  if (res.code === 0) {
+    visibleChangeEmail.value = false;
+  }
 }
 </script>
 <template>
@@ -80,7 +93,7 @@ const handleConfirm = () => {
     <RecoveryEmail v-model="email2FACode" :sendCodeRequest="sendCodeRequest" />
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="" />
+        <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="handleChangeEmail" />
         <RxButton :label="$t('取消')" severity="secondary" class="w-full" outlined />
       </div>
     </template>

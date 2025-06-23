@@ -118,6 +118,8 @@ import {
   UserSetUserConfigCreatePayload,
   UserUnbindEmailCreateData,
   UserUnbindEmailCreatePayload,
+  UserUpdateValidatorTokenCreateData,
+  UserUpdateValidatorTokenCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
   UserValidatorBindCreateData,
@@ -1473,6 +1475,27 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/user_get_validator_info`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserUpdateValidatorTokenCreate
+   * @summary 更新验证器的token
+   * @request POST:/user_update_validator_token
+   * @response `200` `UserUpdateValidatorTokenCreateData`
+   */
+  userUpdateValidatorTokenCreate = (
+    data: UserUpdateValidatorTokenCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdateValidatorTokenCreateData, any>({
+      path: `/user_update_validator_token`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
