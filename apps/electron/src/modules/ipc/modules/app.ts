@@ -188,6 +188,13 @@ export function setupAppIpc(ipcMain: IPCMainInstance) {
     store.showNewFeatureTips = false
   });
 
+  /** 是否显示长时间未登录提示 */
+  ipcMain.on("app:isShowLongTimeNotLoginTips", (event) => {
+    const isShow = store.showLongTimeNotLoginTips || false
+    store.showLongTimeNotLoginTips = false
+    return isShow
+  });
+
   /** 开启系统代理 */
   ipcMain.on("app:setProxy", async (event, payload: Config) => {
     const mainWindow = getMainWindow()!;

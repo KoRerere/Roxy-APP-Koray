@@ -191,6 +191,15 @@ electronAPI.send('app:getGPUFeatureStatus').then((res) => {
   isSupportGPU.value = res['2d_canvas'] === 'enabled' && res['webgl'] === 'enabled'
 })
 
+electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
+  console.log('isShowLongTimeNotLoginTips', res)
+  if (res) {
+    setPassword('')
+    signFormData.value.password = ''
+    toast.add({ severity: 'info', summary: 'Info', detail: $t('您已长时间未登录，请重新登录'), life: 5000 })
+  }
+})
+
 // 如果app有更新
 window.electronAPI.on('app:resource-update', (data) => {
   if (data.type === 'app') {
@@ -234,7 +243,8 @@ provideLoginContext({
         </div>
 
         <div class="sign-card">
-          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
+          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
+            @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
         </div>
@@ -251,7 +261,8 @@ provideLoginContext({
         </div>
 
         <AnimatePresence>
-          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
+            :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
             :transition="{ duration: 0.2 }" class="app-updater-motion">
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>

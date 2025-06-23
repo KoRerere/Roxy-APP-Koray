@@ -286,8 +286,8 @@ async function checkHttpProxy(
   let proxyConfig;
 
   if (host) {
-    const auth = proxyUserName ? `${proxyUserName}:${proxyPassword}@` : '';
-    const httpUrl = encodeURI(`${protocol}://${auth}${host}:${port}`);
+    const auth = encodeAuth(proxyUserName, proxyPassword);
+    const httpUrl = `${protocol}://${auth}${host}:${port}`;
     const Agent = checkChannelIsHttp ? HttpProxyAgent : HttpsProxyAgent
     proxyConfig = {
       [checkChannelIsHttp ? "httpAgent" : "httpsAgent"]: new Agent(
@@ -321,12 +321,8 @@ async function checkSocks5Proxy(parmes: any) {
   const { proxyUserName, proxyPassword, host, port, checkChannel } = parmes;
   logProxyConfig(parmes, `socket5`);
 
-  let auth = `${proxyUserName}:${proxyPassword}@`;
-  if (proxyUserName === `` || proxyPassword === ``) {
-    auth = ``;
-  }
-
-  const url = encodeURI(`socks5h://${auth}${host}:${port}`);
+  const auth = encodeAuth(proxyUserName, proxyPassword);
+  const url = `socks5h://${auth}${host}:${port}`;
   console.log(`SocksProxyAgent url`, url);
   const agent = new SocksProxyAgent(url, commonAxiosConfig);
 
@@ -340,6 +336,16 @@ async function checkSocks5Proxy(parmes: any) {
   });
 
   return response.data;
+}
+
+function encodeAuth(proxyUserName: string, proxyPassword: string) {
+  if (proxyUserName && proxyPassword) {
+    // 正确编码用户名和密码中的特殊字符
+    const encodedUserName = encodeURIComponent(proxyUserName);
+    const encodedPassword = encodeURIComponent(proxyPassword);
+    return `${encodedUserName}:${encodedPassword}@`;
+  }
+  return ``;
 }
 
 export async function detectNetwork(type?: "local" | "system") {

@@ -158,6 +158,8 @@ export interface RenderMessage {
   "app:hideNewFeatureTips": () => void;
   /** 设置系统主题 */
   "app:setSystemTheme": (theme: NativeTheme['themeSource']) => void;
+  /** 是否显示长时间未登录提示 */
+  "app:isShowLongTimeNotLoginTips": () => boolean;
 
   /** 下载指定插件 */
   "extension:download": (
