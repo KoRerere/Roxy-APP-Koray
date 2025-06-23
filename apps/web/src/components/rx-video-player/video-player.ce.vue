@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { $t } from '/@/locales'
+import { useEventListener } from '@vueuse/core'
 
 interface Props {
   src: string
@@ -131,6 +132,13 @@ function reloadVideo() {
     console.error('重新播放失败：', err);
   });
 }
+
+// 监听空格键
+useEventListener(document, 'keydown', (e) => {
+  if (e.key === ' ') {
+    togglePlay()
+  }
+})
 </script>
 
 <template>

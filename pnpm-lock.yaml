@@ -208,8 +208,8 @@ importers:
         specifier: ^8.0.5
         version: 8.0.5
       systeminformation:
-        specifier: ^5.27.4
-        version: 5.27.4
+        specifier: ^5.27.6
+        version: 5.27.6
       terser-webpack-plugin:
         specifier: ^5.3.14
         version: 5.3.14(webpack@5.99.9)
@@ -5849,8 +5849,8 @@ packages:
     resolution: {integrity: sha512-JJoOEKTfL1urb1mDoEblhD9NhEbWmq9jHEMEnxoC4ujUaZ4itA8vKgwkFAyNClgxplLi9tsUKX+EduK0p/l7sg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  systeminformation@5.27.4:
-    resolution: {integrity: sha512-MEXSqGvEI09PVYbZ9NAQ0a+n9PCtYr1ZErJgxX9QJ/yuu5KAzXWS+QQ1pcLzfJv/50gD+UehKj9zDERm+BpCIw==}
+  systeminformation@5.27.6:
+    resolution: {integrity: sha512-9gmEXEtFp8vkewF8MLo69OmYBf0UpvGnqfAQs0kO+dgJRyFuCDxBwX53NQj4p/aV4fFmJQry+K1LLxPadAgmFQ==}
     engines: {node: '>=8.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -12730,7 +12730,7 @@ snapshots:
       '@pkgr/core': 0.1.2
       tslib: 2.8.1
 
-  systeminformation@5.27.4: {}
+  systeminformation@5.27.6: {}
 
   tapable@2.2.2: {}
 

@@ -3,7 +3,7 @@ import AdmZip from 'adm-zip'
 import { stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { TaskMap, TaskQueueItem, ZipPayload } from './taskTypes'
-import systeminformation from 'systeminformation'
+import si from 'systeminformation'
 import { createHash } from 'node:crypto'
 import { exec } from 'node:child_process'
 
@@ -109,14 +109,13 @@ function getCompressedSize(dest: string) {
 /** 生成设备唯一 ID */
 const genDeviceId = async () => {
   console.time('获取设备 ID 耗时')
-  const queue = [systeminformation.system(), systeminformation.baseboard(), systeminformation.diskLayout()] as const
-  const [sys, baseboard, disk] = await Promise.all(queue)
+  const queue = [si.uuid(), si.diskLayout()] as const
+  const [uuid, disk,] = await Promise.all(queue)
 
-  console.debug('sys.uuid', sys.uuid)
-  console.debug('baseboard.serial', baseboard.serial)
+  console.debug('sys.uuid', uuid)
   console.debug('disk[0]?.serialNum', disk[0]?.serialNum)
 
-  const uniqueString = `${sys.uuid || await getDeviceUuid()}-${baseboard.serial}-${disk[0]?.serialNum || ""}`;
+  const uniqueString = `${uuid.os || await getDeviceUuid()}-${uuid.hardware}-${uuid.macs[0]}-${disk[0]?.serialNum || ""}}`;
   const deviceId = createHash("sha256").update(uniqueString).digest("hex");
   console.timeEnd('获取设备 ID 耗时')
   console.debug("设备唯一 ID:", deviceId);
