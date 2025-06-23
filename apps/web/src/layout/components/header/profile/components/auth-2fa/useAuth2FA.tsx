@@ -1,15 +1,15 @@
-import { useDialog, type UseDialogProps } from "/@/hooks/useDialog"
+import { useDialog, type UseDialogProps, type UseDialogInstance } from "/@/hooks/useDialog"
 import { $t } from "/@/locales"
 import Verify2FA from "./verify-2fa.vue"
 import type { Ref } from "vue"
 import RxButton from '/@/components/rx-button'
 
-export const useAuth2FA = (): [(options: UseDialogProps) => void, Ref<string>] => {
+export const useAuth2FA = (): [(options: UseDialogProps) => UseDialogInstance, Ref<string>] => {
   const [showModal] = useDialog()
   const code = ref<string>('')
 
   const showAuth2FA = (options: UseDialogProps) => {
-    showModal({
+    return showModal({
       header: $t('确认访问'),
       style: {
         width: '384px',

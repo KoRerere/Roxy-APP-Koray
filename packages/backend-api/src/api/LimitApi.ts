@@ -171,62 +171,6 @@ export class LimitApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Limit
-   * @name UserGetProjectInfoByWorkspaceList
-   * @summary 获取当前用户所拥有的项目及成员
-   * @request GET:/user_get_project_info_by_workspace
-   * @response `200` `UserGetProjectInfoByWorkspaceListData`
-   */
-  userGetProjectInfoByWorkspaceList = (
-    query: UserGetProjectInfoByWorkspaceListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
-      path: `/user_get_project_info_by_workspace`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Limit
-   * @name UserGetMemberInfoByProjectIdList
-   * @summary 根据项目ID获取成员
-   * @request GET:/user_get_member_info_by_project_id
-   * @response `200` `UserGetMemberInfoByProjectIdListData`
-   */
-  userGetMemberInfoByProjectIdList = (
-    query: UserGetMemberInfoByProjectIdListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetMemberInfoByProjectIdListData, any>({
-      path: `/user_get_member_info_by_project_id`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Limit
-   * @name UserGetTopProjectInfoList
-   * @summary 获取当前用户所拥有的置顶项目信息
-   * @request GET:/user_get_top_project_info
-   * @response `200` `UserGetTopProjectInfoListData`
-   */
-  userGetTopProjectInfoList = (params: RequestParams = {}) =>
-    this.http.request<UserGetTopProjectInfoListData, any>({
-      path: `/user_get_top_project_info`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Limit
    * @name UserAddProjectInfoCreate
    * @summary 新增项目
    * @request POST:/user_add_project_info
@@ -269,20 +213,39 @@ export class LimitApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Limit
-   * @name UserDelProjectInfoCreate
-   * @summary 删除项目
-   * @request POST:/user_del_project_info
-   * @response `200` `UserDelProjectInfoCreateData`
+   * @name UserGetProjectInfoByWorkspaceList
+   * @summary 获取当前用户所拥有的项目及成员
+   * @request GET:/user_get_project_info_by_workspace
+   * @response `200` `UserGetProjectInfoByWorkspaceListData`
    */
-  userDelProjectInfoCreate = (
-    data: UserDelProjectInfoCreatePayload,
+  userGetProjectInfoByWorkspaceList = (
+    query: UserGetProjectInfoByWorkspaceListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserDelProjectInfoCreateData, any>({
-      path: `/user_del_project_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
+    this.http.request<UserGetProjectInfoByWorkspaceListData, any>({
+      path: `/user_get_project_info_by_workspace`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetMemberInfoByProjectIdList
+   * @summary 根据项目ID获取成员
+   * @request GET:/user_get_member_info_by_project_id
+   * @response `200` `UserGetMemberInfoByProjectIdListData`
+   */
+  userGetMemberInfoByProjectIdList = (
+    query: UserGetMemberInfoByProjectIdListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetMemberInfoByProjectIdListData, any>({
+      path: `/user_get_member_info_by_project_id`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -325,6 +288,43 @@ export class LimitApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserDelProjectInfoCreate
+   * @summary 删除项目
+   * @request POST:/user_del_project_info
+   * @response `200` `UserDelProjectInfoCreateData`
+   */
+  userDelProjectInfoCreate = (
+    data: UserDelProjectInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDelProjectInfoCreateData, any>({
+      path: `/user_del_project_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Limit
+   * @name UserGetTopProjectInfoList
+   * @summary 获取当前用户所拥有的置顶项目信息
+   * @request GET:/user_get_top_project_info
+   * @response `200` `UserGetTopProjectInfoListData`
+   */
+  userGetTopProjectInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetTopProjectInfoListData, any>({
+      path: `/user_get_top_project_info`,
+      method: "GET",
       format: "json",
       ...params,
     });

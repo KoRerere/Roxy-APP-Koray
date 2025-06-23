@@ -28,7 +28,8 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const emailCode = ref('')
 
 const stepsRef = useTemplateRef<SetpsRef>('stepsRef')
-const currentSetp = ref('1')
+const defaultSetp = '1'
+const currentSetp = ref(defaultSetp)
 const steps = [
   {
     key: '1',
@@ -46,9 +47,12 @@ const steps = [
   }
 ]
 
-const qrcode = ref()
-const secret = ref()
-const faCode = ref('')
+const qrcode2FA = reactive({
+  qrcode: '',
+  secret: '',
+  code: '',
+})
+
 const close2faCode = ref('')
 
 const recoveryType = ref<'code' | 'email'>();
@@ -85,8 +89,8 @@ const verifyEmailCode = async () => {
     const res2 = await API.base.userGetValidatorTokenList();
     onlyErrorToast(res2.code, res2.msg)
     if (res2.code === 0) {
-      secret.value = res2.data.secret;
-      qrcode.value = res2.data.google_keyuri
+      qrcode2FA.secret = res2.data.secret;
+      qrcode2FA.qrcode = res2.data.google_keyuri
       visible2FA.value = true
     };
   }
@@ -95,7 +99,7 @@ const verifyEmailCode = async () => {
 const handleNext = async () => {
   if (currentSetp.value === '1') {
     const res = await API.base.userPersonalVerifyValidatorCodeList({
-      code: faCode.value,
+      code: qrcode2FA.code,
     })
     onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
@@ -106,6 +110,8 @@ const handleNext = async () => {
   if (currentSetp.value === '3') {
     const res = await API.base.userValidatorBindCreate({
       recover_type: recoveryType.value,
+      recover_email: recoveryEmail.email,
+      ver_code: recoveryEmail.code
     })
     onlyErrorToast(res.code, res.msg);
     if (res.code === 0) {
@@ -148,6 +154,7 @@ const verifyClose2FACode = async () => {
     visibleClose2FA.value = false;
     modelValue.value = false;
     props.onChange?.(false);
+    close2faCode.value = '';
   }
 }
 
@@ -156,10 +163,26 @@ const hideDialog = () => {
   visibleEmail.value = false;
   visible2FA.value = false;
   visibleClose2FA.value = false;
+  currentSetp.value = defaultSetp;
+  qrcode2FA.qrcode = '';
+  qrcode2FA.secret = '';
+  qrcode2FA.code = '';
+  close2faCode.value = ''
+  recoveryType.value = undefined
 }
 
 const sendRecoveryEmailCodeRequest = async () => {
-
+  if (recoveryEmail.email) {
+    const res = await API.base.userSendValidatorEmailVerifyCodeList({
+      email: recoveryEmail.email,
+      type: 'add'
+    })
+    onlyErrorToast(res.code, res.msg)
+    if (res.code === 0) {
+      showToast(0, $t('验证码已发送'))
+    }
+    return res;
+  }
 }
 
 </script>
@@ -185,7 +208,7 @@ const sendRecoveryEmailCodeRequest = async () => {
 
     <!-- 步骤一 -->
     <template v-if="currentSetp === '1'">
-      <QRCode2FA v-model="faCode" v-model:qrcode="qrcode" v-model:secret="secret" />
+      <QRCode2FA v-model="qrcode2FA" />
     </template>
 
     <!-- 步骤二 -->

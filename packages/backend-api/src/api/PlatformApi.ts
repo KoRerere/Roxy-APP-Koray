@@ -97,18 +97,86 @@ export class PlatformApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
+   * @description 字符串类型值：如果用户没有输入值就传空字符串
+   *
+   * @tags Platform
+   * @name UserAddPlatformInfoCreate
+   * @summary 业务平台新增
+   * @request POST:/user_add_platform_info
+   * @response `200` `UserAddPlatformInfoCreateData`
+   */
+  userAddPlatformInfoCreate = (
+    data: UserAddPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserAddPlatformInfoCreateData, any>({
+      path: `/user_add_platform_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
    * No description
    *
    * @tags Platform
-   * @name UserGetPlatformTableSortOrderList
-   * @summary 获取业务平台列表排序规则（暂时没有用到）
-   * @request GET:/user_get_platform_table_sort_order
-   * @response `200` `UserGetPlatformTableSortOrderListData`
+   * @name UserDelPlatformInfoCreate
+   * @summary 业务平台删除
+   * @request POST:/user_del_platform_info
+   * @response `200` `UserDelPlatformInfoCreateData`
    */
-  userGetPlatformTableSortOrderList = (params: RequestParams = {}) =>
-    this.http.request<UserGetPlatformTableSortOrderListData, any>({
-      path: `/user_get_platform_table_sort_order`,
-      method: "GET",
+  userDelPlatformInfoCreate = (
+    data: UserDelPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserDelPlatformInfoCreateData, any>({
+      path: `/user_del_platform_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 字符串类型值：如果用户没有输入值就传空字符串
+   *
+   * @tags Platform
+   * @name UserMdfPlatformInfoCreate
+   * @summary 业务平台修改
+   * @request POST:/user_mdf_platform_info
+   * @response `200` `UserMdfPlatformInfoCreateData`
+   */
+  userMdfPlatformInfoCreate = (
+    data: UserMdfPlatformInfoCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserMdfPlatformInfoCreateData, any>({
+      path: `/user_mdf_platform_info`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Platform
+   * @name UserUpdatePlatformTableRowsCreate
+   * @summary 修改业务平台表格列顺序
+   * @request POST:/user_update_platform_table_rows
+   * @response `200` `UserUpdatePlatformTableRowsCreateData`
+   */
+  userUpdatePlatformTableRowsCreate = (
+    data: UserUpdatePlatformTableRowsCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdatePlatformTableRowsCreateData, any>({
+      path: `/user_update_platform_table_rows`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -153,83 +221,15 @@ export class PlatformApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Platform
-   * @name UserUpdatePlatformTableRowsCreate
-   * @summary 修改业务平台表格列顺序
-   * @request POST:/user_update_platform_table_rows
-   * @response `200` `UserUpdatePlatformTableRowsCreateData`
+   * @name UserGetPlatformTableSortOrderList
+   * @summary 获取业务平台列表排序规则（暂时没有用到）
+   * @request GET:/user_get_platform_table_sort_order
+   * @response `200` `UserGetPlatformTableSortOrderListData`
    */
-  userUpdatePlatformTableRowsCreate = (
-    data: UserUpdatePlatformTableRowsCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserUpdatePlatformTableRowsCreateData, any>({
-      path: `/user_update_platform_table_rows`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description 字符串类型值：如果用户没有输入值就传空字符串
-   *
-   * @tags Platform
-   * @name UserAddPlatformInfoCreate
-   * @summary 业务平台新增
-   * @request POST:/user_add_platform_info
-   * @response `200` `UserAddPlatformInfoCreateData`
-   */
-  userAddPlatformInfoCreate = (
-    data: UserAddPlatformInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserAddPlatformInfoCreateData, any>({
-      path: `/user_add_platform_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description 字符串类型值：如果用户没有输入值就传空字符串
-   *
-   * @tags Platform
-   * @name UserMdfPlatformInfoCreate
-   * @summary 业务平台修改
-   * @request POST:/user_mdf_platform_info
-   * @response `200` `UserMdfPlatformInfoCreateData`
-   */
-  userMdfPlatformInfoCreate = (
-    data: UserMdfPlatformInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserMdfPlatformInfoCreateData, any>({
-      path: `/user_mdf_platform_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Platform
-   * @name UserDelPlatformInfoCreate
-   * @summary 业务平台删除
-   * @request POST:/user_del_platform_info
-   * @response `200` `UserDelPlatformInfoCreateData`
-   */
-  userDelPlatformInfoCreate = (
-    data: UserDelPlatformInfoCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserDelPlatformInfoCreateData, any>({
-      path: `/user_del_platform_info`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
+  userGetPlatformTableSortOrderList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPlatformTableSortOrderListData, any>({
+      path: `/user_get_platform_table_sort_order`,
+      method: "GET",
       format: "json",
       ...params,
     });

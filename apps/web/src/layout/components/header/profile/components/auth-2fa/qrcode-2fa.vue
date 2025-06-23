@@ -3,24 +3,29 @@ import QRCode from 'qrcode'
 import { copyText } from '/@/utils';
 import { RxSvgIcon } from '/@/components/rx-icon'
 
-const moduleValue = defineModel<string>('modelValue')
-const qrcode = defineModel<string>('qrcode')
-const secret = defineModel<string>('secret')
+const moduleValue = defineModel<{ qrcode: string, secret: string, code: string }>('modelValue', {
+  default: () => ({
+    qrcode: '',
+    secret: '',
+    code: '',
+  })
+})
+
 
 const base64 = ref('');
 
 const copied = ref(false)
 
 const onCopySecret = () => {
-  if (secret.value) {
+  if (moduleValue.value.secret) {
     copied.value = true
-    copyText(secret.value)
+    copyText(moduleValue.value.secret)
   }
 }
 
 const generateQrcode = async () => {
-  if (qrcode.value) {
-    const __base64 = await QRCode.toDataURL(qrcode.value)
+  if (moduleValue.value.qrcode) {
+    const __base64 = await QRCode.toDataURL(moduleValue.value.qrcode)
     base64.value = __base64
   }
 }
@@ -50,7 +55,7 @@ generateQrcode();
         $t('如果您无法扫描此二维码，请在应用中手动输入以下字符串') }}</div>
       <div
         class="flex items-center justify-center gap-4px text-center text-16px font-[JetBrains_Mono] font-500 text-[var(--colors-text-text-primary)]">
-        {{ secret }}
+        {{ moduleValue.secret }}
         <RxSvgIcon :name="copied ? 'base/rx_ic_check' : 'base/rx_ic_copy'" size="16px"
           :color="copied ? 'var(--colors-icon-icon-success)' : 'var(--colors-icon-icon-secondary)'"
           class="cursor-pointer" @click="onCopySecret" />
@@ -61,7 +66,7 @@ generateQrcode();
       {{ $t('步骤 2：从应用中验证二维码') }}
     </div>
 
-    <InputOtp class="inputotp-auto" name="passcode" :length="6" v-model="moduleValue" />
+    <InputOtp class="inputotp-auto" name="passcode" :length="6" v-model="moduleValue.code" />
   </div>
 </template>
 

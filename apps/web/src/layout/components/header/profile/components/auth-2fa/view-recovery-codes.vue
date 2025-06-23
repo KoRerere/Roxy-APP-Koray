@@ -14,15 +14,16 @@ const isGenerated = ref(false)
 const [showToast, onlyErrorToast] = useResponseToast()
 
 const handleViewCode = () => {
-  showAuth2FA({
+  const dialogInstance = showAuth2FA({
     header: $t('查看恢复代码'),
     handleOk: async () => {
-      console.log(code2FA.value)
       const res = await API.base.userGetValidatorInfoList({
         code: code2FA.value,
       })
       onlyErrorToast(res.code, res.msg);
       if (res.code === 0) {
+        code2FA.value = '';
+        dialogInstance.handleCancel()
         recoveryCodes.value = res.data.recoverCode
         visible.value = true
       }
@@ -40,14 +41,22 @@ const generateNewCode = async () => {
     recoveryCodes.value = res.data;
   }
 }
+
+const handleHide = () => {
+  recoveryCodes.value = [];
+  isGenerated.value = false;
+}
+
+const handleConfirm = () => {
+  visible.value = false;
+}
 </script>
 
 <template>
   <Action @click="handleViewCode" status="normal" v-bind="$attrs" />
 
-  <Dialog class="w-480px" v-model:visible="visible" :header="$t('恢复代码')" modal :draggable="false">
-    <RxAlert v-model:visible="isGenerated" class="!w-full checkermessage" type="success"
-      :title="$t('您的新代码已生成')">
+  <Dialog class="w-480px" v-model:visible="visible" :header="$t('恢复代码')" modal :draggable="false" @hide="handleHide">
+    <RxAlert v-model:visible="isGenerated" class="!w-full checkermessage" type="success" :title="$t('您的新代码已生成')">
       <template #content>
         {{ $t('请仔细保存您的新代码。请注意，旧代码将不再有效。') }}
       </template>
@@ -55,9 +64,8 @@ const generateNewCode = async () => {
     <RecoveryCodes v-model="recoveryCodes" />
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="" />
-        <RxButton :label="$t('生成新的恢复代码')" severity="secondary" class="w-full" @click="generateNewCode"
-          outlined />
+        <RxButton :label="$t('确认')" severity="primary" class="w-full" @click="handleConfirm" />
+        <RxButton :label="$t('生成新的恢复代码')" severity="secondary" class="w-full" @click="generateNewCode" outlined />
       </div>
     </template>
   </Dialog>

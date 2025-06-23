@@ -700,6 +700,35 @@ export interface UserGetWindowInfoV2ListData {
   msg: string;
 }
 
+export interface UserDelWindowInfoApiV2CreatePayload {
+  /** 要删除的窗口dirIds列表 */
+  dirIds: string[];
+}
+
+export interface UserDelWindowInfoApiV2CreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWindowInfoRandomV2CreatePayload {
+  dirId: string;
+}
+
+export interface UserMdfWindowInfoRandomV2CreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserClearWindowCacheApiV2CreatePayload {
+  /** 要清空的窗口dirId列表 */
+  dirIds: number[];
+}
+
+export interface UserClearWindowCacheApiV2CreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserAddWindowInfoV2CreatePayload {
   /**
    * 窗口名称，str，非必传
@@ -1477,35 +1506,6 @@ export interface UserMdfWindowInfoSingleV2CreateData {
   msg: string;
 }
 
-export interface UserDelWindowInfoApiV2CreatePayload {
-  /** 要删除的窗口dirIds列表 */
-  dirIds: string[];
-}
-
-export interface UserDelWindowInfoApiV2CreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserMdfWindowInfoRandomV2CreatePayload {
-  dirId: string;
-}
-
-export interface UserMdfWindowInfoRandomV2CreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserClearWindowCacheApiV2CreatePayload {
-  /** 要清空的窗口dirId列表 */
-  dirIds: number[];
-}
-
-export interface UserClearWindowCacheApiV2CreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserGetLabelInfoApiListParams {
   /**
    * 空间ID必填
@@ -1547,116 +1547,6 @@ export interface LoginCreateData {
   msg: string;
 }
 
-export interface LoginGoogleV2CreatePayload {
-  /** 传入谷歌登录token */
-  googleToken: string;
-}
-
-export interface LoginGoogleV2CreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-    /** 是否迁移 */
-    is_migrate: boolean;
-    /** 工作空间ID */
-    workspaceId: number;
-  };
-  msg: string;
-}
-
-export interface LoginGithubCreatePayload {
-  /** 传入github登录token */
-  githubToken: string;
-}
-
-export interface LoginGithubCreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-    /** 是否迁移 */
-    is_migrate: boolean;
-    /** 工作空间ID */
-    workspaceId: number;
-  };
-  msg: string;
-}
-
-export interface LoginFacebookCreatePayload {
-  /** 传入Facebook登录token */
-  facebookToken: string;
-}
-
-export interface LoginFacebookCreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-    /** 是否迁移 */
-    is_migrate: boolean;
-    /** 工作空间ID */
-    workspaceId: number;
-    /** 是否绑定邮箱, true:绑定,false:未绑定 */
-    isBindEmail: boolean;
-  };
-  msg: string;
-}
-
-export interface LoginVkCreatePayload {
-  /** 传入vk登录token */
-  vkToken: string;
-  /** 随机字符串，由 a-z, A-Z, 0-9, _ or -, 长度为 43 ~ 128之间 */
-  code_verifier: string;
-  device_id: string;
-  state: string;
-}
-
-export interface LoginVkCreateData {
-  code: number;
-  data: {
-    /** 登录token */
-    token: string;
-    /** 用户类型 */
-    type: number;
-    /** 用户邮箱 */
-    user_name: string;
-    /** 用户ID */
-    user_id: number;
-    /** 账号类型 */
-    role: string;
-    /** 是否迁移 */
-    is_migrate: boolean;
-    /** 工作空间ID */
-    workspaceId: number;
-  };
-  msg: string;
-}
-
 export interface PostBasePayload {
   /** 用户名 */
   user_name: string;
@@ -1669,19 +1559,6 @@ export interface PostBasePayload {
 }
 
 export interface PostBaseData {
-  code: number;
-  msg: string;
-}
-
-export interface SendEmailRegisterVerifyCodeListParams {
-  /**
-   * 邮箱
-   * @example "166533381@qq.com"
-   */
-  email: string;
-}
-
-export interface SendEmailRegisterVerifyCodeListData {
   code: number;
   msg: string;
 }
@@ -1713,22 +1590,25 @@ export interface ForgetPasswordCreateData {
   msg: string;
 }
 
+export interface SendEmailRegisterVerifyCodeListParams {
+  /**
+   * 邮箱
+   * @example "166533381@qq.com"
+   */
+  email: string;
+}
+
+export interface SendEmailRegisterVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
 export interface UserChangeAccountCreatePayload {
   /** 真实姓名 */
   realName: string;
 }
 
 export interface UserChangeAccountCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserChangeUsernameCreatePayload {
-  /** 用户名 */
-  userName: string;
-}
-
-export interface UserChangeUsernameCreateData {
   code: number;
   msg: string;
 }
@@ -1745,47 +1625,6 @@ export interface UserChangePwdCreateData {
   msg: string;
 }
 
-export interface UserSettingPasswordCreatePayload {
-  /** 邮箱 */
-  email: string;
-  /** 验证码 */
-  ver_code: string;
-  /** 密码 */
-  password: string;
-}
-
-export interface UserSettingPasswordCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserSettingPasswordVerifyCodeListParams {
-  /**
-   * 邮箱
-   * @example "166533381@qq.com"
-   */
-  email: string;
-}
-
-export interface UserSettingPasswordVerifyCodeListData {
-  code: number;
-  msg: string;
-}
-
-export interface GetCheckBindEmailVerCodeListParams {
-  /** 邮箱 */
-  email: string;
-  /** 验证码 */
-  ver_code: string;
-}
-
-export interface GetCheckBindEmailVerCodeListData {
-  code: number;
-  /** 验证码是成功 */
-  data: boolean;
-  msg: string;
-}
-
 export interface UserSendEmailVerifyCodeListParams {
   /**
    * 新邮箱
@@ -1796,32 +1635,6 @@ export interface UserSendEmailVerifyCodeListParams {
 
 export interface UserSendEmailVerifyCodeListData {
   code: number;
-  msg: string;
-}
-
-export interface UserVerifyEmailCreatePayload {
-  /** 来源 new,old */
-  source: string;
-  /** 来源是new的才需要 */
-  email?: string;
-}
-
-export interface UserVerifyEmailCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserGetCheckOldEmailVerCodeListParams {
-  /** 密码 */
-  password?: string;
-  /** 验证码 */
-  ver_code?: string;
-}
-
-export interface UserGetCheckOldEmailVerCodeListData {
-  code: number;
-  /** 验证码是成功 */
-  data: boolean;
   msg: string;
 }
 
@@ -2006,53 +1819,6 @@ export interface UserGetAppUpgradeCreateData {
   msg: string;
 }
 
-export interface GetAppUpgradeCreatePayload {
-  /**
-   * 操作系统
-   * 如 "win32", "darwin"，str，必传
-   */
-  os: string;
-  /**
-   * cpu架构
-   * mac专用：interl/apple，str，非必传
-   */
-  cpu?: string;
-  /**
-   *  操作系统位数
-   * 32或64，str，非必传
-   */
-  osBit?: string;
-}
-
-export interface GetAppUpgradeCreateData {
-  code: number;
-  data: {
-    /** 下载地址 */
-    downloadUrl: string;
-    /** 版本号，我们自己定义的版本号，用来和客户端的比对 */
-    version: string;
-    /** 升级标题 */
-    upgradeTitle: string;
-    /** 升级描述 */
-    upgradeDesc: string;
-    upgradeContent: {
-      new_function: string;
-      optimize: string;
-      resolve_bug: string;
-    };
-    /** 发布时间 */
-    releaseTime: string;
-    upgradeContentEn: {
-      new_function: string;
-      optimize: string;
-      resolve_bug: string;
-    };
-    /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
-    webDomain: string;
-  };
-  msg: string;
-}
-
 export interface UserGetCoreUpgradeCreatePayload {
   /**
    * 操作系统
@@ -2077,47 +1843,6 @@ export interface UserGetCoreUpgradeCreatePayload {
 }
 
 export interface UserGetCoreUpgradeCreateData {
-  code: number;
-  data: {
-    rows: {
-      coreVersion?: string;
-      version?: string;
-      downloadUrl?: string;
-      upgradeTitle?: string;
-      upgradeDesc?: string;
-      releaseTime?: string;
-      upgradeContent?: string;
-      upgradeContentEn?: string;
-      upgradeContentRu?: string;
-    }[];
-  };
-  msg: string;
-}
-
-export interface GetCoreUpgradeCreatePayload {
-  /**
-   * 操作系统
-   * 如 "win32", "darwin"，str，必传
-   */
-  os: string;
-  /**
-   * 操作系统版本
-   * 11，10，8，7
-   */
-  osVersion: string;
-  /**
-   * 操作系统位数
-   * 32或64，str，非必传
-   */
-  osBit?: string;
-  /**
-   * cpu架构
-   * mac专用：intel/apple，str，非必传
-   */
-  cpu?: string;
-}
-
-export interface GetCoreUpgradeCreateData {
   code: number;
   data: {
     rows: {
@@ -2431,6 +2156,32 @@ export interface UserReadNotifyCreateData {
   msg: string;
 }
 
+export interface LoginGoogleV2CreatePayload {
+  /** 传入谷歌登录token */
+  googleToken: string;
+}
+
+export interface LoginGoogleV2CreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
+  msg: string;
+}
+
 export interface UserGetOssCredentialV2ListData {
   code: number;
   data: {
@@ -2453,8 +2204,79 @@ export interface UserUploadAvatarCreateData {
   msg: string;
 }
 
+export interface UserChangeUsernameCreatePayload {
+  /** 用户名 */
+  userName: string;
+}
+
+export interface UserChangeUsernameCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface GetCheckBindEmailVerCodeListParams {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+}
+
+export interface GetCheckBindEmailVerCodeListData {
+  code: number;
+  /** 验证码是成功 */
+  data: boolean;
+  msg: string;
+}
+
 export interface UserMigrateDataListData {
   code: number;
+  msg: string;
+}
+
+export interface GetAppUpgradeCreatePayload {
+  /**
+   * 操作系统
+   * 如 "win32", "darwin"，str，必传
+   */
+  os: string;
+  /**
+   * cpu架构
+   * mac专用：interl/apple，str，非必传
+   */
+  cpu?: string;
+  /**
+   *  操作系统位数
+   * 32或64，str，非必传
+   */
+  osBit?: string;
+}
+
+export interface GetAppUpgradeCreateData {
+  code: number;
+  data: {
+    /** 下载地址 */
+    downloadUrl: string;
+    /** 版本号，我们自己定义的版本号，用来和客户端的比对 */
+    version: string;
+    /** 升级标题 */
+    upgradeTitle: string;
+    /** 升级描述 */
+    upgradeDesc: string;
+    upgradeContent: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    /** 发布时间 */
+    releaseTime: string;
+    upgradeContentEn: {
+      new_function: string;
+      optimize: string;
+      resolve_bug: string;
+    };
+    /** 根据用户的IP切换对应的域名，如果是国内就用深圳，国外就是香港 */
+    webDomain: string;
+  };
   msg: string;
 }
 
@@ -2468,13 +2290,51 @@ export interface SaveChannelSourcesPeopleListData {
   msg: string;
 }
 
-export interface SavePromotionLinkClickCountListParams {
-  /** 链接码 */
-  code: string;
+export interface UserGetInviteUserListV2ListParams {
+  /**
+   * 来源，邀请码，A1,B,C,D
+   * @example ""
+   */
+  source?: string;
+  /**
+   * 开始时间
+   * @example 1741104000
+   */
+  start_time?: number;
+  /**
+   * 结束时间
+   * @example 1741104000
+   */
+  end_time?: number;
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
 }
 
-export interface SavePromotionLinkClickCountListData {
+export interface UserGetInviteUserListV2ListData {
   code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 邮箱 */
+      email?: string;
+      /** 创建时间 */
+      createTime?: string;
+      /** 推广者返利(%) */
+      youGet?: number;
+      /** 用户折扣(%)(%) */
+      theyGet?: number;
+      /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
+      source?: string;
+    }[];
+  };
   msg: string;
 }
 
@@ -2525,6 +2385,121 @@ export interface UserGetBannerPictureListListData {
   msg: string;
 }
 
+export interface GetCoreUpgradeCreatePayload {
+  /**
+   * 操作系统
+   * 如 "win32", "darwin"，str，必传
+   */
+  os: string;
+  /**
+   * 操作系统版本
+   * 11，10，8，7
+   */
+  osVersion: string;
+  /**
+   * 操作系统位数
+   * 32或64，str，非必传
+   */
+  osBit?: string;
+  /**
+   * cpu架构
+   * mac专用：intel/apple，str，非必传
+   */
+  cpu?: string;
+}
+
+export interface GetCoreUpgradeCreateData {
+  code: number;
+  data: {
+    rows: {
+      coreVersion?: string;
+      version?: string;
+      downloadUrl?: string;
+      upgradeTitle?: string;
+      upgradeDesc?: string;
+      releaseTime?: string;
+      upgradeContent?: string;
+      upgradeContentEn?: string;
+      upgradeContentRu?: string;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserSettingPasswordCreatePayload {
+  /** 邮箱 */
+  email: string;
+  /** 验证码 */
+  ver_code: string;
+  /** 密码 */
+  password: string;
+}
+
+export interface UserSettingPasswordCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSettingPasswordVerifyCodeListParams {
+  /**
+   * 邮箱
+   * @example "166533381@qq.com"
+   */
+  email: string;
+}
+
+export interface UserSettingPasswordVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface LoginGithubCreatePayload {
+  /** 传入github登录token */
+  githubToken: string;
+}
+
+export interface LoginGithubCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface UserGetLoginInfoListData {
+  code: number;
+  data: {
+    /** 用户id */
+    id?: number;
+    /** 用户IP地址 */
+    address?: string;
+    /** 平台 */
+    platform?: string;
+    /** 设备名称 */
+    deviceName?: string;
+    /** 设备ID */
+    deviceId?: string;
+    /** 位置 */
+    location?: string;
+    /** 登录时间 */
+    createTime?: string;
+  }[];
+  msg: string;
+}
+
 export interface CheckOtherDeviceLoginListParams {
   /** 用户名或者邮箱 */
   user_name?: string;
@@ -2551,70 +2526,37 @@ export interface CheckOtherDeviceLoginListData {
   msg: string;
 }
 
-export interface UserGetLoginInfoListData {
+export interface UserGetPromotionInfoListData {
   code: number;
   data: {
-    /** 用户id */
-    id?: number;
-    /** 用户IP地址 */
-    address?: string;
-    /** 平台 */
-    platform?: string;
-    /** 设备名称 */
-    deviceName?: string;
-    /** 设备ID */
-    deviceId?: string;
-    /** 位置 */
-    location?: string;
-    /** 登录时间 */
-    createTime?: string;
-  }[];
-  msg: string;
-}
-
-export interface UserGetInviteUserListV2ListParams {
-  /**
-   * 来源，邀请码，A1,B,C,D
-   * @example ""
-   */
-  source?: string;
-  /**
-   * 开始时间
-   * @example 1741104000
-   */
-  start_time?: number;
-  /**
-   * 结束时间
-   * @example 1741104000
-   */
-  end_time?: number;
-  /**
-   * 分页索引, int, 非必传, 默认1
-   * @example 1
-   */
-  page_index: number;
-  /**
-   * 分页条数, int, 非必传, 默认15
-   * @example 15
-   */
-  page_size: number;
-}
-
-export interface UserGetInviteUserListV2ListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      /** 邮箱 */
-      email?: string;
-      /** 创建时间 */
-      createTime?: string;
-      /** 推广者返利(%) */
-      youGet?: number;
-      /** 用户折扣(%)(%) */
-      theyGet?: number;
-      /** 邀请来源：inviteCode：邀请码，inviteLink：邀请链接 */
-      source?: string;
+    /** 可提现金额 */
+    withdrawAmount: number;
+    /** 用户推广点击链接次数 */
+    promotionClickCount: number;
+    /** 当天推广点击链接次数 */
+    todayPromotionClickCount: number;
+    /** 已注册的用户数量 */
+    registeredUserNum: number;
+    /** 当天注册的用户数量 */
+    todayRegisteredUserNum: number;
+    /** 已下单购买成功的用户数量 */
+    purchaseUserNum: number;
+    /** 当天下单购买成功的用户数量 */
+    todayPurchaseUserNum: number;
+    /** 用户总收益 */
+    totalIncome: number;
+    /** 当天收益 */
+    todayIncome: number;
+    /** 推荐用户的总交易额 */
+    purchaseUserTotalAmount: number;
+    /** 待收益金额 */
+    pendingAmount: number;
+    promotionLinkList: {
+      promotionLink?: string;
+      linkType?: string;
+      linkStatus?: number;
+      promotionDiscount?: number;
+      userDiscount?: number;
     }[];
   };
   msg: string;
@@ -2728,42 +2670,6 @@ export interface UserGetWithdrawRecordListListData {
   msg: string;
 }
 
-export interface UserGetPromotionInfoListData {
-  code: number;
-  data: {
-    /** 可提现金额 */
-    withdrawAmount: number;
-    /** 用户推广点击链接次数 */
-    promotionClickCount: number;
-    /** 当天推广点击链接次数 */
-    todayPromotionClickCount: number;
-    /** 已注册的用户数量 */
-    registeredUserNum: number;
-    /** 当天注册的用户数量 */
-    todayRegisteredUserNum: number;
-    /** 已下单购买成功的用户数量 */
-    purchaseUserNum: number;
-    /** 当天下单购买成功的用户数量 */
-    todayPurchaseUserNum: number;
-    /** 用户总收益 */
-    totalIncome: number;
-    /** 当天收益 */
-    todayIncome: number;
-    /** 推荐用户的总交易额 */
-    purchaseUserTotalAmount: number;
-    /** 待收益金额 */
-    pendingAmount: number;
-    promotionLinkList: {
-      promotionLink?: string;
-      linkType?: string;
-      linkStatus?: number;
-      promotionDiscount?: number;
-      userDiscount?: number;
-    }[];
-  };
-  msg: string;
-}
-
 export interface UserWithdrawCreatePayload {
   /** 提现金额 */
   amount: number;
@@ -2780,6 +2686,16 @@ export interface UserWithdrawCreateData {
   msg: string;
 }
 
+export interface SavePromotionLinkClickCountListParams {
+  /** 链接码 */
+  code: string;
+}
+
+export interface SavePromotionLinkClickCountListData {
+  code: number;
+  msg: string;
+}
+
 export interface UserWithdrawVerifyCodeListParams {
   /** 提现金额 */
   amount?: string;
@@ -2787,6 +2703,32 @@ export interface UserWithdrawVerifyCodeListParams {
 
 export interface UserWithdrawVerifyCodeListData {
   code: number;
+  msg: string;
+}
+
+export interface UserVerifyEmailCreatePayload {
+  /** 来源 new,old */
+  source: string;
+  /** 来源是new的才需要 */
+  email?: string;
+}
+
+export interface UserVerifyEmailCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetCheckOldEmailVerCodeListParams {
+  /** 密码 */
+  password?: string;
+  /** 验证码 */
+  ver_code?: string;
+}
+
+export interface UserGetCheckOldEmailVerCodeListData {
+  code: number;
+  /** 验证码是成功 */
+  data: boolean;
   msg: string;
 }
 
@@ -2804,6 +2746,64 @@ export interface UserGetBannerPictureListV2ListData {
       image: string;
     }[];
   }[];
+  msg: string;
+}
+
+export interface LoginFacebookCreatePayload {
+  /** 传入Facebook登录token */
+  facebookToken: string;
+}
+
+export interface LoginFacebookCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+    /** 是否绑定邮箱, true:绑定,false:未绑定 */
+    isBindEmail: boolean;
+  };
+  msg: string;
+}
+
+export interface LoginVkCreatePayload {
+  /** 传入vk登录token */
+  vkToken: string;
+  /** 随机字符串，由 a-z, A-Z, 0-9, _ or -, 长度为 43 ~ 128之间 */
+  code_verifier: string;
+  device_id: string;
+  state: string;
+}
+
+export interface LoginVkCreateData {
+  code: number;
+  data: {
+    /** 登录token */
+    token: string;
+    /** 用户类型 */
+    type: number;
+    /** 用户邮箱 */
+    user_name: string;
+    /** 用户ID */
+    user_id: number;
+    /** 账号类型 */
+    role: string;
+    /** 是否迁移 */
+    is_migrate: boolean;
+    /** 工作空间ID */
+    workspaceId: number;
+  };
   msg: string;
 }
 
@@ -2892,21 +2892,6 @@ export interface UserModifyRemarkDisplayStatusCreateData {
   msg: string;
 }
 
-export interface UserSendValidatorVerifyCodeListData {
-  code: number;
-  msg: string;
-}
-
-export interface UserVerifyValidatorVerifyCodeListParams {
-  /** @example "123123" */
-  ver_code?: string;
-}
-
-export interface UserVerifyValidatorVerifyCodeListData {
-  code: number;
-  msg: string;
-}
-
 export interface UserGetValidatorTokenListData {
   code: number;
   data: {
@@ -2929,14 +2914,13 @@ export interface UserPersonalVerifyValidatorCodeListData {
   msg: string;
 }
 
-export interface UserSendValidatorEmailVerifyCodeCreatePayload {
-  /** 恢复邮箱 */
-  email: string;
-  /** 类型：修改还是新增 */
-  type: string;
+export interface UserSendValidatorEmailVerifyCodeListParams {
+  email?: string;
+  /** @example "add" */
+  type?: string;
 }
 
-export interface UserSendValidatorEmailVerifyCodeCreateData {
+export interface UserSendValidatorEmailVerifyCodeListData {
   code: number;
   msg: string;
 }
@@ -2962,10 +2946,24 @@ export interface UserValidatorBindCreatePayload {
   recover_email: string;
   /** 恢复邮箱验证码 */
   ver_code: string;
-  recover_code: string[];
 }
 
 export interface UserValidatorBindCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserSendValidatorVerifyCodeListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeListParams {
+  /** @example "123123" */
+  ver_code?: string;
+}
+
+export interface UserVerifyValidatorVerifyCodeListData {
   code: number;
   msg: string;
 }
@@ -3011,820 +3009,6 @@ export interface UserGetValidatorInfoListData {
     /** 恢复代码 */
     recoverCode: string[];
   };
-  msg: string;
-}
-
-export interface UserGetWindowInfoListListParams {
-  /**
-   * 分页索引, int, 非必传, 默认1
-   * @example 1
-   */
-  page_index: number;
-  /**
-   * 分页条数, int, 非必传, 默认15
-   * @example 15
-   */
-  page_size: number;
-  /**
-   * 窗口名称, str, 非必传
-   * @example "窗口1"
-   */
-  windowName?: string;
-  /**
-   * 指定序号串, 多个序号使用英文逗号分隔, str,非必传
-   * @example "1,4,5,8"
-   */
-  sortNums?: string;
-  /**
-   * 窗口备注, str, 非必传
-   * @example "窗口1"
-   */
-  windowRemark?: string;
-  /**
-   * 窗口状态, str, 非必传,ture:打开,false:关闭
-   * @example "true"
-   */
-  openStatus?: string;
-  /**
-   * 窗口收藏, str, 非必传
-   * @example "true"
-   */
-  isOften?: string;
-  /**
-   * 创建时间开始, str, 非必传
-   * @example "2024-05-22"
-   */
-  startDate?: string;
-  /**
-   * 创建时间结束, str, 非必传
-   * @example "2024-05-24"
-   */
-  endDate?: string;
-  /**
-   * 标签id列表, 多个使用英文逗号分隔, str, 非必传 (多选)
-   * @example "10,20,33"
-   */
-  labelIds?: string;
-  /**
-   * 账号平台（多选）,传数字ID
-   * @example "1,2,3"
-   */
-  platformUrlIds?: string;
-  /**
-   * 操作系统（多选）,传字符串
-   * @example "Windows,macOS"
-   */
-  osList?: string;
-  /**
-   * 排序字段
-   * @example "name"
-   */
-  orderName?: string;
-  /**
-   * 排序类型  desc:降序   asc:升序
-   * @example "desc"
-   */
-  orderType?: string;
-  /**
-   * 是否删除，绑定回收站功能，1.删除，0.不删除
-   * @example 0
-   */
-  isDelete: number;
-  /** 项目ID，默认不传查询所有 */
-  "projectIds "?: string[];
-  /**
-   * 修改时间开始, str, 非必传
-   * @example "2024-05-24"
-   */
-  startUpdateDate?: string;
-  /**
-   * 修改结束开始, str, 非必传
-   * @example "2024-05-24"
-   */
-  endUpdateDate?: string;
-}
-
-export interface UserGetWindowInfoListListData {
-  code: number;
-  data: {
-    total: number;
-    rows: {
-      id?: number;
-      dirId?: string;
-      windowSortNum?: number;
-      windowName?: string;
-      platformUrl?: string;
-      platformIds?: string[];
-      collectUserList?: string;
-      windowPlatformList?: string[];
-      platformUserName?: string;
-      platformPassword?: string;
-      projectName?: string;
-      projectId?: number;
-      coreVersion?: string;
-      os?: string;
-      osVersion?: string;
-      windowRemark?: string;
-      isOften?: boolean;
-      openStatus?: boolean;
-      statusInfo?: string[];
-      labelId?: number;
-      labelColor?: string;
-      labelName?: string;
-      labelIds?: string[];
-      moduleId?: number;
-      proxyMethod?: string;
-      moduleName?: string;
-      proxyNetwork?: string;
-      proxyCategory?: string;
-      ipType?: string;
-      proxyProvider?: string;
-      protocol?: string;
-      country?: string;
-      state?: string;
-      city?: string;
-      host?: string;
-      port?: string;
-      proxyUserName?: string;
-      proxyPassword?: string;
-      proxyTime?: string;
-      refreshUrl?: string;
-      checkChannel?: string;
-      extraChannel?: string;
-      lastIp?: string;
-      lastCountry?: string;
-      lastCity?: string;
-      checkTime?: string;
-      openTime?: string;
-      checkStatus?: number;
-      openLimitStatus?: boolean;
-      labelInfo?: string[];
-      platformUrlList?: string[];
-      maxWindowSort?: number;
-    }[];
-  };
-  msg: string;
-}
-
-export interface UserGetWindowStatusInfoCreatePayload {
-  /** 窗口ID */
-  ids: number[];
-}
-
-export interface UserGetWindowStatusInfoCreateData {
-  code: number;
-  data: {
-    sortNum?: number;
-    /**
-     * 窗口ID
-     * 窗口ID
-     */
-    id: number;
-    /**
-     * 窗口状态1：已打开 0：未打开
-     * 窗口状态1：已打开 0：未打开
-     */
-    openStatus: number;
-    /**
-     * 状态信息
-     * 状态信息
-     */
-    statusInfo: {
-      openUserId?: number;
-      openUserName?: string;
-    }[];
-  }[];
-  msg: string;
-}
-
-export interface UserBatchWindowInfoV2CreatePayload {
-  createCount: number;
-  windowNamePrefix: string;
-  groupId: number;
-  platformUrl: string;
-  defaultOpenUrl: string[];
-  efa: string;
-  os: string;
-  osVersion: string;
-  cookie: {
-    name?: string;
-    value?: string;
-    domain?: string;
-  }[];
-  moduleIds: {
-    moduleId: number;
-    count: number;
-  }[];
-  proxyMethod: string;
-  proxyCategory: string;
-  ipType: string;
-  proxyProvider: string;
-  protocol: string;
-  country: string;
-  state: string;
-  city: string;
-  host: string;
-  port: string;
-  proxyUserName: string;
-  proxyPassword: string;
-  proxyTime: string;
-  refreshUrl: string;
-  accessServer: string;
-  checkChannel: string;
-  extraChannel: string;
-  isExtraNewIp: boolean;
-  isRepectCheck: boolean;
-  extraUrl: string;
-  lastIp: string;
-  lastCountry: string;
-  fingerDetail: {
-    userAgent?: string;
-    font?: string;
-    canvasValue?: string;
-    canvasValuev2?: string;
-    webGLValue?: string;
-    webGLManufacturer?: string;
-    webGLRender?: string;
-    audioContextValue?: string;
-    speechVoicesValue?: object;
-    clientRectsValue?: object;
-    mediaDevice?: boolean;
-    mediaDeviceList?: string[];
-    deviceName?: string;
-    macAddr?: string;
-  }[];
-  isLanguageBaseIp: boolean;
-  language: string;
-  isDisplayLanguageBaseIp: boolean;
-  displayLanguage: string;
-  isTimeZone: boolean;
-  timeZone: string;
-  position: number;
-  isPositionBaseIp: boolean;
-  longitude: string;
-  latitude: string;
-  precisionPos: string;
-  forbidAudio: boolean;
-  forbidImage: number;
-  forbiddenPictureSize: string;
-  forbidMedia: boolean;
-  syncTab: boolean;
-  syncCookie: boolean;
-  openMult: boolean;
-  forbidSavePassword: boolean;
-  stopOpenNet: boolean;
-  stopOpenIP: boolean;
-  stopOpenPosition: boolean;
-  syncIndexedDb: boolean;
-  syncLocalStorage: boolean;
-  syncBookmark: boolean;
-  syncPassword: boolean;
-  syncHistory: boolean;
-  syncExtensions: boolean;
-  clearCacheFile: boolean;
-  clearCookie: boolean;
-  clearHistory: boolean;
-  randomFingerprint: boolean;
-  isDisplayName: boolean;
-  allowRunApplication: boolean;
-  useGpu: boolean;
-  webRTC: number;
-  openWidth: string;
-  openHeight: string;
-  resolutionType: boolean;
-  resolutionX: string;
-  resolutionY: string;
-  fontType: boolean;
-  canvas: boolean;
-  webGL: boolean;
-  webGLMeta: boolean;
-  webGLInfo: boolean;
-  webGpu: string;
-  audioContext: boolean;
-  speechVoices: boolean;
-  doNotTrack: boolean;
-  clientRects: boolean;
-  deviceInfo: boolean;
-  deviceNameSwitch: boolean;
-  macInfo: boolean;
-  portScanProtect: boolean;
-  portScanList: string;
-  disableSsl: boolean;
-  disableSslList: string[];
-  enablePlugin: boolean;
-  enablePluginList: {
-    name: string;
-    description: string;
-    filename: string;
-    mimeType: string;
-    mimeDescription: string;
-    suffixes: number;
-  }[];
-  hardwareConcurrent: number;
-  deviceMemory: number;
-  /** 代理详细信息 */
-  proxyInfoList: string[];
-}
-
-export interface UserBatchWindowInfoV2CreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserImportWindowInfoV2CreatePayload {
-  /** 文件名，str，必传 */
-  fileName: string;
-  /** excel数据 */
-  excelData: {
-    /** 行号，int，必传 */
-    rowNum?: number;
-    /** 窗口名称，str，必传 */
-    windowName?: string;
-    /** 分组名称, str，非必传 */
-    groupName?: string;
-    /** 账号平台，str，非必传 */
-    platformUrl?: string;
-    /** 用户名，str，非必传 */
-    platformUserName?: string;
-    /** 密码，str，非必传 */
-    platformPassword?: string;
-    /** 2fa，str，非必传 */
-    efa?: string;
-    cookie?: {
-      name?: string;
-      path?: string;
-      domain?: string;
-    }[];
-    defaultOpenUrl?: string;
-    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
-    proxyMethod?: string;
-    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
-    proxyInfo?: string;
-    /** 刷新URL， str, 非必传 */
-    refreshUrl?: string;
-    /** 窗口备注，str，非必传 */
-    windowRemark?: string;
-    /** User Agent，str, 非必传 */
-    userAgent?: string;
-    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
-    windowSize?: string;
-  }[];
-  fingerDetail: {
-    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
-    font?: string;
-    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
-    canvasValue?: string;
-    /** 取 1000-99999 之间的随机整数 */
-    canvasValueV2?: string;
-    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
-    webGLValue?: string;
-    /** webGLMeta自定义时，webGL厂商值, 非必传 */
-    webGLManufacturer?: string;
-    /** webGLMeta自定义时，webGL渲染值, 非必传 */
-    webGLRender?: string;
-    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
-    audioContextValue?: string;
-    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
-    speechVoicesValue?: object;
-    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
-    clientRectsValue?: object;
-    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
-    mediaDevice?: boolean;
-    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
-    mediaDeviceList?: string[];
-    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
-    deviceName?: string;
-    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
-    macAddr?: string;
-  }[];
-  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
-  isLanguageBaseIp: boolean;
-  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
-  language: string;
-  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
-  isDisplayLanguageBaseIp: boolean;
-  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
-  displayLanguage: string;
-  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
-  isTimeZone: boolean;
-  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
-  timeZone: string;
-  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
-  position: number;
-  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
-  isPositionBaseIp: boolean;
-  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
-  longitude: string;
-  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
-  latitude: string;
-  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
-  precisionPos: string;
-  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
-  forbidAudio: boolean;
-  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
-  forbidImage: number;
-  /** 自定义加载图片尺寸，str, 非必传 */
-  forbiddenPictureSize: string;
-  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
-  forbidMedia: boolean;
-  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
-  syncTab: boolean;
-  syncCookie: boolean;
-  openMult: boolean;
-  forbidSavePassword: boolean;
-  stopOpenNet: boolean;
-  stopOpenIP: boolean;
-  stopOpenPosition: boolean;
-  syncIndexedDb: boolean;
-  syncLocalStorage: boolean;
-  syncBookmark: boolean;
-  syncPassword: boolean;
-  syncHistory: boolean;
-  syncExtensions: boolean;
-  clearCacheFile: boolean;
-  clearCookie: boolean;
-  clearHistory: boolean;
-  randomFingerprint: boolean;
-  allowRunApplication: boolean;
-  useGpu: boolean;
-  webRTC: number;
-  isDisplayName: boolean;
-  openWidth: string;
-  openHeight: string;
-  resolutionType: boolean;
-  resolutionX: string;
-  resolutionY: string;
-  fontType: boolean;
-  canvas: boolean;
-  webGL: boolean;
-  webGLMeta: boolean;
-  webGLInfo: boolean;
-  webGpu: string;
-  audioContext: boolean;
-  speechVoices: boolean;
-  doNotTrack: boolean;
-  clientRects: boolean;
-  deviceInfo: boolean;
-  deviceNameSwitch: boolean;
-  macInfo: boolean;
-  portScanProtect: boolean;
-  portScanList: string;
-  disableSsl: boolean;
-  disableSslList: string[];
-  enablePlugin: boolean;
-  enablePluginList: {
-    name: string;
-    description: string;
-    filename: string;
-    mimeType: string;
-    mimeDescription: string;
-    suffixes: number;
-  }[];
-  hardwareConcurrent: number;
-  deviceMemory: number;
-}
-
-export interface UserImportWindowInfoV2CreateData {
-  code: number;
-  data: {
-    createBy: number;
-    windowUserId: number;
-    windowId: number;
-  };
-  msg: string;
-}
-
-export interface UserAnalysisWindowInfoCreatePayload {
-  /** 文件名，str，必传 */
-  fileName: string;
-  /** excel数据 */
-  excelData: {
-    /** 行号，int，必传 */
-    rowNum?: number;
-    /** 窗口名称，str，必传 */
-    windowName?: string;
-    /** 分组名称, str，非必传 */
-    groupName?: string;
-    /** 账号平台，str，非必传 */
-    platformUrl?: string;
-    /** 用户名，str，非必传 */
-    platformUserName?: string;
-    /** 密码，str，非必传 */
-    platformPassword?: string;
-    /** 2fa，str，非必传 */
-    efa?: string;
-    cookie?: {
-      name?: string;
-      path?: string;
-      domain?: string;
-    }[];
-    defaultOpenUrl?: string;
-    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
-    proxyMethod?: string;
-    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
-    proxyInfo?: string;
-    /** 刷新URL， str, 非必传 */
-    refreshUrl?: string;
-    /** 窗口备注，str，非必传 */
-    windowRemark?: string;
-    /** User Agent，str, 非必传 */
-    userAgent?: string;
-    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
-    windowSize?: string;
-  }[];
-  fingerDetail: {
-    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
-    font?: string;
-    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
-    canvasValue?: string;
-    /** 取 1000-99999 之间的随机整数 */
-    canvasValueV2?: string;
-    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
-    webGLValue?: string;
-    /** webGLMeta自定义时，webGL厂商值, 非必传 */
-    webGLManufacturer?: string;
-    /** webGLMeta自定义时，webGL渲染值, 非必传 */
-    webGLRender?: string;
-    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
-    audioContextValue?: string;
-    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
-    speechVoicesValue?: object;
-    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
-    clientRectsValue?: object;
-    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
-    mediaDevice?: boolean;
-    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
-    mediaDeviceList?: string[];
-    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
-    deviceName?: string;
-    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
-    macAddr?: string;
-  }[];
-  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
-  isLanguageBaseIp: boolean;
-  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
-  language: string;
-  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
-  isDisplayLanguageBaseIp: boolean;
-  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
-  displayLanguage: string;
-  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
-  isTimeZone: boolean;
-  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
-  timeZone: string;
-  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
-  position: number;
-  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
-  isPositionBaseIp: boolean;
-  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
-  longitude: string;
-  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
-  latitude: string;
-  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
-  precisionPos: string;
-  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
-  forbidAudio: boolean;
-  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
-  forbidImage: number;
-  /** 自定义加载图片尺寸，str, 非必传 */
-  forbiddenPictureSize: string;
-  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
-  forbidMedia: boolean;
-  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
-  syncTab: boolean;
-  syncCookie: boolean;
-  openMult: boolean;
-  forbidSavePassword: boolean;
-  stopOpenNet: boolean;
-  stopOpenIP: boolean;
-  stopOpenPosition: boolean;
-  syncIndexedDb: boolean;
-  syncLocalStorage: boolean;
-  syncBookmark: boolean;
-  syncPassword: boolean;
-  syncHistory: boolean;
-  syncExtensions: boolean;
-  clearCacheFile: boolean;
-  clearCookie: boolean;
-  clearHistory: boolean;
-  randomFingerprint: boolean;
-  allowRunApplication: boolean;
-  useGpu: boolean;
-  webRTC: number;
-  isDisplayName: boolean;
-  openWidth: string;
-  openHeight: string;
-  resolutionType: boolean;
-  resolutionX: string;
-  resolutionY: string;
-  fontType: boolean;
-  canvas: boolean;
-  webGL: boolean;
-  webGLMeta: boolean;
-  webGLInfo: boolean;
-  webGpu: string;
-  audioContext: boolean;
-  speechVoices: boolean;
-  doNotTrack: boolean;
-  clientRects: boolean;
-  deviceInfo: boolean;
-  deviceNameSwitch: boolean;
-  macInfo: boolean;
-  portScanProtect: boolean;
-  portScanList: string;
-  disableSsl: boolean;
-  disableSslList: string[];
-  enablePlugin: boolean;
-  enablePluginList: {
-    name: string;
-    description: string;
-    filename: string;
-    mimeType: string;
-    mimeDescription: string;
-    suffixes: number;
-  }[];
-  hardwareConcurrent: number;
-  deviceMemory: number;
-}
-
-export interface UserAnalysisWindowInfoCreateData {
-  /** 状态码, int */
-  code: number;
-  /** 返回结果, str */
-  msg: string;
-}
-
-export interface UserMdfWindowInfoBatchV2CreatePayload {
-  ids: number[];
-  windowName: string;
-  groupId: number;
-  platformUrl: string;
-  defaultOpenUrl: string[];
-  coreVersion: string;
-  os: string;
-  osVersion: string;
-  efa: string;
-  windowRemark: string;
-  labelIds: number[];
-  isOften: boolean;
-  isDelete: boolean;
-  moduleIds: {
-    moduleId: number;
-    count: number;
-  }[];
-  proxyMethod: string;
-  proxyCategory: string;
-  ipType: string;
-  proxyProvider: string;
-  protocol: string;
-  country: string;
-  state: string;
-  city: string;
-  host: string;
-  port: string;
-  proxyUserName: string;
-  proxyPassword: string;
-  proxyTime: string;
-  refreshUrl: string;
-  accessServer: string;
-  checkChannel: string;
-  extraChannel: string;
-  isExtraNewIp: boolean;
-  isRepectCheck: boolean;
-  extraUrl: string;
-  lastIp: string;
-  lastCountry: string;
-  fingerDetail: {
-    userAgent?: string;
-    font?: string;
-    canvasValue?: string;
-    canvasValueV2?: string;
-    webGLValue?: string;
-    webGLManufacturer?: string;
-    webGLRender?: string;
-    audioContextValue?: string;
-    speechVoicesValue?: object;
-    clientRectsValue?: object;
-    mediaDevice?: boolean;
-    mediaDeviceList?: string[];
-    deviceName?: string;
-    macAddr?: string;
-  }[];
-  isLanguageBaseIp: boolean;
-  language: string;
-  isDisplayLanguageBaseIp: boolean;
-  displayLanguage: string;
-  isTimeZone: boolean;
-  timeZone: string;
-  position: number;
-  isPositionBaseIp: boolean;
-  longitude: string;
-  latitude: string;
-  precisionPos: string;
-  forbidAudio: boolean;
-  forbidImage: number;
-  forbiddenPictureSize: string;
-  forbidMedia: boolean;
-  syncTab: boolean;
-  syncCookie: boolean;
-  openMult: boolean;
-  forbidSavePassword: boolean;
-  stopOpenNet: boolean;
-  stopOpenIP: boolean;
-  stopOpenPosition: boolean;
-  syncIndexedDb: boolean;
-  syncLocalStorage: boolean;
-  syncBookmark: boolean;
-  syncPassword: boolean;
-  syncHistory: boolean;
-  syncExtensions: boolean;
-  syncValue: object;
-  clearCacheFile: boolean;
-  clearCookie: boolean;
-  clearHistory: boolean;
-  randomFingerprint: boolean;
-  allowRunApplication: boolean;
-  useGpu: boolean;
-  isDisplayName: boolean;
-  webRTC: number;
-  openWidth: string;
-  openHeight: string;
-  resolutionType: boolean;
-  resolutionX: string;
-  resolutionY: string;
-  fontType: boolean;
-  canvas: boolean;
-  webGL: boolean;
-  webGLMeta: boolean;
-  webGLInfo: boolean;
-  webGpu: string;
-  audioContext: boolean;
-  speechVoices: boolean;
-  doNotTrack: boolean;
-  clientRects: boolean;
-  deviceInfo: boolean;
-  deviceNameSwitch: boolean;
-  macInfo: boolean;
-  portScanProtect: boolean;
-  portScanList: string;
-  disableSsl: boolean;
-  disableSslList: string[];
-  enablePlugin: boolean;
-  enablePluginList: {
-    name: string;
-    description: string;
-    filename: string;
-    mimeType: string;
-    mimeDescription: string;
-    suffixes: number;
-  }[];
-  hardwareConcurrent: number;
-  deviceMemory: number;
-}
-
-export interface UserMdfWindowInfoBatchV2CreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserMdfWindowDataBatchCreatePayload {
-  /** 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/platform_edit/cookie_edit */
-  type: string;
-  ids: number[];
-  paramList?: {
-    platformUrlIds?: number[];
-    /** 添加账号平台 */
-    windowPlatformList?: string[];
-    /** 选择代理 */
-    moduleId?: number;
-    /** 编辑cookie */
-    cookie?: string[];
-    loading?: boolean;
-    checkStatus?: number;
-    error?: string;
-    lastIp?: string;
-    lastCity?: string;
-    lastCountry?: string;
-    timezone?: string;
-    checkTime?: string;
-    proxyRules?: string;
-    ipType?: string;
-    protocol?: string;
-    proxyCategory?: string;
-    host?: string;
-    port?: number;
-    proxyUserName?: string;
-    proxyPassword?: string;
-    refreshUrl?: string;
-    checkChannel?: string;
-    id?: number;
-    dirId?: string;
-    proxyMethod?: string;
-  };
-}
-
-export interface UserMdfWindowDataBatchCreateData {
-  code: number;
   msg: string;
 }
 
@@ -3911,22 +3095,6 @@ export interface UserGetUaWebglV2ListData {
     userAgent?: string;
     webGLRender?: string;
     webGLManufacturer?: string;
-  }[];
-  msg: string;
-}
-
-export interface UserGetBrowserVersionInfoListParams {
-  /** @example "Windows" */
-  os: string;
-  /** @example "11" */
-  osVersion: string;
-}
-
-export interface UserGetBrowserVersionInfoListData {
-  code: number;
-  data: {
-    /** 浏览器版本 */
-    browserVersion: string;
   }[];
   msg: string;
 }
@@ -4159,18 +3327,6 @@ export interface UserGetWindowFilterNameListListData {
   msg: string;
 }
 
-export interface UserUpdateWindowFilterSortCreatePayload {
-  sort_data: {
-    name?: string;
-    sort?: number;
-  }[];
-}
-
-export interface UserUpdateWindowFilterSortCreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserSaveWindowTableSortOrderCreatePayload {
   /** 名称 */
   orderName: string;
@@ -4192,6 +3348,140 @@ export interface UserGetWindowTableSortOrderListData {
   msg: string;
 }
 
+export interface UserBatchWindowInfoV2CreatePayload {
+  createCount: number;
+  windowNamePrefix: string;
+  groupId: number;
+  platformUrl: string;
+  defaultOpenUrl: string[];
+  efa: string;
+  os: string;
+  osVersion: string;
+  cookie: {
+    name?: string;
+    value?: string;
+    domain?: string;
+  }[];
+  moduleIds: {
+    moduleId: number;
+    count: number;
+  }[];
+  proxyMethod: string;
+  proxyCategory: string;
+  ipType: string;
+  proxyProvider: string;
+  protocol: string;
+  country: string;
+  state: string;
+  city: string;
+  host: string;
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  proxyTime: string;
+  refreshUrl: string;
+  accessServer: string;
+  checkChannel: string;
+  extraChannel: string;
+  isExtraNewIp: boolean;
+  isRepectCheck: boolean;
+  extraUrl: string;
+  lastIp: string;
+  lastCountry: string;
+  fingerDetail: {
+    userAgent?: string;
+    font?: string;
+    canvasValue?: string;
+    canvasValuev2?: string;
+    webGLValue?: string;
+    webGLManufacturer?: string;
+    webGLRender?: string;
+    audioContextValue?: string;
+    speechVoicesValue?: object;
+    clientRectsValue?: object;
+    mediaDevice?: boolean;
+    mediaDeviceList?: string[];
+    deviceName?: string;
+    macAddr?: string;
+  }[];
+  isLanguageBaseIp: boolean;
+  language: string;
+  isDisplayLanguageBaseIp: boolean;
+  displayLanguage: string;
+  isTimeZone: boolean;
+  timeZone: string;
+  position: number;
+  isPositionBaseIp: boolean;
+  longitude: string;
+  latitude: string;
+  precisionPos: string;
+  forbidAudio: boolean;
+  forbidImage: number;
+  forbiddenPictureSize: string;
+  forbidMedia: boolean;
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  isDisplayName: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+  /** 代理详细信息 */
+  proxyInfoList: string[];
+}
+
+export interface UserBatchWindowInfoV2CreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetWindowRowsSortListData {
   code: number;
   data: {
@@ -4202,15 +3492,310 @@ export interface UserGetWindowRowsSortListData {
   msg: string;
 }
 
-export interface UserSaveWindowRowsSortCreatePayload {
-  window_rows: {
+export interface UserImportWindowInfoV2CreatePayload {
+  /** 文件名，str，必传 */
+  fileName: string;
+  /** excel数据 */
+  excelData: {
+    /** 行号，int，必传 */
+    rowNum?: number;
+    /** 窗口名称，str，必传 */
+    windowName?: string;
+    /** 分组名称, str，非必传 */
+    groupName?: string;
+    /** 账号平台，str，非必传 */
+    platformUrl?: string;
+    /** 用户名，str，非必传 */
+    platformUserName?: string;
+    /** 密码，str，非必传 */
+    platformPassword?: string;
+    /** 2fa，str，非必传 */
+    efa?: string;
+    cookie?: {
+      name?: string;
+      path?: string;
+      domain?: string;
+    }[];
+    defaultOpenUrl?: string;
+    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
+    proxyMethod?: string;
+    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
+    proxyInfo?: string;
+    /** 刷新URL， str, 非必传 */
+    refreshUrl?: string;
+    /** 窗口备注，str，非必传 */
+    windowRemark?: string;
+    /** User Agent，str, 非必传 */
+    userAgent?: string;
+    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
+    windowSize?: string;
+  }[];
+  fingerDetail: {
+    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
+    font?: string;
+    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    canvasValue?: string;
+    /** 取 1000-99999 之间的随机整数 */
+    canvasValueV2?: string;
+    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    webGLValue?: string;
+    /** webGLMeta自定义时，webGL厂商值, 非必传 */
+    webGLManufacturer?: string;
+    /** webGLMeta自定义时，webGL渲染值, 非必传 */
+    webGLRender?: string;
+    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
+    audioContextValue?: string;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    speechVoicesValue?: object;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    clientRectsValue?: object;
+    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
+    mediaDevice?: boolean;
+    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
+    mediaDeviceList?: string[];
+    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
+    deviceName?: string;
+    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
+    macAddr?: string;
+  }[];
+  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
+  isLanguageBaseIp: boolean;
+  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  language: string;
+  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isDisplayLanguageBaseIp: boolean;
+  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  displayLanguage: string;
+  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isTimeZone: boolean;
+  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
+  timeZone: string;
+  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
+  position: number;
+  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
+  isPositionBaseIp: boolean;
+  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
+  longitude: string;
+  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
+  latitude: string;
+  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
+  precisionPos: string;
+  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
+  forbidAudio: boolean;
+  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
+  forbidImage: number;
+  /** 自定义加载图片尺寸，str, 非必传 */
+  forbiddenPictureSize: string;
+  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
+  forbidMedia: boolean;
+  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  isDisplayName: boolean;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
     name: string;
-    sort: string;
-    status: number;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+}
+
+export interface UserImportWindowInfoV2CreateData {
+  code: number;
+  data: {
+    createBy: number;
+    windowUserId: number;
+    windowId: number;
+  };
+  msg: string;
+}
+
+export interface UserUpdateWindowFilterSortCreatePayload {
+  sort_data: {
+    name?: string;
+    sort?: number;
   }[];
 }
 
-export interface UserSaveWindowRowsSortCreateData {
+export interface UserUpdateWindowFilterSortCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWindowInfoBatchV2CreatePayload {
+  ids: number[];
+  windowName: string;
+  groupId: number;
+  platformUrl: string;
+  defaultOpenUrl: string[];
+  coreVersion: string;
+  os: string;
+  osVersion: string;
+  efa: string;
+  windowRemark: string;
+  labelIds: number[];
+  isOften: boolean;
+  isDelete: boolean;
+  moduleIds: {
+    moduleId: number;
+    count: number;
+  }[];
+  proxyMethod: string;
+  proxyCategory: string;
+  ipType: string;
+  proxyProvider: string;
+  protocol: string;
+  country: string;
+  state: string;
+  city: string;
+  host: string;
+  port: string;
+  proxyUserName: string;
+  proxyPassword: string;
+  proxyTime: string;
+  refreshUrl: string;
+  accessServer: string;
+  checkChannel: string;
+  extraChannel: string;
+  isExtraNewIp: boolean;
+  isRepectCheck: boolean;
+  extraUrl: string;
+  lastIp: string;
+  lastCountry: string;
+  fingerDetail: {
+    userAgent?: string;
+    font?: string;
+    canvasValue?: string;
+    canvasValueV2?: string;
+    webGLValue?: string;
+    webGLManufacturer?: string;
+    webGLRender?: string;
+    audioContextValue?: string;
+    speechVoicesValue?: object;
+    clientRectsValue?: object;
+    mediaDevice?: boolean;
+    mediaDeviceList?: string[];
+    deviceName?: string;
+    macAddr?: string;
+  }[];
+  isLanguageBaseIp: boolean;
+  language: string;
+  isDisplayLanguageBaseIp: boolean;
+  displayLanguage: string;
+  isTimeZone: boolean;
+  timeZone: string;
+  position: number;
+  isPositionBaseIp: boolean;
+  longitude: string;
+  latitude: string;
+  precisionPos: string;
+  forbidAudio: boolean;
+  forbidImage: number;
+  forbiddenPictureSize: string;
+  forbidMedia: boolean;
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  syncValue: object;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  isDisplayName: boolean;
+  webRTC: number;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+}
+
+export interface UserMdfWindowInfoBatchV2CreateData {
   code: number;
   msg: string;
 }
@@ -4262,6 +3847,378 @@ export interface UserDeleteWindowTemplateInfoCreatePayload {
 }
 
 export interface UserDeleteWindowTemplateInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserGetWindowInfoListListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /**
+   * 窗口名称, str, 非必传
+   * @example "窗口1"
+   */
+  windowName?: string;
+  /**
+   * 指定序号串, 多个序号使用英文逗号分隔, str,非必传
+   * @example "1,4,5,8"
+   */
+  sortNums?: string;
+  /**
+   * 窗口备注, str, 非必传
+   * @example "窗口1"
+   */
+  windowRemark?: string;
+  /**
+   * 窗口状态, str, 非必传,ture:打开,false:关闭
+   * @example "true"
+   */
+  openStatus?: string;
+  /**
+   * 窗口收藏, str, 非必传
+   * @example "true"
+   */
+  isOften?: string;
+  /**
+   * 创建时间开始, str, 非必传
+   * @example "2024-05-22"
+   */
+  startDate?: string;
+  /**
+   * 创建时间结束, str, 非必传
+   * @example "2024-05-24"
+   */
+  endDate?: string;
+  /**
+   * 标签id列表, 多个使用英文逗号分隔, str, 非必传 (多选)
+   * @example "10,20,33"
+   */
+  labelIds?: string;
+  /**
+   * 账号平台（多选）,传数字ID
+   * @example "1,2,3"
+   */
+  platformUrlIds?: string;
+  /**
+   * 操作系统（多选）,传字符串
+   * @example "Windows,macOS"
+   */
+  osList?: string;
+  /**
+   * 排序字段
+   * @example "name"
+   */
+  orderName?: string;
+  /**
+   * 排序类型  desc:降序   asc:升序
+   * @example "desc"
+   */
+  orderType?: string;
+  /**
+   * 是否删除，绑定回收站功能，1.删除，0.不删除
+   * @example 0
+   */
+  isDelete: number;
+  /** 项目ID，默认不传查询所有 */
+  "projectIds "?: string[];
+  /**
+   * 修改时间开始, str, 非必传
+   * @example "2024-05-24"
+   */
+  startUpdateDate?: string;
+  /**
+   * 修改结束开始, str, 非必传
+   * @example "2024-05-24"
+   */
+  endUpdateDate?: string;
+}
+
+export interface UserGetWindowInfoListListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      id?: number;
+      dirId?: string;
+      windowSortNum?: number;
+      windowName?: string;
+      platformUrl?: string;
+      platformIds?: string[];
+      collectUserList?: string;
+      windowPlatformList?: string[];
+      platformUserName?: string;
+      platformPassword?: string;
+      projectName?: string;
+      projectId?: number;
+      coreVersion?: string;
+      os?: string;
+      osVersion?: string;
+      windowRemark?: string;
+      isOften?: boolean;
+      openStatus?: boolean;
+      statusInfo?: string[];
+      labelId?: number;
+      labelColor?: string;
+      labelName?: string;
+      labelIds?: string[];
+      moduleId?: number;
+      proxyMethod?: string;
+      moduleName?: string;
+      proxyNetwork?: string;
+      proxyCategory?: string;
+      ipType?: string;
+      proxyProvider?: string;
+      protocol?: string;
+      country?: string;
+      state?: string;
+      city?: string;
+      host?: string;
+      port?: string;
+      proxyUserName?: string;
+      proxyPassword?: string;
+      proxyTime?: string;
+      refreshUrl?: string;
+      checkChannel?: string;
+      extraChannel?: string;
+      lastIp?: string;
+      lastCountry?: string;
+      lastCity?: string;
+      checkTime?: string;
+      openTime?: string;
+      checkStatus?: number;
+      openLimitStatus?: boolean;
+      labelInfo?: string[];
+      platformUrlList?: string[];
+      maxWindowSort?: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserGetWindowStatusInfoCreatePayload {
+  /** 窗口ID */
+  ids: number[];
+}
+
+export interface UserGetWindowStatusInfoCreateData {
+  code: number;
+  data: {
+    sortNum?: number;
+    /**
+     * 窗口ID
+     * 窗口ID
+     */
+    id: number;
+    /**
+     * 窗口状态1：已打开 0：未打开
+     * 窗口状态1：已打开 0：未打开
+     */
+    openStatus: number;
+    /**
+     * 状态信息
+     * 状态信息
+     */
+    statusInfo: {
+      openUserId?: number;
+      openUserName?: string;
+    }[];
+  }[];
+  msg: string;
+}
+
+export interface UserAnalysisWindowInfoCreatePayload {
+  /** 文件名，str，必传 */
+  fileName: string;
+  /** excel数据 */
+  excelData: {
+    /** 行号，int，必传 */
+    rowNum?: number;
+    /** 窗口名称，str，必传 */
+    windowName?: string;
+    /** 分组名称, str，非必传 */
+    groupName?: string;
+    /** 账号平台，str，非必传 */
+    platformUrl?: string;
+    /** 用户名，str，非必传 */
+    platformUserName?: string;
+    /** 密码，str，非必传 */
+    platformPassword?: string;
+    /** 2fa，str，非必传 */
+    efa?: string;
+    cookie?: {
+      name?: string;
+      path?: string;
+      domain?: string;
+    }[];
+    defaultOpenUrl?: string;
+    /** 代理类型，枚举值:直连模式、socks5、http、https, str，非必传 */
+    proxyMethod?: string;
+    /** 代理信息，格式: 192.168.0.1: 8800:user:password，非必传 */
+    proxyInfo?: string;
+    /** 刷新URL， str, 非必传 */
+    refreshUrl?: string;
+    /** 窗口备注，str，非必传 */
+    windowRemark?: string;
+    /** User Agent，str, 非必传 */
+    userAgent?: string;
+    /** 窗口尺寸，格式：数字*数字，str, 非必传 */
+    windowSize?: string;
+  }[];
+  fingerDetail: {
+    /** 【页面不显示】,字体值，指纹会用到, 非必传 */
+    font?: string;
+    /** 【页面不显示】，canvas为随机时设置， 噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    canvasValue?: string;
+    /** 取 1000-99999 之间的随机整数 */
+    canvasValueV2?: string;
+    /** 【页面不显示】，webGL为随机时设置，随机噪音值 10000 - 1000000，指纹会用到, 非必传 */
+    webGLValue?: string;
+    /** webGLMeta自定义时，webGL厂商值, 非必传 */
+    webGLManufacturer?: string;
+    /** webGLMeta自定义时，webGL渲染值, 非必传 */
+    webGLRender?: string;
+    /** 【页面不显示】，audioContext为随机时，噪音值， 1 - 100 ，关闭时默认10，指纹会用到, 非必传 */
+    audioContextValue?: string;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    speechVoicesValue?: object;
+    /** 【页面不显示】，speechVoices为1时生成，指纹会用到，Json格式，非必传 */
+    clientRectsValue?: object;
+    /** 【页面不显示】，媒体设备，默认0，需要前端生成，布尔值，非必传, 传true和false */
+    mediaDevice?: boolean;
+    /** 【页面不显示】，媒体设备列表，指纹会用到，List格式，非必传 */
+    mediaDeviceList?: string[];
+    /** 设备名称，deviceInfo为1时设置，非必传，通过接口 user_get_device_name 获取 */
+    deviceName?: string;
+    /** mac地址，deviceInfo为1时设置，非必传，通过接口 user_get_mac_addr 获取 */
+    macAddr?: string;
+  }[];
+  /** 语言，1:跟随IP匹配，0自定义，默认1，布尔值，必传, 传true和false */
+  isLanguageBaseIp: boolean;
+  /** isLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  language: string;
+  /** 界面语言，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isDisplayLanguageBaseIp: boolean;
+  /** isDisplayLanguageBaseIp为0时选择的语言, 非必传， 【取字典】 */
+  displayLanguage: string;
+  /** 时区，1: 跟随IP匹配，0：自定义，默认1，布尔值，必传, 传true和false */
+  isTimeZone: boolean;
+  /** isTimeZone为0时选择的时区, 非必传， 【取字典】 */
+  timeZone: string;
+  /** 地理位置 0询问|1允许|2禁止，默认0，int, 必传 */
+  position: number;
+  /** 基于IP生成对应的地理位置，不勾选可自定义，默认1，1：跟随IP匹配，0：自定义, 传true和false */
+  isPositionBaseIp: boolean;
+  /** user_get_ua_webgl	经度 isPositionBaseIp为0时设置, 非必传 */
+  longitude: string;
+  /** 纬度 isPositionBaseIp为0时设置, 非必传 */
+  latitude: string;
+  /** 精度米 isPositionBaseIp为0时设置, 非必传 */
+  precisionPos: string;
+  /** # 声音，开启：1，关闭：0，默认1，布尔值，必传, 传true和false */
+  forbidAudio: boolean;
+  /** 图片，允许加载：1，禁止加载：0，默认1，int, 必传 */
+  forbidImage: number;
+  /** 自定义加载图片尺寸，str, 非必传 */
+  forbiddenPictureSize: string;
+  /** 视频，允许加载：1，禁止加载：0，默认1，布尔值，必传, 传true和false */
+  forbidMedia: boolean;
+  /** 同步标签页，1：是，0：否，默认1，布尔值，必传, 传true和false */
+  syncTab: boolean;
+  syncCookie: boolean;
+  openMult: boolean;
+  forbidSavePassword: boolean;
+  stopOpenNet: boolean;
+  stopOpenIP: boolean;
+  stopOpenPosition: boolean;
+  syncIndexedDb: boolean;
+  syncLocalStorage: boolean;
+  syncBookmark: boolean;
+  syncPassword: boolean;
+  syncHistory: boolean;
+  syncExtensions: boolean;
+  clearCacheFile: boolean;
+  clearCookie: boolean;
+  clearHistory: boolean;
+  randomFingerprint: boolean;
+  allowRunApplication: boolean;
+  useGpu: boolean;
+  webRTC: number;
+  isDisplayName: boolean;
+  openWidth: string;
+  openHeight: string;
+  resolutionType: boolean;
+  resolutionX: string;
+  resolutionY: string;
+  fontType: boolean;
+  canvas: boolean;
+  webGL: boolean;
+  webGLMeta: boolean;
+  webGLInfo: boolean;
+  webGpu: string;
+  audioContext: boolean;
+  speechVoices: boolean;
+  doNotTrack: boolean;
+  clientRects: boolean;
+  deviceInfo: boolean;
+  deviceNameSwitch: boolean;
+  macInfo: boolean;
+  portScanProtect: boolean;
+  portScanList: string;
+  disableSsl: boolean;
+  disableSslList: string[];
+  enablePlugin: boolean;
+  enablePluginList: {
+    name: string;
+    description: string;
+    filename: string;
+    mimeType: string;
+    mimeDescription: string;
+    suffixes: number;
+  }[];
+  hardwareConcurrent: number;
+  deviceMemory: number;
+}
+
+export interface UserAnalysisWindowInfoCreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
+  msg: string;
+}
+
+export interface UserGetBrowserVersionInfoListParams {
+  /** @example "Windows" */
+  os: string;
+  /** @example "11" */
+  osVersion: string;
+}
+
+export interface UserGetBrowserVersionInfoListData {
+  code: number;
+  data: {
+    /** 浏览器版本 */
+    browserVersion: string;
+  }[];
+  msg: string;
+}
+
+export interface UserSaveWindowRowsSortCreatePayload {
+  window_rows: {
+    name: string;
+    sort: string;
+    status: number;
+  }[];
+}
+
+export interface UserSaveWindowRowsSortCreateData {
   code: number;
   msg: string;
 }
@@ -4428,16 +4385,6 @@ export interface UserGetTransferReceiveWindowListListData {
   msg: string;
 }
 
-export interface UserClearTransferWorkspaceCreatePayload {
-  /** 窗口ID */
-  workspaceIds: string[];
-}
-
-export interface UserClearTransferWorkspaceCreateData {
-  code: number;
-  msg: string;
-}
-
 export interface UserAgreeTransferWindowCreatePayload {
   /** 窗口任务编号 */
   windowTransferNo: string;
@@ -4456,6 +4403,57 @@ export interface UserRejectTransferWindowCreatePayload {
 }
 
 export interface UserRejectTransferWindowCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserClearTransferWorkspaceCreatePayload {
+  /** 窗口ID */
+  workspaceIds: string[];
+}
+
+export interface UserClearTransferWorkspaceCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserMdfWindowDataBatchCreatePayload {
+  /** 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/platform_edit/cookie_edit */
+  type: string;
+  ids: number[];
+  paramList?: {
+    platformUrlIds?: number[];
+    /** 添加账号平台 */
+    windowPlatformList?: string[];
+    /** 选择代理 */
+    moduleId?: number;
+    /** 编辑cookie */
+    cookie?: string[];
+    loading?: boolean;
+    checkStatus?: number;
+    error?: string;
+    lastIp?: string;
+    lastCity?: string;
+    lastCountry?: string;
+    timezone?: string;
+    checkTime?: string;
+    proxyRules?: string;
+    ipType?: string;
+    protocol?: string;
+    proxyCategory?: string;
+    host?: string;
+    port?: number;
+    proxyUserName?: string;
+    proxyPassword?: string;
+    refreshUrl?: string;
+    checkChannel?: string;
+    id?: number;
+    dirId?: string;
+    proxyMethod?: string;
+  };
+}
+
+export interface UserMdfWindowDataBatchCreateData {
   code: number;
   msg: string;
 }
@@ -4484,14 +4482,80 @@ export interface UserGetPlatformInfoListData {
   msg: string;
 }
 
-export interface UserGetPlatformTableSortOrderListData {
+export interface UserAddPlatformInfoCreatePayload {
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon: string;
+  /** 平台URL */
+  platformUrl: string;
+  /** 平台账号 */
+  platformUserName: string;
+  /** 平台密码 */
+  platformPassword: string;
+  /** 2FA密钥 */
+  platformEfa: string;
+  /** 平台cookeies */
+  platformCookies: string;
+  /** 平台名称 */
+  platformName: string;
+  /** 平台备注 */
+  platformRemarks: string;
+}
+
+export interface UserAddPlatformInfoCreateData {
   code: number;
-  data: {
-    /** 排序名称 */
-    order_name?: string;
-    /** 排序类型 */
-    order_type?: string;
+  data: object;
+  msg: string;
+}
+
+export interface UserDelPlatformInfoCreatePayload {
+  /** 要删除的业务平台id列表 */
+  ids: number[];
+}
+
+export interface UserDelPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export type UserMdfPlatformInfoCreatePayload = {
+  /** 平台ID */
+  id?: number;
+  /** 业务平台图片，默认空，用户填的传空字符串就行 */
+  platformIcon?: string;
+  /** 平台URL */
+  platformUrl?: string;
+  /** 平台账号 */
+  platformUserName?: string;
+  /** 平台密码 */
+  platformPassword?: string;
+  /** 2FA密钥 */
+  platformEfa?: string;
+  /** 平台cookeies */
+  platformCookies?: string;
+  /** 平台名称 */
+  platformName?: string;
+  /** 平台备注 */
+  platformRemarks?: string;
+}[];
+
+export interface UserMdfPlatformInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUpdatePlatformTableRowsCreatePayload {
+  table_rows: {
+    /** 名称 */
+    name: string;
+    /** 排序 */
+    sort: number;
+    /** 状态 */
+    status: number;
   }[];
+}
+
+export interface UserUpdatePlatformTableRowsCreateData {
+  code: number;
   msg: string;
 }
 
@@ -4522,80 +4586,14 @@ export interface UserGetPlatformTableRowsListData {
   msg: string;
 }
 
-export interface UserUpdatePlatformTableRowsCreatePayload {
-  table_rows: {
-    /** 名称 */
-    name: string;
-    /** 排序 */
-    sort: number;
-    /** 状态 */
-    status: number;
+export interface UserGetPlatformTableSortOrderListData {
+  code: number;
+  data: {
+    /** 排序名称 */
+    order_name?: string;
+    /** 排序类型 */
+    order_type?: string;
   }[];
-}
-
-export interface UserUpdatePlatformTableRowsCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserAddPlatformInfoCreatePayload {
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon: string;
-  /** 平台URL */
-  platformUrl: string;
-  /** 平台账号 */
-  platformUserName: string;
-  /** 平台密码 */
-  platformPassword: string;
-  /** 2FA密钥 */
-  platformEfa: string;
-  /** 平台cookeies */
-  platformCookies: string;
-  /** 平台名称 */
-  platformName: string;
-  /** 平台备注 */
-  platformRemarks: string;
-}
-
-export interface UserAddPlatformInfoCreateData {
-  code: number;
-  data: object;
-  msg: string;
-}
-
-export type UserMdfPlatformInfoCreatePayload = {
-  /** 平台ID */
-  id?: number;
-  /** 业务平台图片，默认空，用户填的传空字符串就行 */
-  platformIcon?: string;
-  /** 平台URL */
-  platformUrl?: string;
-  /** 平台账号 */
-  platformUserName?: string;
-  /** 平台密码 */
-  platformPassword?: string;
-  /** 2FA密钥 */
-  platformEfa?: string;
-  /** 平台cookeies */
-  platformCookies?: string;
-  /** 平台名称 */
-  platformName?: string;
-  /** 平台备注 */
-  platformRemarks?: string;
-}[];
-
-export interface UserMdfPlatformInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserDelPlatformInfoCreatePayload {
-  /** 要删除的业务平台id列表 */
-  ids: number[];
-}
-
-export interface UserDelPlatformInfoCreateData {
-  code: number;
   msg: string;
 }
 
@@ -4830,21 +4828,6 @@ export interface UserMdfProxyModuleCreateData {
   msg: string;
 }
 
-export interface UserDelProxyModuleV2CreatePayload {
-  /**
-   * 要删除的代理id列表
-   * 要删除的代理id列表
-   */
-  ids: number[];
-}
-
-export interface UserDelProxyModuleV2CreateData {
-  /** 状态码, int */
-  code: number;
-  /** 返回结果, str */
-  msg: string;
-}
-
 export interface UserGetProxyTableSortOrderListData {
   code: number;
   data: {
@@ -4870,19 +4853,6 @@ export interface UserSaveProxyTableSortOrderCreateData {
   msg: string;
 }
 
-export interface UserGetProxyTableRowsListData {
-  code: number;
-  data: {
-    /** 名称 */
-    name?: string;
-    /** 排序 */
-    sort?: number;
-    /** 状态 */
-    status?: number;
-  }[];
-  msg: string;
-}
-
 export interface UserUpdateProxyTableRowsCreatePayload {
   table_rows: {
     /** 名称 */
@@ -4896,6 +4866,19 @@ export interface UserUpdateProxyTableRowsCreatePayload {
 
 export interface UserUpdateProxyTableRowsCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetProxyTableRowsListData {
+  code: number;
+  data: {
+    /** 名称 */
+    name?: string;
+    /** 排序 */
+    sort?: number;
+    /** 状态 */
+    status?: number;
+  }[];
   msg: string;
 }
 
@@ -4926,6 +4909,21 @@ export interface UserGetProxyRecommendInfoListData {
   msg: string;
 }
 
+export interface UserDelProxyModuleV2CreatePayload {
+  /**
+   * 要删除的代理id列表
+   * 要删除的代理id列表
+   */
+  ids: number[];
+}
+
+export interface UserDelProxyModuleV2CreateData {
+  /** 状态码, int */
+  code: number;
+  /** 返回结果, str */
+  msg: string;
+}
+
 export interface UserGetTimezoneByCoordinatesInfoListParams {
   /**
    * 纬度
@@ -4947,13 +4945,6 @@ export interface UserGetTimezoneByCoordinatesInfoListData {
   };
   msg: string;
 }
-
-export interface UserUploadChromePluginsV2CreatePayload {
-  /** 插件下载地址 */
-  url: string;
-}
-
-export type UserUploadChromePluginsV2CreateData = object;
 
 export interface UserUploadPluginInfoCreatePayload {
   /** 来源，枚举：local:本地扩展, store:Chrome商店 */
@@ -4980,12 +4971,6 @@ export interface UserUploadPluginInfoCreateData {
     create_by: number;
     plugin_id: number;
   };
-  msg: string;
-}
-
-export interface UserRecordPluginUploadV2ListData {
-  code: number;
-  data: number;
   msg: string;
 }
 
@@ -5123,56 +5108,12 @@ export interface UserGetPluginListListData {
   msg: string;
 }
 
-export interface UserGetPluginInfoByIdListParams {
-  /**
-   * 分页索引
-   * @example 1
-   */
-  pluginId: number;
-}
-
-export interface UserGetPluginInfoByIdListData {
-  code: number;
-  data: {
-    rows: {
-      id?: number;
-      source?: string;
-      pluginDir?: string;
-      pluginName?: string;
-      pluginIcon?: string;
-      pluginRoute?: string;
-      pluginVersion?: string;
-      pluginDesc?: string;
-      provider?: string;
-      userId?: number;
-      pluginSwitchType?: number;
-      installType?: string;
-      pluginUpdateState?: number;
-      pluginNewVersion?: string;
-      useStatus?: boolean;
-      createTime?: string;
-      lateUpdateTime?: string;
-    }[];
-  };
-  msg: string;
-}
-
 export interface UserDelPluginInfoCreatePayload {
   /** 要删除的插件id */
   id: number;
 }
 
 export interface UserDelPluginInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserBatchDelPluginInfoCreatePayload {
-  /** 插件id列表 */
-  ids: number[];
-}
-
-export interface UserBatchDelPluginInfoCreateData {
   code: number;
   msg: string;
 }
@@ -5195,6 +5136,23 @@ export interface UserUpgradePluginsCreatePayload {
 }
 
 export interface UserUpgradePluginsCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserUploadChromePluginsV2CreatePayload {
+  /** 插件下载地址 */
+  url: string;
+}
+
+export type UserUploadChromePluginsV2CreateData = object;
+
+export interface UserBatchDelPluginInfoCreatePayload {
+  /** 插件id列表 */
+  ids: number[];
+}
+
+export interface UserBatchDelPluginInfoCreateData {
   code: number;
   msg: string;
 }
@@ -5237,6 +5195,46 @@ export interface UserAddPluginToWindowCreatePayload {
 
 export interface UserAddPluginToWindowCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserRecordPluginUploadV2ListData {
+  code: number;
+  data: number;
+  msg: string;
+}
+
+export interface UserGetPluginInfoByIdListParams {
+  /**
+   * 分页索引
+   * @example 1
+   */
+  pluginId: number;
+}
+
+export interface UserGetPluginInfoByIdListData {
+  code: number;
+  data: {
+    rows: {
+      id?: number;
+      source?: string;
+      pluginDir?: string;
+      pluginName?: string;
+      pluginIcon?: string;
+      pluginRoute?: string;
+      pluginVersion?: string;
+      pluginDesc?: string;
+      provider?: string;
+      userId?: number;
+      pluginSwitchType?: number;
+      installType?: string;
+      pluginUpdateState?: number;
+      pluginNewVersion?: string;
+      useStatus?: boolean;
+      createTime?: string;
+      lateUpdateTime?: string;
+    }[];
+  };
   msg: string;
 }
 
@@ -5557,6 +5555,33 @@ export interface UserMdfWorkspaceTipInfoListData {
   msg: string;
 }
 
+export interface UserAddProjectInfoCreatePayload {
+  /** 项目名称 */
+  projectName: string;
+}
+
+export interface UserAddProjectInfoCreateData {
+  code: number;
+  data: {
+    projectId: number;
+  };
+  msg: string;
+}
+
+export interface UserMdfProjectInfoCreatePayload {
+  /** 项目ID */
+  id: number;
+  /** 项目名称 */
+  projectName?: string;
+  /** pin状态 */
+  pinStatus?: number;
+}
+
+export interface UserMdfProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetProjectInfoByWorkspaceListParams {
   /**
    * 1:查询不包括默认项目数据，2:查询包括默认项目数据
@@ -5666,6 +5691,43 @@ export interface UserGetMemberInfoByProjectIdListData {
   msg: string;
 }
 
+export interface UserInviteCreatePayload {
+  /** 用户邮箱 */
+  email: string;
+  /**
+   * 权限
+   * Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1) Manager(管理者,枚举：2)
+   */
+  role: number;
+  /** 项目ID */
+  projectIds: number[];
+}
+
+export interface UserInviteCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserAddUserByProjectInfoCreatePayload {
+  /** 加密数据 */
+  data: string;
+}
+
+export interface UserAddUserByProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
+export interface UserDelProjectInfoCreatePayload {
+  /** 项目ID */
+  projectId: number;
+}
+
+export interface UserDelProjectInfoCreateData {
+  code: number;
+  msg: string;
+}
+
 export interface UserGetTopProjectInfoListData {
   code: number;
   data: {
@@ -5702,70 +5764,6 @@ export interface UserGetTopProjectInfoListData {
   msg: string;
 }
 
-export interface UserAddProjectInfoCreatePayload {
-  /** 项目名称 */
-  projectName: string;
-}
-
-export interface UserAddProjectInfoCreateData {
-  code: number;
-  data: {
-    projectId: number;
-  };
-  msg: string;
-}
-
-export interface UserMdfProjectInfoCreatePayload {
-  /** 项目ID */
-  id: number;
-  /** 项目名称 */
-  projectName?: string;
-  /** pin状态 */
-  pinStatus?: number;
-}
-
-export interface UserMdfProjectInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserDelProjectInfoCreatePayload {
-  /** 项目ID */
-  projectId: number;
-}
-
-export interface UserDelProjectInfoCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserInviteCreatePayload {
-  /** 用户邮箱 */
-  email: string;
-  /**
-   * 权限
-   * Viewer(查看者,枚举：0)  Editor(编辑者,枚举：1) Manager(管理者,枚举：2)
-   */
-  role: number;
-  /** 项目ID */
-  projectIds: number[];
-}
-
-export interface UserInviteCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserAddUserByProjectInfoCreatePayload {
-  /** 加密数据 */
-  data: string;
-}
-
-export interface UserAddUserByProjectInfoCreateData {
-  code: number;
-  msg: string;
-}
-
 export type UserShowInvitationLinkStatusCreatePayload = object;
 
 export interface UserShowInvitationLinkStatusCreateData {
@@ -5792,6 +5790,191 @@ export interface UserMdfProjectSortCreatePayload {
 
 export interface UserMdfProjectSortCreateData {
   code: number;
+  msg: string;
+}
+
+export interface UserGetDurationDiscountsListData {
+  code: number;
+  data: {
+    /**
+     * 每个月折扣比例
+     * 每个月折扣比例
+     */
+    "1": number;
+    "3": number;
+    "6": number;
+    "12": number;
+  };
+  msg: string;
+}
+
+export interface UserGetWindowPricingRulesListListData {
+  code: number;
+  data: {
+    rows: {
+      apiRate: number;
+      logDays: number;
+      /** 最大窗口数量 */
+      maxWindows: number;
+      /** 最小窗口数量 */
+      minWindows: number;
+      /** 订阅级别 */
+      subLevel: string;
+      /** 窗口单个价格 */
+      windowPrice: number;
+    }[];
+  };
+  msg: string;
+}
+
+export interface UserPaySettlementCreatePayload {
+  /**
+   * 购买数量
+   * 购买、订阅才有购买数量详细信息{"profile":100,"workspace":1,"staff":2}
+   */
+  purchaseMember?: object;
+  /**
+   * 购买类型(wallet/workspace/staff/profile/workspace_staff)
+   * 购买、订阅才有
+   */
+  purchaseType?: string;
+  /**
+   * 订阅等级(Basic/Pro/Business/Enterprise)
+   * 订阅才有
+   */
+  subLevel?: string;
+  /**
+   * 购买月数(1/3/6/12)
+   * 续费、订阅才有
+   */
+  subscriptionMonths?: number;
+  /**
+   * 是否自动购买和续费,
+   * 续费、订阅才有
+   */
+  isAuto?: boolean;
+  /**
+   * 订单号
+   * 续费才有
+   */
+  orderNo?: string;
+  /**
+   * 支付方式: Balance,Alipay,USDT,Wechat,Card
+   * 都有
+   */
+  payType: string;
+  /**
+   * 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift)
+   * 都有
+   */
+  orderType: string;
+  /**
+   * 子订单类型upgrade:升级, purchase：购买
+   * 订阅才有
+   */
+  subOrderType?: string;
+}
+
+export interface UserPaySettlementCreateData {
+  code: number;
+  data: {
+    /**
+     * 订单号
+     * 订单号
+     */
+    order_no: string;
+    /**
+     * 支付方式
+     * 支付方式
+     */
+    pay_type: string;
+    /**
+     * 支付地址
+     * 支付地址
+     */
+    pay_url: string;
+    /**
+     * usdt支付id
+     * usdt支付id
+     */
+    pay_id: string;
+    /**
+     * 订单金额
+     * 订单金额
+     */
+    order_amount: string;
+    /**
+     * 支付结束时间
+     * 支付结束时间
+     */
+    end_time: string;
+    /**
+     * 实际支付金额
+     * 实际支付金额
+     */
+    real_amount: string;
+    /** 类型 */
+    subOrderType: string;
+  };
+  msg: string;
+}
+
+export interface UserGetPurchaseRecordsInfoListParams {
+  /**
+   * 分页索引, int, 非必传, 默认1
+   * @example 1
+   */
+  page_index: number;
+  /**
+   * 分页条数, int, 非必传, 默认15
+   * @example 15
+   */
+  page_size: number;
+  /** 订单类型 */
+  orderType?: string;
+  /** 开始时间 */
+  startDate?: string;
+  /** 结束时间 */
+  endDate?: string;
+  /** 是否自动续费 */
+  isAuto?: string;
+  /** 主订单号 */
+  mainOrderNo?: string;
+}
+
+export interface UserGetPurchaseRecordsInfoListData {
+  code: number;
+  data: {
+    total: number;
+    rows: {
+      /** 订单号 */
+      orderNo?: string;
+      /** 订单类型 */
+      orderType?: string;
+      /** 实际金额(美元) */
+      actualAmount?: number;
+      /** 支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败' */
+      payStatus?: string;
+      detail?: {
+        /** 天数 */
+        day: number;
+        /** # 普通订阅、升级、主动续订、延长套餐、购买空间成员数量、降级 # subscribe, upgrade, auto, extend , workspace_member, downgrade */
+        subType: string;
+        /** 老窗口数量 */
+        oldWindowCount: number;
+        /** 购买类型 */
+        purchaseType: string;
+        /** 成员数量 */
+        staff: number;
+        /** 现有窗口数量 */
+        windowCount: number;
+        /** 工作时间 */
+        workspace: number;
+      };
+      /** 订单创建时间 */
+      createTime?: string;
+    }[];
+  };
   msg: string;
 }
 
@@ -5971,96 +6154,31 @@ export interface UserGetUserPayInfoListData {
   msg: string;
 }
 
-export interface UserGetWindowPricingRulesListListData {
+export interface UserRechargeSettlementCreatePayload {
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
+  payType: string;
+  /** 充值金额 */
+  rechargeAmount: number;
+}
+
+export interface UserRechargeSettlementCreateData {
   code: number;
   data: {
-    rows: {
-      apiRate: number;
-      logDays: number;
-      /** 最大窗口数量 */
-      maxWindows: number;
-      /** 最小窗口数量 */
-      minWindows: number;
-      /** 订阅级别 */
-      subLevel: string;
-      /** 窗口单个价格 */
-      windowPrice: number;
-    }[];
+    endTime: string;
+    orderAmount: number;
+    orderNo: string;
+    payId: string;
+    payType: string;
+    payUrl: string;
+    realAmount: number;
   };
   msg: string;
 }
 
-export interface UserGetDurationDiscountsListData {
-  code: number;
-  data: {
-    /**
-     * 每个月折扣比例
-     * 每个月折扣比例
-     */
-    "1": number;
-    "3": number;
-    "6": number;
-    "12": number;
-  };
-  msg: string;
-}
+export type UserSevenDayTrialCreatePayload = object;
 
-export interface UserGetPurchaseRecordsInfoListParams {
-  /**
-   * 分页索引, int, 非必传, 默认1
-   * @example 1
-   */
-  page_index: number;
-  /**
-   * 分页条数, int, 非必传, 默认15
-   * @example 15
-   */
-  page_size: number;
-  /** 订单类型 */
-  orderType?: string;
-  /** 开始时间 */
-  startDate?: string;
-  /** 结束时间 */
-  endDate?: string;
-  /** 是否自动续费 */
-  isAuto?: string;
-  /** 主订单号 */
-  mainOrderNo?: string;
-}
-
-export interface UserGetPurchaseRecordsInfoListData {
+export interface UserSevenDayTrialCreateData {
   code: number;
-  data: {
-    total: number;
-    rows: {
-      /** 订单号 */
-      orderNo?: string;
-      /** 订单类型 */
-      orderType?: string;
-      /** 实际金额(美元) */
-      actualAmount?: number;
-      /** 支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败' */
-      payStatus?: string;
-      detail?: {
-        /** 天数 */
-        day: number;
-        /** # 普通订阅、升级、主动续订、延长套餐、购买空间成员数量、降级 # subscribe, upgrade, auto, extend , workspace_member, downgrade */
-        subType: string;
-        /** 老窗口数量 */
-        oldWindowCount: number;
-        /** 购买类型 */
-        purchaseType: string;
-        /** 成员数量 */
-        staff: number;
-        /** 现有窗口数量 */
-        windowCount: number;
-        /** 工作时间 */
-        workspace: number;
-      };
-      /** 订单创建时间 */
-      createTime?: string;
-    }[];
-  };
   msg: string;
 }
 
@@ -6106,126 +6224,6 @@ export interface UserGetPayLinkListData {
   msg: string;
 }
 
-export type UserSevenDayTrialCreatePayload = object;
-
-export interface UserSevenDayTrialCreateData {
-  code: number;
-  msg: string;
-}
-
-export interface UserPaySettlementCreatePayload {
-  /**
-   * 购买数量
-   * 购买、订阅才有购买数量详细信息{"profile":100,"workspace":1,"staff":2}
-   */
-  purchaseMember?: object;
-  /**
-   * 购买类型(wallet/workspace/staff/profile/workspace_staff)
-   * 购买、订阅才有
-   */
-  purchaseType?: string;
-  /**
-   * 订阅等级(Basic/Pro/Business/Enterprise)
-   * 订阅才有
-   */
-  subLevel?: string;
-  /**
-   * 购买月数(1/3/6/12)
-   * 续费、订阅才有
-   */
-  subscriptionMonths?: number;
-  /**
-   * 是否自动购买和续费,
-   * 续费、订阅才有
-   */
-  isAuto?: boolean;
-  /**
-   * 订单号
-   * 续费才有
-   */
-  orderNo?: string;
-  /**
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   * 都有
-   */
-  payType: string;
-  /**
-   * 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift)
-   * 都有
-   */
-  orderType: string;
-  /**
-   * 子订单类型upgrade:升级, purchase：购买
-   * 订阅才有
-   */
-  subOrderType?: string;
-}
-
-export interface UserPaySettlementCreateData {
-  code: number;
-  data: {
-    /**
-     * 订单号
-     * 订单号
-     */
-    order_no: string;
-    /**
-     * 支付方式
-     * 支付方式
-     */
-    pay_type: string;
-    /**
-     * 支付地址
-     * 支付地址
-     */
-    pay_url: string;
-    /**
-     * usdt支付id
-     * usdt支付id
-     */
-    pay_id: string;
-    /**
-     * 订单金额
-     * 订单金额
-     */
-    order_amount: string;
-    /**
-     * 支付结束时间
-     * 支付结束时间
-     */
-    end_time: string;
-    /**
-     * 实际支付金额
-     * 实际支付金额
-     */
-    real_amount: string;
-    /** 类型 */
-    subOrderType: string;
-  };
-  msg: string;
-}
-
-export interface UserRechargeSettlementCreatePayload {
-  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
-  payType: string;
-  /** 充值金额 */
-  rechargeAmount: number;
-}
-
-export interface UserRechargeSettlementCreateData {
-  code: number;
-  data: {
-    endTime: string;
-    orderAmount: number;
-    orderNo: string;
-    payId: string;
-    payType: string;
-    payUrl: string;
-    realAmount: number;
-  };
-  msg: string;
-}
-
 export interface UserCalculatePriceDifferenceListParams {
   /**
    * 窗口数量
@@ -6261,6 +6259,28 @@ export interface UserManageSubscriptionListData {
   msg: string;
 }
 
+export interface UserUpdatePayTipsListParams {
+  /** @example "Wall/Expired" */
+  source: string;
+}
+
+export interface UserUpdatePayTipsListData {
+  code: number;
+  msg: string;
+}
+
+export interface UserCalculateWindowMonthsPriceListParams {
+  /** @example 100 */
+  windowCount: number;
+}
+
+export interface UserCalculateWindowMonthsPriceListData {
+  code: number;
+  /** 金额(美元) */
+  data: number;
+  msg: string;
+}
+
 export interface UserCancelSubscriptionListParams {
   /**
    * 订单号
@@ -6288,28 +6308,6 @@ export interface UserDowngradeSubscriptionListData {
   code: number;
   /** 订阅地址 */
   data: string;
-  msg: string;
-}
-
-export interface UserUpdatePayTipsListParams {
-  /** @example "Wall/Expired" */
-  source: string;
-}
-
-export interface UserUpdatePayTipsListData {
-  code: number;
-  msg: string;
-}
-
-export interface UserCalculateWindowMonthsPriceListParams {
-  /** @example 100 */
-  windowCount: number;
-}
-
-export interface UserCalculateWindowMonthsPriceListData {
-  code: number;
-  /** 金额(美元) */
-  data: number;
   msg: string;
 }
 
