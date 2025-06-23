@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { $t } from '/@/locales'
 
-async function sendCode() {
-  // 发送验证码
-}
+const modelValue = defineModel<{ email: string, code: string }>({
+  default: () => ({ email: '', emailError: false, code: '', codeError: false }),
+})
+
+defineProps<{
+  sendCodeRequest: () => Promise<any>
+}>()
 
 </script>
 
@@ -21,7 +25,7 @@ async function sendCode() {
         <span class="text-[#ff4d4f]">*</span>
         {{ $t('恢复邮箱') }}
       </label>
-      <InputText name="email" class="w-full" :placeholder="$t('请输入您的邮箱地址')" />
+      <InputText v-model="modelValue.email" class="w-full" :placeholder="$t('请输入您的邮箱地址')" />
     </div>
     <div class="flex flex-col gap-4px">
       <label for="verification-code">
@@ -29,8 +33,7 @@ async function sendCode() {
         {{ $t('验证码') }}
       </label>
       <div class="verification-input-group">
-        <RxVerificationCodeSender ref="verificationCodeSender" name="ver_code" :request="sendCode"
-          :placeholder="$t('请输入验证码')" />
+        <RxVerificationCodeSender v-model="modelValue.code" :request="sendCodeRequest" :placeholder="$t('请输入验证码')" />
       </div>
     </div>
   </div>

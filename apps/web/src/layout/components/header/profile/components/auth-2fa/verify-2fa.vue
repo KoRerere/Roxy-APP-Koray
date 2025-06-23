@@ -4,8 +4,10 @@ import { useThemeStore } from '/@/stores/theme'
 const themeStore = useThemeStore()
 
 const imgSrc = computed(() => {
-  return new URL(`../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_subtract`, import.meta.url).href
+  return new URL(`../../../../../../assets/images/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/rx_illustration_subtract.svg`, import.meta.url).href
 })
+
+const modelValue = defineModel<string>('modelValue')
 </script>
 
 <template>
@@ -18,7 +20,7 @@ const imgSrc = computed(() => {
       <div class="text-[var(--colors-text-text-tertiary)] font-12px font-400 font-[Inter]">
         {{ $t('要继续，请检查您的身份验证应用并输入以下一次性密码：') }}
       </div>
-      <InputOtp class="inputotp-auto" name="passcode" :length="6" />
+      <InputOtp class="inputotp-auto" name="passcode" :length="6" v-model="modelValue" autoFocus />
     </div>
   </div>
 </template>
@@ -30,8 +32,8 @@ const imgSrc = computed(() => {
 
   :deep(.p-inputotp-input) {
     display: flex;
-    width: 67px;
-    height: 74px;
+    width: 51px;
+    height: 60px;
     flex-direction: column;
     justify-content: center;
     flex-shrink: 0;

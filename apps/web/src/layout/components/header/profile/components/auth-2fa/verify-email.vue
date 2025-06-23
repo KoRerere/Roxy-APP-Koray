@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { useUserStore } from '/@/stores/user'
-import { API } from '/@/api'
 
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.userInfo)
-
-const verificationCodeSender = ref()
-
-const sendCode = async () => {
-  await API.base.userSendEmailCode({
-    email: userInfo.value.email,
-  })
-}
+const modelValue = defineModel<string>()
+defineProps<{
+  request: ({ email }: { email?: string }) => Promise<{ code: number, msg: string, data: any }>,
+}>()
 
 </script>
 
@@ -27,8 +22,7 @@ const sendCode = async () => {
         {{ $t('验证码') }}
       </label>
       <div class="verification-input-group">
-        <RxVerificationCodeSender ref="verificationCodeSender" name="ver_code" :request="sendCode"
-          :placeholder="$t('请输入验证码')" />
+        <RxVerificationCodeSender v-model="modelValue" name="ver_code" :request="request" :placeholder="$t('请输入验证码')" />
       </div>
     </div>
   </div>

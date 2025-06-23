@@ -87,6 +87,8 @@ import {
   UserGetUserConfigListData,
   UserGetUserInfoListData,
   UserGetValidatorBindInfoListData,
+  UserGetValidatorInfoListData,
+  UserGetValidatorInfoListParams,
   UserGetValidatorTokenListData,
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
@@ -122,8 +124,8 @@ import {
   UserValidatorBindCreatePayload,
   UserVerifyEmailCreateData,
   UserVerifyEmailCreatePayload,
-  UserVerifyValidatorVerifyCodeCreateData,
-  UserVerifyValidatorVerifyCodeCreatePayload,
+  UserVerifyValidatorVerifyCodeListData,
+  UserVerifyValidatorVerifyCodeListParams,
   UserWithdrawCreateData,
   UserWithdrawCreatePayload,
   UserWithdrawVerifyCodeListData,
@@ -162,6 +164,87 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name LoginGoogleV2Create
+   * @summary 谷歌登录
+   * @request POST:/login_google_v2
+   * @response `200` `LoginGoogleV2CreateData`
+   */
+  loginGoogleV2Create = (
+    data: LoginGoogleV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginGoogleV2CreateData, any>({
+      path: `/login_google_v2`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginGithubCreate
+   * @summary Github登录
+   * @request POST:/login_github
+   * @response `200` `LoginGithubCreateData`
+   */
+  loginGithubCreate = (
+    data: LoginGithubCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginGithubCreateData, any>({
+      path: `/login_github`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginFacebookCreate
+   * @summary Facebook登录
+   * @request POST:/login_facebook
+   * @response `200` `LoginFacebookCreateData`
+   */
+  loginFacebookCreate = (
+    data: LoginFacebookCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<LoginFacebookCreateData, any>({
+      path: `/login_facebook`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name LoginVkCreate
+   * @summary VK登录
+   * @request POST:/login_vk
+   * @response `200` `LoginVkCreateData`
+   */
+  loginVkCreate = (data: LoginVkCreatePayload, params: RequestParams = {}) =>
+    this.http.request<LoginVkCreateData, any>({
+      path: `/login_vk`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name PostBase
    * @summary 注册
    * @request POST:/reg
@@ -173,6 +256,26 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name SendEmailRegisterVerifyCodeList
+   * @summary  注册验证码
+   * @request GET:/send_email_register_verify_code
+   * @response `200` `SendEmailRegisterVerifyCodeListData`
+   */
+  sendEmailRegisterVerifyCodeList = (
+    query: SendEmailRegisterVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<SendEmailRegisterVerifyCodeListData, any>({
+      path: `/send_email_register_verify_code`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -221,26 +324,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name SendEmailRegisterVerifyCodeList
-   * @summary  注册验证码
-   * @request GET:/send_email_register_verify_code
-   * @response `200` `SendEmailRegisterVerifyCodeListData`
-   */
-  sendEmailRegisterVerifyCodeList = (
-    query: SendEmailRegisterVerifyCodeListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<SendEmailRegisterVerifyCodeListData, any>({
-      path: `/send_email_register_verify_code`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserChangeAccountCreate
    * @summary 修改真实姓名(老的版本用)
    * @request POST:/user_change_account
@@ -252,6 +335,27 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserChangeAccountCreateData, any>({
       path: `/user_change_account`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserChangeUsernameCreate
+   * @summary 修改用户名
+   * @request POST:/user_change_username
+   * @response `200` `UserChangeUsernameCreateData`
+   */
+  userChangeUsernameCreate = (
+    data: UserChangeUsernameCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserChangeUsernameCreateData, any>({
+      path: `/user_change_username`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -283,6 +387,67 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserSettingPasswordCreate
+   * @summary 设置密码
+   * @request POST:/user_setting_password
+   * @response `200` `UserSettingPasswordCreateData`
+   */
+  userSettingPasswordCreate = (
+    data: UserSettingPasswordCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSettingPasswordCreateData, any>({
+      path: `/user_setting_password`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserSettingPasswordVerifyCodeList
+   * @summary 设置密码的验证码
+   * @request GET:/user_setting_password_verify_code
+   * @response `200` `UserSettingPasswordVerifyCodeListData`
+   */
+  userSettingPasswordVerifyCodeList = (
+    query: UserSettingPasswordVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSettingPasswordVerifyCodeListData, any>({
+      path: `/user_setting_password_verify_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetCheckBindEmailVerCodeList
+   * @summary 比对验证码
+   * @request GET:/get_check_bind_email_ver_code
+   * @response `200` `GetCheckBindEmailVerCodeListData`
+   */
+  getCheckBindEmailVerCodeList = (
+    query: GetCheckBindEmailVerCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetCheckBindEmailVerCodeListData, any>({
+      path: `/get_check_bind_email_ver_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserSendEmailVerifyCodeList
    * @summary 修改邮箱验证码
    * @request GET:/user_send_email_verify_code
@@ -294,6 +459,47 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserSendEmailVerifyCodeListData, any>({
       path: `/user_send_email_verify_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserVerifyEmailCreate
+   * @summary 邮箱换绑验证码发送
+   * @request POST:/user_verify_email
+   * @response `200` `UserVerifyEmailCreateData`
+   */
+  userVerifyEmailCreate = (
+    data: UserVerifyEmailCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserVerifyEmailCreateData, any>({
+      path: `/user_verify_email`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetCheckOldEmailVerCodeList
+   * @summary 比对旧邮箱验证码或者密码
+   * @request GET:/user_get_check_old_email_ver_code
+   * @response `200` `UserGetCheckOldEmailVerCodeListData`
+   */
+  userGetCheckOldEmailVerCodeList = (
+    query: UserGetCheckOldEmailVerCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCheckOldEmailVerCodeListData, any>({
+      path: `/user_get_check_old_email_ver_code`,
       method: "GET",
       query: query,
       format: "json",
@@ -361,6 +567,27 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name GetAppUpgradeCreate
+   * @summary app升级->获取版本信息--无权限认证
+   * @request POST:/get_app_upgrade
+   * @response `200` `GetAppUpgradeCreateData`
+   */
+  getAppUpgradeCreate = (
+    data: GetAppUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetAppUpgradeCreateData, any>({
+      path: `/get_app_upgrade`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserGetCoreUpgradeCreate
    * @summary core升级->获取版本信息--有权限认证
    * @request POST:/user_get_core_upgrade
@@ -372,6 +599,27 @@ export class BaseApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserGetCoreUpgradeCreateData, any>({
       path: `/user_get_core_upgrade`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetCoreUpgradeCreate
+   * @summary core升级->获取版本信息--无权限认证
+   * @request POST:/get_core_upgrade
+   * @response `200` `GetCoreUpgradeCreateData`
+   */
+  getCoreUpgradeCreate = (
+    data: GetCoreUpgradeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetCoreUpgradeCreateData, any>({
+      path: `/get_core_upgrade`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -562,27 +810,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name LoginGoogleV2Create
-   * @summary 谷歌登录
-   * @request POST:/login_google_v2
-   * @response `200` `LoginGoogleV2CreateData`
-   */
-  loginGoogleV2Create = (
-    data: LoginGoogleV2CreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<LoginGoogleV2CreateData, any>({
-      path: `/login_google_v2`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserGetOssCredentialV2List
    * @summary oss窗口数据同步上传和下载权限获取
    * @request GET:/user_get_oss_credential_v2
@@ -620,47 +847,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserChangeUsernameCreate
-   * @summary 修改用户名
-   * @request POST:/user_change_username
-   * @response `200` `UserChangeUsernameCreateData`
-   */
-  userChangeUsernameCreate = (
-    data: UserChangeUsernameCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserChangeUsernameCreateData, any>({
-      path: `/user_change_username`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name GetCheckBindEmailVerCodeList
-   * @summary 比对验证码
-   * @request GET:/get_check_bind_email_ver_code
-   * @response `200` `GetCheckBindEmailVerCodeListData`
-   */
-  getCheckBindEmailVerCodeList = (
-    query: GetCheckBindEmailVerCodeListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<GetCheckBindEmailVerCodeListData, any>({
-      path: `/get_check_bind_email_ver_code`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserMigrateDataList
    * @summary 用户迁移数据
    * @request GET:/user_migrate_data
@@ -670,27 +856,6 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserMigrateDataListData, any>({
       path: `/user_migrate_data`,
       method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name GetAppUpgradeCreate
-   * @summary app升级->获取版本信息--无权限认证
-   * @request POST:/get_app_upgrade
-   * @response `200` `GetAppUpgradeCreateData`
-   */
-  getAppUpgradeCreate = (
-    data: GetAppUpgradeCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<GetAppUpgradeCreateData, any>({
-      path: `/get_app_upgrade`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -718,17 +883,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserGetInviteUserListV2List
-   * @summary 获取邀请的用户列表
-   * @request GET:/user_get_invite_user_list_v2
-   * @response `200` `UserGetInviteUserListV2ListData`
+   * @name SavePromotionLinkClickCountList
+   * @summary 存储渠道推广链接点击次数
+   * @request GET:/save_promotion_link_click_count
+   * @response `200` `SavePromotionLinkClickCountListData`
    */
-  userGetInviteUserListV2List = (
-    query: UserGetInviteUserListV2ListParams,
+  savePromotionLinkClickCountList = (
+    query: SavePromotionLinkClickCountListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserGetInviteUserListV2ListData, any>({
-      path: `/user_get_invite_user_list_v2`,
+    this.http.request<SavePromotionLinkClickCountListData, any>({
+      path: `/save_promotion_link_click_count`,
       method: "GET",
       query: query,
       format: "json",
@@ -811,82 +976,19 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name GetCoreUpgradeCreate
-   * @summary core升级->获取版本信息--无权限认证
-   * @request POST:/get_core_upgrade
-   * @response `200` `GetCoreUpgradeCreateData`
+   * @name CheckOtherDeviceLoginList
+   * @summary 判断是否有在其他设备已经登录
+   * @request GET:/check_other_device_login
+   * @response `200` `CheckOtherDeviceLoginListData`
    */
-  getCoreUpgradeCreate = (
-    data: GetCoreUpgradeCreatePayload,
+  checkOtherDeviceLoginList = (
+    query: CheckOtherDeviceLoginListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<GetCoreUpgradeCreateData, any>({
-      path: `/get_core_upgrade`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserSettingPasswordCreate
-   * @summary 设置密码
-   * @request POST:/user_setting_password
-   * @response `200` `UserSettingPasswordCreateData`
-   */
-  userSettingPasswordCreate = (
-    data: UserSettingPasswordCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserSettingPasswordCreateData, any>({
-      path: `/user_setting_password`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserSettingPasswordVerifyCodeList
-   * @summary 设置密码的验证码
-   * @request GET:/user_setting_password_verify_code
-   * @response `200` `UserSettingPasswordVerifyCodeListData`
-   */
-  userSettingPasswordVerifyCodeList = (
-    query: UserSettingPasswordVerifyCodeListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserSettingPasswordVerifyCodeListData, any>({
-      path: `/user_setting_password_verify_code`,
+    this.http.request<CheckOtherDeviceLoginListData, any>({
+      path: `/check_other_device_login`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name LoginGithubCreate
-   * @summary Github登录
-   * @request POST:/login_github
-   * @response `200` `LoginGithubCreateData`
-   */
-  loginGithubCreate = (
-    data: LoginGithubCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<LoginGithubCreateData, any>({
-      path: `/login_github`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -910,35 +1012,19 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name CheckOtherDeviceLoginList
-   * @summary 判断是否有在其他设备已经登录
-   * @request GET:/check_other_device_login
-   * @response `200` `CheckOtherDeviceLoginListData`
+   * @name UserGetInviteUserListV2List
+   * @summary 获取邀请的用户列表
+   * @request GET:/user_get_invite_user_list_v2
+   * @response `200` `UserGetInviteUserListV2ListData`
    */
-  checkOtherDeviceLoginList = (
-    query: CheckOtherDeviceLoginListParams,
+  userGetInviteUserListV2List = (
+    query: UserGetInviteUserListV2ListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<CheckOtherDeviceLoginListData, any>({
-      path: `/check_other_device_login`,
+    this.http.request<UserGetInviteUserListV2ListData, any>({
+      path: `/user_get_invite_user_list_v2`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserGetPromotionInfoList
-   * @summary 获取用户推广信息
-   * @request GET:/user_get_promotion_info
-   * @response `200` `UserGetPromotionInfoListData`
-   */
-  userGetPromotionInfoList = (params: RequestParams = {}) =>
-    this.http.request<UserGetPromotionInfoListData, any>({
-      path: `/user_get_promotion_info`,
-      method: "GET",
       format: "json",
       ...params,
     });
@@ -986,6 +1072,22 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserGetPromotionInfoList
+   * @summary 获取用户推广信息
+   * @request GET:/user_get_promotion_info
+   * @response `200` `UserGetPromotionInfoListData`
+   */
+  userGetPromotionInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetPromotionInfoListData, any>({
+      path: `/user_get_promotion_info`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserWithdrawCreate
    * @summary 用户提现
    * @request POST:/user_withdraw
@@ -1000,26 +1102,6 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name SavePromotionLinkClickCountList
-   * @summary 存储渠道推广链接点击次数
-   * @request GET:/save_promotion_link_click_count
-   * @response `200` `SavePromotionLinkClickCountListData`
-   */
-  savePromotionLinkClickCountList = (
-    query: SavePromotionLinkClickCountListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<SavePromotionLinkClickCountListData, any>({
-      path: `/save_promotion_link_click_count`,
-      method: "GET",
-      query: query,
       format: "json",
       ...params,
     });
@@ -1047,47 +1129,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserVerifyEmailCreate
-   * @summary 邮箱换绑验证码发送
-   * @request POST:/user_verify_email
-   * @response `200` `UserVerifyEmailCreateData`
-   */
-  userVerifyEmailCreate = (
-    data: UserVerifyEmailCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserVerifyEmailCreateData, any>({
-      path: `/user_verify_email`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserGetCheckOldEmailVerCodeList
-   * @summary 比对旧邮箱验证码或者密码
-   * @request GET:/user_get_check_old_email_ver_code
-   * @response `200` `UserGetCheckOldEmailVerCodeListData`
-   */
-  userGetCheckOldEmailVerCodeList = (
-    query: UserGetCheckOldEmailVerCodeListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserGetCheckOldEmailVerCodeListData, any>({
-      path: `/user_get_check_old_email_ver_code`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserGetBannerPictureListV2List
    * @summary 获取banner图片数据-收费版本
    * @request GET:/user_get_banner_picture_list_v2
@@ -1101,45 +1142,6 @@ export class BaseApi<SecurityDataType = unknown> {
       path: `/user_get_banner_picture_list_v2`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name LoginFacebookCreate
-   * @summary Facebook登录
-   * @request POST:/login_facebook
-   * @response `200` `LoginFacebookCreateData`
-   */
-  loginFacebookCreate = (
-    data: LoginFacebookCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<LoginFacebookCreateData, any>({
-      path: `/login_facebook`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name LoginVkCreate
-   * @summary VK登录
-   * @request POST:/login_vk
-   * @response `200` `LoginVkCreateData`
-   */
-  loginVkCreate = (data: LoginVkCreatePayload, params: RequestParams = {}) =>
-    this.http.request<LoginVkCreateData, any>({
-      path: `/login_vk`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -1288,6 +1290,42 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
+   * @name UserSendValidatorVerifyCodeList
+   * @summary 发送开启验证器验证码
+   * @request GET:/user_send_validator_verify_code
+   * @response `200` `UserSendValidatorVerifyCodeListData`
+   */
+  userSendValidatorVerifyCodeList = (params: RequestParams = {}) =>
+    this.http.request<UserSendValidatorVerifyCodeListData, any>({
+      path: `/user_send_validator_verify_code`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserVerifyValidatorVerifyCodeList
+   * @summary 比对开启验证器验证码
+   * @request GET:/user_verify_validator_verify_code
+   * @response `200` `UserVerifyValidatorVerifyCodeListData`
+   */
+  userVerifyValidatorVerifyCodeList = (
+    query: UserVerifyValidatorVerifyCodeListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserVerifyValidatorVerifyCodeListData, any>({
+      path: `/user_verify_validator_verify_code`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
    * @name UserGetValidatorTokenList
    * @summary 获取用户验证器token
    * @request GET:/user_get_validator_token
@@ -1386,43 +1424,6 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserSendValidatorVerifyCodeList
-   * @summary 发送开启验证器验证码
-   * @request GET:/user_send_validator_verify_code
-   * @response `200` `UserSendValidatorVerifyCodeListData`
-   */
-  userSendValidatorVerifyCodeList = (params: RequestParams = {}) =>
-    this.http.request<UserSendValidatorVerifyCodeListData, any>({
-      path: `/user_send_validator_verify_code`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
-   * @name UserVerifyValidatorVerifyCodeCreate
-   * @summary 比对开启验证器验证码
-   * @request POST:/user_verify_validator_verify_code
-   * @response `200` `UserVerifyValidatorVerifyCodeCreateData`
-   */
-  userVerifyValidatorVerifyCodeCreate = (
-    data: UserVerifyValidatorVerifyCodeCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserVerifyValidatorVerifyCodeCreateData, any>({
-      path: `/user_verify_validator_verify_code`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Base
    * @name UserCloseValidatorCreate
    * @summary 关闭验证器
    * @request POST:/user_close_validator
@@ -1453,6 +1454,26 @@ export class BaseApi<SecurityDataType = unknown> {
     this.http.request<UserGetValidatorBindInfoListData, any>({
       path: `/user_get_validator_bind_info`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetValidatorInfoList
+   * @summary 获取验证信息
+   * @request GET:/user_get_validator_info
+   * @response `200` `UserGetValidatorInfoListData`
+   */
+  userGetValidatorInfoList = (
+    query: UserGetValidatorInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetValidatorInfoListData, any>({
+      path: `/user_get_validator_info`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

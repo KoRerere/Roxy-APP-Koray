@@ -59,14 +59,14 @@ export class PayApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Pay
-   * @name UserGetDurationDiscountsList
-   * @summary 获取用户的订阅时长折扣
-   * @request GET:/user_get_duration_discounts
-   * @response `200` `UserGetDurationDiscountsListData`
+   * @name UserGetUserPayInfoList
+   * @summary 获取用户付费详情
+   * @request GET:/user_get_user_pay_info
+   * @response `200` `UserGetUserPayInfoListData`
    */
-  userGetDurationDiscountsList = (params: RequestParams = {}) =>
-    this.http.request<UserGetDurationDiscountsListData, any>({
-      path: `/user_get_duration_discounts`,
+  userGetUserPayInfoList = (params: RequestParams = {}) =>
+    this.http.request<UserGetUserPayInfoListData, any>({
+      path: `/user_get_user_pay_info`,
       method: "GET",
       format: "json",
       ...params,
@@ -91,20 +91,15 @@ export class PayApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Pay
-   * @name UserPaySettlementCreate
-   * @summary 用户付费结算
-   * @request POST:/user_pay_settlement
-   * @response `200` `UserPaySettlementCreateData`
+   * @name UserGetDurationDiscountsList
+   * @summary 获取用户的订阅时长折扣
+   * @request GET:/user_get_duration_discounts
+   * @response `200` `UserGetDurationDiscountsListData`
    */
-  userPaySettlementCreate = (
-    data: UserPaySettlementCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserPaySettlementCreateData, any>({
-      path: `/user_pay_settlement`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
+  userGetDurationDiscountsList = (params: RequestParams = {}) =>
+    this.http.request<UserGetDurationDiscountsListData, any>({
+      path: `/user_get_duration_discounts`,
+      method: "GET",
       format: "json",
       ...params,
     });
@@ -125,64 +120,6 @@ export class PayApi<SecurityDataType = unknown> {
       path: `/user_get_purchase_records_info`,
       method: "GET",
       query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Pay
-   * @name UserGetUserPayInfoList
-   * @summary 获取用户付费详情
-   * @request GET:/user_get_user_pay_info
-   * @response `200` `UserGetUserPayInfoListData`
-   */
-  userGetUserPayInfoList = (params: RequestParams = {}) =>
-    this.http.request<UserGetUserPayInfoListData, any>({
-      path: `/user_get_user_pay_info`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Pay
-   * @name UserRechargeSettlementCreate
-   * @summary 用户充值结算
-   * @request POST:/user_recharge_settlement
-   * @response `200` `UserRechargeSettlementCreateData`
-   */
-  userRechargeSettlementCreate = (
-    data: UserRechargeSettlementCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserRechargeSettlementCreateData, any>({
-      path: `/user_recharge_settlement`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Pay
-   * @name UserSevenDayTrialCreate
-   * @summary 用户7天试用
-   * @request POST:/user_seven_day_trial
-   * @response `200` `UserSevenDayTrialCreateData`
-   */
-  userSevenDayTrialCreate = (
-    data: UserSevenDayTrialCreatePayload,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserSevenDayTrialCreateData, any>({
-      path: `/user_seven_day_trial`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -250,6 +187,69 @@ export class PayApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Pay
+   * @name UserSevenDayTrialCreate
+   * @summary 用户7天试用
+   * @request POST:/user_seven_day_trial
+   * @response `200` `UserSevenDayTrialCreateData`
+   */
+  userSevenDayTrialCreate = (
+    data: UserSevenDayTrialCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserSevenDayTrialCreateData, any>({
+      path: `/user_seven_day_trial`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserPaySettlementCreate
+   * @summary 用户付费结算
+   * @request POST:/user_pay_settlement
+   * @response `200` `UserPaySettlementCreateData`
+   */
+  userPaySettlementCreate = (
+    data: UserPaySettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserPaySettlementCreateData, any>({
+      path: `/user_pay_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserRechargeSettlementCreate
+   * @summary 用户充值结算
+   * @request POST:/user_recharge_settlement
+   * @response `200` `UserRechargeSettlementCreateData`
+   */
+  userRechargeSettlementCreate = (
+    data: UserRechargeSettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRechargeSettlementCreateData, any>({
+      path: `/user_recharge_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
    * @name UserCalculatePriceDifferenceList
    * @summary 用户计算差价
    * @request GET:/user_calculate_price_difference
@@ -290,46 +290,6 @@ export class PayApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Pay
-   * @name UserUpdatePayTipsList
-   * @summary 修改付费提示
-   * @request GET:/user_update_pay_tips
-   * @response `200` `UserUpdatePayTipsListData`
-   */
-  userUpdatePayTipsList = (
-    query: UserUpdatePayTipsListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserUpdatePayTipsListData, any>({
-      path: `/user_update_pay_tips`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Pay
-   * @name UserCalculateWindowMonthsPriceList
-   * @summary 根据数量计算窗口一个月价格
-   * @request GET:/user_calculate_window_months_price
-   * @response `200` `UserCalculateWindowMonthsPriceListData`
-   */
-  userCalculateWindowMonthsPriceList = (
-    query: UserCalculateWindowMonthsPriceListParams,
-    params: RequestParams = {},
-  ) =>
-    this.http.request<UserCalculateWindowMonthsPriceListData, any>({
-      path: `/user_calculate_window_months_price`,
-      method: "GET",
-      query: query,
-      format: "json",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Pay
    * @name UserCancelSubscriptionList
    * @summary 取消订阅
    * @request GET:/user_cancel_subscription
@@ -361,6 +321,46 @@ export class PayApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserDowngradeSubscriptionListData, any>({
       path: `/user_downgrade_subscription`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserUpdatePayTipsList
+   * @summary 修改付费提示
+   * @request GET:/user_update_pay_tips
+   * @response `200` `UserUpdatePayTipsListData`
+   */
+  userUpdatePayTipsList = (
+    query: UserUpdatePayTipsListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserUpdatePayTipsListData, any>({
+      path: `/user_update_pay_tips`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserCalculateWindowMonthsPriceList
+   * @summary 根据数量计算窗口一个月价格
+   * @request GET:/user_calculate_window_months_price
+   * @response `200` `UserCalculateWindowMonthsPriceListData`
+   */
+  userCalculateWindowMonthsPriceList = (
+    query: UserCalculateWindowMonthsPriceListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCalculateWindowMonthsPriceListData, any>({
+      path: `/user_calculate_window_months_price`,
       method: "GET",
       query: query,
       format: "json",
