@@ -7,7 +7,7 @@ import { useDialog } from '/@/hooks/useDialog'
 import { $t } from '/@/locales'
 import { useUserStore } from '/@/stores/user'
 import { decryptAESGCM, hidePageLoading, showPageLoading, useOauth2Callback, type OauthLoginType } from '/@/utils'
-import { EmailCodeInputOtp, ResetPassword, SignForm } from './components/'
+import { EmailCodeInputOtp, ResetPassword, SignForm, Verify2fa, RecoveryCode } from './components/'
 import MigrationTips from './components/migration-tips.vue'
 import { type CurrentComp, provideLoginContext } from './hooks/useLoginContext'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -33,6 +33,7 @@ const signFormData = ref<LoginCreatePayload>({
 })
 const updateInfo = ref<ResourceUpdateMessage>()
 const signFormSwitchRegister = ref(false)
+const tempToken = ref()
 
 const showUpdaterMessage = computed(() => {
   return currentComp.value === 'signForm' && updateInfo.value && updateInfo.value.percent === 100 && !signFormSwitchRegister.value
@@ -71,6 +72,12 @@ async function handleSubmit() {
   const { code, data, msg } = await API.base.loginCreate(signFormData.value)
 
   if (code !== 0) {
+    if (code === 420) {
+      tempToken.value = data
+      setCurrentComponent('verify2fa')
+      return
+    }
+
     mixpanel.track('login', { method: 'password', success: false, error: msg })
     toast.add({ severity: 'error', summary: 'Error', detail: msg || $t('登录失败'), life: 2500 })
     return
@@ -246,10 +253,11 @@ provideLoginContext({
         </div>
 
         <div class="sign-card">
-          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps"
-            @register="val => signFormSwitchRegister = val" />
+          <SignForm ref="signForm" v-if="currentComp === 'signForm'" v-model="signFormData" v-bind="currentCompProps" @register="val => signFormSwitchRegister = val" />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />
+          <Verify2fa v-else-if="currentComp === 'verify2fa'" :temp-token="tempToken" @success="afterLogin" />
+          <RecoveryCode v-else-if="currentComp === 'recoveryCode'" :temp-token="tempToken" @success="afterLogin" />
         </div>
 
         <div class="footer">
@@ -264,8 +272,7 @@ provideLoginContext({
         </div>
 
         <AnimatePresence>
-          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }"
-            :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
+          <motion.div v-show="showUpdaterMessage" :initial="{ opacity: 0, y: 20, x: '-50%' }" :animate="{ opacity: 1, y: 0, x: '-50%' }" :exit="{ opacity: 0, y: -20, x: '-50%' }"
             :transition="{ duration: 0.2 }" class="app-updater-motion">
             <AppUpdater :version="updateInfo?.version" :current-version="updateInfo?.currentVersion" />
           </motion.div>

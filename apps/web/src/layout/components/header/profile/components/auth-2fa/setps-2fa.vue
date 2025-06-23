@@ -14,6 +14,7 @@ enum RecoveryType {
 }
 
 const props = withDefaults(defineProps<{
+  tempToken?: string
   closable?: boolean
   onCancel?: () => void
   onSuccess?: (type: RecoveryType) => void
@@ -71,8 +72,9 @@ const prev = () => {
 
 const handleNext = async () => {
   if (currentSetp.value === '1') {
-    const res = await API.base.userPersonalVerifyValidatorCodeList({
+    const res = await API.base.getPersonalVerifyValidatorCodeList({
       code: qrcode2FA.code,
+      temp_token: props.tempToken
     })
     onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
@@ -81,10 +83,11 @@ const handleNext = async () => {
     return;
   }
   if (currentSetp.value === '3') {
-    const res = await API.base.userValidatorBindCreate({
+    const res = await API.base.validatorBindCreate({
       recover_type: recoveryType.value as string,
       recover_email: recoveryEmail.email,
-      ver_code: recoveryEmail.code
+      ver_code: recoveryEmail.code,
+      temp_token: props.tempToken
     })
     onlyErrorToast(res.code, res.msg);
     if (res.code === 0) {
@@ -100,8 +103,9 @@ const chooseRecovery = async (type: RecoveryType) => {
   recoveryType.value = type
   stepsRef.value?.next();
   if (type === RecoveryType.Code) {
-    const res = await API.base.userGenerateValidatorRecoverCodeList({
-      type: 'add'
+    const res = await API.base.generateValidatorRecoverCodeList({
+      type: 'add',
+      temp_token: props.tempToken
     })
     onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
@@ -123,9 +127,10 @@ const hideDialog = () => {
 
 const sendRecoveryEmailCodeRequest = async () => {
   if (recoveryEmail.email) {
-    const res = await API.base.userSendValidatorEmailVerifyCodeList({
+    const res = await API.base.sendValidatorEmailVerifyCodeList({
       email: recoveryEmail.email,
-      type: 'add'
+      type: 'add',
+      temp_token: props.tempToken
     })
     onlyErrorToast(res.code, res.msg)
     if (res.code === 0) {
@@ -137,7 +142,7 @@ const sendRecoveryEmailCodeRequest = async () => {
 
 watchEffect(async () => {
   if (visible.value) {
-    const res2 = await API.base.userGetValidatorTokenList();
+    const res2 = await API.base.getValidatorTokenInfoList({ temp_token: props.tempToken });
     onlyErrorToast(res2.code, res2.msg)
     if (res2.code === 0) {
       qrcode2FA.secret = res2.data.secret;
@@ -148,8 +153,7 @@ watchEffect(async () => {
 </script>
 
 <template>
-  <Dialog class="w-480px" v-model:visible="visible" :header="$t('添加新的双重验证方法')" modal :draggable="false"
-    :closable="closable">
+  <Dialog class="w-480px" v-model:visible="visible" :header="$t('添加新的双重验证方法')" modal :draggable="false" :closable="closable">
     <RxSteps class="px-24px mb-24px" v-model="currentSetp" :steps="steps" ref="stepsRef" />
 
     <!-- 步骤一 -->
@@ -217,10 +221,8 @@ watchEffect(async () => {
 
     <template #footer>
       <div class="w-full flex flex-col gap-12px">
-        <RxButton v-if="currentSetp !== '2'" :label="currentSetp === '3' ? $t('确认') : $t('下一步')" severity="primary"
-          class="w-full" @click="handleNext" />
-        <RxButton v-if="currentSetp === '3'" :label="$t('返回上一步')" severity="secondary" class="w-full" @click="prev"
-          outlined />
+        <RxButton v-if="currentSetp !== '2'" :label="currentSetp === '3' ? $t('确认') : $t('下一步')" severity="primary" class="w-full" @click="handleNext" />
+        <RxButton v-if="currentSetp === '3'" :label="$t('返回上一步')" severity="secondary" class="w-full" @click="prev" outlined />
       </div>
     </template>
 

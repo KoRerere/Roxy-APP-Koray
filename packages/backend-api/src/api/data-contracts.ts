@@ -2894,7 +2894,15 @@ export interface UserModifyRemarkDisplayStatusCreateData {
   msg: string;
 }
 
-export interface UserGetValidatorTokenListData {
+export interface GetValidatorTokenInfoListParams {
+  /**
+   * 临时token
+   * @example "0oPwO4vway3Vty0D1750430479980"
+   */
+  temp_token?: string;
+}
+
+export interface GetValidatorTokenInfoListData {
   code: number;
   data: {
     google_keyuri: string;
@@ -2903,54 +2911,67 @@ export interface UserGetValidatorTokenListData {
   msg: string;
 }
 
-export interface UserPersonalVerifyValidatorCodeListParams {
+export interface GetPersonalVerifyValidatorCodeListParams {
   /**
    * 验证码
    * @example "123456"
    */
   code: string;
+  temp_token?: string;
 }
 
-export interface UserPersonalVerifyValidatorCodeListData {
+export interface GetPersonalVerifyValidatorCodeListData {
   code: number;
   msg: string;
 }
 
-export interface UserSendValidatorEmailVerifyCodeListParams {
+export interface SendValidatorEmailVerifyCodeListParams {
   email?: string;
   /** @example "add" */
   type?: string;
+  temp_token?: string;
 }
 
-export interface UserSendValidatorEmailVerifyCodeListData {
+export interface SendValidatorEmailVerifyCodeListData {
   code: number;
   msg: string;
 }
 
-export interface UserGenerateValidatorRecoverCodeListParams {
+export interface GenerateValidatorRecoverCodeListParams {
   /**
    * 类型：修改还是新增:"modify", "add"
    * @example "modify"
    */
   type: string;
+  temp_token?: string;
 }
 
-export interface UserGenerateValidatorRecoverCodeListData {
+export interface GenerateValidatorRecoverCodeListData {
   code: number;
   data: string[];
   msg: string;
 }
 
-export interface UserValidatorBindCreatePayload {
-  /** 恢复方式：恢复邮箱/代码 */
+export interface ValidatorBindCreatePayload {
+  /**
+   * 恢复方式：恢复邮箱/代码
+   * 恢复方式：恢复邮箱/代码
+   */
   recover_type: string;
-  /** 恢复邮箱 */
+  /**
+   * 恢复邮箱
+   * 恢复邮箱
+   */
   recover_email: string;
-  /** 恢复邮箱验证码 */
+  /**
+   * 恢复邮箱验证码
+   * 恢复邮箱验证码
+   */
   ver_code: string;
+  temp_token?: string;
 }
 
-export interface UserValidatorBindCreateData {
+export interface ValidatorBindCreateData {
   code: number;
   msg: string;
 }
@@ -3020,6 +3041,61 @@ export interface UserUpdateValidatorTokenCreatePayload {
 
 export interface UserUpdateValidatorTokenCreateData {
   code: number;
+  msg: string;
+}
+
+export interface Check2FaLoginVerifyCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 验证码 */
+  fa_code: number;
+}
+
+export interface Check2FaLoginVerifyCreateData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
+  msg: string;
+}
+
+export interface CheckRecoverCodeCreatePayload {
+  /** 临时token */
+  temp_token: string;
+  /** 恢复代码 */
+  recover_code: string;
+}
+
+export interface CheckRecoverCodeCreateData {
+  code: number;
+  data: string;
+}
+
+export interface Get2FaLoginInfoListParams {
+  /**
+   * 临时token
+   * @example "oQNTHk45wom22tT71750668640993"
+   */
+  temp_token: string;
+}
+
+export interface Get2FaLoginInfoListData {
+  code: number;
+  data: {
+    is_migrate: boolean;
+    role: string;
+    token: string;
+    type: number;
+    user_id: number;
+    user_name: string;
+    workspaceId: number;
+  };
   msg: string;
 }
 
@@ -4466,33 +4542,6 @@ export interface UserMdfWindowDataBatchCreatePayload {
 
 export interface UserMdfWindowDataBatchCreateData {
   code: number;
-  msg: string;
-}
-
-export interface Check2FaLoginVerifyListParams {
-  /**
-   * 临时token
-   * @example "U1rTwPewi9hDCHKK1750662524108"
-   */
-  temp_token: string;
-  /**
-   * 2fa验证码
-   * @example "123434"
-   */
-  fa_code: string;
-}
-
-export interface Check2FaLoginVerifyListData {
-  code: number;
-  data: {
-    is_migrate: boolean;
-    role: string;
-    token: string;
-    type: number;
-    user_id: number;
-    user_name: string;
-    workspaceId: number;
-  };
   msg: string;
 }
 

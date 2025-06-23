@@ -11,16 +11,28 @@
  */
 
 import {
+  Check2FaLoginVerifyCreateData,
+  Check2FaLoginVerifyCreatePayload,
   CheckOtherDeviceLoginListData,
   CheckOtherDeviceLoginListParams,
+  CheckRecoverCodeCreateData,
+  CheckRecoverCodeCreatePayload,
   ForgetPasswordCreateData,
   ForgetPasswordCreatePayload,
+  GenerateValidatorRecoverCodeListData,
+  GenerateValidatorRecoverCodeListParams,
+  Get2FaLoginInfoListData,
+  Get2FaLoginInfoListParams,
   GetAppUpgradeCreateData,
   GetAppUpgradeCreatePayload,
   GetCheckBindEmailVerCodeListData,
   GetCheckBindEmailVerCodeListParams,
   GetCoreUpgradeCreateData,
   GetCoreUpgradeCreatePayload,
+  GetPersonalVerifyValidatorCodeListData,
+  GetPersonalVerifyValidatorCodeListParams,
+  GetValidatorTokenInfoListData,
+  GetValidatorTokenInfoListParams,
   LoginCreateData,
   LoginCreatePayload,
   LoginFacebookCreateData,
@@ -41,6 +53,8 @@ import {
   SendEmailForgetVerifyCodeListParams,
   SendEmailRegisterVerifyCodeListData,
   SendEmailRegisterVerifyCodeListParams,
+  SendValidatorEmailVerifyCodeListData,
+  SendValidatorEmailVerifyCodeListParams,
   UserBindEmailCreateData,
   UserBindEmailCreatePayload,
   UserBindEmailListListData,
@@ -56,8 +70,6 @@ import {
   UserChangeUsernameCreatePayload,
   UserCloseValidatorCreateData,
   UserCloseValidatorCreatePayload,
-  UserGenerateValidatorRecoverCodeListData,
-  UserGenerateValidatorRecoverCodeListParams,
   UserGetAnntListListData,
   UserGetAppUpgradeCreateData,
   UserGetAppUpgradeCreatePayload,
@@ -89,22 +101,17 @@ import {
   UserGetValidatorBindInfoListData,
   UserGetValidatorInfoListData,
   UserGetValidatorInfoListParams,
-  UserGetValidatorTokenListData,
   UserGetWithdrawRecordListListData,
   UserGetWithdrawRecordListListParams,
   UserMigrateDataListData,
   UserModifyRemarkDisplayStatusCreateData,
   UserModifyRemarkDisplayStatusCreatePayload,
-  UserPersonalVerifyValidatorCodeListData,
-  UserPersonalVerifyValidatorCodeListParams,
   UserReadNotifyCreateData,
   UserReadNotifyCreatePayload,
   UserSendAccountPasswordVerifyCodeListData,
   UserSendAccountPasswordVerifyCodeListParams,
   UserSendEmailVerifyCodeListData,
   UserSendEmailVerifyCodeListParams,
-  UserSendValidatorEmailVerifyCodeListData,
-  UserSendValidatorEmailVerifyCodeListParams,
   UserSendValidatorVerifyCodeListData,
   UserSettingAccountPasswordCreateData,
   UserSettingAccountPasswordCreatePayload,
@@ -122,8 +129,6 @@ import {
   UserUpdateValidatorTokenCreatePayload,
   UserUploadAvatarCreateData,
   UserUploadAvatarCreatePayload,
-  UserValidatorBindCreateData,
-  UserValidatorBindCreatePayload,
   UserVerifyEmailCreateData,
   UserVerifyEmailCreatePayload,
   UserVerifyValidatorVerifyCodeListData,
@@ -134,6 +139,8 @@ import {
   UserWithdrawVerifyCodeListParams,
   UserWriteInviteCodeCreateData,
   UserWriteInviteCodeCreatePayload,
+  ValidatorBindCreateData,
+  ValidatorBindCreatePayload,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -1292,15 +1299,19 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserGetValidatorTokenList
+   * @name GetValidatorTokenInfoList
    * @summary 获取用户验证器token
-   * @request GET:/user_get_validator_token
-   * @response `200` `UserGetValidatorTokenListData`
+   * @request GET:/get_validator_token_info
+   * @response `200` `GetValidatorTokenInfoListData`
    */
-  userGetValidatorTokenList = (params: RequestParams = {}) =>
-    this.http.request<UserGetValidatorTokenListData, any>({
-      path: `/user_get_validator_token`,
+  getValidatorTokenInfoList = (
+    query: GetValidatorTokenInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<GetValidatorTokenInfoListData, any>({
+      path: `/get_validator_token_info`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -1308,17 +1319,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserPersonalVerifyValidatorCodeList
+   * @name GetPersonalVerifyValidatorCodeList
    * @summary 个人设置比对验证器code
-   * @request GET:/user_personal_verify_validator_code
-   * @response `200` `UserPersonalVerifyValidatorCodeListData`
+   * @request GET:/get_personal_verify_validator_code
+   * @response `200` `GetPersonalVerifyValidatorCodeListData`
    */
-  userPersonalVerifyValidatorCodeList = (
-    query: UserPersonalVerifyValidatorCodeListParams,
+  getPersonalVerifyValidatorCodeList = (
+    query: GetPersonalVerifyValidatorCodeListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserPersonalVerifyValidatorCodeListData, any>({
-      path: `/user_personal_verify_validator_code`,
+    this.http.request<GetPersonalVerifyValidatorCodeListData, any>({
+      path: `/get_personal_verify_validator_code`,
       method: "GET",
       query: query,
       format: "json",
@@ -1328,17 +1339,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserSendValidatorEmailVerifyCodeList
+   * @name SendValidatorEmailVerifyCodeList
    * @summary 发送恢复邮箱验证码
-   * @request GET:/user_send_validator_email_verify_code
-   * @response `200` `UserSendValidatorEmailVerifyCodeListData`
+   * @request GET:/send_validator_email_verify_code
+   * @response `200` `SendValidatorEmailVerifyCodeListData`
    */
-  userSendValidatorEmailVerifyCodeList = (
-    query: UserSendValidatorEmailVerifyCodeListParams,
+  sendValidatorEmailVerifyCodeList = (
+    query: SendValidatorEmailVerifyCodeListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserSendValidatorEmailVerifyCodeListData, any>({
-      path: `/user_send_validator_email_verify_code`,
+    this.http.request<SendValidatorEmailVerifyCodeListData, any>({
+      path: `/send_validator_email_verify_code`,
       method: "GET",
       query: query,
       format: "json",
@@ -1348,17 +1359,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserGenerateValidatorRecoverCodeList
+   * @name GenerateValidatorRecoverCodeList
    * @summary 生成恢复验证器恢复代码
-   * @request GET:/user_generate_validator_recover_code
-   * @response `200` `UserGenerateValidatorRecoverCodeListData`
+   * @request GET:/generate_validator_recover_code
+   * @response `200` `GenerateValidatorRecoverCodeListData`
    */
-  userGenerateValidatorRecoverCodeList = (
-    query: UserGenerateValidatorRecoverCodeListParams,
+  generateValidatorRecoverCodeList = (
+    query: GenerateValidatorRecoverCodeListParams,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserGenerateValidatorRecoverCodeListData, any>({
-      path: `/user_generate_validator_recover_code`,
+    this.http.request<GenerateValidatorRecoverCodeListData, any>({
+      path: `/generate_validator_recover_code`,
       method: "GET",
       query: query,
       format: "json",
@@ -1368,17 +1379,17 @@ export class BaseApi<SecurityDataType = unknown> {
    * No description
    *
    * @tags Base
-   * @name UserValidatorBindCreate
+   * @name ValidatorBindCreate
    * @summary 用户验证器绑定
-   * @request POST:/user_validator_bind
-   * @response `200` `UserValidatorBindCreateData`
+   * @request POST:/validator_bind
+   * @response `200` `ValidatorBindCreateData`
    */
-  userValidatorBindCreate = (
-    data: UserValidatorBindCreatePayload,
+  validatorBindCreate = (
+    data: ValidatorBindCreatePayload,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserValidatorBindCreateData, any>({
-      path: `/user_validator_bind`,
+    this.http.request<ValidatorBindCreateData, any>({
+      path: `/validator_bind`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -1496,6 +1507,68 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name Check2FaLoginVerifyCreate
+   * @summary 2FA登录验证
+   * @request POST:/check_2fa_login_verify
+   * @response `200` `Check2FaLoginVerifyCreateData`
+   */
+  check2FaLoginVerifyCreate = (
+    data: Check2FaLoginVerifyCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<Check2FaLoginVerifyCreateData, any>({
+      path: `/check_2fa_login_verify`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name CheckRecoverCodeCreate
+   * @summary 恢复代码
+   * @request POST:/check_recover_code
+   * @response `200` `CheckRecoverCodeCreateData`
+   */
+  checkRecoverCodeCreate = (
+    data: CheckRecoverCodeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<CheckRecoverCodeCreateData, any>({
+      path: `/check_recover_code`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name Get2FaLoginInfoList
+   * @summary 获取2FA登录信息
+   * @request GET:/get_2fa_login_info
+   * @response `200` `Get2FaLoginInfoListData`
+   */
+  get2FaLoginInfoList = (
+    query: Get2FaLoginInfoListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<Get2FaLoginInfoListData, any>({
+      path: `/get_2fa_login_info`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
