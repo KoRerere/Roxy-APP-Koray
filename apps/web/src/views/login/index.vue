@@ -197,7 +197,9 @@ electronAPI.send('app:isShowLongTimeNotLoginTips').then((res) => {
     setPassword('')
     signFormData.value.password = ''
     toast.add({ severity: 'info', summary: $t('您已长时间未登录，请重新登录'), life: 5000 })
-    signFormRef.value?.clearValidateMessages()
+    nextTick(() => {
+      signFormRef.value?.clearValidateMessages()
+    })
   }
 })
 
